@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "family": "FLUX.2 Klein Base 4B",
+  "repository": "black-forest-labs/FLUX.2-klein-base-4B",
+  "revision": "a3b4f4849157f664bdbc776fd7453c2783562f4d",
+  "format": "safetensors",
+  "hub": {
+    "private": false,
+    "gated": false,
+    "license": "apache-2.0",
+    "pipelineTag": "image-to-image",
+    "libraryName": "diffusers",
+    "reviewedAt": "2026-08-27"
+  },
+  "sourceReview": {
+    "diffusersRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
+    "standardPipelineClass": "Flux2KleinPipeline",
+    "modularPipelineClass": "Flux2KleinBaseModularPipeline",
+    "blocksClass": "Flux2KleinBaseAutoBlocks",
+    "workflows": [
+      "text2image",
+      "image_conditioned"
+    ],
+    "modelIndexSha256": "de1fef01845f0af3e1e2f2581cd5e86f2dfa4a4776f7f0b26b4c77feac4ee70f",
+    "transformerConfigSha256": "c8a88c1433f24e52c01f46766c9f519e76d91d1c00bfb43fe0db2e4ed3c84d70",
+    "transformerGuidanceEmbeds": false,
+    "defaultInferenceSteps": 50,
+    "defaultGuidanceScale": 4.0
+  },
+  "licenseReview": {
+    "licenseFile": "LICENSE.md",
+    "licenseFileSha256": "ca02bc51900ab07789d1b70283329e7137f5af98f5161c23a1c81fc38a4af1fe",
+    "termsUrl": "https://huggingface.co/black-forest-labs/FLUX.2-klein-base-4B/blob/a3b4f4849157f664bdbc776fd7453c2783562f4d/LICENSE.md",
+    "revisionBoundAcknowledgementRequired": false
+  },
+  "artifactInventory": {
+    "selectedFileCount": 21,
+    "selectedWeightBytes": 15964212614,
+    "selectedFiles": [
+      ".gitattributes",
+      "LICENSE.md",
+      "README.md",
+      "model_index.json",
+      "scheduler/scheduler_config.json",
+      "text_encoder/config.json",
+      "text_encoder/generation_config.json",
+      "text_encoder/model-00001-of-00002.safetensors",
+      "text_encoder/model-00002-of-00002.safetensors",
+      "text_encoder/model.safetensors.index.json",
+      "tokenizer/added_tokens.json",
+      "tokenizer/chat_template.jinja",
+      "tokenizer/merges.txt",
+      "tokenizer/special_tokens_map.json",
+      "tokenizer/tokenizer.json",
+      "tokenizer/tokenizer_config.json",
+      "tokenizer/vocab.json",
+      "transformer/config.json",
+      "transformer/diffusion_pytorch_model.safetensors",
+      "vae/config.json",
+      "vae/diffusion_pytorch_model.safetensors"
+    ],
+    "excludedFiles": [
+      "editing.jpg",
+      "flux-2-klein-base-4b.safetensors",
+      "others.jpg",
+      "realism.jpg"
+    ],
+    "weightFiles": [
+      {
+        "path": "text_encoder/model-00001-of-00002.safetensors",
+        "byteSize": 4967215360,
+        "sha256": "8c0506e7f4936fa7e26183a4fd8da4e2bdbc5990ba64ae441f965d51228f36ea"
+      },
+      {
+        "path": "text_encoder/model-00002-of-00002.safetensors",
+        "byteSize": 3077766632,
+        "sha256": "82f2bd839378541b0557bfabaf37c7d3d637071fdcb73302dedd7cf61162ce07"
+      },
+      {
+        "path": "transformer/diffusion_pytorch_model.safetensors",
+        "byteSize": 7751109744,
+        "sha256": "e109674697ffa1a3983126e32512f5428a9442bd8df59f9c95566ee90a473bb6"
+      },
+      {
+        "path": "vae/diffusion_pytorch_model.safetensors",
+        "byteSize": 168120878,
+        "sha256": "ca70d2202afe6415bdbcb8793ba8cd99fd159cfe6192381504d6c4d3036e0f04"
+      }
+    ]
+  },
+  "admission": {
+    "status": "live_qualified_output_approval_pending",
+    "executableModes": [
+      "text_to_image",
+      "edit_image"
+    ],
+    "liveQualified": true,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "unresolvedGates": [
+      "generated_output_review"
+    ],
+    "qualificationEvidence": {
+      "textToImageMediaHash": "sha256:bytes:8898a0947624f2b57b7dc8fc766be65841fda3fc6877fc190c268ff814095729",
+      "editImageMediaHash": "sha256:bytes:eaa30ce003fca5e2205ae6e80b5a506539e6b0c8ab41d47a854a6b77b9bf6a4b",
+      "collapsedExpandedGraphEquivalent": true,
+      "showcaseApproved": false
+    }
+  }
+}

@@ -1,6 +1,7 @@
 """Composable runtime configuration nodes shared by Diffusers pipelines."""
 
 import gc
+import hashlib
 import json
 import importlib.util
 import os
@@ -8,7 +9,11 @@ from pathlib import Path
 from typing import Any
 
 from modiff.NodeBase import NodeBase
-from modiff.model_artifact_catalog import resolve_model_revision
+from modiff.model_artifact_catalog import (
+    catalog_artifact_file,
+    catalog_repository_pin,
+    resolve_model_revision,
+)
 from modules.DiffusersImage.main import QUANT_COMPONENTS, quant_config_for
 from utils.torch_utils import str_to_dtype
 
@@ -30,7 +35,6 @@ ATTENTION_BACKENDS = [
     "_flash_varlen_3",
     "_flash_3_hub",
     "_flash_3_varlen_hub",
-    "aiter",
     "sage",
     "sage_hub",
     "sage_varlen",
@@ -63,6 +67,20 @@ NO_QUANTIZATION_CONFIG = {
     "backend": "none",
     "disabled": True,
 }
+
+
+def verify_cataloged_artifact_file(path: Path, contract: dict[str, Any]) -> None:
+    """Verify one downloaded model file against its immutable catalog identity."""
+
+    resolved = path.resolve(strict=True)
+    if not resolved.is_file() or resolved.stat().st_size != contract["byteSize"]:
+        raise RuntimeError("The cataloged model file has an unexpected size.")
+    digest = hashlib.sha256()
+    with resolved.open("rb") as source:
+        while chunk := source.read(8 * 1024 * 1024):
+            digest.update(chunk)
+    if digest.hexdigest() != contract["sha256"]:
+        raise RuntimeError("The cataloged model file failed its immutable SHA-256 check.")
 
 
 def _normalize_optional_quantization_config(value: Any):
@@ -302,41 +320,88 @@ def build_quantization_config_v2(
     return PipelineQuantizationConfig(quant_mapping=quant_mapping), summary
 
 
+def _restore_diffusers_attention_registry_default() -> str:
+    """Restore Diffusers' process-global dispatcher to its configured default.
+
+    Diffusers' pinned ``ModelMixin.set_attention_backend`` implementation sets
+    both the selected model's processors and a process-global registry.  The
+    processors are correctly model-scoped, but the registry is consulted by
+    every processor whose backend remains unset.  Without restoring it, one
+    pipeline's explicit backend can therefore affect an unrelated later run.
+
+    Keep the configured Diffusers default (``native`` unless
+    ``DIFFUSERS_ATTN_BACKEND`` was explicitly set) rather than imposing a
+    MoDiff-specific generation default.
+    """
+
+    from diffusers.models.attention_dispatch import AttentionBackendName, _AttentionBackendRegistry
+    from diffusers.utils.constants import DIFFUSERS_ATTN_BACKEND
+
+    default_backend = AttentionBackendName(str(DIFFUSERS_ATTN_BACKEND))
+    _AttentionBackendRegistry.set_active_backend(default_backend)
+    return default_backend.value
+
+
 def apply_attention_backend(pipeline: Any, backend: str, components: Any = None) -> dict[str, Any]:
     requested = str(backend or "auto")
-    if requested == "auto":
-        return {"requested": "auto", "applied": [], "default_selection": True}
+    if requested not in ATTENTION_BACKENDS:
+        raise ValueError(f"Unsupported attention backend {requested!r}.")
 
     requested_components = _string_list(components)
     candidate_names = requested_components or list(ATTENTION_COMPONENTS)
     applied = []
+    reset = []
     unsupported = []
     seen = set()
-    for name in candidate_names:
-        component = pipeline if name in ("pipeline", "self") else getattr(pipeline, name, None)
-        if component is None or id(component) in seen:
-            continue
-        seen.add(id(component))
-        setter = getattr(component, "set_attention_backend", None)
-        if not callable(setter):
-            unsupported.append(name)
-            continue
-        try:
-            setter(requested)
-        except Exception as exc:
-            raise RuntimeError(f"Could not apply attention backend {requested!r} to {name}: {exc}") from exc
-        applied.append(name)
+    registry_default = None
+    try:
+        for name in candidate_names:
+            component = pipeline if name in ("pipeline", "self") else getattr(pipeline, name, None)
+            if component is None or id(component) in seen:
+                continue
+            seen.add(id(component))
 
-    if not applied:
-        raise RuntimeError(
-            f"Attention backend {requested!r} could not be applied because the selected pipeline components "
-            "do not expose set_attention_backend()."
-        )
+            if requested == "auto":
+                resetter = getattr(component, "reset_attention_backend", None)
+                if not callable(resetter):
+                    unsupported.append(name)
+                    continue
+                try:
+                    resetter()
+                except Exception as exc:
+                    raise RuntimeError(f"Could not reset the attention backend for {name}: {exc}") from exc
+                reset.append(name)
+                continue
+
+            setter = getattr(component, "set_attention_backend", None)
+            if not callable(setter):
+                unsupported.append(name)
+                continue
+            try:
+                setter(requested)
+            except Exception as exc:
+                raise RuntimeError(f"Could not apply attention backend {requested!r} to {name}: {exc}") from exc
+            applied.append(name)
+
+        if requested != "auto" and not applied:
+            raise RuntimeError(
+                f"Attention backend {requested!r} could not be applied because the selected pipeline components "
+                "do not expose set_attention_backend()."
+            )
+    finally:
+        # ``reset_attention_backend`` in the pinned Diffusers revision clears
+        # model processors but does not restore the registry.  Explicit
+        # setters also leave that registry changed.  Always put it back so a
+        # later model with backend=None cannot inherit this run's choice.
+        registry_default = _restore_diffusers_attention_registry_default()
+
     return {
         "requested": requested,
         "applied": applied,
+        "reset": reset,
         "unsupported": unsupported,
-        "default_selection": False,
+        "default_selection": requested == "auto",
+        "registry_default": registry_default,
     }
 
 
@@ -769,6 +834,9 @@ def build_execution_recipe(
     if normalized_device_map == "manual" and not manual_map:
         raise ValueError("Manual device mapping needs at least one component placement entry.")
     normalized_offload = str(offload_mode or "none")
+    normalized_attention_backend = str(attention_backend or "auto")
+    if normalized_attention_backend not in ATTENTION_BACKENDS:
+        raise ValueError(f"Unsupported attention backend {normalized_attention_backend!r}.")
     if quantization_config is not None and (
         normalized_offload != "none" or normalized_device_map not in {"none", "cuda"}
     ):
@@ -788,7 +856,7 @@ def build_execution_recipe(
         "max_memory": normalized_memory,
         "offload_mode": normalized_offload,
         "device": str(device or "cuda:0"),
-        "attention_backend": str(attention_backend or "auto"),
+        "attention_backend": normalized_attention_backend,
         "attention_components": _string_list(attention_components),
         "vae_slicing": bool(vae_slicing),
         "vae_tiling": bool(vae_tiling),
@@ -1075,7 +1143,6 @@ def build_runtime_capabilities(
     flash_attn_available = backend == "cuda" and package_available("flash_attn")
     flash_attn_3_available = vendor == "nvidia" and package_available("flash_attn_interface")
     hub_kernels_available = vendor == "nvidia" and package_available("kernels")
-    aiter_available = vendor == "amd" and package_available("aiter")
     sage_available = backend == "cuda" and package_available("sageattention")
     xformers_available = vendor == "nvidia" and package_available("xformers")
     attention = {
@@ -1146,16 +1213,6 @@ def build_runtime_capabilities(
         "_flash_3_varlen_hub": {
             "available": hub_kernels_available and bool(capability and capability >= (9, 0)),
             "reason": "FlashAttention 3 variable-length Hub kernels are available" if hub_kernels_available else "Requires Hub kernels on NVIDIA Hopper",
-        },
-        "aiter": {
-            "available": aiter_available,
-            "reason": (
-                "ROCm AITER package detected"
-                if aiter_available
-                else "AITER package is not installed"
-                if vendor == "amd"
-                else "Requires AMD ROCm"
-            ),
         },
         "sage": {
             "available": sage_available,
@@ -1662,11 +1719,15 @@ class LoadPrequantizedDiffusersComponent(NodeBase):
             "label": "Artifact",
             "display": "modelselect",
             "type": "string",
-            "value": {"source": "hub", "value": ""},
+            "value": {"source": "hub", "value": "city96/FLUX.1-schnell-gguf"},
             "fieldOptions": {"noValidation": True, "sources": ["hub", "local"]},
         },
-        "filename": {"label": "GGUF Filename", "type": "string", "default": ""},
-        "revision": {"label": "Revision", "type": "string", "default": ""},
+        "filename": {"label": "GGUF Filename", "type": "string", "default": "flux1-schnell-Q4_0.gguf"},
+        "revision": {
+            "label": "Revision",
+            "type": "string",
+            "default": "f495746ed9c5efcf4661f53ef05401dceadc17d2",
+        },
         "component_class": {
             "label": "Component Architecture",
             "type": "string",
@@ -1681,13 +1742,13 @@ class LoadPrequantizedDiffusersComponent(NodeBase):
         "config_model": {
             "label": "Base Config",
             "type": "string",
-            "default": "",
+            "default": "black-forest-labs/FLUX.1-schnell",
             "description": "Optional base repository used to validate the component architecture.",
         },
         "config_revision": {
             "label": "Base Config Revision",
             "type": "string",
-            "default": "",
+            "default": "741f7c3ce8b383c54771c7003378a50191e9efe9",
             "description": "Optional immutable revision for the base configuration repository.",
         },
         "subfolder": {"label": "Config Subfolder", "type": "string", "default": "transformer"},
@@ -1709,6 +1770,10 @@ class LoadPrequantizedDiffusersComponent(NodeBase):
         artifact = _model_value(artifact_selection)
         filename = str(kwargs.get("filename") or "").strip()
         artifact_source = artifact_selection.get("source") if isinstance(artifact_selection, dict) else None
+        artifact_pin = catalog_repository_pin(artifact) if artifact_source in {None, "hub"} else None
+        file_contract = catalog_artifact_file(artifact, filename) if artifact_pin is not None else None
+        if artifact_pin is not None and artifact_pin.get("format") == "gguf" and file_contract is None:
+            raise ValueError("Choose an exact reviewed GGUF filename from the model artifact catalog.")
         revision = resolve_model_revision(
             artifact,
             kwargs.get("revision"),
@@ -1723,6 +1788,8 @@ class LoadPrequantizedDiffusersComponent(NodeBase):
             raise RuntimeError(f"Installed Diffusers does not expose GGUF loading for {class_name}.")
         if not artifact:
             raise ValueError("Choose a pre-quantized artifact.")
+        if file_contract is not None and class_name != file_contract["componentClass"]:
+            raise ValueError("The selected GGUF file does not match the reviewed component architecture.")
 
         source = Path(artifact).expanduser()
         if source.is_file():
@@ -1744,6 +1811,8 @@ class LoadPrequantizedDiffusersComponent(NodeBase):
             )
         if resolved.suffix.lower() != ".gguf":
             raise ValueError(f"Expected a GGUF artifact, got {resolved.name!r}.")
+        if file_contract is not None:
+            verify_cataloged_artifact_file(resolved, file_contract)
 
         from diffusers import GGUFQuantizationConfig
 
@@ -1754,9 +1823,20 @@ class LoadPrequantizedDiffusersComponent(NodeBase):
         }
         config_model = str(kwargs.get("config_model") or "").strip()
         subfolder = str(kwargs.get("subfolder") or "transformer").strip()
+        if file_contract is not None:
+            reviewed_config = str(file_contract["baseConfigRepo"])
+            reviewed_subfolder = str(file_contract["subfolder"])
+            reviewed_dtype = str(file_contract["computeDtype"])
+            if config_model and config_model != reviewed_config:
+                raise ValueError("The selected GGUF file requires its reviewed base configuration repository.")
+            if subfolder != reviewed_subfolder or str(kwargs.get("compute_dtype") or "bfloat16") != reviewed_dtype:
+                raise ValueError("The selected GGUF file requires its reviewed subfolder and compute dtype.")
+            config_model = reviewed_config
         if config_model:
             load_kwargs["config"] = config_model
             config_revision = resolve_model_revision(config_model, kwargs.get("config_revision"))
+            if file_contract is not None and config_revision != file_contract["baseConfigRevision"]:
+                raise ValueError("The selected GGUF file requires its reviewed immutable base configuration revision.")
             if config_revision:
                 load_kwargs["config_revision"] = config_revision
             if subfolder:
@@ -1768,6 +1848,20 @@ class LoadPrequantizedDiffusersComponent(NodeBase):
             raise RuntimeError(
                 f"{resolved.name} does not match {class_name} or its selected base config: {exc}"
             ) from exc
+        if file_contract is not None:
+            component._modiff_prequantized_component_contract = {
+                "schemaVersion": 1,
+                "artifactRepo": artifact_pin["repo"],
+                "artifactRevision": revision,
+                "filename": filename,
+                "sha256": file_contract["sha256"],
+                "byteSize": file_contract["byteSize"],
+                "componentClass": class_name,
+                "baseConfigRepo": config_model,
+                "baseConfigRevision": file_contract["baseConfigRevision"],
+                "subfolder": subfolder,
+                "computeDtype": str(kwargs.get("compute_dtype") or "bfloat16"),
+            }
         return {
             "component": component,
             "resolved_artifact": (

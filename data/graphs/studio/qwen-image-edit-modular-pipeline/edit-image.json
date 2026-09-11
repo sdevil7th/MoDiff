@@ -45,12 +45,34 @@
       "type": "default"
     },
     {
+      "className": "category-modular_route_state",
+      "data": {
+        "connectionType": "modular_route_state"
+      },
+      "edgeType": "default",
+      "id": "edge-03",
+      "markerEnd": {
+        "color": "hsl(49 76% 70%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "route_state_out",
+      "style": {
+        "stroke": "hsl(49 76% 70%)"
+      },
+      "target": "node-01",
+      "targetHandle": "route_state_in",
+      "type": "default"
+    },
+    {
       "className": "category-latents",
       "data": {
         "connectionType": "latents"
       },
       "edgeType": "default",
-      "id": "edge-03",
+      "id": "edge-04",
       "markerEnd": {
         "color": "#6366F1",
         "height": 18,
@@ -67,12 +89,34 @@
       "type": "default"
     },
     {
+      "className": "category-modular_route_state",
+      "data": {
+        "connectionType": "modular_route_state"
+      },
+      "edgeType": "default",
+      "id": "edge-05",
+      "markerEnd": {
+        "color": "hsl(49 76% 70%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-03",
+      "sourceHandle": "route_state_out",
+      "style": {
+        "stroke": "hsl(49 76% 70%)"
+      },
+      "target": "node-02",
+      "targetHandle": "route_state_in",
+      "type": "default"
+    },
+    {
       "className": "category-image",
       "data": {
         "connectionType": "image"
       },
       "edgeType": "default",
-      "id": "edge-04",
+      "id": "edge-06",
       "markerEnd": {
         "color": "#60A5FA",
         "height": 18,
@@ -94,7 +138,7 @@
         "connectionType": "image"
       },
       "edgeType": "default",
-      "id": "edge-05",
+      "id": "edge-07",
       "markerEnd": {
         "color": "#60A5FA",
         "height": 18,
@@ -116,7 +160,7 @@
         "connectionType": "diffusers_auto_model"
       },
       "edgeType": "default",
-      "id": "edge-06",
+      "id": "edge-08",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
@@ -138,7 +182,7 @@
         "connectionType": "diffusers_auto_models"
       },
       "edgeType": "default",
-      "id": "edge-07",
+      "id": "edge-09",
       "markerEnd": {
         "color": "#8B5CF6",
         "height": 18,
@@ -160,7 +204,7 @@
         "connectionType": "diffusers_auto_model"
       },
       "edgeType": "default",
-      "id": "edge-08",
+      "id": "edge-10",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
@@ -182,7 +226,7 @@
         "connectionType": "diffusers_auto_model"
       },
       "edgeType": "default",
-      "id": "edge-09",
+      "id": "edge-11",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
@@ -204,7 +248,7 @@
         "connectionType": "diffusers_auto_model"
       },
       "edgeType": "default",
-      "id": "edge-10",
+      "id": "edge-12",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
@@ -226,7 +270,7 @@
         "connectionType": "embeddings"
       },
       "edgeType": "default",
-      "id": "edge-11",
+      "id": "edge-13",
       "markerEnd": {
         "color": "#FBBF24",
         "height": 18,
@@ -246,7 +290,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "4d7ce9be51540b9611aa48cdb1f0c4c0e0fe92c7b2858b49731bd7694d903b02",
+    "positionHash": "758a94ae2b7427acac6b477121a163a4a40adeda04f52b14eb85d954ba0c8edd",
     "verticalGap": 72
   },
   "nodes": [
@@ -282,12 +326,17 @@
             "label": "Latents *",
             "type": "latents"
           },
+          "route_state_in": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Route State",
+            "type": "modular_route_state"
+          },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
-            "onSignal": "update_node",
             "signal": {
               "direction": "output"
             },
@@ -309,7 +358,7 @@
       "id": "node-01",
       "position": {
         "x": 1320,
-        "y": 369
+        "y": 383
       },
       "type": "custom"
     },
@@ -354,16 +403,6 @@
             "display": "input",
             "isConnected": false,
             "label": "Guider",
-            "onChange": {
-              "false": [
-                "guidance_scale"
-              ],
-              "true": []
-            },
-            "signal": {
-              "direction": "input",
-              "origin": "unet"
-            },
             "type": "custom_guider"
           },
           "image_latents": {
@@ -387,10 +426,25 @@
             "type": "int",
             "value": 50
           },
+          "route_state_in": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Route State",
+            "type": "modular_route_state"
+          },
+          "route_state_out": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Route State",
+            "type": "modular_route_state"
+          },
           "scheduler": {
             "display": "input",
             "isConnected": true,
             "label": "Scheduler *",
+            "signal": {
+              "direction": "output"
+            },
             "type": "diffusers_auto_model"
           },
           "seed": {
@@ -406,21 +460,10 @@
             }
           },
           "unet": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Denoise Model *",
-            "onSignal": [
-              "update_node",
-              {
-                "action": "signal",
-                "target": "guider"
-              },
-              {
-                "action": "signal",
-                "target": "controlnet_bundle"
-              }
-            ],
             "required": true,
             "signal": {
               "direction": "output"
@@ -493,12 +536,42 @@
             "label": "Image Latents",
             "type": "latents"
           },
+          "mask_image": {
+            "display": "input",
+            "isConnected": false,
+            "label": "Mask Image",
+            "type": "image"
+          },
+          "padding_mask_crop": {
+            "label": "Mask Crop Padding",
+            "max": 8192,
+            "min": 0,
+            "step": 1,
+            "type": "int"
+          },
+          "route_state_out": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Route State",
+            "type": "modular_route_state"
+          },
+          "seed": {
+            "default": 0,
+            "display": "random",
+            "label": "Seed",
+            "max": 4294967295,
+            "min": 0,
+            "type": "int",
+            "value": {
+              "isRandom": false,
+              "value": 6203
+            }
+          },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
-            "onSignal": "update_node",
             "signal": {
               "direction": "output"
             },
@@ -520,7 +593,7 @@
       "id": "node-03",
       "position": {
         "x": 440,
-        "y": 500
+        "y": 472
       },
       "type": "custom"
     },
@@ -581,7 +654,7 @@
             "label": false,
             "type": "str",
             "value": [
-              "images/qwen_character_angles.reference_image_1_EL2KBE.webp"
+              "@data/images/qwen_character_angles.reference_image_1.webp"
             ]
           },
           "height": {
@@ -632,7 +705,7 @@
       "id": "node-04",
       "position": {
         "x": 0,
-        "y": 626
+        "y": 682
       },
       "type": "custom"
     },
@@ -653,7 +726,7 @@
           "auto_offload": {
             "label": "Enable Auto Offload",
             "type": "boolean",
-            "value": false
+            "value": true
           },
           "device": {
             "label": "Device",
@@ -673,14 +746,6 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
-              },
-              "cuda:0": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "cuda:0",
-                "schemaVersion": 1,
-                "value": "cuda:0"
               }
             },
             "type": "string",
@@ -699,9 +764,10 @@
                 "value": "float32"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "float16 is not supported by the active runtime.",
+                "installationState": "unavailable",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -718,12 +784,13 @@
             "value": "bfloat16"
           },
           "image_encoder": {
+            "disabled": false,
             "display": "output",
             "isConnected": false,
             "label": "Image Encoder",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_model"
           },
@@ -736,42 +803,48 @@
           "model_type": {
             "disabled": false,
             "label": "Model Type",
-            "onChange": [
-              "set_filters",
-              {
-                "action": "signal",
-                "target": "unet_out"
-              },
-              {
-                "action": "signal",
-                "target": "text_encoders"
-              },
-              {
-                "action": "signal",
-                "target": "vae_out"
-              },
-              {
-                "action": "signal",
-                "target": "image_encoder"
-              }
-            ],
             "options": {
               "": "",
+              "AnimaModularPipeline": "Anima (Contract only)",
+              "Cosmos3DistilledModularPipeline": "Cosmos 3 Distilled (Contract only)",
+              "Cosmos3OmniModularPipeline": "Cosmos 3 Omni (Contract only)",
               "DummyCustomPipeline": "Custom",
+              "Flux2KleinBaseModularPipeline": "FLUX.2 Klein Base (Contract only)",
               "Flux2KleinModularPipeline": "Flux 2 Klein Distilled",
+              "Flux2ModularPipeline": "FLUX.2 (Contract only)",
               "FluxKontextModularPipeline": "Flux Kontext",
               "FluxModularPipeline": "Flux",
+              "HeliosModularPipeline": "Helios (Contract only)",
+              "HeliosPyramidDistilledModularPipeline": "Helios Pyramid Distilled (Contract only)",
+              "HeliosPyramidModularPipeline": "Helios Pyramid (Contract only)",
+              "HunyuanVideo15ModularPipeline": "HunyuanVideo 1.5 (Contract only)",
+              "Ideogram4ModularPipeline": "Ideogram 4 (Contract only)",
+              "Krea2ModularPipeline": "Krea 2 (Contract only)",
+              "Krea2TurboModularPipeline": "Krea 2 Turbo (Contract only)",
+              "LTX25ModularPipeline": "LTX-2.5 (Contract only)",
+              "LTX2ModularPipeline": "LTX-2 (Contract only)",
+              "MiniMaxH3ModularPipeline": "MiniMax H3 (Contract only)",
+              "MiniMaxMusic3ModularPipeline": "MiniMax Music 3 (Contract only)",
               "QwenImageEditModularPipeline": "Qwen-Image-Edit",
               "QwenImageEditPlusModularPipeline": "Qwen-Image-Edit-2511",
               "QwenImageLayeredModularPipeline": "Qwen-Image-Layered",
               "QwenImageModularPipeline": "Qwen-Image-2512",
+              "StableDiffusion3ModularPipeline": "Stable Diffusion 3 (Contract only)",
               "StableDiffusionXLModularPipeline": "Stable Diffusion XL",
+              "WanAnimate2DistilledModularPipeline": "Wan Animate 2 Distilled (Contract only)",
+              "WanAnimate2ModularPipeline": "Wan Animate 2 (Contract only)",
               "WanImage2VideoModularPipeline": "WAN2 I2V",
               "WanModularPipeline": "WAN2 T2V",
               "ZImageModularPipeline": "Z-Image"
             },
             "type": "string",
             "value": "QwenImageEditModularPipeline"
+          },
+          "modiff_pipeline_identity": {
+            "hidden": true,
+            "label": "Custom Pipeline Identity",
+            "type": "object",
+            "value": null
           },
           "offload_mode": {
             "default": "model_cpu",
@@ -819,13 +892,19 @@
               }
             ],
             "type": "string",
-            "value": "none"
+            "value": "model_cpu"
           },
           "quant_config": {
             "display": "input",
             "isConnected": false,
             "label": "Quant Config",
             "type": "quant_config"
+          },
+          "refresh_pipeline_identity_button": {
+            "display": "ui_button",
+            "hidden": true,
+            "label": "Review and Refresh Custom Contract",
+            "value": false
           },
           "repo_id": {
             "disabled": false,
@@ -851,23 +930,38 @@
               "value": "Qwen/Qwen-Image-Edit"
             }
           },
+          "revision": {
+            "description": "Required exact 40-character commit hash for Hub custom contracts.",
+            "disabled": false,
+            "label": "Revision",
+            "type": "string",
+            "value": "ac7f9318f633fc4b5778c59367c8128225f1e3de"
+          },
           "scheduler": {
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Scheduler",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity"
+            },
             "type": "diffusers_auto_model"
           },
           "text_encoders": {
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Text Encoders",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_models"
           },
           "trust_remote_code": {
+            "description": "Repository code execution is disabled; keep this off for contract preview.",
+            "disabled": false,
             "label": "Trust Remote Code",
             "type": "boolean",
             "value": false
@@ -879,12 +973,13 @@
             "type": "diffusers_auto_model"
           },
           "unet_out": {
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Denoise Model",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_model"
           },
@@ -895,20 +990,15 @@
             "type": "diffusers_auto_model"
           },
           "vae_out": {
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "VAE",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_model"
-          },
-          "revision": {
-            "label": "Revision",
-            "type": "string",
-            "default": "",
-            "value": "ac7f9318f633fc4b5778c59367c8128225f1e3de"
           }
         },
         "resizable": true,
@@ -946,7 +1036,7 @@
         "module": "modules.Image",
         "params": {
           "device": {
-            "default": "cuda:0",
+            "default": "cpu:0",
             "hidden": true,
             "options": {
               "cpu": {
@@ -964,14 +1054,6 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
-              },
-              "cuda:0": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "cuda:0",
-                "schemaVersion": 1,
-                "value": "cuda:0"
               }
             },
             "type": "string"
@@ -990,19 +1072,6 @@
           "image": {
             "display": "input",
             "isConnected": true,
-            "onChange": {
-              "action": "show",
-              "condition": {
-                "type": "latent"
-              },
-              "data": {
-                "false": [],
-                "true": [
-                  "vae",
-                  "device"
-                ]
-              }
-            },
             "type": [
               "image",
               "latent"
@@ -1042,7 +1111,7 @@
       "id": "node-06",
       "position": {
         "x": 1760,
-        "y": 327
+        "y": 355
       },
       "type": "custom"
     },
@@ -1093,11 +1162,10 @@
             "value": "Create a 2x2 character turnaround contact sheet from the source character image. Preserve the character identity, face shape, hair, outfit materials, color palette, age, body proportions, and core silhouette. Render four clean views in one image: front close portrait, three-quarter view, low-angle hero view, and wide full-body view. Keep lighting, background style, and rendering quality consistent across all four panels. Do not change the character into a different person. No labels, no panel borders, no captions."
           },
           "text_encoders": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Text Encoders *",
-            "onSignal": "update_node",
             "signal": {
               "direction": "output"
             },
@@ -1119,14 +1187,14 @@
       "id": "node-07",
       "position": {
         "x": 440,
-        "y": 182
+        "y": 154
       },
       "type": "custom"
     }
   ],
   "viewport": {
-    "x": 165.87608318890813,
-    "y": 43,
-    "zoom": 0.4662045060658579
+    "x": 0,
+    "y": 0,
+    "zoom": 1
   }
 }

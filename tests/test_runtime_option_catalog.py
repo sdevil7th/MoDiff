@@ -51,6 +51,17 @@ class RuntimeOptionCatalogTests(unittest.TestCase):
         self.assertEqual(malformed, [])
         self.assertEqual(invalid_defaults, [])
 
+    def test_every_live_node_option_uses_the_validator_supported_container_contract(self):
+        malformed = []
+        for module, actions in self.server.modules.items():
+            for action, values in actions.items():
+                for field_name, field in values.get("params", {}).items():
+                    if not isinstance(field, dict) or "options" not in field:
+                        continue
+                    if not isinstance(field["options"], (list, dict)):
+                        malformed.append(f"{module}.{action}.{field_name}")
+        self.assertEqual(malformed, [])
+
 
 if __name__ == "__main__":
     unittest.main()

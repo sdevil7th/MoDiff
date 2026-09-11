@@ -1,11 +1,18 @@
-import unittest
+import hashlib
+import json
 import tempfile
+import unittest
 from pathlib import Path
 
+import numpy as np
+from safetensors.numpy import save_file
+
+from modiff.auxiliary_lora import build_lora_descriptor
 from modules.DiffusersAdapters.main import (
     LoRAComparisonJobs,
     LoRAFuseUnfuse,
     LoRAHotswap,
+    LoRAInspectValidate,
     LoRAMergeArtifact,
     LoRAUnloadReset,
     apply_lora_mix,
@@ -59,26 +66,157 @@ class FakeMergeComponent:
         self.saves.append((directory, kwargs))
 
 
-def adapter(name, scale=1.0):
-    return {"lora_path": f"/{name}", "weight_name": f"{name}.safetensors", "adapter_name": name, "scale": scale}
+def adapter(directory, name, scale=1.0, *, scheduler_class="", scheduler_config=None):
+    path = Path(directory) / f"{name}.safetensors"
+    if not path.exists():
+        save_file({"lora.weight": np.asarray([1.0], dtype=np.float32)}, str(path))
+    return build_lora_descriptor(
+        selection={"source": "local", "value": str(path)},
+        weight_name=path.name,
+        revision="",
+        expected_sha256="",
+        adapter_name=name,
+        scale=scale,
+        scheduler_class=scheduler_class,
+        scheduler_config=scheduler_config or {},
+    )
+
+
+def resign_descriptor(descriptor):
+    payload = {key: value for key, value in descriptor.items() if key != "descriptor_sha256"}
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    descriptor["descriptor_sha256"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return descriptor
 
 
 class DiffusersAdapterTests(unittest.TestCase):
-    def test_stack_loads_missing_adapters_and_activates_independent_weights(self):
-        pipeline = FakePipeline()
-        result = apply_lora_mix(pipeline, [adapter("existing", 0.25), adapter("style", 0.75)])
+    def test_inspection_consumes_the_same_explicit_versioned_descriptor(self):
+        self.assertEqual(LoRAInspectValidate.params["adapter"]["type"], "custom_lora")
+        self.assertTrue(LoRAInspectValidate.params["adapter"]["required"])
+        self.assertNotIn("weight_name", LoRAInspectValidate.params)
+        with self.assertRaisesRegex(TypeError, "versioned descriptor"):
+            LoRAInspectValidate().execute(adapter="/path/inferred/from/existence")
 
-        self.assertEqual([item[1]["adapter_name"] for item in pipeline.loaded], ["style"])
+    def test_stack_loads_missing_adapters_and_activates_independent_weights(self):
+        with tempfile.TemporaryDirectory() as directory:
+            pipeline = FakePipeline()
+            result = apply_lora_mix(
+                pipeline,
+                [adapter(directory, "existing", 0.25), adapter(directory, "style", 0.75)],
+            )
+
+        self.assertEqual([item[1]["adapter_name"] for item in pipeline.loaded], ["existing", "style"])
+        self.assertEqual(pipeline.deleted, ["existing"])
+        self.assertTrue(all(item[1]["use_safetensors"] for item in pipeline.loaded))
+        self.assertTrue(all(item[1]["weight_name"].endswith(".safetensors") for item in pipeline.loaded))
         self.assertEqual(pipeline.active, (["existing", "style"], [0.25, 0.75]))
         self.assertEqual(result["adapter_names"], ["existing", "style"])
 
     def test_hotswap_requires_an_existing_slot_and_uses_in_place_api(self):
-        pipeline = FakePipeline()
-        LoRAHotswap().execute(pipeline=pipeline, replacement=adapter("replacement", 0.6), slot_name="existing")
+        with tempfile.TemporaryDirectory() as directory:
+            pipeline = FakePipeline()
+            LoRAHotswap().execute(
+                pipeline=pipeline,
+                replacement=adapter(directory, "replacement", 0.6),
+                slot_name="existing",
+            )
 
         self.assertTrue(pipeline.loaded[0][1]["hotswap"])
+        self.assertTrue(pipeline.loaded[0][1]["use_safetensors"])
+        self.assertEqual(pipeline.loaded[0][1]["weight_name"], "replacement.safetensors")
         self.assertEqual(pipeline.loaded[0][1]["adapter_name"], "existing")
         self.assertEqual(pipeline.active, (["existing"], [0.6]))
+
+    def test_stack_and_hotswap_reject_partial_or_tampered_descriptors_before_mutation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            valid = adapter(directory, "style")
+            tampered = {**valid, "scale": 0.25}
+            legacy = {
+                "lora_path": directory,
+                "weight_name": "style.safetensors",
+                "adapter_name": "style",
+            }
+            for operation, value in (
+                ("stack-legacy", legacy),
+                ("stack-tampered", tampered),
+                ("hotswap-legacy", legacy),
+                ("hotswap-tampered", tampered),
+            ):
+                pipeline = FakePipeline()
+                with self.subTest(operation=operation):
+                    with self.assertRaises((TypeError, ValueError)):
+                        if operation.startswith("stack"):
+                            apply_lora_mix(pipeline, value)
+                        else:
+                            LoRAHotswap().execute(
+                                pipeline=pipeline,
+                                replacement=value,
+                                slot_name="existing",
+                            )
+                    self.assertEqual(pipeline.loaded, [])
+                    self.assertEqual(pipeline.deleted, [])
+                    self.assertIsNone(pipeline.active)
+
+    def test_stack_revalidates_the_whole_list_before_deleting_an_existing_slot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            first = adapter(directory, "existing")
+            second = adapter(directory, "style")
+            (Path(directory) / "style.safetensors").write_bytes(b"mutated-style")
+            pipeline = FakePipeline()
+
+            with self.assertRaisesRegex(ValueError, "no longer matches"):
+                apply_lora_mix(pipeline, [first, second])
+
+        self.assertEqual(pipeline.loaded, [])
+        self.assertEqual(pipeline.deleted, [])
+        self.assertIsNone(pipeline.active)
+
+    def test_stack_rejects_malformed_or_empty_safetensors_before_replacing_an_existing_slot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "existing.safetensors"
+            for label in ("malformed", "empty"):
+                save_file({"lora.weight": np.asarray([1.0], dtype=np.float32)}, str(path))
+                descriptor = adapter(directory, "existing")
+                if label == "malformed":
+                    path.write_bytes(b"not-a-safetensors-file")
+                    message = "valid Safetensors"
+                else:
+                    save_file({}, str(path))
+                    message = "at least one tensor"
+                descriptor["artifact"]["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+                resign_descriptor(descriptor)
+                pipeline = FakePipeline()
+
+                with self.subTest(label=label):
+                    with self.assertRaisesRegex(ValueError, message):
+                        apply_lora_mix(pipeline, descriptor)
+                    self.assertEqual(pipeline.loaded, [])
+                    self.assertEqual(pipeline.deleted, [])
+                    self.assertIsNone(pipeline.active)
+
+    def test_stack_and_hotswap_fail_closed_on_scheduler_bearing_descriptors(self):
+        with tempfile.TemporaryDirectory() as directory:
+            value = adapter(
+                directory,
+                "lightning",
+                scheduler_class="FlowMatchEulerDiscreteScheduler",
+                scheduler_config={"base_shift": 1.0},
+            )
+            for operation in ("stack", "hotswap"):
+                pipeline = FakePipeline()
+                with self.subTest(operation=operation):
+                    with self.assertRaisesRegex(ValueError, "scheduler-bearing"):
+                        if operation == "stack":
+                            apply_lora_mix(pipeline, value)
+                        else:
+                            LoRAHotswap().execute(
+                                pipeline=pipeline,
+                                replacement=value,
+                                slot_name="existing",
+                            )
+                    self.assertEqual(pipeline.loaded, [])
+                    self.assertEqual(pipeline.deleted, [])
+                    self.assertIsNone(pipeline.active)
 
     def test_fuse_reset_and_comparison_jobs_preserve_explicit_user_choices(self):
         pipeline = FakePipeline()

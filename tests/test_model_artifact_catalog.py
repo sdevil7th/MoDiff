@@ -1,7 +1,9 @@
 import unittest
+from pathlib import Path
 
 from modiff.model_artifact_catalog import (
     catalog_artifact,
+    catalog_artifact_file,
     catalog_repository_pin,
     catalog_revision,
     community_artifact_is_discoverable,
@@ -13,6 +15,7 @@ from modiff.model_artifact_catalog import (
 
 STUDIO_MODEL_TYPES = {
     "AceStepAudioPipeline",
+    "StableAudioPipeline",
     "Flux2KleinPipeline",
     "FluxCannyPipeline",
     "FluxDepthPipeline",
@@ -32,6 +35,22 @@ STUDIO_MODEL_TYPES = {
     "WanVACEPipeline",
     "WanVideoPipeline",
     "ZImageModularPipeline",
+    "DDPMPipeline",
+    "DDIMPipeline",
+    "ConsistencyModelPipeline",
+    "StableDiffusionPipeline",
+    "LatentConsistencyModelPipeline",
+    "StableDiffusionPAGPipeline",
+    "PixArtSigmaPipeline",
+    "Kandinsky3Pipeline",
+    "AuraFlowPipeline",
+    "ChromaPipeline",
+    "CogView3PlusPipeline",
+    "CogView4Pipeline",
+    "ErnieImagePipeline",
+    "GlmImagePipeline",
+    "JoyImageEditPipeline",
+    "JoyImageEditPlusPipeline",
 }
 
 
@@ -77,6 +96,81 @@ class ModelArtifactCatalogTests(unittest.TestCase):
             catalog_revision("lllyasviel/FramePackI2V_HY"),
             "86cef4396041b6002c957852daac4c91aaa47c79",
         )
+        self.assertEqual(
+            catalog_revision("stabilityai/stable-video-diffusion-img2vid-xt-1-1"),
+            "043843887ccd51926e3efed36270444a838e7861",
+        )
+
+        self.assertEqual(
+            catalog_revision("PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"),
+            "e102b3591cc82e97071b8b4cb90d834d0c487207",
+        )
+        self.assertEqual(
+            catalog_revision("fal/AuraFlow-v0.3"),
+            "2cd8588f04c886002be4571697d84654a50e3af3",
+        )
+        self.assertEqual(
+            catalog_revision("kandinsky-community/kandinsky-3"),
+            "bf79e6c219da8a94abb50235fdc4567eb8fb4632",
+        )
+        self.assertEqual(
+            catalog_revision("lodestones/Chroma1-HD"),
+            "0e0c60ece1e82b17cb7f77342d765ba5024c40c0",
+        )
+        self.assertEqual(
+            catalog_revision("zai-org/CogView3-Plus-3B"),
+            "5d70e40732ac0efac98524c51a7fa9c82707f1e5",
+        )
+        self.assertEqual(
+            catalog_revision("zai-org/CogView4-6B"),
+            "63a52b7f6dace7033380cd6da14d0915eab3e6b5",
+        )
+        self.assertEqual(
+            catalog_revision("baidu/ERNIE-Image-Turbo"),
+            "bc68c81e2a1730a394d5fc9fae70713dee940140",
+        )
+        self.assertEqual(
+            catalog_revision("zai-org/GLM-Image"),
+            "2c433cc0cbc293bde2ac8ca9624f279b5d23fcf4",
+        )
+        self.assertEqual(
+            catalog_revision("rhymes-ai/Allegro"),
+            "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6",
+        )
+        self.assertEqual(
+            catalog_revision("maxin-cn/Latte-1"),
+            "0653024365272f061fc44d1078134df22842b687",
+        )
+        self.assertEqual(
+            catalog_revision("genmo/mochi-1-preview"),
+            "14be5fcea23095ed330cb214647916a451e38b6e",
+        )
+        self.assertEqual(
+            catalog_revision("Efficient-Large-Model/SANA-Video_2B_480p_diffusers"),
+            "db5f398b13ca086d09a50ce156c20527773841b1",
+        )
+        self.assertEqual(
+            catalog_revision("Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled"),
+            "ba991d1546d8c50936c4c16398ed0a87b9b99fb1",
+        )
+        self.assertEqual(
+            catalog_revision("Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny"),
+            "b2d21391ebcf78939344cfec84891932f9d53aa0",
+        )
+
+    def test_flux_schnell_gguf_has_one_exact_component_file_contract(self):
+        contract = catalog_artifact_file(
+            "city96/FLUX.1-schnell-gguf",
+            "flux1-schnell-Q4_0.gguf",
+        )
+        self.assertEqual(contract["byteSize"], 6_770_707_360)
+        self.assertEqual(
+            contract["sha256"],
+            "90a393d3a44bec691c707003f434fdde06064b870bb3c206eb7a4f109b25ff4e",
+        )
+        self.assertEqual(contract["componentClass"], "FluxTransformer2DModel")
+        self.assertEqual(contract["baseConfigRepo"], "black-forest-labs/FLUX.1-schnell")
+        self.assertIsNone(catalog_artifact_file("city96/FLUX.1-schnell-gguf", "flux1-schnell-Q5_0.gguf"))
 
     def test_revision_resolution_preserves_explicit_and_unknown_user_selections(self):
         self.assertEqual(
@@ -94,6 +188,31 @@ class ModelArtifactCatalogTests(unittest.TestCase):
         public = public_model_artifact_catalog()
         self.assertFalse(public["policy"]["popularityIsCompatibilityProof"])
         self.assertFalse(public["selectionPolicy"]["popularityMayChangeAutoSelection"])
+
+    def test_quantization_support_guide_covers_catalog_and_runtime_modes(self):
+        guide = (Path(__file__).resolve().parents[1] / "docs" / "quantization-support.md").read_text(
+            encoding="utf-8"
+        )
+        catalog = read_model_artifact_catalog()
+        artifacts = [artifact for model in catalog["models"] for artifact in model.get("artifacts") or []]
+
+        self.assertEqual(len(artifacts), 22)
+        for artifact in artifacts:
+            self.assertIn(f"`{artifact['repo']}`", guide)
+            self.assertIn(str(artifact["format"]).upper(), guide.upper())
+
+        for mode in (
+            "bnb_4bit",
+            "bnb_8bit",
+            "quanto_float8",
+            "quanto_int8",
+            "torchao_float8",
+            "torchao_int8_weight_only",
+            "torchao_mxfp8",
+            "torchao_nvfp4",
+            "GGUF",
+        ):
+            self.assertIn(mode, guide)
 
 
 if __name__ == "__main__":

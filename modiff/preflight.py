@@ -12,6 +12,7 @@ import time
 
 from modiff.hardware import get_hardware_snapshot, legacy_torch_status
 from modiff.runtime_profile import runtime_profile
+from modiff.secret_config import huggingface_token
 
 
 PACKAGE_CHECKS = {
@@ -21,7 +22,6 @@ PACKAGE_CHECKS = {
         ("nanoid", "nanoid"),
         ("torch", "torch"),
         ("diffusers", "diffusers"),
-        ("transformers", "transformers"),
         ("huggingface_hub", "huggingface-hub"),
         ("accelerate", "accelerate"),
         ("safetensors", "safetensors"),
@@ -34,7 +34,6 @@ PACKAGE_CHECKS = {
         ("kornia", "kornia"),
         ("imageio", "imageio"),
         ("imageio_ffmpeg", "imageio-ffmpeg"),
-        ("peft", "peft"),
         ("torchsde", "torchsde"),
         ("ftfy", "ftfy"),
         ("einops", "einops"),
@@ -47,22 +46,16 @@ PACKAGE_CHECKS = {
         ("nunchaku", "nunchaku"),
         ("torchao", "torchao"),
     ],
+    # Optional-runtime packages are metadata observations only. Even --full
+    # must not import an unqualified base copy before the overlay boundary has
+    # validated its exact version, symbols, origin, and host binding.
+    "optional_runtime": [
+        ("transformers", "transformers"),
+        ("peft", "peft"),
+    ],
 }
 
 CANONICAL_ENTRYPOINT = "python -m modiff.preflight"
-
-# These APIs are part of MoDiff's pinned Diffusers contract rather than
-# optional feature detection.  Treating an older release wheel as healthy can
-# otherwise let the app start successfully and fail only after a long model
-# load, as happened with ACE-Step LoRA workflows.
-REQUIRED_RUNTIME_APIS = {
-    "diffusers": (
-        ("AceStepPipeline", "load_lora_weights"),
-        ("AceStepPipeline", "set_adapters"),
-        ("AceStepPipeline", "unload_lora_weights"),
-    ),
-}
-
 
 def setup_guidance(root):
     return {
@@ -179,20 +172,8 @@ def package_status(module_name, distribution_name, import_check=True):
         status["available"] = True
         status["import_ms"] = round((time.perf_counter() - started) * 1000)
         status["version"] = getattr(module, "__version__", status.get("version"))
-        missing_apis = []
-        for owner_name, attribute_name in REQUIRED_RUNTIME_APIS.get(module_name, ()):
-            owner = getattr(module, owner_name, None)
-            if owner is None or not callable(getattr(owner, attribute_name, None)):
-                missing_apis.append(f"{owner_name}.{attribute_name}")
-        if missing_apis:
-            status["available"] = False
-            status["contractMissing"] = missing_apis
-            status["error"] = (
-                "Installed package does not satisfy MoDiff's pinned runtime contract: "
-                + ", ".join(missing_apis)
-                + ". Repair the managed environment before starting MoDiff."
-            )
     except Exception as error:
+        status["available"] = False
         status["error"] = str(error)
 
     return status
@@ -201,6 +182,7 @@ def package_status(module_name, distribution_name, import_check=True):
 def build_report(args):
     root = project_root()
     cfg = read_config(root)
+    hf_token, hf_token_source = huggingface_token(cfg, root / ".env")
     host = config_value(cfg, "server", "host", "127.0.0.1") or "127.0.0.1"
     port = args.check_port or config_int(cfg, "server", "port", 8088)
     bind_host = "127.0.0.1" if host == "0.0.0.0" else host
@@ -215,7 +197,11 @@ def build_report(args):
     for group, checks in PACKAGE_CHECKS.items():
         packages[group] = []
         for module_name, distribution_name in checks:
-            status = package_status(module_name, distribution_name, import_check=group == "required" or args.full)
+            status = package_status(
+                module_name,
+                distribution_name,
+                import_check=(group == "required" or args.full) and group != "optional_runtime",
+            )
             packages[group].append(status)
             if group == "required" and not status["available"]:
                 missing_required.append(module_name)
@@ -278,7 +264,8 @@ def build_report(args):
             "configuredCacheDir": configured_hf_cache,
             "resolvedCacheDir": resolved_hf_cache,
             "onlineStatus": config_value(cfg, "huggingface", "online_status", "Auto"),
-            "tokenConfigured": bool(config_value(cfg, "huggingface", "token")),
+            "tokenConfigured": bool(hf_token),
+            "tokenSource": hf_token_source,
         },
         "paths": paths,
         "packages": packages,

@@ -14,11 +14,19 @@ from utils.paths import parse_filename
 
 logger = logging.getLogger("modiff")
 AUDIO_SAMPLE_RATE_OPTIONS = {
+    "16000": "16 kHz",
+    "24000": "24 kHz",
     "44100": "44.1 kHz",
     "48000": "48 kHz",
     "88200": "88.2 kHz",
     "96000": "96 kHz",
 }
+AUDIO_OPERATION_MODES = ["audio_trim", "audio_join", "audio_loudness_match"]
+AUDIO_OPERATION_PIPELINE_CLASS = "BuiltinAudioOperationV1"
+MAX_AUDIO_OPERATION_DURATION_SECONDS = 300.0
+MAX_AUDIO_OPERATION_SCALAR_SAMPLES = 14_400_000
+MAX_AUDIO_OPERATION_FILE_BYTES = MAX_AUDIO_OPERATION_SCALAR_SAMPLES * 8 + 1_048_576
+MAX_AUDIO_OPERATION_CHANNELS = 8
 
 
 def _pcm_to_float32(array):
@@ -47,7 +55,26 @@ def _collapse_single(values):
 def _audio_to_numpy(audio):
     import torch
 
+    sample_layout = None
+    declared_channels = None
     if isinstance(audio, dict):
+        sample_layout = audio.get("sample_layout")
+        if sample_layout not in {None, "channels_first", "frames_first"}:
+            raise ValueError("Audio sample_layout must be exactly channels_first or frames_first.")
+        if "channels" in audio:
+            raw_channels = audio.get("channels")
+            try:
+                numeric_channels = float(raw_channels)
+            except (TypeError, ValueError, OverflowError) as error:
+                raise ValueError("Audio channels metadata must be a positive integer.") from error
+            if (
+                isinstance(raw_channels, bool)
+                or not np.isfinite(numeric_channels)
+                or not numeric_channels.is_integer()
+                or numeric_channels <= 0
+            ):
+                raise ValueError("Audio channels metadata must be a positive integer.")
+            declared_channels = int(numeric_channels)
         if "samples" in audio:
             data = audio["samples"]
         elif "audio" in audio:
@@ -62,18 +89,82 @@ def _audio_to_numpy(audio):
     elif isinstance(data, np.ndarray):
         array = _pcm_to_float32(data)
     elif isinstance(data, str):
+        if sample_layout not in {None, "frames_first"}:
+            raise ValueError("Decoded audio files use frames_first sample_layout; the supplied metadata conflicts.")
         loaded = _read_wav(resolve_runtime_input_path(data))
+        if declared_channels is not None and declared_channels != loaded["channels"]:
+            raise ValueError(
+                f"Audio channels metadata declares {declared_channels} channels, but the decoded file has "
+                f"{loaded['channels']}."
+            )
         return loaded["samples"], loaded["sample_rate"]
     else:
         array = np.asarray(data, dtype=np.float32)
 
     if array.ndim == 1:
+        if declared_channels not in {None, 1}:
+            raise ValueError(
+                f"Audio channels metadata declares {declared_channels} channels, but the waveform is one-dimensional."
+            )
         array = array[:, None]
-    elif array.ndim == 2 and array.shape[0] <= 8 and array.shape[1] > array.shape[0]:
-        array = array.T
+    elif array.ndim == 2:
+        rows, columns = (int(value) for value in array.shape)
+        if sample_layout is not None:
+            layout_channels = rows if sample_layout == "channels_first" else columns
+            if declared_channels is not None and declared_channels != layout_channels:
+                raise ValueError(
+                    f"Audio channels metadata declares {declared_channels} channels, but sample_layout "
+                    f"{sample_layout} identifies {layout_channels}."
+                )
+        elif declared_channels is not None:
+            rows_match = rows == declared_channels
+            columns_match = columns == declared_channels
+            if rows_match and columns_match:
+                if declared_channels != 1:
+                    raise ValueError(
+                        "Audio sample layout is ambiguous because both axes match the declared channel count."
+                    )
+            elif rows_match:
+                sample_layout = "channels_first"
+            elif columns_match:
+                sample_layout = "frames_first"
+            else:
+                raise ValueError(
+                    f"Audio channels metadata declares {declared_channels} channels, but neither sample axis matches."
+                )
+
+        if sample_layout == "channels_first":
+            array = array.T
+        elif sample_layout is None and array.shape[0] <= 8 and array.shape[1] > array.shape[0]:
+            array = array.T
 
     sample_rate = int(audio.get("sample_rate", 48000)) if isinstance(audio, dict) else 48000
     return np.clip(array, -1.0, 1.0), sample_rate
+
+
+def _bounded_audio_object(audio, *, label):
+    samples, sample_rate = _audio_to_numpy(audio)
+    if samples.ndim != 2:
+        raise ValueError(f"{label} must contain a one- or two-dimensional waveform.")
+    frames, channels = (int(value) for value in samples.shape)
+    if not 8_000 <= sample_rate <= 192_000:
+        raise ValueError(f"{label} sample rate must be between 8000 and 192000 Hz.")
+    if not 1 <= channels <= MAX_AUDIO_OPERATION_CHANNELS:
+        raise ValueError(f"{label} must contain between 1 and {MAX_AUDIO_OPERATION_CHANNELS} channels.")
+    duration = frames / sample_rate
+    if not frames or not np.isfinite(duration) or duration > MAX_AUDIO_OPERATION_DURATION_SECONDS:
+        raise ValueError(
+            f"{label} duration must be positive and at most {MAX_AUDIO_OPERATION_DURATION_SECONDS:g} seconds."
+        )
+    if frames * channels > MAX_AUDIO_OPERATION_SCALAR_SAMPLES:
+        raise ValueError(f"{label} exceeds the {MAX_AUDIO_OPERATION_SCALAR_SAMPLES}-sample execution limit.")
+    return {
+        "samples": samples,
+        "sample_layout": "frames_first",
+        "sample_rate": int(sample_rate),
+        "channels": channels,
+        "duration_seconds": duration,
+    }
 
 
 def _read_wav(path):
@@ -90,6 +181,7 @@ def _read_wav(path):
     return {
         "path": str(path),
         "samples": array,
+        "sample_layout": "frames_first",
         "sample_rate": int(sample_rate),
         "channels": int(channels),
         "duration_seconds": duration,
@@ -287,7 +379,13 @@ class Load(NodeBase):
 
             path = audio_as_wav(path)
 
-        loaded = _read_wav(path)
+        if path.stat().st_size > MAX_AUDIO_OPERATION_FILE_BYTES:
+            raise ValueError(
+                f"Load Audio accepts at most {MAX_AUDIO_OPERATION_FILE_BYTES} bytes per decoded WAV input."
+            )
+
+        loaded = _bounded_audio_object(_read_wav(path), label="Loaded audio")
+        loaded["path"] = str(path)
         return {
             "audio": loaded,
             "filename": loaded["path"],
@@ -322,13 +420,15 @@ class TrimPad(NodeBase):
         target_sample_rate = int(kwargs.get("target_sample_rate") or sample_rate)
         if target_sample_rate != sample_rate:
             divisor = gcd(sample_rate, target_sample_rate)
-            samples = resample_poly(samples, target_sample_rate // divisor, sample_rate // divisor, axis=0).astype(np.float32)
+            samples = resample_poly(samples, target_sample_rate // divisor, sample_rate // divisor, axis=0).astype(
+                np.float32
+            )
             sample_rate = target_sample_rate
 
         start = max(0, int(float(kwargs.get("start_seconds") or 0) * sample_rate))
         duration_value = float(kwargs.get("duration_seconds") or 0)
         end = start + int(duration_value * sample_rate) if duration_value > 0 else samples.shape[0]
-        trimmed = samples[start:min(end, samples.shape[0])]
+        trimmed = samples[start : min(end, samples.shape[0])]
         if duration_value > 0 and trimmed.shape[0] < end - start:
             pad = np.zeros((end - start - trimmed.shape[0], trimmed.shape[1]), dtype=np.float32)
             trimmed = np.concatenate([trimmed, pad], axis=0)
@@ -340,6 +440,7 @@ class TrimPad(NodeBase):
 
         output = {
             "samples": trimmed,
+            "sample_layout": "frames_first",
             "sample_rate": int(sample_rate),
             "channels": int(trimmed.shape[1] if trimmed.ndim == 2 else 1),
             "duration_seconds": float(trimmed.shape[0] / sample_rate) if sample_rate else 0.0,
@@ -466,6 +567,7 @@ class FitDuration(NodeBase):
         shifted = np.clip(shifted, -1.0, 1.0)
         output = {
             "samples": shifted,
+            "sample_layout": "frames_first",
             "sample_rate": int(sample_rate),
             "channels": int(shifted.shape[1]),
             "duration_seconds": target_frames / sample_rate,
@@ -570,6 +672,7 @@ class MatchLoudness(NodeBase):
         )
         output = {
             "samples": matched,
+            "sample_layout": "frames_first",
             "sample_rate": int(sample_rate),
             "channels": int(matched.shape[1] if matched.ndim == 2 else 1),
             "duration_seconds": float(matched.shape[0] / sample_rate) if sample_rate else 0.0,
@@ -657,6 +760,7 @@ class Join(NodeBase):
         joined = np.concatenate([source, continuation], axis=0)
         output = {
             "samples": np.clip(joined, -1.0, 1.0),
+            "sample_layout": "frames_first",
             "sample_rate": int(sample_rate),
             "channels": int(joined.shape[1]),
             "duration_seconds": float(joined.shape[0] / sample_rate) if sample_rate else 0.0,
@@ -721,6 +825,158 @@ class Export(NodeBase):
         return {
             "file": str(parsed_filename),
             "duration_seconds": float(samples.shape[0] / sample_rate) if sample_rate else 0.0,
+        }
+
+
+class ProcessAudio(NodeBase):
+    """Dispatch reviewed install-free audio edits through bounded base nodes."""
+
+    label = "Process Audio"
+    category = "Audio"
+    resizable = True
+    params = {
+        "source": {"label": "Source Audio", "display": "input", "type": ["audio", "str"]},
+        "reference": {"label": "Reference Audio", "display": "input", "type": ["audio", "str"]},
+        "pipeline_class": {
+            "label": "Built-in Contract",
+            "type": "string",
+            "default": AUDIO_OPERATION_PIPELINE_CLASS,
+            "hidden": True,
+        },
+        "operation": {
+            "label": "Operation",
+            "type": "string",
+            "options": AUDIO_OPERATION_MODES,
+            "default": "audio_trim",
+        },
+        "start_seconds": {"label": "Start", "type": "float", "default": 0.0, "min": 0, "step": 0.01},
+        "duration_seconds": {"label": "Duration (0 = remainder)", "type": "float", "default": 0.0, "min": 0},
+        "target_sample_rate": {
+            "label": "Target Sample Rate",
+            "type": "int",
+            "default": 48_000,
+            "options": AUDIO_SAMPLE_RATE_OPTIONS,
+        },
+        "normalize_peak": {"label": "Normalize Peak", "type": "bool", "default": False},
+        "boundary_fade_seconds": {
+            "label": "Join Boundary Fade",
+            "type": "float",
+            "default": 0.01,
+            "min": 0,
+            "max": 1,
+            "step": 0.001,
+        },
+        "reference_window_seconds": {
+            "label": "Reference Tail",
+            "type": "float",
+            "default": 15.0,
+            "min": 0,
+            "max": 60,
+        },
+        "target_peak_dbfs": {
+            "label": "Peak Ceiling",
+            "type": "float",
+            "default": -1.0,
+            "min": -9,
+            "max": 0,
+        },
+        "max_adjustment_db": {
+            "label": "Maximum Loudness Adjustment",
+            "type": "float",
+            "default": 12.0,
+            "min": 0,
+            "max": 30,
+        },
+        "output": {"label": "Processed Audio", "display": "output", "type": "audio"},
+        "sample_rate": {"label": "Sample Rate", "display": "output", "type": "int"},
+        "duration": {"label": "Duration", "display": "output", "type": "float"},
+    }
+
+    def execute(self, **kwargs):
+        if kwargs.get("pipeline_class", AUDIO_OPERATION_PIPELINE_CLASS) != AUDIO_OPERATION_PIPELINE_CLASS:
+            raise ValueError("Process Audio received an unsupported built-in contract identity.")
+        operation = str(kwargs.get("operation") or "audio_trim")
+        if operation not in AUDIO_OPERATION_MODES:
+            raise ValueError(f"Unsupported built-in audio operation {operation!r}.")
+        if kwargs.get("source") is None:
+            raise ValueError("Built-in audio operations require source audio.")
+        source = _bounded_audio_object(kwargs.get("source"), label="Source audio")
+
+        if operation == "audio_trim":
+            start_seconds = float(kwargs.get("start_seconds") or 0)
+            duration_seconds = float(kwargs.get("duration_seconds") or 0)
+            raw_target_sample_rate = kwargs.get("target_sample_rate")
+            target_sample_rate = int(
+                source["sample_rate"] if raw_target_sample_rate is None else raw_target_sample_rate
+            )
+            if not np.isfinite(start_seconds) or not 0 <= start_seconds < source["duration_seconds"]:
+                raise ValueError("Audio trim start must be finite and within the source duration.")
+            if (
+                not np.isfinite(duration_seconds)
+                or duration_seconds < 0
+                or duration_seconds > MAX_AUDIO_OPERATION_DURATION_SECONDS
+            ):
+                raise ValueError(
+                    f"Audio trim duration must be between 0 and {MAX_AUDIO_OPERATION_DURATION_SECONDS:g} seconds."
+                )
+            if target_sample_rate not in {int(value) for value in AUDIO_SAMPLE_RATE_OPTIONS}:
+                raise ValueError("Audio trim target sample rate is unsupported.")
+            output_duration = duration_seconds or (source["duration_seconds"] - start_seconds)
+            output_frames = round(output_duration * target_sample_rate)
+            if output_frames * source["channels"] > MAX_AUDIO_OPERATION_SCALAR_SAMPLES:
+                raise ValueError("Audio trim output exceeds the bounded sample limit.")
+            result = TrimPad().execute(
+                audio=source,
+                start_seconds=start_seconds,
+                duration_seconds=duration_seconds,
+                target_sample_rate=target_sample_rate,
+                normalize_peak=bool(kwargs.get("normalize_peak")),
+            )
+        else:
+            if kwargs.get("reference") is None:
+                raise ValueError(f"{operation.replace('_', ' ').title()} requires reference audio.")
+            reference = _bounded_audio_object(kwargs.get("reference"), label="Reference audio")
+            if operation == "audio_join":
+                boundary_fade_seconds = float(kwargs.get("boundary_fade_seconds") or 0)
+                if not np.isfinite(boundary_fade_seconds) or not 0 <= boundary_fade_seconds <= 1:
+                    raise ValueError("Audio join boundary fade must be between 0 and 1 second.")
+                reference_frames = round(
+                    reference["samples"].shape[0] * source["sample_rate"] / reference["sample_rate"]
+                )
+                output_channels = max(source["channels"], reference["channels"])
+                if (
+                    source["samples"].shape[0] + reference_frames
+                ) * output_channels > MAX_AUDIO_OPERATION_SCALAR_SAMPLES:
+                    raise ValueError("Audio join output exceeds the bounded sample limit.")
+                result = Join().execute(
+                    source=source,
+                    continuation=reference,
+                    boundary_fade_seconds=boundary_fade_seconds,
+                )
+            else:
+                reference_window_seconds = float(kwargs.get("reference_window_seconds") or 0)
+                raw_target_peak_dbfs = kwargs.get("target_peak_dbfs")
+                raw_max_adjustment_db = kwargs.get("max_adjustment_db")
+                target_peak_dbfs = float(-1.0 if raw_target_peak_dbfs is None else raw_target_peak_dbfs)
+                max_adjustment_db = float(12.0 if raw_max_adjustment_db is None else raw_max_adjustment_db)
+                if not np.isfinite(reference_window_seconds) or not 0 <= reference_window_seconds <= 60:
+                    raise ValueError("Audio loudness reference window must be between 0 and 60 seconds.")
+                if not np.isfinite(target_peak_dbfs) or not -9 <= target_peak_dbfs <= 0:
+                    raise ValueError("Audio loudness peak ceiling must be between -9 and 0 dBFS.")
+                if not np.isfinite(max_adjustment_db) or not 0 <= max_adjustment_db <= 30:
+                    raise ValueError("Audio loudness adjustment must be between 0 and 30 dB.")
+                result = MatchLoudness().execute(
+                    audio=source,
+                    reference=reference,
+                    reference_window_seconds=reference_window_seconds,
+                    target_peak_dbfs=target_peak_dbfs,
+                    max_adjustment_db=max_adjustment_db,
+                )
+        output = result["output"]
+        return {
+            "output": output,
+            "sample_rate": int(output["sample_rate"]),
+            "duration": float(output["duration_seconds"]),
         }
 
 

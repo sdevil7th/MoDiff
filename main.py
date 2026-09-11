@@ -1,19 +1,21 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 
 import os
-
-from modiff.optimization_packages import activate_runtime_overlay
-
-# Optional accelerator packages are staged and validated out-of-process. Make
-# only the explicitly activated environment visible, before importing Torch or
-# any MoDiff module that can transitively import it.
-activate_runtime_overlay()
+import sys
 
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 # Diffusers reads this once while its modules are imported. Configure it before
 # the worker imports any node packages so large sharded pipelines can load
 # their weight files concurrently. An explicit deployment setting still wins.
 os.environ.setdefault("HF_ENABLE_PARALLEL_LOADING", "YES")
+
+# Bind source provenance before the replaceable worker imports any executable
+# backend or node module. The same cached claim is emitted with runtime and
+# completion receipts; the supervisor process deliberately does not attest.
+if "--worker" in sys.argv:
+    from modiff.backend_source_identity import capture_process_backend_source_identity
+
+    capture_process_backend_source_identity()
 
 from modiff.config import CONFIG, ColorCodes
 
@@ -29,7 +31,6 @@ import logging
 import asyncio
 import signal
 import subprocess
-import sys
 from pathlib import Path
 
 logger = logging.getLogger('modiff')
@@ -58,6 +59,11 @@ def handle_loop_exception(loop, context):
 async def worker_main():
     # Import heavyweight model/runtime modules only inside the replaceable
     # worker. The small parent supervisor must never own accelerator state.
+    from modiff.optimization_packages import activate_runtime_overlay
+
+    # Plain-path activation is stdlib-only and fresh-validates the sealed
+    # overlay before any worker import can transitively load Torch/Diffusers.
+    activate_runtime_overlay()
     from modiff.server import server
 
     await server.run()
@@ -112,7 +118,15 @@ def run_supervisor():
     control_host = "127.0.0.1"
     queue_state_path = Path(CONFIG.paths["data"]) / "runtime" / "supervisor-queue.json"
     controller = SupervisorController(queue_state_path)
+    # Bind the singleton control port before touching persisted state. A
+    # mistakenly launched second supervisor must fail without rewriting the
+    # live supervisor's active queue.
     control_server = SupervisorControlServer(controller, control_host, control_port)
+    # A prior supervisor may itself have been terminated after a native model
+    # runtime crash. Recover that worker's last durable queue snapshot before
+    # advertising or starting any new work.
+    if controller.reconcile_interrupted_worker():
+        logger.warning("Recovered tasks left behind by a previously interrupted backend worker.")
     control_server.start()
     logger.info(
         "Supervisor control plane listening at http://%s:%s",
@@ -139,11 +153,23 @@ def run_supervisor():
             controller.set_worker(worker)
             return_code = worker.wait()
             restart_requested = controller.consume_restart_request()
+            worker_pid = worker.pid
             controller.set_worker(None)
             if shutting_down:
                 return return_code
             if return_code == SUPERVISED_RESTART_EXIT_CODE or restart_requested:
                 logger.warning("Replacing the backend worker after a forced run cancellation.")
+                continue
+            if return_code != 0:
+                controller.reconcile_interrupted_worker(
+                    worker_pid=worker_pid,
+                    return_code=return_code,
+                )
+                logger.error(
+                    "Backend worker %s exited unexpectedly with code %s; starting a clean replacement.",
+                    worker_pid,
+                    return_code,
+                )
                 continue
             return return_code
     finally:

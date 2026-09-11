@@ -21,6 +21,7 @@ jobs:
 
   backend:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -29,7 +30,7 @@ jobs:
           - os: windows-latest
             python: '3.12'
             managed-python: ./.venv/Scripts/python.exe
-          - os: macos-14
+          - os: macos-15
             python: '3.12'
             managed-python: ./.venv/bin/python
     runs-on: ${{ matrix.os }}

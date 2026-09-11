@@ -2,7 +2,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from diffusers import QwenImageEditPlusModularPipeline
+from diffusers import FluxModularPipeline, QwenImageEditPlusModularPipeline
 
 from modules.ModularDiffusers.modular_utils import (
     DummyCustomPipeline,
@@ -11,6 +11,7 @@ from modules.ModularDiffusers.modular_utils import (
     require_immutable_hub_revision,
 )
 from modules.ModularDiffusers.denoise import Denoise
+from modules.ModularDiffusers.embeddings import EncodePrompt
 
 
 class ModularPipelineRecoveryTests(unittest.TestCase):
@@ -58,11 +59,6 @@ class ModularPipelineRecoveryTests(unittest.TestCase):
         self.assertEqual(auxiliary.revision, explicit_revision)
         self.assertEqual(applied, {"transformer": "d" * 40, "auxiliary": explicit_revision})
 
-    def tearDown(self):
-        DummyCustomPipeline.repo_id = None
-        DummyCustomPipeline.revision = None
-        DummyCustomPipeline.trust_remote_code = False
-
     def test_remote_code_requires_an_immutable_commit_revision(self):
         with self.assertRaisesRegex(ValueError, "40-character"):
             require_immutable_hub_revision("owner/custom-pipeline", "main", required=True)
@@ -72,35 +68,11 @@ class ModularPipelineRecoveryTests(unittest.TestCase):
             revision,
         )
 
-    def test_dummy_custom_pipeline_never_silently_enables_remote_code(self):
-        DummyCustomPipeline.repo_id = "owner/custom-pipeline"
-        with patch("diffusers.ModularPipeline.from_pretrained", return_value="pipeline") as loader:
-            self.assertEqual(DummyCustomPipeline(), "pipeline")
-
-        loader.assert_called_once_with(
-            "owner/custom-pipeline",
-            trust_remote_code=False,
-            local_files_only=True,
-        )
-
-    def test_dummy_custom_pipeline_propagates_explicit_trust_and_revision(self):
-        DummyCustomPipeline.repo_id = "owner/custom-pipeline"
-        DummyCustomPipeline.trust_remote_code = True
+    def test_dummy_custom_pipeline_is_an_unbound_non_executable_registry_marker(self):
         with patch("diffusers.ModularPipeline.from_pretrained") as loader:
-            with self.assertRaisesRegex(ValueError, "40-character"):
+            with self.assertRaisesRegex(ValueError, "contract_only.*verified contract checksum"):
                 DummyCustomPipeline()
             loader.assert_not_called()
-
-            DummyCustomPipeline.revision = "b" * 40
-            loader.return_value = "pipeline"
-            self.assertEqual(DummyCustomPipeline(), "pipeline")
-
-        loader.assert_called_once_with(
-            "owner/custom-pipeline",
-            trust_remote_code=True,
-            local_files_only=True,
-            revision="b" * 40,
-        )
 
     def test_dynamic_denoise_declares_its_stable_model_input_as_required(self):
         self.assertTrue(Denoise.params["unet"]["required"])
@@ -135,6 +107,88 @@ class ModularPipelineRecoveryTests(unittest.TestCase):
             QwenImageEditPlusModularPipeline,
         )
 
+    def test_selected_pipeline_class_must_match_connected_runtime_components(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            "configured for pipeline class 'QwenImageEditPlusModularPipeline'.*identify 'FluxModularPipeline'",
+        ):
+            pipeline_class_from_runtime_inputs(
+                QwenImageEditPlusModularPipeline,
+                {"model_type": "FluxModularPipeline"},
+            )
+
+    def test_matching_selected_and_runtime_pipeline_class_is_preserved(self):
+        self.assertIs(
+            pipeline_class_from_runtime_inputs(
+                QwenImageEditPlusModularPipeline,
+                {"model_type": "QwenImageEditPlusModularPipeline"},
+            ),
+            QwenImageEditPlusModularPipeline,
+        )
+
+    def test_denoise_synchronizes_model_type_after_runtime_recovery(self):
+        node = Denoise("runtime-model-type")
+        with patch(
+            "modules.ModularDiffusers.denoise.require_modiff_node_contract",
+            side_effect=RuntimeError("stop after recovery"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "stop after recovery"):
+                node.execute(
+                    unet={
+                        "model_type": FluxModularPipeline.__name__,
+                        "repo_id": "local/fixture",
+                    }
+                )
+
+        self.assertIs(node._pipeline_class, FluxModularPipeline)
+        self.assertEqual(node._model_type, FluxModularPipeline.__name__)
+
+    def test_downstream_blocks_do_not_reload_repository_config_before_component_injection(self):
+        node = EncodePrompt("reviewed-block-construction")
+        pipeline = Mock()
+        state = Mock()
+        state.get_by_kwargs.return_value = {"prompt_embeds": "encoded"}
+        pipeline.return_value = state
+        blocks = Mock()
+        blocks.component_names = ["text_encoder"]
+        blocks.input_names = ["prompt"]
+
+        def init_without_repository(*args, **kwargs):
+            self.assertEqual(args, (), "a repository argument would make upstream reload model config")
+            self.assertIn("components_manager", kwargs)
+            return pipeline
+
+        blocks.init_pipeline.side_effect = init_without_repository
+        node_config = {
+            "params": {},
+            "model_input_names": ["text_encoders"],
+            "input_names": ["prompt"],
+            "output_names": ["embeddings"],
+        }
+        managed_component = object()
+
+        with (
+            patch(
+                "modules.ModularDiffusers.embeddings.require_modiff_node_contract",
+                return_value=(blocks, node_config),
+            ),
+            patch("modules.ModularDiffusers.embeddings.collect_model_ids", return_value=["text-encoder-id"]),
+            patch(
+                "modules.ModularDiffusers.embeddings.components.get_components_by_ids",
+                return_value={"text_encoder": managed_component},
+            ),
+        ):
+            outputs = node.execute(
+                text_encoders={
+                    "repo_id": "attacker/reloaded-config",
+                    "model_type": FluxModularPipeline.__name__,
+                },
+                prompt="test prompt",
+            )
+
+        self.assertEqual(outputs, {"embeddings": {"prompt_embeds": "encoded"}})
+        pipeline.update_components.assert_called_once_with(text_encoder=managed_component)
+
     def test_recovers_pipeline_class_from_nested_loader_output(self):
         runtime_inputs = {
             "text_encoders": {
@@ -148,8 +202,8 @@ class ModularPipelineRecoveryTests(unittest.TestCase):
             QwenImageEditPlusModularPipeline,
         )
 
-    def test_recovers_custom_pipeline_marker(self):
-        self.assertIs(
+    def test_legacy_custom_pipeline_marker_is_not_treated_as_an_execution_identity(self):
+        with self.assertRaisesRegex(ValueError, "backend-issued contract identity"):
             pipeline_class_from_runtime_inputs(
                 None,
                 {
@@ -158,15 +212,10 @@ class ModularPipelineRecoveryTests(unittest.TestCase):
                     "revision": "c" * 40,
                     "trust_remote_code": True,
                 },
-            ),
-            DummyCustomPipeline,
-        )
-        self.assertEqual(DummyCustomPipeline.repo_id, "owner/custom-pipeline")
-        self.assertEqual(DummyCustomPipeline.revision, "c" * 40)
-        self.assertTrue(DummyCustomPipeline.trust_remote_code)
+            )
 
     def test_custom_pipeline_recovery_rejects_missing_trust_metadata(self):
-        with self.assertRaisesRegex(ValueError, "trust metadata"):
+        with self.assertRaisesRegex(ValueError, "backend-issued contract identity"):
             pipeline_class_from_runtime_inputs(None, {"model_type": "DummyCustomPipeline"})
 
     def test_rejects_mixed_model_inputs_before_loading(self):

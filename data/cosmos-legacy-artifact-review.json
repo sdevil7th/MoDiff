@@ -1,0 +1,426 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "liveQualified": false,
+    "reason": "All Cosmos 1, Predict2, Predict2.5, and Transfer2.5 snapshots require NVIDIA license acceptance; this machine can review immutable safetensors metadata but cannot resolve the gated component indexes or execute the models.",
+    "runtimeCatalogExposed": false,
+    "status": "metadata_only",
+    "unresolvedGates": [
+      "nvidia_open_model_license_acceptance",
+      "gated_component_index_resolution",
+      "trustworthy_ai_terms_review",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "NVIDIA Cosmos 1, Predict2, Predict2.5, and Transfer2.5",
+  "format": "safetensors",
+  "licenses": [
+    {
+      "acceptanceRequired": true,
+      "builtOnNvidiaCosmosNoticeRequired": true,
+      "bypassingSafetyGuardrailsTerminatesRights": true,
+      "commercialUseAllowedByText": true,
+      "licenseAndNoticeFileRequiredOnDistribution": true,
+      "promptByteSize": 8909,
+      "promptSha256": "270191f783fdf166786b88df6e4588fe9ae78dc95bb1a2b69715699a91a5bb27",
+      "releaseDate": "2025-01-06",
+      "repositoryRoles": [
+        "cosmos1TextToWorld7B",
+        "cosmos1VideoToWorld7B"
+      ],
+      "trustworthyAiTermsLinked": true,
+      "versionName": "NVIDIA Open Model License Agreement"
+    },
+    {
+      "acceptanceRequired": true,
+      "builtOnNvidiaCosmosNoticeRequired": true,
+      "bypassingSafetyGuardrailsTerminatesRights": true,
+      "commercialUseAllowedByText": true,
+      "licenseAndNoticeFileRequiredOnDistribution": true,
+      "promptByteSize": 8908,
+      "promptSha256": "0083d985f7883deefdb96a90bb4d96ea730fe79f4942dbab68091dadb2734a85",
+      "releaseDate": "2025-04-30",
+      "repositoryRoles": [
+        "predict2TextToImage2B",
+        "predict2VideoToWorld2B",
+        "predict2VideoToWorld14B"
+      ],
+      "trustworthyAiTermsLinked": true,
+      "versionName": "NVIDIA Open Model License Agreement"
+    },
+    {
+      "acceptanceRequired": true,
+      "builtOnNvidiaCosmosNoticeRequired": true,
+      "bypassingSafetyGuardrailsWithoutSubstantiallySimilarGuardrailTerminatesRights": true,
+      "commercialUseAllowedByText": true,
+      "licenseAndNoticeFileRequiredOnDistribution": true,
+      "promptByteSize": 5861,
+      "promptSha256": "66d986cc6ced1ec660457b40a7d56fad96d082cea1a979496964596a8b2ac934",
+      "releaseDate": "2025-09-23",
+      "repositoryRoles": [
+        "predict2.5BasePostTrained2B",
+        "transfer2.5General2B",
+        "transfer2.5EdgeControlNet"
+      ],
+      "specialPurposeModelTermsPresent": true,
+      "trustworthyAiTermsLinked": true,
+      "versionName": "NVIDIA Open Model License Agreement"
+    }
+  ],
+  "remoteResourceEnvelopes": {
+    "fourteenB": {
+      "minimumAcceleratorMemoryBytesWithOffloadEstimate": 25769803776,
+      "minimumSelectiveDiskBytes": 68719476736,
+      "minimumSystemRamBytes": 103079215104,
+      "status": "estimate_only_qualification_pending"
+    },
+    "sevenB": {
+      "minimumAcceleratorMemoryBytesWithOffloadEstimate": 17179869184,
+      "minimumSelectiveDiskBytes": 68719476736,
+      "minimumSystemRamBytes": 68719476736,
+      "status": "estimate_only_qualification_pending"
+    },
+    "twoB": {
+      "minimumAcceleratorMemoryBytesWithOffloadEstimate": 17179869184,
+      "minimumSelectiveDiskBytes": 51539607552,
+      "minimumSystemRamBytes": 68719476736,
+      "status": "estimate_only_qualification_pending"
+    }
+  },
+  "repositories": [
+    {
+      "candidatePipelineClass": "CosmosTextToWorldPipeline",
+      "gated": "auto",
+      "modelIndex": {
+        "byteSize": 401,
+        "contentAccessible": false,
+        "gitBlobSha1": "be601e16942caad649d0dbdc622b693a0505cadb"
+      },
+      "private": false,
+      "repository": "nvidia/Cosmos-1.0-Diffusion-7B-Text2World",
+      "revision": "749ad047f60de0ab405ed078fd050ab2d35856f7",
+      "role": "cosmos1TextToWorld7B",
+      "weightBytes": 24575681664,
+      "weightComponents": {
+        "Cosmos-1.0-Guardrail": {
+          "byteSize": 162278280,
+          "fileCount": 2
+        },
+        "text_encoder": {
+          "byteSize": 9729607304,
+          "fileCount": 2
+        },
+        "transformer": {
+          "byteSize": 14472451688,
+          "fileCount": 3
+        },
+        "vae": {
+          "byteSize": 211344392,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 8,
+      "weightInventorySha256": "a7391b3513bc6453873500b50d26d545ded526795d370ff590cfc239a1f9db13"
+    },
+    {
+      "candidatePipelineClass": "CosmosVideoToWorldPipeline",
+      "gated": "auto",
+      "modelIndex": {
+        "byteSize": 401,
+        "contentAccessible": false,
+        "gitBlobSha1": "be601e16942caad649d0dbdc622b693a0505cadb"
+      },
+      "private": false,
+      "repository": "nvidia/Cosmos-1.0-Diffusion-7B-Video2World",
+      "revision": "6b3b7c6314ef62ae9ee1bd0fc6bb3370adc5fb15",
+      "role": "cosmos1VideoToWorld7B",
+      "weightBytes": 41564530104,
+      "weightComponents": {
+        "Cosmos-1.0-Guardrail": {
+          "byteSize": 17151093952,
+          "fileCount": 6
+        },
+        "text_encoder": {
+          "byteSize": 9729607304,
+          "fileCount": 2
+        },
+        "transformer": {
+          "byteSize": 14472484456,
+          "fileCount": 3
+        },
+        "vae": {
+          "byteSize": 211344392,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 12,
+      "weightInventorySha256": "7707ca932e7a801cd88be05dffb43edf8b1c30226619e266cf4e1116e6a88b62"
+    },
+    {
+      "candidatePipelineClass": "Cosmos2TextToImagePipeline",
+      "gated": "auto",
+      "modelIndex": {
+        "byteSize": 470,
+        "contentAccessible": false,
+        "gitBlobSha1": "40bd3b2e0813ea6dd778d243358bb0edee3c5451"
+      },
+      "private": false,
+      "repository": "nvidia/Cosmos-Predict2-2B-Text2Image",
+      "revision": "acdb5fde992a73ef0355f287977d002cbfd127e0",
+      "role": "predict2TextToImage2B",
+      "weightBytes": 14150076300,
+      "weightComponents": {
+        "text_encoder": {
+          "byteSize": 9729607304,
+          "fileCount": 2
+        },
+        "transformer": {
+          "byteSize": 3912877104,
+          "fileCount": 1
+        },
+        "vae": {
+          "byteSize": 507591892,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 4,
+      "weightInventorySha256": "d715db087cb4a3791593f8d95b85d3bb25a4bcee45d3692b8b525068fb0f95fe"
+    },
+    {
+      "candidatePipelineClass": "Cosmos2VideoToWorldPipeline",
+      "gated": "auto",
+      "modelIndex": {
+        "byteSize": 471,
+        "contentAccessible": false,
+        "gitBlobSha1": "d6c51782f65145fae13ea409a74045fa82e05b0c"
+      },
+      "private": false,
+      "repository": "nvidia/Cosmos-Predict2-2B-Video2World",
+      "revision": "f50c09f5d8ab133a90cac3f4886a6471e9ba3f18",
+      "role": "predict2VideoToWorld2B",
+      "weightBytes": 14150092684,
+      "weightComponents": {
+        "text_encoder": {
+          "byteSize": 9729607304,
+          "fileCount": 2
+        },
+        "transformer": {
+          "byteSize": 3912893488,
+          "fileCount": 1
+        },
+        "vae": {
+          "byteSize": 507591892,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 4,
+      "weightInventorySha256": "66bf17a7e81afc3938343ad7e6ea9d3cda21004019dd3c959257b22349aacb16"
+    },
+    {
+      "candidatePipelineClass": "Cosmos2VideoToWorldPipeline",
+      "gated": "auto",
+      "modelIndex": {
+        "byteSize": 471,
+        "contentAccessible": false,
+        "gitBlobSha1": "d6c51782f65145fae13ea409a74045fa82e05b0c"
+      },
+      "private": false,
+      "repository": "nvidia/Cosmos-Predict2-14B-Video2World",
+      "revision": "03b03a377fede782647afac998f674d9f358e319",
+      "role": "predict2VideoToWorld14B",
+      "weightBytes": 38767856404,
+      "weightComponents": {
+        "text_encoder": {
+          "byteSize": 9729607304,
+          "fileCount": 2
+        },
+        "transformer": {
+          "byteSize": 28530657208,
+          "fileCount": 6
+        },
+        "vae": {
+          "byteSize": 507591892,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 9,
+      "weightInventorySha256": "6e8950951362fc6425feaf33b65e3dcc4eaece4c0e5a49ee7183af7ca11bf7df"
+    },
+    {
+      "candidatePipelineClass": "Cosmos2_5_PredictBasePipeline",
+      "gated": "auto",
+      "modelIndex": {
+        "byteSize": 488,
+        "classNameFromHubConfig": "Cosmos2_5_PredictBasePipeline",
+        "contentAccessible": false,
+        "gitBlobSha1": "bf1e83abd7ea453ea441123366b686e125040a44"
+      },
+      "private": false,
+      "repository": "nvidia/Cosmos-Predict2.5-2B",
+      "revision": "0d37c7498f54cee3c599d438d895a0a4a8608064",
+      "revisionName": "diffusers/base/post-trained",
+      "role": "predict2.5BasePostTrained2B",
+      "weightBytes": 21210423156,
+      "weightComponents": {
+        "text_encoder": {
+          "byteSize": 16584414544,
+          "fileCount": 4
+        },
+        "transformer": {
+          "byteSize": 4118416720,
+          "fileCount": 1
+        },
+        "vae": {
+          "byteSize": 507591892,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 6,
+      "weightInventorySha256": "a85901d503a67f04f163427399d90a0ce8045a301daa13ca499eee3229ab1f05"
+    },
+    {
+      "candidatePipelineClass": "Cosmos2_5_TransferPipeline",
+      "gated": "auto",
+      "modelIndex": {
+        "byteSize": 527,
+        "classNameFromHubConfig": "Cosmos2_5_TransferPipeline",
+        "contentAccessible": false,
+        "gitBlobSha1": "fe7ccd03314bb13600a8f8e385c972674f92d742"
+      },
+      "private": false,
+      "repository": "nvidia/Cosmos-Transfer2.5-2B",
+      "revision": "e81bab26e9b495d1778504f460519e2689306a0b",
+      "revisionName": "diffusers/general",
+      "role": "transfer2.5General2B",
+      "weightBytes": 21919819988,
+      "weightComponents": {
+        "text_encoder": {
+          "byteSize": 16584414544,
+          "fileCount": 4
+        },
+        "transformer": {
+          "byteSize": 4827813552,
+          "fileCount": 1
+        },
+        "vae": {
+          "byteSize": 507591892,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 6,
+      "weightInventorySha256": "f556e7a7357d0035dc1c18e1f1025dcdf486974322f4199b14bb1ba49e304247"
+    },
+    {
+      "candidateComponentClass": "CosmosControlNetModel",
+      "gated": "auto",
+      "modelIndex": null,
+      "private": false,
+      "repository": "nvidia/Cosmos-Transfer2.5-2B",
+      "revision": "8af466a4bbd893916cb24c7b232f2d83034fb6f4",
+      "revisionName": "diffusers/controlnet/general/edge",
+      "role": "transfer2.5EdgeControlNet",
+      "weightBytes": 942523208,
+      "weightComponents": {
+        "controlnet": {
+          "byteSize": 942523208,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 1,
+      "weightInventorySha256": "4da41ed62dddc3bfc2a3a2f4fb7a11ac70ae9716b35fee8358185acec4d7ec41"
+    }
+  ],
+  "reviewedAt": "2026-08-13T00:00:00+05:30",
+  "reviewedRecipes": {
+    "cosmos1": {
+      "fps": 30,
+      "guidanceScale": 7.0,
+      "height": 704,
+      "numFrames": 121,
+      "numInferenceSteps": 36,
+      "textPipelineClass": "CosmosTextToWorldPipeline",
+      "videoPipelineClass": "CosmosVideoToWorldPipeline",
+      "width": 1280
+    },
+    "predict2": {
+      "fps": 16,
+      "guidanceScale": 7.0,
+      "height": 704,
+      "numFrames": 93,
+      "numInferenceSteps": 35,
+      "textToImageDimensions": [
+        768,
+        1360
+      ],
+      "textToImagePipelineClass": "Cosmos2TextToImagePipeline",
+      "videoPipelineClass": "Cosmos2VideoToWorldPipeline",
+      "width": 1280
+    },
+    "predict2.5": {
+      "fps": 16,
+      "guidanceScale": 7.0,
+      "height": 704,
+      "numFrames": 93,
+      "numInferenceSteps": 36,
+      "pipelineClass": "Cosmos2_5_PredictBasePipeline",
+      "width": 1280
+    },
+    "transfer2.5Edge": {
+      "controlsConditioningScale": 1.0,
+      "fps": 30,
+      "guidanceScale": 3.0,
+      "height": 704,
+      "numFrames": 93,
+      "numFramesPerChunk": 93,
+      "numInferenceSteps": 36,
+      "pipelineClass": "Cosmos2_5_TransferPipeline"
+    }
+  },
+  "schemaVersion": 1,
+  "sourceContract": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "documentation": {
+      "byteSize": 4382,
+      "sha256": "15fd85078256c07db721dc00761f692e49106be284ad252b11fd7aba2972caec"
+    },
+    "sources": {
+      "Cosmos2TextToImagePipeline": {
+        "byteSize": 34030,
+        "sha256": "1c51f868055be7813be576512b151f5827c37398a1d41568a3f5ee42d951eb14"
+      },
+      "Cosmos2VideoToWorldPipeline": {
+        "byteSize": 40094,
+        "sha256": "a47b2ec6ac61806e0b3131a3949d533e4d823655ffbd1a612257a8d8f50e46e7"
+      },
+      "Cosmos2_5_PredictBasePipeline": {
+        "byteSize": 43903,
+        "sha256": "ad4e65d490e34fae373b725685186e9073a3c6a101c571190a978591721d36b8"
+      },
+      "Cosmos2_5_TransferPipeline": {
+        "byteSize": 51191,
+        "sha256": "e93aac46c9812929f611a5446b5b1da9d3fd369386273e19de099c9987e0c770"
+      },
+      "CosmosTextToWorldPipeline": {
+        "byteSize": 32707,
+        "sha256": "8d658e22a288493d8c0d7d1325f03539ffe64d062a5848378fa6a4ed1a985f9d"
+      },
+      "CosmosVideoToWorldPipeline": {
+        "byteSize": 41696,
+        "sha256": "9f5b6a45cbeee96347791b203310443abc3721563efb88e16a82c939df2626e5"
+      }
+    }
+  }
+}

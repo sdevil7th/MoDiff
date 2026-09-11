@@ -1,6 +1,7 @@
 import sys
 import hashlib
 import json
+import os
 import tempfile
 import threading
 import unittest
@@ -55,6 +56,36 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
             snapshot = huggingface._download_progress_snapshot(repo_id, cache_dir, {"files": []})
 
             self.assertEqual(snapshot["active_files"], [f"blobs/{partial_hash}.incomplete"])
+
+    def test_current_attempt_progress_excludes_redundant_partial_blob(self):
+        with tempfile.TemporaryDirectory() as cache_dir:
+            repo_id = "unit/resumed"
+            repo_path = Path(cache_dir) / "models--unit--resumed"
+            blobs = repo_path / "blobs"
+            blobs.mkdir(parents=True)
+            blob_hash = "b" * 64
+            stale = blobs / f"{blob_hash}.stale.incomplete"
+            current = blobs / f"{blob_hash}.current.incomplete"
+            stale.write_bytes(b"s" * 60)
+            current.write_bytes(b"c" * 20)
+            active_since = 1_700_000_000.0
+            os.utime(stale, (active_since - 10, active_since - 10))
+            os.utime(current, (active_since + 1, active_since + 1))
+            plan = {
+                "selection_limited": True,
+                "files": [{"name": "model.safetensors", "size": 100, "blob_hash": blob_hash}],
+            }
+
+            snapshot = huggingface._download_progress_snapshot(
+                repo_id,
+                cache_dir,
+                plan,
+                active_since=active_since,
+            )
+
+        self.assertEqual(snapshot["downloaded_bytes"], 20)
+        self.assertEqual(snapshot["active_files"], [f"blobs/{current.name}"])
+        self.assertEqual(snapshot["completed_bytes"], 0)
 
     def test_verified_public_repair_retries_a_configured_token_403_anonymously(self):
         from requests import Response
@@ -188,6 +219,142 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
         self.assertEqual(len(persisted["files"]), huggingface.HF_DOWNLOAD_PLAN_FILE_PREVIEW_LIMIT)
         self.assertNotIn("validation_files", persisted)
 
+    def test_app_download_preflight_reserves_remaining_bytes_and_64_gib(self):
+        revision = "a" * 40
+        with (
+            tempfile.TemporaryDirectory() as cache_dir,
+            patch.object(
+                huggingface.CONFIG,
+                "hf",
+                {**huggingface.CONFIG.hf, "cache_dir": cache_dir},
+            ),
+            patch.object(
+                huggingface,
+                "_repo_download_plan",
+                return_value={
+                    "total_bytes": 1000,
+                    "total_file_count": 2,
+                    "size_known": True,
+                    "selection_limited": True,
+                    "snapshot_commit": revision,
+                },
+            ) as upstream_plan,
+            patch.object(
+                huggingface,
+                "_download_progress_snapshot",
+                return_value={"completed_bytes": 200},
+            ),
+            patch.object(
+                huggingface.shutil,
+                "disk_usage",
+                return_value=SimpleNamespace(
+                    total=2000 + huggingface.HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES,
+                    used=100,
+                    free=800 + huggingface.HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES,
+                ),
+            ),
+        ):
+            plan = huggingface.plan_hub_model_download(
+                "unit/exact",
+                ["model.safetensors"],
+                revision,
+            )
+
+        self.assertEqual(plan["revision"], revision)
+        self.assertEqual(plan["snapshotCommit"], revision)
+        self.assertEqual((plan["totalBytes"], plan["completedBytes"], plan["remainingBytes"]), (1000, 200, 800))
+        self.assertEqual(plan["reserveBytes"], 64 * 1024**3)
+        self.assertTrue(plan["fits"])
+        upstream_plan.assert_called_once_with("unit/exact", ["model.safetensors"], revision)
+
+    def test_download_preflight_counts_only_exact_non_resumable_partials_as_reclaimable_space(self):
+        revision = "c" * 40
+        expected_hash = "d" * 64
+        unrelated_hash = "e" * 64
+        upstream_plan = {
+            "total_bytes": 5000,
+            "total_file_count": 1,
+            "size_known": True,
+            "selection_limited": True,
+            "snapshot_commit": revision,
+            "validation_files": [
+                {"name": "model.safetensors", "size": 5000, "blob_hash": expected_hash}
+            ],
+        }
+        with tempfile.TemporaryDirectory() as cache_dir:
+            blobs = Path(cache_dir) / "models--unit--resume" / "blobs"
+            blobs.mkdir(parents=True)
+            partial = blobs / f"{expected_hash}.1234abcd.incomplete"
+            partial.write_bytes(b"x" * 1024)
+            (blobs / f"{unrelated_hash}.1234abcd.incomplete").write_bytes(b"y" * 1024)
+            allocated = getattr(partial.stat(), 'st_blocks', 0) * 512
+            with patch.dict(
+                huggingface.CONFIG.hf, {"cache_dir": cache_dir, "token": None}
+            ), patch.object(
+                huggingface, "_repo_download_plan", return_value=upstream_plan
+            ), patch.object(
+                huggingface.shutil,
+                "disk_usage",
+                return_value=SimpleNamespace(
+                    total=10_000 + huggingface.HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES,
+                    used=100,
+                    free=5000 + huggingface.HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES - allocated,
+                ),
+            ):
+                plan = huggingface.plan_hub_model_download(
+                    "unit/resume", ["model.safetensors"], revision
+                )
+
+        self.assertEqual(plan["reclaimableIncompleteBytes"], allocated)
+        self.assertEqual(plan["reclaimableIncompleteFileCount"], 1)
+        self.assertEqual(plan["effectiveFreeBytes"], 5000 + huggingface.HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES)
+        self.assertTrue(plan["fits"])
+
+    def test_retry_cleanup_removes_only_older_exact_hub_attempt_files(self):
+        revision = "f" * 40
+        expected_hash = "1" * 64
+        unrelated_hash = "2" * 64
+        plan = {
+            "validation_files": [
+                {"name": "model.safetensors", "size": 100, "blob_hash": expected_hash}
+            ]
+        }
+        with tempfile.TemporaryDirectory() as cache_dir, patch.object(
+            huggingface, "_repo_download_plan", return_value=plan
+        ):
+            blobs = Path(cache_dir) / "models--unit--retry" / "blobs"
+            blobs.mkdir(parents=True)
+            stale = blobs / f"{expected_hash}.1234abcd.incomplete"
+            current = blobs / f"{expected_hash}.5678abcd.incomplete"
+            unrelated = blobs / f"{unrelated_hash}.1234abcd.incomplete"
+            legacy = blobs / f"{expected_hash}.incomplete"
+            for path in (stale, current, unrelated, legacy):
+                path.write_bytes(b"partial")
+            cutoff = 1_700_000_000.0
+            os.utime(stale, (cutoff - 10, cutoff - 10))
+            os.utime(current, (cutoff + 10, cutoff + 10))
+            os.utime(unrelated, (cutoff - 10, cutoff - 10))
+            os.utime(legacy, (cutoff - 10, cutoff - 10))
+
+            result = huggingface.cleanup_interrupted_hub_download_files(
+                "unit/retry",
+                cache_dir,
+                ["model.safetensors"],
+                revision,
+                older_than=cutoff,
+            )
+
+            stale_exists = stale.exists()
+            current_exists = current.exists()
+            unrelated_exists = unrelated.exists()
+            legacy_exists = legacy.exists()
+
+        self.assertEqual(result["removed"], [f"blobs/{stale.name}"])
+        self.assertFalse(stale_exists)
+        self.assertTrue(current_exists)
+        self.assertTrue(unrelated_exists)
+        self.assertTrue(legacy_exists)
+
     def test_repo_cache_path_rejects_windows_backslash_traversal(self):
         with tempfile.TemporaryDirectory() as cache_dir:
             with self.assertRaises((TypeError, ValueError)):
@@ -213,6 +380,57 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
 
         self.assertEqual(plan["total_file_count"], 1)
         self.assertEqual(plan["files"][0]["name"], "wanted.safetensors")
+
+    def test_download_stages_byte_identical_lfs_blob_from_another_cached_repo(self):
+        content = b"shared model shard"
+        blob_hash = hashlib.sha256(content).hexdigest()
+        revision = "a" * 40
+        with tempfile.TemporaryDirectory() as cache_dir:
+            source_blob = Path(cache_dir) / "models--unit--source" / "blobs" / blob_hash
+            source_blob.parent.mkdir(parents=True)
+            source_blob.write_bytes(content)
+            plan = {
+                "revision": revision,
+                "snapshot_commit": revision,
+                "validation_files": [
+                    {"name": "transformer/shard.bin", "size": len(content), "blob_hash": blob_hash}
+                ],
+            }
+
+            reused = huggingface._stage_verified_cached_lfs_blobs("unit/target", cache_dir, plan)
+
+            target_repo = Path(cache_dir) / "models--unit--target"
+            target_blob = target_repo / "blobs" / blob_hash
+            target_file = target_repo / "snapshots" / revision / "transformer" / "shard.bin"
+            self.assertEqual(reused, {"files": ["transformer/shard.bin"], "bytes": len(content)})
+            self.assertEqual(target_blob.read_bytes(), content)
+            self.assertEqual(target_file.read_bytes(), content)
+            self.assertNotEqual(source_blob.stat().st_ino, target_blob.stat().st_ino)
+
+    def test_download_does_not_trust_a_cross_repo_blob_filename_without_matching_sha256(self):
+        expected = b"expected content"
+        corrupt = b"corrupt! content"
+        self.assertEqual(len(expected), len(corrupt))
+        blob_hash = hashlib.sha256(expected).hexdigest()
+        revision = "b" * 40
+        with tempfile.TemporaryDirectory() as cache_dir:
+            source_blob = Path(cache_dir) / "models--unit--source" / "blobs" / blob_hash
+            source_blob.parent.mkdir(parents=True)
+            source_blob.write_bytes(corrupt)
+            plan = {
+                "revision": revision,
+                "snapshot_commit": revision,
+                "validation_files": [
+                    {"name": "transformer/shard.bin", "size": len(expected), "blob_hash": blob_hash}
+                ],
+            }
+
+            reused = huggingface._stage_verified_cached_lfs_blobs("unit/target", cache_dir, plan)
+
+            target_repo = Path(cache_dir) / "models--unit--target"
+            self.assertEqual(reused, {"files": [], "bytes": 0})
+            self.assertFalse((target_repo / "blobs" / blob_hash).exists())
+            self.assertFalse((target_repo / "snapshots" / revision / "transformer" / "shard.bin").exists())
 
     def test_download_plan_expands_hugging_face_allow_pattern_globs(self):
         class FakeHfApi:
@@ -517,7 +735,7 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
         self.assertEqual(xet_flags, [True])
         self.assertEqual(hf_constants.HF_HUB_DISABLE_XET, original_disable_xet)
 
-    def test_repair_xet_mode_does_not_leak_into_a_concurrent_normal_download(self):
+    def test_repair_is_exclusive_and_restores_the_shared_http_mode(self):
         from huggingface_hub import constants as hf_constants
 
         plan = {"files": [], "total_bytes": 0, "total_file_count": 0, "size_known": True}
@@ -551,8 +769,133 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
                 self.assertTrue(repair_future.result(timeout=3)["complete"])
                 self.assertTrue(normal_future.result(timeout=3)["complete"])
 
-        self.assertEqual(observed, [("unit/repair", True), ("unit/normal", False)])
+        self.assertEqual(observed, [("unit/repair", True), ("unit/normal", True)])
         self.assertFalse(hf_constants.HF_HUB_DISABLE_XET)
+
+    def test_normal_downloads_share_the_app_transfer_window(self):
+        from huggingface_hub import constants as hf_constants
+
+        plan = {"files": [], "total_bytes": 0, "total_file_count": 0, "size_known": True}
+        validation = {"complete": True, "repair_required": False}
+        both_entered = threading.Event()
+        release_downloads = threading.Event()
+        observed = []
+        observed_lock = threading.Lock()
+
+        def record_snapshot_download(**kwargs):
+            with observed_lock:
+                observed.append((kwargs["repo_id"], hf_constants.HF_HUB_DISABLE_XET))
+                if len(observed) == 2:
+                    both_entered.set()
+            self.assertTrue(release_downloads.wait(timeout=3))
+
+        with tempfile.TemporaryDirectory() as temp_dir, patch.dict(
+            huggingface.CONFIG.hf, {"cache_dir": temp_dir, "token": None}
+        ), patch.object(
+            huggingface, "_repo_download_plan", side_effect=lambda *_args: dict(plan)
+        ), patch.object(
+            huggingface, "_repair_validation_summary", return_value=validation
+        ), patch.object(
+            hf_constants, "HF_HUB_DISABLE_XET", False
+        ), patch(
+            "huggingface_hub.snapshot_download", side_effect=record_snapshot_download
+        ):
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                first = executor.submit(huggingface.download_hub_model, "unit/first")
+                second = executor.submit(huggingface.download_hub_model, "unit/second")
+                try:
+                    self.assertTrue(both_entered.wait(timeout=3))
+                finally:
+                    release_downloads.set()
+                self.assertTrue(first.result(timeout=3)["complete"])
+                self.assertTrue(second.result(timeout=3)["complete"])
+
+        self.assertCountEqual(observed, [("unit/first", True), ("unit/second", True)])
+        self.assertFalse(hf_constants.HF_HUB_DISABLE_XET)
+
+    def test_repair_waits_for_an_active_normal_http_download(self):
+        from huggingface_hub import constants as hf_constants
+
+        plan = {"files": [], "total_bytes": 0, "total_file_count": 0, "size_known": True}
+        validation = {"complete": True, "repair_required": False}
+        normal_entered = threading.Event()
+        repair_started = threading.Event()
+        repair_prepared = threading.Event()
+        repair_entered = threading.Event()
+        release_normal = threading.Event()
+        observed = []
+
+        def record_snapshot_download(**kwargs):
+            observed.append((kwargs["repo_id"], hf_constants.HF_HUB_DISABLE_XET))
+            if kwargs["repo_id"] == "unit/normal":
+                normal_entered.set()
+                self.assertTrue(release_normal.wait(timeout=3))
+            else:
+                repair_entered.set()
+
+        def run_repair():
+            repair_started.set()
+            return huggingface.download_hub_model("unit/repair", None, True)
+
+        def prepare_repair(*_args):
+            repair_prepared.set()
+
+        with tempfile.TemporaryDirectory() as temp_dir, patch.dict(
+            huggingface.CONFIG.hf, {"cache_dir": temp_dir, "token": None}
+        ), patch.object(
+            huggingface, "_repo_download_plan", side_effect=lambda *_args: dict(plan)
+        ), patch.object(
+            huggingface, "_repair_validation_summary", return_value=validation
+        ), patch.object(
+            huggingface, "_prepare_snapshot_repair", side_effect=prepare_repair
+        ), patch.object(
+            hf_constants, "HF_HUB_DISABLE_XET", False
+        ), patch(
+            "huggingface_hub.snapshot_download", side_effect=record_snapshot_download
+        ):
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                normal_future = executor.submit(huggingface.download_hub_model, "unit/normal")
+                self.assertTrue(normal_entered.wait(timeout=3))
+                repair_future = executor.submit(run_repair)
+                self.assertTrue(repair_started.wait(timeout=3))
+                try:
+                    self.assertFalse(repair_prepared.wait(timeout=0.2))
+                    self.assertFalse(repair_entered.wait(timeout=0.2))
+                    self.assertTrue(hf_constants.HF_HUB_DISABLE_XET)
+                finally:
+                    release_normal.set()
+                self.assertTrue(normal_future.result(timeout=3)["complete"])
+                self.assertTrue(repair_future.result(timeout=3)["complete"])
+
+        self.assertEqual(observed, [("unit/normal", True), ("unit/repair", True)])
+        self.assertFalse(hf_constants.HF_HUB_DISABLE_XET)
+
+    def test_shared_http_mode_restores_a_preexisting_disabled_xet_policy(self):
+        from huggingface_hub import constants as hf_constants
+
+        plan = {"files": [], "total_bytes": 0, "total_file_count": 0, "size_known": True}
+        validation = {"complete": True, "repair_required": False}
+        observed = []
+
+        def record_snapshot_download(**_kwargs):
+            observed.append(hf_constants.HF_HUB_DISABLE_XET)
+
+        with tempfile.TemporaryDirectory() as temp_dir, patch.dict(
+            huggingface.CONFIG.hf, {"cache_dir": temp_dir, "token": None}
+        ), patch.object(
+            huggingface, "_repo_download_plan", return_value=plan
+        ), patch.object(
+            huggingface, "_repair_validation_summary", return_value=validation
+        ), patch.object(
+            hf_constants, "HF_HUB_DISABLE_XET", True
+        ), patch(
+            "huggingface_hub.snapshot_download", side_effect=record_snapshot_download
+        ):
+            result = huggingface.download_hub_model("unit/pre-disabled")
+            self.assertTrue(hf_constants.HF_HUB_DISABLE_XET)
+
+        self.assertTrue(result["complete"])
+        self.assertEqual(observed, [True])
 
     def test_cataloged_download_uses_the_immutable_revision(self):
         plan = {"files": [], "total_bytes": 0, "total_file_count": 0, "size_known": True}

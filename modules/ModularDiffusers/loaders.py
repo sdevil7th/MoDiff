@@ -1,14 +1,30 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import logging
+import hashlib
+import json
+import importlib
+import re
+import threading
 import traceback
 from collections.abc import Mapping
+from copy import deepcopy
+from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
 
 import torch
 from diffusers import ComponentSpec, ModularPipeline
 from diffusers.utils import logging as diffusers_logging
-from .pipeline_schema import MoDiffPipelineConfig as PipelineConfig
+from huggingface_hub import get_hf_file_metadata, hf_hub_download, hf_hub_url
+from huggingface_hub.utils import EntryNotFoundError, HfHubHTTPError, LocalEntryNotFoundError
 
 from modiff.NodeBase import NodeBase
+from modiff.auxiliary_lora import (
+    ResolvedLoraDescriptor,
+    reviewed_scheduler_effective_config,
+    resolve_lora_descriptors,
+    scheduler_override_contract,
+)
 from modiff.diffusers_offload import (
     DEFAULT_GROUP_COMPONENTS,
     OFFLOAD_MODE_GROUP_CPU,
@@ -21,17 +37,43 @@ from modiff.diffusers_offload import (
     normalize_offload_mode,
     offload_mode_param,
 )
-from modiff.model_artifact_catalog import resolve_model_revision
+from modiff.model_artifact_catalog import catalog_repository_pin, require_catalog_revision, resolve_model_revision
+from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
+from modiff.modular_workflow_contracts import (
+    HELIOS_MID_REPOSITORY,
+    PINNED_MODULAR_REPOSITORY_ADDITIONAL_MODULAR_COMPONENT_TYPES,
+    PINNED_MODULAR_REPOSITORY_IGNORED_STANDARD_COMPONENT_TYPES,
+    PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES,
+    PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES,
+    PINNED_MODULAR_REPOSITORY_VARIANTS,
+    PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS,
+    reviewed_modular_weight_variant,
+)
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
 
-from . import MESSAGE_DURATION, MODULAR_REGISTRY, components
+from . import MESSAGE_DURATION, components
+from .custom_pipeline import (
+    CUSTOM_PIPELINE_IDENTITY_FIELD,
+    CUSTOM_PIPELINE_MODEL_TYPE,
+    CustomPipelineExecutionIdentity,
+    resolve_custom_pipeline_binding,
+)
 from .modular_utils import (
-    DUMMY_CUSTOM_PIPELINE_CONFIG,
-    DummyCustomPipeline,
+    REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES,
     get_all_model_types,
     get_model_type_metadata,
     pin_modular_component_revisions,
+    pipeline_class_from_model_type,
     require_immutable_hub_revision,
+)
+from .route_state import (
+    bind_loader_outputs,
+    bind_standalone_component_output,
+    issue_pipeline_instance_token,
+    issue_standalone_component_issuer,
+    reset_owned_sdxl_ip_adapter_for_loader,
+    require_standalone_component_binding,
+    standalone_component_reuse_is_bound,
 )
 
 
@@ -39,8 +81,820 @@ logger = logging.getLogger("modiff")
 logger.setLevel(logging.DEBUG)
 
 QWEN_LOW_VRAM_COMPONENT = "qwen_low_vram"
-QWEN_LOW_RESOURCE_COMPONENTS = {"transformer", "text_encoder"}
 GROUP_OFFLOAD_COMPONENTS = set(DEFAULT_GROUP_COMPONENTS)
+REQUIRED_REGIONAL_COMPILE_MODEL_TYPES = frozenset(
+    {
+        "WanAnimate2ModularPipeline",
+        "WanAnimate2DistilledModularPipeline",
+    }
+)
+REVIEWED_BUILTIN_WORKFLOWS = {
+    # Exact expanded Qwen Blocks load only the component inventory required by
+    # the selected upstream workflow. The unpruned repository index also
+    # advertises optional families (for example ControlNet) that are not part
+    # of an ordinary text-to-image run and must not become false loader
+    # requirements.
+    "QwenImageModularPipeline": frozenset(
+        {
+            "text2image",
+            "image2image",
+            "inpainting",
+            "controlnet_text2image",
+            "controlnet_image2image",
+            "controlnet_inpainting",
+        }
+    ),
+    # These reviewed Qwen families use a different upstream workflow shape
+    # from the base text-to-image pipeline. Keep the loader scope exact so it
+    # cannot silently fall back to the repository's unpruned component graph.
+    "QwenImageEditModularPipeline": frozenset(
+        {
+            "image_conditioned",
+            "image_conditioned_inpainting",
+        }
+    ),
+    "QwenImageEditPlusModularPipeline": frozenset({"default"}),
+    "QwenImageLayeredModularPipeline": frozenset({"default"}),
+    # MiniMax H3 publishes two 61.7 GB transformer partitions in one root.
+    # Passing the reviewed workflow is therefore part of the immutable loader
+    # identity: t2va/fl2va select ``transformer`` and ref2va selects
+    # ``transformer_ref``. An unscoped load would pull both partitions.
+    "MiniMaxH3ModularPipeline": frozenset({"t2va", "fl2va", "ref2va"}),
+}
+REVIEWED_EXPANDED_WORKFLOW_MODEL_TYPES = frozenset(
+    {
+        "QwenImageModularPipeline",
+        "QwenImageEditModularPipeline",
+        "QwenImageEditPlusModularPipeline",
+        "QwenImageLayeredModularPipeline",
+    }
+)
+MODELS_LOADER_IDENTITY_OUTPUTS = (
+    "text_encoders",
+    "unet_out",
+    "vae_out",
+    "scheduler",
+    "image_encoder",
+    "pipeline_components",
+)
+MODELS_LOADER_COMPONENT_OUTPUTS = frozenset({"image_encoder"})
+MAX_REVIEWED_PIPELINE_INDEX_BYTES = 1024 * 1024
+_REVIEWED_PIPELINE_INDEX_FILENAMES = ("modular_model_index.json", "model_index.json")
+# Diffusers' private AutoPipeline module eagerly imports every optional image
+# family. A failure in an unrelated family must not prevent validation of an
+# already-reviewed Modular repository. Keep this standard-to-Modular model key
+# join explicit and fail closed when a new reviewed class is introduced.
+_REVIEWED_STANDARD_PIPELINE_MODEL_NAMES = {
+    "StableDiffusionXLPipeline": "stable-diffusion-xl",
+    "QwenImagePipeline": "qwenimage",
+    "QwenImageEditPipeline": "qwenimage-edit",
+    "QwenImageEditPlusPipeline": "qwenimage-edit-plus",
+    "QwenImageLayeredPipeline": "qwenimage-layered",
+    "FluxPipeline": "flux",
+    "FluxKontextPipeline": "flux-kontext",
+    "Flux2Pipeline": "flux2",
+    "Flux2KleinPipeline": "flux2-klein",
+    "ZImagePipeline": "z-image",
+    "HunyuanVideo15Pipeline": "hunyuan-video-1.5",
+    "HunyuanVideo15ImageToVideoPipeline": "hunyuan-video-1.5",
+    "WanPipeline": "wan",
+    "WanImageToVideoPipeline": "wan-i2v",
+}
+MAX_REVIEWED_COMPONENT_CONFIG_BYTES = 1024 * 1024
+MAX_REVIEWED_JSON_DEPTH = 64
+MAX_REVIEWED_JSON_ITEMS = 100_000
+_EXACT_HUB_REVISION = re.compile(r"^[0-9a-f]{40}$")
+_COMPONENT_CONFIG_CLASS_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_DIFFUSERS_COMPONENT_CATEGORY_MODULES = {
+    "unet": "unets.",
+    "transformer": "transformers.",
+    "vae": "autoencoders.",
+    "controlnet": "controlnets.",
+}
+# This pinned Diffusers export inherits torch.nn.Module directly rather than
+# ModelMixin, so it does not implement the reviewed standalone loading contract.
+_DIFFUSERS_COMPONENT_EXPORT_EXCLUSIONS = frozenset({"DualTransformer2DModel"})
+
+
+def _reviewed_loader_component_outputs(model_type):
+    metadata = get_model_type_metadata(model_type)
+    outputs = metadata.get("loader_component_outputs") if isinstance(metadata, Mapping) else None
+    if not isinstance(outputs, list) or any(name not in MODELS_LOADER_COMPONENT_OUTPUTS for name in outputs):
+        raise RuntimeError("The registered Modular pipeline has an invalid loader component output contract.")
+    return tuple(outputs)
+
+
+def _reviewed_builtin_workflow_id(model_type, workflow_id):
+    """Validate loader-level workflow pruning for exact reviewed artifacts."""
+
+    if workflow_id is not None and not isinstance(workflow_id, str):
+        raise TypeError("A reviewed Modular Diffusers workflow ID must be a string.")
+    selected = str(workflow_id or "").strip()
+    supported = REVIEWED_BUILTIN_WORKFLOWS.get(model_type)
+    if supported is None:
+        if not selected:
+            return None
+        # Explicit V2 workflow selection is governed by the same immutable
+        # upstream snapshot as the catalog, not a second Qwen-only allowlist.
+        # This validates structure only; artifact/runtime/license admission
+        # remains mandatory at the existing execution boundaries.
+        contract = reviewed_modular_workflow_contract(model_type)
+        supported = {workflow["id"] for workflow in contract["workflows"]}
+    if selected not in supported:
+        raise ValueError(
+            f"Registered Modular pipeline {model_type!r} requires one exact reviewed workflow: "
+            + ", ".join(sorted(supported))
+            + "."
+        )
+    return selected
+
+
+def configure_required_regional_compile(pipeline, *, model_type):
+    """Apply model-mandated regional compilation once per shared component.
+
+    Wan Animate 2's in-context attention is implemented with a Flex Attention
+    block mask. The pinned Diffusers documentation requires compiling the
+    repeated transformer blocks; eager fallback materializes an attention
+    matrix that does not fit at video resolutions. ComponentsManager can share
+    the transformer between loader instances, so the marker lives on the
+    component rather than on one ModularPipeline wrapper.
+    """
+    if model_type not in REQUIRED_REGIONAL_COMPILE_MODEL_TYPES:
+        return {"required": False, "applied": False, "reused": False, "components": []}
+
+    transformer = getattr(pipeline, "transformer", None)
+    compile_repeated_blocks = getattr(transformer, "compile_repeated_blocks", None)
+    if not callable(compile_repeated_blocks):
+        raise RuntimeError(
+            f"{model_type} requires Diffusers regional compilation, but its transformer does not expose "
+            "compile_repeated_blocks()."
+        )
+
+    marker = getattr(transformer, "_modiff_required_regional_compile", None)
+    expected = {"fullgraph": False}
+    if marker == expected:
+        return {"required": True, "applied": False, "reused": True, "components": ["transformer"]}
+
+    try:
+        compile_repeated_blocks(fullgraph=False)
+    except Exception as exc:
+        raise RuntimeError(f"Could not regionally compile the required {model_type} transformer blocks: {exc}") from exc
+    transformer._modiff_required_regional_compile = expected
+    return {"required": True, "applied": True, "reused": False, "components": ["transformer"]}
+
+
+def _reject_duplicate_pipeline_index_keys(pairs):
+    value = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError(f"Duplicate JSON key {key!r} is not allowed")
+        value[key] = item
+    return value
+
+
+def _reject_nonfinite_pipeline_index_number(value):
+    raise ValueError(f"Non-finite JSON number {value!r} is not allowed")
+
+
+def _validate_reviewed_json_shape(document, *, description):
+    """Bound nesting and aggregate values after the finite-size JSON parse."""
+
+    pending = [(document, 0)]
+    item_count = 0
+    while pending:
+        value, depth = pending.pop()
+        item_count += 1
+        if item_count > MAX_REVIEWED_JSON_ITEMS:
+            raise EnvironmentError(f"{description} exceeds the {MAX_REVIEWED_JSON_ITEMS}-item JSON limit.")
+        if depth > MAX_REVIEWED_JSON_DEPTH:
+            raise EnvironmentError(f"{description} exceeds the {MAX_REVIEWED_JSON_DEPTH}-level JSON depth limit.")
+        if isinstance(value, dict):
+            pending.extend((item, depth + 1) for item in value.values())
+        elif isinstance(value, list):
+            pending.extend((item, depth + 1) for item in value)
+
+
+def _reviewed_json_fingerprint(document):
+    canonical = json.dumps(
+        document,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def _read_bounded_reviewed_json(read_path, *, byte_limit, description):
+    try:
+        file_size = read_path.stat().st_size
+        if file_size > byte_limit:
+            raise EnvironmentError(f"{description} exceeds the {byte_limit}-byte limit.")
+        with read_path.open("rb") as reader:
+            raw_bytes = reader.read(byte_limit + 1)
+    except OSError as error:
+        raise EnvironmentError(f"Could not read {description}: {error}") from error
+    if len(raw_bytes) > byte_limit:
+        raise EnvironmentError(f"{description} exceeds the {byte_limit}-byte limit.")
+    try:
+        document = json.loads(
+            raw_bytes.decode("utf-8"),
+            object_pairs_hook=_reject_duplicate_pipeline_index_keys,
+            parse_constant=_reject_nonfinite_pipeline_index_number,
+        )
+    except (UnicodeDecodeError, ValueError, RecursionError) as error:
+        raise EnvironmentError(f"{description} is not unambiguous UTF-8 JSON: {error}") from error
+    if not isinstance(document, dict):
+        raise EnvironmentError(f"{description} must be a JSON object.")
+    _validate_reviewed_json_shape(document, description=description)
+    return document
+
+
+def _path_is_link(path):
+    return path.is_symlink() or bool(getattr(path, "is_junction", lambda: False)())
+
+
+@lru_cache(maxsize=1)
+def _reviewed_diffusers_component_exports():
+    """Return the pinned Diffusers model export map without importing model classes."""
+
+    from diffusers import models as diffusers_models
+
+    import_structure = getattr(diffusers_models, "_import_structure", None)
+    if not isinstance(import_structure, dict):
+        raise RuntimeError("The pinned Diffusers models export contract is unavailable.")
+    categories = {}
+    for category, module_prefix in _DIFFUSERS_COMPONENT_CATEGORY_MODULES.items():
+        exports = {}
+        for relative_module, names in import_structure.items():
+            if not isinstance(relative_module, str) or not relative_module.startswith(module_prefix):
+                continue
+            if not isinstance(names, (list, tuple)):
+                raise RuntimeError(f"The pinned Diffusers export contract for {relative_module!r} is malformed.")
+            for name in names:
+                if not isinstance(name, str) or not _COMPONENT_CONFIG_CLASS_NAME.fullmatch(name):
+                    raise RuntimeError(
+                        f"The pinned Diffusers export contract for {relative_module!r} has an invalid class name."
+                    )
+                if name in _DIFFUSERS_COMPONENT_EXPORT_EXCLUSIONS:
+                    continue
+                previous = exports.setdefault(name, relative_module)
+                if previous != relative_module:
+                    raise RuntimeError(
+                        f"The pinned Diffusers component {name!r} is exported by multiple model modules."
+                    )
+        categories[category] = tuple(sorted(exports.items()))
+    return tuple(sorted(categories.items()))
+
+
+def reviewed_diffusers_component_class_names(category):
+    """Expose generic Hub filters from the same backend category allowlist."""
+
+    exports = dict(_reviewed_diffusers_component_exports())
+    if not isinstance(category, str) or category not in exports:
+        return []
+    return [name for name, _module in exports[category]]
+
+
+def _resolve_reviewed_diffusers_component_class(category, class_name):
+    """Resolve one prevalidated class only from its pinned Diffusers models module."""
+
+    category_exports = dict(dict(_reviewed_diffusers_component_exports()).get(category, ()))
+    relative_module = category_exports.get(class_name)
+    if relative_module is None:
+        raise ValueError(
+            f"Diffusers class {class_name!r} is not an approved {category!r} component in the pinned runtime."
+        )
+
+    # The repository selects only an allowlisted export name. The installed,
+    # pinned Diffusers package supplies the module path and class object.
+    module = importlib.import_module(f"diffusers.models.{relative_module}")
+    component_class = getattr(module, class_name, None)
+    from diffusers import ModelMixin
+
+    expected_prefix = f"diffusers.models.{_DIFFUSERS_COMPONENT_CATEGORY_MODULES[category]}"
+    if (
+        not isinstance(component_class, type)
+        or not issubclass(component_class, ModelMixin)
+        or not component_class.__module__.startswith(expected_prefix)
+        or not callable(getattr(component_class, "from_pretrained", None))
+    ):
+        raise ValueError(
+            f"Installed Diffusers class {class_name!r} does not satisfy the reviewed {category!r} "
+            "ModelMixin loading contract."
+        )
+    return component_class
+
+
+def _normalize_reviewed_component_subfolder(subfolder):
+    if subfolder is None or subfolder == "":
+        return None
+    if not isinstance(subfolder, str):
+        raise TypeError("AutoModelLoader subfolder must be a string.")
+    if len(subfolder) > 512 or "\\" in subfolder or "\x00" in subfolder:
+        raise ValueError("AutoModelLoader subfolder must be a short relative POSIX path.")
+    parts = subfolder.split("/")
+    if subfolder.startswith("/") or any(part in ("", ".", "..") for part in parts):
+        raise ValueError("AutoModelLoader subfolder must be a traversal-free relative path.")
+    if any(":" in part for part in parts):
+        raise ValueError("AutoModelLoader subfolder must not contain a drive or URI scheme.")
+    return "/".join(parts)
+
+
+def _reviewed_local_component_config(repository, subfolder):
+    raw_root = Path(repository).expanduser().absolute()
+    if not raw_root.exists() or not raw_root.is_dir() or _path_is_link(raw_root):
+        raise ValueError("AutoModelLoader local source must be an existing non-linked directory.")
+    try:
+        root = raw_root.resolve(strict=True)
+    except (OSError, RuntimeError) as error:
+        raise ValueError("AutoModelLoader could not resolve the selected local directory.") from error
+
+    current = root
+    for part in subfolder.split("/") if subfolder else ():
+        current = current / part
+        if not current.exists() or not current.is_dir() or _path_is_link(current):
+            raise ValueError("AutoModelLoader local subfolder must stay inside non-linked directories.")
+    config_path = current / "config.json"
+    if not config_path.exists() or not config_path.is_file() or _path_is_link(config_path):
+        raise ValueError("AutoModelLoader requires a non-linked config.json in the selected component directory.")
+    try:
+        config_path.resolve(strict=True).relative_to(root)
+    except (OSError, RuntimeError, ValueError) as error:
+        raise ValueError("AutoModelLoader component config escapes the selected local directory.") from error
+    return config_path
+
+
+def _reviewed_hub_component_config_path(path, *, repository, revision):
+    config_path = Path(path).absolute()
+    snapshot_path = None
+    for parent in config_path.parents:
+        if parent.name == revision and parent.parent.name == "snapshots":
+            snapshot_path = parent
+            break
+    if snapshot_path is None:
+        raise EnvironmentError(
+            f"The cached component config for {repository}@{revision} is not in its exact Hub snapshot."
+        )
+    try:
+        relative_path = config_path.relative_to(snapshot_path)
+    except ValueError as error:
+        raise EnvironmentError(
+            f"The cached component config for {repository}@{revision} escapes its exact Hub snapshot."
+        ) from error
+
+    repo_cache_path = snapshot_path.parent.parent
+    for directory in (repo_cache_path, snapshot_path.parent, snapshot_path):
+        if _path_is_link(directory):
+            raise EnvironmentError(f"The cached component snapshot boundary must not be linked: '{directory}'.")
+    current = snapshot_path
+    for part in relative_path.parts[:-1]:
+        current = current / part
+        if _path_is_link(current):
+            raise EnvironmentError(f"The cached component config parent must not be linked: '{current}'.")
+
+    read_path = config_path
+    if config_path.is_symlink():
+        try:
+            blob_path = repo_cache_path / "blobs"
+            if _path_is_link(blob_path):
+                raise ValueError("the repository blobs directory is linked")
+            read_path = config_path.resolve(strict=True)
+            read_path.relative_to(blob_path.resolve(strict=True))
+        except (OSError, RuntimeError, ValueError) as error:
+            raise EnvironmentError(
+                f"The cached component config for {repository}@{revision} does not resolve inside its repository cache."
+            ) from error
+    if not read_path.is_file():
+        raise EnvironmentError(f"The cached component config for {repository}@{revision} is not a regular file.")
+    return read_path
+
+
+def _load_reviewed_component_config(source, repository, subfolder, revision):
+    """Load only a bounded component config; Hub downloads use an exact commit."""
+
+    if source == "local":
+        config_path = _reviewed_local_component_config(repository, subfolder)
+        description = f"AutoModelLoader component config '{config_path}'"
+        return _read_bounded_reviewed_json(
+            config_path,
+            byte_limit=MAX_REVIEWED_COMPONENT_CONFIG_BYTES,
+            description=description,
+        )
+
+    download_kwargs = {
+        "repo_id": repository,
+        "filename": "config.json",
+        "revision": revision,
+        "subfolder": subfolder,
+    }
+    try:
+        config_path = hf_hub_download(**download_kwargs, local_files_only=True)
+    except (EntryNotFoundError, LocalEntryNotFoundError):
+        url = hf_hub_url(
+            repository,
+            filename="config.json",
+            subfolder=subfolder,
+            revision=revision,
+        )
+        try:
+            metadata = get_hf_file_metadata(url)
+        except (HfHubHTTPError, ValueError) as error:
+            raise EnvironmentError(
+                f"Could not inspect the exact component config for {repository}@{revision}: {error}"
+            ) from error
+        if metadata.commit_hash and metadata.commit_hash.lower() != revision:
+            raise EnvironmentError(
+                f"The Hub resolved {repository}@{revision} to a different commit; refusing the component config."
+            )
+        if metadata.size is None or metadata.size > MAX_REVIEWED_COMPONENT_CONFIG_BYTES:
+            raise EnvironmentError(
+                f"The component config for {repository}@{revision} has no bounded size or exceeds the "
+                f"{MAX_REVIEWED_COMPONENT_CONFIG_BYTES}-byte limit."
+            )
+        try:
+            config_path = hf_hub_download(**download_kwargs)
+        except (EntryNotFoundError, HfHubHTTPError, ValueError) as error:
+            raise EnvironmentError(
+                f"Could not download the exact component config for {repository}@{revision}: {error}"
+            ) from error
+
+    read_path = _reviewed_hub_component_config_path(
+        config_path,
+        repository=repository,
+        revision=revision,
+    )
+    return _read_bounded_reviewed_json(
+        read_path,
+        byte_limit=MAX_REVIEWED_COMPONENT_CONFIG_BYTES,
+        description=f"cached component config for {repository}@{revision}",
+    )
+
+
+def _reviewed_component_load_class(model_type, source, repository, revision, config_class, requested_class):
+    """Resolve an exact catalog-authorized class override for exceptional Hub configs."""
+
+    requested = str(requested_class or "").strip()
+    if not requested:
+        return config_class
+    if source != "hub":
+        raise ValueError("AutoModelLoader component_class overrides are available only to reviewed Hub artifacts.")
+    pin = catalog_repository_pin(repository)
+    if (
+        not isinstance(pin, Mapping)
+        or pin.get("revision") != revision
+        or pin.get("componentKind") != model_type
+        or pin.get("configClass") != config_class
+        or pin.get("loadClass") != requested
+    ):
+        raise ValueError(
+            "AutoModelLoader component_class does not match an exact reviewed repository loading contract."
+        )
+    return requested
+
+
+def _preflight_reviewed_diffusers_component(model_type, model_id, subfolder, revision, component_class=None):
+    """Bind an untrusted selection to one installed Diffusers component export."""
+
+    if not isinstance(model_type, str) or model_type not in _DIFFUSERS_COMPONENT_CATEGORY_MODULES:
+        raise ValueError(
+            "AutoModelLoader requires a component type of unet, transformer, vae, or controlnet; "
+            f"received {model_type!r}. Rebuild or repair the managed graph before loading model weights."
+        )
+    if not isinstance(model_id, Mapping):
+        raise TypeError("AutoModelLoader model_id must be a model-selector JSON object.")
+    source = model_id.get("source")
+    repository = model_id.get("value")
+    if not isinstance(source, str) or source not in {"hub", "local"}:
+        raise ValueError("AutoModelLoader model source must be exactly 'hub' or 'local'.")
+    if not isinstance(repository, str) or not repository.strip():
+        raise ValueError("AutoModelLoader requires a non-empty repository or local directory.")
+    repository = repository.strip()
+    if len(repository) > 4096 or "\x00" in repository:
+        raise ValueError("AutoModelLoader repository selection is too long or contains a null byte.")
+    subfolder = _normalize_reviewed_component_subfolder(subfolder)
+
+    if revision is not None and not isinstance(revision, str):
+        raise TypeError("AutoModelLoader revision must be a string when provided.")
+    explicit_revision = str(revision or "").strip() or None
+    if source == "hub":
+        resolved_revision = resolve_model_revision(repository, explicit_revision, source="hub")
+        resolved_revision = require_immutable_hub_revision(repository, resolved_revision, required=True)
+        if not isinstance(resolved_revision, str) or not _EXACT_HUB_REVISION.fullmatch(resolved_revision):
+            raise ValueError("AutoModelLoader Hub components require an exact lowercase 40-character commit revision.")
+    else:
+        if explicit_revision is not None:
+            raise ValueError("AutoModelLoader local components must not carry a Hub revision.")
+        resolved_revision = None
+        raw_root = Path(repository).expanduser().absolute()
+        if _path_is_link(raw_root):
+            raise ValueError("AutoModelLoader local source must be an existing non-linked directory.")
+        try:
+            repository = str(raw_root.resolve(strict=True))
+        except (OSError, RuntimeError) as error:
+            raise ValueError("AutoModelLoader could not resolve the selected local directory.") from error
+
+    document = _load_reviewed_component_config(
+        source,
+        repository,
+        subfolder,
+        resolved_revision,
+    )
+    if "auto_map" in document:
+        raise ValueError("AutoModelLoader component configs must not declare remote-code auto_map entries.")
+    class_name = document.get("_class_name")
+    if not isinstance(class_name, str) or not _COMPONENT_CONFIG_CLASS_NAME.fullmatch(class_name):
+        if "model_type" in document:
+            raise ValueError(
+                "AutoModelLoader does not accept Transformers model_type-only configs; select a Diffusers component."
+            )
+        raise ValueError("AutoModelLoader component config requires a simple Diffusers _class_name.")
+    load_class = _reviewed_component_load_class(
+        model_type, source, repository, resolved_revision, class_name, component_class
+    )
+    category_exports = dict(dict(_reviewed_diffusers_component_exports())[model_type])
+    if load_class not in category_exports:
+        raise ValueError(
+            f"Diffusers class {load_class!r} is not an approved {model_type!r} component in the pinned runtime."
+        )
+    return source, repository, resolved_revision, subfolder, load_class, _reviewed_json_fingerprint(document)
+
+
+def _read_reviewed_pipeline_index(path, *, repository, revision):
+    """Read one exact cached Hub index through a finite, duplicate-free boundary."""
+
+    index_path = Path(path).absolute()
+    snapshot_path = index_path.parent
+    if snapshot_path.name != revision or snapshot_path.parent.name != "snapshots":
+        raise EnvironmentError(
+            f"The cached pipeline index for {repository}@{revision} is not in its exact Hub snapshot."
+        )
+    repo_cache_path = snapshot_path.parent.parent
+    for directory in (repo_cache_path, snapshot_path.parent, snapshot_path):
+        is_junction = bool(getattr(directory, "is_junction", lambda: False)())
+        if directory.is_symlink() or is_junction:
+            raise EnvironmentError(f"The cached pipeline snapshot boundary must not be linked: '{directory}'.")
+
+    read_path = index_path
+    if index_path.is_symlink():
+        try:
+            blob_path = repo_cache_path / "blobs"
+            if blob_path.is_symlink() or bool(getattr(blob_path, "is_junction", lambda: False)()):
+                raise ValueError("the repository blobs directory is linked")
+            read_path = index_path.resolve(strict=True)
+            read_path.relative_to(blob_path.resolve(strict=True))
+        except (OSError, RuntimeError, ValueError) as error:
+            raise EnvironmentError(
+                f"The cached pipeline index for {repository}@{revision} does not resolve inside its repository cache."
+            ) from error
+    if not read_path.is_file():
+        raise EnvironmentError(f"The cached pipeline index for {repository}@{revision} is not a regular file.")
+
+    try:
+        file_size = read_path.stat().st_size
+        if file_size > MAX_REVIEWED_PIPELINE_INDEX_BYTES:
+            raise EnvironmentError(
+                f"The cached pipeline index for {repository}@{revision} exceeds the "
+                f"{MAX_REVIEWED_PIPELINE_INDEX_BYTES}-byte limit."
+            )
+        with read_path.open("rb") as reader:
+            raw_bytes = reader.read(MAX_REVIEWED_PIPELINE_INDEX_BYTES + 1)
+    except OSError as error:
+        raise EnvironmentError(
+            f"Could not read the cached pipeline index for {repository}@{revision}: {error}"
+        ) from error
+    if len(raw_bytes) > MAX_REVIEWED_PIPELINE_INDEX_BYTES:
+        raise EnvironmentError(
+            f"The cached pipeline index for {repository}@{revision} exceeds the "
+            f"{MAX_REVIEWED_PIPELINE_INDEX_BYTES}-byte limit."
+        )
+    try:
+        document = json.loads(
+            raw_bytes.decode("utf-8"),
+            object_pairs_hook=_reject_duplicate_pipeline_index_keys,
+            parse_constant=_reject_nonfinite_pipeline_index_number,
+        )
+    except (UnicodeDecodeError, ValueError, RecursionError) as error:
+        raise EnvironmentError(
+            f"The cached pipeline index for {repository}@{revision} is not unambiguous UTF-8 JSON: {error}"
+        ) from error
+    if not isinstance(document, dict):
+        raise EnvironmentError(f"The cached pipeline index for {repository}@{revision} must be a JSON object.")
+    _validate_reviewed_json_shape(
+        document,
+        description=f"cached pipeline index for {repository}@{revision}",
+    )
+    return document
+
+
+def _load_reviewed_pipeline_index(repository, revision):
+    """Resolve only an immutable cached Hub index; this function never downloads."""
+
+    failures = []
+    for filename in _REVIEWED_PIPELINE_INDEX_FILENAMES:
+        try:
+            index_path = hf_hub_download(
+                repository,
+                filename=filename,
+                revision=revision,
+                local_files_only=True,
+            )
+        except (EntryNotFoundError, LocalEntryNotFoundError, HfHubHTTPError, ValueError) as error:
+            failures.append(error)
+            continue
+        return filename, _read_reviewed_pipeline_index(
+            index_path,
+            repository=repository,
+            revision=revision,
+        )
+    raise EnvironmentError(
+        f"No cached modular_model_index.json or model_index.json was found for {repository}@{revision}. "
+        "Install that exact reviewed revision through Model Manager before running the pipeline."
+    ) from (failures[-1] if failures else None)
+
+
+def _validate_reviewed_pipeline_index(model_type, repository, revision):
+    """Bind repo metadata to the installed registered pipeline component contract."""
+
+    from diffusers.modular_pipelines.modular_pipeline import MODULAR_PIPELINE_MAPPING, _create_default_map_fn
+    from diffusers.pipelines.pipeline_loading_utils import _fetch_class_library_tuple, _get_pipeline_class
+
+    pipeline_class = pipeline_class_from_model_type(model_type)
+    filename, document = _load_reviewed_pipeline_index(repository, revision)
+    if filename == ModularPipeline.config_name:
+        resolved_pipeline_class = _get_pipeline_class(ModularPipeline, config=document)
+    else:
+        standard_pipeline_class = _get_pipeline_class(ModularPipeline, config=document)
+        model_name = _REVIEWED_STANDARD_PIPELINE_MODEL_NAMES.get(standard_pipeline_class.__name__)
+        if model_name is None:
+            raise ValueError(
+                f"The cached standard index for reviewed Modular pipeline {model_type!r} declares unsupported "
+                f"standard pipeline class {standard_pipeline_class.__name__!r}. Add an exact reviewed mapping "
+                "before admitting this repository."
+            )
+        map_fn = MODULAR_PIPELINE_MAPPING.get(model_name, _create_default_map_fn("ModularPipeline"))
+        resolved_pipeline_class = getattr(__import__("diffusers"), map_fn(document))
+    if resolved_pipeline_class is not pipeline_class:
+        raise ValueError(
+            f"The cached index for reviewed Modular pipeline {model_type!r} declares incompatible pipeline class "
+            f"{resolved_pipeline_class.__name__!r}. Repair the exact reviewed model revision before running."
+        )
+
+    installed_pipeline = pipeline_class()
+    expected_blocks_class_name = installed_pipeline.config.get("_blocks_class_name")
+    observed_blocks_class_name = document.get("_blocks_class_name")
+    if filename == ModularPipeline.config_name and observed_blocks_class_name != expected_blocks_class_name:
+        raise ValueError(
+            f"The cached index for reviewed Modular pipeline {model_type!r} declares blocks class "
+            f"{observed_blocks_class_name!r}, but the installed pipeline requires "
+            f"{expected_blocks_class_name!r}. Repair the exact reviewed model revision before running."
+        )
+    if filename != ModularPipeline.config_name and observed_blocks_class_name not in {
+        None,
+        expected_blocks_class_name,
+    }:
+        raise ValueError(
+            f"The cached standard index for reviewed Modular pipeline {model_type!r} declares incompatible "
+            f"blocks class {observed_blocks_class_name!r}."
+        )
+
+    expected_component_names = set(installed_pipeline._component_specs)
+    for name, raw_value in document.items():
+        if name in expected_component_names or not isinstance(raw_value, list):
+            continue
+        if filename == ModularPipeline.config_name:
+            if len(raw_value) != 3 or not isinstance(raw_value[2], dict):
+                raise ValueError(
+                    f"The cached reviewed pipeline index declares malformed unexpected component {name!r}."
+                )
+            observed_type_hint = raw_value[2].get("type_hint")
+            if observed_type_hint not in (None, [None, None]):
+                reviewed_additional_type = (
+                    PINNED_MODULAR_REPOSITORY_ADDITIONAL_MODULAR_COMPONENT_TYPES.get(repository, {}).get(name)
+                )
+                if (
+                    reviewed_additional_type is None
+                    or not isinstance(observed_type_hint, list)
+                    or len(observed_type_hint) != 2
+                    or tuple(raw_value[:2]) != reviewed_additional_type
+                    or tuple(observed_type_hint) != reviewed_additional_type
+                ):
+                    raise ValueError(
+                        f"The cached reviewed pipeline index declares unexpected executable component {name!r}."
+                    )
+        elif filename != ModularPipeline.config_name and len(raw_value) == 2:
+            reviewed_ignored_type = PINNED_MODULAR_REPOSITORY_IGNORED_STANDARD_COMPONENT_TYPES.get(repository, {}).get(
+                name
+            )
+            if raw_value != [None, None] and tuple(raw_value) != reviewed_ignored_type:
+                raise ValueError(
+                    f"The cached reviewed pipeline index declares unexpected executable component {name!r}."
+                )
+
+    for component_name, component_spec in installed_pipeline._component_specs.items():
+        raw_component = document.get(component_name)
+        if raw_component is None:
+            continue
+        if (
+            filename == ModularPipeline.config_name
+            and component_spec.default_creation_method == "from_config"
+            and isinstance(raw_component, list)
+            and len(raw_component) == 2
+        ):
+            # Weightless components are created from installed block defaults.
+            # Pinned indexes may retain their two-field class declaration; only
+            # the exact installed class is admitted below. Weight-bearing specs
+            # still require the complete three-field loading contract.
+            observed_type_hint = raw_component
+        elif filename == ModularPipeline.config_name:
+            if (
+                not isinstance(raw_component, list)
+                or len(raw_component) != 3
+                or not isinstance(raw_component[2], dict)
+            ):
+                raise ValueError(
+                    f"The cached reviewed pipeline index has a malformed {component_name!r} component contract."
+                )
+            outer_library, outer_class_name = raw_component[:2]
+            if any(item is not None and not isinstance(item, str) for item in (outer_library, outer_class_name)):
+                raise ValueError(
+                    f"The cached reviewed pipeline index has malformed outer metadata for {component_name!r}."
+                )
+            observed_type_hint = raw_component[2].get("type_hint")
+        else:
+            if not isinstance(raw_component, list) or len(raw_component) != 2:
+                raise ValueError(
+                    f"The cached reviewed pipeline index has a malformed {component_name!r} component contract."
+                )
+            observed_type_hint = raw_component
+        if (
+            not isinstance(observed_type_hint, list)
+            or len(observed_type_hint) != 2
+            or any(not isinstance(item, str) or not item for item in observed_type_hint)
+        ):
+            raise ValueError(
+                f"The cached reviewed pipeline index has an invalid {component_name!r} component type hint."
+            )
+        expected_type_hint = list(_fetch_class_library_tuple(component_spec.type_hint))
+        reviewed_concrete_type = PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES.get(repository, {}).get(component_name)
+        if observed_type_hint != expected_type_hint and tuple(observed_type_hint) != reviewed_concrete_type:
+            raise ValueError(
+                f"The cached reviewed pipeline index maps component {component_name!r} to "
+                f"{observed_type_hint!r}, but registered pipeline {model_type!r} requires {expected_type_hint!r}. "
+                "Repair the exact reviewed model revision before running."
+            )
+    return filename, deepcopy(document)
+
+
+def _instantiate_reviewed_builtin_pipeline(
+    model_type,
+    repository,
+    *,
+    index_filename,
+    index_document,
+    components_manager,
+    collection,
+    workflow_id=None,
+):
+    """Construct installed registered blocks from one already-validated index."""
+
+    pipeline_class = pipeline_class_from_model_type(model_type)
+    installed_pipeline = pipeline_class()
+    load_document = deepcopy(index_document)
+    for component_name, type_hint in PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES.get(repository, {}).items():
+        load_document[component_name] = list(type_hint)
+    config_kwargs = (
+        {"modular_config_dict": load_document}
+        if index_filename == ModularPipeline.config_name
+        else {"config_dict": load_document}
+    )
+    # ``workflow`` is an upstream selection API, not a generic identity field.
+    # Diffusers only accepts it for block trees that publish ``_workflow_map``.
+    # Fixed SequentialPipelineBlocks such as Qwen Edit Plus and Qwen Layered use
+    # MoDiff's reviewed ``default`` as an internal route identity; their blocks
+    # are already the exact executable sequence and must be constructed without
+    # forwarding that synthetic name upstream.
+    workflow_kwargs = {"workflow": workflow_id} if workflow_id and workflow_id != "default" else {}
+    pipeline = pipeline_class(
+        blocks=installed_pipeline.blocks,
+        pretrained_model_name_or_path=repository,
+        components_manager=components_manager,
+        collection=collection,
+        **workflow_kwargs,
+        **config_kwargs,
+    )
+    if model_type == "HeliosPyramidModularPipeline" and repository == HELIOS_MID_REPOSITORY:
+        # The pinned AutoBlocks aggregate retains the ordinary CFG spec from
+        # another block, and upstream ignores two-field modular config entries.
+        # Restore Mid's actual denoiser specification through the official
+        # component API, including its native zero-init configuration.
+        from diffusers.modular_pipelines.helios.denoise import HeliosPyramidChunkDenoiseInner
+
+        guider_spec = next(
+            spec for spec in HeliosPyramidChunkDenoiseInner().expected_components if spec.name == "guider"
+        )
+        pipeline.update_components(guider=guider_spec.create())
+    return pipeline
 
 
 def node_get_component_info(node_id=None, manager=None, name=None):
@@ -64,11 +918,45 @@ def component_quant_config_summary(config):
     return {name: quant_config_to_info(value) for name, value in config.items()}
 
 
+def annotate_modular_loader_outputs(
+    loaded_components,
+    *,
+    repo_id,
+    repo_source,
+    model_type,
+    revision,
+    trust_remote_code,
+    custom_identity=None,
+    pipeline_instance_token=None,
+):
+    """Attach enough verified identity metadata for runtime-only recovery."""
+
+    for value in loaded_components.values():
+        if not isinstance(value, dict):
+            continue
+        value["repo_id"] = repo_id
+        value["repo_source"] = repo_source
+        value["model_type"] = model_type
+        value["revision"] = revision
+        value["trust_remote_code"] = trust_remote_code
+        if custom_identity is not None:
+            value[CUSTOM_PIPELINE_IDENTITY_FIELD] = deepcopy(custom_identity)
+        else:
+            value.pop(CUSTOM_PIPELINE_IDENTITY_FIELD, None)
+    if pipeline_instance_token is not None:
+        bind_loader_outputs(loaded_components, pipeline_instance_token)
+    return loaded_components
+
+
 def should_incrementally_group_offload(*, use_group_offload, quant_config):
-    """Select the low-peak loader path from component capabilities, not a pipeline name."""
-    return bool(
-        use_group_offload and quant_config and QWEN_LOW_RESOURCE_COMPONENTS.intersection(set(quant_config.keys()))
-    )
+    """Offload each supported component before loading the next one.
+
+    A missing override does not imply unquantized weights: checkpoints can
+    carry their own quantization configuration. Delaying offload until every
+    component is resident defeats the selected memory policy during loading.
+    ``quant_config`` is retained for compatibility with existing callers.
+    """
+    return bool(use_group_offload)
 
 
 def safe_diagnostic_value(value):
@@ -401,67 +1289,105 @@ def normalize_quant_config_input(config):
     )
 
 
+@dataclass(frozen=True)
+class _PreparedLoraAdapters:
+    pipeline: object
+    resolved: tuple[ResolvedLoraDescriptor, ...]
+    scheduler: object | None
+
+
 def update_lora_adapters(lora_node, lora_list):
+    """Replace Modular LoRAs only after every identity and file header is revalidated.
+
+    Diffusers still owns model/component key compatibility. A later upstream
+    compatibility failure cannot be made transactional by this lifecycle API.
     """
-    Update LoRA adapters based on the provided list of LoRAs.
 
-    Args:
-        lora_node: ModularPipeline node containing LoRA functionality
-        lora_list: List of dictionaries or single dictionary containing LoRA configurations with:
-                  {'lora_path': str, 'weight_name': str, 'adapter_name': str, 'scale': float}
-    """
-    # Convert single lora to list if needed
-    if not isinstance(lora_list, list):
-        lora_list = [lora_list]
+    resolved = resolve_lora_descriptors(lora_list)
+    get_adapters = getattr(lora_node, "get_list_adapters", None)
+    load = getattr(lora_node, "load_lora_weights", None)
+    activate = getattr(lora_node, "set_adapters", None)
+    if not callable(get_adapters) or not callable(load) or not callable(activate):
+        raise ValueError("This Modular pipeline does not expose the reviewed Diffusers LoRA lifecycle API.")
 
-    # Get currently loaded adapters
-    loaded_adapters = list(set().union(*lora_node.get_list_adapters().values()))
+    listed = get_adapters() or {}
+    if not isinstance(listed, Mapping):
+        raise ValueError("The Modular pipeline returned an invalid loaded-adapter inventory.")
+    loaded_adapters = {str(adapter) for adapters in listed.values() for adapter in (adapters or [])}
+    unload = getattr(lora_node, "unload_lora_weights", None)
+    delete = getattr(lora_node, "delete_adapters", None)
+    if loaded_adapters and not callable(unload) and not callable(delete):
+        raise ValueError("The Modular pipeline cannot safely replace its existing LoRA adapters.")
 
-    # Determine which adapters to set and remove
-    to_set = [lora["adapter_name"] for lora in lora_list]
-    to_remove = [adapter for adapter in loaded_adapters if adapter not in to_set]
+    # Scheduler construction is also a preflight: an invalid/incompatible
+    # override must not unload a currently working adapter set.
+    scheduler = _prepare_lora_scheduler_override(lora_node, resolved)
 
-    # Remove unused adapters first
-    for adapter_name in to_remove:
-        lora_node.delete_adapters(adapter_name)
+    if loaded_adapters:
+        if callable(unload):
+            unload()
+        else:
+            for adapter_name in sorted(loaded_adapters):
+                delete(adapter_name)
 
-    # Load new LoRAs and set their scales
-    scales = {}
-    for lora in lora_list:
-        adapter_name = lora["adapter_name"]
-        if adapter_name not in loaded_adapters:
-            lora_node.load_lora_weights(
-                lora["lora_path"],
-                weight_name=lora["weight_name"],
-                adapter_name=adapter_name,
-            )
-        scales[adapter_name] = lora["scale"]
+    for item in resolved:
+        load(
+            str(item.load_directory),
+            weight_name=item.weight_name,
+            adapter_name=item.adapter_name,
+            use_safetensors=True,
+        )
+    activate(
+        [item.adapter_name for item in resolved],
+        [item.scale for item in resolved],
+    )
+    lora_node._modiff_lora_identities = {item.adapter_name: item.descriptor_sha256 for item in resolved}
+    return _PreparedLoraAdapters(
+        pipeline=lora_node,
+        resolved=tuple(resolved),
+        scheduler=scheduler,
+    )
 
-    # Set adapter scales
-    if scales:
-        lora_node.set_adapters(list(scales.keys()), list(scales.values()))
 
-
-def apply_lora_scheduler_override(pipeline, lora_list):
-    """Apply one explicit scheduler contract supplied by distilled LoRAs."""
-    if not isinstance(lora_list, list):
-        lora_list = [lora_list]
-    overrides = [
-        (item.get("scheduler_class"), item.get("scheduler_config") or {})
-        for item in lora_list
-        if item.get("scheduler_class")
-    ]
-    if not overrides:
+def _prepare_lora_scheduler_override(
+    pipeline,
+    resolved: list[ResolvedLoraDescriptor],
+):
+    override = scheduler_override_contract(resolved)
+    if override is None:
         return None
-    if any(override != overrides[0] for override in overrides[1:]):
-        raise ValueError("Connected LoRAs declare incompatible scheduler contracts.")
-
-    scheduler_class_name, scheduler_config = overrides[0]
-    scheduler_class = getattr(__import__("diffusers", fromlist=[scheduler_class_name]), scheduler_class_name)
+    scheduler_class, scheduler_config = override
     current_scheduler = getattr(pipeline, "scheduler", None)
     if current_scheduler is None:
         raise ValueError("The selected LoRA requires a scheduler, but the pipeline does not expose one.")
-    scheduler = scheduler_class.from_config(current_scheduler.config, **scheduler_config)
+    if not callable(getattr(pipeline, "update_components", None)):
+        raise ValueError("The selected LoRA requires a pipeline that can update its scheduler component.")
+    effective_config = reviewed_scheduler_effective_config(
+        scheduler_class,
+        current_scheduler.config,
+        scheduler_config,
+    )
+    scheduler = scheduler_class.from_config(effective_config)
+    if type(scheduler) is not scheduler_class:
+        raise ValueError(
+            f"Diffusers scheduler {scheduler_class.__name__!r} did not construct an exact scheduler instance."
+        )
+    return scheduler
+
+
+def apply_lora_scheduler_override(pipeline, lora_list=None, *, prepared=None):
+    """Apply one explicit scheduler contract supplied by distilled LoRAs."""
+    if prepared is not None:
+        if lora_list is not None or not isinstance(prepared, _PreparedLoraAdapters):
+            raise TypeError("Prepared LoRA scheduler state must come directly from update_lora_adapters().")
+        if prepared.pipeline is not pipeline:
+            raise ValueError("Prepared LoRA scheduler state belongs to a different pipeline.")
+        scheduler = prepared.scheduler
+    else:
+        resolved = resolve_lora_descriptors(lora_list)
+        scheduler = _prepare_lora_scheduler_override(pipeline, resolved)
+    if scheduler is None:
+        return None
     pipeline.update_components(scheduler=scheduler)
     return scheduler
 
@@ -781,18 +1707,72 @@ class AutoModelLoader(NodeBase):
         },
         "subfolder": {"label": "Subfolder", "type": "string", "value": ""},
         "variant": {"type": "string", "value": "", "options": ["", "fp16", "bf16"]},
-        "trust_remote_code": {"label": "Trust Remote Code", "type": "boolean", "value": False},
+        "trust_remote_code": {
+            "label": "Trust Remote Code",
+            "type": "boolean",
+            "value": False,
+            "description": "Repository code execution is disabled for standalone components.",
+        },
         "revision": {
             "label": "Revision",
             "type": "string",
             "value": "",
-            "description": "Required 40-character commit hash when Trust Remote Code is enabled.",
+            "description": "Required exact lowercase 40-character commit hash for every Hub component.",
+        },
+        "component_class": {
+            "label": "Component Class",
+            "type": "string",
+            "value": "",
+            "description": "Reserved for exact repository-scoped loading contracts reviewed by MoDiff.",
         },
         "device": {"label": "Device", "type": "string", "value": DEFAULT_DEVICE, "options": DEVICE_LIST},
         "auto_offload": {"label": "Enable Auto Offload", "type": "boolean", "value": True},
         "offload_mode": offload_mode_param(),
         "model": {"label": "Model", "display": "output", "type": "diffusers_auto_model"},
     }
+
+    def __init__(self, node_id=None):
+        super().__init__(node_id)
+        self._standalone_component_issuer = issue_standalone_component_issuer()
+
+    def _cache_params_equal(self, previous, current):
+        if not super()._cache_params_equal(previous, current):
+            return False
+        cached_model = self.output.get("model") if isinstance(self.output, dict) else None
+        if cached_model is None:
+            return True
+        require_standalone_component_binding(
+            cached_model,
+            label="cached model",
+            expected_kind=current.get("model_type"),
+            expected_issuer=self._standalone_component_issuer,
+            expected_reviewed_identity=current.get("_reviewed_component_identity"),
+        )
+        return True
+
+    def __call__(self, **kwargs):
+        """Validate the exact Diffusers component before cache reuse."""
+
+        trust_remote_code = kwargs.get("trust_remote_code", False)
+        if type(trust_remote_code) is not bool:
+            raise TypeError("AutoModelLoader trust_remote_code must be a JSON boolean.")
+        if trust_remote_code:
+            raise ValueError(
+                "AutoModelLoader repository code is disabled until MoDiff provides a reviewed, task-scoped "
+                "authorization and isolated content-addressed execution path."
+            )
+        reviewed_identity = _preflight_reviewed_diffusers_component(
+            kwargs.get("model_type"),
+            kwargs.get("model_id"),
+            kwargs.get("subfolder"),
+            kwargs.get("revision"),
+            kwargs.get("component_class"),
+        )
+        # NodeBase includes this backend-derived, content-addressed value in
+        # its cache comparison. Graph input cannot spoof it because we replace
+        # any supplied value after local verification.
+        kwargs["_reviewed_component_identity"] = reviewed_identity
+        return super().__call__(**kwargs)
 
     def __del__(self):
         node_comp_ids = components._lookup_ids(collection=self.node_id)
@@ -802,21 +1782,15 @@ class AutoModelLoader(NodeBase):
 
     def set_filters(self, values, ref):
         model_type = values.get("model_type", "")
-
-        filters = []
-
-        if model_type == "unet":
-            filters = ["UNet2DConditionModel"]
-            self.set_field_params("subfolder", {"value": "unet"})
-        elif model_type == "transformer":
-            filters = ["QwenImageTransformer2DModel", "FluxTransformer2DModel", "SD3Transformer2DModel"]
-            self.set_field_params("subfolder", {"value": "transformer"})
-        elif model_type == "vae":
-            filters = ["AutoencoderKL", "AutoencoderKLQwenImage"]
-            self.set_field_params("subfolder", {"value": "vae"})
-        elif model_type == "controlnet":
-            filters = ["ControlNetModel", "QwenImageControlNetModel", "FluxControlNetModel"]
-            self.set_field_params("subfolder", {"value": ""})
+        filters = reviewed_diffusers_component_class_names(model_type)
+        default_subfolders = {
+            "unet": "unet",
+            "transformer": "transformer",
+            "vae": "vae",
+            "controlnet": "",
+        }
+        if model_type in default_subfolders:
+            self.set_field_params("subfolder", {"value": default_subfolders[model_type]})
 
         self.set_field_params(
             "model_id",
@@ -824,6 +1798,7 @@ class AutoModelLoader(NodeBase):
                 "fieldOptions": {
                     "filter": {
                         "hub": {"className": filters},
+                        "local": {"className": filters},
                     },
                 },
             },
@@ -841,6 +1816,8 @@ class AutoModelLoader(NodeBase):
         variant=None,
         subfolder=None,
         revision=None,
+        component_class=None,
+        _reviewed_component_identity=None,
     ):
         logger.debug(f"AutoModelLoader ({self.node_id}) received parameters:")
         logger.debug(f"  model_type: '{model_type}'")
@@ -853,38 +1830,32 @@ class AutoModelLoader(NodeBase):
         logger.debug(f"  auto_offload: '{auto_offload}'")
         logger.debug(f"  offload_mode: '{offload_mode}'")
 
-        supported_model_types = {"unet", "transformer", "vae", "controlnet"}
-        if model_type not in supported_model_types:
+        if type(trust_remote_code) is not bool:
+            raise TypeError("AutoModelLoader trust_remote_code must be a JSON boolean.")
+        if trust_remote_code:
             raise ValueError(
-                "AutoModelLoader requires a component type of unet, transformer, vae, or controlnet; "
-                f"received {model_type!r}. Rebuild or repair the managed graph before loading model weights."
+                "AutoModelLoader repository code is disabled until MoDiff provides a reviewed, task-scoped "
+                "authorization and isolated content-addressed execution path."
             )
 
-        if isinstance(model_id, dict):
-            real_model_id = model_id.get("value", model_id)
-            _source = model_id.get("source", "hub")
-        else:
-            real_model_id = ""
-
-        if real_model_id == "":
-            self.notify(
-                "Please provide a valid Repository ID.",
-                variant="error",
-                persist=False,
-                autoHideDuration=MESSAGE_DURATION,
-            )
-            return None
-
-        revision = resolve_model_revision(real_model_id, revision, source=_source)
-        revision = require_immutable_hub_revision(
-            real_model_id,
+        reviewed_identity = _preflight_reviewed_diffusers_component(
+            model_type,
+            model_id,
+            subfolder,
             revision,
-            required=bool(trust_remote_code),
+            component_class,
         )
+        if _reviewed_component_identity is not None and tuple(_reviewed_component_identity) != reviewed_identity:
+            raise ValueError("AutoModelLoader component config changed after cache validation; retry the run.")
+        _source, real_model_id, revision, subfolder, class_name, _config_fingerprint = reviewed_identity
+        component_class = _resolve_reviewed_diffusers_component_class(model_type, class_name)
 
         # Normalize parameters
         variant = None if variant == "" else variant
-        subfolder = None if subfolder == "" else subfolder
+        if variant is not None and (
+            not isinstance(variant, str) or len(variant) > 128 or not re.fullmatch(r"[A-Za-z0-9_.-]+", variant)
+        ):
+            raise ValueError("AutoModelLoader variant must be a short filename-safe identifier.")
 
         normalized_offload_mode = normalize_offload_mode(
             offload_mode,
@@ -893,7 +1864,8 @@ class AutoModelLoader(NodeBase):
         )
         spec = ComponentSpec(
             name=model_type,
-            repo=real_model_id,
+            type_hint=component_class,
+            pretrained_model_name_or_path=real_model_id,
             subfolder=subfolder,
             variant=variant,
             revision=revision,
@@ -907,6 +1879,12 @@ class AutoModelLoader(NodeBase):
             device=device,
             node_id=self.node_id,
         )
+        if reusable and not standalone_component_reuse_is_bound(
+            manager_model_id=reusable[0],
+            component_kind=model_type,
+            reviewed_identity=reviewed_identity,
+        ):
+            reusable = None
         if reusable:
             _existing_id, model = reusable
             self.progress(
@@ -922,7 +1900,7 @@ class AutoModelLoader(NodeBase):
                 message=f"Loading {model_type} weights from {real_model_id}",
             )
             with self.diffusers_loading_progress():
-                model = spec.load(torch_dtype=dtype, trust_remote_code=trust_remote_code)
+                model = spec.load(torch_dtype=dtype)
             self.progress(
                 99,
                 phase="component_placement",
@@ -953,8 +1931,15 @@ class AutoModelLoader(NodeBase):
 
         model = components.get_model_info(comp_id)
         model["repo_id"] = real_model_id
+        model["repo_source"] = _source
         model["revision"] = revision
-        model["trust_remote_code"] = bool(trust_remote_code)
+        model["trust_remote_code"] = False
+        bind_standalone_component_output(
+            model,
+            issuer=self._standalone_component_issuer,
+            component_kind=model_type,
+            reviewed_identity=reviewed_identity,
+        )
 
         return {"model": model}
 
@@ -971,13 +1956,7 @@ class ModelsLoader(NodeBase):
             "options": {
                 "": "",
             },
-            "onChange": [
-                "set_filters",
-                {"action": "signal", "target": "unet_out"},
-                {"action": "signal", "target": "text_encoders"},
-                {"action": "signal", "target": "vae_out"},
-                {"action": "signal", "target": "image_encoder"},
-            ],
+            "onChange": "set_filters",
         },
         "repo_id": {
             "label": "Repository ID",
@@ -992,6 +1971,19 @@ class ModelsLoader(NodeBase):
                     "local": {"className": [""]},
                 },
             },
+            "onChange": "refresh_pipeline_identity",
+        },
+        "reviewed_variant": {
+            "label": "Model",
+            "type": "string",
+            "value": "",
+            "options": [],
+            "hidden": True,
+            "fieldOptions": {"controlTier": "essential"},
+            "description": (
+                "Select an immutable, reviewed checkpoint for this exact Modular Diffusers pipeline family. "
+                "Changing it does not replace the workflow graph or reset its parameters."
+            ),
         },
         "dtype": {
             "label": "dtype",
@@ -1000,12 +1992,39 @@ class ModelsLoader(NodeBase):
             "postProcess": str_to_dtype,
         },
         "device": {"label": "Device", "type": "string", "value": DEFAULT_DEVICE, "options": DEVICE_LIST},
-        "trust_remote_code": {"label": "Trust Remote Code", "type": "boolean", "value": False},
+        "trust_remote_code": {
+            "label": "Trust Remote Code",
+            "type": "boolean",
+            "value": False,
+            "description": "Repository code execution is disabled; keep this off for contract preview.",
+            "onChange": "refresh_pipeline_identity",
+        },
         "revision": {
             "label": "Revision",
             "type": "string",
             "value": "",
-            "description": "Required 40-character commit hash for custom or trusted remote code.",
+            "description": "Required exact 40-character commit hash for Hub custom contracts.",
+            "onChange": "refresh_pipeline_identity",
+        },
+        "workflow_id": {
+            "label": "Reviewed Workflow",
+            "type": "string",
+            "value": "",
+            "hidden": True,
+            "description": "Exact reviewed component partition selected by a first-party Cluster Node.",
+        },
+        "modiff_pipeline_identity": {
+            "label": "Custom Pipeline Identity",
+            "type": "object",
+            "value": None,
+            "hidden": True,
+        },
+        "refresh_pipeline_identity_button": {
+            "label": "Review and Refresh Custom Contract",
+            "display": "ui_button",
+            "value": False,
+            "hidden": True,
+            "onChange": "refresh_pipeline_identity",
         },
         "auto_offload": {"label": "Enable Auto Offload", "type": "boolean", "value": True},
         "offload_mode": offload_mode_param(
@@ -1013,12 +2032,18 @@ class ModelsLoader(NodeBase):
         ),
         "unet": {"label": "Denoise Model", "display": "input", "type": "diffusers_auto_model"},
         "vae": {"label": "VAE", "display": "input", "type": "diffusers_auto_model"},
+        "controlnet": {"label": "ControlNet", "display": "input", "type": "diffusers_auto_model"},
         "lora_list": {"label": "Lora", "display": "input", "type": "custom_lora"},
         "text_encoders": {"label": "Text Encoders", "display": "output", "type": "diffusers_auto_models"},
         "unet_out": {"label": "Denoise Model", "display": "output", "type": "diffusers_auto_model"},
         "vae_out": {"label": "VAE", "display": "output", "type": "diffusers_auto_model"},
         "scheduler": {"label": "Scheduler", "display": "output", "type": "diffusers_auto_model"},
         "image_encoder": {"label": "Image Encoder", "display": "output", "type": "diffusers_auto_model"},
+        "pipeline_components": {
+            "label": "Pipeline Components",
+            "display": "output",
+            "type": "diffusers_modular_pipeline_components",
+        },
         "quant_config": {"label": "Quant Config", "display": "input", "type": "quant_config"},
     }
 
@@ -1026,6 +2051,75 @@ class ModelsLoader(NodeBase):
         super().__init__(node_id)
         self.loader = None
         self.model_types_loaded = False
+        self._pipeline_identity_generation = 0
+        self._pipeline_identity_lock = threading.Lock()
+
+    def __call__(self, **kwargs):
+        """Enforce custom identity and remote-code policy before cache reuse."""
+
+        model_type = kwargs.get("model_type")
+        trust_remote_code = kwargs.get("trust_remote_code", False)
+        if type(trust_remote_code) is not bool:
+            raise TypeError("ModelsLoader trust_remote_code must be a JSON boolean.")
+        if trust_remote_code:
+            scope = "custom" if model_type == CUSTOM_PIPELINE_MODEL_TYPE else "built-in"
+            raise ValueError(
+                f"Repository code is disabled for {scope} Modular Diffusers loaders until MoDiff provides a "
+                "reviewed, task-scoped authorization and isolated content-addressed execution path."
+            )
+        if model_type == CUSTOM_PIPELINE_MODEL_TYPE:
+            identity_value = kwargs.get(CUSTOM_PIPELINE_IDENTITY_FIELD)
+            if not isinstance(identity_value, Mapping):
+                raise ValueError(
+                    "Custom Modular Diffusers execution requires a complete backend-issued identity. "
+                    "Use Review and Refresh Custom Contract before running this loader."
+                )
+            identity = CustomPipelineExecutionIdentity.from_value(identity_value)
+            if identity.trust_remote_code:
+                raise ValueError(
+                    "Custom Modular Diffusers repository code is disabled; refresh the contract with Trust Remote "
+                    "Code off."
+                )
+            binding = resolve_custom_pipeline_binding(
+                source=identity.source,
+                repo_id=identity.repo_id,
+                revision=identity.revision,
+                trust_remote_code=False,
+                expected_identity=identity,
+            )
+            kwargs["_reviewed_custom_identity"] = binding.identity.execution_id
+            return super().__call__(**kwargs)
+        kwargs["repo_id"], kwargs["revision"] = self._effective_builtin_selector(
+            model_type=model_type,
+            repo_id=kwargs.get("repo_id"),
+            revision=kwargs.get("revision"),
+            workflow_id=kwargs.get("workflow_id"),
+            reviewed_variant=kwargs.get("reviewed_variant"),
+        )
+        kwargs["workflow_id"] = _reviewed_builtin_workflow_id(
+            model_type,
+            kwargs.get("workflow_id"),
+        ) or ""
+        reviewed_selection = self._preflight_reviewed_builtin_selection(
+            model_type=model_type,
+            repo_id=kwargs.get("repo_id"),
+            revision=kwargs.get("revision"),
+        )
+        source, repository, reviewed_revision, index_filename, index_document = reviewed_selection
+        kwargs["_reviewed_builtin_identity"] = (
+            source,
+            repository,
+            reviewed_revision,
+            index_filename,
+            _reviewed_json_fingerprint(index_document),
+        )
+        return super().__call__(**kwargs)
+
+    def prepare_for_workflow_reuse(self):
+        """Invalidate stale in-flight field-action publications on node reuse."""
+
+        with self._pipeline_identity_lock:
+            self._pipeline_identity_generation += 1
 
     def __del__(self):
         node_comp_ids = components._lookup_ids(collection=self.node_id)
@@ -1034,10 +2128,296 @@ class ModelsLoader(NodeBase):
         self.loader = None
         super().__del__()
 
+    def _begin_pipeline_identity_refresh(self):
+        with self._pipeline_identity_lock:
+            self._pipeline_identity_generation += 1
+            return self._pipeline_identity_generation
+
+    def _publish_pipeline_identity(
+        self,
+        generation,
+        *,
+        persisted_identity,
+        signal_value,
+        show_refresh,
+        dtype=None,
+        update_persisted_identity=True,
+        clear_revision=False,
+    ):
+        """Publish one coherent loader contract if this refresh is still current."""
+
+        with self._pipeline_identity_lock:
+            if generation != self._pipeline_identity_generation:
+                return False
+            field_values = {}
+            if update_persisted_identity:
+                field_values[CUSTOM_PIPELINE_IDENTITY_FIELD] = deepcopy(persisted_identity)
+            if clear_revision:
+                field_values["revision"] = ""
+            if field_values:
+                self.set_field_value(field_values)
+            self.set_field_visibility({"refresh_pipeline_identity_button": bool(show_refresh)})
+            if dtype:
+                self.set_field_params("dtype", {"value": dtype})
+            for output_name in MODELS_LOADER_IDENTITY_OUTPUTS:
+                self.set_field_params(
+                    output_name,
+                    {
+                        "signal": {
+                            "direction": "output",
+                            "origin": CUSTOM_PIPELINE_IDENTITY_FIELD,
+                            "value": deepcopy(signal_value),
+                        }
+                    },
+                )
+            return True
+
+    @staticmethod
+    def _selected_repository(repo_id, *, custom):
+        if not isinstance(repo_id, Mapping):
+            if custom:
+                raise ValueError(
+                    "Custom Modular Diffusers repositories require an explicit Hub or Local source selection."
+                )
+            return "hub", str(repo_id or "").strip()
+        source = repo_id.get("source")
+        repository = repo_id.get("value")
+        if not isinstance(source, str) or source not in {"hub", "local"}:
+            raise ValueError("The repository source must be exactly 'hub' or 'local'.")
+        if not isinstance(repository, str):
+            raise ValueError("The selected Modular Diffusers repository must be a string.")
+        return source, repository.strip()
+
+    @classmethod
+    def _reviewed_workflow_variants(cls, *, model_type, workflow_id, default_repository):
+        """Return repositories safe to switch without changing workflow shape."""
+
+        selected_workflow = str(workflow_id or "").strip()
+        return tuple(
+            repository
+            for repository in PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS.get(
+                (model_type, selected_workflow),
+                (default_repository,) if default_repository else (),
+            )
+            if repository
+        )
+
+    @classmethod
+    def _effective_builtin_selector(
+        cls,
+        *,
+        model_type,
+        repo_id,
+        revision,
+        workflow_id="",
+        reviewed_variant=None,
+    ):
+        """Resolve one same-pipeline model variant without mutating graph identity.
+
+        ``repo_id`` and ``revision`` remain the registered definition's sealed
+        baseline. ``reviewed_variant`` is an ordinary instance value, but it is
+        allowed to override that baseline only when the repository is in the
+        exact pipeline's reviewed variant set and has an immutable catalog pin.
+        """
+
+        if reviewed_variant in (None, ""):
+            return repo_id, revision
+        if not isinstance(reviewed_variant, str):
+            raise TypeError("A reviewed Modular Diffusers model selection must be a repository string.")
+        selected_repository = reviewed_variant.strip()
+        if not selected_repository:
+            return repo_id, revision
+        metadata = get_model_type_metadata(model_type)
+        default_repository = metadata.get("default_repo") if isinstance(metadata, Mapping) else None
+        reviewed_repositories = cls._reviewed_workflow_variants(
+            model_type=model_type,
+            workflow_id=workflow_id,
+            default_repository=default_repository,
+        )
+        if selected_repository not in reviewed_repositories:
+            raise ValueError(
+                f"Modular pipeline {model_type!r} does not admit model variant {selected_repository!r}."
+            )
+        selected_revision = require_catalog_revision(selected_repository, model_type=model_type)
+        return {"source": "hub", "value": selected_repository}, selected_revision
+
+    @classmethod
+    def _reviewed_builtin_selection(cls, *, model_type, repo_id, revision):
+        metadata = get_model_type_metadata(model_type)
+        if not isinstance(metadata, Mapping) or model_type == CUSTOM_PIPELINE_MODEL_TYPE:
+            raise ValueError(
+                "ModelsLoader execution requires a registered built-in Modular Diffusers pipeline type. "
+                "Use the contract-preview flow for custom pipelines."
+            )
+        if metadata.get("execution_status") == "contract_only":
+            raise ValueError(
+                f"Modular pipeline {model_type!r} is registered for Expert contract discovery only. "
+                "It has no reviewed artifact or executable generic action contract and cannot load model weights."
+            )
+        default_repository = metadata.get("default_repo")
+        if not isinstance(default_repository, str) or not default_repository:
+            raise ValueError(f"Registered Modular pipeline {model_type!r} has no reviewed default repository.")
+        source, selected_repository = cls._selected_repository(repo_id, custom=False)
+        if source != "hub":
+            raise ValueError(
+                "Registered built-in Modular Diffusers pipelines execute only from their reviewed immutable Hub "
+                "artifact; local or alternate repository selections are contract-preview only."
+            )
+        reviewed_repositories = PINNED_MODULAR_REPOSITORY_VARIANTS.get(model_type, (default_repository,))
+        if selected_repository not in reviewed_repositories:
+            raise ValueError(f"Registered Modular pipeline {model_type!r} requires reviewed repository selection.")
+        reviewed_revision = require_catalog_revision(selected_repository, model_type=model_type)
+        if revision is not None and not isinstance(revision, str):
+            raise ValueError("A built-in Modular Diffusers revision must be a string when provided.")
+        selected_revision = str(revision or "").strip()
+        if selected_revision and selected_revision != reviewed_revision:
+            raise ValueError(f"Registered Modular pipeline {model_type!r} requires reviewed revision selection.")
+        return source, selected_repository, reviewed_revision
+
+    @classmethod
+    def _preflight_reviewed_builtin_selection(cls, *, model_type, repo_id, revision):
+        selection = cls._reviewed_builtin_selection(
+            model_type=model_type,
+            repo_id=repo_id,
+            revision=revision,
+        )
+        _source, repository, reviewed_revision = selection
+        index_filename, index_document = _validate_reviewed_pipeline_index(
+            model_type,
+            repository,
+            reviewed_revision,
+        )
+        return *selection, index_filename, index_document
+
+    def refresh_pipeline_identity(self, values, ref):
+        """Verify and publish a backend-owned pipeline identity without loading model code."""
+
+        generation = self._begin_pipeline_identity_refresh()
+        values = values if isinstance(values, Mapping) else {}
+        model_type = str(values.get("model_type") or "").strip()
+        if not model_type:
+            self._publish_pipeline_identity(
+                generation,
+                persisted_identity=None,
+                signal_value="",
+                show_refresh=False,
+            )
+            return None
+
+        if model_type != CUSTOM_PIPELINE_MODEL_TYPE:
+            metadata = get_model_type_metadata(model_type)
+            contract_only = isinstance(metadata, Mapping) and metadata.get("execution_status") == "contract_only"
+            if not contract_only:
+                # Do not publish an unknown class name as a runnable capability.
+                pipeline_class_from_model_type(model_type)
+            trust_remote_code = values.get("trust_remote_code", False)
+            selected_repo = values.get("repo_id")
+            clear_revision = (
+                isinstance(selected_repo, Mapping)
+                and selected_repo.get("source") == "local"
+                and bool(str(values.get("revision") or "").strip())
+            )
+            if type(trust_remote_code) is not bool:
+                self._publish_pipeline_identity(
+                    generation,
+                    persisted_identity=None,
+                    signal_value="",
+                    show_refresh=False,
+                    clear_revision=clear_revision,
+                )
+                raise TypeError("ModelsLoader trust_remote_code must be a JSON boolean.")
+            self._publish_pipeline_identity(
+                generation,
+                persisted_identity=None,
+                signal_value="" if trust_remote_code or contract_only else model_type,
+                show_refresh=False,
+                clear_revision=clear_revision,
+            )
+            if trust_remote_code:
+                raise ValueError(
+                    "Built-in Modular Diffusers repository code is disabled. Disable Trust Remote Code; official "
+                    "registered pipeline types do not require it."
+                )
+            return None
+
+        clear_revision = False
+        try:
+            source, repository = self._selected_repository(values.get("repo_id"), custom=True)
+            selected_revision = str(values.get("revision") or "").strip() or None
+            clear_revision = source == "local" and selected_revision is not None
+            revision = None if source == "local" else selected_revision
+            trust_remote_code = values.get("trust_remote_code", False)
+            if type(trust_remote_code) is not bool:
+                raise TypeError("Custom Modular Diffusers trust_remote_code must be a JSON boolean.")
+            explicit_refresh = isinstance(ref, Mapping) and ref.get("key") == "refresh_pipeline_identity_button"
+
+            # Empty selectors are an incomplete form, not an executable custom
+            # identity.  A malformed non-empty selector remains an error.
+            if not repository or (source == "hub" and revision is None):
+                self._publish_pipeline_identity(
+                    generation,
+                    persisted_identity=None,
+                    signal_value="",
+                    show_refresh=True,
+                    clear_revision=clear_revision,
+                )
+                return None
+
+            if trust_remote_code:
+                raise ValueError(
+                    "Custom Modular Diffusers repository code is disabled until MoDiff provides a reviewed, "
+                    "task-scoped authorization and isolated content-addressed execution path. Disable Trust Remote "
+                    "Code to review this declarative contract."
+                )
+
+            previous_identity = values.get(CUSTOM_PIPELINE_IDENTITY_FIELD)
+            if previous_identity in (None, ""):
+                previous_identity = None
+            elif not isinstance(previous_identity, Mapping):
+                raise ValueError("The persisted custom Modular Diffusers contract identity is malformed.")
+
+            binding = resolve_custom_pipeline_binding(
+                source=source,
+                repo_id=repository,
+                revision=revision,
+                trust_remote_code=trust_remote_code,
+                expected_identity=None if explicit_refresh else previous_identity,
+                allow_selector_change=not explicit_refresh,
+            )
+            identity_value = binding.identity.to_dict()
+            config = binding.pipeline_config()
+            self._publish_pipeline_identity(
+                generation,
+                persisted_identity=identity_value,
+                signal_value=identity_value,
+                show_refresh=True,
+                dtype=config.default_dtype,
+                clear_revision=clear_revision,
+            )
+        except Exception:
+            # Never leave a stale contract advertised to connected dynamic
+            # nodes. Preserve a trust-false identity so same-selector drift
+            # still needs explicit review; clear it when remote code was set.
+            published = self._publish_pipeline_identity(
+                generation,
+                persisted_identity=None,
+                signal_value="",
+                show_refresh=True,
+                update_persisted_identity=type(values.get("trust_remote_code", False)) is not bool
+                or values.get("trust_remote_code") is True,
+                clear_revision=clear_revision,
+            )
+            if not published:
+                # A newer field action owns the visible state and its response;
+                # an obsolete background failure must not surface over it.
+                return None
+            raise
+        return None
+
     def set_filters(self, values, ref):
         # first time dynamically load the model_type options
         if not self.model_types_loaded:
-            self.set_field_params("model_type", {"options": get_all_model_types()})
+            self.set_field_params("model_type", {"options": get_all_model_types(include_contract_only=True)})
             self.model_types_loaded = True
 
         model_type = values.get("model_type", "")
@@ -1050,6 +2430,24 @@ class ModelsLoader(NodeBase):
             default_dtype = "float16"
         filters = [model_type]  # Model types map one-to-one to modular pipeline classes.
 
+        default_repository = metadata.get("default_repo") if isinstance(metadata, Mapping) else None
+        reviewed_variants = self._reviewed_workflow_variants(
+            model_type=model_type,
+            workflow_id=values.get("workflow_id"),
+            default_repository=default_repository,
+        )
+        current_variant = values.get("reviewed_variant")
+        if current_variant not in reviewed_variants:
+            current_variant = default_repository if default_repository in reviewed_variants else ""
+        self.set_field_params(
+            "reviewed_variant",
+            {
+                "options": list(reviewed_variants),
+                "value": current_variant,
+            },
+        )
+        self.set_field_visibility({"reviewed_variant": len(reviewed_variants) > 1})
+
         self.set_field_params(
             "repo_id",
             {
@@ -1059,6 +2457,7 @@ class ModelsLoader(NodeBase):
             },
         )
         self.set_field_params("dtype", {"value": default_dtype})
+        return self.refresh_pipeline_identity(values, ref)
 
     def execute(
         self,
@@ -1068,25 +2467,91 @@ class ModelsLoader(NodeBase):
         dtype,
         unet=None,
         vae=None,
+        controlnet=None,
         lora_list=None,
         trust_remote_code=False,
         auto_offload=True,
         offload_mode=OFFLOAD_MODE_MODEL_CPU,
         quant_config=None,
+        reviewed_variant=None,
         revision=None,
+        workflow_id="",
+        modiff_pipeline_identity=None,
+        refresh_pipeline_identity_button=False,
+        _reviewed_builtin_identity=None,
+        _reviewed_custom_identity=None,
     ):
+        if type(trust_remote_code) is not bool:
+            raise TypeError("ModelsLoader trust_remote_code must be a JSON boolean.")
+        if trust_remote_code:
+            raise ValueError(
+                "Modular Diffusers repository code is disabled until MoDiff provides a reviewed, task-scoped "
+                "authorization and isolated content-addressed execution path."
+            )
+        is_custom_pipeline = model_type == CUSTOM_PIPELINE_MODEL_TYPE
+        if is_custom_pipeline:
+            if str(workflow_id or "").strip():
+                raise ValueError("Custom Modular pipeline workflow pruning has no reviewed built-in contract.")
+            reviewed_workflow_id = None
+            _source, real_repo_id = self._selected_repository(repo_id, custom=True)
+            reviewed_index_filename = None
+            reviewed_index_document = None
+            loader_component_outputs = ()
+            weight_variant = None
+        else:
+            repo_id, revision = self._effective_builtin_selector(
+                model_type=model_type,
+                repo_id=repo_id,
+                revision=revision,
+                workflow_id=workflow_id,
+                reviewed_variant=reviewed_variant,
+            )
+            reviewed_workflow_id = _reviewed_builtin_workflow_id(model_type, workflow_id)
+            (
+                _source,
+                real_repo_id,
+                revision,
+                reviewed_index_filename,
+                reviewed_index_document,
+            ) = self._preflight_reviewed_builtin_selection(
+                model_type=model_type,
+                repo_id=repo_id,
+                revision=revision,
+            )
+            current_reviewed_identity = (
+                _source,
+                real_repo_id,
+                revision,
+                reviewed_index_filename,
+                _reviewed_json_fingerprint(reviewed_index_document),
+            )
+            if (
+                _reviewed_builtin_identity is not None
+                and tuple(_reviewed_builtin_identity) != current_reviewed_identity
+            ):
+                raise ValueError("The reviewed Modular pipeline index changed after cache validation; retry the run.")
+            loader_component_outputs = _reviewed_loader_component_outputs(model_type)
+            weight_variant = reviewed_modular_weight_variant(model_type, real_repo_id)
+
         requested_offload_mode = offload_mode
         offload_mode = normalize_offload_mode(
             offload_mode,
             auto_offload=auto_offload,
             device=device,
         )
+        self.record_generation_inputs({
+            "model_type": model_type, "repo_id": real_repo_id, "revision": revision,
+            "dtype": dtype, "device": device, "auto_offload": auto_offload,
+            "offload_mode": offload_mode, "quant_config": quant_config,
+        })
         self._loader_diagnostics = {
             "node_id": self.node_id,
             "loader": "ModelsLoader",
             "model_type": model_type,
             "repo_id": None,
+            "workflow_id": reviewed_workflow_id,
             "dtype": str(dtype),
+            "weight_variant": weight_variant,
             "graph_offload_mode": safe_diagnostic_value(requested_offload_mode),
             "normalized_offload_mode": offload_mode,
             "auto_offload": bool(auto_offload),
@@ -1129,16 +2594,19 @@ class ModelsLoader(NodeBase):
         logger.debug(f"""
             ModelsLoader ({self.node_id}) received parameters:
             - repo_id: {repo_id}
+            - reviewed_variant: {reviewed_variant}
             - dtype: {dtype}
             - device: {device}
             - unet: {unet}
             - vae: {vae}
+            - controlnet: {controlnet}
             - quant_config: {quant_config}
             - auto_offload: {auto_offload}
             - offload_mode: {offload_mode}
             - trust_remote_code: {trust_remote_code}
             - lora_list: {lora_list}
             - model_type: {model_type}
+            - workflow_id: {reviewed_workflow_id}
         """)
 
         components_to_update = {}
@@ -1151,12 +2619,10 @@ class ModelsLoader(NodeBase):
             components_to_update.update(
                 components.get_components_by_ids(ids=[vae["model_id"]], return_dict_with_names=True)
             )
-
-        if isinstance(repo_id, dict):
-            real_repo_id = repo_id.get("value", repo_id)
-            _source = repo_id.get("source", "hub")
-        else:
-            real_repo_id = ""
+        if controlnet:
+            components_to_update.update(
+                components.get_components_by_ids(ids=[controlnet["model_id"]], return_dict_with_names=True)
+            )
 
         if real_repo_id == "":
             self.notify(
@@ -1167,59 +2633,95 @@ class ModelsLoader(NodeBase):
             )
             return None
         self._loader_diagnostics["repo_id"] = real_repo_id
-        revision = resolve_model_revision(
-            real_repo_id,
-            revision,
-            model_type=model_type,
-            source=_source,
-        )
-        revision = require_immutable_hub_revision(
-            real_repo_id,
-            revision,
-            required=bool(trust_remote_code) or model_type == "DummyCustomPipeline",
-        )
+        custom_identity = None
+        custom_binding = None
+        pipeline_load_path = real_repo_id
+        if is_custom_pipeline:
+            expected_identity = modiff_pipeline_identity
+            if not isinstance(expected_identity, Mapping):
+                raise ValueError(
+                    "Custom Modular Diffusers execution requires a complete backend-issued identity. "
+                    "Use Review and Refresh Custom Contract before running this loader."
+                )
+            parsed_identity = CustomPipelineExecutionIdentity.from_value(expected_identity)
+            if parsed_identity.trust_remote_code != trust_remote_code:
+                raise ValueError(
+                    "The selected custom pipeline trust setting does not match its backend-issued identity."
+                )
+            custom_binding = resolve_custom_pipeline_binding(
+                source=_source,
+                repo_id=real_repo_id,
+                revision=str(revision or "").strip() or None,
+                trust_remote_code=trust_remote_code,
+                expected_identity=expected_identity,
+            )
+            custom_identity = custom_binding.identity.to_dict()
+            real_repo_id = custom_binding.identity.repo_id
+            revision = custom_binding.identity.revision
+            pipeline_load_path = custom_binding.repository_path
+            if _reviewed_custom_identity not in (None, custom_binding.identity.execution_id):
+                raise ValueError(
+                    "The reviewed custom pipeline metadata changed after cache validation; retry the run."
+                )
+            loader_component_outputs = tuple(custom_binding.pipeline_config().loader_component_outputs)
         self._loader_diagnostics["revision"] = revision
 
         use_group_offload = offload_mode in [OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]
 
         configure_components_manager_offload(components, mode=offload_mode, device=device)
 
-        self.loader = ModularPipeline.from_pretrained(
-            real_repo_id,
-            components_manager=components,
-            collection=self.node_id,
-            trust_remote_code=trust_remote_code,
-            revision=revision,
-            local_files_only=True,
-        )
+        if custom_binding is not None:
+            self.loader = custom_binding.instantiate(
+                components_manager=components,
+                collection=self.node_id,
+            )
+        else:
+            self.loader = _instantiate_reviewed_builtin_pipeline(
+                model_type,
+                pipeline_load_path,
+                index_filename=reviewed_index_filename,
+                index_document=reviewed_index_document,
+                components_manager=components,
+                collection=self.node_id,
+                workflow_id=reviewed_workflow_id,
+            )
         self._loader_diagnostics["component_revision_pins"] = pin_modular_component_revisions(
             self.loader,
             real_repo_id,
             revision,
         )
 
-        if model_type == "DummyCustomPipeline":
-            # update node param
-            custom_config = PipelineConfig.load(real_repo_id, revision=revision, local_files_only=True)
-            custom_config.label = "Custom"
-
-            # update repo_id for DummyCustomPipeline
-            DummyCustomPipeline.repo_id = real_repo_id
-            DummyCustomPipeline.revision = revision
-            DummyCustomPipeline.trust_remote_code = bool(trust_remote_code)
-            # register DummyCustomPipeline to MODULAR_REGISTRY
-            MODULAR_REGISTRY.register(DummyCustomPipeline, custom_config)
-
-        else:
-            DummyCustomPipeline.repo_id = None
-            DummyCustomPipeline.revision = None
-            DummyCustomPipeline.trust_remote_code = False
-            MODULAR_REGISTRY.register(DummyCustomPipeline, DUMMY_CUSTOM_PIPELINE_CONFIG)
+        # Apply the reviewed filename variant before resident-component lookup.
+        # ComponentSpec.load() records the effective variant in its load id, so
+        # setting it only at load time could otherwise reuse default-variant
+        # weights for an fp16-variant graph.
+        if weight_variant is not None:
+            for component_spec in self.loader._component_specs.values():
+                if component_spec.default_creation_method != "from_config":
+                    component_spec.variant = weight_variant
 
         ALL_COMPONENTS = self.loader.pretrained_component_names
 
-        text_node = self.loader.blocks.sub_blocks["text_encoder"].init_pipeline(real_repo_id)
-        text_encoder_names = text_node.pretrained_component_names
+        # The already-reviewed installed block contract is authoritative. Passing
+        # the repository here would make upstream parse its index a second time.
+        # Whole-workflow contracts such as MiniMax Music do not necessarily have
+        # a top-level block named ``text_encoder``. Their execution adapter uses
+        # the exact full component inventory instead.
+        # Exact expanded workflows execute their reviewed upstream block
+        # placements individually and therefore require one complete,
+        # identity-bound component bundle just like package-owned top-level
+        # workflow adapters.
+        whole_workflow_components = (
+            model_type in REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES
+            or model_type in REVIEWED_EXPANDED_WORKFLOW_MODEL_TYPES
+            or reviewed_workflow_id is not None
+        )
+        text_encoder_block = self.loader.blocks.sub_blocks.get("text_encoder")
+        text_encoder_names = (
+            text_encoder_block.init_pipeline().pretrained_component_names
+            if text_encoder_block is not None
+            else []
+        )
 
         components_to_load = [c for c in ALL_COMPONENTS if c not in components_to_update]
         components_to_reload = []
@@ -1253,9 +2755,12 @@ class ModelsLoader(NodeBase):
                         components.get_components_by_ids(ids=comp_ids_to_reuse, return_dict_with_names=True)
                     )
 
-        required_components = {denoiser_name, "vae", "scheduler", *text_encoder_names}
-        if model_type == "WanImage2VideoModularPipeline":
-            required_components.add("image_encoder")
+        required_components = (
+            set(ALL_COMPONENTS)
+            if whole_workflow_components
+            else {denoiser_name, "vae", "scheduler", *text_encoder_names}
+        )
+        required_components.update(loader_component_outputs)
         required_components = {name for name in required_components if name}
         self._loader_diagnostics["required_components"] = sorted(required_components)
         self._loader_diagnostics["components_to_load"] = list(components_to_reload)
@@ -1276,6 +2781,7 @@ class ModelsLoader(NodeBase):
                 diagnostics=self._loader_diagnostics,
                 component_load_kwargs={
                     "torch_dtype": dtype,
+                    **({"variant": weight_variant} if weight_variant is not None else {}),
                     "trust_remote_code": trust_remote_code,
                     "quantization_config": quant_config,
                 },
@@ -1289,6 +2795,9 @@ class ModelsLoader(NodeBase):
                 else None,
             )
         self.loader.update_components(**components_to_update)
+
+        if model_type == "StableDiffusionXLModularPipeline":
+            reset_owned_sdxl_ip_adapter_for_loader(self.loader)
 
         if use_group_offload:
             try:
@@ -1348,6 +2857,11 @@ class ModelsLoader(NodeBase):
                 }
             )
 
+        self._loader_diagnostics["regional_compile"] = configure_required_regional_compile(
+            self.loader,
+            model_type=model_type,
+        )
+
         record_pipeline_component_runtime_policy(
             self.loader,
             offload_mode=offload_mode,
@@ -1358,28 +2872,50 @@ class ModelsLoader(NodeBase):
         print(f" ModelsLoader: reloaded components: {components_to_reload}")
         print(f" ModelsLoader: updated components: {components_to_update.keys()}")
 
-        if hasattr(self.loader, "unload_lora_weights"):
+        if lora_list is not None:
+            prepared_loras = update_lora_adapters(self.loader, lora_list)
+            apply_lora_scheduler_override(self.loader, prepared=prepared_loras)
+        elif hasattr(self.loader, "unload_lora_weights"):
             self.loader.unload_lora_weights()
-        if lora_list:
-            update_lora_adapters(self.loader, lora_list)
-            apply_lora_scheduler_override(self.loader, lora_list)
 
         # Construct loaded_components at the end after all modifications
         try:
-            loaded_components = {
-                "unet_out": node_get_component_info(node_id=self.node_id, manager=components, name=denoiser_name),
-                "vae_out": node_get_component_info(node_id=self.node_id, manager=components, name="vae"),
-                "text_encoders": {
-                    k: node_get_component_info(node_id=self.node_id, manager=components, name=k)
-                    for k in text_encoder_names
-                },
-                "scheduler": node_get_component_info(node_id=self.node_id, manager=components, name="scheduler"),
-            }
-
-            if model_type == "WanImage2VideoModularPipeline":
-                loaded_components["image_encoder"] = node_get_component_info(
-                    node_id=self.node_id, manager=components, name="image_encoder"
+            loaded_components = {}
+            if denoiser_name is not None:
+                loaded_components["unet_out"] = node_get_component_info(
+                    node_id=self.node_id,
+                    manager=components,
+                    name=denoiser_name,
                 )
+            if "vae" in ALL_COMPONENTS:
+                loaded_components["vae_out"] = node_get_component_info(
+                    node_id=self.node_id,
+                    manager=components,
+                    name="vae",
+                )
+            if text_encoder_names:
+                loaded_components["text_encoders"] = {
+                    name: node_get_component_info(node_id=self.node_id, manager=components, name=name)
+                    for name in text_encoder_names
+                }
+            if "scheduler" in ALL_COMPONENTS:
+                loaded_components["scheduler"] = node_get_component_info(
+                    node_id=self.node_id,
+                    manager=components,
+                    name="scheduler",
+                )
+            if whole_workflow_components:
+                loaded_components["pipeline_components"] = {
+                    name: node_get_component_info(node_id=self.node_id, manager=components, name=name)
+                    for name in ALL_COMPONENTS
+                }
+
+            loaded_components.update(
+                {
+                    name: node_get_component_info(node_id=self.node_id, manager=components, name=name)
+                    for name in loader_component_outputs
+                }
+            )
         except ValueError as e:
             self.notify(
                 f" ModelsLoader: Error retrieving component info: {e}",
@@ -1396,14 +2932,28 @@ class ModelsLoader(NodeBase):
             )
             raise RuntimeError(f"ModelsLoader could not retrieve required component info: {e}") from e
 
+        # Mint only after every loading and component-info step succeeded. A
+        # cache hit keeps these dictionaries (and this identity token), while
+        # each successful re-execution receives a new token.
+        pipeline_instance_token = issue_pipeline_instance_token(
+            model_type=model_type,
+            repo_id=real_repo_id,
+            repo_source=_source,
+            revision=revision,
+        )
+
         # Make every connected output self-describing. Runtime cleanup may
         # recreate downstream nodes without replaying their dynamic UI signal.
-        for k, v in loaded_components.items():
-            if isinstance(v, dict):
-                v["repo_id"] = real_repo_id
-                v["model_type"] = model_type
-                v["revision"] = revision
-                v["trust_remote_code"] = bool(trust_remote_code)
+        annotate_modular_loader_outputs(
+            loaded_components,
+            repo_id=real_repo_id,
+            repo_source=_source,
+            model_type=model_type,
+            revision=revision,
+            trust_remote_code=bool(trust_remote_code),
+            custom_identity=custom_identity,
+            pipeline_instance_token=pipeline_instance_token,
+        )
 
         logger.debug(f" ModelsLoader: Final component_manager state: {components}")
 

@@ -2,6 +2,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 from scipy.io import wavfile
@@ -9,10 +10,268 @@ from scipy.io import wavfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from modules.Audio.main import Export, FitDuration, Join, MatchLoudness, _atempo_factors, _audio_to_numpy, _read_wav
+from modules.Audio.main import (
+    AUDIO_OPERATION_MODES,
+    AUDIO_OPERATION_PIPELINE_CLASS,
+    Export,
+    FitDuration,
+    Join,
+    Load,
+    MatchLoudness,
+    ProcessAudio,
+    TrimPad,
+    _atempo_factors,
+    _audio_to_numpy,
+    _read_wav,
+)
+from modiff.config import CONFIG
+
+
+def _audio(*, frames=16000, sample_rate=16000, channels=1):
+    return {
+        "samples": np.zeros((frames, channels), dtype=np.float32),
+        "sample_layout": "frames_first",
+        "sample_rate": sample_rate,
+        "channels": channels,
+        "duration_seconds": frames / sample_rate,
+    }
+
+
+class BuiltinAudioOperationTests(unittest.TestCase):
+    def test_config_exposes_the_audio_export_directory(self):
+        self.assertIn("audio", CONFIG.paths)
+        self.assertTrue(Path(CONFIG.paths["audio"]).is_dir())
+
+    def test_facade_exposes_three_exact_install_free_operations(self):
+        self.assertEqual(AUDIO_OPERATION_MODES, ["audio_trim", "audio_join", "audio_loudness_match"])
+        self.assertEqual(ProcessAudio.params["pipeline_class"]["default"], AUDIO_OPERATION_PIPELINE_CLASS)
+        self.assertEqual(ProcessAudio.params["operation"]["options"], AUDIO_OPERATION_MODES)
+
+    def test_trim_join_and_loudness_delegate_with_bounded_audio_objects(self):
+        source = _audio()
+        reference = _audio(frames=8000)
+        trimmed = _audio(frames=4000)
+        with patch("modules.Audio.main.TrimPad.execute", return_value={"output": trimmed}) as execute:
+            result = ProcessAudio().execute(
+                source=source,
+                operation="audio_trim",
+                start_seconds=0.25,
+                duration_seconds=0.25,
+                target_sample_rate=16000,
+                normalize_peak=True,
+            )
+        self.assertEqual(result["duration"], 0.25)
+        self.assertEqual(execute.call_args.kwargs["start_seconds"], 0.25)
+        self.assertEqual(execute.call_args.kwargs["duration_seconds"], 0.25)
+        self.assertTrue(execute.call_args.kwargs["normalize_peak"])
+
+        joined = _audio(frames=24000)
+        with patch("modules.Audio.main.Join.execute", return_value={"output": joined}) as execute:
+            result = ProcessAudio().execute(
+                source=source,
+                reference=reference,
+                operation="audio_join",
+                boundary_fade_seconds=0.05,
+            )
+        self.assertEqual(result["duration"], 1.5)
+        self.assertEqual(execute.call_args.kwargs["boundary_fade_seconds"], 0.05)
+
+        matched = _audio()
+        with patch("modules.Audio.main.MatchLoudness.execute", return_value={"output": matched}) as execute:
+            result = ProcessAudio().execute(
+                source=source,
+                reference=reference,
+                operation="audio_loudness_match",
+                reference_window_seconds=0.5,
+                target_peak_dbfs=-2,
+                max_adjustment_db=6,
+            )
+        self.assertEqual(result["sample_rate"], 16000)
+        self.assertEqual(execute.call_args.kwargs["reference_window_seconds"], 0.5)
+        self.assertEqual(execute.call_args.kwargs["target_peak_dbfs"], -2)
+        self.assertEqual(execute.call_args.kwargs["max_adjustment_db"], 6)
+
+    def test_facade_fails_closed_on_identity_inputs_fields_and_memory(self):
+        source = _audio()
+        reference = _audio(frames=8000)
+        with self.assertRaisesRegex(ValueError, "contract identity"):
+            ProcessAudio().execute(source=source, pipeline_class="plugin", operation="audio_trim")
+        with self.assertRaisesRegex(ValueError, "Unsupported built-in audio operation"):
+            ProcessAudio().execute(source=source, operation="audio_generate")
+        with self.assertRaisesRegex(ValueError, "require source"):
+            ProcessAudio().execute(operation="audio_trim")
+        for values in (
+            {"start_seconds": float("nan")},
+            {"start_seconds": 1},
+            {"duration_seconds": float("inf")},
+            {"duration_seconds": -1},
+            {"target_sample_rate": 12345},
+        ):
+            with self.subTest(trim=values), self.assertRaisesRegex(ValueError, "Audio trim"):
+                ProcessAudio().execute(source=source, operation="audio_trim", **values)
+        for operation in ("audio_join", "audio_loudness_match"):
+            with self.subTest(operation=operation), self.assertRaisesRegex(ValueError, "requires reference"):
+                ProcessAudio().execute(source=source, operation=operation)
+        for values in (
+            {"boundary_fade_seconds": float("nan")},
+            {"boundary_fade_seconds": 2},
+        ):
+            with self.subTest(join=values), self.assertRaisesRegex(ValueError, "boundary fade"):
+                ProcessAudio().execute(source=source, reference=reference, operation="audio_join", **values)
+        for values in (
+            {"reference_window_seconds": 61},
+            {"target_peak_dbfs": float("nan")},
+            {"target_peak_dbfs": -10},
+            {"max_adjustment_db": 31},
+        ):
+            with self.subTest(loudness=values), self.assertRaises(ValueError):
+                ProcessAudio().execute(
+                    source=source,
+                    reference=reference,
+                    operation="audio_loudness_match",
+                    **values,
+                )
+        with (
+            patch("modules.Audio.main.MAX_AUDIO_OPERATION_SCALAR_SAMPLES", 10),
+            self.assertRaisesRegex(ValueError, "sample execution limit"),
+        ):
+            ProcessAudio().execute(source=_audio(frames=11), operation="audio_trim", target_sample_rate=16000)
+
+    def test_loader_rejects_oversized_decoded_files_before_reading_samples(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "source.wav"
+            wavfile.write(path, 8000, np.zeros(8, dtype=np.int16))
+            with (
+                patch("modules.Audio.main.MAX_AUDIO_OPERATION_FILE_BYTES", 1),
+                patch("modules.Audio.main._read_wav") as read_wav,
+                self.assertRaisesRegex(ValueError, "decoded WAV input"),
+            ):
+                Load().execute(file=str(path))
+            read_wav.assert_not_called()
 
 
 class AudioExportTests(unittest.TestCase):
+    def test_explicit_sample_layout_preserves_square_stereo_payloads(self):
+        square = np.asarray([[0.1, 0.2], [0.3, 0.4]], dtype=np.float32)
+
+        frames_first, _ = _audio_to_numpy(
+            {
+                "samples": square,
+                "sample_rate": 48000,
+                "channels": 2,
+                "sample_layout": "frames_first",
+            }
+        )
+        channels_first, _ = _audio_to_numpy(
+            {
+                "samples": square,
+                "sample_rate": 48000,
+                "channels": 2,
+                "sample_layout": "channels_first",
+            }
+        )
+
+        np.testing.assert_array_equal(frames_first, square)
+        np.testing.assert_array_equal(channels_first, square.T)
+
+    def test_trim_pad_consumes_a_square_diffusers_channels_first_audio_object(self):
+        channels_first = np.asarray([[0.1, 0.2], [0.3, 0.4]], dtype=np.float32)
+
+        result = TrimPad().execute(
+            audio={
+                "samples": channels_first,
+                "sample_layout": "channels_first",
+                "sample_rate": 48000,
+                "channels": 2,
+                "duration_seconds": 2 / 48000,
+            },
+            target_sample_rate=48000,
+        )
+
+        self.assertEqual(result["output"]["sample_layout"], "frames_first")
+        self.assertEqual(result["output"]["channels"], 2)
+        np.testing.assert_array_equal(result["output"]["samples"], channels_first.T)
+
+    def test_trim_pad_rejects_contradictory_layout_and_channel_metadata(self):
+        cases = (
+            (
+                {
+                    "samples": np.zeros((2, 3), dtype=np.float32),
+                    "sample_layout": "frames_first",
+                    "sample_rate": 48000,
+                    "channels": 2,
+                },
+                "frames_first identifies 3",
+            ),
+            (
+                {
+                    "samples": np.zeros((3, 2), dtype=np.float32),
+                    "sample_layout": "channels_first",
+                    "sample_rate": 48000,
+                    "channels": 2,
+                },
+                "channels_first identifies 3",
+            ),
+        )
+        for payload, message in cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    TrimPad().execute(audio=payload, target_sample_rate=48000)
+
+        for channels in (True, 0, -1, 1.5, float("nan"), float("inf"), "two"):
+            with self.subTest(channels=channels):
+                with self.assertRaisesRegex(ValueError, "channels metadata must be a positive integer"):
+                    TrimPad().execute(
+                        audio={
+                            "samples": np.zeros((3, 2), dtype=np.float32),
+                            "sample_layout": "frames_first",
+                            "sample_rate": 48000,
+                            "channels": channels,
+                        },
+                        target_sample_rate=48000,
+                    )
+
+    def test_trim_pad_uses_decoder_provenance_for_path_backed_metadata(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "two-channel.wav"
+            wavfile.write(path, 48000, np.zeros((3, 2), dtype=np.int16))
+
+            with patch("modules.Audio.main._read_wav") as decoder:
+                with self.assertRaisesRegex(ValueError, "Decoded audio files use frames_first"):
+                    TrimPad().execute(
+                        audio={
+                            "samples": str(path),
+                            "sample_layout": "channels_first",
+                            "sample_rate": 48000,
+                            "channels": 2,
+                        },
+                        target_sample_rate=48000,
+                    )
+                decoder.assert_not_called()
+
+            with self.assertRaisesRegex(ValueError, "declares 1 channels, but the decoded file has 2"):
+                TrimPad().execute(
+                    audio={
+                        "samples": str(path),
+                        "sample_layout": "frames_first",
+                        "sample_rate": 48000,
+                        "channels": 1,
+                    },
+                    target_sample_rate=48000,
+                )
+
+            result = TrimPad().execute(
+                audio={
+                    "samples": str(path),
+                    "sample_layout": "frames_first",
+                    "sample_rate": 48000,
+                    "channels": 2,
+                },
+                target_sample_rate=48000,
+            )
+        self.assertEqual(result["output"]["samples"].shape, (3, 2))
+        self.assertEqual(result["output"]["sample_layout"], "frames_first")
+
     def test_unsigned_pcm_midpoint_is_silence_for_arrays_and_wav_files(self):
         source = np.asarray([0, 128, 255], dtype=np.uint8)
         converted, _sample_rate = _audio_to_numpy({"samples": source, "sample_rate": 8000})
@@ -28,7 +287,7 @@ class AudioExportTests(unittest.TestCase):
     def test_sample_rate_options_include_music_delivery_rates(self):
         options = Export.params["sample_rate"]["options"]
 
-        self.assertEqual(set(options), {"44100", "48000", "88200", "96000"})
+        self.assertEqual(set(options), {"16000", "24000", "44100", "48000", "88200", "96000"})
         self.assertEqual(options["44100"], "44.1 kHz")
         self.assertEqual(options["48000"], "48 kHz")
         self.assertEqual(options["88200"], "88.2 kHz")

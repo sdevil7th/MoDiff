@@ -1,0 +1,211 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "liveQualified": false,
+    "reason": "The exact package-owned Modular Diffusers workflow and a 28.52 GB bounded component snapshot are reviewed. Runtime publication remains closed until the whole-workflow runner, revision-normalized component loader, revision-bound license acknowledgement, and real CUDA execution are qualified together.",
+    "runtimeCatalogExposed": false,
+    "status": "artifact_reviewed_runner_pending",
+    "unresolvedGates": [
+      "whole_modular_workflow_runner",
+      "revision_bound_community_license_acknowledgement",
+      "cuda_execution_qualification",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "diffusersRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
+  "family": "MiniMax Music 3",
+  "format": "safetensors",
+  "licenseReview": {
+    "annualRevenueAuthorizationThresholdUsdExclusive": 20000000,
+    "attributionDisplayRequiredForCommercialProduct": "MiniMax-Music3",
+    "embeddedLicenseFilePresent": true,
+    "hostedGenerationSafeguardsRequired": true,
+    "id": "MiniMax-Music3 Community License",
+    "licenseFileSha256": "b21d12df2adae59dad3fcf80c1d81492654c662342f497d9a9770198c9317e58",
+    "modelCardLicenseTag": null,
+    "policyVersionEvidence": "Exhibit A last revised August 6, 2026",
+    "revisionBoundAcknowledgementRequired": true,
+    "termsUrl": "https://huggingface.co/MiniMaxAI/MiniMax-Music3/blob/fbdf52fbaaca799592917417eb05f1899f1255ec/LICENSE"
+  },
+  "modularIndex": {
+    "allRemoteComponentsSelfReferenceRepository": true,
+    "blocksClass": "MiniMaxMusic3Blocks",
+    "byteSize": 2391,
+    "componentRevisions": {
+      "condition_encoder": null,
+      "language_model": null,
+      "rvq_depth_decoder": null,
+      "scheduler": null,
+      "tokenizer": null,
+      "transformer": null,
+      "vocoder": null
+    },
+    "componentRevisionNormalization": "Apply the reviewed top-level commit to every self-referencing component spec before load_components().",
+    "pipelineClass": "MiniMaxMusic3ModularPipeline",
+    "sha256": "1dc86609cf8855e70cc3f5d085213988094fb59e448aedcda06740d34e386002"
+  },
+  "remoteResourceEnvelope": {
+    "basis": "The exact selected bfloat16 weights plus conservative component-loading, autoregressive hidden-state, chunked flow-matching, vocoder, and output headroom. Publisher low-VRAM guidance is not MoDiff execution evidence.",
+    "minimumAcceleratorMemoryBytesWithGroupOffloadEstimate": 8589934592,
+    "minimumSelectiveDiskBytes": 38654705664,
+    "minimumSystemRamBytes": 51539607552,
+    "recommendedAcceleratorMemoryBytes": 25769803776,
+    "recommendedSystemRamBytes": 68719476736,
+    "status": "estimate_only_qualification_pending"
+  },
+  "repository": {
+    "excludedBytes": 28835770601,
+    "excludedFileCount": 65,
+    "excludedRuntimeIrrelevantRoots": [
+      "assets/",
+      "dav.pth",
+      "figures/",
+      "flowmatching_vae.pth",
+      "qwen_7B/",
+      "scripts/"
+    ],
+    "fullRepositoryBytes": 57353379600,
+    "fullRepositoryFileCount": 88,
+    "gated": false,
+    "private": false,
+    "pythonFilesSelected": false,
+    "repository": "MiniMaxAI/MiniMax-Music3",
+    "revision": "fbdf52fbaaca799592917417eb05f1899f1255ec",
+    "selectedBytes": 28517608999,
+    "selectedFileCount": 23,
+    "selectedFiles": [
+      "LICENSE",
+      "condition_encoder/config.json",
+      "condition_encoder/diffusion_pytorch_model.safetensors",
+      "language_model/config.json",
+      "language_model/generation_config.json",
+      "language_model/model-00001-of-00004.safetensors",
+      "language_model/model-00002-of-00004.safetensors",
+      "language_model/model-00003-of-00004.safetensors",
+      "language_model/model-00004-of-00004.safetensors",
+      "language_model/model.safetensors.index.json",
+      "modular_model_index.json",
+      "rvq_depth_decoder/config.json",
+      "rvq_depth_decoder/diffusion_pytorch_model.safetensors",
+      "scheduler/scheduler_config.json",
+      "tokenizer/chat_template.jinja",
+      "tokenizer/tokenizer.json",
+      "tokenizer/tokenizer_config.json",
+      "transformer/config.json",
+      "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+      "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+      "transformer/diffusion_pytorch_model.safetensors.index.json",
+      "vocoder/config.json",
+      "vocoder/diffusion_pytorch_model.safetensors"
+    ]
+  },
+  "reviewedWorkflow": {
+    "defaultAudioDurationSeconds": 60.0,
+    "defaultNumInferenceSteps": 30,
+    "defaultOutputType": "np",
+    "maximumAudioFrames": 9000,
+    "maximumAudioSecondsAt25Fps": 360.0,
+    "nativeChannels": 2,
+    "nativeSampleRate": 44100,
+    "publicOutputs": [
+      "audios"
+    ],
+    "reviewedInspectableOutputs": [
+      "text_ids",
+      "frame_hiddens",
+      "chunk_starts",
+      "latent_chunks",
+      "audios"
+    ],
+    "pipelineClass": "MiniMaxMusic3ModularPipeline",
+    "requiredInputs": [
+      "lyrics",
+      "prompt"
+    ],
+    "taskId": "text_to_audio",
+    "upstreamBlockSequence": [
+      "semantic_generator",
+      "denoise",
+      "decode"
+    ],
+    "workflowId": "default"
+  },
+  "sourceReview": {
+    "files": {
+      "before_denoise.py": "d0e2bac55e482b1459d25b3ac917a3742640bdff14298ddfb4d30d79868820d2",
+      "decoders.py": "23b3754f86ed5c8b9fb0e1774beeef532c3eca65128e6f6bdeea32a531d61024",
+      "denoise.py": "31f44750add01a9c4c75cb7967d2e0a630d1199793f3fa163f6f8bce793d7df9",
+      "encoders.py": "247ca4492a531c6593485b9fb11503da8607d03315c2f8b313dc6ae44985336b",
+      "modular_blocks_minimax_music3.py": "4aaba8733ec407c90d8952e3d6a292a68ab98fc80ae44a63cd91346d26ed4814",
+      "modular_pipeline.py": "1cb5108dff074f18529c6b2afef3b746871b414a62e07a33bc22dd9bd9af0ccf"
+    },
+    "generatorPolicy": "MoDiff must expose a bounded integer seed and construct torch.Generator on the pipeline execution device; graph values must not supply a generator object.",
+    "officialExecutionRoute": "ModularPipeline.from_pretrained(), load_components(), then call the selected official workflow as a whole; blocks are not invoked directly.",
+    "optionalRuntimeRequirements": [
+      "transformers==5.16.0.dev0",
+      "peft==0.20.0"
+    ]
+  },
+  "weightFiles": [
+    {
+      "byteSize": 100671852,
+      "path": "condition_encoder/diffusion_pytorch_model.safetensors",
+      "sha256": "83179c5eaa9a68a370affe0c1b96c2179f659ea4175666b31071490a202c2a4d"
+    },
+    {
+      "byteSize": 4910103856,
+      "path": "language_model/model-00001-of-00004.safetensors",
+      "sha256": "1e95924a158b45b67cfad04fa0f0a352e5a263e69338734d7c1d558be776cc98"
+    },
+    {
+      "byteSize": 4915960352,
+      "path": "language_model/model-00002-of-00004.safetensors",
+      "sha256": "fde2d335eef7eafa268d35e53d4b040ee51d2f3fa727f9855b4c97d88a2892da"
+    },
+    {
+      "byteSize": 4983068496,
+      "path": "language_model/model-00003-of-00004.safetensors",
+      "sha256": "6549a831637ab678a573047e7fa8fdf966998c4f45330e6eb7573d67f7b9b4c6"
+    },
+    {
+      "byteSize": 2359864688,
+      "path": "language_model/model-00004-of-00004.safetensors",
+      "sha256": "a1c9865f357b64d3ae9f428fb98a844831e5a0aee9ed17b19bd7f7be32b964a9"
+    },
+    {
+      "byteSize": 1292055248,
+      "path": "rvq_depth_decoder/diffusion_pytorch_model.safetensors",
+      "sha256": "80e86ab006bb5c8d4f223205045035a1c77b2bb9c3be9a86d7e740bbafe5ddf0"
+    },
+    {
+      "byteSize": 4959921384,
+      "path": "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+      "sha256": "1943baebe93b5d5a57e9e1f603d9cef51a73a55e7a42f52913932dc06dcf10f0"
+    },
+    {
+      "byteSize": 4767750800,
+      "path": "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+      "sha256": "b2f9e29d241e107e5a281f8b369d6db48eee983917df966c56d7b8dd0bd482c2"
+    },
+    {
+      "byteSize": 216695272,
+      "path": "vocoder/diffusion_pytorch_model.safetensors",
+      "sha256": "daf0bf0560ea978ce7b5ec3e82f420a44429efef18bdfbe3c714d55ceffbe934"
+    }
+  ],
+  "weightInventorySha256": "0a7f1187bf52589e9b3a6052244c980d73595ee96f6046e477a3c457273db72e",
+  "weightBytes": 28506091948,
+  "weightFileCount": 9
+}

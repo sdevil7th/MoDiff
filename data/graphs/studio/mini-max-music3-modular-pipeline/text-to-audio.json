@@ -1,0 +1,838 @@
+{
+  "edges": [
+    {
+      "className": "category-audio",
+      "data": {
+        "connectionType": "audio"
+      },
+      "edgeType": "default",
+      "id": "edge-01",
+      "markerEnd": {
+        "color": "#F472B6",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "audio",
+      "style": {
+        "stroke": "#F472B6"
+      },
+      "target": "node-01",
+      "targetHandle": "audio",
+      "type": "default"
+    },
+    {
+      "className": "category-modular_workflow_state",
+      "data": {
+        "connectionType": "modular_workflow_state"
+      },
+      "edgeType": "default",
+      "id": "edge-02",
+      "markerEnd": {
+        "color": "hsl(217 77% 66%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-03",
+      "sourceHandle": "state_out",
+      "style": {
+        "stroke": "hsl(217 77% 66%)"
+      },
+      "target": "node-02",
+      "targetHandle": "state_in",
+      "type": "default"
+    },
+    {
+      "className": "category-diffusers_modular_pipeline_components",
+      "data": {
+        "connectionType": "diffusers_modular_pipeline_components"
+      },
+      "edgeType": "default",
+      "id": "edge-03",
+      "markerEnd": {
+        "color": "hsl(319 78% 64%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-04",
+      "sourceHandle": "pipeline_components",
+      "style": {
+        "stroke": "hsl(319 78% 64%)"
+      },
+      "target": "node-02",
+      "targetHandle": "pipeline_components",
+      "type": "default"
+    },
+    {
+      "className": "category-diffusers_modular_pipeline_components",
+      "data": {
+        "connectionType": "diffusers_modular_pipeline_components"
+      },
+      "edgeType": "default",
+      "id": "edge-04",
+      "markerEnd": {
+        "color": "hsl(319 78% 64%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-04",
+      "sourceHandle": "pipeline_components",
+      "style": {
+        "stroke": "hsl(319 78% 64%)"
+      },
+      "target": "node-03",
+      "targetHandle": "pipeline_components",
+      "type": "default"
+    },
+    {
+      "className": "category-diffusers_modular_pipeline_components",
+      "data": {
+        "connectionType": "diffusers_modular_pipeline_components"
+      },
+      "edgeType": "default",
+      "id": "edge-05",
+      "markerEnd": {
+        "color": "hsl(319 78% 64%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-04",
+      "sourceHandle": "pipeline_components",
+      "style": {
+        "stroke": "hsl(319 78% 64%)"
+      },
+      "target": "node-05",
+      "targetHandle": "pipeline_components",
+      "type": "default"
+    },
+    {
+      "className": "category-modular_workflow_state",
+      "data": {
+        "connectionType": "modular_workflow_state"
+      },
+      "edgeType": "default",
+      "id": "edge-06",
+      "markerEnd": {
+        "color": "hsl(217 77% 66%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-05",
+      "sourceHandle": "state_out",
+      "style": {
+        "stroke": "hsl(217 77% 66%)"
+      },
+      "target": "node-03",
+      "targetHandle": "state_in",
+      "type": "default"
+    }
+  ],
+  "layout": {
+    "algorithm": "modiff-layered-v1",
+    "horizontalGap": 140,
+    "positionHash": "9e65649e89d7eab8861d8ad990fdc83e5853af0beb13c6f129ece1aaa9a98dca",
+    "verticalGap": 72
+  },
+  "nodes": [
+    {
+      "data": {
+        "action": "Export",
+        "cache": false,
+        "category": "Audio",
+        "description": "Save audio to a WAV file and expose a preview.",
+        "label": "Export Audio",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Audio",
+        "params": {
+          "audio": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Audio",
+            "type": [
+              "audio",
+              "str"
+            ]
+          },
+          "duration_seconds": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Duration",
+            "type": "float"
+          },
+          "file": {
+            "display": "output",
+            "isConnected": false,
+            "label": "File",
+            "type": "audio"
+          },
+          "filename": {
+            "default": "{PATH:audio}/MoDiff_{HASH:6}.wav",
+            "label": "File",
+            "type": "str"
+          },
+          "preview": {
+            "dataSource": "file",
+            "display": "ui_audio",
+            "type": "url"
+          },
+          "sample_rate": {
+            "default": 48000,
+            "label": "Export Sample Rate",
+            "options": {
+              "16000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "16 kHz",
+                "schemaVersion": 1,
+                "value": "16000"
+              },
+              "24000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "24 kHz",
+                "schemaVersion": 1,
+                "value": "24000"
+              },
+              "44100": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "44.1 kHz",
+                "schemaVersion": 1,
+                "value": "44100"
+              },
+              "48000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "48 kHz",
+                "schemaVersion": 1,
+                "value": "48000"
+              },
+              "88200": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "88.2 kHz",
+                "schemaVersion": 1,
+                "value": "88200"
+              },
+              "96000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "96 kHz",
+                "schemaVersion": 1,
+                "value": "96000"
+              }
+            },
+            "type": "int",
+            "value": 44100
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "audioExport",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-01",
+      "position": {
+        "x": 1760,
+        "y": 187
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "WorkflowDecodeAudio",
+        "cache": false,
+        "category": "Modular Diffusers",
+        "description": "Run the official decoder and convert its waveform to MoDiff audio.",
+        "label": "Modular Workflow Decode Audio",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.ModularDiffusers",
+        "params": {
+          "audio": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Audio",
+            "type": "audio"
+          },
+          "block_path": {
+            "default": "decode",
+            "hidden": true,
+            "type": "string",
+            "value": "decode"
+          },
+          "duration_seconds": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Duration",
+            "type": "float"
+          },
+          "pipeline_class": {
+            "default": "MiniMaxMusic3ModularPipeline",
+            "hidden": true,
+            "type": "string",
+            "value": "MiniMaxMusic3ModularPipeline"
+          },
+          "pipeline_components": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Pipeline Components",
+            "required": true,
+            "type": "diffusers_modular_pipeline_components"
+          },
+          "sample_rate": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Sample Rate",
+            "type": "int"
+          },
+          "state_in": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Workflow State",
+            "required": true,
+            "type": "modular_workflow_state"
+          },
+          "workflow_id": {
+            "default": "default",
+            "hidden": true,
+            "type": "string",
+            "value": "default"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": true,
+        "studioOwned": true,
+        "studioRole": "decode",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-02",
+      "position": {
+        "x": 1320,
+        "y": 159
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "WorkflowDenoise",
+        "cache": false,
+        "category": "Modular Diffusers",
+        "description": "Run the official denoise block using a sealed preceding state.",
+        "label": "Modular Workflow Denoise",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.ModularDiffusers",
+        "params": {
+          "block_path": {
+            "default": "denoise",
+            "hidden": true,
+            "type": "string",
+            "value": "denoise"
+          },
+          "num_inference_steps": {
+            "default": 30,
+            "display": "slider",
+            "label": "Steps",
+            "max": 100,
+            "min": 1,
+            "type": "int",
+            "value": 30
+          },
+          "pipeline_class": {
+            "default": "MiniMaxMusic3ModularPipeline",
+            "hidden": true,
+            "type": "string",
+            "value": "MiniMaxMusic3ModularPipeline"
+          },
+          "pipeline_components": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Pipeline Components",
+            "required": true,
+            "type": "diffusers_modular_pipeline_components"
+          },
+          "state_in": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Workflow State",
+            "required": true,
+            "type": "modular_workflow_state"
+          },
+          "state_out": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Workflow State",
+            "type": "modular_workflow_state"
+          },
+          "workflow_id": {
+            "default": "default",
+            "hidden": true,
+            "type": "string",
+            "value": "default"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": true,
+        "studioOwned": true,
+        "studioRole": "denoise",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-03",
+      "position": {
+        "x": 880,
+        "y": 173
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "ModelsLoader",
+        "cache": false,
+        "category": "loader",
+        "description": "",
+        "label": "Diffusers.LoadPipeline",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.ModularDiffusers",
+        "params": {
+          "auto_offload": {
+            "label": "Enable Auto Offload",
+            "type": "boolean",
+            "value": true
+          },
+          "controlnet": {
+            "display": "input",
+            "isConnected": false,
+            "label": "ControlNet",
+            "type": "diffusers_auto_model"
+          },
+          "device": {
+            "label": "Device",
+            "options": {
+              "cpu": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              },
+              "cpu:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
+              }
+            },
+            "type": "string",
+            "value": "cuda:0"
+          },
+          "dtype": {
+            "label": "dtype",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "float32",
+                "schemaVersion": 1,
+                "value": "float32"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "float16",
+                "schemaVersion": 1,
+                "value": "float16"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "bfloat16",
+                "schemaVersion": 1,
+                "value": "bfloat16"
+              }
+            ],
+            "value": "bfloat16"
+          },
+          "image_encoder": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Image Encoder",
+            "type": "diffusers_auto_model"
+          },
+          "lora_list": {
+            "display": "input",
+            "isConnected": false,
+            "label": "Lora",
+            "type": "custom_lora"
+          },
+          "model_type": {
+            "disabled": true,
+            "label": "Model Type",
+            "options": {
+              "": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "",
+                "schemaVersion": 1,
+                "value": ""
+              }
+            },
+            "type": "string",
+            "value": "MiniMaxMusic3ModularPipeline"
+          },
+          "modiff_pipeline_identity": {
+            "hidden": true,
+            "label": "Custom Pipeline Identity",
+            "type": "object",
+            "value": null
+          },
+          "offload_mode": {
+            "default": "model_cpu",
+            "label": "Offload Mode",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "auto_cpu",
+                "schemaVersion": 1,
+                "value": "auto_cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "none",
+                "schemaVersion": 1,
+                "value": "none"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "model_cpu",
+                "schemaVersion": 1,
+                "value": "model_cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "group_cpu",
+                "schemaVersion": 1,
+                "value": "group_cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "group_disk",
+                "schemaVersion": 1,
+                "value": "group_disk"
+              }
+            ],
+            "type": "string",
+            "value": "model_cpu"
+          },
+          "pipeline_components": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Pipeline Components",
+            "type": "diffusers_modular_pipeline_components"
+          },
+          "quant_config": {
+            "display": "input",
+            "isConnected": false,
+            "label": "Quant Config",
+            "type": "quant_config"
+          },
+          "refresh_pipeline_identity_button": {
+            "display": "ui_button",
+            "hidden": true,
+            "label": "Review and Refresh Custom Contract",
+            "value": false
+          },
+          "repo_id": {
+            "disabled": true,
+            "display": "modelselect",
+            "fieldOptions": {
+              "filter": {
+                "hub": {
+                  "className": [
+                    ""
+                  ]
+                },
+                "local": {
+                  "className": [
+                    ""
+                  ]
+                }
+              },
+              "noValidation": true,
+              "sources": [
+                "hub",
+                "local"
+              ]
+            },
+            "label": "Repository ID",
+            "type": "string",
+            "value": {
+              "source": "hub",
+              "value": "MiniMaxAI/MiniMax-Music3"
+            }
+          },
+          "reviewed_variant": {
+            "description": "Select an immutable, reviewed checkpoint for this exact Modular Diffusers pipeline family. Changing it does not replace the workflow graph or reset its parameters.",
+            "fieldOptions": {
+              "controlTier": "essential"
+            },
+            "hidden": true,
+            "label": "Model",
+            "options": [],
+            "type": "string",
+            "value": ""
+          },
+          "revision": {
+            "description": "Required exact 40-character commit hash for Hub custom contracts.",
+            "disabled": true,
+            "label": "Revision",
+            "type": "string",
+            "value": "fbdf52fbaaca799592917417eb05f1899f1255ec"
+          },
+          "scheduler": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Scheduler",
+            "type": "diffusers_auto_model"
+          },
+          "text_encoders": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Text Encoders",
+            "type": "diffusers_auto_models"
+          },
+          "trust_remote_code": {
+            "description": "Repository code execution is disabled; keep this off for contract preview.",
+            "disabled": true,
+            "label": "Trust Remote Code",
+            "type": "boolean",
+            "value": false
+          },
+          "unet": {
+            "display": "input",
+            "isConnected": false,
+            "label": "Denoise Model",
+            "type": "diffusers_auto_model"
+          },
+          "unet_out": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Denoise Model",
+            "type": "diffusers_auto_model"
+          },
+          "vae": {
+            "display": "input",
+            "isConnected": false,
+            "label": "VAE",
+            "type": "diffusers_auto_model"
+          },
+          "vae_out": {
+            "display": "output",
+            "isConnected": false,
+            "label": "VAE",
+            "type": "diffusers_auto_model"
+          },
+          "workflow_id": {
+            "description": "Exact reviewed component partition selected by a first-party Cluster Node.",
+            "hidden": true,
+            "label": "Reviewed Workflow",
+            "type": "string",
+            "value": ""
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": true,
+        "studioOwned": true,
+        "studioRole": "models",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom",
+        "uiState": {}
+      },
+      "id": "node-04",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "WorkflowSemanticGeneration",
+        "cache": false,
+        "category": "Modular Diffusers",
+        "description": "Run MiniMax Music 3's official semantic-generation block.",
+        "label": "Modular Semantic Generation",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.ModularDiffusers",
+        "params": {
+          "audio_duration": {
+            "default": 60,
+            "label": "Duration",
+            "max": 360,
+            "min": 1,
+            "type": "float",
+            "value": 60
+          },
+          "block_path": {
+            "default": "semantic_generator",
+            "hidden": true,
+            "type": "string",
+            "value": "semantic_generator"
+          },
+          "lyrics": {
+            "default": "",
+            "display": "textarea",
+            "label": "Lyrics",
+            "type": "text",
+            "value": "[verse]\nSilver rails beneath the rain\nEvery window holds a flame\nI have carried maps of home\nThrough the miles I walked alone\n[chorus]\nLeave a little light for me\nWhere the river meets the sea\nThrough the dark the wheels will sing\nMorning waits on folded wings\n[outro]\nLeave a little light for me\nI am closer than I seem"
+          },
+          "pipeline_class": {
+            "default": "MiniMaxMusic3ModularPipeline",
+            "hidden": true,
+            "type": "string",
+            "value": "MiniMaxMusic3ModularPipeline"
+          },
+          "pipeline_components": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Pipeline Components",
+            "required": true,
+            "type": "diffusers_modular_pipeline_components"
+          },
+          "prompt": {
+            "default": "",
+            "display": "textarea",
+            "label": "Music Description",
+            "type": "text",
+            "value": "An original English chamber-pop song, 96 BPM in D major, intimate clear female lead vocal. Begin with fingerpicked acoustic guitar and soft felt piano; add warm upright bass and brushed drums during the verse. The chorus opens into close three-part vocal harmonies, a lyrical cello countermelody and restrained tambourine. A brief instrumental answer follows the chorus, then the final line resolves gently with piano and cello. Hopeful late-night train journey atmosphere, natural breathing, intelligible lyrics, spacious stereo acoustic production, balanced dynamics, no audience or spoken introduction."
+          },
+          "seed": {
+            "default": 0,
+            "display": "random",
+            "label": "Seed",
+            "max": 4294967295,
+            "min": 0,
+            "type": "int",
+            "value": {
+              "isRandom": false,
+              "value": 20260908
+            }
+          },
+          "state_out": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Workflow State",
+            "type": "modular_workflow_state"
+          },
+          "workflow_id": {
+            "default": "default",
+            "hidden": true,
+            "type": "string",
+            "value": "default"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": true,
+        "studioOwned": true,
+        "studioRole": "prompt",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-05",
+      "position": {
+        "x": 440,
+        "y": 145
+      },
+      "type": "custom"
+    }
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

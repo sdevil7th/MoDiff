@@ -23,7 +23,15 @@ from modiff.diffusers_offload import (
     reset_pipeline_device_map_for_runtime,
     supports_accelerator_cpu_offload,
 )
-from modiff.diffusers_profiles import QWEN_IMAGE_2512_PREQUANTIZED_REPO, public_execution_profiles
+from modiff.diffusers_profiles import (
+    QWEN_IMAGE_2512_PREQUANTIZED_REPO,
+    execution_profiles_for_execution,
+    optional_runtime_profile_ids_for_execution,
+    public_execution_profiles,
+)
+from modiff.model_artifact_catalog import catalog_revision
+from modiff.optional_runtime_execution import optional_runtime_requirement_for_execution
+from modiff.studio_execution_specs import studio_execution_spec_for_pair, studio_model_dependencies_for_pair
 from modules.ModularDiffusers.denoise import embeddings_are_missing, embeddings_missing_error
 from modules.ModularDiffusers.embeddings import extract_prompt_embeddings
 from modules.ModularDiffusers.loaders import normalize_quant_config_input
@@ -32,6 +40,7 @@ from modules.ModularDiffusers.loaders import (
     ModelsLoader,
     RequiredComponentLoadError,
     component_reuse_compatible,
+    configure_required_regional_compile,
     load_components_strict,
     place_pipeline_components,
     record_pipeline_component_runtime_policy,
@@ -39,6 +48,46 @@ from modules.ModularDiffusers.loaders import (
     should_incrementally_group_offload,
 )
 from modules.DiffusersImage.main import build_qwen_pipeline_quantization_config, coerce_pipeline_quantization_config
+
+
+def resource_plan_target(model_type, mode):
+    profiles = execution_profiles_for_execution(model_type, mode)
+    if len(profiles) != 1:
+        raise AssertionError(f"Expected one execution profile for {model_type}:{mode}, got {len(profiles)}")
+    profile = profiles[0]
+    return {
+        "autoResourceSchemaVersion": 2,
+        "executionProfileId": profile.id,
+        "modelType": model_type,
+        "mode": mode,
+        "loaderModule": profile.loader_module,
+        "loaderAction": profile.loader_action,
+        "executionPath": profile.execution_path,
+        "pipelineClass": profile.pipeline_class,
+    }
+
+
+def auto_resource_plan_target(model_type, mode):
+    target = {
+        **resource_plan_target(model_type, mode),
+        "modelDependencies": studio_model_dependencies_for_pair(model_type, mode),
+        "optionalRuntimeProfileIds": list(
+            optional_runtime_profile_ids_for_execution(model_type, mode)
+        ),
+        "optionalRuntimeRequirement": optional_runtime_requirement_for_execution(
+            model_type,
+            mode,
+        ),
+    }
+    specification = studio_execution_spec_for_pair(model_type, mode)
+    if specification is not None:
+        target["studioExecutionSpecContract"] = {
+            "schemaVersion": specification["schemaVersion"],
+            "id": specification["id"],
+            "contentHash": specification["contentHash"],
+            "executionProfileId": specification["executionProfileId"],
+        }
+    return target
 
 
 class FakePipelineState:
@@ -138,6 +187,56 @@ class FakeStrictPipeline:
 
 
 class DiffusersOffloadSmokeTest(unittest.TestCase):
+    def test_wan_animate_required_regional_compile_is_applied_once_per_shared_transformer(self):
+        class Transformer:
+            def __init__(self):
+                self.calls = []
+
+            def compile_repeated_blocks(self, **kwargs):
+                self.calls.append(kwargs)
+
+        transformer = Transformer()
+        pipeline = type("WanPipeline", (), {"transformer": transformer})()
+
+        applied = configure_required_regional_compile(
+            pipeline,
+            model_type="WanAnimate2DistilledModularPipeline",
+        )
+        reused = configure_required_regional_compile(
+            pipeline,
+            model_type="WanAnimate2DistilledModularPipeline",
+        )
+
+        self.assertEqual(transformer.calls, [{"fullgraph": False}])
+        self.assertEqual(
+            applied,
+            {"required": True, "applied": True, "reused": False, "components": ["transformer"]},
+        )
+        self.assertEqual(
+            reused,
+            {"required": True, "applied": False, "reused": True, "components": ["transformer"]},
+        )
+
+    def test_required_regional_compile_fails_closed_when_wan_transformer_cannot_compile(self):
+        pipeline = type("WanPipeline", (), {"transformer": object()})()
+
+        with self.assertRaisesRegex(RuntimeError, "requires Diffusers regional compilation"):
+            configure_required_regional_compile(
+                pipeline,
+                model_type="WanAnimate2ModularPipeline",
+            )
+
+    def test_unrelated_modular_pipeline_does_not_request_regional_compile(self):
+        result = configure_required_regional_compile(
+            object(),
+            model_type="QwenImageModularPipeline",
+        )
+
+        self.assertEqual(
+            result,
+            {"required": False, "applied": False, "reused": False, "components": []},
+        )
+
     def test_generic_component_filter_does_not_assign_an_uninstalled_repository(self):
         node = AutoModelLoader("generic-component-filter")
 
@@ -146,12 +245,23 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
 
         model_call = next(call for call in set_field_params.call_args_list if call.args[0] == "model_id")
         params = model_call.args[1]
-        self.assertEqual(
-            params["fieldOptions"]["filter"]["hub"]["className"],
-            ["ControlNetModel", "QwenImageControlNetModel", "FluxControlNetModel"],
-        )
+        filters = params["fieldOptions"]["filter"]
+        class_names = filters["hub"]["className"]
+        self.assertEqual(class_names, sorted(class_names))
+        self.assertEqual(filters["local"]["className"], class_names)
+        self.assertIn("ControlNetModel", class_names)
+        self.assertIn("QwenImageControlNetModel", class_names)
+        self.assertIn("FluxControlNetModel", class_names)
+        self.assertIn("ZImageControlNetModel", class_names)
+        self.assertNotIn("FluxPipeline", class_names)
+        self.assertNotIn("AutoencoderKL", class_names)
         self.assertNotIn("value", params)
         self.assertNotIn("default", params)
+
+        self.assertIn(
+            "every Hub component",
+            AutoModelLoader.params["revision"]["description"],
+        )
 
     def test_generic_pipeline_filter_preserves_selection_until_user_chooses_an_installed_repository(self):
         node = ModelsLoader("generic-pipeline-filter")
@@ -312,13 +422,18 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         with (
             patch("modules.ModularDiffusers.loaders.components", manager),
             patch(
-                "modules.ModularDiffusers.loaders.ModularPipeline.from_pretrained",
+                "modules.ModularDiffusers.loaders._validate_reviewed_pipeline_index",
+                return_value=("model_index.json", {"_class_name": "QwenImagePipeline"}),
+            ),
+            patch(
+                "modules.ModularDiffusers.loaders._instantiate_reviewed_builtin_pipeline",
                 side_effect=StopAtModelLoad("model load reached"),
             ),
         ):
             with self.assertRaisesRegex(StopAtModelLoad, "model load reached"):
                 node.execute(
-                    model_type="QwenImagePipeline",
+                    model_type="QwenImageModularPipeline",
+                    workflow_id="text2image",
                     repo_id={"source": "hub", "value": "Qwen/Qwen-Image-2512"},
                     device="cpu:0",
                     dtype=torch.float32,
@@ -679,7 +794,28 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertIn("CUDA out of memory", str(context.exception))
         self.assertEqual(diagnostics["components_failed"][0]["name"], "text_encoder")
 
-    def test_incremental_group_offload_is_selected_by_quantized_components_not_pipeline_name(self):
+    def test_strict_component_loading_forwards_reviewed_weight_variant(self):
+        pipeline = FakeStrictPipeline({"unet": FakeComponentSpec("unet")})
+        diagnostics = {}
+
+        load_components_strict(
+            pipeline,
+            ["unet"],
+            required_names={"unet"},
+            model_id="stabilityai/stable-diffusion-xl-base-1.0",
+            dtype="float16",
+            offload_mode=OFFLOAD_MODE_MODEL_CPU,
+            quant_config=None,
+            diagnostics=diagnostics,
+            component_load_kwargs={"torch_dtype": "float16", "variant": "fp16"},
+        )
+
+        self.assertEqual(
+            pipeline.registered["unet"]["kwargs"],
+            {"torch_dtype": "float16", "variant": "fp16"},
+        )
+
+    def test_incremental_group_offload_does_not_require_a_quantization_override(self):
         self.assertTrue(
             should_incrementally_group_offload(
                 use_group_offload=True,
@@ -692,12 +828,17 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
                 quant_config={"transformer": "bnb_4bit"},
             )
         )
-        self.assertFalse(
+        self.assertTrue(
             should_incrementally_group_offload(
                 use_group_offload=True,
                 quant_config={"vae": "bnb_4bit"},
             )
         )
+        for config in (None, {}):
+            with self.subTest(quant_config=config):
+                self.assertTrue(should_incrementally_group_offload(
+                    use_group_offload=True, quant_config=config,
+                ))
 
     def test_strict_component_loading_keeps_optional_component_failure_diagnostic(self):
         pipeline = FakeStrictPipeline({
@@ -906,6 +1047,7 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
                     "action": "LoadPipeline",
                     "params": {
                         "model_id": {"value": {"source": "hub", "value": "old-model"}},
+                        "revision": {"value": "a" * 40},
                         "pipeline_class": {"value": "QwenImagePipeline"},
                         "device_map": {"value": "none"},
                         "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
@@ -920,8 +1062,7 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
             server,
             graph,
             {
-                "executionPath": "direct-diffusers-image",
-                "pipelineClass": "QwenImagePipeline",
+                **resource_plan_target("QwenImageModularPipeline", "text_to_image"),
                 "modelRepo": "Qwen/Qwen-Image-2512",
                 "offloadMode": OFFLOAD_MODE_NONE,
                 "deviceMap": "cuda",
@@ -933,6 +1074,8 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertEqual(params["device_map"]["value"], "cuda")
         self.assertEqual(params["offload_mode"]["value"], OFFLOAD_MODE_NONE)
         self.assertFalse(params["auto_offload"]["value"])
+        self.assertEqual(params["model_id"]["value"]["value"], "Qwen/Qwen-Image-2512")
+        self.assertEqual(params["revision"]["value"], catalog_revision("Qwen/Qwen-Image-2512"))
         self.assertEqual(graph["nodes"]["recipe"]["params"]["device_map"]["value"], "cuda")
         self.assertEqual(graph["nodes"]["recipe"]["params"]["offload_mode"]["value"], OFFLOAD_MODE_NONE)
 
@@ -955,6 +1098,7 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
                     "action": "LoadPipeline",
                     "params": {
                         "model_id": {"value": {"source": "hub", "value": "old-audio"}},
+                        "revision": {"value": "a" * 40},
                         "pipeline_class": {"value": "AceStepPipeline"},
                         "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
                         "auto_offload": {"value": True},
@@ -986,8 +1130,8 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
             server,
             graph,
             {
+                **resource_plan_target("AceStepAudioPipeline", "text_to_audio"),
                 "modelRepo": "ACE-Step/acestep-v15-xl-turbo-diffusers",
-                "pipelineClass": "AceStepPipeline",
                 "offloadMode": OFFLOAD_MODE_NONE,
                 "deviceMap": "cuda",
                 "generation": {"audioDuration": 24, "steps": 8},
@@ -1001,6 +1145,10 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
             graph["nodes"]["audio-loader"]["params"]["model_id"]["value"]["value"],
             "ACE-Step/acestep-v15-xl-turbo-diffusers",
         )
+        self.assertEqual(
+            graph["nodes"]["audio-loader"]["params"]["revision"]["value"],
+            catalog_revision("ACE-Step/acestep-v15-xl-turbo-diffusers"),
+        )
         # Auto retry plans own runtime configuration only; creative/generation
         # controls remain exactly as the user configured them.
         self.assertEqual(graph["nodes"]["audio-generate"]["params"]["audio_duration"]["value"], 12)
@@ -1012,6 +1160,628 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
             graph["nodes"]["video-loader"]["params"]["pipeline_class"]["value"],
             "LTXConditionPipeline",
         )
+
+    def test_auto_repo_mutation_uses_custom_plan_revision_and_changes_identity_atomically(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        revision = "b" * 40
+        graph = {
+            "nodes": {
+                "loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": {"source": "local", "value": "old/repo"}},
+                        "revision": {"value": "a" * 40},
+                        "pipeline_class": {"value": "FluxPipeline"},
+                    },
+                },
+            },
+        }
+
+        updated = WebServer._apply_resource_retry_plan_to_graph(
+            server,
+            graph,
+            {
+                **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+                "modelRepo": "custom/new-repo",
+                "artifactRevision": revision,
+            },
+        )
+
+        params = graph["nodes"]["loader"]["params"]
+        self.assertEqual(updated, ["loader"])
+        self.assertEqual(params["model_id"]["value"], {"source": "hub", "value": "custom/new-repo"})
+        self.assertEqual(params["revision"]["value"], revision)
+
+    def test_z_image_auto_plan_updates_the_client_shaped_direct_loader(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        target_repo = "Tongyi-MAI/Z-Image-Turbo"
+        graph = {
+            "paths": [["z-image-loader", "independent-modular-loader"]],
+            "nodes": {
+                "z-image-loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": {"source": "hub", "value": "custom/old-repo"}},
+                        "revision": {"value": "a" * 40},
+                        "pipeline_class": {"value": "ZImagePipeline"},
+                    },
+                },
+                "independent-modular-loader": {
+                    "module": "modules.ModularDiffusers",
+                    "action": "ModelsLoader",
+                    "params": {
+                        "repo_id": {"value": {"source": "hub", "value": "custom/modular-repo"}},
+                        "revision": {"value": "c" * 40},
+                        "model_type": {"value": "ZImageModularPipeline"},
+                    },
+                },
+            },
+        }
+
+        updated = WebServer._apply_resource_retry_plan_to_graph(
+            server,
+            graph,
+            {
+                **resource_plan_target("ZImageModularPipeline", "text_to_image"),
+                "modelRepo": target_repo,
+            },
+        )
+
+        params = graph["nodes"]["z-image-loader"]["params"]
+        self.assertEqual(updated, ["z-image-loader"])
+        self.assertEqual(params["model_id"]["value"], {"source": "hub", "value": target_repo})
+        self.assertEqual(params["revision"]["value"], catalog_revision(target_repo))
+        self.assertEqual(
+            graph["nodes"]["independent-modular-loader"]["params"]["repo_id"]["value"]["value"],
+            "custom/modular-repo",
+        )
+
+    def test_auto_repo_mutation_rejects_stale_pinned_revision_without_partial_change(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        old_selection = {"source": "hub", "value": "custom/old-repo"}
+        stale_revision = "a" * 40
+        graph = {
+            "runtimeHints": {
+                "autoFieldOverrides": [
+                    {"schemaVersion": 1, "nodeId": "loader", "fieldKey": "revision"},
+                ],
+            },
+            "nodes": {
+                "loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": dict(old_selection)},
+                        "revision": {"value": stale_revision},
+                        "pipeline_class": {"value": "QwenImagePipeline"},
+                    },
+                },
+            },
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "revision override is pinned"):
+            WebServer._apply_resource_retry_plan_to_graph(
+                server,
+                graph,
+                {
+                    **resource_plan_target("QwenImageModularPipeline", "text_to_image"),
+                    "modelRepo": "Qwen/Qwen-Image-2512",
+                },
+            )
+
+        self.assertEqual(graph["nodes"]["loader"]["params"]["model_id"]["value"], old_selection)
+        self.assertEqual(graph["nodes"]["loader"]["params"]["revision"]["value"], stale_revision)
+
+    def test_auto_repo_mutation_error_does_not_echo_untrusted_graph_identity(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        marker = "GRAPH_SECRET_MARKER_" + "x" * 1024
+        graph = {
+            "runtimeHints": {
+                "autoFieldOverrides": [
+                    {"schemaVersion": 1, "nodeId": "loader", "fieldKey": "revision"},
+                ],
+            },
+            "nodes": {
+                "loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": {"source": "hub", "value": marker}},
+                        "revision": {"value": "a" * 40},
+                        "pipeline_class": {"value": "QwenImagePipeline"},
+                    },
+                },
+            },
+        }
+
+        with self.assertRaises(RuntimeError) as raised:
+            WebServer._apply_resource_retry_plan_to_graph(
+                server,
+                graph,
+                {
+                    **resource_plan_target("QwenImageModularPipeline", "text_to_image"),
+                    "modelRepo": "Qwen/Qwen-Image-2512",
+                },
+            )
+
+        self.assertNotIn("GRAPH_SECRET_MARKER_", str(raised.exception))
+        self.assertLess(len(str(raised.exception)), 256)
+        self.assertEqual(raised.exception.modiff_error_code, "auto_resource_target_mismatch")
+
+    def test_auto_repo_mutation_preserves_a_pinned_repo_and_its_revision(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        selection = {"source": "hub", "value": "custom/pinned-repo"}
+        revision = "c" * 40
+        graph = {
+            "runtimeHints": {
+                "autoFieldOverrides": [
+                    {"schemaVersion": 1, "nodeId": "loader", "fieldKey": "model_id"},
+                ],
+            },
+            "nodes": {
+                "loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": dict(selection)},
+                        "revision": {"value": revision},
+                        "pipeline_class": {"value": "FluxPipeline"},
+                    },
+                },
+            },
+        }
+
+        updated = WebServer._apply_resource_retry_plan_to_graph(
+            server,
+            graph,
+            {
+                **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+                "modelRepo": "custom/new-repo",
+                "artifactRevision": "d" * 40,
+            },
+        )
+
+        self.assertEqual(updated, [])
+        self.assertEqual(graph["nodes"]["loader"]["params"]["model_id"]["value"], selection)
+        self.assertEqual(graph["nodes"]["loader"]["params"]["revision"]["value"], revision)
+
+    def test_auto_repo_mutation_preserves_pinned_revision_when_repository_is_unchanged(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        repository = "custom/same-repo"
+        pinned_revision = "c" * 40
+        graph = {
+            "runtimeHints": {
+                "autoFieldOverrides": [
+                    {"schemaVersion": 1, "nodeId": "loader", "fieldKey": "revision"},
+                ],
+            },
+            "nodes": {
+                "loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": {"source": "hub", "value": repository}},
+                        "revision": {"value": pinned_revision},
+                        "pipeline_class": {"value": "FluxPipeline"},
+                    },
+                },
+            },
+        }
+
+        updated = WebServer._apply_resource_retry_plan_to_graph(
+            server,
+            graph,
+            {
+                **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+                "modelRepo": repository,
+                "artifactRevision": "d" * 40,
+            },
+        )
+
+        self.assertEqual(updated, [])
+        self.assertEqual(graph["nodes"]["loader"]["params"]["revision"]["value"], pinned_revision)
+
+    def test_auto_repo_mutation_fails_closed_when_loader_has_no_revision_contract(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        graph = {
+            "nodes": {
+                "legacy-loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": {"source": "hub", "value": "custom/old-repo"}},
+                        "pipeline_class": {"value": "QwenImagePipeline"},
+                    },
+                },
+            },
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "without a revision field"):
+            WebServer._apply_resource_retry_plan_to_graph(
+                server,
+                graph,
+                {
+                    **resource_plan_target("QwenImageModularPipeline", "text_to_image"),
+                    "modelRepo": "Qwen/Qwen-Image-2512",
+                },
+            )
+        self.assertEqual(
+            graph["nodes"]["legacy-loader"]["params"]["model_id"]["value"]["value"],
+            "custom/old-repo",
+        )
+
+    def test_auto_repo_mutation_rejects_plan_revision_that_disagrees_with_catalog(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        graph = {
+            "nodes": {
+                "loader": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "model_id": {"value": {"source": "hub", "value": "custom/old-repo"}},
+                        "revision": {"value": "a" * 40},
+                        "pipeline_class": {"value": "QwenImagePipeline"},
+                    },
+                },
+            },
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "does not match the reviewed catalog commit"):
+            WebServer._apply_resource_retry_plan_to_graph(
+                server,
+                graph,
+                {
+                    **resource_plan_target("QwenImageModularPipeline", "text_to_image"),
+                    "modelRepo": "Qwen/Qwen-Image-2512",
+                    "artifactRevision": "b" * 40,
+                },
+            )
+        self.assertEqual(
+            graph["nodes"]["loader"]["params"]["model_id"]["value"]["value"],
+            "custom/old-repo",
+        )
+
+    def test_exact_modular_plans_update_only_the_matching_models_loader(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        cases = (
+            ("QwenImageModularPipeline", "control_image"),
+            ("QwenImageEditModularPipeline", "edit_image"),
+            ("QwenImageEditPlusModularPipeline", "edit_image"),
+            ("QwenImageLayeredModularPipeline", "layer_decomposition"),
+        )
+        for model_type, mode in cases:
+            with self.subTest(model_type=model_type, mode=mode):
+                profile = execution_profiles_for_execution(model_type, mode)[0]
+                graph = {
+                    "nodes": {
+                        "target": {
+                            "module": "modules.ModularDiffusers",
+                            "action": "ModelsLoader",
+                            "params": {
+                                "model_type": {"value": model_type},
+                                "repo_id": {"value": {"source": "hub", "value": "custom/old"}},
+                                "revision": {"value": "a" * 40},
+                                "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                            },
+                        },
+                        "other-modular": {
+                            "module": "modules.ModularDiffusers",
+                            "action": "ModelsLoader",
+                            "params": {
+                                "model_type": {"value": "ZImageModularPipeline"},
+                                "repo_id": {"value": {"source": "hub", "value": "custom/other"}},
+                                "revision": {"value": "c" * 40},
+                                "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                            },
+                        },
+                        "direct-image": {
+                            "module": "modules.DiffusersImage",
+                            "action": "LoadPipeline",
+                            "params": {
+                                "pipeline_class": {"value": "QwenImagePipeline"},
+                                "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                            },
+                        },
+                    },
+                }
+
+                updated = WebServer._apply_resource_retry_plan_to_graph(
+                    server,
+                    graph,
+                    {
+                        **resource_plan_target(model_type, mode),
+                        "modelRepo": profile.default_repo,
+                        "offloadMode": OFFLOAD_MODE_NONE,
+                    },
+                )
+
+                self.assertEqual(updated, ["target"])
+                self.assertEqual(
+                    graph["nodes"]["target"]["params"]["repo_id"]["value"]["value"],
+                    profile.default_repo,
+                )
+                self.assertEqual(
+                    graph["nodes"]["target"]["params"]["revision"]["value"],
+                    catalog_revision(profile.default_repo),
+                )
+                self.assertEqual(
+                    graph["nodes"]["other-modular"]["params"]["repo_id"]["value"]["value"],
+                    "custom/other",
+                )
+                self.assertEqual(
+                    graph["nodes"]["direct-image"]["params"]["offload_mode"]["value"],
+                    OFFLOAD_MODE_MODEL_CPU,
+                )
+
+    def test_same_module_action_different_pipeline_class_is_not_repurposed(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        graph = {
+            "nodes": {
+                "flux": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "pipeline_class": {"value": "FluxPipeline"},
+                        "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                    },
+                },
+                "qwen": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "pipeline_class": {"value": "QwenImagePipeline"},
+                        "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                    },
+                },
+            },
+        }
+
+        updated = WebServer._apply_resource_retry_plan_to_graph(
+            server,
+            graph,
+            {
+                **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+                "offloadMode": OFFLOAD_MODE_GROUP_DISK,
+            },
+        )
+
+        self.assertEqual(updated, ["flux"])
+        self.assertEqual(
+            graph["nodes"]["flux"]["params"]["offload_mode"]["value"],
+            OFFLOAD_MODE_GROUP_DISK,
+        )
+        self.assertEqual(
+            graph["nodes"]["qwen"]["params"]["offload_mode"]["value"],
+            OFFLOAD_MODE_MODEL_CPU,
+        )
+        self.assertEqual(graph["nodes"]["qwen"]["params"]["pipeline_class"]["value"], "QwenImagePipeline")
+
+    def test_plan_with_zero_exact_loader_identities_fails_closed(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        graph = {
+            "nodes": {
+                "video": {
+                    "module": "modules.DiffusersVideo",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "pipeline_class": {"value": "LTXConditionPipeline"},
+                        "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                    },
+                },
+            },
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "matched zero exact loader identities") as raised:
+            WebServer._apply_resource_retry_plan_to_graph(
+                server,
+                graph,
+                {
+                    **resource_plan_target("AceStepAudioPipeline", "text_to_audio"),
+                    "offloadMode": OFFLOAD_MODE_GROUP_DISK,
+                },
+            )
+
+        self.assertEqual(raised.exception.modiff_error_code, "auto_resource_target_mismatch")
+        self.assertEqual(
+            graph["nodes"]["video"]["params"]["offload_mode"]["value"],
+            OFFLOAD_MODE_MODEL_CPU,
+        )
+
+    def test_exact_idempotent_loader_plan_is_valid_but_target_only_plan_is_not(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        graph = {
+            "nodes": {
+                "flux": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "pipeline_class": {"value": "FluxPipeline"},
+                        "offload_mode": {"value": OFFLOAD_MODE_GROUP_DISK},
+                        "auto_offload": {"value": True},
+                    },
+                },
+            },
+        }
+        target = resource_plan_target("FluxSchnellPipeline", "text_to_image")
+
+        self.assertEqual(
+            WebServer._apply_resource_retry_plan_to_graph(
+                server,
+                graph,
+                {**target, "offloadMode": OFFLOAD_MODE_GROUP_DISK},
+            ),
+            [],
+        )
+        with self.assertRaisesRegex(RuntimeError, "none exposes an applicable plan field"):
+            WebServer._apply_resource_retry_plan_to_graph(server, graph, target)
+
+    def test_disconnected_matching_loader_does_not_satisfy_plan_target(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        graph = {
+            "paths": [["qwen"]],
+            "nodes": {
+                "disconnected-flux": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "pipeline_class": {"value": "FluxPipeline"},
+                        "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                    },
+                },
+                "qwen": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "pipeline_class": {"value": "QwenImagePipeline"},
+                        "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                    },
+                },
+            },
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "matched zero exact loader identities"):
+            WebServer._apply_resource_retry_plan_to_graph(
+                server,
+                graph,
+                {
+                    **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+                    "offloadMode": OFFLOAD_MODE_GROUP_DISK,
+                },
+            )
+        self.assertEqual(
+            graph["nodes"]["disconnected-flux"]["params"]["offload_mode"]["value"],
+            OFFLOAD_MODE_MODEL_CPU,
+        )
+
+    def test_disconnected_duplicate_identity_is_not_mutated_with_executable_target(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        graph = {
+            "paths": [["active-flux"]],
+            "nodes": {
+                "active-flux": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "pipeline_class": {"value": "FluxPipeline"},
+                        "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                    },
+                },
+                "disconnected-flux": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "pipeline_class": {"value": "FluxPipeline"},
+                        "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                    },
+                },
+            },
+        }
+
+        updated = WebServer._apply_resource_retry_plan_to_graph(
+            server,
+            graph,
+            {
+                **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+                "offloadMode": OFFLOAD_MODE_GROUP_DISK,
+            },
+        )
+
+        self.assertEqual(updated, ["active-flux"])
+        self.assertEqual(
+            graph["nodes"]["disconnected-flux"]["params"]["offload_mode"]["value"],
+            OFFLOAD_MODE_MODEL_CPU,
+        )
+
+    def test_wan_modular_plan_routes_through_its_exact_execution_profile(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        graph = {
+            "nodes": {
+                "wan": {
+                    "module": "modules.ModularDiffusers",
+                    "action": "ModelsLoader",
+                    "params": {
+                        "model_type": {"value": "WanModularPipeline"},
+                        "offload_mode": {"value": OFFLOAD_MODE_MODEL_CPU},
+                    },
+                },
+            },
+        }
+        plan = {
+            "modelType": "WanModularPipeline",
+            "mode": "text_to_video",
+            "loaderModule": "modules.ModularDiffusers",
+            "loaderAction": "ModelsLoader",
+            "executionPath": "modular-diffusers",
+            "pipelineClass": "WanModularPipeline",
+            "offloadMode": OFFLOAD_MODE_GROUP_DISK,
+        }
+
+        updated = WebServer._apply_resource_retry_plan_to_graph(server, graph, plan)
+
+        self.assertEqual(updated, ["wan"])
+        self.assertEqual(
+            graph["nodes"]["wan"]["params"]["offload_mode"]["value"],
+            OFFLOAD_MODE_GROUP_DISK,
+        )
+
+    def test_retry_plan_sanitizer_preserves_exact_candidate_and_loader_target(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        plan = {
+            **resource_plan_target("QwenImageEditPlusModularPipeline", "edit_image"),
+            "candidateId": "qwen-edit-plus-retry",
+            "id": "qwen-edit-plus-retry",
+            "modelType": "QwenImageEditPlusModularPipeline",
+            "mode": "edit_image",
+            "offloadMode": OFFLOAD_MODE_GROUP_DISK,
+        }
+
+        sanitized = WebServer._sanitize_retry_plan_for_hints(server, plan)
+
+        for key in (
+            "candidateId",
+            "id",
+            "modelType",
+            "mode",
+            "loaderModule",
+            "loaderAction",
+            "executionPath",
+            "pipelineClass",
+        ):
+            self.assertEqual(sanitized[key], plan[key])
 
     def test_auto_retry_preserves_pinned_fields_and_requires_an_unpinned_change(self):
         from modiff.server import WebServer
@@ -1041,11 +1811,13 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
                     "params": {
                         "dtype": {"value": "float16"},
                         "offload_mode": {"value": OFFLOAD_MODE_NONE},
+                        "pipeline_class": {"value": "FluxPipeline"},
                     },
                 },
             },
         }
         plan = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
             "dtype": "bfloat16",
             "offloadMode": OFFLOAD_MODE_MODEL_CPU,
             "onCategories": ["oom"],
@@ -1098,24 +1870,39 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
             "paths": [["loader-node"]],
             "deterministicMode": {"enabled": True, "strict": False, "seed": 17},
             "runtimeHints": {
+                **resource_plan_target("ZImageModularPipeline", "text_to_image"),
                 "source": "studio",
+                "resourceMode": "expert",
                 "device": "cuda:0",
                 "offloadMode": OFFLOAD_MODE_GROUP_CPU,
                 "resourceRetryModes": [OFFLOAD_MODE_GROUP_DISK],
             },
             "nodes": {
                 "loader-node": {
-                    "module": "modules.ModularDiffusers",
-                    "action": "ModelsLoader",
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
                     "params": {
                         "offload_mode": {"value": OFFLOAD_MODE_GROUP_CPU},
                         "auto_offload": {"value": True},
+                        "pipeline_class": {"value": "ZImagePipeline"},
                     },
                 },
             },
         }
 
-        result = WebServer.execute_graph(server, graph)
+        with patch(
+            "modiff.server.graph_optional_runtime_requirement",
+            return_value={
+                "schemaVersion": 1,
+                "delivery": "optional_overlay",
+                "requiredNow": True,
+                "profileIds": ["huggingface-transformers-peft-5.14.1-0.20.0"],
+                "executionProfileIds": ["z-image:auto"],
+                "state": "active",
+                "reason": "optional_runtime_active",
+            },
+        ):
+            result = WebServer.execute_graph(server, graph)
         self.assertIsNone(result)
         self.assertEqual(calls["count"], 2)
         self.assertEqual(deterministic_calls, [1, 2])
@@ -1123,6 +1910,48 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertEqual(completed["deterministicMode"]["seed"], 17)
         self.assertEqual(completed["deterministicMode"]["application"], 2)
         self.assertEqual(graph["nodes"]["loader-node"]["params"]["offload_mode"]["value"], OFFLOAD_MODE_GROUP_DISK)
+
+    def test_auto_retry_modes_come_from_exact_profile_and_expert_modes_remain_explicit(self):
+        from modiff.server import WebServer
+
+        server = object.__new__(WebServer)
+        auto_hints = {
+            **auto_resource_plan_target("QwenImageModularPipeline", "text_to_image"),
+            "resourceMode": "auto",
+            "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+            "resourceRetryModes": [OFFLOAD_MODE_GROUP_CPU],
+        }
+
+        self.assertEqual(
+            WebServer._resource_retry_modes(server, auto_hints),
+            [OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK],
+        )
+        self.assertEqual(
+            [plan["offloadMode"] for plan in WebServer._coerce_retry_plan_list(server, auto_hints)],
+            [OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK],
+        )
+        self.assertEqual(
+            WebServer._resource_retry_modes(
+                server,
+                {
+                    **auto_resource_plan_target("ZImageModularPipeline", "text_to_image"),
+                    "resourceMode": "auto",
+                    "offloadMode": OFFLOAD_MODE_GROUP_CPU,
+                },
+            ),
+            [OFFLOAD_MODE_GROUP_DISK],
+        )
+        self.assertEqual(
+            WebServer._resource_retry_modes(
+                server,
+                {
+                    "resourceMode": "expert",
+                    "offloadMode": OFFLOAD_MODE_MODEL_CPU,
+                    "resourceRetryModes": [OFFLOAD_MODE_GROUP_CPU],
+                },
+            ),
+            [OFFLOAD_MODE_GROUP_CPU],
+        )
 
 
 if __name__ == "__main__":

@@ -1,10 +1,12 @@
 import copy
+import asyncio
 import io
 import json
 import mimetypes
 import os
 import sys
 import tempfile
+import threading
 import types
 import unittest
 from contextlib import redirect_stdout
@@ -27,11 +29,88 @@ sys.modules.setdefault(
 )
 
 from modiff import preflight  # noqa: E402
+from modiff.auto_resource import build_auto_resource_plan  # noqa: E402
+from modiff.backend_source_identity import backend_source_identity  # noqa: E402
+from modiff.diffusers_profiles import (  # noqa: E402
+    execution_profiles_for_execution,
+    optional_runtime_profile_ids_for_execution,
+)
+from modiff.optional_runtime_execution import optional_runtime_requirement_for_execution  # noqa: E402
 from modiff.server import WebServer  # noqa: E402
+from modiff.studio_execution_specs import (  # noqa: E402
+    studio_execution_spec_for_pair,
+    studio_model_dependencies_for_pair,
+)
 from aiohttp.web_fileresponse import CONTENT_TYPES as AIOHTTP_CONTENT_TYPES  # noqa: E402
 
 
 GIB = 1024**3
+
+
+class BackendSourceIdentityTests(unittest.TestCase):
+    def test_source_identity_is_canonical_and_ignores_hidden_or_generated_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "modiff").mkdir()
+            (root / "modules").mkdir()
+            (root / "utils").mkdir()
+            (root / "modiff" / "__pycache__").mkdir()
+            (root / "modiff" / ".private").mkdir()
+            (root / "main.py").write_text("print('one')\n", encoding="utf-8", newline="\n")
+            (root / "pyproject.toml").write_text("[project]\nname='test'\n", encoding="utf-8", newline="\n")
+            (root / "modiff" / "worker.py").write_text("VALUE = 1\n", encoding="utf-8", newline="\n")
+            (root / "modiff" / "__pycache__" / "worker.py").write_text("ignored\n", encoding="utf-8")
+            (root / "modiff" / ".private" / "secret.py").write_text("ignored\n", encoding="utf-8")
+
+            with patch("modiff.backend_source_identity._git_commit", return_value="a" * 40):
+                first = backend_source_identity(root)
+                (root / "modiff" / "__pycache__" / "worker.py").write_text("still ignored\n", encoding="utf-8")
+                hidden_changed = backend_source_identity(root)
+                (root / "modiff" / "worker.py").write_text("VALUE = 2\n", encoding="utf-8")
+                source_changed = backend_source_identity(root)
+
+        self.assertEqual(first["schemaVersion"], 1)
+        self.assertEqual(first["claim"], "process_start_backend_source_identity")
+        self.assertEqual(first["gitCommit"], "a" * 40)
+        self.assertEqual(first["fileCount"], 3)
+        self.assertEqual(
+            first["fingerprint"],
+            "sha256:backend-source-v1:e5e01008f9e7c08c868c96522b87162128dcfc7ee2cd8e8fa68cf37899cdd907",
+        )
+        self.assertEqual(first["fingerprint"], hidden_changed["fingerprint"])
+        self.assertNotEqual(first["fingerprint"], source_changed["fingerprint"])
+
+
+def resource_plan_target(model_type, mode):
+    profiles = execution_profiles_for_execution(model_type, mode)
+    if len(profiles) != 1:
+        raise AssertionError(f"Expected one execution profile for {model_type}:{mode}, got {len(profiles)}")
+    profile = profiles[0]
+    target = {
+        "autoResourceSchemaVersion": 2,
+        "executionProfileId": profile.id,
+        "loaderModule": profile.loader_module,
+        "loaderAction": profile.loader_action,
+        "executionPath": profile.execution_path,
+        "pipelineClass": profile.pipeline_class,
+        "modelDependencies": studio_model_dependencies_for_pair(model_type, mode),
+        "optionalRuntimeProfileIds": list(
+            optional_runtime_profile_ids_for_execution(model_type, mode)
+        ),
+        "optionalRuntimeRequirement": optional_runtime_requirement_for_execution(
+            model_type,
+            mode,
+        ),
+    }
+    specification = studio_execution_spec_for_pair(model_type, mode)
+    if specification is not None:
+        target["studioExecutionSpecContract"] = {
+            "schemaVersion": specification["schemaVersion"],
+            "id": specification["id"],
+            "contentHash": specification["contentHash"],
+            "executionProfileId": specification["executionProfileId"],
+        }
+    return target
 
 
 def hardware_snapshot(*, ram_total=32 * GIB, cuda=True):
@@ -130,6 +209,36 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
+    def test_workflow_auto_revalidates_exact_graph_and_resources_before_node_execution(self):
+        from modiff.workflow_auto_resource import workflow_graph_hash
+        graph = {"sid": "sid", "nodes": {"data": {"module": "modules.Primitive", "action": "String", "params": {"value": {"value": "hello"}}}}, "paths": [["data"]]}
+        graph["runtimeHints"] = {"resourceMode": "auto", "workflowAutoPlan": {"schemaVersion": 1, "graphHash": workflow_graph_hash(graph)}}
+        self.server.execute_node = Mock()
+        self.server._build_workflow_auto_plan = Mock(return_value={"canAutoRun": False, "patches": [], "issues": ["Combined memory changed"]})
+        with self.assertRaisesRegex(Exception, "Combined memory changed"):
+            self.server._execute_graph(copy.deepcopy(graph))
+        self.server.execute_node.assert_not_called()
+        self.server._build_workflow_auto_plan.assert_called_once()
+        graph["nodes"]["data"]["params"]["value"]["value"] = "edited"
+        self.server._build_workflow_auto_plan.reset_mock()
+        with self.assertRaisesRegex(Exception, "workflow changed after Auto planning"):
+            self.server._execute_graph(graph)
+        self.server._build_workflow_auto_plan.assert_not_called()
+        self.server.execute_node.assert_not_called()
+
+    async def test_workflow_auto_http_has_strict_payload_and_no_execution(self):
+        graph = {"nodes": {"data": {"module": "modules.Primitive", "action": "String", "params": {}}}, "paths": [["data"]]}
+        self.server._build_workflow_auto_plan = Mock(return_value={"canAutoRun": True})
+        self.server.execute_node = Mock()
+        request = SimpleNamespace(json=AsyncMock(return_value={"schemaVersion": 1, "graph": graph}))
+        response = await self.server.workflow_auto_resource_plan(request)
+        self.assertEqual(response.status, 200)
+        self.assertEqual(json.loads(response.text), {"canAutoRun": True})
+        self.server.execute_node.assert_not_called()
+        request.json = AsyncMock(return_value={"schemaVersion": 1, "graph": graph, "install": True})
+        response = await self.server.workflow_auto_resource_plan(request)
+        self.assertEqual(response.status, 400)
+
     async def test_runtime_resources_uses_a_separate_versioned_snapshot_without_mutating_auto_state(self):
         snapshot = {
             "schemaVersion": 1,
@@ -188,6 +297,26 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(snapshot["activitySource"], "windows-physical-disk")
         self.assertEqual(snapshot["kind"], "ssd")
         self.assertEqual(snapshot["detectionSource"], "linux-sysfs")
+
+    def test_runtime_resources_preserve_authoritative_memory_topology(self):
+        torch = SimpleNamespace(version=SimpleNamespace(hip="test-rocm"))
+        memory = SimpleNamespace(total=240 * GIB, available=120 * GIB, percent=50.0)
+        cuda = {"devices": [{"index": 0, "name": "AMD GPU", "total_bytes": 192 * GIB, "free_bytes": 180 * GIB}]}
+        for topology_kind, expected_kind in [("dedicated", "dedicated"), ("shared", "shared"), (None, "shared")]:
+            with (
+                self.subTest(topology_kind=topology_kind),
+                patch("modiff.server.import_module", return_value=torch),
+                patch("psutil.virtual_memory", return_value=memory),
+                patch.object(self.server, "_cuda_memory_snapshot", return_value=cuda),
+                patch.object(self.server, "_runtime_storage_snapshot", return_value={}),
+                patch("modiff.server.get_hardware_snapshot", return_value={
+                    "devices": [{"device": "cuda:0", "memory_kind": topology_kind}]
+                }),
+            ):
+                snapshot = self.server._collect_runtime_resource_snapshot()
+                self.assertEqual(snapshot["accelerators"][0]["memoryKind"], expected_kind)
+                self.assertEqual(snapshot["accelerators"][0]["memoryTotalBytes"], 192 * GIB)
+                self.assertFalse(any(error.startswith("accelerator telemetry") for error in snapshot["errors"]))
 
     async def test_runtime_options_describe_compatibility_availability_and_dependencies(self):
         self.server.modules = {
@@ -407,6 +536,185 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(timer.daemon)
         timer.start.assert_called_once_with()
 
+    def test_graph_runtime_deadline_uses_remaining_task_budget(self):
+        handle = SimpleNamespace(cancel=Mock())
+        loop = SimpleNamespace(call_later=Mock(return_value=handle))
+        self.server.loop = loop
+        self.server.current_task = {
+            "task_id": "deadline-task",
+            "name": "Graph execution",
+            "started_at": 95.0,
+        }
+
+        with patch("modiff.server.time.time", return_value=100.0):
+            scheduled = self.server._schedule_task_runtime_deadline(
+                "deadline-task",
+                {"maxRuntimeSeconds": 60},
+            )
+
+        self.assertIs(scheduled, handle)
+        loop.call_later.assert_called_once_with(
+            55.0,
+            self.server._task_runtime_deadline_reached,
+            "deadline-task",
+            60,
+        )
+
+    def test_graph_runtime_deadline_interrupts_active_model_and_schedules_restart(self):
+        pipeline = SimpleNamespace(_interrupt=False)
+        node = SimpleNamespace(_interrupt=False, _active_pipeline=pipeline)
+        self.server.node_cache = {"active-node": node}
+        self.server.current_task = {
+            "task_id": "deadline-task",
+            "name": "Graph execution",
+            "sid": "session",
+            "started_at": 1.0,
+            "progress": 42,
+            "current_node": "active-node",
+            "current_node_name": "modules.DiffusersVideo.Generate",
+            "runtimeHints": {"maxRuntimeSeconds": 60},
+        }
+        failure = {
+            "message": "deadline",
+            "category": "execution",
+            "error_code": "runtime_deadline_exceeded",
+            "recovery_hint": "use accelerator",
+        }
+
+        with (
+            patch.object(self.server, "_exception_payload", return_value=failure),
+            patch.object(self.server, "_persist_supervisor_queue_state") as persist,
+            patch.object(self.server, "queue_message") as queue_message,
+            patch.object(
+                self.server,
+                "_schedule_forced_restart_if_still_running",
+                return_value=2000,
+            ) as schedule_restart,
+        ):
+            self.server._task_runtime_deadline_reached("deadline-task", 60)
+
+        self.assertTrue(self.server.interrupt_flag)
+        self.assertTrue(self.server.current_task["interrupt_requested"])
+        self.assertEqual(self.server.current_task["interrupt_reason"], "runtime_deadline")
+        self.assertEqual(self.server.current_task["runtime_deadline_seconds"], 60)
+        self.assertEqual(self.server.current_task["runtime_deadline_failure"], failure)
+        self.assertEqual(self.server.current_task["phase"], "stopping")
+        self.assertTrue(node._interrupt)
+        self.assertTrue(pipeline._interrupt)
+        persist.assert_called_once_with(force=True)
+        schedule_restart.assert_called_once_with("deadline-task")
+        progress = queue_message.call_args.args[0]
+        self.assertEqual(progress["type"], "task_progress")
+        self.assertEqual(progress["error_code"], "runtime_deadline_exceeded")
+
+    def test_forced_user_cancel_is_durable_before_worker_exit(self):
+        self.server.current_task = {
+            "task_id": "cancelled-task", "name": "Graph execution", "sid": "session",
+            "started_at": 1.0, "progress": 42, "interrupt_requested": True,
+            "runtimeHints": {"workflowTabId": "edited-workflow", "workflowTitle": "My edit"},
+        }
+        events = []
+        snapshots = []
+
+        def persist(*, force=False):
+            self.assertTrue(force)
+            snapshots.append(copy.deepcopy(self.server.recent_tasks))
+            events.append("persist")
+
+        def send(payload):
+            events.append(payload["type"])
+
+        def exit_worker(_code):
+            events.append("exit")
+            raise SystemExit
+
+        with (
+            patch.object(self.server, "queue_message", side_effect=send),
+            patch.object(self.server, "_persist_supervisor_queue_state", side_effect=persist),
+            patch.object(self.server, "_mark_studio_preview_run_terminal") as preview_terminal,
+            patch("modiff.server.time.sleep"),
+            patch("modiff.server.os._exit", side_effect=exit_worker),
+            self.assertRaises(SystemExit),
+        ):
+            self.server._force_restart_if_task_is_active("cancelled-task")
+
+        self.assertEqual(events, ["persist", "task_cancelled", "exit"])
+        entry = snapshots[0][0]
+        self.assertEqual(entry["task_id"], "cancelled-task")
+        self.assertEqual(entry["status"], "cancelled")
+        self.assertEqual(entry["workflow_tab_id"], "edited-workflow")
+        self.assertIn("restarting", entry["message"])
+        preview_terminal.assert_called_once_with("cancelled-task", "cancelled")
+
+    async def test_forced_user_cancel_run_detail_survives_worker_reconstruction(self):
+        snapshot = {"nodes": [{"id": "edited-node"}], "edges": []}
+        self.server.current_task = {
+            "task_id": "cancelled-task", "name": "Graph execution", "sid": "session",
+            "started_at": 1.0, "progress": 42, "interrupt_requested": True,
+            "runtimeHints": {"workflowTabId": "edited-workflow", "workflowSnapshot": snapshot},
+        }
+        state_path = Path(self.temp_dir.name) / "supervisor-queue.json"
+        self.server._supervisor_queue_state_path = state_path
+        self.server._supervisor_queue_state_lock = threading.RLock()
+        with (
+            patch.object(self.server, "queue_message"),
+            patch.object(self.server, "_mark_studio_preview_run_terminal"),
+            patch("modiff.server.time.sleep"),
+            patch("modiff.server.os._exit", side_effect=SystemExit),
+            self.assertRaises(SystemExit),
+        ):
+            self.server._force_restart_if_task_is_active("cancelled-task")
+        with patch.dict(os.environ, {"MODIFF_SUPERVISOR_QUEUE_STATE": str(state_path)}):
+            replacement = WebServer(modules={"unit": {}}, work_dir=self.temp_dir.name, data_dir=self.temp_dir.name)
+        response = await replacement.get_run(SimpleNamespace(match_info={"task_id": "cancelled-task"}))
+        self.assertEqual(response.status, 200)
+        payload = json.loads(response.body)
+        self.assertEqual(payload["task"]["status"], "cancelled")
+        self.assertEqual(payload["workflow_snapshot"], snapshot)
+        self.assertFalse(replacement.current_task)
+
+    def test_forced_restart_persists_runtime_deadline_as_failed(self):
+        failure = {
+            "message": "Graph execution reached its configured 60 second runtime limit.",
+            "exception_type": "TimeoutError",
+            "category": "execution",
+            "error_code": "runtime_deadline_exceeded",
+            "recovery_hint": "Use a qualified accelerator.",
+            "oom": False,
+        }
+        self.server.current_task = {
+            "task_id": "deadline-task",
+            "name": "Graph execution",
+            "sid": "session",
+            "started_at": 1.0,
+            "progress": 42,
+            "interrupt_requested": True,
+            "interrupt_reason": "runtime_deadline",
+            "runtime_deadline_failure": failure,
+            "runtimeHints": {"maxRuntimeSeconds": 60},
+        }
+
+        with (
+            patch.object(self.server, "queue_message") as queue_message,
+            patch.object(self.server, "_persist_supervisor_queue_state") as persist,
+            patch.object(self.server, "_mark_studio_preview_run_terminal") as preview_terminal,
+            patch("modiff.server.time.sleep"),
+            patch("modiff.server.os._exit", side_effect=SystemExit) as process_exit,
+            self.assertRaises(SystemExit),
+        ):
+            self.server._force_restart_if_task_is_active("deadline-task")
+
+        entry = self.server.recent_tasks[0]
+        self.assertEqual(entry["task_id"], "deadline-task")
+        self.assertEqual(entry["status"], "failed")
+        self.assertEqual(entry["error_code"], "runtime_deadline_exceeded")
+        preview_terminal.assert_called_once_with("deadline-task", "failed")
+        persist.assert_called_once_with(force=True)
+        message = queue_message.call_args.args[0]
+        self.assertEqual(message["type"], "task_failed")
+        self.assertTrue(message["backend_restart"])
+        process_exit.assert_called_once()
+
     def test_queue_snapshots_include_workflow_navigation_without_repeating_it_in_progress_identity(self):
         workflow_snapshot = {"nodes": [{"id": "loader"}], "edges": []}
         runtime_hints = self.server._coerce_runtime_hints(
@@ -558,7 +866,9 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
     async def test_cancelled_run_releases_runtime_before_the_queue_advances(self):
         events = []
 
-        async def run_callback(_callback, *, serialize_model_io=False):
+        async def run_callback(_callback, *, serialize_model_io=False, on_start=None):
+            if on_start is not None:
+                on_start()
             if "first" not in events:
                 events.append("first")
                 self.server.current_task["interrupt_requested"] = True
@@ -627,6 +937,1176 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("model family changed from QwenImage to AceStep", second["reasons"])
         self.assertEqual(release.call_count, 2)
         self.assertEqual(self.server._last_auto_model_family, "AceStep")
+
+    def test_expert_pre_run_cleanup_releases_cross_family_cache_and_emits_generic_event(self):
+        self.server.node_cache = {"flux-loader": object()}
+        self.server._last_auto_model_family = "Flux2KleinModularPipeline"
+        messages = []
+
+        with (
+            patch("modiff.server.get_hardware_snapshot", return_value=hardware_snapshot()),
+            patch.object(
+                self.server,
+                "_release_runtime_caches_for_retry",
+                return_value={"released": {"nodes": 1}, "errors": []},
+            ) as release,
+            patch.object(self.server, "queue_message", side_effect=messages.append),
+        ):
+            result = self.server._prepare_auto_runtime_for_graph(
+                {
+                    "resourceMode": "expert",
+                    "modelType": "LTX2ModularPipeline",
+                    "resolvedArtifact": "Lightricks/LTX-2",
+                    "pipelineClass": "LTX2ConditionPipeline",
+                    "loaderContract": ["modules.DiffusersVideo.LoadPipeline"],
+                    "dtype": "bfloat16",
+                    "offloadMode": "model_cpu",
+                }
+            )
+
+        self.assertTrue(result["performed"])
+        self.assertEqual(result["resourceMode"], "expert")
+        self.assertIn(
+            "model family changed from Flux2KleinModularPipeline to LTX2ModularPipeline",
+            result["reasons"],
+        )
+        release.assert_called_once_with()
+        self.assertEqual(messages[0]["type"], "runtime_resource_cleanup")
+        self.assertEqual(messages[0]["resourceMode"], "expert")
+
+    def test_structurally_customized_graph_derives_cleanup_identity_without_route_authority(self):
+        graph_nodes = {
+            "models": {
+                "module": "modules.ModularDiffusers",
+                "action": "ModelsLoader",
+                "params": {
+                    "repo_id": {"source": "hub", "value": "Qwen/Qwen-Image-2512"},
+                    "model_type": "QwenImageModularPipeline",
+                    "dtype": "bfloat16",
+                    "auto_offload": True,
+                    "offload_mode": "model_cpu",
+                },
+            },
+            "prompt": {"module": "modules.ModularDiffusers", "action": "EncodePrompt", "params": {}},
+        }
+
+        hints = self.server._runtime_cleanup_hints_for_graph(
+            graph_nodes,
+            {
+                "clientRunId": "customized-block-run",
+                "workflowTitle": "Qwen structural proof",
+            },
+        )
+
+        self.assertEqual(hints["resourceMode"], "expert")
+        self.assertEqual(hints["modelType"], "QwenImageModularPipeline")
+        self.assertEqual(hints["pipelineClass"], "QwenImageModularPipeline")
+        self.assertEqual(hints["resolvedArtifact"], "Qwen/Qwen-Image-2512")
+        self.assertEqual(hints["dtype"], "bfloat16")
+        self.assertEqual(hints["offloadMode"], "model_cpu")
+        self.assertEqual(hints["loaderContract"], ["modules.ModularDiffusers.ModelsLoader"])
+        self.assertEqual(hints["cleanupIdentitySource"], "submitted_graph_loader")
+        self.assertNotIn("autoResourcePlan", hints)
+        self.assertNotIn("studioExecutionSpec", hints)
+
+    def test_graph_derived_cleanup_identity_releases_a_different_resident_artifact(self):
+        self.server.node_cache = {"layered-loader": object()}
+        resident = {
+            "resourceMode": "expert",
+            "modelType": "QwenImageLayeredModularPipeline",
+            "resolvedArtifact": "Qwen/Qwen-Image-Layered",
+            "loaderContract": ["modules.ModularDiffusers.ModelsLoader"],
+            "dtype": "bfloat16",
+            "offloadMode": "model_cpu",
+        }
+        self.server._last_auto_model_family = resident["modelType"]
+        self.server._last_auto_resource_signature = self.server._auto_candidate_cache_signature(resident)
+        incoming = self.server._runtime_cleanup_hints_for_graph(
+            {
+                "models": {
+                    "module": "modules.ModularDiffusers",
+                    "action": "ModelsLoader",
+                    "params": {
+                        "repo_id": {"source": "hub", "value": "Qwen/Qwen-Image-2512"},
+                        "model_type": "QwenImageModularPipeline",
+                        "dtype": "bfloat16",
+                        "offload_mode": "model_cpu",
+                    },
+                }
+            },
+            {"clientRunId": "customized-block-run"},
+        )
+
+        with (
+            patch("modiff.server.get_hardware_snapshot", return_value=hardware_snapshot()),
+            patch.object(
+                self.server,
+                "_release_runtime_caches_for_retry",
+                return_value={"released": {"nodes": 1}, "errors": []},
+            ) as release,
+            patch.object(self.server, "queue_message"),
+        ):
+            result = self.server._prepare_auto_runtime_for_graph(incoming)
+
+        self.assertTrue(result["performed"])
+        self.assertIn(
+            "model family changed from QwenImageLayeredModularPipeline to QwenImageModularPipeline",
+            result["reasons"],
+        )
+        release.assert_called_once_with()
+
+    def test_expert_pre_run_cleanup_preserves_an_identical_resident_recipe(self):
+        self.server.node_cache = {"ltx-loader": object()}
+        hints = {
+            "resourceMode": "expert",
+            "modelType": "LTX2ModularPipeline",
+            "resolvedArtifact": "Lightricks/LTX-2",
+            "pipelineClass": "LTX2ConditionPipeline",
+            "loaderContract": ["modules.DiffusersVideo.LoadPipeline"],
+            "dtype": "bfloat16",
+            "offloadMode": "model_cpu",
+        }
+        self.server._last_auto_model_family = hints["modelType"]
+        self.server._last_auto_resource_signature = self.server._auto_candidate_cache_signature(hints)
+
+        with (
+            patch("modiff.server.get_hardware_snapshot", return_value=hardware_snapshot()),
+            patch.object(self.server, "_release_runtime_caches_for_retry") as release,
+            patch.object(self.server, "queue_message"),
+        ):
+            result = self.server._prepare_auto_runtime_for_graph(hints)
+
+        self.assertFalse(result["performed"])
+        self.assertTrue(result["residentRecipeReusable"])
+        self.assertEqual(result["reasons"], [])
+        release.assert_not_called()
+
+    def test_expert_pre_run_cleanup_releases_a_different_artifact_in_the_same_family(self):
+        self.server.node_cache = {"image-loader": object()}
+        first = {
+            "resourceMode": "expert",
+            "modelType": "FluxModularPipeline",
+            "resolvedArtifact": "black-forest-labs/FLUX.1-dev",
+            "pipelineClass": "FluxPipeline",
+            "loaderContract": ["modules.DiffusersImage.LoadPipeline"],
+            "dtype": "bfloat16",
+            "offloadMode": "model_cpu",
+        }
+        second = {**first, "resolvedArtifact": "black-forest-labs/FLUX.1-schnell"}
+        self.server._last_auto_model_family = first["modelType"]
+        self.server._last_auto_resource_signature = self.server._auto_candidate_cache_signature(first)
+
+        with (
+            patch("modiff.server.get_hardware_snapshot", return_value=hardware_snapshot()),
+            patch.object(
+                self.server,
+                "_release_runtime_caches_for_retry",
+                return_value={"released": {}, "errors": []},
+            ) as release,
+            patch.object(self.server, "queue_message"),
+        ):
+            result = self.server._prepare_auto_runtime_for_graph(second)
+
+        self.assertTrue(result["performed"])
+        self.assertTrue(result["resourceRecipeChanged"])
+        self.assertIn("resource recipe changed within FluxModularPipeline", result["reasons"])
+        release.assert_called_once_with()
+
+    def test_expert_resource_plan_minimums_participate_in_live_pressure_cleanup(self):
+        self.server.node_cache = {"cached-node": object()}
+        self.server._last_auto_model_family = "LTX2ModularPipeline"
+        snapshot = hardware_snapshot()
+        snapshot["system"]["ram_available"] = 12 * GIB
+
+        with (
+            patch("modiff.server.get_hardware_snapshot", return_value=snapshot),
+            patch.object(
+                self.server,
+                "_release_runtime_caches_for_retry",
+                return_value={"released": {}, "errors": []},
+            ) as release,
+            patch.object(self.server, "queue_message"),
+        ):
+            result = self.server._prepare_auto_runtime_for_graph(
+                {
+                    "resourceMode": "expert",
+                    "modelType": "LTX2ModularPipeline",
+                    "resolvedArtifact": "Lightricks/LTX-2",
+                    "resourcePlan": {"requirements": {"minimum": {"systemRamBytes": 64 * GIB}}},
+                }
+            )
+
+        self.assertTrue(result["performed"])
+        self.assertIn("available system memory is below the selected candidate minimum", result["reasons"])
+        release.assert_called_once_with()
+
+    def test_auto_pre_run_cleanup_detects_modular_components_without_generic_cache_entries(self):
+        self.server.node_cache = {}
+        self.server._last_auto_model_family = "QwenImageEditModularPipeline"
+        modular_module = SimpleNamespace(
+            components=SimpleNamespace(components={"transformer_qwen-edit": object()})
+        )
+
+        with (
+            patch.dict(sys.modules, {"modules.ModularDiffusers": modular_module}),
+            patch("modiff.server.get_hardware_snapshot", return_value=hardware_snapshot()),
+            patch.object(
+                self.server,
+                "_release_runtime_caches_for_retry",
+                return_value={"released": {"diffusersComponents": 1}, "errors": []},
+            ) as release,
+            patch.object(self.server, "queue_message"),
+        ):
+            result = self.server._prepare_auto_runtime_for_graph(
+                {
+                    "resourceMode": "auto",
+                    "modelType": "QwenImageEditPlusModularPipeline",
+                }
+            )
+
+        self.assertTrue(result["performed"])
+        self.assertIn(
+            "model family changed from QwenImageEditModularPipeline to QwenImageEditPlusModularPipeline",
+            result["reasons"],
+        )
+        release.assert_called_once()
+
+    def test_modular_component_release_drops_references_without_cpu_materialization(self):
+        class AcceleratorResidentComponent:
+            def to(self, _device):
+                raise AssertionError("full cache release must not copy a component to CPU")
+
+        class OffloadHook:
+            def offload(self):
+                raise AssertionError("full cache release must not offload before destruction")
+
+            def remove(self):
+                raise AssertionError("manager-owned hooks should be detached, not replayed")
+
+        manager = SimpleNamespace(
+            components={"transformer-qwen": AcceleratorResidentComponent()},
+            model_hooks=[OffloadHook()],
+            _auto_offload_enabled=True,
+            _auto_offload_device="cuda:0",
+            added_time={"transformer-qwen": 1},
+            collections={"qwen": {"transformer-qwen"}},
+        )
+        modular_module = SimpleNamespace(components=manager)
+
+        with patch("modiff.server.import_module", return_value=modular_module):
+            released, errors = self.server._release_modular_diffusers_components()
+
+        self.assertEqual(released, 1)
+        self.assertEqual(errors, [])
+        self.assertEqual(manager.components, {})
+        self.assertIsNone(manager.model_hooks)
+        self.assertFalse(manager._auto_offload_enabled)
+        self.assertIsNone(manager._auto_offload_device)
+        self.assertEqual(manager.added_time, {})
+        self.assertEqual(manager.collections, {})
+
+    def test_auto_execution_rejects_an_undeclared_pair_even_if_the_client_marks_it_ready(self):
+        cases = (
+            ("BrandNewPipeline", "text_to_image"),
+            ("QwenImageEditPlusModularPipeline", "inpaint"),
+            ("FluxReduxPipeline", "multi_image_reference_edit"),
+        )
+
+        for model_type, mode in cases:
+            with self.subTest(model_type=model_type, mode=mode):
+                hints = self.server._coerce_runtime_hints(
+                    {
+                        "resourceMode": "auto",
+                        "modelType": model_type,
+                        "mode": mode,
+                        "autoResourcePlan": {
+                            "id": "stale-client-candidate",
+                            "modelType": model_type,
+                            "mode": mode,
+                            "proof": {"status": "declared_safe"},
+                        },
+                    }
+                )
+
+                with self.assertRaisesRegex(RuntimeError, "no declared execution recipe") as raised:
+                    self.server._assert_auto_resource_candidate_ready(hints)
+
+                self.assertEqual(raised.exception.modiff_error_code, "auto_resource_pair_undeclared")
+                self.assertEqual(raised.exception.modiff_auto_resource_status, "expert_only")
+
+    def test_auto_execution_rejects_a_stale_declared_plan_for_a_different_requested_pair(self):
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "auto",
+                "modelType": "QwenImageEditPlusModularPipeline",
+                "mode": "inpaint",
+                "autoResourcePlan": {
+                    "id": "stale-flux-candidate",
+                    "modelType": "FluxSchnellPipeline",
+                    "mode": "text_to_image",
+                    "proof": {"status": "declared_safe"},
+                },
+            }
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "does not match the requested workflow pair") as raised:
+            self.server._assert_auto_resource_candidate_ready(hints)
+
+        self.assertEqual(raised.exception.modiff_error_code, "auto_resource_pair_mismatch")
+        self.assertEqual(raised.exception.modiff_auto_resource_status, "expert_only")
+        self.assertNotIn("FluxSchnellPipeline:text_to_image", str(raised.exception))
+        self.assertNotIn("QwenImageEditPlusModularPipeline:inpaint", str(raised.exception))
+        self.assertLess(len(str(raised.exception)), 256)
+
+    def test_auto_execution_keeps_declared_but_unqualified_recipe_behavior(self):
+        candidate = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "flux-schnell-contract-only",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "skipped"},
+        }
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "auto",
+                "modelType": "FluxSchnellPipeline",
+                "mode": "text_to_image",
+                "autoResourceCandidateId": candidate["id"],
+                "autoResourcePlan": candidate,
+                "autoResourceCandidates": [candidate],
+            }
+        )
+
+        self.assertIsNone(self.server._assert_auto_resource_candidate_ready(hints))
+
+    def test_generated_schema_v2_plan_is_accepted_by_runtime_admission(self):
+        plan = build_auto_resource_plan(
+            {"form": {"modelType": "FluxSchnellPipeline", "mode": "text_to_image"}},
+            runtime_fingerprint={"resourceFingerprint": "runtime-admission"},
+            local_models=[],
+            data_dir=self.temp_dir.name,
+        )
+        candidate = plan["candidates"][0]
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "auto",
+                "modelType": "FluxSchnellPipeline",
+                "mode": "text_to_image",
+                "autoResourceCandidateId": candidate["id"],
+                "autoResourcePlan": candidate,
+                "autoResourceCandidates": plan["candidates"],
+            }
+        )
+
+        self.assertEqual(candidate["autoResourceSchemaVersion"], plan["schemaVersion"])
+        self.assertEqual(candidate["executionProfileId"], "flux-schnell:direct")
+        self.assertEqual(
+            candidate["optionalRuntimeProfileIds"],
+            list(
+                optional_runtime_profile_ids_for_execution(
+                    "FluxSchnellPipeline",
+                    "text_to_image",
+                )
+            ),
+        )
+        self.assertEqual(
+            candidate["optionalRuntimeRequirement"]["executionProfileIds"],
+            ["flux-schnell:direct"],
+        )
+        self.assertEqual(
+            candidate["studioExecutionSpecContract"],
+            {
+                "schemaVersion": 1,
+                "id": "flux-schnell:text-to-image:v1",
+                "contentHash": "studio-spec-v1-9cd1abb5",
+                "executionProfileId": "flux-schnell:direct",
+            },
+        )
+        self.assertIsNone(self.server._assert_auto_resource_candidate_ready(hints))
+
+    def test_auto_execution_requires_exact_candidate_id_and_list_binding(self):
+        candidate = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "flux-bound",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "declared_safe"},
+        }
+        cases = (
+            {
+                "autoResourcePlan": candidate,
+                "autoResourceCandidates": [candidate],
+            },
+            {
+                "autoResourcePlan": candidate,
+                "autoResourceCandidateId": candidate["id"],
+            },
+            {
+                "autoResourcePlan": candidate,
+                "autoResourceCandidateId": "stale-id",
+                "autoResourceCandidates": [candidate],
+            },
+        )
+        for case in cases:
+            with self.subTest(keys=sorted(case)):
+                hints = self.server._coerce_runtime_hints(
+                    {
+                        "resourceMode": "auto",
+                        "modelType": "FluxSchnellPipeline",
+                        "mode": "text_to_image",
+                        **case,
+                    }
+                )
+                with self.assertRaises(RuntimeError) as raised:
+                    self.server._assert_auto_resource_candidate_ready(hints)
+                self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
+                self.assertLess(len(str(raised.exception)), 256)
+
+    def test_auto_execution_rejects_same_id_with_divergent_proof_recipe(self):
+        listed = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "same-id",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "skipped"},
+        }
+        selected = copy.deepcopy(listed)
+        selected["proof"] = {"status": "declared_safe"}
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "auto",
+                "modelType": "FluxSchnellPipeline",
+                "mode": "text_to_image",
+                "autoResourceCandidateId": "same-id",
+                "autoResourcePlan": selected,
+                "autoResourceCandidates": [listed],
+            }
+        )
+
+        with self.assertRaises(RuntimeError) as raised:
+            self.server._assert_auto_resource_candidate_ready(hints)
+
+        self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
+
+    def test_auto_execution_rejects_stale_profile_and_schema_receipts(self):
+        base = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "stale-receipt",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "declared_safe"},
+        }
+        for candidate in (
+            {**base, "executionProfileId": "flux-schnell:replacement"},
+            {**base, "autoResourceSchemaVersion": 3},
+            {**base, "optionalRuntimeProfileIds": []},
+            {
+                **base,
+                "optionalRuntimeRequirement": {
+                    **base["optionalRuntimeRequirement"],
+                    "executionProfileIds": ["flux-schnell:replacement"],
+                },
+            },
+            {
+                **base,
+                "studioExecutionSpecContract": {
+                    **base["studioExecutionSpecContract"],
+                    "contentHash": "studio-spec-v1-00000000",
+                },
+            },
+            {
+                key: value
+                for key, value in base.items()
+                if key != "studioExecutionSpecContract"
+            },
+            {
+                **base,
+                "studioExecutionSpecContract": {
+                    **base["studioExecutionSpecContract"],
+                    "extra": True,
+                },
+            },
+        ):
+            with self.subTest(candidate=candidate):
+                hints = self.server._coerce_runtime_hints(
+                    {
+                        "resourceMode": "auto",
+                        "modelType": "FluxSchnellPipeline",
+                        "mode": "text_to_image",
+                        "autoResourceCandidateId": candidate["id"],
+                        "autoResourcePlan": candidate,
+                        "autoResourceCandidates": [candidate],
+                    }
+                )
+                with self.assertRaises(RuntimeError) as raised:
+                    self.server._assert_auto_resource_candidate_ready(hints)
+                self.assertEqual(raised.exception.modiff_error_code, "auto_resource_target_mismatch")
+                self.assertLess(len(str(raised.exception)), 256)
+
+    def test_auto_execution_binds_exact_model_dependency_receipts(self):
+        base = {
+            **resource_plan_target("QwenImageModularPipeline", "control_image"),
+            "id": "qwen-control",
+            "modelType": "QwenImageModularPipeline",
+            "mode": "control_image",
+            "proof": {"status": "declared_safe"},
+        }
+        valid = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "auto",
+                "modelType": base["modelType"],
+                "mode": base["mode"],
+                "modelDependencies": base["modelDependencies"],
+                "autoResourceCandidateId": base["id"],
+                "autoResourcePlan": base,
+                "autoResourceCandidates": [base],
+            }
+        )
+        self.assertIsNone(self.server._assert_auto_resource_candidate_ready(valid))
+
+        stale_dependency = {
+            **base["modelDependencies"][0],
+            "revision": "0000000000000000000000000000000000000000",
+        }
+        cases = (
+            ({key: value for key, value in base.items() if key != "modelDependencies"}, None),
+            ({**base, "modelDependencies": [stale_dependency]}, None),
+            (
+                {
+                    **base,
+                    "modelDependencies": [{**base["modelDependencies"][0], "extra": True}],
+                },
+                None,
+            ),
+            (base, [stale_dependency]),
+        )
+        for candidate, hint_dependencies in cases:
+            with self.subTest(candidate=candidate, hints=hint_dependencies):
+                payload = {
+                    "resourceMode": "auto",
+                    "modelType": base["modelType"],
+                    "mode": base["mode"],
+                    "autoResourceCandidateId": candidate["id"],
+                    "autoResourcePlan": candidate,
+                    "autoResourceCandidates": [candidate],
+                }
+                if hint_dependencies is not None:
+                    payload["modelDependencies"] = hint_dependencies
+                hints = self.server._coerce_runtime_hints(payload)
+                with self.assertRaises(RuntimeError) as raised:
+                    self.server._assert_auto_resource_candidate_ready(hints)
+                self.assertEqual(raised.exception.modiff_error_code, "auto_resource_target_mismatch")
+                self.assertLess(len(str(raised.exception)), 256)
+
+        malformed = {
+            **base["modelDependencies"][0],
+            "extra": True,
+        }
+        with self.assertRaises(RuntimeError) as raised:
+            self.server._coerce_runtime_hints({"modelDependencies": [malformed]})
+        self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
+
+    def test_controlled_artifact_receipts_are_server_derived_and_candidate_bound(self):
+        receipt = {
+            "schemaVersion": 1,
+            "kind": "diffusers_lora",
+            "module": "modules.DiffusersImage",
+            "action": "LoadAdapter",
+            "artifact": {
+                "source": "hub",
+                "repository": "example/style",
+                "revision": "a" * 40,
+                "weightName": "style.safetensors",
+                "sha256": "b" * 64,
+            },
+            "adapterName": "style",
+            "scale": 0.75,
+            "scheduler": None,
+            "replaceExisting": True,
+            "descriptorSha256": "c" * 64,
+        }
+        candidate = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "flux-with-style",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "declared_safe"},
+            "controlledArtifacts": [{"untrusted": True}],
+        }
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "auto",
+                "modelType": candidate["modelType"],
+                "mode": candidate["mode"],
+                "autoResourceCandidateId": candidate["id"],
+                "autoResourcePlan": candidate,
+                "autoResourceCandidates": [candidate],
+                "controlledArtifacts": [{"untrusted": True}],
+            }
+        )
+        self.assertNotIn("controlledArtifacts", hints)
+        self.assertNotIn("controlledArtifacts", hints["autoResourcePlan"])
+        self.assertNotIn("controlledArtifacts", hints["autoResourceCandidates"][0])
+        baseline_cache_signature = self.server._auto_candidate_cache_signature(hints)
+
+        with patch("modiff.server.controlled_artifact_receipts_from_graph", return_value=[receipt]):
+            self.assertEqual(
+                self.server._bind_controlled_artifact_receipts({"nodes": {}, "paths": []}, hints),
+                [receipt],
+            )
+        self.assertEqual(hints["controlledArtifacts"], [receipt])
+        self.assertEqual(hints["autoResourcePlan"]["controlledArtifacts"], [receipt])
+        self.assertEqual(hints["autoResourceCandidates"][0]["controlledArtifacts"], [receipt])
+        self.assertNotEqual(self.server._auto_candidate_cache_signature(hints), baseline_cache_signature)
+        self.assertIsNone(self.server._assert_auto_resource_candidate_ready(hints))
+
+        base_history_hints = copy.deepcopy(hints)
+        for history_candidate in (
+            base_history_hints["autoResourcePlan"],
+            base_history_hints["autoResourceCandidates"][0],
+        ):
+            history_candidate["proof"] = {
+                "status": "live_proven",
+                "source": "auto_resource_history",
+            }
+        with (
+            patch("modiff.server.controlled_artifact_receipts_from_graph", return_value=[receipt]),
+            patch("modiff.server.matching_auto_resource_success_history", return_value=None),
+            patch.object(self.server, "_runtime_fingerprint", return_value={"fingerprint": "unit"}),
+        ):
+            self.server._bind_controlled_artifact_receipts(
+                {"nodes": {}, "paths": []},
+                base_history_hints,
+            )
+        self.assertEqual(base_history_hints["autoResourcePlan"]["proof"]["status"], "skipped")
+        self.assertEqual(
+            base_history_hints["autoResourceCandidates"][0]["proof"]["source"],
+            "controlled_artifact_history_required",
+        )
+        # Qualification proof is advisory at execution, but base-only history
+        # can no longer be represented as live proof for this adapter set.
+        self.assertIsNone(self.server._assert_auto_resource_candidate_ready(base_history_hints))
+
+        exact_history_hints = copy.deepcopy(hints)
+        for history_candidate in (
+            exact_history_hints["autoResourcePlan"],
+            exact_history_hints["autoResourceCandidates"][0],
+        ):
+            history_candidate["proof"] = {
+                "status": "live_proven",
+                "source": "auto_resource_history",
+            }
+        with (
+            patch("modiff.server.controlled_artifact_receipts_from_graph", return_value=[receipt]),
+            patch(
+                "modiff.server.matching_auto_resource_success_history",
+                return_value={"successCount": 1, "lastSuccessAt": 1},
+            ),
+            patch.object(self.server, "_runtime_fingerprint", return_value={"fingerprint": "unit"}),
+        ):
+            self.server._bind_controlled_artifact_receipts(
+                {"nodes": {}, "paths": []},
+                exact_history_hints,
+            )
+        self.assertEqual(exact_history_hints["autoResourcePlan"]["proof"]["status"], "live_proven")
+        self.assertIsNone(self.server._assert_auto_resource_candidate_ready(exact_history_hints))
+
+        hints["autoResourceCandidates"][0]["controlledArtifacts"][0]["scale"] = 1.0
+        with self.assertRaises(RuntimeError) as raised:
+            self.server._assert_auto_resource_candidate_ready(hints)
+        self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
+
+    def test_controlled_artifact_validation_errors_are_bounded_and_redacted(self):
+        marker = "CONTROLLED_ARTIFACT_SECRET_" + "x" * 2048
+        with patch(
+            "modiff.server.controlled_artifact_receipts_from_graph",
+            side_effect=ValueError(marker),
+        ):
+            with self.assertRaises(RuntimeError) as raised:
+                self.server._bind_controlled_artifact_receipts(
+                    {"nodes": {}, "paths": []},
+                    {"resourceMode": "auto"},
+                )
+        self.assertEqual(raised.exception.modiff_error_code, "controlled_artifact_mismatch")
+        self.assertNotIn(marker, str(raised.exception))
+        self.assertLess(len(str(raised.exception)), 256)
+
+    def test_auto_target_errors_do_not_echo_oversized_untrusted_values(self):
+        marker = "PUBLIC_SECRET_MARKER_" + "x" * 2048
+        candidate = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "flux-bound",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "loaderModule": marker,
+            "proof": {"status": "declared_safe"},
+        }
+
+        with self.assertRaises(RuntimeError) as raised:
+            self.server._coerce_runtime_hints(
+                {
+                    "resourceMode": "auto",
+                    "modelType": "FluxSchnellPipeline",
+                    "mode": "text_to_image",
+                    "autoResourceCandidateId": candidate["id"],
+                    "autoResourcePlan": candidate,
+                    "autoResourceCandidates": [candidate],
+                }
+            )
+
+        self.assertNotIn("PUBLIC_SECRET_MARKER_", str(raised.exception))
+        self.assertLess(len(str(raised.exception)), 256)
+        self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
+
+    def test_auto_candidate_projection_drops_unknown_deep_and_wide_values_but_bounds_contract_fields(self):
+        deep = {}
+        cursor = deep
+        for _ in range(1200):
+            cursor["next"] = {}
+            cursor = cursor["next"]
+        candidate = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "bounded",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "declared_safe"},
+            "junk": deep,
+            "wideJunk": list(range(100000)),
+        }
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "auto",
+                "modelType": "FluxSchnellPipeline",
+                "mode": "text_to_image",
+                "autoResourceCandidateId": candidate["id"],
+                "autoResourcePlan": candidate,
+                "autoResourceCandidates": [candidate],
+            }
+        )
+        self.assertNotIn("junk", hints["autoResourcePlan"])
+        self.assertNotIn("wideJunk", hints["autoResourceCandidates"][0])
+
+        nested_proof = {"status": "declared_safe"}
+        cursor = nested_proof
+        for _ in range(10):
+            cursor["nested"] = {}
+            cursor = cursor["nested"]
+        invalid = {**candidate, "proof": nested_proof}
+        with self.assertRaises(RuntimeError) as raised:
+            self.server._coerce_runtime_hints({"autoResourcePlan": invalid})
+        self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
+
+        with self.assertRaises(RuntimeError):
+            self.server._coerce_runtime_hints({"autoResourceCandidates": [candidate] * 65})
+        with self.assertRaises(RuntimeError):
+            self.server._coerce_runtime_hints({"resourceRetryPlans": [{}] * 33})
+
+    def test_runtime_hints_reject_obsolete_and_unreviewed_aiter_backends(self):
+        for backend in ("aiter", "aiter_fa2_hub"):
+            with self.subTest(backend=backend), self.assertRaises(RuntimeError) as raised:
+                self.server._coerce_runtime_hints({"attentionBackend": backend})
+            self.assertEqual(raised.exception.modiff_error_code, "auto_resource_candidate_mismatch")
+
+    def test_runtime_hints_preserve_only_bounded_controlled_graph_contract_receipts(self):
+        hints = self.server._coerce_runtime_hints(
+            {"controlledGraphContracts": ["upscale.video.v1"]}
+        )
+        self.assertEqual(hints["controlledGraphContracts"], ["upscale.video.v1"])
+
+        for contracts in (
+            ["upscale.video.v1", "upscale.video.v1"],
+            ["UPPERCASE"],
+            ["upscale.video.v1"] * 17,
+            "upscale.video.v1",
+        ):
+            with self.subTest(contracts=contracts), self.assertRaises(RuntimeError) as raised:
+                self.server._coerce_runtime_hints({"controlledGraphContracts": contracts})
+            self.assertEqual(raised.exception.modiff_error_code, "studio_execution_spec_mismatch")
+
+    def test_retry_adjacent_runtime_containers_are_bounded_or_worker_owned(self):
+        marker = "RUNTIME_CONTAINER_SECRET_MARKER"
+        deep = {"marker": marker}
+        cursor = deep
+        for _ in range(1200):
+            cursor["next"] = {}
+            cursor = cursor["next"]
+
+        for payload in (
+            {"resourcePlan": deep},
+            {"compatibilityProbe": deep},
+            {"optimizationQualificationForm": deep},
+            {"workflowSnapshot": deep},
+            {"modelType": deep},
+            {"workflowTitle": deep},
+            {"deviceMap": deep},
+            {"attentionBackend": deep},
+            {"denoiserCache": deep},
+            {"regionalCompile": deep},
+            {"channelsLast": deep},
+            {"layerwiseCasting": deep},
+            {
+                "autoFieldOverrides": [
+                    {"nodeId": "loader", "fieldKey": "dtype", "value": deep},
+                ],
+            },
+        ):
+            with self.subTest(field=next(iter(payload))):
+                with self.assertRaises(RuntimeError) as raised:
+                    self.server._coerce_runtime_hints(payload)
+                self.assertNotIn(marker, str(raised.exception))
+                self.assertLess(len(str(raised.exception)), 256)
+
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceRetryHistory": [deep],
+                "resourceRetryAttempt": 9,
+                "resourceRetryLastError": marker,
+                "resourceRetryLastCode": marker,
+                "resourcePlan": {
+                    "summary": "bounded",
+                    "activeRetryPlan": {"reason": marker},
+                },
+            }
+        )
+        self.assertNotIn("resourceRetryHistory", hints)
+        self.assertNotIn("resourceRetryAttempt", hints)
+        self.assertNotIn("resourceRetryLastError", hints)
+        self.assertNotIn("resourceRetryLastCode", hints)
+        self.assertNotIn("activeRetryPlan", hints["resourcePlan"])
+        self.assertNotIn(marker, json.dumps(hints))
+
+        with self.assertRaises(RuntimeError):
+            self.server._coerce_runtime_hints({"resourceRetryModes": ["model_cpu"] * 100000})
+
+    def test_client_model_family_and_low_vram_classifiers_are_not_runtime_authority(self):
+        hints = self.server._coerce_runtime_hints(
+            {
+                "modelFamily": "Qwen Image",
+                "lowVramMode": True,
+                "modelType": "QwenImageModularPipeline",
+                "mode": "text_to_image",
+            }
+        )
+
+        self.assertEqual(hints["modelType"], "QwenImageModularPipeline")
+        self.assertEqual(hints["mode"], "text_to_image")
+        self.assertNotIn("modelFamily", hints)
+        self.assertNotIn("lowVramMode", hints)
+
+    async def test_graph_queue_replaces_raw_deep_candidate_data_before_copying(self):
+        deep = {}
+        cursor = deep
+        for _ in range(1200):
+            cursor["next"] = {}
+            cursor = cursor["next"]
+        graph = {
+            "nodes": {},
+            "paths": [],
+            "runtimeHints": {
+                "autoResourcePlan": {
+                    "id": "queue-candidate",
+                    "junk": deep,
+                },
+                "resourceRetryHistory": [deep],
+            },
+        }
+
+        await self.server.queue_task(
+            lambda: None,
+            (graph,),
+            None,
+            "sid",
+            name="Graph execution",
+        )
+
+        self.assertNotIn("junk", graph["runtimeHints"]["autoResourcePlan"])
+        self.assertNotIn("resourceRetryHistory", graph["runtimeHints"])
+        queued_graph = next(iter(self.server.task_graphs.values()))
+        self.assertNotIn("junk", queued_graph["runtimeHints"]["autoResourcePlan"])
+        self.assertNotIn("resourceRetryHistory", queued_graph["runtimeHints"])
+
+    async def test_graph_rejects_malformed_runtime_receipts_without_queueing(self):
+        malformed_dependency = {
+            "repository": "example/model",
+            "revision": "a" * 40,
+            "extra": True,
+        }
+        request = JsonRequest(
+            {
+                "sid": "malformed-runtime-receipt",
+                "nodes": {},
+                "paths": [],
+                "runtimeHints": {"modelDependencies": [malformed_dependency]},
+            }
+        )
+
+        with patch.object(self.server, "_auto_resource_runtime_block", return_value=None):
+            response = await self.server.graph(request)
+        payload = json.loads(response.text)
+
+        self.assertEqual(response.status, 400)
+        self.assertTrue(payload["error"])
+        self.assertEqual(payload["category"], "auto_resource")
+        self.assertEqual(payload["error_code"], "auto_resource_candidate_mismatch")
+        self.assertEqual(payload["sid"], "malformed-runtime-receipt")
+        self.assertEqual(self.server.main_queue.qsize(), 0)
+        self.assertEqual(self.server.task_graphs, {})
+
+    def test_auto_retry_candidate_is_bound_to_selected_profile_and_supported_values(self):
+        flux = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "id": "flux",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "declared_safe"},
+        }
+        qwen = {
+            **resource_plan_target("QwenImageModularPipeline", "text_to_image"),
+            "id": "qwen",
+            "modelType": "QwenImageModularPipeline",
+            "mode": "text_to_image",
+            "proof": {"status": "declared_safe"},
+        }
+        cross_branch = {
+            **resource_plan_target("QwenImageModularPipeline", "text_to_image"),
+            "candidateId": "qwen",
+            "modelType": "QwenImageModularPipeline",
+            "mode": "text_to_image",
+            "onCategories": ["oom"],
+        }
+        with self.assertRaises(RuntimeError):
+            self.server._coerce_runtime_hints(
+                {
+                    "resourceMode": "auto",
+                    "modelType": "FluxSchnellPipeline",
+                    "mode": "text_to_image",
+                    "autoResourceCandidateId": "flux",
+                    "autoResourcePlan": flux,
+                    "autoResourceCandidates": [flux, qwen],
+                    "resourceRetryPlans": [cross_branch],
+                }
+            )
+
+        marker = "EVENT_SECRET_MARKER_" + "x" * 1024
+        invalid = {**flux, "offloadMode": marker}
+        invalid_retry = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "candidateId": "flux",
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+        }
+        with self.assertRaises(RuntimeError) as raised:
+            self.server._coerce_runtime_hints(
+                {
+                    "resourceMode": "auto",
+                    "modelType": "FluxSchnellPipeline",
+                    "mode": "text_to_image",
+                    "autoResourceCandidateId": "flux",
+                    "autoResourcePlan": invalid,
+                    "autoResourceCandidates": [invalid],
+                    "resourceRetryPlans": [invalid_retry],
+                }
+            )
+        self.assertNotIn("EVENT_SECRET_MARKER_", str(raised.exception))
+        self.assertLess(len(str(raised.exception)), 256)
+
+    def test_expert_retry_events_drop_untrusted_ids_and_trigger_labels(self):
+        marker = "RETRY_EVENT_SECRET_MARKER"
+        raw_plan = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "candidateId": marker,
+            "id": marker,
+            "offloadMode": "model_cpu",
+            "reason": marker,
+            "onCategories": ["oom", marker],
+            "onErrorCodes": ["cuda_oom", marker],
+        }
+        hints = self.server._coerce_runtime_hints(
+            {
+                "resourceMode": "expert",
+                "modelType": "FluxSchnellPipeline",
+                "mode": "text_to_image",
+                "resourceRetryPlans": [raw_plan],
+            }
+        )
+
+        plan = self.server._coerce_retry_plan_list(hints)[0]
+        public = self.server._sanitize_retry_plan_for_hints(plan)
+
+        self.assertNotIn("candidateId", public)
+        self.assertNotIn("id", public)
+        self.assertEqual(public["reason"], "retry_plan_1")
+        self.assertEqual(public["onCategories"], ["oom"])
+        self.assertEqual(public["onErrorCodes"], ["cuda_oom"])
+        self.assertNotIn(marker, json.dumps(public))
+        self.assertNotIn(marker, json.dumps(hints))
+
+    def test_graph_completed_runtime_hints_never_echo_raw_retry_state(self):
+        marker = "GRAPH_COMPLETED_RETRY_SECRET_MARKER"
+        messages = []
+        self.server.current_task = {"task_id": "task-redaction", "progress": 0}
+        self.server.interrupt_flag = False
+        self.server.queue_message = messages.append
+        self.server.execute_node = lambda *_args, **_kwargs: None
+        self.server._runtime_fingerprint = lambda: {
+            "fingerprint": "test",
+            "backendSource": copy.deepcopy(self.server.backend_source_identity),
+        }
+        self.server._runtime_measurement = lambda **_kwargs: {"elapsedSeconds": 0}
+        self.server._record_auto_resource_success = lambda *_args, **_kwargs: None
+        self.server._record_optimization_observations = lambda *_args, **_kwargs: []
+        raw_plan = {
+            **resource_plan_target("FluxSchnellPipeline", "text_to_image"),
+            "modelType": "FluxSchnellPipeline",
+            "mode": "text_to_image",
+            "candidateId": marker,
+            "id": marker,
+            "offloadMode": "model_cpu",
+            "reason": marker,
+            "onCategories": ["oom", marker],
+            "onErrorCodes": ["cuda_oom", marker],
+        }
+        graph = {
+            "sid": "sid",
+            "paths": [["noop"]],
+            "nodes": {
+                "noop": {
+                    "module": "modules.Primitive",
+                    "action": "Value",
+                    "params": {},
+                },
+            },
+            "runtimeHints": {
+                "resourceMode": "expert",
+                "modelType": "FluxSchnellPipeline",
+                "mode": "text_to_image",
+                "resourceRetryPlans": [raw_plan],
+                "resourceRetryAttempt": 7,
+                "resourceRetryLastError": marker,
+                "resourceRetryLastCode": marker,
+                "resourceRetryHistory": [{"error": marker}],
+                "resourcePlan": {"activeRetryPlan": {"reason": marker}},
+            },
+        }
+
+        self.server._execute_graph(graph)
+
+        completed = next(message for message in messages if message.get("type") == "graph_completed")
+        self.assertEqual(
+            completed["runtimeFingerprint"]["backendSource"],
+            self.server.backend_source_identity,
+        )
+        self.assertNotIn(marker, json.dumps(completed))
+        self.assertNotIn(marker, json.dumps(graph["runtimeHints"]))
+
+    def test_qwen_legacy_cuda_kernel_triggers_survive_but_cross_branch_retry_is_rejected(self):
+        marker = "UNTRUSTED_RETRY_TRIGGER"
+        raw_plan = {
+            **resource_plan_target("QwenImageModularPipeline", "text_to_image"),
+            "modelType": "QwenImageModularPipeline",
+            "mode": "text_to_image",
+            "modelRepo": "Qwen/Qwen-Image-2512",
+            "resolvedArtifact": "Qwen/Qwen-Image-2512",
+            "quantizationMode": "bnb_4bit",
+            "quantizedComponents": ["transformer"],
+            "bnb4ComputeDtype": "bfloat16",
+            "offloadMode": "model_cpu",
+            "generation": {"steps": 50, "guidanceScale": 4.0},
+            "onErrorCodes": ["cuda_kernel_unsupported", marker],
+        }
+        self.server._normalize_retry_plan_triggers(raw_plan)
+        self.assertNotIn("onCategories", raw_plan)
+        self.assertEqual(raw_plan["onErrorCodes"], ["cuda_kernel_unsupported"])
+        self.assertTrue(
+            self.server._retry_plan_matches(
+                raw_plan,
+                {"category": "cuda_kernel", "error_code": "cuda_kernel_unsupported"},
+            )
+        )
+        self.assertNotIn(marker, json.dumps(raw_plan))
+
+        modular_graph = {
+            "paths": [["loader"]],
+            "nodes": {
+                "loader": {
+                    "module": "modules.ModularDiffusers",
+                    "action": "ModelsLoader",
+                    "params": {
+                        "model_type": {"value": "QwenImageModularPipeline"},
+                        "repo_id": {"value": "Qwen/Qwen-Image-2512"},
+                    },
+                },
+            },
+        }
+        with self.assertRaisesRegex(RuntimeError, "matched zero exact loader identities"):
+            self.server._apply_resource_retry_plan_to_graph(modular_graph, raw_plan)
+
+        missing_identity = {
+            key: value
+            for key, value in raw_plan.items()
+            if key not in {"modelType", "mode", "loaderModule", "loaderAction", "pipelineClass"}
+        }
+        with self.assertRaisesRegex(RuntimeError, "exact modelType and mode"):
+            self.server._coerce_runtime_hints(
+                {
+                    "resourceMode": "expert",
+                    "modelType": "QwenImageModularPipeline",
+                    "mode": "text_to_image",
+                    "resourceRetryPlans": [missing_identity],
+                }
+            )
+
+        category_plan = copy.deepcopy(raw_plan)
+        category_plan.pop("onErrorCodes")
+        category_plan["onCategories"] = ["cuda_kernel", marker]
+        self.server._normalize_retry_plan_triggers(category_plan)
+        self.assertEqual(category_plan["onCategories"], ["cuda_kernel"])
+        self.assertTrue(
+            self.server._retry_plan_matches(
+                category_plan,
+                {"category": "cuda_kernel", "error_code": "cuda_kernel_unsupported"},
+            )
+        )
+
+    def test_auto_plan_requires_the_exact_studio_receipt_before_loader_application(self):
+        candidate = {
+            **resource_plan_target("QwenImageModularPipeline", "control_image"),
+            "id": "qwen-control-unqualified",
+            "modelType": "QwenImageModularPipeline",
+            "mode": "control_image",
+            "offloadMode": "model_cpu",
+            "proof": {"status": "skipped"},
+        }
+        graph = {
+            "sid": "sid",
+            "paths": [["qwen"]],
+            "runtimeHints": {
+                "resourceMode": "auto",
+                "modelType": "QwenImageModularPipeline",
+                "mode": "control_image",
+                "autoResourceCandidateId": candidate["id"],
+                "autoResourcePlan": candidate,
+                "autoResourceCandidates": [candidate],
+            },
+            "nodes": {
+                "qwen": {
+                    "module": "modules.DiffusersImage",
+                    "action": "LoadPipeline",
+                    "params": {
+                        "pipeline_class": {"value": "QwenImagePipeline"},
+                        "offload_mode": {"value": "model_cpu"},
+                    },
+                },
+            },
+        }
+
+        with (
+            patch.object(self.server, "_prepare_auto_runtime_for_graph", return_value=None),
+            self.assertRaisesRegex(RuntimeError, "Studio execution specification receipt is required"),
+        ):
+            self.server._execute_graph(graph)
 
     def test_auto_pre_run_cleanup_preserves_same_family_cache_with_headroom(self):
         self.server.node_cache = {"cached-node": object()}
@@ -840,10 +2320,21 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         release.assert_called_once()
 
     def test_failed_or_cancelled_run_cleanup_trims_device_and_process_allocators(self):
-        self.server.node_cache = {"cached-node": object()}
+        cleanup_order = []
+
+        class OrderedNodeCache(dict):
+            def clear(self):
+                cleanup_order.append("nodes")
+                super().clear()
+
+        self.server.node_cache = OrderedNodeCache({"cached-node": object()})
         with (
-            patch("modiff.server.memory_manager.clear", return_value=1),
-            patch.object(self.server, "_release_modular_diffusers_components", return_value=(0, [])),
+            patch("modiff.server.memory_manager.clear", side_effect=lambda: cleanup_order.append("models") or 1),
+            patch.object(
+                self.server,
+                "_release_modular_diffusers_components",
+                side_effect=lambda: cleanup_order.append("components") or (1, []),
+            ),
             patch.object(self.server, "_release_diffusers_offload_cache", return_value=(0, [])),
             patch.object(self.server, "_best_effort_device_cache_clear", return_value=[]) as device_clear,
             patch.object(self.server, "_best_effort_allocator_trim", return_value=(True, [])) as allocator_trim,
@@ -853,6 +2344,8 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result["released"]["nodes"], 1)
         self.assertEqual(result["released"]["models"], 1)
+        self.assertEqual(result["released"]["diffusers_components"], 1)
+        self.assertEqual(cleanup_order, ["models", "components", "nodes"])
         self.assertTrue(result["allocatorTrimmed"])
         self.assertEqual(result["errors"], [])
         device_clear.assert_called_once_with()
@@ -867,6 +2360,26 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
         classification = self.server._classify_exception(wrapped)
         self.assertEqual(classification["category"], "input_validation")
+        self.server.current_task = {"runtimeHints": {"resourceMode": "auto"}}
+        with patch("modiff.server.record_auto_resource_failure") as record_failure:
+            self.server._record_auto_resource_failure(wrapped, classification)
+        record_failure.assert_not_called()
+
+    def test_attention_mask_backend_incompatibility_is_actionable_not_invalid_input(self):
+        try:
+            raise ValueError("`attn_mask` is not supported for native flash attention")
+        except ValueError as cause:
+            wrapped = RuntimeError("Error executing modules.ModularDiffusers.Denoise")
+            wrapped.__cause__ = cause
+
+        classification = self.server._classify_exception(wrapped)
+
+        self.assertEqual(classification["category"], "runtime_compatibility")
+        self.assertEqual(classification["error_code"], "attention_backend_mask_unsupported")
+        self.assertEqual(classification["message"], "`attn_mask` is not supported for native flash attention")
+        self.assertIn("Attention Backend to Auto or native", classification["recovery_hint"])
+        self.assertIn("restart the backend", classification["recovery_hint"])
+
         self.server.current_task = {"runtimeHints": {"resourceMode": "auto"}}
         with patch("modiff.server.record_auto_resource_failure") as record_failure:
             self.server._record_auto_resource_failure(wrapped, classification)
@@ -924,6 +2437,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         }.issubset(payload))
         self.assertEqual(payload["hardware"], snapshot)
         self.assertEqual(payload["runtime_fingerprint"], "sha256:runtime-ready")
+        self.assertEqual(payload["backend_source"], self.server.backend_source_identity)
         self.assertEqual(payload["runtime_profile"], profile)
         self.assertTrue(payload["ready"])
         self.assertEqual(payload["packages"]["torch"]["cuda_device_name"], "Mock CUDA")
@@ -1048,6 +2562,47 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(payload["candidates"], [])
         build_plan.assert_not_called()
 
+    async def test_single_and_batch_auto_planning_leave_the_http_event_loop_responsive(self):
+        loop_thread = threading.get_ident()
+        for batch in (False, True):
+            with self.subTest(batch=batch):
+                phases = []
+                heartbeat = threading.Event()
+                observed_heartbeat = []
+
+                def phase(name, result):
+                    def run(*_args, **_kwargs):
+                        phases.append((name, threading.get_ident()))
+                        return result
+                    return run
+
+                def build(*_args, **_kwargs):
+                    phases.append(("planner", threading.get_ident()))
+                    observed_heartbeat.append(heartbeat.wait(timeout=0.5))
+                    return {"error": False, "status": "ready"}
+
+                request = JsonRequest({"forms": [{}]} if batch else {"form": {}})
+                with (
+                    patch.object(self.server, "_auto_resource_runtime_block", side_effect=phase("runtime", None)),
+                    patch.object(self.server, "_auto_planning_runtime_fingerprint", side_effect=phase("fingerprint", {})),
+                    patch("modiff.server.get_local_models", side_effect=phase("inventory", [])),
+                    patch("modiff.server.read_auto_resource_history", side_effect=phase("history", {})),
+                    patch("modiff.server.build_auto_resource_plan", side_effect=build),
+                    patch("modiff.server.build_auto_resource_plans", side_effect=build),
+                ):
+                    timer = asyncio.get_running_loop().call_later(0.01, heartbeat.set)
+                    try:
+                        handler = self.server.auto_resource_plans if batch else self.server.auto_resource_plan
+                        response = await handler(request)
+                    finally:
+                        timer.cancel()
+                        heartbeat.set()
+                self.assertEqual(json.loads(response.text), {"error": False, "status": "ready"})
+                self.assertEqual(observed_heartbeat, [True], "HTTP heartbeat was blocked by resource planning")
+                self.assertTrue(phases)
+                for name, thread_id in phases:
+                    self.assertNotEqual(thread_id, loop_thread, f"{name} ran on the HTTP event loop")
+
     def test_auto_planning_counts_only_modiff_reserved_vram_as_reclaimable(self):
         snapshot = hardware_snapshot()
         snapshot["devices"][0]["vram_free"] = 4 * GIB
@@ -1102,6 +2657,18 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         adjusted_device = adjusted["hardware"]["devices"][0]
         self.assertEqual(adjusted_device["vram_free"], 16 * GIB)
         self.assertEqual(adjusted_device["torch_vram_free"], 16 * GIB)
+
+    def test_shared_gpu_reclaimable_capacity_does_not_shrink_to_dedicated_vram(self):
+        snapshot = hardware_snapshot()
+        snapshot["devices"][0].update(memory_kind="shared", vram_total=2 * GIB, vram_free=GIB, torch_vram_total=100 * GIB, torch_vram_free=90 * GIB)
+        fingerprint = {"fingerprint": "shared", "hardware": snapshot}
+        fake_cuda = SimpleNamespace(is_available=lambda: True, device_count=lambda: 1, memory_reserved=lambda _: 5 * GIB)
+        self.server.node_cache = {"model": object()}
+        with patch.object(self.server, "_runtime_fingerprint", return_value=fingerprint), patch("modiff.server.import_module", return_value=SimpleNamespace(cuda=fake_cuda)):
+            device = self.server._auto_planning_runtime_fingerprint()["hardware"]["devices"][0]
+        self.assertEqual(device["vram_free"], 2 * GIB)
+        self.assertEqual(device["torch_vram_free"], 95 * GIB)
+        self.assertEqual(snapshot["devices"][0]["torch_vram_free"], 90 * GIB)
 
     def test_auto_planning_does_not_enter_accelerator_apis_during_active_run(self):
         snapshot = hardware_snapshot()
@@ -1215,7 +2782,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(payload["task_id"], "active-task")
         self.assertIs(self.server.node_cache["active-node"], cached_node)
 
-    async def test_gpu_cleanup_detaches_managed_models_before_destroying_cached_nodes(self):
+    async def test_gpu_cleanup_detaches_both_model_registries_before_destroying_cached_nodes(self):
         cleanup_order = []
 
         class OrderedNodeCache(dict):
@@ -1227,7 +2794,11 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch("modiff.server.memory_manager.clear", side_effect=lambda: cleanup_order.append("models") or 1),
             patch.object(self.server, "_cuda_memory_snapshot", return_value={"available": False}),
-            patch.object(self.server, "_release_modular_diffusers_components", return_value=(0, [])),
+            patch.object(
+                self.server,
+                "_release_modular_diffusers_components",
+                side_effect=lambda: cleanup_order.append("components") or (1, []),
+            ),
             patch.object(self.server, "_release_diffusers_offload_cache", return_value=(0, [])),
             patch.object(self.server, "_best_effort_device_cache_clear", return_value=[]),
             patch.object(self.server, "_best_effort_allocator_trim", return_value=(True, [])) as allocator_trim,
@@ -1237,8 +2808,9 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
         payload = json.loads(response.text)
         self.assertFalse(payload["error"])
-        self.assertEqual(cleanup_order, ["models", "nodes"])
+        self.assertEqual(cleanup_order, ["models", "components", "nodes"])
         self.assertEqual(payload["released_model_count"], 1)
+        self.assertEqual(payload["released_diffusers_component_count"], 1)
         self.assertEqual(payload["released_node_count"], 1)
         self.assertTrue(payload["allocator_trimmed"])
         allocator_trim.assert_called_once_with()
@@ -1258,7 +2830,8 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(first["fingerprint"], second["fingerprint"])
         self.assertEqual(first["hardware"]["system"]["ram_total"], 32 * GIB)
         self.assertEqual(second["hardware"]["system"]["ram_total"], 64 * GIB)
-        self.assertTrue({"packages", "torch", "work_dir", "data_dir", "hardware"}.issubset(first))
+        self.assertTrue({"packages", "torch", "work_dir", "data_dir", "backendSource", "hardware"}.issubset(first))
+        self.assertEqual(first["backendSource"], self.server.backend_source_identity)
         self.assertFalse(first["torch"]["cuda_available"])
         self.assertEqual(
             get_snapshot.call_args_list,
@@ -1292,32 +2865,40 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
 
 class PreflightHardwareTests(unittest.TestCase):
-    def test_diffusers_package_status_rejects_an_older_api_contract(self):
-        old_diffusers = SimpleNamespace(
-            __version__="0.39.0",
-            AceStepPipeline=type("AceStepPipeline", (), {}),
-        )
+    def test_diffusers_package_status_does_not_probe_optional_runtime_symbols(self):
+        class CleanBaseDiffusers:
+            __version__ = "0.40.0.dev0"
+
+            def __getattr__(self, name):
+                if name == "AceStepPipeline":
+                    raise AssertionError("optional-dependent pipeline symbol must not be probed")
+                raise AttributeError(name)
+
         with (
-            patch("modiff.preflight.metadata.version", return_value="0.39.0"),
-            patch("modiff.preflight.importlib.import_module", return_value=old_diffusers),
+            patch("modiff.preflight.metadata.version", return_value="0.40.0.dev0"),
+            patch("modiff.preflight.importlib.import_module", return_value=CleanBaseDiffusers()),
         ):
             status = preflight.package_status("diffusers", "diffusers")
 
+        self.assertTrue(status["available"])
+        self.assertNotIn("error", status)
+
+    def test_package_import_failure_cannot_remain_available(self):
+        with (
+            patch("modiff.preflight.metadata.version", return_value="1.0.0"),
+            patch("modiff.preflight.importlib.import_module", side_effect=RuntimeError("broken import")),
+        ):
+            status = preflight.package_status("example", "example")
+
         self.assertFalse(status["available"])
-        self.assertEqual(
-            status["contractMissing"],
-            [
-                "AceStepPipeline.load_lora_weights",
-                "AceStepPipeline.set_adapters",
-                "AceStepPipeline.unload_lora_weights",
-            ],
-        )
-        self.assertIn("Repair the managed environment", status["error"])
+        self.assertEqual(status["error"], "broken import")
 
     def test_report_adds_hardware_and_preserves_torch_human_summary(self):
         snapshot = hardware_snapshot()
+        checks = []
 
         def package_status(module_name, distribution_name, import_check=True):
+            checks.append((module_name, import_check))
             return {
                 "module": module_name,
                 "distribution": distribution_name,
@@ -1327,7 +2908,7 @@ class PreflightHardwareTests(unittest.TestCase):
                 "version": "unit-test",
             }
 
-        args = SimpleNamespace(check_port=65534, full=False)
+        args = SimpleNamespace(check_port=65534, full=True)
         with (
             patch("modiff.preflight.package_status", side_effect=package_status),
             patch("modiff.preflight.get_hardware_snapshot", return_value=copy.deepcopy(snapshot)),
@@ -1343,6 +2924,12 @@ class PreflightHardwareTests(unittest.TestCase):
         self.assertEqual(report["hardware"], snapshot)
         self.assertEqual(torch_status["cuda_device_name"], "Mock CUDA")
         self.assertTrue(torch_status["cuda_available"])
+        self.assertEqual(
+            [item["module"] for item in report["packages"]["optional_runtime"]],
+            ["transformers", "peft"],
+        )
+        self.assertIn(("transformers", False), checks)
+        self.assertIn(("peft", False), checks)
         self.assertEqual(
             report["namespace"],
             {

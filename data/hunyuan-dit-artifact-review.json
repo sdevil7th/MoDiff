@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "family": "Hunyuan-DiT v1.2 Distilled",
+  "reviewedAt": "2026-08-14T00:00:00+05:30",
+  "repository": {
+    "repository": "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled",
+    "revision": "ba991d1546d8c50936c4c16398ed0a87b9b99fb1",
+    "private": false,
+    "gated": false,
+    "repositoryFileCount": 20,
+    "repositoryBytes": 14427314721,
+    "weightFileCount": 5,
+    "weightBytes": 14422655700,
+    "weightInventorySha256": "34b4ccbf5168c648fd8467e673a6414aa462f568ada68a18de13128c19ee8d92",
+    "safetensorsDtypeParameterCounts": {
+      "F32": 3605600391
+    },
+    "pythonFilesPresent": false,
+    "trustRemoteCodeRequired": false,
+    "licenseFilePresent": false,
+    "modelIndexClass": "HunyuanDiTPipeline"
+  },
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "weightFiles": [
+    {
+      "path": "text_encoder/model.safetensors",
+      "sha256": "c6c6348af2cb4d5852fe51102ce39605903dbe7925c005cf8995506cc21ea914",
+      "byteSize": 1408188288
+    },
+    {
+      "path": "text_encoder_2/model-00001-of-00002.safetensors",
+      "sha256": "2c0c539ab8e8fba3877cc94bc483e427f74c525f817a809b028ebc8d96d75a94",
+      "byteSize": 4993585936
+    },
+    {
+      "path": "text_encoder_2/model-00002-of-00002.safetensors",
+      "sha256": "3b49976cb1fe40da28a600d783f4686024c97eb01f224c54305cce55ddcd8a5e",
+      "byteSize": 1686275552
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model.safetensors",
+      "sha256": "af0239f15b91e424160581963873466b0eb673993b952a16e5a54ae18d521a1c",
+      "byteSize": 5999962656
+    },
+    {
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "98a14dc6fe8d71c83576f135a87c61a16561c9c080abba418d2cc976ee034f88",
+      "byteSize": 334643268
+    }
+  ],
+  "metadataSha256": {
+    "modelCard": "74c62160ec8db2af9776b263c16fddf203b1e350b2adf40ddb224194ecae2fce",
+    "modelIndex": "2efa723f3c6d0d3417cdaae521007ab606d20c5f8436183eaf37f10169f9e0a5",
+    "schedulerConfig": "8fec1b96351b2199255f683080e59cee41372334e369465d4c1fca6a242f71cc",
+    "bertConfig": "968833abc78add3eeb3d2a06db3d6c7a8f1ec8b5ae1100305a6e0d5cee8aa8b2",
+    "t5Config": "e5e73dc1b19e8a61543714a7f61e7873e1b69a774b2a9fe238b1421cc88a5e11",
+    "t5SafetensorsIndex": "7d1c96db95f747494d7c9000a04e24a65ad2ae8f80d40def94d26c8aa278052a",
+    "transformerConfig": "ddfc9fee88d59bf4f69f6e1e6d8324f0ef24494b46edc5bd9401037d876dcbe2",
+    "vaeConfig": "d59730ff7b5f2f4f5abd2f9572727d60ac1f8d3288e77554b10b998c606f9b12"
+  },
+  "pinnedRuntime": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "diffusersVersion": "0.40.0.dev0",
+    "pipelineClass": "HunyuanDiTPipeline",
+    "pipelineSha256": "4e9684c73a1773ebbb09a6a859170cad5ce4ad8fdc3fe89be21de8b4c702a22f",
+    "transformerClass": "HunyuanDiT2DModel",
+    "transformerSha256": "832a11b47fe0638e43c51c29879a5e3a249cc867d1b447c1983432715d97e28c",
+    "schedulerClass": "DDPMScheduler",
+    "schedulerSha256": "3822205d8e95938da6af85dfb9e0455c15bc37983d2d5842ee586c29bc75b74a",
+    "outputClass": "StableDiffusionPipelineOutput",
+    "outputSha256": "8cf1e9db2a1a6e7d08c28962c381445a9442e28f367f7e7fbf2b39e3da64542e",
+    "modelCpuOffloadSequence": "text_encoder->text_encoder_2->transformer->vae",
+    "callbackOnStepEndAvailable": true,
+    "callbackTensorInputs": [
+      "latents",
+      "prompt_embeds",
+      "negative_prompt_embeds",
+      "prompt_embeds_2",
+      "negative_prompt_embeds_2"
+    ],
+    "interruptFlagAvailable": true
+  },
+  "license": {
+    "id": "tencent-hunyuan-community",
+    "sourceSnapshotContainsLicenseFile": false,
+    "sourceCardLinksMutableMainLicense": true,
+    "sealedLicenseRepository": "Tencent-Hunyuan/HunyuanDiT",
+    "sealedLicenseRevision": "b47a590cac7a3e1a973036700e45b3fe457e2239",
+    "sealedLicensePath": "LICENSE.txt",
+    "sealedLicenseByteSize": 14614,
+    "sealedLicenseSha256": "9fdd20c8fbfece1457ece0fed2d6e40833ee4c72cd140e5f9691f091a83d48ae",
+    "acceptanceTriggeredByUse": true,
+    "hostedServiceAddressed": true,
+    "commercialLicenseThresholdMonthlyActiveUsers": 100000000,
+    "agreementAndUseRestrictionNoticeRequiredForDistribution": true,
+    "machineGeneratedContentDisclosureRequiredForPublicUse": true,
+    "immutableTermsAcknowledgementRequired": true
+  },
+  "pipelineContract": {
+    "mode": "text_to_image",
+    "width": 1024,
+    "height": 1024,
+    "numInferenceSteps": 25,
+    "guidanceScale": 5.0,
+    "guidanceBasis": "Pinned package default; the immutable distilled model card specifies 25 steps but does not override guidance.",
+    "bertTokenLimit": 77,
+    "t5TokenLimit": 256,
+    "negativePromptAvailable": true,
+    "numImagesPerPrompt": 1,
+    "outputType": "pil",
+    "useResolutionBinning": true,
+    "runtimeDtype": "float16",
+    "offloadMode": "model_cpu",
+    "modelIndexDeclaresSafetyCheckerRequired": true,
+    "modelSnapshotShipsSafetyChecker": false
+  },
+  "remoteResourceEnvelope": {
+    "status": "estimate_only_modiff_qualification_pending",
+    "minimumAcceleratorMemoryBytesEstimate": 12884901888,
+    "minimumSelectiveDiskBytesEstimate": 21474836480,
+    "minimumSystemRamBytesEstimate": 34359738368,
+    "basis": "Exact 14.42 GB float32 safetensors surface loaded in float16 with conservative download and offload headroom; no live proof."
+  },
+  "admission": {
+    "status": "source_complete_execution_pending",
+    "executableModes": [
+      "HunyuanDiTPipeline:text_to_image"
+    ],
+    "runtimeCatalogExposed": true,
+    "downloadCatalogExposed": true,
+    "remoteOnly": true,
+    "liveQualified": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "fullWeightFilesDownloaded": false,
+    "remoteWeightBytesFetched": 0,
+    "unresolvedGates": [
+      "remote_heavy_hardware_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  }
+}

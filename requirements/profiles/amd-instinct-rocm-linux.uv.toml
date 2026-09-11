@@ -1,0 +1,12 @@
+# AMD's public index returns HTTP 403 (not 404) for packages it does not host.
+# Permit fallback only for that public index. Keep first-index selection and
+# TLS checks; this does not affect Hugging Face authentication or model gates.
+[[index]]
+name = "amd-instinct"
+url = "https://repo.amd.com/rocm/whl-multi-arch/"
+ignore-error-codes = [403]
+
+[[index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true

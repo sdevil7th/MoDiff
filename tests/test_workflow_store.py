@@ -1,18 +1,29 @@
 import asyncio
 import json
 import tempfile
+import threading
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from modiff.NodeBase import NodeBase
 from modiff.server import WebServer
-from modiff.workflow_store import delete_workflow, get_workflow, list_workflows, save_workflow
+from modiff.execution_input_provenance import capture_generation_inputs
+from modiff.workflow_store import (
+    delete_workflow,
+    get_workflow,
+    list_workflow_summaries,
+    list_workflows,
+    save_workflow,
+)
+from modules.ModularDiffusers.custom_pipeline import CustomPipelineContractError
 
 
 class FakeRequest:
-    def __init__(self, workflow_id, payload=None):
+    def __init__(self, workflow_id, payload=None, query=None):
         self.match_info = {"workflow_id": workflow_id, "task_id": workflow_id, "output_id": workflow_id}
         self._payload = payload
+        self.query = query or {}
 
     async def json(self):
         return self._payload
@@ -33,12 +44,126 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(second["revision"], 2)
         self.assertEqual(get_workflow(self.directory.name, "workflow-1")["title"], "Two")
         self.assertEqual([item["id"] for item in list_workflows(self.directory.name)], ["workflow-1"])
+        summaries = list_workflow_summaries(self.directory.name)
+        self.assertEqual([item["id"] for item in summaries], ["workflow-1"])
+        self.assertNotIn("snapshot", summaries[0])
         self.assertTrue(delete_workflow(self.directory.name, "workflow-1"))
         self.assertIsNone(get_workflow(self.directory.name, "workflow-1"))
 
     def test_workflow_id_cannot_escape_backend_storage(self):
         with self.assertRaisesRegex(ValueError, "Workflow id"):
             save_workflow(self.directory.name, "../escape", {"snapshot": {}})
+
+    def test_summary_listing_reuses_only_unchanged_metadata_and_detects_external_replacement(self):
+        from modiff import workflow_store
+
+        save_workflow(self.directory.name, "one", {"title": "First", "snapshot": {"nodes": [1]}})
+        list_workflow_summaries(self.directory.name)
+        with patch.object(workflow_store, "_read", wraps=workflow_store._read) as read:
+            result = list_workflow_summaries(self.directory.name)
+            result[0]["title"] = "Not a saved edit"
+            self.assertEqual(list_workflow_summaries(self.directory.name)[0]["title"], "First")
+            read.assert_not_called()
+
+        path = Path(self.directory.name) / "user-workflows/one.json"
+        record = get_workflow(self.directory.name, "one")
+        record["title"] = "External replacement"
+        replacement = path.with_suffix(".replacement")
+        replacement.write_text(json.dumps(record), encoding="utf-8")
+        replacement.replace(path)
+        self.assertEqual(list_workflow_summaries(self.directory.name)[0]["title"], "External replacement")
+        path.write_text("broken json", encoding="utf-8")
+        self.assertEqual(list_workflow_summaries(self.directory.name), [])
+        path.write_text(json.dumps(record), encoding="utf-8")
+        self.assertEqual(list_workflow_summaries(self.directory.name)[0]["title"], "External replacement")
+        delete_workflow(self.directory.name, "one")
+        self.assertEqual(list_workflow_summaries(self.directory.name), [])
+        save_workflow(self.directory.name, "one", {"title": "Recreated", "snapshot": {}})
+        self.assertEqual(list_workflow_summaries(self.directory.name)[0]["title"], "Recreated")
+
+    async def test_workflow_storage_and_response_serialization_do_not_block_http_loop(self):
+        server = WebServer(modules={}, work_dir=self.directory.name, data_dir=self.directory.name)
+        messages = []
+        server.queue_message = messages.append
+        loop_thread = threading.get_ident()
+        record = {"id": "one", "snapshot": {}, "revision": 1}
+        for handler_name, store_name, stored, query in (
+            ("workflows_list", "list_workflows", [record], {}),
+            ("workflows_list", "list_workflow_summaries", [{"id": "one"}], {"view": "summary"}),
+            ("workflow_get", "get_workflow", record, {}),
+            ("workflow_put", "save_workflow", record, {}),
+            ("workflow_delete", "delete_workflow", True, {}),
+        ):
+            with self.subTest(handler=handler_name, store=store_name):
+                heartbeat = threading.Event()
+                observed = []
+
+                def storage(*_args, **_kwargs):
+                    observed.append(heartbeat.wait(timeout=0.2))
+                    self.assertNotEqual(threading.get_ident(), loop_thread)
+                    return stored
+
+                def serialize(payload):
+                    self.assertNotEqual(threading.get_ident(), loop_thread)
+                    return json.dumps(payload).encode("utf-8")
+
+                timer = asyncio.get_running_loop().call_later(0.01, heartbeat.set)
+                try:
+                    with (
+                        patch(f"modiff.workflow_store.{store_name}", side_effect=storage),
+                        patch.object(server, "_json_response_bytes", side_effect=serialize),
+                    ):
+                        response = await getattr(server, handler_name)(FakeRequest("one", {"snapshot": {}}, query))
+                        self.assertEqual(response.status, 200)
+                finally:
+                    timer.cancel()
+                    heartbeat.set()
+                self.assertEqual(observed, [True])
+
+    def test_summary_cache_is_bounded_and_never_retains_graph_snapshots(self):
+        from modiff import workflow_store
+
+        with (
+            patch.object(workflow_store, "_SUMMARY_CACHE", workflow_store.OrderedDict()),
+            patch.object(workflow_store, "_SUMMARY_CACHE_LIMIT", 2),
+        ):
+            for index in range(3):
+                save_workflow(self.directory.name, str(index), {"snapshot": {"privateGraph": "not metadata"}})
+            self.assertEqual(len(list_workflow_summaries(self.directory.name)), 3)
+            self.assertEqual(len(workflow_store._SUMMARY_CACHE), 2)
+            self.assertNotIn("privateGraph", repr(workflow_store._SUMMARY_CACHE))
+            self.assertNotIn("snapshot", repr(workflow_store._SUMMARY_CACHE))
+
+    async def test_cancelled_save_request_still_notifies_after_durable_write(self):
+        server = WebServer(modules={}, work_dir=self.directory.name, data_dir=self.directory.name)
+        messages = []
+        notified = asyncio.Event()
+        entered = threading.Event()
+        release = threading.Event()
+        loop = asyncio.get_running_loop()
+
+        def notify(message):
+            messages.append(message)
+            loop.call_soon_threadsafe(notified.set)
+
+        def save(*args):
+            entered.set()
+            release.wait(timeout=2)
+            return save_workflow(*args)
+
+        server.queue_message = notify
+        with patch("modiff.workflow_store.save_workflow", side_effect=save):
+            task = asyncio.create_task(server.workflow_put(FakeRequest("cancelled", {"snapshot": {"nodes": []}})))
+            try:
+                self.assertTrue(await asyncio.to_thread(entered.wait, 1))
+                task.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await task
+            finally:
+                release.set()
+            await asyncio.wait_for(notified.wait(), timeout=2)
+        self.assertEqual(get_workflow(self.directory.name, "cancelled")["revision"], 1)
+        self.assertEqual(messages[0]["type"], "workflow_updated")
 
     async def test_routes_broadcast_backend_workflow_updates(self):
         server = WebServer(modules={}, work_dir=self.directory.name, data_dir=self.directory.name)
@@ -54,6 +179,8 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
 
         listing = json.loads((await server.workflows_list(None)).text)
         self.assertEqual(listing["workflows"][0]["id"], "shared")
+        summary_listing = json.loads((await server.workflows_list(FakeRequest("", query={"view": "summary"}))).text)
+        self.assertNotIn("snapshot", summary_listing["workflows"][0])
 
         await server.workflow_delete(FakeRequest("shared"))
         self.assertEqual(messages[-1], {"type": "workflow_deleted", "workflow_id": "shared"})
@@ -147,12 +274,21 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
             def refresh(self, _values, _ref):
                 self.set_field_params("dtype", {"options": ["float16", "bfloat16"]})
 
-        module_name = ".".join(FieldNode.__module__.split(".")[:-1])
-        definition = {module_name: {"FieldNode": {"params": {}}}}
+        FieldNode.__module__ = "tests.test_workflow_store"
+        module_name = "tests"
+        definition = {
+            module_name: {
+                "FieldNode": {
+                    "params": {
+                        "dtype": {"onChange": "refresh"},
+                    }
+                }
+            }
+        }
         with patch("modiff.NodeBase._module_map", return_value=definition):
             node = FieldNode("field-node")
 
-        server = WebServer(modules={}, work_dir=self.directory.name, data_dir=self.directory.name)
+        server = WebServer(modules=definition, work_dir=self.directory.name, data_dir=self.directory.name)
         server.loop = asyncio.get_running_loop()
         server.node_cache["field-node"] = node
         messages = []
@@ -162,12 +298,15 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
             {
                 "node": "field-node",
                 "sid": "field-session",
+                "module": module_name,
+                "action": "FieldNode",
                 "fn": "refresh",
                 "values": {"dtype": "float16"},
                 "fieldKey": "dtype",
                 "queue": True,
                 "workflowTabId": "workflow-field",
                 "workflowCanvasEpoch": 17,
+                "workflowFormEpoch": 23,
             },
         )
 
@@ -184,13 +323,263 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(field_message["task_id"], task_id)
         self.assertEqual(field_message["workflow_tab_id"], "workflow-field")
         self.assertEqual(field_message["workflow_canvas_epoch"], 17)
+        self.assertEqual(field_message["workflow_form_epoch"], 23)
         self.assertEqual(field_message["sid"], "field-session")
 
         completed = next(message for message in messages if message.get("type") == "task_completed")
         self.assertEqual(completed["task_id"], task_id)
         self.assertEqual(completed["workflow_tab_id"], "workflow-field")
         self.assertEqual(completed["workflow_canvas_epoch"], 17)
+        self.assertEqual(completed["workflow_form_epoch"], 23)
         self.assertEqual(completed["args"][1]["node"], "field-node")
+
+    async def test_synchronous_canvas_scoped_field_action_echoes_tab_and_canvas_without_form_epoch(self):
+        class FieldNode(NodeBase):
+            def refresh(self, _values, _ref):
+                self.set_field_params("dtype", {"options": ["float16", "bfloat16"]})
+
+        FieldNode.__module__ = "tests.test_workflow_store"
+        module_name = "tests"
+        definition = {
+            module_name: {
+                "FieldNode": {
+                    "params": {
+                        "dtype": {"onChange": "refresh"},
+                    }
+                }
+            }
+        }
+        with patch("modiff.NodeBase._module_map", return_value=definition):
+            node = FieldNode("canvas-field-node")
+
+        server = WebServer(modules=definition, work_dir=self.directory.name, data_dir=self.directory.name)
+        server.loop = asyncio.get_running_loop()
+        server.node_cache["canvas-field-node"] = node
+        messages = []
+        server.queue_message = lambda message, *_args, **_kwargs: messages.append(message)
+        request = FakeRequest(
+            "canvas-field-node",
+            {
+                "node": "canvas-field-node",
+                "sid": "canvas-field-session",
+                "module": module_name,
+                "action": "FieldNode",
+                "fn": "refresh",
+                "values": {"dtype": "bfloat16"},
+                "fieldKey": "dtype",
+                "queue": False,
+                "workflowTabId": "workflow-canvas-field",
+                "workflowCanvasEpoch": 31,
+            },
+        )
+
+        with patch("modiff.NodeBase._server", return_value=server):
+            response = await server.field_action(request)
+
+        payload = json.loads(response.text)
+        self.assertEqual(response.status, 200)
+        self.assertFalse(payload["error"])
+        field_message = next(message for message in messages if message.get("type") == "set_field_params")
+        self.assertEqual(field_message["workflow_tab_id"], "workflow-canvas-field")
+        self.assertEqual(field_message["workflow_canvas_epoch"], 31)
+        self.assertNotIn("workflow_form_epoch", field_message)
+        self.assertEqual(field_message["sid"], "canvas-field-session")
+
+    async def test_field_action_rejects_unknown_or_undeclared_targets_before_import(self):
+        module_name = "modules.ModularDiffusers"
+        action_name = "ModelsLoader"
+        definition = {
+            module_name: {
+                action_name: {
+                    "params": {
+                        "repo_id": {"onChange": "refresh_pipeline_identity"},
+                    }
+                }
+            }
+        }
+        server = WebServer(modules=definition, work_dir=self.directory.name, data_dir=self.directory.name)
+        base_payload = {
+            "node": "imported-loader",
+            "sid": "field-session",
+            "module": module_name,
+            "action": action_name,
+            "fieldKey": "repo_id",
+            "fn": "refresh_pipeline_identity",
+            "values": {},
+            "queue": False,
+        }
+        cases = {
+            "unknown module": {"module": "custom.Attacker"},
+            "unknown action": {"action": "AttackerNode"},
+            "unknown field": {"fieldKey": "removed_or_imported_field"},
+            "undeclared method": {"fn": "prepare_for_workflow_reuse"},
+        }
+
+        with patch("modiff.server.import_module") as import_mock:
+            for label, override in cases.items():
+                with self.subTest(label=label):
+                    response = await server.field_action(
+                        FakeRequest("imported-loader", {**base_payload, **override})
+                    )
+                    payload = json.loads(response.text)
+                    self.assertEqual(response.status, 400)
+                    self.assertTrue(payload["error"])
+            import_mock.assert_not_called()
+
+    async def test_field_action_rejects_non_object_payload_before_dispatch(self):
+        server = WebServer(modules={}, work_dir=self.directory.name, data_dir=self.directory.name)
+        with patch("modiff.server.import_module") as import_mock:
+            for payload in (None, [], ["attacker"]):
+                with self.subTest(payload=payload):
+                    response = await server.field_action(FakeRequest("field-node", payload))
+                    body = json.loads(response.text)
+                    self.assertEqual(response.status, 400)
+                    self.assertTrue(body["error"])
+                    self.assertIn("JSON object", body["message"])
+        import_mock.assert_not_called()
+
+    async def test_field_action_dispatches_authorized_models_loader_callback(self):
+        module_name = "modules.ModularDiffusers"
+        action_name = "ModelsLoader"
+        definition = {
+            module_name: {
+                action_name: {
+                    "params": {
+                        "repo_id": {
+                            "onSignal": [
+                                {"action": "value", "data": "repo_id"},
+                                [{"action": "exec", "data": "refresh_pipeline_identity"}],
+                            ]
+                        },
+                    }
+                }
+            }
+        }
+
+        class CachedModelsLoader:
+            module_name = "modules.ModularDiffusers"
+            class_name = "ModelsLoader"
+
+            def __init__(self):
+                self._sid = None
+                self.calls = []
+
+            def refresh_pipeline_identity(self, values, ref):
+                self.calls.append((values, ref))
+
+            def prepare_for_workflow_reuse(self):
+                raise AssertionError("An undeclared callback was dispatched.")
+
+        cached_node = CachedModelsLoader()
+        server = WebServer(modules=definition, work_dir=self.directory.name, data_dir=self.directory.name)
+        server.loop = asyncio.get_running_loop()
+        server.node_cache["models-loader"] = cached_node
+
+        with patch(
+            "modiff.server.field_action_optional_runtime_requirement",
+            return_value={
+                "schemaVersion": 1,
+                "delivery": "optional_overlay",
+                "requiredNow": True,
+                "profileIds": ["huggingface-transformers-peft-5.14.1-0.20.0"],
+                "executionProfileIds": ["qwen-image:modular"],
+                "state": "active",
+                "reason": "optional_runtime_active",
+            },
+        ):
+            response = await server.field_action(
+                FakeRequest(
+                    "models-loader",
+                    {
+                        "node": "models-loader",
+                        "sid": "field-session",
+                        "module": module_name,
+                        "action": action_name,
+                        "fieldKey": "repo_id",
+                        "fn": "refresh_pipeline_identity",
+                        "values": {
+                            "model_type": "QwenImageModularPipeline",
+                            "repo_id": {"source": "hub", "value": "Qwen/Qwen-Image-2512"},
+                        },
+                        "queue": False,
+                    },
+                )
+            )
+
+        payload = json.loads(response.text)
+        self.assertEqual(response.status, 200)
+        self.assertFalse(payload["error"])
+        self.assertEqual(payload["ref"], {"node": "models-loader", "key": "repo_id", "queue": False})
+        self.assertEqual(cached_node._sid, "field-session")
+        self.assertEqual(
+            cached_node.calls,
+            [
+                (
+                    {
+                        "model_type": "QwenImageModularPipeline",
+                        "repo_id": {"source": "hub", "value": "Qwen/Qwen-Image-2512"},
+                    },
+                    {"node": "models-loader", "key": "repo_id", "queue": False},
+                )
+            ],
+        )
+
+    async def test_field_action_preserves_actionable_custom_pipeline_error_contract(self):
+        module_name = "modules.ModularDiffusers"
+        action_name = "ModelsLoader"
+        definition = {
+            module_name: {
+                action_name: {
+                    "params": {"repo_id": {"onChange": "refresh_pipeline_identity"}},
+                }
+            }
+        }
+
+        class CachedModelsLoader:
+            module_name = "modules.ModularDiffusers"
+            class_name = "ModelsLoader"
+            _sid = None
+
+            def refresh_pipeline_identity(self, _values, _ref):
+                raise CustomPipelineContractError(
+                    "custom_pipeline_unpinned_auxiliary",
+                    "The auxiliary repository is mutable.",
+                    "Pin every auxiliary repository to an exact commit.",
+                )
+
+        server = WebServer(modules=definition, work_dir=self.directory.name, data_dir=self.directory.name)
+        server.loop = asyncio.get_running_loop()
+        server.node_cache["models-loader"] = CachedModelsLoader()
+        request = FakeRequest(
+            "models-loader",
+            {
+                "node": "models-loader",
+                "sid": "field-session",
+                "module": module_name,
+                "action": action_name,
+                "fieldKey": "repo_id",
+                "fn": "refresh_pipeline_identity",
+                "values": {"model_type": "DummyCustomPipeline"},
+                "queue": False,
+            },
+        )
+        active_requirement = {
+            "schemaVersion": 1,
+            "delivery": "optional_overlay",
+            "requiredNow": True,
+            "profileIds": ["huggingface-transformers-peft-5.14.1-0.20.0"],
+            "executionProfileIds": ["custom-modular:reviewed-loader"],
+            "state": "active",
+            "reason": "optional_runtime_active",
+        }
+        with patch("modiff.server.field_action_optional_runtime_requirement", return_value=active_requirement):
+            response = await server.field_action(request)
+
+        payload = json.loads(response.text)
+        self.assertEqual(response.status, 409)
+        self.assertEqual(payload["category"], "custom_pipeline")
+        self.assertEqual(payload["error_code"], "custom_pipeline_unpinned_auxiliary")
+        self.assertEqual(payload["recovery_hint"], "Pin every auxiliary repository to an exact commit.")
 
     async def test_generated_media_is_preserved_without_a_frontend_history_post(self):
         server = WebServer(modules={}, work_dir=self.directory.name, data_dir=self.directory.name)
@@ -205,6 +594,7 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
                     "mode": "text_to_image",
                     "modelType": "QwenImageModularPipeline",
                     "prompt": "Preserve this output",
+                    "modelRepo": "Qwen/Qwen-Image-2512",
                 },
             },
         }
@@ -252,8 +642,112 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(output["workflowTabId"], "disconnected-workflow")
         self.assertTrue(output["url"].startswith("/file?file="))
         self.assertEqual(output["displayType"], "image")
+        self.assertEqual(output["repo"], "Qwen/Qwen-Image-2512")
+        self.assertNotIn("modelRepo", runtime_hints)
+        self.assertNotIn("source", runtime_hints)
         self.assertTrue(output["backendMediaPath"].startswith("@data/"))
         self.assertTrue(server._resolve_managed_path_identifier(output["backendMediaPath"]).is_file())
+
+    async def test_generated_cluster_media_uses_the_qualified_cluster_form(self):
+        server = WebServer(modules={}, work_dir=self.directory.name, data_dir=self.directory.name)
+        runtime_hints = {
+            "source": "hugging-face-cluster",
+            "modelType": "ErnieImageModularPipeline",
+            "modelName": "Ernie Image — Text To Image",
+            "resolvedArtifact": "baidu/ERNIE-Image-Turbo",
+            "optimizationQualificationForm": {
+                "mode": "text_to_image",
+                "modelType": "ErnieImageModularPipeline",
+                "prompt": "The exact Cluster prompt",
+                "modelRepo": "fixture/stale-form-repository",
+                "steps": 1,
+                "width": 1024,
+                "height": 1024,
+            },
+            "workflowSnapshot": {
+                "nodes": [],
+                "edges": [],
+                "studioForm": {
+                    "mode": "text_to_image",
+                    "modelType": "ZImageModularPipeline",
+                    "prompt": "Stale Studio form",
+                    "steps": 8,
+                },
+            },
+        }
+        server.current_task = {
+            "task_id": "cluster-task",
+            "name": "Graph execution",
+            "sid": "cluster-browser",
+            "started_at": 1,
+            "attempt_index": 0,
+            "runtimeHints": runtime_hints,
+        }
+        server.task_graphs["cluster-task"] = {"runtimeHints": runtime_hints}
+
+        _output_id, persisted = server._persist_generated_output_update(
+            {
+                "type": "update_value",
+                "task_id": "cluster-task",
+                "client_run_id": "cluster-client",
+                "run_input_hash": "cluster-hash",
+                "attempt_index": 0,
+                "node": "preview",
+                "key": "images",
+                "value": ["data:image/png;base64,iVBORw0KGgo="],
+            },
+            display="ui_image",
+        )
+
+        self.assertTrue(persisted)
+        output = server._studio_outputs_for_run("cluster-task")[0]
+        self.assertEqual(output["modelType"], "ErnieImageModularPipeline")
+        self.assertEqual(output["repo"], "baidu/ERNIE-Image-Turbo")
+        self.assertEqual(output["prompt"], "The exact Cluster prompt")
+        self.assertEqual(output["steps"], 1)
+        self.assertEqual(output["formSnapshot"], runtime_hints["optimizationQualificationForm"])
+
+    async def test_resolved_connected_inputs_survive_frontend_enrichment_and_reject_forgery(self):
+        server = WebServer(modules={}, work_dir=self.directory.name, data_dir=self.directory.name)
+        hints = {"workflowSnapshot": {"studioForm": {"prompt": "fallback", "steps": 8}}}
+        encoder = {"module": "modules.Diffusers", "action": "Encode", "params": {
+            "prompt": {"sourceId": "text", "sourceKey": "output", "value": "fallback"},
+        }}
+        preview = {"module": "modules.Diffusers", "action": "Preview", "params": {
+            "image": {"sourceId": "encode", "sourceKey": "images"},
+        }}
+        server.current_task = {"task_id": "resolved-task", "attempt_index": 2, "runtimeHints": hints}
+        server.task_graphs["resolved-task"] = {"nodes": {"encode": encoder, "preview": preview}, "runtimeHints": hints}
+        server._resolved_input_context = ("resolved-task", 2)
+        server._resolved_input_records = {
+            "encode": capture_generation_inputs("encode", encoder, {"prompt": "actual connected prompt", "num_inference_steps": 50}),
+            "preview": capture_generation_inputs("preview", preview, {}),
+        }
+        message = {"task_id": "resolved-task", "attempt_index": 2, "node": "preview", "key": "text", "value": "output"}
+        _, persisted = server._persist_generated_output_update(message, display="ui_text")
+        self.assertTrue(persisted)
+        output = server._studio_outputs_for_run("resolved-task")[0]
+        self.assertEqual(output["prompt"], "actual connected prompt")
+        self.assertEqual(output["steps"], 50)
+        self.assertEqual(output["formSnapshot"]["prompt"], "fallback")
+        self.assertEqual(message["resolved_execution_inputs"], output["resolvedExecutionInputs"])
+        enriched = server._normalize_studio_output({**output, "prompt": "stale browser form", "steps": 8})
+        self.assertNotIn("resolvedExecutionInputs", enriched)
+        merged = server._merge_studio_outputs([output], [enriched])[0]
+        self.assertEqual(merged["prompt"], "actual connected prompt")
+        self.assertEqual(merged["steps"], 50)
+        self.assertEqual(merged["resolvedExecutionInputs"], output["resolvedExecutionInputs"])
+        with self.assertRaisesRegex(ValueError, "cannot be reassigned"):
+            server._merge_studio_outputs([output], [{**enriched, "taskId": "other-task"}])
+        with patch.object(server, "_normalize_studio_output", side_effect=AssertionError("Must reject before media writes")):
+            conflict = await server.studio_outputs_post(FakeRequest("", {**output, "taskId": "other-task"}))
+        self.assertEqual(conflict.status, 409)
+        server._resolved_input_context = ("resolved-task", 3)
+        late_message = {**message, "key": "late", "resolved_execution_inputs": None}
+        _, persisted = server._persist_generated_output_update(late_message, display="ui_text")
+        self.assertTrue(persisted)
+        late_output = next(item for item in server._studio_outputs_for_run("resolved-task") if item["fieldKey"] == "late")
+        self.assertNotIn("resolvedExecutionInputs", late_output)
 
     async def test_preview_slot_changes_only_on_admission_and_output_promotion(self):
         modules = {

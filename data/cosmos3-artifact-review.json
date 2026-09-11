@@ -1,0 +1,492 @@
+{
+  "admission": {
+    "componentRevisionResolution": {
+      "loaderIndexPreference": "modular_model_index.json",
+      "nullSameRepositoryDescriptorsBoundToTopLevelRevision": true,
+      "standardModelIndexIgnoredWhenModularIndexPresent": true
+    },
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "existingModularContractsPreserved": [
+      "Cosmos3OmniModularPipeline",
+      "Cosmos3DistilledModularPipeline"
+    ],
+    "graphQualifiedRoutes": [
+      {
+        "artifactRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "text_to_image",
+        "workflowId": "text2image"
+      },
+      {
+        "artifactRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "text_to_video",
+        "workflowId": "text2video"
+      },
+      {
+        "artifactRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "image_to_video",
+        "workflowId": "image2video"
+      },
+      {
+        "artifactRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "video_to_video",
+        "workflowId": "video2video"
+      },
+      {
+        "artifactRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "text_to_video_with_audio",
+        "workflowId": "text2video_with_sound"
+      },
+      {
+        "artifactRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "image_to_video_with_audio",
+        "workflowId": "image2video_with_sound"
+      },
+      {
+        "artifactRevision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "video_to_video_with_audio",
+        "workflowId": "video2video_with_sound"
+      },
+      {
+        "artifactRevision": "aa0d5a57b7b045d68daa60fbacd84ec723c7cb7b",
+        "pipelineClass": "Cosmos3DistilledModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "text_to_image",
+        "workflowId": "text2image"
+      },
+      {
+        "artifactRevision": "cd55ce81bc5cea51a09c37cd7652144e7278f049",
+        "pipelineClass": "Cosmos3DistilledModularPipeline",
+        "publicationExecutable": false,
+        "studioMode": "image_to_video",
+        "workflowId": "image2video"
+      }
+    ],
+    "liveQualified": false,
+    "reason": "All seven non-action Nano workflows and the two Distilled workflows with exact route-specific 4-step checkpoints now have static BlockDefinitionV2 graph routes. All Run, Auto, template, Gallery, and public execution claims remain closed: the mandatory gated guardrail has not been acknowledged or installed, its optional runtime has not been admitted, and neither the 34.99 GB Nano snapshot nor either roughly 130 GB Distilled snapshot has received a real resource/output qualification. The unmatched Distilled text/video routes and three action workflows still require separate route-specific review.",
+    "runtimeCatalogExposed": false,
+    "status": "partially_graph_qualified",
+    "unresolvedGates": [
+      "remaining_route_specific_graph_admission",
+      "distilled_tensor_parallel_resource_and_output_qualification",
+      "cosmos_guardrail_hub_access_and_license_acknowledgement",
+      "cosmos_guardrail_optional_runtime_and_revision_binding",
+      "nano_snapshot_installation_and_resource_qualification",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": ["path", "byteSize", "sha256"],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "Cosmos3",
+  "format": "safetensors",
+  "guardrail": {
+    "access": "gated_auto",
+    "acknowledgedByUser": false,
+    "distribution": "cosmos-guardrail",
+    "exactPackageVersion": "0.3.1",
+    "license": "nvidia-open-model-license",
+    "repository": "nvidia/Cosmos-Guardrail1",
+    "revision": "d6d4bfa899a71454a700907664f3e88f503950cf",
+    "snapshotByteSize": 7171449905,
+    "weightByteSize": 3627263067
+  },
+  "license": {
+    "embeddedLicenseFilePresent": false,
+    "id": "openmdw-1.1",
+    "linkedLicenseSnapshot": {
+      "byteSize": 49273,
+      "copyAndOriginNoticesRequiredOnDistribution": true,
+      "modelOutputUseRestricted": false,
+      "patentOrCopyrightLitigationTermination": true,
+      "sha256": "e6f52cf62d0c109183e4c37a6df424bd223f8fcd2372aa108e2b6a94a282c1a5",
+      "url": "https://openmdw.ai/license/1-1/"
+    },
+    "modelCardsLinkMutableLicenseUrl": true,
+    "modelCardsNameLicense": "openmdw1.1-license"
+  },
+  "modularContracts": [
+    {
+      "blocksClass": "Cosmos3OmniBlocks",
+      "pipelineClass": "Cosmos3OmniModularPipeline",
+      "workflows": {
+        "action_forward_dynamics": {
+          "requiredInputs": ["action", "num_inference_steps", "prompt"],
+          "taskId": "action_forward_dynamics"
+        },
+        "action_inverse_dynamics": {
+          "requiredInputs": ["action", "num_inference_steps", "prompt"],
+          "taskId": "action_inverse_dynamics"
+        },
+        "action_policy": {
+          "requiredInputs": ["action", "num_inference_steps", "prompt"],
+          "taskId": "action_policy"
+        },
+        "image2video": {
+          "requiredInputs": ["image", "num_inference_steps", "prompt"],
+          "taskId": "image_to_video"
+        },
+        "image2video_with_sound": {
+          "requiredInputs": ["image", "num_inference_steps", "prompt"],
+          "taskId": "image_to_video_with_audio"
+        },
+        "text2image": {
+          "requiredInputs": ["num_inference_steps", "prompt"],
+          "taskId": "text_to_image"
+        },
+        "text2video": {
+          "requiredInputs": ["num_inference_steps", "prompt"],
+          "taskId": "text_to_video"
+        },
+        "text2video_with_sound": {
+          "requiredInputs": ["num_inference_steps", "prompt"],
+          "taskId": "text_to_video_with_audio"
+        },
+        "video2video": {
+          "requiredInputs": ["num_inference_steps", "prompt", "video"],
+          "taskId": "video_to_video"
+        },
+        "video2video_with_sound": {
+          "requiredInputs": ["num_inference_steps", "prompt", "video"],
+          "taskId": "video_to_video_with_audio"
+        }
+      }
+    },
+    {
+      "blocksClass": "Cosmos3DistilledBlocks",
+      "pipelineClass": "Cosmos3DistilledModularPipeline",
+      "workflows": {
+        "image2video": {
+          "requiredInputs": ["image", "prompt"],
+          "taskId": "image_to_video"
+        },
+        "text2image": {
+          "requiredInputs": ["prompt"],
+          "taskId": "text_to_image"
+        },
+        "text2video": {
+          "requiredInputs": ["prompt"],
+          "taskId": "text_to_video"
+        },
+        "video2video": {
+          "requiredInputs": ["prompt", "video"],
+          "taskId": "video_to_video"
+        }
+      }
+    }
+  ],
+  "remoteResourceEnvelopes": {
+    "nano": {
+      "minimumAcceleratorMemoryBytesWithOffloadEstimate": 25769803776,
+      "minimumSelectiveDiskBytes": 68719476736,
+      "minimumSystemRamBytes": 103079215104,
+      "status": "estimate_only_qualification_pending"
+    },
+    "super": {
+      "minimumAggregateAcceleratorMemoryBytesEstimate": 137438953472,
+      "minimumSelectiveDiskBytes": 206158430208,
+      "minimumSystemRamBytes": 206158430208,
+      "tensorParallelExecutionExpected": true,
+      "status": "estimate_only_qualification_pending"
+    }
+  },
+  "repositories": [
+    {
+      "componentDescriptorRevisionState": "all_null",
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 502,
+        "className": "Cosmos3OmniDiffusersPipeline",
+        "classExportedByPinnedDiffusers": false,
+        "sha256": "90088a6638deb68418d795971ad48e6d5aa3f7764d69f3c62bbca9e8f3485bcd"
+      },
+      "modularIndex": {
+        "blocksClass": "Cosmos3OmniBlocks",
+        "byteSize": 1667,
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "sha256": "849634afcffb6958d8ed71e367a1d658b092c660e8ee97b65aa81458dbf54d33"
+      },
+      "private": false,
+      "repository": "nvidia/Cosmos3-Nano",
+      "revision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+      "role": "nano",
+      "snapshotByteSize": 34986890561,
+      "transformer": {
+        "actionDimension": 64,
+        "configSha256": "282862cf9c42a257dbd2f00e41b5ef65c3aacfb693ad1f8ab28b05a02e1b9ffe",
+        "hiddenLayers": 36,
+        "hiddenSize": 4096
+      },
+      "weightBytes": 34894818144,
+      "weightComponents": {
+        "sound_tokenizer": {
+          "byteSize": 1985176840,
+          "fileCount": 1
+        },
+        "transformer": {
+          "byteSize": 30347429288,
+          "fileCount": 7
+        },
+        "vae": {
+          "byteSize": 1409400600,
+          "fileCount": 1
+        },
+        "vision_encoder": {
+          "byteSize": 1152811416,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 10,
+      "weightInventorySha256": "cd57d6ee25e161059bf6896a1ecb12c33aba2261d20aedf2f7c431545d47ddd9"
+    },
+    {
+      "componentDescriptorRevisionState": "all_null",
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 502,
+        "className": "Cosmos3OmniDiffusersPipeline",
+        "classExportedByPinnedDiffusers": false,
+        "sha256": "90088a6638deb68418d795971ad48e6d5aa3f7764d69f3c62bbca9e8f3485bcd"
+      },
+      "modularIndex": {
+        "blocksClass": "Cosmos3OmniBlocks",
+        "byteSize": 1672,
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "sha256": "a040aabdd63c457470e4102ccc45cb14ba024b39611e18e055990ce3c32792d5"
+      },
+      "private": false,
+      "repository": "nvidia/Cosmos3-Super",
+      "revision": "fe77b66696d645f663b8f27e942b3b43e4629e23",
+      "role": "super",
+      "snapshotByteSize": 132710200448,
+      "transformer": {
+        "actionDimension": 64,
+        "configSha256": "7d4ade2f8cc05e8b2b505a0ed6260e8a0fb1027c5ee49bc9f0c854e895af682b",
+        "hiddenLayers": 64,
+        "hiddenSize": 5120
+      },
+      "weightBytes": 132624780208,
+      "weightComponents": {
+        "sound_tokenizer": {
+          "byteSize": 1985176840,
+          "fileCount": 1
+        },
+        "transformer": {
+          "byteSize": 128039634416,
+          "fileCount": 27
+        },
+        "vae": {
+          "byteSize": 1409400600,
+          "fileCount": 1
+        },
+        "vision_encoder": {
+          "byteSize": 1190568352,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 30,
+      "weightInventorySha256": "62cf8758a1aa3c17a04b7841b77d448c229aa96bd21e0def4a3b339c34c06808"
+    },
+    {
+      "componentDescriptorRevisionState": "revision_key_absent",
+      "distilledSigmas": [1.0, 0.9375, 0.8333333333333334, 0.625],
+      "gated": false,
+      "guidanceScaleForced": 1.0,
+      "modelIndex": {
+        "byteSize": 475,
+        "className": "Cosmos3OmniPipeline",
+        "safetyCheckerConfigured": false,
+        "sha256": "f09a2d15751a6372648dba75f351045a20e8b1542d61d1e41cfe97ad309749c5"
+      },
+      "modularIndex": {
+        "blocksClass": "Cosmos3DistilledBlocks",
+        "byteSize": 1766,
+        "pipelineClass": "Cosmos3DistilledModularPipeline",
+        "sha256": "3f90c0c5507576b694c484e42a7e262d450c727d3ad566ef0c060e596209db82"
+      },
+      "private": false,
+      "repository": "nvidia/Cosmos3-Super-Text2Image-4Step",
+      "revision": "aa0d5a57b7b045d68daa60fbacd84ec723c7cb7b",
+      "role": "superTextToImage4Step",
+      "snapshotByteSize": 131423464104,
+      "transformer": {
+        "actionDimension": 32,
+        "configSha256": "0762cfbb830e78565ee88979bfa83c1109dadeb856af05e7e685df6f0102b16a",
+        "hiddenLayers": 64,
+        "hiddenSize": 5120
+      },
+      "weightBytes": 131391926304,
+      "weightComponents": {
+        "sound_tokenizer": {
+          "byteSize": 1985176840,
+          "fileCount": 1
+        },
+        "transformer": {
+          "byteSize": 127997348864,
+          "fileCount": 27
+        },
+        "vae": {
+          "byteSize": 1409400600,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 29,
+      "weightInventorySha256": "cde33a2ecd21f5ba244747dfc07294a94b8b01f82bcffb5e409d6f8e3848172d"
+    },
+    {
+      "componentDescriptorRevisionState": "revision_key_absent",
+      "distilledSigmas": [1.0, 0.9375, 0.8333333333333334, 0.625],
+      "gated": false,
+      "guidanceScaleForced": 1.0,
+      "modelIndex": {
+        "byteSize": 445,
+        "className": "Cosmos3OmniPipeline",
+        "safetyCheckerConfigured": false,
+        "sha256": "e513a6fcc037141d69575ce0aba6fda48e8c7f4a4d869db6c3818a1e5eec9eb8"
+      },
+      "modularIndex": {
+        "blocksClass": "Cosmos3DistilledBlocks",
+        "byteSize": 1453,
+        "pipelineClass": "Cosmos3DistilledModularPipeline",
+        "sha256": "6659d697ea7e89b2368fea030985d47161dff362ec82a86ee8de0945b0a5001c"
+      },
+      "private": false,
+      "repository": "nvidia/Cosmos3-Super-Image2Video-4Step",
+      "revision": "cd55ce81bc5cea51a09c37cd7652144e7278f049",
+      "role": "superImageToVideo4Step",
+      "snapshotByteSize": 129446040640,
+      "transformer": {
+        "actionDimension": 32,
+        "configSha256": "eb80c6af30d45ea2387177e13a7b61e8841189d3304d7a188d1d9bfe7da8da18",
+        "hiddenLayers": 64,
+        "hiddenSize": 5120
+      },
+      "weightBytes": 129405417712,
+      "weightComponents": {
+        "transformer": {
+          "byteSize": 127996017112,
+          "fileCount": 27
+        },
+        "vae": {
+          "byteSize": 1409400600,
+          "fileCount": 1
+        }
+      },
+      "weightFileCount": 28,
+      "weightInventorySha256": "ea28fd89ee4c39f0c7ed1df91b26576348585f7a720592978a4704b3b1d976be"
+    }
+  ],
+  "reviewedAt": "2026-09-02T13:30:00+05:30",
+  "reviewedRecipes": {
+    "distilled": {
+      "guidanceScale": 1.0,
+      "imageToVideo": {
+        "height": 720,
+        "numFrames": 189,
+        "repositoryRole": "superImageToVideo4Step",
+        "width": 1280
+      },
+      "negativePromptIgnored": true,
+      "numInferenceSteps": 4,
+      "textToImage": {
+        "height": 720,
+        "numFrames": 1,
+        "publicOutputProjection": {
+          "catalogOutputName": "videos",
+          "executionField": "image",
+          "executionRole": "decode",
+          "publicMediaType": "image",
+          "publicPortId": "images",
+          "reason": "The pinned Cosmos3Distilled text2image catalog keeps the shared semantic output name videos, while its exact decoder publishes one PIL image on decode.image; the registered Block aliases only that reviewed terminal to an image socket."
+        },
+        "repositoryRole": "superTextToImage4Step",
+        "width": 1280
+      }
+    },
+    "omni": {
+      "flowShift": 10.0,
+      "fps": 24.0,
+      "guidanceScale": 6.0,
+      "height": 720,
+      "numFrames": 189,
+      "numInferenceSteps": 35,
+      "schedulerClass": "UniPCMultistepScheduler",
+      "soundEnabledOnlyWhenTokenizerPresent": true,
+      "useKarrasSigmas": false,
+      "width": 1280
+    },
+    "promptUpsampling": {
+      "allowedDuringDiscovery": false,
+      "externalFrameworkRequired": true,
+      "remoteProviderExample": "Anthropic Opus 4.6",
+      "videoToVideoModeImplemented": false
+    },
+    "safety": {
+      "cosmosGuardrailDependencyRequired": true,
+      "modularPipelineRequiresExplicitEnableSafetyChecker": true,
+      "taskPipelineEnableSafetyCheckDefault": true
+    }
+  },
+  "schemaVersion": 1,
+  "sourceContract": {
+    "diffusersRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
+    "documentation": {
+      "byteSize": 47634,
+      "sha256": "836a47a96d563477e48566f85c14316d5649c1122271178e60478164ec6409f4",
+      "url": "https://github.com/huggingface/diffusers/blob/2f7e0154a9db246e95c9ede43edba7db5b130805/docs/source/en/api/pipelines/cosmos3.md"
+    },
+    "modelCard": {
+      "readmeByteSize": 44048,
+      "readmeSha256": "70cd946ba24ef287f5519dc76b9f3aa2e5dcac7e18560756645364f992757a4e",
+      "repository": "nvidia/Cosmos3-Nano",
+      "revision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1",
+      "safetyByteSize": 3677,
+      "safetySha256": "b59cf989cb66eb3b1c5e0692d04c42b9a39751801259b225733ab9493e08f03b"
+    },
+    "sources": {
+      "Cosmos3DistilledBlocks": {
+        "byteSize": 9849,
+        "sha256": "00643e71121a8397cfb60853ac186b2381508ee5262200c5d8f57974b45a6df2"
+      },
+      "Cosmos3OmniBlocks": {
+        "byteSize": 55845,
+        "sha256": "35aec5589de05b9f93235340c807697db40827eb6be95269e619fe8441ab83ba"
+      },
+      "Cosmos3OmniPipeline": {
+        "byteSize": 96173,
+        "sha256": "11b98eff235f954ec8531ed0b32143222d81fe595c012e1a34c22f62ed72dbd0"
+      },
+      "Cosmos3OmniModularPipeline": {
+        "byteSize": 5100,
+        "sha256": "c0b687c2dc96bd1fd93a53979073e2a99d2640fb00334e06eab16ff499851cec"
+      },
+      "Cosmos3Encoders": {
+        "byteSize": 47644,
+        "sha256": "6134b4ba0da172d6d8c15ab556d59f3349c2e12aa4839f9f249e93960e2e9c81"
+      },
+      "Cosmos3Decoders": {
+        "byteSize": 10594,
+        "sha256": "60c74e4eba9c89bfc13a0af98e044d4ea96c743815cdb2bdfbdd3ff1be06a6cc"
+      }
+    }
+  }
+}

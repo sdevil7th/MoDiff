@@ -1,6 +1,6 @@
 # Hugging Face Engineering Alignment
 
-MoDiff is not part of the Hugging Face organization, but its model runtime is deliberately built on Hugging Face Diffusers and Modular Diffusers. This document records which upstream engineering expectations are project requirements and how contributors verify them.
+MoDiff is not part of the Hugging Face organization, but its local model runtime may integrate official libraries maintained and published by Hugging Face. Diffusers and Modular Diffusers remain the original and primary integrations; additional libraries follow the same review, reproducibility, graph, and security requirements. This document records which upstream engineering expectations are project requirements and how contributors verify them.
 
 ## Upstream references
 
@@ -29,13 +29,17 @@ Upstream repository layouts and release processes are not copied mechanically. M
 - Keep public graph, HTTP, WebSocket, and persistence contracts stable. A deliberate migration must update both repositories, tests, and documentation.
 - Keep optional dependencies optional. Registry discovery and diagnostics must not import every model stack or require accelerator hardware.
 
-### One model-execution boundary
+### One graph boundary, reviewed Hugging Face runtimes
 
-- Diffusers and Modular Diffusers are the only supported model execution layer.
-- Transformers, Accelerate, PEFT, quantization libraries, and accelerator kernels may support a Diffusers pipeline; they must not become an independent application or alternate workflow driver.
-- Ordinary deterministic image, audio, video, tensor, and file operations are allowed when they do not load another model runtime.
-- Do not add alternate graph executors, hosted inference providers, arbitrary Python model modules, or another model-execution layer.
-- Pin the reviewed Diffusers revision in the executable installer contract. Model and adapter references used by curated workflows must also use immutable revisions where the Hub supports them.
+- A model-execution library is eligible when it is officially maintained and published by Hugging Face and its ownership and package provenance have been verified during integration. Eligibility is not automatic support: each library needs a declared use, reviewed dependency/version contract, backend adapter, and compatibility tests.
+- Hugging Face Hub hosting does not make a library, model, or repository-supplied Python implementation first-party. Curated model and adapter references use immutable revisions where the Hub supports them, and remote code remains separately trust-gated.
+- Every library executes locally through MoDiff's existing node graph, resource lifecycle, progress/cancellation, Auto/Expert, file, and output contracts. Do not add alternate graph executors, hosted inference providers, browser-side model runtimes, or a second workflow representation.
+- Frontend nodes and task surfaces remain modality- or task-generic. The backend execution specification selects the reviewed library/model adapter and publishes its dynamic input, parameter, and output contract. The client must not infer Python classes or maintain a parallel model-specific parameter table.
+- Transformers is an optional runtime and is not part of the default application installation. Registry discovery, template browsing/opening, and Auto planning may report that it is required but must not install it. Installation requires an explicit user action against a reviewed optional-runtime profile, followed by version and compatibility verification before execution.
+- Accelerate, PEFT, quantization libraries, accelerator kernels, and ordinary deterministic image, audio, video, tensor, and file operations may support a model path when narrowly scoped and tested.
+- Keep the reviewed Diffusers revision pinned in the executable installer contract. Apply an equally explicit compatible-version or immutable-source contract to every additional execution library.
+
+Transition status: the legacy base dependency on Transformers and its required preflight check remain until roadmap segment P0.5 migrates existing Diffusers consumers to the staged optional-runtime contract. The policy above is the acceptance criterion for that migration, not a claim that the current installer already omits Transformers.
 
 ### Modular Diffusers
 
