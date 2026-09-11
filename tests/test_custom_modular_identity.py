@@ -1697,7 +1697,9 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
         from diffusers import FluxTransformer2DModel
         from modules.ModularDiffusers.loaders import _preflight_reviewed_diffusers_component
 
-        with tempfile.TemporaryDirectory() as directory:
+        # This case exercises a relative local path. Windows CI keeps its
+        # checkout and system temp directory on different drives.
+        with tempfile.TemporaryDirectory(prefix=".test-pipeline-", dir=Path.cwd()) as directory:
             repository = Path(directory).resolve()
             component_directory = repository / "transformer"
             component_directory.mkdir()
