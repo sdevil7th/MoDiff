@@ -1,5 +1,6 @@
+from source_contract_helpers import source_sha256
+
 import ast
-import hashlib
 from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
@@ -293,7 +294,7 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
         for source_path, class_name, digest, required_parameters in cases:
             with self.subTest(pipeline=class_name):
                 self.assertTrue(source_path.is_file())
-                self.assertEqual(hashlib.sha256(source_path.read_bytes()).hexdigest(), digest)
+                self.assertEqual(source_sha256(source_path), digest)
                 self.assertTrue(
                     required_parameters.issubset(_parameter_names(_pinned_call_node(source_path, class_name)))
                 )

@@ -1,5 +1,6 @@
+from source_contract_helpers import source_sha256
+
 import ast
-import hashlib
 from pathlib import Path
 import sys
 import unittest
@@ -112,7 +113,7 @@ class DiffusersVideoExtendedRouteTests(unittest.TestCase):
                 source_path = diffusers_root / relative_path
                 self.assertTrue(source_path.is_file())
                 self.assertEqual(
-                    hashlib.sha256(source_path.read_bytes()).hexdigest(),
+                    source_sha256(source_path),
                     expected_digest,
                 )
                 tree = ast.parse(source_path.read_text(encoding="utf-8"))

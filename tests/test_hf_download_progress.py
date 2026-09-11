@@ -287,7 +287,7 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
             partial = blobs / f"{expected_hash}.1234abcd.incomplete"
             partial.write_bytes(b"x" * 1024)
             (blobs / f"{unrelated_hash}.1234abcd.incomplete").write_bytes(b"y" * 1024)
-            allocated = partial.stat().st_blocks * 512
+            allocated = getattr(partial.stat(), 'st_blocks', 0) * 512
             with patch.dict(
                 huggingface.CONFIG.hf, {"cache_dir": cache_dir, "token": None}
             ), patch.object(

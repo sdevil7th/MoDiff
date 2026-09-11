@@ -1,6 +1,9 @@
 import configparser
+import os
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from modiff.config import Config
 from modiff.secret_config import dotenv_value, huggingface_token, set_dotenv_value
@@ -62,7 +65,26 @@ def test_set_dotenv_value_preserves_unrelated_entries_and_restricts_permissions(
     assert dotenv_path.read_text(encoding="utf-8") == (
         "UNRELATED=value\nHF_TOKEN=new-token\n"
     )
-    assert dotenv_path.stat().st_mode & 0o777 == 0o600
+    if os.name != "nt":
+        assert dotenv_path.stat().st_mode & 0o777 == 0o600
+
+
+def test_set_dotenv_value_without_fchmod(tmp_path: Path, monkeypatch):
+    monkeypatch.delattr(os, "fchmod", raising=False)
+    dotenv_path = tmp_path / ".env"
+    set_dotenv_value(dotenv_path, "HF_TOKEN", "synthetic-token")
+    assert dotenv_value(dotenv_path, "HF_TOKEN") == "synthetic-token"
+    assert list(tmp_path.iterdir()) == [dotenv_path]
+
+
+def test_permission_failure_closes_temporary_file_and_preserves_original(tmp_path: Path):
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text("HF_TOKEN=original\n", encoding="utf-8")
+    with patch.object(os, "fchmod", side_effect=PermissionError("denied"), create=True):
+        with pytest.raises(PermissionError, match="denied"):
+            set_dotenv_value(dotenv_path, "HF_TOKEN", "replacement")
+    assert dotenv_path.read_text(encoding="utf-8") == "HF_TOKEN=original\n"
+    assert list(tmp_path.iterdir()) == [dotenv_path]
 
 
 def test_set_dotenv_value_rejects_multiline_values_and_symlinks(tmp_path: Path):
@@ -77,7 +99,12 @@ def test_set_dotenv_value_rejects_multiline_values_and_symlinks(tmp_path: Path):
 
     target = tmp_path / "target"
     target.write_text("HF_TOKEN=unchanged\n", encoding="utf-8")
-    dotenv_path.symlink_to(target)
+    try:
+        dotenv_path.symlink_to(target)
+    except OSError as error:
+        if os.name == "nt" and error.winerror == 1314:
+            pytest.skip("Windows symlink creation requires Developer Mode or privilege")
+        raise
     try:
         set_dotenv_value(dotenv_path, "HF_TOKEN", "replacement")
     except ValueError:

@@ -80,7 +80,10 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
 
         profile_id = optional_runtimes.TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID
         candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[profile_id]
-        result = qualification.qualification_preflight(profile_id)
+        with mock.patch.object(qualification, "_platform_name", return_value="linux"), mock.patch.object(
+            qualification, "_machine_name", return_value="x86_64"
+        ):
+            result = qualification.qualification_preflight(profile_id)
 
         self.assertEqual(result["profileId"], profile_id)
         self.assertEqual(result["candidateSpecDigest"], candidate.spec_digest)

@@ -2,9 +2,13 @@ import copy
 import hashlib
 import json
 import unittest
+import tempfile
+from pathlib import Path
+from unittest import mock
 
 from modiff.huggingface_cluster_publication_audit import (
     ClusterPublicationAuditError,
+    _RELEASE_REPORT_HASH_PREFIX,
     _RESOURCE_REPORT_HASH_PREFIX,
     _RESOURCE_ROUTE_BINDING_HASH_PREFIX,
     _canonical_hash,
@@ -145,17 +149,58 @@ class HuggingFaceClusterPublicationAuditTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.library = reviewed_huggingface_node_library()
-        resource, cls.release = checked_in_publication_evidence()
-        # Local qualification workspaces may contain stale ignored receipts.
-        # Unit tests start from the checked family evidence with an explicitly
-        # empty exact-route lane and add current route fixtures per scenario.
-        cls.resource = copy.deepcopy(resource)
-        cls.resource["routeQualifications"] = []
+        # Synthetic unit evidence must not depend on ignored machine-local
+        # qualification receipts or claim a real model run.
+        cls.resource = {
+            "schemaVersion": 1,
+            "format": "modiff.resource-recipe-coverage.v1",
+            "generatedAt": "2026-09-02T00:00:00.000Z",
+            "releaseContractHash": "sha256:release-contract-v1:unit-fixture",
+            "status": "incomplete",
+            "coverage": {},
+            "recipes": [{
+                "modelType": model_type,
+                "status": "qualified",
+                "templates": [],
+                "dtype": "bfloat16",
+                "offloadMode": "model_cpu",
+                "quantizationMode": "none",
+                "evidence": {"source": "synthetic-unit-fixture"},
+            } for model_type in (
+                "QwenImageModularPipeline", "MiniMaxMusic3ModularPipeline", "WanTI2VPipeline"
+            )],
+            "routeQualifications": [],
+        }
         cls.resource["reportHash"] = _canonical_hash(
-            cls.resource,
-            field="reportHash",
-            prefix=_RESOURCE_REPORT_HASH_PREFIX,
+            cls.resource, field="reportHash", prefix=_RESOURCE_REPORT_HASH_PREFIX,
         )
+        cls.release = {
+            "schemaVersion": 1,
+            "format": "modiff.release-candidate-report.v1",
+            "releaseContractHash": cls.resource["releaseContractHash"],
+            "status": "blocked",
+            "blockers": [],
+        }
+        cls.release["reportHash"] = _canonical_hash(
+            cls.release, field="reportHash", prefix=_RELEASE_REPORT_HASH_PREFIX,
+        )
+
+    def test_evidence_loader_requires_present_valid_receipts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            resource_path = Path(directory, "resource.json")
+            release_path = Path(directory, "release.json")
+            with (
+                mock.patch("modiff.huggingface_cluster_publication_audit.RESOURCE_RECIPE_COVERAGE_PATH", resource_path),
+                mock.patch("modiff.huggingface_cluster_publication_audit.RELEASE_CANDIDATE_REPORT_PATH", release_path),
+            ):
+                with self.assertRaises(ClusterPublicationAuditError):
+                    checked_in_publication_evidence()
+                resource_path.write_text(json.dumps(self.resource), encoding="utf-8")
+                release_path.write_text(json.dumps(self.release), encoding="utf-8")
+                self.assertEqual(checked_in_publication_evidence(), (self.resource, self.release))
+                release_path.write_text("{}", encoding="utf-8")
+                with self.assertRaises(ClusterPublicationAuditError):
+                    checked_in_publication_evidence()
 
     def audit(self, admission_id, *, resource=None):
         return audit_cluster_publication_route(

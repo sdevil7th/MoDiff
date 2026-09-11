@@ -34,6 +34,7 @@ from modiff.optional_runtimes import (
     TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
     public_optional_runtime_profiles,
+    optional_runtime_target,
 )
 from modiff.server import WebServer
 
@@ -160,6 +161,12 @@ def base_delivery(profile_id=EXECUTION_PROFILE_ID, **changes):
 
 class OptionalRuntimeRequirementTests(unittest.TestCase):
     def setUp(self):
+        self.enterContext(mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            side_effect=lambda *, platform_name=None, machine=None: optional_runtime_target(
+                platform_name=platform_name or "linux", machine=machine or "x86_64"
+            ),
+        ))
         # These catalog fixtures describe a base worker unless a case explicitly
         # selects active/recovery status. Keep that unit-test world independent
         # of the validated overlay used to launch the surrounding pytest suite.
@@ -1124,6 +1131,12 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
 
 class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
+        self.enterContext(mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            side_effect=lambda *, platform_name=None, machine=None: optional_runtime_target(
+                platform_name=platform_name or "linux", machine=machine or "x86_64"
+            ),
+        ))
         self.temporary = tempfile.TemporaryDirectory()
         self.environment = mock.patch.dict(
             os.environ,
@@ -1738,6 +1751,12 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
             self.calls.append((values, ref))
 
     def setUp(self):
+        self.enterContext(mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            side_effect=lambda *, platform_name=None, machine=None: optional_runtime_target(
+                platform_name=platform_name or "linux", machine=machine or "x86_64"
+            ),
+        ))
         self.temporary = tempfile.TemporaryDirectory()
         self.environment = mock.patch.dict(
             os.environ,

@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from PIL import Image
 
 from modiff import media_assets
@@ -72,17 +73,19 @@ def test_export_with_audio_muxes_mp4(tmp_path):
     assert result["duration_seconds"] == 1
 
 
-def test_retained_segments_stitch_and_mux_audio_without_materializing_the_join(tmp_path, monkeypatch):
+@pytest.mark.parametrize(("clip_count", "fps"), [(2, 8), (3, 8), (3, 16)])
+def test_retained_segments_stitch_and_mux_audio_without_materializing_the_join(tmp_path, monkeypatch, clip_count, fps):
     monkeypatch.setattr(media_assets, "asset_root", lambda root=None: tmp_path)
-    first = ExportAsset("retain-red").execute(video=solid("red", count=8, size=(32, 24)), fps=8, pin=True)
-    second = ExportAsset("retain-blue").execute(video=solid("blue", count=8, size=(32, 24)), fps=8, pin=True)
+    first = ExportAsset("retain-red").execute(video=solid("red", count=fps, size=(32, 24)), fps=fps, pin=True)
+    second = ExportAsset("retain-blue").execute(video=solid("blue", count=fps, size=(32, 24)), fps=fps, pin=True)
 
     joined = ConcatenateAssets("join-segments").execute(
-        clips=[first["asset"], second["asset"]],
+        clips=[first["asset"], second["asset"], first["asset"]][:clip_count],
         transition_seconds=0.25,
         pin=True,
     )
-    samples = np.zeros((84000, 1), dtype=np.float32)
+    expected_duration = clip_count - 0.25 * (clip_count - 1)
+    samples = np.zeros((int(expected_duration * 48000), 1), dtype=np.float32)
     muxed = MuxAudioAsset("mux-segments").execute(
         video=joined["asset"],
         audio={"samples": samples, "sample_rate": 48000},
@@ -90,8 +93,8 @@ def test_retained_segments_stitch_and_mux_audio_without_materializing_the_join(t
         pin=True,
     )
 
-    assert joined["frames"] == 14
-    assert joined["duration_seconds"] == 1.75
+    assert joined["frames"] == int(expected_duration * fps)
+    assert joined["duration_seconds"] == expected_duration
     assert muxed["frames"] == joined["frames"]
     assert muxed["duration_seconds"] == joined["duration_seconds"]
     assert media_assets.coerce_video_asset(muxed["asset"])["path"] == muxed["file"]

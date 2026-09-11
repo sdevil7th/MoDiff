@@ -91,8 +91,15 @@ def set_dotenv_value(path: Path, key: str, value: str) -> None:
     try:
         descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
         temporary_path = Path(temporary_name)
-        os.fchmod(descriptor, 0o600)
         with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            # Python 3.12 on Windows has no fchmod. Its access control comes
+            # from the containing directory's ACL, rather than POSIX mode bits.
+            # Own the descriptor before setting permissions so failures close
+            # it before the temporary file is removed.
+            if hasattr(os, "fchmod"):
+                os.fchmod(handle.fileno(), 0o600)
+            else:
+                os.chmod(temporary_path, 0o600)
             handle.write("\n".join(updated_lines) + "\n")
             handle.flush()
             os.fsync(handle.fileno())

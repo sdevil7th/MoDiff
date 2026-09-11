@@ -105,6 +105,17 @@ def _canonical_digest(value: Any) -> str:
     return f"sha256:{hashlib.sha256(body).hexdigest()}"
 
 
+def _set_source_timestamp(path: Path, epoch: int) -> None:
+    # Extraction owns this private workspace. Recheck links/reparse points
+    # immediately before metadata writes, including on Python 3.12 Windows
+    # where utime does not implement follow_symlinks=False.
+    details = path.lstat()
+    if not (_safe_regular_details(details) or _safe_directory_details(details)):
+        raise RuntimeError("A source timestamp target is unsafe.")
+    options = {"follow_symlinks": False} if os.utime in os.supports_follow_symlinks else {}
+    os.utime(path, (epoch, epoch), **options)
+
+
 def _normalized_distribution(value: Any) -> str:
     return str(value or "").strip().lower().replace("_", "-").replace(".", "-")
 
@@ -648,11 +659,7 @@ def extract_locked_source_tree(
             if observed != member.size:
                 raise RuntimeError("A reviewed source member was truncated.")
             output_path.chmod(0o644)
-            os.utime(
-                output_path,
-                (normalized["sourceDateEpoch"], normalized["sourceDateEpoch"]),
-                follow_symlinks=False,
-            )
+            _set_source_timestamp(output_path, normalized["sourceDateEpoch"])
             selected_files.add(relative)
             for tree in source_trees:
                 if relative.startswith(f"{tree}/"):
@@ -670,17 +677,9 @@ def extract_locked_source_tree(
         if not _safe_directory_details(directory.lstat()):
             raise RuntimeError("The extracted source tree contains a link.")
         directory.chmod(0o755)
-        os.utime(
-            directory,
-            (normalized["sourceDateEpoch"], normalized["sourceDateEpoch"]),
-            follow_symlinks=False,
-        )
+        _set_source_timestamp(directory, normalized["sourceDateEpoch"])
     destination_root.chmod(0o755)
-    os.utime(
-        destination_root,
-        (normalized["sourceDateEpoch"], normalized["sourceDateEpoch"]),
-        follow_symlinks=False,
-    )
+    _set_source_timestamp(destination_root, normalized["sourceDateEpoch"])
     return {
         "schemaVersion": 1,
         "archiveSha256": source["sha256"],

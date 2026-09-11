@@ -1,5 +1,6 @@
+from source_contract_helpers import source_sha256
+
 import ast
-import hashlib
 from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
@@ -171,7 +172,7 @@ class QwenStandardSafeWaveTests(unittest.TestCase):
             with self.subTest(pipeline=class_name):
                 source_path = diffusers_root / "pipelines" / "qwenimage" / filename
                 self.assertTrue(source_path.is_file())
-                self.assertEqual(hashlib.sha256(source_path.read_bytes()).hexdigest(), expected_digest)
+                self.assertEqual(source_sha256(source_path), expected_digest)
                 tree = ast.parse(source_path.read_text(encoding="utf-8"))
                 pipeline_node = next(
                     node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == class_name

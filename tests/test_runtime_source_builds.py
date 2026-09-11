@@ -561,7 +561,8 @@ class SourceArchiveSecurityTests(SourceBuildFixture):
         ):
             path = destination / relative
             self.assertTrue(path.is_file())
-            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o644)
+            if os.name != "nt":
+                self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o644)
             self.assertEqual(int(path.stat().st_mtime), 315_532_800)
 
     def test_archive_rejects_traversal_collisions_links_and_incomplete_selection(self):
@@ -847,7 +848,7 @@ class SourceWheelAssemblyTests(SourceBuildFixture):
             mock.patch("runpy.run_path", side_effect=AssertionError("runpy used")),
             mock.patch("subprocess.Popen", side_effect=AssertionError("child used")),
             mock.patch("os.system", side_effect=AssertionError("shell used")),
-            mock.patch("os.posix_spawn", side_effect=AssertionError("spawn used")),
+            mock.patch("os.posix_spawn", side_effect=AssertionError("spawn used"), create=True),
         ):
             result = runtime_source_builds.build_locked_source_wheel(
                 contract,

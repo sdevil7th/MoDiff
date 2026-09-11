@@ -840,7 +840,9 @@ def _interrupted_download_partials(
                     'path': partial,
                     'relative_path': partial.relative_to(repo_path).as_posix(),
                     'logical_bytes': stat.st_size,
-                    'allocated_bytes': stat.st_blocks * 512,
+                    # Windows does not expose allocated blocks. Do not count
+                    # logical size as reclaimable space (files may be sparse).
+                    'allocated_bytes': getattr(stat, 'st_blocks', 0) * 512,
                     'modified_at': stat.st_mtime,
                 }
             )

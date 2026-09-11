@@ -1174,14 +1174,16 @@ def _file_asset_collection(value):
 
 
 def _video_filter(asset, label, *, width, height, fps, duration=None):
-    # `xfade` rejects inputs whose filter-link frame rate is unspecified.  The
-    # source MP4 can be perfectly CFR while a preceding `xfade` link still
-    # reports 1/0, so normalize both the rate and time base explicitly.
+    # Normalize timestamps/rate before geometry filters. FFmpeg 7.1 scale
+    # clears frame duration metadata; a subsequent fps filter can then discard
+    # the last frame. setpts also clears the negotiated rate, so it must precede
+    # fps for the CFR inputs required by xfade.
     fps_text = f"{float(fps):.12g}"
     expression = (
-        f"[{label}:v]scale={width}:{height}:force_original_aspect_ratio=decrease,"
+        f"[{label}:v]setpts=PTS-STARTPTS,fps={fps_text},"
+        f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
         f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,"
-        f"settb=expr=1/{fps_text},setpts=PTS-STARTPTS,fps={fps_text}"
+        f"settb=expr=1/{fps_text}"
     )
     if duration is not None:
         expression += f",tpad=stop_mode=clone:stop_duration={max(0.0, duration)}"
@@ -1304,11 +1306,10 @@ class ConcatenateAssets(NodeBase):
                 filters.append(
                     f"[{previous}][v{index}]xfade=transition=fade:duration={usable}:offset={offset}[{raw_output}]"
                 )
-                # FFmpeg 7 can drop the negotiated frame-rate metadata from an
-                # xfade output. Reassert it before feeding that link into the
-                # next xfade; otherwise a chain of three or more clips fails
-                # with `current rate of 1/0 is invalid`.
-                filters.append(f"[{raw_output}]settb=expr=1/{fps_text},setpts=PTS-STARTPTS,fps={fps_text}[{output}]")
+                # xfade preserves the normalized timestamps and frame rate.
+                # Resetting PTS here would clear that rate; resampling again
+                # can drop the last frame after the geometry filters above.
+                filters.append(f"[{raw_output}]settb=expr=1/{fps_text}[{output}]")
                 previous = output
                 elapsed += float(source["duration_seconds"]) - usable
         asset_id, destination = allocate_video_path(task_id=current_task_id())

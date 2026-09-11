@@ -56,9 +56,9 @@ class BackendSourceIdentityTests(unittest.TestCase):
             (root / "utils").mkdir()
             (root / "modiff" / "__pycache__").mkdir()
             (root / "modiff" / ".private").mkdir()
-            (root / "main.py").write_text("print('one')\n", encoding="utf-8")
-            (root / "pyproject.toml").write_text("[project]\nname='test'\n", encoding="utf-8")
-            (root / "modiff" / "worker.py").write_text("VALUE = 1\n", encoding="utf-8")
+            (root / "main.py").write_text("print('one')\n", encoding="utf-8", newline="\n")
+            (root / "pyproject.toml").write_text("[project]\nname='test'\n", encoding="utf-8", newline="\n")
+            (root / "modiff" / "worker.py").write_text("VALUE = 1\n", encoding="utf-8", newline="\n")
             (root / "modiff" / "__pycache__" / "worker.py").write_text("ignored\n", encoding="utf-8")
             (root / "modiff" / ".private" / "secret.py").write_text("ignored\n", encoding="utf-8")
 

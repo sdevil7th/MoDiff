@@ -278,14 +278,20 @@ class GuidedInstallerTests(unittest.TestCase):
             )
             + "\n"
         )
-        patch_check = subprocess.run(
-            ["git", "apply", "--check", "-"],
-            cwd=root,
-            input=patch_body,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
+        # The qualifier runs on macOS; reproduce its LF checkout even when
+        # this contract test runs under Windows Git autocrlf.
+        with tempfile.TemporaryDirectory() as directory:
+            Path(directory, "pyproject.toml").write_text(
+                (root / "pyproject.toml").read_text(encoding="utf-8"),
+                encoding="utf-8", newline="\n",
+            )
+            patch_check = subprocess.run(
+                ["git", "apply", "--check", "-"],
+                cwd=directory,
+                input=patch_body.encode("utf-8"),
+                capture_output=True,
+                check=False,
+            )
         self.assertEqual(patch_check.returncode, 0, patch_check.stderr)
         self.assertIn("scripts/qualify_optional_runtime.py --preflight-only", workflow)
         self.assertIn("scripts/qualify_optional_runtime.py --consent", workflow)

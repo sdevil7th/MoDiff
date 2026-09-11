@@ -1,6 +1,7 @@
+from source_contract_helpers import source_sha256
+
 import ast
 from contextlib import nullcontext
-import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -324,7 +325,7 @@ class DiffusersDirectImagePromotionTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(pipeline_class=class_name):
                 source_path = diffusers_root / relative_path
                 self.assertTrue(source_path.is_file())
-                self.assertEqual(hashlib.sha256(source_path.read_bytes()).hexdigest(), digest)
+                self.assertEqual(source_sha256(source_path), digest)
                 tree = ast.parse(source_path.read_text(encoding="utf-8"))
                 class_node = next(
                     node
