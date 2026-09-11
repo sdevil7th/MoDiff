@@ -40,7 +40,7 @@ def main() -> int:
         if current != rendered:
             raise SystemExit(f"{args.output} is stale; regenerate it with {Path(__file__).name}.")
         return 0
-    args.output.write_text(rendered, encoding="utf-8")
+    args.output.write_text(rendered, encoding="utf-8", newline="\n")
     return 0
 
 

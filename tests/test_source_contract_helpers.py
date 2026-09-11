@@ -1,6 +1,7 @@
 import hashlib
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -38,3 +39,19 @@ def test_required_catalog_snapshots_are_present_and_not_ignored():
         cwd=root, capture_output=True, text=True, check=False,
     )
     assert result.returncode == 1, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("generator", [
+    "template_candidate_contracts", "template_authoring_specs",
+    "comfy_contract_resolution", "comfy_evidence_resolution",
+])
+def test_generated_ledger_bytes_survive_git_newline_normalization(tmp_path, generator):
+    root = Path(__file__).resolve().parents[1]
+    output = tmp_path / "ledger.json"
+    subprocess.run(
+        [sys.executable, str(root / "scripts" / f"generate_{generator}.py"), "--output", str(output)],
+        cwd=root, check=True, capture_output=True,
+    )
+    # Downstream ledgers bind exact file bytes. Git's eol=lf checkout must not
+    # change those bytes after generation on Windows.
+    assert b"\r\n" not in output.read_bytes()
