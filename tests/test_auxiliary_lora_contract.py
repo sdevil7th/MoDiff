@@ -67,6 +67,35 @@ def _resign_descriptor(descriptor):
 
 
 class AuxiliaryLoraContractTests(unittest.TestCase):
+    def test_generated_names_allow_versioned_weights_and_nested_node_ids_without_collisions(self):
+        import torch
+
+        with tempfile.TemporaryDirectory() as directory:
+            names = []
+            for filename in ("Lightning-V1.0.safetensors", "Lightning-V1_0.safetensors"):
+                weight = Path(directory) / filename
+                _write_tiny_safetensors(weight)
+                node_id = "block-v2-node:4:root:7:adapter"
+                descriptor = _local_descriptor(weight, node_id=node_id)
+                graph = {
+                    "nodes": {node_id: {
+                        "module": "modules.ModularDiffusers", "action": "Lora",
+                        "params": {
+                            "model": {"value": {"source": "local", "value": str(weight)}},
+                            "weight_name": {"value": filename}, "scale": {"value": 1.0},
+                        },
+                    }},
+                    "paths": [[node_id]],
+                }
+                receipt = controlled_lora_receipts_from_graph(graph)[0]
+                self.assertEqual(receipt["descriptorSha256"], descriptor["descriptor_sha256"])
+                self.assertEqual(receipt["adapterName"], descriptor["adapter_name"])
+                name = descriptor["adapter_name"]
+                torch.nn.ModuleDict({name: torch.nn.Identity()})
+                self.assertEqual(_local_descriptor(weight, node_id=node_id)["adapter_name"], name)
+                names.append(name)
+            self.assertNotEqual(names[0], names[1])
+
     def test_executable_graph_receipts_bind_order_and_ignore_disconnected_adapters(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -150,10 +150,6 @@ _REVIEWED_NON_VIDEO_RESEARCH_BLOCKED_PIPELINES = frozenset(
         "BriaFiboPipeline",
         "BriaPipeline",
         "CogView4ControlPipeline",
-        "Flux2KleinKVPipeline",
-        "FluxControlNetImg2ImgPipeline",
-        "FluxControlNetInpaintPipeline",
-        "FluxControlNetPipeline",
         "Ideogram4Pipeline",
         "Kandinsky5I2IPipeline",
         "Kandinsky5T2IPipeline",
@@ -478,6 +474,15 @@ _TEMPLATE_EXPORT_SCRIPT = r"""
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 
+// The optimized eager chunk can also contain browser stores. Inspect only its
+// exported static catalog, with empty ephemeral storage and no network/runtime.
+globalThis.window = {
+  location: { protocol: 'http:', host: 'localhost', hostname: 'localhost', origin: 'http://localhost' },
+  addEventListener() {},
+};
+globalThis.localStorage = { getItem() { return null; }, setItem() {}, removeItem() {} };
+globalThis.fetch = () => { throw new Error('Template inventory must not perform network requests.'); };
+globalThis.WebSocket = class { constructor() { throw new Error('Template inventory must not connect a runtime.'); } };
 const modulePath = resolve(process.argv[1]);
 const loaded = await import(pathToFileURL(modulePath).href);
 const candidates = Object.values(loaded).filter((value) =>

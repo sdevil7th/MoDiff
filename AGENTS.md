@@ -1,5 +1,10 @@
 # MoDiff Backend Agent Instructions
 
+Before node/Block/hierarchy, persistence/execution, qualification or cross-machine
+integration work, read [Cluster engineering lessons and required procedure](docs/cluster-engineering-lessons.md)
+completely. Treat its reproduction, preservation and proof-level checks as required,
+not optional background. Keep the mirrored guide in both repositories aligned.
+
 These rules apply to AI-assisted work in this repository. `CONTRIBUTING.md` is the complete contributor guide; read it together with `SECURITY.md` and the relevant document under `docs/` before editing.
 
 ## Scope And Runtime Boundary

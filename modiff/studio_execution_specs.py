@@ -17387,6 +17387,46 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS.update(
     }
 )
 
+_MODULAR_FLUX2_PROFILE = {
+    **_MODULAR_FLUX2_KLEIN_BASE_PROFILE,
+    "id": "flux2:modular",
+    "model_type": "Flux2ModularPipeline",
+    "pipeline_class": "Flux2ModularPipeline",
+    "default_repo": FLUX2_DEV_REPO,
+    "default_quantized_components": (),
+    "max_low_memory_steps": 20,
+}
+_MODULAR_FLUX2_CAPABILITY = deepcopy(_FLUX2_DEV_DIRECT_CAPABILITY)
+_MODULAR_FLUX2_CAPABILITY.update({
+    "modelType": "Flux2ModularPipeline",
+    "label": "FLUX.2 dev (Modular Diffusers)",
+    "modes": ["text_to_image", "edit_image"],
+    "modeRequirements": {"edit_image": {"requiredImages": ["referenceImages"]}},
+    "offloadSupport": {
+        "default": OFFLOAD_MODE_MODEL_CPU, "lowVram": OFFLOAD_MODE_GROUP_DISK,
+        "emergency": OFFLOAD_MODE_GROUP_DISK,
+        "modes": list(_MODULAR_FLUX2_PROFILE["supported_offload_modes"]),
+    },
+})
+STUDIO_EXECUTION_SPEC_DEFINITIONS.update({
+    "flux2:modular-text-to-image:v1": {
+        "modelType": "Flux2ModularPipeline", "mode": "text_to_image",
+        "profile": _MODULAR_FLUX2_PROFILE, "capability": _MODULAR_FLUX2_CAPABILITY,
+        "roles": _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
+        "edges": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_EDGES,
+        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+    },
+    "flux2:modular-edit-image:v1": {
+        "modelType": "Flux2ModularPipeline", "mode": "edit_image",
+        "profile": _MODULAR_FLUX2_PROFILE,
+        "roles": _MODULAR_SDXL_EDIT_GRAPH_ROLES,
+        "edges": _MODULAR_FLUX_IMAGE_TO_IMAGE_GRAPH_EDGES,
+        "bindings": tuple(binding for binding in _MODULAR_SDXL_EDIT_GRAPH_BINDINGS
+                          if binding not in {("prompt", "negative_prompt", "negativePrompt"),
+                                             ("denoise", "strength", "strength")}),
+    },
+})
+
 _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
     "flux-canny:direct",
     "flux-canny:img2img-direct",
@@ -17407,7 +17447,7 @@ _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS = {
     "flux-schnell:direct",
     "flux2-klein:direct",
     "flux2-dev:direct",
-    "flux2-modular:equivalent-standard",
+    "flux2:modular",
     "flux2-klein:modular",
     "flux2-klein-base:modular",
     "flux2-klein-inpaint:direct",
@@ -17536,22 +17576,6 @@ _LTX2_EQUIVALENT_CAPABILITY.setdefault("notes", []).append(
 )
 
 _EQUIVALENT_STANDARD_STUDIO_SPECS = {
-    "flux2-modular:equivalent-standard-text-to-image:v1": {
-        "source": "flux2-dev:text-to-image:v1",
-        "modelType": "Flux2ModularPipeline",
-        "mode": "text_to_image",
-        "profileId": "flux2-modular:equivalent-standard",
-        "modes": ("text_to_image", "multi_image_reference_edit"),
-        "label": "FLUX.2 Modular — Equivalent Standard Execution",
-    },
-    "flux2-modular:equivalent-standard-image-conditioned:v1": {
-        "source": "flux2-dev:multi-image-reference-edit:v1",
-        "modelType": "Flux2ModularPipeline",
-        "mode": "multi_image_reference_edit",
-        "profileId": "flux2-modular:equivalent-standard",
-        "modes": ("text_to_image", "multi_image_reference_edit"),
-        "label": "FLUX.2 Modular — Equivalent Standard Execution",
-    },
     "ernie-image:equivalent-standard-text-to-image:v1": {
         "source": "ernie-image-turbo:text-to-image:v1",
         "modelType": "ErnieImageModularPipeline",
@@ -17666,6 +17690,122 @@ for _spec_id, _equivalent in _EQUIVALENT_STANDARD_STUDIO_SPECS.items():
     STUDIO_EXECUTION_SPEC_DEFINITIONS[_spec_id] = _equivalent_definition
 
 
+# Ordinary ControlNet pipelines require a distinct auxiliary component. They are
+# not aliases for the self-contained FLUX Canny/Depth pipelines or Modular blocks.
+_FLUX_CONTROLNET_CANNY_REPO = "InstantX/FLUX.1-dev-Controlnet-Canny"
+for _flux_control_class, _flux_control_mode, _flux_control_role, _flux_control_roles, _flux_control_edges, _flux_control_bindings, _flux_control_images in (
+    ("FluxControlNetPipeline", "control_image", "diffusersImageControl", _CONTROL_GRAPH_ROLES,
+     _CONTROL_GRAPH_EDGES, _CONTROL_GRAPH_BINDINGS, ["controlImage"]),
+    ("FluxControlNetImg2ImgPipeline", "control_edit_image", "diffusersImageControlEdit", _CONTROL_EDIT_GRAPH_ROLES,
+     _CONTROL_EDIT_GRAPH_EDGES, _CONTROL_EDIT_GRAPH_BINDINGS, ["referenceImages", "controlImage"]),
+    ("FluxControlNetInpaintPipeline", "control_inpaint", "diffusersImageControlInpaint", _CONTROL_INPAINT_GRAPH_ROLES,
+     _CONTROL_INPAINT_GRAPH_EDGES, _CONTROL_INPAINT_GRAPH_BINDINGS, ["referenceImages", "maskImage", "controlImage"]),
+):
+    _flux_control_dependency = {
+        "id": "flux-dev-controlnet-canny", "label": "FLUX.1-dev Canny ControlNet",
+        "repo": _FLUX_CONTROLNET_CANNY_REPO,
+        "revision": require_catalog_revision(_FLUX_CONTROLNET_CANNY_REPO),
+        "kind": "controlnet", "requiredForModes": [_flux_control_mode],
+        "downloadFiles": ["config.json", "diffusion_pytorch_model.safetensors"],
+        "description": "Separate pinned ControlNet component; supply a prepared Canny control image.",
+    }
+    _STUDIO_MODEL_DEPENDENCY_REQUIREMENTS[(_flux_control_class, _flux_control_mode)] = (
+        _flux_control_dependency,
+    )
+    _flux_control_profile = {
+        "id": f"flux-controlnet:{_flux_control_mode}:direct",
+        "model_type": _flux_control_class, "modes": (_flux_control_mode,),
+        "loader_module": "modules.DiffusersImage", "loader_action": "LoadPipeline",
+        "execution_path": "direct-diffusers-image", "pipeline_class": _flux_control_class,
+        "default_repo": FLUX_DEV_REPO, "fallback_repo": None,
+        "quantizable_components": ("transformer", "text_encoder_2"),
+        "default_quantized_components": (), "supported_offload_modes": _DIRECT_OFFLOAD_MODES,
+        "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+        "max_low_memory_side": 768, "max_low_memory_steps": 28,
+        "live_proof": False, "compatible_repos": (),
+    }
+    _flux_control_capability = {
+        "modelType": _flux_control_class,
+        "label": f"FLUX ControlNet — {_flux_control_mode.replace('_', ' ').title()}",
+        "displayName": "FLUX.1-dev + Canny ControlNet", "family": "FLUX",
+        "supportTier": "supported", "qualificationStatus": "graph-qualified-execution-pending",
+        "qualifiedModes": [], "defaultRepo": FLUX_DEV_REPO,
+        "downloadFiles": FLUX_DEV_DIFFUSERS_FILES, "defaultDtype": "bfloat16",
+        "artifactLabel": "Reused bfloat16 FLUX.1-dev plus a separate pinned ControlNet component",
+        "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+        "recommendedSteps": 28, "recommendedGuidance": 3.5, "guidanceLabel": "Distilled Guidance",
+        "supportsNegativePrompt": _flux_control_mode == "control_image",
+        "supportsImageInput": True, "supportsMask": _flux_control_mode == "control_inpaint",
+        "supportsMultiImage": False, "supportsControlImage": True, "supportsLayers": False,
+        "supportsLora": True, "modes": [_flux_control_mode],
+        "offloadSupport": {"default": OFFLOAD_MODE_MODEL_CPU, "lowVram": OFFLOAD_MODE_SEQUENTIAL_CPU,
+                           "emergency": OFFLOAD_MODE_GROUP_DISK, "modes": list(_DIRECT_OFFLOAD_MODES)},
+        "modeRequirements": {_flux_control_mode: {
+            "modelRequirements": [_flux_control_dependency], "requiredImages": _flux_control_images,
+            "note": "Requires a prepared Canny control image and the separate pinned ControlNet component.",
+        }},
+        "additionalRequirements": [_flux_control_dependency],
+        "revisionCandidates": [require_catalog_revision(FLUX_DEV_REPO, model_type="FluxDevPipeline")],
+        "executionStatus": "expert_only", "autoEligible": False, "templateEligible": True,
+        "galleryEligible": False, "liveProof": False,
+        "notes": ["Ordinary upstream pipeline: no invented Modular hierarchy.",
+                  "Single reviewed ControlNet component; multi-control/Union artifacts require separate review.",
+                  "Auto, Gallery and live qualification remain disabled until model execution is verified."],
+    }
+    _flux_control_extra_bindings = (
+        ("diffusersImagePipeline", "revision", "defaultRevision"),
+        ("diffusersImagePipeline", "conditioning_kind", "kind"),
+        ("diffusersImagePipeline", "conditioning_model_id", "repo"),
+        ("diffusersImagePipeline", "conditioning_revision", "revision"),
+        (_flux_control_role, "conditioning_scale", "conditioningScale"),
+        (_flux_control_role, "control_guidance_start", "controlGuidanceStart"),
+        (_flux_control_role, "control_guidance_end", "controlGuidanceEnd"),
+    )
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[f"flux-controlnet:{_flux_control_mode.replace('_', '-')}:v1"] = {
+        "modelType": _flux_control_class, "mode": _flux_control_mode,
+        "profile": _flux_control_profile, "roles": _flux_control_roles, "edges": _flux_control_edges,
+        "bindings": tuple(binding for binding in _flux_control_bindings
+                          if not (_flux_control_mode == "control_image" and binding[1] == "strength"))
+                    + _flux_control_extra_bindings,
+        "capability": _flux_control_capability,
+    }
+
+
+# KV is an ordinary, independently owned upstream pipeline, not a mutable
+# conversion of a cached Klein Modular transformer. Do not invent nested blocks.
+_FLUX_KLEIN_KV_REPO = "black-forest-labs/FLUX.2-klein-9b-kv"
+for _kv_mode in ("text_to_image", "edit_image", "multi_image_reference_edit"):
+    _kv_source = STUDIO_EXECUTION_SPEC_DEFINITIONS[f"flux2-klein:{_kv_mode.replace('_', '-')}:v1"]
+    _kv_definition = deepcopy(_kv_source)
+    _kv_definition.pop("autoRequirements", None)
+    _kv_definition["modelType"] = "Flux2KleinKVPipeline"
+    _kv_definition["profile"].update({
+        "id": "flux2-klein-kv:direct", "model_type": "Flux2KleinKVPipeline",
+        "pipeline_class": "Flux2KleinKVPipeline", "default_repo": _FLUX_KLEIN_KV_REPO,
+        "quantizable_components": ("transformer", "text_encoder"),
+        "default_quantized_components": (), "live_proof": False,
+    })
+    _kv_definition["bindings"] = tuple(binding for binding in _kv_definition["bindings"]
+                                       if binding[1] not in {"guidance_scale", "strength", "image_guidance_scale"})
+    _kv_capability = deepcopy(STUDIO_EXECUTION_SPEC_DEFINITIONS["flux2-klein:text-to-image:v1"]["capability"])
+    _kv_capability.pop("lowVram", None)
+    _kv_capability.update({
+        "modelType": "Flux2KleinKVPipeline", "label": "FLUX.2 Klein 9B KV",
+        "displayName": "FLUX.2-klein-9b-kv", "defaultRepo": _FLUX_KLEIN_KV_REPO,
+        "recommendedGuidance": 0.0, "supportsGuidance": False,
+        "executionStatus": "expert_only", "autoEligible": False,
+        "templateEligible": True, "galleryEligible": False, "liveProof": False,
+        "qualifiedModes": [], "qualificationStatus": "graph-qualified-execution-pending",
+        "revisionCandidates": [require_catalog_revision(_FLUX_KLEIN_KV_REPO)],
+        "notes": ["Ordinary upstream KV pipeline; no artificial Modular hierarchy.",
+                  "Step-distilled four-step model; upstream has no guidance control.",
+                  "Reference KV state is per generation, not reused between calls.",
+                  "Full-weight execution and resource qualification remain pending."],
+    })
+    _kv_definition["capability"] = _kv_capability
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[f"flux2-klein-kv:{_kv_mode.replace('_', '-')}:v1"] = _kv_definition
+
+
 for _definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values():
     if _definition["profile"]["id"] in _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS:
         _definition["profile"]["expert_quantization_modes"] = _EXPERT_IMAGE_QUANTIZATION_MODES
@@ -17719,10 +17859,23 @@ def _public_spec(spec_id: str, definition: dict[str, Any]) -> dict[str, Any]:
 
 
 def studio_execution_profile_definitions() -> dict[str, dict[str, Any]]:
-    return {
+    profiles = {
         definition["profile"]["id"]: deepcopy(definition["profile"])
         for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
     }
+    # Persisted pre-native FLUX.2 graphs explicitly select this loader profile.
+    # Retire the catalog admission, not their executable loader identity. Keep
+    # the original standard pipeline and resource policy; never auto-convert a
+    # saved graph to the new Modular implementation or publish a duplicate row.
+    legacy_flux2 = _equivalent_standard_profile(
+        "flux2-dev:text-to-image:v1",
+        profile_id="flux2-modular:equivalent-standard",
+        model_type="Flux2ModularPipeline",
+        modes=("text_to_image", "multi_image_reference_edit"),
+    )
+    legacy_flux2["public"] = False
+    profiles[legacy_flux2["id"]] = legacy_flux2
+    return profiles
 
 
 def studio_auto_model_requirements() -> dict[str, dict[str, Any]]:
@@ -17799,6 +17952,30 @@ def _execution_spec_role_params(
     node: dict[str, Any],
 ) -> dict[str, Any]:
     params = deepcopy(node["params"])
+    if node_key.startswith("modules.DiffusersImage."):
+        from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS, image_pipeline_contract, image_loader_field_params
+
+        image_adapter = IMAGE_PIPELINE_ADAPTERS.get(public["pipelineClass"])
+        if image_adapter is not None:
+            selected_contract = image_pipeline_contract(image_adapter, public["mode"])
+            if "image_contract" in params:
+                # A compiled Ernie/ControlNet/etc. action must not carry the
+                # generic class's placeholder FLUX contract as its default.
+                params["image_contract"]["default"] = selected_contract
+                # Compiled ordinary Blocks intentionally do not replay dynamic
+                # field actions on insertion. Seed the same selected field
+                # schema that update_image_contract publishes for ordinary nodes.
+                for field, overlay in selected_contract["fieldParams"].items():
+                    if field in params:
+                        params[field].update(deepcopy(overlay))
+            if node_key == "modules.DiffusersImage.LoadPipeline":
+                params["pipeline"]["signal"]["value"] = selected_contract
+                for field, overlay in image_loader_field_params(image_adapter).items():
+                    if field in params:
+                        params[field].update(deepcopy(overlay))
+            if image_adapter.secondary_guidance_parameter is None:
+                params.pop("use_guidance_scale_2", None)
+                params.pop("guidance_scale_2", None)
     if node_key == "modules.ModularDiffusers.ModelsLoader":
         loader_roles = {
             role

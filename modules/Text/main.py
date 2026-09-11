@@ -168,53 +168,57 @@ class ProcessText(NodeBase):
     }
 
     def execute(self, **kwargs):
-        if kwargs.get("pipeline_class", BUILTIN_DATA_OPERATION_PIPELINE_CLASS) != BUILTIN_DATA_OPERATION_PIPELINE_CLASS:
-            raise ValueError("Unsupported built-in data-operation contract.")
-        source = _bounded_text(kwargs.get("source", ""))
-        operation = kwargs.get("operation", "text_select")
-        if operation == "data_conversion":
-            return {
-                "output": _convert_text(source, kwargs.get("target_type", "json")),
-                "selected_index": -1,
-                "item_count": 1,
-            }
-        if operation == "graph_utility":
-            alternate_source = _bounded_text(kwargs.get("alternate_source", ""))
-            condition = kwargs.get("condition", True)
-            if not isinstance(condition, bool):
-                raise ValueError("Text branch selection requires a boolean condition.")
-            return {
-                "output": source if condition else alternate_source,
-                "selected_index": 0 if condition else 1,
-                "item_count": 2,
-            }
-        if operation != "text_select":
-            raise ValueError("Unsupported built-in data operation.")
+        return evaluate_data_operation(kwargs)
 
-        lines = source.splitlines()
-        if kwargs.get("ignore_empty_lines", False):
-            lines = [line for line in lines if line.strip()]
-        if len(lines) > MAX_DATA_OPERATION_LINES:
-            raise ValueError("Text selection exceeds the bounded line count.")
-        if not lines:
-            raise ValueError("Text selection requires at least one selectable line.")
-        index = kwargs.get("index", 0)
-        if isinstance(index, bool) or not isinstance(index, int) or not -MAX_DATA_OPERATION_LINES <= index <= MAX_DATA_OPERATION_LINES:
-            raise ValueError("Line index must be a bounded integer.")
-        mode = kwargs.get("selection_mode", "error")
-        if mode == "wrap":
-            selected_index = index % len(lines)
-        elif mode == "clamp":
-            selected_index = min(max(index, -len(lines)), len(lines) - 1)
-            if selected_index < 0:
-                selected_index += len(lines)
-        elif mode == "error":
-            if not -len(lines) <= index < len(lines):
-                raise ValueError("Line index is outside the selected text range.")
-            selected_index = index if index >= 0 else len(lines) + index
-        else:
-            raise ValueError("Unsupported line-selection behavior.")
-        output = lines[selected_index]
-        if kwargs.get("strip_line", True):
-            output = output.strip()
-        return {"output": output, "selected_index": selected_index, "item_count": len(lines)}
+
+def evaluate_data_operation(kwargs):
+    if kwargs.get("pipeline_class", BUILTIN_DATA_OPERATION_PIPELINE_CLASS) != BUILTIN_DATA_OPERATION_PIPELINE_CLASS:
+        raise ValueError("Unsupported built-in data-operation contract.")
+    source = _bounded_text(kwargs.get("source", ""))
+    operation = kwargs.get("operation", "text_select")
+    if operation == "data_conversion":
+        return {
+            "output": _convert_text(source, kwargs.get("target_type", "json")),
+            "selected_index": -1,
+            "item_count": 1,
+        }
+    if operation == "graph_utility":
+        alternate_source = _bounded_text(kwargs.get("alternate_source", ""))
+        condition = kwargs.get("condition", True)
+        if not isinstance(condition, bool):
+            raise ValueError("Text branch selection requires a boolean condition.")
+        return {
+            "output": source if condition else alternate_source,
+            "selected_index": 0 if condition else 1,
+            "item_count": 2,
+        }
+    if operation != "text_select":
+        raise ValueError("Unsupported built-in data operation.")
+
+    lines = source.splitlines()
+    if kwargs.get("ignore_empty_lines", False):
+        lines = [line for line in lines if line.strip()]
+    if len(lines) > MAX_DATA_OPERATION_LINES:
+        raise ValueError("Text selection exceeds the bounded line count.")
+    if not lines:
+        raise ValueError("Text selection requires at least one selectable line.")
+    index = kwargs.get("index", 0)
+    if isinstance(index, bool) or not isinstance(index, int) or not -MAX_DATA_OPERATION_LINES <= index <= MAX_DATA_OPERATION_LINES:
+        raise ValueError("Line index must be a bounded integer.")
+    mode = kwargs.get("selection_mode", "error")
+    if mode == "wrap":
+        selected_index = index % len(lines)
+    elif mode == "clamp":
+        selected_index = min(max(index, -len(lines)), len(lines) - 1)
+        if selected_index < 0:
+            selected_index += len(lines)
+    elif mode == "error":
+        if not -len(lines) <= index < len(lines):
+            raise ValueError("Line index is outside the selected text range.")
+        selected_index = index if index >= 0 else len(lines) + index
+    else:
+        raise ValueError("Unsupported line-selection behavior.")
+    output = lines[selected_index]
+    if kwargs.get("strip_line", True):
+        output = output.strip()
+    return {"output": output, "selected_index": selected_index, "item_count": len(lines)}

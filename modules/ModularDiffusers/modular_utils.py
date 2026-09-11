@@ -1215,6 +1215,21 @@ FLUX_2_KLEIN_BASE_PIPELINE_CONFIG = PipelineConfig(
     denoise_image_latent_dimensions=IMAGE_LATENT_DIMENSIONS,
 )
 
+FLUX_2_PIPELINE_CONFIG = PipelineConfig(
+    node_specs={
+        **FLUX_2_KLEIN_DISTILLED_NODE_SPECS,
+        "denoise": {
+            **FLUX_2_KLEIN_BASE_NODE_SPECS["denoise"],
+            # Full FLUX.2 uses distilled guidance embeddings, not Klein Base CFG.
+            "model_inputs": [PipelineParam.unet(), PipelineParam.scheduler()],
+        },
+    },
+    label="Flux 2",
+    default_repo="black-forest-labs/FLUX.2-dev",
+    default_dtype="bfloat16",
+    denoise_image_latent_dimensions=IMAGE_LATENT_DIMENSIONS,
+)
+
 
 # =============================================================================
 # Z-Image
@@ -1839,6 +1854,13 @@ def _initialize_registry(registry: ModiffPipelineRegistry):
         registry.register(FluxKontextModularPipeline, FLUX_KONTEXT_PIPELINE_CONFIG)
     except Exception as e:
         logger.warning(f"Failed to register FluxKontextModularPipeline: {e}")
+
+    try:
+        from diffusers import Flux2ModularPipeline
+
+        registry.register(Flux2ModularPipeline, FLUX_2_PIPELINE_CONFIG)
+    except Exception as e:
+        logger.warning(f"Failed to register Flux2ModularPipeline: {e}")
 
     try:
         from diffusers import Flux2KleinModularPipeline

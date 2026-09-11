@@ -9,6 +9,43 @@ MoDiff integrates the experimental [Diffusers Modular Pipelines](https://hugging
 
 ## Concepts
 
+### Edited reviewed compositions
+
+`ReviewedModularWorkflowStep` accepts a bounded, pinned `composition_recipe`
+for edited upstream trees. The server validates the original reviewed source,
+each operation and the exact resulting placement contract, then rebuilds the
+tree through upstream `init_pipeline` using the existing ComponentsManager.
+Connected state is server-issued and belongs to that exact recipe and loader;
+state from another composition must be regenerated, not silently reused.
+Ordinary utility nodes remain under MoDiff's graph executor. A structural
+rebuild receipt alone does not qualify model execution or publication.
+Required components come from the selected edited workflow, not inactive
+branches. Selected-workflow input specializations must retain their exact
+contracts when rebuilding the full tree; a matching Python class is not enough.
+
+Declared intermediate values are also exposed as typed sockets. Output keys use
+`state_output__<upstream-name>` so an output cannot overwrite an input with the
+same name. Inputs conflicting with existing media outputs use
+`state_input__<upstream-name>`. Unconnected sockets inherit Pipeline State; they
+do not inject registry defaults. Explicit generators take precedence over the
+seed widget. Existing adapted media outputs keep their transport contract.
+Only outputs declared by the exact reviewed block are published; arbitrary
+state fields and components are not exposed. Loop-member descriptors remain
+owned by their loop, not independent once-per-graph tensor producers.
+
+Cross-context insertion accepts **exact reviewed block contracts** independently
+of whether their original class appears in the destination hierarchy. It keeps
+the source identity for reconstruction and rebinds execution to the destination;
+actual component and state requirements still have to be satisfied.
+This is not permission to transfer foreign Pipeline State or proof that every
+same-shaped tensor or third-party implementation is interchangeable.
+
+The frontend can retain a disconnected draft and identify missing declared
+state inputs. Fix offers a specific compatible state reconnection, checked
+against the current graph hash, without restoring the entire cluster. Unknown
+ordinary state processors are opaque to static analysis; upstream execution
+still validates runtime values and component requirements.
+
 - **Dynamic node contracts:** node fields adapt to the selected pipeline configuration.
 - **Composable workflows:** model loading, prompt encoding, denoising, and decoding can remain separate or be combined into a custom block.
 - **Shared components:** compatible nodes can reuse components from the package-level `ComponentsManager` instead of loading duplicate models.
@@ -20,6 +57,20 @@ derivation is recorded in `pipeline_schema.py` and `THIRD_PARTY_NOTICES.md`. Ups
 for model components and Modular Pipeline execution.
 
 ## Setup
+
+### FLUX.2 native hierarchy
+
+The registered full FLUX.2 text and image-conditioned routes use
+`Flux2ModularPipeline` and its actual upstream blocks through Models Loader and
+Reviewed Modular Workflow Step. They no longer label a standard-pipeline call
+as an editable Modular graph. Full FLUX.2 uses guidance embeddings; Klein Base
+uses its separate CFG component. Shared configuration never substitutes one for
+the other. Ordinary `Flux2Pipeline` authored/direct workflows remain available
+through their existing executor and are not rewritten when loading saved graphs.
+
+Native graph admission and weightless tests do not qualify the 105-GiB model
+resource recipe. Gated access, local artifacts and actual frontend generation
+must pass separately; see [runtime qualification](../../docs/runtime-support-matrix.md#acceptance-and-remaining-qualification).
 
 Install and validate the backend from the repository root:
 
@@ -61,6 +112,22 @@ The bundled `text_to_image` graph illustrates five stages:
 
 The exact fields and defaults come from the live registry. For example, Flux, Qwen Image, Z-Image, and Wan pipelines do not share one universal guidance, prompt, or step contract. Refresh or recreate a graph when a model's dynamic definition changes.
 
+The Qwen Image text-to-image Cluster's Model selector also admits the catalog-pinned
+`unsloth/Qwen-Image-2512-unsloth-bnb-4bit` checkpoint at
+`f50b8c24fe21e9265509b15113b7cca82d0a4443`. This community conversion stores fewer
+weight bytes using bitsandbytes quantization; it has the same architecture and
+parameter count. It uses the existing Cluster and official Diffusers/Transformers
+component loaders, including the checkpoint's saved quantization settings.
+Selecting it does not admit other community repositories or other Qwen workflows.
+Memory requirements still depend on image dimensions, attention, and offloading;
+the checkpoint size alone is not a VRAM-fit guarantee.
+Use Expert mode with model CPU offloading for this checkpoint until its Auto
+resource route is separately qualified. The pinned runtime's group-offload hooks
+can leave bitsandbytes auxiliary quantization state on a different device from
+the weights. Group offloading is therefore not a validated execution recipe for
+this checkpoint. For supported group-offload components, loading applies offload
+component by component even when quantization comes from the checkpoint.
+
 Reviewed built-in pipeline metadata also declares any additional component that
 **Load Models** must load and publish. Wan I2V currently declares its
 `image_encoder` this way; the loader no longer selects that requirement from a
@@ -95,6 +162,35 @@ custom sidecar metadata cannot authorize a built-in execution exception.
 Type a prompt, confirm model readiness, and use **Run**. A queued task response only confirms submission; watch Queue and WebSocket progress for completion or structured failure details.
 
 [Watch a workflow execution demo (MP4)](https://github.com/user-attachments/assets/e563eeb0-4f9e-4a27-8304-49fd15b87550)
+
+The reviewed Helios Base, Mid, and Distilled indexes serialize a concrete
+`T5Tokenizer`, while their installed Modular blocks request `AutoTokenizer`.
+Models Loader accepts that exact repository-scoped mapping and the Distilled
+checkpoint's `HeliosDMDScheduler` declaration. Other tokenizer
+substitutions and unreviewed repositories remain rejected; this compatibility
+check is not live generation qualification. Weightless components created from
+installed block defaults may retain their two-field class declaration (such as
+Helios's guider), with exact class validation. Components loaded from weights
+still require the complete three-field Modular loading contract.
+
+The exact Mid index declares `ClassifierFreeZeroStarGuidance`. Its pinned
+AutoBlocks aggregate otherwise retains ordinary CFG, and the upstream constructor
+ignores the two-field guider entry. Models Loader admits this exact Mid class
+and restores the installed pyramid denoiser's native guider specification through
+`update_components`, including `zero_init_steps=2`. Base and Distilled keep their
+own guiders. This restores model behavior without changing graph controls or
+weakening class validation for other repositories.
+
+Reviewed Helios Mid and Distilled block graphs also accept the existing
+`pyramid_stage_1_steps`, `pyramid_stage_2_steps`, and `pyramid_stage_3_steps`
+controls. Each supplied scalar replaces its corresponding entry in
+`pyramid_num_inference_steps_list` at execution, with the same integer 1–50
+bounds as the legacy denoise node. This prevents an inherited `[10, 10, 10]`
+list from silently overriding the visible step controls. Unspecified stages
+retain their native list values (or the pinned block default); graphs using
+only the native list retain their values and stage count. Persisted graph
+parameters are not rewritten. These aliases apply only to reviewed Helios
+pyramid pipelines and blocks that consume the native stage list.
 
 ### Opaque state routes
 
@@ -249,13 +345,120 @@ Modular nodes expose a `Doc` output where the upstream block provides documentat
 
 Use the image comparison node to inspect outputs from different prompts, guiders, schedulers, resource modes, or model revisions. Record the model revision, seed, graph, and settings when the comparison is intended as reproducible evidence.
 
+### Control image format
+
+The ordinary **Canny Edge Detection** node exposes **Output Mode**. Its default
+`L` retains the existing single-channel behavior; `RGB` repeats the same edge
+intensity into three channels without changing resolution or thresholds. Choose
+`RGB` for a ControlNet encoder whose VAE requires a three-channel condition,
+including the reviewed Qwen ControlNet route. The public image socket alone
+does not guarantee compatible channels or preprocessing. Existing saved Canny
+nodes are not silently converted.
+
+### Native numeric edits
+
+Form widgets may save a formatted string such as `"0.90"`. The generic reviewed
+adapter normalizes numeric and boolean inputs using the selected upstream
+block's exact `type_hint` before assigning Pipeline State, including numeric
+scalar/list alternatives such as ControlNet conditioning scale. It rejects
+invalid or non-finite values; it does not guess types for text/opaque unions.
+The stored Block values and immutable defaults are not rewritten. Execution
+provenance captures normalized consumed values where the capture schema allows
+the field; the submitted workflow retains the complete original instance.
+
+### Edited compositions and iteration connections
+
+Exact reviewed blocks may be reused outside their original pipeline hierarchy.
+Their source definition, hash, revision and placement remain pinned; execution
+uses the destination's owned component bundle. Different origin labels are not
+an incompatibility test. Drafts may retain missing/incompatible components;
+execution validates actual component classes (including valid subclasses), not
+just catalog type strings. It names the failing block/component rather than
+silently selecting a different model.
+
+Loop-member `iteration_input__*` sockets accept explicit per-iteration values.
+`iteration_output__*` refers to this iteration, and `iteration_previous__*` to
+the preceding one. The graph exporter lowers these to `iteration_bindings` in
+the existing Loop Members descriptors; they are not once-per-run tensor edges.
+Current producers must precede consumers in the same concrete loop. Previous
+values need initial state for iteration zero. Conflicting constant/wire drivers
+are errors. Constants are normalized using the exact upstream input type and
+copied per iteration. Existing unbound loop parameters retain their behavior.
+
+`modiff.modular_loop_bindings` temporarily wraps the actual upstream members
+inside the existing Diffusers loop, then restores them even after failure.
+Only explicitly referenced outputs are snapshotted. No alternative scheduler,
+loop executor, implicit tensor cast, or model default is introduced. Runtime
+errors include the block path and available input shapes without printing
+prompt/tensor contents; OOM retains its existing resource-recovery category.
+
+### Caller controls and derived Pipeline State
+
+New registered graphs bind a shared caller control only up to its first
+declared state writer in the exact selected upstream sequence. Later steps
+consume the derived value through their ordinary Pipeline State connection.
+For example, a strength-aware scheduler retains the requested step count while
+the denoise loop uses the shortened effective count. These are distinct values;
+progress must not reapply the original requested count over the effective one.
+
+Existing workflow instances keep their saved bindings. When an exact connected
+state writer and duplicate shared control are verified, **Fix** offers an
+explicit repair. It preserves requested values, prompts, layout, unrelated
+wires and the immutable definition snapshot. Independently authored overrides,
+sealed controls, conflicting wires and unverifiable contracts are not silently
+repaired. New compiled catalog hashes change where ownership changes; historical
+execution/publication receipts remain attached to their original identities.
+
 [Watch the image comparison demo (MP4)](https://github.com/user-attachments/assets/058fcce6-28db-4faf-9063-b48a0a1ea592)
 
 ## Troubleshooting
 
+- Reviewed Helios Base, Mid, and Distilled image/video encoder blocks invoke the
+  existing ComponentsManager model CPU offload hook before upstream code creates
+  VAE normalization tensors. This keeps those tensors on the encoding device
+  when the VAE starts on CPU. The manager's eviction strategy, installed hooks,
+  and normal residency lifecycle remain in effect; no generation settings or
+  upstream encoder implementation are replaced. This compatibility adapter
+  covers model CPU offload, not group offload qualification.
 - Missing embeddings or dynamic fields usually mean the graph definition is stale or an upstream node did not produce its connected output. Update/recreate the graph after registry refresh.
 - Missing scheduler/config errors require the compatible scheduler connection expected by the selected pipeline.
 - CUDA OOM and unsupported quantized-kernel errors need a safer model/resource plan, not repeated blind retries.
 - An unavailable optional package should be installed through the matching extra, followed by a backend restart.
 
 See [docs/troubleshooting.md](../../docs/troubleshooting.md) for backend, accelerator, model-download, and bundle diagnostics.
+
+### Video frame annotations and public file paths
+
+Reviewed `video` and `driving_video` inputs retain video socket semantics even
+when the upstream annotation describes a sequence of PIL images. The video
+loader supplies that decoded sequence. The paired Wan Animate2 client routes
+adapt their public inputs to video file paths; their compiled catalog retains
+the original creator values, structural containers and graph connections.
+Changing the input metadata requires the matching client catalog pins.
+
+For reviewed Wan Animate2 base/distilled workflows, the image preprocessing
+step interprets the creator height/width as target area and resolves a frame
+from the reference aspect ratio. Once that step supplies image_pixels, the
+video preprocessing and outer denoise blocks consume height/width from the
+issued native pipeline state. Reapplying the repeated creator area controls at
+those nodes would produce incompatible image/video conditioning. Initial area
+controls, prompts and other families remain unchanged; upstream segment geometry
+validation still runs. This adapter follows native state flow and does not
+rewrite the saved graph or resize already-produced conditioning tensors.
+
+The expanded Helios Mid executor also restores the pinned pyramid inner
+denoiser's ZeroStar guider specification when creating a selected-workflow
+pipeline. Its component transfer includes pretrained weights/schedulers only;
+a corrected loader guider alone does not reach this second pipeline. Restoring
+the native specification before text encoding preserves unconditional encoding
+and the native zero-init configuration when graph guidance controls recreate
+the component. Base and Distilled keep their existing guidance behavior.
+
+Expanded workflow seed controls initialize the shared native `PipelineState`
+generator only at a declared Generator-consuming block. New compiled routes
+bind one initializer to the first actual consumer. A legacy seed on a different
+preparation block remains inert until the user explicitly applies Graph Fix;
+loading a saved workflow does not silently alter its random sequence. Such a
+misplaced seed is not reported as a consumed execution input and must not reset
+an existing Generator. This deliberately excludes the cloud checkpoint's broader
+implicit seed-forwarding behavior from the unified runtime.

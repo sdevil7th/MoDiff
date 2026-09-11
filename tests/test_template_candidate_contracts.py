@@ -70,9 +70,9 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 199,
-                "publicTemplateCount": 77,
-                "canonicalWorkflowsWithPublicTemplates": 51,
+                "canonicalWorkflowCount": 200,
+                "publicTemplateCount": 78,
+                "canonicalWorkflowsWithPublicTemplates": 52,
                 "candidateContractCount": 148,
                 "mediaKindCounts": {"audio": 6, "image": 100, "json": 9, "video": 33},
                 "contractsRequiringInputExamples": 93,
@@ -121,8 +121,8 @@ class TemplateCandidateContractTests(unittest.TestCase):
         }
         contracts_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["contracts"]}
 
-        self.assertEqual(len(public_templates), 77)
-        self.assertEqual(len(public_workflow_ids), 51)
+        self.assertEqual(len(public_templates), 78)
+        self.assertEqual(len(public_workflow_ids), 52)
         self.assertEqual(public_workflow_ids, coverage_public_workflow_ids)
         self.assertEqual(len(contracts_by_id), len(self.ledger["contracts"]))
         self.assertEqual(set(contracts_by_id), set(manifest_by_id) - public_workflow_ids)

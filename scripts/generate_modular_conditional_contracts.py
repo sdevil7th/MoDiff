@@ -7,18 +7,29 @@ import argparse
 import json
 from pathlib import Path
 
+import diffusers
+
 from modiff.modular_conditional_contracts import (
     MODULAR_CONDITIONAL_CONTRACT_SNAPSHOT,
     build_modular_conditional_contract,
     merge_modular_conditional_contracts,
 )
-from generate_modular_block_contracts import _reviewed_pipelines
+from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
+from modiff.modular_workflow_discovery import load_reviewed_modular_workflow_snapshot
 
 
 def generate() -> dict:
-    return merge_modular_conditional_contracts(
-        [build_modular_conditional_contract(pipeline) for pipeline in _reviewed_pipelines()]
-    )
+    # This companion must cover the reviewed snapshot, independently of whether
+    # a class has moved between executable, equivalent, or contract-only routes.
+    parts = []
+    for contract in load_reviewed_modular_workflow_snapshot()["contracts"]:
+        name = contract["pipelineClass"]
+        truth = PINNED_MODULAR_WORKFLOW_TRUTH.get(name)
+        config = dict(truth.constructor_config) if truth is not None else {}
+        constructor = getattr(diffusers, name)
+        pipeline = constructor(config_dict=config) if config else constructor()
+        parts.append(build_modular_conditional_contract(pipeline))
+    return merge_modular_conditional_contracts(parts)
 
 
 def main() -> int:

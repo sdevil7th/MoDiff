@@ -1,4 +1,6 @@
 import unittest
+import numpy as np
+import torch
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -76,6 +78,135 @@ def fake_block(path, *, inputs=(), callback=None, sub_blocks=None, progress_step
 
 
 class ReviewedModularWorkflowStepTests(unittest.TestCase):
+    def test_static_registry_exposes_typed_inputs_and_outputs(self):
+        from modules import MODULE_MAP
+        params = MODULE_MAP['modules.ModularDiffusers']['ReviewedModularWorkflowStep']['params']
+        self.assertEqual(params['state_output__prompt_embeds']['display'], 'output')
+        self.assertEqual(params['state_input__images']['display'], 'input')
+        self.assertEqual(params['generator']['type'], 'generator')
+
+    def test_declared_intermediate_outputs_are_available_without_exposing_private_state(self):
+        state = FakeState()
+        tensor = torch.ones((1, 4, 8))
+        state.set("prompt_embeds", tensor)
+        state.set("width", 1328)
+        state.set("private_component", object())
+        output = reviewed_blocks._published_outputs(state, {"prompt_embeds", "width"})
+        self.assertIs(output["state_output__prompt_embeds"], tensor)
+        self.assertEqual(output["state_output__width"], 1328)
+        self.assertNotIn("state_output__private_component", output)
+        params = reviewed_blocks.ReviewedModularWorkflowStep.params
+        self.assertEqual(params["state_output__prompt_embeds"]["display"], "output")
+        self.assertEqual(params["state_output__width"]["type"], params["width"]["type"])
+        self.assertNotEqual(params["width"].get("display"), "output")
+
+    def composed_text_input(self):
+        definition = reviewed_blocks._reviewed_definition(PIPELINE_CLASS, WORKFLOW_ID)
+        snapshot = reviewed_blocks.reviewed_modular_conditional_snapshot()
+        pipeline = next(p for p in snapshot["pipelines"] if p["pipelineClass"] == PIPELINE_CLASS)
+        block = next(b for b in snapshot["blockDefinitions"] if b["className"] == "QwenImageTextInputsStep")
+        source = next(p for p in pipeline["placements"] if p["blockDefinitionId"] == block["id"])
+        recipe = {
+            "schemaVersion": 1, "diffusersRevision": snapshot["diffusersRevision"],
+            "pipelineClass": PIPELINE_CLASS, "workflowId": WORKFLOW_ID,
+            "definitionId": definition["id"], "blockContractHash": definition["blockContractHash"],
+            "operations": [{"kind": "duplicate", "path": source["path"],
+                            "parentPath": source["path"][:-1], "name": "demo_copy", "index": 0}],
+        }
+        return recipe, block, (*source["path"][:-1], "demo_copy")
+
+    def test_edited_composition_executes_the_inserted_block_not_the_original_placement(self):
+        recipe, contract, path = self.composed_text_input()
+        state = FakeState()
+        seen = []
+        def invoke(_self, pipeline, current):
+            seen.append(current.get("num_images_per_prompt"))
+            return pipeline, current
+        block = type(contract["className"], (), {"__call__": invoke})()
+        block.inputs = [SimpleNamespace(name="num_images_per_prompt", kwargs_type="optional", type_hint=int)]
+        tree = SimpleNamespace(sub_blocks={})
+        parent = tree
+        for segment in path[:-1]:
+            parent.sub_blocks[segment] = SimpleNamespace(sub_blocks={})
+            parent = parent.sub_blocks[segment]
+        parent.sub_blocks[path[-1]] = block
+        pipeline = SimpleNamespace(blocks=tree, component_names=())
+        with patch.object(reviewed_blocks, "_new_runtime", return_value=(object(), pipeline, state)) as new_runtime:
+            output = reviewed_blocks.ReviewedModularWorkflowStep().execute(
+                pipeline_class=PIPELINE_CLASS, workflow_id=WORKFLOW_ID, execution_scope="unpruned_pipeline",
+                placement_path=list(path), block_definition_id=contract["id"], block_class=contract["className"],
+                block_contract_hash=contract["contentHash"], composition_recipe=recipe,
+                execution_kind="step", pipeline_components={}, num_images_per_prompt="2",
+            )
+        self.assertEqual(seen, [2])
+        self.assertIs(output["state_out"]._pipeline, pipeline)
+        self.assertEqual(new_runtime.call_args.kwargs["composition_recipe"], recipe)
+
+    def test_composition_runtime_initializes_edited_tree_with_existing_component_manager(self):
+        recipe, _contract, _path = self.composed_text_input()
+        pipeline = SimpleNamespace(pretrained_component_names=("controlnet",), update_components=lambda **_kwargs: None)
+        from unittest.mock import Mock
+        blocks = SimpleNamespace(init_pipeline=Mock(return_value=pipeline), get_workflow=Mock(return_value=SimpleNamespace(expected_components=[])))
+        validated = reviewed_blocks.validate_modular_composition_recipe(recipe)
+        with (
+            patch.object(reviewed_blocks, "_component_bundle_token", return_value="issued"),
+            patch.object(reviewed_blocks, "build_reviewed_modular_composition_blocks", return_value=(validated, blocks)),
+            patch.object(reviewed_blocks, "collect_model_ids", return_value=[]),
+            patch.object(reviewed_blocks, "pipeline_class_from_model_type") as original,
+        ):
+            token, created, _state = reviewed_blocks._new_runtime(
+                bundle={}, pipeline_class=PIPELINE_CLASS, workflow_id=WORKFLOW_ID,
+                execution_scope="unpruned_pipeline", composition_recipe=recipe,
+            )
+        self.assertEqual(token, "issued")
+        self.assertIs(created, pipeline)
+        blocks.init_pipeline.assert_called_once_with(components_manager=reviewed_blocks.components)
+        blocks.get_workflow.assert_not_called()
+        original.assert_not_called()
+        self.assertEqual(pipeline._modiff_composition_hash, validated["recipeHash"])
+
+    def test_composed_state_cannot_cross_to_another_recipe_or_unmodified_execution(self):
+        pipeline = SimpleNamespace(_modiff_composition_hash="sha256:edited")
+        value = reviewed_blocks._issue_state(
+            token=object(), pipeline_class=PIPELINE_CLASS, workflow_id=WORKFLOW_ID,
+            execution_scope="unpruned_pipeline", pipeline=pipeline, state=FakeState(), completed_path=("demo",),
+        )
+        for incompatible in (None, "sha256:other"):
+            with self.assertRaisesRegex(ValueError, "different edited Modular composition"):
+                reviewed_blocks._continued_runtime(
+                    value, bundle=None, pipeline_class=PIPELINE_CLASS, workflow_id=WORKFLOW_ID,
+                    execution_scope="unpruned_pipeline", composition_hash=incompatible,
+                )
+        self.assertIs(reviewed_blocks._continued_runtime(
+            value, bundle=None, pipeline_class=PIPELINE_CLASS, workflow_id=WORKFLOW_ID,
+            execution_scope="unpruned_pipeline", composition_hash="sha256:edited",
+        )[1], pipeline)
+
+    def test_sound_socket_preserves_actual_sample_rate_without_mutating_pipeline_state(self):
+        state = FakeState()
+        waveform = np.zeros((1, 2, 2205), dtype=np.float32)
+        state.set("sound", waveform)
+        state.set("sampling_rate", 22050)
+        outputs = reviewed_blocks._published_outputs(state, {"sound", "sampling_rate"})
+        self.assertIs(state.get("sound"), waveform)
+        self.assertEqual(outputs["sound"]["sample_rate"], 22050)
+        self.assertEqual(outputs["sound"]["samples"].shape, (2, 2205))
+        self.assertEqual(outputs["sampling_rate"], 22050)
+        self.assertIsNone(outputs["audio"])
+        self.assertIsNone(reviewed_blocks._published_outputs(state, {"images"})["sound"])
+
+    def test_sound_socket_rejects_missing_rate_and_does_not_discard_batch_members(self):
+        state = FakeState()
+        state.set("sound", np.zeros((2, 100), dtype=np.float32))
+        for rate in (None, True, 0, -1, "48000"):
+            state.set("sampling_rate", rate)
+            with self.assertRaisesRegex(ValueError, "actual positive integer sampling_rate"):
+                reviewed_blocks._published_outputs(state, {"sound", "sampling_rate"})
+        state.set("sampling_rate", 48000)
+        state.set("sound", np.zeros((2, 2, 100), dtype=np.float32))
+        with self.assertRaisesRegex(ValueError, "batch audio cannot be silently discarded"):
+            reviewed_blocks._published_outputs(state, {"sound", "sampling_rate"})
+
     def test_loader_accepts_every_exact_pinned_workflow_not_only_qwen(self):
         snapshot = load_reviewed_modular_workflow_snapshot()
         count = 0
@@ -202,18 +333,51 @@ class ReviewedModularWorkflowStepTests(unittest.TestCase):
         state = FakeState()
         block = fake_block(path, inputs=(("height", "required"), ("width", "optional")))
         pipeline = SimpleNamespace(blocks=SimpleNamespace(sub_blocks={path[0]: block}), component_names=())
+        node = reviewed_blocks.ReviewedModularWorkflowStep()
         with patch.object(reviewed_blocks, "_new_runtime", return_value=(object(), pipeline, state)):
-            output = reviewed_blocks.ReviewedModularWorkflowStep().execute(
+            output = node.execute(
                 **exact_identity(path),
                 execution_kind="step",
                 pipeline_components={},
                 height="640",
                 width="768",
+                guidance_scale=None,
+                prompt="not consumed by this block",
             )
         self.assertEqual(state.values, {"height": 640, "width": 768})
         self.assertEqual(state.kwargs_types, {"height": "required", "width": "optional"})
         self.assertIsNotNone(output["state_out"])
         self.assertIsNone(output["images"])
+        self.assertEqual(node._execution_input_record["fields"], {
+            "height": {"value": 640, "source": "literal"},
+            "width": {"value": 768, "source": "literal"},
+        })
+
+    def test_explicit_input_alias_is_normalized_and_conflicting_drivers_are_rejected(self):
+        path = ("denoise.prepare_latents",)
+        state = FakeState()
+        block = fake_block(path, inputs=(("height", "required"),))
+        pipeline = SimpleNamespace(blocks=SimpleNamespace(sub_blocks={path[0]: block}), component_names=())
+        node = reviewed_blocks.ReviewedModularWorkflowStep()
+        with patch.object(reviewed_blocks, "_new_runtime", return_value=(object(), pipeline, state)):
+            node.execute(**exact_identity(path), execution_kind="step", pipeline_components={}, state_input__height="1328")
+        self.assertEqual(state.get("height"), 1328)
+        with patch.object(reviewed_blocks, "_new_runtime", return_value=(object(), pipeline, state)):
+            with self.assertRaisesRegex(ValueError, "height"):
+                node.execute(**exact_identity(path), execution_kind="step", pipeline_components={}, height=640, state_input__height=1328)
+            with self.assertRaisesRegex(ValueError, "prompt_embeds"):
+                node.execute(**exact_identity(path), execution_kind="step", pipeline_components={}, state_input__prompt_embeds=torch.ones(1))
+
+    def test_explicit_generator_is_not_overwritten_by_the_seed_control(self):
+        path = ("denoise.prepare_latents",)
+        state = FakeState()
+        block = fake_block(path, inputs=(("generator", "optional"),))
+        pipeline = SimpleNamespace(blocks=SimpleNamespace(sub_blocks={path[0]: block}), component_names=())
+        generator = torch.Generator().manual_seed(123)
+        with patch.object(reviewed_blocks, "_new_runtime", return_value=(object(), pipeline, state)):
+            reviewed_blocks.ReviewedModularWorkflowStep().execute(**exact_identity(path), execution_kind="step", pipeline_components={}, seed=42, generator=generator)
+        self.assertIs(state.get("generator"), generator)
+        self.assertEqual(generator.initial_seed(), 123)
 
     def test_dotted_postprocess_placement_publishes_images(self):
         path = ("decode.postprocess",)
@@ -228,6 +392,35 @@ class ReviewedModularWorkflowStepTests(unittest.TestCase):
                 pipeline_components={},
             )
         self.assertIs(output["images"], expected_images)
+
+    def test_exact_step_normalizes_native_decimal_edits_before_state_assignment(self):
+        path = ("denoise.prepare_latents",)
+        state = FakeState()
+        block = fake_block(path, inputs=(("strength", "optional"),))
+        block.inputs[0].type_hint = float
+        pipeline = SimpleNamespace(blocks=SimpleNamespace(sub_blocks={path[0]: block}), component_names=())
+        node = reviewed_blocks.ReviewedModularWorkflowStep()
+        with patch.object(reviewed_blocks, "_new_runtime", return_value=(object(), pipeline, state)):
+            node.execute(**exact_identity(path), execution_kind="step", pipeline_components={}, strength="0.90")
+        self.assertEqual(state.values, {"strength": 0.9})
+        self.assertIsInstance(state.values["strength"], float)
+        self.assertEqual(node._execution_input_record["fields"]["strength"]["value"], 0.9)
+
+    def test_seed_capture_matches_the_generator_used_for_latents_and_does_not_replay_rng(self):
+        path = ("denoise.prepare_latents",)
+        state = FakeState()
+        samples = []
+        block = fake_block(path, inputs=(("generator", "optional"),), callback=lambda _pipeline, current:
+            samples.append(torch.rand(3, generator=current.get("generator"))))
+        pipeline = SimpleNamespace(blocks=SimpleNamespace(sub_blocks={path[0]: block}), component_names=())
+        node = reviewed_blocks.ReviewedModularWorkflowStep()
+        with patch.object(reviewed_blocks, "_new_runtime", return_value=(object(), pipeline, state)):
+            node.execute(**exact_identity(path), execution_kind="step", pipeline_components={}, seed="20260905")
+        expected_generator = torch.Generator().manual_seed(20260905)
+        self.assertTrue(torch.equal(samples[0], torch.rand(3, generator=expected_generator)))
+        self.assertTrue(torch.equal(torch.rand(3, generator=state.get("generator")),
+                                    torch.rand(3, generator=expected_generator)))
+        self.assertEqual(node._execution_input_record["fields"]["seed"]["value"], 20260905)
 
     def test_loop_owner_requires_exact_connected_member_order(self):
         owner_path = ("denoise.denoise",)

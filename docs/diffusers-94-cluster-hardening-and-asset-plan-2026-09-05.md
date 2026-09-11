@@ -4,6 +4,14 @@ Date: 2026-09-05
 
 Status: active implementation plan
 
+## Current guidance
+
+This dated plan is historical context, not current route or release approval.
+Use the [runtime support matrix](runtime-support-matrix.md#model-families-and-support-boundaries)
+for family boundaries, the [engineering procedure](cluster-engineering-lessons.md)
+for verification, and [runtime troubleshooting](troubleshooting.md#resource-monitoring-during-execution)
+for resource monitoring and request responsiveness.
+
 ## Immediate delivery plan — Qwen closure, then cached FLUX
 
 Updated 2026-09-05 after the overnight regression checkpoint. This sequence

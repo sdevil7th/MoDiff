@@ -2319,7 +2319,8 @@ class LoadPipeline(WanVACELoadPipeline):
             **common_kwargs,
             **recipe_load_kwargs,
         )
-        enable_vae_tiling = getattr(pipeline, "enable_vae_tiling", None)
+        # The pinned Mochi API exposes tiling on its VAE, not the pipeline.
+        enable_vae_tiling = getattr(getattr(pipeline, "vae", None), "enable_tiling", None)
         if not callable(enable_vae_tiling):
             raise RuntimeError("Mochi did not expose the documented VAE tiling hook.")
         apply_execution_recipe_to_pipeline(pipeline, recipe)

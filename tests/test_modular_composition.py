@@ -54,6 +54,62 @@ def fake_blocks(definition, block_definitions):
 
 
 class ModularCompositionTests(unittest.TestCase):
+    def test_component_compatible_block_absent_from_qwen_hierarchy_can_be_inserted(self):
+        source = next(d for d in self.library["definitions"] if d.get("pipelineClass") == "ErnieImageModularPipeline")
+        placement = next(p for p in source["blockPlacements"]
+                         if self.block_definitions[p["blockDefinitionId"]]["className"] == "ErnieImageSetTimestepsStep")
+        self.assertNotIn(placement["blockDefinitionId"],
+                         {p["blockDefinitionId"] for p in self.unpruned_definition["placements"]})
+        operation = {"kind": "insert", "sourceDefinitionId": source["id"],
+                     "sourceBlockDefinitionId": placement["blockDefinitionId"], "sourcePath": placement["path"],
+                     "sourceExecutionScope": "selected_workflow", "parentPath": ["denoise", "text2image"],
+                     "name": "compatible_timesteps", "index": 0}
+        validated = validate_modular_composition_recipe(self.recipe([operation]), library=self.library)
+        self.assertTrue(any(p["path"][-1] == "compatible_timesteps" for p in validated["composedPlacements"]))
+
+    def test_shared_qwen_contract_can_be_reused_from_edit_into_text_to_image(self):
+        source = next(d for d in self.library["definitions"]
+                      if d.get("pipelineClass") == "QwenImageEditModularPipeline"
+                      and d.get("workflowId") == "image_conditioned")
+        placement = next(p for p in source["blockPlacements"]
+                         if self.block_definitions[p["blockDefinitionId"]]["className"] == "QwenImageTextInputsStep")
+        recipe = self.recipe([{
+            "kind": "insert", "sourceDefinitionId": source["id"],
+            "sourceBlockDefinitionId": placement["blockDefinitionId"], "sourcePath": placement["path"],
+            "sourceExecutionScope": "selected_workflow", "parentPath": ["denoise", "text2image"],
+            "name": "shared_inputs", "index": 1,
+        }])
+        normalized = validate_modular_composition_recipe(recipe, library=self.library)
+        copied = next(p for p in normalized["composedPlacements"] if p["path"][-1] == "shared_inputs")
+        self.assertEqual(copied["blockDefinitionId"], placement["blockDefinitionId"])
+        from modiff.modular_composition import build_reviewed_modular_composition_blocks, _block_at_path
+        trees = {
+            (self.definition["pipelineClass"], "__unpruned__"): fake_blocks(self.unpruned_definition, self.block_definitions),
+            (source["pipelineClass"], source["workflowId"]): fake_blocks(source, self.block_definitions),
+        }
+        _, tree = build_reviewed_modular_composition_blocks(recipe, library=self.library, blocks_resolver=lambda *key: trees[key])
+        self.assertEqual(type(_block_at_path(tree, ("denoise", "text2image", "shared_inputs"))).__name__, "QwenImageTextInputsStep")
+
+    def test_execution_builder_returns_edited_tree_and_exact_placement_contracts(self):
+        from modiff.modular_composition import build_reviewed_modular_composition_blocks
+
+        first = self.unpruned_definition["placements"][0]["path"]
+        blocks = fake_blocks(self.unpruned_definition, self.block_definitions)
+        recipe, composed = build_reviewed_modular_composition_blocks(
+            self.recipe([{
+                "kind": "duplicate", "path": first, "parentPath": [],
+                "name": "demo_copy", "index": 0,
+            }]),
+            library=self.library,
+            blocks_resolver=lambda _pipeline, _workflow: blocks,
+        )
+        self.assertIs(composed, blocks)
+        self.assertIn("demo_copy", composed.sub_blocks)
+        original = next(p for p in recipe["composedPlacements"] if p["path"] == first)
+        copied = next(p for p in recipe["composedPlacements"] if p["path"] == ["demo_copy"])
+        self.assertEqual(copied["blockDefinitionId"], original["blockDefinitionId"])
+        self.assertEqual(blocks.init_calls, 0, "The executor must supply its existing component manager.")
+
     @classmethod
     def setUpClass(cls):
         cls.library = reviewed_huggingface_node_library()
@@ -308,10 +364,9 @@ class ModularCompositionTests(unittest.TestCase):
         )
         self.assertEqual(destination_blocks.init_calls, 1)
 
-    def test_insert_rejects_foreign_family_and_mismatched_pinned_source(self):
+    def test_foreign_draft_preserves_authority_but_mismatched_pinned_source_is_rejected(self):
         foreign = self.foreign_definition["blockPlacements"][0]
-        with self.assertRaisesRegex(ModularCompositionError, "same Modular pipeline family"):
-            validate_modular_composition_recipe(
+        validated = validate_modular_composition_recipe(
                 self.recipe(
                     [
                         {
@@ -328,6 +383,7 @@ class ModularCompositionTests(unittest.TestCase):
                 ),
                 library=self.library,
             )
+        self.assertTrue(any(p["path"] == ["foreign_block"] for p in validated["composedPlacements"]))
 
         source = self.source_definition["blockPlacements"][0]
         different_block = next(

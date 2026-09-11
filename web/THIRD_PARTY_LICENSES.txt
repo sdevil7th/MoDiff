@@ -21,9 +21,10 @@ License 2.0; the project `LICENSE` contains that license text.
 This revision is an evidence-based pre-import comparison baseline selected
 from repository history and file similarity. It is not asserted to be a proven
 Git ancestor or necessarily the exact snapshot used for MoDiff Client's
-original import. MoDiff Client has modified the adapted files. See the
-[source-provenance map](docs/source-provenance.md) for the affected path
-families and the treatment of formats that cannot carry comments.
+original import. MoDiff Client has modified the adapted files. In-file
+modification comments identify adapted source; retain these project-level
+notices alongside generated and commentless artifacts whose formats cannot
+carry those comments. New MoDiff-only files are not attributed to that baseline.
 
 ## Font software
 

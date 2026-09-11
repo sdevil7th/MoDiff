@@ -74,6 +74,8 @@ class BlockGraphNodeV2(TypedDict):
     semanticRole: NotRequired[str]
     upstreamBlockPath: NotRequired[str]
     modularDiffusers: NotRequired["BlockGraphNodeModularDiffusersV2"]
+    containerInterface: NotRequired["BlockContainerInterfaceV1"]
+    parentNodeId: NotRequired[str]
 
 
 class BlockGraphNodeModularDiffusersV2(TypedDict):
@@ -161,6 +163,28 @@ class BlockControlV2(TypedDict):
     order: int
     group: NotRequired[str]
     help: NotRequired[str]
+
+
+class BlockContainerControlV1(TypedDict):
+    """A field view with no independent value/default authority."""
+
+    controlId: str
+    label: str
+    binding: BlockControlBindingV2
+    mirrorBindings: NotRequired[list[BlockControlBindingV2]]
+    valueType: str
+    required: NotRequired[bool]
+    sealed: NotRequired[bool]
+    order: int
+    group: NotRequired[str]
+    help: NotRequired[str]
+
+
+class BlockContainerInterfaceV1(TypedDict):
+    schemaVersion: Literal[1]
+    boundary: BlockBoundaryV2
+    controls: list[BlockContainerControlV1]
+    previews: NotRequired[list["BlockPreviewBindingV2"]]
 
 
 class SuggestedInputSetV2(TypedDict):
@@ -255,27 +279,58 @@ def modular_container_node_ids_v2(graph: BlockGraphV2 | dict[str, Any]) -> list[
     collapsible in the editor.
     """
 
+    return sorted(set(block_graph_parent_ids_v2(graph).values()) | {
+        node["nodeId"] for node in graph["nodes"] if node["nodeType"] == "group" and not node.get("modularDiffusers")
+    })
+
+
+def block_graph_parent_ids_v2(graph: BlockGraphV2 | dict[str, Any]) -> dict[str, str]:
+    """Source-neutral customized ownership, falling back to exact catalog placement."""
     node_id_by_placement: dict[str, str] = {}
+    nodes_by_id = {node["nodeId"]: node for node in graph.get("nodes", [])}
     for node in graph.get("nodes", []):
         metadata = node.get("modularDiffusers")
         if not isinstance(metadata, dict) or metadata.get("kind") != "upstream_block":
             continue
         placement = metadata.get("placementPath")
         if isinstance(placement, list) and placement:
-            node_id_by_placement["/".join(placement)] = node["nodeId"]
+            key = "/".join(placement)
+            if key in node_id_by_placement:
+                raise ValueError(f"Ambiguous Block V2 subtree placement {key}.")
+            node_id_by_placement[key] = node["nodeId"]
 
-    container_ids: set[str] = set()
+    parents: dict[str, str] = {}
     for node in graph.get("nodes", []):
-        metadata = node.get("modularDiffusers")
-        if not isinstance(metadata, dict) or metadata.get("kind") != "upstream_block":
+        metadata = node.get("modularDiffusers", {})
+        parent_path = metadata.get("parentPlacementPath")
+        upstream_parent = (
+            node_id_by_placement.get("/".join(parent_path))
+            if metadata.get("kind") == "upstream_block" and parent_path else None
+        )
+        parent_id = node.get("parentNodeId", upstream_parent)
+        if not parent_id:
             continue
-        parent = metadata.get("parentPlacementPath")
-        if not isinstance(parent, list) or not parent:
-            continue
-        parent_id = node_id_by_placement.get("/".join(parent))
-        if parent_id:
-            container_ids.add(parent_id)
-    return sorted(container_ids)
+        if "parentNodeId" in node:
+            parent = nodes_by_id.get(parent_id)
+            if parent is None:
+                raise ValueError(f"Block V2 node {node['nodeId']} references unknown parent {parent_id}.")
+            parent_metadata = parent.get("modularDiffusers", {})
+            if parent["nodeType"] != "group" and not (
+                parent_metadata.get("kind") == "upstream_block" and parent_metadata.get("blockKind") != "block"
+            ):
+                raise ValueError(f"Block V2 parent {parent_id} is not a container.")
+            if upstream_parent and upstream_parent != parent_id:
+                raise ValueError(f"Block V2 node {node['nodeId']} has conflicting explicit and upstream parents.")
+        parents[node["nodeId"]] = parent_id
+    for node_id in parents:
+        seen: set[str] = set()
+        current = node_id
+        while current in parents:
+            if current in seen:
+                raise ValueError(f"Cyclic Block V2 subtree at {current}.")
+            seen.add(current)
+            current = parents[current]
+    return parents
 
 
 _SOURCE_KINDS = {"diffusers_catalog", "transformers_catalog", "hub_import", "user"}
@@ -844,10 +899,12 @@ def _validate_graph(graph_value: Any) -> tuple[dict[str, Any], set[str]]:
             node,
             path,
             required={"nodeId", "nodeType", "data"},
-            optional={"semanticRole", "upstreamBlockPath", "modularDiffusers"},
+            optional={"semanticRole", "upstreamBlockPath", "modularDiffusers", "containerInterface", "parentNodeId"},
         )
         node_id = _string(node["nodeId"], f"{path}.nodeId", maximum=384, pattern=_ID_RE)
         node_type = _string(node["nodeType"], f"{path}.nodeType")
+        if "parentNodeId" in node:
+            _string(node["parentNodeId"], f"{path}.parentNodeId", maximum=384, pattern=_ID_RE)
         if node_id in node_ids:
             raise ValueError(f"BlockDefinitionV2.graph contains duplicate nodeId {node_id!r}.")
         node_ids.add(node_id)
@@ -897,6 +954,33 @@ def _validate_graph(graph_value: Any) -> tuple[dict[str, Any], set[str]]:
             raise ValueError("BlockDefinitionV2.graph.executionOrder must not contain duplicates.")
         if not set(order).issubset(node_ids):
             raise ValueError("BlockDefinitionV2.graph.executionOrder references an unknown graph node.")
+
+    block_graph_parent_ids_v2(graph)
+    for node in nodes:
+        if "containerInterface" in node:
+            local = validate_block_container_interface_v1(node["containerInterface"], graph, node["nodeId"])
+            included = block_graph_subtree_node_ids_v2(graph, node["nodeId"])
+            for edge in edges:
+                for direction in ("input", "output"):
+                    endpoint_id = edge["targetNodeId" if direction == "input" else "sourceNodeId"]
+                    opposite_id = edge["sourceNodeId" if direction == "input" else "targetNodeId"]
+                    field_id = edge["targetPortId" if direction == "input" else "sourcePortId"]
+                    if endpoint_id not in included or (endpoint_id != node["nodeId"] and opposite_id in included):
+                        continue
+                    ports = local["boundary"]["inputs" if direction == "input" else "outputs"]
+                    if not any(
+                        binding["nodeId"] == endpoint_id and binding["fieldOrPortId"] == field_id
+                        for port in ports for binding in [port["binding"], *port.get("mirrorBindings", [])]
+                    ):
+                        # A live crossing is displayed as a connected-only socket;
+                        # it does not become part of the reusable interface.
+                        endpoint = next(item for item in nodes if item["nodeId"] == endpoint_id)
+                        params = endpoint.get("data", {}).get("params", {})
+                        field = params.get(field_id) if isinstance(params, dict) else None
+                        if not isinstance(field, dict) or (field.get("display") == "output") != (direction == "output"):
+                            raise ValueError(
+                                f"BlockDefinitionV2.graph container {node['nodeId']} has an invalid connected {direction} {endpoint_id}.{field_id}."
+                            )
 
     expected_hash = block_graph_hash_v2(graph)
     if graph["graphHash"] != expected_hash:
@@ -975,7 +1059,8 @@ def _validate_port(
             param = _object(params.get(mirror_field_id), f"{mirror_path} target field")
             if param.get("display") == "output":
                 raise ValueError(f"{mirror_path} cannot target an output field.")
-            if not _block_value_types_are_compatible_v2(port["valueType"], param.get("type")):
+            if not (_block_value_types_are_compatible_v2(port["valueType"], param.get("type"))
+                    or _block_media_file_boundary_is_compatible_v2(port["valueType"], param)):
                 raise ValueError(f"{mirror_path} targets an incompatible field type.")
             seen_bindings.add(mirror_key)
             previous_key = mirror_key
@@ -1094,6 +1179,23 @@ def _block_value_types_are_compatible_v2(left: Any, right: Any) -> bool:
     return "int" in left_types and "float" in right_types
 
 
+def _block_media_file_boundary_is_compatible_v2(value_type: Any, param: dict[str, Any]) -> bool:
+    """Match media inputs to an explicitly matching file picker's path transport."""
+    options = param.get("fieldOptions")
+    if (param.get("display") != "filebrowser"
+            or not _block_value_types_are_compatible_v2(param.get("type"), "string")
+            or not isinstance(options, dict) or not isinstance(options.get("fileTypes"), list)):
+        return False
+    file_types = {value.strip().lower() for value in options["fileTypes"] if isinstance(value, str)}
+    values = value_type if isinstance(value_type, list) else [value_type]
+    patterns = {"image": r"images?|pil|pixels?", "video": r"videos?|frames?", "audio": r"audios?|sounds?|waveforms?"}
+    return any(media in file_types and any(
+        isinstance(value, str) and (re.search(rf"(?:^|[^a-z])(?:{pattern})(?:[^a-z]|$)", value, re.I)
+            or (media == "video" and re.fullmatch(r"(?:typing\.)?(?:list|sequence)\[(?:PIL\.Image\.Image|image)\]", value.strip(), re.I)))
+        for value in values
+    ) for media, pattern in patterns.items())
+
+
 def _validate_controls(
     controls_value: Any,
     *,
@@ -1172,6 +1274,134 @@ def _validate_controls(
         if "defaultValue" in control:
             _json_value(control["defaultValue"], f"{path}.defaultValue")
     return control_ids
+
+
+def block_graph_subtree_node_ids_v2(graph: dict[str, Any], root_node_id: str) -> set[str]:
+    """Resolve the same flat semantic subtree used by the client projector."""
+    if not any(node["nodeId"] == root_node_id for node in graph["nodes"]):
+        raise ValueError(f"Unknown Block V2 subtree {root_node_id}.")
+    children: dict[str, list[str]] = {}
+    for node_id, parent_id in block_graph_parent_ids_v2(graph).items():
+        children.setdefault(parent_id, []).append(node_id)
+    included: set[str] = set()
+
+    def visit(node_id: str, ancestors: set[str]) -> None:
+        if node_id in ancestors:
+            raise ValueError(f"Cyclic Block V2 subtree at {node_id}.")
+        if node_id in included:
+            return
+        included.add(node_id)
+        for child in children.get(node_id, []):
+            visit(child, ancestors | {node_id})
+
+    visit(root_node_id, set())
+    return included
+
+
+def validate_block_container_interface_v1(
+    value: Any, graph: dict[str, Any], owner_node_id: str
+) -> BlockContainerInterfaceV1:
+    """Strict local interface, hash-covered by its one existing semantic graph."""
+    label = f"Block container interface V1 ({owner_node_id})"
+    interface = _object(value, label)
+    _exact_keys(interface, label, required={"schemaVersion", "boundary", "controls"}, optional={"previews"})
+    if interface["schemaVersion"] != 1 or isinstance(interface["schemaVersion"], bool):
+        raise ValueError(f"{label}.schemaVersion must be 1.")
+    included = block_graph_subtree_node_ids_v2(graph, owner_node_id)
+    scoped_graph = {**graph, "nodes": [node for node in graph["nodes"] if node["nodeId"] in included]}
+    _validate_boundary(interface["boundary"], graph=scoped_graph, source_kind="user")
+    boundary = interface["boundary"]
+    if boundary["mode"] != "explicit":
+        raise ValueError(f"{label} boundary must be explicit.")
+    _validate_controls(interface["controls"], graph=scoped_graph)
+    nodes_by_id = {node["nodeId"]: node for node in scoped_graph["nodes"]}
+
+    def validate_field(entry: dict[str, Any], binding: dict[str, Any], direction: str) -> tuple[str, str]:
+        field_id = binding.get("fieldId", binding.get("fieldOrPortId"))
+        params = _object(nodes_by_id[binding["nodeId"]]["data"].get("params"), f"{label} target params")
+        param = _object(params.get(field_id), f"{label} target field {binding['nodeId']}.{field_id}")
+        if (direction == "output") != (param.get("display") == "output"):
+            raise ValueError(f"{label} field {binding['nodeId']}.{field_id} has incompatible direction.")
+        if not (_block_value_types_are_compatible_v2(entry["valueType"], param.get("type"))
+                or (direction == "input" and _block_media_file_boundary_is_compatible_v2(entry["valueType"], param))):
+            raise ValueError(f"{label} field {binding['nodeId']}.{field_id} has incompatible type.")
+        return binding["nodeId"], field_id
+
+    occupied_inputs: set[tuple[str, str]] = set()
+    for direction in ("input", "output"):
+        for port in boundary["inputs" if direction == "input" else "outputs"]:
+            for binding in [port["binding"], *port.get("mirrorBindings", [])]:
+                key = validate_field(port, binding, direction)
+                if direction == "input":
+                    if key in occupied_inputs:
+                        raise ValueError(f"{label}: an internal input cannot be exposed by multiple local ports.")
+                    occupied_inputs.add(key)
+    occupied_controls: set[tuple[str, str]] = set()
+    inputs_by_id = {port["portId"]: port for port in boundary["inputs"]}
+    for control in interface["controls"]:
+        if "defaultValue" in control:
+            raise ValueError(f"{label}: control defaults belong to the bound fields, not this view.")
+        for binding in [control["binding"], *control.get("mirrorBindings", [])]:
+            key = validate_field(control, binding, "control")
+            if key in occupied_controls:
+                raise ValueError(f"{label}: a field cannot have multiple local controls.")
+            occupied_controls.add(key)
+        shared = inputs_by_id.get(control["controlId"])
+        if shared:
+            port_targets = {(b["nodeId"], b["fieldOrPortId"]) for b in [shared["binding"], *shared.get("mirrorBindings", [])]}
+            control_targets = {(b["nodeId"], b["fieldId"]) for b in [control["binding"], *control.get("mirrorBindings", [])]}
+            media_path_control = _block_value_types_are_compatible_v2(control["valueType"], "string") and all(
+                _block_media_file_boundary_is_compatible_v2(shared["valueType"], nodes_by_id[node_id]["data"]["params"][field_id])
+                for node_id, field_id in port_targets
+            )
+            if port_targets != control_targets or (shared["valueType"] != control["valueType"] and not media_path_control):
+                raise ValueError(f"{label}: a shared input/control ID must bind the same complete field set and type.")
+    if "previews" in interface:
+        _validate_previews(interface["previews"], node_ids=set(nodes_by_id))
+        media_tokens = {
+            "image": r"images?|pil|pixels?", "video": r"videos?|frames?",
+            "audio": r"audios?|sounds?|waveforms?", "text": r"texts?|strings?|str",
+            "file": r"files?|paths?|uris?|urls?",
+        }
+        for preview in interface["previews"]:
+            params = _object(nodes_by_id[preview["nodeId"]]["data"].get("params"), f"{label} preview params")
+            field = _object(params.get(preview["outputPortId"]), f"{label} preview field")
+            types = field.get("type")
+            types = types if isinstance(types, list) else [types]
+            media_type = preview["mediaType"]
+            display = "ui_text" if media_type == "file" else f"ui_{media_type}"
+            transported_preview = field.get("display") == display and (
+                "type" not in field or any(
+                    isinstance(entry, str) and re.fullmatch(r"url|uri|path|string|str|base64", entry, re.I)
+                    for entry in types
+                )
+            )
+            if field.get("display") not in {"output", display} or not (transported_preview or any(
+                isinstance(entry, str) and re.search(rf"(?:^|[^a-z])(?:{media_tokens[media_type]})(?:[^a-z]|$)", entry, re.I)
+                for entry in types
+            )):
+                raise ValueError(f"{label} preview {preview['nodeId']}.{preview['outputPortId']} has incompatible type or display.")
+    return copy.deepcopy(interface)
+
+
+def block_instance_preview_bindings_v2(definition: dict[str, Any], graph: dict[str, Any]) -> list[BlockPreviewBindingV2]:
+    """Root bindings first, then unique local sources; one root-owned state per source."""
+    node_ids = {node["nodeId"] for node in graph["nodes"]}
+    bindings = copy.deepcopy([binding for binding in definition["previews"] if binding["nodeId"] in node_ids])
+    by_source = {(binding["nodeId"], binding["outputPortId"]): binding for binding in bindings}
+    for node in graph["nodes"]:
+        for preview in node.get("containerInterface", {}).get("previews", []):
+            key = (preview["nodeId"], preview["outputPortId"])
+            existing = by_source.get(key)
+            if existing is not None:
+                if existing["mediaType"] != preview["mediaType"]:
+                    raise ValueError(f"Block preview inventory V2: conflicting media types for {key[0]}.{key[1]}.")
+                continue
+            binding = copy.deepcopy(preview)
+            binding.pop("primary", None)
+            bindings.append(binding)
+            by_source[key] = binding
+    return bindings
 
 
 def _validate_suggested_inputs(value: Any, *, control_ids: set[str]) -> None:
@@ -1308,6 +1538,7 @@ def validate_block_definition_v2(payload: Any) -> BlockDefinitionV2:
     if "suggestedInputs" in definition:
         _validate_suggested_inputs(definition["suggestedInputs"], control_ids=control_ids)
     _validate_previews(definition["previews"], node_ids=node_ids)
+    block_instance_preview_bindings_v2(definition, graph)
 
     ownership = _object(definition["ownership"], "BlockDefinitionV2.ownership")
     _exact_keys(
@@ -1417,13 +1648,15 @@ def _validate_instance_preview_states(
     value: Any,
     *,
     definition: BlockDefinitionV2,
+    effective_graph: BlockGraphV2,
 ) -> list[dict[str, Any]]:
     states = _array(value, "BlockInstanceV2.previewStates")
-    if len(states) != len(definition["previews"]):
+    expected = block_instance_preview_bindings_v2(definition, effective_graph)
+    if len(states) != len(expected):
         raise ValueError(
-            "BlockInstanceV2.previewStates must preserve the ordered definition preview bindings."
+            "BlockInstanceV2.previewStates must preserve the ordered definition and local preview bindings."
         )
-    definition_node_ids = {node["nodeId"] for node in definition["graph"]["nodes"]}
+    definition_node_ids = {node["nodeId"] for node in [*definition["graph"]["nodes"], *effective_graph["nodes"]]}
     for index, state_value in enumerate(states):
         path = f"BlockInstanceV2.previewStates[{index}]"
         state = _object(state_value, path)
@@ -1434,9 +1667,9 @@ def _validate_instance_preview_states(
             optional={"mediaReference", "taskId", "status"},
         )
         _validate_previews([state["binding"]], node_ids=definition_node_ids)
-        if _stable_json(state["binding"]) != _stable_json(definition["previews"][index]):
+        if _stable_json(state["binding"]) != _stable_json(expected[index]):
             raise ValueError(
-                "BlockInstanceV2.previewStates must preserve the ordered definition preview bindings."
+                "BlockInstanceV2.previewStates must preserve the ordered definition and local preview bindings."
             )
         if "mediaReference" in state:
             _string(state["mediaReference"], f"{path}.mediaReference", maximum=8192)
@@ -1595,7 +1828,7 @@ def _validate_route_selection_v1(value: Any) -> BlockRouteSelectionV1:
                 },
                 "previewStates": [
                     {"binding": preview, "status": "idle"}
-                    for preview in definition["previews"]
+                    for preview in block_instance_preview_bindings_v2(definition, _validate_graph(draft["effectiveGraph"])[0])
                 ],
                 "authorities": [],
             }
@@ -1822,6 +2055,7 @@ def validate_block_instance_v2(payload: Any) -> BlockInstanceV2:
     preview_states = _validate_instance_preview_states(
         instance["previewStates"],
         definition=definition,
+        effective_graph=effective_graph,
     )
     authorities = _validate_instance_authorities(
         instance["authorities"],

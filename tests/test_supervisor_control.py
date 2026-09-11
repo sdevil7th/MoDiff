@@ -5,10 +5,24 @@ from http.client import HTTPConnection
 from pathlib import Path
 from unittest.mock import Mock
 
-from modiff.supervisor_control import SupervisorControlServer, SupervisorController, _allowed_browser_origin
+from modiff.supervisor_control import (
+    SupervisorControlServer,
+    SupervisorController,
+    _allowed_browser_origin,
+    compact_task_history,
+)
 
 
 class SupervisorControlTests(unittest.TestCase):
+    def test_compaction_does_not_invent_execution_identity_from_resource_only_receipt(self):
+        task = {"runtimeFingerprint": {"resourceFingerprint": "sha256:resource"}}
+        self.assertIsNone(compact_task_history([task])[0]["runtimeFingerprint"])
+        self.assertEqual(task["runtimeFingerprint"], {"resourceFingerprint": "sha256:resource"})
+        self.assertEqual(
+            compact_task_history([{"runtimeFingerprint": "sha256:execution"}])[0]["runtimeFingerprint"],
+            "sha256:execution",
+        )
+
     def test_browser_origin_policy_allows_only_local_origins(self):
         self.assertTrue(_allowed_browser_origin("http://localhost:5173"))
         self.assertTrue(_allowed_browser_origin("http://127.0.0.1:8088"))
@@ -152,7 +166,10 @@ class SupervisorControlTests(unittest.TestCase):
 
             self.assertNotIn("workflow_snapshot", task)
             self.assertTrue(task["has_workflow_snapshot"])
-            self.assertEqual(task["runtimeFingerprint"], "sha256:resource")
+            # Runtime provenance and resource-cache identity are distinct. The
+            # compact receipt must corroborate graph_completed, not substitute
+            # its hardware/resource key for the executing runtime identity.
+            self.assertEqual(task["runtimeFingerprint"], "sha256:execution")
 
     def test_stop_restarts_worker_when_its_snapshot_was_replaced_or_corrupted(self):
         with tempfile.TemporaryDirectory() as directory:

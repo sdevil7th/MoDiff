@@ -209,6 +209,36 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
+    def test_workflow_auto_revalidates_exact_graph_and_resources_before_node_execution(self):
+        from modiff.workflow_auto_resource import workflow_graph_hash
+        graph = {"sid": "sid", "nodes": {"data": {"module": "modules.Primitive", "action": "String", "params": {"value": {"value": "hello"}}}}, "paths": [["data"]]}
+        graph["runtimeHints"] = {"resourceMode": "auto", "workflowAutoPlan": {"schemaVersion": 1, "graphHash": workflow_graph_hash(graph)}}
+        self.server.execute_node = Mock()
+        self.server._build_workflow_auto_plan = Mock(return_value={"canAutoRun": False, "patches": [], "issues": ["Combined memory changed"]})
+        with self.assertRaisesRegex(Exception, "Combined memory changed"):
+            self.server._execute_graph(copy.deepcopy(graph))
+        self.server.execute_node.assert_not_called()
+        self.server._build_workflow_auto_plan.assert_called_once()
+        graph["nodes"]["data"]["params"]["value"]["value"] = "edited"
+        self.server._build_workflow_auto_plan.reset_mock()
+        with self.assertRaisesRegex(Exception, "workflow changed after Auto planning"):
+            self.server._execute_graph(graph)
+        self.server._build_workflow_auto_plan.assert_not_called()
+        self.server.execute_node.assert_not_called()
+
+    async def test_workflow_auto_http_has_strict_payload_and_no_execution(self):
+        graph = {"nodes": {"data": {"module": "modules.Primitive", "action": "String", "params": {}}}, "paths": [["data"]]}
+        self.server._build_workflow_auto_plan = Mock(return_value={"canAutoRun": True})
+        self.server.execute_node = Mock()
+        request = SimpleNamespace(json=AsyncMock(return_value={"schemaVersion": 1, "graph": graph}))
+        response = await self.server.workflow_auto_resource_plan(request)
+        self.assertEqual(response.status, 200)
+        self.assertEqual(json.loads(response.text), {"canAutoRun": True})
+        self.server.execute_node.assert_not_called()
+        request.json = AsyncMock(return_value={"schemaVersion": 1, "graph": graph, "install": True})
+        response = await self.server.workflow_auto_resource_plan(request)
+        self.assertEqual(response.status, 400)
+
     async def test_runtime_resources_uses_a_separate_versioned_snapshot_without_mutating_auto_state(self):
         snapshot = {
             "schemaVersion": 1,
@@ -576,6 +606,72 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         progress = queue_message.call_args.args[0]
         self.assertEqual(progress["type"], "task_progress")
         self.assertEqual(progress["error_code"], "runtime_deadline_exceeded")
+
+    def test_forced_user_cancel_is_durable_before_worker_exit(self):
+        self.server.current_task = {
+            "task_id": "cancelled-task", "name": "Graph execution", "sid": "session",
+            "started_at": 1.0, "progress": 42, "interrupt_requested": True,
+            "runtimeHints": {"workflowTabId": "edited-workflow", "workflowTitle": "My edit"},
+        }
+        events = []
+        snapshots = []
+
+        def persist(*, force=False):
+            self.assertTrue(force)
+            snapshots.append(copy.deepcopy(self.server.recent_tasks))
+            events.append("persist")
+
+        def send(payload):
+            events.append(payload["type"])
+
+        def exit_worker(_code):
+            events.append("exit")
+            raise SystemExit
+
+        with (
+            patch.object(self.server, "queue_message", side_effect=send),
+            patch.object(self.server, "_persist_supervisor_queue_state", side_effect=persist),
+            patch.object(self.server, "_mark_studio_preview_run_terminal") as preview_terminal,
+            patch("modiff.server.time.sleep"),
+            patch("modiff.server.os._exit", side_effect=exit_worker),
+            self.assertRaises(SystemExit),
+        ):
+            self.server._force_restart_if_task_is_active("cancelled-task")
+
+        self.assertEqual(events, ["persist", "task_cancelled", "exit"])
+        entry = snapshots[0][0]
+        self.assertEqual(entry["task_id"], "cancelled-task")
+        self.assertEqual(entry["status"], "cancelled")
+        self.assertEqual(entry["workflow_tab_id"], "edited-workflow")
+        self.assertIn("restarting", entry["message"])
+        preview_terminal.assert_called_once_with("cancelled-task", "cancelled")
+
+    async def test_forced_user_cancel_run_detail_survives_worker_reconstruction(self):
+        snapshot = {"nodes": [{"id": "edited-node"}], "edges": []}
+        self.server.current_task = {
+            "task_id": "cancelled-task", "name": "Graph execution", "sid": "session",
+            "started_at": 1.0, "progress": 42, "interrupt_requested": True,
+            "runtimeHints": {"workflowTabId": "edited-workflow", "workflowSnapshot": snapshot},
+        }
+        state_path = Path(self.temp_dir.name) / "supervisor-queue.json"
+        self.server._supervisor_queue_state_path = state_path
+        self.server._supervisor_queue_state_lock = threading.RLock()
+        with (
+            patch.object(self.server, "queue_message"),
+            patch.object(self.server, "_mark_studio_preview_run_terminal"),
+            patch("modiff.server.time.sleep"),
+            patch("modiff.server.os._exit", side_effect=SystemExit),
+            self.assertRaises(SystemExit),
+        ):
+            self.server._force_restart_if_task_is_active("cancelled-task")
+        with patch.dict(os.environ, {"MODIFF_SUPERVISOR_QUEUE_STATE": str(state_path)}):
+            replacement = WebServer(modules={"unit": {}}, work_dir=self.temp_dir.name, data_dir=self.temp_dir.name)
+        response = await replacement.get_run(SimpleNamespace(match_info={"task_id": "cancelled-task"}))
+        self.assertEqual(response.status, 200)
+        payload = json.loads(response.body)
+        self.assertEqual(payload["task"]["status"], "cancelled")
+        self.assertEqual(payload["workflow_snapshot"], snapshot)
+        self.assertFalse(replacement.current_task)
 
     def test_forced_restart_persists_runtime_deadline_as_failed(self):
         failure = {
@@ -2561,6 +2657,18 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         adjusted_device = adjusted["hardware"]["devices"][0]
         self.assertEqual(adjusted_device["vram_free"], 16 * GIB)
         self.assertEqual(adjusted_device["torch_vram_free"], 16 * GIB)
+
+    def test_shared_gpu_reclaimable_capacity_does_not_shrink_to_dedicated_vram(self):
+        snapshot = hardware_snapshot()
+        snapshot["devices"][0].update(memory_kind="shared", vram_total=2 * GIB, vram_free=GIB, torch_vram_total=100 * GIB, torch_vram_free=90 * GIB)
+        fingerprint = {"fingerprint": "shared", "hardware": snapshot}
+        fake_cuda = SimpleNamespace(is_available=lambda: True, device_count=lambda: 1, memory_reserved=lambda _: 5 * GIB)
+        self.server.node_cache = {"model": object()}
+        with patch.object(self.server, "_runtime_fingerprint", return_value=fingerprint), patch("modiff.server.import_module", return_value=SimpleNamespace(cuda=fake_cuda)):
+            device = self.server._auto_planning_runtime_fingerprint()["hardware"]["devices"][0]
+        self.assertEqual(device["vram_free"], 2 * GIB)
+        self.assertEqual(device["torch_vram_free"], 95 * GIB)
+        self.assertEqual(snapshot["devices"][0]["torch_vram_free"], 90 * GIB)
 
     def test_auto_planning_does_not_enter_accelerator_apis_during_active_run(self):
         snapshot = hardware_snapshot()

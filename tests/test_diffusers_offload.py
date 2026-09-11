@@ -815,7 +815,7 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
             {"torch_dtype": "float16", "variant": "fp16"},
         )
 
-    def test_incremental_group_offload_is_selected_by_quantized_components_not_pipeline_name(self):
+    def test_incremental_group_offload_does_not_require_a_quantization_override(self):
         self.assertTrue(
             should_incrementally_group_offload(
                 use_group_offload=True,
@@ -828,12 +828,17 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
                 quant_config={"transformer": "bnb_4bit"},
             )
         )
-        self.assertFalse(
+        self.assertTrue(
             should_incrementally_group_offload(
                 use_group_offload=True,
                 quant_config={"vae": "bnb_4bit"},
             )
         )
+        for config in (None, {}):
+            with self.subTest(quant_config=config):
+                self.assertTrue(should_incrementally_group_offload(
+                    use_group_offload=True, quant_config=config,
+                ))
 
     def test_strict_component_loading_keeps_optional_component_failure_diagnostic(self):
         pipeline = FakeStrictPipeline({

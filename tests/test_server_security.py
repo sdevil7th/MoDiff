@@ -1,5 +1,6 @@
 import base64
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import json
 import tempfile
 import threading
@@ -630,6 +631,66 @@ class ServerSecurityTests(unittest.IsolatedAsyncioTestCase):
             [json.loads(response.text)["query"] for response in capability_responses],
             ["qwen", "qwen"],
         )
+        self.assertEqual(self.server.control_snapshot_tasks, {})
+
+    async def test_cancelled_resource_poll_does_not_cancel_other_pollers(self):
+        release = threading.Event()
+        started = threading.Event()
+
+        def build_resources():
+            started.set()
+            if not release.wait(5):
+                raise TimeoutError("The resource test did not release its worker.")
+            return {"schemaVersion": 1, "sampledAt": 123}
+
+        with patch.object(self.server, "_runtime_resource_snapshot", side_effect=build_resources) as build:
+            first = asyncio.create_task(self.server.runtime_resources(JsonRequest({})))
+            second = asyncio.create_task(self.server.runtime_resources(JsonRequest({})))
+            try:
+                async with asyncio.timeout(1):
+                    while not started.is_set():
+                        await asyncio.sleep(0.01)
+                first.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await first
+                self.assertFalse(second.done())
+            finally:
+                release.set()
+                responses = await asyncio.gather(first, second, return_exceptions=True)
+            self.assertEqual(json.loads(responses[1].text), {"schemaVersion": 1, "sampledAt": 123})
+            build.assert_called_once_with()
+        self.assertEqual(self.server.control_snapshot_tasks, {})
+
+    async def test_duplicate_resource_polls_cannot_fill_workers_and_starve_health(self):
+        # A native/system probe can be slow even when it releases the GIL.
+        # Duplicate waiters must not each occupy another default-pool worker.
+        asyncio.get_running_loop().set_default_executor(ThreadPoolExecutor(max_workers=2))
+        release = threading.Event()
+        builds = []
+
+        def build_resources():
+            builds.append(threading.get_ident())
+            if not release.wait(5):
+                raise TimeoutError("The resource test did not release its worker.")
+            return {"schemaVersion": 1, "accelerators": [], "currentRun": None}
+
+        with (
+            patch.object(self.server, "_runtime_resource_snapshot", side_effect=build_resources),
+            patch.object(self.server, "_build_runtime_status_payload", return_value={"ready": True}),
+        ):
+            polls = [asyncio.create_task(self.server.runtime_resources(JsonRequest({}))) for _ in range(4)]
+            try:
+                await asyncio.sleep(0.05)
+                health = await asyncio.wait_for(self.server.runtime_status(JsonRequest({})), timeout=0.5)
+                self.assertTrue(json.loads(health.text)["ready"])
+                self.assertEqual(len(builds), 1)
+            finally:
+                release.set()
+                results = await asyncio.gather(*polls, return_exceptions=True)
+        self.assertTrue(all(not isinstance(result, BaseException) for result in results))
+        self.assertEqual([json.loads(result.text) for result in results], [
+            {"schemaVersion": 1, "accelerators": [], "currentRun": None}
+        ] * 4)
         self.assertEqual(self.server.control_snapshot_tasks, {})
 
     async def test_slow_health_probe_is_coalesced_off_loop(self):

@@ -101,7 +101,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
 
     def test_registered_pipelines_have_exact_truth_or_whole_workflow_adapters(self):
         registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
-        self.assertEqual(len(PINNED_MODULAR_WORKFLOW_TRUTH), 21)
+        self.assertEqual(len(PINNED_MODULAR_WORKFLOW_TRUTH), 22)
         whole_workflow_only = registered - set(PINNED_MODULAR_WORKFLOW_TRUTH)
         self.assertEqual(
             whole_workflow_only,
@@ -214,6 +214,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                 "video_to_video_with_audio",
             },
         }
+        expected["Flux2ModularPipeline"] = {"text_to_image", "edit_image"}
         self.assertEqual(_advertised_modular_modes(), expected)
         truth_modes = {
             model_type: set(dict(truth.modes)) for model_type, truth in PINNED_MODULAR_WORKFLOW_TRUTH.items()

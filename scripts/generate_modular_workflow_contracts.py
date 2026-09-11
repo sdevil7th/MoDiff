@@ -14,6 +14,7 @@ from diffusers.modular_pipelines.modular_pipeline import PipelineState
 from modiff.modular_contract_only_registry import (
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES,
     CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS,
+    CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY,
 )
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION, PINNED_MODULAR_WORKFLOW_TRUTH
 from modiff.modular_workflow_discovery import (
@@ -24,6 +25,9 @@ from modiff.modular_workflow_discovery import (
 
 
 _GENERIC_TASK_ALIASES = {
+    "text2video_with_sound": "text_to_video_with_audio",
+    "image2video_with_sound": "image_to_video_with_audio",
+    "video2video_with_sound": "video_to_video_with_audio",
     "text2image": "text_to_image",
     "image2image": "image_to_image",
     "inpainting": "inpaint",
@@ -64,6 +68,11 @@ def _aliases(truth) -> dict[str, str]:
 
 def generate() -> dict:
     contracts = []
+    for pipeline_class_name, aliases in CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY.items():
+        contracts.append(build_modular_workflow_contract(
+            getattr(diffusers, pipeline_class_name)(), aliases=dict(aliases),
+            pipeline_state_factory=PipelineState,
+        ))
     for pipeline_class_name, truth in PINNED_MODULAR_WORKFLOW_TRUTH.items():
         pipeline_class = getattr(diffusers, pipeline_class_name)
         constructor_config = dict(truth.constructor_config)

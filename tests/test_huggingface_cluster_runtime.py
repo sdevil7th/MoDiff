@@ -239,6 +239,9 @@ class HuggingFaceClusterRuntimeTests(unittest.TestCase):
         route_files = [
             client_studio / "registeredBlockV2Routes.ts",
             client_studio / "registeredBlockV2FanOutRoutes.ts",
+            client_studio / "registeredBlockV2AudioRoutes.ts",
+            client_studio / "registeredBlockV2ImageRoutes.ts",
+            client_studio / "registeredBlockV2OrdinaryFluxRoutes.ts",
         ]
         if any(not path.is_file() for path in route_files):
             self.skipTest("Sibling MoDiff-client checkout is required for the registered V2 pin parity gate.")
@@ -262,7 +265,7 @@ class HuggingFaceClusterRuntimeTests(unittest.TestCase):
             for pattern in patterns
             for admission_id, content_hash, canonical_sha256 in pattern.findall(source)
         }
-        self.assertEqual(len(client_pins), 90)
+        self.assertEqual(len(client_pins), 122)
         self.assertEqual(dict(REGISTERED_BLOCK_V2_DEFINITION_PINS), client_pins)
 
     def test_transformers_composite_receipt_joins_direct_profile_and_optional_runtime(self):
@@ -613,6 +616,42 @@ class HuggingFaceClusterRuntimeTests(unittest.TestCase):
         self.assertEqual(receipt["loaderModule"], "modules.DiffusersVideo")
         self.assertEqual(receipt["executionPath"], "direct-diffusers-video")
         self.assertTrue(receipt["artifactStatus"]["exactRevisionComplete"])
+
+    def test_ace_audio_receipt_distinguishes_model_type_from_pipeline_class(self):
+        repository = "ACE-Step/acestep-v15-xl-turbo-diffusers"
+        revision = "200ba991ae448051e14b0183157e35c2d27c9fb0"
+        snapshot = self.cache_dir / "models--ACE-Step--acestep-v15-xl-turbo-diffusers" / "snapshots" / revision
+        snapshot.mkdir(parents=True)
+        (snapshot / "model.safetensors").write_bytes(b"ace-audio-contract-fixture-not-real-weights")
+        request = {
+            "schemaVersion": 1,
+            "definitionId": "diffusers.composite:AceStepAudioPipeline:text_to_audio",
+            "admissionId": "diffusers.cluster-admission:AceStepAudioPipeline:text_to_audio:mode:text_to_audio",
+            "resourceMode": "expert",
+            "recipe": {"device": "cuda:0", "dtype": "bfloat16", "quantizationMode": "none",
+                       "autoOffload": True, "offloadMode": "model_cpu"},
+        }
+        library = build_huggingface_node_library()
+        kwargs = {
+            "library": library,
+            "runtime_fingerprint": runtime_fingerprint(),
+            "local_models": [{"id": repository, "cache_dirs": [str(self.cache_dir)],
+                              "revisions": [{"hash": revision}]}],
+            "optional_runtime_requirement": {
+                "schemaVersion": 1, "delivery": "main_runtime", "requiredNow": False,
+                "profileIds": [], "executionProfileIds": [], "state": "not_required",
+                "reason": "main_runtime_route",
+            },
+        }
+        receipt = qualify_huggingface_cluster_expert_runtime(request, **kwargs)
+        self.assertEqual(receipt["modelType"], "AceStepAudioPipeline")
+        self.assertEqual(receipt["pipelineClass"], "AceStepPipeline")
+        self.assertEqual(receipt["loaderModule"], "modules.DiffusersAudio")
+        self.assertEqual(receipt["executionPath"], "direct-diffusers-audio")
+        definition = next(d for d in library["definitions"] if d["id"] == request["definitionId"])
+        definition["blocksClass"] = "UnreviewedPipeline"
+        with self.assertRaises(ValueError):
+            qualify_huggingface_cluster_expert_runtime(request, **kwargs)
 
     def test_qwen_same_family_expert_receipt_uses_the_selected_exact_artifact(self):
         snapshot = (

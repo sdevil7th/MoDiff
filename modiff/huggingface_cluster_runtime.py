@@ -26,6 +26,7 @@ from modiff.block_definition_v2 import (
 )
 from modiff.diffusers_profiles import execution_profiles_for_execution
 from modiff.modular_contract_only_registry import equivalent_modular_targets
+from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS
 from modiff.model_artifact_catalog import catalog_repository_pin
 from modiff.optional_runtime_execution import (
     optional_runtime_requirement_blocks_execution,
@@ -67,6 +68,8 @@ def _effective_reviewed_artifact(
     admission: Mapping[str, Any],
     profile: Any,
     selected_repository: Any,
+    *,
+    workflow_id: str = "",
 ) -> dict[str, str]:
     """Resolve an optional same-pipeline instance choice to one exact pin."""
 
@@ -89,6 +92,12 @@ def _effective_reviewed_artifact(
         )
         if isinstance(repository, str) and repository
     }
+    if profile.execution_path == "modular-diffusers":
+        # Share the loader's workflow-scoped review instead of requiring a
+        # broader profile fallback that would also admit unrelated workflows.
+        admitted = set(PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS.get(
+            (str(profile.model_type), workflow_id), admitted,
+        ))
     if selected not in admitted:
         raise _invalid(f"model repository {selected!r} is not an admitted same-pipeline variant.")
     pin = catalog_repository_pin(selected, model_type=str(profile.model_type))
@@ -99,6 +108,7 @@ def _effective_reviewed_artifact(
 _DIRECT_LOADER_CONTRACTS = {
     "direct-diffusers-image": ("modules.DiffusersImage", "LoadPipeline"),
     "direct-diffusers-video": ("modules.DiffusersVideo", "LoadPipeline"),
+    "direct-diffusers-audio": ("modules.DiffusersAudio", "LoadPipeline"),
 }
 _GIB = 1024**3
 _AUTO_AUTHORITY_KEYS = {
@@ -169,8 +179,32 @@ _LEGACY_REGISTERED_BLOCK_V2_DEFINITION_PINS: Mapping[str, tuple[str, str]] = {
         "sha256:c8de506963cfb8c7aaf8e102d7aec7689033a32c10e5105e155f7b52c9ddc731",
     ),
     "diffusers.cluster-admission:ErnieImageModularPipeline:text2image:mode:equivalent_standard_route": (
-        "block-definition-v2-778d2320",
-        "sha256:ef45c8d18cf88c5f23caca37dcf04b848bc687a2e57fdb1fe5374f07448b4ac7",
+        "block-definition-v2-30138b23",
+        "sha256:3792671213c6136ad61d90642fca28a851d88e2203c017ca9a15f3145c9ec22c",
+    ),
+    "diffusers.cluster-admission:Flux2KleinKVPipeline:edit_image:mode:edit_image": (
+        "block-definition-v2-be5bd288",
+        "sha256:b0b3becb6fc65d9669567a2d8cb8fdd8a0922d3ebf34e6cd1e38db55ee279aba",
+    ),
+    "diffusers.cluster-admission:Flux2KleinKVPipeline:multi_image_reference_edit:mode:multi_image_reference_edit": (
+        "block-definition-v2-dee1170f",
+        "sha256:1c02f6015dcd96a871cc73957c0d07b56515a7d96e6f5066d0ae36a1e7a8127e",
+    ),
+    "diffusers.cluster-admission:Flux2KleinKVPipeline:text_to_image:mode:text_to_image": (
+        "block-definition-v2-43a76702",
+        "sha256:f748049784ddd76da53b8964d64a5708d9bfeec78673b1354c58c24ec47cda55",
+    ),
+    "diffusers.cluster-admission:FluxControlNetImg2ImgPipeline:control_edit_image:mode:control_edit_image": (
+        "block-definition-v2-1d1f7ba8",
+        "sha256:f1ced8f5d7a2d236f49edbaa7305bd6aa2d6d687f0ae526a32aade06235292eb",
+    ),
+    "diffusers.cluster-admission:FluxControlNetInpaintPipeline:control_inpaint:mode:control_inpaint": (
+        "block-definition-v2-72285fb3",
+        "sha256:ea56ac900ca1d08f3301715267e7b07c745852e7756097ebffaa05cd21432e28",
+    ),
+    "diffusers.cluster-admission:FluxControlNetPipeline:control_image:mode:control_image": (
+        "block-definition-v2-08c46ac3",
+        "sha256:f03eabf30f80f2dae9c3977263490698dcc7cb72da416f6f63b6569d2a45b7a9",
     ),
     "diffusers.cluster-admission:Flux2KleinBaseModularPipeline:image_conditioned:mode:edit_image": (
         "block-definition-v2-6e4f2796",
@@ -188,13 +222,13 @@ _LEGACY_REGISTERED_BLOCK_V2_DEFINITION_PINS: Mapping[str, tuple[str, str]] = {
         "block-definition-v2-4e6ba70c",
         "sha256:ab57fb06f35d74b7f14909d9da9a46eadb0ce00300500e89ec668b16ed1bb507",
     ),
-    "diffusers.cluster-admission:Flux2ModularPipeline:image_conditioned:mode:equivalent_standard_route": (
-        "block-definition-v2-3f971efd",
-        "sha256:fb77b70e97e1daefbfcfe4a636ceb72fc1d6e462604d3bf963860a93e53a5286",
+    "diffusers.cluster-admission:Flux2ModularPipeline:image_conditioned:mode:edit_image": (
+        "block-definition-v2-45e2b3a1",
+        "sha256:9d135fb1efd896b6504fd8e370547abe78c672432ba852721ebdeb294fc6bf81",
     ),
-    "diffusers.cluster-admission:Flux2ModularPipeline:text2image:mode:equivalent_standard_route": (
-        "block-definition-v2-626b28a6",
-        "sha256:d9a6a962cff5d1830a10123034d6d8745cf8f15b64d5fa761ba4a972faacf5c7",
+    "diffusers.cluster-admission:Flux2ModularPipeline:text2image:mode:text_to_image": (
+        "block-definition-v2-345eadbe",
+        "sha256:5ea6fbc9a77c3570d8684366d6bc2347c2ec7d8e2e087e1d97ca8d111ec98796",
     ),
     "diffusers.cluster-admission:FluxKontextModularPipeline:image_conditioned:mode:edit_image": (
         "block-definition-v2-5b90216a",
@@ -709,7 +743,7 @@ def qualify_huggingface_cluster_expert_runtime(
         if definition.get("integrationStatus") == "reviewed_diffusers_composite":
             if (
                 definition.get("definitionKind") != "studio_execution_composite"
-                or profile.pipeline_class != model_type
+                or profile.pipeline_class != definition.get("blocksClass")
                 or (profile.loader_module, profile.loader_action)
                 != _DIRECT_LOADER_CONTRACTS.get(profile.execution_path)
                 or admission.get("sealedBindingValues", {}).get("pipelineClass") != profile.pipeline_class
@@ -772,7 +806,10 @@ def qualify_huggingface_cluster_expert_runtime(
     if selected_optional_requirement.get("requiredNow") is True and profile.id not in requirement_profiles:
         raise _invalid("the optional-runtime receipt does not name the exact execution profile.")
 
-    artifact = _effective_reviewed_artifact(admission, profile, payload.get("artifactRepo"))
+    artifact = _effective_reviewed_artifact(
+        admission, profile, payload.get("artifactRepo"),
+        workflow_id=str(definition.get("workflowId") or ""),
+    )
     artifact_status = artifact_revision_cache_status(
         str(artifact.get("repo") or ""),
         str(artifact.get("revision") or ""),
@@ -1018,6 +1055,7 @@ def qualify_huggingface_cluster_auto_authority(
         admission,
         profile,
         instance["values"].get("modelVariant"),
+        workflow_id=str(definition.get("workflowId") or ""),
     )
     repository = selected_artifact["repo"]
     repository_revision = selected_artifact["revision"]

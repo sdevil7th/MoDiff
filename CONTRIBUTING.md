@@ -4,6 +4,10 @@ MoDiff is an experimental local backend with a separately maintained frontend bu
 
 Before starting, read [SECURITY.md](SECURITY.md) and the relevant guide in [docs/README.md](docs/README.md).
 
+Before changing nodes, Blocks, graph persistence/execution, model qualification or
+integrating another machine's work, read and follow
+[Cluster engineering lessons and required procedure](docs/cluster-engineering-lessons.md).
+
 ## Development setup
 
 Use Python 3.12 and create the same managed CPU profile used by baseline CI:
@@ -82,6 +86,20 @@ uv pip check --python .venv/bin/python
 
 The wrapper applies the installed accelerator profile's process environment before Python imports Torch. On Windows, run `.venv/Scripts/python.exe` directly in the equivalent commands.
 
+To exercise tests requiring an **already installed and activated** optional
+runtime, use the verified entry point instead of adding a sealed site-packages
+directory to `PYTHONPATH` manually:
+
+```bash
+./scripts/with-runtime-env.sh .venv/bin/python scripts/test_reviewed_optional_runtime.py -q tests
+```
+
+It validates the active artifact-locked runtime through the normal startup
+boundary, performs no installation, and disables bytecode writes in this process
+and child generators. Generated `__pycache__` files inside a sealed overlay are
+integrity drift, not files to whitelist. Keep base-gate and optional-runtime
+results separate; skipped model-library tests are not execution coverage.
+
 On a host with Git Bash or a POSIX shell:
 
 ```bash
@@ -107,6 +125,18 @@ See [README.md](README.md#updating-the-bundled-client) for exact-mirror examples
 ## Documentation and change descriptions
 
 Update public documentation when commands, extras, routes, storage behavior, trust boundaries, or compatibility guarantees change. Keep claims proportional to the evidence actually run.
+
+Put lasting guidance in the relevant API, runtime, module, or troubleshooting
+guide and link it from `docs/README.md`. Keep dated execution trackers, private
+task IDs, raw logs, screenshots, recordings, and handoff notes outside public
+documentation. Local `reviews/`, `checkpoints/`, and `maintenance/` directories
+are ignored; sanitized evidence can be attached to the issue or pull request.
+
+Before committing, inspect `git status --short`, `git diff --cached --stat`, and
+`git diff --cached --check`, then review the staged content. Ignore rules do not
+remove already tracked files. Keep intentional fixtures, executable catalogs,
+and the checked frontend bundle; do not confuse these required artifacts with
+local reports, cache contents, or generated model output.
 
 A useful change description includes:
 

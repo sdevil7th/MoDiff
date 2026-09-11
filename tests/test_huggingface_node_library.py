@@ -31,14 +31,35 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
             if definition["pipelineClass"] == pipeline_class and definition["workflowId"] == workflow_id
         )
 
+    def test_cached_sound_generators_keep_exact_native_recipe_contracts(self):
+        for pipeline, label, duration, steps, guidance, sample_source, sample_rate in (
+            ("LongCatAudioDiTPipeline", "LongCat AudioDiT", 5, 16, 4.0, "sampleRate24000", 24000),
+            ("AudioLDM2Pipeline", "AudioLDM2", 10, 200, 3.5, "sampleRate16000", 16000),
+        ):
+            with self.subTest(pipeline=pipeline):
+                definition = self.definition(pipeline, "text_to_audio")
+                self.assertEqual(definition["definitionKind"], "studio_execution_composite")
+                self.assertEqual(definition["label"], f"{label} — Text To Audio")
+                fields = {field["name"]: field for field in definition["inputs"]}
+                self.assertNotIn("lyrics", fields)
+                self.assertEqual(fields["audio_duration"]["default"], duration)
+                self.assertEqual(fields["num_inference_steps"]["default"], steps)
+                self.assertEqual(fields["guidance_scale"]["default"], guidance)
+                admission = definition["executionAdmissions"][0]
+                self.assertEqual(admission["sealedBindingValues"][sample_source], sample_rate)
+                self.assertEqual(admission["sealedBindingValues"]["text2audio"], "text2audio")
+                self.assertFalse(admission["publication"]["autoEligible"])
+                if pipeline == "AudioLDM2Pipeline":
+                    self.assertEqual(admission["sealedBindingValues"]["numWaveforms3"], 3)
+
     def test_current_snapshot_builds_immutable_first_party_definitions(self):
         self.assertEqual(self.library["schemaVersion"], 6)
-        self.assertEqual(len(self.library["definitions"]), 103)
-        self.assertEqual(len(self.library["blockDefinitions"]), 511)
+        self.assertEqual(len(self.library["definitions"]), 135)
+        self.assertEqual(len(self.library["blockDefinitions"]), 559)
         self.assertEqual(self.library["providers"], ["diffusers", "transformers"])
         diffusers_definitions = [item for item in self.library["definitions"] if item["provider"] == "diffusers"]
         transformers_definitions = [item for item in self.library["definitions"] if item["provider"] == "transformers"]
-        self.assertEqual(len(diffusers_definitions), 95)
+        self.assertEqual(len(diffusers_definitions), 127)
         self.assertEqual(len(transformers_definitions), 8)
         for definition in diffusers_definitions:
             self.assertEqual(definition["schemaVersion"], 6)
@@ -103,8 +124,8 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
             admission for definition in self.library["definitions"] for admission in definition["executionAdmissions"]
         ]
 
-        self.assertEqual(len(admissions), 90)
-        self.assertEqual(sum(admission["status"] == "admitted" for admission in admissions), 90)
+        self.assertEqual(len(admissions), 122)
+        self.assertEqual(sum(admission["status"] == "admitted" for admission in admissions), 122)
         self.assertTrue(all(admission["executable"] is False for admission in admissions))
         self.assertTrue(
             all(definition["executionClaim"] == "discovery_only" for definition in self.library["definitions"])
@@ -165,8 +186,8 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
         adapter_definitions = [item for item in self.library["definitions"] if item["graphAdapterContracts"]]
         adapters = [adapter for definition in adapter_definitions for adapter in definition["graphAdapterContracts"]]
 
-        self.assertEqual(len(adapter_definitions), 103)
-        self.assertEqual(len(adapters), 107)
+        self.assertEqual(len(adapter_definitions), 135)
+        self.assertEqual(len(adapters), 139)
         self.assertTrue(all(definition["executionClaim"] == "discovery_only" for definition in adapter_definitions))
         flux = self.definition("FluxModularPipeline", "text2image")
         self.assertEqual(flux["graphAdapterContracts"][0]["actionSequence"], ["text_encoder", "denoise", "decoder"])
@@ -181,8 +202,8 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
         )
         flux2_text = self.definition("Flux2ModularPipeline", "text2image")
         flux2_image = self.definition("Flux2ModularPipeline", "image_conditioned")
-        self.assertEqual(flux2_text["integrationStatus"], "equivalent_standard_route")
-        self.assertEqual(flux2_image["integrationStatus"], "equivalent_standard_route")
+        self.assertEqual(flux2_text["integrationStatus"], "reviewed_modiff_contract")
+        self.assertEqual(flux2_image["integrationStatus"], "reviewed_modiff_contract")
         self.assertEqual(flux2_text["graphAdapterContracts"][0]["requiredInputs"], ["prompt"])
         self.assertEqual(flux2_image["graphAdapterContracts"][0]["requiredInputs"], ["image", "prompt"])
         helios_text = self.definition("HeliosModularPipeline", "text2video")
@@ -527,7 +548,7 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
             for definition in self.library["definitions"]
             if definition["provider"] == "diffusers" and definition["integrationStatus"] == "equivalent_standard_route"
         ]
-        self.assertEqual(len(equivalent_definitions), 11)
+        self.assertEqual(len(equivalent_definitions), 9)
         for definition in equivalent_definitions:
             referenced = {
                 definition["rootBlockDefinitionId"],

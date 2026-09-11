@@ -3,7 +3,9 @@ import inspect
 import logging
 import math
 import sys
+from contextlib import contextmanager
 from dataclasses import dataclass
+from functools import wraps
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +13,20 @@ import numpy as np
 from PIL import Image, ImageColor, ImageDraw, ImageFilter
 
 from modiff.NodeBase import NodeBase
+from modules.DiffusersImage.call_inputs import (
+    CALL_INPUT_ADDITIONS, CALL_INPUT_PARAMS, PIPELINE_CALL_INPUTS, apply_call_inputs, normalize_call_inputs,
+    record_image_call_inputs,
+)
+from modules.DiffusersImage.image_prompt_adapter import (
+    attach_image_prompt_adapters, image_prompt_adapter_config,
+    validate_image_prompt_adapters, validate_image_prompt_inputs, resolve_image_prompt_adapter_files,
+)
+from modules.DiffusersImage.control_components import (
+    CONTROL_PIPELINES, control_component_config, load_control_components,
+    normalize_control_inputs, validate_control_components,
+)
 from modiff.diffusers_offload import (
+    DEFAULT_GROUP_COMPONENTS,
     OFFLOAD_MODE_GROUP_CPU,
     OFFLOAD_MODE_GROUP_DISK,
     OFFLOAD_MODE_MODEL_CPU,
@@ -48,9 +63,11 @@ FLUX_FILL_REPO = "black-forest-labs/FLUX.1-Fill-dev"
 FLUX_DEPTH_REPO = "black-forest-labs/FLUX.1-Depth-dev"
 FLUX_CANNY_REPO = "black-forest-labs/FLUX.1-Canny-dev"
 FLUX_CANNY_REPAIR_REPO = "fuliucansheng/FLUX.1-Canny-dev-diffusers"
+FLUX_CONTROLNET_CANNY_REPO = "InstantX/FLUX.1-dev-Controlnet-Canny"
 FLUX_REDUX_REPO = "black-forest-labs/FLUX.1-Redux-dev"
 FLUX2_DEV_REPO = "black-forest-labs/FLUX.2-dev"
 FLUX2_KLEIN_REPO = "black-forest-labs/FLUX.2-klein-4B"
+FLUX2_KLEIN_KV_REPO = "black-forest-labs/FLUX.2-klein-9b-kv"
 Z_IMAGE_REPO = "Tongyi-MAI/Z-Image-Turbo"
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SDXL_TURBO_REPO = "stabilityai/sdxl-turbo"
@@ -127,7 +144,7 @@ class ImagePipelineAdapter:
     weight_variant: str | None = None
     component_dtype_overrides: tuple[tuple[str, str], ...] = ()
     prompt_embedding_dtype_component: str | None = None
-    prompt_prior_token_method: str | None = None
+    native_prompt_encoding: bool = False
     prompt_embedding_encoder_dtype: str | None = None
     prompt_embedding_mask_modes: frozenset[str] = frozenset()
     max_inference_steps: int = 100
@@ -140,6 +157,10 @@ class ImagePipelineAdapter:
     minimum_image_guidance_scale: float = 0.0
     default_image_guidance_scale: float = 1.5
     guidance_parameter: str | None = "guidance_scale"
+    secondary_guidance_parameter: str | None = None
+    secondary_guidance_default: float = 3.5
+    guidance_label: str = "Guidance"
+    secondary_guidance_label: str = "Secondary Guidance"
     image_guidance_parameter: str | None = "image_guidance_scale"
     ignored_generation_parameters: frozenset[str] = frozenset()
     rejected_input_fields: tuple[str, ...] = ()
@@ -196,6 +217,12 @@ class ImagePipelineAdapter:
             raise ValueError("The default image guidance scale must satisfy the reviewed adapter bounds.")
         if self.guidance_parameter is not None and not self.guidance_parameter:
             raise ValueError("A text guidance parameter cannot be blank.")
+        if self.secondary_guidance_parameter is not None:
+            if (self.secondary_guidance_parameter not in {"guidance_scale", "true_cfg_scale"}
+                    or self.secondary_guidance_parameter == self.guidance_parameter):
+                raise ValueError("Secondary guidance must declare a distinct reviewed upstream parameter.")
+            if not 0.0 <= self.secondary_guidance_default <= 20.0:
+                raise ValueError("Secondary guidance defaults must be bounded between zero and twenty.")
         if self.image_guidance_parameter is not None and not self.image_guidance_parameter:
             raise ValueError("An image guidance parameter cannot be blank.")
         if self.multi_image_strategy not in {
@@ -236,14 +263,10 @@ class ImagePipelineAdapter:
             or self.prompt_embedding_dtype_component != self.prompt_embedding_dtype_component.strip()
         ):
             raise ValueError("An image prompt-embedding dtype component must be a nonblank component name.")
-        if self.prompt_prior_token_method is not None and (
-            self.prompt_embedding_dtype_component is None
-            or not self.prompt_prior_token_method
-            or self.prompt_prior_token_method != self.prompt_prior_token_method.strip()
+        if type(self.native_prompt_encoding) is not bool or (
+            self.native_prompt_encoding and self.prompt_embedding_dtype_component is None
         ):
-            raise ValueError(
-                "An image prompt prior-token method requires a prompt-embedding dtype component and a nonblank name."
-            )
+            raise ValueError("Native prompt encoding requires a reviewed embedding dtype component.")
         if (self.prompt_embedding_encoder_dtype is None) != (not self.prompt_embedding_mask_modes):
             raise ValueError(
                 "Masked prompt-embedding modes and their encoder dtype must be declared together."
@@ -377,6 +400,10 @@ class ImagePipelineAdapter:
             and values.get("guidance_scale") is not None
         ):
             target[self.guidance_parameter] = values.get("guidance_scale")
+        if values.get("use_guidance_scale_2"):
+            if not self.secondary_guidance_parameter or not supports_arg(pipeline, self.secondary_guidance_parameter):
+                raise ValueError(f"{self.pipeline_class} does not support a secondary guidance override.")
+            target[self.secondary_guidance_parameter] = values["guidance_scale_2"]
         if (
             self.image_guidance_parameter
             and "image_guidance_scale" not in self.ignored_generation_parameters
@@ -401,15 +428,52 @@ class ImagePipelineAdapter:
         if self.max_input_image_size is not None and supports_arg(pipeline, "max_input_image_size"):
             target["max_input_image_size"] = self.max_input_image_size
 
-    def prepare_prompt_embeddings(self, pipeline: Any, values: dict[str, Any], target: dict[str, Any]) -> None:
+    @contextmanager
+    def prompt_encoding_context(self, pipeline: Any):
+        """Keep native validation/prior/encoding order while selecting embedding dtype."""
+        if not self.native_prompt_encoding:
+            yield
+            return
+        encode_prompt = getattr(pipeline, "encode_prompt", None)
+        component = getattr(pipeline, self.prompt_embedding_dtype_component, None)
+        component_dtype = getattr(component, "dtype", None)
+        if component is not None and component_dtype is None:
+            try:
+                component_dtype = next(component.parameters()).dtype
+            except (AttributeError, StopIteration):
+                component_dtype = None
+        if not callable(encode_prompt) or component_dtype is None:
+            raise RuntimeError(f"{self.pipeline_class} did not expose its reviewed native prompt-encoding boundary.")
+        signature = inspect.signature(encode_prompt)
+        if "dtype" not in signature.parameters:
+            raise RuntimeError(f"{self.pipeline_class} native prompt encoding does not expose dtype.")
+        had_instance_method = "encode_prompt" in vars(pipeline)
+        previous_instance_method = vars(pipeline).get("encode_prompt")
+
+        @wraps(encode_prompt)
+        def encode_at_component_dtype(*args, **kwargs):
+            bound = signature.bind(*args, **kwargs)
+            bound.arguments["dtype"] = component_dtype
+            return encode_prompt(*bound.args, **bound.kwargs)
+
+        pipeline.encode_prompt = encode_at_component_dtype
+        try:
+            yield
+        finally:
+            if had_instance_method:
+                pipeline.encode_prompt = previous_instance_method
+            else:
+                del pipeline.encode_prompt
+
+    def prepare_prompt_embeddings(self, pipeline: Any, values: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
         """Bridge a reviewed mixed-dtype prompt encoder to its denoising component."""
 
         component_name = self.prompt_embedding_dtype_component
-        if component_name is None:
-            return
+        if component_name is None or self.native_prompt_encoding:
+            return {}
         loaded_mode = getattr(pipeline, "_modiff_image_mode", None)
         if self.prompt_embedding_mask_modes and loaded_mode not in self.prompt_embedding_mask_modes:
-            return
+            return {}
         component = getattr(pipeline, component_name, None)
         component_dtype = getattr(component, "dtype", None)
         if component is not None and component_dtype is None:
@@ -467,31 +531,12 @@ class ImagePipelineAdapter:
             )
             target.pop("prompt", None)
             target.pop("negative_prompt", None)
-            return
+            return {'prompt': raw_prompt, 'negative_prompt': negative_prompt,
+                    'max_sequence_length': values['max_sequence_length']}
 
         encode_prompt = getattr(pipeline, "encode_prompt", None)
         if not callable(encode_prompt):
             raise RuntimeError(f"{self.pipeline_class} did not expose its reviewed prompt-embedding bridge.")
-        if self.prompt_prior_token_method is not None:
-            generate_prior_tokens = getattr(pipeline, self.prompt_prior_token_method, None)
-            if not callable(generate_prior_tokens):
-                raise RuntimeError(
-                    f"{self.pipeline_class} did not expose its reviewed {self.prompt_prior_token_method} prompt bridge."
-                )
-            prior = generate_prior_tokens(
-                prompt=raw_prompt,
-                image=target.get("image"),
-                height=target.get("height"),
-                width=target.get("width"),
-                device=getattr(pipeline, "_execution_device", None),
-                generator=target.get("generator"),
-            )
-            if not isinstance(prior, tuple) or len(prior) != 3:
-                raise RuntimeError(
-                    f"{self.pipeline_class} returned an invalid reviewed prior-token bridge result."
-                )
-            target["prior_token_ids"], target["prior_token_image_ids"], target["source_image_grid_thw"] = prior
-
         guidance_scale = float(target.get(self.guidance_parameter or "guidance_scale", 0.0))
         with torch.no_grad():
             prompt_embeds, negative_prompt_embeds = encode_prompt(
@@ -504,10 +549,9 @@ class ImagePipelineAdapter:
             )
         target["prompt_embeds"] = prompt_embeds
         target["negative_prompt_embeds"] = negative_prompt_embeds
-        # Upstream pipelines reject raw prompt text together with prepared
-        # embeddings. GLM separately consumes the prompt for prior tokens, so
-        # that reviewed bridge must complete before the raw prompt is removed.
+        # Upstream pipelines reject raw prompt text together with prepared embeddings.
         target.pop("prompt", None)
+        return {'prompt': raw_prompt, 'max_sequence_length': values['max_sequence_length']}
 
 
 IMAGE_PIPELINE_ADAPTERS = {
@@ -1051,11 +1095,12 @@ IMAGE_PIPELINE_ADAPTERS = {
         # The reviewed GLM checkpoint keeps its Transformers text encoder in
         # float32. Its upstream pipeline derives ``self.dtype`` from that first
         # component even though the diffusion transformer is bfloat16, so the
-        # adapter pre-encodes and explicitly casts prompt embeddings at the
-        # transformer boundary before the upstream denoising call.
+        # adapter selects the transformer dtype during native prompt encoding.
+        # Keeping the native order permits different positive/negative glyph
+        # lengths without padding or the API's precomputed-shape restriction.
         component_dtype_overrides=(("text_encoder", "float32"),),
         prompt_embedding_dtype_component="transformer",
-        prompt_prior_token_method="generate_prior_tokens",
+        native_prompt_encoding=True,
         max_inference_steps=50,
         min_output_side=1024,
         max_output_side=1024,
@@ -1280,6 +1325,9 @@ IMAGE_PIPELINE_ADAPTERS = {
         compatible_repos=frozenset({FLUX_DEV_REPO, FLUX_DEV_FP8_REPO, FLUX_KREA_REPO}),
         safe_serialization_required=True,
         guidance_parameter="true_cfg_scale",
+        secondary_guidance_parameter="guidance_scale",
+        guidance_label="True CFG",
+        secondary_guidance_label="Distilled Guidance",
     ),
     "Flux2Pipeline": ImagePipelineAdapter(
         "Flux2Pipeline",
@@ -1302,6 +1350,16 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("Flux2KleinPipeline", "Flux2KleinInpaintPipeline"),
         safe_serialization_required=True,
     ),
+    "Flux2KleinKVPipeline": ImagePipelineAdapter(
+        "Flux2KleinKVPipeline",
+        frozenset({"text_to_image", "edit_image", "multi_image_reference_edit"}),
+        FLUX2_KLEIN_KV_REPO,
+        safe_serialization_required=True,
+        guidance_parameter=None,
+        image_guidance_parameter=None,
+        max_reference_images=8,
+        min_output_side=64,
+    ),
     "FluxImg2ImgPipeline": ImagePipelineAdapter(
         "FluxImg2ImgPipeline",
         frozenset({"edit_image"}),
@@ -1310,6 +1368,9 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("FluxPipeline", "FluxImg2ImgPipeline"),
         safe_serialization_required=True,
         guidance_parameter="true_cfg_scale",
+        secondary_guidance_parameter="guidance_scale",
+        guidance_label="True CFG",
+        secondary_guidance_label="Distilled Guidance",
     ),
     "FluxInpaintPipeline": ImagePipelineAdapter(
         "FluxInpaintPipeline",
@@ -1319,6 +1380,9 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("FluxPipeline", "FluxInpaintPipeline"),
         safe_serialization_required=True,
         guidance_parameter="true_cfg_scale",
+        secondary_guidance_parameter="guidance_scale",
+        guidance_label="True CFG",
+        secondary_guidance_label="Distilled Guidance",
     ),
     "FluxFillPipeline": ImagePipelineAdapter(
         "FluxFillPipeline",
@@ -1326,6 +1390,52 @@ IMAGE_PIPELINE_ADAPTERS = {
         FLUX_FILL_REPO,
         safe_serialization_required=True,
         maximum_guidance_scale=30.0,
+    ),
+    "FluxControlNetPipeline": ImagePipelineAdapter(
+        "FluxControlNetPipeline",
+        frozenset({"control_image"}),
+        FLUX_DEV_REPO,
+        artifact_pipeline_classes=("FluxPipeline", "FluxControlNetPipeline"),
+        safe_serialization_required=True,
+        secondary_guidance_parameter="true_cfg_scale",
+        secondary_guidance_default=1.0,
+        guidance_label="Distilled Guidance",
+        secondary_guidance_label="True CFG",
+        conditioning_kind="controlnet",
+        default_conditioning_repo=FLUX_CONTROLNET_CANNY_REPO,
+        conditioning_component_class="FluxControlNetModel",
+        conditioning_component_parameter="controlnet",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
+        conditioning_config_requirements=(("in_channels", 64), ("joint_attention_dim", 4096),
+                                         ("pooled_projection_dim", 768)),
+    ),
+    "FluxControlNetImg2ImgPipeline": ImagePipelineAdapter(
+        "FluxControlNetImg2ImgPipeline",
+        frozenset({"control_edit_image"}),
+        FLUX_DEV_REPO,
+        artifact_pipeline_classes=("FluxPipeline", "FluxControlNetImg2ImgPipeline"),
+        safe_serialization_required=True,
+        conditioning_kind="controlnet",
+        default_conditioning_repo=FLUX_CONTROLNET_CANNY_REPO,
+        conditioning_component_class="FluxControlNetModel",
+        conditioning_component_parameter="controlnet",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
+        conditioning_config_requirements=(("in_channels", 64), ("joint_attention_dim", 4096),
+                                         ("pooled_projection_dim", 768)),
+    ),
+    "FluxControlNetInpaintPipeline": ImagePipelineAdapter(
+        "FluxControlNetInpaintPipeline",
+        frozenset({"control_inpaint"}),
+        FLUX_DEV_REPO,
+        artifact_pipeline_classes=("FluxPipeline", "FluxControlNetInpaintPipeline"),
+        safe_serialization_required=True,
+        conditioning_kind="controlnet",
+        default_conditioning_repo=FLUX_CONTROLNET_CANNY_REPO,
+        conditioning_component_class="FluxControlNetModel",
+        conditioning_component_parameter="controlnet",
+        conditioning_scale_parameter="controlnet_conditioning_scale",
+        conditioning_config_requirements=(("in_channels", 64), ("joint_attention_dim", 4096),
+                                         ("pooled_projection_dim", 768)),
     ),
     "FluxControlPipeline": ImagePipelineAdapter(
         "FluxControlPipeline",
@@ -1342,6 +1452,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         compatible_repos=frozenset({FLUX_CANNY_REPO, FLUX_CANNY_REPAIR_REPO}),
         artifact_pipeline_classes=("FluxControlPipeline", "FluxControlImg2ImgPipeline"),
         safe_serialization_required=True,
+        maximum_guidance_scale=30.0,
     ),
     "FluxControlInpaintPipeline": ImagePipelineAdapter(
         "FluxControlInpaintPipeline",
@@ -1350,6 +1461,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         compatible_repos=frozenset({FLUX_CANNY_REPO, FLUX_CANNY_REPAIR_REPO}),
         artifact_pipeline_classes=("FluxControlPipeline", "FluxControlInpaintPipeline"),
         safe_serialization_required=True,
+        maximum_guidance_scale=30.0,
     ),
     "FluxKontextPipeline": ImagePipelineAdapter(
         "FluxKontextPipeline",
@@ -1358,6 +1470,10 @@ IMAGE_PIPELINE_ADAPTERS = {
         compatible_repos=frozenset({FLUX_KONTEXT_NVFP4_REPO}),
         safe_serialization_required=True,
         guidance_parameter="true_cfg_scale",
+        secondary_guidance_parameter="guidance_scale",
+        secondary_guidance_default=2.5,
+        guidance_label="True CFG",
+        secondary_guidance_label="Distilled Guidance",
         multi_image_strategy="stitch_horizontal",
         max_reference_images=8,
     ),
@@ -1369,6 +1485,10 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("FluxKontextPipeline", "FluxKontextInpaintPipeline"),
         safe_serialization_required=True,
         guidance_parameter="true_cfg_scale",
+        secondary_guidance_parameter="guidance_scale",
+        secondary_guidance_default=2.5,
+        guidance_label="True CFG",
+        secondary_guidance_label="Distilled Guidance",
     ),
     # Virtual adapter class: FLUX Redux is a prior that supplies embeddings to
     # a base FLUX pipeline, not a standalone img2img checkpoint.
@@ -1912,6 +2032,10 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     "Flux2KleinInpaintPipeline": {
         mode: _image_field_contract(*_SIZE_GUIDANCE_STRENGTH_CROP_SEQUENCE) for mode in ("inpaint", "outpaint")
     },
+    "Flux2KleinKVPipeline": {
+        mode: _image_field_contract("width", "height", "max_sequence_length")
+        for mode in ("text_to_image", "edit_image", "multi_image_reference_edit")
+    },
     "FluxImg2ImgPipeline": {
         "edit_image": _image_field_contract(*_NEGATIVE_SIZE_GUIDANCE_STRENGTH_SEQUENCE),
     },
@@ -1920,6 +2044,19 @@ IMAGE_MODE_FIELD_CONTRACTS = {
     },
     "FluxFillPipeline": {
         mode: _image_field_contract(*_SIZE_GUIDANCE_STRENGTH_SEQUENCE) for mode in ("inpaint", "outpaint")
+    },
+    "FluxControlNetPipeline": {
+        "control_image": _image_field_contract("negative_prompt", "width", "height", "guidance_scale",
+            "max_sequence_length", "conditioning_scale", "control_guidance_start", "control_guidance_end"),
+    },
+    "FluxControlNetImg2ImgPipeline": {
+        "control_edit_image": _image_field_contract("width", "height", "guidance_scale", "strength",
+            "max_sequence_length", "conditioning_scale", "control_guidance_start", "control_guidance_end"),
+    },
+    "FluxControlNetInpaintPipeline": {
+        "control_inpaint": _image_field_contract("width", "height", "guidance_scale", "strength",
+            "padding_mask_crop", "max_sequence_length", "conditioning_scale",
+            "control_guidance_start", "control_guidance_end"),
     },
     "FluxControlPipeline": {
         "control_image": _image_field_contract(*_SIZE_GUIDANCE_SEQUENCE),
@@ -1983,11 +2120,6 @@ def get_image_mode_field_contract(adapter: ImagePipelineAdapter, mode: str) -> I
 
 
 _REMOVED_IMAGE_PIPELINE_ERRORS = {
-    "FluxControlNetPipeline": (
-        "FluxControlNetPipeline requires a separately loaded FluxControlNetModel, but the generic Diffusers image "
-        "loader does not yet expose that component-assembly contract. Use FluxControlPipeline for the self-contained "
-        "FLUX Depth/Canny checkpoints until generic ControlNet assembly is available."
-    ),
     "StableDiffusionAdapterPipeline": (
         "StableDiffusionAdapterPipeline requires a separately loaded T2IAdapter. The reviewed official SD1.5 "
         "Canny adapter currently publishes legacy PyTorch .bin weights only, so MoDiff cannot expose an exact "
@@ -2207,6 +2339,15 @@ def resolve_image_conditioning_selection(
     return {"source": "hub", "value": canonical_repository}, resolved_revision
 
 
+def _loader_conditioning_selection(adapter, values):
+    configs = values.get('control_components')
+    if configs is not None:
+        validate_control_components(adapter.load_pipeline_class, configs)
+        return {'source': 'hub', 'value': configs[0].repository}, configs[0].revision
+    return resolve_image_conditioning_selection(adapter, values.get('conditioning_kind'),
+        values.get('conditioning_model_id'), values.get('conditioning_revision'))
+
+
 def image_model_field_options(adapter: ImagePipelineAdapter) -> dict[str, Any]:
     classes = list(adapter.model_filter_classes)
     return {
@@ -2219,9 +2360,69 @@ def image_model_field_options(adapter: ImagePipelineAdapter) -> dict[str, Any]:
     }
 
 
+def image_loader_field_params(adapter: ImagePipelineAdapter) -> dict[str, dict[str, Any]]:
+    """Selected loader presentation shared by ordinary fields and compiled Blocks.
+
+    This publishes schema only. Existing model/component/revision values are
+    never reseeded by compiling or by an unrelated field update.
+    """
+    has_conditioning = adapter.conditioning_kind is not None
+    return {
+        "mode": {"options": list(adapter.mode_options), "default": adapter.mode_options[0]},
+        "model_id": {"fieldOptions": image_model_field_options(adapter)},
+        "conditioning_kind": {"hidden": not has_conditioning,
+                              "options": [adapter.conditioning_kind] if has_conditioning else ["none"]},
+        "conditioning_model_id": {
+            "hidden": not has_conditioning,
+            "fieldOptions": {"noValidation": True, "sources": ["hub"],
+                "filter": {"hub": {"className": [adapter.conditioning_component_class]
+                                   if has_conditioning else []}}},
+        },
+        "conditioning_revision": {"hidden": not has_conditioning},
+    }
+
+
+_LATENT_OUTPUT_PIPELINES = frozenset(PIPELINE_CALL_INPUTS) - {'FluxReduxPipeline'}
+
+
+def _image_output_options(adapter: ImagePipelineAdapter, action: str) -> list[str]:
+    options = ['pil'] if action in {'Inpaint', 'ControlInpaint'} else (
+        ['pil', 'np'] if action == 'LayerDecompose' else ['pil', 'np', 'pt'])
+    if adapter.load_pipeline_class in _LATENT_OUTPUT_PIPELINES:
+        options = ['pil', 'np', 'pt', 'latent']
+    return options
+
+
+def _image_or_latent_result(result: Any, values: dict[str, Any]) -> dict[str, Any]:
+    output = getattr(result, 'images', result)
+    if values['output_type'] == 'latent':
+        import torch
+        if not isinstance(output, torch.Tensor) or output.ndim < 3:
+            raise ValueError('output_type=latent requires an upstream latent tensor with at least three dimensions.')
+        # Packed sequence lengths are not pixel dimensions. Preserve the exact
+        # upstream layout/storage; never feed these values to image consumers.
+        return {'images': None, 'latents_out': output, 'width_out': None, 'height_out': None}
+    width, height = output_image_dimensions(output, values['output_type'])
+    return {'images': output, 'latents_out': None,
+            'width_out': width if width is not None else values['width'],
+            'height_out': height if height is not None else values['height']}
+
+
 def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[str, Any]:
     field_contract = get_image_mode_field_contract(adapter, mode)
     field_params = field_contract.field_param_overlay()
+    for key in PIPELINE_CALL_INPUTS.get(adapter.load_pipeline_class, ()):
+        field_params[key] = {"hidden": False}
+    if adapter.secondary_guidance_parameter is not None:
+        field_params["guidance_scale"] = {**field_params["guidance_scale"], "label": adapter.guidance_label}
+        field_params["use_guidance_scale_2"] = {
+            "hidden": False, "label": f"Override {adapter.secondary_guidance_label}", "default": False,
+        }
+        field_params["guidance_scale_2"] = {
+            "hidden": False, "label": adapter.secondary_guidance_label,
+            "default": adapter.secondary_guidance_default,
+            "description": "Used only when its override toggle is enabled; otherwise retain the upstream default.",
+        }
     if adapter.maximum_guidance_scale != 20.0:
         field_params["guidance_scale"] = {
             **field_params["guidance_scale"],
@@ -2261,6 +2462,10 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
         action: [candidate for candidate in adapter.mode_options if candidate in accepted_modes]
         for action, accepted_modes in IMAGE_ACTION_MODES.items()
     }
+    if adapter.load_pipeline_class in _LATENT_OUTPUT_PIPELINES:
+        action = next(action for action, modes in actions.items() if mode in modes)
+        field_params['output_type'] = {'options': _image_output_options(adapter, action)}
+        field_params['latents_out'] = {'hidden': False}
     contract = {
         "schemaVersion": 1,
         "library": "diffusers",
@@ -2291,6 +2496,54 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
             "farValue": 1.0,
         }
     return contract
+
+
+def _compatible_image_contract(signal: Any, expected: dict[str, Any]) -> bool:
+    """Accept only the exact pre-secondary-guidance form, never arbitrary drift.
+
+    These five existing pipelines keep their original guidance argument mapping.
+    Missing opt-in controls are presentation-only and cannot enable an override.
+    Other pipelines and all identity/action/port fields still require equality.
+    """
+    if signal == expected:
+        return True
+    if expected["pipelineClass"] in {"FluxControlImg2ImgPipeline", "FluxControlInpaintPipeline"} and expected["fieldParams"]["guidance_scale"].get("max") == 30.0:
+        # Earlier saved contracts lacked the model-card guidance bound. Accept
+        # that exact presentation (including older optional-field generations)
+        # without rewriting saved controls or accepting identity/port drift.
+        previous = {**expected, "fieldParams": {**expected["fieldParams"],
+            "guidance_scale": {key: value for key, value in expected["fieldParams"]["guidance_scale"].items()
+                               if key != "max"}}}
+        if _compatible_image_contract(signal, previous):
+            return True
+    previous_fields = dict(expected["fieldParams"])
+    # Redux acquired these prior inputs after its scale controls. Other FLUX
+    # pipelines already exposed them: do not admit a partial contract there.
+    if expected["pipelineClass"] == "FluxReduxPipeline":
+        previous_fields = {key: value for key, value in previous_fields.items()
+                           if key not in {"prompt_2", "prompt_embeds", "pooled_prompt_embeds"}}
+        if signal == {**expected, "fieldParams": previous_fields}:
+            return True
+    for added_fields in reversed(CALL_INPUT_ADDITIONS):
+        previous_fields = {key: value for key, value in previous_fields.items() if key not in added_fields}
+        if signal == {**expected, "fieldParams": previous_fields}:
+            return True
+    # Optional sockets are absent on historical definitions. Accept only their
+    # exact prior presentation, never unrelated identity/action/field drift.
+    fields_without_optional = {key: value for key, value in previous_fields.items()
+                               if key not in CALL_INPUT_PARAMS}
+    previous = {**expected, "fieldParams": fields_without_optional}
+    if signal == previous:
+        return True
+    if expected["pipelineClass"] not in {
+        "FluxPipeline", "FluxImg2ImgPipeline", "FluxInpaintPipeline",
+        "FluxKontextPipeline", "FluxKontextInpaintPipeline",
+    }:
+        return False
+    legacy_fields = {key: dict(value) for key, value in fields_without_optional.items()
+                     if key not in {"guidance_scale_2", "use_guidance_scale_2"}}
+    legacy_fields["guidance_scale"].pop("label", None)
+    return signal == {**expected, "fieldParams": legacy_fields}
 
 
 DEFAULT_IMAGE_PIPELINE_CONTRACT = image_pipeline_contract(
@@ -2325,6 +2578,11 @@ def _tag_image_pipeline(
     setattr(pipeline, "_modiff_image_source", source)
     setattr(pipeline, "_modiff_image_revision", revision)
     if adapter.conditioning_kind is not None:
+        configured_components = getattr(pipeline, '_modiff_control_components', None)
+        if configured_components is not None:
+            validate_control_components(adapter.load_pipeline_class, configured_components)
+            conditioning_repo = configured_components[0].repository
+            conditioning_revision = configured_components[0].revision
         setattr(pipeline, "_modiff_conditioning_kind", adapter.conditioning_kind)
         setattr(pipeline, "_modiff_conditioning_component_class", adapter.conditioning_component_class)
         setattr(pipeline, "_modiff_conditioning_repo", conditioning_repo)
@@ -2658,6 +2916,28 @@ def preflight_image_action(
             "Use only the backend-owned generic image contract."
         )
     values = dict(kwargs)
+    optional_inputs = normalize_call_inputs(adapter.load_pipeline_class, values)
+    values.update(optional_inputs)
+    validate_image_prompt_inputs(pipeline, optional_inputs)
+    for field in ('ip_adapter_image', 'negative_ip_adapter_image'):
+        if field in optional_inputs:
+            images = optional_inputs[field]
+            # An outer list selects adapters; an inner list is an image batch.
+            flat = [image for group in images for image in (group if isinstance(group, list) else [group])] if isinstance(images, list) else images
+            _validate_image_media(flat, field=field, max_items=8, max_pixels=16 * 1024 * 1024)
+    if "image_reference" in optional_inputs:
+        _validate_image_media(optional_inputs["image_reference"], field="image_reference",
+                              max_items=adapter.max_reference_images,
+                              max_pixels=adapter.max_reference_pixels)
+    use_secondary = values.get("use_guidance_scale_2", False)
+    if type(use_secondary) is not bool:
+        raise ValueError("use_guidance_scale_2 must be a boolean.")
+    if use_secondary and adapter.secondary_guidance_parameter is None:
+        raise ValueError(f"{adapter.pipeline_class} does not support a secondary guidance override.")
+    values["use_guidance_scale_2"] = use_secondary
+    if use_secondary:
+        values["guidance_scale_2"] = _bounded_image_float(values.get("guidance_scale_2"),
+            field="guidance_scale_2", default=adapter.secondary_guidance_default, minimum=0.0, maximum=20.0)
     values["pipeline"] = pipeline
     values["prompt"] = _normalized_image_prompt(values.get("prompt"), field="prompt")
     values["negative_prompt"] = _normalized_image_prompt(
@@ -2686,6 +2966,13 @@ def preflight_image_action(
             f"{adapter.pipeline_class} output cannot exceed {adapter.max_output_pixels} pixels; "
             f"received {values['width']}x{values['height']} ({output_pixels} pixels)."
         )
+    if "num_images_per_prompt" in optional_inputs or "prompt_embeds" in optional_inputs:
+        prompt_batch = len(values["prompt"]) if isinstance(values["prompt"], list) else 1
+        if "prompt_embeds" in optional_inputs:
+            prompt_batch = optional_inputs["prompt_embeds"].shape[0]
+        image_count = prompt_batch * optional_inputs.get("num_images_per_prompt", 1)
+        if image_count > 8 or image_count * output_pixels > 16 * 1024 * 1024:
+            raise ValueError("num_images_per_prompt and prompt batch must produce at most 8 images and 16 megapixels in total.")
     values["seed"] = _bounded_image_int(values.get("seed"), field="seed", default=0, minimum=0, maximum=4294967295)
     values["num_inference_steps"] = _bounded_image_int(
         values.get("num_inference_steps"),
@@ -2747,29 +3034,17 @@ def preflight_image_action(
         minimum=0.0,
         maximum=1.0,
     )
-    values["conditioning_scale"] = _bounded_image_float(
-        values.get("conditioning_scale"),
-        field="conditioning_scale",
-        default=1.0,
-        minimum=0.0,
-        maximum=2.0,
-    )
-    values["control_guidance_start"] = _bounded_image_float(
-        values.get("control_guidance_start"),
-        field="control_guidance_start",
-        default=0.0,
-        minimum=0.0,
-        maximum=1.0,
-    )
-    values["control_guidance_end"] = _bounded_image_float(
-        values.get("control_guidance_end"),
-        field="control_guidance_end",
-        default=1.0,
-        minimum=0.0,
-        maximum=1.0,
-    )
-    if values["control_guidance_start"] > values["control_guidance_end"]:
-        raise ValueError("Diffusers image control guidance start cannot exceed its end.")
+    control_media = values.get('control_image')
+    control_max_items = 1
+    if adapter.load_pipeline_class in CONTROL_PIPELINES:
+        control_media, control_max_items = normalize_control_inputs(pipeline, values)
+    else:
+        for field, default, maximum in [('conditioning_scale', 1., 2.),
+                ('control_guidance_start', 0., 1.), ('control_guidance_end', 1., 1.)]:
+            values[field] = _bounded_image_float(values.get(field), field=field,
+                default=default, minimum=0., maximum=maximum)
+        if values["control_guidance_start"] > values["control_guidance_end"]:
+            raise ValueError("Diffusers image control guidance start cannot exceed its end.")
     if adapter.layer_resolutions:
         values["layers"] = _bounded_image_int(
             values.get("layers"),
@@ -2803,17 +3078,13 @@ def preflight_image_action(
     output_type = (
         "pil" if "output_type" not in values or values.get("output_type") is None else values.get("output_type")
     )
-    allowed_output_types = (
-        {"pil"}
-        if action in {"Inpaint", "ControlInpaint"}
-        else {"pil", "np"}
-        if action == "LayerDecompose"
-        else {"pil", "np", "pt"}
-    )
+    allowed_output_types = _image_output_options(adapter, action)
     if not isinstance(output_type, str) or output_type not in allowed_output_types:
         allowed = ", ".join(sorted(allowed_output_types))
         raise ValueError(f"Diffusers image {action} output_type must be exactly one of: {allowed}.")
     values["output_type"] = output_type
+    if output_type != 'pil' and values['padding_mask_crop']:
+        raise ValueError('padding_mask_crop requires PIL image output. Set it to 0 for a tensor, array or latent output.')
 
     if action == "LayerDecompose":
         if not isinstance(values["prompt"], str) or not isinstance(values["negative_prompt"], str):
@@ -2845,9 +3116,9 @@ def preflight_image_action(
             max_pixels=adapter.max_reference_pixels,
         )
         _validate_image_media(
-            values.get("control_image"),
+            control_media,
             field="Control edit control image",
-            max_items=1,
+            max_items=control_max_items,
             max_pixels=adapter.max_reference_pixels,
         )
     elif action in {"Inpaint", "ControlInpaint"}:
@@ -2869,16 +3140,16 @@ def preflight_image_action(
         )
         if action == "ControlInpaint":
             _validate_image_media(
-                values.get("control_image"),
+                control_media,
                 field="Control inpaint control image",
-                max_items=1,
+                max_items=control_max_items,
                 max_pixels=adapter.max_reference_pixels,
             )
     elif action == "ControlGenerate":
         _validate_image_media(
-            values.get("control_image"),
+            control_media,
             field="Control image",
-            max_items=1,
+            max_items=control_max_items,
             max_pixels=adapter.max_reference_pixels,
         )
     return adapter, values
@@ -3538,6 +3809,11 @@ class FluxReduxPipelineBundle:
         callback_on_step_end=None,
         callback_on_step_end_tensor_inputs=None,
         reference_strength=1.0,
+        prompt_embeds_scale=None,
+        pooled_prompt_embeds_scale=None,
+        prompt_2=None,
+        prompt_embeds=None,
+        pooled_prompt_embeds=None,
     ):
         # FluxPriorReduxPipeline produces the exact reference/text embeddings
         # consumed by FluxPipeline. For multiple images, current Diffusers
@@ -3550,6 +3826,21 @@ class FluxReduxPipelineBundle:
             reference_scales = [1.0, *([secondary_strength] * (len(image) - 1))]
             prior_kwargs["prompt_embeds_scale"] = reference_scales
             prior_kwargs["pooled_prompt_embeds_scale"] = reference_scales
+        prior_inputs = normalize_call_inputs("FluxReduxPipeline", {
+            "prompt_embeds_scale": prompt_embeds_scale,
+            "pooled_prompt_embeds_scale": pooled_prompt_embeds_scale,
+            "prompt_2": prompt_2,
+            "prompt_embeds": prompt_embeds,
+            "pooled_prompt_embeds": pooled_prompt_embeds,
+        })
+        image_count = len(image) if isinstance(image, (list, tuple)) else (
+            int(image.shape[0]) if hasattr(image, "shape") and len(image.shape) == 4 else 1
+        )
+        for key in ("prompt_embeds_scale", "pooled_prompt_embeds_scale"):
+            scale = prior_inputs.get(key)
+            if isinstance(scale, list) and len(scale) != image_count:
+                raise ValueError(f"{key} requires one scale per reference: {image_count} images, {len(scale)} scales.")
+        apply_call_inputs(prior_inputs, prior_kwargs)
         prior_output = self.prior(**prior_kwargs)
         prompt_embeds = prior_output.prompt_embeds
         pooled_prompt_embeds = prior_output.pooled_prompt_embeds
@@ -3571,6 +3862,97 @@ class FluxReduxPipelineBundle:
         if callback_on_step_end_tensor_inputs is not None:
             base_kwargs["callback_on_step_end_tensor_inputs"] = callback_on_step_end_tensor_inputs
         return self.base(**base_kwargs)
+
+
+class ImagePromptAdapter(NodeBase):
+    """Configure pinned IP-Adapter files for a separately owned image pipeline."""
+
+    label = "Image Prompt Adapter"
+    category = "Diffusers Image"
+    resizable = True
+    params = {
+        "previous": {"label": "Previous adapters", "display": "input", "type": "diffusers_image_prompt_adapter"},
+        "adapter_model": {"label": "Adapter Model", "display": "modelselect", "type": "string",
+            "value": {"source": "hub", "value": "XLabs-AI/flux-ip-adapter"},
+            "fieldOptions": {"noValidation": True, "sources": ["hub"]}},
+        "revision": {"label": "Adapter Revision", "type": "string", "default": "18f6940238ab5dc3744df7a8e30315892279d5f9"},
+        "weight_name": {"label": "Adapter Weight File", "type": "string", "default": "ip_adapter.safetensors"},
+        "expected_sha256": {"label": "Adapter SHA-256", "type": "string", "default": "750f912149b84bbb0c2a6ce90ffa7e78afd1795821407718724ebcd36372dc2d"},
+        "image_encoder_model": {"label": "Vision Encoder", "display": "modelselect", "type": "string",
+            "value": {"source": "hub", "value": "openai/clip-vit-large-patch14"},
+            "fieldOptions": {"noValidation": True, "sources": ["hub"]}},
+        "image_encoder_revision": {"label": "Encoder Revision", "type": "string", "default": "32bd64288804d66eefd0ccbe215aa642df71cc41"},
+        "image_encoder_sha256": {"label": "Encoder SHA-256", "type": "string", "default": "a2bf730a0c7debf160f7a6b50b3aaf3703e7e88ac73de7a314903141db026dcb"},
+        "scale": {"label": "Scale", "type": "float", "default": 0.6, "min": -100, "max": 100, "step": 0.05},
+        "layer_scales": {"label": "Per-layer Scales", "display": "input", "type": "float",
+            "description": "Optional list, one scale per transformer block. Overrides this adapter's scalar only."},
+        "adapters": {"label": "Image Prompt Adapter", "display": "output", "type": "diffusers_image_prompt_adapter"},
+    }
+
+    def __call__(self, **kwargs):
+        # NodeBase's instance params hold previous values after construction;
+        # defaults always belong to the immutable class declaration.
+        values = {key: field.get('default', field.get('value')) for key, field in type(self).params.items()
+                  if field.get('display') != 'output'}
+        values.update(kwargs)
+        image_prompt_adapter_config(values)
+        return super().__call__(**values)
+
+    def execute(self, **kwargs):
+        return {'adapters': image_prompt_adapter_config(kwargs)}
+
+
+class ControlComponent(NodeBase):
+    """Configure one pinned ControlNet; chain configurations for a shared loader."""
+    label = "Control Component"
+    category = "Diffusers Image"
+    resizable = True
+    params = {
+        'previous': {'label': 'Previous components', 'display': 'input', 'type': 'diffusers_control_components'},
+        'model_id': {'label': 'Control Model', 'display': 'modelselect', 'type': 'string',
+            'value': {'source': 'hub', 'value': FLUX_CONTROLNET_CANNY_REPO},
+            'fieldOptions': {'noValidation': True, 'sources': ['hub']}},
+        'revision': {'label': 'Revision', 'type': 'string', 'default': '',
+            'description': 'Catalog pin, or an explicit immutable commit for a custom compatible ControlNet.'},
+        'shared_conditions': {'label': 'Shared Union Conditions', 'type': 'bool', 'default': False,
+            'description': 'Use one Union model for multiple control images and mode IDs.'},
+        'components': {'label': 'Control Components', 'display': 'output', 'type': 'diffusers_control_components'},
+    }
+
+    @staticmethod
+    def _configuration(values):
+        adapter = IMAGE_PIPELINE_ADAPTERS['FluxControlNetPipeline']
+        return control_component_config(values, lambda model, revision:
+            resolve_image_conditioning_selection(adapter, 'controlnet', model, revision))
+
+    def __call__(self, **kwargs):
+        values = {key: field.get('default', field.get('value')) for key, field in type(self).params.items()
+                  if field.get('display') != 'output'}
+        values.update(kwargs)
+        configuration = self._configuration(values)[-1]
+        values['model_id'] = {'source': 'hub', 'value': configuration.repository}
+        values['revision'] = configuration.revision
+        return super().__call__(**values)
+
+    def execute(self, **kwargs):
+        configs = self._configuration(kwargs)
+        return {'components': configs}
+
+
+def load_cached_image_component(factory, model_id: str, **load_kwargs):
+    """Keep missing-cache recovery actionable without enabling inference downloads."""
+    from huggingface_hub.errors import LocalEntryNotFoundError
+
+    try:
+        return factory.from_pretrained(model_id, **load_kwargs)
+    except LocalEntryNotFoundError as error:
+        revision = load_kwargs.get("revision")
+        selected = f"{model_id}@{revision}" if revision else model_id
+        raise FileNotFoundError(
+            f"The pinned model snapshot {selected} is not available in the local Hub cache. "
+            "Open Model Manager, install or repair this model at the selected revision, "
+            "then run again. Model downloads happen through Model Manager, not during inference."
+        ) from error
 
 
 class LoadPipeline(NodeBase):
@@ -3696,6 +4078,12 @@ class LoadPipeline(NodeBase):
             "type": "any",
             "description": "Reviewed single-file transformer component for exact base-pipeline assembly.",
         },
+        "image_prompt_adapter": {"label": "Image Prompt Adapter", "display": "input",
+            "type": "diffusers_image_prompt_adapter",
+            "description": "Optional pinned configuration. Attach to this loader before offload; supported FLUX.1 pipelines only."},
+        "control_components": {"label": "Control Components", "display": "input",
+            "type": "diffusers_control_components",
+            "description": "Optional exact configurations replace the single conditioning-model selection. Loaded as independently owned upstream ControlNet components."},
         "device_map": {
             "label": "Device Map",
             "type": "string",
@@ -3718,18 +4106,15 @@ class LoadPipeline(NodeBase):
 
     def __call__(self, **kwargs):
         adapter = _loader_image_pipeline_adapter(kwargs)
+        validate_image_prompt_adapters(adapter.load_pipeline_class, kwargs.get('image_prompt_adapter'))
+        validate_control_components(adapter.load_pipeline_class, kwargs.get('control_components'))
         requested_mode = _loader_image_mode(kwargs, adapter)
         values = dict(kwargs)
         values["pipeline_class"] = adapter.pipeline_class
         values["mode"] = requested_mode
         values["model_id"] = resolve_image_model_selection(adapter, values.get("model_id"))
         values["revision"] = resolve_image_pipeline_revision(values["model_id"], values.get("revision"))
-        conditioning_selection, conditioning_revision = resolve_image_conditioning_selection(
-            adapter,
-            values.get("conditioning_kind"),
-            values.get("conditioning_model_id"),
-            values.get("conditioning_revision"),
-        )
+        conditioning_selection, conditioning_revision = _loader_conditioning_selection(adapter, values)
         if adapter.conditioning_kind is not None:
             values["conditioning_kind"] = adapter.conditioning_kind
             values["conditioning_model_id"] = conditioning_selection
@@ -3809,11 +4194,28 @@ class LoadPipeline(NodeBase):
                     "" if selection_was_replaced else resolve_image_pipeline_revision(resolved_selection, raw_revision)
                 )
 
-        self.set_field_params(
-            "mode",
-            {"options": list(adapter.mode_options), "default": adapter.mode_options[0]},
-        )
-        self.set_field_params("model_id", {"fieldOptions": image_model_field_options(adapter)})
+        for field, overlay in image_loader_field_params(adapter).items():
+            self.set_field_params(field, overlay)
+        has_conditioning = adapter.conditioning_kind is not None
+        # Only an explicit class selection may seed a different auxiliary. A
+        # prompt/size/mode change must not reset the user's component or pin.
+        if signal_origin == "pipeline_class":
+            if not has_conditioning:
+                if values.get("conditioning_kind") not in (None, "", "none"):
+                    self.set_field_value({"conditioning_kind": "none", "conditioning_revision": ""})
+            else:
+                self.set_field_value({"conditioning_kind": adapter.conditioning_kind})
+                current_aux = values.get("conditioning_model_id")
+                current_repo = repo_value(current_aux) if current_aux else ""
+                known_aux = [item for item in IMAGE_PIPELINE_ADAPTERS.values()
+                             if item.default_conditioning_repo == current_repo]
+                if not current_repo or (known_aux and not any(
+                    item.conditioning_component_class == adapter.conditioning_component_class for item in known_aux
+                )):
+                    self.set_field_value({
+                        "conditioning_model_id": {"source": "hub", "value": adapter.default_conditioning_repo},
+                        "conditioning_revision": require_catalog_revision(adapter.default_conditioning_repo),
+                    })
         if selected_mode != requested_mode:
             self.set_field_value({"mode": selected_mode})
         if resolved_selection != current_selection:
@@ -3852,6 +4254,12 @@ class LoadPipeline(NodeBase):
             raise TypeError("Execution Recipe must come from a Diffusers Execution Recipe node.")
         adapter = _loader_image_pipeline_adapter(kwargs)
         pipeline_class_name = adapter.pipeline_class
+        validate_image_prompt_adapters(adapter.load_pipeline_class, kwargs.get('image_prompt_adapter'))
+        validate_control_components(adapter.load_pipeline_class, kwargs.get('control_components'))
+        if kwargs.get('image_prompt_adapter') is not None:
+            # Missing/corrupt auxiliary files must fail before allocating the
+            # base transformer. Attachment re-verifies immediately before use.
+            resolve_image_prompt_adapter_files(kwargs['image_prompt_adapter'])
         requested_mode = _loader_image_mode(kwargs, adapter)
         model_selection = resolve_image_model_selection(adapter, kwargs.get("model_id"))
         model_id = repo_value(model_selection)
@@ -3859,12 +4267,7 @@ class LoadPipeline(NodeBase):
         dtype = str_to_dtype(kwargs.get("dtype") or "bfloat16")
         device = execution_recipe.get("device") or kwargs.get("device") or DEFAULT_DEVICE
         revision = resolve_image_pipeline_revision(model_selection, kwargs.get("revision"))
-        conditioning_selection, conditioning_revision = resolve_image_conditioning_selection(
-            adapter,
-            kwargs.get("conditioning_kind"),
-            kwargs.get("conditioning_model_id"),
-            kwargs.get("conditioning_revision"),
-        )
+        conditioning_selection, conditioning_revision = _loader_conditioning_selection(adapter, kwargs)
         auto_offload = bool(kwargs.get("auto_offload", True))
         recipe_offload = execution_recipe.get("offload_mode")
         if recipe_offload is not None:
@@ -3964,7 +4367,7 @@ class LoadPipeline(NodeBase):
             # base is a separate Hub snapshot and must carry its own pin.
             base_kwargs["revision"] = require_catalog_revision(FLUX_DEV_REPO, model_type="FluxDevPipeline")
             with self.diffusers_loading_progress():
-                base = FluxPipeline.from_pretrained(FLUX_DEV_REPO, **base_kwargs)
+                base = load_cached_image_component(FluxPipeline, FLUX_DEV_REPO, **base_kwargs)
 
                 prior_kwargs = dict(load_kwargs)
                 prior_kwargs.pop("quantization_config", None)
@@ -3974,7 +4377,7 @@ class LoadPipeline(NodeBase):
                 # than silently ignored, then leave the base pipeline embedding-only.
                 for component in ("text_encoder", "text_encoder_2", "tokenizer", "tokenizer_2"):
                     prior_kwargs[component] = getattr(base, component, None)
-                prior = FluxPriorReduxPipeline.from_pretrained(model_id, **prior_kwargs)
+                prior = load_cached_image_component(FluxPriorReduxPipeline, model_id, **prior_kwargs)
             if hasattr(base, "register_modules"):
                 base.register_modules(
                     text_encoder=None,
@@ -3983,6 +4386,14 @@ class LoadPipeline(NodeBase):
                     tokenizer_2=None,
                 )
             pipeline = FluxReduxPipelineBundle(prior, base)
+        elif kwargs.get('control_components') is not None:
+            pipeline_class = pipeline_class_from_name(adapter.load_pipeline_class)
+            with self.diffusers_loading_progress():
+                conditioning_component = load_control_components(kwargs['control_components'], adapter,
+                    dtype, bool(kwargs.get('low_cpu_mem_usage', True)))
+                pipeline = load_cached_image_component(pipeline_class, model_id,
+                    **{**load_kwargs, 'use_safetensors': True, 'controlnet': conditioning_component})
+            pipeline._modiff_control_components = kwargs['control_components']
         elif adapter.conditioning_kind is not None:
             conditioning_model_id = repo_value(conditioning_selection)
             component_class = pipeline_class_from_name(str(adapter.conditioning_component_class))
@@ -4002,7 +4413,7 @@ class LoadPipeline(NodeBase):
                 str(adapter.conditioning_component_parameter): None,
             }
             with self.diffusers_loading_progress():
-                conditioning_component = component_class.from_pretrained(
+                conditioning_component = load_cached_image_component(component_class,
                     conditioning_model_id,
                     **component_kwargs,
                 )
@@ -4015,11 +4426,13 @@ class LoadPipeline(NodeBase):
                             f"{expected_value!r}; received {actual_value!r}."
                         )
                 base_load_kwargs[str(adapter.conditioning_component_parameter)] = conditioning_component
-                pipeline = pipeline_class.from_pretrained(model_id, **base_load_kwargs)
+                pipeline = load_cached_image_component(pipeline_class, model_id, **base_load_kwargs)
         else:
             pipeline_class = pipeline_class_from_name(adapter.load_pipeline_class)
             with self.diffusers_loading_progress():
-                pipeline = pipeline_class.from_pretrained(model_id, **load_kwargs)
+                pipeline = load_cached_image_component(pipeline_class, model_id, **load_kwargs)
+        attach_image_prompt_adapters(pipeline, adapter.load_pipeline_class,
+                                     kwargs.get('image_prompt_adapter'), dtype=dtype)
         component_dtype_overrides = list(adapter.component_dtype_overrides)
         if requested_mode in adapter.prompt_embedding_mask_modes:
             component_dtype_overrides.append(("text_encoder", str(adapter.prompt_embedding_encoder_dtype)))
@@ -4053,12 +4466,15 @@ class LoadPipeline(NodeBase):
             [pipeline.prior, pipeline.base] if isinstance(pipeline, FluxReduxPipelineBundle) else [pipeline]
         )
         for index, target in enumerate(offload_targets):
+            adapter_offload = ({'component_names': (*DEFAULT_GROUP_COMPONENTS, 'image_encoder', 'controlnet')}
+                               if kwargs.get('image_prompt_adapter') is not None else {})
             offload_result = apply_pipeline_offload(
                 target,
                 mode=offload_mode,
                 device=device,
                 node_id=self.node_id,
                 scope=f"diffusers-image-{index}" if len(offload_targets) > 1 else "diffusers-image",
+                **adapter_offload,
             )
             self.progress(
                 -1,
@@ -4138,7 +4554,7 @@ class UnconditionalGenerate(NodeBase):
         adapter = get_image_pipeline_adapter(signal_value.get("pipelineClass"))
         mode = str(signal_value.get("mode") or "")
         expected_signal = image_pipeline_contract(adapter, mode)
-        if signal_value != expected_signal:
+        if not _compatible_image_contract(signal_value, expected_signal):
             raise ValueError("The connected image pipeline published a stale or mismatched task contract.")
         if mode not in expected_signal["actions"].get(self.class_name, ()):
             raise ValueError("The connected image pipeline does not support unconditional image generation.")
@@ -4271,7 +4687,7 @@ class PredictMap(NodeBase):
         adapter = get_image_pipeline_adapter(signal_value.get("pipelineClass"))
         mode = str(signal_value.get("mode") or "")
         expected_signal = image_pipeline_contract(adapter, mode)
-        if signal_value != expected_signal:
+        if not _compatible_image_contract(signal_value, expected_signal):
             raise ValueError("The connected image pipeline published a stale or mismatched task contract.")
         if mode not in expected_signal["actions"].get(self.class_name, ()):
             raise ValueError("The connected image pipeline does not support generic prediction maps.")
@@ -4326,6 +4742,7 @@ class Generate(NodeBase):
     category = "Diffusers Image"
     resizable = True
     params = {
+        **CALL_INPUT_PARAMS,
         "pipeline": {
             "label": "Pipeline",
             "display": "input",
@@ -4373,6 +4790,14 @@ class Generate(NodeBase):
             "max": 20,
             "step": 0.1,
             "hidden": True,
+        },
+        "use_guidance_scale_2": {
+            "label": "Override Secondary Guidance", "type": "bool", "default": False, "hidden": True,
+        },
+        "guidance_scale_2": {
+            "label": "Secondary Guidance", "type": "float", "display": "slider",
+            "default": 3.5, "min": 0.0, "max": 20.0, "step": 0.1, "hidden": True,
+            "description": "Used only when its override toggle is enabled.",
         },
         "pag_scale": {
             "label": "PAG Scale",
@@ -4463,6 +4888,10 @@ class Generate(NodeBase):
         "max_sequence_length": {"label": "Max Sequence Length", "type": "int", "default": 256, "min": 1, "max": 512},
         "output_type": {"label": "Output type", "type": "string", "options": ["pil", "np", "pt"], "default": "pil"},
         "images": {"label": "Images", "display": "output", "type": "image"},
+        "latents_out": {
+            "label": "Latents", "display": "output", "type": "tensor", "hidden": True,
+            "description": "Exact upstream latent tensor when Output type is latent. Connect a compatible tensor consumer; Images/Width/Height are empty. Layout is pipeline-specific.",
+        },
         "width_out": {"label": "Width", "display": "output", "type": "int"},
         "height_out": {"label": "Height", "display": "output", "type": "int"},
     }
@@ -4483,7 +4912,12 @@ class Generate(NodeBase):
             "ControlGenerate",
         }:
             raise ValueError(f"Unsupported Diffusers image action {action!r}.")
-        _adapter, values = preflight_image_action(kwargs.get("pipeline"), action, kwargs)
+        adapter, values = preflight_image_action(kwargs.get("pipeline"), action, kwargs)
+        # NodeBase checks its static options after the concrete preflight. Use
+        # this instance's actual pipeline options, without editing shared defaults.
+        self.default_params = {**self.default_params, 'output_type': {
+            **self.default_params['output_type'], 'options': _image_output_options(adapter, action),
+        }}
         return super().__call__(**values)
 
     def update_image_contract(self, values, ref):
@@ -4496,11 +4930,16 @@ class Generate(NodeBase):
         adapter = get_image_pipeline_adapter(signal_value.get("pipelineClass"))
         mode = str(signal_value.get("mode") or "")
         expected_signal = image_pipeline_contract(adapter, mode)
-        if signal_value != expected_signal:
+        if not _compatible_image_contract(signal_value, expected_signal):
             raise ValueError("The connected image pipeline published a stale or mismatched task contract.")
         if mode not in expected_signal["actions"].get(self.class_name, ()):
             raise ValueError("The connected image pipeline does not support this generic image action.")
 
+        for field in ("use_guidance_scale_2", "guidance_scale_2", 'latents_out', *CALL_INPUT_PARAMS):
+            if field not in expected_signal["fieldParams"]:
+                self.set_field_params(field, {"hidden": True})
+        if 'output_type' not in expected_signal['fieldParams']:
+            self.set_field_params('output_type', {'options': _image_output_options(adapter, self.class_name)})
         for field, params in expected_signal["fieldParams"].items():
             if field in self.__class__.params:
                 self.set_field_params(field, params)
@@ -4527,20 +4966,17 @@ class Generate(NodeBase):
             "return_dict": True,
         }
         adapter.apply_generation_parameters(pipeline, values, call_kwargs)
-        adapter.prepare_prompt_embeddings(pipeline, values, call_kwargs)
-        add_progress_callback(self, pipeline, call_kwargs, steps)
+        encoded_inputs = adapter.prepare_prompt_embeddings(pipeline, values, call_kwargs)
+        apply_call_inputs(normalize_call_inputs(adapter.load_pipeline_class, values), call_kwargs)
+        add_progress_callback(self, pipeline, call_kwargs, len(values["sigmas"]) if values.get("sigmas") is not None else steps)
+        record_image_call_inputs(self, values, call_kwargs, adapter, encoded_inputs)
         self._active_pipeline = pipeline
         try:
-            result = pipeline(**call_kwargs)
+            with adapter.prompt_encoding_context(pipeline):
+                result = pipeline(**call_kwargs)
         finally:
             self._active_pipeline = None
-        images = getattr(result, "images", result)
-        actual_width, actual_height = output_image_dimensions(images, values["output_type"])
-        return {
-            "images": images,
-            "width_out": actual_width if actual_width is not None else call_kwargs["width"],
-            "height_out": actual_height if actual_height is not None else call_kwargs["height"],
-        }
+        return _image_or_latent_result(result, {**values, 'width': call_kwargs['width'], 'height': call_kwargs['height']})
 
 
 class Edit(Generate):
@@ -4596,20 +5032,17 @@ class Edit(Generate):
             **extra_kwargs,
         }
         adapter.apply_generation_parameters(pipeline, values, call_kwargs)
-        adapter.prepare_prompt_embeddings(pipeline, values, call_kwargs)
-        add_progress_callback(self, pipeline, call_kwargs, steps)
+        encoded_inputs = adapter.prepare_prompt_embeddings(pipeline, values, call_kwargs)
+        apply_call_inputs(normalize_call_inputs(adapter.load_pipeline_class, values), call_kwargs)
+        add_progress_callback(self, pipeline, call_kwargs, len(values["sigmas"]) if values.get("sigmas") is not None else steps)
+        record_image_call_inputs(self, values, call_kwargs, adapter, encoded_inputs)
         self._active_pipeline = pipeline
         try:
-            result = pipeline(**call_kwargs)
+            with adapter.prompt_encoding_context(pipeline):
+                result = pipeline(**call_kwargs)
         finally:
             self._active_pipeline = None
-        images = getattr(result, "images", result)
-        actual_width, actual_height = output_image_dimensions(images, call_kwargs["output_type"])
-        return {
-            "images": images,
-            "width_out": actual_width if actual_width is not None else values["width"],
-            "height_out": actual_height if actual_height is not None else values["height"],
-        }
+        return _image_or_latent_result(result, values)
 
 
 def normalize_layer_decomposition_images(images: Any, *, layers: int, output_type: str) -> Any:
@@ -4699,6 +5132,8 @@ class Inpaint(Edit):
             {"image": values["image"], "mask_image": values["mask_image"]},
             adapter=adapter,
         )
+        if values['output_type'] != 'pil':
+            return result
         result["images"] = composite_masked_pil_outputs(
             result.get("images"),
             values["image"],
@@ -4803,12 +5238,63 @@ class ControlInpaint(Inpaint):
             },
             adapter=adapter,
         )
+        if values['output_type'] != 'pil':
+            return result
         result["images"] = composite_masked_pil_outputs(
             result.get("images"),
             values["image"],
             values["mask_image"],
         )
         return result
+
+
+class DecodeLatents(NodeBase):
+    """Decode the selected pipeline's explicit latent output, not starting noise."""
+
+    label = 'Decode Image Latents'
+    category = 'Diffusers Image'
+    params = {
+        'pipeline': {'label': 'Pipeline', 'type': 'image_diffusion_pipeline', 'display': 'input', 'required': True},
+        'latents': {'label': 'Latents', 'type': 'tensor', 'display': 'input', 'required': True},
+        'width': {'label': 'Width', 'type': 'int', 'default': 1024, 'min': 64, 'max': 4096},
+        'height': {'label': 'Height', 'type': 'int', 'default': 1024, 'min': 64, 'max': 4096},
+        'output_type': {'label': 'Output type', 'type': 'string', 'options': ['pil', 'np', 'pt'], 'default': 'pil'},
+        'images': {'label': 'Images', 'type': 'image', 'display': 'output'},
+        'width_out': {'label': 'Width', 'type': 'int', 'display': 'output'},
+        'height_out': {'label': 'Height', 'type': 'int', 'display': 'output'},
+    }
+
+    def execute(self, pipeline, latents, width=1024, height=1024, output_type='pil'):
+        import torch
+        adapter = _image_pipeline_adapter(pipeline)
+        if adapter.load_pipeline_class not in _LATENT_OUTPUT_PIPELINES:
+            raise ValueError('Decode Image Latents requires a reviewed FLUX pipeline with explicit latent output.')
+        if not isinstance(latents, torch.Tensor) or not latents.is_floating_point() or latents.device.type == 'meta':
+            raise ValueError('Latents must be a materialized floating-point Tensor from the matching pipeline.')
+        vae = pipeline.vae
+        channels = vae.config.latent_channels
+        # FLUX.1 returns packed normalized tokens. FLUX.2 returns already
+        # unpatchified, denormalized VAE latents. Neither conversion is implicit
+        # at an arbitrary tensor connection; this explicit consumer owns decode.
+        flux2 = adapter.load_pipeline_class.startswith('Flux2')
+        scale = 2 ** (len(vae.config.block_out_channels) - 1)
+        latent_h, latent_w = height // scale, width // scale
+        expected = (channels, latent_h, latent_w) if flux2 else ((latent_h // 2) * (latent_w // 2), channels * 4)
+        if (tuple(latents.shape[1:]) != expected or not 1 <= latents.shape[0] <= 8
+                or width % (scale * 2) or height % (scale * 2)
+                or latents.shape[0] * width * height > 16 * 1024 * 1024):
+            raise ValueError(f'Latents have incompatible layout for {adapter.pipeline_class}: expected batch × {expected}. '
+                'Use its matching latent output and set Width/Height to the original generation dimensions.')
+        with torch.inference_mode():
+            value = latents.to(device=pipeline._execution_device, dtype=vae.dtype)
+            if not flux2:
+                value = pipeline._unpack_latents(value, height, width, pipeline.vae_scale_factor)
+                value = value / vae.config.scaling_factor + (getattr(vae.config, 'shift_factor', 0) or 0)
+            decoded = vae.decode(value, return_dict=False)[0]
+            images = pipeline.image_processor.postprocess(decoded, output_type=output_type)
+        pipeline.maybe_free_model_hooks()
+        actual_width, actual_height = output_image_dimensions(images, output_type)
+        return {'images': images, 'width_out': actual_width, 'height_out': actual_height}
 
 
 class LoadAdapter(NodeBase):

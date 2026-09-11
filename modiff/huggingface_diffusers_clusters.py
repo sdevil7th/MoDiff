@@ -20,10 +20,108 @@ from modiff.model_artifact_catalog import require_catalog_revision
 from modiff.studio_execution_specs import (
     STUDIO_EXECUTION_SPEC_DEFINITIONS,
     studio_execution_spec_for_pair,
+    studio_model_dependencies_for_pair,
+    studio_capability_definitions,
 )
 
 
-_REVIEWED_SPECS = ("wan-22-ti2v-5b:text-to-video:v1",)
+_REVIEWED_SPECS = (
+    "wan-22-ti2v-5b:text-to-video:v1",
+    "ace-step-v1.5-xl-turbo:text-to-audio:v1",
+    "ace-step-v1.5-xl-turbo:audio-variation:v1",
+    "ace-step-v1.5-xl-turbo:audio-continuation:v1",
+    "ace-step-v1.5-xl-turbo:audio-repaint:v1",
+    "longcat-audio-dit-1b:text-to-audio:v1",
+    "audioldm2-base:text-to-audio:v1",
+    "flux-controlnet:control-image:v1",
+    "flux-controlnet:control-edit-image:v1",
+    "flux-controlnet:control-inpaint:v1",
+    "flux2-klein-kv:text-to-image:v1",
+    "flux2-klein-kv:edit-image:v1",
+    "flux2-klein-kv:multi-image-reference-edit:v1",
+)
+
+_NEW_ORDINARY_FLUX_SPECS = (
+    "flux-schnell:text-to-image:v1",
+    "flux-krea:text-to-image:v1",
+    "flux-depth:control-image:v1",
+    "flux-depth:control-edit-image:v1",
+    "flux-depth:control-inpaint:v1",
+    "flux-canny:control-image:v1",
+    "flux-canny:control-edit-image:v1",
+    "flux-canny:control-inpaint:v1",
+    "flux-redux:edit-image:v1",
+    "flux-redux:multi-image-reference-edit:v1",
+    "flux-fill:inpaint:v1",
+    "flux-fill:outpaint:v1",
+    "flux-dev:inpaint:v1",
+    "flux-kontext:multi-image-reference-edit:v1",
+    "flux-kontext-inpaint-direct:inpaint:v1",
+    "flux-kontext-inpaint-direct:outpaint:v1",
+    "flux2-klein:multi-image-reference-edit:v1",
+    "flux2-klein-inpaint-direct:inpaint:v1",
+    "flux2-klein-inpaint-direct:outpaint:v1",
+    "flux2-dev:multi-image-reference-edit:v1",
+)
+_REVIEWED_SPECS += _NEW_ORDINARY_FLUX_SPECS
+
+# Existing creator-facing recipe seeds for newly admitted ordinary operations.
+# These affect new definitions only, never saved instance values or legacy forms.
+_NEW_IMAGE_RECIPE_SEEDS = {
+    'FluxFillPipeline': ('FLUX.1 Fill dev', 50, 30),
+    'FluxDepthPipeline': ('FLUX.1 Depth dev', 50, 30),
+    'FluxCannyPipeline': ('FLUX.1 Canny dev', 50, 30),
+    'FluxKontextPipeline': ('FLUX.1 Kontext dev', 28, 3.5),
+}
+
+_IMAGE_INPUT_FIELDS = {
+    "prompt": ("prompt", "str", True, "", "Describe the intended image or edit."),
+    "negativePrompt": ("negative_prompt", "str", False, "", "Unwanted content."),
+    "width": ("width", "int", False, 1024, "Output width in pixels."),
+    "height": ("height", "int", False, 1024, "Output height in pixels."),
+    "steps": ("num_inference_steps", "int", False, 28, "Denoising step count."),
+    "guidanceScale": ("guidance_scale", "float", False, 3.5, "Guidance scale."),
+    "seed": ("seed", "int", False, 42, "Random generator seed."),
+    "maxSequenceLength": ("max_sequence_length", "int", False, 512, "Maximum prompt token count."),
+    "strength": ("strength", "float", False, 0.8, "Source image denoising strength."),
+    "conditioningScale": ("conditioning_scale", "float", False, 1.0, "Control image influence."),
+    "controlGuidanceStart": ("control_guidance_start", "float", False, 0.0, "Start fraction of ControlNet guidance."),
+    "controlGuidanceEnd": ("control_guidance_end", "float", False, 1.0, "End fraction of ControlNet guidance."),
+    "referenceImages": ("image", "image", True, None, "Source or reference images for this operation."),
+    "maskImage": ("mask_image", "image", True, None, "Mask identifying the edited region."),
+    "controlImage": ("control_image", "image", True, None, "Prepared control image."),
+    "outputType": ("output_type", "str", False, "pil", "Decoded image output type."),
+}
+
+_AUDIO_INPUT_FIELDS = {
+    "prompt": ("prompt", "str", True, "", "Music description: genre, mood, instrumentation and arrangement."),
+    "negativePrompt": ("negative_prompt", "str", False, "", "Unwanted audio content or artifacts."),
+    "lyrics": ("lyrics", "str", False, "", "Original lyrics with structure tags on separate lines."),
+    "audioDuration": ("audio_duration", "float", False, 30.0, "Generated audio duration in seconds."),
+    "steps": ("num_inference_steps", "int", False, 8, "Native turbo denoising step count."),
+    "guidanceScale": ("guidance_scale", "float", False, 1.0, "Guidance scale; turbo uses distilled guidance."),
+    "sourceAudio": ("source_audio", "audio", True, None, "Source audio for the selected edit operation."),
+    "extensionDuration": ("extension_duration", "float", False, 15.0, "Continuation length in seconds."),
+    "repaintingStart": ("repainting_start", "float", False, 0.0, "Start of replaced section, in seconds."),
+    "repaintingEnd": ("repainting_end", "float", False, 10.0, "End of replaced section, in seconds."),
+    "audioCoverStrength": ("audio_cover_strength", "float", False, 0.5, "Source arrangement strength for variation."),
+}
+
+_AUDIO_MODE_INPUTS = {
+    "text_to_audio": ("audioDuration",),
+    "audio_variation": ("sourceAudio", "audioDuration", "audioCoverStrength"),
+    "audio_continuation": ("sourceAudio", "extensionDuration"),
+    "audio_repaint": ("sourceAudio", "repaintingStart", "repaintingEnd"),
+}
+
+_AUDIO_SEALED_VALUES = {
+    "false": False,
+    "text2music": "text2music", "cover": "cover", "continuation": "continuation", "repaint": "repaint",
+    "sampleRate48000": 48000, "referenceWindow15": 15, "targetPeakMinus1": -1,
+    "maxAdjustment12": 12, "boundaryFade001": 0.01,
+    "text2audio": "text2audio", "sampleRate24000": 24000, "sampleRate16000": 16000,
+    "numWaveforms3": 3,
+}
 
 _INPUT_FIELDS = {
     "prompt": ("prompt", "str", True, "", "Text prompt for the generated video."),
@@ -70,8 +168,8 @@ def _hash(value: Mapping[str, Any]) -> str:
     return f"sha256:{hashlib.sha256(payload.encode('utf-8')).hexdigest()}"
 
 
-def _field(source: str) -> dict[str, Any]:
-    name, field_type, required, default, description = _INPUT_FIELDS[source]
+def _field(source: str, fields=None) -> dict[str, Any]:
+    name, field_type, required, default, description = (fields or _INPUT_FIELDS)[source]
     return {
         "name": name,
         "type": field_type,
@@ -111,15 +209,65 @@ def _definition_and_blocks(spec_id: str, diffusers_revision: str) -> tuple[dict[
     public_spec = studio_execution_spec_for_pair(model_type, mode)
     if public_spec is None or public_spec["id"] != spec_id:
         raise ValueError(f"Standard Diffusers Cluster spec {spec_id!r} is not uniquely resolvable.")
-    if public_spec["executionPath"] not in {"direct-diffusers-image", "direct-diffusers-video"}:
+    if public_spec["executionPath"] not in {"direct-diffusers-image", "direct-diffusers-video", "direct-diffusers-audio"}:
         raise ValueError(f"Standard Diffusers Cluster spec {spec_id!r} is not a direct Diffusers route.")
 
     repository = str(profile["default_repo"])
     revision = require_catalog_revision(repository, model_type=model_type)
     binding_sources = sorted({str(source) for _role, _field_name, source in public_spec["bindings"]})
-    input_sources = [source for source in _INSTANCE_INPUT_SOURCES if source in binding_sources]
-    inputs = [_field(source) for source in input_sources]
+    audio = public_spec["executionPath"] == "direct-diffusers-audio"
+    image = public_spec["executionPath"] == "direct-diffusers-image"
+    field_sources = (tuple(_IMAGE_INPUT_FIELDS) if image else
+                    ("prompt", "negativePrompt", "lyrics", "steps", "guidanceScale", *_AUDIO_MODE_INPUTS[mode]) if audio else _INSTANCE_INPUT_SOURCES)
+    input_sources = [source for source in field_sources if source in binding_sources]
+    input_fields = _AUDIO_INPUT_FIELDS if audio else _INPUT_FIELDS
+    capability = deepcopy(studio_definition.get("capability") or studio_capability_definitions().get(model_type, {}))
+    if image and model_type in _NEW_IMAGE_RECIPE_SEEDS:
+        label, steps, guidance = _NEW_IMAGE_RECIPE_SEEDS[model_type]
+        capability.update(label=label, recommendedSteps=steps, recommendedGuidance=guidance,
+                          defaultSize={'width': 1024, 'height': 1024})
+    if image:
+        input_fields = dict(_IMAGE_INPUT_FIELDS)
+        for source, value in (
+            ("steps", capability["recommendedSteps"]),
+            ("guidanceScale", capability["recommendedGuidance"]),
+            ("width", capability["defaultSize"]["width"]),
+            ("height", capability["defaultSize"]["height"]),
+        ):
+            name, kind, required, _default, description = input_fields[source]
+            input_fields[source] = (name, kind, required, value, description)
+        if not capability.get("supportsNegativePrompt", False):
+            input_sources = [source for source in input_sources if source != "negativePrompt"]
+        if not capability.get("supportsGuidance", True):
+            input_sources = [source for source in input_sources if source != "guidanceScale"]
+        if not capability.get("supportsControlImage", False):
+            input_sources = [source for source in input_sources if source != "conditioningScale"]
+        if model_type == 'FluxReduxPipeline' and mode == 'multi_image_reference_edit' and 'conditioningScale' in binding_sources:
+            input_fields['conditioningScale'] = ('reference_strength', 'float', False, 1.0,
+                                                'Reference embedding influence; independently overridable in Generate.')
+            input_sources.append('conditioningScale')
+        if model_type in {'FluxSchnellPipeline', 'FluxKreaPipeline', 'FluxReduxPipeline'} or mode == 'multi_image_reference_edit':
+            input_sources = [source for source in input_sources if source != 'strength']
+    if audio and model_type != "AceStepAudioPipeline":
+        # Preserve existing ACE identities. New composites seed only their own
+        # reviewed recipe; music-turbo defaults do not apply to sound generators.
+        input_fields = dict(input_fields)
+        for source, key, description in (
+            ("audioDuration", "recommendedDuration", "Generated audio duration in seconds."),
+            ("steps", "recommendedSteps", "Native denoising step count."),
+            ("guidanceScale", "recommendedGuidance", "Prompt guidance scale."),
+        ):
+            name, kind, required, _default, _description = input_fields[source]
+            input_fields[source] = (name, kind, required, capability[key], description)
+        input_fields["prompt"] = ("prompt", "str", True, "", "Describe the sound, environment and temporal sequence.")
+    inputs = [_field(source, input_fields) for source in input_sources]
     input_by_source = {source: field["name"] for source, field in zip(input_sources, inputs, strict=True)}
+    model_dependencies = studio_model_dependencies_for_pair(model_type, mode) if image else []
+    dependency_values = {}
+    if model_dependencies:
+        if len(model_dependencies) != 1:
+            raise ValueError("Image composite auxiliary bindings require one exact dependency.")
+        dependency_values = {key: model_dependencies[0][key] for key in ("kind", "repo", "revision")}
     sealed_values = {
         source: value
         for source, value in {
@@ -129,6 +277,9 @@ def _definition_and_blocks(spec_id: str, diffusers_revision: str) -> tuple[dict[
             "executionProfileId": public_spec["executionProfileId"],
             "mode": mode,
             **_SEALED_VALUES,
+            **(_AUDIO_SEALED_VALUES if audio else {}),
+            **({"removeAlpha": "remove alpha"} if image else {}),
+            **dependency_values,
         }.items()
         if source in binding_sources
     }
@@ -198,7 +349,7 @@ def _definition_and_blocks(spec_id: str, diffusers_revision: str) -> tuple[dict[
         artifact=artifact,
         studio_execution_spec=studio_execution_spec,
     )
-    live_proof = bool(profile.get("live_proof")) or promotion_receipt is not None
+    live_proof = (bool(profile.get("live_proof")) and spec_id not in _NEW_ORDINARY_FLUX_SPECS) or promotion_receipt is not None
     publication_reasons = [
         {
             "code": "runtime_resource_admission_required",
@@ -221,8 +372,13 @@ def _definition_and_blocks(spec_id: str, diffusers_revision: str) -> tuple[dict[
         "instanceInputBindings": instance_input_bindings,
         "executionParameterSources": execution_parameter_sources,
         "sealedBindingValues": sealed_values,
-        "modelDependencies": [],
-        "dynamicFieldActions": [],
+        "modelDependencies": model_dependencies,
+        # Image role registries already carry the exact structured task signal
+        # from _execution_spec_role_params; pipelineClass alone is not that
+        # signal and must never be replayed as an onSignal value.
+        "dynamicFieldActions": ([] if image else [{
+            "role": "audioGenerate", "field": "pipeline", "event": "onSignal", "valueSource": "pipelineClass",
+        }] if audio and model_type != "AceStepAudioPipeline" else []),
         "adapterContractId": adapter["id"],
         "studioExecutionSpec": studio_execution_spec,
         "artifact": artifact,
@@ -257,9 +413,16 @@ def _definition_and_blocks(spec_id: str, diffusers_revision: str) -> tuple[dict[
         "workflowKind": "sequential",
         "taskId": mode,
         "taskContractId": f"diffusers.task.{mode}.v1",
-        "label": "Wan 2.2 TI2V 5B — Text to Video",
+        "label": (
+            f"{capability['label'].split(' — ')[0]} — {mode.replace('_', ' ').title()}" if image else
+            f"{'ACE-Step' if model_type == 'AceStepAudioPipeline' else capability['family']} — {mode.replace('_', ' ').title()}"
+            if audio else "Wan 2.2 TI2V 5B — Text to Video"
+        ),
         "description": (
-            "Cluster Node containing the exact standard Diffusers Wan loader, execution recipe, "
+            "Standard Diffusers image loader, execution recipe, generation and preview nodes; not an upstream Modular hierarchy."
+            if image else
+            "Standard Diffusers audio loader, generation, processing and preview nodes; not an upstream Modular hierarchy."
+            if audio else "Cluster Node containing the exact standard Diffusers Wan loader, execution recipe, "
             "text-to-video generation, export, and preview graph."
         ),
         "integrationStatus": "reviewed_diffusers_composite",
@@ -269,11 +432,11 @@ def _definition_and_blocks(spec_id: str, diffusers_revision: str) -> tuple[dict[
         "inputs": inputs,
         "outputs": [
             {
-                "name": "video",
-                "type": "video",
+                "name": "images" if image else "audio" if audio else "video",
+                "type": "image" if image else "audio" if audio else "video",
                 "required": True,
                 "default": None,
-                "description": "Exported video from the reviewed standard Diffusers graph.",
+                "description": "Generated images from the reviewed standard Diffusers graph." if image else "Exported audio from the reviewed standard Diffusers graph." if audio else "Exported video from the reviewed standard Diffusers graph.",
             }
         ],
         "requiredInputs": [field["name"] for field in inputs if field["required"]],

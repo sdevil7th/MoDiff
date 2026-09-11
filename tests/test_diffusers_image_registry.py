@@ -43,6 +43,7 @@ from modules.DiffusersImage.main import (
     GLM_IMAGE_REPO,
     FLUX2_DEV_REPO,
     FLUX2_KLEIN_REPO,
+    FLUX2_KLEIN_KV_REPO,
     FLUX_CANNY_REPO,
     FLUX_DEPTH_REPO,
     FLUX_DEV_REPO,
@@ -122,6 +123,26 @@ def tag_test_image_pipeline(pipeline, pipeline_class, mode, *, repo=None, revisi
 
 
 class DiffusersImageRegistryTests(unittest.TestCase):
+    def test_missing_pinned_snapshot_explains_model_manager_recovery_without_download(self):
+        from huggingface_hub.errors import LocalEntryNotFoundError
+        from modules.DiffusersImage.main import load_cached_image_component
+
+        factory = Mock()
+        error = LocalEntryNotFoundError("No local snapshot")
+        factory.from_pretrained.side_effect = error
+        with self.assertRaisesRegex(FileNotFoundError, "Model Manager") as raised:
+            load_cached_image_component(factory, FLUX_CANNY_REPO,
+                revision="a" * 40, local_files_only=True, use_safetensors=True)
+        self.assertIn(FLUX_CANNY_REPO, str(raised.exception))
+        self.assertIn("a" * 40, str(raised.exception))
+        self.assertIs(raised.exception.__cause__, error)
+        factory.from_pretrained.assert_called_once_with(FLUX_CANNY_REPO,
+            revision="a" * 40, local_files_only=True, use_safetensors=True)
+        factory.from_pretrained.side_effect = RuntimeError("out of memory")
+        with self.assertRaisesRegex(RuntimeError, "out of memory"):
+            load_cached_image_component(factory, FLUX_CANNY_REPO, revision="a" * 40,
+                local_files_only=True)
+
     def test_output_dimensions_support_pil_numpy_and_torch_layouts(self):
         self.assertEqual(output_image_dimensions([Image.new("RGB", (31, 19))], "pil"), (31, 19))
         self.assertEqual(output_image_dimensions(np.zeros((2, 19, 31, 3)), "np"), (31, 19))
@@ -917,6 +938,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 )
 
     def test_image_field_contracts_cover_every_adapter_mode_and_selected_values(self):
+        from modules.DiffusersImage.call_inputs import PIPELINE_CALL_INPUTS
         self.assertEqual(set(IMAGE_MODE_FIELD_CONTRACTS), set(IMAGE_PIPELINE_ADAPTERS))
         expected_fields = {
             "negative_prompt",
@@ -944,7 +966,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 for mode in adapter.mode_options:
                     self.assertEqual(
                         set(image_pipeline_contract(adapter, mode)["fieldParams"]),
-                        expected_fields,
+                        expected_fields | ({"guidance_scale_2", "use_guidance_scale_2"}
+                                           if adapter.secondary_guidance_parameter else set())
+                        | set(PIPELINE_CALL_INPUTS.get(adapter.load_pipeline_class, ()))
+                        | ({'output_type', 'latents_out'} if adapter.load_pipeline_class in PIPELINE_CALL_INPUTS
+                           and adapter.load_pipeline_class != 'FluxReduxPipeline' else set()),
                     )
 
         flux_text = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["FluxPipeline"], "text_to_image")
@@ -1650,11 +1676,23 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 if adapter.guidance_parameter is not None:
                     self.assertIn(adapter.guidance_parameter, parameters)
 
+        new_flux_modes = {
+            "Flux2KleinKVPipeline": ({"text_to_image", "edit_image", "multi_image_reference_edit"}, FLUX2_KLEIN_KV_REPO, {"prompt", "image"}),
+            "FluxControlNetPipeline": ({"control_image"}, FLUX_DEV_REPO, {"prompt", "control_image"}),
+            "FluxControlNetImg2ImgPipeline": ({"control_edit_image"}, FLUX_DEV_REPO, {"prompt", "image", "control_image", "strength"}),
+            "FluxControlNetInpaintPipeline": ({"control_inpaint"}, FLUX_DEV_REPO, {"prompt", "image", "mask_image", "control_image", "strength"}),
+        }
+        for name, (modes, repository, required) in new_flux_modes.items():
+            with self.subTest(pipeline=name):
+                adapter = IMAGE_PIPELINE_ADAPTERS[name]
+                params = set(inspect.signature(pipeline_class_from_name(adapter.load_pipeline_class).__call__).parameters)
+                self.assertEqual(adapter.modes, frozenset(modes))
+                self.assertEqual(adapter.default_repo, repository)
+                self.assertTrue(required <= params)
+                self.assertTrue({"num_inference_steps", "generator", "output_type"} <= params)
+                if adapter.guidance_parameter is not None:
+                    self.assertIn(adapter.guidance_parameter, params)
         for deferred in (
-            "Flux2KleinKVPipeline",
-            "FluxControlNetPipeline",
-            "FluxControlNetImg2ImgPipeline",
-            "FluxControlNetInpaintPipeline",
             "QwenImageControlNetInpaintPipeline",
             "ZImageControlNetPipeline",
             "ZImageControlNetInpaintPipeline",
@@ -1833,6 +1871,19 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     {"_execution_device": "cpu", "__call__": call},
                 )
                 pipeline = tag_test_image_pipeline(fake_type(), pipeline_name, mode)
+                # This is a signature fixture, not a model proof. Mirror the
+                # explicit mixed-dtype encoder boundary used by current adapters.
+                if adapter.prompt_embedding_dtype_component is not None:
+                    import torch
+                    setattr(pipeline, adapter.prompt_embedding_dtype_component, SimpleNamespace(dtype=torch.float32))
+                    def encode_prompt(prompt=None, *, dtype=None, **kwargs):
+                        return torch.zeros(1, 2, 4, dtype=dtype), torch.zeros(1, 2, 4, dtype=dtype)
+                    pipeline.encode_prompt = encode_prompt
+                    if mode in adapter.prompt_embedding_mask_modes:
+                        pipeline.vae_image_processor = SimpleNamespace(resize_center_crop=lambda image, size: image)
+                        pipeline.encode_prompt_multiple_images = lambda **kwargs: (
+                            torch.zeros(1, 2, 4), torch.ones(1, 2, dtype=torch.bool)
+                        )
                 values = {
                     "pipeline": pipeline,
                     "prompt": "render the reviewed fixture",
@@ -1896,6 +1947,15 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                         if parameter in upstream_parameters:
                             expected_keys.add(parameter)
 
+                if adapter.prompt_embedding_dtype_component is not None and not adapter.native_prompt_encoding and (
+                    not adapter.prompt_embedding_mask_modes or mode in adapter.prompt_embedding_mask_modes
+                ):
+                    expected_keys.discard("prompt")
+                    expected_keys.update({"prompt_embeds", "negative_prompt_embeds"})
+                    if mode in adapter.prompt_embedding_mask_modes:
+                        expected_keys.discard("negative_prompt")
+                        expected_keys.update({"prompt_embeds_mask", "negative_prompt_embeds_mask"})
+
                 with patch("modules.DiffusersImage.main.add_progress_callback"):
                     action_class(f"signature-{pipeline_name}").execute(**values)
 
@@ -1912,7 +1972,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                         self.assertEqual(received["control_guidance_start"], 0.0)
                     if "control_guidance_end" in upstream_parameters:
                         self.assertEqual(received["control_guidance_end"], 1.0)
-                if "negative_prompt" in upstream_parameters:
+                if "negative_prompt" in expected_keys:
                     self.assertEqual(received["negative_prompt"], "artifact")
 
     def test_modern_flux_true_cfg_and_negative_prompt_use_the_reviewed_parameters(self):
@@ -1945,19 +2005,14 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     {"negative_prompt": "artifact", "true_cfg_scale": 5.0},
                 )
 
-    def test_flux_controlnet_is_not_advertised_without_component_assembly(self):
-        self.assertNotIn("FluxControlNetPipeline", IMAGE_PIPELINE_CLASSES)
-        node = LoadPipeline("removed-controlnet-probe")
-        with (
-            patch("modules.DiffusersImage.main.pipeline_class_from_name") as resolve_pipeline,
-            self.assertRaisesRegex(ValueError, "requires a separately loaded FluxControlNetModel"),
-        ):
-            node(
-                model_id=FLUX_DEV_REPO,
-                pipeline_class="FluxControlNetPipeline",
-                mode="control_image",
-            )
-        resolve_pipeline.assert_not_called()
+    def test_flux_controlnet_requires_separate_reviewed_component_assembly(self):
+        for name in ("FluxControlNetPipeline", "FluxControlNetImg2ImgPipeline", "FluxControlNetInpaintPipeline"):
+            adapter = IMAGE_PIPELINE_ADAPTERS[name]
+            self.assertIn(name, IMAGE_PIPELINE_CLASSES)
+            self.assertEqual(adapter.conditioning_component_class, "FluxControlNetModel")
+            self.assertEqual(adapter.conditioning_component_parameter, "controlnet")
+            self.assertEqual(adapter.default_conditioning_repo, "InstantX/FLUX.1-dev-Controlnet-Canny")
+            self.assertEqual(adapter.artifact_pipeline_classes, ("FluxPipeline", name))
 
     def test_t2i_adapter_is_not_advertised_with_legacy_only_official_weights(self):
         self.assertNotIn("StableDiffusionAdapterPipeline", IMAGE_PIPELINE_CLASSES)
@@ -2515,6 +2570,46 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "between 0.0 and 20.0"):
             preflight_image_action(generic, "Generate", {"guidance_scale": 30})
 
+    def test_flux_control_modes_accept_creator_guidance_without_changing_values(self):
+        image = Image.new("RGB", (32, 32), "black")
+        mask = Image.new("L", (32, 32), "white")
+        for name, mode, action, inputs in (
+            ("FluxControlPipeline", "control_image", "ControlGenerate", {"control_image": image}),
+            ("FluxControlImg2ImgPipeline", "control_edit_image", "ControlEdit", {"image": image, "control_image": image}),
+            ("FluxControlInpaintPipeline", "control_inpaint", "ControlInpaint", {"image": image, "control_image": image, "mask_image": mask}),
+        ):
+            for repo in (FLUX_CANNY_REPO, FLUX_DEPTH_REPO):
+                with self.subTest(pipeline=name, repo=repo):
+                    pipeline = tag_test_image_pipeline(type(name, (), {})(), name, mode, repo=repo)
+                    submitted = {**inputs, "guidance_scale": 30, "num_inference_steps": 50}
+                    _, values = preflight_image_action(pipeline, action, submitted)
+                    self.assertEqual(values["guidance_scale"], 30.0)
+                    self.assertEqual(submitted["guidance_scale"], 30)
+                    contract = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS[name], mode)
+                    self.assertEqual(contract["fieldParams"]["guidance_scale"]["max"], 30.0)
+                    with self.assertRaisesRegex(ValueError, "between 0.0 and 30.0"):
+                        preflight_image_action(pipeline, action, {**inputs, "guidance_scale": 30.1})
+
+    def test_control_guidance_bound_update_accepts_exact_saved_contract_only(self):
+        from copy import deepcopy
+        from modules.DiffusersImage.main import _compatible_image_contract
+        for name, mode in (("FluxControlImg2ImgPipeline", "control_edit_image"),
+                           ("FluxControlInpaintPipeline", "control_inpaint")):
+            expected = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS[name], mode)
+            old = deepcopy(expected)
+            old['fieldParams']['guidance_scale'].pop('max', None)
+            before = deepcopy(old)
+            self.assertTrue(_compatible_image_contract(old, expected))
+            self.assertEqual(old, before)
+            for mutate in (
+                lambda value: value.update(pipelineClass='FluxPipeline'),
+                lambda value: value['fieldParams']['guidance_scale'].update(max=99),
+                lambda value: value.update(mode='text_to_image'),
+            ):
+                forged = deepcopy(old)
+                mutate(forged)
+                self.assertFalse(_compatible_image_contract(forged, expected))
+
     def test_generate_preflight_rejects_every_declared_bound_and_nonfinite_value(self):
         class FluxPipeline:
             def __call__(self, **_kwargs):
@@ -2531,7 +2626,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("strength", -0.01),
             ("padding_mask_crop", 7),
             ("max_sequence_length", 513),
-            ("output_type", "latent"),
+            ("output_type", "unreviewed-output"),
         )
         for field, value in invalid:
             with self.subTest(field=field, value=value), patch.dict(sys.modules, {"torch": None}):
@@ -3691,6 +3786,12 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 if prompt is not None and prompt_embeds is not None:
                     raise ValueError("Cannot forward both prompt and prompt_embeds")
                 called.update(locals())
+                self.generate_prior_tokens(prompt, None, height, width, self._execution_device, generator)
+                self.encode_prompt(
+                    prompt, do_classifier_free_guidance=guidance_scale > 1,
+                    device=self._execution_device, dtype="float32",
+                    max_sequence_length=max_sequence_length,
+                )
                 return SimpleNamespace(images=[Image.new("RGB", (width, height))])
 
             def generate_prior_tokens(self, prompt, image, height, width, device, generator):
@@ -3757,10 +3858,10 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(called["num_inference_steps"], 50)
         self.assertEqual(called["guidance_scale"], 1.5)
         self.assertEqual(called["max_sequence_length"], 2048)
-        self.assertEqual(called["prompt_embeds"], "bfloat16-prompt-embeds")
-        self.assertEqual(called["negative_prompt_embeds"], "bfloat16-negative-prompt-embeds")
-        self.assertIsNone(called["prompt"])
-        self.assertEqual(called["prior_token_ids"], "prior-token-ids")
+        self.assertIsNone(called["prompt_embeds"])
+        self.assertIsNone(called["negative_prompt_embeds"])
+        self.assertEqual(called["prompt"], "reviewed fixture")
+        self.assertIsNone(called["prior_token_ids"])
         self.assertEqual(prior["prompt"], "reviewed fixture")
         self.assertIsNone(prior["image"])
         self.assertEqual(prior["height"], 1024)
@@ -3796,7 +3897,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         override = dict(adapter.component_dtype_overrides)
         self.assertEqual(override, {"text_encoder": "float32"})
         self.assertEqual(adapter.prompt_embedding_dtype_component, "transformer")
-        self.assertEqual(adapter.prompt_prior_token_method, "generate_prior_tokens")
+        self.assertTrue(adapter.native_prompt_encoding)
 
         text_encoder = torch.nn.Linear(4, 4).to(getattr(torch, override["text_encoder"]))
         float32_activations = torch.ones((1, 4), dtype=torch.float32)

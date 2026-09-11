@@ -117,6 +117,37 @@ in-memory work that cannot be reconstructed safely, and starts a clean worker.
 The browser reconnects automatically; the interrupted run does not resume from
 its last denoising step and must be retried with a resource plan that fits.
 
+## Open-file exhaustion during model loading or generation
+
+`file_descriptor_limit` and `huggingface_file_descriptor_limit` identify a
+process or system file-descriptor limit, including native errors hidden by a
+subsequent model-loader decoding error. Inspect the model-owning worker's
+`/proc/<PID>/limits` and descriptor count on Linux. A systemd service may inherit
+a soft limit of only 1,024 even when the shell or hard limit is much larger.
+
+ROCm expandable allocations can retain one descriptor per allocation segment.
+A constrained worker can therefore report HIP out-of-memory while substantial
+VRAM remains free. Confirm descriptor growth and release before concluding that
+the model is too large or that its weights are corrupt. Increase the service's
+soft `LimitNOFILE` within its existing hard limit, restart only while the queue
+is idle, and retry the original recipe while monitoring descriptors. Record this
+as a deployment change separately from application code. Do not increase limits
+indefinitely if descriptors continue growing after models and caches are released.
+
+After a failed model download, an empty active-download list does not prove the
+model is installed. Require Model Manager's exact reviewed artifact to report
+Ready before retrying generation; partial cache files are preserved for repair.
+
+## Video export completed but its file is missing
+
+A completed graph receipt alone does not prove that a video was encoded. Verify
+that its media URL returns a non-empty file and that the file decodes. The Video
+Export node accepts NumPy video batches in `B,F,H,W,C` layout, including the
+pinned Helios decoder's default `output_type=np`, and exports each batch item as
+its own clip. Empty or unsupported inputs and missing encoded files must fail
+instead of returning a preview URL for a nonexistent artifact. Keep the original
+decoder output type when reproducing export failures.
+
 ## Apple MPS or Intel XPU is unavailable
 
 Install or repair the Apple profile:
@@ -177,6 +208,28 @@ solely to switch transports.
 Cleanup can release MoDiff's node cache, managed Diffusers components, memory-manager entries, and accelerator cache. It cannot free memory owned by another process, and it does not guarantee that the same workflow fits afterward.
 
 ## A run is taking much longer than expected
+
+### Resource monitoring during execution
+
+Allocator statistics can show as paused while a task is active. This is deliberate:
+Torch allocator probes can hold the GIL during inference even when called from a
+background thread. The monitor retains device identity and available OS samples,
+and shows unavailable counters as unknown rather than zero or stale values.
+Idle allocator sampling resumes after execution; final run measurements remain
+separate. See the [resource API](api-reference.md) for the response fields.
+
+Use WebSocket progress and the lightweight `/queue` snapshot during inference;
+request full `/runs/{task_id}` details for terminal provenance or explicit
+inspection. Concurrent resource and history reads are coalesced, and history
+serialization and mutations run off the HTTP event loop with ordered writes.
+These boundaries reduce observer-induced stalls but do not guarantee a latency
+bound for every model or native library operation. If unrelated requests still
+time out, retain bounded health/queue/resource samples and profile the actual
+running source. Distinguish a slow worker from a dead worker using supervisor
+status. Do not delete history, weaken timeout assertions, or reduce generation
+settings to conceal the problem.
+
+### Inference and recovery
 
 First distinguish slow progress from a stalled worker. A step counter that
 continues to advance, an active node/phase in Queue, websocket heartbeats, or
@@ -241,3 +294,39 @@ These are disposable when the backend and tests are stopped:
 - A local `.venv/`, if you are prepared to recreate it with `./install.sh --accelerator auto --repair` or the equivalent Windows installer command.
 
 Do not broadly delete `data/`, Hugging Face caches, or `config.ini` while troubleshooting. They may contain models, generated media, prompts, blocks, workflow shares, planner history, or tokens. Review specific paths and back up anything important first.
+
+## Mochi fails before component placement
+
+The reviewed Mochi loader enables mandatory tiling through the pinned
+Diffusers API, `pipeline.vae.enable_tiling()`, after applying the execution
+recipe and before offload placement. The pipeline itself has no
+`enable_vae_tiling()` method. A loader calling that pipeline-level method is
+an adapter defect; changing drivers, the prompt, or the generation settings
+will not repair it. The indexed T5 selection, BF16 variant, and original
+offload policy remain part of the reviewed route.
+
+## GLM-Image rejects unequal prompt embedding shapes
+
+GLM glyph encoding can produce a long positive sequence and a one-token empty
+negative sequence. The pinned pipeline supports those lengths during native
+encoding, but rejects unequal embeddings supplied directly to its public call.
+MoDiff keeps GLM's native validation, prior generation and encoding order. A
+call-scoped dtype adapter requests the diffusion transformer's dtype from
+`encode_prompt`, while the text encoder stays float32. The original method is
+restored on success or failure. Prompts and embeddings are neither truncated
+nor padded to satisfy the public precomputed-embedding check.
+
+
+### Missing Modular conditional companion snapshot
+
+If a reviewed block reports `Cannot load conditional snapshot`, restore
+`data/modular-conditional-contracts.json` using
+`scripts/generate_modular_conditional_contracts.py` in the pinned optional
+Diffusers runtime. This is a no-weight structural generator. Its coverage comes
+from the validated reviewed workflow snapshot, preserving constructor configs;
+routing registry promotions must not remove classes from this companion.
+The generator validates hashes, branch truth tables and execution traces against
+the existing resolved snapshots. Run its `--check` mode and the conditional
+contract tests after restoration. Do not substitute an empty snapshot or bypass
+validation. This generated deployment file is distinct from curated media review
+records, which cannot be reconstructed by inventing approvals.

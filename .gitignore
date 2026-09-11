@@ -9,6 +9,18 @@ config.ini
 *.local
 
 artifacts/
+# Local review notes, evidence, recordings, and handoff checkpoints.
+/review/
+/reviews/
+/review-assets/
+/checkpoints/
+/maintenance/
+/output/
+/playwright-report/
+/playwright-report-*/
+/blob-report/
+/test-results/
+/test-results-*/
 review-pending/
 review-approved/
 .pytest_cache/

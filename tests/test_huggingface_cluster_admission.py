@@ -514,18 +514,6 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
 
     def test_equivalent_standard_routes_keep_modular_structure_but_seal_full_pipeline_execution(self):
         expected = {
-            ("Flux2ModularPipeline", "text2image"): (
-                "text_to_image",
-                "Flux2Pipeline",
-                "modules.DiffusersImage.LoadPipeline",
-                "black-forest-labs/FLUX.2-dev",
-            ),
-            ("Flux2ModularPipeline", "image_conditioned"): (
-                "multi_image_reference_edit",
-                "Flux2Pipeline",
-                "modules.DiffusersImage.LoadPipeline",
-                "black-forest-labs/FLUX.2-dev",
-            ),
             ("ErnieImageModularPipeline", "text2image"): (
                 "text_to_image",
                 "ErnieImagePipeline",

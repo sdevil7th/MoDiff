@@ -17,11 +17,14 @@ from modiff.modular_block_contracts import (
 from modiff.modular_contract_only_registry import (
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES,
     CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS,
+    CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY,
 )
 from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
 
 
 def _reviewed_pipelines():
+    for pipeline_class_name in CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY:
+        yield getattr(diffusers, pipeline_class_name)()
     for pipeline_class_name, truth in PINNED_MODULAR_WORKFLOW_TRUTH.items():
         pipeline_class = getattr(diffusers, pipeline_class_name)
         constructor_config = dict(truth.constructor_config)

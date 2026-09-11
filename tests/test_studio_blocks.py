@@ -288,6 +288,53 @@ class StudioBlockPersistenceTests(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(0)
         return server
 
+    async def test_v2_durable_container_interface_save_list_get_round_trip(self):
+        server = await self.make_server()
+        payload = json.loads((Path(__file__).parent / "fixtures/block_container_interface_v1.json").read_text())
+        payload["definitionId"] = "nested-interface-fixture"
+        response = await server.studio_blocks_post(FakeRequest(payload))
+        self.assertEqual(response.status, 200, response.text)
+        self.assertEqual(response_json(response)["block"], payload)
+        loaded = await server.studio_block_get(FakeRequest(match_info={"block_id": payload["definitionId"]}))
+        self.assertEqual(loaded.status, 200, loaded.text)
+        self.assertEqual(response_json(loaded)["block"], payload)
+        bad = copy.deepcopy(payload)
+        bad["graph"]["nodes"][0]["containerInterface"]["values"] = {"prompt": "shadow value"}
+        bad["graph"]["graphHash"] = block_graph_hash_v2(bad["graph"])
+        bad["contentHash"] = block_definition_content_hash_v2(bad)
+        rejected = await server.studio_blocks_post(FakeRequest(bad))
+        self.assertEqual(rejected.status, 400)
+        loaded = await server.studio_block_get(FakeRequest(match_info={"block_id": payload["definitionId"]}))
+        self.assertEqual(response_json(loaded)["block"], payload)
+
+    async def test_v2_nested_preview_definition_save_get_round_trip(self):
+        server = await self.make_server()
+        payload = json.loads((Path(__file__).parent / "fixtures/block_container_previews_v1.json").read_text())
+        payload["definitionId"] = "nested-preview-fixture"
+        response = await server.studio_blocks_post(FakeRequest(payload))
+        self.assertEqual(response.status, 200, response.text)
+        loaded = await server.studio_block_get(FakeRequest(match_info={"block_id": payload["definitionId"]}))
+        self.assertEqual(loaded.status, 200, loaded.text)
+        self.assertEqual(response_json(loaded)["block"], payload)
+
+    async def test_v2_generic_parent_ownership_save_get_round_trip(self):
+        server = await self.make_server()
+        payload = json.loads((Path(__file__).parent / "fixtures/block_parent_node_v2.json").read_text())
+        payload["definitionId"] = "generic-parent-fixture"
+        response = await server.studio_blocks_post(FakeRequest(payload))
+        self.assertEqual(response.status, 200, response.text)
+        loaded = await server.studio_block_get(FakeRequest(match_info={"block_id": payload["definitionId"]}))
+        self.assertEqual(loaded.status, 200, loaded.text)
+        self.assertEqual(response_json(loaded)["block"], payload)
+        bad = copy.deepcopy(payload)
+        bad["graph"]["nodes"][2]["parentNodeId"] = "missing-parent"
+        bad["graph"]["graphHash"] = block_graph_hash_v2(bad["graph"])
+        bad["contentHash"] = block_definition_content_hash_v2(bad)
+        rejected = await server.studio_blocks_post(FakeRequest(bad))
+        self.assertEqual(rejected.status, 400)
+        loaded = await server.studio_block_get(FakeRequest(match_info={"block_id": payload["definitionId"]}))
+        self.assertEqual(response_json(loaded)["block"], payload)
+
     async def test_block_save_list_get_and_delete(self):
         server = await self.make_server()
         payload = {
@@ -404,6 +451,25 @@ class StudioBlockPersistenceTests(unittest.IsolatedAsyncioTestCase):
         delete_response = await server.studio_block_delete(FakeRequest(match_info={"block_id": "user-block-v2"}))
         self.assertEqual(delete_response.status, 200)
         self.assertEqual(response_json(delete_response)["id"], "user-block-v2")
+
+    async def test_v2_safe_random_ids_preserve_trailing_underscores(self):
+        server = await self.make_server()
+        # nanoid's valid alphabet includes '_'; a new User Node can randomly
+        # end with it. These exact IDs must not alias their trimmed neighbours.
+        ids = ("user-block-v2-random", "user-block-v2-random_", "user-block-v2-random__", "x" + "_" * 79)
+        for definition_id in ids:
+            with self.subTest(definition_id=definition_id):
+                payload = block_definition_v2(definition_id=definition_id)
+                response = await server.studio_blocks_post(FakeRequest(payload))
+                self.assertEqual(response.status, 200, response.text)
+                self.assertEqual(response_json(response)["block"], payload)
+                loaded = await server.studio_block_get(FakeRequest(match_info={"block_id": definition_id}))
+                self.assertEqual(response_json(loaded)["block"], payload)
+                self.assertEqual(Path(response_json(response)["path"]).name, f"{definition_id}.json")
+        deleted = await server.studio_block_delete(FakeRequest(match_info={"block_id": ids[1]}))
+        self.assertEqual(deleted.status, 200)
+        listed = response_json(await server.studio_blocks_get(FakeRequest(query={})))
+        self.assertCountEqual([block["definitionId"] for block in listed["blocks"]], [ids[0], *ids[2:]])
 
     async def test_v2_modular_source_provenance_round_trips_and_is_all_or_none(self):
         server = await self.make_server()

@@ -149,7 +149,7 @@ class HuggingFaceClusterPromotionStagingTests(unittest.TestCase):
         self.assertEqual(bundle["contentHash"], canonical_content_hash(bundle))
         self.assertEqual(
             bundle["evidenceRouteBinding"]["blockDefinition"]["contentHash"],
-            "block-definition-v2-bf9170d5",
+            REGISTERED_BLOCK_V2_DEFINITION_PINS[QWEN][0],
         )
         self.assertEqual(
             bundle["postPromotionRoute"]["blockDefinition"]["contentHash"],

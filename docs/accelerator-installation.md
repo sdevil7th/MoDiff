@@ -14,6 +14,12 @@ Useful modes:
 - `--guide`: print help for every stable setup error code.
 - `--json`: return the same phases and structured steps for automation.
 
+On Windows, both PowerShell launchers preserve native progress written to
+stderr when output is redirected (for example,
+`.\install.ps1 -Accelerator auto *> install.log`). They use the native exit
+code to detect failure; a successful progress message must not abort setup.
+`run.ps1` still refuses to start the worker when profile validation fails.
+
 Executable profiles are `nvidia-cuda`, `amd-rocm-linux`, `amd-instinct-rocm-linux` (preview), `intel-xpu`, `apple-mps`, and `cpu`. Choose Intel explicitly with `--accelerator intel`; Auto selects it when a supported Intel GPU is detected and no higher-priority NVIDIA/AMD profile applies. The XPU profile is preview-only and requires a successful `xpu:0` tensor before launch. The manifest retains `amd-pytorch-windows` as a conditional target, but installation remains blocked until MoDiff pins the complete official Windows SDK wheel set instead of guessing dependencies. Strix Halo on Ubuntu 24.04.3 uses the AMD ROCm 7.2/PyTorch 2.9.1 profile. The separate Instinct preview below targets MI300X/gfx942, not Ryzen. Ubuntu 26.04 is experimental and requires `--allow-experimental`; non-interactive Auto otherwise selects CPU. WSL and unqualified accelerators fall back to CPU.
 
 On macOS, the `cpu` and `apple-mps` profiles use the same MPS-capable PyTorch wheel. The managed profile remains authoritative: selecting `cpu` validates and records a CPU tensor even though the wheel contains MPS support, while selecting `mps` requires an available MPS device and validates on `mps:0`.

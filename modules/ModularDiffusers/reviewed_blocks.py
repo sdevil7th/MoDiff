@@ -17,8 +17,11 @@ import json
 import math
 import time
 import weakref
+from contextlib import nullcontext
 from collections.abc import Mapping
 from copy import deepcopy
+from types import UnionType
+from typing import Union, get_args, get_origin
 
 import torch
 from diffusers.modular_pipelines import PipelineState
@@ -27,6 +30,13 @@ from modiff.NodeBase import NodeBase
 from modiff.huggingface_node_library import reviewed_huggingface_node_library
 from modiff.modular_block_contracts import reviewed_modular_block_snapshot
 from modiff.modular_conditional_contracts import reviewed_modular_conditional_snapshot
+from modiff.modular_composition import (
+    build_reviewed_modular_composition_blocks,
+    validate_modular_composition_recipe,
+)
+from modiff.modular_loop_bindings import bind_upstream_loop_inputs
+from modiff.modular_requirements import validate_runtime_component_requirements
+from modiff.modular_runtime_diagnostics import modular_execution_diagnostics
 
 from . import components
 from .modular_utils import pipeline_class_from_model_type
@@ -106,11 +116,31 @@ class _ReviewedNodeProgressBar:
         )
 
 
+def _prepare_reviewed_block_components(pipeline_class, block_class, pipeline):
+    """Onload Helios' VAE before the pinned encoder reads its device.
+
+    The image/video blocks create normalization tensors before ``encode``
+    triggers its offload hook. Use that same upstream hook early so those
+    tensors follow the VAE, retaining the manager's eviction strategy and hooks.
+    This is selected only after the exact reviewed placement is validated.
+    """
+    if pipeline_class not in {
+        "HeliosModularPipeline", "HeliosPyramidModularPipeline", "HeliosPyramidDistilledModularPipeline"
+    } or block_class not in {"HeliosImageVaeEncoderStep", "HeliosVideoVaeEncoderStep"}:
+        return
+    from diffusers.modular_pipelines.components_manager import CustomOffloadHook
+
+    vae = pipeline.vae
+    hook = getattr(vae, "_hf_hook", None)
+    if isinstance(hook, CustomOffloadHook) and vae.device != hook.execution_device:
+        hook.pre_forward(vae)
+
+
 def _field_label(name):
     return " ".join(part.capitalize() for part in str(name).strip("_").split("_") if part) or str(name)
 
 
-def _reviewed_block_input_params():
+def _reviewed_block_input_params(field_kind="inputs"):
     """Publish the pinned Modular block input union through one generic node.
 
     The client still instantiates only the fields declared by the selected
@@ -120,11 +150,13 @@ def _reviewed_block_input_params():
     """
 
     definitions = reviewed_modular_block_snapshot()["blockDefinitions"]
+    if field_kind == "outputs":
+        definitions = [*definitions, *reviewed_modular_conditional_snapshot()["blockDefinitions"]]
     fields_by_name = {}
     for block in definitions:
-        for field in block.get("inputs", ()):
+        for field in block.get(field_kind, ()):
             name = field.get("name")
-            if not isinstance(name, str) or not name or name == "generator":
+            if not isinstance(name, str) or not name or (name == "generator" and field_kind == "inputs"):
                 continue
             fields_by_name.setdefault(name, []).append(field)
 
@@ -132,12 +164,16 @@ def _reviewed_block_input_params():
     for name, fields in sorted(fields_by_name.items()):
         type_names = " ".join(str(field.get("type", "opaque")) for field in fields).lower()
         param = {"label": _field_label(name)}
-        if "latent" in name or "tensor" in type_names:
+        if name == "generator":
+            param.update({"display": "input", "type": "generator"})
+        elif "latent" in name or "tensor" in type_names:
             param.update({"display": "input", "type": "latent"})
+        elif name in {"video", "driving_video"}:
+            # Upstream video processors may annotate a sequence of PIL frames.
+            # Preserve the video socket that supplies that decoded sequence.
+            param.update({"display": "input", "type": "video"})
         elif "pil.image" in type_names or name == "image" or name.endswith("_image") or name.endswith("_images"):
             param.update({"display": "input", "type": "image"})
-        elif name in {"video", "driving_video"}:
-            param.update({"display": "input", "type": "video"})
         elif name in {"audio", "audios"}:
             param.update({"display": "input", "type": "audio"})
         elif "builtins.bool" in type_names and "opaque" not in type_names:
@@ -169,6 +205,30 @@ def _reviewed_block_input_params():
 
 
 _REVIEWED_BLOCK_INPUT_PARAMS = _reviewed_block_input_params()
+_REVIEWED_BLOCK_INPUT_ALIASES = {
+    f"state_input__{name}": {
+        key: value for key, value in {**param, "display": "input"}.items()
+        if key not in {"default", "value", "required", "options"}
+    }
+    for name, param in _REVIEWED_BLOCK_INPUT_PARAMS.items()
+}
+_REVIEWED_BLOCK_OUTPUT_PARAMS = {
+    f"state_output__{name}": {
+        key: value for key, value in {**param, "display": "output"}.items()
+        if key not in {"default", "value", "required", "options"}
+    }
+    for name, param in _reviewed_block_input_params("outputs").items()
+}
+_REVIEWED_LOOP_PORT_PARAMS = {
+    **{f"iteration_input__{name}": {
+        **{key: value for key, value in param.items() if key not in {"default", "value", "required", "options"}},
+        "display": "input", "type": list(dict.fromkeys([*(param["type"] if isinstance(param["type"], list) else [param["type"]]), "modular_loop_value"])),
+        "label": f"{param.get('label', name)} (each iteration)",
+    } for name, param in _REVIEWED_BLOCK_INPUT_PARAMS.items()},
+    **{f"{prefix}{name}": {"display": "output", "type": "modular_loop_value", "label": f"{name} ({label})"}
+       for name in _reviewed_block_input_params("outputs")
+       for prefix, label in (("iteration_output__", "this iteration"), ("iteration_previous__", "previous iteration"))},
+}
 
 
 class _ReviewedWorkflowState:
@@ -239,16 +299,70 @@ def _placement_path(value):
     return result
 
 
-def _runtime_input_value(name, value):
+def _numeric_form_contract(type_hint):
+    if type_hint in (int, float, bool, type(None)):
+        return True
+    origin = get_origin(type_hint)
+    args = get_args(type_hint)
+    return bool(args) and origin in (list, Union, UnionType) and all(_numeric_form_contract(arg) for arg in args)
+
+
+def _numeric_form_value(name, value, type_hint):
+    """Convert only an exact numeric/bool declaration, never opaque/text unions."""
+    origin = get_origin(type_hint)
+    if origin in (Union, UnionType):
+        for candidate in get_args(type_hint):
+            try:
+                return _numeric_form_value(name, value, candidate)
+            except ValueError:
+                pass
+        raise ValueError(f"{name} must match its declared numeric or boolean input type.")
+    if origin is list:
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except (json.JSONDecodeError, RecursionError) as error:
+                raise ValueError(f"{name} must be a valid numeric list.") from error
+        if not isinstance(value, list):
+            raise ValueError(f"{name} must be a numeric list.")
+        return [_numeric_form_value(name, item, get_args(type_hint)[0]) for item in value]
+    if type_hint is type(None):
+        if value is None:
+            return None
+        raise ValueError(f"{name} must be null.")
+    if type_hint is bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str) and value.strip().lower() in ("true", "false"):
+            return value.strip().lower() == "true"
+        raise ValueError(f"{name} must be a boolean.")
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a number, not a boolean.")
+    try:
+        number = type_hint(value)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError(f"{name} must be a finite {type_hint.__name__}.") from error
+    if not math.isfinite(number) or (type_hint is int and isinstance(value, float) and not value.is_integer()):
+        raise ValueError(f"{name} must be a finite {type_hint.__name__}.")
+    return number
+
+
+def _runtime_input_value(name, value, *, type_hint=None):
     """Normalize ordinary JSON form values at the exact block boundary.
 
     Reviewed steps intentionally allow a superset of upstream fields, so the
     generic node cannot use NodeBase's whole-schema casting pass. Apply the
-    finite workflow-input contract here instead; this keeps persisted UI
+    exact upstream scalar/list type here instead; this keeps persisted UI
     values byte-stable while giving Diffusers the Python types its blocks
     declare.
     """
 
+    if type_hint is not None and _numeric_form_contract(type_hint):
+        return _numeric_form_value(name, value, type_hint)
+    if type_hint is not None and name not in _JSON_INPUTS:
+        # A text/opaque alternative is meaningful. Do not override it with a
+        # historical field-name guess used for descriptors without type hints.
+        return value
     if name in _INTEGER_INPUTS:
         if isinstance(value, bool):
             raise ValueError(f"{name} must be an integer, not a boolean.")
@@ -277,6 +391,60 @@ def _runtime_input_value(name, value):
     return value
 
 
+def _reviewed_runtime_inputs(pipeline_class, values, input_specs):
+    """Translate the reviewed Helios stage controls without rewriting the graph.
+
+    Registered V2 workflows retain the legacy scalar controls alongside the
+    upstream list default. Each supplied scalar owns its corresponding list
+    entry, just as in WorkflowVideoDenoise; a native-list-only workflow keeps
+    its original values and stage count.
+    """
+
+    target = "pyramid_num_inference_steps_list"
+    if pipeline_class not in {
+        "HeliosPyramidModularPipeline",
+        "HeliosPyramidDistilledModularPipeline",
+    } or target not in input_specs:
+        return values
+    aliases = tuple(f"pyramid_stage_{stage}_steps" for stage in (1, 2, 3))
+    if not any(values.get(name) is not None for name in aliases):
+        return values
+    native = values.get(target)
+    if native is None:
+        native = input_specs[target].default
+    if not isinstance(native, (list, tuple)) or len(native) != 3:
+        raise ValueError("Helios scalar pyramid stage controls require a native list with three entries.")
+    stages = list(native)
+    for index, name in enumerate(aliases):
+        value = values.get(name)
+        if value is None:
+            continue
+        try:
+            number = _runtime_input_value("num_inference_steps", value)
+        except ValueError as error:
+            raise ValueError(f"{name} must be an integer from 1 through 50.") from error
+        if not 1 <= number <= 50:
+            raise ValueError(f"{name} must be an integer from 1 through 50.")
+        stages[index] = number
+    return {**values, target: stages}
+
+
+def _reviewed_resolved_dimensions(pipeline_class, block_class, state, values):
+    """Wan's image step owns resolved geometry after interpreting target area.
+
+    Repeated creator controls on downstream nodes still contain target-area
+    dimensions. Native video/denoise steps must retain the resolved dimensions
+    carried by the authenticated upstream state instead of resetting them.
+    """
+    if pipeline_class not in {"WanAnimate2ModularPipeline", "WanAnimate2DistilledModularPipeline"}:
+        return values
+    if block_class not in {
+        "WanAnimate2ProcessVideosInputStep", "WanAnimate2DenoiseStep", "WanAnimate2DistilledDenoiseStep",
+    } or state.get("image_pixels") is None:
+        return values
+    return {**values, "height": state.get("height"), "width": state.get("width")}
+
+
 def _reviewed_definition(pipeline_class, workflow_id):
     matches = [
         definition
@@ -291,8 +459,29 @@ def _reviewed_definition(pipeline_class, workflow_id):
 
 
 def _reviewed_placement(
-    *, pipeline_class, workflow_id, execution_scope, placement_path, block_definition_id, block_class, block_hash
+    *, pipeline_class, workflow_id, execution_scope, placement_path, block_definition_id, block_class, block_hash,
+    composition=None,
 ):
+    if composition is not None:
+        if (
+            composition["pipelineClass"] != pipeline_class
+            or composition["workflowId"] != workflow_id
+            or execution_scope != "unpruned_pipeline"
+        ):
+            raise ValueError("The edited Modular composition belongs to another workflow or execution scope.")
+        placement = next(
+            (item for item in composition["composedPlacements"] if tuple(item["path"]) == placement_path), None,
+        )
+        block = next(
+            (item for item in reviewed_modular_conditional_snapshot()["blockDefinitions"]
+             if item.get("id") == block_definition_id), None,
+        )
+        if (
+            placement is None or placement["blockDefinitionId"] != block_definition_id
+            or block is None or block.get("className") != block_class or block.get("contentHash") != block_hash
+        ):
+            raise ValueError("The Modular block identity/path does not match the validated edited composition.")
+        return composition, block
     # ``default`` is MoDiff's internal identity for fixed
     # SequentialPipelineBlocks classes that do not expose an upstream
     # ``_workflow_map``. Those classes execute their original nested tree;
@@ -366,31 +555,55 @@ def _component_bundle_token(bundle, *, pipeline_class):
     )
 
 
-def _new_runtime(*, bundle, pipeline_class, workflow_id, execution_scope):
+def _new_runtime(*, bundle, pipeline_class, workflow_id, execution_scope, composition_recipe=None):
     token = _component_bundle_token(bundle, pipeline_class=pipeline_class)
-    pipeline_type = pipeline_class_from_model_type(pipeline_class)
-    definition = pipeline_type()
-    blocks = definition.blocks
-    if execution_scope == "selected_workflow" and workflow_id != "default":
-        blocks = blocks.get_workflow(workflow_id)
+    composition_hash = None
+    if composition_recipe is not None:
+        recipe, blocks = build_reviewed_modular_composition_blocks(composition_recipe)
+        composition_hash = recipe["recipeHash"]
+    else:
+        pipeline_type = pipeline_class_from_model_type(pipeline_class)
+        definition = pipeline_type()
+        blocks = definition.blocks
+        if execution_scope == "selected_workflow" and workflow_id != "default":
+            blocks = blocks.get_workflow(workflow_id)
     pipeline = blocks.init_pipeline(components_manager=components)
+    pipeline._modiff_composition_hash = composition_hash
     expected = tuple(pipeline.pretrained_component_names)
+    # An edited graph explicitly invokes its reviewed steps. Do not re-run the
+    # original conditional selectors to guess the graph's component demand:
+    # their selected child can legitimately have moved to another container.
+    # Install the connected bundle's applicable components; each executed step
+    # still validates its exact required components/types before invocation.
+    # Inactive branches must not force extra models into a text-only workflow.
     model_ids = collect_model_ids(
         {"pipeline_components": bundle},
         target_key_names=("pipeline_components",),
         target_model_names=expected,
     )
     installed = components.get_components_by_ids(ids=model_ids, return_dict_with_names=True) if model_ids else {}
-    missing = sorted(set(expected) - set(installed))
+    missing = sorted(set(expected) - set(installed)) if composition_recipe is None else []
     if missing:
         raise ValueError(
             "The connected Models Loader bundle is missing reviewed Modular components: " + ", ".join(missing)
         )
     pipeline.update_components(**installed)
+    if pipeline_class == "HeliosPyramidModularPipeline":
+        # Selected upstream trees retain an aggregate CFG spec. The expanded
+        # executor creates its own pipeline and transfers only pretrained
+        # components, so the loader's corrected from-config guider is absent.
+        # Use the actual pinned inner denoiser spec before text encoding and
+        # retain it for later guidance-scale component recreation.
+        from diffusers.modular_pipelines.helios.denoise import HeliosPyramidChunkDenoiseInner
+
+        guider_spec = next(
+            spec for spec in HeliosPyramidChunkDenoiseInner().expected_components if spec.name == "guider"
+        )
+        pipeline.update_components(guider=guider_spec.create())
     return token, pipeline, PipelineState()
 
 
-def _continued_runtime(value, *, bundle, pipeline_class, workflow_id, execution_scope):
+def _continued_runtime(value, *, bundle, pipeline_class, workflow_id, execution_scope, composition_hash=None):
     if type(value) is not _ReviewedWorkflowState or value not in _ISSUED_STATES:
         raise ValueError("Connect the backend-issued state from the preceding reviewed Modular block.")
     token = value._token
@@ -404,6 +617,8 @@ def _continued_runtime(value, *, bundle, pipeline_class, workflow_id, execution_
         or value._execution_scope != execution_scope
     ):
         raise ValueError("The connected block state belongs to another Modular workflow.")
+    if getattr(value._pipeline, "_modiff_composition_hash", None) != composition_hash:
+        raise ValueError("The connected Pipeline State belongs to a different edited Modular composition. Re-run its upstream nodes.")
     return token, value._pipeline, value._state
 
 
@@ -417,12 +632,29 @@ def _loop_member_descriptor(kwargs, path, block):
         raise ValueError("Reviewed loop members must be connected in one exact ordered chain.")
     if len(members) >= _MAX_LOOP_MEMBERS:
         raise ValueError("The reviewed Modular loop member limit was exceeded.")
+    bindings = kwargs.get("iteration_bindings")
+    if bindings is not None:
+        declared = {field["name"] for field in block.get("inputs", ())}
+        if not isinstance(bindings, dict) or len(bindings) > 128 or set(bindings) - declared:
+            raise ValueError(f"Loop member {'/'.join(path)}: iteration bindings must target its exact declared inputs.")
+    bindings = dict(bindings or {})
+    declared = {field["name"] for field in block.get("inputs", ())}
+    for key, value in kwargs.items():
+        if not key.startswith("iteration_input__") or value is None:
+            continue
+        field = key.removeprefix("iteration_input__")
+        if field not in declared:
+            raise ValueError(f"Loop member {'/'.join(path)}: input {field!r} is not declared.")
+        if field in bindings:
+            raise ValueError(f"Loop member {'/'.join(path)}, input {field}: disconnect one of the competing iteration drivers.")
+        bindings[field] = {"kind": "constant", "value": value}
     members.append(
         {
             "path": list(path),
             "blockDefinitionId": block["id"],
             "blockClass": block["className"],
             "blockContractHash": block["contentHash"],
+            **({"iterationBindings": deepcopy(bindings)} if bindings else {}),
         }
     )
     return tuple(members)
@@ -446,6 +678,35 @@ def _validate_loop_members(block, value, *, parent_path):
         )
 
 
+def _published_outputs(state, declared_outputs):
+    published = {
+        name: state.get(name) if name in declared_outputs else None
+        for name in ("images", "videos", "audio", "audios", "sound", "sampling_rate", "action")
+    }
+    # Keep the official waveform untouched inside PipelineState. The ordinary
+    # canvas audio socket carries MoDiff's sample-rate-bearing audio object,
+    # matching the existing workflow decoder/export boundary (no default Hz).
+    if published["sound"] is not None:
+        sample_rate = state.get("sampling_rate")
+        if isinstance(sample_rate, bool) or not isinstance(sample_rate, int) or sample_rate <= 0:
+            raise ValueError("The reviewed sound output requires its actual positive integer sampling_rate.")
+        from modules.DiffusersAudio.main import output_to_audio_objects
+
+        audio = output_to_audio_objects(published["sound"], sample_rate=sample_rate)
+        if len(audio) != 1:
+            raise ValueError("The reviewed sound socket requires one waveform; batch audio cannot be silently discarded.")
+        published["sound"] = audio[0]
+    # Inputs and outputs may have the same upstream name. Separate ordinary
+    # output handles avoid overwriting the editable input. Only the exact
+    # reviewed block's declared outputs are published, never arbitrary state.
+    published.update({
+        f"state_output__{name}": state.get(name)
+        for name in declared_outputs
+        if f"state_output__{name}" in _REVIEWED_BLOCK_OUTPUT_PARAMS
+    })
+    return published
+
+
 class ReviewedModularWorkflowStep(NodeBase):
     """Run one exact reviewed block, or declare one exact loop member."""
 
@@ -455,6 +716,9 @@ class ReviewedModularWorkflowStep(NodeBase):
     skipParamsCheck = True
     params = {
         **_REVIEWED_BLOCK_INPUT_PARAMS,
+        **_REVIEWED_BLOCK_INPUT_ALIASES,
+        **_REVIEWED_BLOCK_OUTPUT_PARAMS,
+        **_REVIEWED_LOOP_PORT_PARAMS,
         "pipeline_components": {
             "label": "Pipeline Components",
             "display": "input",
@@ -470,6 +734,8 @@ class ReviewedModularWorkflowStep(NodeBase):
             "default": "selected_workflow",
             "options": ["selected_workflow", "unpruned_pipeline"],
         },
+        "composition_recipe": {"type": "object", "hidden": True},
+        "iteration_bindings": {"type": "object", "hidden": True},
         "placement_path": {"type": "object", "hidden": True},
         "block_definition_id": {"type": "string", "hidden": True},
         "block_class": {"type": "string", "hidden": True},
@@ -484,6 +750,7 @@ class ReviewedModularWorkflowStep(NodeBase):
         "max_sequence_length": {"label": "Maximum Sequence Length", "type": "int", "default": 1024},
         "num_images_per_prompt": {"label": "Images Per Prompt", "type": "int", "default": 1},
         "latents": {"label": "Latents", "display": "input", "type": "latent"},
+        "generator": {"label": "Generator", "display": "input", "type": "generator"},
         "height": {"label": "Height", "type": "int", "default": 1024},
         "width": {"label": "Width", "type": "int", "default": 1024},
         "seed": {"label": "Seed", "display": "random", "type": "int", "default": 0},
@@ -503,6 +770,7 @@ class ReviewedModularWorkflowStep(NodeBase):
         "videos": {"label": "Videos", "display": "output", "type": "video"},
         "audio": {"label": "Audio", "display": "output", "type": "audio"},
         "audios": {"label": "Audio", "display": "output", "type": "audio"},
+        "sound": {"label": "Sound", "display": "output", "type": "audio"},
         "sampling_rate": {"label": "Sampling Rate", "display": "output", "type": "int"},
         "action": {"label": "Action", "display": "output", "type": "object"},
     }
@@ -515,6 +783,10 @@ class ReviewedModularWorkflowStep(NodeBase):
         block_definition_id = _exact_text(kwargs.get("block_definition_id"), label="Block definition id")
         block_class = _exact_text(kwargs.get("block_class"), label="Block class")
         block_hash = _exact_text(kwargs.get("block_contract_hash"), label="Block contract hash")
+        composition_recipe = kwargs.get("composition_recipe")
+        composition = (
+            validate_modular_composition_recipe(composition_recipe) if composition_recipe is not None else None
+        )
         _definition, reviewed_block = _reviewed_placement(
             pipeline_class=pipeline_class,
             workflow_id=workflow_id,
@@ -523,9 +795,11 @@ class ReviewedModularWorkflowStep(NodeBase):
             block_definition_id=block_definition_id,
             block_class=block_class,
             block_hash=block_hash,
+            composition=composition,
         )
         execution_kind = kwargs.get("execution_kind")
         if execution_kind == "loop_member":
+            self.record_generation_inputs({"iteration_bindings": kwargs["iteration_bindings"]} if kwargs.get("iteration_bindings") else {})
             return {
                 "state_out": None,
                 "loop_members": _loop_member_descriptor(kwargs, path, reviewed_block),
@@ -533,6 +807,7 @@ class ReviewedModularWorkflowStep(NodeBase):
                 "videos": None,
                 "audio": None,
                 "audios": None,
+                "sound": None,
                 "sampling_rate": None,
                 "action": None,
             }
@@ -546,6 +821,7 @@ class ReviewedModularWorkflowStep(NodeBase):
                 pipeline_class=pipeline_class,
                 workflow_id=workflow_id,
                 execution_scope=execution_scope,
+                **({"composition_recipe": composition_recipe} if composition is not None else {}),
             )
         else:
             token, pipeline, state = _continued_runtime(
@@ -554,10 +830,12 @@ class ReviewedModularWorkflowStep(NodeBase):
                 pipeline_class=pipeline_class,
                 workflow_id=workflow_id,
                 execution_scope=execution_scope,
+                **({"composition_hash": composition["recipeHash"]} if composition is not None else {}),
             )
         runtime_block = _block_at_path(pipeline.blocks, path)
         if type(runtime_block).__name__ != block_class:
             raise ValueError("The runtime Modular block class differs from its pinned reviewed identity.")
+        validate_runtime_component_requirements(runtime_block, pipeline, path=path)
         if execution_kind == "loop_owner":
             _validate_loop_members(runtime_block, kwargs.get("loop_members_in"), parent_path=path)
 
@@ -573,26 +851,52 @@ class ReviewedModularWorkflowStep(NodeBase):
             "block_class",
             "block_contract_hash",
             "execution_kind",
+            "composition_recipe",
+            "iteration_bindings",
         }
         block_input_specs = {item.name: item for item in runtime_block.inputs if item.name}
         block_inputs = set(block_input_specs)
-        for name, value in kwargs.items():
+        consumed_inputs = {}
+        bound_inputs = dict(kwargs)
+        for alias in _REVIEWED_BLOCK_INPUT_ALIASES:
+            value = kwargs.get(alias)
+            if value is None:
+                continue
+            name = alias.removeprefix("state_input__")
+            if name not in block_inputs:
+                raise ValueError(f"{block_class} does not declare an input named {name!r}.")
+            if kwargs.get(name) is not None:
+                raise ValueError(f"{block_class}.{name} has competing direct and aliased input values. Disconnect one driver.")
+            bound_inputs[name] = value
+        runtime_inputs = _reviewed_runtime_inputs(pipeline_class, bound_inputs, block_input_specs)
+        runtime_inputs = _reviewed_resolved_dimensions(pipeline_class, block_class, state, runtime_inputs)
+        for name, value in runtime_inputs.items():
             if name in ignored or value is None or name not in block_inputs:
                 continue
             if name == "seed":
                 continue
-            state.set(
-                name,
-                _runtime_input_value(name, value),
-                kwargs_type=block_input_specs[name].kwargs_type,
-            )
-        if "generator" in block_inputs and kwargs.get("seed") is not None:
+            value = _runtime_input_value(name, value, type_hint=getattr(block_input_specs[name], "type_hint", None))
+            state.set(name, value, kwargs_type=block_input_specs[name].kwargs_type)
+            consumed_inputs[name] = value
+        # Legacy misplaced seeds remain inert until the user applies the explicit
+        # graph repair. Initializing on an unrelated preparation step would change
+        # saved workflows and can reset an already-advanced shared Generator.
+        if "generator" in block_inputs and kwargs.get("generator") is None and kwargs.get("seed") is not None:
             device = getattr(pipeline, "_execution_device", None) or "cpu"
-            state.set("generator", torch.Generator(device=device).manual_seed(int(kwargs["seed"])))
+            seed = int(kwargs["seed"])
+            state.set("generator", torch.Generator(device=device).manual_seed(seed))
+            consumed_inputs["seed"] = seed
         guidance_scale = kwargs.get("guidance_scale")
         if guidance_scale is not None and "guider" in pipeline.component_names:
             guider_spec = pipeline.get_component_spec("guider")
-            pipeline.update_components(guider=guider_spec.create(guidance_scale=float(guidance_scale)))
+            guidance_scale = float(guidance_scale)
+            pipeline.update_components(guider=guider_spec.create(guidance_scale=guidance_scale))
+            consumed_inputs["guidance_scale"] = guidance_scale
+
+        # A reviewed adapter accepts a union of fields but a particular block
+        # consumes only its exact inputs. Capture those normalized values, not
+        # unused union defaults or the pre-conversion persisted UI strings.
+        self.record_generation_inputs(consumed_inputs)
 
         progress_bar_override = execution_kind == "loop_owner" and callable(
             getattr(runtime_block, "progress_bar", None)
@@ -606,7 +910,13 @@ class ReviewedModularWorkflowStep(NodeBase):
                 total=total,
             )
         try:
-            _pipeline, state = runtime_block(pipeline, state)
+            _prepare_reviewed_block_components(pipeline_class, block_class, pipeline)
+            bindings = (
+                bind_upstream_loop_inputs(runtime_block, kwargs["loop_members_in"], parent_path=path, coerce_input=_runtime_input_value)
+                if execution_kind == "loop_owner" else nullcontext()
+            )
+            with bindings, modular_execution_diagnostics(runtime_block, state, path=path):
+                _pipeline, state = runtime_block(pipeline, state)
         finally:
             if progress_bar_override:
                 if had_instance_progress_bar:
@@ -614,10 +924,7 @@ class ReviewedModularWorkflowStep(NodeBase):
                 else:
                     del runtime_block.progress_bar
         declared_outputs = {item.get("name") for item in reviewed_block.get("outputs", ())}
-        published = {
-            name: state.get(name) if name in declared_outputs else None
-            for name in ("images", "videos", "audio", "audios", "sampling_rate", "action")
-        }
+        published = _published_outputs(state, declared_outputs)
         return {
             "state_out": _issue_state(
                 token=token,

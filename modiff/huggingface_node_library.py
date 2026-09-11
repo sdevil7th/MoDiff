@@ -93,6 +93,8 @@ _PUBLISHER_PROMPT_EXAMPLES = {
         "while sea breeze moves its fur against crystal-clear water and distant green hills."
     ),
     "nvidia/Cosmos3-Nano": "A small warehouse robot moves a blue box across a clean floor.",
+    "ruixiangma/LongCat-AudioDiT-1B-Diffusers": "A calm ocean wave ambience with soft wind in the background.",
+    "cvssp/audioldm2": "The sound of a hammer hitting a wooden surface",
 }
 
 _PUBLISHER_ADDITIONAL_INPUT_EXAMPLES = {

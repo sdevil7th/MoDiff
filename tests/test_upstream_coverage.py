@@ -20,6 +20,7 @@ from modiff.upstream_coverage import (
     UPSTREAM_COVERAGE_STATUSES,
     UpstreamCoverageError,
     _load_reviewed_gallery_manifest,
+    _load_public_templates,
     build_upstream_coverage,
     load_upstream_coverage,
     render_upstream_coverage,
@@ -43,28 +44,41 @@ class UpstreamCoverageTests(unittest.TestCase):
     def setUpClass(cls):
         cls.ledger = load_upstream_coverage()
 
+    def test_template_inventory_handles_eager_browser_store_imports_without_network(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            bundle = Path(temporary) / "catalog.mjs"
+            bundle.write_text(
+                "if (window.location.hostname !== 'localhost' || localStorage.getItem('private') !== null) throw Error('environment');"
+                "export const templates = [{id:'test',modelType:'AudioLDM2Pipeline',mode:'text_to_audio',verificationStatus:'unverified'}];",
+                encoding="utf-8",
+            )
+            self.assertEqual(_load_public_templates(bundle)[0]["id"], "test")
+            bundle.write_text("await fetch('https://example.invalid'); export const templates = [];", encoding="utf-8")
+            with self.assertRaisesRegex(UpstreamCoverageError, "must not perform network"):
+                _load_public_templates(bundle)
+
     def test_checked_in_ledger_has_exact_reviewed_counts(self):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 199,
-                "canonicalWorkflowsWithPublicTemplates": 51,
+                "canonicalWorkflowCount": 200,
+                "canonicalWorkflowsWithPublicTemplates": 52,
                 "canonicalWorkflowsWithoutPublicTemplates": 148,
                 "diffusersPipelineSymbolCount": 330,
                 "pipelineStatusCounts": {
                     "contract-only": 5,
-                    "equivalent": 12,
-                    "executable": 137,
+                    "equivalent": 11,
+                    "executable": 142,
                     "intentionally-excluded": 56,
-                    "research-blocked": 120,
+                    "research-blocked": 116,
                     "unreviewed": 0,
                 },
-                "publicTemplateCount": 77,
+                "publicTemplateCount": 78,
                 "reviewedGalleryTemplateCount": 70,
                 "templateStatusCounts": {
                     "contract-only": 0,
                     "equivalent": 0,
-                    "executable": 77,
+                    "executable": 78,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
@@ -82,7 +96,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "workflowStatusCounts": {
                     "contract-only": 0,
                     "equivalent": 0,
-                    "executable": 199,
+                    "executable": 200,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
@@ -121,7 +135,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         reviewed_non_video = [
             item for item in items if item["reviewDecision"] == "pinned-diffusers-non-video-source-triage"
         ]
-        self.assertEqual(len(reviewed_non_video), 79)
+        self.assertEqual(len(reviewed_non_video), 75)
         self.assertEqual(
             {
                 status: sum(item["status"] == status for item in reviewed_non_video)
@@ -132,7 +146,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "equivalent": 0,
                 "executable": 0,
                 "intentionally-excluded": 43,
-                "research-blocked": 36,
+                "research-blocked": 32,
                 "unreviewed": 0,
             },
         )
@@ -296,11 +310,11 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(_canonical_json_sha256(graph_path), item["graphHash"], workflow_id)
 
         templates = self.ledger["publicTemplates"]
-        self.assertEqual(len({item["id"] for item in templates}), 77)
+        self.assertEqual(len({item["id"] for item in templates}), 78)
         self.assertTrue(all(item["canonicalWorkflowId"] in ledger_workflows for item in templates))
         self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 70)
         self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 70)
-        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 51)
+        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 52)
 
     def test_template_and_gallery_source_fingerprints_remain_current(self):
         expected_bundle_hash = hashlib.sha256(TEMPLATE_BUNDLE.read_bytes()).hexdigest()

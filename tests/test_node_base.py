@@ -19,6 +19,184 @@ from modiff.NodeBase import NodeBase, deep_equal, node_message_context  # noqa: 
 
 
 class NodeBaseDeepEqualTests(unittest.TestCase):
+    def test_optional_outputs_cache_success_but_not_failed_or_invalid_results(self):
+        class OptionalNode(NodeBase):
+            def execute(self, mode):
+                self.calls += 1
+                if self.fail:
+                    raise ValueError('retry this execution')
+                if self.invalid:
+                    return {'wrong': None}
+                return {'images': 1 if mode == 'image' else None,
+                        'latents': 2 if mode == 'latent' else None}
+
+        module = '.'.join(OptionalNode.__module__.split('.')[:-1])
+        definition = {module: {'OptionalNode': {'params': {
+            'mode': {'type': 'string'},
+            'images': {'type': 'int', 'display': 'output'},
+            'latents': {'type': 'int', 'display': 'output'},
+        }}}}
+        with patch('modiff.NodeBase._module_map', return_value=definition):
+            node = OptionalNode('optional')
+            node.calls, node.fail, node.invalid = 0, False, False
+            for count, mode in enumerate(('image', 'latent'), 1):
+                first = node(mode=mode)
+                self.assertEqual(node(mode=mode), first)
+                self.assertFalse(node._has_changed)
+                self.assertEqual(node.calls, count)
+            node.invalidate_cache()
+            node.fail = True
+            with self.assertRaisesRegex(RuntimeError, 'retry this execution'):
+                node(mode='latent')
+            node.fail = False
+            node.invalid = True
+            with self.assertRaisesRegex(ValueError, 'Output keys do not match'):
+                node(mode='latent')
+            node.invalid = False
+            self.assertEqual(node(mode='latent')['latents'], 2)
+            self.assertEqual(node.calls, 5)
+            node(mode='latent')
+            self.assertEqual(node.calls, 5)
+            node.invalidate_cache()
+            node(mode='latent')
+            self.assertEqual(node.calls, 6)
+
+    def test_zero_output_node_executes_once_even_with_empty_inputs(self):
+        class EmptyNode(NodeBase):
+            def execute(self):
+                self.calls += 1
+                return {}
+
+        module = '.'.join(EmptyNode.__module__.split('.')[:-1])
+        with patch('modiff.NodeBase._module_map', return_value={module: {'EmptyNode': {'params': {}}}}):
+            node = EmptyNode('empty')
+            node.calls = 0
+            self.assertEqual(node(), {})
+            self.assertEqual(node(), {})
+            self.assertEqual(node.calls, 1)
+
+    def test_invalid_selector_retains_value_and_fails_before_execution_instead_of_empty_container(self):
+        class SelectorConsumer(NodeBase):
+            def execute(self, **kwargs):
+                raise AssertionError('An invalid selector must not reach model or tensor execution')
+
+        module_name = '.'.join(SelectorConsumer.__module__.split('.')[:-1])
+        for options in (['cpu:0', 'cuda:0'], {'cpu:0': {'label': 'CPU'}, 'cuda:0': {'label': 'GPU'}}):
+            with self.subTest(options=options):
+                definition = {module_name: {'SelectorConsumer': {'params': {
+                    'device': {'type': 'string', 'options': options, 'default': 'cpu:0'},
+                }}}}
+                with patch('modiff.NodeBase._module_map', return_value=definition):
+                    node = SelectorConsumer('invalid-selector')
+                    supplied = {'device': 'cpu'}
+                    with self.assertRaisesRegex(ValueError, 'Invalid option for device.*cpu:0'):
+                        node(**supplied)
+                    self.assertEqual(supplied, {'device': 'cpu'})
+
+    def test_dispatch_captures_normalized_postprocessed_inputs_without_replaying_them(self):
+        from modiff.server import WebServer
+
+        processed, calls = [], []
+
+        def select_seed(value, _params):
+            processed.append(value)
+            return value + 7
+
+        class NumericConsumer(NodeBase):
+            def execute(self, width, seed, prompt):
+                calls.append((width, seed, list(prompt)))
+                # A callback must not be able to rewrite its captured inputs.
+                prompt.append("runtime mutation")
+                return {"result": width}
+
+        module_name = ".".join(NumericConsumer.__module__.split(".")[:-1])
+        definition = {module_name: {"NumericConsumer": {"params": {
+            "width": {"type": "int"}, "seed": {"type": "int", "postProcess": select_seed},
+            "prompt": {"type": "string"}, "result": {"type": "int", "display": "output"},
+        }}}}
+        graph_node = {"module": module_name, "action": "NumericConsumer", "params": {
+            "width": {"value": "1024"}, "seed": {"value": "42"}, "prompt": {"value": ["original"]},
+        }}
+        with patch("modiff.NodeBase._module_map", return_value=definition):
+            server = object.__new__(WebServer)
+            server.modules = definition
+            server.current_task = {"task_id": "numeric-run", "attempt_index": 0}
+            server.node_cache = {"generate": NumericConsumer("generate")}
+            server.execute_node("generate", graph_node, "test", quiet=True)
+        fields = server._resolved_input_records["generate"]["fields"]
+        self.assertEqual(fields["width"]["value"], 1024)
+        self.assertEqual(fields["seed"]["value"], 49)
+        self.assertEqual(fields["prompt"]["value"], ["original"])
+        self.assertEqual(processed, [42])
+        self.assertEqual(calls, [(1024, 49, ["original"])])
+
+    def test_cached_adapter_receipt_keeps_effective_values_not_unconsumed_form_fields(self):
+        from modiff.server import WebServer
+
+        calls = []
+
+        class AdapterConsumer(NodeBase):
+            def execute(self, **kwargs):
+                values = {"width": int(kwargs["width"])}
+                self.record_generation_inputs(values)
+                calls.append(values)
+                return {"result": values["width"]}
+
+        module_name = ".".join(AdapterConsumer.__module__.split(".")[:-1])
+        definition = {module_name: {"AdapterConsumer": {"skipParamsCheck": True, "params": {
+            "width": {"type": "int"}, "height": {"type": "int"},
+            "result": {"type": "int", "display": "output"},
+        }}}}
+        graph_node = {"module": module_name, "action": "AdapterConsumer", "params": {
+            "width": {"value": "1024"}, "height": {"value": "unused"},
+        }}
+        with patch("modiff.NodeBase._module_map", return_value=definition):
+            server = object.__new__(WebServer)
+            server.modules = definition
+            server.current_task = {"task_id": "first", "attempt_index": 0}
+            server.node_cache = {"generate": AdapterConsumer("generate")}
+            server.execute_node("generate", graph_node, "test", quiet=True)
+            server.current_task = {"task_id": "cached", "attempt_index": 1}
+            server.execute_node("generate", graph_node, "test", quiet=True)
+        self.assertEqual(calls, [{"width": 1024}])
+        self.assertEqual(server._resolved_input_records["generate"]["fields"], {
+            "width": {"value": 1024, "source": "literal"},
+        })
+
+    def test_dispatch_captures_connected_generation_inputs_after_resolution_and_scopes_attempts(self):
+        from modiff.server import WebServer
+
+        class PromptConsumer(NodeBase):
+            def execute(self, prompt):
+                return {"result": prompt}
+
+        module_name = ".".join(PromptConsumer.__module__.split(".")[:-1])
+        definition = {module_name: {"PromptConsumer": {"params": {
+            "prompt": {"type": "string"}, "result": {"type": "string", "display": "output"},
+        }}}}
+        graph_node = {"module": module_name, "action": "PromptConsumer", "params": {
+            "prompt": {"value": "fallback", "sourceId": "text", "sourceKey": "output"},
+        }}
+        with patch("modiff.NodeBase._module_map", return_value=definition):
+            server = object.__new__(WebServer)
+            server.modules = definition
+            server.current_task = {"task_id": "run", "attempt_index": 0}
+            server.node_cache = {
+                "text": SimpleNamespace(output={"output": "actually connected"}, _has_changed=True),
+                "encode": PromptConsumer("encode"),
+            }
+            server.execute_node("encode", graph_node, "test", quiet=True)
+            self.assertEqual(server.node_cache["encode"].output["result"], "actually connected")
+            self.assertEqual(server._resolved_input_records["encode"]["fields"]["prompt"]["value"], "actually connected")
+            self.assertEqual(server._resolved_input_records["encode"]["fields"]["prompt"]["source"], "connected")
+            self.assertEqual(graph_node["params"]["prompt"]["value"], "fallback")
+            server._resolved_input_records["prior-attempt"] = {}
+            server.current_task["attempt_index"] = 1
+            server.execute_node("encode", graph_node, "test", quiet=True, param_overrides={"prompt": "override"})
+            self.assertEqual(server._resolved_input_context, ("run", 1))
+            self.assertNotIn("prior-attempt", server._resolved_input_records)
+            self.assertEqual(server._resolved_input_records["encode"]["fields"]["prompt"], {"value": "override", "source": "override"})
+
     def test_dynamic_node_messages_carry_workflow_ownership_and_target_the_originating_session(self):
         class DynamicNode(NodeBase):
             pass

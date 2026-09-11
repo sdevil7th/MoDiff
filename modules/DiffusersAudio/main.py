@@ -1965,6 +1965,18 @@ class Generate(NodeBase):
 
         values = values if isinstance(values, dict) else {}
         signal_value = values.get("audio_contract")
+        if isinstance(signal_value, str):
+            # A registered composite can seed its form before a pipeline is
+            # loaded, using the pinned class and already-bound exact task.
+            # This resolves UI metadata only; execution still validates the
+            # connected runtime pipeline and its independently tagged contract.
+            adapter = get_audio_pipeline_adapter(signal_value)
+            matching = [contract for contract in adapter.mode_contracts
+                        if contract.task_type == values.get("task_type")]
+            if len(matching) != 1:
+                raise ValueError("The registered audio class and task do not resolve one exact form contract.")
+            signal_value = matching[0].signal_value(adapter.pipeline_class, adapter.default_repo)
+            self.set_field_value({"audio_contract": signal_value})
         if not isinstance(signal_value, dict):
             raise ValueError("The connected audio pipeline did not publish a valid task contract.")
         adapter = get_audio_pipeline_adapter(signal_value.get("pipelineClass"))

@@ -598,6 +598,25 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
             )
         self.assertEqual(local.set_field_value.call_args.args[0]["revision"], "")
 
+    def test_registered_class_signal_resolves_only_an_exact_task_form(self):
+        node = Generate("registered-audio-form")
+        node.set_field_params = Mock()
+        node.set_field_value = Mock()
+        for name in ("LongCatAudioDiTPipeline", "AudioLDM2Pipeline"):
+            node.set_field_params.reset_mock()
+            node.update_audio_contract({"audio_contract": name, "task_type": "text2audio"}, {"key": "pipeline"})
+            updates = {call.args[0]: call.args[1] for call in node.set_field_params.call_args_list}
+            self.assertTrue(updates["bpm"]["hidden"])
+            self.assertTrue(updates["guidance_scale"]["hidden"])
+            self.assertFalse(updates["stable_audio_steps"]["hidden"])
+            self.assertFalse(updates["stable_audio_guidance"]["hidden"])
+            self.assertEqual(node.set_field_value.call_args.args[0]["audio_contract"]["pipelineClass"], name)
+        for name, task in (("unregistered", "text2audio"), ("LongCatAudioDiTPipeline", "cover")):
+            node.set_field_params.reset_mock()
+            with self.assertRaises(ValueError):
+                node.update_audio_contract({"audio_contract": name, "task_type": task}, {"key": "pipeline"})
+            node.set_field_params.assert_not_called()
+
     def test_generate_contract_signal_sets_task_and_audio_input_form_contract(self):
         node = Generate("audio-generate-contract")
         node.set_field_params = Mock()

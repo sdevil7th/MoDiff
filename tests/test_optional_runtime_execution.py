@@ -159,6 +159,14 @@ def base_delivery(profile_id=EXECUTION_PROFILE_ID, **changes):
 
 
 class OptionalRuntimeRequirementTests(unittest.TestCase):
+    def setUp(self):
+        # These catalog fixtures describe a base worker unless a case explicitly
+        # selects active/recovery status. Keep that unit-test world independent
+        # of the validated overlay used to launch the surrounding pytest suite.
+        environment = mock.patch.dict(os.environ, {"MODIFF_RUNTIME_OVERLAY_STATUS": "base"})
+        environment.start()
+        self.addCleanup(environment.stop)
+
     def test_every_current_profile_has_explicit_platform_scoped_delivery(self):
         expected_keys = {
             "schemaVersion",
@@ -442,6 +450,29 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         self.assertIsNone(reason)
         self.assertEqual([profile.id for profile in profiles], ["flux-kontext:direct"])
         self.assertIn(FLUX_KONTEXT_NVFP4_REPO, profiles[0].compatible_repos)
+
+    def test_retired_profiles_are_explicit_lookup_only_not_implicit_loader_candidates(self):
+        values = {
+            "pipeline_class": "Flux2Pipeline",
+            "mode": "multi_image_reference_edit",
+            "model_id": {"source": "hub", "value": "black-forest-labs/FLUX.2-dev"},
+        }
+        for selected, expected in ((None, "flux2-dev:direct"), ("flux2-modular:equivalent-standard", "flux2-modular:equivalent-standard")):
+            with self.subTest(selected=selected):
+                params = {**values, **({"execution_profile_id": selected} if selected else {})}
+                profiles, reason = resolve_execution_profiles_for_loader("modules.DiffusersImage", "LoadPipeline", params)
+                self.assertIsNone(reason)
+                self.assertEqual([profile.id for profile in profiles], [expected])
+                graph = {
+                    "nodes": {"loader": {"module": "modules.DiffusersImage", "action": "LoadPipeline",
+                        "params": {key: {"value": value} for key, value in params.items()}}},
+                    "paths": [["loader"]],
+                }
+                catalog = runtime_catalog("present_unqualified", process_status="active", overlay_status="active", qualified=True)
+                with mock.patch.dict(os.environ, {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"}):
+                    requirement = graph_optional_runtime_requirement(graph, catalog_resolver=lambda: catalog)
+                self.assertEqual(requirement["state"], "active")
+                self.assertEqual(requirement["executionProfileIds"], [expected])
 
     def test_loader_resolution_honors_a_sealed_exact_execution_profile(self):
         values = {

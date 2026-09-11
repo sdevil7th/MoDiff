@@ -16,6 +16,8 @@
     "qualificationEvidence": {"status": "unqualified", "source": "catalog-review-required"}
   },
   "repositoryPins": [
+    {"repo": "black-forest-labs/FLUX.2-klein-9b-kv", "revision": "a6dfb36eca3a3906eb2fd460795adfb844e5fcce", "license": "flux-non-commercial-license", "purpose": "flux2-klein-kv-standard-pipeline", "gated": true, "snapshotByteSize": 34722772576, "verifiedAt": "2026-09-09T09:55:00+05:30"},
+    {"repo": "InstantX/FLUX.1-dev-Controlnet-Canny", "revision": "e7cee4b2afa335bf8f913f2b044764b1a1b01881", "license": "flux-1-dev-non-commercial-license", "purpose": "flux-dev-standard-controlnet-canny-component", "format": "safetensors", "weightName": "diffusion_pytorch_model.safetensors", "weightByteSize": 3583232168, "verifiedAt": "2026-09-09T08:35:00+05:30"},
     {"repo": "Qwen/Qwen-Image", "revision": "75e0b4be04f60ec59a75f475837eced720f823b6", "license": "apache-2.0", "purpose": "qwen-image-modular-text-to-image-base-family-variant", "snapshotByteSize": 57704594653, "weightByteSize": 57699249390, "verifiedAt": "2026-09-04T00:00:00+05:30"},
     {"repo": "nvidia/Cosmos-Guardrail1", "revision": "d6d4bfa899a71454a700907664f3e88f503950cf", "license": "nvidia-open-model-license", "purpose": "cosmos3-mandatory-safety-guardrail", "gated": true, "snapshotByteSize": 7171449905, "weightByteSize": 3627263067, "verifiedAt": "2026-09-02T00:00:00+05:30"},
     {"repo": "nvidia/Cosmos3-Super-Image2Video-4Step", "revision": "cd55ce81bc5cea51a09c37cd7652144e7278f049", "license": "openmdw-1.1", "purpose": "cosmos3-distilled-modular-image-to-video-4-step", "snapshotByteSize": 129446040640, "weightByteSize": 129405417712, "verifiedAt": "2026-09-02T00:00:00+05:30"},

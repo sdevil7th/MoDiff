@@ -16,7 +16,7 @@
       "presentationMediaHints"
     ]
   },
-  "contentHash": "sha256:d55b7dd036408be94af30e5082239faa245e8b82520a5d7622ce506db72a1718",
+  "contentHash": "sha256:9d3dad69cf5722740cc1091ddd64e6ebbbd3d76ae0532c833ee3958afe4e2eb1",
   "contractKind": "non_executable_comfy_evidence_resolution_ledger",
   "resolutions": [
     {
@@ -43,7 +43,7 @@
       },
       "contractId": "comfy-research:blueprint:audio_generation_stable_audio_3_medium",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 4,
+      "currentTaskBoundaryOptionCount": 5,
       "inferenceBasis": "explicit_title_audio_generation",
       "inferredMode": "text_to_audio",
       "presentationMediaHints": [
@@ -97,7 +97,7 @@
       },
       "contractId": "comfy-research:blueprint:audio_generation_stable_audio_3_medium_base",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 4,
+      "currentTaskBoundaryOptionCount": 5,
       "inferenceBasis": "explicit_title_audio_generation",
       "inferredMode": "text_to_audio",
       "presentationMediaHints": [
@@ -7483,18 +7483,18 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:bb6e3a1327676489da461b83e089a298d35afc37055f2221852270876d863025",
+      "contentHash": "sha256:03e83ce2047ff58f573739d2f91e4168d18c0bacd1711a01e778292275030f22",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:dfe094171c916cab6b43772f6d214cd947a82267566dddd82b665dccae1da784"
+      "sha256": "sha256:6ed1a3b8c7f5a53c64140f70d07edad0bc8c16d3fdbc639438470aeffdcd9add"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:d0a8aa7b53770391b285b375de480fead9504ccdac716a2c291d5d1e19296983",
+      "contentHash": "sha256:68f1033cc66ea25bbb00e90b3ea77780f55946c446842fa0539bf00a3c48b0ff",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:b9c700e6baf67b384759348264866e7be11f8e96df3340bb11c84254164378f0"
+      "sha256": "sha256:9a45aeb888f3f6892dab0845dadec613cf39d6fa64ddca1cb442f440470ad6d6"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:626c3021870cc5bed82be7aa15272f95803459c52514cfe095ad044732a159a9"
+      "sha256": "sha256:e0770f481ed444f78e215ceb2055c11d0d26f7259653e63ae3cd327cd2833cf8"
     }
   },
   "summary": {

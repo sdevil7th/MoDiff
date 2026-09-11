@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-22T03:30:45.084Z",
+  "generatedAt": "2026-09-08T09:45:53.930Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 188,
-  "supportedPairCount": 199,
+  "supportedCanonicalPairCount": 267,
+  "supportedPairCount": 200,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -3819,6 +3819,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/marigold-depth-pipeline/depth-estimation.json",
       "graphHash": "e6cb9d127b49c86713ff98d74415fb86de845b545b511353dc4d42303b17ea44"
+    },
+    {
+      "id": "MiniMaxMusic3ModularPipeline:text_to_audio",
+      "modelType": "MiniMaxMusic3ModularPipeline",
+      "modelFamily": "MiniMax Music 3",
+      "mode": "text_to_audio",
+      "mediaKind": "audio",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "MiniMaxAI/MiniMax-Music3"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "MiniMaxMusic3ModularPipeline"
+      ],
+      "sourceTemplateId": "minimax_music3_chamber_pop",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/mini-max-music3-modular-pipeline/text-to-audio.json",
+      "graphHash": "0f481695e525099c8ca281baa422e9442171d196988562605823f36f6acca41c"
     },
     {
       "id": "MochiPipeline:text_to_video",

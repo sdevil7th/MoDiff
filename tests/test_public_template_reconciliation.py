@@ -164,22 +164,40 @@ class PublicTemplateReconciliationTests(unittest.TestCase):
 
 
 class PublicTemplateReconciliationLiveLedgerTests(unittest.TestCase):
-    def test_checked_in_release_contract_matches_current_24_keep_2_stale_51_never_ledger(self):
+    def test_local_release_contract_partitions_every_actual_historical_receipt(self):
         path = ROOT / "data" / "release-contract.v1.json"
         if not path.is_file():
             self.skipTest("Local release-contract ledger is not present.")
         ledger = build_public_template_reconciliation(ROOT)
-        self.assertEqual(ledger["summary"]["templateCount"], 77)
-        self.assertEqual(ledger["summary"]["currentKeepCount"], 24)
-        self.assertEqual(ledger["summary"]["staleCanaryCount"], 2)
-        self.assertEqual(ledger["summary"]["neverHadExampleCount"], 51)
+        # This is an optional local evidence ledger, not a frozen fixture.
+        # Installing the pinned Gallery or regenerating exact contracts changes
+        # these counts legitimately. Verify every classification against its
+        # actual source instead of hard-coding one machine's older inventory.
+        templates = json.loads(path.read_text(encoding="utf-8"))["templates"]
+        expected = {BUCKET_CURRENT: set(), BUCKET_STALE: set(), BUCKET_NEVER: set()}
+        for template in templates:
+            evidence = template.get("historicalEvidence")
+            if evidence is None:
+                expected[BUCKET_NEVER].add(template["id"])
+            elif evidence["status"] == "stale":
+                expected[BUCKET_STALE].add(template["id"])
+            else:
+                self.assertIn(evidence["status"], {"current", "legacy_node_contract_match"})
+                self.assertIsInstance(template["lastSuccessfulRealRun"], dict)
+                expected[BUCKET_CURRENT].add(template["id"])
+        self.assertEqual(len(ledger["items"]), len(templates))
+        self.assertEqual(ledger["summary"]["templateCount"], len(templates))
+        for bucket, count_key in (
+            (BUCKET_CURRENT, "currentKeepCount"),
+            (BUCKET_STALE, "staleCanaryCount"),
+            (BUCKET_NEVER, "neverHadExampleCount"),
+        ):
+            self.assertEqual(ledger["summary"][count_key], len(expected[bucket]))
+            self.assertEqual(
+                {item["templateId"] for item in ledger["items"] if item["bucket"] == bucket}, expected[bucket]
+            )
         self.assertEqual(ledger["summary"]["localTechnicalReceiptOverlapCount"], 0)
         self.assertTrue(ledger["policy"]["blanketRerunForbidden"])
-        keep = {item["templateId"] for item in ledger["items"] if item["bucket"] == BUCKET_CURRENT}
-        never = {item["templateId"] for item in ledger["items"] if item["bucket"] == BUCKET_NEVER}
-        self.assertIn("fast_lora", keep)
-        self.assertIn("ace_step_custom_lora", never)
-        self.assertIn("wan_video_long_showcase", never)
 
 
 if __name__ == "__main__":

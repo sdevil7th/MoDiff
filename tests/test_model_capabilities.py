@@ -21,6 +21,18 @@ class FakeRequest:
 
 
 class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
+    async def test_public_runtime_aggregate_excludes_hidden_legacy_execution_profiles(self):
+        response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
+        capabilities = json.loads(response.text)["capabilities"]
+        for capability in capabilities:
+            with self.subTest(model=capability["modelType"]):
+                published = {profile["id"] for profile in capability["executionProfiles"]}
+                aggregate = set(capability["optionalRuntimeRequirement"]["executionProfileIds"])
+                self.assertEqual(aggregate, published)
+        # Public discovery must not retire explicitly selected historical loaders.
+        self.assertIn("flux2-modular:equivalent-standard", DIFFUSERS_EXECUTION_PROFILES)
+        self.assertFalse(DIFFUSERS_EXECUTION_PROFILES["flux2-modular:equivalent-standard"].public)
+
     async def test_capabilities_publish_only_app_delivered_quantization_as_available(self):
         catalog = {
             "capabilities": [
@@ -140,7 +152,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("Flux2ModularPipeline", experimental)
         self.assertEqual(
             supported["Flux2ModularPipeline"]["runnableModes"],
-            ["multi_image_reference_edit", "text_to_image"],
+            ["edit_image", "text_to_image"],
         )
         self.assertNotIn("AnimaModularPipeline", experimental)
         self.assertEqual(
@@ -331,7 +343,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 267)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 273)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",

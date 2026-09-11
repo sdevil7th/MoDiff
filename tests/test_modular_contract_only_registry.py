@@ -17,6 +17,7 @@ from modiff.modular_contract_only_registry import (
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES,
     CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS,
     CURRENT_PIN_EQUIVALENT_MODULAR_WORKFLOW_TARGETS,
+    CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY,
     equivalent_modular_targets,
 )
 from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
@@ -57,9 +58,9 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
     @requires_transformers
     def test_current_pin_batches_cover_exact_exported_classes_and_normalized_schemas(self):
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES), 4)
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES), 1)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_VIDEO_PIPELINES), 0)
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_AUDIO_PIPELINES), 0)
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES), 3)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES), 1)
         self.assertTrue(
             all(item.batch == "image" for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_IMAGE_PIPELINES)
         )
@@ -75,9 +76,12 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
                 for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_MULTIMODAL_PIPELINES
             )
         )
-        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 8)
-        self.assertEqual(len(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS), 6)
-        self.assertEqual(len(CURRENT_PIN_EQUIVALENT_MODULAR_WORKFLOW_TARGETS), 6)
+        self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 5)
+        self.assertEqual(len(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS), 5)
+        self.assertEqual(len(CURRENT_PIN_EQUIVALENT_MODULAR_WORKFLOW_TARGETS), 4)
+        self.assertEqual(set(CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY), {
+            "Cosmos3DistilledModularPipeline", "MiniMaxH3ModularPipeline",
+        })
         self.assertTrue(
             set(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS).isdisjoint(
                 CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME
@@ -95,7 +99,8 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
         self.assertEqual(
             set(PINNED_MODULAR_WORKFLOW_TRUTH)
             | set(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME)
-            | set(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS),
+            | set(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS)
+            | set(CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY),
             exported_modular_classes,
         )
 

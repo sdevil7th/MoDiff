@@ -4,8 +4,8 @@ The visual editor may compose ordinary MoDiff nodes freely inside a User Node.
 That graph editing is deliberately distinct from changing an upstream
 ``ModularPipelineBlocks`` tree. This module owns the latter boundary: a recipe
 starts from one reviewed pipeline/workflow at the pinned Diffusers commit,
-allows only exact block paths already present in that reviewed workflow, and
-rebuilds the modified tree through upstream ``init_pipeline()``.
+allows exact reviewed source blocks and authenticated structural edits, and
+rebuilds the modified unpruned tree through upstream ``init_pipeline()``.
 
 No model weights are loaded here. The returned receipt is a structural rebuild
 receipt, not model/runtime admission and not an executable publication claim.
@@ -227,9 +227,9 @@ def validate_modular_composition_recipe(
             if not isinstance(source_block_definition_id, str) or source_block_definition_id not in definitions:
                 raise ModularCompositionError(f"Operation {index + 1} source block definition is unavailable.")
             source_definition = _definition_by_id(reviewed, source_definition_id)
-            if source_definition.get("provider") != "diffusers" or source_definition.get("pipelineClass") != pipeline_class:
+            if source_definition.get("provider") != "diffusers":
                 raise ModularCompositionError(
-                    f"Operation {index + 1} must use a reviewed block from the same Modular pipeline family."
+                    f"Operation {index + 1} must use a reviewed Diffusers block."
                 )
             reviewed_source_path = _path(operation.get("sourcePath"), f"Operation {index + 1} source path")
             if source_execution_scope == "selected_workflow":
@@ -257,6 +257,10 @@ def validate_modular_composition_recipe(
             }
             if not source_subtree:
                 raise ModularCompositionError(f"Operation {index + 1} source subtree is unavailable.")
+            # This validates editable structure and exact source authority, not
+            # model readiness. Original-tree declarations cannot reject a draft
+            # whose components may have been replaced. Execution checks the
+            # actual upstream ComponentSpecs against the actual owned bundle.
             if kind == "insert":
                 parent = _path(operation.get("parentPath"), f"Operation {index + 1} parent path", allow_root=True)
                 name = _identifier(operation.get("name"), f"Operation {index + 1} block name")
@@ -378,6 +382,9 @@ def validate_modular_composition_recipe(
         "originalPathCount": len(original_paths),
         "composedPathCount": len(paths),
         "composedPaths": [list(path) for path in sorted(paths)],
+        "composedPlacements": [
+            {"path": list(path), "blockDefinitionId": paths[path]} for path in sorted(paths)
+        ],
     }
 
 
@@ -422,13 +429,18 @@ def _field_names(values: Any) -> list[str]:
     )
 
 
-def rebuild_reviewed_modular_composition(
+def build_reviewed_modular_composition_blocks(
     value: Any,
     *,
     library: Mapping[str, Any] | None = None,
     blocks_resolver: Callable[[str, str], Any] | None = None,
-) -> dict[str, Any]:
-    """Apply a validated recipe and force upstream to rebuild its pipeline API."""
+) -> tuple[dict[str, Any], Any]:
+    """Return the validated edited tree; the caller owns pipeline initialization.
+
+    The model executor uses the same reviewed operations as structural preview,
+    but supplies its existing ComponentsManager and retains nested runtime paths.
+    No weights, arbitrary Python imports, or serialized runtime objects enter here.
+    """
 
     reviewed = library if library is not None else reviewed_huggingface_node_library()
     recipe = validate_modular_composition_recipe(value, library=reviewed)
@@ -462,7 +474,17 @@ def rebuild_reviewed_modular_composition(
                 source_blocks_cache[source_key] = resolver(*source_key)
             source_blocks = source_blocks_cache[source_key]
             source_path = tuple(operation["sourcePath"])
-            selected = _block_at_path(source_blocks, source_path)
+            try:
+                selected = _block_at_path(source_blocks, source_path)
+            except ModularCompositionError:
+                # The reviewed default-workflow inventory uses flattened dotted
+                # keys for Edit Plus/Layered, but their native default trees stay
+                # nested. This fallback applies only to an already authenticated
+                # selected-workflow path, never arbitrary execution paths. Exact
+                # native keys take precedence and the class is checked below.
+                if operation["sourceExecutionScope"] != "selected_workflow" or not any("." in part for part in source_path):
+                    raise
+                selected = _block_at_path(source_blocks, tuple(part for segment in source_path for part in segment.split(".")))
             expected_source_class = definitions[operation["sourceBlockDefinitionId"]]["className"]
             if type(selected).__name__ != expected_source_class:
                 raise ModularCompositionError(
@@ -507,7 +529,24 @@ def rebuild_reviewed_modular_composition(
         target_sub_blocks = getattr(target_parent, "sub_blocks", None)
         _insert(target_sub_blocks, operation["name"], selected, operation["index"])
 
-    selected_blocks = blocks if recipe["workflowId"] == "default" else blocks.get_workflow(recipe["workflowId"])
+    return recipe, blocks
+
+
+def rebuild_reviewed_modular_composition(
+    value: Any,
+    *,
+    library: Mapping[str, Any] | None = None,
+    blocks_resolver: Callable[[str, str], Any] | None = None,
+) -> dict[str, Any]:
+    """Rebuild a structural preview; this receipt never grants runtime admission."""
+    recipe, blocks = build_reviewed_modular_composition_blocks(
+        value, library=library, blocks_resolver=blocks_resolver,
+    )
+    # Inspect the edited tree, not the original workflow's branch selection.
+    # A concrete child may have moved out of a conditional container. Its old
+    # selector is not the executor of the explicit MoDiff graph, and calling it
+    # here can fail even though each graph-selected step initializes and runs.
+    selected_blocks = blocks
     init_pipeline = getattr(selected_blocks, "init_pipeline", None)
     if not callable(init_pipeline):
         raise ModularCompositionError("The composed upstream block tree cannot initialize a Modular pipeline.")
@@ -517,6 +556,7 @@ def rebuild_reviewed_modular_composition(
         "schemaVersion": MODULAR_COMPOSITION_SCHEMA_VERSION,
         "claim": "reviewed_modular_composition_rebuilt",
         "executable": False,
+        "inspectionScope": "edited_unpruned_tree",
         "recipeHash": recipe["recipeHash"],
         "diffusersRevision": recipe["diffusersRevision"],
         "pipelineClass": recipe["pipelineClass"],

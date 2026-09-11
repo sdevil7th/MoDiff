@@ -58,13 +58,27 @@ CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME = {
     item.class_name: item for item in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
 }
 
+# Already-promoted whole-workflow adapters without an entry in the split-node
+# truth matrix. Discovery must retain them when they leave the contract-only
+# list. This is generator coverage, not an additional execution permission.
+CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY = {
+    "Cosmos3DistilledModularPipeline": {
+        "text2image": "text_to_image", "text2video": "text_to_video",
+        "image2video": "image_to_video", "video2video": "video_to_video",
+    },
+    "MiniMaxH3ModularPipeline": {
+        "t2va": "text_to_video_with_audio",
+        "fl2va": "first_last_frame_to_video_with_audio",
+        "ref2va": "reference_to_video_with_audio",
+    },
+}
+
 # These exact pinned Modular exports add no public task surface beyond the
 # already executable standard classes listed here. Keep them separate from the
 # contract-only registry: equivalence is a reviewed routing decision, not a
 # runnable Modular profile or loader claim.
 CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS = {
     "ErnieImageModularPipeline": ("ErnieImagePipeline",),
-    "Flux2ModularPipeline": ("Flux2Pipeline",),
     "LTXModularPipeline": ("LTXConditionPipeline",),
     "LTX2ModularPipeline": ("LTX2ConditionPipeline", "LTX2InContextPipeline"),
     "Wan22ModularPipeline": ("WanPipeline",),
@@ -76,8 +90,6 @@ CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS = {
 # proven text/image route cannot relabel sibling condition or in-context
 # workflows as equivalent.
 CURRENT_PIN_EQUIVALENT_MODULAR_WORKFLOW_TARGETS = {
-    ("Flux2ModularPipeline", "text2image"): ("Flux2Pipeline",),
-    ("Flux2ModularPipeline", "image_conditioned"): ("Flux2Pipeline",),
     ("LTX2ModularPipeline", "text2video"): ("LTX2ConditionPipeline",),
     ("LTX2ModularPipeline", "image2video"): ("LTX2ConditionPipeline",),
     # The reviewed adapter materializes an ordered image list as official

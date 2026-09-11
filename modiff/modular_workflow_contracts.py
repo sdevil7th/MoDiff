@@ -29,6 +29,7 @@ FLUX2_KLEIN_REPOSITORY = "black-forest-labs/FLUX.2-klein-4B"
 FLUX2_KLEIN_BASE_REPOSITORY = "black-forest-labs/FLUX.2-klein-base-4B"
 QWEN_IMAGE_REPOSITORY = "Qwen/Qwen-Image"
 QWEN_IMAGE_2512_REPOSITORY = "Qwen/Qwen-Image-2512"
+QWEN_IMAGE_2512_PREQUANTIZED_REPOSITORY = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
 HUNYUAN_VIDEO_15_T2V_REPOSITORY = (
     "hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_t2v"
 )
@@ -38,18 +39,22 @@ HUNYUAN_VIDEO_15_I2V_REPOSITORY = (
 COSMOS3_DISTILLED_T2I_REPOSITORY = "nvidia/Cosmos3-Super-Text2Image-4Step"
 COSMOS3_DISTILLED_I2V_REPOSITORY = "nvidia/Cosmos3-Super-Image2Video-4Step"
 MINIMAX_H3_REPOSITORY = "MiniMaxAI/MiniMax-H3"
+HELIOS_BASE_REPOSITORY = "BestWishYsh/Helios-Base"
+HELIOS_MID_REPOSITORY = "BestWishYsh/Helios-Mid"
+HELIOS_DISTILLED_REPOSITORY = "BestWishYsh/Helios-Distilled"
 
-# One installed Modular pipeline class can have multiple official weight/config
+# One installed Modular pipeline class can have multiple reviewed weight/config
 # contracts. Keep the allowed repositories beside the pinned workflow truth;
 # the loader still requires an immutable catalog revision for the selected
 # repository, and the downstream action validates the workflow/repository pair.
 PINNED_MODULAR_REPOSITORY_VARIANTS = {
-    # Both official text-to-image checkpoints serialize the same
-    # QwenImagePipeline component classes. They are reviewed model variants of
-    # one Modular workflow, not separate task routes.
+    # The official checkpoints and the catalog-pinned community BNB conversion
+    # serialize the same QwenImagePipeline component classes. The latter uses
+    # its saved quantization config through the official component loaders.
     "QwenImageModularPipeline": (
         QWEN_IMAGE_REPOSITORY,
         QWEN_IMAGE_2512_REPOSITORY,
+        QWEN_IMAGE_2512_PREQUANTIZED_REPOSITORY,
     ),
     "Cosmos3DistilledModularPipeline": (
         COSMOS3_DISTILLED_T2I_REPOSITORY,
@@ -81,6 +86,7 @@ PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS = {
     ("QwenImageModularPipeline", "text2image"): (
         QWEN_IMAGE_REPOSITORY,
         QWEN_IMAGE_2512_REPOSITORY,
+        QWEN_IMAGE_2512_PREQUANTIZED_REPOSITORY,
     ),
 }
 # Weight filename variants are a separate contract from the repository choices
@@ -106,6 +112,26 @@ def reviewed_modular_weight_variant(model_type: str, repository: str) -> str | N
 # while the installed Modular blocks declare their reviewed base/factory types.
 # These are exact repository-scoped aliases, not general subclass admission.
 PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES = {
+    # The reviewed FLUX.2-dev index and processor configs serialize Pixtral;
+    # native Modular encoders request the AutoProcessor factory. The loader
+    # separately checks the immutable repository revision before this alias.
+    "black-forest-labs/FLUX.2-dev": {
+        "tokenizer": ("transformers", "PixtralProcessor"),
+    },
+    # Pinned Helios indexes serialize T5Tokenizer, while the installed blocks
+    # request AutoTokenizer. Admit only the reviewed concrete tokenizer for
+    # these repositories; factory declarations elsewhere remain fail-closed.
+    HELIOS_BASE_REPOSITORY: {
+        "tokenizer": ("transformers", "T5Tokenizer"),
+    },
+    HELIOS_MID_REPOSITORY: {
+        "tokenizer": ("transformers", "T5Tokenizer"),
+        "guider": ("diffusers", "ClassifierFreeZeroStarGuidance"),
+    },
+    HELIOS_DISTILLED_REPOSITORY: {
+        "tokenizer": ("transformers", "T5Tokenizer"),
+        "scheduler": ("diffusers", "HeliosDMDScheduler"),
+    },
     # The official Cosmos 3 indexes serialize the concrete fast tokenizer,
     # while the pinned Modular blocks deliberately request AutoTokenizer.
     # Keep that factory-to-concrete compatibility exact and repository scoped.
@@ -1418,6 +1444,23 @@ PINNED_MODULAR_WORKFLOW_TRUTH: dict[str, PinnedModularPipelineTruth] = {
                     _IMAGE_TO_OUTPUT_EDGES,
                 ),
             ),
+        ),
+    ),
+    "Flux2ModularPipeline": PinnedModularPipelineTruth(
+        blocks_class="Flux2AutoBlocks",
+        workflows=(
+            _workflow("text2image", "prompt"),
+            _workflow("image_conditioned", "image", "prompt"),
+        ),
+        modes=(
+            ("text_to_image", ModularModeTruth(
+                "text2image", frozenset({"prompt"}),
+                ("text_encoder", "denoise", "decoder"), _TEXT_TO_OUTPUT_EDGES,
+            )),
+            ("edit_image", ModularModeTruth(
+                "image_conditioned", frozenset({"image", "prompt"}),
+                ("text_encoder", "vae_encoder", "denoise", "decoder"), _IMAGE_TO_OUTPUT_EDGES,
+            )),
         ),
     ),
     "Flux2KleinModularPipeline": PinnedModularPipelineTruth(

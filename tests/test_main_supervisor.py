@@ -5,6 +5,7 @@ import signal
 import sys
 from types import ModuleType, SimpleNamespace
 import unittest
+from tempfile import TemporaryDirectory
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -20,6 +21,33 @@ def load_main_module():
 
 
 class MainSupervisorTests(unittest.TestCase):
+    def setUp(self):
+        self.test_data = TemporaryDirectory(prefix="modiff-supervisor-test-")
+        self.addCleanup(self.test_data.cleanup)
+        # A port-zero supervisor is not filesystem-isolated. Startup recovery
+        # otherwise rewrites the real worker's durable queue during unit tests.
+        module = load_main_module()
+        data_patch = patch.dict(module.CONFIG.paths, {"data": self.test_data.name})
+        data_patch.start()
+        self.addCleanup(data_patch.stop)
+
+    def test_supervisor_uses_isolated_test_queue(self):
+        module = load_main_module()
+        worker = Mock(wait=Mock(return_value=0))
+        worker.poll.return_value = None
+        with (
+            patch.object(module.subprocess, "Popen", return_value=worker),
+            patch.object(module.signal, "signal"),
+            patch("modiff.supervisor_control.SupervisorController") as controller_class,
+            patch("modiff.supervisor_control.SupervisorControlServer"),
+        ):
+            controller_class.return_value.consume_restart_request.return_value = False
+            self.assertEqual(module.run_supervisor(), 0)
+        self.assertEqual(
+            controller_class.call_args.args[0],
+            Path(self.test_data.name) / "runtime" / "supervisor-queue.json",
+        )
+
     def test_importing_supervisor_never_activates_runtime_overlay(self):
         optimization_module = ModuleType("modiff.optimization_packages")
         activation = Mock(side_effect=AssertionError("supervisor imported an overlay"))

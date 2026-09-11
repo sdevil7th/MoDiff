@@ -568,7 +568,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("Flux2Pipeline", "text_to_image"),
                 ("Flux2Pipeline", "multi_image_reference_edit"),
                 ("Flux2ModularPipeline", "text_to_image"),
-                ("Flux2ModularPipeline", "multi_image_reference_edit"),
+                ("Flux2ModularPipeline", "edit_image"),
                 ("ErnieImageModularPipeline", "text_to_image"),
                 ("LTXModularPipeline", "text_to_video"),
                 ("LTXModularPipeline", "image_to_video"),
@@ -578,6 +578,12 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("LTX2ModularPipeline", "image_to_video"),
                 ("LTX2ModularPipeline", "reference_to_video"),
                 ("LTX2ModularPipeline", "in_context_to_video"),
+                ("FluxControlNetPipeline", "control_image"),
+                ("FluxControlNetImg2ImgPipeline", "control_edit_image"),
+                ("FluxControlNetInpaintPipeline", "control_inpaint"),
+                ("Flux2KleinKVPipeline", "text_to_image"),
+                ("Flux2KleinKVPipeline", "edit_image"),
+                ("Flux2KleinKVPipeline", "multi_image_reference_edit"),
             ],
         )
         by_id = {item["id"]: item for item in specs}
@@ -2484,6 +2490,13 @@ class StudioExecutionSpecTests(unittest.TestCase):
         assert_studio_execution_graph(graph, hints)
 
     def test_qwen_image_edit_plus_modes_seal_the_exact_dynamic_modular_route(self):
+        # Template materialization resolves defaultRevision from the capability
+        # served to the browser, not from a separately compiled Cluster receipt.
+        capability = STUDIO_MODEL_CAPABILITIES["QwenImageEditPlusModularPipeline"]
+        self.assertEqual(
+            capability["revisionCandidates"],
+            ["6f3ccc0b56e431dc6a0c2b2039706d7d26f22cb9"],
+        )
         specs = [
             studio_execution_spec_for_pair("QwenImageEditPlusModularPipeline", mode)
             for mode in ("edit_image", "multi_image_reference_edit")
@@ -2496,6 +2509,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
             self.assertEqual(spec["roles"], specs[0]["roles"])
             self.assertEqual(spec["edges"], specs[0]["edges"])
             self.assertEqual(spec["bindings"], specs[0]["bindings"])
+            self.assertIn(("models", "revision", "defaultRevision"), spec["bindings"])
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
 

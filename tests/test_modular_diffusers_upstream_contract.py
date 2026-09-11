@@ -456,6 +456,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
     def test_denoise_image_latent_dimensions_come_from_reviewed_pipeline_metadata(self):
         registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
         retained = {
+            "Flux2ModularPipeline",
             "Flux2KleinModularPipeline",
             "Flux2KleinBaseModularPipeline",
             "FluxKontextModularPipeline",
@@ -554,6 +555,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             "QwenImageLayeredModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "FluxModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "FluxKontextModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
+            "Flux2ModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "Flux2KleinModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "Flux2KleinBaseModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "ZImageModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
@@ -581,6 +583,9 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 "WanAnimate2DistilledModularPipeline",
                 "WanAnimate2ModularPipeline",
                 "Cosmos3OmniModularPipeline",
+                "Cosmos3DistilledModularPipeline",
+                "HunyuanVideo15ModularPipeline",
+                "MiniMaxH3ModularPipeline",
             },
         )
         self.assertEqual(registered, set(expected))
@@ -721,6 +726,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             ("QwenImageLayeredModularPipeline", "vae_encoder"),
             ("FluxModularPipeline", "vae_encoder"),
             ("FluxKontextModularPipeline", "vae_encoder"),
+            ("Flux2ModularPipeline", "vae_encoder"),
             ("Flux2KleinModularPipeline", "vae_encoder"),
             ("Flux2KleinBaseModularPipeline", "vae_encoder"),
             ("ZImageModularPipeline", "vae_encoder"),

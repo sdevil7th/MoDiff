@@ -427,6 +427,8 @@ type BlockGraphNodeV2 = {
   semanticRole?: string;
   upstreamBlockPath?: string;
   modularDiffusers?: BlockGraphNodeModularDiffusersV2;
+  containerInterface?: BlockContainerInterfaceV1;
+  parentNodeId?: string;
 };
 
 type BlockGraphEdgeV2 = {
@@ -436,7 +438,115 @@ type BlockGraphEdgeV2 = {
   targetNodeId: string;
   targetPortId: string;
 };
+
+type BlockContainerInterfaceV1 = {
+  schemaVersion: 1;
+  boundary: BlockBoundaryV2; // mode MUST be explicit
+  controls: Omit<BlockControlV2, "defaultValue">[];
+  previews?: BlockPreviewBindingV2[];
+};
 ```
+
+`containerInterface` is an optional, canonical/hash-covered local public
+surface on an existing semantic node, not a nested composite instance. Its
+ports and controls bind only to that node and its semantic descendants.
+Primary/mirror bindings must resolve to existing direction- and
+type-compatible fields; duplicate input targets, duplicate control targets,
+and a shared input/control ID with different complete target sets are rejected.
+Every current edge crossing a declared container boundary must have a matching
+local port. Declaration edits that remove or rebind a connected port fail
+before any graph mutation. Sealed controls cannot be weakened by this editor.
+
+Root/local type compatibility has the same narrow file-transport exception:
+an explicitly matching media file browser can bind a media port and a string
+path control with the same full target set. Video file browsers also admit
+declared sequences of PIL/image frames. Preview widgets qualify URL/base64
+transport by their exact media display, rather than pretending URLs are image
+tensors. Other string fields and mismatched modalities remain rejected.
+
+There is still one flat effective execution graph and one owning instance.
+Local controls MUST NOT store defaults or values independently. They write
+existing effective fields or the root logical override when that field is
+already exposed; shared root mirror consumers retain one value identity.
+Renaming/reordering a local interface does not rewrite the root interface or
+any field values. Newly wired non-baseline crossings retain a durable socket
+after disconnection; neither projection nor persistence recreates a wire.
+Collapsed mirrored sockets group only identical visible wires and carry exact
+semantic-edge receipts for atomic connect/reconnect/delete. Execution always
+uses the original flat graph, not those grouped canvas edges.
+An undeclared deeper view inherits the nearest ancestor-local controls before
+root controls, without adding a declaration during a value edit. A mirrored
+public input remains one socket with its complete subtree-local target set.
+
+Subtree adoption validates the complete incoming graph atomically and remaps
+local bindings with semantic IDs. Replacement preserves compatible local IDs
+and rebinds their targets; deletion reports declarations held by surviving
+containers rather than silently dropping them. Saving a configured subtree as
+a User Node promotes that exact local surface to the new root boundary and
+controls, baking current field values/defaults into the copy. It does not
+modify the source workflow or register a new catalog Cluster.
+
+Local `previews`, when declared, bind existing compatible preview/output fields
+within that same subtree. They share one owner `previewStates` inventory rather
+than copying run state per view. Inventory order is root-definition bindings,
+then first-seen local bindings in semantic graph-node order, deduplicated by
+node/output port. Shared sources MUST agree on media type; a local `primary`
+belongs only to that view, not to a newly introduced inventory entry. At most
+one primary is allowed per surface. Root and local views filter this inventory
+using their own declarations. The paired fixture is
+`tests/fixtures/block_container_previews_v1.json`.
+
+Nesting a whole multi-root Block introduces one generic non-executing group in
+the target's flat graph. Its local interface is the source's public boundary,
+controls and previews. All semantic IDs, edges, parent relations, exact upstream
+placements and declarations are rebased together; effective values are baked
+into copied fields. A single container with a different independently declared
+surface also receives a wrapper, preserving both interfaces. The inserted outer
+container begins collapsed. Moving within a workflow preserves completed media
+references but never transfers in-flight execution authority. Saving it as a
+new reusable definition preserves current prompts/settings and preview bindings,
+not transient output media or publication approval. Generic grouping imposes no
+pipeline family; actual upstream control-owner adoption remains pinned-family
+checked. Typed execution connections remain authoritative in either case.
+
+Compatibility: omitted declarations preserve old canonical bytes and hashes.
+Legacy interfaces are derived until an explicit interface or non-baseline
+wiring edit requires persistence. Readers without this optional-field contract
+reject it under strict validation; they must not discard it. This requires
+coordinated frontend/backend deployment, not an automatic historical-definition
+rewrite. The cross-runtime fixture is
+`tests/fixtures/block_container_interface_v1.json`; both strict validators,
+hash implementations and API/workflow round trips are release gates.
+
+`parentNodeId` is optional, canonical/hash-covered semantic ownership for an
+ordinary node or a saved User subtree placed inside another semantic container.
+It references a group or an exact non-leaf upstream block in the same graph.
+Missing parents, self-parenting, cycles, leaf parents, and conflicts with an
+already resolved upstream placement parent are rejected. Existing upstream
+placements keep their exact provenance; ordinary utility nodes MUST NOT acquire
+fabricated `modularDiffusers` identity merely because they are nested. Both
+explicit ownership and upstream placement resolve through one parent relation
+for projection, descendant scopes, validation and subtree persistence.
+
+Moving/copying a subtree remaps internal parent IDs and local interface bindings;
+saving it independently removes only its external parent reference. Current
+field values and root overrides are baked into the reusable copy. Ownership
+does not add an executor, second instance, new parameter value authority or
+implicit wire. Palette insertion/adoption is atomic: failure removes the draft
+insertion, and one Undo restores the prior graph. A whole Block with multiple
+independent roots uses a generic wrapper carrying its already explicit public
+surface. It never guesses a boundary or silently discards crossing wires.
+Ordinary nodes and User containers can change parent within an instance while
+preserving IDs, fields, wires and execution order. A retained local declaration
+that would cross outside its owner must be rebound explicitly before the move.
+Empty generic groups remain expandable insertion targets; inactive empty
+upstream branch annotations do not become executable containers.
+Whole-subtree move-out creates a workflow-owned User Block, not a library entry.
+It preserves local controls and completed preview references; crossing wires
+require exact public boundaries and complete fan-out. Existing root-owned
+controls and previews are protected until explicitly rebound. The shared fixture is
+`tests/fixtures/block_parent_node_v2.json`. Omission preserves pre-extension
+hashes; older strict readers reject the new field, requiring paired deployment.
 
 `modularDiffusers`, when present, is canonical, hash-covered semantic identity
 for one expanded registered/imported Modular Diffusers node. It distinguishes

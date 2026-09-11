@@ -1052,6 +1052,15 @@ def resolve_execution_profiles_for_loader(
     if len(matching) == 1:
         return selected_optional_runtime(matching), None
 
+    # A retained private compatibility alias must not make a current public
+    # loader ambiguous. Explicit IDs above still select that exact old route.
+    # Keep sole private/custom loaders: visibility is not execution permission.
+    public_matching = tuple(profile for profile in matching if profile.public)
+    if public_matching:
+        matching = public_matching
+        if len(matching) == 1:
+            return selected_optional_runtime(matching), None
+
     raw_mode = values.get("mode")
     if raw_mode is not None:
         if not isinstance(raw_mode, str) or not raw_mode.strip():

@@ -1396,6 +1396,19 @@
       "status": "executable"
     },
     {
+      "graphHash": "0f481695e525099c8ca281baa422e9442171d196988562605823f36f6acca41c",
+      "graphPath": "studio/mini-max-music3-modular-pipeline/text-to-audio.json",
+      "id": "MiniMaxMusic3ModularPipeline:text_to_audio",
+      "mode": "text_to_audio",
+      "modelType": "MiniMaxMusic3ModularPipeline",
+      "publicTemplateIds": [
+        "minimax_music3_chamber_pop"
+      ],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
       "graphHash": "87aefb0a156179b01c43d042dbdb7bd0f6caa5ef41a88ee5671f016ececf0008",
       "graphPath": "studio/mochi-pipeline/text-to-video.json",
       "id": "MochiPipeline:text_to_video",
@@ -2326,7 +2339,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:d0a8aa7b53770391b285b375de480fead9504ccdac716a2c291d5d1e19296983",
+  "contentHash": "sha256:68f1033cc66ea25bbb00e90b3ea77780f55946c446842fa0539bf00a3c48b0ff",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -3302,12 +3315,28 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux2-klein-kv:edit-image:v1",
+          "mode": "edit_image",
+          "modelType": "Flux2KleinKVPipeline"
+        },
+        {
+          "id": "flux2-klein-kv:multi-image-reference-edit:v1",
+          "mode": "multi_image_reference_edit",
+          "modelType": "Flux2KleinKVPipeline"
+        },
+        {
+          "id": "flux2-klein-kv:text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "Flux2KleinKVPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "Flux2KleinKVPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -3365,18 +3394,27 @@
     },
     {
       "artifactReviews": [],
-      "equivalentTo": [
-        "Flux2Pipeline"
+      "equivalentTo": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux2:modular-edit-image:v1",
+          "mode": "edit_image",
+          "modelType": "Flux2ModularPipeline"
+        },
+        {
+          "id": "flux2:modular-text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "Flux2ModularPipeline"
+        }
       ],
-      "exactExecutionSpecs": [],
       "modularWorkflowIds": [
         "edit_image",
         "text_to_image"
       ],
       "name": "Flux2ModularPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "equivalent"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -3391,16 +3429,6 @@
           "id": "flux2-dev:text-to-image:v1",
           "mode": "text_to_image",
           "modelType": "Flux2Pipeline"
-        },
-        {
-          "id": "flux2-modular:equivalent-standard-image-conditioned:v1",
-          "mode": "multi_image_reference_edit",
-          "modelType": "Flux2ModularPipeline"
-        },
-        {
-          "id": "flux2-modular:equivalent-standard-text-to-image:v1",
-          "mode": "text_to_image",
-          "modelType": "Flux2ModularPipeline"
         }
       ],
       "modularWorkflowIds": [],
@@ -3454,32 +3482,50 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux-controlnet:control-edit-image:v1",
+          "mode": "control_edit_image",
+          "modelType": "FluxControlNetImg2ImgPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "FluxControlNetImg2ImgPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux-controlnet:control-inpaint:v1",
+          "mode": "control_inpaint",
+          "modelType": "FluxControlNetInpaintPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "FluxControlNetInpaintPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux-controlnet:control-image:v1",
+          "mode": "control_image",
+          "modelType": "FluxControlNetPipeline"
+        }
+      ],
       "modularWorkflowIds": [],
       "name": "FluxControlNetPipeline",
-      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
-      "reviewDecision": "pinned-diffusers-non-video-source-triage",
-      "status": "research-blocked"
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -7970,6 +8016,21 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "MiniMaxMusic3ModularPipeline:text_to_audio",
+      "evidencePolicy": "generated",
+      "galleryExamplePresent": false,
+      "galleryQualityReviewStatus": null,
+      "galleryVerificationStatus": null,
+      "id": "minimax_music3_chamber_pop",
+      "mode": "text_to_audio",
+      "modelType": "MiniMaxMusic3ModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reviewedGalleryExample": false,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "QwenImageEditModularPipeline:edit_image",
       "evidencePolicy": "generated",
       "galleryExamplePresent": true,
@@ -8551,7 +8612,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "4f458f26a17a4defbf8d471f284273ffbb2c5829b5ebc4f9f3d0e2da8af304c8",
+    "templateBundleSha256": "54af4e46775be1cad3b18f01d176dd4195f586ab22856929dc50d85d810e4517",
     "transformers": {
       "productionRuntime": {
         "byteSize": 11625234,
@@ -8570,24 +8631,24 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 199,
-    "canonicalWorkflowsWithPublicTemplates": 51,
+    "canonicalWorkflowCount": 200,
+    "canonicalWorkflowsWithPublicTemplates": 52,
     "canonicalWorkflowsWithoutPublicTemplates": 148,
     "diffusersPipelineSymbolCount": 330,
     "pipelineStatusCounts": {
       "contract-only": 5,
-      "equivalent": 12,
-      "executable": 137,
+      "equivalent": 11,
+      "executable": 142,
       "intentionally-excluded": 56,
-      "research-blocked": 120,
+      "research-blocked": 116,
       "unreviewed": 0
     },
-    "publicTemplateCount": 77,
+    "publicTemplateCount": 78,
     "reviewedGalleryTemplateCount": 70,
     "templateStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 77,
+      "executable": 78,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0
@@ -8605,7 +8666,7 @@
     "workflowStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 199,
+      "executable": 200,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

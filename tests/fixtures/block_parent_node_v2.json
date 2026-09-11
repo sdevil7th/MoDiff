@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 2,
+  "definitionId": "user:generic-nested-block",
+  "displayName": "Generic nested Block",
+  "contentHash": "block-definition-v2-46ad65c1",
+  "source": { "kind": "user" },
+  "graph": {
+    "nodes": [
+      { "nodeId": "outer", "nodeType": "group", "data": { "type": "group", "label": "Outer", "params": {} } },
+      {
+        "nodeId": "inner", "nodeType": "group", "parentNodeId": "outer",
+        "data": { "type": "group", "label": "Inner", "params": {} },
+        "containerInterface": {
+          "schemaVersion": 1,
+          "boundary": { "mode": "explicit", "inputs": [{ "portId": "text", "label": "Text", "valueType": "string", "required": false, "binding": { "nodeId": "leaf", "fieldOrPortId": "text" } }], "outputs": [{ "portId": "output", "label": "Output", "valueType": "string", "required": false, "binding": { "nodeId": "leaf", "fieldOrPortId": "output" } }] },
+          "controls": [{ "controlId": "text", "label": "Text", "valueType": "string", "binding": { "nodeId": "leaf", "fieldId": "text" }, "order": 0 }]
+        }
+      },
+      { "nodeId": "leaf", "nodeType": "custom", "parentNodeId": "inner", "data": { "type": "custom", "module": "modules.Primitive", "action": "TextValue", "params": { "text": { "type": "string", "display": "text", "value": "An intricate botanical observatory" }, "output": { "type": "string", "display": "output" } } } }
+    ],
+    "edges": [], "executionOrder": ["outer", "inner", "leaf"], "graphHash": "block-graph-v2-4e607b61"
+  },
+  "boundary": { "mode": "explicit", "inputs": [], "outputs": [] },
+  "controls": [], "previews": [], "ownership": { "kind": "user", "definitionMutable": true }
+}

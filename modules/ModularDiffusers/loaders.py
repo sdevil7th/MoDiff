@@ -40,6 +40,7 @@ from modiff.diffusers_offload import (
 from modiff.model_artifact_catalog import catalog_repository_pin, require_catalog_revision, resolve_model_revision
 from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
 from modiff.modular_workflow_contracts import (
+    HELIOS_MID_REPOSITORY,
     PINNED_MODULAR_REPOSITORY_ADDITIONAL_MODULAR_COMPONENT_TYPES,
     PINNED_MODULAR_REPOSITORY_IGNORED_STANDARD_COMPONENT_TYPES,
     PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES,
@@ -80,7 +81,6 @@ logger = logging.getLogger("modiff")
 logger.setLevel(logging.DEBUG)
 
 QWEN_LOW_VRAM_COMPONENT = "qwen_low_vram"
-QWEN_LOW_RESOURCE_COMPONENTS = {"transformer", "text_encoder"}
 GROUP_OFFLOAD_COMPONENTS = set(DEFAULT_GROUP_COMPONENTS)
 REQUIRED_REGIONAL_COMPILE_MODEL_TYPES = frozenset(
     {
@@ -795,7 +795,18 @@ def _validate_reviewed_pipeline_index(model_type, repository, revision):
         raw_component = document.get(component_name)
         if raw_component is None:
             continue
-        if filename == ModularPipeline.config_name:
+        if (
+            filename == ModularPipeline.config_name
+            and component_spec.default_creation_method == "from_config"
+            and isinstance(raw_component, list)
+            and len(raw_component) == 2
+        ):
+            # Weightless components are created from installed block defaults.
+            # Pinned indexes may retain their two-field class declaration; only
+            # the exact installed class is admitted below. Weight-bearing specs
+            # still require the complete three-field loading contract.
+            observed_type_hint = raw_component
+        elif filename == ModularPipeline.config_name:
             if (
                 not isinstance(raw_component, list)
                 or len(raw_component) != 3
@@ -864,7 +875,7 @@ def _instantiate_reviewed_builtin_pipeline(
     # are already the exact executable sequence and must be constructed without
     # forwarding that synthetic name upstream.
     workflow_kwargs = {"workflow": workflow_id} if workflow_id and workflow_id != "default" else {}
-    return pipeline_class(
+    pipeline = pipeline_class(
         blocks=installed_pipeline.blocks,
         pretrained_model_name_or_path=repository,
         components_manager=components_manager,
@@ -872,6 +883,18 @@ def _instantiate_reviewed_builtin_pipeline(
         **workflow_kwargs,
         **config_kwargs,
     )
+    if model_type == "HeliosPyramidModularPipeline" and repository == HELIOS_MID_REPOSITORY:
+        # The pinned AutoBlocks aggregate retains the ordinary CFG spec from
+        # another block, and upstream ignores two-field modular config entries.
+        # Restore Mid's actual denoiser specification through the official
+        # component API, including its native zero-init configuration.
+        from diffusers.modular_pipelines.helios.denoise import HeliosPyramidChunkDenoiseInner
+
+        guider_spec = next(
+            spec for spec in HeliosPyramidChunkDenoiseInner().expected_components if spec.name == "guider"
+        )
+        pipeline.update_components(guider=guider_spec.create())
+    return pipeline
 
 
 def node_get_component_info(node_id=None, manager=None, name=None):
@@ -926,10 +949,14 @@ def annotate_modular_loader_outputs(
 
 
 def should_incrementally_group_offload(*, use_group_offload, quant_config):
-    """Select the low-peak loader path from component capabilities, not a pipeline name."""
-    return bool(
-        use_group_offload and quant_config and QWEN_LOW_RESOURCE_COMPONENTS.intersection(set(quant_config.keys()))
-    )
+    """Offload each supported component before loading the next one.
+
+    A missing override does not imply unquantized weights: checkpoints can
+    carry their own quantization configuration. Delaying offload until every
+    component is resident defeats the selected memory policy during loading.
+    ``quant_config`` is retained for compatibility with existing callers.
+    """
+    return bool(use_group_offload)
 
 
 def safe_diagnostic_value(value):
@@ -2512,6 +2539,11 @@ class ModelsLoader(NodeBase):
             auto_offload=auto_offload,
             device=device,
         )
+        self.record_generation_inputs({
+            "model_type": model_type, "repo_id": real_repo_id, "revision": revision,
+            "dtype": dtype, "device": device, "auto_offload": auto_offload,
+            "offload_mode": offload_mode, "quant_config": quant_config,
+        })
         self._loader_diagnostics = {
             "node_id": self.node_id,
             "loader": "ModelsLoader",

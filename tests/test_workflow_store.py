@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from modiff.NodeBase import NodeBase
 from modiff.server import WebServer
+from modiff.execution_input_provenance import capture_generation_inputs
 from modiff.workflow_store import (
     delete_workflow,
     get_workflow,
@@ -705,6 +706,48 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(output["prompt"], "The exact Cluster prompt")
         self.assertEqual(output["steps"], 1)
         self.assertEqual(output["formSnapshot"], runtime_hints["optimizationQualificationForm"])
+
+    async def test_resolved_connected_inputs_survive_frontend_enrichment_and_reject_forgery(self):
+        server = WebServer(modules={}, work_dir=self.directory.name, data_dir=self.directory.name)
+        hints = {"workflowSnapshot": {"studioForm": {"prompt": "fallback", "steps": 8}}}
+        encoder = {"module": "modules.Diffusers", "action": "Encode", "params": {
+            "prompt": {"sourceId": "text", "sourceKey": "output", "value": "fallback"},
+        }}
+        preview = {"module": "modules.Diffusers", "action": "Preview", "params": {
+            "image": {"sourceId": "encode", "sourceKey": "images"},
+        }}
+        server.current_task = {"task_id": "resolved-task", "attempt_index": 2, "runtimeHints": hints}
+        server.task_graphs["resolved-task"] = {"nodes": {"encode": encoder, "preview": preview}, "runtimeHints": hints}
+        server._resolved_input_context = ("resolved-task", 2)
+        server._resolved_input_records = {
+            "encode": capture_generation_inputs("encode", encoder, {"prompt": "actual connected prompt", "num_inference_steps": 50}),
+            "preview": capture_generation_inputs("preview", preview, {}),
+        }
+        message = {"task_id": "resolved-task", "attempt_index": 2, "node": "preview", "key": "text", "value": "output"}
+        _, persisted = server._persist_generated_output_update(message, display="ui_text")
+        self.assertTrue(persisted)
+        output = server._studio_outputs_for_run("resolved-task")[0]
+        self.assertEqual(output["prompt"], "actual connected prompt")
+        self.assertEqual(output["steps"], 50)
+        self.assertEqual(output["formSnapshot"]["prompt"], "fallback")
+        self.assertEqual(message["resolved_execution_inputs"], output["resolvedExecutionInputs"])
+        enriched = server._normalize_studio_output({**output, "prompt": "stale browser form", "steps": 8})
+        self.assertNotIn("resolvedExecutionInputs", enriched)
+        merged = server._merge_studio_outputs([output], [enriched])[0]
+        self.assertEqual(merged["prompt"], "actual connected prompt")
+        self.assertEqual(merged["steps"], 50)
+        self.assertEqual(merged["resolvedExecutionInputs"], output["resolvedExecutionInputs"])
+        with self.assertRaisesRegex(ValueError, "cannot be reassigned"):
+            server._merge_studio_outputs([output], [{**enriched, "taskId": "other-task"}])
+        with patch.object(server, "_normalize_studio_output", side_effect=AssertionError("Must reject before media writes")):
+            conflict = await server.studio_outputs_post(FakeRequest("", {**output, "taskId": "other-task"}))
+        self.assertEqual(conflict.status, 409)
+        server._resolved_input_context = ("resolved-task", 3)
+        late_message = {**message, "key": "late", "resolved_execution_inputs": None}
+        _, persisted = server._persist_generated_output_update(late_message, display="ui_text")
+        self.assertTrue(persisted)
+        late_output = next(item for item in server._studio_outputs_for_run("resolved-task") if item["fieldKey"] == "late")
+        self.assertNotIn("resolvedExecutionInputs", late_output)
 
     async def test_preview_slot_changes_only_on_admission_and_output_promotion(self):
         modules = {

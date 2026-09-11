@@ -188,8 +188,8 @@ class Export(NodeBase):
             return [tensor]
 
         def save_video(video_data):
-            if video_data is None:
-                return None, 0, 0, 0
+            if video_data is None or (isinstance(video_data, list) and not video_data):
+                raise ValueError("Export Video needs non-empty video frames.")
 
             parsed_filename = parse_filename(filename)
             Path(parsed_filename).parent.mkdir(parents=True, exist_ok=True)
@@ -235,8 +235,22 @@ class Export(NodeBase):
 
                 if isinstance(video_data, torch.Tensor):
                     return save_video(tensor_to_frames(video_data))
+                raise ValueError("Export Video received an unsupported video shape or type.")
 
-            return str(parsed_filename), width, height, frame_count
+            destination = Path(parsed_filename)
+            if not destination.is_file() or destination.stat().st_size == 0:
+                raise RuntimeError("Export Video did not produce a non-empty encoded file.")
+            # The existing encoder may resize odd dimensions to a macroblock
+            # boundary. Report the retained file, not the pre-encoder frames.
+            from modiff.media_assets import probe_video_file
+
+            encoded = probe_video_file(destination)
+            return str(parsed_filename), encoded["width"], encoded["height"], encoded["frame_count"]
+
+        # Diffusers VideoProcessor returns NumPy output as B,F,H,W,C. Preserve
+        # the batch as separate clips, just like its existing nested PIL output.
+        if isinstance(video, np.ndarray) and video.ndim == 5:
+            video = [list(clip) for clip in video]
 
         if isinstance(video, list) and video and isinstance(video[0], list):
             files = []

@@ -74,9 +74,9 @@ def compact_task_history(tasks: Any) -> list[dict[str, Any]]:
         summary = {key: value for key, value in task.items() if key != "workflow_snapshot"}
         runtime_fingerprint = summary.get("runtimeFingerprint")
         if isinstance(runtime_fingerprint, dict):
-            summary["runtimeFingerprint"] = runtime_fingerprint.get("resourceFingerprint") or runtime_fingerprint.get(
-                "fingerprint"
-            )
+            # Match the execution receipt's identity. resourceFingerprint is a
+            # separate cache/admission key and cannot corroborate provenance.
+            summary["runtimeFingerprint"] = runtime_fingerprint.get("fingerprint")
         summary["has_workflow_snapshot"] = isinstance(task.get("workflow_snapshot"), dict)
         compacted.append(summary)
     return compacted

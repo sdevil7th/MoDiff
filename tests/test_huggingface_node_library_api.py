@@ -30,8 +30,8 @@ class HuggingFaceNodeLibraryApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(second_response.status, 200)
         self.assertEqual(second["schemaVersion"], 6)
         self.assertEqual(second["providers"], ["diffusers", "transformers"])
-        self.assertEqual(len(second["definitions"]), 103)
-        self.assertEqual(len(second["blockDefinitions"]), 511)
+        self.assertEqual(len(second["definitions"]), 135)
+        self.assertEqual(len(second["blockDefinitions"]), 559)
         self.assertEqual(len(second["blockRoleAdapters"]), 321)
         self.assertEqual(len(second["containerStateAdapters"]), 9)
         self.assertNotEqual(second["definitions"][0]["label"], "Changed by caller")
@@ -40,8 +40,8 @@ class HuggingFaceNodeLibraryApiTests(unittest.IsolatedAsyncioTestCase):
         admissions = [
             admission for definition in second["definitions"] for admission in definition["executionAdmissions"]
         ]
-        self.assertEqual(len(admissions), 90)
-        self.assertEqual(sum(admission["status"] == "admitted" for admission in admissions), 90)
+        self.assertEqual(len(admissions), 122)
+        self.assertEqual(sum(admission["status"] == "admitted" for admission in admissions), 122)
         self.assertTrue(all(admission["executable"] is False for admission in admissions))
 
     async def test_registered_block_v2_endpoint_serves_one_detached_hash_pinned_definition(self):

@@ -164,6 +164,10 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "FluxReduxPipeline",
             "Flux2KleinPipeline",
             "Flux2KleinInpaintPipeline",
+            "Flux2KleinKVPipeline",
+            "FluxControlNetPipeline",
+            "FluxControlNetImg2ImgPipeline",
+            "FluxControlNetInpaintPipeline",
             "StableDiffusionXLPipeline",
             "StableDiffusionXLTurboPipeline",
             "StableDiffusionXLInstructPix2PixPipeline",
@@ -393,7 +397,10 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                 ("bnb_4bit",)
                 if profile_id in qwen_ids
                 else flux_modes
-                if profile.model_type.startswith("Flux")
+                if profile.model_type.startswith("Flux") and profile.model_type not in {
+                    "Flux2KleinKVPipeline", "FluxControlNetPipeline",
+                    "FluxControlNetImg2ImgPipeline", "FluxControlNetInpaintPipeline",
+                }
                 else ()
             )
             with self.subTest(profile=profile_id):

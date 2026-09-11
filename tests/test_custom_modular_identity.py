@@ -2155,6 +2155,46 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
             )
 
     @requires_transformers
+    def test_flux2_accepts_only_the_reviewed_concrete_processor(self):
+        document = {
+            "_class_name": "Flux2Pipeline",
+            "_diffusers_version": "0.36.0.dev0",
+            "scheduler": ["diffusers", "FlowMatchEulerDiscreteScheduler"],
+            "text_encoder": ["transformers", "Mistral3ForConditionalGeneration"],
+            "tokenizer": ["transformers", "PixtralProcessor"],
+            "transformer": ["diffusers", "Flux2Transformer2DModel"],
+            "vae": ["diffusers", "AutoencoderKLFlux2"],
+        }
+        with patch(
+            "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+            return_value=("model_index.json", document),
+        ):
+            self.assertEqual(
+                _validate_reviewed_pipeline_index(
+                    "Flux2ModularPipeline",
+                    "black-forest-labs/FLUX.2-dev",
+                    "26afe3a78bb242c0a8bb181dcc8937bb16e5c66c",
+                ),
+                ("model_index.json", document),
+            )
+        for wrong_type in ("AutoTokenizer", "Qwen2TokenizerFast", "CLIPProcessor"):
+            with (
+                self.subTest(wrong_type=wrong_type),
+                patch(
+                    "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                    return_value=("model_index.json", {
+                        **document, "tokenizer": ["transformers", wrong_type],
+                    }),
+                ),
+                self.assertRaisesRegex(ValueError, wrong_type),
+            ):
+                _validate_reviewed_pipeline_index(
+                    "Flux2ModularPipeline",
+                    "black-forest-labs/FLUX.2-dev",
+                    "26afe3a78bb242c0a8bb181dcc8937bb16e5c66c",
+                )
+
+    @requires_transformers
     def test_flux2_klein_accepts_only_the_pinned_transformers_v5_tokenizer_alias(self):
         document = {
             "_class_name": "Flux2KleinPipeline",
@@ -2352,6 +2392,35 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
         self.assertEqual(second["scheduler"]["version"], "B")
         self.assertEqual(third["scheduler"]["version"], "B")
         self.assertEqual(node.execute.call_count, 2)
+
+    def test_same_family_variant_capture_records_selected_repository_revision_and_dtype(self):
+        node = ModelsLoader("same-family-captured-inputs")
+        revision = "75e0b4be04f60ec59a75f475837eced720f823b6"
+        outputs = {name: {"selected": "base"} for name in MODELS_LOADER_IDENTITY_OUTPUTS}
+        node.execute = Mock(return_value=outputs)
+        inputs = {
+            "model_type": "QwenImageModularPipeline",
+            "repo_id": {"source": "hub", "value": "Qwen/Qwen-Image-2512"},
+            "reviewed_variant": "Qwen/Qwen-Image", "workflow_id": "text2image",
+            "revision": "25468b98e3276ca6700de15c6628e51b7de54a26",
+            "device": "cpu", "dtype": "bfloat16", "auto_offload": False,
+            "offload_mode": "none", "trust_remote_code": False,
+        }
+        with (
+            patch.object(node, "_preflight_reviewed_builtin_selection", return_value=(
+                "hub", "Qwen/Qwen-Image", revision, "modular_model_index.json",
+                {"_class_name": "QwenImageModularPipeline"},
+            )),
+            patch("modiff.NodeBase.modelstore.is_hf_cached", return_value=True),
+        ):
+            node(**inputs)
+            node(**inputs)
+        self.assertEqual(node.execute.call_count, 1)
+        fields = node._execution_input_record["fields"]
+        self.assertEqual(fields["repo_id"]["value"], "Qwen/Qwen-Image")
+        self.assertEqual(fields["revision"]["value"], revision)
+        self.assertEqual(fields["dtype"]["value"], "bfloat16")
+        self.assertEqual(inputs["repo_id"]["value"], "Qwen/Qwen-Image-2512")
 
     @requires_transformers
     def test_builtin_pipeline_rejects_cache_selected_blocks_before_construction(self):

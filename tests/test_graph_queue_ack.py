@@ -73,7 +73,9 @@ class GraphQueueAcknowledgementTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(terminal["runtimeMeasurement"]["elapsedSeconds"], 12.5)
 
     async def test_graph_execution_leaves_time_for_queue_ack_before_model_work(self):
-        server = WebServer(modules={})
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        server = WebServer(modules={}, work_dir=directory.name, data_dir=directory.name)
         server.loop = asyncio.get_running_loop()
         server.queue_message = lambda *args, **kwargs: None
         executor_started = asyncio.Event()

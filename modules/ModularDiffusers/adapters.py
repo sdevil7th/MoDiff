@@ -2,7 +2,7 @@
 from pathlib import PurePosixPath
 
 from modiff.NodeBase import NodeBase
-from modiff.auxiliary_lora import build_lora_descriptor
+from modiff.auxiliary_lora import build_lora_descriptor, generated_lora_adapter_name
 
 
 class Lora(NodeBase):
@@ -84,7 +84,7 @@ class Lora(NodeBase):
             weight_name=weight_name,
             revision=revision,
             expected_sha256=expected_sha256,
-            adapter_name=f"{name_seed}_{self.node_id}",
+            adapter_name=generated_lora_adapter_name(name_seed, self.node_id),
             scale=scale,
             scheduler_class=scheduler_class,
             scheduler_config=scheduler_config,
