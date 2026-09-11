@@ -1,3 +1,4 @@
+import importlib.util
 import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
@@ -7,7 +8,11 @@ import torch
 from PIL import Image
 
 from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
-from modiff.modular_workflow_contracts import WAN_FLF_REPOSITORY, WAN_I2V_REPOSITORY
+from modiff.modular_workflow_contracts import (
+    WAN_FLF_REPOSITORY,
+    WAN_I2V_720P_REPOSITORY,
+    WAN_I2V_REPOSITORY,
+)
 from modules.ModularDiffusers.denoise import Denoise
 from modules.ModularDiffusers.embeddings import ImageEmbeddings
 from modules.ModularDiffusers.latents import DecodeLatents, ImageEncode
@@ -35,6 +40,10 @@ from modules.ModularDiffusers.route_state import (
 )
 
 
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
+)
 WAN_I2V = "WanImage2VideoModularPipeline"
 WAN_LATENTS_MEAN = (
     -0.7571,
@@ -178,6 +187,7 @@ class _FlfTransformer(_Transformer):
 
 
 WAN_I2V_REVISION = "b184e23a8a16b20f108f727c902e769e873ffc73"
+WAN_I2V_720P_REVISION = "eb849f76dfa246545b65774a9e25943ee69b3fa3"
 WAN_FLF_REVISION = "17c30769b1e0b5dcaa1799b117bf20a9c31f59d7"
 
 
@@ -352,6 +362,10 @@ class WanRouteStateTests(unittest.TestCase):
         image = Image.new("RGB", (64, 64))
         last_image = Image.new("RGB", (64, 64))
         i2v_token, _outputs = _bound_outputs()
+        i2v_720p_token, _outputs = _bound_outputs(
+            repository=WAN_I2V_720P_REPOSITORY,
+            revision=WAN_I2V_720P_REVISION,
+        )
         flf_token, _outputs = _bound_outputs(
             repository=WAN_FLF_REPOSITORY,
             revision=WAN_FLF_REVISION,
@@ -361,10 +375,32 @@ class WanRouteStateTests(unittest.TestCase):
             "image2video",
         )
         self.assertEqual(
+            require_cataloged_wan_action_source(
+                image=image,
+                last_image=None,
+                binding=i2v_720p_token,
+            ),
+            "image2video",
+        )
+        self.assertEqual(
             require_cataloged_wan_action_source(image=image, last_image=last_image, binding=flf_token),
             "flf2v",
         )
-        for binding, ending in ((i2v_token, last_image), (flf_token, None)):
+        wrong_revision_token, _outputs = _bound_outputs(
+            repository=WAN_I2V_720P_REPOSITORY,
+            revision=WAN_I2V_REVISION,
+        )
+        with self.assertRaisesRegex(ValueError, "reviewed immutable"):
+            require_cataloged_wan_action_source(
+                image=image,
+                last_image=None,
+                binding=wrong_revision_token,
+            )
+        for binding, ending in (
+            (i2v_token, last_image),
+            (i2v_720p_token, last_image),
+            (flf_token, None),
+        ):
             with self.subTest(repository=binding._repo_id), self.assertRaisesRegex(ValueError, "reviewed immutable"):
                 require_cataloged_wan_action_source(image=image, last_image=ending, binding=binding)
 
@@ -1092,6 +1128,7 @@ class WanActionBoundaryTests(unittest.TestCase):
         self.assertEqual(processor_spec.call_args.kwargs["type_hint"].__name__, "CLIPImageProcessor")
         return result, pipeline_calls
 
+    @requires_transformers
     def test_image_embeddings_manager_init_and_call_swaps_publish_no_route(self):
         for stage in ("init", "call"):
             replacement = _ImageEncoder()
@@ -1105,6 +1142,7 @@ class WanActionBoundaryTests(unittest.TestCase):
                     call_mutation=(swap if stage == "call" else None),
                 )
 
+    @requires_transformers
     def test_image_embeddings_processor_and_encoder_config_mutation_publish_no_route(self):
         mutations = (
             lambda _manager, processor: setattr(processor, "do_normalize", False),
@@ -1123,11 +1161,13 @@ class WanActionBoundaryTests(unittest.TestCase):
                 )
             )
 
+    @requires_transformers
     def test_image_embeddings_canonical_string_replay_hits_cache(self):
         result, calls = self._run_image_embeddings(use_cache=True)
         self.assertIsNotNone(result[ROUTE_STATE_OUTPUT])
         self.assertEqual(len(calls), 1)
 
+    @requires_transformers
     def test_exact_flf_artifact_executes_image_and_vae_actions(self):
         last_image = Image.new("RGB", (100, 200), "blue")
         image_result, image_calls = self._run_image_embeddings(last_image=last_image)
@@ -1321,6 +1361,7 @@ class WanActionBoundaryTests(unittest.TestCase):
                 )
             )
 
+    @requires_transformers
     def test_producer_device_mismatch_publishes_no_image_or_vae_route(self):
         with self.assertRaisesRegex(ValueError, "producing Wan execution device"):
             self._run_image_embeddings(execution_device="cuda")

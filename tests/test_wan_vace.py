@@ -49,6 +49,7 @@ class WanVaceLoaderTests(unittest.TestCase):
             torch_dtype=torch.float32,
             revision="ec4d2cb062b548996b179d493fdd05340de702a1",
             local_files_only=True,
+            use_safetensors=True,
             cache_dir="E:/MoDiff/huggingface/hub",
         )
         from_pretrained.assert_called_once()
@@ -59,6 +60,7 @@ class WanVaceLoaderTests(unittest.TestCase):
         self.assertEqual(load_kwargs["revision"], "ec4d2cb062b548996b179d493fdd05340de702a1")
         self.assertEqual(load_kwargs["cache_dir"], "E:/MoDiff/huggingface/hub")
         self.assertTrue(load_kwargs["local_files_only"])
+        self.assertTrue(load_kwargs["use_safetensors"])
         self.assertTrue(load_kwargs["low_cpu_mem_usage"])
 
 

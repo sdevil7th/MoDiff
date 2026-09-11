@@ -38,6 +38,8 @@ MODULE_PARSE = [
     "loaders",
     "schedulers",
     "dynamic_node",
+    "workflow_blocks",
+    "reviewed_blocks",
 ]
 
 SDXL_BLOCKS = list(SDXL_LAYER_BLOCK_OPTIONS)
@@ -51,3 +53,9 @@ MODULAR_SCHEDULER_OPTIONS = get_modular_scheduler_options()
 # package object. Export reviewed dynamic options so the public /nodes
 # contract contains mappings instead of unresolved identifier strings.
 from .guiders import GUIDER_OPTIONS as GUIDER_OPTIONS  # noqa: E402,F401
+from .reviewed_blocks import (  # noqa: E402,F401
+    _REVIEWED_BLOCK_INPUT_PARAMS as _REVIEWED_BLOCK_INPUT_PARAMS,
+    _REVIEWED_BLOCK_INPUT_ALIASES as _REVIEWED_BLOCK_INPUT_ALIASES,
+    _REVIEWED_BLOCK_OUTPUT_PARAMS as _REVIEWED_BLOCK_OUTPUT_PARAMS,
+    _REVIEWED_LOOP_PORT_PARAMS as _REVIEWED_LOOP_PORT_PARAMS,
+)

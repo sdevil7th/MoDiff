@@ -7,8 +7,9 @@ hf_logging.set_verbosity_error()
 from modiff.config import CONFIG
 from modiff.model_artifact_catalog import resolve_model_revision
 from collections import Counter
+from contextlib import contextmanager
 from fnmatch import fnmatchcase
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import hashlib
 import json
 import os
@@ -78,7 +79,83 @@ def _common_appdata_hf_cache_candidates():
 
 HF_CACHE_REPO_PREFIXES = ('models--', 'datasets--', 'spaces--')
 HF_DOWNLOAD_PLAN_FILE_PREVIEW_LIMIT = 200
-_HF_XET_MODE_LOCK = threading.RLock()
+HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES = 64 * 1024**3
+
+
+class _HFDownloadModeGate:
+    """Share bounded HTTP downloads while keeping cache repair exclusive."""
+
+    def __init__(self):
+        self._condition = threading.Condition()
+        self._normal_downloads = 0
+        self._normal_previous_disable_xet = None
+        self._repair_active = False
+        self._repair_waiters = 0
+
+    @contextmanager
+    def normal(self, hf_constants):
+        with self._condition:
+            while self._repair_active or self._repair_waiters:
+                self._condition.wait()
+            if self._normal_downloads == 0:
+                self._normal_previous_disable_xet = hf_constants.HF_HUB_DISABLE_XET
+                hf_constants.HF_HUB_DISABLE_XET = True
+            self._normal_downloads += 1
+        try:
+            yield
+        finally:
+            with self._condition:
+                self._normal_downloads -= 1
+                if self._normal_downloads == 0:
+                    hf_constants.HF_HUB_DISABLE_XET = self._normal_previous_disable_xet
+                    self._normal_previous_disable_xet = None
+                    self._condition.notify_all()
+
+    @contextmanager
+    def repair(self, hf_constants):
+        with self._condition:
+            self._repair_waiters += 1
+            try:
+                while self._repair_active or self._normal_downloads:
+                    self._condition.wait()
+                self._repair_active = True
+                previous_disable_xet = hf_constants.HF_HUB_DISABLE_XET
+                hf_constants.HF_HUB_DISABLE_XET = True
+            finally:
+                self._repair_waiters -= 1
+        try:
+            yield
+        finally:
+            with self._condition:
+                hf_constants.HF_HUB_DISABLE_XET = previous_disable_xet
+                self._repair_active = False
+                self._condition.notify_all()
+
+
+_HF_DOWNLOAD_MODE_GATE = _HFDownloadModeGate()
+
+
+@contextmanager
+def app_hub_download_mode(*, repair: bool = False):
+    """Use bounded standard HTTP for app-owned Hub snapshots.
+
+    Native Xet reconstruction has no app-visible overall stall boundary. The
+    standard Hub HTTP path retains per-request timeouts and retries while
+    preserving completed cache blobs. Its process-global selection is restored
+    exactly after the shared transfer window drains. Repair remains exclusive
+    because it validates and may replace target partial files before resuming
+    the snapshot.
+    """
+
+    from huggingface_hub import constants as hf_constants
+
+    mode = (
+        _HF_DOWNLOAD_MODE_GATE.repair(hf_constants)
+        if repair
+        else _HF_DOWNLOAD_MODE_GATE.normal(hf_constants)
+    )
+    with mode:
+        yield
 
 
 def _path_looks_like_hf_cache_root(path_obj: Path):
@@ -563,7 +640,12 @@ def _snapshot_file_status(path_obj: Path, expected_files: list[dict], *, snapsho
     }
 
 
-def _active_download_files(path_obj: Path, limit: int = 5, expected_blob_hashes: set[str] | None = None):
+def _active_download_files(
+    path_obj: Path,
+    limit: int = 5,
+    expected_blob_hashes: set[str] | None = None,
+    modified_since: float | None = None,
+):
     active_files = []
     if not path_obj.exists():
         return active_files
@@ -574,7 +656,17 @@ def _active_download_files(path_obj: Path, limit: int = 5, expected_blob_hashes:
                 continue
             name = entry.name.lower()
             if name.endswith('.incomplete') or name.endswith('.lock'):
-                blob_hash = name.rsplit('.', 1)[0]
+                try:
+                    modified_at = entry.stat().st_mtime
+                except OSError:
+                    continue
+                if modified_since is not None and modified_at < modified_since:
+                    continue
+                # Standard Hub HTTP downloads add a per-attempt suffix between
+                # the immutable LFS hash and ``.incomplete``. Match the stable
+                # hash prefix rather than treating that suffix as part of the
+                # blob identity.
+                blob_hash = name.split('.', 1)[0]
                 if expected_blob_hashes is not None and blob_hash not in expected_blob_hashes:
                     continue
                 candidates.append(entry)
@@ -586,7 +678,74 @@ def _active_download_files(path_obj: Path, limit: int = 5, expected_blob_hashes:
     return active_files
 
 
-def _download_progress_snapshot(repo_id: str, cache_dir: str | None, plan: dict | None = None):
+def _active_download_bytes(
+    path_obj: Path,
+    expected_files: list[dict],
+    *,
+    snapshot_dir: Path | None,
+    modified_since: float,
+):
+    """Count only current-attempt partial bytes for exact LFS blobs.
+
+    A repository may retain redundant ``<hash>.<attempt>.incomplete`` files
+    after a disconnected request. Summing the whole cache makes progress and
+    the server's shrinking reservation optimistic. Count only partials touched
+    after this task started; multiple retry files still consume distinct disk
+    bytes and therefore remain part of the conservative reservation receipt.
+    """
+
+    expected_by_hash = {}
+    completed_hashes = set()
+    for expected_file in expected_files:
+        if not isinstance(expected_file, dict):
+            continue
+        blob_hash = str(expected_file.get('blob_hash') or '').lower()
+        expected_size = expected_file.get('size')
+        name = expected_file.get('name')
+        if not re.fullmatch(r'[a-f0-9]{64}', blob_hash) or not isinstance(expected_size, int) or expected_size < 0:
+            continue
+        expected_by_hash[blob_hash] = max(expected_by_hash.get(blob_hash, 0), expected_size)
+        if snapshot_dir is None or not name:
+            continue
+        try:
+            if (snapshot_dir / str(name)).stat().st_size == expected_size:
+                completed_hashes.add(blob_hash)
+        except OSError:
+            pass
+
+    blobs_dir = path_obj / 'blobs'
+    if not expected_by_hash or not blobs_dir.is_dir():
+        return 0
+
+    current_attempt_bytes = 0
+    try:
+        for entry in blobs_dir.iterdir():
+            name = entry.name.lower()
+            if not name.endswith('.incomplete') or not entry.is_file():
+                continue
+            blob_hash = name.split('.', 1)[0]
+            if blob_hash not in expected_by_hash or blob_hash in completed_hashes:
+                continue
+            try:
+                stat = entry.stat()
+            except OSError:
+                continue
+            if stat.st_mtime < modified_since:
+                continue
+            current_attempt_bytes += min(stat.st_size, expected_by_hash[blob_hash])
+    except OSError:
+        return 0
+
+    return current_attempt_bytes
+
+
+def _download_progress_snapshot(
+    repo_id: str,
+    cache_dir: str | None,
+    plan: dict | None = None,
+    *,
+    active_since: float | None = None,
+):
     path_obj = _repo_cache_dir(repo_id, cache_dir)
     expected_files = _plan_validation_files(plan)
     if not path_obj.exists():
@@ -614,16 +773,115 @@ def _download_progress_snapshot(repo_id: str, cache_dir: str | None, plan: dict 
         # file that is still incomplete.
         if not expected_blob_hashes:
             expected_blob_hashes = None
-    active_files = _active_download_files(path_obj, expected_blob_hashes=expected_blob_hashes)
+    active_files = _active_download_files(
+        path_obj,
+        expected_blob_hashes=expected_blob_hashes,
+        modified_since=active_since,
+    )
+    downloaded_bytes = summary.get('total_file_bytes', 0)
+    if active_since is not None:
+        downloaded_bytes = snapshot_status.get('completed_bytes', 0) + _active_download_bytes(
+            path_obj,
+            expected_files,
+            snapshot_dir=snapshot_dir,
+            modified_since=active_since,
+        )
     return {
         'path': str(path_obj),
         'cache_dir': str(Path(cache_dir or CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()),
-        'downloaded_bytes': summary.get('total_file_bytes', 0),
+        'downloaded_bytes': downloaded_bytes,
         'file_count': summary.get('file_count', 0),
         'completed_file_count': snapshot_status.get('completed_file_count', 0),
         'completed_bytes': snapshot_status.get('completed_bytes', 0),
         'active_files': active_files,
         'current_file': active_files[0] if active_files else None,
+    }
+
+
+def _interrupted_download_partials(
+    repo_id: str,
+    cache_dir: str | None,
+    plan: dict | None,
+    *,
+    older_than: float | None = None,
+):
+    """Return app-reclaimable partials left by an interrupted Hub 1.x download.
+
+    huggingface_hub 1.x writes every file to a process-unique
+    ``<sha256>.<attempt>.incomplete`` path and explicitly does not reuse that
+    path in a later call.  A killed worker can therefore leave large files that
+    consume disk but cannot reduce the next snapshot download.  Limit discovery
+    to immutable SHA-256 objects in the exact download plan; unrelated cache
+    entries and a partial touched by the current task are never included.
+    """
+
+    expected_hashes = {
+        str(item.get('blob_hash') or '').lower()
+        for item in _plan_validation_files(plan)
+        if isinstance(item, dict)
+        and re.fullmatch(r'[a-f0-9]{64}', str(item.get('blob_hash') or '').lower())
+    }
+    repo_path = _repo_cache_dir(repo_id, cache_dir)
+    blobs_dir = repo_path / 'blobs'
+    if not expected_hashes or not blobs_dir.is_dir():
+        return []
+
+    candidates = []
+    try:
+        for partial in blobs_dir.iterdir():
+            match = re.fullmatch(r'([a-f0-9]{64})\.([a-f0-9]{8})\.incomplete', partial.name.lower())
+            if match is None or match.group(1) not in expected_hashes or not partial.is_file() or partial.is_symlink():
+                continue
+            stat = partial.stat()
+            if older_than is not None and stat.st_mtime >= older_than:
+                continue
+            candidates.append(
+                {
+                    'path': partial,
+                    'relative_path': partial.relative_to(repo_path).as_posix(),
+                    'logical_bytes': stat.st_size,
+                    # Windows does not expose allocated blocks. Do not count
+                    # logical size as reclaimable space (files may be sparse).
+                    'allocated_bytes': getattr(stat, 'st_blocks', 0) * 512,
+                    'modified_at': stat.st_mtime,
+                }
+            )
+    except OSError:
+        return []
+    return candidates
+
+
+def cleanup_interrupted_hub_download_files(
+    repo_id: str,
+    cache_dir: str | None = None,
+    allow_patterns: list[str] | tuple[str, ...] | None = None,
+    revision: str | None = None,
+    *,
+    older_than: float,
+):
+    """Delete only stale, non-resumable attempt files for one exact plan."""
+
+    plan = _repo_download_plan(repo_id, allow_patterns, revision)
+    removed = []
+    logical_bytes = 0
+    allocated_bytes = 0
+    for candidate in _interrupted_download_partials(
+        repo_id,
+        cache_dir,
+        plan,
+        older_than=older_than,
+    ):
+        try:
+            candidate['path'].unlink()
+        except OSError:
+            continue
+        removed.append(candidate['relative_path'])
+        logical_bytes += int(candidate['logical_bytes'])
+        allocated_bytes += int(candidate['allocated_bytes'])
+    return {
+        'removed': removed,
+        'logical_bytes': logical_bytes,
+        'allocated_bytes': allocated_bytes,
     }
 
 
@@ -693,6 +951,66 @@ def _repo_download_plan(
         }
 
 
+def plan_hub_model_download(
+    model_id: str,
+    allow_patterns: list[str] | tuple[str, ...] | None = None,
+    revision: str | None = None,
+):
+    """Return an app-owned immutable download and free-space preflight.
+
+    The estimate intentionally reserves the complete remaining snapshot even
+    when Hub blobs may later deduplicate. This lets the server account for
+    several queued downloads without deleting older cache entries or depending
+    on optimistic filesystem behavior.
+    """
+
+    requested_files = [str(name) for name in (allow_patterns or []) if str(name).strip()]
+    revision = resolve_model_revision(model_id, revision)
+    plan = _repo_download_plan(model_id, requested_files, revision)
+    cache_root = Path(CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()
+    cache_root.mkdir(parents=True, exist_ok=True)
+    disk = shutil.disk_usage(cache_root)
+    snapshot = _download_progress_snapshot(model_id, str(cache_root), plan)
+    interrupted_partials = _interrupted_download_partials(model_id, str(cache_root), plan)
+    reclaimable_incomplete_bytes = sum(
+        int(candidate.get('allocated_bytes') or 0) for candidate in interrupted_partials
+    )
+    total_bytes = plan.get('total_bytes')
+    completed_bytes = int(snapshot.get('completed_bytes') or 0)
+    remaining_bytes = (
+        max(int(total_bytes) - completed_bytes, 0)
+        if isinstance(total_bytes, int) and total_bytes >= 0
+        else None
+    )
+    size_known = bool(plan.get('size_known')) and remaining_bytes is not None
+    fits = bool(
+        size_known
+        and remaining_bytes + HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES
+        <= disk.free + reclaimable_incomplete_bytes
+    )
+    return {
+        'repoId': model_id,
+        'revision': revision,
+        'snapshotCommit': plan.get('snapshot_commit'),
+        'selectionLimited': bool(plan.get('selection_limited')),
+        'requestedFiles': requested_files,
+        'totalBytes': total_bytes,
+        'completedBytes': completed_bytes,
+        'remainingBytes': remaining_bytes,
+        'totalFileCount': plan.get('total_file_count'),
+        'sizeKnown': size_known,
+        'planError': plan.get('plan_error'),
+        'cacheRoot': str(cache_root),
+        'freeBytes': disk.free,
+        'effectiveFreeBytes': disk.free + reclaimable_incomplete_bytes,
+        'reclaimableIncompleteBytes': reclaimable_incomplete_bytes,
+        'reclaimableIncompleteFileCount': len(interrupted_partials),
+        'totalFilesystemBytes': disk.total,
+        'reserveBytes': HF_DOWNLOAD_FREE_SPACE_RESERVE_BYTES,
+        'fits': fits,
+    }
+
+
 def _plan_validation_files(plan: dict | None):
     if not isinstance(plan, dict):
         return []
@@ -701,6 +1019,128 @@ def _plan_validation_files(plan: dict | None):
         return validation_files
     files = plan.get('files')
     return files if isinstance(files, list) else []
+
+
+def _stage_verified_cached_lfs_blobs(repo_id: str, cache_dir: str | None, plan: dict | None):
+    """Reuse byte-identical LFS content already cached by another model repo.
+
+    Hugging Face scopes its blob directories by repository, so snapshot_download
+    does not discover the same LFS object in a sibling repository automatically.
+    A 64-character LFS object id is the file's SHA-256. We still hash every local
+    candidate while copying it into the target repository, so a corrupt or forged
+    cache filename is never trusted as model content.
+    """
+
+    if not isinstance(plan, dict):
+        return {'files': [], 'bytes': 0}
+    repo_path = _repo_cache_dir(repo_id, cache_dir)
+    snapshot_dir = _snapshot_dir_for_plan(repo_path, plan)
+    if snapshot_dir is None:
+        snapshot_identity = str(plan.get('snapshot_commit') or plan.get('revision') or '').strip()
+        if not re.fullmatch(r'[a-f0-9]{40}', snapshot_identity):
+            return {'files': [], 'bytes': 0}
+        snapshot_dir = repo_path / 'snapshots' / snapshot_identity
+        try:
+            snapshot_dir.resolve(strict=False).relative_to((repo_path / 'snapshots').resolve(strict=False))
+        except (OSError, RuntimeError, ValueError):
+            return {'files': [], 'bytes': 0}
+        snapshot_dir.mkdir(parents=True, exist_ok=True)
+
+    cache_root = Path(cache_dir or CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()
+    blobs_dir = repo_path / 'blobs'
+    blobs_dir.mkdir(parents=True, exist_ok=True)
+    staged_files = []
+    staged_bytes = 0
+    published_hashes = set()
+
+    for expected in _plan_validation_files(plan):
+        if not isinstance(expected, dict) or not expected.get('name'):
+            continue
+        name = str(expected['name'])
+        expected_size = expected.get('size')
+        expected_hash = str(expected.get('blob_hash') or '').lower()
+        if (
+            not isinstance(expected_size, int)
+            or expected_size < 0
+            or not re.fullmatch(r'[a-f0-9]{64}', expected_hash)
+        ):
+            continue
+
+        target = snapshot_dir / name
+        try:
+            target.resolve(strict=False).relative_to(snapshot_dir.resolve(strict=False))
+        except (OSError, RuntimeError, ValueError):
+            continue
+        try:
+            if target.is_file() and target.stat().st_size == expected_size:
+                continue
+        except OSError:
+            pass
+
+        final_blob = blobs_dir / expected_hash
+        if expected_hash not in published_hashes and not final_blob.is_file():
+            candidates = sorted(cache_root.glob(f'models--*/blobs/{expected_hash}'))
+            for candidate in candidates:
+                if candidate == final_blob:
+                    continue
+                try:
+                    if not candidate.is_file() or candidate.stat().st_size != expected_size:
+                        continue
+                    temporary = tempfile.NamedTemporaryFile(
+                        prefix=f'.{expected_hash}.modiff-reuse-',
+                        dir=blobs_dir,
+                        delete=False,
+                    )
+                    temporary_path = Path(temporary.name)
+                    digest = hashlib.sha256()
+                    copied_bytes = 0
+                    try:
+                        with temporary, candidate.open('rb') as source:
+                            for chunk in iter(lambda: source.read(8 * 1024 * 1024), b''):
+                                digest.update(chunk)
+                                temporary.write(chunk)
+                                copied_bytes += len(chunk)
+                            temporary.flush()
+                            os.fsync(temporary.fileno())
+                        if copied_bytes != expected_size or digest.hexdigest() != expected_hash:
+                            temporary_path.unlink(missing_ok=True)
+                            continue
+                        try:
+                            os.link(temporary_path, final_blob)
+                        except FileExistsError:
+                            pass
+                        finally:
+                            temporary_path.unlink(missing_ok=True)
+                    except Exception:
+                        temporary_path.unlink(missing_ok=True)
+                        raise
+                    if final_blob.is_file() and final_blob.stat().st_size == expected_size:
+                        published_hashes.add(expected_hash)
+                        staged_bytes += expected_size
+                        break
+                except OSError:
+                    continue
+
+        if not final_blob.is_file():
+            continue
+        try:
+            if final_blob.stat().st_size != expected_size:
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if target.exists() or target.is_symlink():
+                continue
+            try:
+                target.symlink_to(os.path.relpath(final_blob, target.parent))
+            except OSError:
+                try:
+                    os.link(final_blob, target)
+                except OSError:
+                    shutil.copyfile(final_blob, target)
+            staged_files.append(name)
+        except OSError:
+            continue
+
+    return {'files': staged_files, 'bytes': staged_bytes}
 
 
 def _write_repo_download_plan(repo_id: str, cache_dir: str | None, plan: dict):
@@ -1094,12 +1534,21 @@ def _model_from_repo(repo, cache_dir: str | None, compact: bool = False):
 
         last_revision = list(repo.revisions)[-1]
         for file in getattr(last_revision, 'files', []):
-            if getattr(file, 'file_name', None) and file.file_name.lower().endswith('.json'):
+            name = str(getattr(file, 'file_name', '') or '').lower()
+            # These official payloads contain vocabulary/weight maps, not
+            # loader class declarations. Parsing tokenizer.json alone can
+            # allocate millions of objects while merely opening Model Manager.
+            # Keep other JSON metadata (including custom config names) eligible.
+            if name in {'tokenizer.json', 'vocab.json', 'special_tokens_map.json', 'added_tokens.json'} or name.endswith(('.safetensors.index.json', '.bin.index.json')):
+                continue
+            if name.endswith('.json'):
                 config = Path(getattr(file, 'file_path', None))
                 if config and config.exists():
                     try:
                         with open(config, 'r', encoding='utf-8') as f:
                             config_data = json.load(f)
+                        if not isinstance(config_data, dict):
+                            continue
                         if '_class_name' in config_data and config_data['_class_name'] is not None and config_data['_class_name'] not in model['class_names']:
                             model['class_names'].append(str(config_data['_class_name']))
                         if 'architectures' in config_data and isinstance(config_data['architectures'], list):
@@ -1329,6 +1778,62 @@ def resolve_managed_hf_cache_file(path: str | os.PathLike[str]) -> Path:
         raise FileNotFoundError('Installed Hugging Face cache entry is not a file.')
     return resolved
 
+
+def exact_cached_snapshot_path(repo_id: str, revision: str, marker_file: str = 'model_index.json') -> Path:
+    """Resolve one immutable installed Hub snapshot without asking the Hub for its full tree.
+
+    Model Manager may intentionally install a reviewed runtime closure instead
+    of every unrelated weight variant in a repository. Passing the Hub ID back
+    to ``from_pretrained(local_files_only=True)`` can still make the Hub client
+    reject that bounded snapshot when its cached remote tree contains those
+    unrelated variants. Diffusers officially supports loading from a local
+    pipeline directory, so reviewed loaders use this helper to retain the exact
+    commit/cache boundary while avoiding another repository-wide completeness
+    decision at execution time.
+    """
+
+    try:
+        validate_repo_id(repo_id)
+    except Exception as error:
+        raise ValueError('An exact cached snapshot requires a valid Hugging Face repository ID.') from error
+    if not isinstance(revision, str) or re.fullmatch(r'[a-f0-9]{40}', revision) is None:
+        raise ValueError('An exact cached snapshot requires a lowercase 40-character commit revision.')
+    if not isinstance(marker_file, str) or not marker_file or len(marker_file) > 512 or '\x00' in marker_file:
+        raise ValueError('An exact cached snapshot marker must be a bounded relative file path.')
+    marker = PurePosixPath(marker_file)
+    if marker.is_absolute() or any(part in {'', '.', '..'} or ':' in part for part in marker.parts):
+        raise ValueError('An exact cached snapshot marker must stay inside the snapshot.')
+
+    cached = cached_file_path(repo_id, marker.as_posix(), revision=revision)
+    if not isinstance(cached, str):
+        raise FileNotFoundError(
+            f'Install the exact reviewed {repo_id}@{revision} snapshot before loading this pipeline.'
+        )
+    alias = Path(cached).expanduser().absolute()
+    snapshot = alias
+    for _part in marker.parts:
+        snapshot = snapshot.parent
+    if snapshot.name != revision or snapshot.parent.name != 'snapshots':
+        raise ValueError('Installed Hugging Face cache lookup did not preserve the exact snapshot revision.')
+    repository_cache = snapshot.parent.parent
+    for directory in (repository_cache, snapshot.parent, snapshot):
+        is_junction = bool(getattr(directory, 'is_junction', lambda: False)())
+        if directory.is_symlink() or is_junction:
+            raise ValueError('Installed Hugging Face snapshot directories must not be linked.')
+    expected_alias = snapshot.joinpath(*marker.parts)
+    if alias != expected_alias:
+        raise ValueError('Installed Hugging Face cache lookup did not preserve the requested snapshot marker.')
+
+    resolved_marker = resolve_managed_hf_cache_file(alias)
+    try:
+        snapshot.resolve(strict=True).relative_to(
+            Path(CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser().resolve(strict=False)
+        )
+        resolved_marker.relative_to(repository_cache.resolve(strict=True))
+    except (OSError, RuntimeError, ValueError) as error:
+        raise ValueError('Installed Hugging Face snapshot resolves outside its managed repository cache.') from error
+    return snapshot
+
 def is_file_cached(repo_id: str, file: str | list[str] | tuple[str, ...]) -> bool:
     if isinstance(file, str):
         file = [file]
@@ -1453,7 +1958,7 @@ def download_hub_model(
     allow_patterns: list[str] | tuple[str, ...] | None = None,
     revision: str | None = None,
 ):
-    from huggingface_hub import constants as hf_constants, snapshot_download
+    from huggingface_hub import snapshot_download
 
     cache_dir = CONFIG.hf['cache_dir']
     token = CONFIG.hf['token']
@@ -1468,7 +1973,7 @@ def download_hub_model(
 
     def build_payload(status: str, progress: float | None = None, error: str | None = None):
         now = time.time()
-        snapshot = _download_progress_snapshot(model_id, cache_dir, plan)
+        snapshot = _download_progress_snapshot(model_id, cache_dir, plan, active_since=started_at)
         total_bytes = plan.get('total_bytes')
         observed_bytes = snapshot.get('downloaded_bytes', 0) or 0
         completed_bytes = snapshot.get('completed_bytes', 0) or 0
@@ -1536,7 +2041,7 @@ def download_hub_model(
     def monitor_download():
         monitor_last_state = None
         while not stop_event.is_set():
-            snapshot = _download_progress_snapshot(model_id, cache_dir, plan)
+            snapshot = _download_progress_snapshot(model_id, cache_dir, plan, active_since=started_at)
             state = (snapshot.get('downloaded_bytes'), snapshot.get('file_count'), snapshot.get('completed_file_count'))
             if state != monitor_last_state and progress_cb:
                 progress_cb(build_payload('downloading'))
@@ -1545,59 +2050,53 @@ def download_hub_model(
 
     try:
         emit('planning', 0.0)
-        if repair:
-            _prepare_snapshot_repair(model_id, cache_dir, plan)
-        emit('downloading', 0.0)
-        if progress_cb:
-            monitor_thread = threading.Thread(target=monitor_download, daemon=True)
-            monitor_thread.start()
-        # huggingface_hub exposes Xet disabling only as process-global state.
-        # Serialize every app-owned snapshot download so a repair cannot leak
-        # its temporary mode into a concurrent normal download.
-        with _HF_XET_MODE_LOCK:
-            previous_disable_xet = hf_constants.HF_HUB_DISABLE_XET
+        # All app-owned model transfers use the bounded standard Hub HTTP path.
+        # Normal downloads share the server's transfer window, while repair is
+        # exclusive because it validates and may replace partial target files.
+        with app_hub_download_mode(repair=repair):
             if repair:
-                # A repair must not repeat a wedged Xet reconstruction session.
-                # Standard Hub HTTP resumes immutable blobs with bounded request
-                # retries and leaves every already-valid cache blob untouched.
-                hf_constants.HF_HUB_DISABLE_XET = True
-            try:
-                attempts = 3 if repair else 1
-                for attempt in range(attempts):
-                    try:
-                        download_kwargs = {
-                            'repo_id': model_id,
-                            'cache_dir': cache_dir,
-                            'token': token,
-                            'force_download': False,
-                            'revision': revision,
-                        }
-                        if requested_files:
-                            download_kwargs['allow_patterns'] = requested_files
-                        downloaded_snapshot = snapshot_download(
-                            **download_kwargs,
-                        )
-                        if isinstance(downloaded_snapshot, (str, os.PathLike)):
-                            # Carry the authoritative path returned by the Hub into
-                            # every post-download validation step. This also covers
-                            # branch/tag revisions whose local snapshot directory is
-                            # named after the resolved commit rather than the ref.
-                            plan['snapshot_path'] = str(downloaded_snapshot)
-                        break
-                    except Exception as error:
-                        if attempt + 1 >= attempts or not _retryable_download_error(error):
-                            if repair and repair_source_repo_id:
-                                emit('repairing_from_verified_source', None, str(error))
-                                repaired = _repair_from_verified_source(
-                                    model_id, repair_source_repo_id, cache_dir, plan
-                                )
-                                if repaired:
-                                    break
-                            raise
-                        emit('retrying', None, str(error))
-                        time.sleep(2 ** attempt)
-            finally:
-                hf_constants.HF_HUB_DISABLE_XET = previous_disable_xet
+                _prepare_snapshot_repair(model_id, cache_dir, plan)
+            reused = _stage_verified_cached_lfs_blobs(model_id, cache_dir, plan)
+            if reused['files']:
+                emit('reusing_cache')
+            emit('downloading', 0.0)
+            if progress_cb:
+                monitor_thread = threading.Thread(target=monitor_download, daemon=True)
+                monitor_thread.start()
+            attempts = 3 if repair else 1
+            for attempt in range(attempts):
+                try:
+                    download_kwargs = {
+                        'repo_id': model_id,
+                        'cache_dir': cache_dir,
+                        'token': token,
+                        'force_download': False,
+                        'revision': revision,
+                    }
+                    if requested_files:
+                        download_kwargs['allow_patterns'] = requested_files
+                    downloaded_snapshot = snapshot_download(
+                        **download_kwargs,
+                    )
+                    if isinstance(downloaded_snapshot, (str, os.PathLike)):
+                        # Carry the authoritative path returned by the Hub into
+                        # every post-download validation step. This also covers
+                        # branch/tag revisions whose local snapshot directory is
+                        # named after the resolved commit rather than the ref.
+                        plan['snapshot_path'] = str(downloaded_snapshot)
+                    break
+                except Exception as error:
+                    if attempt + 1 >= attempts or not _retryable_download_error(error):
+                        if repair and repair_source_repo_id:
+                            emit('repairing_from_verified_source', None, str(error))
+                            repaired = _repair_from_verified_source(
+                                model_id, repair_source_repo_id, cache_dir, plan
+                            )
+                            if repaired:
+                                break
+                        raise
+                    emit('retrying', None, str(error))
+                    time.sleep(2 ** attempt)
         _cleanup_redundant_incomplete_files(model_id, cache_dir)
         stop_event.set()
         if monitor_thread:

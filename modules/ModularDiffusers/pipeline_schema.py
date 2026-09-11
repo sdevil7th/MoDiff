@@ -2,8 +2,8 @@
 
 Derived from Hugging Face Diffusers'
 ``src/diffusers/modular_pipelines/mellon_node_utils.py`` at commit
-``13a7bee4878d62fccc8d25f97e480e68de96fa03`` (Apache-2.0):
-https://github.com/huggingface/diffusers/blob/13a7bee4878d62fccc8d25f97e480e68de96fa03/src/diffusers/modular_pipelines/mellon_node_utils.py
+``bb56997d4b7e87f0743f26a612f49ec4e7ce7213`` (Apache-2.0):
+https://github.com/huggingface/diffusers/blob/bb56997d4b7e87f0743f26a612f49ec4e7ce7213/src/diffusers/modular_pipelines/mellon_node_utils.py
 
 MoDiff changes the Mellon-facing names, metadata key, configuration filename,
 and imports to integrate the helper with MoDiff. The executable Diffusers
@@ -27,6 +27,7 @@ from huggingface_hub import create_repo, hf_hub_download, upload_file
 from huggingface_hub.utils import (
     EntryNotFoundError,
     HfHubHTTPError,
+    LocalEntryNotFoundError,
     RepositoryNotFoundError,
     RevisionNotFoundError,
     validate_repo_id,
@@ -52,6 +53,7 @@ MAX_CUSTOM_PIPELINE_JSON_CONTAINER_ITEMS = 2_048
 MAX_CUSTOM_PIPELINE_JSON_STRING_CHARS = 16_384
 MAX_CUSTOM_PIPELINE_ACTIONS = 128
 MAX_CUSTOM_PIPELINE_PARAMS_PER_ACTION = 256
+MELLON_PIPELINE_CONFIG_FILENAME = "mellon_pipeline_config.json"
 MAX_LOADER_COMPONENT_OUTPUTS = 16
 MAX_LAYER_BLOCK_OPTIONS = 64
 MAX_GUIDER_OPTIONS = 16
@@ -70,6 +72,10 @@ _LOCAL_EXECUTABLE_CONFIG_FILES = {
 
 class DuplicateConfigKeyError(ValueError):
     """Raised when a JSON object contains an ambiguous duplicate key."""
+
+
+class HubPipelineSidecarNotInstalledError(EnvironmentError):
+    """Raised when an exact cached Hub snapshot has no supported sidecar."""
 
 
 def _reject_duplicate_config_keys(pairs):
@@ -437,10 +443,16 @@ def _is_linked_directory(path: Path) -> bool:
     return path.is_symlink() or bool(getattr(path, "is_junction", lambda: False)())
 
 
-def _validate_hub_snapshot_config_path(config_path: Path, *, revision: str) -> None:
+def _validate_hub_snapshot_config_path(
+    config_path: Path,
+    *,
+    revision: str,
+    expected_filename: str | None = None,
+) -> None:
+    expected_filename = expected_filename or MoDiffPipelineConfig.config_name
     repository_path = config_path.parent
     if (
-        config_path.name != MoDiffPipelineConfig.config_name
+        config_path.name != expected_filename
         or repository_path.name != revision
         or repository_path.parent.name != "snapshots"
     ):
@@ -464,7 +476,7 @@ def _validate_hub_snapshot_config_path(config_path: Path, *, revision: str) -> N
             target.relative_to(blob_root.resolve(strict=True))
         except (OSError, RuntimeError, ValueError) as error:
             raise EnvironmentError(
-                f"The cached Hub {MoDiffPipelineConfig.config_name} symlink does not resolve inside this "
+                f"The cached Hub {expected_filename} symlink does not resolve inside this "
                 "repository cache's blobs directory."
             ) from error
 
@@ -605,7 +617,23 @@ class VerifiedMoDiffPipelineConfig:
     source: str
     repo_id: str
     revision: str | None
+    config_filename: str
     executable_manifest_sha256: str
+    config_path: str
+    repository_path: str
+
+
+@dataclass(frozen=True)
+class InspectedHubPipelineSidecar:
+    """One exact cached declarative sidecar; never a remote-code authorization."""
+
+    config: "MoDiffPipelineConfig"
+    raw_bytes: bytes
+    sha256: str
+    repo_id: str
+    revision: str
+    filename: str
+    source_format: str
     config_path: str
     repository_path: str
 
@@ -1643,33 +1671,48 @@ class MoDiffPipelineConfig:
                     "Custom Modular Diffusers Hub repositories require an immutable lowercase 40-character commit "
                     "revision before their MoDiff sidecar can be read."
                 )
-            try:
-                config_file = hf_hub_download(
-                    repository,
-                    filename=cls.config_name,
-                    cache_dir=cache_dir,
-                    local_files_only=True,
-                    token=token,
-                    revision=normalized_revision,
-                )
-            except (
-                RepositoryNotFoundError,
-                RevisionNotFoundError,
-                EntryNotFoundError,
-                HfHubHTTPError,
-                ValueError,
-            ) as error:
+            config_file = None
+            config_filename = None
+            failures = []
+            for candidate_filename in (cls.config_name, MELLON_PIPELINE_CONFIG_FILENAME):
+                try:
+                    config_file = hf_hub_download(
+                        repository,
+                        filename=candidate_filename,
+                        cache_dir=cache_dir,
+                        local_files_only=True,
+                        token=token,
+                        revision=normalized_revision,
+                    )
+                    config_filename = candidate_filename
+                    break
+                except (
+                    RepositoryNotFoundError,
+                    RevisionNotFoundError,
+                    EntryNotFoundError,
+                    LocalEntryNotFoundError,
+                    HfHubHTTPError,
+                    ValueError,
+                ) as error:
+                    failures.append(f"{candidate_filename}: {error}")
+            if config_file is None or config_filename is None:
                 raise EnvironmentError(
-                    f"Could not resolve cached {cls.config_name} for {repository}@{normalized_revision}. "
-                    "Install that exact revision through Model Manager before refreshing the custom pipeline contract."
-                ) from error
+                    f"Could not resolve cached {cls.config_name} or {MELLON_PIPELINE_CONFIG_FILENAME} for "
+                    f"{repository}@{normalized_revision}. Install that exact revision through Model Manager before "
+                    "refreshing the custom pipeline contract."
+                    + (f" ({'; '.join(failures)})" if failures else "")
+                )
             config_path = Path(config_file).absolute()
             if not config_path.is_file():
                 raise EnvironmentError(
-                    f"The cached Hub snapshot for {repository}@{normalized_revision} has no {cls.config_name}."
+                    f"The cached Hub snapshot for {repository}@{normalized_revision} has no {config_filename}."
                 )
             repository_path = config_path.parent
-            _validate_hub_snapshot_config_path(config_path, revision=normalized_revision)
+            _validate_hub_snapshot_config_path(
+                config_path,
+                revision=normalized_revision,
+                expected_filename=config_filename,
+            )
             normalized_repository = repository
             executable_manifest_sha256 = _executable_manifest_sha256(repository_path, source="hub")
         else:
@@ -1695,6 +1738,7 @@ class MoDiffPipelineConfig:
                 ) from error
             if not config_path.is_file():
                 raise EnvironmentError(f"No file named {cls.config_name} found in {repository_path}")
+            config_filename = cls.config_name
             normalized_repository = str(repository_path)
             executable_manifest_sha256 = _executable_manifest_sha256(repository_path, source="local")
 
@@ -1707,6 +1751,7 @@ class MoDiffPipelineConfig:
             source=source,
             repo_id=normalized_repository,
             revision=normalized_revision,
+            config_filename=config_filename,
             executable_manifest_sha256=executable_manifest_sha256,
             config_path=str(config_path),
             repository_path=str(repository_path),
@@ -1914,6 +1959,7 @@ class MoDiffPipelineConfig:
         inputs = []
         model_inputs = []
         outputs = []
+        required_inputs = []
 
         # Process block inputs
         for input_param in block.inputs:
@@ -1922,7 +1968,8 @@ class MoDiffPipelineConfig:
             if input_param.name in input_types:
                 input_param = copy.copy(input_param)
                 input_param.metadata = {"modiff": input_types[input_param.name]}
-            print(f" processing input: {input_param.name}, metadata: {input_param.metadata}")
+            if input_param.required:
+                required_inputs.append(input_param.name)
             inputs.append(input_param_to_modiff_param(input_param))
 
         # Process block outputs
@@ -1946,7 +1993,7 @@ class MoDiffPipelineConfig:
             "inputs": inputs,
             "model_inputs": model_inputs,
             "outputs": outputs,
-            "required_inputs": [],
+            "required_inputs": required_inputs,
             "required_model_inputs": [],
             "block_name": "custom",
         }
@@ -1955,3 +2002,73 @@ class MoDiffPipelineConfig:
             node_specs={"custom": node_spec},
             label=node_label,
         )
+
+
+def inspect_cached_hub_pipeline_sidecar(repo_id: str, revision: str) -> InspectedHubPipelineSidecar:
+    """Inspect MoDiff or official Mellon JSON from one installed immutable Hub snapshot.
+
+    The Mellon format is structurally compatible with the bounded core of
+    ``MoDiffPipelineConfig``. This function translates it only into validated
+    declarative metadata. It never imports or authorizes repository ``block.py``.
+    """
+
+    repository = str(repo_id or "").strip()
+    normalized_revision = str(revision or "").strip().lower()
+    try:
+        validate_repo_id(repository)
+    except ValueError as error:
+        raise ValueError(f"Invalid Hugging Face repository ID {repository!r}: {error}") from error
+    if _IMMUTABLE_HUB_REVISION.fullmatch(normalized_revision) is None:
+        raise ValueError("Hub contract inspection requires an exact lowercase 40-character commit revision.")
+
+    failures = []
+    for filename, source_format in (
+        (MoDiffPipelineConfig.config_name, "modiff"),
+        (MELLON_PIPELINE_CONFIG_FILENAME, "mellon"),
+    ):
+        try:
+            config_file = hf_hub_download(
+                repository,
+                filename=filename,
+                local_files_only=True,
+                revision=normalized_revision,
+            )
+        except (
+            RepositoryNotFoundError,
+            RevisionNotFoundError,
+            EntryNotFoundError,
+            HfHubHTTPError,
+            LocalEntryNotFoundError,
+            ValueError,
+        ) as error:
+            failures.append(f"{filename}: {error}")
+            continue
+        config_path = Path(config_file).absolute()
+        if not config_path.is_file():
+            failures.append(f"{filename}: cached path is not a regular file")
+            continue
+        _validate_hub_snapshot_config_path(
+            config_path,
+            revision=normalized_revision,
+            expected_filename=filename,
+        )
+        raw_bytes = _read_pipeline_config_bytes(config_path)
+        config = MoDiffPipelineConfig.from_json_bytes(raw_bytes, source_label=str(config_path))
+        return InspectedHubPipelineSidecar(
+            config=config,
+            raw_bytes=raw_bytes,
+            sha256=hashlib.sha256(raw_bytes).hexdigest(),
+            repo_id=repository,
+            revision=normalized_revision,
+            filename=filename,
+            source_format=source_format,
+            config_path=str(config_path),
+            repository_path=str(config_path.parent),
+        )
+
+    raise HubPipelineSidecarNotInstalledError(
+        f"The installed snapshot {repository}@{normalized_revision} has neither "
+        f"{MoDiffPipelineConfig.config_name} nor {MELLON_PIPELINE_CONFIG_FILENAME}. "
+        "Install the exact revision through Model Manager before inspecting it."
+        + (f" ({'; '.join(failures)})" if failures else "")
+    )

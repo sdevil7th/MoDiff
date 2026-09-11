@@ -260,6 +260,28 @@ class HardwareSnapshotTests(unittest.TestCase):
         self.assertEqual(device["torch_vram_total"], 96 * GIB)
         self.assertEqual(device["shared_memory_total"], 96 * GIB)
 
+    def test_rocm_discrete_vram_near_host_ram_is_not_misclassified_as_shared(self):
+        cuda = types.SimpleNamespace(
+            is_available=lambda: True,
+            device_count=lambda: 1,
+            get_device_name=lambda _: "AMD Instinct MI300X VF",
+            get_device_properties=lambda _: types.SimpleNamespace(total_memory=192 * GIB, gcnArchName="gfx942"),
+            mem_get_info=lambda _: (190 * GIB, 192 * GIB),
+            memory_allocated=lambda _: 0,
+            memory_reserved=lambda _: 0,
+        )
+        regions = [{"vram_total": 192 * GIB, "vram_used": 2 * GIB, "gtt_total": 120 * GIB, "gtt_used": GIB}]
+        with (
+            patch("modiff.hardware._linux_amd_memory_regions", return_value=regions),
+            patch("modiff.hardware.system_memory_snapshot", return_value={"total_bytes": 240 * GIB}),
+        ):
+            snapshot = get_hardware_snapshot(torch_module=_fake_torch(cuda=cuda, hip_version="7.14.0"))
+        device = snapshot["devices"][0]
+        self.assertEqual(device["memory_kind"], "dedicated")
+        self.assertEqual(device["planning_memory_total"], 192 * GIB)
+        self.assertEqual(device["planning_memory_free"], 190 * GIB)
+        self.assertEqual(device["shared_memory_total"], 120 * GIB)
+
     def test_snapshot_schema_has_stable_system_and_devices_shape(self):
         snapshot = get_hardware_snapshot(torch_module=None)
 

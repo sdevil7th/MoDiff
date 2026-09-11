@@ -2,6 +2,7 @@
 import logging
 import asyncio
 import math
+import errno
 from aiohttp import web, WSMsgType
 from aiohttp.web_fileresponse import CONTENT_TYPES as AIOHTTP_CONTENT_TYPES
 from aiohttp_cors import setup as cors_setup, ResourceOptions
@@ -28,7 +29,6 @@ import re
 import shutil
 import stat
 import subprocess
-import configparser
 import threading
 from utils.paths import list_files
 from pathlib import Path
@@ -38,6 +38,14 @@ import time
 import gc
 from urllib.parse import quote, unquote, unquote_to_bytes, urlparse, parse_qs
 from copy import deepcopy
+from modiff.block_definition_v2 import validate_user_store_block_definition_v2
+from modiff.backend_source_identity import process_backend_source_identity
+from modiff.execution_input_provenance import (
+    apply_resolved_execution_inputs,
+    build_resolved_execution_inputs,
+    bind_generation_input_origins,
+)
+from modiff.studio_persistence_lock import STUDIO_PERSISTENCE_LOCK
 from modiff.path_identifiers import (
     data_path_identifier,
     is_data_path_identifier,
@@ -46,8 +54,19 @@ from modiff.path_identifiers import (
 )
 from modiff.disk_activity import DiskActivitySampler
 from modiff.supervisor_control import compact_task_history
+from modiff.template_gallery import (
+    TEMPLATE_GALLERY_SOURCE_PATH,
+    TemplateGalleryError,
+    fetch_template_gallery_contract,
+    install_template_gallery,
+    load_template_gallery_source,
+    plan_template_gallery_install,
+    template_gallery_destination_present,
+    verify_template_gallery_tree,
+)
 
 logger = logging.getLogger("modiff")
+WEBSOCKET_SEND_TIMEOUT_SECONDS = 5.0
 
 SUPERVISED_RESTART_EXIT_CODE = 75
 SUPPORTED_AUDIO_DOWNLOAD_SAMPLE_RATES = {44100, 48000, 88200, 96000}
@@ -180,8 +199,29 @@ def audio_download_filename(filename, sample_rate):
     return f"{path.stem}-{label}{suffix}"
 
 
+def _file_descriptor_exhaustion(error):
+    """Find OS/native descriptor exhaustion even when a loader masks its cause."""
+    seen = set()
+    while error is not None and id(error) not in seen:
+        seen.add(id(error))
+        if (
+            isinstance(error, OSError) and error.errno in {errno.EMFILE, errno.ENFILE}
+        ) or "too many open files" in str(error).lower():
+            return True
+        error = getattr(error, "__cause__", None) or getattr(error, "__context__", None)
+    return False
+
+
 def classify_hf_download_error(error: Exception) -> tuple[int, str, str, bool]:
     """Map Hub failures to stable, actionable API errors without discarding cache data."""
+    if _file_descriptor_exhaustion(error):
+        return (
+            503,
+            "huggingface_file_descriptor_limit",
+            "The backend exhausted its open-file limit. Raise the process/service limit and "
+            "investigate descriptor use before retrying the preserved download.",
+            False,
+        )
     name = error.__class__.__name__.lower()
     message = str(error)
     status_code = getattr(getattr(error, "response", None), "status_code", None)
@@ -413,6 +453,15 @@ from modiff.diffusers_profiles import (
     public_experimental_pipelines,
 )
 from modiff.hardware import format_hardware_summary, get_hardware_snapshot, legacy_torch_status
+from modiff.runtime_telemetry import active_accelerator_snapshot, accelerator_cuda_diagnostic
+from modiff.huggingface_node_library import reviewed_huggingface_node_library
+from modiff.registered_block_v2_catalog import registered_block_v2_catalog_entry
+from modiff.huggingface_cluster_runtime import (
+    qualify_huggingface_cluster_auto_authority,
+    qualify_huggingface_cluster_expert_runtime,
+)
+from modiff.modular_conditional_contracts import reviewed_modular_conditional_snapshot
+from modiff.modular_composition import rebuild_reviewed_modular_composition
 from modiff.runtime_profile import runtime_profile
 from modiff.auto_resource import (
     AUTO_RESOURCE_SCHEMA_VERSION,
@@ -427,6 +476,7 @@ from modiff.auto_resource import (
     record_auto_resource_failure,
     record_auto_resource_success,
 )
+from modiff.workflow_auto_resource import build_workflow_auto_plan, workflow_graph_hash
 from modiff.model_artifact_catalog import (
     IMMUTABLE_HUB_REVISION,
     catalog_revision,
@@ -463,6 +513,7 @@ from modiff.runtime_overlays import (
 from modiff.optional_runtimes import public_optional_runtime_profiles
 from modiff.optional_runtime_execution import (
     assert_optional_runtime_ready,
+    field_action_optional_runtime_requirement,
     graph_optional_runtime_requirement,
     loader_optional_runtime_requirement,
     optional_runtime_blocker_payload,
@@ -470,6 +521,17 @@ from modiff.optional_runtime_execution import (
     optional_runtime_requirement_for_execution,
 )
 from modiff.studio_execution_specs import (
+    ACE_STEP_DIFFUSERS_FILES,
+    FLUX_FILL_DIFFUSERS_FILES,
+    FLUX_KONTEXT_DIFFUSERS_FILES,
+    LTX_VIDEO_DIFFUSERS_FILES,
+    QWEN_IMAGE_2512_DIFFUSERS_FILES,
+    QWEN_IMAGE_EDIT_2511_DIFFUSERS_FILES,
+    QWEN_IMAGE_EDIT_DIFFUSERS_FILES,
+    QWEN_IMAGE_LAYERED_DIFFUSERS_FILES,
+    WAN_T2V_1_3B_DIFFUSERS_FILES,
+    WAN_VACE_1_3B_DIFFUSERS_FILES,
+    Z_IMAGE_DIFFUSERS_FILES,
     assert_studio_execution_graph,
     studio_capability_definitions,
     studio_execution_spec_for_pair,
@@ -477,13 +539,30 @@ from modiff.studio_execution_specs import (
     studio_model_requirements_for_pair,
     validate_studio_execution_specs,
 )
+from modiff.model_artifact_catalog import require_catalog_revision
+from modiff.hf_cache_deletion import (
+    HfCacheDeletionPlanError,
+    build_hf_cache_deletion_plan,
+    parse_revision_hashes,
+)
+from modiff.hf_incomplete_cleanup import (
+    HfIncompleteCleanupError,
+    build_hf_incomplete_cleanup_plan,
+    cleanup_hf_incomplete_files,
+)
+from modiff.task_template_contracts import (
+    TASK_TEMPLATE_CONTRACT_SCHEMA_VERSION,
+    build_task_template_contracts,
+)
 from modiff.modelstore import modelstore
 from modules import MODULE_MAP, parse_module_map
 from utils.huggingface import (
+    cleanup_interrupted_hub_download_files,
     delete_model,
     download_hub_model,
     get_cache_diagnostics,
     get_local_models,
+    plan_hub_model_download,
     search_hub,
     validate_hf_repo_id,
 )
@@ -532,7 +611,6 @@ RUNTIME_ATTENTION_BACKENDS = {
     "_flash_varlen_3",
     "_flash_3_hub",
     "_flash_3_varlen_hub",
-    "aiter",
     "sage",
     "sage_hub",
     "sage_varlen",
@@ -556,36 +634,6 @@ RUNTIME_DEVICE_MAPS = {
     "cpu",
     "manual",
 }
-
-# The official 0.9.8 13B repository duplicates pipeline components under a
-# nested VAE tree and includes large preview media. A full snapshot is about
-# 93 GB; the root Diffusers pipeline needs only these component files. This
-# allow-list is published as capability metadata and automatically applied by
-# every app Model Manager entry point.
-LTX_VIDEO_DIFFUSERS_FILES = [
-    "model_index.json",
-    "scheduler/scheduler_config.json",
-    "text_encoder/config.json",
-    "text_encoder/model-00001-of-00004.safetensors",
-    "text_encoder/model-00002-of-00004.safetensors",
-    "text_encoder/model-00003-of-00004.safetensors",
-    "text_encoder/model-00004-of-00004.safetensors",
-    "text_encoder/model.safetensors.index.json",
-    "tokenizer/added_tokens.json",
-    "tokenizer/special_tokens_map.json",
-    "tokenizer/spiece.model",
-    "tokenizer/tokenizer_config.json",
-    "transformer/config.json",
-    "transformer/diffusion_pytorch_model-00001-of-00006.safetensors",
-    "transformer/diffusion_pytorch_model-00002-of-00006.safetensors",
-    "transformer/diffusion_pytorch_model-00003-of-00006.safetensors",
-    "transformer/diffusion_pytorch_model-00004-of-00006.safetensors",
-    "transformer/diffusion_pytorch_model-00005-of-00006.safetensors",
-    "transformer/diffusion_pytorch_model-00006-of-00006.safetensors",
-    "transformer/diffusion_pytorch_model.safetensors.index.json",
-    "vae/config.json",
-    "vae/diffusion_pytorch_model.safetensors",
-]
 
 DIRECT_OFFLOAD_SUPPORT = {
     "default": OFFLOAD_MODE_MODEL_CPU,
@@ -660,6 +708,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "displayName": "Z-Image-Turbo",
         "family": "Z-Image",
         "defaultRepo": "Tongyi-MAI/Z-Image-Turbo",
+        "downloadFiles": Z_IMAGE_DIFFUSERS_FILES,
         "artifactLabel": "Diffusers repo",
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
@@ -667,7 +716,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "recommendedGuidance": 1,
         "guidanceLabel": "Guidance",
         "supportsNegativePrompt": False,
-        "supportsImageInput": False,
+        "supportsImageInput": True,
         "supportsMask": False,
         "supportsMultiImage": False,
         "supportsControlImage": False,
@@ -675,7 +724,19 @@ STUDIO_MODEL_CAPABILITIES = {
         "supportsLora": True,
         "offloadSupport": QWEN_MODULAR_OFFLOAD_SUPPORT,
         "lowVram": {"dtype": "bfloat16", "autoOffload": True, "offloadMode": OFFLOAD_MODE_MODEL_CPU, "steps": 8},
-        "modes": ["text_to_image"],
+        "modes": ["text_to_image", "edit_image"],
+        "modeRequirements": {
+            "edit_image": {
+                "requiredImages": ["referenceImages"],
+                "note": "Requires one source image for image-to-image transformation.",
+            }
+        },
+        "revisionCandidates": [
+            require_catalog_revision(
+                "Tongyi-MAI/Z-Image-Turbo",
+                model_type="ZImageModularPipeline",
+            )
+        ],
         "executionStatus": "supported",
     },
     "QwenImageModularPipeline": {
@@ -684,14 +745,15 @@ STUDIO_MODEL_CAPABILITIES = {
         "displayName": "Qwen-Image-2512",
         "family": "Qwen Image",
         "defaultRepo": "Qwen/Qwen-Image-2512",
+        "downloadFiles": QWEN_IMAGE_2512_DIFFUSERS_FILES,
         "artifactLabel": "bfloat16 Diffusers repo",
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
         "recommendedSteps": 50,
         "recommendedGuidance": 4.5,
         "guidanceLabel": "Guidance",
-        "supportsImageInput": False,
-        "supportsMask": False,
+        "supportsImageInput": True,
+        "supportsMask": True,
         "supportsMultiImage": False,
         "supportsControlImage": True,
         "supportsLayers": False,
@@ -704,20 +766,63 @@ STUDIO_MODEL_CAPABILITIES = {
             "offloadMode": OFFLOAD_MODE_MODEL_CPU,
             "steps": 28,
         },
-        "modes": ["text_to_image", "control_image"],
+        "modes": [
+            "text_to_image",
+            "edit_image",
+            "inpaint",
+            "control_image",
+            "image_to_image",
+            "inpainting",
+            "control_edit_image",
+            "control_inpaint",
+        ],
         "executionStatus": "supported_with_model",
         "additionalRequirements": studio_model_requirements_for_pair(
             "QwenImageModularPipeline", "control_image"
         ),
         "modeRequirements": {
+            "edit_image": {
+                "requiredImages": ["referenceImages"],
+                "note": "Requires one source image for image-to-image transformation.",
+            },
+            "inpaint": {
+                "requiredImages": ["referenceImages", "maskImage"],
+                "note": "Requires one source image and one mask image for inpainting.",
+            },
             "control_image": {
                 "modelRequirements": studio_model_requirements_for_pair(
                     "QwenImageModularPipeline", "control_image"
                 ),
                 "requiredImages": ["controlImage"],
                 "note": "Requires the Qwen ControlNet Union model plus one control image.",
-            }
+            },
+            "image_to_image": {
+                "requiredImages": ["referenceImages"],
+                "note": "Requires one source image for the exact Modular Diffusers image2image workflow.",
+            },
+            "inpainting": {
+                "requiredImages": ["referenceImages", "maskImage"],
+                "note": "Requires one source image and one mask for the exact Modular Diffusers inpainting workflow.",
+            },
+            "control_edit_image": {
+                "modelRequirements": studio_model_requirements_for_pair(
+                    "QwenImageModularPipeline", "control_edit_image"
+                ),
+                "requiredImages": ["referenceImages", "controlImage"],
+            },
+            "control_inpaint": {
+                "modelRequirements": studio_model_requirements_for_pair(
+                    "QwenImageModularPipeline", "control_inpaint"
+                ),
+                "requiredImages": ["referenceImages", "maskImage", "controlImage"],
+            },
         },
+        "revisionCandidates": [
+            require_catalog_revision(
+                "Qwen/Qwen-Image-2512",
+                model_type="QwenImageModularPipeline",
+            )
+        ],
     },
     "QwenImageEditModularPipeline": {
         "modelType": "QwenImageEditModularPipeline",
@@ -725,6 +830,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "displayName": "Qwen-Image-Edit",
         "family": "Qwen Image",
         "defaultRepo": "Qwen/Qwen-Image-Edit",
+        "downloadFiles": QWEN_IMAGE_EDIT_DIFFUSERS_FILES,
         "artifactLabel": "bfloat16 Diffusers repo",
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
@@ -768,6 +874,13 @@ STUDIO_MODEL_CAPABILITIES = {
         "displayName": "Qwen-Image-Edit-2511",
         "family": "Qwen Image",
         "defaultRepo": "Qwen/Qwen-Image-Edit-2511",
+        "revisionCandidates": [
+            require_catalog_revision(
+                "Qwen/Qwen-Image-Edit-2511",
+                model_type="QwenImageEditPlusModularPipeline",
+            )
+        ],
+        "downloadFiles": QWEN_IMAGE_EDIT_2511_DIFFUSERS_FILES,
         "artifactLabel": "bfloat16 Diffusers repo",
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
@@ -808,6 +921,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "displayName": "Qwen-Image-Layered",
         "family": "Qwen Image",
         "defaultRepo": "Qwen/Qwen-Image-Layered",
+        "downloadFiles": QWEN_IMAGE_LAYERED_DIFFUSERS_FILES,
         "artifactLabel": "bfloat16 Diffusers repo",
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
@@ -839,6 +953,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "qualificationStatus": "qualified",
         "qualifiedModes": ["text_to_video", "video_inpaint", "video_outpaint", "control_to_video"],
         "defaultRepo": "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+        "downloadFiles": WAN_VACE_1_3B_DIFFUSERS_FILES,
         "artifactLabel": "Diffusers repo",
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 832, "height": 480, "aspectRatio": "16:9"},
@@ -897,6 +1012,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "displayName": "Wan2.1-T2V-1.3B-Diffusers",
         "family": "Wan Video",
         "defaultRepo": "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
+        "downloadFiles": WAN_T2V_1_3B_DIFFUSERS_FILES,
         "artifactLabel": "Diffusers repo",
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 832, "height": 480, "aspectRatio": "16:9"},
@@ -1001,6 +1117,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "displayName": "acestep-v15-xl-turbo-diffusers",
         "family": "ACE Audio",
         "defaultRepo": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+        "downloadFiles": ACE_STEP_DIFFUSERS_FILES,
         "artifactLabel": "Diffusers repo",
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 0, "height": 0, "aspectRatio": "custom"},
@@ -1036,6 +1153,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "displayName": "FLUX.1-Kontext-dev",
         "family": "FLUX Image",
         "defaultRepo": "black-forest-labs/FLUX.1-Kontext-dev",
+        "downloadFiles": FLUX_KONTEXT_DIFFUSERS_FILES,
         "alternateArtifact": "black-forest-labs/FLUX.1-Kontext-dev-NVFP4",
         "artifactLabel": "Diffusers repo",
         "defaultDtype": "bfloat16",
@@ -1070,6 +1188,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "displayName": "FLUX.1-Fill-dev",
         "family": "FLUX Image",
         "defaultRepo": "black-forest-labs/FLUX.1-Fill-dev",
+        "downloadFiles": FLUX_FILL_DIFFUSERS_FILES,
         "artifactLabel": "Diffusers repo",
         "defaultDtype": "bfloat16",
         "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
@@ -1104,6 +1223,33 @@ STUDIO_MODEL_CAPABILITIES = {
 STUDIO_MODEL_CAPABILITIES.update(studio_capability_definitions())
 
 
+def studio_download_files_for_repo(repo_id):
+    """Return the one reviewed app-download selection for a Studio repository."""
+
+    matches = []
+    for capability in STUDIO_MODEL_CAPABILITIES.values():
+        if capability.get("defaultRepo") == repo_id and capability.get("downloadFiles"):
+            matches.append(capability["downloadFiles"])
+        matches.extend(
+            selection["downloadFiles"]
+            for selection in capability.get("artifactSelections") or []
+            if selection.get("repo") == repo_id and selection.get("downloadFiles")
+        )
+        requirements = list(capability.get("additionalRequirements") or [])
+        for mode_requirement in (capability.get("modeRequirements") or {}).values():
+            requirements.extend(mode_requirement.get("modelRequirements") or [])
+        matches.extend(
+            requirement["downloadFiles"]
+            for requirement in requirements
+            if requirement.get("repo") == repo_id and requirement.get("downloadFiles")
+        )
+
+    normalized = {tuple(sorted(set(selection))) for selection in matches}
+    if len(normalized) > 1:
+        raise RuntimeError(f"Conflicting reviewed Studio download selections for {repo_id}.")
+    return list(next(iter(normalized), ()))
+
+
 class WebServer:
     def __init__(
         self,
@@ -1120,6 +1266,7 @@ class WebServer:
         data_dir: str = "data",
     ):
         self.instance = nanoid.generate(size=10)
+        self.backend_source_identity = process_backend_source_identity()
 
         self.modules = modules
         self.ws_sessions = {}
@@ -1144,6 +1291,7 @@ class WebServer:
         self._runtime_resource_process = None
         self._runtime_resource_cached_at = 0.0
         self._runtime_resource_cached_snapshot = None
+        self._runtime_resource_cached_run_key = None
         self._runtime_disk_activity_sampler = DiskActivitySampler()
         try:
             import psutil
@@ -1169,6 +1317,8 @@ class WebServer:
             except (OSError, TypeError, ValueError):
                 pass
         self.task_graphs = {}
+        self._resolved_input_context = None
+        self._resolved_input_records = {}
         self.optimization_jobs = {}
         self._runtime_install_leases = {}
         self._runtime_install_gate_tokens = {}
@@ -1185,7 +1335,34 @@ class WebServer:
         # process-local lock as well.
         self.studio_history_file_lock = threading.RLock()
         self.hf_download_semaphore = asyncio.Semaphore(2)
+        self.download_reservation_lock = asyncio.Lock()
+        self.hf_cache_mutation_lock = asyncio.Lock()
+        # Model Manager opens three discovery endpoints together. A refresh of
+        # this machine's large cache is filesystem-heavy, so keep one shared
+        # background actualization instead of blocking aiohttp or scanning the
+        # same cache independently for every endpoint.
+        self.model_discovery_lock = asyncio.Lock()
+        self.model_discovery_task = None
+        # Generation-scoped discovery products prevent the three Model Manager
+        # refresh requests from repeating post-refresh filesystem scans. The
+        # builders always run in worker threads; a requested refresh can never
+        # reuse a payload from an older generation.
+        self.model_discovery_generation = 0
+        self.model_discovery_snapshot_lock = asyncio.Lock()
+        self.model_discovery_snapshot_tasks = {}
+        self.model_discovery_snapshot_cache = {}
+        # Runtime status and capability catalogs contain hardware/package
+        # probes, filesystem inspection, and multi-megabyte JSON encoding.
+        # They are requested together during Studio discovery, so build one
+        # identical response off-loop and let concurrent callers share it.
+        self.control_snapshot_lock = asyncio.Lock()
+        self.control_snapshot_tasks = {}
+        self.model_capabilities_cache_generation = 0
+        self.model_capabilities_response_cache = {}
+        self.runtime_fingerprint_lock = threading.RLock()
         self.hf_download_tasks = {}
+        self.template_gallery_install_task = None
+        self.template_gallery_reserved_bytes = 0
         # ROCm and MPS commonly use system RAM as accelerator memory. Loading a
         # large pipeline while hf-xet is assembling another model can exhaust
         # the same physical pool and let the kernel kill the app. Keep graph
@@ -1200,6 +1377,10 @@ class WebServer:
         except Exception:
             self.serialize_model_io = False
         self.model_io_lock = asyncio.Lock()
+        # Model destructors can take minutes. Serialize cache ownership without
+        # holding the HTTP event loop or racing a same-id loader replacement.
+        self._node_cache_lock = asyncio.Lock()
+        self._node_cache_teardown_active = False
 
         self.main_worker_task = None
         self.background_worker_task = None
@@ -1308,10 +1489,32 @@ class WebServer:
                 web.post("/runtime/gpu_cleanup", self.runtime_gpu_cleanup),
                 web.get("/media_assets", self.media_assets_list),
                 web.delete("/media_assets", self.media_assets_cleanup),
+                web.get("/huggingface/node-library", self.huggingface_node_library),
+                web.get(
+                    "/huggingface/registered-block-v2",
+                    self.huggingface_registered_block_v2,
+                ),
+                web.get(
+                    "/huggingface/modular-conditionals",
+                    self.huggingface_modular_conditionals,
+                ),
+                web.post(
+                    "/huggingface/cluster/runtime-qualification",
+                    self.huggingface_cluster_runtime_qualification,
+                ),
+                web.post(
+                    "/huggingface/cluster/auto-authority",
+                    self.huggingface_cluster_auto_authority,
+                ),
+                web.post(
+                    "/huggingface/modular-composition/rebuild",
+                    self.huggingface_modular_composition_rebuild,
+                ),
                 web.get("/model_capabilities", self.model_capabilities),
                 web.get("/model_artifact_catalog", self.model_artifact_catalog),
                 web.post("/auto_resource/plan", self.auto_resource_plan),
                 web.post("/auto_resource/plans", self.auto_resource_plans),
+                web.post("/auto_resource/workflow", self.workflow_auto_resource_plan),
                 web.get("/auto_resource/history", self.auto_resource_history),
                 web.delete("/auto_resource/history", self.auto_resource_history_clear),
                 web.get("/model_fingerprints", self.model_fingerprints),
@@ -1333,13 +1536,41 @@ class WebServer:
                 web.post("/studio/blocks", self.studio_blocks_post),
                 web.get("/studio/blocks/{block_id}", self.studio_block_get),
                 web.delete("/studio/blocks/{block_id}", self.studio_block_delete),
+                web.get("/studio/composite-migrations/preview", self.composite_migration_preview),
+                web.post(
+                    "/studio/composite-migrations/preview",
+                    self.composite_migration_compiled_preview,
+                ),
+                web.get(
+                    "/studio/composite-migrations/recovery-audit",
+                    self.composite_migration_recovery_audit,
+                ),
+                web.get("/studio/composite-migrations", self.composite_migrations_get),
+                web.post("/studio/composite-migrations/apply", self.composite_migration_apply),
+                web.get(
+                    "/studio/composite-migrations/{migration_id}",
+                    self.composite_migration_get,
+                ),
+                web.post(
+                    "/studio/composite-migrations/{migration_id}/rollback",
+                    self.composite_migration_rollback,
+                ),
                 web.get("/workflow_shares", self.workflow_shares_list),
                 web.post("/workflows/share", self.workflow_share_post),
                 web.get("/workflows/share/{share_id}/media/{filename}", self.workflow_share_media_get),
                 web.get("/workflows/share/{share_id}", self.workflow_share_get),
+                web.get("/hf_cache/incomplete-cleanup-plan", self.hf_incomplete_cleanup_plan),
+                web.delete("/hf_cache/incomplete-cleanup", self.hf_incomplete_cleanup),
                 web.delete("/hf_cache/{hash}", self.hf_cache_delete),
+                web.get("/hf_cache/{hash}/deletion-plan", self.hf_cache_delete_plan),
                 web.get("/hf_hub", self.hf_hub),
+                web.post("/custom_modular/inspect", self.custom_modular_inspect),
+                web.get("/hf_download/plan", self.hf_download_plan),
+                web.get("/hf_download/status", self.hf_download_status),
                 web.post("/hf_download", self.hf_download),
+                web.get("/template_gallery/status", self.template_gallery_status),
+                web.get("/template_gallery/plan", self.template_gallery_plan),
+                web.post("/template_gallery/install", self.template_gallery_install),
                 web.get("/static/{module}/{file}", self.user_assets),
                 web.get("/stream", self.stream),
             ]
@@ -1368,8 +1599,22 @@ class WebServer:
         try:
             hardware = get_hardware_snapshot(self.data_dir, refresh=True)
             logger.info(format_hardware_summary(hardware))
+            # The liveness and capability endpoints are opened together by
+            # Studio. Seed their stable runtime identity from the startup
+            # probe instead of repeating accelerator calls on the request
+            # loop immediately after the listening socket opens.
+            self._runtime_fingerprint(hardware_snapshot=hardware)
         except Exception:
             logger.warning("Unable to log the startup hardware summary", exc_info=True)
+
+        try:
+            # This catalog is several megabytes because it retains backwards-
+            # compatible embedded execution contracts. Serialize the default
+            # response before opening the HTTP socket so JSON's C encoder
+            # cannot hold the GIL while liveness requests are in flight.
+            await self._model_capabilities_response("")
+        except Exception:
+            logger.warning("Unable to prime the Studio model-capability catalog", exc_info=True)
 
         # Get the current event loop
         self.loop = asyncio.get_event_loop()
@@ -1557,6 +1802,7 @@ class WebServer:
             "runtimeFingerprint": self.current_task.get("runtimeFingerprint"),
             "resourceCandidateId": self.current_task.get("resourceCandidateId"),
             "runtimeMeasurement": self.current_task.get("runtimeMeasurement"),
+            "runtimePreparation": self.current_task.get("runtimePreparation"),
             **self._current_run_identity_payload(),
             # Retain navigation metadata with recent runs as well as the live
             # queue snapshot. A refreshed client can then open the originating
@@ -1789,7 +2035,19 @@ class WebServer:
         preview_state = None
         if graph is not None:
             self.task_graphs[task_id] = deepcopy(graph)
-            preview_state = self._mark_studio_preview_slots_pending(graph, task_id)
+            try:
+                preview_state = await self._run_studio_history_mutation(
+                    self._mark_studio_preview_slots_pending, graph, task_id
+                )
+            except asyncio.CancelledError:
+                # The pending transaction has drained before cancellation is
+                # raised. Do not strand a queued entry that was never enqueued.
+                self.queued_tasks.pop(task_id, None)
+                self.task_graphs.pop(task_id, None)
+                await self._run_studio_history_mutation(
+                    self._mark_studio_preview_run_terminal, task_id, "cancelled"
+                )
+                raise
         await self.main_queue.put((task, args, future, task_id))
         self._persist_supervisor_queue_state(force=True)
 
@@ -1856,7 +2114,9 @@ class WebServer:
             return values
 
         matches = []
-        for output in self._read_studio_outputs():
+        with self.studio_history_file_lock:
+            outputs = self._read_studio_outputs()
+        for output in outputs:
             if not isinstance(output, dict):
                 continue
             task_ids = identity_values(output, "taskId", "backendExecutionId")
@@ -1884,6 +2144,11 @@ class WebServer:
         if task is None:
             return web.json_response({"error": True, "message": "Run not found."}, status=404)
         graph = self.task_graphs.get(task_id)
+        # Capture event-loop-owned queue identity before yielding. History
+        # lookup, graph receipt assembly, and JSON encoding belong off-loop.
+        return await asyncio.to_thread(self._run_detail_response, task_id, dict(task), graph)
+
+    def _run_detail_response(self, task_id, task, graph):
         runtime_hints = graph.get("runtimeHints") if isinstance(graph, dict) else None
         client_run_id = runtime_hints.get("clientRunId") if isinstance(runtime_hints, dict) else None
         if not client_run_id and isinstance(task, dict):
@@ -1921,7 +2186,9 @@ class WebServer:
         if task_id in self.queued_tasks:
             task = self.queued_tasks.pop(task_id)
             self.task_graphs.pop(task_id, None)
-            preview_state = self._mark_studio_preview_run_terminal(task_id, "cancelled")
+            preview_state = await self._run_studio_history_mutation(
+                self._mark_studio_preview_run_terminal, task_id, "cancelled"
+            )
             self._persist_supervisor_queue_state(force=True)
             logger.info(f"Task {task_id} {task['name']} deleted from queue.")
             task_list, current_task = self._get_queue()
@@ -1997,6 +2264,7 @@ class WebServer:
                         self.current_task.update(self._initial_graph_execution_state(args))
                         self.current_task["_phase_started_at"] = time.time()
                         self.current_task["phase_timings"] = {}
+                    runtime_deadline_handle = None
                     self._persist_supervisor_queue_state(force=True)
                     task_list, current_task = self._get_queue()
                     self.queue_message(
@@ -2026,11 +2294,16 @@ class WebServer:
                         else:
                             callback = partial(task, args)
                         serialize_model_io = current_task.get("name") == "Graph execution"
-                        if serialize_model_io and self.serialize_model_io and self.model_io_lock.locked():
+                        waiting_for_cache = self._node_cache_lock.locked()
+                        if waiting_for_cache or (serialize_model_io and self.serialize_model_io and self.model_io_lock.locked()):
                             self.current_task.update(
                                 {
-                                    "phase": "waiting_for_model_io",
-                                    "message": "Waiting for the active app-managed model download to finish safely.",
+                                    "phase": "waiting_for_node_cache" if waiting_for_cache else "waiting_for_model_io",
+                                    "message": (
+                                        "Waiting for the previous model or node-cache operation to finish safely."
+                                        if waiting_for_cache else
+                                        "Waiting for the active app-managed model download to finish safely."
+                                    ),
                                     "updated_at": time.time(),
                                 }
                             )
@@ -2044,11 +2317,35 @@ class WebServer:
                                     "message": self.current_task["message"],
                                 }
                             )
-                        result = await self._run_executor_callback(
-                            callback,
-                            serialize_model_io=serialize_model_io,
+                        def arm_runtime_deadline():
+                            nonlocal runtime_deadline_handle
+                            runtime_deadline_handle = self._schedule_task_runtime_deadline(
+                                task_id,
+                                runtime_hints,
+                            )
+
+                        def run_unless_cancelled():
+                            if self.current_task and self.current_task.get("interrupt_requested"):
+                                return None
+                            return callback()
+
+                        result = await self._with_node_cache_lease(
+                            lambda: self._run_executor_callback(
+                                run_unless_cancelled,
+                                serialize_model_io=serialize_model_io,
+                                on_start=arm_runtime_deadline,
+                            )
                         )
 
+                        interrupt_reason = (
+                            self.current_task.get("interrupt_reason")
+                            if self.current_task
+                            else None
+                        )
+                        if interrupt_reason == "runtime_deadline":
+                            raise self._task_runtime_deadline_error(
+                                self.current_task.get("runtime_deadline_seconds")
+                            )
                         if self.current_task and self.current_task.get("interrupt_requested"):
                             terminal_status = "cancelled"
                         if future and terminal_status == "completed":
@@ -2056,25 +2353,41 @@ class WebServer:
                         elif future and terminal_status == "cancelled":
                             future.set_exception(asyncio.CancelledError("Execution interrupted by the user."))
                     except Exception as e:
-                        interrupted_by_user = bool(self.current_task and self.current_task.get("interrupt_requested"))
+                        interrupt_reason = (
+                            self.current_task.get("interrupt_reason")
+                            if self.current_task
+                            else None
+                        )
+                        failure = (
+                            self._task_runtime_deadline_error(
+                                self.current_task.get("runtime_deadline_seconds")
+                            )
+                            if interrupt_reason == "runtime_deadline"
+                            else e
+                        )
+                        interrupted_by_user = bool(
+                            self.current_task
+                            and self.current_task.get("interrupt_requested")
+                            and interrupt_reason != "runtime_deadline"
+                        )
                         terminal_status = "cancelled" if interrupted_by_user else "failed"
                         if interrupted_by_user:
                             if future:
                                 future.set_exception(asyncio.CancelledError("Execution interrupted by the user."))
                             continue
-                        traceback_text = getattr(e, "modiff_traceback", None) or traceback.format_exc()
+                        traceback_text = getattr(failure, "modiff_traceback", None) or traceback.format_exc()
                         logger.error(f"Error occurred in {traceback_text}")
                         task_list, _ = self._get_queue()
                         failure_payload = self._exception_payload(
-                            e,
+                            failure,
                             task_id=task_id,
                             sid=self.current_task["sid"] if self.current_task else None,
-                            node_id=getattr(e, "modiff_node_id", None),
-                            node_name=getattr(e, "modiff_node_name", None),
+                            node_id=getattr(failure, "modiff_node_id", None),
+                            node_name=getattr(failure, "modiff_node_name", None),
                             traceback_text=traceback_text,
                         )
                         self._record_auto_resource_failure(
-                            e,
+                            failure,
                             {
                                 "category": failure_payload.get("category"),
                                 "error_code": failure_payload.get("error_code"),
@@ -2083,8 +2396,10 @@ class WebServer:
                             },
                         )
                         if future:
-                            future.set_exception(e)
+                            future.set_exception(failure)
                     finally:
+                        if runtime_deadline_handle is not None:
+                            runtime_deadline_handle.cancel()
                         runtime_cleanup = None
                         if terminal_status in {"cancelled", "failed"}:
                             # A failed or cancelled graph must not leave model,
@@ -2093,9 +2408,8 @@ class WebServer:
                             # inside third-party model loading, so teardown runs
                             # immediately after that call returns and before the
                             # worker advances the queue.
-                            runtime_cleanup = await self.loop.run_in_executor(
-                                None,
-                                self._release_runtime_caches_for_retry,
+                            runtime_cleanup = await self._with_node_cache_lease(
+                                lambda: asyncio.to_thread(self._release_runtime_caches_for_retry)
                             )
                             self._last_auto_model_family = None
                             self._last_auto_resource_signature = None
@@ -2104,7 +2418,9 @@ class WebServer:
                             task_name = self.current_task.get("name")
                             attempt_index = self.current_task.get("attempt_index")
                             terminal_entry = self._record_terminal_task(terminal_status, error_payload=failure_payload)
-                            preview_state = self._mark_studio_preview_run_terminal(task_id, terminal_status)
+                            preview_state = await self._run_studio_history_mutation(
+                                self._mark_studio_preview_run_terminal, task_id, terminal_status
+                            )
                             task_list, _ = self._get_queue()
                             terminal_message = {
                                 "type": "task_completed"
@@ -2156,11 +2472,43 @@ class WebServer:
         finally:
             logger.debug("Main worker shutting down")
 
-    async def _run_executor_callback(self, callback, *, serialize_model_io=False):
+    async def _with_node_cache_lease(self, operation):
+        async with self._node_cache_lock:
+            task = asyncio.ensure_future(operation())
+            cancelled = False
+            while True:
+                try:
+                    result = await asyncio.shield(task)
+                    break
+                except asyncio.CancelledError:
+                    if task.done():
+                        raise
+                    # HTTP cancellation does not stop an executor thread. Even
+                    # repeated cancellation must retain ownership until it ends.
+                    cancelled = True
+            if cancelled:
+                raise asyncio.CancelledError
+            return result
+
+    async def _run_executor_callback(self, callback, *, serialize_model_io=False, on_start=None):
+        loop = self.loop or asyncio.get_running_loop()
+
+        def run_after_resource_probe():
+            # A probe that began while idle must finish before model allocator
+            # activity begins. Once current_task is set, subsequent resource
+            # samples take the non-Torch path. Never wait on this lock in aiohttp.
+            with self._runtime_resource_lock:
+                pass
+            return callback()
+
         if serialize_model_io and self.serialize_model_io:
             async with self.model_io_lock:
-                return await self.loop.run_in_executor(None, callback)
-        return await self.loop.run_in_executor(None, callback)
+                if on_start is not None:
+                    on_start()
+                return await loop.run_in_executor(None, run_after_resource_probe)
+        if on_start is not None:
+            on_start()
+        return await loop.run_in_executor(None, run_after_resource_probe)
 
     async def _background_worker(self):
         try:
@@ -2482,6 +2830,7 @@ class WebServer:
             {
                 "workflowTabId": data.get("workflowTabId"),
                 "workflowCanvasEpoch": data.get("workflowCanvasEpoch"),
+                "workflowFormEpoch": data.get("workflowFormEpoch"),
             }
         )
 
@@ -2496,7 +2845,12 @@ class WebServer:
         ref,
     ):
         assert_optional_runtime_ready(
-            loader_optional_runtime_requirement(module, action, values)
+            field_action_optional_runtime_requirement(
+                module,
+                action,
+                fn.__name__,
+                values,
+            )
         )
         from modiff.NodeBase import node_message_context
 
@@ -2555,6 +2909,9 @@ class WebServer:
             )
 
     async def field_action(self, request):
+        return await self._with_node_cache_lease(lambda: self._field_action(request))
+
+    async def _field_action(self, request):
         data = await request.json()
         if not isinstance(data, dict):
             return web.json_response(
@@ -2605,9 +2962,10 @@ class WebServer:
                 {"error": True, "message": str(error)},
                 status=400,
             )
-        optional_runtime_requirement = loader_optional_runtime_requirement(
+        optional_runtime_requirement = field_action_optional_runtime_requirement(
             module,
             action,
+            method_name,
             values,
         )
         if optional_runtime_requirement_blocks_execution(
@@ -2703,14 +3061,23 @@ class WebServer:
                         optional_runtime_blocker_payload(blocked_requirement),
                         status=409,
                     )
+                classification = self._classify_exception(e)
+                status = 409 if getattr(e, "modiff_error_code", None) else 500
+                recovery_hint = classification.get("recovery_hint")
+                response_message = f"Field action error: {e}"
+                if recovery_hint:
+                    response_message = f"{response_message} {recovery_hint}"
                 return web.json_response(
                     {
                         "error": True,
-                        "message": f"Field action error: {e}",
+                        "message": response_message,
+                        "category": classification.get("category"),
+                        "error_code": classification.get("error_code"),
+                        "recovery_hint": recovery_hint,
                         "sid": sid,
                         "ref": ref,
                     },
-                    status=500,
+                    status=status,
                 )
             task_id = None
 
@@ -2931,19 +3298,42 @@ class WebServer:
 
     async def delete_cache(self, request):
         data = await request.json()
+        if not isinstance(data, dict):
+            return web.json_response({"error": True, "message": "Cache deletion requires an object."}, status=400)
         nodes = data.get("nodes", [])
-
         if isinstance(nodes, str):
-            nodes = list(self.node_cache.keys()) if nodes == "*" else [nodes]
+            nodes = nodes if nodes == "*" else [nodes]
+        if nodes != "*" and (not isinstance(nodes, list) or any(not isinstance(node, str) for node in nodes)):
+            return web.json_response({"error": True, "message": "Cache node ids must be strings."}, status=400)
 
-        # this might take a while because it could be freeing up VRAM
-        for node in nodes:
-            if node in self.node_cache:
-                del self.node_cache[node]
+        def release():
+            targets = list(self.node_cache) if nodes == "*" else nodes
+            # A root can have cached children from an earlier edited snapshot
+            # that are no longer present in the imported/collapsed graph.
+            # Drop its exact length-prefixed runtime namespace as well.
+            prefixes = tuple(f"block-v2-node:{len(node.encode('utf-16-le')) // 2}:{node}:" for node in targets)
+            targets = list(dict.fromkeys([*targets, *(key for key in self.node_cache if key.startswith(prefixes))]))
+            released_components = self._release_node_modular_components(targets)
+            for node in targets:
+                self.node_cache.pop(node, None)
+            if released_components:
+                gc.collect()
+                self._best_effort_device_cache_clear()
+                self._best_effort_allocator_trim()
+            logger.debug(f"Removed {len(targets)} nodes from cache.")
+            return targets
 
-        logger.debug(f"Removed {len(nodes)} nodes from cache.")
+        async def release_in_background():
+            self._node_cache_teardown_active = True
+            try:
+                # Drain an already-running idle Torch probe; subsequent probes
+                # use non-Torch observations while destructors own the device.
+                return await self._run_executor_callback(release)
+            finally:
+                self._node_cache_teardown_active = False
 
-        return web.json_response({"error": False, "nodes": nodes})
+        removed = await self._with_node_cache_lease(release_in_background)
+        return web.json_response({"error": False, "nodes": removed})
 
     """
     ╭───────────────────╮
@@ -3359,45 +3749,65 @@ class WebServer:
 
         return web.json_response(tree)
 
-    async def workflows_list(self, _request):
-        from modiff.workflow_store import list_workflows
+    async def workflows_list(self, request):
+        from modiff.workflow_store import list_workflow_summaries, list_workflows
 
-        return web.json_response({"workflows": list_workflows(self.data_dir)})
+        view = request.query.get("view") if request is not None else None
+        def build():
+            workflows = list_workflow_summaries(self.data_dir) if view == "summary" else list_workflows(self.data_dir)
+            return self._json_response_bytes({"workflows": workflows})
+
+        body = await asyncio.to_thread(build)
+        return web.Response(body=body, content_type="application/json")
 
     async def workflow_get(self, request):
         from modiff.workflow_store import get_workflow
 
-        record = get_workflow(self.data_dir, request.match_info.get("workflow_id"))
-        if record is None:
+        workflow_id = request.match_info.get("workflow_id")
+        def build():
+            record = get_workflow(self.data_dir, workflow_id)
+            return self._json_response_bytes(record) if record is not None else None
+
+        body = await asyncio.to_thread(build)
+        if body is None:
             return web.json_response({"error": True, "message": "Workflow not found."}, status=404)
-        return web.json_response(record)
+        return web.Response(body=body, content_type="application/json")
 
     async def workflow_put(self, request):
         from modiff.workflow_store import save_workflow
 
         try:
-            record = save_workflow(
-                self.data_dir,
-                request.match_info.get("workflow_id"),
-                await request.json(),
-            )
+            workflow_id = request.match_info.get("workflow_id")
+            payload = await request.json()
+            def save():
+                record = save_workflow(self.data_dir, workflow_id, payload)
+                # Keep the notification with the durable write, even if the
+                # requesting browser disconnects while this worker is running.
+                self.queue_message({"type": "workflow_updated", "workflow": record})
+                return self._json_response_bytes(record)
+
+            body = await asyncio.to_thread(save)
         except (ValueError, json.JSONDecodeError) as exc:
             return web.json_response({"error": True, "message": str(exc)}, status=400)
-        self.queue_message({"type": "workflow_updated", "workflow": record})
-        return web.json_response(record)
+        return web.Response(body=body, content_type="application/json")
 
     async def workflow_delete(self, request):
         from modiff.workflow_store import delete_workflow
 
         try:
             workflow_id = request.match_info.get("workflow_id")
-            deleted = delete_workflow(self.data_dir, workflow_id)
+            def delete():
+                if not delete_workflow(self.data_dir, workflow_id):
+                    return None
+                self.queue_message({"type": "workflow_deleted", "workflow_id": workflow_id})
+                return self._json_response_bytes({"error": False, "workflow_id": workflow_id})
+
+            body = await asyncio.to_thread(delete)
         except ValueError as exc:
             return web.json_response({"error": True, "message": str(exc)}, status=400)
-        if not deleted:
+        if body is None:
             return web.json_response({"error": True, "message": "Workflow not found."}, status=404)
-        self.queue_message({"type": "workflow_deleted", "workflow_id": workflow_id})
-        return web.json_response({"error": False, "workflow_id": workflow_id})
+        return web.Response(body=body, content_type="application/json")
 
     async def fileGet(self, request):
         file = request.query.get("file")
@@ -3729,13 +4139,18 @@ class WebServer:
         return resp
 
     async def local_models(self, request):
-        refresh = request.query.get("refresh", False)
+        refresh = str(request.query.get("refresh", "")).lower() in ("1", "true", "yes")
         path_match = request.query.get("match", "")
 
         if refresh:
-            modelstore.update_local()
+            await self._refresh_model_indexes()
+        else:
+            await self._settled_model_discovery_generation()
 
-        files = modelstore.get_local_ids(name=path_match)
+        # Keep even local-model directory filtering off the aiohttp loop. The
+        # index is in memory, but a large installation can still contain many
+        # thousands of entries and an active refresh must settle first.
+        files = await asyncio.to_thread(modelstore.get_local_ids, path_match)
 
         return web.json_response(files)
 
@@ -3750,15 +4165,41 @@ class WebServer:
 
     def _safe_block_id(self, block_id=None):
         raw_id = str(block_id or nanoid.generate(size=12))
+        # V2 IDs are immutable identities, not display-name slugs. In
+        # particular nanoid may end in '_': trimming it randomly rejects Save
+        # and aliases a distinct valid neighbouring ID. Keep legacy sanitation
+        # only for input that is not already a safe bounded filename stem.
+        if re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}", raw_id):
+            return raw_id
         safe_id = re.sub(r"[^a-zA-Z0-9_-]+", "_", raw_id).strip("_")[:80]
         return safe_id or nanoid.generate(size=12)
 
     def _studio_block_file(self, block_id):
         return self._studio_blocks_dir() / f"{self._safe_block_id(block_id)}.json"
 
+    def _studio_block_identity(self, block):
+        if block.get("schemaVersion") == 2:
+            return str(block["definitionId"])
+        return str(block["id"])
+
     def _validate_studio_block(self, payload):
         if not isinstance(payload, dict):
             raise ValueError("User block must be a JSON object.")
+
+        if payload.get("schemaVersion") == 2:
+            return validate_user_store_block_definition_v2(payload)
+        if "schemaVersion" in payload and "version" not in payload:
+            raise ValueError("Unsupported user block schemaVersion.")
+
+        source = payload.get("source")
+        ownership = payload.get("ownership")
+        if (
+            isinstance(source, dict)
+            and source.get("kind") in {"diffusers_catalog", "transformers_catalog"}
+        ) or (isinstance(ownership, dict) and ownership.get("kind") == "registered"):
+            raise ValueError(
+                "Registered catalog definitions cannot be saved or overwritten through /studio/blocks."
+            )
 
         block_id = self._safe_block_id(payload.get("id"))
         name = str(payload.get("name") or "User Block").strip()[:120] or "User Block"
@@ -3800,38 +4241,61 @@ class WebServer:
         return block
 
     def _read_studio_block(self, block_id):
-        block_file = self._studio_block_file(block_id)
-        if not block_file.exists():
-            return None
-        with open(block_file, "r", encoding="utf-8") as f:
-            payload = json.load(f)
-        return self._validate_studio_block(payload)
+        with STUDIO_PERSISTENCE_LOCK:
+            block_file = self._studio_block_file(block_id)
+            if not block_file.exists():
+                return None
+            with open(block_file, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+            block = self._validate_studio_block(payload)
+            if block.get("schemaVersion") == 2 and self._studio_block_identity(block) != str(block_id):
+                return None
+            return block
 
     def _write_studio_block(self, block):
-        blocks_dir = self._studio_blocks_dir()
-        blocks_dir.mkdir(parents=True, exist_ok=True)
-        validated = self._validate_studio_block(block)
-        validated["updatedAt"] = int(time.time() * 1000)
-        target = self._studio_block_file(validated["id"])
-        temp_file = target.with_suffix(".tmp")
-        with open(temp_file, "w", encoding="utf-8") as f:
-            json.dump(validated, f, ensure_ascii=False)
-        temp_file.replace(target)
-        return validated, target
+        with STUDIO_PERSISTENCE_LOCK:
+            blocks_dir = self._studio_blocks_dir()
+            blocks_dir.mkdir(parents=True, exist_ok=True)
+            validated = self._validate_studio_block(block)
+            if validated.get("schemaVersion") != 2:
+                validated["updatedAt"] = int(time.time() * 1000)
+            block_id = self._studio_block_identity(validated)
+            if validated.get("schemaVersion") == 2 and self._safe_block_id(block_id) != block_id:
+                raise ValueError(
+                    "BlockDefinitionV2.definitionId must use at most 80 ASCII letters, digits, '_' or '-' "
+                    "when saved through /studio/blocks."
+                )
+            target = self._studio_block_file(block_id)
+            if target.exists():
+                try:
+                    with open(target, "r", encoding="utf-8") as f:
+                        existing = self._validate_studio_block(json.load(f))
+                except (ValueError, json.JSONDecodeError, UnicodeDecodeError, OSError) as exc:
+                    raise ValueError(
+                        "The existing Studio block record is invalid and will not be overwritten."
+                    ) from exc
+                if self._studio_block_identity(existing) != block_id:
+                    raise ValueError("The Studio block identifier conflicts with an existing block record.")
+            temp_file = target.with_suffix(".tmp")
+            with open(temp_file, "w", encoding="utf-8") as f:
+                json.dump(validated, f, ensure_ascii=validated.get("schemaVersion") == 2)
+            temp_file.replace(target)
+            return validated, target
 
     def _list_studio_blocks(self):
-        blocks_dir = self._studio_blocks_dir()
-        if not blocks_dir.exists():
-            return []
+        with STUDIO_PERSISTENCE_LOCK:
+            blocks_dir = self._studio_blocks_dir()
+            if not blocks_dir.exists():
+                return []
 
-        blocks = []
-        for block_file in blocks_dir.glob("*.json"):
-            try:
-                with open(block_file, "r", encoding="utf-8") as f:
-                    blocks.append(self._validate_studio_block(json.load(f)))
-            except (ValueError, json.JSONDecodeError, UnicodeDecodeError, OSError) as e:
-                logger.error(f"Error reading Studio user block {block_file}: {e}")
-        return sorted(blocks, key=lambda block: block.get("updatedAt") or 0, reverse=True)
+            blocks = []
+            for block_file in blocks_dir.glob("*.json"):
+                try:
+                    with open(block_file, "r", encoding="utf-8") as f:
+                        blocks.append(self._validate_studio_block(json.load(f)))
+                except (ValueError, json.JSONDecodeError, UnicodeDecodeError, OSError) as e:
+                    logger.error(f"Error reading Studio user block {block_file}: {e}")
+            return sorted(blocks, key=lambda block: block.get("updatedAt") or 0, reverse=True)
 
     def _studio_preview_slot_key(self, workflow_tab_id, node_id, field_key):
         if not workflow_tab_id or not node_id or not field_key:
@@ -4025,6 +4489,7 @@ class WebServer:
                 continue
 
             previous = merged[key]
+            self._assert_captured_output_identity(previous, output)
             merged[key] = {
                 **previous,
                 **output,
@@ -4033,8 +4498,23 @@ class WebServer:
                 "backendMediaPath": output.get("backendMediaPath") or previous.get("backendMediaPath"),
                 "backendSyncedAt": output.get("backendSyncedAt") or previous.get("backendSyncedAt"),
             }
+            # Browser enrichment must never replace actual resolved dispatch
+            # inputs with a stale root-form summary. Retry identities must match.
+            receipt = output.get("resolvedExecutionInputs") or previous.get("resolvedExecutionInputs")
+            merged[key] = apply_resolved_execution_inputs(merged[key], receipt)
 
         return self._sort_studio_outputs([merged[key] for key in order])
+
+    def _assert_captured_output_identity(self, previous, output):
+        if not previous.get("resolvedExecutionInputs"):
+            return
+        attempt = output.get("attemptIndex", 0)
+        if attempt is None:
+            attempt = 0
+        if type(attempt) is not int or any(
+            str(previous.get(field)) != str(output.get(field)) for field in ("taskId", "nodeId")
+        ) or int(previous.get("attemptIndex") or 0) != attempt:
+            raise ValueError("A captured output cannot be reassigned to another task, attempt, or node.")
 
     def _generated_preview_fields_for_graph(self, graph):
         if not isinstance(graph, dict):
@@ -4297,6 +4777,17 @@ class WebServer:
             normalized["mediaHash"] = self._hash_file(media_path)
             normalized["contentType"] = content_type
             normalized["byteSize"] = len(media_bytes)
+            if content_type.startswith("video/") or normalized.get("displayType") == "video":
+                # Requested generation controls can differ from native crop and
+                # encoder output. Preserve them and attach separately measured
+                # geometry/timing to the retained media and backend provenance.
+                normalized.pop("mediaMetadata", None)
+                try:
+                    from modiff.media_assets import probe_video_file
+
+                    normalized["mediaMetadata"] = {"source": "encoded-file", **probe_video_file(media_path)}
+                except Exception as exc:
+                    logger.warning("Could not probe retained Studio video metadata: %s", exc)
             saved_items.append(normalized)
 
         if saved_items:
@@ -4317,8 +4808,12 @@ class WebServer:
 
         return output
 
-    def _normalize_studio_output(self, output):
+    def _normalize_studio_output(self, output, *, resolved_inputs=None):
         normalized = deepcopy(output)
+        # HTTP history posts are not evidence of backend execution. Only the
+        # private dispatch/persist path may introduce this receipt.
+        normalized.pop("resolvedExecutionInputs", None)
+        normalized = apply_resolved_execution_inputs(normalized, resolved_inputs)
         if not isinstance(normalized.get("id"), str) or not normalized.get("id"):
             normalized["id"] = nanoid.generate(size=12)
         if not normalized.get("createdAt"):
@@ -4439,7 +4934,14 @@ class WebServer:
         )
         workflow_snapshot = runtime_hints.get("workflowSnapshot") if isinstance(runtime_hints, dict) else None
         workflow_snapshot = workflow_snapshot if isinstance(workflow_snapshot, dict) else {}
-        form_snapshot = workflow_snapshot.get("studioForm")
+        qualified_cluster_form = (
+            runtime_hints.get("optimizationQualificationForm")
+            if runtime_hints.get("source") == "hugging-face-cluster"
+            else None
+        )
+        form_snapshot = (
+            qualified_cluster_form if isinstance(qualified_cluster_form, dict) else workflow_snapshot.get("studioForm")
+        )
         form_snapshot = form_snapshot if isinstance(form_snapshot, dict) else {}
         graph_snapshot = {
             key: deepcopy(workflow_snapshot[key]) for key in ("nodes", "edges", "viewport") if key in workflow_snapshot
@@ -4465,9 +4967,13 @@ class WebServer:
             "modelType": form_snapshot.get("modelType")
             or (runtime_hints.get("modelType") if isinstance(runtime_hints, dict) else None),
             "modelLabel": runtime_hints.get("modelName") if isinstance(runtime_hints, dict) else None,
-            "repo": runtime_hints.get("resolvedArtifact") or runtime_hints.get("modelRepo")
-            if isinstance(runtime_hints, dict)
-            else None,
+            # User-owned graphs carry their resolved display metadata in the
+            # workflow snapshot without claiming registered execution authority.
+            "repo": (
+                runtime_hints.get("resolvedArtifact") or runtime_hints.get("modelRepo")
+                if isinstance(runtime_hints, dict)
+                else None
+            ) or form_snapshot.get("modelRepo"),
             "prompt": form_snapshot.get("prompt"),
             "negativePrompt": form_snapshot.get("negativePrompt"),
             "seed": form_snapshot.get("seed"),
@@ -4497,9 +5003,19 @@ class WebServer:
         }
         output = {key: item for key, item in output.items() if item is not None}
 
+        input_context = (str(task_id), int(message.get("attempt_index") or 0))
+        resolved_inputs = None
+        if self._resolved_input_context == input_context:
+            resolved_inputs = build_resolved_execution_inputs(
+                graph, self._resolved_input_records, task_id=task_id,
+                attempt_index=message.get("attempt_index"), node_id=str(node_id),
+            )
+        if resolved_inputs:
+            message["resolved_execution_inputs"] = deepcopy(resolved_inputs)
+
         try:
             with self.studio_history_file_lock:
-                normalized = self._normalize_studio_output(output)
+                normalized = self._normalize_studio_output(output, resolved_inputs=resolved_inputs)
                 state = self._read_studio_output_state()
                 outputs = self._merge_studio_outputs(state["outputs"], [normalized])
                 slot_key = self._studio_preview_slot_key(
@@ -4555,6 +5071,14 @@ class WebServer:
 
     async def studio_outputs_get(self, request):
         limit = min(max(int(request.query.get("limit", 80)), 1), 200)
+        body = await self._coalesced_control_response(
+            ("studio_outputs", limit), lambda: self._studio_outputs_response_bytes(limit)
+        )
+        return web.Response(body=body, content_type="application/json")
+
+    def _studio_outputs_response_bytes(self, limit):
+        # Include JSON encoding in the worker: persisted workflows can make
+        # this response large even when only a few media items are requested.
         with self.studio_history_file_lock:
             state = self._read_studio_output_state()
         outputs = state["outputs"]
@@ -4570,7 +5094,7 @@ class WebServer:
             if output_id in current_ids and output_id not in response_ids:
                 response_outputs.append(output)
                 response_ids.add(output_id)
-        return web.json_response(
+        return self._json_response_bytes(
             {
                 "error": False,
                 "count": len(outputs),
@@ -4580,6 +5104,29 @@ class WebServer:
                 "path": str(self._studio_history_file()),
             }
         )
+
+    async def _run_studio_history_mutation(self, builder, *args):
+        """Serialize whole file transactions without blocking the HTTP loop.
+
+        A cancelled HTTP waiter must not release the ordering lock while its
+        thread is still writing. Repeated cancellation also cannot interrupt
+        that drain. The file lock additionally orders executor output writers.
+        """
+        async with self.studio_history_lock:
+            task = asyncio.create_task(asyncio.to_thread(builder, *args))
+            try:
+                return await asyncio.shield(task)
+            except asyncio.CancelledError:
+                while not task.done():
+                    try:
+                        await asyncio.shield(task)
+                    except asyncio.CancelledError:
+                        continue
+                    except Exception:
+                        break
+                if not task.cancelled() and task.exception() is not None:
+                    logger.error("Cancelled Studio history transaction failed: %s", task.exception())
+                raise
 
     async def studio_outputs_post(self, request):
         try:
@@ -4593,16 +5140,27 @@ class WebServer:
         if raw_outputs is None:
             raw_outputs = [payload] if isinstance(payload, dict) else []
 
-        async with self.studio_history_lock:
-            with self.studio_history_file_lock:
-                incoming = [
-                    self._normalize_studio_output(output) for output in raw_outputs if isinstance(output, dict)
-                ]
-                if not incoming:
-                    return web.json_response({"error": True, "message": "No Studio outputs supplied."}, status=400)
-                existing = self._read_studio_outputs()
-                outputs = self._write_studio_outputs(self._merge_studio_outputs(existing, incoming))
-                state = self._read_studio_output_state()
+        return await self._run_studio_history_mutation(self._studio_outputs_post, raw_outputs)
+
+    def _studio_outputs_post(self, raw_outputs):
+        # Keep normalization, captured-identity checks, file IO, and response
+        # serialization in one ordered off-loop transaction.
+        with self.studio_history_file_lock:
+            existing = self._read_studio_outputs()
+            existing_by_id = {self._studio_output_key(output): output for output in existing}
+            try:
+                for output in raw_outputs:
+                    if isinstance(output, dict):
+                        self._assert_captured_output_identity(existing_by_id.get(self._studio_output_key(output), {}), output)
+            except ValueError as error:
+                return web.json_response({"error": True, "message": str(error)}, status=409)
+            incoming = [
+                self._normalize_studio_output(output) for output in raw_outputs if isinstance(output, dict)
+            ]
+            if not incoming:
+                return web.json_response({"error": True, "message": "No Studio outputs supplied."}, status=400)
+            outputs = self._write_studio_outputs(self._merge_studio_outputs(existing, incoming))
+            state = self._read_studio_output_state()
 
         return web.json_response(
             {
@@ -4624,29 +5182,36 @@ class WebServer:
         except json.JSONDecodeError:
             return web.json_response({"error": True, "message": "Invalid JSON body."}, status=400)
 
-        async with self.studio_history_lock:
-            with self.studio_history_file_lock:
-                outputs = self._read_studio_outputs()
-                updated = False
-                for index, output in enumerate(outputs):
-                    if str(output.get("id")) != output_id:
-                        continue
-                    outputs[index] = {
-                        **output,
-                        **payload,
-                        "id": output_id,
-                        "updatedAt": int(time.time() * 1000),
-                    }
-                    updated = True
-                    break
+        return await self._run_studio_history_mutation(self._studio_outputs_patch, output_id, payload)
 
-                if not updated:
-                    return web.json_response(
-                        {"error": True, "message": f"Studio output {output_id} was not found."}, status=404
-                    )
+    def _studio_outputs_patch(self, output_id, payload):
+        if not isinstance(payload, dict) or set(payload) != {"favorite"} or type(payload["favorite"]) is not bool:
+            return web.json_response(
+                {"error": True, "message": "Studio output PATCH requires only a boolean favorite field; execution metadata is immutable."},
+                status=400,
+            )
+        with self.studio_history_file_lock:
+            outputs = self._read_studio_outputs()
+            updated = False
+            for index, output in enumerate(outputs):
+                if str(output.get("id")) != output_id:
+                    continue
+                outputs[index] = {
+                    **output,
+                    **payload,
+                    "id": output_id,
+                    "updatedAt": int(time.time() * 1000),
+                }
+                updated = True
+                break
 
-                outputs = self._write_studio_outputs(self._sort_studio_outputs(outputs))
-                state = self._read_studio_output_state()
+            if not updated:
+                return web.json_response(
+                    {"error": True, "message": f"Studio output {output_id} was not found."}, status=404
+                )
+
+            outputs = self._write_studio_outputs(self._sort_studio_outputs(outputs))
+            state = self._read_studio_output_state()
 
         return web.json_response(
             {
@@ -4663,29 +5228,31 @@ class WebServer:
         if not output_id:
             return web.json_response({"error": True, "message": "Missing Studio output id."}, status=400)
 
-        async with self.studio_history_lock:
-            with self.studio_history_file_lock:
-                state = self._read_studio_output_state()
-                outputs = state["outputs"]
-                next_outputs = [output for output in outputs if str(output.get("id")) != output_id]
-                if len(next_outputs) == len(outputs):
-                    return web.json_response(
-                        {"error": True, "message": f"Studio output {output_id} was not found."}, status=404
-                    )
-                now = int(time.time() * 1000)
-                for key, slot in state["previewSlots"].items():
-                    if str(slot.get("currentOutputId") or "") != output_id:
-                        continue
-                    state["previewSlots"][key] = {
-                        **slot,
-                        "currentOutputId": None,
-                        "status": "empty",
-                        "updatedAt": now,
-                    }
-                revision = state["revision"] + 1
-                outputs = self._write_studio_output_state(
-                    next_outputs, state["previewSlots"], revision=revision
+        return await self._run_studio_history_mutation(self._studio_outputs_delete, output_id)
+
+    def _studio_outputs_delete(self, output_id):
+        with self.studio_history_file_lock:
+            state = self._read_studio_output_state()
+            outputs = state["outputs"]
+            next_outputs = [output for output in outputs if str(output.get("id")) != output_id]
+            if len(next_outputs) == len(outputs):
+                return web.json_response(
+                    {"error": True, "message": f"Studio output {output_id} was not found."}, status=404
                 )
+            now = int(time.time() * 1000)
+            for key, slot in state["previewSlots"].items():
+                if str(slot.get("currentOutputId") or "") != output_id:
+                    continue
+                state["previewSlots"][key] = {
+                    **slot,
+                    "currentOutputId": None,
+                    "status": "empty",
+                    "updatedAt": now,
+                }
+            revision = state["revision"] + 1
+            outputs = self._write_studio_output_state(
+                next_outputs, state["previewSlots"], revision=revision
+            )
 
         return web.json_response(
             {
@@ -4708,6 +5275,171 @@ class WebServer:
                 "path": str(self._studio_blocks_dir()),
             }
         )
+
+    async def composite_migration_preview(self, request):
+        from modiff.composite_migration import scan_composite_migration_preview
+
+        try:
+            preview = scan_composite_migration_preview(self.data_dir)
+        except (OSError, TypeError, ValueError) as exc:
+            logger.error(f"Error preparing composite migration preview: {exc}")
+            return web.json_response(
+                {"error": True, "message": "Could not prepare the composite migration preview."},
+                status=500,
+            )
+        return web.json_response({"error": False, "preview": preview})
+
+    async def composite_migration_compiled_preview(self, request):
+        """Preview an exact registered-Cluster compiler supplement without writes."""
+
+        from modiff.composite_migration import CompositeMigrationError, scan_composite_migration_preview
+
+        try:
+            payload = await request.json()
+            if not isinstance(payload, dict) or set(payload) != {"compilerSupplement"}:
+                raise CompositeMigrationError(
+                    "Compiled migration preview body must contain only compilerSupplement."
+                )
+            preview = scan_composite_migration_preview(
+                self.data_dir,
+                compiler_supplement=payload.get("compilerSupplement"),
+            )
+        except json.JSONDecodeError:
+            return web.json_response({"error": True, "message": "Invalid JSON body."}, status=400)
+        except (CompositeMigrationError, TypeError, ValueError) as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=400)
+        except OSError as exc:
+            logger.error(f"Error preparing compiled composite migration preview: {exc}")
+            return web.json_response(
+                {"error": True, "message": "Could not prepare the compiled composite migration preview."},
+                status=500,
+            )
+        return web.json_response({"error": False, "preview": preview})
+
+    async def composite_migration_recovery_audit(self, request):
+        """Expose redacted legacy evidence availability without conversion authority."""
+
+        from modiff.composite_migration_recovery_audit import (
+            scan_registered_cluster_recovery_audit,
+        )
+
+        try:
+            # The audit walks every persisted workflow/User Node candidate and
+            # verifies checked-in evidence hashes.  Keep that synchronous
+            # filesystem/CPU work off aiohttp's event loop so the Studio does
+            # not appear disconnected while the read-only audit is running.
+            audit = await asyncio.to_thread(
+                scan_registered_cluster_recovery_audit,
+                self.data_dir,
+            )
+        except (OSError, TypeError, ValueError) as exc:
+            logger.error(f"Error preparing composite migration recovery audit: {exc}")
+            return web.json_response(
+                {"error": True, "message": "Could not prepare the composite migration recovery audit."},
+                status=500,
+            )
+        return web.json_response({"error": False, "audit": audit})
+
+    async def composite_migrations_get(self, request):
+        from modiff.composite_migration import list_composite_migrations
+
+        try:
+            return web.json_response({"error": False, **list_composite_migrations(self.data_dir)})
+        except (OSError, TypeError, ValueError) as exc:
+            logger.error(f"Error reading composite migration journals: {exc}")
+            return web.json_response(
+                {"error": True, "message": "Could not read composite migration recovery state."},
+                status=500,
+            )
+
+    async def composite_migration_get(self, request):
+        from modiff.composite_migration import composite_migration_status
+
+        try:
+            status = composite_migration_status(self.data_dir, request.match_info.get("migration_id"))
+        except ValueError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=400)
+        except OSError as exc:
+            logger.error(f"Error reading composite migration status: {exc}")
+            return web.json_response(
+                {"error": True, "message": "Could not read composite migration recovery state."},
+                status=500,
+            )
+        if status is None:
+            return web.json_response({"error": True, "message": "Migration journal was not found."}, status=404)
+        return web.json_response({"error": False, "status": status})
+
+    async def composite_migration_apply(self, request):
+        from modiff.composite_migration import (
+            CompositeMigrationAuthorizationError,
+            CompositeMigrationConflictError,
+            CompositeMigrationError,
+            apply_composite_migration,
+        )
+
+        try:
+            payload = await request.json()
+            if not isinstance(payload, dict):
+                raise CompositeMigrationAuthorizationError("Migration apply body must be a JSON object.")
+            result = apply_composite_migration(
+                self.data_dir,
+                migration_id=payload.get("migrationId"),
+                plan_hash=payload.get("planHash"),
+                confirmation=payload.get("confirmation"),
+                allow_blocked_candidates=payload.get("allowBlockedCandidates") is True,
+                compiler_supplement=payload.get("compilerSupplement"),
+            )
+        except json.JSONDecodeError:
+            return web.json_response({"error": True, "message": "Invalid JSON body."}, status=400)
+        except CompositeMigrationAuthorizationError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=403)
+        except CompositeMigrationConflictError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=409)
+        except CompositeMigrationError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=400)
+        except OSError as exc:
+            logger.error(f"Error applying composite migration: {exc}")
+            return web.json_response(
+                {
+                    "error": True,
+                    "message": "Composite migration could not finish; inspect the recovery journal.",
+                },
+                status=500,
+            )
+        return web.json_response(result)
+
+    async def composite_migration_rollback(self, request):
+        from modiff.composite_migration import (
+            CompositeMigrationAuthorizationError,
+            CompositeMigrationConflictError,
+            CompositeMigrationError,
+            rollback_composite_migration,
+        )
+
+        try:
+            payload = await request.json()
+            if not isinstance(payload, dict):
+                raise CompositeMigrationAuthorizationError("Migration rollback body must be a JSON object.")
+            result = rollback_composite_migration(
+                self.data_dir,
+                migration_id=request.match_info.get("migration_id"),
+                confirmation=payload.get("confirmation"),
+            )
+        except json.JSONDecodeError:
+            return web.json_response({"error": True, "message": "Invalid JSON body."}, status=400)
+        except CompositeMigrationAuthorizationError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=403)
+        except CompositeMigrationConflictError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=409)
+        except CompositeMigrationError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=400)
+        except OSError as exc:
+            logger.error(f"Error rolling back composite migration: {exc}")
+            return web.json_response(
+                {"error": True, "message": "Composite migration rollback could not finish."},
+                status=500,
+            )
+        return web.json_response(result)
 
     async def studio_blocks_post(self, request):
         try:
@@ -4755,14 +5487,20 @@ class WebServer:
         if not block_file.exists():
             return web.json_response({"error": True, "message": f"User block {block_id} was not found."}, status=404)
         try:
-            block_file.unlink()
-        except OSError as e:
+            with STUDIO_PERSISTENCE_LOCK:
+                block = self._read_studio_block(block_id)
+                if block is None:
+                    return web.json_response(
+                        {"error": True, "message": f"User block {block_id} was not found."}, status=404
+                    )
+                block_file.unlink()
+        except (ValueError, json.JSONDecodeError, UnicodeDecodeError, OSError) as e:
             logger.error(f"Error deleting Studio user block {block_id}: {e}")
             return web.json_response({"error": True, "message": "Could not delete user block."}, status=500)
         return web.json_response(
             {
                 "error": False,
-                "id": self._safe_block_id(block_id),
+                "id": self._studio_block_identity(block),
             }
         )
 
@@ -5300,8 +6038,30 @@ class WebServer:
                 status=409,
             )
 
-        task_id = await self.queue_task(self.execute_graph, (graph,), None, sid, name="Graph execution")
-        preview_state = self._studio_preview_slots_for_task(task_id)
+        try:
+            task_id = await self.queue_task(
+                self.execute_graph,
+                (graph,),
+                None,
+                sid,
+                name="Graph execution",
+            )
+        except RuntimeError as error:
+            if not getattr(error, "modiff_error_code", None):
+                raise
+            classification = self._classify_exception(error)
+            return web.json_response(
+                {
+                    "error": True,
+                    "message": classification["message"],
+                    "category": classification["category"],
+                    "error_code": classification["error_code"],
+                    "recovery_hint": classification["recovery_hint"],
+                    "sid": sid,
+                },
+                status=400,
+            )
+        preview_state = await asyncio.to_thread(self._studio_preview_slots_for_task, task_id)
         return web.json_response(
             {
                 "error": False,
@@ -5352,6 +6112,7 @@ class WebServer:
         run_input_hash = runtime_hints.get("runInputHash")
         workflow_tab_id = runtime_hints.get("workflowTabId")
         workflow_canvas_epoch = runtime_hints.get("workflowCanvasEpoch")
+        workflow_form_epoch = runtime_hints.get("workflowFormEpoch")
         node_id = runtime_hints.get("nodeId")
         if client_run_id:
             payload["client_run_id"] = client_run_id
@@ -5361,6 +6122,8 @@ class WebServer:
             payload["workflow_tab_id"] = workflow_tab_id
         if workflow_canvas_epoch is not None:
             payload["workflow_canvas_epoch"] = workflow_canvas_epoch
+        if workflow_form_epoch is not None:
+            payload["workflow_form_epoch"] = workflow_form_epoch
         if node_id:
             payload["node_id"] = node_id
         return payload
@@ -5435,6 +6198,8 @@ class WebServer:
             message = "Prompt embeddings are missing from Encode Prompt. Update or recreate the Studio graph after node definitions finish refreshing."
         elif classification.get("message"):
             message = classification["message"]
+        if classification["category"] == "custom_pipeline" and classification.get("recovery_hint"):
+            message = f"{message} {classification['recovery_hint']}"
         oom = classification["category"] == "oom"
         memory_summary = None
         if oom:
@@ -5471,6 +6236,16 @@ class WebServer:
                 "error_code": explicit_error_code,
                 "message": message,
                 "recovery_hint": getattr(e, "modiff_recovery_hint", None),
+            }
+        if _file_descriptor_exhaustion(e):
+            return {
+                "category": "runtime_error",
+                "error_code": "file_descriptor_limit",
+                "message": "The backend exhausted its open-file limit while loading or executing the model.",
+                "recovery_hint": (
+                    "Raise the backend process/service open-file limit, investigate descriptor use, "
+                    "and restart the idle worker before retrying."
+                ),
             }
         chain = self._exception_chain(e)
         chain_text = " | ".join(f"{type(item).__name__} {str(item) or type(item).__name__}" for item in chain)
@@ -5523,6 +6298,30 @@ class WebServer:
                     (str(item) for item in reversed(chain) if "cublas" in (str(item) or "").lower()), message
                 ),
                 "recovery_hint": "The quantized CUDA kernel used by this model path is not supported by the current PyTorch/bitsandbytes/CUDA combination. Try a non-quantized smaller model path, update the CUDA/PyTorch/bitsandbytes stack, or use a backend path that provides compatible Qwen weights.",
+            }
+
+        if (
+            "attn_mask" in normalized
+            and "not supported" in normalized
+            and ("native flash attention" in normalized or "flash-attn" in normalized)
+        ):
+            return {
+                "category": "runtime_compatibility",
+                "error_code": "attention_backend_mask_unsupported",
+                "message": next(
+                    (
+                        str(item)
+                        for item in reversed(chain)
+                        if "attn_mask" in (str(item) or "").lower()
+                        and "not supported" in (str(item) or "").lower()
+                    ),
+                    message,
+                ),
+                "recovery_hint": (
+                    "Set Attention Backend to Auto or native and retry. This model supplies an attention mask, "
+                    "which native Flash Attention cannot consume. If the Cluster has no attention control, "
+                    "restart the backend to load the current runtime fix before retrying."
+                ),
             }
 
         if (
@@ -5607,7 +6406,7 @@ class WebServer:
             "recovery_hint": "Review the run details, fix the referenced node or input, and retry.",
         }
 
-    def _runtime_fingerprint(self):
+    def _runtime_fingerprint(self, *, hardware_snapshot=None):
         packages = {
             "python": sys.version.split(" ")[0],
             "platform": platform.platform(),
@@ -5622,7 +6421,11 @@ class WebServer:
             # execution. The normal hardware snapshot cache can otherwise retain
             # pre-run deterministic flags and make identical duplicate runs look
             # like different runtimes.
-            hardware = get_hardware_snapshot(self.data_dir, refresh=True)
+            hardware = (
+                deepcopy(hardware_snapshot)
+                if isinstance(hardware_snapshot, dict)
+                else get_hardware_snapshot(self.data_dir, refresh=True)
+            )
             torch_metadata = hardware.get("torch") if isinstance(hardware.get("torch"), dict) else {}
             legacy_status = legacy_torch_status(hardware)
             if torch_metadata.get("available"):
@@ -5698,6 +6501,7 @@ class WebServer:
             "fingerprint": f"sha256:{fingerprint}",
             "resourceFingerprint": f"sha256:{resource_fingerprint}",
             **returned_payload,
+            "backendSource": deepcopy(self.backend_source_identity),
             "hardware": hardware,
         }
         self._last_runtime_fingerprint = deepcopy(result)
@@ -6064,6 +6868,7 @@ class WebServer:
             "supportedOffloadModes",
             "resourcePlan",
             "autoResourcePlan",
+            "workflowAutoPlan",
             "autoResourceCandidates",
             "autoResourceProofStatus",
             "autoResourceCandidateId",
@@ -6083,6 +6888,7 @@ class WebServer:
             "runInputHash",
             "workflowTabId",
             "workflowCanvasEpoch",
+            "workflowFormEpoch",
             "workflowTitle",
             "workflowSnapshot",
             "nodeId",
@@ -6090,8 +6896,20 @@ class WebServer:
             "autoFieldOverrides",
             "optimizationQualificationForm",
             "studioExecutionSpec",
+            "controlledGraphContracts",
         }
         hints = {key: value.get(key) for key in allowed if key in value}
+        if "workflowAutoPlan" in hints:
+            receipt = hints["workflowAutoPlan"]
+            if not isinstance(receipt, dict) or not {"schemaVersion", "graphHash"} <= set(receipt) or bool(set(receipt) - {"schemaVersion", "graphHash", "resourceControlGroups"}) or receipt.get("schemaVersion") != 1 or not isinstance(receipt.get("graphHash"), str):
+                raise self._auto_resource_contract_error("The workflow Auto plan is malformed.")
+            groups = receipt.get("resourceControlGroups", [])
+            if not isinstance(groups, list) or len(groups) > 2048 or any(
+                not isinstance(group, list) or not 2 <= len(group) <= 2048 or any(
+                    not isinstance(item, dict) or set(item) != {"nodeId", "field"} or not isinstance(item["nodeId"], str)
+                    or item["field"] not in {"offload_mode", "auto_offload"} for item in group)
+                for group in groups) or sum(map(len, groups)) > 4096:
+                raise self._auto_resource_contract_error("The workflow Auto shared-control groups are malformed.")
 
         for key in (
             "source",
@@ -6179,6 +6997,15 @@ class WebServer:
         ):
             hints.pop("workflowCanvasEpoch", None)
 
+        workflow_form_epoch = hints.get("workflowFormEpoch")
+        if workflow_form_epoch is not None and (
+            isinstance(workflow_form_epoch, bool)
+            or not isinstance(workflow_form_epoch, int)
+            or workflow_form_epoch < 0
+            or workflow_form_epoch > 9_007_199_254_740_991
+        ):
+            hints.pop("workflowFormEpoch", None)
+
         known_offload_modes = {
             OFFLOAD_MODE_NONE,
             OFFLOAD_MODE_MODEL_CPU,
@@ -6204,6 +7031,24 @@ class WebServer:
                     hints[key] = normalized
                 else:
                     hints.pop(key, None)
+
+        if "controlledGraphContracts" in hints:
+            contracts = hints["controlledGraphContracts"]
+            if (
+                not isinstance(contracts, list)
+                or len(contracts) > 16
+                or len(set(contracts)) != len(contracts)
+                or any(
+                    not isinstance(item, str)
+                    or re.fullmatch(r"[a-z0-9][a-z0-9.-]{0,63}", item) is None
+                    for item in contracts
+                )
+            ):
+                raise self._auto_resource_contract_error(
+                    "Controlled graph contract receipt is malformed. Rebuild the managed graph.",
+                    code="studio_execution_spec_mismatch",
+                )
+            hints["controlledGraphContracts"] = list(contracts)
 
         if "modelDependencies" in hints and hints["modelDependencies"] is not None:
             dependencies = self._model_dependencies_signature(hints["modelDependencies"])
@@ -8040,16 +8885,19 @@ class WebServer:
             except Exception as clear_error:
                 errors.append(f"memory manager fallback: {clear_error}")
 
-        # Detach MemoryManager ownership first. Node destructors otherwise call
-        # remove(), which may try to materialize an offloaded pipeline on CPU
-        # while its accelerator allocation is still live.
+        # Detach both model registries before destroying cached nodes. Modular
+        # loader destructors call ComponentsManager.remove_from_collection();
+        # while auto offload is enabled, each individual removal rebuilds the
+        # remaining hook set and can offload the whole large model again. On
+        # unified-memory ROCm that repeated teardown exhausts RAM and swap.
+        # Releasing the manager once first makes every destructor a no-op.
+        released["diffusers_components"], diffusers_errors = self._release_modular_diffusers_components()
+        errors.extend(diffusers_errors)
+
         try:
             self.node_cache.clear()
         except Exception as e:
             errors.append(f"node cache: {e}")
-
-        released["diffusers_components"], diffusers_errors = self._release_modular_diffusers_components()
-        errors.extend(diffusers_errors)
         released["offload_files"], offload_errors = self._release_diffusers_offload_cache()
         errors.extend(offload_errors)
 
@@ -8073,6 +8921,8 @@ class WebServer:
             return {}
         candidate = runtime_hints.get("autoResourcePlan")
         if not isinstance(candidate, dict):
+            candidate = runtime_hints.get("resourcePlan")
+        if not isinstance(candidate, dict):
             return {}
         requirements = candidate.get("requirements")
         if not isinstance(requirements, dict):
@@ -8086,7 +8936,9 @@ class WebServer:
             return None
         candidate = runtime_hints.get("autoResourcePlan")
         if not isinstance(candidate, dict):
-            return None
+            candidate = runtime_hints.get("resourcePlan")
+        if not isinstance(candidate, dict):
+            candidate = {}
         payload = {
             "modelType": candidate.get("modelType") or runtime_hints.get("modelType"),
             "artifact": (
@@ -8133,27 +8985,121 @@ class WebServer:
         }
         return sorted(item for item in contract if item != ".")
 
+    @staticmethod
+    def _graph_loader_param_value(params, *names):
+        if not isinstance(params, dict):
+            return None
+        for name in names:
+            value = params.get(name)
+            # API graphs normally contain already-resolved values, while a
+            # few imported/legacy graphs retain a NodeParam-like wrapper.
+            if isinstance(value, dict) and "value" in value and set(value).intersection(
+                {"type", "label", "display", "required", "fieldOptions", "value"}
+            ):
+                value = value.get("value")
+            # Hub selectors are durable source/value objects by design.
+            if isinstance(value, dict) and isinstance(value.get("value"), str):
+                value = value.get("value")
+            if value not in (None, ""):
+                return value
+        return None
+
+    def _runtime_cleanup_hints_for_graph(self, nodes, runtime_hints):
+        """Derive cleanup identity from the loader without granting authority.
+
+        A structurally customized registered Block deliberately loses its
+        exact route/admission receipt. That must prevent publication and Auto
+        authority, but it must not prevent process-wide memory cleanup. The
+        submitted loader is the execution truth for that narrow purpose.
+        """
+        hints = deepcopy(runtime_hints) if isinstance(runtime_hints, dict) else {}
+        hints["loaderContract"] = self._graph_loader_contract(nodes)
+        if not isinstance(nodes, dict):
+            return hints or None
+        loader_actions = {"LoadPipeline", "ModelsLoader", "AutoModelLoader"}
+        loaders = [
+            node
+            for node in nodes.values()
+            if isinstance(node, dict) and node.get("action") in loader_actions
+        ]
+        if len(loaders) != 1:
+            return hints or None
+        loader = loaders[0]
+        params = loader.get("params") if isinstance(loader.get("params"), dict) else {}
+        model_type = self._graph_loader_param_value(
+            params,
+            "model_type",
+            "pipeline_class",
+            "pipeline_type",
+            "model_class",
+        )
+        artifact = self._graph_loader_param_value(
+            params,
+            "repo_id",
+            "model_id",
+            "model_repo",
+            "pretrained_model_name_or_path",
+        )
+        dtype = self._graph_loader_param_value(params, "dtype", "torch_dtype")
+        offload_mode = self._graph_loader_param_value(params, "offload_mode")
+        device_map = self._graph_loader_param_value(params, "device_map")
+        if not hints.get("resourceMode"):
+            # Graph-derived identity is advisory cleanup metadata only. It is
+            # never an Auto candidate or an execution qualification receipt.
+            hints["resourceMode"] = "expert"
+        if model_type and not hints.get("modelType"):
+            hints["modelType"] = str(model_type)
+        if model_type and not hints.get("pipelineClass"):
+            hints["pipelineClass"] = str(model_type)
+        if artifact and not hints.get("resolvedArtifact"):
+            hints["resolvedArtifact"] = str(artifact)
+        if artifact and not hints.get("modelRepo"):
+            hints["modelRepo"] = str(artifact)
+        if dtype and not hints.get("dtype"):
+            hints["dtype"] = str(dtype)
+        if offload_mode and not hints.get("offloadMode"):
+            hints["offloadMode"] = str(offload_mode)
+        if device_map and not hints.get("deviceMap"):
+            hints["deviceMap"] = str(device_map)
+        hints["cleanupIdentitySource"] = "submitted_graph_loader"
+        return hints
+
     def _prepare_auto_runtime_for_graph(self, runtime_hints):
-        """Release stale app-owned caches before an Auto run when warranted.
+        """Release stale app-owned caches before any model-backed graph run.
 
         Same-family cache is intentionally retained while memory has headroom;
-        it is useful, not stale. A model-family switch or live RAM/VRAM
-        pressure releases all app-owned graph/model caches before loading the
-        selected candidate.
+        it is useful, not stale. A model-family/artifact/recipe switch or live
+        RAM/VRAM pressure releases all app-owned graph/model caches before
+        loading the selected candidate. The historical method name is retained
+        because Auto callers and tests use it, but Expert Cluster runs require
+        the same process-wide memory boundary.
         """
-        if not isinstance(runtime_hints, dict) or runtime_hints.get("resourceMode") != "auto":
+        if not isinstance(runtime_hints, dict):
+            return None
+
+        resource_mode = str(runtime_hints.get("resourceMode") or "").strip().lower()
+        if resource_mode not in {"auto", "expert"}:
             return None
 
         candidate = runtime_hints.get("autoResourcePlan")
-        previous_family = self._last_auto_model_family
-        previous_signature = self._last_auto_resource_signature
+        if not isinstance(candidate, dict):
+            candidate = runtime_hints.get("resourcePlan")
+        previous_family = getattr(self, "_last_auto_model_family", None)
+        previous_signature = getattr(self, "_last_auto_resource_signature", None)
         incoming_family = str(
             (candidate.get("modelType") if isinstance(candidate, dict) else None)
             or runtime_hints.get("modelType")
             or ""
         ).strip()
         incoming_signature = self._auto_candidate_cache_signature(runtime_hints)
-        has_runtime_cache = bool(self.node_cache or memory_manager.cache)
+        modular_diffusers = sys.modules.get("modules.ModularDiffusers")
+        modular_manager = getattr(modular_diffusers, "components", None) if modular_diffusers is not None else None
+        modular_components = getattr(modular_manager, "components", None)
+        has_runtime_cache = bool(
+            getattr(self, "node_cache", None)
+            or memory_manager.cache
+            or (modular_components is not None and len(modular_components) > 0)
+        )
         resident_recipe_reusable = bool(
             has_runtime_cache
             and previous_family
@@ -8176,7 +9122,8 @@ class WebServer:
             and incoming_signature
             and previous_signature != incoming_signature
         ):
-            reasons.append(f"Auto resource recipe changed within {incoming_family}")
+            recipe_label = "Auto resource recipe" if resource_mode == "auto" else "resource recipe"
+            reasons.append(f"{recipe_label} changed within {incoming_family}")
 
         minimums = self._auto_candidate_minimums(runtime_hints)
         try:
@@ -8234,6 +9181,7 @@ class WebServer:
         result = {
             "performed": cleanup is not None,
             "reasons": reasons,
+            "resourceMode": resource_mode,
             "incomingModelFamily": incoming_family or None,
             "previousModelFamily": previous_family,
             "residentRecipeReusable": resident_recipe_reusable,
@@ -8247,7 +9195,7 @@ class WebServer:
         if cleanup is not None:
             self.queue_message(
                 {
-                    "type": "auto_resource_cleanup",
+                    "type": "auto_resource_cleanup" if resource_mode == "auto" else "runtime_resource_cleanup",
                     "task_id": self.current_task.get("task_id") if self.current_task else None,
                     **self._current_run_identity_payload(),
                     **result,
@@ -8349,6 +9297,7 @@ class WebServer:
                 "iteration_mode": iteration_mode,
                 "carry": bool(item.get("carry", True)),
                 "collect": bool(item.get("collect", True)),
+                "durable": bool(item.get("durable", False)),
                 "max_retries": max(0, min(10, int(item.get("maxRetries") or 0))),
             }
             prepared.append(prepared_loop)
@@ -8386,8 +9335,134 @@ class WebServer:
                 root_by_node[node_id] = root
         return {"loops": prepared, "by_node": root_by_node, "loops_by_id": loops_by_id}
 
+    def _durable_loop_checkpoint_path(self, loop, checkpoint_key):
+        """Resolve one input-scoped checkpoint without exposing identity in its filename."""
+
+        if not loop.get("durable"):
+            return None
+        runtime_hints = (self.current_task or {}).get("runtimeHints") or {}
+        workflow_id = str(runtime_hints.get("workflowTabId") or "").strip()
+        run_input_hash = str(runtime_hints.get("runInputHash") or "").strip()
+        if not workflow_id or not run_input_hash:
+            raise ValueError(
+                f"Durable loop {loop['id']} needs workflowTabId and runInputHash runtime identity."
+            )
+        identity = json.dumps(
+            [workflow_id, run_input_hash, checkpoint_key],
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()
+        data_dir = Path(getattr(self, "data_dir", "data")).resolve()
+        return data_dir / "runtime" / "loop-checkpoints" / f"{digest}.json"
+
+    @staticmethod
+    def _durable_loop_asset(value):
+        """Validate and normalize the retained-video value a durable loop may save."""
+
+        if not isinstance(value, dict) or value.get("storage") != "file" or value.get("media_type") != "video":
+            raise ValueError("Durable loops may checkpoint only retained file-backed video assets.")
+        from modiff.media_assets import asset_root, coerce_video_asset
+
+        asset = coerce_video_asset(value)
+        path = Path(asset["path"]).resolve()
+        try:
+            path.relative_to(asset_root())
+        except ValueError as exc:
+            raise ValueError("Durable loop assets must be inside MoDiff's retained-media directory.") from exc
+        projected = {
+            key: asset[key]
+            for key in (
+                "schema_version",
+                "asset_id",
+                "storage",
+                "path",
+                "media_type",
+                "width",
+                "height",
+                "fps",
+                "frame_count",
+                "duration_seconds",
+                "task_id",
+                "temporary",
+                "pinned",
+                "created_at",
+                "updated_at",
+                "source_asset_ids",
+                "operation",
+            )
+            if key in asset
+        }
+        encoded = json.dumps(projected, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
+        if len(encoded.encode("utf-8")) > 65536:
+            raise ValueError("Durable loop asset metadata exceeds the 64 KiB checkpoint limit.")
+        return projected
+
+    def _load_durable_loop_checkpoint(self, path, signature):
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            return None
+        except (OSError, TypeError, ValueError) as exc:
+            raise ValueError(f"Durable loop checkpoint {path.name} is unreadable.") from exc
+        if not isinstance(value, dict) or value.get("schema_version") != 1 or value.get("signature") != signature:
+            raise ValueError(f"Durable loop checkpoint {path.name} does not match this loop contract.")
+        try:
+            next_index = int(value["next_index"])
+            collection = [self._durable_loop_asset(item) for item in value.get("collection") or []]
+            carry_value = value.get("carry_value")
+            carry_value = self._durable_loop_asset(carry_value) if carry_value is not None else None
+            stopped = bool(value.get("stopped"))
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"Durable loop checkpoint {path.name} contains unusable retained media.") from exc
+        if next_index < 0 or next_index != len(collection):
+            raise ValueError(f"Durable loop checkpoint {path.name} has inconsistent iteration metadata.")
+        return {
+            "signature": signature,
+            "next_index": next_index,
+            "collection": collection,
+            "carry_value": carry_value,
+            "stopped": stopped,
+            "durable_path": path,
+        }
+
+    def _persist_durable_loop_checkpoint(self, checkpoint):
+        path = checkpoint.get("durable_path")
+        if path is None:
+            return
+        collection = [self._durable_loop_asset(item) for item in checkpoint["collection"]]
+        carry_value = checkpoint.get("carry_value")
+        carry_value = self._durable_loop_asset(carry_value) if carry_value is not None else None
+        payload = {
+            "schema_version": 1,
+            "signature": checkpoint["signature"],
+            "next_index": int(checkpoint["next_index"]),
+            "collection": collection,
+            "carry_value": carry_value,
+            "stopped": bool(checkpoint["stopped"]),
+            "updated_at": time.time(),
+        }
+        encoded = json.dumps(payload, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
+        if len(encoded.encode("utf-8")) > 8 * 1024 * 1024:
+            raise ValueError("Durable loop checkpoint exceeds the 8 MiB metadata limit.")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_suffix(path.suffix + ".tmp")
+        try:
+            temporary.write_text(encoded, encoding="utf-8")
+            os.replace(temporary, path)
+        except Exception:
+            temporary.unlink(missing_ok=True)
+            raise
+
+    def _clear_loop_checkpoints(self, task_id):
+        checkpoints = self.__dict__.setdefault("_loop_checkpoints", {}).pop(str(task_id), {})
+        for checkpoint in checkpoints.values():
+            path = checkpoint.get("durable_path") if isinstance(checkpoint, dict) else None
+            if isinstance(path, Path):
+                path.unlink(missing_ok=True)
+
     def _loop_checkpoint(self, loop, *, iterations, scope=""):
-        """Return a compatible in-process checkpoint for graph-level retries."""
+        """Return a compatible in-process or retained-media checkpoint."""
         task_id = str((self.current_task or {}).get("task_id") or "session")
         checkpoints = self.__dict__.setdefault("_loop_checkpoints", {})
         if len(checkpoints) > 20:
@@ -8397,15 +9472,25 @@ class WebServer:
         task_checkpoints = checkpoints.setdefault(task_id, {})
         checkpoint_key = f"{scope}/{loop['id']}" if scope else loop["id"]
         checkpoint = task_checkpoints.get(checkpoint_key)
-        signature = (loop["iteration_mode"], int(iterations), bool(loop["carry"]), bool(loop["collect"]))
+        signature = {
+            "iteration_mode": loop["iteration_mode"],
+            "iterations": int(iterations),
+            "carry": bool(loop["carry"]),
+            "collect": bool(loop["collect"]),
+            "durable": bool(loop.get("durable")),
+        }
         if not isinstance(checkpoint, dict) or checkpoint.get("signature") != signature:
-            checkpoint = {
-                "signature": signature,
-                "next_index": 0,
-                "collection": [],
-                "carry_value": None,
-                "stopped": False,
-            }
+            path = self._durable_loop_checkpoint_path(loop, checkpoint_key)
+            checkpoint = self._load_durable_loop_checkpoint(path, signature) if path is not None else None
+            if checkpoint is None:
+                checkpoint = {
+                    "signature": signature,
+                    "next_index": 0,
+                    "collection": [],
+                    "carry_value": None,
+                    "stopped": False,
+                    "durable_path": path,
+                }
             task_checkpoints[checkpoint_key] = checkpoint
         return checkpoint
 
@@ -8544,6 +9629,7 @@ class WebServer:
                     "stopped": stopped,
                 }
             )
+            self._persist_durable_loop_checkpoint(checkpoint)
             if stopped:
                 break
 
@@ -8671,20 +9757,105 @@ class WebServer:
     def _execute_graph(self, graph):
         sid = graph["sid"]
         nodes = graph["nodes"]
-        paths = graph["paths"]
+        # API paths share ancestor prefixes. Visit each outer graph node once
+        # per attempt, retaining mutable outputs (notably Generators) across
+        # consumers. The existing loop executor still owns repeated body calls.
+        paths = [list(dict.fromkeys(node_id for path in graph["paths"] for node_id in path))]
         self._active_graph_node_ids = set(nodes)
+        self._workflow_auto_resolved_fields = {}
+        prepared_data_nodes = set()
         graph_loops = self._prepare_graph_loops(graph)
 
         graph_execution_time = time.time()
         base_runtime_hints = self._coerce_runtime_hints(graph.get("runtimeHints"))
+        workflow_auto_plan = None
+        if base_runtime_hints and "workflowAutoPlan" in base_runtime_hints:
+            receipt = base_runtime_hints["workflowAutoPlan"]
+            if receipt["graphHash"] != workflow_graph_hash(graph):
+                raise self._auto_resource_contract_error("The workflow changed after Auto planning. Plan the current graph again.")
+            workflow_auto_plan = self._build_workflow_auto_plan(graph)
+            if workflow_auto_plan.get("requiresPreparation") and workflow_auto_plan["canAutoRun"]:
+                workflow_auto_plan, prepared_data_nodes = self._prepare_workflow_auto_data(graph, workflow_auto_plan)
+            if prepared_data_nodes and workflow_auto_plan["canAutoRun"] and workflow_auto_plan["patches"]:
+                changes = {(item["nodeId"], item["field"]): item["value"] for item in workflow_auto_plan["patches"]}
+                for group in receipt.get("resourceControlGroups", []):
+                    if not any((item["nodeId"], item["field"]) in changes for item in group):
+                        continue
+                    values = []
+                    for item in group:
+                        param = nodes.get(item["nodeId"], {}).get("params", {}).get(item["field"])
+                        if param is None or param.get("sourceId"):
+                            raise self._auto_resource_contract_error("A computed Auto plan would change a shared control outside this run scope.")
+                        values.append(changes.get((item["nodeId"], item["field"]), param.get("value")))
+                    if any(value != values[0] for value in values):
+                        raise self._auto_resource_contract_error("A computed Auto plan requires conflicting values on one shared resource control.")
+                updates = []
+                for item in workflow_auto_plan["patches"]:
+                    param = nodes[item["nodeId"]]["params"][item["field"]]
+                    if param.get("sourceId"):
+                        raise self._auto_resource_contract_error("Auto cannot replace a connected resource control.")
+                    updates.append({**item, "previousValue": param.get("value")})
+                    param["value"] = item["value"]
+                    workflow_auto_plan.setdefault("resolvedFields", {}).setdefault(item["nodeId"], {})[item["field"]] = item["value"]
+                if workflow_graph_hash(graph) != workflow_auto_plan["plannedGraphHash"]:
+                    raise self._auto_resource_contract_error("Computed Auto resource updates changed an unplanned field.")
+                workflow_auto_plan["appliedUpdates"] = updates
+                workflow_auto_plan["patches"] = []
+                receipt["graphHash"] = workflow_auto_plan["plannedGraphHash"]
+                self.queue_message({"type": "auto_resource_plan_applied", "sid": sid,
+                    "task_id": self.current_task.get("task_id") if self.current_task else None,
+                    **self._current_run_identity_payload(), "resourceUpdates": updates,
+                    "updatedNodes": sorted({item["nodeId"] for item in updates}),
+                    "message": "Auto applied resource settings for the computed inputs. Model and creative controls were preserved."})
+            self._workflow_auto_resolved_fields = workflow_auto_plan.get("resolvedFields", {})
+            if not workflow_auto_plan["canAutoRun"] or workflow_auto_plan["patches"]:
+                changes = [f"{item['nodeId']}.{item['field']} = {item['value']}" for item in workflow_auto_plan["patches"]]
+                raise self._auto_resource_contract_error("Workflow Auto needs a fresh plan: " + "; ".join(workflow_auto_plan["issues"] or changes or ["resource settings changed"]))
         assert_studio_execution_graph(graph, base_runtime_hints)
         if isinstance(base_runtime_hints, dict):
             self._bind_controlled_artifact_receipts(graph, base_runtime_hints)
             base_runtime_hints["loaderContract"] = self._graph_loader_contract(nodes)
             graph["runtimeHints"] = deepcopy(base_runtime_hints)
-        auto_runtime_preparation = self._prepare_auto_runtime_for_graph(base_runtime_hints)
-        if self.current_task and auto_runtime_preparation is not None:
-            self.current_task["autoRuntimePreparation"] = auto_runtime_preparation
+        cleanup_runtime_hints = self._runtime_cleanup_hints_for_graph(nodes, base_runtime_hints)
+        if workflow_auto_plan is not None:
+            # Reuse the existing cache-switch/pressure cleanup. Resource identity
+            # excludes prompts, seeds and placement, so unchanged model owners
+            # remain reusable across runs of an edited creative workload.
+            owners = [{"nodeId": item["nodeId"], "repository": item["repository"], "candidateId": item["candidateId"],
+                       "settings": {key: item["settings"].get(key) for key in ("device", "dtype", "offloadMode", "autoOffload", "quantizationMode")}}
+                      for item in workflow_auto_plan["loaders"]]
+            resource_identity = hashlib.sha256(json.dumps({"owners": owners, "adapters": workflow_auto_plan["adapters"]}, sort_keys=True).encode()).hexdigest()
+            cleanup_runtime_hints = {"resourceMode": "auto", "modelType": "workflow", "loaderContract": self._graph_loader_contract(nodes),
+                                     "resourcePlan": {"modelType": "workflow", "artifact": resource_identity,
+                                                      "requirements": {"minimum": workflow_auto_plan["requirements"]}}}
+        owner_schedule = workflow_auto_plan.get("schedule") if workflow_auto_plan else None
+        if workflow_auto_plan:
+            logger.info("Workflow Auto strategy: %s, %s owners, requirements %s", workflow_auto_plan["strategy"],
+                        len(workflow_auto_plan["loaders"]), workflow_auto_plan["requirements"])
+        if owner_schedule:
+            # Start the planned lifetime from an empty model cache. Prior-run
+            # owners must not occupy slots reserved for this schedule.
+            prepared_cache = {key: self.node_cache[key] for key in prepared_data_nodes if key in self.node_cache}
+            self._runtime_gpu_cleanup_idle()
+            self.node_cache.update(prepared_cache)
+            del prepared_cache
+            paths = [owner_schedule["executionOrder"]]
+            if self.current_task:
+                self.current_task["workflowAutoSchedule"] = deepcopy(owner_schedule)
+        prepared_cache = {key: self.node_cache[key] for key in prepared_data_nodes if key in self.node_cache}
+        runtime_preparation = self._prepare_auto_runtime_for_graph(cleanup_runtime_hints)
+        if prepared_cache:
+            self.node_cache.update(prepared_cache)
+        del prepared_cache
+        if workflow_auto_plan is not None:
+            runtime_preparation = {**(runtime_preparation or {}), "workflowAuto": {
+                "strategy": workflow_auto_plan["strategy"], "schedule": owner_schedule,
+                "preparedDataNodes": sorted(prepared_data_nodes), "resolvedFields": workflow_auto_plan.get("resolvedFields", {}),
+                "appliedUpdates": workflow_auto_plan.get("appliedUpdates", []),
+                "releases": [],
+            }}
+        if self.current_task and runtime_preparation is not None:
+            self.current_task["runtimePreparation"] = runtime_preparation
         retry_plans = self._coerce_retry_plan_list(base_runtime_hints)
         retry_history = []
         deterministic_receipt = None
@@ -8704,7 +9875,8 @@ class WebServer:
             if self.current_task and runtime_hints is not None:
                 self.current_task["runtimeHints"] = runtime_hints
             if runtime_hints and active_retry_plan is None and attempt_index == 0:
-                self._assert_auto_resource_candidate_ready(runtime_hints)
+                if workflow_auto_plan is None:
+                    self._assert_auto_resource_candidate_ready(runtime_hints)
                 auto_plan = runtime_hints.get("autoResourcePlan")
                 if isinstance(auto_plan, dict):
                     proven = self._auto_resource_candidate_is_proven(auto_plan)
@@ -8827,10 +9999,12 @@ class WebServer:
             attempt_started_at = time.monotonic()
             self._reset_runtime_measurement()
             executed_loops = set()
+            execution_index = -1
 
             try:
                 for path in paths:
                     for id in path:
+                        execution_index += 1
                         if self.interrupt_flag:
                             if self.current_task:
                                 self.current_task["interrupt_requested"] = True
@@ -8877,6 +10051,11 @@ class WebServer:
                                 }
                             )
                             self._persist_supervisor_queue_state(force=True)
+                        if owner_schedule:
+                            from modiff.workflow_auto_lifecycle import assert_next_owner_capacity
+                            for owner in owner_schedule["owners"]:
+                                if owner["first"] == execution_index:
+                                    assert_next_owner_capacity(self, owner)
                         graph_loop = graph_loops["by_node"].get(id)
                         if graph_loop is not None:
                             loop_id = graph_loop["id"]
@@ -8884,8 +10063,18 @@ class WebServer:
                                 continue
                             self._execute_graph_loop(graph_loop, nodes, sid)
                             executed_loops.add(loop_id)
-                        else:
+                        elif id not in prepared_data_nodes:
                             self.execute_node(id, nodes[id], sid)
+
+                        if owner_schedule:
+                            from modiff.workflow_auto_lifecycle import release_owner_caches
+                            for event in owner_schedule["releases"]:
+                                if event["afterIndex"] == execution_index:
+                                    released = release_owner_caches(self, event, memory_manager)
+                                    runtime_preparation["workflowAuto"]["releases"].append(released)
+                                    self.queue_message({"type": "auto_resource_cleanup", "sid": sid, "performed": True, "reasons": ["completed model owners"],
+                                                        "task_id": self.current_task.get("task_id") if self.current_task else None,
+                                                        **released})
 
                         # broadcast the task progress
                         if self.current_task:
@@ -9017,7 +10206,7 @@ class WebServer:
                     }
                 )
             task_id = str((self.current_task or {}).get("task_id") or "session")
-            self.__dict__.setdefault("_loop_checkpoints", {}).pop(task_id, None)
+            self._clear_loop_checkpoints(task_id)
             self.queue_message(
                 {
                     "type": "graph_completed",
@@ -9030,10 +10219,92 @@ class WebServer:
                     "runtimeHints": runtime_hints,
                     "runtimeBudget": runtime_budget,
                     "runtimeMeasurement": runtime_measurement,
+                    "runtimePreparation": runtime_preparation,
                     "resourceRetryHistory": retry_history,
                 }
             )
             return
+
+    @staticmethod
+    def _task_runtime_deadline_error(runtime_limit):
+        try:
+            normalized_limit = max(1, int(runtime_limit))
+        except (TypeError, ValueError):
+            normalized_limit = 1
+        error = TimeoutError(
+            f"Graph execution reached its configured {normalized_limit} second runtime limit."
+        )
+        setattr(error, "modiff_error_code", "runtime_deadline_exceeded")
+        setattr(error, "modiff_category", "execution")
+        setattr(
+            error,
+            "modiff_recovery_hint",
+            "Use a qualified accelerator or select a smaller bounded recipe before retrying.",
+        )
+        return error
+
+    def _schedule_task_runtime_deadline(self, task_id, runtime_hints):
+        if not self.current_task or self.current_task.get("name") != "Graph execution":
+            return None
+        runtime_limit = runtime_hints.get("maxRuntimeSeconds") if isinstance(runtime_hints, dict) else None
+        if not isinstance(runtime_limit, (int, float)) or isinstance(runtime_limit, bool) or runtime_limit <= 0:
+            return None
+        started_at = self.current_task.get("started_at")
+        elapsed = max(0.0, time.time() - float(started_at)) if isinstance(started_at, (int, float)) else 0.0
+        delay = max(0.0, float(runtime_limit) - elapsed)
+        return self.loop.call_later(
+            delay,
+            self._task_runtime_deadline_reached,
+            task_id,
+            int(runtime_limit),
+        )
+
+    def _task_runtime_deadline_reached(self, task_id, runtime_limit):
+        current = self.current_task if isinstance(self.current_task, dict) else {}
+        if current.get("task_id") != task_id or current.get("interrupt_requested"):
+            return
+        error = self._task_runtime_deadline_error(runtime_limit)
+        failure_payload = self._exception_payload(
+            error,
+            task_id=task_id,
+            sid=current.get("sid"),
+            node_id=current.get("current_node"),
+            node_name=current.get("current_node_name"),
+            traceback_text=None,
+        )
+        self.interrupt_flag = True
+        current.update(
+            {
+                "interrupt_requested": True,
+                "interrupt_reason": "runtime_deadline",
+                "runtime_deadline_seconds": int(runtime_limit),
+                "runtime_deadline_failure": failure_payload,
+                "updated_at": time.time(),
+                "phase": "stopping",
+                "message": str(error),
+            }
+        )
+        for node in self.node_cache.values():
+            node._interrupt = True
+            active_pipeline = getattr(node, "_active_pipeline", None)
+            if active_pipeline is not None and hasattr(active_pipeline, "_interrupt"):
+                active_pipeline._interrupt = True
+        self._persist_supervisor_queue_state(force=True)
+        self.queue_message(
+            {
+                "type": "task_progress",
+                "task_id": task_id,
+                **self._current_run_identity_payload(),
+                "status": "running",
+                "phase": "stopping",
+                "progress": current.get("progress", 0),
+                "message": str(error),
+                "category": failure_payload["category"],
+                "error_code": failure_payload["error_code"],
+                "recovery_hint": failure_payload["recovery_hint"],
+            }
+        )
+        self._schedule_forced_restart_if_still_running(task_id)
 
     async def stop_execution(self, request):
         # check if there is a current task or any queued task
@@ -9147,19 +10418,55 @@ class WebServer:
         current = self.current_task if isinstance(self.current_task, dict) else {}
         if current.get("task_id") != task_id or not current.get("interrupt_requested"):
             return
+        deadline_failure = (
+            current.get("runtime_deadline_failure")
+            if current.get("interrupt_reason") == "runtime_deadline"
+            else None
+        )
+        if isinstance(deadline_failure, dict):
+            terminal_entry = self._record_terminal_task(
+                "failed",
+                error_payload=deadline_failure,
+            )
+            self._mark_studio_preview_run_terminal(task_id, "failed")
+            self._persist_supervisor_queue_state(force=True)
+            self.queue_message(
+                {
+                    "type": "task_failed",
+                    "task_id": task_id,
+                    **self._current_run_identity_payload(),
+                    "status": "failed",
+                    "completed_at": (
+                        terminal_entry.get("completed_at")
+                        if terminal_entry
+                        else time.time()
+                    ),
+                    "backend_restart": True,
+                    **deadline_failure,
+                }
+            )
+        else:
+            message = "The backend worker is restarting to finish cancellation and release RAM/VRAM."
+            # A websocket acknowledgement is not durable history. Record the
+            # terminal task before os._exit so reconnecting clients can inspect
+            # the cancelled run even when they missed the final socket event.
+            terminal_entry = self._record_terminal_task("cancelled", error_payload={"message": message})
+            self._mark_studio_preview_run_terminal(task_id, "cancelled")
+            self._persist_supervisor_queue_state(force=True)
+            self.queue_message(
+                {
+                    "type": "task_cancelled",
+                    "task_id": task_id,
+                    **self._current_run_identity_payload(),
+                    "status": "cancelled",
+                    "completed_at": terminal_entry.get("completed_at") if terminal_entry else time.time(),
+                    "message": message,
+                    "backend_restart": True,
+                }
+            )
         logger.error(
             "Task %s did not honor cancellation; replacing the supervised backend worker to release runtime memory.",
             task_id,
-        )
-        self.queue_message(
-            {
-                "type": "task_cancelled",
-                "task_id": task_id,
-                **self._current_run_identity_payload(),
-                "status": "cancelled",
-                "message": "The backend worker is restarting to finish cancellation and release RAM/VRAM.",
-                "backend_restart": True,
-            }
         )
         # Give the event-loop queue one brief opportunity to flush the terminal
         # notification. The supervisor immediately replaces this process; the
@@ -9298,6 +10605,10 @@ class WebServer:
                 raise TypeError("Node parameter overrides must be a dictionary.")
             args.update(param_overrides)
 
+        for field, expected in getattr(self, "_workflow_auto_resolved_fields", {}).get(id, {}).items():
+            if field in args and args[field] != expected:
+                raise self._auto_resource_contract_error(f"{id}.{field} changed after resource planning. Auto stopped before allocating its resources.")
+
         # Re-resolve the exact loader from authoritative node arguments at the
         # last boundary before importing its module.  This closes admission to
         # worker and connected-parameter TOCTOU gaps without trusting runtime
@@ -9328,6 +10639,17 @@ class WebServer:
                 }
             )
             self.queue_message(starting_progress)
+
+        # Workflow node ids are document-local. A later graph may legitimately
+        # reuse the same id for a different module/action, so never dispatch
+        # through a cached instance whose executable identity no longer
+        # matches the current graph.
+        cached_node = self.node_cache.get(id)
+        if cached_node is not None and (
+            getattr(cached_node, "module_name", None) != module
+            or getattr(cached_node, "class_name", None) != action
+        ):
+            self.node_cache.pop(id, None)
 
         # if the node is not in the cache, initialize it
         if id not in self.node_cache:
@@ -9419,6 +10741,10 @@ class WebServer:
             heartbeat_thread.start()
 
         # *** execute the node ***
+        input_task = getattr(self, "current_task", None)
+        input_context = (
+            str(input_task.get("task_id")), int(input_task.get("attempt_index") or 0)
+        ) if input_task and input_task.get("task_id") else None
         try:
             self.node_cache[id](**args)
         except Exception as e:
@@ -9462,6 +10788,21 @@ class WebServer:
                     }
                 )
             raise e
+
+        # Commit only successful calls. The node snapshots after its actual
+        # normalization, before library mutation, and retains that evidence for
+        # cache reuse. A non-NodeBase extension without capture remains missing
+        # evidence instead of being mislabelled with unnormalized form values.
+        if input_context is not None:
+            if getattr(self, "_resolved_input_context", None) != input_context:
+                self._resolved_input_context = input_context
+                self._resolved_input_records = {}
+            input_record = bind_generation_input_origins(
+                id, node, getattr(self.node_cache[id], "_execution_input_record", None), param_overrides,
+                source_fields=getattr(self.node_cache[id], "_execution_input_source_fields", None),
+            )
+            if input_record is not None:
+                self._resolved_input_records[str(id)] = input_record
 
         heartbeat_stop.set()
         if heartbeat_thread is not None:
@@ -9658,15 +10999,67 @@ class WebServer:
     ╰────────────────╯
     """
 
-    async def hf_cache(self, request):
-        refresh = request.query.get("refresh", False)
-        id = request.match_info.get("id", None)
-        class_name = request.query.get("className", None)
-        compact = request.query.get("compact", False)
-        if refresh:
-            modelstore.update_hf()
+    async def _refresh_model_indexes(self):
+        async with self.model_discovery_lock:
+            task = self.model_discovery_task
+            if task is None or task.done():
+                task = asyncio.create_task(asyncio.to_thread(modelstore.actualize))
+                self.model_discovery_task = task
+        try:
+            await asyncio.shield(task)
+        finally:
+            if task.done():
+                async with self.model_discovery_lock:
+                    if self.model_discovery_task is task:
+                        if not task.cancelled() and task.exception() is None:
+                            self.model_discovery_generation += 1
+                        self.model_discovery_task = None
+        return self.model_discovery_generation
 
-        models = modelstore.get_hf_models(id, class_name, "full")
+    async def _settled_model_discovery_generation(self):
+        """Return an index generation without observing a half-finished refresh."""
+        async with self.model_discovery_lock:
+            pending = self.model_discovery_task
+            generation = self.model_discovery_generation
+        if pending is None:
+            return generation
+        return await self._refresh_model_indexes()
+
+    async def _build_model_discovery_snapshot(self, kind, generation, builder):
+        """Build and publish one immutable generation-scoped discovery value."""
+        key = (kind, generation)
+        current = asyncio.current_task()
+        try:
+            payload = await asyncio.to_thread(builder)
+            frozen = deepcopy(payload)
+            async with self.model_discovery_snapshot_lock:
+                cached = self.model_discovery_snapshot_cache.get(kind)
+                if cached is None or generation >= cached[0]:
+                    self.model_discovery_snapshot_cache[kind] = (generation, frozen)
+            return frozen
+        finally:
+            async with self.model_discovery_snapshot_lock:
+                if self.model_discovery_snapshot_tasks.get(key) is current:
+                    self.model_discovery_snapshot_tasks.pop(key, None)
+
+    async def _model_discovery_snapshot(self, kind, generation, builder):
+        """Return one fresh cached value while coalescing identical slow scans."""
+        key = (kind, generation)
+        async with self.model_discovery_snapshot_lock:
+            cached = self.model_discovery_snapshot_cache.get(kind)
+            if cached is not None and cached[0] == generation:
+                return deepcopy(cached[1])
+            task = self.model_discovery_snapshot_tasks.get(key)
+            if task is None or task.done():
+                task = asyncio.create_task(
+                    self._build_model_discovery_snapshot(kind, generation, builder)
+                )
+                self.model_discovery_snapshot_tasks[key] = task
+        return deepcopy(await asyncio.shield(task))
+
+    def _build_hf_cache_inventory(self):
+        """Validate the complete indexed Hub inventory outside the aiohttp loop."""
+        models = deepcopy(modelstore.get_hf_models(return_type="full"))
         annotated = []
         for model in models:
             status = artifact_cache_status(model.get("id"), models)
@@ -9681,8 +11074,66 @@ class WebServer:
                     "active_files": status.get("activeFiles") or [],
                     "missing_files": status.get("missingFiles") or [],
                     "corrupt_files": status.get("corruptFiles") or [],
+                    "planned_revision": status.get("plannedRevision"),
+                    "planned_files": status.get("plannedFiles") or [],
                 }
             )
+            annotated.append(entry)
+        return annotated
+
+    @staticmethod
+    def _filter_hf_cache_inventory(models, id=None, class_name=None):
+        output = models
+        if isinstance(id, list) and id:
+            try:
+                output = [
+                    model
+                    for model in output
+                    if any(str(item).lower() == str(model["id"]).lower() for item in id)
+                ]
+            except Exception:
+                output = models
+        elif isinstance(id, str):
+            output = [model for model in output if re.search(id, model["id"], re.IGNORECASE)]
+
+        if isinstance(class_name, list) and class_name:
+            try:
+                output = [
+                    model
+                    for model in output
+                    if any(str(item).lower() in model["class_names"] for item in class_name)
+                ]
+            except Exception:
+                pass
+        elif isinstance(class_name, str):
+            try:
+                output = [
+                    model
+                    for model in output
+                    if any(re.search(class_name, name, re.IGNORECASE) for name in model["class_names"])
+                ]
+            except Exception:
+                pass
+        return output
+
+    async def hf_cache(self, request):
+        refresh = str(request.query.get("refresh", "")).lower() in ("1", "true", "yes")
+        id = request.match_info.get("id", None)
+        class_name = request.query.get("className", None)
+        compact = request.query.get("compact", False)
+        if refresh:
+            generation = await self._refresh_model_indexes()
+        else:
+            generation = await self._settled_model_discovery_generation()
+
+        inventory = await self._model_discovery_snapshot(
+            "hf_cache_inventory",
+            generation,
+            self._build_hf_cache_inventory,
+        )
+        models = self._filter_hf_cache_inventory(inventory, id, class_name)
+        annotated = []
+        for entry in models:
             if compact:
                 entry = {
                     key: entry[key]
@@ -9697,6 +11148,8 @@ class WebServer:
                         "active_files",
                         "missing_files",
                         "corrupt_files",
+                        "planned_revision",
+                        "planned_files",
                     )
                 }
             annotated.append(entry)
@@ -9725,19 +11178,47 @@ class WebServer:
         return package
 
     def _runtime_fingerprint_for_control_request(self):
-        """Avoid entering accelerator APIs while a model call owns the runtime."""
-        if self.current_task and isinstance(self._last_runtime_fingerprint, dict):
-            return deepcopy(self._last_runtime_fingerprint)
-        return self._runtime_fingerprint()
+        """Return the startup/run identity without probing accelerators from HTTP."""
+        with self.runtime_fingerprint_lock:
+            if isinstance(self._last_runtime_fingerprint, dict):
+                return deepcopy(self._last_runtime_fingerprint)
+            # Directly constructed test/integration servers have not executed
+            # ``run`` and therefore lack the startup snapshot. Only one worker
+            # may perform that fallback probe.
+            return self._runtime_fingerprint()
+
+    @staticmethod
+    def _json_response_bytes(payload):
+        """Serialize a JSON response in the worker that built the payload."""
+        return json.dumps(payload, separators=(",", ":")).encode("utf-8")
+
+    async def _coalesced_control_response(self, key, builder):
+        """Build one identical control response off-loop for concurrent callers."""
+        async with self.control_snapshot_lock:
+            task = self.control_snapshot_tasks.get(key)
+            if task is None or task.done():
+                task = asyncio.create_task(asyncio.to_thread(builder))
+                self.control_snapshot_tasks[key] = task
+        try:
+            return await asyncio.shield(task)
+        finally:
+            if task.done():
+                async with self.control_snapshot_lock:
+                    if self.control_snapshot_tasks.get(key) is task:
+                        self.control_snapshot_tasks.pop(key, None)
 
     async def system_stats(self, _request):
         if self.current_task and isinstance(self._last_runtime_fingerprint, dict):
             cached_hardware = self._last_runtime_fingerprint.get("hardware")
             if isinstance(cached_hardware, dict):
                 return web.json_response(deepcopy(cached_hardware))
-        return web.json_response(get_hardware_snapshot(self.data_dir))
+        body = await self._coalesced_control_response(
+            "system_stats",
+            lambda: self._json_response_bytes(get_hardware_snapshot(self.data_dir)),
+        )
+        return web.Response(body=body, content_type="application/json")
 
-    async def runtime_status(self, request):
+    def _build_runtime_status_payload(self):
         runtime_fingerprint = self._runtime_fingerprint_for_control_request()
         hardware = runtime_fingerprint.get("hardware")
         if not isinstance(hardware, dict):
@@ -9768,52 +11249,58 @@ class WebServer:
             }
 
         ready = len(missing_required) == 0 and bool(profile.get("execution_ready"))
-        return web.json_response(
-            {
-                "error": False,
-                "ready": ready,
-                "runtime_fingerprint": (
-                    runtime_fingerprint.get("resourceFingerprint") or runtime_fingerprint.get("fingerprint")
-                ),
-                "runtime_profile": profile,
-                "instance": self.instance,
-                "server": {
-                    "host": self.host,
-                    "port": self.port,
-                    "scheme": "https" if self.ssl_context else "http",
-                    "work_dir": self.work_dir,
-                    "data_dir": self.data_dir,
-                    "client_max_size": self.client_max_size,
-                },
-                "python": {
-                    "version": sys.version,
-                    "executable": sys.executable,
-                    "platform": platform.platform(),
-                    "cwd": os.getcwd(),
-                },
-                "config": {
-                    "hf_cache_dir": CONFIG.hf.get("cache_dir"),
-                    "hf_online_status": CONFIG.hf.get("online_status"),
-                    "hf_token_configured": bool(CONFIG.hf.get("token")),
-                    "pytorch_cuda_alloc_conf": os.environ.get("PYTORCH_CUDA_ALLOC_CONF"),
-                    "paths": CONFIG.paths,
-                },
-                "packages": packages,
-                "hardware": hardware,
-                "missing_required_packages": missing_required,
-                "modules": {
-                    "registered_count": len(self.modules),
-                    "module_map_count": len(MODULE_MAP),
-                },
-                "queue": {
-                    "current": current_task,
-                    "queued_count": len(self.queued_tasks),
-                    "main_queue_size": self.main_queue.qsize(),
-                    "background_queue_size": self.background_queue.qsize(),
-                    "interrupt_requested": self.interrupt_flag,
-                },
-            }
+        return {
+            "error": False,
+            "ready": ready,
+            "runtime_fingerprint": (
+                runtime_fingerprint.get("resourceFingerprint") or runtime_fingerprint.get("fingerprint")
+            ),
+            "runtime_profile": profile,
+            "instance": self.instance,
+            "backend_source": deepcopy(self.backend_source_identity),
+            "server": {
+                "host": self.host,
+                "port": self.port,
+                "scheme": "https" if self.ssl_context else "http",
+                "work_dir": self.work_dir,
+                "data_dir": self.data_dir,
+                "client_max_size": self.client_max_size,
+            },
+            "python": {
+                "version": sys.version,
+                "executable": sys.executable,
+                "platform": platform.platform(),
+                "cwd": os.getcwd(),
+            },
+            "config": {
+                "hf_cache_dir": CONFIG.hf.get("cache_dir"),
+                "hf_online_status": CONFIG.hf.get("online_status"),
+                "hf_token_configured": bool(CONFIG.hf.get("token")),
+                "pytorch_cuda_alloc_conf": os.environ.get("PYTORCH_CUDA_ALLOC_CONF"),
+                "paths": CONFIG.paths,
+            },
+            "packages": packages,
+            "hardware": hardware,
+            "missing_required_packages": missing_required,
+            "modules": {
+                "registered_count": len(self.modules),
+                "module_map_count": len(MODULE_MAP),
+            },
+            "queue": {
+                "current": current_task,
+                "queued_count": len(self.queued_tasks),
+                "main_queue_size": self.main_queue.qsize(),
+                "background_queue_size": self.background_queue.qsize(),
+                "interrupt_requested": self.interrupt_flag,
+            },
+        }
+
+    async def runtime_status(self, _request):
+        body = await self._coalesced_control_response(
+            "runtime_status",
+            lambda: self._json_response_bytes(self._build_runtime_status_payload()),
         )
+        return web.Response(body=body, content_type="application/json")
 
     def _optimization_runtime_context(self):
         runtime_fingerprint = self._runtime_fingerprint_for_control_request()
@@ -10021,6 +11508,7 @@ class WebServer:
             or self.queued_tasks
             or self._active_nonruntime_mutations
             or self.hf_download_tasks
+            or (self.template_gallery_install_task is not None and not self.template_gallery_install_task.done())
         ):
             raise OverlayInstallBusy(
                 "Finish or stop active and queued runs before changing the runtime environment."
@@ -10372,7 +11860,11 @@ class WebServer:
         return web.json_response(public_optimization_catalog(runtime_profile=profile, hardware=hardware))
 
     async def runtime_optional_runtimes(self, _request):
-        return web.json_response(public_optional_runtime_catalog())
+        body = await self._coalesced_control_response(
+            "runtime_optional_runtimes",
+            lambda: self._json_response_bytes(public_optional_runtime_catalog()),
+        )
+        return web.Response(body=body, content_type="application/json")
 
     async def _run_optimization_install_job(
         self, job_id, capability_id, profile, hardware, lease, gate_token
@@ -11098,6 +12590,20 @@ class WebServer:
         )
 
     def _cuda_memory_snapshot(self):
+        lock = getattr(self, "_runtime_resource_lock", None)
+        if lock is None:
+            # Diagnostics must not replace the original execution exception
+            # when reporting from a partially initialized server/embedding.
+            return {"available": False, "device_count": 0, "devices": [],
+                    "error": "Runtime resource monitor is not initialized."}
+        with lock:
+            return self._collect_cuda_memory_snapshot()
+
+    def _collect_cuda_memory_snapshot(self):
+        if self.current_task or self._node_cache_teardown_active:
+            identity = self._last_runtime_fingerprint
+            hardware = identity.get("hardware") if isinstance(identity, dict) else None
+            return accelerator_cuda_diagnostic(active_accelerator_snapshot(hardware))
         snapshot = {
             "available": False,
             "device_count": 0,
@@ -11286,25 +12792,244 @@ class WebServer:
         }
 
     async def runtime_gpu_processes(self, request):
-        return web.json_response(
-            {
+        body = await self._coalesced_control_response(
+            "runtime_gpu_processes",
+            lambda: self._json_response_bytes({
                 "error": False,
                 "cuda_memory_snapshot": self._cuda_memory_snapshot(),
                 "gpu_processes": self._gpu_process_snapshot(),
-            }
+            }),
         )
+        return web.Response(body=body, content_type="application/json")
 
     def _runtime_resource_snapshot(self, *, max_age_seconds=1.0):
         with self._runtime_resource_lock:
             now = time.monotonic()
-            if isinstance(
-                self._runtime_resource_cached_snapshot, dict
-            ) and now - self._runtime_resource_cached_at <= max(0.0, float(max_age_seconds)):
+            task = self.current_task
+            run_key = (bool(task), task.get("task_id") if isinstance(task, dict) else None, self._node_cache_teardown_active)
+            if (
+                isinstance(self._runtime_resource_cached_snapshot, dict)
+                and self._runtime_resource_cached_run_key == run_key
+                and now - self._runtime_resource_cached_at <= max(0.0, float(max_age_seconds))
+            ):
                 return deepcopy(self._runtime_resource_cached_snapshot)
             snapshot = self._collect_runtime_resource_snapshot()
-            self._runtime_resource_cached_at = now
+            self._runtime_resource_cached_at = time.monotonic()
             self._runtime_resource_cached_snapshot = snapshot
+            self._runtime_resource_cached_run_key = run_key
             return deepcopy(snapshot)
+
+    def _runtime_accelerator_snapshot(self, *, ram_total):
+        errors = []
+        if self.current_task or self._node_cache_teardown_active:
+            identity = self._last_runtime_fingerprint
+            hardware = identity.get("hardware") if isinstance(identity, dict) else None
+            accelerators = active_accelerator_snapshot(hardware)
+            if not isinstance(hardware, dict):
+                errors.append("Accelerator topology unavailable during execution.")
+        else:
+            cuda_snapshot = self._cuda_memory_snapshot()
+            accelerators = []
+            try:
+                torch = import_module("torch")
+                hardware_snapshot = get_hardware_snapshot(self.data_dir)
+                topology_by_device = {
+                    str(item.get("device")): item
+                    for item in (hardware_snapshot.get("devices") or [])
+                    if isinstance(item, dict) and item.get("device")
+                }
+                hip_version = getattr(getattr(torch, "version", None), "hip", None)
+                runtime_backend = "rocm" if hip_version else "cuda"
+                for raw_device in cuda_snapshot.get("devices") or []:
+                    device_name = f"cuda:{raw_device.get('index', len(accelerators))}"
+                    topology = topology_by_device.get(device_name, {})
+                    total = self._safe_int(raw_device.get("total_bytes") or raw_device.get("total_memory"))
+                    free = self._safe_int(raw_device.get("free_bytes"))
+                    allocated = self._safe_int(raw_device.get("allocated_bytes"))
+                    reserved = self._safe_int(raw_device.get("reserved_bytes"))
+                    used = max(0, total - free) if total is not None and free is not None else reserved
+                    memory_kind = topology.get("memory_kind")
+                    # Hardware topology is authoritative when available. Large
+                    # discrete Instinct GPUs can have VRAM close to host RAM; the
+                    # capacity-only fallback must not override a dedicated result.
+                    shared = (
+                        memory_kind == "shared"
+                        if memory_kind in {"shared", "dedicated"}
+                        else bool(
+                            hip_version and total is not None and ram_total is not None and total >= int(ram_total * 0.75)
+                        )
+                    )
+                    planning_total = self._safe_int(topology.get("planning_memory_total")) or total
+                    planning_free = self._safe_int(topology.get("planning_memory_free"))
+                    if planning_free is None:
+                        planning_free = free
+                    accelerators.append(
+                        {
+                            "device": device_name,
+                            "index": raw_device.get("index", len(accelerators)),
+                            "name": raw_device.get("name") or raw_device.get("device_name") or runtime_backend.upper(),
+                            "backend": runtime_backend,
+                            "vendor": topology.get("vendor") or ("amd" if hip_version else "nvidia"),
+                            "architecture": topology.get("architecture"),
+                            "memoryKind": "shared" if shared else "dedicated",
+                            "utilizationPercent": None,
+                            "utilizationSource": None,
+                            "memoryTotalBytes": planning_total,
+                            "memoryFreeBytes": planning_free,
+                            "memoryUsedBytes": (
+                                max(0, planning_total - planning_free)
+                                if planning_total is not None and planning_free is not None
+                                else used
+                            ),
+                            "accessibleMemoryTotalBytes": total,
+                            "accessibleMemoryFreeBytes": free,
+                            "dedicatedMemoryTotalBytes": self._safe_int(topology.get("dedicated_memory_total")),
+                            "dedicatedMemoryFreeBytes": self._safe_int(topology.get("dedicated_memory_free")),
+                            "sharedMemoryTotalBytes": self._safe_int(topology.get("shared_memory_total")),
+                            "sharedMemoryFreeBytes": self._safe_int(topology.get("shared_memory_free")),
+                            "allocatedBytes": allocated,
+                            "reservedBytes": reserved,
+                            "peakAllocatedBytes": self._safe_int(raw_device.get("max_allocated_bytes")),
+                            "peakReservedBytes": self._safe_int(raw_device.get("max_reserved_bytes")),
+                        }
+                    )
+
+                xpu = getattr(torch, "xpu", None)
+                if not accelerators and xpu is not None and bool(getattr(xpu, "is_available", lambda: False)()):
+                    for index in range(int(xpu.device_count())):
+                        device_name = f"xpu:{index}"
+                        topology = topology_by_device.get(device_name, {})
+                        total = free = allocated = reserved = None
+                        try:
+                            properties = xpu.get_device_properties(index)
+                            total = self._safe_int(getattr(properties, "total_memory", None))
+                        except Exception:
+                            pass
+                        try:
+                            free, runtime_total = xpu.mem_get_info(index)
+                            free = self._safe_int(free)
+                            total = total or self._safe_int(runtime_total)
+                        except Exception:
+                            pass
+                        try:
+                            allocated = self._safe_int(xpu.memory_allocated(index))
+                            reserved = self._safe_int(xpu.memory_reserved(index))
+                        except Exception:
+                            pass
+                        accelerators.append(
+                            {
+                                "device": device_name,
+                                "index": index,
+                                "name": str(getattr(xpu, "get_device_name", lambda _index: f"Intel XPU {index}")(index)),
+                                "backend": "xpu",
+                                "vendor": "intel",
+                                "architecture": topology.get("architecture"),
+                                "memoryKind": topology.get("memory_kind") or "dedicated",
+                                "utilizationPercent": None,
+                                "utilizationSource": None,
+                                "memoryTotalBytes": self._safe_int(topology.get("planning_memory_total")) or total,
+                                "memoryFreeBytes": self._safe_int(topology.get("planning_memory_free")) or free,
+                                "accessibleMemoryTotalBytes": total,
+                                "accessibleMemoryFreeBytes": free,
+                                "dedicatedMemoryTotalBytes": self._safe_int(topology.get("dedicated_memory_total")),
+                                "dedicatedMemoryFreeBytes": self._safe_int(topology.get("dedicated_memory_free")),
+                                "sharedMemoryTotalBytes": self._safe_int(topology.get("shared_memory_total")),
+                                "sharedMemoryFreeBytes": self._safe_int(topology.get("shared_memory_free")),
+                                "memoryUsedBytes": max(0, total - free)
+                                if total is not None and free is not None
+                                else reserved,
+                                "allocatedBytes": allocated,
+                                "reservedBytes": reserved,
+                            }
+                        )
+
+                mps = getattr(torch, "mps", None)
+                if not accelerators and bool(
+                    getattr(getattr(torch, "backends", None), "mps", None) and torch.backends.mps.is_available()
+                ):
+                    allocated = None
+                    driver_allocated = None
+                    recommended_max = None
+                    try:
+                        allocated = self._safe_int(mps.current_allocated_memory())
+                        driver_allocated = self._safe_int(mps.driver_allocated_memory())
+                        recommended = getattr(mps, "recommended_max_memory", None)
+                        recommended_max = self._safe_int(recommended()) if callable(recommended) else None
+                    except Exception:
+                        pass
+                    accelerators.append(
+                        {
+                            "device": "mps:0",
+                            "index": 0,
+                            "name": "Apple Metal Performance Shaders",
+                            "backend": "mps",
+                            "vendor": "apple",
+                            "architecture": platform.machine(),
+                            "memoryKind": "shared",
+                            "utilizationPercent": None,
+                            "utilizationSource": None,
+                            "memoryTotalBytes": recommended_max,
+                            "memoryFreeBytes": (
+                                max(0, recommended_max - driver_allocated)
+                                if recommended_max is not None and driver_allocated is not None
+                                else None
+                            ),
+                            "memoryUsedBytes": driver_allocated,
+                            "allocatedBytes": allocated,
+                            "reservedBytes": driver_allocated,
+                        }
+                    )
+            except Exception as exc:
+                errors.append(f"accelerator telemetry: {exc}")
+
+        # Whole-device utilization is deliberately separate from Torch's
+        # allocator counters. Prefer low-overhead vendor sources and leave the
+        # value unavailable rather than inventing activity from allocation.
+        try:
+            if accelerators and accelerators[0].get("backend") == "cuda":
+                nvidia_smi = shutil.which("nvidia-smi")
+                if not nvidia_smi:
+                    raise FileNotFoundError("nvidia-smi is unavailable")
+                result = subprocess.run(
+                    [
+                        nvidia_smi,
+                        "--query-gpu=index,utilization.gpu",
+                        "--format=csv,noheader,nounits",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=1.5,
+                )
+                if result.returncode == 0:
+                    for row in csv.reader(result.stdout.splitlines()):
+                        if len(row) < 2:
+                            continue
+                        index = self._safe_int(row[0])
+                        utilization = self._safe_int(row[1])
+                        for accelerator in accelerators:
+                            if accelerator.get("index") == index:
+                                accelerator["utilizationPercent"] = utilization
+                                accelerator["utilizationSource"] = "nvidia-smi"
+            elif accelerators and accelerators[0].get("backend") == "rocm":
+                amd_cards = []
+                drm_root = Path("/sys/class/drm")
+                if drm_root.is_dir():
+                    for busy_path in sorted(drm_root.glob("card*/device/gpu_busy_percent")):
+                        vendor_path = busy_path.parent / "vendor"
+                        try:
+                            if vendor_path.read_text(encoding="utf-8").strip().lower() != "0x1002":
+                                continue
+                            amd_cards.append(self._safe_int(busy_path.read_text(encoding="utf-8").strip()))
+                        except Exception:
+                            continue
+                for index, utilization in enumerate(amd_cards):
+                    if index < len(accelerators):
+                        accelerators[index]["utilizationPercent"] = utilization
+                        accelerators[index]["utilizationSource"] = "sysfs"
+        except Exception as exc:
+            errors.append(f"device utilization: {exc}")
+
+        return accelerators, errors
 
     def _collect_runtime_resource_snapshot(self):
         sampled_at = time.time()
@@ -11361,199 +13086,10 @@ class WebServer:
         except Exception as exc:
             errors.append(f"process telemetry: {exc}")
 
-        cuda_snapshot = self._cuda_memory_snapshot()
-        accelerators = []
-        try:
-            torch = import_module("torch")
-            hardware_snapshot = get_hardware_snapshot(self.data_dir)
-            topology_by_device = {
-                str(item.get("device")): item
-                for item in (hardware_snapshot.get("devices") or [])
-                if isinstance(item, dict) and item.get("device")
-            }
-            hip_version = getattr(getattr(torch, "version", None), "hip", None)
-            runtime_backend = "rocm" if hip_version else "cuda"
-            ram_total = system.get("ramTotalBytes")
-            for raw_device in cuda_snapshot.get("devices") or []:
-                device_name = f"cuda:{raw_device.get('index', len(accelerators))}"
-                topology = topology_by_device.get(device_name, {})
-                total = self._safe_int(raw_device.get("total_bytes") or raw_device.get("total_memory"))
-                free = self._safe_int(raw_device.get("free_bytes"))
-                allocated = self._safe_int(raw_device.get("allocated_bytes"))
-                reserved = self._safe_int(raw_device.get("reserved_bytes"))
-                used = max(0, total - free) if total is not None and free is not None else reserved
-                shared = topology.get("memory_kind") == "shared" or bool(
-                    hip_version and total is not None and ram_total is not None and total >= int(ram_total * 0.75)
-                )
-                planning_total = self._safe_int(topology.get("planning_memory_total")) or total
-                planning_free = self._safe_int(topology.get("planning_memory_free"))
-                if planning_free is None:
-                    planning_free = free
-                accelerators.append(
-                    {
-                        "device": device_name,
-                        "index": raw_device.get("index", len(accelerators)),
-                        "name": raw_device.get("name") or raw_device.get("device_name") or runtime_backend.upper(),
-                        "backend": runtime_backend,
-                        "vendor": topology.get("vendor") or ("amd" if hip_version else "nvidia"),
-                        "architecture": topology.get("architecture"),
-                        "memoryKind": "shared" if shared else "dedicated",
-                        "utilizationPercent": None,
-                        "utilizationSource": None,
-                        "memoryTotalBytes": planning_total,
-                        "memoryFreeBytes": planning_free,
-                        "memoryUsedBytes": (
-                            max(0, planning_total - planning_free)
-                            if planning_total is not None and planning_free is not None
-                            else used
-                        ),
-                        "accessibleMemoryTotalBytes": total,
-                        "accessibleMemoryFreeBytes": free,
-                        "dedicatedMemoryTotalBytes": self._safe_int(topology.get("dedicated_memory_total")),
-                        "dedicatedMemoryFreeBytes": self._safe_int(topology.get("dedicated_memory_free")),
-                        "sharedMemoryTotalBytes": self._safe_int(topology.get("shared_memory_total")),
-                        "sharedMemoryFreeBytes": self._safe_int(topology.get("shared_memory_free")),
-                        "allocatedBytes": allocated,
-                        "reservedBytes": reserved,
-                        "peakAllocatedBytes": self._safe_int(raw_device.get("max_allocated_bytes")),
-                        "peakReservedBytes": self._safe_int(raw_device.get("max_reserved_bytes")),
-                    }
-                )
-
-            xpu = getattr(torch, "xpu", None)
-            if not accelerators and xpu is not None and bool(getattr(xpu, "is_available", lambda: False)()):
-                for index in range(int(xpu.device_count())):
-                    device_name = f"xpu:{index}"
-                    topology = topology_by_device.get(device_name, {})
-                    total = free = allocated = reserved = None
-                    try:
-                        properties = xpu.get_device_properties(index)
-                        total = self._safe_int(getattr(properties, "total_memory", None))
-                    except Exception:
-                        pass
-                    try:
-                        free, runtime_total = xpu.mem_get_info(index)
-                        free = self._safe_int(free)
-                        total = total or self._safe_int(runtime_total)
-                    except Exception:
-                        pass
-                    try:
-                        allocated = self._safe_int(xpu.memory_allocated(index))
-                        reserved = self._safe_int(xpu.memory_reserved(index))
-                    except Exception:
-                        pass
-                    accelerators.append(
-                        {
-                            "device": device_name,
-                            "index": index,
-                            "name": str(getattr(xpu, "get_device_name", lambda _index: f"Intel XPU {index}")(index)),
-                            "backend": "xpu",
-                            "vendor": "intel",
-                            "architecture": topology.get("architecture"),
-                            "memoryKind": topology.get("memory_kind") or "dedicated",
-                            "utilizationPercent": None,
-                            "utilizationSource": None,
-                            "memoryTotalBytes": self._safe_int(topology.get("planning_memory_total")) or total,
-                            "memoryFreeBytes": self._safe_int(topology.get("planning_memory_free")) or free,
-                            "accessibleMemoryTotalBytes": total,
-                            "accessibleMemoryFreeBytes": free,
-                            "dedicatedMemoryTotalBytes": self._safe_int(topology.get("dedicated_memory_total")),
-                            "dedicatedMemoryFreeBytes": self._safe_int(topology.get("dedicated_memory_free")),
-                            "sharedMemoryTotalBytes": self._safe_int(topology.get("shared_memory_total")),
-                            "sharedMemoryFreeBytes": self._safe_int(topology.get("shared_memory_free")),
-                            "memoryUsedBytes": max(0, total - free)
-                            if total is not None and free is not None
-                            else reserved,
-                            "allocatedBytes": allocated,
-                            "reservedBytes": reserved,
-                        }
-                    )
-
-            mps = getattr(torch, "mps", None)
-            if not accelerators and bool(
-                getattr(getattr(torch, "backends", None), "mps", None) and torch.backends.mps.is_available()
-            ):
-                allocated = None
-                driver_allocated = None
-                recommended_max = None
-                try:
-                    allocated = self._safe_int(mps.current_allocated_memory())
-                    driver_allocated = self._safe_int(mps.driver_allocated_memory())
-                    recommended = getattr(mps, "recommended_max_memory", None)
-                    recommended_max = self._safe_int(recommended()) if callable(recommended) else None
-                except Exception:
-                    pass
-                accelerators.append(
-                    {
-                        "device": "mps:0",
-                        "index": 0,
-                        "name": "Apple Metal Performance Shaders",
-                        "backend": "mps",
-                        "vendor": "apple",
-                        "architecture": platform.machine(),
-                        "memoryKind": "shared",
-                        "utilizationPercent": None,
-                        "utilizationSource": None,
-                        "memoryTotalBytes": recommended_max,
-                        "memoryFreeBytes": (
-                            max(0, recommended_max - driver_allocated)
-                            if recommended_max is not None and driver_allocated is not None
-                            else None
-                        ),
-                        "memoryUsedBytes": driver_allocated,
-                        "allocatedBytes": allocated,
-                        "reservedBytes": driver_allocated,
-                    }
-                )
-        except Exception as exc:
-            errors.append(f"accelerator telemetry: {exc}")
-
-        # Whole-device utilization is deliberately separate from Torch's
-        # allocator counters. Prefer low-overhead vendor sources and leave the
-        # value unavailable rather than inventing activity from allocation.
-        try:
-            if accelerators and accelerators[0].get("backend") == "cuda":
-                nvidia_smi = shutil.which("nvidia-smi")
-                if not nvidia_smi:
-                    raise FileNotFoundError("nvidia-smi is unavailable")
-                result = subprocess.run(
-                    [
-                        nvidia_smi,
-                        "--query-gpu=index,utilization.gpu",
-                        "--format=csv,noheader,nounits",
-                    ],
-                    capture_output=True,
-                    text=True,
-                    timeout=1.5,
-                )
-                if result.returncode == 0:
-                    for row in csv.reader(result.stdout.splitlines()):
-                        if len(row) < 2:
-                            continue
-                        index = self._safe_int(row[0])
-                        utilization = self._safe_int(row[1])
-                        for accelerator in accelerators:
-                            if accelerator.get("index") == index:
-                                accelerator["utilizationPercent"] = utilization
-                                accelerator["utilizationSource"] = "nvidia-smi"
-            elif accelerators and accelerators[0].get("backend") == "rocm":
-                amd_cards = []
-                drm_root = Path("/sys/class/drm")
-                if drm_root.is_dir():
-                    for busy_path in sorted(drm_root.glob("card*/device/gpu_busy_percent")):
-                        vendor_path = busy_path.parent / "vendor"
-                        try:
-                            if vendor_path.read_text(encoding="utf-8").strip().lower() != "0x1002":
-                                continue
-                            amd_cards.append(self._safe_int(busy_path.read_text(encoding="utf-8").strip()))
-                        except Exception:
-                            continue
-                for index, utilization in enumerate(amd_cards):
-                    if index < len(accelerators):
-                        accelerators[index]["utilizationPercent"] = utilization
-                        accelerators[index]["utilizationSource"] = "sysfs"
-        except Exception as exc:
-            errors.append(f"device utilization: {exc}")
+        accelerators, accelerator_errors = self._runtime_accelerator_snapshot(
+            ram_total=system.get("ramTotalBytes")
+        )
+        errors.extend(accelerator_errors)
 
         active_device = None
         if self.current_task:
@@ -11585,9 +13121,14 @@ class WebServer:
         }
 
     async def runtime_resources(self, _request):
-        # psutil and vendor probes are blocking system calls. Keep them off the
-        # aiohttp loop so resource telemetry cannot delay graph or queue APIs.
-        return web.json_response(await asyncio.to_thread(self._runtime_resource_snapshot))
+        # Share the in-flight sample before submitting work to the thread pool.
+        # Otherwise concurrent polls each consume a worker while waiting for
+        # the resource snapshot lock and can starve unrelated health requests.
+        body = await self._coalesced_control_response(
+            "runtime_resources",
+            lambda: self._json_response_bytes(self._runtime_resource_snapshot()),
+        )
+        return web.Response(body=body, content_type="application/json")
 
     def _best_effort_device_cache_clear(self):
         errors = []
@@ -11636,6 +13177,51 @@ class WebServer:
             logger.debug("malloc_trim failed during accelerator cleanup", exc_info=True)
             return False, [f"malloc_trim: {e}"]
 
+    def _release_node_modular_components(self, node_ids):
+        """Destroy unshared ownership without offloading soon-to-be-dead models.
+
+        The pinned manager's remove() rebuilds all offload hooks (or calls
+        component.to('cpu')). Either can duplicate a whole accelerator model in
+        RAM. Prune only the selected collections and their now-unowned entries;
+        surviving components retain their exact hooks, device and strategy.
+        Called only while the node-cache lease excludes model work.
+        """
+        module = sys.modules.get("modules.ModularDiffusers")
+        manager = getattr(module, "components", None)
+        collections = getattr(manager, "collections", None)
+        components = getattr(manager, "components", None)
+        if not isinstance(collections, dict) or not isinstance(components, dict):
+            return 0
+        targets = set(node_ids).intersection(collections)
+        if not targets:
+            return 0
+        selected = set().union(*(set(collections[key]) for key in targets))
+        retained = set().union(*(set(value) for key, value in collections.items() if key not in targets))
+        removed = selected - retained
+        for key in targets:
+            collections.pop(key, None)
+        hooks = getattr(manager, "model_hooks", None)
+        if isinstance(hooks, list):
+            remaining_hooks = []
+            for wrapper in hooks:
+                hook = getattr(wrapper, "hook", None)
+                peers = getattr(hook, "other_hooks", None)
+                if isinstance(peers, list):
+                    hook.other_hooks = [peer for peer in peers if getattr(peer, "model_id", None) not in removed]
+                if getattr(wrapper, "model_id", None) not in removed:
+                    remaining_hooks.append(wrapper)
+            manager.model_hooks = remaining_hooks or None
+            if not remaining_hooks:
+                manager._auto_offload_enabled = False
+                manager._auto_offload_device = None
+                manager._offload_strategy = None
+        for component_id in removed:
+            components.pop(component_id, None)
+            added_time = getattr(manager, "added_time", None)
+            if isinstance(added_time, dict):
+                added_time.pop(component_id, None)
+        return len(removed)
+
     def _release_modular_diffusers_components(self):
         try:
             modular_diffusers = import_module("modules.ModularDiffusers")
@@ -11650,25 +13236,14 @@ class WebServer:
         released_count = len(components_dict) if components_dict is not None else 0
         errors = []
 
-        try:
-            torch = import_module("torch")
-        except Exception:
-            torch = None
-
-        hooks = list(getattr(manager, "model_hooks", None) or [])
-        for hook in hooks:
-            for label, callback in (
-                ("offload", getattr(hook, "offload", None)),
-                ("remove", getattr(hook, "remove", None)),
-            ):
-                if callback is None:
-                    continue
-                try:
-                    callback()
-                except Exception as e:
-                    logger.debug(f"Modular Diffusers hook {label} failed during cleanup", exc_info=True)
-                    errors.append(f"Modular Diffusers hook {label}: {e}")
-
+        # A full family/recipe turnover is a destruction path, not an offload
+        # path. Calling hook.offload() or component.to("cpu") first can
+        # transiently materialize an accelerator-sized CPU copy. On unified-
+        # memory ROCm machines that RAM spike can make the kernel OOM-kill the
+        # worker before the old model is released. Detach the manager-owned
+        # hook/component references instead; clearing node_cache immediately
+        # afterwards releases the remaining owners before gc/allocator trim.
+        hooks = getattr(manager, "model_hooks", None)
         try:
             manager.model_hooks = None
             manager._auto_offload_enabled = False
@@ -11678,14 +13253,6 @@ class WebServer:
             errors.append(f"Modular Diffusers offload reset: {e}")
 
         if components_dict is not None:
-            for component_id, component in list(components_dict.items()):
-                try:
-                    if torch is not None and isinstance(component, torch.nn.Module):
-                        component.to("cpu")
-                except Exception as e:
-                    logger.debug(f"Could not move Modular Diffusers component {component_id} to CPU", exc_info=True)
-                    errors.append(f"Modular Diffusers component {component_id}: {e}")
-
             try:
                 components_dict.clear()
             except Exception as e:
@@ -11698,6 +13265,10 @@ class WebServer:
                     value.clear()
             except Exception as e:
                 errors.append(f"Modular Diffusers {attr} clear: {e}")
+
+        # Do not keep hooks alive through the caller's gc.collect(). Hooks can
+        # retain the same large modules after the manager registries are empty.
+        del hooks
 
         return released_count, errors
 
@@ -11722,18 +13293,21 @@ class WebServer:
         # then fail with a KeyError for its node id when execution metrics or
         # outputs are recorded.  Refuse cleanup while the worker owns a task;
         # callers can retry once /queue reports no current task.
-        if self.current_task:
-            task_id = self.current_task.get("task_id")
+        if self.current_task or self._node_cache_lock.locked():
+            task_id = (self.current_task or {}).get("task_id")
             return web.json_response(
                 {
                     "error": True,
                     "error_code": "runtime_cleanup_busy",
-                    "message": "Accelerator cleanup cannot run while a task is active. Wait for the current task to finish, then retry.",
+                    "message": "Accelerator cleanup cannot run while model work or cache cleanup is active. Wait for it to finish, then retry.",
                     "task_id": task_id,
                 },
                 status=409,
             )
 
+        return await self._with_node_cache_lease(lambda: asyncio.to_thread(self._runtime_gpu_cleanup_idle))
+
+    def _runtime_gpu_cleanup_idle(self):
         before = self._cuda_memory_snapshot()
         cleanup_errors = []
         released_nodes = len(self.node_cache)
@@ -11741,13 +13315,12 @@ class WebServer:
         released_diffusers_components = 0
         released_offload_files = 0
 
-        # Drop memory-manager ownership before destroying cached nodes. Node
-        # destructors call MemoryManager.remove() for their tracked ids; if the
-        # manager still owns a large Accelerate-offloaded pipeline, remove()
-        # tries to materialize it on CPU and flushes once per id. On unified
-        # memory ROCm systems that turns cleanup into minutes of RAM/swap
-        # thrashing. With the manager detached first, those destructor calls
-        # are no-ops and the pipeline references are released exactly once.
+        # Drop both model registries before destroying cached nodes. Generic
+        # node destructors consult MemoryManager; Modular loader destructors
+        # consult ComponentsManager. Leaving either manager attached makes
+        # destruction materialize/offload and flush large components one at a
+        # time, which can turn cleanup into minutes of RAM/swap thrashing on a
+        # unified-memory ROCm host.
         try:
             released_models = memory_manager.clear()
         except Exception as e:
@@ -11759,14 +13332,14 @@ class WebServer:
             except Exception as clear_error:
                 cleanup_errors.append(f"memory manager fallback: {clear_error}")
 
+        released_diffusers_components, diffusers_errors = self._release_modular_diffusers_components()
+        cleanup_errors.extend(diffusers_errors)
+
         try:
             self.node_cache.clear()
         except Exception as e:
             logger.debug("Failed to clear node cache during accelerator cleanup", exc_info=True)
             cleanup_errors.append(f"node cache: {e}")
-
-        released_diffusers_components, diffusers_errors = self._release_modular_diffusers_components()
-        cleanup_errors.extend(diffusers_errors)
 
         released_offload_files, offload_cache_errors = self._release_diffusers_offload_cache()
         cleanup_errors.extend(offload_cache_errors)
@@ -11804,8 +13377,113 @@ class WebServer:
             }
         )
 
-    async def model_capabilities(self, request):
-        query = str(request.query.get("q", "")).lower().strip()
+    async def huggingface_node_library(self, _request):
+        return web.json_response(await asyncio.to_thread(reviewed_huggingface_node_library))
+
+    async def huggingface_registered_block_v2(self, request):
+        definition_id = request.query.get("definition_id", "")
+        admission_id = request.query.get("admission_id", "")
+        if not definition_id or not admission_id:
+            return web.json_response(
+                {
+                    "error": True,
+                    "message": "definition_id and admission_id are required.",
+                },
+                status=400,
+            )
+        try:
+            entry = await asyncio.to_thread(
+                registered_block_v2_catalog_entry,
+                definition_id,
+                admission_id,
+            )
+        except ValueError as exc:
+            logger.exception("Could not validate the registered Block V2 catalog")
+            return web.json_response({"error": True, "message": str(exc)}, status=500)
+        if entry is None:
+            return web.json_response(
+                {
+                    "error": True,
+                    "message": "No exact compiled BlockDefinitionV2 is registered for this admission.",
+                },
+                status=404,
+            )
+        return web.json_response({"error": False, "schemaVersion": 1, "entry": entry})
+
+    async def huggingface_modular_conditionals(self, _request):
+        return web.json_response(await asyncio.to_thread(reviewed_modular_conditional_snapshot))
+
+    async def huggingface_modular_composition_rebuild(self, request):
+        """Rebuild a pinned official block recipe without loading model weights."""
+
+        try:
+            payload = await request.json()
+            receipt = await asyncio.to_thread(rebuild_reviewed_modular_composition, payload)
+        except json.JSONDecodeError:
+            return web.json_response({"error": True, "message": "Invalid JSON body."}, status=400)
+        except ValueError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=400)
+        except Exception as exc:
+            logger.exception("Could not rebuild the reviewed Modular Diffusers composition")
+            return web.json_response(
+                {"error": True, "message": str(exc) or type(exc).__name__},
+                status=500,
+            )
+        return web.json_response({"error": False, "receipt": receipt})
+
+    async def huggingface_cluster_runtime_qualification(self, request):
+        try:
+            payload = await request.json()
+            if not isinstance(payload, dict):
+                raise ValueError("The Cluster runtime qualification payload must be an object.")
+            runtime_fingerprint = self._runtime_fingerprint_for_control_request()
+            receipt = await asyncio.to_thread(
+                qualify_huggingface_cluster_expert_runtime,
+                payload,
+                library=reviewed_huggingface_node_library(),
+                runtime_fingerprint=runtime_fingerprint,
+                local_models=get_local_models(),
+            )
+        except ValueError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=400)
+        except Exception as exc:
+            logger.exception("Could not qualify the Hugging Face Cluster Node Expert runtime")
+            return web.json_response(
+                {"error": True, "message": str(exc) or type(exc).__name__},
+                status=500,
+            )
+        return web.json_response({"error": False, "receipt": receipt})
+
+    async def huggingface_cluster_auto_authority(self, request):
+        try:
+            payload = await request.json()
+            if not isinstance(payload, dict):
+                raise ValueError("The Cluster Auto authority payload must be an object.")
+            runtime_fingerprint = self._runtime_fingerprint_for_control_request()
+            receipt = await asyncio.to_thread(
+                qualify_huggingface_cluster_auto_authority,
+                payload,
+                library=reviewed_huggingface_node_library(),
+                runtime_fingerprint=runtime_fingerprint,
+                local_models=get_local_models(),
+                data_dir=self.data_dir,
+            )
+        except json.JSONDecodeError:
+            return web.json_response({"error": True, "message": "Invalid JSON body."}, status=400)
+        except ValueError as exc:
+            return web.json_response({"error": True, "message": str(exc)}, status=400)
+        except Exception as exc:
+            logger.exception("Could not issue the Hugging Face Cluster Node Auto authority")
+            return web.json_response(
+                {"error": True, "message": str(exc) or type(exc).__name__},
+                status=500,
+            )
+        return web.json_response({"error": False, "receipt": receipt})
+
+    def _build_model_capabilities_payload(self, query=""):
+        from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+        from modiff.optional_runtime_execution import optional_runtime_requirement_for_profiles
+
         optional_runtime_catalog_snapshot = None
         execution_specs = validate_studio_execution_specs(self.modules)
         specs_by_model = {}
@@ -11818,11 +13496,43 @@ class WebServer:
                 optional_runtime_catalog_snapshot = public_optional_runtime_catalog()
             return optional_runtime_catalog_snapshot
 
-        profiles_by_model = {}
-        for profile in public_execution_profiles(
+        published_execution_profiles = public_execution_profiles(
             observe_optional_runtime=True,
             optional_runtime_catalog_resolver=request_optional_runtime_catalog,
-        ):
+        )
+        _fingerprint, optimization_hardware, optimization_profile = self._optimization_runtime_context()
+        optimization_catalog = public_optimization_catalog(
+            runtime_profile=optimization_profile,
+            hardware=optimization_hardware,
+            optional_runtime_catalog=request_optional_runtime_catalog(),
+        )
+        optimization_by_id = {
+            item.get("id"): item
+            for item in optimization_catalog.get("capabilities", [])
+            if isinstance(item, dict) and isinstance(item.get("id"), str)
+        }
+        quantization_capabilities = {
+            "bnb_4bit": "bitsandbytes",
+            "bnb_8bit": "bitsandbytes",
+            "quanto_float8": "optimum_quanto",
+            "torchao_float8": "torchao",
+        }
+        for profile in published_execution_profiles:
+            declared_modes = profile.get("expert_quantization_modes")
+            if not isinstance(declared_modes, list):
+                continue
+            profile["available_expert_quantization_modes"] = [
+                mode
+                for mode in declared_modes
+                if (
+                    isinstance(mode, str)
+                    and isinstance(optimization_by_id.get(quantization_capabilities.get(mode)), dict)
+                    and optimization_by_id[quantization_capabilities[mode]].get("availableForExecution") is True
+                )
+            ]
+
+        profiles_by_model = {}
+        for profile in published_execution_profiles:
             profiles_by_model.setdefault(profile.get("model_type"), []).append(profile)
 
         capabilities = []
@@ -11892,8 +13602,11 @@ class WebServer:
                     "optionalRuntimeProfiles": public_optional_runtime_profiles(
                         optional_runtime_profile_ids
                     ),
-                    "optionalRuntimeRequirement": optional_runtime_requirement_for_execution(
-                        capability.get("modelType"),
+                    # Aggregate the same public records sent above. Retained
+                    # hidden loader profiles are compatibility authority, not
+                    # undisclosed requirements of a new catalog admission.
+                    "optionalRuntimeRequirement": optional_runtime_requirement_for_profiles(
+                        tuple(DIFFUSERS_EXECUTION_PROFILES[profile["id"]] for profile in profiles),
                         catalog_resolver=request_optional_runtime_catalog,
                     ),
                 }
@@ -11904,6 +13617,16 @@ class WebServer:
                     specification["mode"] for specification in capability["studioExecutionSpecs"]
                 )
             capabilities.append(capability)
+        task_template_contracts = build_task_template_contracts(capabilities, execution_specs)
+        task_contracts_by_model = {}
+        for contract in task_template_contracts:
+            task_contracts_by_model.setdefault(contract["modelType"], []).append(contract)
+        for capability in capabilities:
+            contracts = task_contracts_by_model.get(capability["modelType"], [])
+            capability["taskTemplateContracts"] = contracts
+            if contracts:
+                capability["taskTemplateContractSchemaVersion"] = TASK_TEMPLATE_CONTRACT_SCHEMA_VERSION
+                capability["taskTemplateContractModes"] = sorted(contract["mode"] for contract in contracts)
         if query:
             capabilities = [
                 capability
@@ -11913,26 +13636,61 @@ class WebServer:
                 or query in capability.get("family", "").lower()
                 or query in capability.get("defaultRepo", "").lower()
             ]
+            returned_models = {capability["modelType"] for capability in capabilities}
+            task_template_contracts = [
+                contract for contract in task_template_contracts if contract["modelType"] in returned_models
+            ]
 
-        return web.json_response(
-            {
-                "error": False,
-                "schemaVersion": 2,
-                "count": len(capabilities),
-                "capabilities": capabilities,
-                "diffusersExecutionProfiles": public_execution_profiles(
-                    observe_optional_runtime=True,
-                    optional_runtime_catalog_resolver=request_optional_runtime_catalog,
-                ),
-                "studioExecutionSpecs": execution_specs,
-                "optionalRuntimeProfiles": public_optional_runtime_profiles(),
-                "experimentalCapabilities": public_experimental_pipelines(
-                    observe_optional_runtime=True,
-                    optional_runtime_catalog_resolver=request_optional_runtime_catalog,
-                ),
-                "source": "modiff-backend",
-            }
+        return {
+            "error": False,
+            "schemaVersion": 2,
+            "count": len(capabilities),
+            "capabilities": capabilities,
+            "taskTemplateContractSchemaVersion": TASK_TEMPLATE_CONTRACT_SCHEMA_VERSION,
+            "taskTemplateContracts": task_template_contracts,
+            "diffusersExecutionProfiles": published_execution_profiles,
+            "studioExecutionSpecs": execution_specs,
+            "optionalRuntimeProfiles": public_optional_runtime_profiles(),
+            "experimentalCapabilities": public_experimental_pipelines(
+                observe_optional_runtime=True,
+                optional_runtime_catalog_resolver=request_optional_runtime_catalog,
+            ),
+            "source": "modiff-backend",
+        }
+
+    async def _model_capabilities_response(self, query):
+        """Return one pre-serialized capability catalog for the active generation."""
+        async with self.control_snapshot_lock:
+            generation = self.model_capabilities_cache_generation
+            cached = self.model_capabilities_response_cache.get(query)
+            if cached is not None and cached[0] == generation:
+                return cached[1]
+
+        body = await self._coalesced_control_response(
+            ("model_capabilities", generation, query),
+            lambda: self._json_response_bytes(self._build_model_capabilities_payload(query)),
         )
+        async with self.control_snapshot_lock:
+            if self.model_capabilities_cache_generation == generation:
+                # The unfiltered Studio request is primed at startup. Bound
+                # optional query variants so arbitrary search strings cannot
+                # turn the response cache into unbounded process memory.
+                if query == "" or query in self.model_capabilities_response_cache:
+                    self.model_capabilities_response_cache[query] = (generation, body)
+                elif len(self.model_capabilities_response_cache) < 16:
+                    self.model_capabilities_response_cache[query] = (generation, body)
+        return body
+
+    async def _invalidate_model_capabilities_response(self):
+        """Advance the catalog generation after an in-process runtime mutation."""
+        async with self.control_snapshot_lock:
+            self.model_capabilities_cache_generation += 1
+            self.model_capabilities_response_cache.clear()
+
+    async def model_capabilities(self, request):
+        query = str(request.query.get("q", "")).lower().strip()
+        body = await self._model_capabilities_response(query)
+        return web.Response(body=body, content_type="application/json")
 
     def _auto_resource_runtime_block(self):
         cached = (
@@ -12064,7 +13822,12 @@ class WebServer:
                 free = device.get(key)
                 if not isinstance(free, int):
                     continue
-                device[key] = min(total, free + reclaimable) if total is not None else free + reclaimable
+                capacity = total
+                if key == "torch_vram_free" and device.get("memory_kind") in {"shared", "unified"}:
+                    accessible = device.get("torch_vram_total")
+                    if isinstance(accessible, int) and accessible > 0:
+                        capacity = accessible
+                device[key] = min(capacity, free + reclaimable) if capacity is not None else free + reclaimable
             device["modiff_reclaimable_vram"] = reclaimable
 
         torch_state = adjusted_hardware.get("torch") if isinstance(adjusted_hardware, dict) else None
@@ -12078,6 +13841,100 @@ class WebServer:
                 )
         return adjusted
 
+    def _build_auto_resource_response(self, payload, *, batch=False):
+        """Build planning snapshots outside the HTTP loop, including probes/I/O.
+
+        Model Manager requests all supported plans at once. Snapshot gathering
+        and candidate evaluation can be expensive even when no model is running;
+        neither may prevent health, cancellation, or library requests being served.
+        Plans remain advisory: graph admission revalidates execution authority.
+        """
+        runtime_block = self._auto_resource_runtime_block()
+        if runtime_block:
+            if not batch:
+                return self._json_response_bytes(runtime_block)
+            forms = payload.get("forms", []) if isinstance(payload, dict) else []
+            keys = payload.get("keys", []) if isinstance(payload, dict) else []
+            plans = []
+            for index, _form in enumerate(forms):
+                plan = {**runtime_block, "requestIndex": index}
+                if index < len(keys) and keys[index]:
+                    plan["planKey"] = str(keys[index])
+                plans.append(plan)
+            return self._json_response_bytes({
+                "error": False,
+                "schemaVersion": 2,
+                "resourceMode": "auto",
+                "count": len(plans),
+                "plans": plans,
+                "checkedAt": int(time.time() * 1000),
+            })
+        kwargs = {
+            "runtime_fingerprint": self._auto_planning_runtime_fingerprint(),
+            "local_models": get_local_models(),
+            "data_dir": self.data_dir,
+        }
+        if batch:
+            result = build_auto_resource_plans(payload if isinstance(payload, dict) else {}, **kwargs)
+        else:
+            result = build_auto_resource_plan(
+                payload if isinstance(payload, dict) else {},
+                history=read_auto_resource_history(self.data_dir),
+                **kwargs,
+            )
+        return self._json_response_bytes(result)
+
+    def _prepare_workflow_auto_data(self, graph, plan):
+        from modiff.workflow_auto_values import RUNTIME_VALUES
+        prepared, values = set(), {}
+        order = list(dict.fromkeys(key for path in graph["paths"] for key in path))
+        # The same executor dispatches each supplier exactly once for this run.
+        # No prior-run cache output is accepted as a resource bound.
+        for _ in range(len(order) + 1):
+            needed = set(plan.get("preparationNodeIds", [])) - prepared
+            if not needed:
+                if plan.get("requiresPreparation"):
+                    raise self._auto_resource_contract_error("Auto data preparation could not resolve a resource control.")
+                return plan, prepared
+            for node_id in order:
+                if node_id not in needed:
+                    continue
+                if self.interrupt_flag:
+                    raise self._auto_resource_contract_error("Auto data preparation was cancelled.")
+                cached = self.node_cache.get(node_id)
+                if callable(getattr(cached, "invalidate_cache", None)):
+                    cached.invalidate_cache()
+                self.execute_node(node_id, graph["nodes"][node_id], graph["sid"])
+                output = self.node_cache[node_id].output
+                if not isinstance(output, dict):
+                    raise self._auto_resource_contract_error("The data supplier returned an invalid output contract.")
+                values.update({(node_id, key): value for key, value in output.items()})
+                prepared.add(node_id)
+            token = RUNTIME_VALUES.set(values)
+            try:
+                plan = self._build_workflow_auto_plan(graph)
+            finally:
+                RUNTIME_VALUES.reset(token)
+            if not plan["canAutoRun"]:
+                return plan, prepared
+        raise self._auto_resource_contract_error("Auto data preparation exceeded its graph bound.")
+
+    def _build_workflow_auto_plan(self, graph):
+        runtime_block = self._auto_resource_runtime_block()
+        if runtime_block:
+            raise ValueError(runtime_block.get("message") or "The installed runtime requires repair before Auto can run.")
+        return build_workflow_auto_plan(graph, runtime_fingerprint=self._auto_planning_runtime_fingerprint(), local_models=get_local_models(), data_dir=self.data_dir)
+
+    async def workflow_auto_resource_plan(self, request):
+        try:
+            payload = await request.json()
+            if not isinstance(payload, dict) or set(payload) != {"schemaVersion", "graph"} or payload.get("schemaVersion") != 1 or not isinstance(payload.get("graph"), dict):
+                raise ValueError("Invalid workflow Auto planning request.")
+            plan = await asyncio.to_thread(self._build_workflow_auto_plan, payload["graph"])
+            return web.json_response(plan)
+        except (ValueError, TypeError) as error:
+            return web.json_response({"error": True, "message": str(error)}, status=400)
+
     async def auto_resource_plan(self, request):
         try:
             payload = await request.json()
@@ -12085,17 +13942,8 @@ class WebServer:
             payload = {}
 
         try:
-            runtime_block = self._auto_resource_runtime_block()
-            if runtime_block:
-                return web.json_response(runtime_block)
-            plan = build_auto_resource_plan(
-                payload if isinstance(payload, dict) else {},
-                runtime_fingerprint=self._auto_planning_runtime_fingerprint(),
-                local_models=get_local_models(),
-                data_dir=self.data_dir,
-                history=read_auto_resource_history(self.data_dir),
-            )
-            return web.json_response(plan)
+            body = await asyncio.to_thread(self._build_auto_resource_response, payload)
+            return web.Response(body=body, content_type="application/json")
         except Exception as exc:
             return web.json_response(
                 {
@@ -12150,33 +13998,8 @@ class WebServer:
             payload = {}
 
         try:
-            runtime_block = self._auto_resource_runtime_block()
-            if runtime_block:
-                forms = payload.get("forms", []) if isinstance(payload, dict) else []
-                keys = payload.get("keys", []) if isinstance(payload, dict) else []
-                plans = []
-                for index, _form in enumerate(forms):
-                    plan = {**runtime_block, "requestIndex": index}
-                    if index < len(keys) and keys[index]:
-                        plan["planKey"] = str(keys[index])
-                    plans.append(plan)
-                return web.json_response(
-                    {
-                        "error": False,
-                        "schemaVersion": 2,
-                        "resourceMode": "auto",
-                        "count": len(plans),
-                        "plans": plans,
-                        "checkedAt": int(time.time() * 1000),
-                    }
-                )
-            result = build_auto_resource_plans(
-                payload if isinstance(payload, dict) else {},
-                runtime_fingerprint=self._auto_planning_runtime_fingerprint(),
-                local_models=get_local_models(),
-                data_dir=self.data_dir,
-            )
-            return web.json_response(result)
+            body = await asyncio.to_thread(self._build_auto_resource_response, payload, batch=True)
+            return web.Response(body=body, content_type="application/json")
         except Exception as exc:
             return web.json_response(
                 {
@@ -12385,9 +14208,18 @@ class WebServer:
     async def model_cache_diagnostics(self, request):
         refresh = str(request.query.get("refresh", "")).lower() in ("1", "true", "yes")
         if refresh:
-            modelstore.actualize()
+            generation = await self._refresh_model_indexes()
+        else:
+            generation = await self._settled_model_discovery_generation()
 
-        return web.json_response(get_cache_diagnostics())
+        diagnostics = await self._model_discovery_snapshot(
+            "cache_diagnostics",
+            generation,
+            get_cache_diagnostics,
+        )
+        if not isinstance(diagnostics, dict):
+            raise RuntimeError("Model cache diagnostics did not return a JSON object.")
+        return web.json_response(diagnostics)
 
     def _custom_modules_root(self):
         root = Path("custom").resolve()
@@ -12702,13 +14534,378 @@ class WebServer:
             logger.error(f"Error enabling custom module: {e}", exc_info=True)
             return web.json_response({"error": True, "message": str(e)}, status=500)
 
-    async def hf_cache_delete(self, request):
-        hashes = request.match_info.get("hash").split(",")
-        if not hashes:
-            return web.json_response({"error": "Incorrect request, `hash` is required."}, status=400)
+    @staticmethod
+    def _template_gallery_error_response(error, *, plan=None):
+        status = 409
+        if isinstance(error, TemplateGalleryError):
+            code = error.code
+            if code in {"template_gallery_contract_missing"}:
+                status = 404
+            elif code in {"template_gallery_download_unavailable"}:
+                status = 503
+        else:
+            code = "template_gallery_install_failed"
+            status = 500
+        return web.json_response(
+            {
+                "error": str(error) if isinstance(error, TemplateGalleryError) else "Template Gallery operation failed.",
+                "code": code,
+                "retryable": status >= 500,
+                **({"plan": plan} if isinstance(plan, dict) else {}),
+            },
+            status=status,
+        )
 
-        result = delete_model(*hashes)
-        return web.json_response({"error": not result})
+    def _template_gallery_queue_reservation(self):
+        return sum(int(task.get("reserved_bytes") or 0) for task in self.hf_download_tasks.values())
+
+    async def template_gallery_status(self, request):
+        source = None
+        try:
+            source = load_template_gallery_source(TEMPLATE_GALLERY_SOURCE_PATH)
+            installing = self.template_gallery_install_task is not None and not self.template_gallery_install_task.done()
+            if not template_gallery_destination_present(TEMPLATE_GALLERY_ROOT):
+                return web.json_response(
+                    {
+                        "error": False,
+                        "schemaVersion": 1,
+                        "status": "installing" if installing else "missing",
+                        "installed": False,
+                        "complete": False,
+                        "repairRequired": False,
+                        "installing": installing,
+                        "repoId": source["repoId"],
+                        "revision": source["revision"],
+                        "assetSetId": source["assetSetId"],
+                    }
+                )
+            source, manifest = await asyncio.to_thread(fetch_template_gallery_contract, TEMPLATE_GALLERY_SOURCE_PATH)
+            verification = await asyncio.to_thread(verify_template_gallery_tree, TEMPLATE_GALLERY_ROOT, manifest)
+            return web.json_response(
+                {
+                    "error": False,
+                    "schemaVersion": 1,
+                    "status": "installing" if installing else "ready",
+                    "installing": installing,
+                    "repoId": source["repoId"],
+                    "revision": source["revision"],
+                    **verification,
+                }
+            )
+        except TemplateGalleryError as error:
+            return web.json_response(
+                {
+                    "error": False,
+                    "schemaVersion": 1,
+                    "status": (
+                        "repair_required"
+                        if template_gallery_destination_present(TEMPLATE_GALLERY_ROOT)
+                        else "unavailable"
+                    ),
+                    "installed": False,
+                    "complete": False,
+                    "repairRequired": template_gallery_destination_present(TEMPLATE_GALLERY_ROOT),
+                    "installing": False,
+                    "code": error.code,
+                    "message": str(error),
+                    **(
+                        {
+                            "repoId": source["repoId"],
+                            "revision": source["revision"],
+                            "assetSetId": source["assetSetId"],
+                        }
+                        if isinstance(source, dict)
+                        else {}
+                    ),
+                }
+            )
+        except Exception as error:
+            logger.error("Could not inspect the Template Gallery install", exc_info=True)
+            return self._template_gallery_error_response(error)
+
+    async def _template_gallery_plan(self):
+        async with self.download_reservation_lock:
+            queued_reservation = self._template_gallery_queue_reservation()
+            _source, _manifest, plan = await asyncio.to_thread(
+                partial(
+                    plan_template_gallery_install,
+                    TEMPLATE_GALLERY_SOURCE_PATH,
+                    TEMPLATE_GALLERY_ROOT,
+                    queued_reservation_bytes=queued_reservation,
+                )
+            )
+        plan["installing"] = self.template_gallery_install_task is not None and not self.template_gallery_install_task.done()
+        return plan
+
+    async def template_gallery_plan(self, request):
+        try:
+            return web.json_response({"error": False, **(await self._template_gallery_plan())})
+        except TemplateGalleryError as error:
+            return self._template_gallery_error_response(error)
+        except Exception as error:
+            logger.error("Could not plan the Template Gallery install", exc_info=True)
+            return self._template_gallery_error_response(error)
+
+    async def _run_template_gallery_install(self):
+        source = manifest = plan = None
+        try:
+            async with self.download_reservation_lock:
+                queued_reservation = self._template_gallery_queue_reservation()
+                source, manifest, plan = await asyncio.to_thread(
+                    partial(
+                        plan_template_gallery_install,
+                        TEMPLATE_GALLERY_SOURCE_PATH,
+                        TEMPLATE_GALLERY_ROOT,
+                        queued_reservation_bytes=queued_reservation,
+                    )
+                )
+                plan["installing"] = True
+                if not plan["sizeKnown"] or not plan["fitsWithQueue"]:
+                    return {
+                        "complete": False,
+                        "httpStatus": 507,
+                        "code": "insufficient_template_gallery_space",
+                        "error": (
+                            "The app refused the Template Gallery install because its exact download and staging "
+                            "reservation, active model reservations, and the 64 GiB safety reserve do not fit."
+                        ),
+                        "plan": plan,
+                    }
+                if plan["installed"]:
+                    return {"complete": True, "alreadyInstalled": True, "plan": plan}
+                self.template_gallery_reserved_bytes = int(plan["reservationBytes"])
+            async with self.hf_download_semaphore:
+                result = await asyncio.to_thread(
+                    partial(
+                        install_template_gallery,
+                        source,
+                        manifest,
+                        TEMPLATE_GALLERY_ROOT,
+                        receipt_path=Path(self.data_dir) / "template-gallery-install.v1.json",
+                    )
+                )
+            return {"complete": True, "alreadyInstalled": False, "plan": plan, "result": result}
+        except TemplateGalleryError as error:
+            return {
+                "complete": False,
+                "httpStatus": 409,
+                "code": error.code,
+                "error": str(error),
+                **({"plan": plan} if isinstance(plan, dict) else {}),
+            }
+        except Exception:
+            logger.error("Template Gallery installation failed", exc_info=True)
+            return {
+                "complete": False,
+                "httpStatus": 500,
+                "code": "template_gallery_install_failed",
+                "error": "Template Gallery installation failed.",
+                **({"plan": plan} if isinstance(plan, dict) else {}),
+            }
+        finally:
+            self.template_gallery_reserved_bytes = 0
+
+    async def template_gallery_install(self, request):
+        if getattr(request, "can_read_body", False):
+            try:
+                payload = await request.json()
+            except (TypeError, ValueError):
+                return web.json_response({"error": "Invalid JSON body."}, status=400)
+            if not isinstance(payload, dict) or payload:
+                return web.json_response(
+                    {"error": "The Template Gallery install request must be an empty JSON object."}, status=400
+                )
+
+        if self.template_gallery_install_task is None or self.template_gallery_install_task.done():
+            self.template_gallery_install_task = asyncio.create_task(self._run_template_gallery_install())
+        task = self.template_gallery_install_task
+        try:
+            result = await asyncio.shield(task)
+            if not isinstance(result, dict) or result.get("complete") is not True:
+                status = int(result.get("httpStatus") or 409) if isinstance(result, dict) else 500
+                return web.json_response(
+                    {
+                        "error": result.get("error") if isinstance(result, dict) else "Template Gallery install failed.",
+                        "code": result.get("code") if isinstance(result, dict) else "template_gallery_install_failed",
+                        "retryable": status >= 500,
+                        **({"plan": result.get("plan")} if isinstance(result, dict) and result.get("plan") else {}),
+                    },
+                    status=status,
+                )
+            return web.json_response({"error": False, **result})
+        finally:
+            if self.template_gallery_install_task is task and task.done():
+                self.template_gallery_install_task = None
+
+    async def _hf_cache_deletion_plan(self, raw_hashes, *, allow_redownload=False):
+        hashes = parse_revision_hashes(raw_hashes)
+        models = await asyncio.to_thread(get_local_models)
+        gallery_task = self.template_gallery_install_task
+        gallery_active = gallery_task is not None and not gallery_task.done()
+        return build_hf_cache_deletion_plan(
+            project_root=Path(self.data_dir).resolve().parent,
+            data_dir=Path(self.data_dir),
+            revision_hashes=hashes,
+            models=models,
+            current_task=self.current_task,
+            queued_tasks=self.queued_tasks,
+            download_repos=self.hf_download_tasks,
+            template_gallery_active=gallery_active,
+            allow_redownload=allow_redownload,
+        )
+
+    async def _hf_incomplete_cleanup_plan(self):
+        models = await asyncio.to_thread(get_local_models)
+        gallery_task = self.template_gallery_install_task
+        gallery_active = gallery_task is not None and not gallery_task.done()
+        return build_hf_incomplete_cleanup_plan(
+            models=models,
+            current_task=self.current_task,
+            queued_tasks=self.queued_tasks,
+            download_repos=self.hf_download_tasks,
+            template_gallery_active=gallery_active,
+        )
+
+    async def hf_incomplete_cleanup_plan(self, _request):
+        return web.json_response({"error": False, **(await self._hf_incomplete_cleanup_plan())})
+
+    async def hf_incomplete_cleanup(self, request):
+        try:
+            payload = await request.json() if getattr(request, "can_read_body", False) else {}
+        except (TypeError, ValueError):
+            return web.json_response({"error": "Invalid JSON body."}, status=400)
+        if not isinstance(payload, dict) or set(payload) != {"planHash"} or not isinstance(payload["planHash"], str):
+            return web.json_response(
+                {
+                    "error": "Incomplete-download cleanup requires the exact current plan hash.",
+                    "code": "huggingface_incomplete_cleanup_plan_required",
+                    "retryable": False,
+                },
+                status=409,
+            )
+        async with self.hf_cache_mutation_lock:
+            plan = await self._hf_incomplete_cleanup_plan()
+            if payload["planHash"] != plan["planHash"]:
+                return web.json_response(
+                    {
+                        "error": "Incomplete-download state changed; review a fresh cleanup plan.",
+                        "code": "huggingface_incomplete_cleanup_plan_stale",
+                        "retryable": True,
+                        "plan": plan,
+                    },
+                    status=409,
+                )
+            if not plan["canCleanup"]:
+                return web.json_response(
+                    {
+                        "error": "Incomplete-download cleanup is blocked or has no eligible stale files.",
+                        "code": "huggingface_incomplete_cleanup_blocked",
+                        "retryable": False,
+                        "plan": plan,
+                    },
+                    status=409,
+                )
+            try:
+                result = await asyncio.to_thread(cleanup_hf_incomplete_files, plan)
+            except HfIncompleteCleanupError as error:
+                return web.json_response(
+                    {
+                        "error": str(error),
+                        "code": "huggingface_incomplete_cleanup_target_changed",
+                        "retryable": True,
+                    },
+                    status=409,
+                )
+            if result["removedFileCount"]:
+                await self._refresh_model_indexes()
+            return web.json_response({"error": False, **result, "plan": plan})
+
+    async def hf_cache_delete_plan(self, request):
+        try:
+            query = getattr(request, "query", {}) or {}
+            allow_redownload = query.get("allow_redownload") == "true"
+            plan = await self._hf_cache_deletion_plan(
+                request.match_info.get("hash"),
+                allow_redownload=allow_redownload,
+            )
+        except HfCacheDeletionPlanError as error:
+            return web.json_response(
+                {"error": str(error), "code": "invalid_huggingface_revision", "retryable": False}, status=400
+            )
+        return web.json_response({"error": False, **plan})
+
+    async def hf_cache_delete(self, request):
+        try:
+            hashes = parse_revision_hashes(request.match_info.get("hash"))
+        except HfCacheDeletionPlanError as error:
+            return web.json_response(
+                {"error": str(error), "code": "invalid_huggingface_revision", "retryable": False}, status=400
+            )
+        try:
+            payload = await request.json() if getattr(request, "can_read_body", False) else {}
+        except (TypeError, ValueError):
+            return web.json_response({"error": "Invalid JSON body."}, status=400)
+        if (
+            not isinstance(payload, dict)
+            or set(payload) not in ({"planHash"}, {"planHash", "allowRedownload"})
+            or not isinstance(payload.get("planHash"), str)
+            or ("allowRedownload" in payload and not isinstance(payload["allowRedownload"], bool))
+        ):
+            return web.json_response(
+                {
+                    "error": "Cache deletion requires the exact current deletion-plan hash.",
+                    "code": "huggingface_deletion_plan_required",
+                    "retryable": False,
+                },
+                status=409,
+            )
+
+        async with self.hf_cache_mutation_lock:
+            allow_redownload = payload.get("allowRedownload") is True
+            plan = await self._hf_cache_deletion_plan(
+                ",".join(hashes),
+                allow_redownload=allow_redownload,
+            )
+            if payload["planHash"] != plan["planHash"]:
+                return web.json_response(
+                    {
+                        "error": "Cache state or dependencies changed; review a fresh deletion plan.",
+                        "code": "huggingface_deletion_plan_stale",
+                        "retryable": True,
+                        "plan": plan,
+                    },
+                    status=409,
+                )
+            if not plan["canDelete"]:
+                return web.json_response(
+                    {
+                        "error": "Cache deletion is blocked by active work or unresolved dependencies.",
+                        "code": "huggingface_deletion_blocked",
+                        "retryable": False,
+                        "plan": plan,
+                    },
+                    status=409,
+                )
+            # Cached Diffusers pipelines may retain mmap/file-descriptor
+            # references to immutable snapshot blobs.  Deleting the Hub
+            # revision before releasing those objects makes the directory
+            # disappear while the filesystem space remains allocated until
+            # the worker eventually exits.  The plan above guarantees there
+            # is no active or queued graph, so release every app-owned model
+            # cache inside the same mutation transaction before removing any
+            # cache bytes.
+            runtime_release = await asyncio.to_thread(self._release_runtime_caches_for_retry)
+            result = await asyncio.to_thread(delete_model, *hashes)
+            if result:
+                await self._refresh_model_indexes()
+            return web.json_response(
+                {
+                    "error": not result,
+                    "deleted": bool(result),
+                    "plan": plan,
+                    "runtimeRelease": runtime_release,
+                }
+            )
 
     async def hf_hub(self, request):
         query = request.query.get("q", "")
@@ -12727,6 +14924,301 @@ class WebServer:
             logger.error(f"Error in hf_hub endpoint: {e}")
             return web.json_response({"error": str(e)}, status=500)
 
+    async def custom_modular_inspect(self, request):
+        """Inspect one exact installed declarative sidecar without executing repository code."""
+
+        try:
+            payload = await request.json()
+        except (TypeError, ValueError):
+            return web.json_response({"error": "Invalid JSON body."}, status=400)
+        if not isinstance(payload, dict) or set(payload) != {"repo_id", "revision"}:
+            return web.json_response(
+                {
+                    "error": "Custom Modular inspection requires only repo_id and revision.",
+                    "code": "invalid_custom_modular_inspection_request",
+                },
+                status=400,
+            )
+        repo_id = payload.get("repo_id")
+        revision = payload.get("revision")
+        if not isinstance(repo_id, str) or not isinstance(revision, str):
+            return web.json_response(
+                {
+                    "error": "Custom Modular inspection requires string repo_id and revision values.",
+                    "code": "invalid_custom_modular_inspection_request",
+                },
+                status=400,
+            )
+        try:
+            from modiff.custom_modular_inspection import inspect_installed_custom_modular_contract
+            from modules.ModularDiffusers.pipeline_schema import HubPipelineSidecarNotInstalledError
+
+            result = await asyncio.to_thread(inspect_installed_custom_modular_contract, repo_id, revision)
+            return web.json_response({"error": False, **result})
+        except ValueError as error:
+            return web.json_response(
+                {"error": str(error), "code": "invalid_custom_modular_inspection_request"},
+                status=400,
+            )
+        except HubPipelineSidecarNotInstalledError as error:
+            return web.json_response(
+                {"error": str(error), "code": "custom_modular_revision_not_installed"},
+                status=409,
+            )
+        except EnvironmentError as error:
+            return web.json_response(
+                {"error": str(error), "code": "custom_modular_inspection_failed"},
+                status=422,
+            )
+        except Exception as error:
+            logger.exception("Custom Modular contract inspection failed")
+            return web.json_response(
+                {"error": str(error), "code": "custom_modular_inspection_failed"},
+                status=422,
+            )
+
+    async def hf_download_plan(self, request):
+        query = getattr(request, "query", {}) or {}
+        repo_id = query.get("repo_id")
+        if not repo_id:
+            return web.json_response({"error": "Incorrect request, `repo_id` is required."}, status=400)
+        try:
+            repo_id = validate_hf_repo_id(repo_id)
+        except (TypeError, ValueError) as error:
+            return web.json_response(
+                {"error": str(error), "code": "invalid_huggingface_repo_id", "retryable": False},
+                status=400,
+            )
+
+        raw_revision = query.get("revision")
+        if raw_revision is not None and (
+            not isinstance(raw_revision, str)
+            or raw_revision != raw_revision.strip()
+            or raw_revision != raw_revision.lower()
+            or not IMMUTABLE_HUB_REVISION.fullmatch(raw_revision)
+        ):
+            return web.json_response(
+                {
+                    "error": "Model download plans require an exact lowercase 40-character commit revision.",
+                    "code": "invalid_huggingface_revision",
+                    "retryable": False,
+                },
+                status=400,
+            )
+        revision = raw_revision or catalog_revision(repo_id)
+        requested_files = []
+        if hasattr(query, "getall"):
+            requested_files = query.getall("file", [])
+        elif query.get("file"):
+            requested_files = [query.get("file")]
+        requested_files = sorted(
+            {item.strip() for raw in requested_files for item in str(raw or "").split(",") if item.strip()}
+        )
+        if not requested_files:
+            requested_files = studio_download_files_for_repo(repo_id)
+
+        try:
+            plan = await asyncio.to_thread(
+                plan_hub_model_download,
+                repo_id,
+                requested_files,
+                revision,
+            )
+        except Exception as error:
+            return web.json_response(
+                {
+                    "error": str(error) or type(error).__name__,
+                    "code": "huggingface_download_plan_failed",
+                    "retryable": True,
+                },
+                status=503,
+            )
+        active_entry = self.hf_download_tasks.get(repo_id)
+        joins_active_download = bool(
+            isinstance(active_entry, dict)
+            and sorted(active_entry.get("requested_files") or []) == requested_files
+            and active_entry.get("revision") == revision
+        )
+        queued_reservation = self.template_gallery_reserved_bytes + sum(
+            int(task.get("reserved_bytes") or 0)
+            for task in self.hf_download_tasks.values()
+            if not joins_active_download or task is not active_entry
+        )
+        remaining_bytes = plan.get("remainingBytes")
+        fits_with_queue = bool(
+            plan.get("sizeKnown")
+            and isinstance(remaining_bytes, int)
+            and remaining_bytes + queued_reservation + int(plan.get("reserveBytes") or 0)
+            <= int(plan.get("effectiveFreeBytes") or plan.get("freeBytes") or 0)
+        )
+        return web.json_response(
+            {
+                "error": False,
+                **plan,
+                "queuedReservationBytes": queued_reservation,
+                "fitsWithQueue": joins_active_download or fits_with_queue,
+                "alreadyQueued": joins_active_download,
+                "taskId": active_entry.get("task_id") if joins_active_download else None,
+            }
+        )
+
+    @staticmethod
+    def _update_hf_download_progress(download_repo_id, entry, **updates):
+        previous = entry.get("progress")
+        if not isinstance(previous, dict):
+            previous = {}
+        snapshot = {
+            **previous,
+            "type": "hf_download_progress",
+            "repo_id": download_repo_id,
+            "task_id": entry["task_id"],
+            "download_id": entry["task_id"],
+            "started_at": entry.get("started_at"),
+            "updated_at": time.time(),
+            **updates,
+        }
+        entry["progress"] = snapshot
+        return snapshot
+
+    def _hf_download_status_snapshots(self):
+        snapshots = []
+        for repo_id, entry in self.hf_download_tasks.items():
+            progress = entry.get("progress")
+            if not isinstance(progress, dict):
+                progress = {
+                    "type": "hf_download_progress",
+                    "repo_id": repo_id,
+                    "task_id": entry.get("task_id"),
+                    "download_id": entry.get("task_id"),
+                    "status": "queued",
+                    "phase": "queued",
+                    "progress": 0,
+                    "started_at": entry.get("started_at"),
+                    "updated_at": entry.get("started_at"),
+                }
+            snapshot = dict(progress)
+            snapshot["revision"] = entry.get("revision")
+            snapshot["repair"] = bool(entry.get("repair"))
+            snapshot["requested_file_count"] = len(entry.get("requested_files") or [])
+            reserved_bytes = entry.get("reserved_bytes")
+            if isinstance(reserved_bytes, int) and reserved_bytes >= 0:
+                snapshot["reserved_bytes"] = reserved_bytes
+                if snapshot.get("remaining_bytes") is None:
+                    snapshot["remaining_bytes"] = reserved_bytes
+            plan = entry.get("download_plan")
+            if isinstance(plan, dict):
+                plan_fields = {
+                    "total_bytes": "totalBytes",
+                    "completed_bytes": "completedBytes",
+                    "total_file_count": "totalFileCount",
+                    "size_known": "sizeKnown",
+                    "cache_dir": "cacheRoot",
+                }
+                for target, source in plan_fields.items():
+                    if snapshot.get(target) is None and plan.get(source) is not None:
+                        snapshot[target] = plan[source]
+            interrupted_cleanup = entry.get("interrupted_partial_cleanup")
+            if isinstance(interrupted_cleanup, dict):
+                snapshot["reclaimed_interrupted_bytes"] = int(
+                    interrupted_cleanup.get("allocated_bytes") or 0
+                )
+                snapshot["reclaimed_interrupted_file_count"] = len(
+                    interrupted_cleanup.get("removed") or []
+                )
+            snapshots.append(snapshot)
+        return sorted(
+            snapshots,
+            key=lambda snapshot: (
+                float(snapshot.get("started_at") or 0),
+                str(snapshot.get("repo_id") or ""),
+            ),
+        )
+
+    async def hf_download_status(self, request):
+        downloads = self._hf_download_status_snapshots()
+        return web.json_response(
+            {
+                "error": False,
+                "schemaVersion": 1,
+                "downloads": downloads,
+                "activeCount": len(downloads),
+                "queuedReservationBytes": sum(
+                    int(task.get("reserved_bytes") or 0) for task in self.hf_download_tasks.values()
+                ),
+                "templateGalleryReservationBytes": self.template_gallery_reserved_bytes,
+            }
+        )
+
+    async def _reserve_hf_download_space(self, repo_id, entry):
+        async with self.download_reservation_lock:
+            try:
+                plan = await asyncio.to_thread(
+                    plan_hub_model_download,
+                    repo_id,
+                    entry.get("requested_files"),
+                    entry.get("revision"),
+                )
+            except Exception as error:
+                return {
+                    "complete": False,
+                    "errorCode": "huggingface_download_plan_failed",
+                    "httpStatus": 503,
+                    "validation": {"reason": str(error) or type(error).__name__},
+                }
+
+            remaining_bytes = plan.get("remainingBytes")
+            if not plan.get("sizeKnown") or not isinstance(remaining_bytes, int):
+                return {
+                    "complete": False,
+                    "errorCode": "huggingface_download_size_unknown",
+                    "httpStatus": 503,
+                    "downloadPlan": plan,
+                    "validation": {
+                        "reason": "The app could not prove the immutable model download size before writing files."
+                    },
+                }
+            queued_reservation = self.template_gallery_reserved_bytes + sum(
+                int(task.get("reserved_bytes") or 0)
+                for task in self.hf_download_tasks.values()
+                if task is not entry
+            )
+            cleanup = {"removed": [], "logical_bytes": 0, "allocated_bytes": 0}
+            if int(plan.get("reclaimableIncompleteFileCount") or 0) > 0:
+                cleanup = await asyncio.to_thread(
+                    cleanup_interrupted_hub_download_files,
+                    repo_id,
+                    plan.get("cacheRoot"),
+                    entry.get("requested_files"),
+                    entry.get("revision"),
+                    older_than=float(entry.get("started_at") or time.time()),
+                )
+                if cleanup.get("removed"):
+                    plan = await asyncio.to_thread(
+                        plan_hub_model_download,
+                        repo_id,
+                        entry.get("requested_files"),
+                        entry.get("revision"),
+                    )
+                    remaining_bytes = plan.get("remainingBytes")
+            entry["interrupted_partial_cleanup"] = cleanup
+            required_with_reserve = remaining_bytes + queued_reservation + int(plan.get("reserveBytes") or 0)
+            if required_with_reserve > int(plan.get("freeBytes") or 0):
+                return {
+                    "complete": False,
+                    "errorCode": "insufficient_model_download_space",
+                    "httpStatus": 507,
+                    "downloadPlan": {**plan, "queuedReservationBytes": queued_reservation},
+                    "validation": {
+                        "reason": (
+                            "The app refused the model download because its conservative remaining-size reservation, "
+                            "the active download queue, and the 64 GiB safety reserve do not fit on the cache volume."
+                        )
+                    },
+                }
+            entry["reserved_bytes"] = remaining_bytes
+            entry["download_plan"] = plan
+            return None
+
     async def _run_hf_download_task(self, repo_id, entry):
         task_id = entry["task_id"]
 
@@ -12740,6 +15232,9 @@ class WebServer:
             if isinstance(progress, dict):
                 message.update(progress)
                 progress_value = message.get("progress")
+                remaining_bytes = message.get("remaining_bytes")
+                if isinstance(remaining_bytes, int) and remaining_bytes >= 0:
+                    entry["reserved_bytes"] = remaining_bytes
             else:
                 progress_value = float(progress or 0)
                 message["progress"] = progress_value
@@ -12747,59 +15242,53 @@ class WebServer:
             if "status" not in message:
                 message["status"] = "downloading" if progress_value is None or progress_value < 1 else "complete"
 
+            message = self._update_hf_download_progress(repo_id, entry, **message)
+
             for download_sid in list(entry.get("sids", [])):
                 self.queue_message(message, download_sid)
 
+        queued_message = self._update_hf_download_progress(
+            repo_id,
+            entry,
+            progress=0,
+            status="queued",
+            phase="queued",
+        )
         for download_sid in list(entry.get("sids", [])):
-            self.queue_message(
-                {
-                    "type": "hf_download_progress",
-                    "repo_id": repo_id,
-                    "task_id": task_id,
-                    "download_id": task_id,
-                    "progress": 0,
-                    "status": "queued",
-                    "phase": "queued",
-                    "started_at": entry.get("started_at"),
-                    "updated_at": time.time(),
-                },
-                download_sid,
-            )
+            self.queue_message(queued_message, download_sid)
 
+        reservation_failure = await self._reserve_hf_download_space(repo_id, entry)
+        if reservation_failure is not None:
+            return reservation_failure
+
+        try:
+            return await self._run_reserved_hf_download(repo_id, entry, progress_cb)
+        finally:
+            entry["reserved_bytes"] = 0
+
+    async def _run_reserved_hf_download(self, repo_id, entry, progress_cb):
         async with self.hf_download_semaphore:
+            planning_message = self._update_hf_download_progress(
+                repo_id,
+                entry,
+                progress=0,
+                status="planning",
+                phase="planning",
+            )
             for download_sid in list(entry.get("sids", [])):
-                self.queue_message(
-                    {
-                        "type": "hf_download_progress",
-                        "repo_id": repo_id,
-                        "task_id": task_id,
-                        "download_id": task_id,
-                        "progress": 0,
-                        "status": "planning",
-                        "phase": "planning",
-                        "started_at": entry.get("started_at"),
-                        "updated_at": time.time(),
-                    },
-                    download_sid,
-                )
+                self.queue_message(planning_message, download_sid)
 
             if self.serialize_model_io and self.model_io_lock.locked():
+                waiting_message = self._update_hf_download_progress(
+                    repo_id,
+                    entry,
+                    progress=0,
+                    status="queued",
+                    phase="waiting_for_model_io",
+                    message="Waiting for active generation or model I/O to finish safely.",
+                )
                 for download_sid in list(entry.get("sids", [])):
-                    self.queue_message(
-                        {
-                            "type": "hf_download_progress",
-                            "repo_id": repo_id,
-                            "task_id": task_id,
-                            "download_id": task_id,
-                            "progress": 0,
-                            "status": "queued",
-                            "phase": "waiting_for_model_io",
-                            "message": "Waiting for active generation or model I/O to finish safely.",
-                            "started_at": entry.get("started_at"),
-                            "updated_at": time.time(),
-                        },
-                        download_sid,
-                    )
+                    self.queue_message(waiting_message, download_sid)
             result = await self._run_executor_callback(
                 partial(
                     download_hub_model,
@@ -12813,7 +15302,7 @@ class WebServer:
                 serialize_model_io=True,
             )
             if result:
-                modelstore.actualize()
+                await self._refresh_model_indexes()
             return result
 
     async def hf_download(self, request):
@@ -12865,16 +15354,7 @@ class WebServer:
             {item.strip() for raw in raw_files for item in str(raw or "").split(",") if item.strip()}
         )
         if not requested_files and repo_id:
-            matching_capability = next(
-                (
-                    capability
-                    for capability in STUDIO_MODEL_CAPABILITIES.values()
-                    if capability.get("defaultRepo") == repo_id and capability.get("downloadFiles")
-                ),
-                None,
-            )
-            if matching_capability:
-                requested_files = sorted(set(matching_capability["downloadFiles"]))
+            requested_files = studio_download_files_for_repo(repo_id)
         if repair and not repair_source_repo_id:
             repair_source_repo_id = VERIFIED_REPAIR_SOURCES.get(repo_id)
 
@@ -12893,49 +15373,50 @@ class WebServer:
         if revision is None:
             revision = catalog_revision(repo_id)
 
-        if repo_id in self.hf_download_tasks:
-            entry = self.hf_download_tasks[repo_id]
-            if (
-                sorted(entry.get("requested_files") or []) != requested_files
-                or entry.get("revision") != revision
-            ):
-                return web.json_response(
-                    {
-                        "error": "A different immutable snapshot or file selection is already downloading for this repository.",
-                        "repo_id": repo_id,
-                        "retryable": True,
-                    },
-                    status=409,
-                )
-            if sid:
-                entry["sids"].add(sid)
-                self.queue_message(
-                    {
-                        "type": "hf_download_progress",
-                        "repo_id": repo_id,
-                        "task_id": entry["task_id"],
-                        "download_id": entry["task_id"],
-                        "status": "joined",
-                        "phase": "queued",
-                        "progress": None,
-                        "started_at": entry.get("started_at"),
-                        "updated_at": time.time(),
-                    },
-                    sid,
-                )
-        else:
-            task_id = nanoid.generate(size=12)
-            entry = {
-                "task_id": task_id,
-                "sids": set([sid] if sid else []),
-                "started_at": time.time(),
-                "repair": repair,
-                "repair_source_repo_id": repair_source_repo_id,
-                "requested_files": requested_files,
-                "revision": revision,
-            }
-            entry["future"] = self.loop.create_task(self._run_hf_download_task(repo_id, entry))
-            self.hf_download_tasks[repo_id] = entry
+        async with self.hf_cache_mutation_lock:
+            if repo_id in self.hf_download_tasks:
+                entry = self.hf_download_tasks[repo_id]
+                if (
+                    sorted(entry.get("requested_files") or []) != requested_files
+                    or entry.get("revision") != revision
+                ):
+                    return web.json_response(
+                        {
+                            "error": "A different immutable snapshot or file selection is already downloading for this repository.",
+                            "repo_id": repo_id,
+                            "retryable": True,
+                        },
+                        status=409,
+                    )
+                if sid:
+                    entry["sids"].add(sid)
+                    self.queue_message(
+                        {
+                            "type": "hf_download_progress",
+                            "repo_id": repo_id,
+                            "task_id": entry["task_id"],
+                            "download_id": entry["task_id"],
+                            "status": "joined",
+                            "phase": "queued",
+                            "progress": None,
+                            "started_at": entry.get("started_at"),
+                            "updated_at": time.time(),
+                        },
+                        sid,
+                    )
+            else:
+                task_id = nanoid.generate(size=12)
+                entry = {
+                    "task_id": task_id,
+                    "sids": set([sid] if sid else []),
+                    "started_at": time.time(),
+                    "repair": repair,
+                    "repair_source_repo_id": repair_source_repo_id,
+                    "requested_files": requested_files,
+                    "revision": revision,
+                }
+                entry["future"] = self.loop.create_task(self._run_hf_download_task(repo_id, entry))
+                self.hf_download_tasks[repo_id] = entry
 
         try:
             result = await asyncio.shield(entry["future"])
@@ -12946,18 +15427,35 @@ class WebServer:
                     if isinstance(result, dict) and isinstance(result.get("validation"), dict)
                     else None
                 ) or "The downloaded snapshot is incomplete and requires repair."
+                response_status = (
+                    int(result.get("httpStatus") or 409) if isinstance(result, dict) else 409
+                )
                 return web.json_response(
                     {
                         "error": reason,
+                        "code": result.get("errorCode") if isinstance(result, dict) else None,
                         "result": result,
                         "task_id": entry["task_id"],
                         "repo_id": repo_id,
-                        "repair_required": True,
+                        "repair_required": response_status == 409,
                     },
-                    status=409,
+                    status=response_status,
                 )
+            interrupted_cleanup = entry.get("interrupted_partial_cleanup")
+            public_cleanup = None
+            if isinstance(interrupted_cleanup, dict):
+                public_cleanup = {
+                    "reclaimedBytes": int(interrupted_cleanup.get("allocated_bytes") or 0),
+                    "reclaimedFileCount": len(interrupted_cleanup.get("removed") or []),
+                }
             return web.json_response(
-                {"error": False, "result": result, "task_id": entry["task_id"], "repo_id": repo_id}
+                {
+                    "error": False,
+                    "result": result,
+                    "task_id": entry["task_id"],
+                    "repo_id": repo_id,
+                    "interruptedPartialCleanup": public_cleanup,
+                }
             )
         except Exception as e:
             logger.error(f"Error in hf_download endpoint: {e}")
@@ -13001,22 +15499,17 @@ class WebServer:
                 message = f"{message} HTTP {status}."
             return web.json_response({"error": message}, status=401)
 
-        config_path = Path(__file__).resolve().parent.parent / "config.ini"
-        parser = configparser.ConfigParser()
-        parser.optionxform = str
-        parser.read(config_path, encoding="utf-8")
-        if not parser.has_section("huggingface"):
-            parser.add_section("huggingface")
-        parser.set("huggingface", "token", token)
-        temp_path = config_path.with_suffix(".ini.tmp")
         try:
-            with temp_path.open("w", encoding="utf-8") as handle:
-                parser.write(handle)
-            os.replace(temp_path, config_path)
-        finally:
-            if temp_path.exists():
-                temp_path.unlink(missing_ok=True)
+            from modiff.secret_config import set_dotenv_value
+
+            set_dotenv_value(Path(__file__).resolve().parent.parent / ".env", "HF_TOKEN", token)
+        except (OSError, ValueError):
+            return web.json_response(
+                {"error": "Could not store the Hugging Face token in the local .env file."},
+                status=500,
+            )
         CONFIG.hf["token"] = token
+        CONFIG.hf["token_source"] = "dotenv"
         return web.json_response(
             {
                 "error": False,
@@ -13062,6 +15555,7 @@ class WebServer:
                 "cachedNodes": list(self.node_cache.keys()),
                 "queued": queued_tasks,
                 "current": current_task,
+                "downloads": self._hf_download_status_snapshots(),
                 # Keep the welcome contract aligned with /queue: workflow graphs
                 # remain available lazily through /runs/{task_id}, but are not
                 # disclosed or retransmitted in the initial handshake.
@@ -13128,19 +15622,20 @@ class WebServer:
             exclude = [exclude] if not isinstance(exclude, list) else exclude
             sessions = [s for s in sessions if s not in exclude]
 
-        for session in sessions:
+        async def send_to_session(session):
             websocket = self.ws_sessions.get(session)
             if websocket is None:
-                continue
+                return
             if websocket.closed:
                 if self.ws_sessions.get(session) is websocket:
                     self.ws_sessions.pop(session, None)
-                continue
+                return
             try:
                 if isinstance(message, dict):
-                    await websocket.send_json(message)
+                    sending = websocket.send_json(message)
                 else:
-                    await websocket.send_bytes(message)
+                    sending = websocket.send_bytes(message)
+                await asyncio.wait_for(sending, timeout=WEBSOCKET_SEND_TIMEOUT_SECONDS)
             except Exception as e:
                 # A browser refresh can close the transport after the `closed`
                 # check but before aiohttp begins the write. Prune that stale
@@ -13153,6 +15648,18 @@ class WebServer:
                     logger.debug(f"[Websocket] Dropped closing session {session}: {e}")
                 else:
                     logger.warning(f"[Websocket] Dropped failed session {session}: {e}")
+                # A stalled transport must reconnect, not remain apparently
+                # connected after being removed from progress delivery.
+                if not websocket.closed:
+                    try:
+                        await asyncio.wait_for(websocket.close(code=1013), timeout=1.0)
+                    except Exception:
+                        logger.debug("[Websocket] Failed session close did not finish")
+
+        # One non-reading browser must not delay every other client's progress,
+        # previews and completion. Bound each write while retaining queue order
+        # across broadcasts; only the stalled transport is discarded.
+        await asyncio.gather(*(send_to_session(session) for session in dict.fromkeys(sessions)))
 
     def queue_message(self, message: dict | bytes, sid: list[str] | str = None, exclude: list[str] | str = None):
         loop = self.loop
@@ -13161,7 +15668,7 @@ class WebServer:
                 self.background_queue.put((self.broadcast, (message, sid, exclude))), loop
             )
 
-    def get_signal_value(self, node: str, field: str, sid: str, timeout: int = 2):
+    def get_signal_value(self, node: str, field: str, sid: str, timeout: int = 60):
         try:
             if not sid or sid not in self.ws_sessions or self.ws_sessions[sid].closed:
                 return {"__MODIFF_ERROR": "invalid_sid"}
@@ -13180,27 +15687,38 @@ class WebServer:
                 # No running loop in this thread; safe to proceed
                 pass
 
-            # Create a future bound to the server loop and register it
-            request_id = nanoid.generate(size=12)
-            future = self.loop.create_future()
-            self.pending_ws_requests[request_id] = future
+            async def request_signal_value():
+                # Create, register, send, and clean up on the owning event-loop
+                # thread. Signal lookups are synchronous graph dependencies, so
+                # dispatch them directly instead of parking them behind queued
+                # progress and node-definition broadcasts from earlier graphs.
+                request_id = nanoid.generate(size=12)
+                future = self.loop.create_future()
+                self.pending_ws_requests[request_id] = future
+                try:
+                    await self.broadcast(
+                        {
+                            "type": "get_signal_value",
+                            "request_id": request_id,
+                            "node": node,
+                            "field": field,
+                            "sid": sid,
+                        },
+                        sid,
+                    )
+                    return await asyncio.wait_for(future, timeout=timeout)
+                finally:
+                    self.pending_ws_requests.pop(request_id, None)
 
-            # Send the request to the target client
-            self.queue_message(
-                {"type": "get_signal_value", "request_id": request_id, "node": node, "field": field, "sid": sid}, sid
-            )
-
-            # Await the future result from outside the event loop thread
-            # Use run_coroutine_threadsafe to wait with a timeout safely
-            wrapped = asyncio.wait_for(future, timeout=timeout)
-            cfut = asyncio.run_coroutine_threadsafe(wrapped, self.loop)
+            # The graph executor runs outside the HTTP event-loop thread. Run
+            # the complete request there and synchronously await its bounded
+            # result without touching loop-owned futures from this thread.
+            cfut = asyncio.run_coroutine_threadsafe(request_signal_value(), self.loop)
             try:
                 result = cfut.result(timeout=timeout + 0.5)
             except Exception:
+                cfut.cancel()
                 result = {"__MODIFF_ERROR": "timeout"}
-            finally:
-                # Cleanup any leftover pending entry
-                self.pending_ws_requests.pop(request_id, None)
 
             return result
         except Exception as e:

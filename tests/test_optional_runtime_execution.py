@@ -22,19 +22,31 @@ from modiff.diffusers_profiles import (
 )
 from modiff.optional_runtime_execution import (
     OptionalRuntimeExecutionBlocked,
+    field_action_optional_runtime_requirement,
     graph_optional_runtime_requirement,
     loader_optional_runtime_requirement,
     optional_runtime_requirement_for_profiles,
 )
 from modiff.optional_runtimes import (
+    GALLERY_MEDIA_RUNTIME_PROFILE_ID,
     OPTIONAL_RUNTIME_PROFILES,
+    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+    public_optional_runtime_profiles,
+    optional_runtime_target,
 )
 from modiff.server import WebServer
 
 
 EXECUTION_PROFILE_ID = "z-image:auto"
-OPTIONAL_PROFILE_ID = TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
+OPTIONAL_PROFILE_ID = TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID
+BUILTIN_IMAGE_PROFILE_ID = "builtin-image-operations:direct"
+BUILTIN_AUDIO_PROFILE_ID = "builtin-audio-operations:direct"
+BUILTIN_DATA_PROFILE_ID = "builtin-data-operations:direct"
+BUILTIN_VIDEO_PROFILE_ID = "builtin-video-operations:direct"
+SPANDREL_VIDEO_UPSCALE_PROFILE_ID = "real-esrgan-x2-video-upscale:direct"
+SPANDREL_IMAGE_UPSCALE_PROFILE_ID = "real-esrgan-x2-image-upscale:direct"
 
 
 class JsonRequest:
@@ -81,14 +93,23 @@ def loader_graph(*, runtime_hints=None):
     return graph
 
 
+def qwen_loader_graph():
+    graph = loader_graph()
+    loader = graph["nodes"]["loader"]
+    loader["params"]["pipeline_class"]["value"] = "QwenImagePipeline"
+    loader["params"]["model_id"]["value"]["value"] = "Qwen/Qwen-Image-2512"
+    return graph
+
+
 def runtime_catalog(
     package_status="missing",
     *,
     process_status="base",
     overlay_status="missing",
     qualified=False,
+    profile_id=OPTIONAL_PROFILE_ID,
 ):
-    contract = OPTIONAL_RUNTIME_PROFILES[OPTIONAL_PROFILE_ID]
+    contract = OPTIONAL_RUNTIME_PROFILES[profile_id]
     return {
         "schemaVersion": 1,
         "profiles": [
@@ -121,8 +142,39 @@ def overlay_delivery(profile_id=EXECUTION_PROFILE_ID, **changes):
         yield updated
 
 
+@contextmanager
+def base_delivery(profile_id=EXECUTION_PROFILE_ID, **changes):
+    original = DIFFUSERS_EXECUTION_PROFILES[profile_id]
+    updated = replace(
+        original,
+        optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_BASE,
+        optional_runtime_platform_deliveries=(),
+        **changes,
+    )
+    with mock.patch.dict(
+        DIFFUSERS_EXECUTION_PROFILES,
+        {profile_id: updated},
+        clear=False,
+    ):
+        yield updated
+
+
 class OptionalRuntimeRequirementTests(unittest.TestCase):
-    def test_every_current_profile_is_explicitly_base_delivered(self):
+    def setUp(self):
+        self.enterContext(mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            side_effect=lambda *, platform_name=None, machine=None: optional_runtime_target(
+                platform_name=platform_name or "linux", machine=machine or "x86_64"
+            ),
+        ))
+        # These catalog fixtures describe a base worker unless a case explicitly
+        # selects active/recovery status. Keep that unit-test world independent
+        # of the validated overlay used to launch the surrounding pytest suite.
+        environment = mock.patch.dict(os.environ, {"MODIFF_RUNTIME_OVERLAY_STATUS": "base"})
+        environment.start()
+        self.addCleanup(environment.stop)
+
+    def test_every_current_profile_has_explicit_platform_scoped_delivery(self):
         expected_keys = {
             "schemaVersion",
             "delivery",
@@ -135,19 +187,133 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         self.assertTrue(DIFFUSERS_EXECUTION_PROFILES)
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
             with self.subTest(profile=profile.id):
-                self.assertEqual(
-                    profile.optional_runtime_delivery,
-                    OPTIONAL_RUNTIME_DELIVERY_BASE,
-                )
+                if profile.optional_runtime_delivery == OPTIONAL_RUNTIME_DELIVERY_BASE:
+                    self.assertIn(
+                        profile.id,
+                        {
+                            BUILTIN_AUDIO_PROFILE_ID,
+                            BUILTIN_DATA_PROFILE_ID,
+                            BUILTIN_IMAGE_PROFILE_ID,
+                            BUILTIN_VIDEO_PROFILE_ID,
+                            SPANDREL_IMAGE_UPSCALE_PROFILE_ID,
+                            SPANDREL_VIDEO_UPSCALE_PROFILE_ID,
+                        },
+                    )
+                    self.assertEqual(profile.optional_runtime_profiles, ())
+                    self.assertEqual(profile.optional_runtime_platform_deliveries, ())
+                    requirement = profile.to_public_dict()["optionalRuntimeRequirement"]
+                    self.assertEqual(set(requirement), expected_keys)
+                    self.assertEqual(requirement["delivery"], "base")
+                    self.assertFalse(requirement["requiredNow"])
+                    self.assertEqual(requirement["profileIds"], [])
+                    self.assertEqual(requirement["state"], "base_satisfied")
+                    self.assertEqual(requirement["reason"], "no_optional_runtime_required")
+                    self.assertEqual(requirement["executionProfileIds"], [profile.id])
+                    for platform_name, machine in (
+                        ("linux", "x86_64"),
+                        ("windows", "x86_64"),
+                        ("linux", "arm64"),
+                        ("windows", "arm64"),
+                        ("macos", "x86_64"),
+                        ("macos", "arm64"),
+                    ):
+                        targeted = declarative_requirement(
+                            (profile,),
+                            platform_name=platform_name,
+                            machine=machine,
+                        )
+                        self.assertEqual(targeted, requirement)
+                    continue
+                self.assertEqual(profile.optional_runtime_delivery, OPTIONAL_RUNTIME_DELIVERY_OVERLAY)
+                self.assertEqual(len(profile.optional_runtime_platform_deliveries), 6)
                 requirement = profile.to_public_dict()["optionalRuntimeRequirement"]
                 self.assertEqual(set(requirement), expected_keys)
-                self.assertEqual(requirement["delivery"], "base")
-                self.assertFalse(requirement["requiredNow"])
-                self.assertEqual(requirement["state"], "base_satisfied")
+                self.assertEqual(requirement["delivery"], "optional_overlay")
+                self.assertTrue(requirement["requiredNow"])
+                self.assertEqual(requirement["state"], "unavailable")
                 self.assertEqual(requirement["executionProfileIds"], [profile.id])
+                for platform_name, machine, expected in (
+                    ("linux", "x86_64", "optional_overlay"),
+                    ("windows", "x86_64", "optional_overlay"),
+                    ("linux", "arm64", "base"),
+                    ("windows", "arm64", "base"),
+                    ("macos", "x86_64", "base"),
+                    ("macos", "arm64", "base"),
+                ):
+                    targeted = declarative_requirement(
+                        (profile,),
+                        platform_name=platform_name,
+                        machine=machine,
+                    )
+                    self.assertEqual(targeted["delivery"], expected)
+                    self.assertEqual(targeted["requiredNow"], expected == "optional_overlay")
+                    expected_profile_id = (
+                        TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID
+                        if (platform_name, machine) == ("linux", "x86_64")
+                        else TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
+                    )
+                    self.assertEqual(targeted["profileIds"], [expected_profile_id])
+
+    def test_platform_profile_binding_is_explicit_and_fail_closed(self):
+        profile = DIFFUSERS_EXECUTION_PROFILES[EXECUTION_PROFILE_ID]
+        self.assertEqual(
+            profile.optional_runtime_profile_ids_for_target(
+                platform_name="linux",
+                machine="x86_64",
+            ),
+            (TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,),
+        )
+        self.assertEqual(
+            profile.optional_runtime_profile_ids_for_target(
+                platform_name="windows",
+                machine="AMD64",
+            ),
+            (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
+        )
+        for platform_name, machine in (
+            ("linux", "arm64"),
+            ("macos", "x86_64"),
+            ("macos", "arm64"),
+            ("windows", "arm64"),
+        ):
+            with self.subTest(platform_name=platform_name, machine=machine):
+                targeted = declarative_requirement(
+                    (profile,),
+                    platform_name=platform_name,
+                    machine=machine,
+                )
+                self.assertEqual(targeted["delivery"], OPTIONAL_RUNTIME_DELIVERY_BASE)
+                self.assertFalse(targeted["requiredNow"])
+                self.assertEqual(
+                    targeted["profileIds"],
+                    [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
+                )
+                pending_profile = public_optional_runtime_profiles(
+                    [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
+                    platform_name=platform_name,
+                    machine=machine,
+                    version_resolver=lambda _distribution: "0",
+                )[0]
+                self.assertEqual(
+                    pending_profile["contractState"],
+                    "candidate_unqualified",
+                )
+                self.assertFalse(pending_profile["cutoverReady"])
+
+        unknown = declarative_requirement(
+            (profile,),
+            platform_name="freebsd",
+            machine="x86_64",
+        )
+        self.assertEqual(unknown["state"], "unavailable")
+        self.assertEqual(unknown["reason"], "execution_profile_contract_invalid")
 
     def test_base_delivery_never_observes_runtime_catalog(self):
-        profile = DIFFUSERS_EXECUTION_PROFILES[EXECUTION_PROFILE_ID]
+        profile = replace(
+            DIFFUSERS_EXECUTION_PROFILES[EXECUTION_PROFILE_ID],
+            optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_BASE,
+            optional_runtime_platform_deliveries=(),
+        )
         resolver = mock.Mock(side_effect=AssertionError("catalog must stay dormant"))
         requirement = optional_runtime_requirement_for_profiles(
             (profile,),
@@ -177,11 +343,16 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                 )
 
     def test_mixed_cutover_contract_fails_closed_but_pure_diffusers_is_neutral(self):
-        original = DIFFUSERS_EXECUTION_PROFILES[EXECUTION_PROFILE_ID]
+        original = replace(
+            DIFFUSERS_EXECUTION_PROFILES[EXECUTION_PROFILE_ID],
+            optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_BASE,
+            optional_runtime_platform_deliveries=(),
+        )
         overlay = replace(
             original,
             id="fixture-overlay:direct",
             optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
+            optional_runtime_platform_deliveries=(),
         )
         mixed = declarative_requirement((original, overlay))
         self.assertTrue(mixed["requiredNow"])
@@ -287,8 +458,220 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         self.assertEqual([profile.id for profile in profiles], ["flux-kontext:direct"])
         self.assertIn(FLUX_KONTEXT_NVFP4_REPO, profiles[0].compatible_repos)
 
-    def test_local_custom_and_malformed_shared_selectors_are_base_tolerated(self):
-        trap = mock.Mock(side_effect=AssertionError("catalog must stay dormant"))
+    def test_retired_profiles_are_explicit_lookup_only_not_implicit_loader_candidates(self):
+        values = {
+            "pipeline_class": "Flux2Pipeline",
+            "mode": "multi_image_reference_edit",
+            "model_id": {"source": "hub", "value": "black-forest-labs/FLUX.2-dev"},
+        }
+        for selected, expected in ((None, "flux2-dev:direct"), ("flux2-modular:equivalent-standard", "flux2-modular:equivalent-standard")):
+            with self.subTest(selected=selected):
+                params = {**values, **({"execution_profile_id": selected} if selected else {})}
+                profiles, reason = resolve_execution_profiles_for_loader("modules.DiffusersImage", "LoadPipeline", params)
+                self.assertIsNone(reason)
+                self.assertEqual([profile.id for profile in profiles], [expected])
+                graph = {
+                    "nodes": {"loader": {"module": "modules.DiffusersImage", "action": "LoadPipeline",
+                        "params": {key: {"value": value} for key, value in params.items()}}},
+                    "paths": [["loader"]],
+                }
+                catalog = runtime_catalog("present_unqualified", process_status="active", overlay_status="active", qualified=True)
+                with mock.patch.dict(os.environ, {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"}):
+                    requirement = graph_optional_runtime_requirement(graph, catalog_resolver=lambda: catalog)
+                self.assertEqual(requirement["state"], "active")
+                self.assertEqual(requirement["executionProfileIds"], [expected])
+
+    def test_loader_resolution_honors_a_sealed_exact_execution_profile(self):
+        values = {
+            "pipeline_class": "ErnieImagePipeline",
+            "mode": "text_to_image",
+            "model_id": {"source": "hub", "value": "baidu/ERNIE-Image-Turbo"},
+        }
+        profiles, reason = resolve_execution_profiles_for_loader(
+            "modules.DiffusersImage",
+            "LoadPipeline",
+            values,
+        )
+        self.assertEqual(reason, "loader_profile_ambiguous")
+        self.assertEqual(
+            {profile.id for profile in profiles},
+            {"ernie-image-turbo:direct", "ernie-image:equivalent-standard"},
+        )
+
+        profiles, reason = resolve_execution_profiles_for_loader(
+            "modules.DiffusersImage",
+            "LoadPipeline",
+            {**values, "execution_profile_id": "ernie-image:equivalent-standard"},
+        )
+        self.assertIsNone(reason)
+        self.assertEqual([profile.id for profile in profiles], ["ernie-image:equivalent-standard"])
+
+        invalid_cases = (
+            ({**values, "execution_profile_id": "missing:profile"}, "loader_execution_profile_unregistered"),
+            (
+                {
+                    **values,
+                    "pipeline_class": "FluxPipeline",
+                    "execution_profile_id": "ernie-image:equivalent-standard",
+                },
+                "loader_execution_profile_mismatch",
+            ),
+            (
+                {
+                    **values,
+                    "model_id": {"source": "hub", "value": "owner/other"},
+                    "execution_profile_id": "ernie-image:equivalent-standard",
+                },
+                "loader_execution_profile_mismatch",
+            ),
+        )
+        for selected, expected_reason in invalid_cases:
+            with self.subTest(expected_reason=expected_reason):
+                _profiles, reason = resolve_execution_profiles_for_loader(
+                    "modules.DiffusersImage",
+                    "LoadPipeline",
+                    selected,
+                )
+                self.assertEqual(reason, expected_reason)
+
+    def test_quanto_loader_selection_requires_the_exact_qualified_composite(self):
+        values = {
+            "pipeline_class": "FluxPipeline",
+            "model_id": {"source": "hub", "value": "black-forest-labs/FLUX.1-dev"},
+            "quantization_mode": "quanto_float8",
+        }
+        profiles, reason = resolve_execution_profiles_for_loader(
+            "modules.DiffusersImage",
+            "LoadPipeline",
+            values,
+        )
+        self.assertIsNone(reason)
+        self.assertEqual([profile.id for profile in profiles], ["flux-dev:direct"])
+        self.assertEqual(
+            profiles[0].optional_runtime_profiles,
+            (TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,),
+        )
+        requirement = loader_optional_runtime_requirement(
+            "modules.DiffusersImage",
+            "LoadPipeline",
+            values,
+            catalog_resolver=lambda: runtime_catalog(
+                "missing",
+                profile_id=TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
+            ),
+        )
+        self.assertEqual(
+            requirement["profileIds"],
+            [TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID],
+        )
+        self.assertEqual(requirement["state"], "missing")
+
+    def test_loader_resolution_uses_declared_mode_before_repository(self):
+        values = {
+            "pipeline_class": "DreamLiteMobilePipeline",
+            "model_id": {"source": "hub", "value": "carlofkl/DreamLite-mobile"},
+        }
+        cases = {
+            "text_to_image": "dreamlite-mobile:direct",
+            "edit_image": "dreamlite-mobile:edit-direct",
+        }
+        for mode, expected in cases.items():
+            with self.subTest(mode=mode):
+                profiles, reason = resolve_execution_profiles_for_loader(
+                    "modules.DiffusersImage",
+                    "LoadPipeline",
+                    {**values, "mode": mode},
+                )
+                self.assertIsNone(reason)
+                self.assertEqual([profile.id for profile in profiles], [expected])
+
+        profiles, reason = resolve_execution_profiles_for_loader(
+            "modules.DiffusersImage",
+            "LoadPipeline",
+            values,
+        )
+        self.assertEqual(reason, "loader_profile_ambiguous")
+        self.assertEqual(len(profiles), 2)
+
+        cases = (("unknown", "loader_mode_unregistered"), ([], "loader_mode_invalid"))
+        for mode, expected_reason in cases:
+            with self.subTest(mode=mode):
+                profiles, reason = resolve_execution_profiles_for_loader(
+                    "modules.DiffusersImage",
+                    "LoadPipeline",
+                    {**values, "mode": mode},
+                )
+                self.assertEqual(reason, expected_reason)
+                self.assertEqual(len(profiles), 2)
+
+    def test_reviewed_custom_loaders_share_the_first_use_optional_runtime_gate(self):
+        cases = (
+            (
+                "ModelsLoader",
+                {"model_type": "DummyCustomPipeline", "repo_id": {"source": "hub", "value": "owner/repo"}},
+                "custom-modular:reviewed-loader",
+            ),
+            (
+                "DynamicBlockNode",
+                {"repo_id": {"source": "hub", "value": "owner/repo"}},
+                "custom-modular:reviewed-block",
+            ),
+        )
+        for action, values, expected_id in cases:
+            with self.subTest(action=action):
+                profiles, reason = resolve_execution_profiles_for_loader(
+                    "modules.ModularDiffusers",
+                    action,
+                    values,
+                )
+                self.assertIsNone(reason)
+                self.assertEqual([profile.id for profile in profiles], [expected_id])
+                requirement = loader_optional_runtime_requirement(
+                    "modules.ModularDiffusers",
+                    action,
+                    values,
+                    catalog_resolver=lambda: runtime_catalog("missing"),
+                )
+                self.assertTrue(requirement["requiredNow"])
+                self.assertEqual(requirement["state"], "missing")
+
+    def test_reviewed_custom_preview_actions_do_not_probe_or_install_the_runtime(self):
+        catalog = mock.Mock(side_effect=AssertionError("preview must not inspect the runtime catalog"))
+        cases = (
+            ("modules.ModularDiffusers", "ModelsLoader", "refresh_pipeline_identity"),
+            ("modules.ModularDiffusers", "DynamicBlockNode", "update_node"),
+            ("modules.DiffusersImage", "LoadPipeline", "update_pipeline_contract"),
+            ("modules.DiffusersImage", "Generate", "update_image_contract"),
+            ("modules.DiffusersImage", "Edit", "update_image_contract"),
+            ("modules.DiffusersImage", "Inpaint", "update_image_contract"),
+            ("modules.DiffusersImage", "ControlGenerate", "update_image_contract"),
+            ("modules.DiffusersImage", "UnconditionalGenerate", "update_image_contract"),
+            ("modules.DiffusersImage", "PredictMap", "update_image_contract"),
+            ("modules.DiffusersAudio", "LoadPipeline", "update_audio_contract"),
+            ("modules.DiffusersAudio", "Generate", "update_audio_contract"),
+            ("modules.DiffusersThreeD", "LoadPipeline", "update_three_d_contract"),
+            ("modules.DiffusersThreeD", "GenerateRenderedArtifact", "update_three_d_contract"),
+            ("modules.DiffusersVideo", "LoadPipeline", "select_adapter"),
+            ("modules.DiffusersVideo", "Generate", "update_adapter_modes"),
+        )
+        for module, action, method_name in cases:
+            with self.subTest(module=module, action=action):
+                requirement = field_action_optional_runtime_requirement(
+                    module,
+                    action,
+                    method_name,
+                    {
+                        "model_type": "DummyCustomPipeline",
+                        "repo_id": {"source": "hub", "value": "owner/repo"},
+                    },
+                    catalog_resolver=catalog,
+                )
+                self.assertFalse(requirement["requiredNow"])
+                self.assertEqual(requirement["state"], "base_satisfied")
+        catalog.assert_not_called()
+
+    def test_local_custom_and_malformed_shared_selectors_fail_closed_after_cutover(self):
+        catalog = mock.Mock(return_value=runtime_catalog("missing"))
         for selector in (
             {"source": "local", "value": "C:/models/flux"},
             {"source": "custom", "value": "repo"},
@@ -300,10 +683,12 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                     "modules.DiffusersImage",
                     "LoadPipeline",
                     {"pipeline_class": "FluxPipeline", "model_id": selector},
-                    catalog_resolver=trap,
+                    catalog_resolver=catalog,
                 )
-                self.assertEqual(requirement["state"], "base_satisfied")
-        trap.assert_not_called()
+                self.assertEqual(requirement["state"], "unavailable")
+                self.assertTrue(requirement["requiredNow"])
+                self.assertTrue(requirement["reason"].startswith("execution_profile_"))
+        self.assertEqual(catalog.call_count, 0)
 
     def test_graph_requirement_uses_only_deduplicated_executable_path_nodes(self):
         graph = loader_graph()
@@ -332,6 +717,223 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
             self.assertEqual(executable["state"], "missing")
             self.assertEqual(executable["executionProfileIds"], [EXECUTION_PROFILE_ID])
             catalog.assert_called_once_with()
+
+    def test_whisper_graph_uses_its_sealed_loader_identity_at_submission(self):
+        graph = {
+            "nodes": {
+                "loader": {
+                    "module": "modules.HuggingFaceSpeech",
+                    "action": "LoadSpeechRecognitionModel",
+                    "params": {
+                        "model_id": {
+                            "value": {"source": "hub", "value": "openai/whisper-tiny"},
+                        },
+                        "pipeline_class": {"value": "AutoModelForSpeechSeq2Seq"},
+                        "execution_profile_id": {"value": "whisper-tiny:direct"},
+                    },
+                }
+            },
+            "paths": [["loader"]],
+        }
+        catalog = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+        )
+        with mock.patch.dict(os.environ, {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"}):
+            requirement = graph_optional_runtime_requirement(
+                graph,
+                catalog_resolver=lambda: catalog,
+            )
+            mismatched = graph_optional_runtime_requirement(
+                {
+                    **graph,
+                    "nodes": {
+                        "loader": {
+                            **graph["nodes"]["loader"],
+                            "params": {
+                                **graph["nodes"]["loader"]["params"],
+                                "pipeline_class": {"value": "AutoModelForCTC"},
+                            },
+                        }
+                    },
+                },
+                catalog_resolver=lambda: catalog,
+            )
+
+        self.assertEqual(requirement["state"], "active")
+        self.assertEqual(requirement["executionProfileIds"], ["whisper-tiny:direct"])
+        self.assertEqual(mismatched["state"], "unavailable")
+        self.assertEqual(mismatched["reason"], "execution_profile_loader_execution_profile_mismatch")
+
+    def test_wav2vec2_ctc_graph_uses_its_distinct_sealed_loader_identity(self):
+        graph = {
+            "nodes": {
+                "loader": {
+                    "module": "modules.HuggingFaceSpeech",
+                    "action": "LoadCTCSpeechRecognitionModel",
+                    "params": {
+                        "model_id": {
+                            "value": {"source": "hub", "value": "facebook/wav2vec2-base-960h"},
+                        },
+                        "pipeline_class": {"value": "AutoModelForCTC"},
+                        "execution_profile_id": {"value": "wav2vec2-base-960h:ctc-direct"},
+                    },
+                }
+            },
+            "paths": [["loader"]],
+        }
+        catalog = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+        )
+        with mock.patch.dict(os.environ, {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"}):
+            requirement = graph_optional_runtime_requirement(
+                graph,
+                catalog_resolver=lambda: catalog,
+            )
+
+        self.assertEqual(requirement["state"], "active")
+        self.assertEqual(requirement["executionProfileIds"], ["wav2vec2-base-960h:ctc-direct"])
+
+    def test_gallery_media_nodes_require_the_exact_app_owned_codec_overlay(self):
+        for action in ("EdgePreprocessor", "ObjectMaskPropagate"):
+            graph = {
+                "nodes": {
+                    "media": {
+                        "module": "modules.VideoConditioning",
+                        "action": action,
+                        "params": {},
+                    }
+                },
+                "paths": [["media"]],
+            }
+            with self.subTest(action=action):
+                requirement = graph_optional_runtime_requirement(
+                    graph,
+                    catalog_resolver=lambda: runtime_catalog(
+                        profile_id=GALLERY_MEDIA_RUNTIME_PROFILE_ID,
+                    ),
+                )
+                self.assertTrue(requirement["requiredNow"])
+                self.assertEqual(requirement["state"], "missing")
+                self.assertEqual(
+                    requirement["profileIds"],
+                    [GALLERY_MEDIA_RUNTIME_PROFILE_ID],
+                )
+                self.assertEqual(
+                    requirement["executionProfileIds"],
+                    ["video-conditioning:gallery-media"],
+                )
+
+    def test_ltx2_image_conditioning_requires_pyav_but_text_generation_does_not(self):
+        def graph_for(mode):
+            return {
+                "nodes": {
+                    "generate": {
+                        "module": "modules.DiffusersVideo",
+                        "action": "GenerateVideoAudio",
+                        "params": {"mode": {"value": mode}},
+                    }
+                },
+                "paths": [["generate"]],
+            }
+
+        image_requirement = graph_optional_runtime_requirement(
+            graph_for("image_to_video"),
+            catalog_resolver=lambda: runtime_catalog(
+                profile_id=GALLERY_MEDIA_RUNTIME_PROFILE_ID,
+            ),
+        )
+        reference_requirement = graph_optional_runtime_requirement(
+            graph_for("reference_to_video"),
+            catalog_resolver=lambda: runtime_catalog(
+                profile_id=GALLERY_MEDIA_RUNTIME_PROFILE_ID,
+            ),
+        )
+        text_requirement = graph_optional_runtime_requirement(
+            graph_for("text_to_video"),
+            catalog_resolver=mock.Mock(side_effect=AssertionError("text generation must not require PyAV")),
+        )
+
+        for requirement in (image_requirement, reference_requirement):
+            self.assertTrue(requirement["requiredNow"])
+            self.assertEqual(requirement["state"], "missing")
+            self.assertEqual(requirement["profileIds"], [GALLERY_MEDIA_RUNTIME_PROFILE_ID])
+            self.assertEqual(requirement["executionProfileIds"], ["ltx2:image-conditioning-media"])
+        self.assertFalse(text_requirement["requiredNow"])
+        self.assertEqual(text_requirement["state"], "base_satisfied")
+
+    def test_gallery_media_worker_check_rejects_wrong_active_overlay(self):
+        with mock.patch.dict(
+            os.environ,
+            {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
+        ):
+            requirement = loader_optional_runtime_requirement(
+                "modules.VideoConditioning",
+                "EdgePreprocessor",
+                {},
+                catalog_resolver=lambda: runtime_catalog(
+                    "present_unqualified",
+                    process_status="active",
+                    overlay_status="active",
+                    qualified=True,
+                    profile_id=TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+                ),
+            )
+        self.assertEqual(requirement["state"], "unavailable")
+        self.assertEqual(requirement["reason"], "optional_runtime_profile_unknown")
+
+    def test_composite_gallery_overlay_satisfies_loader_and_media_checks(self):
+        gallery_contract = OPTIONAL_RUNTIME_PROFILES[
+            GALLERY_MEDIA_RUNTIME_PROFILE_ID
+        ]
+        main_contract = OPTIONAL_RUNTIME_PROFILES[
+            TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID
+        ]
+        catalog = {
+            "schemaVersion": 1,
+            "profiles": [
+                {
+                    **contract.to_spec_dict(),
+                    "specDigest": contract.spec_digest,
+                    "status": "present_unqualified",
+                    "overlayStatus": "active",
+                    "contractState": "qualified",
+                    "cutoverReady": True,
+                    "installActionAvailable": True,
+                    "activationAvailable": True,
+                }
+                for contract in (main_contract, gallery_contract)
+            ],
+            "overlay": {"processLoadStatus": "active"},
+        }
+        graph = qwen_loader_graph()
+        graph["nodes"]["media"] = {
+            "module": "modules.VideoConditioning",
+            "action": "EdgePreprocessor",
+            "params": {},
+        }
+        graph["paths"] = [["loader", "media"]]
+        with mock.patch.dict(
+            os.environ,
+            {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
+        ):
+            requirement = graph_optional_runtime_requirement(
+                graph,
+                catalog_resolver=lambda: catalog,
+            )
+        self.assertEqual(requirement["state"], "active")
+        self.assertEqual(
+            requirement["profileIds"],
+            [
+                TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+                GALLERY_MEDIA_RUNTIME_PROFILE_ID,
+            ],
+        )
 
     def test_malformed_or_missing_path_references_do_not_authorize_loaders(self):
         graph = loader_graph()
@@ -380,6 +982,67 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                     )
                     self.assertEqual(requirement["state"], expected)
                     self.assertEqual(requirement["requiredNow"], True)
+
+    def test_linux_graph_requires_exact_main_profile_and_digest(self):
+        active_main = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+        )
+        active_old = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+            profile_id=TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+        )
+        with mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            return_value=("linux", "x86_64"),
+        ), mock.patch.dict(
+            os.environ,
+            {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
+        ):
+            ready = graph_optional_runtime_requirement(
+                qwen_loader_graph(),
+                catalog_resolver=lambda: active_main,
+            )
+            stale = graph_optional_runtime_requirement(
+                qwen_loader_graph(),
+                catalog_resolver=lambda: active_old,
+            )
+            forged = graph_optional_runtime_requirement(
+                qwen_loader_graph(),
+                catalog_resolver=lambda: {
+                    **active_main,
+                    "profiles": [
+                        {
+                            **active_main["profiles"][0],
+                            "specDigest": OPTIONAL_RUNTIME_PROFILES[
+                                TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
+                            ].spec_digest,
+                        }
+                    ],
+                },
+            )
+
+        self.assertEqual(ready["state"], "active")
+        self.assertEqual(
+            ready["profileIds"],
+            [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
+        )
+        self.assertEqual(
+            ready["executionProfileIds"],
+            ["qwen-image:t2i-direct"],
+        )
+        self.assertEqual(stale["state"], "unavailable")
+        self.assertEqual(stale["reason"], "optional_runtime_profile_unknown")
+        self.assertEqual(forged["state"], "unavailable")
+        self.assertEqual(
+            forged["reason"],
+            "optional_runtime_profile_digest_mismatch",
+        )
 
     def test_fake_active_catalog_cannot_override_base_worker_status(self):
         with overlay_delivery() as profile, mock.patch.dict(
@@ -468,6 +1131,12 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
 
 class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
+        self.enterContext(mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            side_effect=lambda *, platform_name=None, machine=None: optional_runtime_target(
+                platform_name=platform_name or "linux", machine=machine or "x86_64"
+            ),
+        ))
         self.temporary = tempfile.TemporaryDirectory()
         self.environment = mock.patch.dict(
             os.environ,
@@ -507,7 +1176,7 @@ class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_current_base_graph_survives_every_persistent_overlay_status(self):
         catalog = mock.Mock(side_effect=AssertionError("base graph must not scan catalog"))
-        with mock.patch(
+        with base_delivery(), mock.patch(
             "modiff.optional_runtime_execution.public_optional_runtime_catalog",
             catalog,
         ):
@@ -574,7 +1243,7 @@ class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
         catalog = mock.Mock(
             side_effect=AssertionError("unrelated mutations must not scan catalog")
         )
-        with mock.patch(
+        with base_delivery(), mock.patch(
             "modiff.optional_runtime_execution.public_optional_runtime_catalog",
             catalog,
         ):
@@ -774,6 +1443,53 @@ class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(OptionalRuntimeExecutionBlocked):
                     self.server.execute_graph(loader_graph())
             capture.assert_not_called()
+
+    async def test_linux_qwen_graph_endpoint_accepts_main_and_rejects_old_profile(self):
+        active_main = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+        )
+        active_old = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+            profile_id=TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+        )
+        with mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            return_value=("linux", "x86_64"),
+        ), mock.patch.dict(
+            os.environ,
+            {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
+        ), mock.patch(
+            "modiff.optional_runtime_execution.public_optional_runtime_catalog",
+            return_value=active_main,
+        ):
+            ready, ready_queue = await self._graph_response(qwen_loader_graph())
+        self.assertEqual(ready.status, 200)
+        ready_queue.assert_awaited_once()
+
+        with mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            return_value=("linux", "x86_64"),
+        ), mock.patch.dict(
+            os.environ,
+            {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
+        ), mock.patch(
+            "modiff.optional_runtime_execution.public_optional_runtime_catalog",
+            return_value=active_old,
+        ):
+            stale, stale_queue = await self._graph_response(qwen_loader_graph())
+        self.assertEqual(stale.status, 409)
+        stale_queue.assert_not_awaited()
+        stale_body = response_json(stale)
+        self.assertEqual(
+            stale_body["optionalRuntimeRequirement"]["executionProfileIds"],
+            ["qwen-image:t2i-direct"],
+        )
 
     def test_loader_boundary_blocks_before_module_import(self):
         self.server.modules = {
@@ -1035,6 +1751,12 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
             self.calls.append((values, ref))
 
     def setUp(self):
+        self.enterContext(mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            side_effect=lambda *, platform_name=None, machine=None: optional_runtime_target(
+                platform_name=platform_name or "linux", machine=machine or "x86_64"
+            ),
+        ))
         self.temporary = tempfile.TemporaryDirectory()
         self.environment = mock.patch.dict(
             os.environ,
@@ -1083,9 +1805,15 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
             path="/fields/action",
         )
 
+    def qwen_request(self):
+        request = self.request()
+        request.body["values"]["pipeline_class"] = "QwenImagePipeline"
+        request.body["values"]["model_id"]["value"] = "Qwen/Qwen-Image-2512"
+        return request
+
     async def test_base_direct_and_queued_field_actions_survive_persistent_states(self):
         catalog = mock.Mock(side_effect=AssertionError("base action must not scan catalog"))
-        with mock.patch(
+        with base_delivery(), mock.patch(
             "modiff.optional_runtime_execution.public_optional_runtime_catalog",
             catalog,
         ):
@@ -1129,6 +1857,63 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status, 409)
         self.assertEqual(response_json(response)["error_code"], "optional_runtime_missing")
         importer.assert_not_called()
+
+    async def test_linux_field_action_accepts_exact_main_and_rejects_old_profile(self):
+        active_main = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+        )
+        active_old = runtime_catalog(
+            "present_unqualified",
+            process_status="active",
+            overlay_status="active",
+            qualified=True,
+            profile_id=TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+        )
+        with mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            return_value=("linux", "x86_64"),
+        ), mock.patch.dict(
+            os.environ,
+            {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
+        ), mock.patch(
+            "modiff.optional_runtime_execution.public_optional_runtime_catalog",
+            return_value=active_main,
+        ):
+            ready = await self.server.field_action(self.qwen_request())
+        self.assertEqual(ready.status, 200)
+        self.assertEqual(len(self.node.calls), 1)
+        self.assertEqual(
+            self.node.calls[0][0]["pipeline_class"],
+            "QwenImagePipeline",
+        )
+
+        self.node.calls.clear()
+        with mock.patch(
+            "modiff.diffusers_profiles.optional_runtime_target",
+            return_value=("linux", "x86_64"),
+        ), mock.patch.dict(
+            os.environ,
+            {"MODIFF_RUNTIME_OVERLAY_STATUS": "active"},
+        ), mock.patch(
+            "modiff.optional_runtime_execution.public_optional_runtime_catalog",
+            return_value=active_old,
+        ):
+            stale = await self.server.field_action(self.qwen_request())
+        self.assertEqual(stale.status, 409)
+        stale_body = response_json(stale)
+        self.assertEqual(stale_body["error_code"], "optional_runtime_unavailable")
+        self.assertEqual(
+            stale_body["optionalRuntimeRequirement"]["profileIds"],
+            [TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID],
+        )
+        self.assertEqual(
+            stale_body["optionalRuntimeRequirement"]["executionProfileIds"],
+            ["qwen-image:t2i-direct"],
+        )
+        self.assertEqual(self.node.calls, [])
 
     async def test_queued_field_action_rechecks_state_before_callback(self):
         active = runtime_catalog(
@@ -1192,6 +1977,7 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
             side_effect=AssertionError("persistent restart state must short-circuit")
         )
         with (
+            base_delivery(),
             mock.patch.object(
                 server_module,
                 "validate_optional_runtime_activation_request",

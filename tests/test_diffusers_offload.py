@@ -40,6 +40,7 @@ from modules.ModularDiffusers.loaders import (
     ModelsLoader,
     RequiredComponentLoadError,
     component_reuse_compatible,
+    configure_required_regional_compile,
     load_components_strict,
     place_pipeline_components,
     record_pipeline_component_runtime_policy,
@@ -186,6 +187,56 @@ class FakeStrictPipeline:
 
 
 class DiffusersOffloadSmokeTest(unittest.TestCase):
+    def test_wan_animate_required_regional_compile_is_applied_once_per_shared_transformer(self):
+        class Transformer:
+            def __init__(self):
+                self.calls = []
+
+            def compile_repeated_blocks(self, **kwargs):
+                self.calls.append(kwargs)
+
+        transformer = Transformer()
+        pipeline = type("WanPipeline", (), {"transformer": transformer})()
+
+        applied = configure_required_regional_compile(
+            pipeline,
+            model_type="WanAnimate2DistilledModularPipeline",
+        )
+        reused = configure_required_regional_compile(
+            pipeline,
+            model_type="WanAnimate2DistilledModularPipeline",
+        )
+
+        self.assertEqual(transformer.calls, [{"fullgraph": False}])
+        self.assertEqual(
+            applied,
+            {"required": True, "applied": True, "reused": False, "components": ["transformer"]},
+        )
+        self.assertEqual(
+            reused,
+            {"required": True, "applied": False, "reused": True, "components": ["transformer"]},
+        )
+
+    def test_required_regional_compile_fails_closed_when_wan_transformer_cannot_compile(self):
+        pipeline = type("WanPipeline", (), {"transformer": object()})()
+
+        with self.assertRaisesRegex(RuntimeError, "requires Diffusers regional compilation"):
+            configure_required_regional_compile(
+                pipeline,
+                model_type="WanAnimate2ModularPipeline",
+            )
+
+    def test_unrelated_modular_pipeline_does_not_request_regional_compile(self):
+        result = configure_required_regional_compile(
+            object(),
+            model_type="QwenImageModularPipeline",
+        )
+
+        self.assertEqual(
+            result,
+            {"required": False, "applied": False, "reused": False, "components": []},
+        )
+
     def test_generic_component_filter_does_not_assign_an_uninstalled_repository(self):
         node = AutoModelLoader("generic-component-filter")
 
@@ -382,6 +433,7 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
             with self.assertRaisesRegex(StopAtModelLoad, "model load reached"):
                 node.execute(
                     model_type="QwenImageModularPipeline",
+                    workflow_id="text2image",
                     repo_id={"source": "hub", "value": "Qwen/Qwen-Image-2512"},
                     device="cpu:0",
                     dtype=torch.float32,
@@ -742,7 +794,28 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertIn("CUDA out of memory", str(context.exception))
         self.assertEqual(diagnostics["components_failed"][0]["name"], "text_encoder")
 
-    def test_incremental_group_offload_is_selected_by_quantized_components_not_pipeline_name(self):
+    def test_strict_component_loading_forwards_reviewed_weight_variant(self):
+        pipeline = FakeStrictPipeline({"unet": FakeComponentSpec("unet")})
+        diagnostics = {}
+
+        load_components_strict(
+            pipeline,
+            ["unet"],
+            required_names={"unet"},
+            model_id="stabilityai/stable-diffusion-xl-base-1.0",
+            dtype="float16",
+            offload_mode=OFFLOAD_MODE_MODEL_CPU,
+            quant_config=None,
+            diagnostics=diagnostics,
+            component_load_kwargs={"torch_dtype": "float16", "variant": "fp16"},
+        )
+
+        self.assertEqual(
+            pipeline.registered["unet"]["kwargs"],
+            {"torch_dtype": "float16", "variant": "fp16"},
+        )
+
+    def test_incremental_group_offload_does_not_require_a_quantization_override(self):
         self.assertTrue(
             should_incrementally_group_offload(
                 use_group_offload=True,
@@ -755,12 +828,17 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
                 quant_config={"transformer": "bnb_4bit"},
             )
         )
-        self.assertFalse(
+        self.assertTrue(
             should_incrementally_group_offload(
                 use_group_offload=True,
                 quant_config={"vae": "bnb_4bit"},
             )
         )
+        for config in (None, {}):
+            with self.subTest(quant_config=config):
+                self.assertTrue(should_incrementally_group_offload(
+                    use_group_offload=True, quant_config=config,
+                ))
 
     def test_strict_component_loading_keeps_optional_component_failure_diagnostic(self):
         pipeline = FakeStrictPipeline({
@@ -1644,7 +1722,7 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
             OFFLOAD_MODE_MODEL_CPU,
         )
 
-    def test_wan_modular_plan_cannot_be_class_or_path_routed(self):
+    def test_wan_modular_plan_routes_through_its_exact_execution_profile(self):
         from modiff.server import WebServer
 
         server = object.__new__(WebServer)
@@ -1670,11 +1748,12 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
             "offloadMode": OFFLOAD_MODE_GROUP_DISK,
         }
 
-        with self.assertRaisesRegex(RuntimeError, "does not resolve to one exact execution profile"):
-            WebServer._apply_resource_retry_plan_to_graph(server, graph, plan)
+        updated = WebServer._apply_resource_retry_plan_to_graph(server, graph, plan)
+
+        self.assertEqual(updated, ["wan"])
         self.assertEqual(
             graph["nodes"]["wan"]["params"]["offload_mode"]["value"],
-            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
         )
 
     def test_retry_plan_sanitizer_preserves_exact_candidate_and_loader_target(self):
@@ -1811,7 +1890,19 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
             },
         }
 
-        result = WebServer.execute_graph(server, graph)
+        with patch(
+            "modiff.server.graph_optional_runtime_requirement",
+            return_value={
+                "schemaVersion": 1,
+                "delivery": "optional_overlay",
+                "requiredNow": True,
+                "profileIds": ["huggingface-transformers-peft-5.14.1-0.20.0"],
+                "executionProfileIds": ["z-image:auto"],
+                "state": "active",
+                "reason": "optional_runtime_active",
+            },
+        ):
+            result = WebServer.execute_graph(server, graph)
         self.assertIsNone(result)
         self.assertEqual(calls["count"], 2)
         self.assertEqual(deterministic_calls, [1, 2])

@@ -66,12 +66,75 @@ class OptimizationPackageTests(unittest.TestCase):
             hardware={"torch": {"version": "2.9.1+rocm7.2"}, "amd_architectures": ["gfx1151"]},
         )
         by_id = {item["id"]: item for item in catalog["capabilities"]}
+        self.assertNotIn("aiter", by_id)
         self.assertTrue(by_id["torchao"]["compatible"])
         self.assertFalse(by_id["hub_attention_kernels"]["compatible"])
         self.assertFalse(by_id["torchao"]["enabled"])
         self.assertFalse(by_id["torchao"]["canInstall"])
         self.assertFalse(by_id["torchao"]["canEnable"])
+        self.assertFalse(by_id["torchao"]["deliveryQualified"])
+        self.assertFalse(by_id["torchao"]["availableForExecution"])
         self.assertIn("immutable artifact lock", by_id["torchao"]["disabledReason"])
+
+    def test_reviewed_nvidia_base_bitsandbytes_is_execution_available(self):
+        with (
+            mock.patch.object(optimizations, "_package_version", return_value="0.50.0"),
+            mock.patch.object(optimizations, "_normalized_platform", return_value="linux"),
+        ):
+            catalog = optimizations.public_catalog(
+                runtime_profile={"installed": "nvidia-cuda"},
+                hardware={"torch": {"version": "2.8.0"}},
+            )
+        bitsandbytes = next(item for item in catalog["capabilities"] if item["id"] == "bitsandbytes")
+        self.assertTrue(bitsandbytes["compatible"])
+        self.assertTrue(bitsandbytes["deliveryQualified"])
+        self.assertEqual(bitsandbytes["delivery"], "base_profile")
+        self.assertTrue(bitsandbytes["availableForExecution"])
+        self.assertIsNone(bitsandbytes["disabledReason"])
+
+    def test_active_qualified_quanto_overlay_is_execution_available(self):
+        profile_id = optimizations.TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID
+        runtime_catalog = {
+            "profiles": [
+                {
+                    "id": profile_id,
+                    "contractState": "qualified",
+                    "cutoverReady": True,
+                    "overlayStatus": "active",
+                }
+            ]
+        }
+        with (
+            mock.patch.object(optimizations, "_package_version", return_value="0.2.7"),
+            mock.patch.object(optimizations, "_normalized_platform", return_value="linux"),
+        ):
+            catalog = optimizations.public_catalog(
+                runtime_profile={"installed": "amd-rocm-linux"},
+                hardware={"torch": {"version": "2.9.1+rocm7.2"}},
+                optional_runtime_catalog=runtime_catalog,
+            )
+        quanto = next(item for item in catalog["capabilities"] if item["id"] == "optimum_quanto")
+        self.assertTrue(quanto["compatible"])
+        self.assertTrue(quanto["deliveryQualified"])
+        self.assertEqual(quanto["delivery"], "optional_overlay")
+        self.assertTrue(quanto["availableForExecution"])
+        self.assertEqual(quanto["optionalRuntimeProfileId"], profile_id)
+        self.assertIsNone(quanto["disabledReason"])
+
+    def test_obsolete_aiter_attention_is_not_advertised_or_recorded(self):
+        catalog = optimizations.public_catalog(
+            runtime_profile={"installed": "amd-rocm-linux"},
+            hardware={"torch": {"version": "2.9.1+rocm7.2"}, "amd_architectures": ["gfx942"]},
+        )
+        self.assertNotIn("aiter", {item["id"] for item in catalog["capabilities"]})
+        for backend in ("aiter", "aiter_fa2_hub"):
+            with self.subTest(backend=backend):
+                self.assertEqual(
+                    optimizations.optimization_selections_from_graph(
+                        {"nodes": [{"attention_backend": backend}]}
+                    ),
+                    [],
+                )
 
     def test_locked_requirements_keep_windows_file_hash_out_of_url_path(self):
         wheel = optimizations.OPTIMIZATION_ROOT / "demo_pkg-1.0.0-py3-none-any.whl"
@@ -218,6 +281,82 @@ class OptimizationPackageTests(unittest.TestCase):
             rolled_back = optimizations.rollback_environment()
         self.assertIsNone(rolled_back["state"]["activeEnvironmentId"])
         self.assertTrue(rolled_back["restartRequired"])
+
+    def test_fresh_optional_environment_can_replace_stale_environment_of_same_trust_class(self):
+        current = "runtime-1-deadbeef"
+        target = "runtime-2-feedface"
+        state = optimizations._default_state()
+        state.update(
+            {
+                "activeEnvironmentId": current,
+                "activeTrustClass": "artifact_locked_optional",
+                "_storageStatus": "ok",
+            }
+        )
+
+        def inspect(environment_id, *, verify_integrity=True, **_kwargs):
+            if environment_id == target:
+                return {
+                    "status": "ready",
+                    "manifest": {"trustClass": "artifact_locked_optional"},
+                }
+            if environment_id == current:
+                return {"status": "repair_required"}
+            raise AssertionError(environment_id)
+
+        with (
+            mock.patch.object(optimizations, "reserve_install", side_effect=lambda *_args: self.lease()),
+            mock.patch.object(optimizations, "release_install"),
+            mock.patch.object(optimizations, "_reconcile_promotion"),
+            mock.patch.object(optimizations, "read_state", return_value=state),
+            mock.patch.object(optimizations, "_environment_inspection", side_effect=inspect),
+            mock.patch.object(optimizations, "_fresh_validation_matches", return_value=True),
+            mock.patch.object(optimizations, "_write_state", side_effect=lambda value: value),
+        ):
+            result = optimizations._activate_environment_transaction(
+                target,
+                expected_trust_class="artifact_locked_optional",
+            )
+
+        self.assertEqual(result["state"]["activeEnvironmentId"], target)
+        self.assertEqual(result["state"]["previousEnvironmentId"], current)
+        self.assertTrue(result["restartRequired"])
+
+    def test_stale_environment_owned_by_another_trust_class_still_blocks_activation(self):
+        current = "runtime-1-deadbeef"
+        target = "runtime-2-feedface"
+        state = optimizations._default_state()
+        state.update(
+            {
+                "activeEnvironmentId": current,
+                "activeTrustClass": "legacy_optimization",
+                "_storageStatus": "ok",
+            }
+        )
+
+        def inspect(environment_id, *, verify_integrity=True, **_kwargs):
+            if environment_id == target:
+                return {
+                    "status": "ready",
+                    "manifest": {"trustClass": "artifact_locked_optional"},
+                }
+            if environment_id == current:
+                return {"status": "repair_required"}
+            raise AssertionError(environment_id)
+
+        with (
+            mock.patch.object(optimizations, "reserve_install", side_effect=lambda *_args: self.lease()),
+            mock.patch.object(optimizations, "release_install"),
+            mock.patch.object(optimizations, "_reconcile_promotion"),
+            mock.patch.object(optimizations, "read_state", return_value=state),
+            mock.patch.object(optimizations, "_environment_inspection", side_effect=inspect),
+            mock.patch.object(optimizations, "_fresh_validation_matches", return_value=True),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "another class"):
+                optimizations._activate_environment_transaction(
+                    target,
+                    expected_trust_class="artifact_locked_optional",
+                )
 
     def test_startup_never_imports_or_inserts_a_legacy_overlay(self):
         self.set_active_environment("runtime-1-deadbeef")

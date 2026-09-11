@@ -1,4 +1,5 @@
 import gc
+import importlib.util
 import json
 import pickle
 import unittest
@@ -14,7 +15,7 @@ from PIL import Image
 from modiff.NodeBase import deep_equal
 from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
 from modules.ModularDiffusers.controlnet import Controlnet
-from modules.ModularDiffusers.denoise import Denoise
+from modules.ModularDiffusers.denoise import Denoise, _isolate_mutated_upstream_input
 from modules.ModularDiffusers.latents import DecodeLatents, ImageEncode
 from modules.ModularDiffusers.loaders import AutoModelLoader, ModelsLoader, annotate_modular_loader_outputs
 from modules.ModularDiffusers.modular_utils import (
@@ -197,8 +198,6 @@ def _sdxl_ip_adapter_fixture(*, suffix="a", scale=0.75):
     from diffusers import ClassifierFreeGuidance
     from diffusers.models import ImageProjection
     from diffusers.models.attention_processor import IPAdapterAttnProcessor
-    from transformers import CLIPImageProcessor
-
     class FixtureEncoder(torch.nn.Module):
         def __init__(self):
             super().__init__()
@@ -207,12 +206,12 @@ def _sdxl_ip_adapter_fixture(*, suffix="a", scale=0.75):
                 (),
                 {
                     "image_size": 224,
-                    "hidden_size": 1280,
+                    "hidden_size": 1664,
                     "patch_size": 14,
                     "num_channels": 3,
-                    "num_hidden_layers": 32,
+                    "num_hidden_layers": 48,
                     "num_attention_heads": 16,
-                    "projection_dim": 1024,
+                    "projection_dim": 1280,
                 },
             )()
 
@@ -222,7 +221,7 @@ def _sdxl_ip_adapter_fixture(*, suffix="a", scale=0.75):
             self.dtype = torch.float32
             self.encoder_hid_proj = type("FixtureProjection", (), {})()
             self.encoder_hid_proj.image_projection_layers = torch.nn.ModuleList(
-                [ImageProjection(image_embed_dim=1024, cross_attention_dim=8, num_image_text_embeds=4)]
+                [ImageProjection(image_embed_dim=1280, cross_attention_dim=8, num_image_text_embeds=4)]
             )
             self.attn_processors = {
                 "down_blocks.0.attentions.0.transformer_blocks.0.attn2.processor": IPAdapterAttnProcessor(
@@ -234,14 +233,26 @@ def _sdxl_ip_adapter_fixture(*, suffix="a", scale=0.75):
             }
             self.config = type("FixtureIPAdapterUNetConfig", (), {"encoder_hid_dim_type": "ip_image_proj"})()
 
+    class FixtureCLIPImageProcessor:
+        size = {"shortest_edge": 224}
+        crop_size = {"height": 224, "width": 224}
+        do_convert_rgb = True
+        do_resize = True
+        do_rescale = True
+        rescale_factor = 1 / 255
+        do_normalize = True
+        do_center_crop = True
+        image_mean = [0.48145466, 0.4578275, 0.40821073]
+        image_std = [0.26862954, 0.26130258, 0.27577711]
+
     token, outputs = _bound_outputs(SDXL, suffix=suffix, model_id=f"ip-unet-{suffix}")
     unet = FixtureUNet()
     encoder = FixtureEncoder()
-    processor = CLIPImageProcessor(size=224, crop_size=224)
+    processor = FixtureCLIPImageProcessor()
     guider = ClassifierFreeGuidance(guidance_scale=7.5)
     image = Image.new("RGB", (32, 24), "purple")
-    embeddings = [torch.zeros((1, 1, 1024))]
-    negative_embeddings = [torch.ones((1, 1, 1024))]
+    embeddings = [torch.zeros((1, 1, 1280))]
+    negative_embeddings = [torch.ones((1, 1, 1280))]
     bundle = issue_sdxl_ip_adapter_bundle(
         binding=token,
         unet=unet,
@@ -251,7 +262,7 @@ def _sdxl_ip_adapter_fixture(*, suffix="a", scale=0.75):
             "sdxl_models/ip-adapter_sdxl.safetensors",
             "1" * 64,
             1,
-            "models/image_encoder",
+            "sdxl_models/image_encoder",
             "CLIPVisionModelWithProjection",
         ),
         image_encoder=encoder,
@@ -1899,6 +1910,18 @@ class OpaqueRoutePrimitiveTests(unittest.TestCase):
 
 
 class SDXLIPAdapterReceiptTests(unittest.TestCase):
+    def test_upstream_embedding_list_normalization_is_isolated_from_the_receipt(self):
+        embeddings = [torch.zeros((1, 1, 1280))]
+        isolated = _isolate_mutated_upstream_input("ip_adapter_embeds", embeddings)
+        self.assertIsNot(isolated, embeddings)
+        self.assertIs(isolated[0], embeddings[0])
+        isolated[0] = torch.cat([isolated[0]], dim=0)
+        self.assertIsNot(isolated[0], embeddings[0])
+        self.assertIs(
+            _isolate_mutated_upstream_input("prompt_embeds", embeddings),
+            embeddings,
+        )
+
     def test_exact_backend_publication_validates_and_cannot_serialize(self):
         fixture = _sdxl_ip_adapter_fixture()
         self.assertIs(
@@ -1932,7 +1955,7 @@ class SDXLIPAdapterReceiptTests(unittest.TestCase):
                     guider=override.get("guider", fixture["guider"]),
                 )
 
-        fixture["bundle"]["ip_adapter_embeds"] = [torch.zeros((1, 1, 1024))]
+        fixture["bundle"]["ip_adapter_embeds"] = [torch.zeros((1, 1, 1280))]
         with self.assertRaisesRegex(ValueError, "changed after backend publication"):
             require_sdxl_ip_adapter_bundle(
                 fixture["bundle"],
@@ -1990,6 +2013,36 @@ class SDXLIPAdapterReceiptTests(unittest.TestCase):
                 unet=fixture["unet"],
                 guider=fixture["guider"],
             )
+        )
+
+    @unittest.skipUnless(torch.cuda.is_available(), "requires a Torch accelerator for an actual offload move")
+    def test_parameter_device_offload_does_not_invalidate_the_receipt(self):
+        fixture = _sdxl_ip_adapter_fixture()
+        adapter_modules = [
+            fixture["unet"].encoder_hid_proj.image_projection_layers[0],
+            *fixture["unet"].attn_processors.values(),
+        ]
+        for module in adapter_modules:
+            module.to("cuda:0")
+        self.assertIs(
+            require_sdxl_ip_adapter_bundle(
+                fixture["bundle"],
+                binding=fixture["token"],
+                unet=fixture["unet"],
+                guider=fixture["guider"],
+            )._binding,
+            fixture["token"],
+        )
+        for module in adapter_modules:
+            module.to("cpu")
+        self.assertIs(
+            require_sdxl_ip_adapter_bundle(
+                fixture["bundle"],
+                binding=fixture["token"],
+                unet=fixture["unet"],
+                guider=fixture["guider"],
+            )._binding,
+            fixture["token"],
         )
 
     def test_resident_adapter_requires_its_exact_bundle(self):
@@ -3118,7 +3171,15 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
                 )
                 torch.rand((4,), generator=kwargs["generator"])
                 observed[-1]["post_state"] = kwargs["generator"].get_state().clone()
-                return FakeControlOutput({"control_image_latents": control_latents[len(observed) - 1]})
+                return FakeControlOutput(
+                    {
+                        "control_image_latents": control_latents[len(observed) - 1],
+                        # PipelineState retains inputs as well as declared
+                        # outputs. The graph bundle must not expose this
+                        # backend-owned, already-advanced generator.
+                        "generator": kwargs["generator"],
+                    }
+                )
 
         class FakeControlBlocks:
             component_names = ["vae", "controlnet"]
@@ -3135,6 +3196,7 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
                 "controlnet_conditioning_scale",
                 "control_guidance_start",
                 "control_guidance_end",
+                "generator",
             ]
 
         def contract(_pipeline_class, node_type, **_kwargs):
@@ -3184,6 +3246,8 @@ class RouteRuntimeBoundaryTests(unittest.TestCase):
         self.assertIs(text_result["controlnet_bundle"]["control_image_latents"], control_latents[0])
         self.assertIs(text_result["controlnet_bundle"]["controlnet"], controlnet)
         self.assertIs(image_result["controlnet_bundle"]["control_image_latents"], control_latents[1])
+        self.assertNotIn("generator", text_result["controlnet_bundle"])
+        self.assertNotIn("generator", image_result["controlnet_bundle"])
 
         fresh = torch.Generator(device="cpu").manual_seed(seed)
         self.assertTrue(torch.equal(observed[0]["pre_state"], fresh.get_state()))
@@ -5282,6 +5346,10 @@ class PinnedRouteSchemaTests(unittest.TestCase):
         self.assertFalse({"seed", ROUTE_STATE_INPUT}.intersection(sdxl_control["input_names"]))
         self.assertNotIn(ROUTE_STATE_OUTPUT, sdxl_control["output_names"])
 
+    @unittest.skipUnless(
+        importlib.util.find_spec("transformers"),
+        "requires the staged optional Transformers runtime",
+    )
     def test_qwen_vae_route_inputs_and_edit_decoder_anomaly_are_pinned_exactly(self):
         image = get_model_type_metadata("QwenImageModularPipeline")["node_params"]["vae_encoder"]
         edit = get_model_type_metadata(QWEN_EDIT)["node_params"]["vae_encoder"]

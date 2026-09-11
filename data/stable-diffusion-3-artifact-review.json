@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "family": "Stable Diffusion 3",
+  "reviewedAt": "2026-08-14T00:00:00+05:30",
+  "repository": {
+    "repository": "stabilityai/stable-diffusion-3-medium-diffusers",
+    "revision": "ea42f8cef0f178587cf766dc8129abd379c90671",
+    "private": false,
+    "gated": "auto",
+    "repositoryFileCount": 38,
+    "repositoryBytes": 31012147557,
+    "pythonFilesPresent": false,
+    "trustRemoteCodeRequired": false,
+    "licenseFileAccessibleWithoutAuthentication": true,
+    "modelIndexAccessibleWithoutAcceptedGate": false,
+    "componentConfigsAccessibleWithoutAcceptedGate": false,
+    "gatedArtifactHttpStatus": 401,
+    "selectedWeightFileCount": 6,
+    "selectedWeightBytes": 15499002486,
+    "selectedWeightInventorySha256": "522c80462031434d55b4dfbf85666b9ae7df8a1045f2364706ab89806de01f2f"
+  },
+  "selectedWeightFiles": [
+    {
+      "path": "base/text_encoder/model.fp16.safetensors",
+      "sha256": "71e183d11db0c6b6282a4d9e0abb74125edc8692393e89ed8ee5571005f35cb1",
+      "byteSize": 247323896
+    },
+    {
+      "path": "base/text_encoder_2/model.fp16.safetensors",
+      "sha256": "ec310df2af79c318e24d20511b601a591ca8cd4f1fce1d8dff822a356bcdb1f4",
+      "byteSize": 1389382176
+    },
+    {
+      "path": "base/text_encoder_3/model.fp16-00001-of-00002.safetensors",
+      "sha256": "4f2751ceeb2a96edd693e539dc5d6bba0b8d3814f49a9b3798403a0cec4b2e3d",
+      "byteSize": 4994582104
+    },
+    {
+      "path": "base/text_encoder_3/model.fp16-00002-of-00002.safetensors",
+      "sha256": "f63154532130422309532ff56f11945fbea8266c958e3133e8e5aef85c6293c7",
+      "byteSize": 4530066248
+    },
+    {
+      "path": "base/transformer/diffusion_pytorch_model.fp16.safetensors",
+      "sha256": "8b0e357dd04755fbfb067c63f4a883ac1de2942dd4a3240069874a17022e5418",
+      "byteSize": 4169981408
+    },
+    {
+      "path": "base/vae/diffusion_pytorch_model.fp16.safetensors",
+      "sha256": "f9b67a279283625caee39d61eacb5324243848477b4eb535355eaaa8423d4e09",
+      "byteSize": 167666654
+    }
+  ],
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "entries": ["path", "byteSize", "sha256"],
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "crossReviewReceipt": {
+    "source": "data/sd3-controlnet-artifact-review.json",
+    "sameRepositoryRevision": true,
+    "sameSelectedBaseWeightInventory": true,
+    "remoteSafetensorsHeaderBytesFetchedByPriorReview": 0,
+    "notes": [
+      "The standard-family review reuses the exact base inventory already sealed for the SD3 ControlNet assembly review.",
+      "The prior review fetched only auxiliary ControlNet safetensors headers; no Stable Diffusion 3 base weight bytes were fetched."
+    ]
+  },
+  "pinnedDiffusers": {
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "version": "0.40.0.dev0",
+    "textToImagePipelineClass": "StableDiffusion3Pipeline",
+    "imageToImagePipelineClass": "StableDiffusion3Img2ImgPipeline",
+    "inpaintPipelineClass": "StableDiffusion3InpaintPipeline",
+    "transformerClass": "SD3Transformer2DModel",
+    "schedulerClass": "FlowMatchEulerDiscreteScheduler",
+    "outputClass": "StableDiffusion3PipelineOutput",
+    "sourceSha256": {
+      "textToImagePipeline": "b1299e0549145df66c98f9b2260545076d08038dc074b58480c65fc5793061c5",
+      "imageToImagePipeline": "a6ce7eb800c32c5c47223b21ec9db5a1b698522d6d77f6967520c8bdfdb6b6bb",
+      "inpaintPipeline": "78c02abc322ead4deb825cd4aad1b20271302360e2368ddb91bf59d7d2542d35",
+      "output": "c864145fa25c0ebb2900123861726a26dd73c1e237e33d0c061e532430e74fe8",
+      "transformer": "0c9bcbf6c19c4eeb9c438332157d233f8191253125438e660054700e466c42d8",
+      "scheduler": "1af27be5b2f92b7d139d3c50239be5ce3eafc4a7eddf59c2d30689f8ec31e93d"
+    },
+    "callbackOnStepEndAvailable": true,
+    "interruptFlagAvailable": true,
+    "interruptFlagReadByDenoisingLoop": true,
+    "safetyCheckerAvailable": false,
+    "modelCpuOffloadSequence": "text_encoder->text_encoder_2->text_encoder_3->image_encoder->transformer->vae"
+  },
+  "pipelineContract": {
+    "defaultHeight": 1024,
+    "defaultWidth": 1024,
+    "dimensionMultiple": 16,
+    "defaultGuidanceScale": 7.0,
+    "defaultMaxSequenceLength": 256,
+    "packageMaxSequenceLength": 512,
+    "negativePromptAvailable": true,
+    "modes": {
+      "text_to_image": {
+        "pipelineClass": "StableDiffusion3Pipeline",
+        "requiredInputs": ["prompt"],
+        "defaultNumInferenceSteps": 28
+      },
+      "edit_image": {
+        "pipelineClass": "StableDiffusion3Img2ImgPipeline",
+        "requiredInputs": ["prompt", "image"],
+        "defaultNumInferenceSteps": 50,
+        "defaultStrength": 0.6
+      },
+      "inpaint": {
+        "pipelineClass": "StableDiffusion3InpaintPipeline",
+        "requiredInputs": ["prompt", "image", "mask_image"],
+        "defaultNumInferenceSteps": 50,
+        "defaultStrength": 0.6
+      }
+    },
+    "packageUpperBounds": {
+      "maxSequenceLength": 512,
+      "numInferenceSteps": null,
+      "height": null,
+      "width": null,
+      "inputPixels": null,
+      "outputPixels": null
+    }
+  },
+  "licenseReview": {
+    "id": "stabilityai-nc-research-community",
+    "licenseByteSize": 7420,
+    "licenseSha256": "01889551358d3e37d16dfcd1852e85be0bd8470f00930d39ed361e754ab1cc14",
+    "gateAcceptanceRequired": true,
+    "taskScopedProductAcceptanceObtained": false,
+    "acceptanceTriggeredByUse": true,
+    "nonCommercialOnly": true,
+    "productionUseProhibitedWithoutSeparateLicense": true,
+    "hostedServiceOrApiUseProhibitedWithoutSeparateLicense": true,
+    "distributionLicenseAndNoticeRequired": true,
+    "legalAndProductApprovalComplete": false
+  },
+  "remoteResourceEnvelope": {
+    "status": "estimate_only_not_admitted",
+    "selectedWeightBytes": 15499002486,
+    "minimumSelectiveDiskBytes": 25769803776,
+    "minimumSystemRamBytes": 51539607552,
+    "minimumAcceleratorMemoryBytesEstimate": 25769803776,
+    "notes": [
+      "The estimate covers the selected fp16 partition and package-owned pipelines with CPU offload.",
+      "No local or remote real-weight run qualified this envelope."
+    ]
+  },
+  "appDownloadPreflight": {
+    "transportPolicy": "app_only",
+    "planRequestedThroughApp": true,
+    "submissionAttempted": false,
+    "termsAcceptedByMoDiff": false,
+    "directWeightDownloadPerformed": false,
+    "olderModelsDeleted": false,
+    "preflightFreeBytes": 524908945408,
+    "preflightExistingQueuedReservationBytes": 446582359749,
+    "snapshotRemainingBytes": 31012147557,
+    "reserveBytes": 68719476736,
+    "standaloneFits": true,
+    "fitsWithQueue": false,
+    "preSnapshotHeadroomAfterReserveBytes": 9607108923,
+    "additionalBytesRequired": 21405038634
+  },
+  "admission": {
+    "status": "review_complete_blocked_noncommercial_license_and_capacity",
+    "runtimeCatalogExposed": false,
+    "downloadCatalogExposed": false,
+    "capabilityExposed": false,
+    "canonicalWorkflowsAdded": 0,
+    "clientSurfaceAdded": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "liveQualified": false,
+    "baseWeightBytesFetched": 0,
+    "modelWeightsDownloaded": false,
+    "blockingReasons": [
+      "The repository gate requires affirmative license acceptance, which this source review did not perform for the product or user.",
+      "The exact base license is non-commercial-only and prohibits production and hosted/API use without a separate license.",
+      "The authenticated model index and component configs remain unavailable to the unaccepted review boundary.",
+      "The package pipelines contain no safety checker and do not bound steps, input pixels, or output pixels.",
+      "The full app snapshot is 21.41 GB short beside the existing download queue and safety reserve."
+    ],
+    "unresolvedGates": [
+      "task_scoped_license_acceptance",
+      "commercial_license_and_legal_product_approval",
+      "authenticated_model_index_and_component_review",
+      "backend_owned_bounds_and_optional_runtime_contract",
+      "app_storage_capacity",
+      "remote_real_weight_execution_and_output_review",
+      "physical_macos_execution"
+    ]
+  }
+}

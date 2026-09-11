@@ -1,0 +1,417 @@
+{
+  "schemaVersion": 1,
+  "family": "Kandinsky 2.2",
+  "reviewedAt": "2026-08-14T00:00:00+05:30",
+  "officialRepositoryDiscovery": {
+    "provider": "Hugging Face Hub model API",
+    "organization": "kandinsky-community",
+    "exactVersion22RepositoryCount": 5,
+    "repositories": [
+      "kandinsky-community/kandinsky-2-2-decoder",
+      "kandinsky-community/kandinsky-2-2-prior",
+      "kandinsky-community/kandinsky-2-2-decoder-inpaint",
+      "kandinsky-community/kandinsky-2-2-controlnet-depth",
+      "kandinsky-community/kandinsky-2-2-decoder-refiner"
+    ]
+  },
+  "pinnedDiffusers": {
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "version": "0.40.0.dev0",
+    "sourceSha256": {
+      "__init__.py": "59e57c296a022e3e8a4ef27e7f70e8f3b2285ff751fc064dca5073eff22ef3bb",
+      "pipeline_kandinsky2_2.py": "e449c957ef85638155a9e89f1a3b27c8ef40c976a37ab1a213998f374f7a2357",
+      "pipeline_kandinsky2_2_combined.py": "5c8b6f3ca0cbe2ca8afdab2c775d233fc15f87e4a3499f6f7b96190e1146d8f1",
+      "pipeline_kandinsky2_2_controlnet.py": "737586dc2a2a2337eda37539b6b37c1f9a2eeb97183d0d93edb82380f317b883",
+      "pipeline_kandinsky2_2_controlnet_img2img.py": "c0802aa2d85a84826c86c2eac5d6c1cef2915bdf557f6166cc76bd31bd09d4dd",
+      "pipeline_kandinsky2_2_img2img.py": "2173e4a313ee541fae03a8b6fbb4992318889f47aa527cf7d5ce4127bb2554ef",
+      "pipeline_kandinsky2_2_inpainting.py": "e08b3c64ca003b301b2771b27f5b8d225055dd039b70ba95e5078bb04ae22cea",
+      "pipeline_kandinsky2_2_prior.py": "527fb4e82d4929b0dd3e0b7a30ea837efca4a7ca321b2710c97417fec3ab5f5e",
+      "pipeline_kandinsky2_2_prior_emb2emb.py": "506d03282120f59241101372d6edd693cb43c8cf16075f69552990ce8cb17b7e",
+      "pipeline_loading_utils.py": "d631cac6cb063afc0438bf08bab7c7faeb537fa73fbe3f85630c7002064dbf91",
+      "pipeline_utils.py": "9c751d37677e3e6a265fc7b0831fa0cb4f9789011a6bab70553d978e80339a2a"
+    }
+  },
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path within each repository",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256",
+    "entryFields": [
+      "path",
+      "byteSize",
+      "sha256"
+    ]
+  },
+  "repositories": {
+    "decoder": {
+      "repository": "kandinsky-community/kandinsky-2-2-decoder",
+      "revision": "9ae140d347fed8ce6e8bb3005dcc1f48543bb8e3",
+      "modelIndexPipelineClass": "KandinskyV22Pipeline",
+      "private": false,
+      "gated": false,
+      "declaredLicense": "apache-2.0",
+      "licenseFilePresent": false,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "repositoryFileCount": 10,
+      "repositoryBytes": 10567696040,
+      "selectedSerialization": "safetensors",
+      "selectedWeightFileCount": 2,
+      "selectedWeightBytes": 5283689948,
+      "selectedWeightInventorySha256": "a45c29fd2d223a898e4ecd3a037da02604d850a9e2eded9b8c840cf9b57694f7",
+      "connectedPriorRepository": "kandinsky-community/kandinsky-2-2-prior",
+      "connectedPriorRevisionDeclared": null,
+      "metadataSha256": {
+        "README.md": "23e958a88dabb1a9bb6dc525eabcee038311b7a9f21fe6f0eda96af511a61917",
+        "model_index.json": "5cde694d9f2a436adcdf0874c7f2b863d03bfcf54dbaf98926d2ef55bfe32918",
+        "movq/config.json": "b7448f3ea8aecf233629b20c1f606887e22244656edcee1be6a419079717a23e",
+        "scheduler/scheduler_config.json": "b0900b16ee3e47c7b1e3c3fda579835d8dbc8bb5ba8434395412fed5c732c597",
+        "unet/config.json": "4f30206052776397195b5f1c9df9d7f7e34f50b1cb1ad9a027856021a94b62d6"
+      },
+      "weightFiles": [
+        {
+          "path": "movq/diffusion_pytorch_model.safetensors",
+          "byteSize": 271380364,
+          "sha256": "43a5860fea195a7116f2471396c5cc9535fade9b63c4857d8a192ffd924b7002",
+          "tensorCount": 431,
+          "dtypeElementCounts": {
+            "F32": 67832495
+          },
+          "headerBytesFetched": 50384
+        },
+        {
+          "path": "unet/diffusion_pytorch_model.safetensors",
+          "byteSize": 5012309584,
+          "sha256": "3cc2f07442b9de0f18fb3f22247790872c094c4acc9dbe68552f96fd2e5c1ea1",
+          "tensorCount": 724,
+          "dtypeElementCounts": {
+            "F32": 1253057288
+          },
+          "headerBytesFetched": 80432
+        }
+      ]
+    },
+    "prior": {
+      "repository": "kandinsky-community/kandinsky-2-2-prior",
+      "revision": "9fc51ad5732afc5d031724219d22e6c42179c5a8",
+      "modelIndexPipelineClass": "KandinskyV22PriorPipeline",
+      "private": false,
+      "gated": false,
+      "declaredLicense": "apache-2.0",
+      "licenseFilePresent": false,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "repositoryFileCount": 18,
+      "repositoryBytes": 21148946563,
+      "selectedSerialization": "safetensors",
+      "selectedWeightFileCount": 3,
+      "selectedWeightBytes": 10573556608,
+      "selectedWeightInventorySha256": "82183e03182b586858a9ea315a7b908f6ccc8911a2a355b3d653ec4d18288fe0",
+      "metadataSha256": {
+        "README.md": "bba4898931a219c1d2f2f832bb8050e205a94ec781e7ebee55eb96c89add286d",
+        "image_encoder/config.json": "1d53c2b4b74c5f85171d313adda3e3b8771ff5c698ee66a29710d0ac822298e4",
+        "image_processor/preprocessor_config.json": "0a70aaa5de2ccb5e222b0e7e3ea347a3da051c3588c763cdd23b4d80bbf96b65",
+        "model_index.json": "26cba76e560b6da612d65b8e7beac9be04442df8df2e1743b8466454988d1f5e",
+        "prior/config.json": "e36f9ae41677b87a8ca72853f1246704228c49c280adcfa8a8e100ef47d2ee5a",
+        "scheduler/scheduler_config.json": "5ba056e705a3317f60d79a3756a3409b0a53f1129b76a6aa5097ce9f513d143e",
+        "text_encoder/config.json": "3dec84fa855c0b7f531eea433e805a1194086c38c5635baceda8cbed4f727f1b",
+        "tokenizer/merges.txt": "9fd691f7c8039210e0fced15865466c65820d09b63988b0174bfe25de299051a",
+        "tokenizer/special_tokens_map.json": "f8c0d6c39aee3f8431078ef6646567b0aba7f2246e9c54b8b99d55c22b707cbf",
+        "tokenizer/tokenizer_config.json": "e19f34ef773563fb695f96cfcae1e4c7b112ab6ad532f6962061df5242d924f0",
+        "tokenizer/vocab.json": "5047b556ce86ccaf6aa22b3ffccfc52d391ea4accdab9c2f2407da5b742d4363"
+      },
+      "weightFiles": [
+        {
+          "path": "image_encoder/model.safetensors",
+          "byteSize": 3689912664,
+          "sha256": "657723e09f46a7c3957df651601029f66b1748afb12b419816330f16ed45d64d",
+          "tensorCount": 777,
+          "dtypeElementCounts": {
+            "F16": 1844907264,
+            "I64": 257
+          },
+          "headerBytesFetched": 96080
+        },
+        {
+          "path": "prior/diffusion_pytorch_model.safetensors",
+          "byteSize": 4104940968,
+          "sha256": "ab139b2df9e40ed0b1eda8dc6270a139a796c5fa3af76cd6b0573f620dca6dde",
+          "tensorCount": 338,
+          "dtypeElementCounts": {
+            "F32": 1026225920
+          },
+          "headerBytesFetched": 37288
+        },
+        {
+          "path": "text_encoder/model.safetensors",
+          "byteSize": 2778702976,
+          "sha256": "6eaafeea664d7ab87df17274d6114dfdf092c587c7cd56c13cf84aacdebc0332",
+          "tensorCount": 518,
+          "dtypeElementCounts": {
+            "F32": 694659840,
+            "I64": 77
+          },
+          "headerBytesFetched": 63000
+        }
+      ]
+    },
+    "inpaintDecoder": {
+      "repository": "kandinsky-community/kandinsky-2-2-decoder-inpaint",
+      "revision": "db790ad5cbcabed886f069ef2710774657621702",
+      "modelIndexPipelineClass": "KandinskyV22InpaintPipeline",
+      "private": false,
+      "gated": false,
+      "declaredLicense": "apache-2.0",
+      "licenseFilePresent": false,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "repositoryFileCount": 10,
+      "repositoryBytes": 10567832707,
+      "selectedSerialization": "safetensors",
+      "selectedWeightFileCount": 2,
+      "selectedWeightBytes": 5283759068,
+      "selectedWeightInventorySha256": "7ba254f7f300d5ce8bf0c819fe5852be33309f363fccb5b36b1c9592b44e9554",
+      "connectedPriorRepository": "kandinsky-community/kandinsky-2-2-prior",
+      "connectedPriorRevisionDeclared": null,
+      "metadataSha256": {
+        "README.md": "2d4ec36bbaf91ab7d1d1d2ee3a921d5c16f39e8d1ce6d3f9045a8d82cb0ef186",
+        "model_index.json": "6dfda60c9ec616ddd4f38cdf01a2adf3e1c6cf074e925f7bb77980d543aee8b1",
+        "movq/config.json": "b7448f3ea8aecf233629b20c1f606887e22244656edcee1be6a419079717a23e",
+        "scheduler/scheduler_config.json": "801b60ec20835a36bf8c0cd2dab9f2c72d0b938ec87202a6b5b3eeb2714e1b97",
+        "unet/config.json": "35e05e11683958668f34f2d99fb63524c26863f5d21257fda3c4a684e9f3131d"
+      },
+      "weightFiles": [
+        {
+          "path": "movq/diffusion_pytorch_model.safetensors",
+          "byteSize": 271380364,
+          "sha256": "43a5860fea195a7116f2471396c5cc9535fade9b63c4857d8a192ffd924b7002",
+          "tensorCount": 431,
+          "dtypeElementCounts": {
+            "F32": 67832495
+          },
+          "headerBytesFetched": 50384
+        },
+        {
+          "path": "unet/diffusion_pytorch_model.safetensors",
+          "byteSize": 5012378704,
+          "sha256": "098b846d2378b4b44a33e0bd47f89f2886b72a10200cbf9e96d5fae3c471543f",
+          "tensorCount": 724,
+          "dtypeElementCounts": {
+            "F32": 1253074568
+          },
+          "headerBytesFetched": 80432
+        }
+      ]
+    },
+    "controlnetDepth": {
+      "repository": "kandinsky-community/kandinsky-2-2-controlnet-depth",
+      "revision": "4ecd717e8c9086cf4a16ca28b64894f70a42cd08",
+      "modelIndexPipelineClass": "KandinskyV22ControlnetPipeline",
+      "private": false,
+      "gated": false,
+      "declaredLicense": "apache-2.0",
+      "licenseFilePresent": false,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "repositoryFileCount": 8,
+      "repositoryBytes": 5285502688,
+      "selectedSerialization": null,
+      "safetensorsWeightFileCount": 0,
+      "legacyWeightFileCount": 2,
+      "legacyWeightBytes": 5285488364,
+      "legacyWeightInventorySha256": "dd30812ab98bd0eb7e56fb6b80b48e832004caa71e1cb22cf5a4eea96d0daf03",
+      "connectedPriorRepository": "kandinsky-community/kandinsky-2-2-prior",
+      "connectedPriorRevisionDeclared": null,
+      "metadataSha256": {
+        "README.md": "040695c701d9d3568d67b4dad5140bc69cb89360355fcf2a63d8952fb747e1ba",
+        "model_index.json": "3b275988ddabc0ab143c6b9f17811193c6e7fd996fdf3a089f6aa9f7d5e4ad7e",
+        "movq/config.json": "b7448f3ea8aecf233629b20c1f606887e22244656edcee1be6a419079717a23e",
+        "scheduler/scheduler_config.json": "b0900b16ee3e47c7b1e3c3fda579835d8dbc8bb5ba8434395412fed5c732c597",
+        "unet/config.json": "29dcb862031753804e9b600da1c26e79ec83239c43b835e5a74f06548ab3434e"
+      },
+      "weightFiles": [
+        {
+          "path": "movq/diffusion_pytorch_model.bin",
+          "byteSize": 271492131,
+          "sha256": "772e09739d742ddee6807add2d3c2fd2a32db53896b5d07a92c729d8c879ce59"
+        },
+        {
+          "path": "unet/diffusion_pytorch_model.bin",
+          "byteSize": 5013996233,
+          "sha256": "3418cd4f977d51ec902d095ff67482232c6097edfd91b474443148113b8f8a36"
+        }
+      ]
+    },
+    "decoderRefiner": {
+      "repository": "kandinsky-community/kandinsky-2-2-decoder-refiner",
+      "revision": "9ae654a9d10d0a61c238fd4dd377d2f7a1b16386",
+      "modelIndexPipelineClass": "KandinskyPipeline",
+      "modelIndexClassMatchesVersion22Package": false,
+      "private": false,
+      "gated": false,
+      "declaredLicense": null,
+      "readmePresent": false,
+      "licenseFilePresent": false,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "repositoryFileCount": 7,
+      "repositoryBytes": 5283986661,
+      "selectedSerialization": null,
+      "safetensorsWeightFileCount": 0,
+      "legacyWeightFileCount": 2,
+      "legacyWeightBytes": 5283982252,
+      "legacyWeightInventorySha256": "dfe02df39ea99107659a9aa227a340ba5b5089bb19c32c6520a6e9202d97ff5f",
+      "metadataSha256": {
+        "model_index.json": "e60059045a49ac5d8acce7c7b8a9bb8d5ccf533a6eafe53e1551a7162c0023cb",
+        "movq/config.json": "b7448f3ea8aecf233629b20c1f606887e22244656edcee1be6a419079717a23e",
+        "scheduler/scheduler_config.json": "801b60ec20835a36bf8c0cd2dab9f2c72d0b938ec87202a6b5b3eeb2714e1b97",
+        "unet/config.json": "4f30206052776397195b5f1c9df9d7f7e34f50b1cb1ad9a027856021a94b62d6"
+      },
+      "weightFiles": [
+        {
+          "path": "movq/diffusion_pytorch_model.bin",
+          "byteSize": 271492131,
+          "sha256": "772e09739d742ddee6807add2d3c2fd2a32db53896b5d07a92c729d8c879ce59"
+        },
+        {
+          "path": "unet/diffusion_pytorch_model.bin",
+          "byteSize": 5012490121,
+          "sha256": "ca239d59ab7d0fc7089c99515173b2a3f6069e4aa1339f62f4e11423f9dd8226"
+        }
+      ]
+    }
+  },
+  "headerEvidence": {
+    "fullWeightFilesDownloaded": false,
+    "remoteWeightBytesFetched": 0,
+    "rangeRequests": 7,
+    "rangeBytesFetched": 458000,
+    "uniqueSafetensorsArtifactsInspected": 6,
+    "uniqueSafetensorsHeaderBytes": 407616
+  },
+  "pipelineContracts": {
+    "combinedModes": {
+      "textToImage": {
+        "pipelineClass": "KandinskyV22CombinedPipeline",
+        "requiredInputs": [
+          "prompt"
+        ]
+      },
+      "imageToImage": {
+        "pipelineClass": "KandinskyV22Img2ImgCombinedPipeline",
+        "requiredInputs": [
+          "prompt",
+          "image"
+        ],
+        "defaultStrength": 0.3
+      },
+      "inpaint": {
+        "pipelineClass": "KandinskyV22InpaintCombinedPipeline",
+        "requiredInputs": [
+          "prompt",
+          "image",
+          "mask_image"
+        ]
+      }
+    },
+    "defaultNumInferenceSteps": 100,
+    "defaultPriorNumInferenceSteps": 25,
+    "defaultGuidanceScale": 4.0,
+    "defaultPriorGuidanceScale": 4.0,
+    "defaultHeight": 512,
+    "defaultWidth": 512,
+    "defaultNumImagesPerPrompt": 1,
+    "requestedResolutionRoundedUpToMultiple": 64,
+    "priorModernStepEndCallbackAvailable": true,
+    "decoderModernStepEndCallbackAvailable": true,
+    "combinedCallbacksCoverBothDenoisingStages": true,
+    "callbackExceptionCanAbortExecution": true,
+    "interruptFlagAvailable": false,
+    "safetyCheckerAvailable": false,
+    "backendOwnedUpperBoundsPresent": false,
+    "controlnetDepthPipelines": [
+      "KandinskyV22ControlnetPipeline",
+      "KandinskyV22ControlnetImg2ImgPipeline"
+    ],
+    "controlnetModernStepEndCallbackAvailable": false,
+    "priorEmbeddingPipelines": [
+      "KandinskyV22PriorPipeline",
+      "KandinskyV22PriorEmb2EmbPipeline"
+    ]
+  },
+  "connectedPriorRevisionReview": {
+    "combinedPipelinesLoadConnectedPipes": true,
+    "decoderInpaintAndControlCardsContainRepositoryOnly": true,
+    "connectedPriorRevisionEmbedded": false,
+    "decoderPriorInpaintAndControlRevisionsAreDistinct": true,
+    "fromPretrainedCopiesPrimaryRevisionToConnectedPrior": true,
+    "primaryRevisionsExistOnPriorRepository": false,
+    "immutableCombinedFromPretrainedLoadIsValid": false,
+    "downloadPathForwardsRevisionToConnectedPrior": false,
+    "downloadPathUsesMovingConnectedPrior": true,
+    "backendCompositeRevisionBindingImplemented": false
+  },
+  "licenseReview": {
+    "decoderPriorInpaintAndControlDeclaredLicense": "apache-2.0",
+    "refinerDeclaredLicense": null,
+    "modelSnapshotLicenseFilePresent": false,
+    "modelSnapshotNoticeFilePresent": false,
+    "upstreamSourceRepository": "ai-forever/Kandinsky-2",
+    "upstreamSourceRevision": "aeefc1ce3a989eefe7c99d6a02cce44318c4d210",
+    "upstreamLicensePath": "license",
+    "upstreamLicenseId": "apache-2.0",
+    "upstreamLicenseByteSize": 11357,
+    "upstreamLicenseSha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "exactModelSnapshotLicenseClarificationRequired": true
+  },
+  "compositeArtifactSurfaces": {
+    "textAndImageGeneration": {
+      "selectedWeightFileCount": 5,
+      "selectedWeightBytes": 15857246556,
+      "runtimeMemoryStatus": "unqualified"
+    },
+    "inpaint": {
+      "selectedWeightFileCount": 5,
+      "selectedWeightBytes": 15857315676,
+      "runtimeMemoryStatus": "unqualified"
+    },
+    "controlnetDepth": {
+      "safeCompositeAvailable": false,
+      "reason": "The official control decoder contains only legacy pickle-based PyTorch .bin weights."
+    },
+    "decoderRefiner": {
+      "safeCompositeAvailable": false,
+      "reason": "The repository contains only legacy pickle-based PyTorch .bin weights and names the Kandinsky 2.1 pipeline class."
+    }
+  },
+  "admission": {
+    "status": "review_complete_blocked",
+    "runtimeCatalogExposed": false,
+    "downloadCatalogExposed": false,
+    "capabilityExposed": false,
+    "canonicalWorkflowsAdded": 0,
+    "clientSurfaceAdded": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "liveQualified": false,
+    "blockingReasons": [
+      "the combined package loader cannot bind a decoder or control snapshot and its prior to distinct immutable revisions",
+      "the official ControlNet Depth and decoder-refiner snapshots contain no safetensors weights",
+      "the decoder-refiner names a Kandinsky 2.1 pipeline class and provides no model card or declared license",
+      "the backend has no Kandinsky-specific two-stage loader or bounded generation contract",
+      "the package pipelines have no safety checker or equivalent output guardrail",
+      "the immutable model snapshots embed no license or notice payload"
+    ],
+    "unresolvedGates": [
+      "exact_connected_prior_revision_binding",
+      "backend_owned_two_stage_loader_and_bounds",
+      "official_controlnet_and_refiner_safetensors",
+      "refiner_versioned_pipeline_and_license_contract",
+      "output_safety_guardrail",
+      "model_snapshot_license_payload_or_legal_clarification",
+      "remote_heavy_hardware_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  }
+}

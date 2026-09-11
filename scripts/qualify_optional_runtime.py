@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 """Run the portable, fail-closed optional-runtime qualification workload.
 
-This tool is deliberately outside the product API. It temporarily projects the
-future qualified profile in memory, operates only in a newly-created temporary
-managed root, and never changes the source-controlled action/cutover flags.
+This tool is deliberately outside the product API. It accepts a qualified
+target or temporarily projects one pending target in memory, operates only in
+a newly-created temporary managed root, and never changes source-controlled
+action/cutover policy.
 Run it from a clean prospective base where every staged distribution is absent.
 """
 
 from __future__ import annotations
 
 import argparse
-from dataclasses import replace
 import hashlib
 import json
 import os
 from pathlib import Path
 import platform
+import re
 import shutil
 import stat
 import subprocess
@@ -42,7 +43,7 @@ sys.path.insert(0, str(root))
 import modiff.optional_runtimes as optional_runtimes
 import modiff.optimization_packages as optimization_packages
 
-profile_id = "huggingface-transformers-peft-5.14.1-0.20.0"
+profile_id = sys.argv[2]
 candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[profile_id]
 plan = optimization_packages._artifact_install_plan(candidate)
 present = []
@@ -56,7 +57,6 @@ print(json.dumps({"plan": plan, "present": present}, sort_keys=True))
 """
 
 _WORKLOAD_SCRIPT = r"""
-from dataclasses import replace
 import json
 import math
 import os
@@ -68,15 +68,9 @@ sys.path.insert(0, str(root))
 
 import modiff.optional_runtimes as optional_runtimes
 
-profile_id = "huggingface-transformers-peft-5.14.1-0.20.0"
+profile_id = sys.argv[2]
 candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[profile_id]
-qualified = replace(
-    candidate,
-    contract_state="qualified",
-    cutover_ready=True,
-    install_action_available=True,
-    activation_available=True,
-)
+qualified = optional_runtimes.project_optional_runtime_qualification(candidate)
 optional_runtimes.OPTIONAL_RUNTIME_PROFILES = {profile_id: qualified}
 
 import modiff.optimization_packages as optimization_packages
@@ -118,6 +112,26 @@ finite = bool(torch.isfinite(output).all().item())
 trainable = [name for name, value in model.named_parameters() if value.requires_grad]
 if not finite or list(output.shape) != [1, 4, 16] or len(trainable) != 4 or USE_PEFT_BACKEND is not True:
     raise RuntimeError("the no-weight Transformers/PEFT workload failed its invariant")
+if transformers.__version__ != candidate.packages[0].version:
+    raise RuntimeError("the workload loaded a different Transformers version")
+
+quanto = None
+if any(package.distribution == "optimum-quanto" for package in candidate.packages):
+    from diffusers import QuantoConfig
+    from optimum.quanto import freeze, qfloat8, quantize
+
+    quantized = torch.nn.Sequential(torch.nn.Linear(8, 8), torch.nn.GELU(), torch.nn.Linear(8, 4)).eval()
+    quantize(quantized, weights=qfloat8)
+    freeze(quantized)
+    with torch.no_grad():
+        quantized_output = quantized(torch.linspace(-1, 1, 16, dtype=torch.float32).reshape(2, 8))
+    quanto = {
+        "configWeightsDtype": QuantoConfig(weights_dtype="float8").weights_dtype,
+        "finite": bool(torch.isfinite(quantized_output).all().item()),
+        "shape": list(quantized_output.shape),
+    }
+    if quanto != {"configWeightsDtype": "float8", "finite": True, "shape": [2, 4]}:
+        raise RuntimeError("the no-weight Quanto float8 workload failed its invariant")
 
 print(json.dumps({
     "status": "passed",
@@ -129,6 +143,7 @@ print(json.dumps({
     "finite": finite,
     "trainableAdapterParameters": len(trainable),
     "diffusersPeftBackend": bool(USE_PEFT_BACKEND),
+    "quanto": quanto,
 }, sort_keys=True))
 """
 
@@ -152,7 +167,17 @@ for name in json.loads(sys.argv[2]):
         continue
     present.append(name)
 if active is not None or os.environ.get("MODIFF_RUNTIME_OVERLAY_STATUS") != "base" or present:
-    raise RuntimeError("rollback did not restore the clean base process")
+    raise RuntimeError(
+        "rollback did not restore the clean base process: "
+        + json.dumps(
+            {
+                "active": active,
+                "status": os.environ.get("MODIFF_RUNTIME_OVERLAY_STATUS"),
+                "present": present,
+            },
+            sort_keys=True,
+        )
+    )
 print(json.dumps({"status": "passed", "activeEnvironment": None, "stagedPackagesPresent": present}))
 """
 
@@ -259,35 +284,37 @@ def _source_revision() -> dict[str, Any]:
                 timeout=10,
             ).stdout.strip()
         )
-    except (OSError, subprocess.SubprocessError):
+        if re.fullmatch(r"[0-9a-f]{40}", commit) is None:
+            raise RuntimeError("the source revision is not an exact Git commit")
+    except (OSError, RuntimeError, subprocess.SubprocessError):
         commit, dirty = "unavailable", True
-    return {"commit": commit, "dirty": dirty}
+    return {
+        "commit": commit,
+        "dirty": dirty,
+        "available": commit != "unavailable",
+    }
 
 
-def _future_profile():
+def _future_profile(profile_id: str = PROFILE_ID):
     sys.path.insert(0, str(ROOT))
     import modiff.optional_runtimes as optional_runtimes
 
-    candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[PROFILE_ID]
-    if (
-        candidate.contract_state != "candidate_unqualified"
-        or candidate.cutover_ready
-        or candidate.install_action_available
-        or candidate.activation_available
-    ):
-        raise RuntimeError("qualification requires the production profile to remain dormant")
-    return candidate, replace(
+    candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[profile_id]
+    qualified = optional_runtimes.project_optional_runtime_qualification(
         candidate,
-        contract_state="qualified",
-        cutover_ready=True,
-        install_action_available=True,
-        activation_available=True,
+        platform_name=_platform_name(),
+        machine=_machine_name(),
     )
+    return candidate, qualified
 
 
-def qualification_preflight() -> dict[str, Any]:
-    candidate, qualified = _future_profile()
-    probe = _json_process(_PREFLIGHT_SCRIPT, str(ROOT), timeout=60)
+def qualification_preflight(profile_id: str = PROFILE_ID) -> dict[str, Any]:
+    candidate, qualified = _future_profile(profile_id)
+    source_target = candidate.contract_for_target(
+        platform_name=_platform_name(),
+        machine=_machine_name(),
+    )
+    probe = _json_process(_PREFLIGHT_SCRIPT, str(ROOT), profile_id, timeout=60)
     plan = probe.get("plan")
     present = probe.get("present")
     if not isinstance(plan, list) or not isinstance(present, list):
@@ -300,23 +327,38 @@ def qualification_preflight() -> dict[str, Any]:
     except (OSError, RuntimeError, TypeError, ValueError):
         pass
     artifact_body = json.dumps(plan, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    source_revision = _source_revision()
+    source_revision_ready = bool(
+        source_revision.get("available") is True
+        and source_revision.get("dirty") is False
+    )
     return {
         "schemaVersion": 1,
-        "status": "ready" if not present and uv_ready and sys.version_info[:2] == (3, 12) else "not_ready",
+        "status": (
+            "ready"
+            if not present
+            and uv_ready
+            and sys.version_info[:2] == (3, 12)
+            and source_revision_ready
+            else "not_ready"
+        ),
         "platform": _platform_name(),
         "machine": _machine_name(),
         "pythonVersion": platform.python_version(),
-        "source": _source_revision(),
+        "source": source_revision,
+        "sourceRevisionReady": source_revision_ready,
         "profileId": candidate.id,
         "candidateSpecDigest": candidate.spec_digest,
         "qualificationSpecDigest": qualified.spec_digest,
-        "sourceFlagsDormant": True,
+        "sourceFlagsDormant": not source_target.cutover_ready,
+        "sourceTargetQualified": source_target.cutover_ready,
         "cleanBase": not present,
         "stagedPackagesPresent": present,
         "managedUvReceiptPresent": uv_ready,
         "artifactCount": len(plan),
         "artifactBytes": sum(int(item["byteSize"]) for item in plan),
         "artifactPlanDigest": "sha256:" + hashlib.sha256(artifact_body).hexdigest(),
+        "sourceBuildCount": len(candidate.source_builds),
     }
 
 
@@ -348,7 +390,16 @@ def _json_process(script: str, *arguments: str, timeout: int = 300) -> dict[str,
         check=False,
     )
     if result.returncode != 0:
-        raise RuntimeError("an isolated qualification process failed")
+        diagnostic = next(
+            (
+                line.strip()
+                for line in reversed(result.stderr.splitlines())
+                if line.strip().startswith(("RuntimeError:", "ImportError:", "ModuleNotFoundError:", "AssertionError:"))
+            ),
+            "child exited without a structured Python error",
+        )
+        diagnostic = re.sub(r"[^\x20-\x7e]", "?", diagnostic)[:512]
+        raise RuntimeError(f"an isolated qualification process failed: {diagnostic}")
     try:
         value = json.loads(result.stdout.strip().splitlines()[-1])
     except (IndexError, json.JSONDecodeError) as exc:
@@ -365,15 +416,15 @@ def _child(script: str, *arguments: str, timeout: int = 300) -> dict[str, Any]:
     return value
 
 
-def run_qualification(*, consent: bool) -> dict[str, Any]:
+def run_qualification(*, consent: bool, profile_id: str = PROFILE_ID) -> dict[str, Any]:
     if consent is not True:
         raise RuntimeError("explicit --consent is required")
     if "modiff.optimization_packages" in sys.modules or "modiff.runtime_overlays" in sys.modules:
         raise RuntimeError("qualification must start in a fresh Python process")
-    preflight = qualification_preflight()
+    preflight = qualification_preflight(profile_id)
     if preflight["status"] != "ready":
         raise RuntimeError("the host is not a clean, installer-ready qualification base")
-    candidate, qualified = _future_profile()
+    candidate, qualified = _future_profile(profile_id)
     progress: list[str] = []
     started = time.monotonic()
     previous_managed_root = os.environ.get("MODIFF_MANAGED_ROOT")
@@ -387,11 +438,11 @@ def run_qualification(*, consent: bool) -> dict[str, Any]:
             import modiff.optional_runtimes as optional_runtimes
             import modiff.optimization_packages as optimization_packages
 
-            profiles = {PROFILE_ID: qualified}
+            profiles = {profile_id: qualified}
             optional_runtimes.OPTIONAL_RUNTIME_PROFILES = profiles
             optimization_packages.OPTIONAL_RUNTIME_PROFILES = profiles
             install = optimization_packages.install_optional_runtime(
-                PROFILE_ID,
+                profile_id,
                 qualified.spec_digest,
                 consent=True,
                 progress=lambda update: progress.append(str(update.get("phase") or "")),
@@ -399,13 +450,13 @@ def run_qualification(*, consent: bool) -> dict[str, Any]:
             environment_id = install["environmentId"]
             activation = optimization_packages.activate_optional_runtime_environment(
                 environment_id,
-                PROFILE_ID,
+                profile_id,
                 qualified.spec_digest,
                 consent=True,
             )
             if activation.get("restartRequired") is not True:
                 raise RuntimeError("qualification activation did not require a fresh process")
-            workload = _child(_WORKLOAD_SCRIPT, str(ROOT), timeout=600)
+            workload = _child(_WORKLOAD_SCRIPT, str(ROOT), profile_id, timeout=600)
             rollback = optimization_packages.rollback_optional_runtime_environment(consent=True)
             if rollback.get("restartRequired") is not True:
                 raise RuntimeError("qualification rollback did not require a fresh process")
@@ -453,14 +504,23 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consent", action="store_true", help="Allow the networked temporary qualification run.")
     parser.add_argument("--preflight-only", action="store_true", help="Inspect readiness without network or mutation.")
+    parser.add_argument(
+        "--profile-id",
+        default=PROFILE_ID,
+        help="Qualify one exact source-controlled optional-runtime profile.",
+    )
     parser.add_argument("--evidence", type=Path, help="Create a bounded JSON evidence file (must not already exist).")
     args = parser.parse_args(argv)
     try:
-        result = qualification_preflight() if args.preflight_only else run_qualification(consent=args.consent)
+        result = (
+            qualification_preflight(args.profile_id)
+            if args.preflight_only
+            else run_qualification(consent=args.consent, profile_id=args.profile_id)
+        )
         if args.evidence:
             _write_evidence(args.evidence, result)
         print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
-        return 0 if result["status"] == "passed" or args.preflight_only else 1
+        return 0 if result["status"] in {"passed", "ready"} else 1
     except Exception as exc:  # keep public failure evidence bounded and path-free
         failure = {
             "schemaVersion": 1,

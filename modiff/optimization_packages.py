@@ -35,6 +35,7 @@ from typing import Any
 
 from modiff.optional_runtimes import (
     OPTIONAL_RUNTIME_PROFILES,
+    TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
     optional_runtime_base_contracts,
     public_optional_runtime_profiles,
 )
@@ -62,6 +63,11 @@ from modiff.runtime_overlays import (
     verify_artifact_anchored_overlay,
     locked_artifact_file_seal,
     managed_directory_identity,
+)
+from modiff.runtime_source_builds import (
+    build_locked_source_wheel,
+    source_build_output_artifact,
+    validate_source_build_contract,
 )
 from modiff.tool_locks import UV_TOOL_LOCKS
 
@@ -602,7 +608,11 @@ def _spec_is_current(record: dict[str, Any]) -> bool:
             current
             and record.get("specDigest") == current["specDigest"]
             and record.get("spec") == current["spec"]
-            and (kind != "optional_runtime" or current["spec"].get("activationAvailable") is True)
+            and (
+                kind != "optional_runtime"
+                or OPTIONAL_RUNTIME_PROFILES[identifier].contract_for_target().activation_available
+                is True
+            )
         )
     except (KeyError, TypeError, ValueError):
         return False
@@ -1062,17 +1072,6 @@ def _catalog() -> dict[str, dict[str, Any]]:
             "summary": "Profile-managed xFormers build matched to the installed PyTorch release.",
             "documentation": "https://github.com/facebookresearch/xformers",
         },
-        "aiter": {
-            "label": "AMD AITER",
-            "kind": "external",
-            "distribution": "amd-aiter",
-            "importName": "aiter",
-            "profiles": ["amd-rocm-linux"],
-            "platforms": ["linux"],
-            "automaticEligible": False,
-            "summary": "AMD datacenter-kernel package; only qualified Instinct/ABI combinations are supported.",
-            "documentation": "https://github.com/ROCm/aiter",
-        },
         "regional_compile": {
             "label": "Regional torch.compile",
             "kind": "runtime",
@@ -1246,6 +1245,7 @@ def public_catalog(
     *,
     runtime_profile: dict[str, Any] | None = None,
     hardware: dict[str, Any] | None = None,
+    optional_runtime_catalog: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     state = read_state()
     profile_id = _profile_id(runtime_profile)
@@ -1257,6 +1257,16 @@ def public_catalog(
     accelerators = hardware.get("accelerators") if isinstance(hardware.get("accelerators"), list) else []
     device_count = len(devices or accelerators)
     enabled = {str(item) for item in state.get("enabledCapabilities") or []}
+    optional_profiles = {
+        item.get("id"): item
+        for item in (
+            optional_runtime_catalog.get("profiles", [])
+            if isinstance(optional_runtime_catalog, dict)
+            and isinstance(optional_runtime_catalog.get("profiles"), list)
+            else []
+        )
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
     capabilities = []
     for capability_id, raw in _catalog().items():
         item = {"id": capability_id, **deepcopy(raw)}
@@ -1299,6 +1309,26 @@ def public_catalog(
             reason = "The upstream feature is documented, but MoDiff has not qualified a safe execution contract yet."
         installed_version = _package_version(str(item.get("distribution"))) if item.get("distribution") else None
         installed = bool(installed_version) if item.get("distribution") else implemented
+        base_profile_delivered = bool(
+            capability_id == "bitsandbytes"
+            and profile_id == "nvidia-cuda"
+            and installed_version == "0.50.0"
+        )
+        optional_runtime_profile_id = (
+            TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID
+            if capability_id == "optimum_quanto"
+            else None
+        )
+        optional_profile = optional_profiles.get(optional_runtime_profile_id)
+        optional_profile_delivered = bool(
+            capability_id == "optimum_quanto"
+            and installed_version == "0.2.7"
+            and isinstance(optional_profile, dict)
+            and optional_profile.get("contractState") == "qualified"
+            and optional_profile.get("cutoverReady") is True
+            and optional_profile.get("overlayStatus") == "active"
+        )
+        delivery_qualified = base_profile_delivered or optional_profile_delivered
         can_enable = compatible and (
             item.get("kind") == "runtime" or (item.get("kind") in {"package", "profile", "external"} and installed)
         )
@@ -1310,6 +1340,16 @@ def public_catalog(
                 "enabled": capability_id in enabled,
                 "installed": installed,
                 "installedVersion": installed_version,
+                "deliveryQualified": delivery_qualified,
+                "delivery": (
+                    "base_profile"
+                    if base_profile_delivered
+                    else "optional_overlay"
+                    if optional_profile_delivered
+                    else "unqualified"
+                ),
+                "availableForExecution": bool(delivery_qualified and compatible),
+                "optionalRuntimeProfileId": optional_runtime_profile_id,
                 "canInstall": item.get("kind") == "package" and compatible,
                 "canEnable": can_enable,
                 "requiresRestart": item.get("kind") == "package",
@@ -1319,7 +1359,9 @@ def public_catalog(
             item["canInstall"] = False
             item["canEnable"] = False
             item["disabledReason"] = (
-                "This legacy package profile has no reviewed immutable artifact lock and remains unqualified."
+                None
+                if delivery_qualified
+                else "This legacy package profile has no reviewed immutable artifact lock and remains unqualified."
             )
         if item.get("kind") == "external":
             item["disabledReason"] = (
@@ -1508,6 +1550,18 @@ def _artifact_install_plan(profile) -> list[dict[str, Any]]:
 
     supported_tags = set(sys_tags())
     selected: dict[str, dict[str, Any]] = {}
+    source_outputs: dict[str, dict[str, Any]] = {}
+    for raw_source_build in profile.source_builds:
+        source_build = validate_source_build_contract(raw_source_build)
+        output = source_build_output_artifact(source_build)
+        distribution = str(output["distribution"])
+        if (
+            distribution not in expected
+            or output["version"] != expected[distribution]
+            or distribution in source_outputs
+        ):
+            raise RuntimeError("The optional-runtime source-build output is invalid.")
+        source_outputs[distribution] = output
     for artifact in profile.artifact_locks:
         if not isinstance(artifact, dict):
             continue
@@ -1539,6 +1593,7 @@ def _artifact_install_plan(profile) -> list[dict[str, Any]]:
             distribution not in expected
             or version != expected[distribution]
             or distribution in selected
+            or distribution in source_outputs
             or not filename.endswith(".whl")
             or parsed.scheme != "https"
             or parsed.hostname != "files.pythonhosted.org"
@@ -1569,15 +1624,22 @@ def _artifact_install_plan(profile) -> list[dict[str, Any]]:
             "pythonTag": python_tag,
             "machine": artifact_machine,
         }
-    if set(selected) != set(expected):
+    if set(selected) | set(source_outputs) != set(expected):
         raise RuntimeError("The optional-runtime artifact lock is incomplete for this Python and platform.")
-    return [selected[package.distribution] for package in profile.packages]
+    return [
+        source_outputs.get(package.distribution, selected.get(package.distribution))
+        for package in profile.packages
+    ]
 
 
 def _artifact_install_urls(profile) -> list[str]:
     """Compatibility projection used by contract tests and diagnostics."""
 
-    return [f"{item['url']}#sha256={item['sha256']}" for item in _artifact_install_plan(profile)]
+    return [
+        f"{item['url']}#sha256={item['sha256']}"
+        for item in _artifact_install_plan(profile)
+        if "url" in item
+    ]
 
 
 def validate_optional_runtime_install_request(
@@ -1598,7 +1660,7 @@ def validate_optional_runtime_install_request(
     profile = OPTIONAL_RUNTIME_PROFILES[profile_id]
     if spec_digest != spec["specDigest"]:
         raise ValueError("The optional runtime specDigest does not match the reviewed catalog.")
-    if profile.install_action_available is not True:
+    if profile.contract_for_target().install_action_available is not True:
         raise RuntimeError("This optional runtime is not qualified for installation.")
     base_contracts = list(optional_runtime_base_contracts([profile_id]))
     # Establish constraints, exact observed versions/origins, accelerator lock,
@@ -1610,6 +1672,9 @@ def validate_optional_runtime_install_request(
         "profile": profile,
         "spec": spec,
         "artifactLocks": artifacts,
+        "sourceBuilds": [
+            validate_source_build_contract(item) for item in profile.source_builds
+        ],
         "baseContracts": base_contracts,
         "installerExecutable": installer,
     }
@@ -1627,7 +1692,7 @@ def validate_optional_runtime_activation_request(
     profile = OPTIONAL_RUNTIME_PROFILES[profile_id]
     if spec_digest != spec["specDigest"]:
         raise ValueError("The optional runtime specDigest does not match the reviewed catalog.")
-    if profile.activation_available is not True:
+    if profile.contract_for_target().activation_available is not True:
         raise RuntimeError("This optional runtime is not qualified for activation.")
     return spec
 
@@ -1695,6 +1760,7 @@ def _install_reviewed_overlay(
     hash_locked: bool = True,
     installer_executable: str | None = None,
     artifact_locks: list[dict[str, Any]] | None = None,
+    source_builds: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     def report(phase: str, message: str) -> None:
         if progress:
@@ -1753,6 +1819,9 @@ def _install_reviewed_overlay(
         base_packages = _merge_contracts(existing_base, base_contracts)
         binding = current_base_binding(base_packages)
         selected_artifacts = [dict(item) for item in (artifact_locks or [])]
+        selected_source_builds = [
+            validate_source_build_contract(item) for item in (source_builds or [])
+        ]
         if hash_locked:
             if spec.get("kind") != "optional_runtime" or not selected_artifacts:
                 raise RuntimeError("A locked optional runtime requires a complete artifact plan.")
@@ -1762,11 +1831,50 @@ def _install_reviewed_overlay(
             if any(item.get("kind") != "optional_runtime" for item in specs):
                 raise RuntimeError("Hashless legacy packages cannot be mixed into an optional runtime.")
             ensure_managed_directory(ARTIFACTS_DIR, managed_root=MANAGED_ROOT)
-            cached_artifacts = cache_locked_artifacts(
-                selected_artifacts,
+            source_outputs = {
+                source_build_output_artifact(item)["distribution"]: item
+                for item in selected_source_builds
+            }
+            if len(source_outputs) != len(selected_source_builds):
+                raise RuntimeError("The optional-runtime source-build outputs are not unique.")
+            downloaded_artifacts = [
+                item
+                for item in selected_artifacts
+                if item["distribution"] not in source_outputs
+            ]
+            cached_downloads = cache_locked_artifacts(
+                downloaded_artifacts,
                 ARTIFACTS_DIR,
                 lease=lease,
             )
+            cached_by_distribution = {
+                item["distribution"]: path
+                for item, path in zip(downloaded_artifacts, cached_downloads, strict=True)
+            }
+            for index, source_build in enumerate(selected_source_builds):
+                workspace = staged / f"source-build-{index}"
+                result = build_locked_source_wheel(
+                    source_build,
+                    cache_root=ARTIFACTS_DIR,
+                    work_root=workspace,
+                    lease=lease,
+                )
+                expected_output = source_build_output_artifact(source_build)
+                if result.artifact != expected_output:
+                    raise RuntimeError("A source build returned an unexpected wheel lock.")
+                cached_by_distribution[result.artifact["distribution"]] = result.path
+                remove_managed_directory(
+                    workspace,
+                    parent=staged,
+                )
+            if set(cached_by_distribution) != {
+                item["distribution"] for item in selected_artifacts
+            }:
+                raise RuntimeError("The optional-runtime artifact cache is incomplete after source builds.")
+            cached_artifacts = [
+                cached_by_distribution[item["distribution"]]
+                for item in selected_artifacts
+            ]
             # Authenticate and structurally inspect every wheel before giving
             # any archive to the installer/extractor.
             locked_artifact_file_seal(
@@ -1973,6 +2081,27 @@ def install_optional_runtime(
         progress=progress,
         installer_executable=request["installerExecutable"],
         artifact_locks=request["artifactLocks"],
+        source_builds=request["sourceBuilds"],
+    )
+
+
+def _environment_spec_satisfies_optional_profile(
+    spec: dict[str, Any],
+    profile: dict[str, Any],
+) -> bool:
+    if spec.get("kind") != "optional_runtime":
+        return False
+    if (
+        spec.get("id") == profile["id"]
+        and spec.get("specDigest") == profile["specDigest"]
+    ):
+        return True
+    provider = OPTIONAL_RUNTIME_PROFILES.get(str(spec.get("id") or ""))
+    return bool(
+        provider
+        and spec.get("specDigest") == provider.spec_digest
+        and (profile["id"], profile["specDigest"])
+        in provider.satisfies_profiles
     )
 
 
@@ -2056,9 +2185,7 @@ def public_optional_runtime_catalog() -> dict[str, Any]:
             environment
             for environment in environments
             if any(
-                spec.get("kind") == "optional_runtime"
-                and spec.get("id") == profile["id"]
-                and spec.get("specDigest") == profile["specDigest"]
+                _environment_spec_satisfies_optional_profile(spec, profile)
                 for spec in environment["specs"]
             )
         ]
@@ -2217,8 +2344,11 @@ def _activate_environment_transaction(
             current_inspection = _environment_inspection(current)
             if (
                 state.get("activeTrustClass") != expected_trust_class
-                or current_inspection.get("manifest", {}).get("trustClass")
-                != expected_trust_class
+                or (
+                    current_inspection.get("status") == "ready"
+                    and current_inspection.get("manifest", {}).get("trustClass")
+                    != expected_trust_class
+                )
             ):
                 raise RuntimeError(
                     "Roll back the current runtime trust class before activating another class."
@@ -2375,7 +2505,6 @@ def optimization_selections_from_graph(graph: dict[str, Any] | None) -> list[dic
                     "sage": "sage_attention",
                     "sage_hub": "hub_attention_kernels",
                     "xformers": "xformers",
-                    "aiter": "aiter",
                 }.get(attention)
                 if capability:
                     found[capability] = {

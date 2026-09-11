@@ -4,6 +4,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from diffusers.modular_pipelines.modular_pipeline_utils import InputParam, OutputParam
+
 from modules.ModularDiffusers.modular_utils import require_modiff_node_contract
 from modules.ModularDiffusers.pipeline_schema import MoDiffParam, MoDiffPipelineConfig, input_param_to_modiff_param
 
@@ -50,6 +52,23 @@ class PipelineSchemaTests(unittest.TestCase):
         self.assertEqual(converted.name, "prompt")
         self.assertEqual(converted.to_dict()["display"], "textarea")
         self.assertEqual(converted.to_dict()["default"], "hello")
+
+    def test_custom_block_preserves_upstream_required_inputs(self):
+        block = SimpleNamespace(
+            inputs=[
+                InputParam(name="prompt", type_hint=str, required=True, metadata={"modiff": "textbox"}),
+                InputParam(name="strength", type_hint=float, default=0.5, required=False),
+            ],
+            outputs=[OutputParam(name="latents")],
+            component_names=[],
+        )
+
+        config = MoDiffPipelineConfig.from_custom_block(block, node_label="Required fixture")
+        custom = config.node_params["custom"]
+
+        self.assertEqual(custom["input_names"], ["prompt", "strength"])
+        self.assertEqual(custom["params"]["prompt"]["label"], "Prompt *")
+        self.assertEqual(custom["params"]["strength"]["label"], "Strength")
 
     def test_config_round_trip_uses_modiff_owned_filename(self):
         config = MoDiffPipelineConfig(

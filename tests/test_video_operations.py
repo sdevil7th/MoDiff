@@ -69,7 +69,7 @@ class VideoOperationTests(unittest.TestCase):
             filter_graph = commands[1][commands[1].index("-filter_complex") + 1]
             self.assertEqual(filter_graph.count("xfade=transition=fade"), 2)
             self.assertIn("settb=expr=1/8", filter_graph)
-            self.assertIn("[raw_x1]settb=expr=1/8,setpts=PTS-STARTPTS,fps=8[x1]", filter_graph)
+            self.assertIn("[raw_x1]settb=expr=1/8[x1]", filter_graph)
             self.assertEqual(commands[1][commands[1].index("-r") + 1], "8.0")
 
     def test_file_native_audio_mux_preserves_video_stream_and_matches_duration(self):

@@ -9,6 +9,7 @@ pre-cutover application remains readiness-neutral.
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
+from dataclasses import dataclass
 import os
 import re
 from typing import Any
@@ -21,6 +22,10 @@ from modiff.diffusers_profiles import (
     resolve_execution_profiles_for_loader,
 )
 from modiff.optimization_packages import public_optional_runtime_catalog
+from modiff.optional_runtimes import (
+    GALLERY_MEDIA_RUNTIME_PROFILE_ID,
+    OPTIONAL_RUNTIME_PROFILES,
+)
 
 
 _PROCESS_BLOCK_STATES = {
@@ -46,6 +51,11 @@ _RESOLUTION_REASONS = {
     "loader_identity_missing",
     "loader_selection_unregistered",
     "loader_profile_ambiguous",
+    "loader_execution_profile_invalid",
+    "loader_execution_profile_unregistered",
+    "loader_execution_profile_mismatch",
+    "loader_mode_invalid",
+    "loader_mode_unregistered",
 }
 _STATE_PRIORITY = {
     "active": 0,
@@ -69,6 +79,60 @@ _OVERLAY_STATES = {
     "staged_unchecked",
 }
 _PROCESS_STATES = {"active", "base", *_PROCESS_BLOCK_STATES}
+
+
+@dataclass(frozen=True)
+class _NodeOptionalRuntimeProfile:
+    """Structural execution profile for model-neutral optional node actions."""
+
+    id: str
+    optional_runtime_profiles: tuple[str, ...]
+
+    def optional_runtime_delivery_for_target(self, **_target: Any) -> str:
+        return OPTIONAL_RUNTIME_DELIVERY_OVERLAY
+
+    def optional_runtime_profile_ids_for_target(self, **_target: Any) -> tuple[str, ...]:
+        return self.optional_runtime_profiles
+
+
+_GALLERY_MEDIA_EXECUTION_PROFILE = _NodeOptionalRuntimeProfile(
+    id="video-conditioning:gallery-media",
+    optional_runtime_profiles=(GALLERY_MEDIA_RUNTIME_PROFILE_ID,),
+)
+_LTX2_IMAGE_CONDITIONING_EXECUTION_PROFILE = _NodeOptionalRuntimeProfile(
+    id="ltx2:image-conditioning-media",
+    optional_runtime_profiles=(GALLERY_MEDIA_RUNTIME_PROFILE_ID,),
+)
+_NODE_OPTIONAL_RUNTIME_PROFILES = {
+    ("modules.VideoConditioning", "EdgePreprocessor"): (
+        _GALLERY_MEDIA_EXECUTION_PROFILE,
+    ),
+    ("modules.VideoConditioning", "ObjectMaskPropagate"): (
+        _GALLERY_MEDIA_EXECUTION_PROFILE,
+    ),
+}
+
+
+def _execution_profiles_for_node(
+    module: str,
+    action: str,
+    values: dict[str, Any],
+) -> tuple[tuple[Any, ...], str | None]:
+    node_profiles = _NODE_OPTIONAL_RUNTIME_PROFILES.get((module, action))
+    if node_profiles is not None:
+        return node_profiles, None
+    # Upstream LTX-2 applies H.264 CRF re-compression to image conditions by
+    # default. Diffusers imports PyAV only when one of these conditioned modes
+    # executes, so keep text-only generation on the smaller Transformers
+    # overlay while admitting image conditioning only through the reviewed
+    # composite media-codec overlay.
+    if (
+        module == "modules.DiffusersVideo"
+        and action in {"GenerateVideoAudio", "GenerateLTX2"}
+        and values.get("mode") in {"image_to_video", "reference_to_video"}
+    ):
+        return (_LTX2_IMAGE_CONDITIONING_EXECUTION_PROFILE,), None
+    return resolve_execution_profiles_for_loader(module, action, values)
 
 
 def _copy_requirement(requirement: dict[str, Any], *, state: str, reason: str) -> dict[str, Any]:
@@ -245,6 +309,17 @@ def optional_runtime_requirement_for_profiles(
             state="unavailable",
             reason="optional_runtime_profile_unknown",
         )
+    if any(
+        profile_id not in OPTIONAL_RUNTIME_PROFILES
+        or by_id[profile_id]["specDigest"]
+        != OPTIONAL_RUNTIME_PROFILES[profile_id].spec_digest
+        for profile_id in requested
+    ):
+        return _copy_requirement(
+            requirement,
+            state="unavailable",
+            reason="optional_runtime_profile_digest_mismatch",
+        )
 
     states = [_catalog_profile_state(by_id[profile_id], process_status) for profile_id in requested]
     if states and all(state == "active" for state, _reason in states):
@@ -276,7 +351,7 @@ def loader_optional_runtime_requirement(
     *,
     catalog_resolver: Callable[[], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    profiles, resolution_reason = resolve_execution_profiles_for_loader(
+    profiles, resolution_reason = _execution_profiles_for_node(
         module,
         action,
         values,
@@ -284,6 +359,113 @@ def loader_optional_runtime_requirement(
     return optional_runtime_requirement_for_profiles(
         profiles,
         resolution_reason=resolution_reason,
+        catalog_resolver=catalog_resolver,
+    )
+
+
+_DECLARATIVE_FIELD_ACTIONS = frozenset(
+    {
+        (
+            "modules.ModularDiffusers",
+            "ModelsLoader",
+            "refresh_pipeline_identity",
+        ),
+        (
+            "modules.ModularDiffusers",
+            "DynamicBlockNode",
+            "update_node",
+        ),
+        (
+            "modules.DiffusersImage",
+            "LoadPipeline",
+            "update_pipeline_contract",
+        ),
+        (
+            "modules.DiffusersImage",
+            "Generate",
+            "update_image_contract",
+        ),
+        (
+            "modules.DiffusersImage",
+            "Edit",
+            "update_image_contract",
+        ),
+        (
+            "modules.DiffusersImage",
+            "Inpaint",
+            "update_image_contract",
+        ),
+        (
+            "modules.DiffusersImage",
+            "ControlGenerate",
+            "update_image_contract",
+        ),
+        (
+            "modules.DiffusersImage",
+            "UnconditionalGenerate",
+            "update_image_contract",
+        ),
+        (
+            "modules.DiffusersImage",
+            "PredictMap",
+            "update_image_contract",
+        ),
+        (
+            "modules.DiffusersAudio",
+            "LoadPipeline",
+            "update_audio_contract",
+        ),
+        (
+            "modules.DiffusersAudio",
+            "Generate",
+            "update_audio_contract",
+        ),
+        (
+            "modules.DiffusersThreeD",
+            "LoadPipeline",
+            "update_three_d_contract",
+        ),
+        (
+            "modules.DiffusersThreeD",
+            "GenerateRenderedArtifact",
+            "update_three_d_contract",
+        ),
+        (
+            "modules.DiffusersVideo",
+            "LoadPipeline",
+            "select_adapter",
+        ),
+        (
+            "modules.DiffusersVideo",
+            "Generate",
+            "update_adapter_modes",
+        ),
+    }
+)
+
+
+def field_action_optional_runtime_requirement(
+    module: str,
+    action: str,
+    method_name: str,
+    values: dict[str, Any],
+    *,
+    catalog_resolver: Callable[[], dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Keep reviewed metadata previews on the non-installing base path.
+
+    These callbacks verify immutable repository metadata but never construct a
+    pipeline or import repository Python. The executable node remains guarded
+    by :func:`loader_optional_runtime_requirement` at graph admission and again
+    immediately before worker import.
+    """
+
+    if (module, action, method_name) in _DECLARATIVE_FIELD_ACTIONS:
+        return declarative_requirement_for_profiles(())
+    return loader_optional_runtime_requirement(
+        module,
+        action,
+        values,
         catalog_resolver=catalog_resolver,
     )
 
@@ -331,7 +513,7 @@ def graph_optional_runtime_requirement(
                 seen_node_ids.add(node_id)
                 executable_node_ids.append(node_id)
 
-    selected: list[DiffusersExecutionProfile] = []
+    selected: list[Any] = []
     blocking_resolution_reason: str | None = None
     for node_id in executable_node_ids:
         node = nodes[node_id]
@@ -341,7 +523,7 @@ def graph_optional_runtime_requirement(
         action = node.get("action")
         if not isinstance(module, str) or not isinstance(action, str):
             continue
-        profiles, resolution_reason = resolve_execution_profiles_for_loader(
+        profiles, resolution_reason = _execution_profiles_for_node(
             module,
             action,
             _static_node_values(node),
@@ -352,7 +534,7 @@ def graph_optional_runtime_requirement(
             if profile not in selected:
                 selected.append(profile)
         if resolution_reason and any(
-            profile.optional_runtime_delivery == OPTIONAL_RUNTIME_DELIVERY_OVERLAY
+            profile.optional_runtime_delivery_for_target() == OPTIONAL_RUNTIME_DELIVERY_OVERLAY
             for profile in profiles
         ):
             blocking_resolution_reason = resolution_reason
@@ -396,12 +578,13 @@ _RECOVERY_HINTS = {
 
 def optional_runtime_blocker_payload(requirement: dict[str, Any]) -> dict[str, Any]:
     state = requirement.get("state") if requirement.get("state") in _BLOCK_MESSAGES else "unavailable"
+    recovery_hint = _RECOVERY_HINTS[state]
     return {
         "error": True,
         "category": "optional_runtime",
         "error_code": f"optional_runtime_{state}",
-        "message": _BLOCK_MESSAGES[state],
-        "recovery_hint": _RECOVERY_HINTS[state],
+        "message": f"{_BLOCK_MESSAGES[state]} {recovery_hint}",
+        "recovery_hint": recovery_hint,
         "optionalRuntimeRequirement": _copy_requirement(
             requirement,
             state=state,

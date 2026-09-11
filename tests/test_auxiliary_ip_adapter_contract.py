@@ -23,8 +23,20 @@ def _pin(payload=b"reviewed-ip-adapter"):
         "weightName": WEIGHT,
         "sha256": hashlib.sha256(payload).hexdigest(),
         "byteSize": len(payload),
-        "imageEncoderSubfolder": "models/image_encoder",
+        "imageEncoderSubfolder": "sdxl_models/image_encoder",
         "imageEncoderClass": "CLIPVisionModelWithProjection",
+        "imageEncoderFiles": [
+            {
+                "filename": "sdxl_models/image_encoder/config.json",
+                "sha256": hashlib.sha256(payload).hexdigest(),
+                "byteSize": len(payload),
+            },
+            {
+                "filename": "sdxl_models/image_encoder/model.safetensors",
+                "sha256": hashlib.sha256(payload).hexdigest(),
+                "byteSize": len(payload),
+            },
+        ],
     }
 
 
@@ -37,8 +49,23 @@ class AuxiliaryIPAdapterContractTests(unittest.TestCase):
         self.assertEqual(pin["weightName"], WEIGHT)
         self.assertEqual(pin["sha256"], "ba1002529e783604c5f326d49f0122025392d1d20ac8d573b3eeb3e6dea4ebb6")
         self.assertEqual(pin["byteSize"], 702585376)
-        self.assertEqual(pin["imageEncoderSubfolder"], "models/image_encoder")
+        self.assertEqual(pin["imageEncoderSubfolder"], "sdxl_models/image_encoder")
         self.assertEqual(pin["imageEncoderClass"], "CLIPVisionModelWithProjection")
+        self.assertEqual(
+            pin["imageEncoderFiles"],
+            [
+                {
+                    "filename": "sdxl_models/image_encoder/config.json",
+                    "sha256": "1d53c2b4b74c5f85171d313adda3e3b8771ff5c698ee66a29710d0ac822298e4",
+                    "byteSize": 2013,
+                },
+                {
+                    "filename": "sdxl_models/image_encoder/model.safetensors",
+                    "sha256": "657723e09f46a7c3957df651601029f66b1748afb12b419816330f16ed45d64d",
+                    "byteSize": 3689912664,
+                },
+            ],
+        )
 
     def test_resolution_is_local_only_and_content_addressed(self):
         payload = b"reviewed-ip-adapter"
@@ -66,6 +93,29 @@ class AuxiliaryIPAdapterContractTests(unittest.TestCase):
         self.assertEqual(resolved.weight_name, "ip-adapter_sdxl.safetensors")
         self.assertEqual(resolved.content_sha256, hashlib.sha256(payload).hexdigest())
         self.assertEqual(resolved.byte_size, len(payload))
+
+    def test_resolution_preserves_the_snapshot_safetensors_name_while_hashing_the_blob(self):
+        payload = b"reviewed-ip-adapter"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            blob = root / hashlib.sha256(payload).hexdigest()
+            blob.write_bytes(payload)
+            snapshot = root / "snapshot" / "sdxl_models"
+            snapshot.mkdir(parents=True)
+            logical_weight = snapshot / "ip-adapter_sdxl.safetensors"
+            logical_weight.symlink_to(blob)
+            with (
+                patch("modiff.auxiliary_ip_adapter.catalog_repository_pin", return_value=_pin(payload)),
+                patch("modiff.auxiliary_ip_adapter.hf_hub_download", return_value=str(logical_weight)),
+            ):
+                resolved = resolve_reviewed_sdxl_ip_adapter(
+                    selection={"source": "hub", "value": REPOSITORY},
+                    revision=REVISION,
+                    weight_name=WEIGHT,
+                )
+
+        self.assertEqual(resolved.weight_name, "ip-adapter_sdxl.safetensors")
+        self.assertEqual(resolved.load_directory, snapshot)
 
     def test_unreviewed_selectors_and_mutable_identity_fail_before_cache_access(self):
         cases = (

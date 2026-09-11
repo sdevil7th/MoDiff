@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 import tomllib
 import types
 import unittest
@@ -178,7 +179,7 @@ class GuidedInstallerTests(unittest.TestCase):
         diffusers = next(item for item in project["project"]["dependencies"] if item.startswith("diffusers"))
         self.assertEqual(
             diffusers,
-            "diffusers @ git+https://github.com/huggingface/diffusers.git@13a7bee4878d62fccc8d25f97e480e68de96fa03",
+            "diffusers @ git+https://github.com/huggingface/diffusers.git@2f7e0154a9db246e95c9ede43edba7db5b130805",
         )
         self.assertNotIn("diffusers", project["tool"]["uv"].get("sources", {}))
 
@@ -244,6 +245,65 @@ class GuidedInstallerTests(unittest.TestCase):
         self.assertNotIn("uv run", linux_launcher)
         self.assertNotRegex(linux_launcher, r"exec python(?:3)? main\.py")
         self.assertIn("Run ./install.sh before starting", linux_launcher)
+
+    @unittest.skipIf(os.name == "nt", "POSIX executable bits are not available on Windows")
+    def test_documented_posix_entrypoints_are_executable(self):
+        root = Path(__file__).parents[1]
+
+        for relative_path in ("install.sh", "run.sh", "scripts/with-runtime-env.sh"):
+            with self.subTest(path=relative_path):
+                self.assertTrue(
+                    os.access(root / relative_path, os.X_OK),
+                    f"{relative_path} must be executable because documentation invokes it directly",
+                )
+
+    def test_macos_optional_runtime_qualifier_is_manual_and_fail_closed(self):
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github/workflows/qualify-optional-runtime-macos.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("pull_request:", workflow)
+        self.assertNotIn("push:", workflow)
+        self.assertIn("runs-on: macos-15", workflow)
+        self.assertIn('test "$(uname -m)" = "arm64"', workflow)
+        self.assertIn('test "$(git diff --name-only)" = "pyproject.toml"', workflow)
+        self.assertEqual(workflow.count('-  "peft>=0.17.0;'), 1)
+        self.assertEqual(workflow.count('-  "transformers>=4.49.0;'), 1)
+        patch_body = (
+            textwrap.dedent(
+                workflow.split("cat > \"$RUNNER_TEMP/prospective-base.patch\" <<'PATCH'\n", 1)[1]
+                .split("\n          PATCH", 1)[0]
+            )
+            + "\n"
+        )
+        # The qualifier runs on macOS; reproduce its LF checkout even when
+        # this contract test runs under Windows Git autocrlf.
+        with tempfile.TemporaryDirectory() as directory:
+            Path(directory, "pyproject.toml").write_text(
+                (root / "pyproject.toml").read_text(encoding="utf-8"),
+                encoding="utf-8", newline="\n",
+            )
+            patch_check = subprocess.run(
+                ["git", "apply", "--check", "-"],
+                cwd=directory,
+                input=patch_body.encode("utf-8"),
+                capture_output=True,
+                check=False,
+            )
+        self.assertEqual(patch_check.returncode, 0, patch_check.stderr)
+        self.assertIn("scripts/qualify_optional_runtime.py --preflight-only", workflow)
+        self.assertIn("scripts/qualify_optional_runtime.py --consent", workflow)
+        self.assertEqual(
+            workflow.count("huggingface-transformers-main-96fe6dce-peft-0.20.0"),
+            4,
+        )
+        self.assertNotIn("huggingface-transformers-main-a597f974-peft-0.20.0", workflow)
+        self.assertIn('assert value["status"] == "ready"', workflow)
+        self.assertIn('assert value["status"] == "passed"', workflow)
+        self.assertIn("prospective-base.diff", workflow)
+        self.assertIn("actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f", workflow)
 
     def test_structured_issue_contains_help_and_safe_action_metadata(self):
         issue = enrich_issue(

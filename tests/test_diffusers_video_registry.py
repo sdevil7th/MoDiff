@@ -1,11 +1,12 @@
 import inspect
+import importlib.util
 import sys
 import tempfile
 import unittest
 from contextlib import chdir
 from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from types import ModuleType, SimpleNamespace
+from unittest.mock import MagicMock, call, patch
 
 import numpy as np
 from PIL import Image
@@ -22,9 +23,30 @@ from modules.DiffusersVideo import (
     PlanLongVideo,
 )
 from modules.DiffusersVideo.main import (
+    ALLEGRO_REPO,
+    ALLEGRO_REVISION,
+    ANIMATEDIFF_BASE_REPO,
+    ANIMATEDIFF_BASE_REVISION,
+    ANIMATEDIFF_MOTION_REPO,
+    ANIMATEDIFF_MOTION_REVISION,
+    ANIMATELCM_LORA_ADAPTER_NAME,
+    ANIMATELCM_LORA_SCALE,
+    ANIMATELCM_LORA_WEIGHT_NAME,
+    ANIMATELCM_MOTION_REPO,
+    ANIMATELCM_MOTION_REVISION,
+    COGVIDEOX_2B_REPO,
+    COGVIDEOX_2B_REVISION,
     FRAMEPACK_BASE_REPO,
     FRAMEPACK_VISION_REPO,
+    LATTE_REPO,
+    LATTE_REVISION,
+    MOCHI_REPO,
+    MOCHI_REVISION,
+    SANA_VIDEO_REPO,
+    SANA_VIDEO_REVISION,
     LTX_DISTILLED_TIMESTEPS,
+    STABLE_VIDEO_DIFFUSION_REPO,
+    STABLE_VIDEO_DIFFUSION_REVISION,
     VIDEO_PIPELINE_ADAPTERS,
     VIDEO_PIPELINE_EXECUTE_HANDLERS,
     VIDEO_PIPELINE_LOAD_HANDLERS,
@@ -35,6 +57,33 @@ from modules.DiffusersVideo.main import (
     _resolve_loader_revision,
     get_video_pipeline_adapter,
 )
+
+
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
+)
+
+
+class FakeLTXVideoCondition:
+    def __init__(self, image=None, video=None, frame_index=0, strength=1.0):
+        self.image = image
+        self.video = video
+        self.frame_index = frame_index
+        self.strength = strength
+
+
+class FakeLTX2VideoCondition:
+    def __init__(self, frames=None, index=0, strength=1.0):
+        self.frames = frames
+        self.index = index
+        self.strength = strength
+
+
+class FakeLTX2ReferenceCondition:
+    def __init__(self, frames=None, strength=1.0):
+        self.frames = frames
+        self.strength = strength
 
 
 class DiffusersVideoRegistryTests(unittest.TestCase):
@@ -165,9 +214,45 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertEqual(execute.call_args.kwargs["secondary_guidance_scale"], 0)
         self.assertEqual(execute.call_args.kwargs["strength"], 0)
 
+    def test_generate_shot_job_extracts_the_previous_segment_boundary_for_continuation(self):
+        first = Image.new("RGB", (8, 6), "red")
+        last = Image.new("RGB", (8, 6), "blue")
+        with patch.object(
+            Generate,
+            "execute",
+            return_value={"video_out": [last], "frames_out": 1},
+        ) as execute:
+            GenerateShotJob().execute(
+                pipeline=object(),
+                previous_video=[first, last],
+                job={
+                    "prompt": "Continue the same camera move.",
+                    "mode": "image_to_video",
+                    "uses_previous_last_frame": True,
+                    "fps": 16,
+                },
+            )
+
+        self.assertEqual(execute.call_args.kwargs["reference_images"], [last])
+
+    def test_generate_shot_job_fails_closed_when_a_continuation_segment_is_missing(self):
+        with patch.object(Generate, "execute") as execute:
+            with self.assertRaisesRegex(ValueError, "needs the previous video segment"):
+                GenerateShotJob().execute(
+                    pipeline=object(),
+                    job={
+                        "prompt": "Continue the same camera move.",
+                        "mode": "image_to_video",
+                        "uses_previous_last_frame": True,
+                    },
+                )
+        execute.assert_not_called()
+
     def test_long_video_planner_emits_loop_ready_ltx_chunks_and_one_framepack_job(self):
+        opening = Image.new("RGB", (8, 6), "black")
         ltx = PlanLongVideo().execute(
             prompt="A continuous tracking shot",
+            opening_image=opening,
             target_seconds=30,
             fps=16,
             strategy="ltx_continuation",
@@ -177,6 +262,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         )
         framepack = PlanLongVideo().execute(
             prompt="A continuous tracking shot",
+            opening_image=opening,
             target_seconds=30,
             fps=16,
             strategy="framepack_continuous",
@@ -185,9 +271,97 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
         self.assertGreater(ltx["job_count"], 1)
         self.assertTrue(all((job["num_frames"] - 1) % 8 == 0 for job in ltx["jobs"]))
+        self.assertIs(ltx["jobs"][0]["opening_image"], opening)
+        self.assertIsNone(ltx["jobs"][1]["opening_image"])
         self.assertTrue(ltx["jobs"][1]["uses_previous_last_frame"])
         self.assertEqual(framepack["job_count"], 1)
         self.assertEqual(framepack["planned_frames"], 480)
+
+    def test_long_video_planner_requires_a_first_segment_anchor_for_continuation(self):
+        with self.assertRaisesRegex(ValueError, "needs an opening image"):
+            PlanLongVideo().execute(
+                prompt="A continuous tracking shot",
+                target_seconds=30,
+                fps=16,
+                strategy="ltx_continuation",
+            )
+
+    def test_long_video_planner_emits_a_bounded_30_minute_ltx_job_collection(self):
+        opening = Image.new("RGB", (8, 6), "black")
+        result = PlanLongVideo().execute(
+            prompt="A continuous 30-minute tracking shot.",
+            opening_image=opening,
+            target_seconds=1800,
+            fps=16,
+            strategy="ltx_continuation",
+            chunk_seconds=5,
+            overlap_seconds=0.25,
+            max_jobs=512,
+            width=704,
+            height=480,
+            steps=8,
+            guidance_scale=1,
+            conditioning_strength=0.75,
+            negative_prompt="flicker",
+            seed=40,
+        )
+
+        self.assertEqual(PlanLongVideo.params["target_seconds"]["max"], 1800)
+        self.assertEqual(result["job_count"], 374)
+        self.assertEqual(result["overlap_frames"], 4)
+        self.assertEqual(result["planned_frames"], 28802)
+        self.assertEqual(result["planned_seconds"], 1800.125)
+        self.assertIs(result["jobs"][0]["opening_image"], opening)
+        self.assertIsNone(result["jobs"][1]["opening_image"])
+        self.assertFalse(result["jobs"][0]["uses_previous_last_frame"])
+        self.assertTrue(all(job["uses_previous_last_frame"] for job in result["jobs"][1:]))
+        self.assertEqual(result["jobs"][-1]["seed"], 413)
+        for job in result["jobs"]:
+            self.assertEqual(
+                {
+                    "num_frames": job["num_frames"],
+                    "fps": job["fps"],
+                    "width": job["width"],
+                    "height": job["height"],
+                    "steps": job["steps"],
+                    "guidance_scale": job["guidance_scale"],
+                    "conditioning_strength": job["conditioning_strength"],
+                    "negative_prompt": job["negative_prompt"],
+                },
+                {
+                    "num_frames": 81,
+                    "fps": 16,
+                    "width": 704,
+                    "height": 480,
+                    "steps": 8,
+                    "guidance_scale": 1,
+                    "conditioning_strength": 0.75,
+                    "negative_prompt": "flicker",
+                },
+            )
+
+    def test_long_video_planner_rejects_unbounded_duration_job_count_and_framepack_memory(self):
+        opening = Image.new("RGB", (8, 6), "black")
+        common = {
+            "prompt": "A continuous tracking shot.",
+            "opening_image": opening,
+            "fps": 16,
+            "strategy": "ltx_continuation",
+            "chunk_seconds": 5,
+            "overlap_seconds": 0.25,
+        }
+        with self.assertRaisesRegex(ValueError, "target duration.*1 through 1800"):
+            PlanLongVideo().execute(**common, target_seconds=1801)
+        with self.assertRaisesRegex(ValueError, "needs 374 jobs.*maximum of 300"):
+            PlanLongVideo().execute(**common, target_seconds=1800, max_jobs=300)
+        with self.assertRaisesRegex(ValueError, "FramePack continuous planning remains capped at 600 seconds"):
+            PlanLongVideo().execute(
+                prompt=common["prompt"],
+                opening_image=opening,
+                target_seconds=1800,
+                fps=16,
+                strategy="framepack_continuous",
+            )
 
     def test_facade_has_normalized_contract(self):
         self.assertEqual(LoadPipeline.category, "Diffusers Video")
@@ -1434,8 +1608,8 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         node = LoadPipeline()
 
         with (
-            patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae),
-            patch("diffusers.WanPipeline.from_pretrained", return_value=pipeline),
+            patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae) as load_vae,
+            patch("diffusers.WanPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
             patch(
                 "diffusers.schedulers.scheduling_unipc_multistep.UniPCMultistepScheduler.from_config"
             ) as replace_scheduler,
@@ -1457,6 +1631,8 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertIs(loaded, pipeline)
         self.assertIs(loaded.scheduler, scheduler)
         self.assertEqual(loaded.scheduler.config["flow_shift"], 5.0)
+        self.assertTrue(load_vae.call_args.kwargs["use_safetensors"])
+        self.assertTrue(load_pipeline.call_args.kwargs["use_safetensors"])
         replace_scheduler.assert_not_called()
 
     def test_wan_text_generation_can_override_flow_shift_for_a_locked_recipe(self):
@@ -1501,8 +1677,8 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         node = LoadPipeline()
 
         with (
-            patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae),
-            patch("diffusers.WanPipeline.from_pretrained", return_value=pipeline),
+            patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae) as load_vae,
+            patch("diffusers.WanPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
             patch(
                 "diffusers.schedulers.scheduling_unipc_multistep.UniPCMultistepScheduler.from_config",
                 return_value=replacement_scheduler,
@@ -1523,6 +1699,8 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             )
 
         self.assertIs(loaded.scheduler, replacement_scheduler)
+        self.assertTrue(load_vae.call_args.kwargs["use_safetensors"])
+        self.assertTrue(load_pipeline.call_args.kwargs["use_safetensors"])
         replace_scheduler.assert_called_once_with(scheduler.config, flow_shift=8.0)
 
     def test_wan_22_quality_contract_rejects_shorter_than_five_second_clips(self):
@@ -1576,7 +1754,9 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertIs(loaded, pipeline)
         self.assertEqual(load_vae.call_args.args[0], adapter.default_repo)
         self.assertEqual(str(load_vae.call_args.kwargs["torch_dtype"]), "torch.float32")
+        self.assertTrue(load_vae.call_args.kwargs["use_safetensors"])
         self.assertIs(load_pipeline.call_args.kwargs["vae"], vae)
+        self.assertTrue(load_pipeline.call_args.kwargs["use_safetensors"])
         self.assertNotIn("quantization_config", load_pipeline.call_args.kwargs)
         apply_recipe.assert_called_once()
 
@@ -1613,6 +1793,102 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
         self.assertIs(loaded, pipeline)
         self.assertEqual(load_pipeline.call_args.kwargs["device_map"], "cuda")
+
+    def test_ltx2_hub_pipeline_loads_the_reviewed_bounded_snapshot_as_a_local_directory(self):
+        adapter = get_video_pipeline_adapter("LTX2ConditionPipeline")
+        revision = "47da56e2ad66ce4125a9922b4a8826bf407f9d0a"
+        snapshot = Path("/managed/hub/models--Lightricks--LTX-2/snapshots") / revision
+        pipeline = SimpleNamespace()
+        node = LoadPipeline("ltx2-bounded-snapshot-test")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", return_value=snapshot) as resolve_snapshot,
+            patch("diffusers.LTX2ConditionPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline"),
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
+        ):
+            loaded = node._load_ltx2(
+                adapter,
+                {
+                    "model_id": {"source": "hub", "value": adapter.default_repo},
+                    "revision": revision,
+                    "dtype": "bfloat16",
+                    "device": "cuda:0",
+                    "auto_offload": True,
+                    "offload_mode": "model_cpu",
+                },
+            )
+
+        self.assertIs(loaded, pipeline)
+        resolve_snapshot.assert_called_once_with(adapter.default_repo, revision)
+        self.assertEqual(load_pipeline.call_args.args, (snapshot,))
+        self.assertTrue(load_pipeline.call_args.kwargs["local_files_only"])
+        self.assertTrue(load_pipeline.call_args.kwargs["use_safetensors"])
+        self.assertNotIn("revision", load_pipeline.call_args.kwargs)
+        self.assertNotIn("cache_dir", load_pipeline.call_args.kwargs)
+
+    def test_ltx2_in_context_loader_pins_both_snapshots_and_named_safe_lora(self):
+        adapter = get_video_pipeline_adapter("LTX2InContextPipeline")
+        base_revision = "47da56e2ad66ce4125a9922b4a8826bf407f9d0a"
+        lora_repo = "Lightricks/LTX-2-19b-IC-LoRA-Canny-Control"
+        lora_revision = "28be96236294914042a1605f37e3f7812b45f43f"
+        weight_name = "ltx-2-19b-ic-lora-canny-control.safetensors"
+        base_snapshot = Path("/managed/base") / base_revision
+        lora_snapshot = Path("/managed/lora") / lora_revision
+        pipeline = SimpleNamespace(load_lora_weights=MagicMock(), set_adapters=MagicMock())
+
+        class FakePipelineClass:
+            from_pretrained = MagicMock(return_value=pipeline)
+
+            def load_lora_weights(self, *_args, **_kwargs):
+                raise AssertionError("the pipeline instance owns LoRA loading")
+
+        def resolve_snapshot(repo, revision):
+            return base_snapshot if repo == adapter.default_repo else lora_snapshot
+
+        node = LoadPipeline("ltx2-in-context-loader-test")
+        with (
+            patch("diffusers.LTX2InContextPipeline", FakePipelineClass),
+            patch("modules.DiffusersVideo.main.exact_cached_snapshot_path", side_effect=resolve_snapshot) as snapshots,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+            patch.object(node, "progress"),
+            patch.object(node, "mm_add") as mm_add,
+        ):
+            loaded = node._load_ltx2_in_context(
+                adapter,
+                {
+                    "model_id": {"source": "hub", "value": adapter.default_repo},
+                    "revision": base_revision,
+                    "ic_lora_id": {"source": "hub", "value": lora_repo},
+                    "ic_lora_revision": lora_revision,
+                    "ic_lora_weight_name": weight_name,
+                    "dtype": "bfloat16",
+                    "device": "cpu",
+                    "offload_mode": "sequential_cpu",
+                },
+            )
+
+        self.assertIs(loaded, pipeline)
+        self.assertEqual(snapshots.call_args_list, [call(adapter.default_repo, base_revision), call(lora_repo, lora_revision)])
+        FakePipelineClass.from_pretrained.assert_called_once()
+        self.assertEqual(FakePipelineClass.from_pretrained.call_args.args, (base_snapshot,))
+        self.assertTrue(FakePipelineClass.from_pretrained.call_args.kwargs["local_files_only"])
+        self.assertTrue(FakePipelineClass.from_pretrained.call_args.kwargs["use_safetensors"])
+        pipeline.load_lora_weights.assert_called_once_with(
+            lora_snapshot,
+            weight_name=weight_name,
+            adapter_name="ic_lora",
+            local_files_only=True,
+        )
+        pipeline.set_adapters.assert_called_once_with("ic_lora", 1.0)
+        apply_recipe.assert_called_once()
+        apply_offload.assert_called_once()
+        mm_add.assert_called_once_with(pipeline, priority=2)
+        self.assertEqual(pipeline._modiff_video_ic_lora_repo, lora_repo)
+        self.assertEqual(pipeline._modiff_video_ic_lora_revision, lora_revision)
+        self.assertEqual(pipeline._modiff_video_ic_lora_weight_name, weight_name)
 
     def test_ltx_long_adapter_uses_native_sliding_windows_instead_of_independent_clip_chaining(self):
         class Output:
@@ -1697,21 +1973,80 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                 return Output()
 
         pipeline = FakePipeline()
-        result = GenerateVideoAudio().execute(
-            pipeline=pipeline,
-            mode="image_to_video",
-            reference_images=[object()],
-            prompt="A continuous walking shot with natural synchronized ambience",
-            width=768,
-            height=512,
-            num_frames=121,
-            frame_rate=24,
-        )
+        condition_module = SimpleNamespace(LTX2VideoCondition=FakeLTX2VideoCondition)
+        with patch.dict(
+            sys.modules,
+            {"diffusers.pipelines.ltx2.pipeline_ltx2_condition": condition_module},
+        ):
+            result = GenerateVideoAudio().execute(
+                pipeline=pipeline,
+                mode="image_to_video",
+                reference_images=[object()],
+                prompt="A continuous walking shot with natural synchronized ambience",
+                width=768,
+                height=512,
+                num_frames=121,
+                frame_rate=24,
+            )
 
         self.assertEqual(result["frames_out"], 2)
         self.assertEqual(result["sample_rate_out"], 24000)
         self.assertEqual(result["audio"]["channels"], 2)
         self.assertEqual(len(pipeline.calls[0]["conditions"]), 1)
+
+    def test_ltx2_in_context_executes_reference_conditions_and_returns_video_audio(self):
+        class Output:
+            frames = [["frame-a", "frame-b", "frame-c"]]
+            audio = np.zeros((1, 2, 240), dtype=np.float32)
+
+        class FakePipeline:
+            _modiff_video_pipeline_class = "LTX2InContextPipeline"
+            _execution_device = "cpu"
+            vocoder = SimpleNamespace(config={"output_sampling_rate": 24000})
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        pipeline = FakePipeline()
+        reference_frames = [object(), object()]
+        condition_module = SimpleNamespace(LTX2ReferenceCondition=FakeLTX2ReferenceCondition)
+        with patch.dict(
+            sys.modules,
+            {"diffusers.pipelines.ltx2.pipeline_ltx2_ic_lora": condition_module},
+        ):
+            result = GenerateVideoAudio().execute(
+                pipeline=pipeline,
+                mode="in_context_to_video",
+                reference_video=reference_frames,
+                reference_strength=0.8,
+                reference_downscale_factor=2,
+                conditioning_attention_strength=0.65,
+                prompt="A continuous walking shot with coherent motion and synchronized ambience",
+                negative_prompt="flicker",
+                width=768,
+                height=512,
+                num_frames=121,
+                frame_rate=24,
+                num_inference_steps=8,
+                guidance_scale=3.5,
+                seed=42,
+            )
+
+        self.assertEqual(result["video_out"], ["frame-a", "frame-b", "frame-c"])
+        self.assertEqual(result["frames_out"], 3)
+        self.assertEqual(result["sample_rate_out"], 24000)
+        call_kwargs = pipeline.calls[0]
+        self.assertEqual(call_kwargs["reference_downscale_factor"], 2)
+        self.assertEqual(call_kwargs["conditioning_attention_strength"], 0.65)
+        self.assertEqual(call_kwargs["num_frames"], 121)
+        self.assertEqual(len(call_kwargs["reference_conditions"]), 1)
+        condition = call_kwargs["reference_conditions"][0]
+        self.assertEqual(condition.frames, reference_frames)
+        self.assertEqual(condition.strength, 0.8)
 
     def test_video_audio_node_rejects_video_only_pipeline_before_generation(self):
         class FakePipeline:
@@ -2015,20 +2350,33 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
     def test_framepack_loader_composes_the_official_transformer_base_and_vision_repositories(self):
         adapter = get_video_pipeline_adapter("HunyuanVideoFramepackPipeline")
+        try:
+            import transformers  # noqa: F401
+        except ModuleNotFoundError:
+            pass
+        else:
+            import diffusers
+
+            # Resolve Diffusers' lazy FramePack exports before replacing the
+            # optional dependency with the bounded loader fixture below.
+            diffusers.HunyuanVideoFramepackPipeline
+            diffusers.HunyuanVideoFramepackTransformer3DModel
         transformer = object()
         feature_extractor = object()
         image_encoder = object()
         pipeline = object()
         node = LoadPipeline()
+        load_processor = MagicMock(return_value=feature_extractor)
+        load_encoder = MagicMock(return_value=image_encoder)
+        transformers_module = ModuleType("transformers")
+        transformers_module.SiglipImageProcessor = SimpleNamespace(from_pretrained=load_processor)
+        transformers_module.SiglipVisionModel = SimpleNamespace(from_pretrained=load_encoder)
 
         with (
+            patch.dict(sys.modules, {"transformers": transformers_module}),
             patch(
                 "diffusers.HunyuanVideoFramepackTransformer3DModel.from_pretrained", return_value=transformer
             ) as load_transformer,
-            patch(
-                "transformers.SiglipImageProcessor.from_pretrained", return_value=feature_extractor
-            ) as load_processor,
-            patch("transformers.SiglipVisionModel.from_pretrained", return_value=image_encoder) as load_encoder,
             patch("diffusers.HunyuanVideoFramepackPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
             patch.object(node, "progress"),
             patch.object(node, "mm_add"),
@@ -2051,6 +2399,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             load_transformer.call_args.kwargs["revision"],
             "86cef4396041b6002c957852daac4c91aaa47c79",
         )
+        self.assertTrue(load_transformer.call_args.kwargs["use_safetensors"])
         self.assertEqual(load_processor.call_args.args[0], FRAMEPACK_VISION_REPO)
         self.assertEqual(
             load_processor.call_args.kwargs["revision"],
@@ -2061,11 +2410,13 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             load_encoder.call_args.kwargs["revision"],
             "45b801affc54ff2af4e5daf1b282e0921901db87",
         )
+        self.assertTrue(load_encoder.call_args.kwargs["use_safetensors"])
         self.assertEqual(load_pipeline.call_args.args[0], FRAMEPACK_BASE_REPO)
         self.assertEqual(
             load_pipeline.call_args.kwargs["revision"],
             "e8c2aaa66fe3742a32c11a6766aecbf07c56e773",
         )
+        self.assertTrue(load_pipeline.call_args.kwargs["use_safetensors"])
         self.assertIs(load_pipeline.call_args.kwargs["transformer"], transformer)
         self.assertIs(load_pipeline.call_args.kwargs["feature_extractor"], feature_extractor)
         self.assertIs(load_pipeline.call_args.kwargs["image_encoder"], image_encoder)
@@ -2145,6 +2496,43 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertEqual(output["frames_out"], 2)
         self.assertEqual(pipeline.calls[0]["strength"], 0.35)
         self.assertEqual(pipeline.calls[0]["video"], ["source-a", "source-b"])
+
+    def test_wan_video_to_video_loader_requires_safe_serialization(self):
+        adapter = get_video_pipeline_adapter("WanVideoToVideoPipeline")
+        vae = object()
+        scheduler = SimpleNamespace(config={"flow_shift": 3.0})
+        replacement_scheduler = SimpleNamespace(config={"flow_shift": 3.0})
+        pipeline = SimpleNamespace(scheduler=scheduler)
+        node = LoadPipeline()
+
+        with (
+            patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae) as load_vae,
+            patch(
+                "diffusers.WanVideoToVideoPipeline.from_pretrained",
+                return_value=pipeline,
+            ) as load_pipeline,
+            patch(
+                "diffusers.schedulers.scheduling_unipc_multistep.UniPCMultistepScheduler.from_config",
+                return_value=replacement_scheduler,
+            ),
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline"),
+            patch.object(node, "progress"),
+            patch.object(node, "mm_add"),
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
+        ):
+            loaded = node._load_wan_video_to_video(
+                adapter,
+                {
+                    "model_id": {"source": "hub", "value": adapter.default_repo},
+                    "dtype": "bfloat16",
+                    "device": "cpu",
+                    "execution_recipe": {"offload_mode": "none", "device": "cpu"},
+                },
+            )
+
+        self.assertIs(loaded, pipeline)
+        self.assertTrue(load_vae.call_args.kwargs["use_safetensors"])
+        self.assertTrue(load_pipeline.call_args.kwargs["use_safetensors"])
 
     def test_base_wan_text_to_video_uses_the_same_generic_node_contract(self):
         adapter = get_video_pipeline_adapter("WanPipeline")
@@ -2236,17 +2624,22 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
         source = object()
         pipeline = FakePipeline()
-        Generate().execute(
-            pipeline=pipeline,
-            mode="image_to_video",
-            reference_images=[source],
-            prompt="Water pours while the camera moves laterally.",
-            width=704,
-            height=480,
-            num_frames=81,
-            num_inference_steps=4,
-            strength=0.85,
-        )
+        condition_module = SimpleNamespace(LTXVideoCondition=FakeLTXVideoCondition)
+        with patch.dict(
+            sys.modules,
+            {"diffusers.pipelines.ltx.pipeline_ltx_condition": condition_module},
+        ):
+            Generate().execute(
+                pipeline=pipeline,
+                mode="image_to_video",
+                reference_images=[source],
+                prompt="Water pours while the camera moves laterally.",
+                width=704,
+                height=480,
+                num_frames=81,
+                num_inference_steps=4,
+                strength=0.85,
+            )
 
         condition = pipeline.calls[0]["conditions"][0]
         self.assertEqual(condition.video, [source])
@@ -2272,17 +2665,22 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
         source_frames = [object(), object(), object()]
         pipeline = FakePipeline()
-        Generate().execute(
-            pipeline=pipeline,
-            mode="video_to_video",
-            video=source_frames,
-            prompt="Preserve motion and restyle the season.",
-            width=704,
-            height=480,
-            num_frames=81,
-            num_inference_steps=4,
-            strength=0.55,
-        )
+        condition_module = SimpleNamespace(LTXVideoCondition=FakeLTXVideoCondition)
+        with patch.dict(
+            sys.modules,
+            {"diffusers.pipelines.ltx.pipeline_ltx_condition": condition_module},
+        ):
+            Generate().execute(
+                pipeline=pipeline,
+                mode="video_to_video",
+                video=source_frames,
+                prompt="Preserve motion and restyle the season.",
+                width=704,
+                height=480,
+                num_frames=81,
+                num_inference_steps=4,
+                strength=0.55,
+            )
 
         conditions = pipeline.calls[0]["conditions"]
         self.assertEqual(len(conditions), 1)
@@ -2449,6 +2847,1012 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertAlmostEqual(pipeline.scheduler.calls[0][1]["mu"], expected_mu)
         self.assertIn("timesteps", pipeline.scheduler_signature)
         self.assertEqual(pipeline.scheduler.set_timesteps, original_set_timesteps)
+
+    def test_stable_video_loader_uses_only_the_reviewed_safe_chunked_recipe(self):
+        pipeline = SimpleNamespace(
+            unet=SimpleNamespace(enable_forward_chunking=MagicMock()),
+        )
+        node = LoadPipeline("stable-video-loader")
+        with (
+            patch(
+                "diffusers.StableVideoDiffusionPipeline.from_pretrained",
+                return_value=pipeline,
+            ) as from_pretrained,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+            patch.object(node, "mm_add") as mm_add,
+        ):
+            result = node.execute(
+                pipeline_class="StableVideoDiffusionPipeline",
+                model_id={"source": "hub", "value": STABLE_VIDEO_DIFFUSION_REPO},
+                dtype="float16",
+                device="cpu",
+                offload_mode="model_cpu",
+            )
+
+        self.assertIs(result["pipeline"], pipeline)
+        self.assertEqual(result["resolved_artifact"], STABLE_VIDEO_DIFFUSION_REPO)
+        self.assertEqual(pipeline._modiff_video_pipeline_class, "StableVideoDiffusionPipeline")
+        self.assertEqual(pipeline._modiff_video_repo, STABLE_VIDEO_DIFFUSION_REPO)
+        self.assertEqual(pipeline._modiff_video_revision, STABLE_VIDEO_DIFFUSION_REVISION)
+        load_args, load_kwargs = from_pretrained.call_args
+        self.assertEqual(load_args, (STABLE_VIDEO_DIFFUSION_REPO,))
+        self.assertEqual(load_kwargs["revision"], STABLE_VIDEO_DIFFUSION_REVISION)
+        self.assertEqual(load_kwargs["variant"], "fp16")
+        self.assertIs(load_kwargs["use_safetensors"], True)
+        self.assertNotIn("trust_remote_code", load_kwargs)
+        self.assertNotIn("quantization_config", load_kwargs)
+        self.assertNotIn("device_map", load_kwargs)
+        pipeline.unet.enable_forward_chunking.assert_called_once_with()
+        apply_recipe.assert_called_once_with(pipeline, {})
+        apply_offload.assert_called_once_with(
+            pipeline,
+            mode="none",
+            device="cpu",
+            node_id="stable-video-loader",
+            scope="stable-video-diffusion",
+        )
+        mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_animatediff_loader_pins_safe_base_motion_adapter_and_ddim_scheduler(self):
+        motion_adapter = object()
+        scheduler = object()
+        pipeline = SimpleNamespace(vae=SimpleNamespace(enable_slicing=MagicMock()))
+        node = LoadPipeline("animatediff-loader")
+        with (
+            patch("diffusers.MotionAdapter.from_pretrained", return_value=motion_adapter) as load_motion,
+            patch("diffusers.DDIMScheduler.from_pretrained", return_value=scheduler) as load_scheduler,
+            patch("diffusers.AnimateDiffPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+            patch.object(node, "mm_add") as mm_add,
+        ):
+            result = node.execute(
+                pipeline_class="AnimateDiffPipeline",
+                model_id={"source": "hub", "value": ANIMATEDIFF_BASE_REPO},
+                revision=ANIMATEDIFF_BASE_REVISION,
+                motion_adapter_id={"source": "hub", "value": ANIMATEDIFF_MOTION_REPO},
+                motion_adapter_revision=ANIMATEDIFF_MOTION_REVISION,
+                dtype="float16",
+                device="cpu",
+                offload_mode="model_cpu",
+            )
+
+        self.assertIs(result["pipeline"], pipeline)
+        self.assertEqual(pipeline._modiff_video_pipeline_class, "AnimateDiffPipeline")
+        self.assertEqual(pipeline._modiff_video_repo, ANIMATEDIFF_BASE_REPO)
+        self.assertEqual(pipeline._modiff_video_revision, ANIMATEDIFF_BASE_REVISION)
+        self.assertEqual(pipeline._modiff_video_motion_adapter_repo, ANIMATEDIFF_MOTION_REPO)
+        self.assertEqual(pipeline._modiff_video_motion_adapter_revision, ANIMATEDIFF_MOTION_REVISION)
+        motion_args, motion_kwargs = load_motion.call_args
+        self.assertEqual(motion_args, (ANIMATEDIFF_MOTION_REPO,))
+        self.assertEqual(motion_kwargs["revision"], ANIMATEDIFF_MOTION_REVISION)
+        self.assertEqual(motion_kwargs["variant"], "fp16")
+        self.assertIs(motion_kwargs["use_safetensors"], True)
+        scheduler_args, scheduler_kwargs = load_scheduler.call_args
+        self.assertEqual(scheduler_args, (ANIMATEDIFF_BASE_REPO,))
+        self.assertEqual(scheduler_kwargs["subfolder"], "scheduler")
+        self.assertEqual(scheduler_kwargs["revision"], ANIMATEDIFF_BASE_REVISION)
+        self.assertIs(scheduler_kwargs["clip_sample"], False)
+        self.assertEqual(scheduler_kwargs["timestep_spacing"], "linspace")
+        self.assertEqual(scheduler_kwargs["beta_schedule"], "linear")
+        self.assertEqual(scheduler_kwargs["steps_offset"], 1)
+        base_args, base_kwargs = load_pipeline.call_args
+        self.assertEqual(base_args, (ANIMATEDIFF_BASE_REPO,))
+        self.assertIs(base_kwargs["motion_adapter"], motion_adapter)
+        self.assertIs(base_kwargs["scheduler"], scheduler)
+        self.assertEqual(base_kwargs["revision"], ANIMATEDIFF_BASE_REVISION)
+        self.assertEqual(base_kwargs["variant"], "fp16")
+        self.assertIs(base_kwargs["use_safetensors"], True)
+        pipeline.vae.enable_slicing.assert_called_once_with()
+        apply_recipe.assert_called_once_with(pipeline, {})
+        apply_offload.assert_called_once_with(
+            pipeline,
+            mode="none",
+            device="cpu",
+            node_id="animatediff-loader",
+            scope="animatediff",
+        )
+        mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_animatelcm_loader_pins_linear_scheduler_and_named_safe_lora(self):
+        replacement_scheduler = object()
+        pipeline = SimpleNamespace(
+            scheduler=SimpleNamespace(config={"beta_schedule": "scaled_linear"}),
+            vae=SimpleNamespace(enable_slicing=MagicMock()),
+            load_lora_weights=MagicMock(),
+            set_adapters=MagicMock(),
+        )
+        node = LoadPipeline("animatelcm-loader")
+        with (
+            patch("diffusers.MotionAdapter.from_pretrained", return_value=object()) as load_motion,
+            patch("diffusers.AnimateDiffPipeline.from_pretrained", return_value=pipeline),
+            patch("diffusers.LCMScheduler.from_config", return_value=replacement_scheduler) as lcm_scheduler,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload"),
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline"),
+            patch.object(node, "mm_add"),
+        ):
+            node.execute(
+                pipeline_class="AnimateLCMPipeline",
+                model_id={"source": "hub", "value": ANIMATEDIFF_BASE_REPO},
+                revision=ANIMATEDIFF_BASE_REVISION,
+                motion_adapter_id={"source": "hub", "value": ANIMATELCM_MOTION_REPO},
+                motion_adapter_revision=ANIMATELCM_MOTION_REVISION,
+                dtype="float16",
+                device="cpu",
+            )
+
+        self.assertEqual(load_motion.call_args.args, (ANIMATELCM_MOTION_REPO,))
+        self.assertEqual(load_motion.call_args.kwargs["revision"], ANIMATELCM_MOTION_REVISION)
+        lcm_scheduler.assert_called_once_with({"beta_schedule": "scaled_linear"}, beta_schedule="linear")
+        self.assertIs(pipeline.scheduler, replacement_scheduler)
+        pipeline.load_lora_weights.assert_called_once_with(
+            ANIMATELCM_MOTION_REPO,
+            weight_name=ANIMATELCM_LORA_WEIGHT_NAME,
+            adapter_name=ANIMATELCM_LORA_ADAPTER_NAME,
+            revision=ANIMATELCM_MOTION_REVISION,
+            local_files_only=True,
+            use_safetensors=True,
+        )
+        pipeline.set_adapters.assert_called_once_with(
+            [ANIMATELCM_LORA_ADAPTER_NAME],
+            [ANIMATELCM_LORA_SCALE],
+        )
+
+    def test_animatediff_loader_rejects_unreviewed_components_before_weight_loading(self):
+        node = LoadPipeline("strict-animatediff-loader")
+        with patch("diffusers.MotionAdapter.from_pretrained") as load_motion:
+            with self.assertRaisesRegex(ValueError, "requires MotionAdapter"):
+                node.execute(
+                    pipeline_class="AnimateDiffPipeline",
+                    model_id={"source": "hub", "value": ANIMATEDIFF_BASE_REPO},
+                    revision=ANIMATEDIFF_BASE_REVISION,
+                    motion_adapter_id={"source": "hub", "value": ANIMATELCM_MOTION_REPO},
+                    motion_adapter_revision=ANIMATELCM_MOTION_REVISION,
+                    dtype="float16",
+                )
+        load_motion.assert_not_called()
+
+    def test_animatediff_generate_seals_the_short_text_to_video_contract(self):
+        class Output:
+            frames = [[f"frame-{index}" for index in range(8)]]
+
+        class FakePipeline:
+            _modiff_video_pipeline_class = "AnimateLCMPipeline"
+            _modiff_video_repo = ANIMATEDIFF_BASE_REPO
+            _modiff_video_revision = ANIMATEDIFF_BASE_REVISION
+            _modiff_video_motion_adapter_repo = ANIMATELCM_MOTION_REPO
+            _modiff_video_motion_adapter_revision = ANIMATELCM_MOTION_REVISION
+            _execution_device = "cpu"
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        pipeline = FakePipeline()
+        result = Generate().execute(
+            pipeline=pipeline,
+            mode="text_to_video",
+            prompt="A paper kite circles above a quiet field.",
+            negative_prompt="flicker",
+            width=512,
+            height=512,
+            num_frames=8,
+            num_inference_steps=6,
+            guidance_scale=1.5,
+            max_sequence_length=77,
+            seed=23,
+            output_type="pil",
+        )
+
+        self.assertEqual(result["frames_out"], 8)
+        call = pipeline.calls[0]
+        self.assertEqual(call["num_frames"], 8)
+        self.assertEqual(call["num_inference_steps"], 6)
+        self.assertEqual(call["guidance_scale"], 1.5)
+        self.assertEqual(call["decode_chunk_size"], 16)
+        self.assertEqual(call["num_videos_per_prompt"], 1)
+        self.assertEqual(VIDEO_PIPELINE_ADAPTERS["AnimateDiffPipeline"].max_prompt_tokens, 77)
+        self.assertEqual(VIDEO_PIPELINE_ADAPTERS["AnimateLCMPipeline"].max_prompt_tokens, 77)
+        self.assertNotIn("max_sequence_length", call)
+        self.assertNotIn("image", call)
+        with self.assertRaisesRegex(ValueError, "step count must be an integer from 1 through 8"):
+            Generate().execute(
+                pipeline=pipeline,
+                mode="text_to_video",
+                prompt="A paper kite circles above a quiet field.",
+                width=512,
+                height=512,
+                num_frames=8,
+                num_inference_steps=9,
+            )
+
+    def test_cogvideox_loader_pins_safe_weights_and_documented_tiling(self):
+        pipeline = SimpleNamespace(vae=SimpleNamespace(enable_tiling=MagicMock()))
+        node = LoadPipeline("cogvideox-loader")
+        ordered_calls = MagicMock()
+        with (
+            patch("diffusers.CogVideoXPipeline.from_pretrained", return_value=pipeline) as from_pretrained,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+            patch.object(node, "mm_add") as mm_add,
+        ):
+            ordered_calls.attach_mock(apply_recipe, "apply_recipe")
+            ordered_calls.attach_mock(pipeline.vae.enable_tiling, "enable_tiling")
+            result = node.execute(
+                pipeline_class="CogVideoXPipeline",
+                model_id={"source": "hub", "value": COGVIDEOX_2B_REPO},
+                revision=COGVIDEOX_2B_REVISION,
+                dtype="float16",
+                device="cpu",
+                offload_mode="model_cpu",
+            )
+
+        self.assertIs(result["pipeline"], pipeline)
+        self.assertEqual(result["resolved_artifact"], COGVIDEOX_2B_REPO)
+        self.assertEqual(pipeline._modiff_video_pipeline_class, "CogVideoXPipeline")
+        self.assertEqual(pipeline._modiff_video_repo, COGVIDEOX_2B_REPO)
+        self.assertEqual(pipeline._modiff_video_revision, COGVIDEOX_2B_REVISION)
+        load_args, load_kwargs = from_pretrained.call_args
+        self.assertEqual(load_args, (COGVIDEOX_2B_REPO,))
+        self.assertEqual(load_kwargs["revision"], COGVIDEOX_2B_REVISION)
+        self.assertIs(load_kwargs["use_safetensors"], True)
+        self.assertNotIn("trust_remote_code", load_kwargs)
+        self.assertNotIn("quantization_config", load_kwargs)
+        self.assertNotIn("device_map", load_kwargs)
+        pipeline.vae.enable_tiling.assert_called_once_with()
+        apply_recipe.assert_called_once_with(pipeline, {})
+        self.assertEqual(
+            ordered_calls.method_calls[:2],
+            [
+                call.apply_recipe(pipeline, {}),
+                call.enable_tiling(),
+            ],
+        )
+        apply_offload.assert_called_once_with(
+            pipeline,
+            mode="none",
+            device="cpu",
+            node_id="cogvideox-loader",
+            scope="cogvideox-2b",
+        )
+        mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_cogvideox_loader_rejects_unreviewed_artifacts_before_diffusers(self):
+        node = LoadPipeline("strict-cogvideox-loader")
+        with patch("diffusers.CogVideoXPipeline.from_pretrained") as from_pretrained:
+            with self.assertRaisesRegex(ValueError, "exact reviewed Hub artifact"):
+                node.execute(
+                    pipeline_class="CogVideoXPipeline",
+                    model_id={"source": "hub", "value": "organization/custom-cogvideo"},
+                    revision="0123456789abcdef0123456789abcdef01234567",
+                    dtype="float16",
+                )
+        from_pretrained.assert_not_called()
+
+    def test_cogvideox_generate_seals_native_short_text_to_video_contract(self):
+        class Output:
+            frames = [[f"frame-{index}" for index in range(25)]]
+
+        class FakePipeline:
+            _modiff_video_pipeline_class = "CogVideoXPipeline"
+            _modiff_video_repo = COGVIDEOX_2B_REPO
+            _modiff_video_revision = COGVIDEOX_2B_REVISION
+            _execution_device = "cpu"
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        pipeline = FakePipeline()
+        result = Generate().execute(
+            pipeline=pipeline,
+            mode="text_to_video",
+            prompt="A red kite crosses a quiet winter sky.",
+            negative_prompt="camera shake",
+            width=720,
+            height=480,
+            num_frames=25,
+            num_inference_steps=25,
+            guidance_scale=6,
+            seed=29,
+            output_type="pil",
+            max_sequence_length=226,
+        )
+
+        self.assertEqual(
+            result, {"video_out": Output.frames[0], "width_out": 720, "height_out": 480, "frames_out": 25}
+        )
+        call = pipeline.calls[0]
+        self.assertEqual(call["num_frames"], 25)
+        self.assertEqual(call["num_inference_steps"], 25)
+        self.assertEqual(call["guidance_scale"], 6)
+        self.assertIs(call["use_dynamic_cfg"], False)
+        self.assertEqual(call["num_videos_per_prompt"], 1)
+        self.assertEqual(call["max_sequence_length"], 226)
+        self.assertNotIn("image", call)
+
+    def test_cogvideox_invalid_short_contracts_fail_before_torch_or_execution(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="CogVideoXPipeline",
+            _modiff_video_repo=COGVIDEOX_2B_REPO,
+            _modiff_video_revision=COGVIDEOX_2B_REVISION,
+        )
+        invalid = (
+            ({"num_frames": 8}, "integer from 9 through 25"),
+            ({"num_frames": 24}, r"4k\+1"),
+            ({"width": 712}, "integer from 720 through 720"),
+            ({"reference_images": [Image.new("RGB", (720, 480))]}, "does not accept image conditioning"),
+            ({"output_type": "np"}, "requires output_type=pil"),
+            ({"max_sequence_length": 227}, "integer from 1 through 226"),
+        )
+        with patch.dict(sys.modules, {"torch": None}):
+            for update, message in invalid:
+                with self.subTest(update=update):
+                    with self.assertRaisesRegex(ValueError, message):
+                        Generate().execute(
+                            pipeline=pipeline,
+                            mode="text_to_video",
+                            prompt="A red kite crosses a quiet winter sky.",
+                            **update,
+                        )
+
+    def test_allegro_loader_pins_safe_weights_fp32_vae_and_documented_tiling(self):
+        vae = SimpleNamespace(enable_tiling=MagicMock())
+        pipeline = SimpleNamespace(vae=vae)
+        node = LoadPipeline("allegro-loader")
+        ordered_calls = MagicMock()
+        with (
+            patch("diffusers.AutoencoderKLAllegro.from_pretrained", return_value=vae) as load_vae,
+            patch("diffusers.AllegroPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+            patch.object(node, "mm_add") as mm_add,
+        ):
+            ordered_calls.attach_mock(apply_recipe, "apply_recipe")
+            ordered_calls.attach_mock(vae.enable_tiling, "enable_tiling")
+            result = node.execute(
+                pipeline_class="AllegroPipeline",
+                model_id={"source": "hub", "value": ALLEGRO_REPO},
+                revision=ALLEGRO_REVISION,
+                dtype="bfloat16",
+                device="cpu",
+                offload_mode="sequential_cpu",
+            )
+
+        self.assertIs(result["pipeline"], pipeline)
+        self.assertEqual(result["resolved_artifact"], ALLEGRO_REPO)
+        self.assertEqual(pipeline._modiff_video_pipeline_class, "AllegroPipeline")
+        self.assertEqual(pipeline._modiff_video_repo, ALLEGRO_REPO)
+        self.assertEqual(pipeline._modiff_video_revision, ALLEGRO_REVISION)
+        self.assertEqual(load_vae.call_args.args, (ALLEGRO_REPO,))
+        self.assertEqual(load_vae.call_args.kwargs["subfolder"], "vae")
+        self.assertEqual(str(load_vae.call_args.kwargs["torch_dtype"]), "torch.float32")
+        self.assertIs(load_vae.call_args.kwargs["use_safetensors"], True)
+        self.assertEqual(load_pipeline.call_args.args, (ALLEGRO_REPO,))
+        self.assertIs(load_pipeline.call_args.kwargs["vae"], vae)
+        self.assertEqual(str(load_pipeline.call_args.kwargs["torch_dtype"]), "torch.bfloat16")
+        self.assertEqual(load_pipeline.call_args.kwargs["revision"], ALLEGRO_REVISION)
+        self.assertIs(load_pipeline.call_args.kwargs["use_safetensors"], True)
+        self.assertNotIn("trust_remote_code", load_pipeline.call_args.kwargs)
+        self.assertNotIn("quantization_config", load_pipeline.call_args.kwargs)
+        self.assertNotIn("device_map", load_pipeline.call_args.kwargs)
+        self.assertEqual(
+            ordered_calls.method_calls[:2],
+            [call.apply_recipe(pipeline, {}), call.enable_tiling()],
+        )
+        apply_offload.assert_called_once_with(
+            pipeline,
+            mode="none",
+            device="cpu",
+            node_id="allegro-loader",
+            scope="allegro",
+        )
+        mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_allegro_loader_rejects_unreviewed_artifacts_before_diffusers(self):
+        node = LoadPipeline("strict-allegro-loader")
+        with patch("diffusers.AllegroPipeline.from_pretrained") as from_pretrained:
+            with self.assertRaisesRegex(ValueError, "exact reviewed Hub artifact"):
+                node.execute(
+                    pipeline_class="AllegroPipeline",
+                    model_id={"source": "hub", "value": "organization/custom-allegro"},
+                    revision="0123456789abcdef0123456789abcdef01234567",
+                    dtype="bfloat16",
+                )
+        from_pretrained.assert_not_called()
+
+    def test_allegro_generate_seals_native_text_to_video_contract(self):
+        class Output:
+            frames = [[f"frame-{index}" for index in range(88)]]
+
+        class FakePipeline:
+            _modiff_video_pipeline_class = "AllegroPipeline"
+            _modiff_video_repo = ALLEGRO_REPO
+            _modiff_video_revision = ALLEGRO_REVISION
+            _execution_device = "cpu"
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        pipeline = FakePipeline()
+        result = Generate().execute(
+            pipeline=pipeline,
+            mode="text_to_video",
+            prompt="A sailboat crosses a sunlit bay.",
+            negative_prompt="flicker",
+            width=1280,
+            height=720,
+            num_frames=88,
+            num_inference_steps=100,
+            guidance_scale=7.5,
+            seed=31,
+            output_type="pil",
+            max_sequence_length=512,
+        )
+
+        self.assertEqual(
+            result,
+            {"video_out": Output.frames[0], "width_out": 1280, "height_out": 720, "frames_out": 88},
+        )
+        call_kwargs = pipeline.calls[0]
+        self.assertEqual(call_kwargs["num_frames"], 88)
+        self.assertEqual(call_kwargs["num_inference_steps"], 100)
+        self.assertEqual(call_kwargs["guidance_scale"], 7.5)
+        self.assertEqual(call_kwargs["num_videos_per_prompt"], 1)
+        self.assertEqual(call_kwargs["max_sequence_length"], 512)
+        self.assertIs(call_kwargs["clean_caption"], False)
+        self.assertNotIn("image", call_kwargs)
+        self.assertNotIn("attention_kwargs", call_kwargs)
+
+    def test_allegro_invalid_native_contracts_fail_before_torch_or_execution(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="AllegroPipeline",
+            _modiff_video_repo=ALLEGRO_REPO,
+            _modiff_video_revision=ALLEGRO_REVISION,
+        )
+        invalid = (
+            ({"num_frames": 87}, "integer from 88 through 88"),
+            ({"width": 1272}, "integer from 1280 through 1280"),
+            ({"height": 712}, "integer from 720 through 720"),
+            ({"num_inference_steps": 101}, "integer from 1 through 100"),
+            ({"reference_images": [Image.new("RGB", (1280, 720))]}, "does not accept image conditioning"),
+            ({"output_type": "np"}, "requires output_type=pil"),
+            ({"max_sequence_length": 513}, "integer from 1 through 512"),
+        )
+        with patch.dict(sys.modules, {"torch": None}):
+            for update, message in invalid:
+                with self.subTest(update=update):
+                    with self.assertRaisesRegex(ValueError, message):
+                        Generate().execute(
+                            pipeline=pipeline,
+                            mode="text_to_video",
+                            prompt="A sailboat crosses a sunlit bay.",
+                            **update,
+                        )
+
+    def test_latte_loader_pins_safe_float16_weights_and_sequential_offload(self):
+        pipeline = SimpleNamespace()
+        node = LoadPipeline("latte-loader")
+        with (
+            patch("diffusers.LattePipeline.from_pretrained", return_value=pipeline) as load_pipeline,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+            patch.object(node, "mm_add") as mm_add,
+        ):
+            result = node.execute(
+                pipeline_class="LattePipeline",
+                model_id={"source": "hub", "value": LATTE_REPO},
+                revision=LATTE_REVISION,
+                dtype="float16",
+                device="cpu",
+                offload_mode="sequential_cpu",
+            )
+
+        self.assertIs(result["pipeline"], pipeline)
+        self.assertEqual(result["resolved_artifact"], LATTE_REPO)
+        self.assertEqual(pipeline._modiff_video_pipeline_class, "LattePipeline")
+        self.assertEqual(pipeline._modiff_video_repo, LATTE_REPO)
+        self.assertEqual(pipeline._modiff_video_revision, LATTE_REVISION)
+        self.assertEqual(load_pipeline.call_args.args, (LATTE_REPO,))
+        self.assertEqual(str(load_pipeline.call_args.kwargs["torch_dtype"]), "torch.float16")
+        self.assertEqual(load_pipeline.call_args.kwargs["revision"], LATTE_REVISION)
+        self.assertIs(load_pipeline.call_args.kwargs["use_safetensors"], True)
+        self.assertNotIn("trust_remote_code", load_pipeline.call_args.kwargs)
+        self.assertNotIn("quantization_config", load_pipeline.call_args.kwargs)
+        self.assertNotIn("device_map", load_pipeline.call_args.kwargs)
+        apply_recipe.assert_called_once_with(pipeline, {})
+        apply_offload.assert_called_once_with(
+            pipeline,
+            mode="none",
+            device="cpu",
+            node_id="latte-loader",
+            scope="latte",
+        )
+        mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_latte_loader_rejects_unreviewed_artifacts_before_diffusers(self):
+        node = LoadPipeline("strict-latte-loader")
+        with patch("diffusers.LattePipeline.from_pretrained") as from_pretrained:
+            with self.assertRaisesRegex(ValueError, "exact reviewed Hub artifact"):
+                node.execute(
+                    pipeline_class="LattePipeline",
+                    model_id={"source": "hub", "value": "organization/custom-latte"},
+                    revision="0123456789abcdef0123456789abcdef01234567",
+                    dtype="float16",
+                )
+        from_pretrained.assert_not_called()
+
+    def test_latte_generate_seals_native_text_to_video_contract(self):
+        class Output:
+            frames = [[f"frame-{index}" for index in range(16)]]
+
+        class FakePipeline:
+            _modiff_video_pipeline_class = "LattePipeline"
+            _modiff_video_repo = LATTE_REPO
+            _modiff_video_revision = LATTE_REVISION
+            _execution_device = "cpu"
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        pipeline = FakePipeline()
+        result = Generate().execute(
+            pipeline=pipeline,
+            mode="text_to_video",
+            prompt="A coffee cup steams beside a rain-streaked window.",
+            negative_prompt="flicker",
+            width=512,
+            height=512,
+            num_frames=16,
+            num_inference_steps=50,
+            guidance_scale=7.5,
+            seed=37,
+            output_type="pil",
+        )
+
+        self.assertEqual(
+            result,
+            {"video_out": Output.frames[0], "width_out": 512, "height_out": 512, "frames_out": 16},
+        )
+        call_kwargs = pipeline.calls[0]
+        self.assertEqual(call_kwargs["video_length"], 16)
+        self.assertEqual(call_kwargs["num_inference_steps"], 50)
+        self.assertEqual(call_kwargs["guidance_scale"], 7.5)
+        self.assertEqual(call_kwargs["num_images_per_prompt"], 1)
+        self.assertEqual(call_kwargs["decode_chunk_size"], 14)
+        self.assertIs(call_kwargs["clean_caption"], False)
+        self.assertIs(call_kwargs["mask_feature"], True)
+        self.assertIs(call_kwargs["enable_temporal_attentions"], True)
+        self.assertNotIn("image", call_kwargs)
+
+    def test_latte_invalid_native_contracts_fail_before_torch_or_execution(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="LattePipeline",
+            _modiff_video_repo=LATTE_REPO,
+            _modiff_video_revision=LATTE_REVISION,
+        )
+        invalid = (
+            ({"num_frames": 15}, "integer from 16 through 16"),
+            ({"width": 504}, "integer from 512 through 512"),
+            ({"height": 520}, "integer from 512 through 512"),
+            ({"num_inference_steps": 51}, "integer from 1 through 50"),
+            ({"reference_images": [Image.new("RGB", (512, 512))]}, "does not accept image conditioning"),
+            ({"output_type": "np"}, "requires output_type=pil"),
+            ({"guidance_scale": 12.1}, "finite and from 1 through 12"),
+        )
+        with patch.dict(sys.modules, {"torch": None}):
+            for update, message in invalid:
+                with self.subTest(update=update):
+                    with self.assertRaisesRegex(ValueError, message):
+                        Generate().execute(
+                            pipeline=pipeline,
+                            mode="text_to_video",
+                            prompt="A coffee cup steams beside a rain-streaked window.",
+                            **update,
+                        )
+
+    @requires_transformers
+    def test_mochi_loader_pins_indexed_t5_and_bfloat16_variant(self):
+        pipeline = SimpleNamespace(vae=SimpleNamespace(enable_tiling=MagicMock()))
+        text_encoder = object()
+        node = LoadPipeline("mochi-loader")
+        with (
+            patch("transformers.T5EncoderModel.from_pretrained", return_value=text_encoder) as load_text_encoder,
+            patch("diffusers.MochiPipeline.from_pretrained", return_value=pipeline) as load_pipeline,
+            patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+            patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+            patch.object(node, "mm_add") as mm_add,
+        ):
+            result = node.execute(
+                pipeline_class="MochiPipeline",
+                model_id={"source": "hub", "value": MOCHI_REPO},
+                revision=MOCHI_REVISION,
+                dtype="bfloat16",
+                device="cpu",
+                offload_mode="sequential_cpu",
+            )
+
+        self.assertIs(result["pipeline"], pipeline)
+        self.assertEqual(result["resolved_artifact"], MOCHI_REPO)
+        self.assertEqual(pipeline._modiff_video_pipeline_class, "MochiPipeline")
+        self.assertEqual(pipeline._modiff_video_repo, MOCHI_REPO)
+        self.assertEqual(pipeline._modiff_video_revision, MOCHI_REVISION)
+        self.assertEqual(load_text_encoder.call_args.args, (MOCHI_REPO,))
+        self.assertEqual(load_text_encoder.call_args.kwargs["subfolder"], "text_encoder")
+        self.assertEqual(str(load_text_encoder.call_args.kwargs["torch_dtype"]), "torch.bfloat16")
+        self.assertIs(load_text_encoder.call_args.kwargs["use_safetensors"], True)
+        self.assertEqual(load_pipeline.call_args.args, (MOCHI_REPO,))
+        self.assertIs(load_pipeline.call_args.kwargs["text_encoder"], text_encoder)
+        self.assertEqual(load_pipeline.call_args.kwargs["variant"], "bf16")
+        self.assertEqual(str(load_pipeline.call_args.kwargs["torch_dtype"]), "torch.bfloat16")
+        self.assertEqual(load_pipeline.call_args.kwargs["revision"], MOCHI_REVISION)
+        self.assertIs(load_pipeline.call_args.kwargs["use_safetensors"], True)
+        self.assertNotIn("trust_remote_code", load_pipeline.call_args.kwargs)
+        self.assertNotIn("quantization_config", load_pipeline.call_args.kwargs)
+        self.assertNotIn("device_map", load_pipeline.call_args.kwargs)
+        apply_recipe.assert_called_once_with(pipeline, {})
+        pipeline.vae.enable_tiling.assert_called_once_with()
+        apply_offload.assert_called_once_with(
+            pipeline,
+            mode="none",
+            device="cpu",
+            node_id="mochi-loader",
+            scope="mochi",
+        )
+        mm_add.assert_called_once_with(pipeline, priority=2)
+
+    @requires_transformers
+    def test_mochi_loader_rejects_unreviewed_artifacts_before_diffusers(self):
+        node = LoadPipeline("strict-mochi-loader")
+        with patch("diffusers.MochiPipeline.from_pretrained") as from_pretrained:
+            with self.assertRaisesRegex(ValueError, "exact reviewed Hub artifact"):
+                node.execute(
+                    pipeline_class="MochiPipeline",
+                    model_id={"source": "hub", "value": "organization/custom-mochi"},
+                    revision="0123456789abcdef0123456789abcdef01234567",
+                    dtype="bfloat16",
+                )
+        from_pretrained.assert_not_called()
+
+    def test_mochi_generate_seals_native_text_to_video_contract(self):
+        class Output:
+            frames = [[f"frame-{index}" for index in range(31)]]
+
+        class FakePipeline:
+            _modiff_video_pipeline_class = "MochiPipeline"
+            _modiff_video_repo = MOCHI_REPO
+            _modiff_video_revision = MOCHI_REVISION
+            _execution_device = "cpu"
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        pipeline = FakePipeline()
+        result = Generate().execute(
+            pipeline=pipeline,
+            mode="text_to_video",
+            prompt="A paper lantern drifts over a moonlit lake.",
+            negative_prompt="flicker",
+            width=848,
+            height=480,
+            num_frames=31,
+            num_inference_steps=64,
+            guidance_scale=4.5,
+            max_sequence_length=256,
+            seed=41,
+            output_type="pil",
+        )
+
+        self.assertEqual(
+            result,
+            {"video_out": Output.frames[0], "width_out": 848, "height_out": 480, "frames_out": 31},
+        )
+        call_kwargs = pipeline.calls[0]
+        self.assertEqual(call_kwargs["num_frames"], 31)
+        self.assertEqual(call_kwargs["num_inference_steps"], 64)
+        self.assertEqual(call_kwargs["guidance_scale"], 4.5)
+        self.assertEqual(call_kwargs["num_videos_per_prompt"], 1)
+        self.assertEqual(call_kwargs["max_sequence_length"], 256)
+        self.assertNotIn("image", call_kwargs)
+        self.assertNotIn("video", call_kwargs)
+
+    def test_mochi_invalid_native_contracts_fail_before_torch_or_execution(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="MochiPipeline",
+            _modiff_video_repo=MOCHI_REPO,
+            _modiff_video_revision=MOCHI_REVISION,
+        )
+        invalid = (
+            ({"num_frames": 30}, "integer from 31 through 31"),
+            ({"width": 840}, "integer from 848 through 848"),
+            ({"height": 488}, "integer from 480 through 480"),
+            ({"num_inference_steps": 65}, "integer from 1 through 64"),
+            ({"reference_images": [Image.new("RGB", (848, 480))]}, "does not accept image conditioning"),
+            ({"output_type": "np"}, "requires output_type=pil"),
+            ({"max_sequence_length": 257}, "integer from 1 through 256"),
+            ({"guidance_scale": 12.1}, "finite and from 1 through 12"),
+        )
+        with patch.dict(sys.modules, {"torch": None}):
+            for update, message in invalid:
+                with self.subTest(update=update):
+                    with self.assertRaisesRegex(ValueError, message):
+                        Generate().execute(
+                            pipeline=pipeline,
+                            mode="text_to_video",
+                            prompt="A paper lantern drifts over a moonlit lake.",
+                            **update,
+                        )
+
+    def test_sana_video_loaders_pin_mixed_precision_and_mandatory_vae_tiling(self):
+        for pipeline_class, class_path, scope in (
+            ("SanaVideoPipeline", "diffusers.SanaVideoPipeline.from_pretrained", "sana-video-480p"),
+            (
+                "SanaImageToVideoPipeline",
+                "diffusers.SanaImageToVideoPipeline.from_pretrained",
+                "sana-video-480p-i2v",
+            ),
+        ):
+            with self.subTest(pipeline_class=pipeline_class):
+                vae = SimpleNamespace(enable_tiling=MagicMock())
+                pipeline = SimpleNamespace(vae=vae)
+                node = LoadPipeline(f"{scope}-loader")
+                with (
+                    patch("diffusers.AutoencoderKLWan.from_pretrained", return_value=vae) as load_vae,
+                    patch(class_path, return_value=pipeline) as load_pipeline,
+                    patch("modules.DiffusersVideo.main.apply_pipeline_offload") as apply_offload,
+                    patch("modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline") as apply_recipe,
+                    patch.object(node, "mm_add") as mm_add,
+                ):
+                    result = node.execute(
+                        pipeline_class=pipeline_class,
+                        model_id={"source": "hub", "value": SANA_VIDEO_REPO},
+                        revision=SANA_VIDEO_REVISION,
+                        dtype="bfloat16",
+                        device="cpu",
+                        offload_mode="sequential_cpu",
+                    )
+
+                self.assertIs(result["pipeline"], pipeline)
+                self.assertEqual(result["resolved_artifact"], SANA_VIDEO_REPO)
+                self.assertEqual(pipeline._modiff_video_pipeline_class, pipeline_class)
+                self.assertEqual(pipeline._modiff_video_repo, SANA_VIDEO_REPO)
+                self.assertEqual(pipeline._modiff_video_revision, SANA_VIDEO_REVISION)
+                self.assertEqual(load_vae.call_args.args, (SANA_VIDEO_REPO,))
+                self.assertEqual(load_vae.call_args.kwargs["subfolder"], "vae")
+                self.assertEqual(str(load_vae.call_args.kwargs["torch_dtype"]), "torch.float32")
+                self.assertEqual(load_pipeline.call_args.args, (SANA_VIDEO_REPO,))
+                self.assertIs(load_pipeline.call_args.kwargs["vae"], vae)
+                self.assertEqual(str(load_pipeline.call_args.kwargs["torch_dtype"]), "torch.bfloat16")
+                self.assertEqual(load_pipeline.call_args.kwargs["revision"], SANA_VIDEO_REVISION)
+                self.assertIs(load_pipeline.call_args.kwargs["use_safetensors"], True)
+                self.assertNotIn("trust_remote_code", load_pipeline.call_args.kwargs)
+                self.assertNotIn("quantization_config", load_pipeline.call_args.kwargs)
+                self.assertNotIn("device_map", load_pipeline.call_args.kwargs)
+                apply_recipe.assert_called_once_with(pipeline, {})
+                vae.enable_tiling.assert_called_once_with(tile_sample_min_width=512, tile_sample_min_height=512)
+                apply_offload.assert_called_once_with(
+                    pipeline,
+                    mode="none",
+                    device="cpu",
+                    node_id=f"{scope}-loader",
+                    scope=scope,
+                )
+                mm_add.assert_called_once_with(pipeline, priority=2)
+
+    def test_sana_video_loader_rejects_unreviewed_artifacts_before_diffusers(self):
+        node = LoadPipeline("strict-sana-video-loader")
+        with patch("diffusers.SanaVideoPipeline.from_pretrained") as from_pretrained:
+            with self.assertRaisesRegex(ValueError, "exact reviewed Hub artifact"):
+                node.execute(
+                    pipeline_class="SanaVideoPipeline",
+                    model_id={"source": "hub", "value": "organization/custom-sana-video"},
+                    revision="0123456789abcdef0123456789abcdef01234567",
+                    dtype="bfloat16",
+                )
+        from_pretrained.assert_not_called()
+
+    def test_sana_video_generation_seals_native_text_and_image_contracts(self):
+        class Output:
+            frames = [[f"frame-{index}" for index in range(81)]]
+
+        class FakePipeline:
+            _modiff_video_repo = SANA_VIDEO_REPO
+            _modiff_video_revision = SANA_VIDEO_REVISION
+            _execution_device = "cpu"
+
+            def __init__(self, pipeline_class):
+                self._modiff_video_pipeline_class = pipeline_class
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        reference = Image.new("RGB", (832, 480))
+        for pipeline_class, mode, media in (
+            ("SanaVideoPipeline", "text_to_video", {}),
+            ("SanaImageToVideoPipeline", "image_to_video", {"reference_images": [reference]}),
+        ):
+            with self.subTest(mode=mode):
+                pipeline = FakePipeline(pipeline_class)
+                result = Generate().execute(
+                    pipeline=pipeline,
+                    mode=mode,
+                    prompt="A red kite crosses a windswept coastal bluff.",
+                    negative_prompt="flicker",
+                    width=832,
+                    height=480,
+                    num_frames=81,
+                    num_inference_steps=50,
+                    guidance_scale=6,
+                    max_sequence_length=300,
+                    seed=43,
+                    output_type="pil",
+                    **media,
+                )
+                self.assertEqual(
+                    result,
+                    {"video_out": Output.frames[0], "width_out": 832, "height_out": 480, "frames_out": 81},
+                )
+                call_kwargs = pipeline.calls[0]
+                self.assertEqual(
+                    call_kwargs["prompt"], "A red kite crosses a windswept coastal bluff. motion score: 30."
+                )
+                self.assertEqual(call_kwargs["frames"], 81)
+                self.assertEqual(call_kwargs["num_inference_steps"], 50)
+                self.assertEqual(call_kwargs["guidance_scale"], 6)
+                self.assertEqual(call_kwargs["max_sequence_length"], 300)
+                self.assertIs(call_kwargs["clean_caption"], False)
+                self.assertIs(call_kwargs["use_resolution_binning"], False)
+                self.assertIs(call_kwargs.get("image"), reference if media else None)
+
+    def test_sana_video_invalid_native_contracts_fail_before_torch_or_execution(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="SanaVideoPipeline",
+            _modiff_video_repo=SANA_VIDEO_REPO,
+            _modiff_video_revision=SANA_VIDEO_REVISION,
+        )
+        invalid = (
+            ({"num_frames": 77}, "integer from 81 through 81"),
+            ({"width": 800}, "integer from 832 through 832"),
+            ({"height": 512}, "integer from 480 through 480"),
+            ({"num_inference_steps": 51}, "integer from 1 through 50"),
+            ({"reference_images": [Image.new("RGB", (832, 480))]}, "does not accept image conditioning"),
+            ({"output_type": "np"}, "requires output_type=pil"),
+            ({"max_sequence_length": 301}, "integer from 1 through 300"),
+            ({"guidance_scale": 12.1}, "finite and from 1 through 12"),
+        )
+        with patch.dict(sys.modules, {"torch": None}):
+            for update, message in invalid:
+                with self.subTest(update=update):
+                    with self.assertRaisesRegex(ValueError, message):
+                        Generate().execute(
+                            pipeline=pipeline,
+                            mode="text_to_video",
+                            prompt="A red kite crosses a windswept coastal bluff.",
+                            **update,
+                        )
+
+    def test_stable_video_loader_rejects_unreviewed_artifacts_before_diffusers(self):
+        node = LoadPipeline("strict-stable-video-loader")
+        custom_revision = "0123456789abcdef0123456789abcdef01234567"
+        with patch("diffusers.StableVideoDiffusionPipeline.from_pretrained") as from_pretrained:
+            with self.assertRaisesRegex(ValueError, "exact reviewed gated Hub artifact"):
+                node.execute(
+                    pipeline_class="StableVideoDiffusionPipeline",
+                    model_id={"source": "hub", "value": "organization/custom-svd"},
+                    revision=custom_revision,
+                )
+        from_pretrained.assert_not_called()
+
+    def test_stable_video_generate_seals_image_only_short_video_arguments(self):
+        class Output:
+            frames = [[f"frame-{index}" for index in range(8)]]
+
+        class FakePipeline:
+            _modiff_video_pipeline_class = "StableVideoDiffusionPipeline"
+            _modiff_video_repo = STABLE_VIDEO_DIFFUSION_REPO
+            _modiff_video_revision = STABLE_VIDEO_DIFFUSION_REVISION
+            _execution_device = "cpu"
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(self, **kwargs):
+                self.calls.append(kwargs)
+                return Output()
+
+        reference = Image.new("RGB", (1024, 576))
+        pipeline = FakePipeline()
+        result = Generate().execute(
+            pipeline=pipeline,
+            mode="image_to_video",
+            reference_images=[reference],
+            width=1024,
+            height=576,
+            num_frames=8,
+            num_inference_steps=12,
+            guidance_scale=3,
+            frame_rate=7,
+            seed=17,
+            output_type="pil",
+        )
+
+        self.assertEqual(
+            result, {"video_out": Output.frames[0], "width_out": 1024, "height_out": 576, "frames_out": 8}
+        )
+        call = pipeline.calls[0]
+        self.assertIs(call["image"], reference)
+        self.assertEqual(call["num_frames"], 8)
+        self.assertEqual(call["num_inference_steps"], 12)
+        self.assertEqual(call["min_guidance_scale"], 1.0)
+        self.assertEqual(call["max_guidance_scale"], 3.0)
+        self.assertEqual(call["motion_bucket_id"], 127)
+        self.assertEqual(call["noise_aug_strength"], 0.02)
+        self.assertEqual(call["decode_chunk_size"], 2)
+        self.assertEqual(call["num_videos_per_prompt"], 1)
+        self.assertEqual(call["output_type"], "pil")
+
+    def test_stable_video_invalid_contracts_fail_before_torch_or_pipeline_execution(self):
+        pipeline = SimpleNamespace(
+            _modiff_video_pipeline_class="StableVideoDiffusionPipeline",
+            _modiff_video_repo=STABLE_VIDEO_DIFFUSION_REPO,
+            _modiff_video_revision=STABLE_VIDEO_DIFFUSION_REVISION,
+        )
+        reference = Image.new("RGB", (1024, 576))
+        invalid = (
+            ({"prompt": "ignored text"}, "does not accept prompt text"),
+            ({"num_frames": 26}, "frame count must be an integer from 8 through 25"),
+            ({"width": 1023}, "must be divisible by 8"),
+            ({"output_type": "np"}, "requires output_type=pil"),
+            ({"reference_images": [reference, reference]}, "exactly one opening reference image"),
+            ({"last_image": reference}, "does not accept last-image conditioning"),
+        )
+        with patch.dict(sys.modules, {"torch": None}):
+            for update, message in invalid:
+                with self.subTest(update=update):
+                    values = {
+                        "pipeline": pipeline,
+                        "mode": "image_to_video",
+                        "reference_images": [reference],
+                        "width": 1024,
+                        "height": 576,
+                        "num_frames": 8,
+                        **update,
+                    }
+                    with self.assertRaisesRegex(ValueError, message):
+                        Generate().execute(**values)
+
+        unreviewed = SimpleNamespace(
+            _modiff_video_pipeline_class="StableVideoDiffusionPipeline",
+            _modiff_video_repo="organization/custom-svd",
+            _modiff_video_revision=STABLE_VIDEO_DIFFUSION_REVISION,
+        )
+        with self.assertRaisesRegex(ValueError, "does not match the reviewed artifact"):
+            Generate().execute(
+                pipeline=unreviewed,
+                mode="image_to_video",
+                reference_images=[reference],
+            )
 
     def test_only_generic_video_module_key_is_registered(self):
         self.assertNotIn("modules.WanVACE", module_registry.MODULE_MAP)

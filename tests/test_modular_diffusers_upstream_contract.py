@@ -1,15 +1,18 @@
 import inspect
+import importlib.util
 import unittest
 from unittest.mock import MagicMock, patch
 
 import diffusers
 import torch
 from diffusers import ComponentSpec, ComponentsManager, EulerDiscreteScheduler, ModularPipeline
+from diffusers import guiders as diffusers_guiders
 from diffusers.modular_pipelines import InputParam, LoopSequentialPipelineBlocks, ModularPipelineBlocks, OutputParam
 
 from modiff.diffusers_profiles import public_execution_profiles, public_experimental_pipelines
 from modules import MODULE_MAP
 from modules.ModularDiffusers.modular_utils import (
+    REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES,
     get_all_model_types,
     get_modular_guider_options,
     get_modular_layer_block_options,
@@ -36,6 +39,7 @@ from modules.ModularDiffusers.loaders import (
     AutoModelLoader,
     ModelsLoader,
     QuantizationConfigNode,
+    _REVIEWED_STANDARD_PIPELINE_MODEL_NAMES,
     _reviewed_loader_component_outputs,
 )
 from modules.ModularDiffusers.pipeline_schema import (
@@ -53,11 +57,76 @@ from modules.ModularDiffusers.route_state import (
 from modules.ModularDiffusers.schedulers import SCHEDULER_CONFIGS, Scheduler
 
 
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
+)
 _NO_EXPLICIT_GUIDER = object()
 
 
 class ModularDiffusersUpstreamContractTests(unittest.TestCase):
     """Hardware-free checks for the experimental upstream API MoDiff consumes."""
+
+    def test_ip_adapter_is_exported_through_the_runtime_node_module(self):
+        from modules.ModularDiffusers import main
+
+        self.assertIs(main.IPAdapter, IPAdapter)
+
+    def test_flux_kontext_generic_denoise_preserves_both_official_auto_workflows(self):
+        pipeline_class = getattr(diffusers, "FluxKontextModularPipeline")
+        _blocks, node_config = require_modiff_node_contract(
+            pipeline_class,
+            "denoise",
+            require_blocks=False,
+            resolve_blocks=False,
+        )
+
+        self.assertEqual(
+            node_config["input_names"],
+            ["embeddings", "width", "height", "seed", "num_inference_steps", "guidance_scale", "image_latents"],
+        )
+        self.assertEqual(node_config["params"]["image_latents"]["label"], "Image Latents")
+        self.assertNotIn("*", node_config["params"]["image_latents"]["label"])
+        self.assertEqual(node_config["params"]["width"]["default"], 1024)
+        self.assertEqual(node_config["params"]["height"]["default"], 1024)
+
+    @requires_transformers
+    def test_flux_decoders_preserve_packed_latent_geometry_across_split_nodes(self):
+        for pipeline_class in (
+            diffusers.FluxModularPipeline,
+            diffusers.FluxKontextModularPipeline,
+        ):
+            with self.subTest(pipeline_class=pipeline_class.__name__):
+                blocks, node_config = require_modiff_node_contract(pipeline_class, "decoder")
+                self.assertTrue({"latents", "width", "height"}.issubset(blocks.input_names))
+                self.assertEqual(
+                    node_config["input_names"],
+                    ["latents", "width", "height"],
+                )
+                self.assertEqual(node_config["params"]["width"]["default"], 1024)
+                self.assertEqual(node_config["params"]["height"]["default"], 1024)
+
+                _denoise_blocks, denoise_config = require_modiff_node_contract(pipeline_class, "denoise")
+                self.assertIn("out_width", denoise_config["output_names"])
+                self.assertIn("out_height", denoise_config["output_names"])
+
+    @requires_transformers
+    def test_flux_image_encoder_preserves_requested_geometry_across_split_nodes(self):
+        from diffusers.modular_pipelines.flux.modular_blocks_flux import FluxAutoVaeEncoderStep
+
+        upstream = FluxAutoVaeEncoderStep()
+        self.assertIn("height", upstream.input_names)
+        self.assertIn("width", upstream.input_names)
+
+        _blocks, node_config = require_modiff_node_contract(diffusers.FluxModularPipeline, "vae_encoder")
+        self.assertEqual(node_config["input_names"], ["image", "height", "width", "seed"])
+
+    @requires_transformers
+    def test_z_image_encoder_preserves_requested_geometry_across_split_nodes(self):
+        blocks, node_config = require_modiff_node_contract(diffusers.ZImageModularPipeline, "vae_encoder")
+
+        self.assertTrue({"image", "height", "width", "generator"}.issubset(blocks.input_names))
+        self.assertEqual(node_config["input_names"], ["image", "height", "width", "seed"])
 
     def _run_guider(self, node, guider, *, model_type="QwenImageModularPipeline", **kwargs):
         with patch.object(Guider, "get_signal_value", return_value=model_type):
@@ -155,6 +224,15 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 "stop",
                 "enabled",
             ],
+            "MagnitudeAwareGuidance": [
+                "guidance_scale",
+                "alpha",
+                "guidance_rescale",
+                "use_original_formulation",
+                "start",
+                "stop",
+                "enabled",
+            ],
         }
         expected_defaults = {
             "AdaptiveProjectedMixGuidance": {
@@ -173,20 +251,30 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 "perturbed_guidance_layers": None,
                 "perturbed_guidance_config": None,
             },
+            "MagnitudeAwareGuidance": {
+                "guidance_scale": 10.0,
+                "alpha": 8.0,
+                "guidance_rescale": 0.0,
+                "use_original_formulation": False,
+                "start": 0.0,
+                "stop": 1.0,
+                "enabled": True,
+            },
         }
 
         for guider_name, expected_parameters in expected_signatures.items():
             with self.subTest(guider=guider_name):
-                self.assertTrue(hasattr(diffusers, guider_name))
-                signature = inspect.signature(getattr(diffusers, guider_name))
+                self.assertTrue(hasattr(diffusers_guiders, guider_name))
+                signature = inspect.signature(getattr(diffusers_guiders, guider_name))
                 self.assertEqual(list(signature.parameters), expected_parameters)
                 for parameter_name, default in expected_defaults[guider_name].items():
                     self.assertEqual(signature.parameters[parameter_name].default, default)
 
         self.assertIn("AdaptiveProjectedMixGuidance", GUIDER_OPTIONS)
         self.assertIn("PerturbedAttentionGuidance", GUIDER_OPTIONS)
-        self.assertNotIn("MagnitudeAwareGuidance", GUIDER_OPTIONS)
+        self.assertIn("MagnitudeAwareGuidance", GUIDER_OPTIONS)
         self.assertFalse(hasattr(diffusers, "MagnitudeAwareGuidance"))
+        self.assertEqual(set(GUIDER_CONFIGS["MagnitudeAwareGuidance"]), {"alpha"})
         self.assertEqual(
             set(GUIDER_CONFIGS["AdaptiveProjectedMixGuidance"]),
             {
@@ -206,7 +294,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             "perturbed_guidance_config",
         )
 
-    def test_reviewed_dynamic_block_resolves_its_catalog_revision(self):
+    def test_dynamic_block_requires_an_explicit_immutable_revision(self):
         node = DynamicBlockNode("dynamic-revision-probe")
         verified = MagicMock()
         verified.config = object()
@@ -214,12 +302,12 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             "modules.ModularDiffusers.dynamic_node.PipelineConfig.load_verified",
             return_value=verified,
         ) as load_verified:
-            node._get_custom_config("diffusers/FLUX.2-klein-4B-modular")
+            node._get_custom_config("owner/custom-block", "a" * 40)
 
         load_verified.assert_called_once_with(
-            "diffusers/FLUX.2-klein-4B-modular",
+            "owner/custom-block",
             source="hub",
-            revision="62ac375aa5308588f111fcd12115f5c54a8b1f4f",
+            revision="a" * 40,
         )
 
     def test_models_loader_resolves_known_base_revision(self):
@@ -251,6 +339,19 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             "Tongyi-MAI/Z-Image-Turbo",
             "f332072aa78be7aecdf3ee76d5c247082da564a6",
         )
+
+    def test_reviewed_standard_index_mapping_does_not_import_unrelated_auto_pipelines(self):
+        self.assertEqual(
+            _REVIEWED_STANDARD_PIPELINE_MODEL_NAMES["Flux2KleinPipeline"],
+            "flux2-klein",
+        )
+        validation_source = inspect.getsource(
+            __import__(
+                "modules.ModularDiffusers.loaders",
+                fromlist=["_validate_reviewed_pipeline_index"],
+            )._validate_reviewed_pipeline_index
+        )
+        self.assertNotIn("diffusers.pipelines.auto_pipeline", validation_source)
 
     def test_quantization_layer_probe_uses_the_public_auto_model_boundary(self):
         fake_model = unittest.mock.Mock()
@@ -355,7 +456,9 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
     def test_denoise_image_latent_dimensions_come_from_reviewed_pipeline_metadata(self):
         registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
         retained = {
+            "Flux2ModularPipeline",
             "Flux2KleinModularPipeline",
+            "Flux2KleinBaseModularPipeline",
             "FluxKontextModularPipeline",
             "QwenImageEditModularPipeline",
             "QwenImageEditPlusModularPipeline",
@@ -422,6 +525,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             "FluxModularPipeline",
             "FluxKontextModularPipeline",
             "Flux2KleinModularPipeline",
+            "Flux2KleinBaseModularPipeline",
             "ZImageModularPipeline",
             "WanModularPipeline",
             "WanImage2VideoModularPipeline",
@@ -432,7 +536,10 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         registered = set(get_all_model_types())
         self.assertTrue(required.issubset(registered), f"MoDiff registry is missing: {sorted(required - registered)}")
 
+    @requires_transformers
     def test_registered_pipeline_action_matrix_resolves_real_contracts(self):
+        registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
+        registered_whole_workflow_models = registered & REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES
         expected = {
             "StableDiffusionXLModularPipeline": {
                 "controlnet",
@@ -448,7 +555,9 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             "QwenImageLayeredModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "FluxModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "FluxKontextModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
+            "Flux2ModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "Flux2KleinModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
+            "Flux2KleinBaseModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "ZImageModularPipeline": {"decoder", "denoise", "text_encoder", "vae_encoder"},
             "WanModularPipeline": {"decoder", "denoise", "text_encoder"},
             "WanImage2VideoModularPipeline": {
@@ -458,8 +567,27 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 "text_encoder",
                 "vae_encoder",
             },
+            **{
+                model_type: set()
+                for model_type in registered_whole_workflow_models
+            },
         }
-        registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
+        self.assertEqual(
+            registered_whole_workflow_models,
+            {
+                "AnimaModularPipeline",
+                "HeliosModularPipeline",
+                "HeliosPyramidDistilledModularPipeline",
+                "HeliosPyramidModularPipeline",
+                "MiniMaxMusic3ModularPipeline",
+                "WanAnimate2DistilledModularPipeline",
+                "WanAnimate2ModularPipeline",
+                "Cosmos3OmniModularPipeline",
+                "Cosmos3DistilledModularPipeline",
+                "HunyuanVideo15ModularPipeline",
+                "MiniMaxH3ModularPipeline",
+            },
+        )
         self.assertEqual(registered, set(expected))
 
         actions = {"controlnet", "decoder", "denoise", "image_encoder", "ip_adapter", "text_encoder", "vae_encoder"}
@@ -488,6 +616,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                                 require_blocks=action != "controlnet",
                             )
 
+    @requires_transformers
     def test_qwen_layered_targeted_controls_match_the_pinned_upstream_contract_without_weights(self):
         expected_defaults = {
             "text_encoder": {
@@ -587,6 +716,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             },
         )
 
+    @requires_transformers
     def test_registered_encoder_seed_ports_exactly_match_upstream_generator_inputs(self):
         expected_generator_actions = {
             ("StableDiffusionXLModularPipeline", "vae_encoder"),
@@ -596,7 +726,9 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             ("QwenImageLayeredModularPipeline", "vae_encoder"),
             ("FluxModularPipeline", "vae_encoder"),
             ("FluxKontextModularPipeline", "vae_encoder"),
+            ("Flux2ModularPipeline", "vae_encoder"),
             ("Flux2KleinModularPipeline", "vae_encoder"),
+            ("Flux2KleinBaseModularPipeline", "vae_encoder"),
             ("ZImageModularPipeline", "vae_encoder"),
             ("WanImage2VideoModularPipeline", "vae_encoder"),
         }
@@ -630,6 +762,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
 
         self.assertEqual(actual_generator_actions, expected_generator_actions)
 
+    @requires_transformers
     def test_registered_denoise_component_ports_exactly_match_upstream_blocks(self):
         port_components = {
             "unet": {"transformer", "unet"},
@@ -644,6 +777,14 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
 
         for model_type in sorted(registered):
             with self.subTest(model_type=model_type):
+                metadata = get_model_type_metadata(model_type)
+                if metadata["node_params"].get("denoise") is None:
+                    self.assertIn(model_type, REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES)
+                    with self.assertRaisesRegex(ValueError, "does not support the generic Denoise"):
+                        require_modiff_node_contract(getattr(diffusers, model_type), "denoise")
+                    continue
+
+                self.assertNotIn(model_type, REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES)
                 blocks, node_config = require_modiff_node_contract(getattr(diffusers, model_type), "denoise")
                 upstream_components = set(blocks.component_names)
                 expected_ports = {
@@ -757,6 +898,17 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                     expected.pop(connector, None)
                     self.assertEqual(node.send_node_definition.call_args.args[0], expected)
                     self.assertEqual(node.send_node_definition.call_count, index)
+
+                # Restored Cluster graphs deliberately reuse deterministic node
+                # IDs. A fresh browser no longer has the dynamic schema, even
+                # when the backend node instance still remembers the same model.
+                # Every generic action must therefore republish idempotently.
+                node.get_signal_value = MagicMock(return_value=model_types[-1])
+                node.update_node({}, None)
+                expected = dict(get_model_type_metadata(model_types[-1])["node_params"][action]["params"])
+                expected.pop(connector, None)
+                self.assertEqual(node.send_node_definition.call_args.args[0], expected)
+                self.assertEqual(node.send_node_definition.call_count, len(model_types) + 1)
 
                 update_source = inspect.getsource(node_class.update_node)
                 for registered_model_type in set(get_all_model_types()) - {""}:
@@ -880,6 +1032,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                     ):
                         node.execute(**{connector: runtime_component})
 
+    @requires_transformers
     def test_sdxl_controlnet_keeps_its_supported_bundle_only_contract(self):
         pipeline_class = diffusers.StableDiffusionXLModularPipeline
         blocks, node_config = require_modiff_node_contract(
@@ -1085,6 +1238,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 control_image="fixture-control-image",
             )
 
+    @requires_transformers
     def test_qwen_controlnet_generator_is_closed_by_seed_and_optional_opaque_route(self):
         blocks, node_config = require_modiff_node_contract(
             diffusers.QwenImageModularPipeline,
@@ -1133,6 +1287,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         self.assertNotIn("QwenImageModularPipeline", layer_source)
         self.assertNotIn("FluxModularPipeline", layer_source)
 
+    @requires_transformers
     def test_guider_options_follow_reviewed_pipeline_components_and_layer_contracts(self):
         all_options = list(GUIDER_OPTIONS)
         layer_guiders = set(LAYER_CONFIG_MAPPING)
@@ -1152,6 +1307,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         expected = {
             **{model_type: all_options for model_type in full_models},
             **{model_type: non_layer_options for model_type in non_layer_models},
+            "Flux2KleinBaseModularPipeline": ["ClassifierFreeGuidance"],
         }
 
         self.assertEqual(get_modular_guider_options(), expected)
@@ -1165,15 +1321,23 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
         for model_type in sorted(registered):
             with self.subTest(model_type=model_type):
+                metadata = get_model_type_metadata(model_type)
+                if metadata["node_params"].get("denoise") is None:
+                    self.assertIn(model_type, REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES)
+                    self.assertNotIn(model_type, expected)
+                    self.assertEqual(metadata["guider_options"], [])
+                    continue
+
                 blocks, _ = require_modiff_node_contract(getattr(diffusers, model_type), "denoise")
                 has_upstream_guider = "guider" in blocks.component_names
                 self.assertEqual(model_type in expected, has_upstream_guider)
-                self.assertEqual(get_model_type_metadata(model_type)["guider_options"], expected.get(model_type, []))
+                self.assertEqual(metadata["guider_options"], expected.get(model_type, []))
 
         guider_source = inspect.getsource(Guider)
         for model_type in registered:
             self.assertNotIn(model_type, guider_source)
 
+    @requires_transformers
     def test_scheduler_options_follow_pinned_upstream_compatibility(self):
         expected_choices = [name for name in SCHEDULER_CONFIGS if name not in {"LCMScheduler", "TCDScheduler"}]
         expected = {
@@ -1196,6 +1360,13 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         for model_type in set(get_all_model_types()) - {"", "DummyCustomPipeline"}:
             pipeline_class = getattr(diffusers, model_type)
             with self.subTest(model_type=model_type):
+                metadata = get_model_type_metadata(model_type)
+                if metadata["node_params"].get("denoise") is None:
+                    self.assertIn(model_type, REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES)
+                    self.assertNotIn(model_type, expected)
+                    self.assertEqual(metadata["scheduler_options"], [])
+                    continue
+
                 blocks, _node_config = require_modiff_node_contract(pipeline_class, "denoise")
                 scheduler_spec = next(spec for spec in blocks.expected_components if spec.name == "scheduler")
                 scheduler_type = scheduler_spec.type_hint
@@ -1206,7 +1377,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
                 compatible = [name for name in SCHEDULER_CONFIGS if name in upstream_choices]
                 self.assertEqual(expected.get(model_type, []), compatible)
                 self.assertEqual(
-                    get_model_type_metadata(model_type)["scheduler_options"],
+                    metadata["scheduler_options"],
                     compatible,
                 )
 
@@ -1278,6 +1449,9 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         with patch.object(Guider, "get_signal_value", return_value="QwenImageLayeredModularPipeline"):
             node.updateNode({"guider": "AdaptiveProjectedMixGuidance"}, None)
             node.send_node_definition.assert_called_once()
+            node.send_node_definition.reset_mock()
+            node.updateNode({"guider": "MagnitudeAwareGuidance"}, None)
+            node.send_node_definition.assert_called_once_with(GUIDER_CONFIGS["MagnitudeAwareGuidance"])
             with self.assertRaisesRegex(ValueError, "connected reviewed Modular pipeline"):
                 node.updateNode({"guider": "SkipLayerGuidance"}, None)
 
@@ -1359,7 +1533,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
     def test_adaptive_projected_mix_guider_forwards_exact_typed_arguments(self):
         node = object.__new__(Guider)
         node.node_id = "adaptive-projected-mix-contract"
-        with patch.object(diffusers, "AdaptiveProjectedMixGuidance", return_value="configured") as constructor:
+        with patch.object(diffusers_guiders, "AdaptiveProjectedMixGuidance", return_value="configured") as constructor:
             result = self._run_guider(
                 node,
                 "AdaptiveProjectedMixGuidance",
@@ -1391,20 +1565,50 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             enabled=True,
         )
 
+    def test_magnitude_aware_guider_forwards_exact_typed_arguments(self):
+        node = object.__new__(Guider)
+        node.node_id = "magnitude-aware-contract"
+        with patch.object(diffusers_guiders, "MagnitudeAwareGuidance", return_value="configured") as constructor:
+            result = self._run_guider(
+                node,
+                "MagnitudeAwareGuidance",
+                guidance_scale=10.0,
+                alpha=7.5,
+                guidance_rescale=0.2,
+                use_original_formulation=True,
+                start=0.1,
+                stop=0.9,
+                enabled=True,
+            )
+
+        self.assertEqual(result, {"guider_out": "configured"})
+        constructor.assert_called_once_with(
+            guidance_scale=10.0,
+            alpha=7.5,
+            guidance_rescale=0.2,
+            use_original_formulation=True,
+            start=0.1,
+            stop=0.9,
+            enabled=True,
+        )
+
     def test_new_pinned_guiders_construct_without_model_weights(self):
         node = object.__new__(Guider)
         node.node_id = "new-guider-construction-contract"
 
         adaptive = self._run_guider(node, "AdaptiveProjectedMixGuidance")["guider_out"]
+        magnitude = self._run_guider(node, "MagnitudeAwareGuidance")["guider_out"]
         perturbed = self._run_guider(
             node,
             "PerturbedAttentionGuidance",
             layers_config=[{"indices": [1], "fqn": "transformer_blocks", "dropout": 1.0}],
         )["guider_out"]
 
-        self.assertIsInstance(adaptive, diffusers.AdaptiveProjectedMixGuidance)
+        self.assertIsInstance(adaptive, diffusers_guiders.AdaptiveProjectedMixGuidance)
         self.assertEqual(adaptive.adaptive_projected_guidance_start_step, 5)
-        self.assertIsInstance(perturbed, diffusers.PerturbedAttentionGuidance)
+        self.assertIsInstance(magnitude, diffusers_guiders.MagnitudeAwareGuidance)
+        self.assertEqual(magnitude.alpha, 8.0)
+        self.assertIsInstance(perturbed, diffusers_guiders.PerturbedAttentionGuidance)
         self.assertEqual(perturbed.skip_layer_config[0].indices, [1])
         self.assertTrue(perturbed.skip_layer_config[0].skip_attention_scores)
 
@@ -1412,7 +1616,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         node = object.__new__(Guider)
         node.node_id = "adaptive-projected-mix-invalid-start"
 
-        with patch.object(diffusers, "AdaptiveProjectedMixGuidance") as constructor:
+        with patch.object(diffusers_guiders, "AdaptiveProjectedMixGuidance") as constructor:
             with self.assertRaisesRegex(ValueError, "adaptive_projected_guidance_start_step must be an integer"):
                 self._run_guider(
                     node,
@@ -1424,7 +1628,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
     def test_perturbed_attention_guider_normalizes_the_generic_layers_contract(self):
         node = object.__new__(Guider)
         node.node_id = "perturbed-attention-contract"
-        with patch.object(diffusers, "PerturbedAttentionGuidance", return_value="configured") as constructor:
+        with patch.object(diffusers_guiders, "PerturbedAttentionGuidance", return_value="configured") as constructor:
             result = self._run_guider(
                 node,
                 "PerturbedAttentionGuidance",
@@ -1471,7 +1675,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
 
         for layers_config in invalid_layers:
             with self.subTest(layers_config=layers_config):
-                with patch.object(diffusers, "PerturbedAttentionGuidance") as constructor:
+                with patch.object(diffusers_guiders, "PerturbedAttentionGuidance") as constructor:
                     with self.assertRaises((TypeError, ValueError)):
                         self._run_guider(node, "PerturbedAttentionGuidance", layers_config=layers_config)
                     constructor.assert_not_called()
@@ -1479,7 +1683,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
     def test_guider_converts_validated_layer_mapping_to_upstream_config(self):
         node = object.__new__(Guider)
         node.node_id = "guider-contract"
-        with patch.object(diffusers, "SkipLayerGuidance", return_value="configured") as constructor:
+        with patch.object(diffusers_guiders, "SkipLayerGuidance", return_value="configured") as constructor:
             result = self._run_guider(
                 node,
                 "SkipLayerGuidance",
@@ -1503,7 +1707,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
     def test_frequency_decoupled_guider_uses_upstream_plural_scale_argument(self):
         node = object.__new__(Guider)
         node.node_id = "frequency-guider-contract"
-        with patch.object(diffusers, "FrequencyDecoupledGuidance", return_value="configured") as constructor:
+        with patch.object(diffusers_guiders, "FrequencyDecoupledGuidance", return_value="configured") as constructor:
             result = self._run_guider(node, "FrequencyDecoupledGuidance", guidance_scale=4.5)
 
         self.assertEqual(result, {"guider_out": "configured"})

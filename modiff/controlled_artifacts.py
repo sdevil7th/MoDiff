@@ -31,7 +31,12 @@ _CONTROLLED_PIPELINE_CONTRACTS = {
     ("modules.DiffusersAudio", "LoadPipeline"),
     ("modules.DiffusersVideo", "LoadPipeline"),
 }
-_CONTROLLED_UPSCALER_CONTRACT = ("modules.Spandrel", "Upscaler")
+_CONTROLLED_UPSCALER_CONTRACTS = {
+    ("modules.Spandrel", "Upscaler"),
+    ("modules.Video", "UpscaleVideo"),
+}
+_DEFAULT_CONTROLLED_UPSCALER_CONTRACT = ("modules.Spandrel", "Upscaler")
+_CONTROLLED_IMAGE_PIPELINE_CONTRACT = ("modules.DiffusersImage", "LoadPipeline")
 
 
 @dataclass(frozen=True)
@@ -47,7 +52,8 @@ def _graph_param_value(node: Mapping[str, Any], key: str, default: Any = None) -
     param = params.get(key)
     if not isinstance(param, Mapping):
         return default
-    return param.get("value", param.get("default", default))
+    value = param.get("value")
+    return param.get("default", default) if value is None else value
 
 
 def _executable_node_ids(graph: Mapping[str, Any]) -> list[str]:
@@ -186,7 +192,11 @@ def _selection(value: Any) -> tuple[str, str, Mapping[str, Any]]:
     return source, selected, value
 
 
-def resolve_upscaler_artifact(selection: Any) -> ResolvedUpscalerArtifact:
+def resolve_upscaler_artifact(
+    selection: Any,
+    *,
+    contract: tuple[str, str] = _DEFAULT_CONTROLLED_UPSCALER_CONTRACT,
+) -> ResolvedUpscalerArtifact:
     """Resolve and rehash one generic Spandrel model selection."""
 
     source, selected, metadata = _selection(selection)
@@ -239,8 +249,8 @@ def resolve_upscaler_artifact(selection: Any) -> ResolvedUpscalerArtifact:
     payload = {
         "schemaVersion": 1,
         "kind": "spandrel_upscaler",
-        "module": _CONTROLLED_UPSCALER_CONTRACT[0],
-        "action": _CONTROLLED_UPSCALER_CONTRACT[1],
+        "module": contract[0],
+        "action": contract[1],
         "artifact": safe_artifact,
     }
     return ResolvedUpscalerArtifact(
@@ -266,6 +276,47 @@ def _pipeline_receipt(node: Mapping[str, Any]) -> dict[str, Any]:
         "action": node.get("action"),
         "artifact": {"source": "hub", "repository": repository, "revision": revision},
         "pipelineClass": pipeline_class,
+    }
+    return {**payload, "descriptorSha256": _canonical_digest(payload)}
+
+
+def _image_conditioning_receipt(node: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Bind an assembled image pipeline's auxiliary component to admission."""
+
+    from modules.DiffusersImage.main import (
+        get_image_pipeline_adapter,
+        repo_value,
+        resolve_image_conditioning_selection,
+    )
+
+    pipeline_class = _graph_param_value(node, "pipeline_class")
+    adapter = get_image_pipeline_adapter(pipeline_class)
+    raw_kind = _graph_param_value(node, "conditioning_kind", "none")
+    if adapter.conditioning_kind is None and raw_kind in (None, "", "none"):
+        return None
+    selection, revision = resolve_image_conditioning_selection(
+        adapter,
+        raw_kind,
+        _graph_param_value(node, "conditioning_model_id"),
+        _graph_param_value(node, "conditioning_revision"),
+    )
+    if selection is None or revision is None:
+        raise ValueError("A conditioned image pipeline requires one exact auxiliary artifact.")
+    payload = {
+        "schemaVersion": 1,
+        "kind": "diffusers_conditioning_component",
+        "module": node.get("module"),
+        "action": node.get("action"),
+        "artifact": {
+            "source": "hub",
+            "repository": repo_value(selection),
+            "revision": revision,
+        },
+        "conditioningKind": adapter.conditioning_kind,
+        "componentClass": adapter.conditioning_component_class,
+        "componentParameter": adapter.conditioning_component_parameter,
+        "pipelineClass": adapter.pipeline_class,
+        "safeSerializationRequired": True,
     }
     return {**payload, "descriptorSha256": _canonical_digest(payload)}
 
@@ -300,14 +351,21 @@ def controlled_artifact_receipts_from_graph(
         if isinstance(nodes_by_id.get(node_id), Mapping)
     ]
     pipeline_nodes = [
-        node
-        for node in executable_nodes
-        if (node.get("module"), node.get("action")) in _CONTROLLED_PIPELINE_CONTRACTS
+        node for node in executable_nodes if (node.get("module"), node.get("action")) in _CONTROLLED_PIPELINE_CONTRACTS
     ]
     for node in executable_nodes:
         contract = (node.get("module"), node.get("action"))
-        if contract == _CONTROLLED_UPSCALER_CONTRACT:
-            receipts.append(resolve_upscaler_artifact(_graph_param_value(node, "model_id")).receipt)
+        if contract in _CONTROLLED_UPSCALER_CONTRACTS:
+            receipts.append(
+                resolve_upscaler_artifact(
+                    _graph_param_value(node, "model_id"),
+                    contract=contract,
+                ).receipt
+            )
+        elif contract == _CONTROLLED_IMAGE_PIPELINE_CONTRACT:
+            receipt = _image_conditioning_receipt(node)
+            if receipt is not None:
+                receipts.append(receipt)
         elif contract in _CONTROLLED_PIPELINE_CONTRACTS and (
             not _is_primary_pipeline(node, primary_candidate)
             and (isinstance(primary_candidate, Mapping) or len(pipeline_nodes) > 1)

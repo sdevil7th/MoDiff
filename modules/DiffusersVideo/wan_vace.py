@@ -259,6 +259,7 @@ class WanVACELoadPipeline(NodeBase):
         component_load_kwargs = {
             "revision": revision,
             "local_files_only": offline,
+            "use_safetensors": True,
         }
         if CONFIG.hf.get("cache_dir"):
             component_load_kwargs["cache_dir"] = CONFIG.hf["cache_dir"]

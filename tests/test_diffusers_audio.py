@@ -1,4 +1,5 @@
 import hashlib
+import importlib.util
 import sys
 import tempfile
 import unittest
@@ -10,6 +11,12 @@ from unittest.mock import Mock, patch
 import numpy as np
 
 
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers") is not None,
+    "Transformers optional runtime is not active",
+)
+
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import modules as module_registry  # noqa: E402
@@ -17,14 +24,17 @@ from modules.DiffusersAudio.main import (  # noqa: E402
     ACE_CONTINUATION_MAX_EXTENSION_SECONDS,
     ACE_MAX_DURATION_SECONDS,
     ACE_STEP_DEFAULT_REPO,
+    AUDIO_LDM2_DEFAULT_REPO,
     AUDIO_PIPELINE_ADAPTERS,
     AUDIO_SAMPLE_RATE_OPTIONS,
+    LONGCAT_AUDIO_DIT_DEFAULT_REPO,
     STABLE_AUDIO_DEFAULT_REPO,
     FuseAdapters,
     Generate,
     LoadAdapter,
     LoadPipeline,
     SetAdapters,
+    _ensure_language_model_generation_api,
     _resolve_audio_model_selection,
     _resolve_audio_loader_revision,
     _preflight_audio_invocation,
@@ -96,6 +106,8 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
     def test_audio_adapters_declare_ordered_mode_task_and_input_contracts(self):
         ace = AUDIO_PIPELINE_ADAPTERS["AceStepPipeline"]
         stable = AUDIO_PIPELINE_ADAPTERS["StableAudioPipeline"]
+        longcat = AUDIO_PIPELINE_ADAPTERS["LongCatAudioDiTPipeline"]
+        audioldm2 = AUDIO_PIPELINE_ADAPTERS["AudioLDM2Pipeline"]
 
         self.assertEqual(
             ace.modes,
@@ -127,6 +139,20 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         self.assertIsNone(stable.source_audio_channels)
         self.assertEqual(stable.mode_contracts[0].task_type, "text2audio")
         self.assertEqual(stable.mode_contracts[0].max_duration_seconds, 47)
+        self.assertEqual(longcat.generation_kind, "longcat_audio_dit")
+        self.assertEqual(longcat.default_inference_steps, 16)
+        self.assertEqual(longcat.mode_contracts[0].max_duration_seconds, 30)
+        self.assertFalse(longcat.supports_multiple_waveforms)
+        self.assertEqual(audioldm2.generation_kind, "audioldm2")
+        self.assertEqual(audioldm2.default_inference_steps, 200)
+        self.assertEqual(audioldm2.mode_contracts[0].max_duration_seconds, 10)
+        self.assertTrue(audioldm2.supports_multiple_waveforms)
+        self.assertTrue(
+            all(
+                item.safe_serialization_required
+                for item in (ace, stable, longcat, audioldm2)
+            )
+        )
         self.assertNotIn("extract", Generate.params["task_type"]["options"])
         self.assertNotIn("lego", Generate.params["task_type"]["options"])
         self.assertNotIn("complete", Generate.params["task_type"]["options"])
@@ -143,6 +169,55 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                 adapter = AUDIO_PIPELINE_ADAPTERS[profile["pipeline_class"]]
                 self.assertEqual(tuple(profile["modes"]), adapter.modes)
                 self.assertEqual(profile["default_repo"], adapter.default_repo)
+
+    def test_audioldm2_language_model_gains_generation_mixin_update_helper(self):
+        class FakeGpt2:
+            pass
+
+        class FakeGenerationMixin:
+            def _update_model_kwargs_for_generation(self, outputs, model_kwargs):
+                return model_kwargs
+
+        helper = FakeGenerationMixin._update_model_kwargs_for_generation
+        with patch(
+            "modules.DiffusersAudio.main._reviewed_audioldm2_generation_helper",
+            return_value=(FakeGpt2, helper),
+        ):
+            pipeline = SimpleNamespace(language_model=FakeGpt2())
+            _ensure_language_model_generation_api(pipeline, "AudioLDM2Pipeline")
+            self.assertTrue(callable(pipeline.language_model._update_model_kwargs_for_generation))
+            sentinel = pipeline.language_model._update_model_kwargs_for_generation
+            _ensure_language_model_generation_api(pipeline, "AudioLDM2Pipeline")
+            self.assertIs(pipeline.language_model._update_model_kwargs_for_generation, sentinel)
+
+            unrelated = SimpleNamespace(language_model=object())
+            _ensure_language_model_generation_api(unrelated, "StableAudioPipeline")
+            self.assertFalse(hasattr(unrelated.language_model, "_update_model_kwargs_for_generation"))
+
+            with self.assertRaisesRegex(RuntimeError, "must contain a Transformers GPT2Model"):
+                _ensure_language_model_generation_api(
+                    SimpleNamespace(language_model=object()),
+                    "AudioLDM2Pipeline",
+                )
+
+    @requires_transformers
+    def test_audioldm2_generation_helper_accepts_only_the_reviewed_optional_runtime(self):
+        import transformers
+        from modules.DiffusersAudio.main import (
+            _AUDIO_LDM2_TRANSFORMERS_VERSION,
+            _reviewed_audioldm2_generation_helper,
+        )
+
+        # The macOS base may contain Transformers without the reviewed main
+        # overlay. Presence alone must not bypass this exact-version boundary.
+        if transformers.__version__ != _AUDIO_LDM2_TRANSFORMERS_VERSION:
+            with self.assertRaisesRegex(RuntimeError, "has not been reviewed"):
+                _reviewed_audioldm2_generation_helper()
+            return
+
+        gpt2_model, helper = _reviewed_audioldm2_generation_helper()
+        self.assertEqual(gpt2_model.__name__, "GPT2Model")
+        self.assertEqual(helper.__name__, "_update_model_kwargs_for_generation")
 
     def test_adapter_identity_and_real_loader_inputs_are_strict(self):
         for invalid in (None, "", " AceStepPipeline", "AceStepPipeline ", False, 0, {}, []):
@@ -533,6 +608,25 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                 {"key": "model_id"},
             )
         self.assertEqual(local.set_field_value.call_args.args[0]["revision"], "")
+
+    def test_registered_class_signal_resolves_only_an_exact_task_form(self):
+        node = Generate("registered-audio-form")
+        node.set_field_params = Mock()
+        node.set_field_value = Mock()
+        for name in ("LongCatAudioDiTPipeline", "AudioLDM2Pipeline"):
+            node.set_field_params.reset_mock()
+            node.update_audio_contract({"audio_contract": name, "task_type": "text2audio"}, {"key": "pipeline"})
+            updates = {call.args[0]: call.args[1] for call in node.set_field_params.call_args_list}
+            self.assertTrue(updates["bpm"]["hidden"])
+            self.assertTrue(updates["guidance_scale"]["hidden"])
+            self.assertFalse(updates["stable_audio_steps"]["hidden"])
+            self.assertFalse(updates["stable_audio_guidance"]["hidden"])
+            self.assertEqual(node.set_field_value.call_args.args[0]["audio_contract"]["pipelineClass"], name)
+        for name, task in (("unregistered", "text2audio"), ("LongCatAudioDiTPipeline", "cover")):
+            node.set_field_params.reset_mock()
+            with self.assertRaises(ValueError):
+                node.update_audio_contract({"audio_contract": name, "task_type": task}, {"key": "pipeline"})
+            node.set_field_params.assert_not_called()
 
     def test_generate_contract_signal_sets_task_and_audio_input_form_contract(self):
         node = Generate("audio-generate-contract")
@@ -1539,7 +1633,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         self.assertEqual(pipeline.calls, [])
 
         with tempfile.TemporaryDirectory() as temporary:
-            temporary_path = Path(temporary)
+            temporary_path = Path(temporary).resolve()
             adapter_file = temporary_path / "installed.safetensors"
             adapter_file.write_bytes(b"installed-audio-lora")
 
@@ -1804,6 +1898,56 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         self.assertTrue(all(item["samples"].shape == (2, 48000) for item in result["audio_variations"]))
         self.assertIs(result["audio"], result["audio_variations"][0])
 
+    def test_longcat_and_audioldm2_use_exact_generic_generation_signatures(self):
+        class FakeLongCat:
+            _modiff_audio_pipeline_class = "LongCatAudioDiTPipeline"
+            device = "cpu"
+            sample_rate = 24000
+
+            def __call__(self, **kwargs):
+                self.call_kwargs = kwargs
+                return SimpleNamespace(audios=np.zeros((1, 1, 24000), dtype=np.float32))
+
+        longcat = FakeLongCat()
+        longcat_result = Generate().execute(
+            pipeline=longcat,
+            prompt="Calm ocean waves",
+            audio_duration=1,
+            stable_audio_steps=16,
+            stable_audio_guidance=4,
+            sample_rate=24000,
+        )
+        self.assertEqual(longcat.call_kwargs["audio_duration_s"], 1)
+        self.assertEqual(longcat.call_kwargs["num_inference_steps"], 16)
+        self.assertNotIn("num_waveforms_per_prompt", longcat.call_kwargs)
+        self.assertEqual(longcat_result["audio"]["samples"].shape, (1, 24000))
+
+        class FakeAudioLDM2:
+            _modiff_audio_pipeline_class = "AudioLDM2Pipeline"
+            device = "cpu"
+            vocoder = SimpleNamespace(config={"sampling_rate": 16000})
+
+            def __call__(self, **kwargs):
+                self.call_kwargs = kwargs
+                return SimpleNamespace(audios=np.zeros((3, 16000), dtype=np.float32))
+
+        audioldm2 = FakeAudioLDM2()
+        audioldm2_result = Generate().execute(
+            pipeline=audioldm2,
+            prompt="A wooden hammer strike",
+            audio_duration=1,
+            stable_audio_steps=200,
+            stable_audio_guidance=3.5,
+            num_waveforms=3,
+            sample_rate=16000,
+        )
+        self.assertEqual(audioldm2.call_kwargs["audio_length_in_s"], 1)
+        self.assertEqual(audioldm2.call_kwargs["num_waveforms_per_prompt"], 3)
+        self.assertEqual(len(audioldm2_result["audio_variations"]), 3)
+        self.assertTrue(
+            all(item["samples"].shape == (1, 16000) for item in audioldm2_result["audio_variations"])
+        )
+
     def test_explicit_zero_audio_controls_are_preserved_only_where_upstream_allows_them(self):
         pipeline = FakeSourceConditionedAceStepPipeline()
         node = Generate("ace-zero-values-test")
@@ -1992,6 +2136,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         self.assertEqual(loaded["repo"], "org/ace-step")
         self.assertEqual(loaded["kwargs"]["device_map"], "cuda")
         self.assertEqual(loaded["kwargs"]["revision"], "0123456789abcdef0123456789abcdef01234567")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
 
     def test_curated_audio_pipeline_uses_catalog_revision(self):
         loaded = {}
@@ -2025,6 +2170,31 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                     "200ba991ae448051e14b0183157e35c2d27c9fb0",
                 )
 
+        for pipeline_class, repo, revision in (
+            (
+                "LongCatAudioDiTPipeline",
+                LONGCAT_AUDIO_DIT_DEFAULT_REPO,
+                "f4c063ea37f262ba5e6129ebd80095a6d6a9de4d",
+            ),
+            ("AudioLDM2Pipeline", AUDIO_LDM2_DEFAULT_REPO, "c8e7e189d324425c05c4c2f81214041ef4107983"),
+        ):
+            with self.subTest(pipeline_class=pipeline_class):
+                with (
+                    patch("modules.DiffusersAudio.main.pipeline_class_from_name", return_value=FakePipeline),
+                    patch("modules.DiffusersAudio.main.apply_pipeline_offload"),
+                    patch("modules.DiffusersAudio.main._ensure_language_model_generation_api"),
+                ):
+                    node.execute(
+                        model_id={"source": "hub", "value": repo},
+                        pipeline_class=pipeline_class,
+                        mode="text_to_audio",
+                        device="cpu",
+                        auto_offload=False,
+                        offload_mode="none",
+                    )
+                    self.assertEqual(loaded["kwargs"]["revision"], revision)
+                    self.assertTrue(loaded["kwargs"]["use_safetensors"])
+
     def test_xl_turbo_schema_uses_distilled_defaults(self):
         steps = Generate.params["num_inference_steps"]
         guidance = Generate.params["guidance_scale"]
@@ -2035,7 +2205,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         self.assertIn("guidance-distilled", guidance["description"])
         self.assertIn("above 1", guidance["description"])
 
-    def test_generate_sample_rate_is_a_four_option_delivery_selector(self):
+    def test_generate_sample_rate_is_a_reviewed_delivery_selector(self):
         self.assertEqual(
             Generate.params["sample_rate"]["options"],
             AUDIO_SAMPLE_RATE_OPTIONS,

@@ -12,6 +12,7 @@ from modiff.diffusers_profiles import (
     MPS_UNQUALIFIED_WITH_Z_IMAGE_FALLBACK_POLICY,
     QWEN_EXPERT_CUDA_POLICY,
     QWEN_EXPERT_QUANTIZATION_POLICY,
+    execution_profiles_for_execution,
 )
 from modiff.model_artifact_catalog import catalog_revision
 from modules.DiffusersAudio.main import AUDIO_PIPELINE_ADAPTERS
@@ -23,10 +24,56 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
     def test_every_profile_declares_one_explicit_loader_and_execution_path(self):
         expected_targets = {
             "modular-diffusers": ("modules.ModularDiffusers", "ModelsLoader"),
+            "dynamic-modular": ("modules.ModularDiffusers", "DynamicBlockNode"),
             "direct-diffusers-image": ("modules.DiffusersImage", "LoadPipeline"),
             "direct-diffusers-video": ("modules.DiffusersVideo", "LoadPipeline"),
             "direct-wan-vace": ("modules.DiffusersVideo", "LoadPipeline"),
             "direct-diffusers-audio": ("modules.DiffusersAudio", "LoadPipeline"),
+            "direct-diffusers-three-d": ("modules.DiffusersThreeD", "LoadPipeline"),
+            "direct-huggingface-speech": (
+                "modules.HuggingFaceSpeech",
+                "LoadSpeechRecognitionModel",
+            ),
+            "direct-huggingface-speech-ctc": (
+                "modules.HuggingFaceSpeech",
+                "LoadCTCSpeechRecognitionModel",
+            ),
+            "direct-huggingface-transformers-text": (
+                "modules.HuggingFaceTransformers",
+                "LoadTextGenerationModel",
+            ),
+            "direct-huggingface-transformers-image-text": (
+                "modules.HuggingFaceTransformers",
+                "LoadImageTextToTextModel",
+            ),
+            "direct-huggingface-transformers-any-to-any": (
+                "modules.HuggingFaceTransformers",
+                "LoadAnyToAnyModel",
+            ),
+            "builtin-image-operation": (
+                "modules.ImageOperations",
+                "ProcessImage",
+            ),
+            "builtin-audio-operation": (
+                "modules.Audio",
+                "ProcessAudio",
+            ),
+            "builtin-data-operation": (
+                "modules.Text",
+                "ProcessText",
+            ),
+            "builtin-video-operation": (
+                "modules.Video",
+                "ProcessVideo",
+            ),
+            "spandrel-video-upscale": (
+                "modules.Video",
+                "UpscaleVideo",
+            ),
+            "spandrel-image-upscale": (
+                "modules.Spandrel",
+                "Upscaler",
+            ),
         }
 
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
@@ -47,29 +94,157 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
 
     def test_every_supported_studio_model_has_an_execution_profile(self):
         expected = {
+            "AnimaModularPipeline",
+            "HeliosModularPipeline",
+            "HeliosPyramidModularPipeline",
+            "HeliosPyramidDistilledModularPipeline",
+            "WanAnimate2ModularPipeline",
+            "WanAnimate2DistilledModularPipeline",
             "ZImageModularPipeline",
             "QwenImageModularPipeline",
             "QwenImageEditModularPipeline",
             "QwenImageEditPlusModularPipeline",
             "QwenImageLayeredModularPipeline",
+            "QwenImageControlNetPipeline",
+            "QwenImageLayeredPipeline",
+            "QwenImageEditPipeline",
+            "QwenImageEditPlusPipeline",
+            "ZImageInpaintPipeline",
+            "ChromaImg2ImgPipeline",
+            "ChromaInpaintPipeline",
             "WanVACEPipeline",
             "WanVideoPipeline",
             "WanImageToVideoPipeline",
             "WanTI2VPipeline",
+            "Wan22Pipeline",
+            "WanAnimatePipeline",
+            "WanImage2VideoModularPipeline",
+            "WanModularPipeline",
             "LTXVideoPipeline",
+            "LTXI2VLongMultiPromptPipeline",
+            "LTX2ConditionPipeline",
+            "LTX2InContextPipeline",
+            "LTX2ModularPipeline",
+            "LTX2Pipeline",
+            "HunyuanVideoFramepackPipeline",
+            "StableVideoDiffusionPipeline",
+            "AnimateDiffPipeline",
+            "AnimateDiffPAGPipeline",
+            "AnimateDiffVideoToVideoPipeline",
+            "AnimateDiffControlNetPipeline",
+            "AnimateDiffVideoToVideoControlNetPipeline",
+            "AnimateLCMPipeline",
+            "CogVideoXPipeline",
+            "CogVideoXVideoToVideoPipeline",
+            "AllegroPipeline",
+            "LattePipeline",
+            "MochiPipeline",
+            "SanaVideoPipeline",
+            "SanaImageToVideoPipeline",
             "AceStepAudioPipeline",
+            "StableAudioPipeline",
+            "LongCatAudioDiTPipeline",
+            "AudioLDM2Pipeline",
+            "ShapEPipeline",
+            "ShapEImg2ImgPipeline",
             "FluxSchnellPipeline",
             "FluxDevPipeline",
+            "FluxModularPipeline",
+            "FluxKontextModularPipeline",
+            "Flux2KleinModularPipeline",
+            "Flux2KleinBaseModularPipeline",
+            "Flux2ModularPipeline",
+            "Flux2Pipeline",
             "FluxKreaPipeline",
             "FluxKontextPipeline",
+            "FluxKontextInpaintPipeline",
             "FluxFillPipeline",
             "FluxDepthPipeline",
             "FluxCannyPipeline",
             "FluxReduxPipeline",
             "Flux2KleinPipeline",
+            "Flux2KleinInpaintPipeline",
+            "Flux2KleinKVPipeline",
+            "FluxControlNetPipeline",
+            "FluxControlNetImg2ImgPipeline",
+            "FluxControlNetInpaintPipeline",
+            "StableDiffusionXLPipeline",
+            "StableDiffusionXLTurboPipeline",
+            "StableDiffusionXLInstructPix2PixPipeline",
+            "StableDiffusionXLControlNetPipeline",
+            "HunyuanDiTPipeline",
+            "HunyuanDiTPAGPipeline",
+            "HunyuanDiTControlNetPipeline",
+            "StableDiffusionXLAdapterPipeline",
+            "StableDiffusionXLPAGPipeline",
+            "SanaPipeline",
+            "SanaPAGPipeline",
+            "SanaSprintPipeline",
+            "PixArtSigmaPipeline",
+            "PixArtSigmaPAGPipeline",
+            "Kandinsky3Pipeline",
+            "LongCatImagePipeline",
+            "LongCatImageEditPipeline",
+            "LuminaPipeline",
+            "Lumina2Pipeline",
+            "OmniGenPipeline",
+            "OvisImagePipeline",
+            "PRXPipeline",
+            "NucleusMoEImagePipeline",
+            "AuraFlowPipeline",
+            "ChromaPipeline",
+            "CogView3PlusPipeline",
+            "CogView4Pipeline",
+            "ErnieImagePipeline",
+            "GlmImagePipeline",
+            "JoyImageEditPipeline",
+            "JoyImageEditPlusPipeline",
+            "DreamLitePipeline",
+            "DreamLiteMobilePipeline",
+            "DummyCustomPipeline",
+            "DDPMPipeline",
+            "DDIMPipeline",
+            "ConsistencyModelPipeline",
+            "StableDiffusionPipeline",
+            "LatentConsistencyModelPipeline",
+            "StableDiffusionPAGPipeline",
+            "StableDiffusionXLModularPipeline",
+            "MarigoldDepthPipeline",
+            "HuggingFaceSpeechRecognitionModel",
+            "HuggingFaceCTCSpeechRecognitionModel",
+            "HuggingFaceTextGenerationModel",
+            "HuggingFaceImageTextToTextModel",
+            "HuggingFaceAnyToAnyModel",
+            "BuiltinAudioOperation",
+            "BuiltinDataOperation",
+            "BuiltinImageOperation",
+            "BuiltinVideoOperation",
+            "SpandrelVideoUpscale",
+            "SpandrelImageUpscale",
+            "ErnieImageModularPipeline",
+            "LTXModularPipeline",
+            "Wan22ModularPipeline",
+            "Wan22Image2VideoModularPipeline",
+            "MiniMaxMusic3ModularPipeline",
+            "MiniMaxH3ModularPipeline",
+            "Cosmos3DistilledModularPipeline",
+            "Cosmos3OmniModularPipeline",
+            "HunyuanVideo15ModularPipeline",
         }
         actual = {profile.model_type for profile in DIFFUSERS_EXECUTION_PROFILES.values()}
         self.assertEqual(expected, actual)
+
+    def test_ltx_13b_profiles_do_not_silently_fallback_to_the_2b_family_index(self):
+        for mode in ("text_to_video", "image_to_video", "video_to_video", "reference_to_video"):
+            profiles = execution_profiles_for_execution("LTXVideoPipeline", mode)
+            self.assertEqual(len(profiles), 1)
+            with self.subTest(mode=mode):
+                profile = profiles[0]
+                self.assertEqual(
+                    profile.default_repo,
+                    "Lightricks/LTX-Video-0.9.8-13B-distilled",
+                )
+                self.assertIsNone(profile.fallback_repo)
 
     def test_video_profile_uses_generic_facade(self):
         profile = DIFFUSERS_EXECUTION_PROFILES["wan-vace:direct"]
@@ -98,11 +273,17 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
     def test_qwen_profiles_publish_reviewed_expert_resource_policies(self):
         qwen_profile_ids = {
             "qwen-image:t2i-direct",
+            "qwen-image:img2img-direct",
+            "qwen-image:inpaint-direct",
             "qwen-image:modular",
             "qwen-edit:direct-inpaint",
             "qwen-edit:modular",
             "qwen-edit-plus:modular",
             "qwen-layered:modular",
+            "qwen-image-controlnet:direct",
+            "qwen-image-layered:direct",
+            "qwen-image-edit:direct",
+            "qwen-image-edit-plus:direct",
         }
 
         for profile_id, profile in DIFFUSERS_EXECUTION_PROFILES.items():
@@ -162,11 +343,18 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
 
     def test_profiles_publish_only_the_reviewed_expert_mps_policies(self):
         unqualified = {
+            "janus-pro-1b:direct",
+            "qwen-image:img2img-direct",
+            "qwen-image:inpaint-direct",
             "qwen-image:modular",
             "qwen-edit:direct-inpaint",
             "qwen-edit:modular",
             "qwen-edit-plus:modular",
             "qwen-layered:modular",
+            "qwen-image-controlnet:direct",
+            "qwen-image-layered:direct",
+            "qwen-image-edit:direct",
+            "qwen-image-edit-plus:direct",
             "wan-vace:direct",
             "wan-22-image-to-video:direct",
             "wan-22-ti2v-5b:direct",
@@ -192,14 +380,29 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
         flux_modes = ("bnb_4bit", "bnb_8bit", "quanto_float8", "torchao_float8")
         qwen_ids = {
             "qwen-image:t2i-direct",
+            "qwen-image:img2img-direct",
+            "qwen-image:inpaint-direct",
             "qwen-image:modular",
             "qwen-edit:direct-inpaint",
             "qwen-edit:modular",
             "qwen-edit-plus:modular",
             "qwen-layered:modular",
+            "qwen-image-controlnet:direct",
+            "qwen-image-layered:direct",
+            "qwen-image-edit:direct",
+            "qwen-image-edit-plus:direct",
         }
         for profile_id, profile in DIFFUSERS_EXECUTION_PROFILES.items():
-            expected = ("bnb_4bit",) if profile_id in qwen_ids else flux_modes if profile.model_type.startswith("Flux") else ()
+            expected = (
+                ("bnb_4bit",)
+                if profile_id in qwen_ids
+                else flux_modes
+                if profile.model_type.startswith("Flux") and profile.model_type not in {
+                    "Flux2KleinKVPipeline", "FluxControlNetPipeline",
+                    "FluxControlNetImg2ImgPipeline", "FluxControlNetInpaintPipeline",
+                }
+                else ()
+            )
             with self.subTest(profile=profile_id):
                 self.assertEqual(profile.expert_quantization_modes, expected)
                 self.assertEqual(
@@ -295,9 +498,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "modules.DiffusersAudio.LoadPipeline": AUDIO_PIPELINE_ADAPTERS,
         }
         direct_profiles = [
-            profile
-            for profile in DIFFUSERS_EXECUTION_PROFILES.values()
-            if profile.backend_path in registries
+            profile for profile in DIFFUSERS_EXECUTION_PROFILES.values() if profile.backend_path in registries
         ]
         self.assertTrue(direct_profiles)
 

@@ -80,10 +80,10 @@ _WAN_IMAGE_ENCODER_HEADS = 16
 _WAN_CLIP_IMAGE_MEAN = (0.48145466, 0.4578275, 0.40821073)
 _WAN_CLIP_IMAGE_STD = (0.26862954, 0.26130258, 0.27577711)
 _SDXL_IP_ADAPTER_IMAGE_SIZE = 224
-_SDXL_IP_ADAPTER_HIDDEN_SIZE = 1280
+_SDXL_IP_ADAPTER_HIDDEN_SIZE = 1664
 _SDXL_IP_ADAPTER_PATCH_SIZE = 14
-_SDXL_IP_ADAPTER_PROJECTION_DIM = 1024
-_SDXL_IP_ADAPTER_LAYERS = 32
+_SDXL_IP_ADAPTER_PROJECTION_DIM = 1280
+_SDXL_IP_ADAPTER_LAYERS = 48
 _SDXL_IP_ADAPTER_HEADS = 16
 _SDXL_IP_ADAPTER_IMAGE_MEAN = (0.48145466, 0.4578275, 0.40821073)
 _SDXL_IP_ADAPTER_IMAGE_STD = (0.26862954, 0.26130258, 0.27577711)
@@ -737,6 +737,7 @@ _LOADER_OUTPUT_ROLES = {
     "text_encoders": "text_encoders",
     "scheduler": "scheduler",
     "image_encoder": "image_encoder",
+    "pipeline_components": "pipeline_components",
 }
 
 
@@ -1804,9 +1805,18 @@ def require_cataloged_wan_action_source(*, image, last_image, binding):
     workflow = _validate_wan_source_pair(image, last_image)
     if not _is_issued_binding(binding) or binding._model_type != "WanImage2VideoModularPipeline":
         raise ValueError("Wan image execution requires the current Models Loader publication.")
-    expected_repository = dict(WAN_WORKFLOW_REPOSITORIES).get(workflow)
-    if expected_repository is None:
+    expected_repositories = tuple(
+        repository
+        for reviewed_workflow, repository in WAN_WORKFLOW_REPOSITORIES
+        if reviewed_workflow == workflow
+    )
+    if not expected_repositories:
         raise ValueError("Wan image execution selected an unknown workflow contract.")
+    expected_repository = binding._repo_id
+    if expected_repository not in expected_repositories:
+        raise ValueError(
+            "Wan image execution does not match the reviewed immutable artifact for the selected workflow."
+        )
     expected_revision = require_catalog_revision(
         expected_repository,
         model_type="WanImage2VideoModularPipeline",
@@ -2340,6 +2350,15 @@ def sdxl_ip_adapter_feature_extractor_contract(feature_extractor):
 
 
 def _sdxl_ip_adapter_parameter_seal(modules):
+    """Seal adapter parameter identity and contents, independent of placement.
+
+    Diffusers and Accelerate move the same ``Parameter`` objects between CPU
+    and the execution device for model CPU offload.  Device placement is
+    therefore runtime scheduling state, not adapter identity.  Object identity,
+    Torch's mutation version, shape, and dtype still fail closed for parameter
+    replacement, in-place weight changes, and incompatible conversions.
+    """
+
     values = []
     for module_index, module in enumerate(modules):
         named_parameters = getattr(module, "named_parameters", None)
@@ -2358,7 +2377,6 @@ def _sdxl_ip_adapter_parameter_seal(modules):
                     int(getattr(parameter, "_version", -1)),
                     tuple(parameter.shape),
                     str(parameter.dtype),
-                    str(parameter.device),
                 )
             )
     if not values:
@@ -2419,7 +2437,12 @@ def _sdxl_ip_adapter_tensor_refs(values, *, label, required):
     if type(values) is not list or len(values) != 1 or type(values[0]) is not torch.Tensor:
         raise ValueError(f"SDXL IP-Adapter {label} must contain exactly one Torch tensor.")
     tensor = values[0]
-    if tensor.ndim != 3 or tensor.shape[0] != 1 or not 1 <= tensor.shape[1] <= 64 or tensor.shape[2] != 1024:
+    if (
+        tensor.ndim != 3
+        or tensor.shape[0] != 1
+        or not 1 <= tensor.shape[1] <= 64
+        or tensor.shape[2] != _SDXL_IP_ADAPTER_PROJECTION_DIM
+    ):
         raise ValueError(f"SDXL IP-Adapter {label} has an invalid standard projection shape.")
     return (weakref.ref(tensor),)
 

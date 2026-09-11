@@ -20,6 +20,7 @@ _EXACT_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _PURPOSE = "sdxl-ip-adapter"
 _IMAGE_ENCODER_CLASS = "CLIPVisionModelWithProjection"
 _MAX_WEIGHT_BYTES = 2 * 1024 * 1024 * 1024
+_MAX_IMAGE_ENCODER_FILE_BYTES = 8 * 1024 * 1024 * 1024
 
 
 @dataclass(frozen=True)
@@ -102,6 +103,30 @@ def resolve_reviewed_sdxl_ip_adapter(
     )
     if pin.get("imageEncoderClass") != _IMAGE_ENCODER_CLASS:
         raise ValueError("The reviewed SDXL IP-Adapter image-encoder class is invalid.")
+    encoder_files = pin.get("imageEncoderFiles")
+    expected_encoder_files = {
+        f"{image_encoder_subfolder}/config.json",
+        f"{image_encoder_subfolder}/model.safetensors",
+    }
+    if not isinstance(encoder_files, list) or len(encoder_files) != len(expected_encoder_files):
+        raise ValueError("The reviewed SDXL IP-Adapter image-encoder file inventory is invalid.")
+    reviewed_encoder_files = set()
+    for contract in encoder_files:
+        if not isinstance(contract, Mapping):
+            raise ValueError("The reviewed SDXL IP-Adapter image-encoder file contract is invalid.")
+        filename = _exact_posix_path(contract.get("filename"), label="image-encoder filename")
+        digest = contract.get("sha256")
+        size = contract.get("byteSize")
+        if (
+            not isinstance(digest, str)
+            or not _EXACT_SHA256.fullmatch(digest)
+            or type(size) is not int
+            or not 1 <= size <= _MAX_IMAGE_ENCODER_FILE_BYTES
+        ):
+            raise ValueError("The reviewed SDXL IP-Adapter image-encoder file contract is invalid.")
+        reviewed_encoder_files.add(filename)
+    if reviewed_encoder_files != expected_encoder_files:
+        raise ValueError("The reviewed SDXL IP-Adapter image-encoder file inventory is invalid.")
     content_sha256 = pin.get("sha256")
     byte_size = pin.get("byteSize")
     if not isinstance(content_sha256, str) or not _EXACT_SHA256.fullmatch(content_sha256):
@@ -121,7 +146,8 @@ def resolve_reviewed_sdxl_ip_adapter(
             "The reviewed SDXL IP-Adapter weight is not installed locally; graph execution never downloads it."
         ) from error
     try:
-        resolved_path = Path(cached_path).resolve(strict=True)
+        cached_file = Path(cached_path)
+        resolved_path = cached_file.resolve(strict=True)
         stat = resolved_path.stat()
     except (OSError, RuntimeError, TypeError) as error:
         raise FileNotFoundError("The cached SDXL IP-Adapter weight could not be resolved safely.") from error
@@ -129,14 +155,19 @@ def resolve_reviewed_sdxl_ip_adapter(
         raise ValueError("The cached SDXL IP-Adapter weight does not match its reviewed byte size.")
     if _sha256_file(resolved_path) != content_sha256:
         raise ValueError("The cached SDXL IP-Adapter weight failed its reviewed SHA-256 check.")
+    if cached_file.name != PurePosixPath(reviewed_weight).name:
+        raise ValueError("The cached SDXL IP-Adapter weight lost its reviewed file identity.")
 
     return ResolvedSDXLIPAdapter(
         repository=canonical_repository,
         revision=selected_revision,
-        weight_name=resolved_path.name,
+        # Keep the logical snapshot filename so Diffusers selects its
+        # safetensors loader. Integrity is still checked against the resolved
+        # content-addressed blob above.
+        weight_name=cached_file.name,
         content_sha256=content_sha256,
         byte_size=byte_size,
         image_encoder_subfolder=image_encoder_subfolder,
         image_encoder_class=_IMAGE_ENCODER_CLASS,
-        load_directory=resolved_path.parent,
+        load_directory=cached_file.parent,
     )

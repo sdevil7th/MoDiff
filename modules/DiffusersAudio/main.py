@@ -29,6 +29,8 @@ logger = logging.getLogger("modiff")
 
 ACE_STEP_DEFAULT_REPO = "ACE-Step/acestep-v15-xl-turbo-diffusers"
 STABLE_AUDIO_DEFAULT_REPO = "stabilityai/stable-audio-open-1.0"
+LONGCAT_AUDIO_DIT_DEFAULT_REPO = "ruixiangma/LongCat-AudioDiT-1B-Diffusers"
+AUDIO_LDM2_DEFAULT_REPO = "cvssp/audioldm2"
 ACE_MAX_DURATION_SECONDS = 240.0
 ACE_CONTINUATION_MAX_EXTENSION_SECONDS = 180.0
 ACE_CONTINUATION_DEFAULT_EXTENSION_SECONDS = 15.0
@@ -43,6 +45,8 @@ DIRECT_AUDIO_OFFLOAD_MODES = [
 ACE_TASK_TYPES = ["text2music", "cover", "continuation", "repaint"]
 STALE_ACE_TASK_TYPES = frozenset({"extract", "lego", "complete"})
 AUDIO_SAMPLE_RATE_OPTIONS = {
+    "16000": "16 kHz",
+    "24000": "24 kHz",
     "44100": "44.1 kHz",
     "48000": "48 kHz",
     "88200": "88.2 kHz",
@@ -84,6 +88,12 @@ _STABLE_AUDIO_VISIBLE_FIELDS = (
     "stable_audio_steps",
     "stable_audio_guidance",
     "num_waveforms",
+    "audio_duration",
+)
+_LONGCAT_AUDIO_DIT_VISIBLE_FIELDS = (
+    "negative_prompt",
+    "stable_audio_steps",
+    "stable_audio_guidance",
     "audio_duration",
 )
 
@@ -154,8 +164,22 @@ class AudioPipelineAdapter:
     pipeline_class: str
     default_repo: str
     mode_contracts: tuple[AudioModeContract, ...]
+    generation_kind: str = "ace_step"
+    safe_serialization_required: bool = False
+    max_inference_steps: int = 100
+    default_inference_steps: int = 8
+    default_guidance_scale: float = 1.0
+    supports_multiple_waveforms: bool = False
     source_audio_channels: int | None = None
     duplicate_mono_source: bool = False
+
+    def __post_init__(self) -> None:
+        if self.generation_kind not in {"ace_step", "stable_audio", "longcat_audio_dit", "audioldm2"}:
+            raise ValueError("Audio pipeline adapters must select a reviewed generation kind.")
+        if self.max_inference_steps < 1 or not 1 <= self.default_inference_steps <= self.max_inference_steps:
+            raise ValueError("Audio pipeline adapters must declare bounded inference-step defaults.")
+        if not isfinite(self.default_guidance_scale) or not 0 <= self.default_guidance_scale <= 20:
+            raise ValueError("Audio pipeline adapters must declare guidance between 0 and 20.")
 
     @property
     def modes(self) -> tuple[str, ...]:
@@ -221,6 +245,7 @@ AUDIO_PIPELINE_ADAPTERS = {
                 max_duration_seconds=ACE_MAX_DURATION_SECONDS,
             ),
         ),
+        safe_serialization_required=True,
         # The reviewed ACE-Step artifact uses AutoencoderOobleck with
         # ``audio_channels=2``. A mono waveform has one unambiguous,
         # deterministic stereo representation; layouts with more than two
@@ -243,6 +268,53 @@ AUDIO_PIPELINE_ADAPTERS = {
                 max_duration_seconds=47,
             ),
         ),
+        generation_kind="stable_audio",
+        safe_serialization_required=True,
+        max_inference_steps=300,
+        default_inference_steps=100,
+        default_guidance_scale=7,
+        supports_multiple_waveforms=True,
+    ),
+    "LongCatAudioDiTPipeline": AudioPipelineAdapter(
+        pipeline_class="LongCatAudioDiTPipeline",
+        default_repo=LONGCAT_AUDIO_DIT_DEFAULT_REPO,
+        mode_contracts=(
+            AudioModeContract(
+                "text_to_audio",
+                "text2audio",
+                "text2audio",
+                "forbidden",
+                "forbidden",
+                visible_fields=_LONGCAT_AUDIO_DIT_VISIBLE_FIELDS,
+                max_duration_seconds=30,
+            ),
+        ),
+        generation_kind="longcat_audio_dit",
+        safe_serialization_required=True,
+        max_inference_steps=100,
+        default_inference_steps=16,
+        default_guidance_scale=4,
+    ),
+    "AudioLDM2Pipeline": AudioPipelineAdapter(
+        pipeline_class="AudioLDM2Pipeline",
+        default_repo=AUDIO_LDM2_DEFAULT_REPO,
+        mode_contracts=(
+            AudioModeContract(
+                "text_to_audio",
+                "text2audio",
+                "text2audio",
+                "forbidden",
+                "forbidden",
+                visible_fields=_STABLE_AUDIO_VISIBLE_FIELDS,
+                max_duration_seconds=10,
+            ),
+        ),
+        generation_kind="audioldm2",
+        safe_serialization_required=True,
+        max_inference_steps=300,
+        default_inference_steps=200,
+        default_guidance_scale=3.5,
+        supports_multiple_waveforms=True,
     ),
 }
 
@@ -837,6 +909,45 @@ def crop_tail(audio: dict[str, Any], start_seconds: float, duration_seconds: flo
     }
 
 
+_AUDIO_LDM2_TRANSFORMERS_VERSION = "5.16.0.dev0"
+_AUDIO_LDM2_GENERATION_UPDATE_SHA256 = "fb244c4da03341e837bbf50b900e70ea88a6fee722a43aa40c6172dfedfd15ef"
+
+
+def _reviewed_audioldm2_generation_helper() -> tuple[type, Any]:
+    """Return only the exact Transformers helper reviewed with AudioLDM2."""
+
+    import hashlib
+    import inspect
+    import transformers
+    from transformers import GPT2Model
+    from transformers.generation.utils import GenerationMixin
+
+    helper = GenerationMixin._update_model_kwargs_for_generation
+    helper_sha256 = hashlib.sha256(inspect.getsource(helper).encode("utf-8")).hexdigest()
+    if (
+        transformers.__version__ != _AUDIO_LDM2_TRANSFORMERS_VERSION
+        or helper_sha256 != _AUDIO_LDM2_GENERATION_UPDATE_SHA256
+    ):
+        raise RuntimeError(
+            "AudioLDM2 generation compatibility has not been reviewed for the active Transformers runtime."
+        )
+    return GPT2Model, helper
+
+
+def _ensure_language_model_generation_api(pipeline: Any, pipeline_class: str) -> None:
+    """Bridge one reviewed AudioLDM2/GPT-2 API removal, failing closed on drift."""
+
+    if pipeline_class != "AudioLDM2Pipeline":
+        return
+    language_model = getattr(pipeline, "language_model", None)
+    gpt2_model, helper = _reviewed_audioldm2_generation_helper()
+    if not isinstance(language_model, gpt2_model):
+        raise RuntimeError("The reviewed AudioLDM2 artifact must contain a Transformers GPT2Model language model.")
+    if hasattr(language_model, "_update_model_kwargs_for_generation"):
+        return
+    language_model._update_model_kwargs_for_generation = helper.__get__(language_model, type(language_model))
+
+
 class LoadPipeline(NodeBase):
     """Load a generic Diffusers audio pipeline."""
 
@@ -870,7 +981,12 @@ class LoadPipeline(NodeBase):
             "type": "string",
             # Keep this literal so the static registry parser can expose the
             # choices without importing Diffusers or executing this module.
-            "options": ["AceStepPipeline", "StableAudioPipeline"],
+            "options": [
+                "AceStepPipeline",
+                "StableAudioPipeline",
+                "LongCatAudioDiTPipeline",
+                "AudioLDM2Pipeline",
+            ],
             "default": "AceStepPipeline",
             "fieldOptions": {"noValidation": True},
             "onChange": "update_audio_contract",
@@ -1019,10 +1135,13 @@ class LoadPipeline(NodeBase):
             "local_files_only": local_files_only(model_id),
             **recipe_load_kwargs,
         }
+        if adapter.safe_serialization_required:
+            load_kwargs["use_safetensors"] = True
 
         self.progress(-1, phase="loading", message=f"Loading {pipeline_class_name}")
         with self.diffusers_loading_progress():
             pipeline = pipeline_class.from_pretrained(model_id, **load_kwargs)
+        _ensure_language_model_generation_api(pipeline, adapter.pipeline_class)
         self._tag_pipeline(pipeline, adapter, mode, model_id, revision)
         if recipe:
             apply_execution_recipe_to_pipeline(pipeline, recipe)
@@ -1513,9 +1632,7 @@ def _preflight_audio_invocation(pipeline: Any, kwargs: dict[str, Any]) -> AudioI
     elif contract.mode == "audio_repaint":
         duration = source.duration_seconds
     else:
-        duration_label = (
-            "Stable Audio duration" if adapter.pipeline_class == "StableAudioPipeline" else "ACE-Step duration"
-        )
+        duration_label = f"{adapter.pipeline_class} duration"
         duration = _finite_positive_bound(
             kwargs.get("audio_duration"),
             default=30.0,
@@ -1530,29 +1647,34 @@ def _preflight_audio_invocation(pipeline: Any, kwargs: dict[str, Any]) -> AudioI
         minimum=0,
         maximum=4294967295,
     )
-    if adapter.pipeline_class == "StableAudioPipeline":
+    if adapter.generation_kind != "ace_step":
+        control_label = {
+            "stable_audio": "Stable Audio",
+            "longcat_audio_dit": "LongCat AudioDiT",
+            "audioldm2": "AudioLDM2",
+        }[adapter.generation_kind]
         controls: dict[str, int | float | None] = {
             "seed": seed,
             "steps": _bounded_int(
                 kwargs.get("stable_audio_steps"),
-                default=100,
-                label="Stable Audio steps",
+                default=adapter.default_inference_steps,
+                label=f"{control_label} steps",
                 minimum=1,
-                maximum=300,
+                maximum=adapter.max_inference_steps,
             ),
             "guidance": _bounded_float(
                 kwargs.get("stable_audio_guidance"),
-                default=7,
-                label="Stable Audio guidance",
+                default=adapter.default_guidance_scale,
+                label=f"{control_label} guidance",
                 minimum=0,
                 maximum=20,
             ),
             "waveforms": _bounded_int(
                 kwargs.get("num_waveforms"),
                 default=1,
-                label="Stable Audio variations",
+                label=f"{control_label} variations",
                 minimum=1,
-                maximum=8,
+                maximum=8 if adapter.supports_multiple_waveforms else 1,
             ),
         }
     else:
@@ -1789,7 +1911,7 @@ class Generate(NodeBase):
             "min": 1,
             "max": 300,
             "hidden": True,
-            "description": "StableAudioPipeline-only denoising steps; ignored by ACE-Step.",
+            "description": "Denoising steps for reviewed standard Diffusers audio pipelines; ignored by ACE-Step.",
         },
         "stable_audio_guidance": {
             "label": "Stable Audio Guidance",
@@ -1798,7 +1920,7 @@ class Generate(NodeBase):
             "min": 0,
             "max": 20,
             "hidden": True,
-            "description": "StableAudioPipeline-only classifier-free guidance; ignored by ACE-Step.",
+            "description": "Classifier-free guidance for reviewed standard Diffusers audio pipelines; ignored by ACE-Step.",
         },
         "num_waveforms": {
             "label": "Variations",
@@ -1807,7 +1929,7 @@ class Generate(NodeBase):
             "min": 1,
             "max": 8,
             "hidden": True,
-            "description": "Number of StableAudioPipeline waveforms; ignored by ACE-Step.",
+            "description": "Number of generated waveforms when supported; ignored by ACE-Step.",
         },
         "audio": {"label": "Audio", "display": "output", "type": "audio"},
         "audio_variations": {"label": "Audio Variations", "display": "output", "type": "collection"},
@@ -1843,6 +1965,18 @@ class Generate(NodeBase):
 
         values = values if isinstance(values, dict) else {}
         signal_value = values.get("audio_contract")
+        if isinstance(signal_value, str):
+            # A registered composite can seed its form before a pipeline is
+            # loaded, using the pinned class and already-bound exact task.
+            # This resolves UI metadata only; execution still validates the
+            # connected runtime pipeline and its independently tagged contract.
+            adapter = get_audio_pipeline_adapter(signal_value)
+            matching = [contract for contract in adapter.mode_contracts
+                        if contract.task_type == values.get("task_type")]
+            if len(matching) != 1:
+                raise ValueError("The registered audio class and task do not resolve one exact form contract.")
+            signal_value = matching[0].signal_value(adapter.pipeline_class, adapter.default_repo)
+            self.set_field_value({"audio_contract": signal_value})
         if not isinstance(signal_value, dict):
             raise ValueError("The connected audio pipeline did not publish a valid task contract.")
         adapter = get_audio_pipeline_adapter(signal_value.get("pipelineClass"))
@@ -1865,8 +1999,8 @@ class Generate(NodeBase):
         adapter = invocation.adapter
         contract = invocation.contract
 
-        if adapter.pipeline_class == "StableAudioPipeline":
-            return self._execute_stable_audio(pipeline, kwargs, invocation)
+        if adapter.generation_kind != "ace_step":
+            return self._execute_standard_diffusers_audio(pipeline, kwargs, invocation)
 
         import torch
 
@@ -1983,7 +2117,7 @@ class Generate(NodeBase):
             "duration_seconds": float(audio.get("duration_seconds") or 0.0),
         }
 
-    def _execute_stable_audio(self, pipeline, kwargs, invocation: AudioInvocation):
+    def _execute_standard_diffusers_audio(self, pipeline, kwargs, invocation: AudioInvocation):
         import torch
 
         device = getattr(pipeline, "_execution_device", None) or getattr(pipeline, "device", None) or "cpu"
@@ -1997,28 +2131,68 @@ class Generate(NodeBase):
                 pipeline._num_timesteps = int(invocation.controls["steps"])
             self.pipe_callback(pipeline, step, timestep, {"latents": latents})
 
-        result = pipeline(
-            prompt=str(kwargs.get("prompt") or ""),
-            negative_prompt=none_if_blank(kwargs.get("negative_prompt")),
-            audio_start_in_s=0,
-            audio_end_in_s=invocation.duration_seconds,
-            num_inference_steps=int(invocation.controls["steps"]),
-            guidance_scale=float(invocation.controls["guidance"]),
-            num_waveforms_per_prompt=int(invocation.controls["waveforms"]),
-            generator=generator,
-            callback=callback,
-            callback_steps=1,
-            output_type="pt",
-            return_dict=True,
-        )
-        vae = getattr(pipeline, "vae", None)
-        vae_config = getattr(vae, "config", None)
-        configured_rate = vae_config.get("sampling_rate") if hasattr(vae_config, "get") else None
-        sample_rate = int(getattr(vae, "sampling_rate", None) or configured_rate or 44100)
+        common_kwargs = {
+            "prompt": str(kwargs.get("prompt") or ""),
+            "negative_prompt": none_if_blank(kwargs.get("negative_prompt")),
+            "num_inference_steps": int(invocation.controls["steps"]),
+            "guidance_scale": float(invocation.controls["guidance"]),
+            "generator": generator,
+            "output_type": "pt",
+            "return_dict": True,
+        }
+        if invocation.adapter.generation_kind == "stable_audio":
+            result = pipeline(
+                **common_kwargs,
+                audio_start_in_s=0,
+                audio_end_in_s=invocation.duration_seconds,
+                num_waveforms_per_prompt=int(invocation.controls["waveforms"]),
+                callback=callback,
+                callback_steps=1,
+            )
+            vae = getattr(pipeline, "vae", None)
+            vae_config = getattr(vae, "config", None)
+            configured_rate = vae_config.get("sampling_rate") if hasattr(vae_config, "get") else None
+            sample_rate = int(getattr(vae, "sampling_rate", None) or configured_rate or 44100)
+            audio_variations = output_to_audio_objects(result, sample_rate)
+        elif invocation.adapter.generation_kind == "longcat_audio_dit":
+            result = pipeline(
+                **common_kwargs,
+                audio_duration_s=invocation.duration_seconds,
+                callback_on_step_end=self.pipe_callback,
+                callback_on_step_end_tensor_inputs=["latents"],
+            )
+            sample_rate = int(getattr(pipeline, "sample_rate", None) or 24000)
+            audio_variations = output_to_audio_objects(result, sample_rate)
+        elif invocation.adapter.generation_kind == "audioldm2":
+            result = pipeline(
+                **common_kwargs,
+                audio_length_in_s=invocation.duration_seconds,
+                num_waveforms_per_prompt=int(invocation.controls["waveforms"]),
+                callback=callback,
+                callback_steps=1,
+            )
+            vocoder = getattr(pipeline, "vocoder", None)
+            vocoder_config = getattr(vocoder, "config", None)
+            configured_rate = (
+                vocoder_config.get("sampling_rate") if hasattr(vocoder_config, "get") else None
+            )
+            sample_rate = int(configured_rate or 16000)
+            raw_audio = getattr(result, "audios", result)
+            if _is_torch_audio_tensor(raw_audio):
+                raw_audio = raw_audio.detach().float().cpu().numpy()
+            raw_array = np.asarray(raw_audio, dtype=np.float32)
+            if raw_array.ndim == 1:
+                raw_array = raw_array[None, :]
+            if raw_array.ndim != 2:
+                raise ValueError("AudioLDM2 returned an unsupported audio tensor shape.")
+            audio_variations = [_audio_array_to_object(waveform, sample_rate) for waveform in raw_array]
+        else:
+            raise ValueError(f"Unsupported standard audio generation kind {invocation.adapter.generation_kind}.")
+
         requested_sample_rate = int(invocation.controls["sample_rate"])
         audio_variations = [
             resample_audio_object(crop_tail(audio, 0, invocation.duration_seconds), requested_sample_rate)
-            for audio in output_to_audio_objects(result, sample_rate)
+            for audio in audio_variations
         ]
         audio = audio_variations[0]
         return {

@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "family": "OmniGen",
+  "repository": {
+    "repository": "Shitao/OmniGen-v1-diffusers",
+    "revision": "016e2f61d12a98303f6bbdf122687694d7984268",
+    "private": false,
+    "gated": false,
+    "pythonFilesPresent": false,
+    "trustRemoteCodeRequired": false,
+    "modelIndexClass": "OmniGenPipeline",
+    "reportedUsedStorageBytes": 8085311084,
+    "snapshotDownloadBytes": 8088956424,
+    "snapshotFileCount": 11,
+    "weightFileCount": 2,
+    "weightBytes": 8085311084,
+    "weightInventorySha256": "8c0f7cedebc2aeca541318e5557b5663bb5df6717e38ca0b082c76b33eb64bbf",
+    "modelCardLicenseTag": "mit",
+    "licenseFilePresent": false
+  },
+  "weightFiles": [
+    {
+      "path": "transformer/diffusion_pytorch_model.safetensors",
+      "byteSize": 7750667816,
+      "sha256": "da89cdbea388e9019c74cff11421cbbef62be172176295fb69590d54c1420b7e"
+    },
+    {
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "byteSize": 334643268,
+      "sha256": "1598f3d24932bcfe6634e8b618ea1e30ab1d57f5aad13a6d2de446d2199f2341"
+    }
+  ],
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "entries": ["path", "byteSize", "sha256"],
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "metadataBlobReceipts": {
+    "modelIndexGitBlob": "41221448a4163fe3b457f4a96dd41996f0d989e8",
+    "schedulerConfigGitBlob": "138a49e24b0c08dfbb49990d268389e3e0c883bd",
+    "tokenizerSpecialTokensGitBlob": "0616f20a3af0830d0991f72c15c4f5e6d5dc02fa",
+    "tokenizerJsonGitBlob": "0be3442091b2f555401c41479e4e04e7465a3414",
+    "tokenizerConfigGitBlob": "435799db07cda77d43824bf4e8af36e2301ce983",
+    "transformerConfigGitBlob": "aa075fd56b5b2a7064197bc4fe41565442cd30f1",
+    "vaeConfigGitBlob": "3d24d1d91e85090b5697ef89ff85cc8bb07f8fe1"
+  },
+  "metadataContentReceipts": {
+    "modelIndexSha256": "3dffe1dfbed6afdde8b94079afd614c1c735862c362e7d498879da46a64b09fa",
+    "schedulerConfigSha256": "9576c1255183b951a6704239a1574f12e70b6a4351850d0a969dd19ec84e2916",
+    "transformerConfigSha256": "a498588f3bc753b2434ff7138c244ef86e7082392ee8b7e530ad5bc041b37a5d",
+    "vaeConfigSha256": "f7e98fd875de04b277e5ccb4171c77d676020fd9b062f3ead16d78942e8a542d"
+  },
+  "pinnedRuntime": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "diffusersVersion": "0.40.0.dev0",
+    "pipelineSha256": "09f95c82c6249a3348d13c5767d1b0408b161c5aaa2c7281738d200283551995",
+    "processorSha256": "7fcb5624ec8284391d38d9fbe7b2c5157c9a412e0ac0b95e08a68a640f30cbc9",
+    "transformerSha256": "9ea93f454d7c20238b0f078cf244bfb7adf25949784a491d441a24c3b14e6dab",
+    "requiredDiffusersSymbols": ["OmniGenPipeline", "OmniGenTransformer2DModel"],
+    "requiredTransformersSymbols": ["LlamaTokenizer", "LlamaTokenizerFast"]
+  },
+  "pipelineContract": {
+    "pipelineClass": "OmniGenPipeline",
+    "modes": ["text_to_image", "edit_image", "multi_image_reference_edit"],
+    "defaultWidth": 1024,
+    "defaultHeight": 1024,
+    "moDiffMinimumSide": 512,
+    "moDiffMaximumSide": 2048,
+    "dimensionMultiple": 16,
+    "moDiffMaximumOutputPixels": 1048576,
+    "defaultNumInferenceSteps": 50,
+    "moDiffMaximumInferenceSteps": 50,
+    "defaultGuidanceScale": 2.5,
+    "defaultImageGuidanceScale": 1.6,
+    "maximumInputImageSide": 1024,
+    "maximumReferenceImages": 3,
+    "maximumCumulativeReferencePixels": 3145728,
+    "inputImageParameter": "input_images",
+    "promptPlaceholderPattern": "<img><|image_N|></img>",
+    "modelCpuOffloadSequence": "transformer->vae"
+  },
+  "cancellationAndSafety": {
+    "callbackOnStepEndAvailable": true,
+    "interruptFlagAvailable": true,
+    "interruptFlagReadByDenoisingLoop": false,
+    "serverStopPropagatesThroughCallback": true,
+    "packageSafetyCheckerPresent": false,
+    "reservedPromptSyntaxRejected": true,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "notes": [
+      "The package invokes the callback after every denoising step; MoDiff's generic callback owns cancellation and progress.",
+      "MoDiff generates continuous one-based image placeholders from the validated reference list instead of accepting placeholder markup from the user.",
+      "No live output is accepted until remote safety and quality review is complete."
+    ]
+  },
+  "license": {
+    "id": "mit",
+    "modelCardLicenseTag": "mit",
+    "modelSnapshotLicenseFilePresent": false,
+    "upstream": {
+      "repository": "VectorSpaceLab/OmniGen",
+      "revision": "d4752019ae16741dc3801fd4989432aad4c81a4f",
+      "licenseId": "mit",
+      "licenseGitBlob": "802385928e847d0877470c24abb736abd7031994",
+      "licenseSha256": "0e953a17fc5d32d1717b260987cccb9da3e151bcefb22114553a894ff4e79aef"
+    },
+    "modelSnapshotLicenseClarificationPending": true
+  },
+  "remoteResourceEnvelope": {
+    "status": "estimate_only_qualification_pending",
+    "minimumSnapshotDiskBytes": 12884901888,
+    "minimumSystemRamBytes": 17179869184,
+    "minimumAcceleratorMemoryBytesWithModelOffloadEstimate": 8589934592,
+    "notes": [
+      "The estimates cover the approximately 8.09 GB weight surface plus decode and framework overhead.",
+      "Conditioned generation performs three transformer branches and can require materially more working memory than text-only generation.",
+      "No local real-weight inference or generated output has qualified these estimates."
+    ]
+  },
+  "appDownloadQueue": {
+    "submittedThroughAppOnly": true,
+    "directWeightDownloadPerformed": false,
+    "olderModelsDeleted": false,
+    "preflightFreeBytes": 612865241088,
+    "preflightExistingQueuedReservationBytes": 495504680091,
+    "snapshotReservationBytes": 8088956424,
+    "reserveBytes": 68719476736,
+    "aggregateFits": true,
+    "aggregateHeadroomAfterReserveBytes": 40552127837,
+    "statusAtReview": "queued"
+  },
+  "admission": {
+    "status": "source_complete_execution_pending",
+    "runtimeCatalogExposed": true,
+    "downloadCatalogExposed": true,
+    "capabilityExposed": true,
+    "canonicalWorkflowsAdded": 3,
+    "clientSurfaceAdded": true,
+    "remoteOnly": true,
+    "liveQualified": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "unresolvedGates": [
+      "remote_real_weight_execution_and_memory_measurement",
+      "live_output_safety_and_quality_review",
+      "model_snapshot_license_file_clarification",
+      "physical_macos_execution"
+    ]
+  }
+}

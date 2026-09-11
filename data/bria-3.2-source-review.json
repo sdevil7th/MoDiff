@@ -1,0 +1,157 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "liveQualified": false,
+    "remoteOnly": true,
+    "runtimeCatalogExposed": false,
+    "status": "reviewed_not_admitted_gated_noncommercial_unresolved_artifact",
+    "unresolvedGates": [
+      "bria_gate_acceptance",
+      "noncommercial_weight_license_or_separate_commercial_agreement",
+      "immutable_repository_head_and_exact_artifact_inventory",
+      "authenticated_model_index_and_component_config_review",
+      "backend_owned_mixed_precision_component_contract",
+      "backend_owned_resource_and_input_bounds",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ],
+    "userVisible": false
+  },
+  "family": "Bria 3.2",
+  "format": "safetensors",
+  "genericContractReview": {
+    "candidateInputContracts": [
+      "text_to_image"
+    ],
+    "candidateOutputKind": "image",
+    "currentMoDiffAdapterPresent": false,
+    "requiredExecutionBoundary": "load the package-owned Bria pipeline at an authenticated immutable revision, apply the reviewed per-component and per-layer precision recipe, and enforce backend-owned generation and resource bounds"
+  },
+  "licenseReview": {
+    "acceptanceRequired": true,
+    "commercialUseAllowedWithoutSeparateAgreement": false,
+    "declaredLicenseId": "bria-3.2",
+    "evidence": "The public model card labels the weights non-commercial, links CC BY-NC 4.0, requires gate acceptance, and directs commercial users to purchase a separate license.",
+    "exactRepositoryLicensePayloadReviewed": false,
+    "linkedLicenseDeed": "cc-by-nc-4.0",
+    "separateCommercialAgreementAdvertised": true
+  },
+  "metadataAccess": {
+    "anonymousApiHttpStatus": 401,
+    "componentConfigPayloadsReviewed": false,
+    "exactArtifactInventoryAvailable": false,
+    "modelIndexPayloadReviewed": false,
+    "publicFileTreeReviewed": true,
+    "publicModelCardReviewed": true,
+    "resolvedRepositoryRevision": null
+  },
+  "pinnedDiffusers": {
+    "callbackOnStepEndAvailable": true,
+    "modelCpuOffloadSequence": "text_encoder->text_encoder_2->image_encoder->transformer->vae",
+    "outputClass": "BriaPipelineOutput",
+    "packageOwnedClasses": [
+      "BriaPipeline",
+      "BriaTransformer2DModel"
+    ],
+    "pipelineClass": "BriaPipeline",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "sourceSha256": {
+      "pipeline": "38e1697fdddac8a17f1585811d5ed47ad2f6488ec5973483f078452f4ab984b9",
+      "pipelineOutput": "6c647f537538221a6b3e1bf41e984c2ec1f621b2512296c3db58b61aff06b3b5",
+      "transformer": "dfc19e557f34779f8503a4bc42b87eeda9bb0473305e7251dafa6ff793334487"
+    },
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContract": {
+    "callbackTensorInputs": [
+      "latents",
+      "prompt_embeds"
+    ],
+    "defaultGuidanceScale": 5.0,
+    "defaultHeight": 1024,
+    "defaultMaxSequenceLength": 128,
+    "defaultNumInferenceSteps": 30,
+    "defaultWidth": 1024,
+    "documentedRecommendedInferenceSteps": [
+      30,
+      50
+    ],
+    "maximumPackageSequenceLength": 512,
+    "outputType": "BriaPipelineOutput",
+    "requiredOneOf": [
+      "prompt",
+      "prompt_embeds"
+    ],
+    "supportsNegativePrompt": true,
+    "unboundedByPackage": [
+      "prompt_character_length",
+      "batch_size",
+      "num_images_per_prompt",
+      "num_inference_steps",
+      "height",
+      "width"
+    ]
+  },
+  "precisionContract": {
+    "genericAdapterCanRepresentExactRecipe": false,
+    "loadDtype": "bfloat16",
+    "requiredTextEncoderDtype": "bfloat16",
+    "requiredTextEncoderFinalProjectionDtype": "float32",
+    "requiredVaeDtypeWhenShiftFactorIsZero": "float32",
+    "unresolvedReason": "MoDiff can place a complete component at one dtype but does not yet own a declarative, validated per-layer dtype override for every T5 DenseReluDense.wo projection."
+  },
+  "repository": {
+    "gated": true,
+    "gatingMode": "auto",
+    "listedPythonFilesPresent": false,
+    "observedFileCommitCandidates": [
+      "71cb6825158b33da9e4ba73bc68d48afc2a894c0",
+      "b976867c84a8524843a6e7d788b844dd3917a934",
+      "efca02d793eb3a651e691b57bee5f0cfaaa7f0e6",
+      "f47bfdf74c9b313c8e2182a4a760a3297a099d14",
+      "7a4e581ea43c057977472dcee17b93cd45ca61cf",
+      "9fbdbd0ff56a0a4d7044c1086fad342bb0ece101",
+      "322a4f8b7f0117f13df7290fcb5ffb8140f6a559"
+    ],
+    "observedWeightFiles": [
+      {
+        "path": "text_encoder/model-00001-of-00003.safetensors",
+        "publishedRoundedSize": "4.99 GB"
+      },
+      {
+        "path": "text_encoder/model-00002-of-00003.safetensors",
+        "publishedRoundedSize": "4.97 GB"
+      },
+      {
+        "path": "text_encoder/model-00003-of-00003.safetensors",
+        "publishedRoundedSize": "1.58 GB"
+      },
+      {
+        "path": "transformer/diffusion_pytorch_model.safetensors",
+        "publishedRoundedSize": "7.57 GB"
+      },
+      {
+        "path": "vae/diffusion_pytorch_model.safetensors",
+        "publishedRoundedSize": "335 MB"
+      }
+    ],
+    "private": false,
+    "repository": "briaai/BRIA-3.2",
+    "revision": null,
+    "trustRemoteCodeRequiredByPackageRoute": false,
+    "weightFileCountObserved": 5,
+    "weightInventoryExact": false
+  },
+  "resourceEnvelope": {
+    "minimumAcceleratorMemoryBytesEstimate": null,
+    "minimumSelectiveDiskBytesEstimate": null,
+    "minimumSystemRamBytesEstimate": null,
+    "notes": [
+      "The public gated tree exposes only rounded file sizes, so MoDiff does not convert them into exact byte or memory claims.",
+      "No local or remote measurement has qualified a loading recipe."
+    ],
+    "status": "not_estimated_until_authenticated_inventory_review"
+  },
+  "schemaVersion": 1
+}

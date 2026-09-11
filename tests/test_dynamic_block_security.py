@@ -2,7 +2,8 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-from modules.ModularDiffusers.dynamic_node import DynamicBlockNode
+from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
+from modules.ModularDiffusers.dynamic_node import DynamicBlockNode, _custom_node_contract
 from modules.ModularDiffusers.pipeline_schema import MoDiffPipelineConfig
 
 
@@ -10,15 +11,16 @@ _REVISION = "a" * 40
 
 
 def _custom_config(params=None):
+    params = {} if params is None else params
     return MoDiffPipelineConfig.from_dict(
         {
             "label": "Dynamic fixture",
             "default_dtype": "float32",
             "node_params": {
                 "custom": {
-                    "params": {} if params is None else params,
+                    "params": params,
                     "model_input_names": [],
-                    "input_names": [],
+                    "input_names": [name for name in params if name in {"prompt", "image"}],
                     "output_names": [],
                     "label": "Dynamic fixture",
                 }
@@ -35,13 +37,94 @@ def _verified(config=None):
     )
 
 
+def _binding(config=None):
+    return SimpleNamespace(
+        pipeline_config=lambda: _custom_config() if config is None else config,
+        identity=SimpleNamespace(to_dict=lambda: {"schema": "fixture"}),
+        execution_contract=SimpleNamespace(pipeline_class_name="FluxModularPipeline"),
+    )
+
+
 class DynamicBlockSecurityTests(unittest.TestCase):
+    def test_reviewed_workflow_selector_exposes_only_tasks_the_sidecar_can_carry(self):
+        config = MoDiffPipelineConfig.from_dict(
+            {
+                "label": "Text-only fixture",
+                "node_params": {
+                    "custom": {
+                        "params": {
+                            "prompt": {"type": "string"},
+                            "image": {"type": "image", "display": "input"},
+                            "out_images": {"type": "image", "display": "output"},
+                            "out_processed_image": {"type": "image", "display": "output"},
+                        },
+                        "model_input_names": [],
+                        "input_names": ["prompt"],
+                        "output_names": ["out_images", "out_processed_image"],
+                    }
+                },
+            }
+        )
+        contract = _custom_node_contract(
+            config,
+            reviewed_modular_workflow_contract("FluxModularPipeline"),
+        )
+
+        self.assertEqual(contract["params"]["workflow"]["options"], {"text_to_image": "Text To Image"})
+        self.assertTrue(contract["params"]["image"]["hidden"])
+        self.assertTrue(contract["params"]["out_processed_image"]["hidden"])
+
+    def test_sidecar_pipeline_fields_must_exist_in_the_reviewed_upstream_contract(self):
+        config = MoDiffPipelineConfig.from_dict(
+            {
+                "label": "Unknown-field fixture",
+                "node_params": {
+                    "custom": {
+                        "params": {"attacker_input": {"type": "string"}},
+                        "model_input_names": [],
+                        "input_names": ["attacker_input"],
+                        "output_names": [],
+                    }
+                },
+            }
+        )
+        workflow_contract = reviewed_modular_workflow_contract("FluxModularPipeline")
+        with self.assertRaisesRegex(ValueError, "absent from the reviewed upstream workflow contract"):
+            _custom_node_contract(config, workflow_contract)
+
+    def test_framework_owned_doc_output_is_allowed_outside_pipeline_state(self):
+        config = MoDiffPipelineConfig.from_dict(
+            {
+                "label": "Documented fixture",
+                "node_params": {
+                    "custom": {
+                        "params": {
+                            "prompt": {"type": "string"},
+                            "images": {"type": "image", "display": "output"},
+                            "doc": {"type": "string", "display": "output"},
+                        },
+                        "model_input_names": [],
+                        "input_names": ["prompt"],
+                        "output_names": ["images", "doc"],
+                    }
+                },
+            }
+        )
+
+        contract = _custom_node_contract(
+            config,
+            reviewed_modular_workflow_contract("Flux2KleinModularPipeline"),
+        )
+
+        self.assertEqual(contract["output_names"], ["images", "doc"])
+        self.assertIn("doc", contract["params"])
+
     def test_imported_trust_and_non_boolean_values_fail_before_any_loader(self):
         node = DynamicBlockNode("dynamic-imported-trust")
 
         cases = (
-            (False, ValueError, "contract-preview only"),
-            (True, ValueError, "contract-preview only"),
+            (False, ValueError, "backend-issued reviewed identity"),
+            (True, ValueError, "task-scoped operator authorization"),
             ("false", TypeError, "JSON boolean"),
             (1, TypeError, "JSON boolean"),
         )
@@ -53,12 +136,12 @@ class DynamicBlockSecurityTests(unittest.TestCase):
                     "_get_verified_custom_config",
                 ) as verify_config,
                 patch(
-                    "diffusers.ModularPipeline.from_pretrained",
+                    "modules.ModularDiffusers.dynamic_node.resolve_custom_pipeline_binding",
                 ) as pipeline_loader,
             ):
                 with self.assertRaisesRegex(error_type, message):
                     node.execute(
-                        "owner/custom-block",
+                        {"source": "hub", "value": "owner/custom-block"},
                         "cpu",
                         False,
                         trust_value,
@@ -69,17 +152,61 @@ class DynamicBlockSecurityTests(unittest.TestCase):
                 verify_config.assert_not_called()
                 pipeline_loader.assert_not_called()
 
+    def test_unknown_reviewed_workflow_is_rejected_before_pipeline_construction(self):
+        config = MoDiffPipelineConfig.from_dict(
+            {
+                "label": "Workflow fixture",
+                "default_dtype": "float32",
+                "node_params": {
+                    "custom": {
+                        "params": {
+                            "prompt": {"type": "string"},
+                            "out_images": {"type": "image", "display": "output"},
+                        },
+                        "model_input_names": [],
+                        "input_names": ["prompt"],
+                        "output_names": ["out_images"],
+                    }
+                },
+            }
+        )
+        binding = _binding(config)
+        binding.instantiate = MagicMock(side_effect=AssertionError("pipeline construction must not run"))
+        node = DynamicBlockNode("dynamic-unknown-workflow")
+        with (
+            patch(
+                "modules.ModularDiffusers.dynamic_node.CustomPipelineExecutionIdentity.from_value",
+                return_value=SimpleNamespace(),
+            ),
+            patch(
+                "modules.ModularDiffusers.dynamic_node.resolve_custom_pipeline_binding",
+                return_value=binding,
+            ),
+        ):
+            with self.assertRaisesRegex(ValueError, "Unknown Modular workflow task"):
+                node.execute(
+                    {"source": "hub", "value": "owner/custom-block"},
+                    "cpu",
+                    False,
+                    False,
+                    offload_mode="none",
+                    revision=_REVISION,
+                    modiff_pipeline_identity={"schema": "fixture"},
+                    workflow="attacker_workflow",
+                    prompt="hello",
+                )
+        binding.instantiate.assert_not_called()
+
     def test_exact_revision_is_used_for_local_only_verified_sidecar_resolution(self):
         node = DynamicBlockNode("dynamic-sidecar-revision")
         verified = _verified()
         with (
-            patch("modules.ModularDiffusers.dynamic_node.resolve_model_revision", return_value=_REVISION),
             patch(
                 "modules.ModularDiffusers.dynamic_node.PipelineConfig.load_verified",
                 return_value=verified,
             ) as load_verified,
         ):
-            result = node._get_verified_custom_config("owner/custom-block", "main")
+            result = node._get_verified_custom_config("owner/custom-block", _REVISION)
 
         self.assertIs(result, verified)
         load_verified.assert_called_once_with(
@@ -98,10 +225,9 @@ class DynamicBlockSecurityTests(unittest.TestCase):
         for index, params in enumerate(hostile_actions):
             node = DynamicBlockNode(f"dynamic-hostile-action-{index}")
             node.send_node_definition_with_meta = MagicMock()
-            with patch.object(
-                node,
-                "_get_verified_custom_config",
-                return_value=_verified(_custom_config(params)),
+            with patch(
+                "modules.ModularDiffusers.dynamic_node.resolve_custom_pipeline_binding",
+                return_value=_binding(_custom_config(params)),
             ):
                 with self.assertRaisesRegex(ValueError, "must not define"):
                     node.update_node(
@@ -118,7 +244,7 @@ class DynamicBlockSecurityTests(unittest.TestCase):
     def test_trusted_preview_is_rejected_before_sidecar_resolution(self):
         node = DynamicBlockNode("dynamic-trusted-preview")
         node.send_node_definition_with_meta = MagicMock()
-        with patch.object(node, "_get_verified_custom_config") as verify_config:
+        with patch("modules.ModularDiffusers.dynamic_node.resolve_custom_pipeline_binding") as verify_config:
             with self.assertRaisesRegex(ValueError, "Trust Remote Code off"):
                 node.update_node(
                     {
@@ -148,10 +274,9 @@ class DynamicBlockSecurityTests(unittest.TestCase):
         node = DynamicBlockNode("dynamic-declarative-actions")
         node.send_node_definition_with_meta = MagicMock()
         with (
-            patch.object(
-                node,
-                "_get_verified_custom_config",
-                return_value=_verified(_custom_config(params)),
+            patch(
+                "modules.ModularDiffusers.dynamic_node.resolve_custom_pipeline_binding",
+                return_value=_binding(_custom_config(params)),
             ) as verify_config,
             patch("modules.ModularDiffusers.dynamic_node.PipelineConfig.load") as network_config_load,
         ):
@@ -165,8 +290,21 @@ class DynamicBlockSecurityTests(unittest.TestCase):
             )
 
         published_params = node.send_node_definition_with_meta.call_args.args[0]
-        self.assertEqual(published_params, params)
-        verify_config.assert_called_once_with("owner/custom-block", _REVISION)
+        self.assertEqual(published_params["mode"], params["mode"])
+        self.assertEqual(published_params["identity"], params["identity"])
+        self.assertEqual(published_params["prompt"], {**params["prompt"], "hidden": False})
+        self.assertEqual(published_params["image"], {**params["image"], "hidden": True})
+        self.assertEqual(
+            published_params["workflow"]["options"],
+            {"text_to_image": "Text To Image", "image_to_image": "Image To Image"},
+        )
+        verify_config.assert_called_once_with(
+            source="hub",
+            repo_id="owner/custom-block",
+            revision=_REVISION,
+            trust_remote_code=False,
+            expected_identity=None,
+        )
         network_config_load.assert_not_called()
 
     def test_declarative_sidecar_cannot_target_unpublished_fields(self):
@@ -186,10 +324,9 @@ class DynamicBlockSecurityTests(unittest.TestCase):
         for index, params in enumerate(hostile_targets):
             node = DynamicBlockNode(f"dynamic-hostile-target-{index}")
             node.send_node_definition_with_meta = MagicMock()
-            with patch.object(
-                node,
-                "_get_verified_custom_config",
-                return_value=_verified(_custom_config(params)),
+            with patch(
+                "modules.ModularDiffusers.dynamic_node.resolve_custom_pipeline_binding",
+                return_value=_binding(_custom_config(params)),
             ):
                 with self.assertRaisesRegex(ValueError, "unknown contract field|input or output"):
                     node.update_node(
@@ -206,10 +343,9 @@ class DynamicBlockSecurityTests(unittest.TestCase):
         for index, field_name in enumerate(("__proto__", "prototype", "constructor")):
             node = DynamicBlockNode(f"dynamic-prototype-field-{index}")
             node.send_node_definition_with_meta = MagicMock()
-            with patch.object(
-                node,
-                "_get_verified_custom_config",
-                return_value=_verified(_custom_config({field_name: {"type": "string"}})),
+            with patch(
+                "modules.ModularDiffusers.dynamic_node.resolve_custom_pipeline_binding",
+                return_value=_binding(_custom_config({field_name: {"type": "string"}})),
             ):
                 with self.assertRaisesRegex(ValueError, "fields must map"):
                     node.update_node(

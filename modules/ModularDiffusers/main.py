@@ -3,8 +3,11 @@ from .adapters import *
 from .controlnet import *
 from .denoise import *
 from .dynamic_node import *
+from .workflow_blocks import *
+from .reviewed_blocks import *
 from .embeddings import *
 from .guiders import *
+from .ip_adapter import *
 from .latents import *
 from .loaders import *
 from .schedulers import *

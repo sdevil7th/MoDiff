@@ -7,8 +7,10 @@ import tempfile
 import threading
 import unittest
 from unittest import mock
+from dataclasses import replace
 
 from modiff import server as server_module
+from modiff import optimization_packages
 from modiff.optional_runtimes import (
     OPTIONAL_RUNTIME_PROFILES,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
@@ -220,10 +222,18 @@ class OptionalRuntimeServerTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_unavailable_candidate_rejects_before_gate_lease_job_or_worker(self):
         profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID]
+        pending = replace(
+            profile,
+            contract_state="candidate_unqualified",
+            cutover_ready=False,
+            install_action_available=False,
+            activation_available=False,
+            target_contracts=(),
+        )
         body = json.dumps(
             {
-                "profileId": profile.id,
-                "specDigest": profile.spec_digest,
+                "profileId": pending.id,
+                "specDigest": pending.spec_digest,
                 "consent": True,
             }
         ).encode("utf-8")
@@ -233,6 +243,11 @@ class OptionalRuntimeServerTests(unittest.IsolatedAsyncioTestCase):
         installer = mock.Mock(side_effect=AssertionError("installer must not run"))
 
         with (
+            mock.patch.object(
+                optimization_packages,
+                "OPTIONAL_RUNTIME_PROFILES",
+                {pending.id: pending},
+            ),
             mock.patch.object(self.server, "_reserve_worker_runtime_gate", gate),
             mock.patch.object(self.server, "_persist_optimization_job", persist),
             mock.patch.object(server_module, "reserve_runtime_install", lease),
@@ -362,8 +377,9 @@ class OptionalRuntimeServerTests(unittest.IsolatedAsyncioTestCase):
             "token": "secret-install-token",
             "command": ["uv", "--token", "secret-install-token"],
         }
-        with mock.patch(
-            "modiff.optimization_packages.active_install", return_value=active
+        with (
+            mock.patch("modiff.optimization_packages.active_install", return_value=active),
+            mock.patch("modiff.optional_runtimes.optional_runtime_target", return_value=("linux", "x86_64")),
         ):
             response = await self.server.runtime_optional_runtimes(object())
         body = response_json(response)
@@ -371,9 +387,9 @@ class OptionalRuntimeServerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(profile["stagedRequirements"]), 10)
         self.assertEqual(len(profile["artifactLocks"]), 60)
         self.assertTrue(all(lock["byteSize"] > 0 for lock in profile["artifactLocks"]))
-        self.assertFalse(profile["installActionAvailable"])
-        self.assertFalse(profile["activationAvailable"])
-        self.assertFalse(profile["cutoverReady"])
+        self.assertTrue(profile["installActionAvailable"])
+        self.assertTrue(profile["activationAvailable"])
+        self.assertTrue(profile["cutoverReady"])
         self.assertEqual(
             body["activeInstallJob"],
             {"ownerKind": "optional_runtime", "ownerId": None},

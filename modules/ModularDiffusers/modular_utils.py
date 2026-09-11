@@ -11,7 +11,12 @@ from typing import Any, Dict, Optional
 import torch
 from diffusers import Flux2KleinModularPipeline
 from modiff.model_artifact_catalog import resolve_model_revision
-from modiff.modular_workflow_contracts import WAN_I2V_REPOSITORY
+from modiff.modular_contract_only_registry import (
+    CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME,
+    CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES,
+)
+from modiff.modular_workflow_contracts import WAN_I2V_REPOSITORY, WAN_T2V_REPOSITORY
+from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_model_types
 from .pipeline_schema import MoDiffParam as PipelineParam
 from .pipeline_schema import MoDiffPipelineConfig as PipelineConfig
 from .custom_pipeline import (
@@ -49,6 +54,7 @@ ALL_GUIDER_OPTIONS = (
     "SkipLayerGuidance",
     "AdaptiveProjectedGuidance",
     "AdaptiveProjectedMixGuidance",
+    "MagnitudeAwareGuidance",
     "ClassifierFreeZeroStarGuidance",
     "AutoGuidance",
     "SmoothedEnergyGuidance",
@@ -76,6 +82,13 @@ COMPATIBLE_SCHEDULER_OPTIONS = (
     "PNDMScheduler",
     "UniPCMultistepScheduler",
 )
+
+# These package-owned pipelines have reviewed artifacts and official block
+# boundaries but are not publicly executable until their complete Studio route
+# and live qualification gates are promoted. ModelsLoader uses this set only to
+# prepare the all-component bundle required by the official block executor; it
+# does not by itself publish a capability or admit a Cluster Node.
+REVIEWED_WHOLE_WORKFLOW_MODEL_TYPES = reviewed_whole_workflow_model_types()
 
 
 def _normalize_modular_integer(value):
@@ -269,7 +282,12 @@ SDXL_NODE_SPECS = {
         ],
         "model_inputs": [
             PipelineParam.unet(),
-            PipelineParam.guider(display="input"),
+            # This action requires a connected Guider and never constructs one
+            # from a local guidance_scale. Keeping the generic visibility
+            # callback here allowed a just-mounted expanded execution node to
+            # transiently inject an undefined guidance_scale field, changing
+            # the authorized graph solely because the Cluster was expanded.
+            PipelineParam.guider(display="input", onChange=None),
         ],
         "outputs": [
             PipelineParam.ip_adapter(display="output"),
@@ -419,6 +437,31 @@ SDXL_PIPELINE_CONFIG = PipelineConfig(
 # Qwen Image
 # =============================================================================
 
+
+def _qwen_image_max_sequence_length_param():
+    """Return Qwen Image's upstream prompt-length input and Studio binding."""
+
+    return PipelineParam(
+        name="max_sequence_length",
+        label="Maximum Sequence Length",
+        type="int",
+        default=1024,
+        min=1,
+        max=1024,
+        step=1,
+        fieldOptions={
+            "controlTier": "advanced",
+            "studioBinding": {
+                "schemaVersion": 1,
+                "group": "maximum-sequence-length",
+                "formFields": ["maxSequenceLength"],
+                "transform": "identity",
+            },
+        },
+        required_block_params=["max_sequence_length"],
+    )
+
+
 QWEN_IMAGE_NODE_SPECS = {
     "controlnet": {
         "inputs": [
@@ -497,6 +540,7 @@ QWEN_IMAGE_NODE_SPECS = {
         "inputs": [
             PipelineParam.prompt(),
             PipelineParam.negative_prompt(),
+            _qwen_image_max_sequence_length_param(),
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
@@ -546,10 +590,13 @@ QWEN_IMAGE_EDIT_NODE_SPECS = {
     "denoise": {
         "inputs": [
             PipelineParam.embeddings(display="input"),
+            PipelineParam.width(),
+            PipelineParam.height(),
             PipelineParam.seed(),
             PipelineParam.num_inference_steps(40),
             PipelineParam.guidance_scale(4.0),
             PipelineParam.image_latents(display="input"),
+            PipelineParam.strength(),
             PipelineParam.route_state_in(),
         ],
         "model_inputs": [
@@ -752,25 +799,7 @@ def _qwen_image_layered_resolution_param():
 def _qwen_image_layered_max_sequence_length_param():
     """Return the Layered prompt-length contract and its generic form binding."""
 
-    return PipelineParam(
-        name="max_sequence_length",
-        label="Maximum Sequence Length",
-        type="int",
-        default=1024,
-        min=1,
-        max=1024,
-        step=1,
-        fieldOptions={
-            "controlTier": "advanced",
-            "studioBinding": {
-                "schemaVersion": 1,
-                "group": "maximum-sequence-length",
-                "formFields": ["maxSequenceLength"],
-                "transform": "identity",
-            },
-        },
-        required_block_params=["max_sequence_length"],
-    )
+    return _qwen_image_max_sequence_length_param()
 
 
 QWEN_IMAGE_LAYERED_NODE_SPECS = {
@@ -889,6 +918,11 @@ FLUX_NODE_SPECS = {
         ],
         "outputs": [
             PipelineParam.latents(display="output"),
+            # These duplicate input names are exported as out_width/out_height
+            # by the MoDiff schema. They preserve any geometry normalized by
+            # the official upstream denoise blocks for the split decoder.
+            PipelineParam.width(display="output"),
+            PipelineParam.height(display="output"),
             PipelineParam.doc(),
         ],
         "required_inputs": ["embeddings"],
@@ -898,6 +932,12 @@ FLUX_NODE_SPECS = {
     "vae_encoder": {
         "inputs": [
             PipelineParam.image(),
+            # The upstream Flux VAE encoder consumes the requested geometry
+            # while preprocessing the source image. Omitting these fields in
+            # a split graph makes it fall back to the pipeline's 1024px
+            # defaults even when the saved workflow requests another size.
+            PipelineParam.height(),
+            PipelineParam.width(),
             PipelineParam.seed(),
         ],
         "model_inputs": [
@@ -930,6 +970,11 @@ FLUX_NODE_SPECS = {
     "decoder": {
         "inputs": [
             PipelineParam.latents(display="input"),
+            # Flux packs 2x2 latent patches. Its official decoder cannot infer
+            # the requested image geometry from the packed tensor and defaults
+            # to 1024x1024 when these state fields are absent.
+            PipelineParam.width(display="input"),
+            PipelineParam.height(display="input"),
         ],
         "model_inputs": [
             PipelineParam.vae(),
@@ -962,6 +1007,8 @@ FLUX_KONTEXT_NODE_SPECS = {
     "denoise": {
         "inputs": [
             PipelineParam.embeddings(display="input"),
+            PipelineParam.width(),
+            PipelineParam.height(),
             PipelineParam.seed(),
             PipelineParam.num_inference_steps(28),
             PipelineParam.guidance_scale(2.5),
@@ -973,9 +1020,18 @@ FLUX_KONTEXT_NODE_SPECS = {
         ],
         "outputs": [
             PipelineParam.latents(display="output"),
+            # Kontext may normalize a requested size to a supported training
+            # resolution. Export the resulting state, rather than making the
+            # split decoder reuse the pre-normalization UI values.
+            PipelineParam.width(display="output"),
+            PipelineParam.height(display="output"),
             PipelineParam.doc(),
         ],
-        "required_inputs": ["embeddings", "image_latents"],
+        # The pinned FluxKontextAutoBlocks dispatches to text2image when
+        # image_latents is absent and image_conditioned when it is present.
+        # Requiring image_latents here made the official text2image workflow
+        # impossible to express through the generic Denoise node.
+        "required_inputs": ["embeddings"],
         "required_model_inputs": ["unet", "scheduler"],
         "block_name": "denoise",
     },
@@ -1014,6 +1070,10 @@ FLUX_KONTEXT_NODE_SPECS = {
     "decoder": {
         "inputs": [
             PipelineParam.latents(display="input"),
+            # Kontext reuses FluxDecodeStep, including its explicit packed-
+            # latent width/height contract.
+            PipelineParam.width(display="input"),
+            PipelineParam.height(display="input"),
         ],
         "model_inputs": [
             PipelineParam.vae(),
@@ -1121,6 +1181,55 @@ FLUX_2_KLEIN_DISTILLED_PIPELINE_CONFIG = PipelineConfig(
     denoise_image_latent_dimensions=IMAGE_LATENT_DIMENSIONS,
 )
 
+FLUX_2_KLEIN_BASE_NODE_SPECS = {
+    **FLUX_2_KLEIN_DISTILLED_NODE_SPECS,
+    "denoise": {
+        **FLUX_2_KLEIN_DISTILLED_NODE_SPECS["denoise"],
+        "inputs": [
+            PipelineParam.embeddings(display="input"),
+            PipelineParam.width(),
+            PipelineParam.height(),
+            PipelineParam.seed(),
+            PipelineParam.num_inference_steps(50),
+            PipelineParam.guidance_scale(4.0),
+            PipelineParam.image_latents(display="input"),
+        ],
+        # The base (non-distilled) upstream denoiser owns a reviewed
+        # ClassifierFreeGuidance component. Keep the port optional, like the
+        # other generic denoisers: an explicit Guider node may replace it,
+        # while guidance_scale can still configure the pipeline-owned default.
+        "model_inputs": [
+            PipelineParam.unet(),
+            PipelineParam.guider(),
+            PipelineParam.scheduler(),
+        ],
+    },
+}
+
+FLUX_2_KLEIN_BASE_PIPELINE_CONFIG = PipelineConfig(
+    node_specs=FLUX_2_KLEIN_BASE_NODE_SPECS,
+    label="Flux 2 Klein Base",
+    default_repo="black-forest-labs/FLUX.2-klein-base-4B",
+    default_dtype="bfloat16",
+    guider_options=("ClassifierFreeGuidance",),
+    denoise_image_latent_dimensions=IMAGE_LATENT_DIMENSIONS,
+)
+
+FLUX_2_PIPELINE_CONFIG = PipelineConfig(
+    node_specs={
+        **FLUX_2_KLEIN_DISTILLED_NODE_SPECS,
+        "denoise": {
+            **FLUX_2_KLEIN_BASE_NODE_SPECS["denoise"],
+            # Full FLUX.2 uses distilled guidance embeddings, not Klein Base CFG.
+            "model_inputs": [PipelineParam.unet(), PipelineParam.scheduler()],
+        },
+    },
+    label="Flux 2",
+    default_repo="black-forest-labs/FLUX.2-dev",
+    default_dtype="bfloat16",
+    denoise_image_latent_dimensions=IMAGE_LATENT_DIMENSIONS,
+)
+
 
 # =============================================================================
 # Z-Image
@@ -1155,6 +1264,8 @@ Z_IMAGE_NODE_SPECS = {
     "vae_encoder": {
         "inputs": [
             PipelineParam.image(),
+            PipelineParam.height(),
+            PipelineParam.width(),
             PipelineParam.seed(),
         ],
         "model_inputs": [
@@ -1210,8 +1321,130 @@ Z_IMAGE_PIPELINE_CONFIG = PipelineConfig(
 )
 
 # =============================================================================
+# Package-owned whole workflows
+# =============================================================================
+
+MINIMAX_MUSIC3_PIPELINE_CONFIG = PipelineConfig(
+    # MiniMax Music 3 uses the reviewed package-owned top-level workflow nodes
+    # in workflow_blocks.py. The older generic action schema is intentionally
+    # empty so no encode/denoise/decode compatibility is inferred.
+    node_specs={},
+    label="MiniMax Music 3",
+    default_repo="MiniMaxAI/MiniMax-Music3",
+    default_dtype="bfloat16",
+)
+
+MINIMAX_H3_PIPELINE_CONFIG = PipelineConfig(
+    # MiniMax H3 is exposed only through its exact package-owned
+    # before-encode/text/VAE/denoise/decode actions. The Models Loader also
+    # requires t2va, fl2va, or ref2va so one transformer partition is selected.
+    node_specs={},
+    label="MiniMax H3",
+    default_repo="MiniMaxAI/MiniMax-H3",
+    default_dtype="bfloat16",
+)
+
+ANIMA_PIPELINE_CONFIG = PipelineConfig(
+    # Anima uses reviewed package-owned top-level workflow nodes in
+    # workflow_blocks.py. No generic block compatibility is inferred here.
+    node_specs={},
+    label="Anima",
+    default_repo="circlestone-labs/Anima-Base-v1.0-Diffusers",
+    default_dtype="bfloat16",
+)
+
+HELIOS_PIPELINE_CONFIG = PipelineConfig(
+    node_specs={},
+    label="Helios",
+    default_repo="BestWishYsh/Helios-Base",
+    default_dtype="bfloat16",
+)
+
+HELIOS_PYRAMID_PIPELINE_CONFIG = PipelineConfig(
+    node_specs={},
+    label="Helios Pyramid",
+    default_repo="BestWishYsh/Helios-Mid",
+    default_dtype="bfloat16",
+)
+
+HELIOS_PYRAMID_DISTILLED_PIPELINE_CONFIG = PipelineConfig(
+    node_specs={},
+    label="Helios Pyramid Distilled",
+    default_repo="BestWishYsh/Helios-Distilled",
+    default_dtype="bfloat16",
+)
+
+HUNYUAN_VIDEO_15_PIPELINE_CONFIG = PipelineConfig(
+    # HunyuanVideo 1.5 is exposed only through the exact package-owned
+    # text/VAE/SigLIP/denoise/decode workflow actions. No generic action
+    # compatibility or resource qualification is inferred by registration.
+    node_specs={},
+    label="HunyuanVideo 1.5",
+    default_repo="hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_t2v",
+    default_dtype="bfloat16",
+)
+
+WAN_ANIMATE_2_PIPELINE_CONFIG = PipelineConfig(
+    node_specs={},
+    label="Wan Animate 2",
+    default_repo="Wan-AI/Wan2.2-Animate-2-14B-Diffusers",
+    default_dtype="bfloat16",
+)
+
+WAN_ANIMATE_2_DISTILLED_PIPELINE_CONFIG = PipelineConfig(
+    node_specs={},
+    label="Wan Animate 2 Distilled",
+    default_repo="Wan-AI/Wan2.2-Animate-2-14B-Distilled-Diffusers",
+    default_dtype="bfloat16",
+)
+
+COSMOS3_NANO_PIPELINE_CONFIG = PipelineConfig(
+    # Cosmos 3 uses the exact package-owned workflow actions; no generic
+    # encode/denoise/decode compatibility is inferred from this registration.
+    node_specs={},
+    label="Cosmos 3 Nano",
+    default_repo="nvidia/Cosmos3-Nano",
+    default_dtype="bfloat16",
+)
+
+COSMOS3_DISTILLED_PIPELINE_CONFIG = PipelineConfig(
+    # The Distilled checkpoints use their exact package-owned text/VAE/
+    # denoise/decode workflow actions. Registration does not imply runtime,
+    # resource, safety-guardrail, Auto, Gallery, or publication qualification.
+    node_specs={},
+    label="Cosmos 3 Distilled",
+    default_repo="nvidia/Cosmos3-Super-Text2Image-4Step",
+    default_dtype="bfloat16",
+)
+
+# =============================================================================
 # WAN
 # =============================================================================
+
+
+def _wan_max_sequence_length_param():
+    """Return Wan's upstream UMT5 prompt-length input and Studio binding."""
+
+    return PipelineParam(
+        name="max_sequence_length",
+        label="Maximum Sequence Length",
+        type="int",
+        default=512,
+        min=1,
+        max=512,
+        step=1,
+        fieldOptions={
+            "controlTier": "advanced",
+            "studioBinding": {
+                "schemaVersion": 1,
+                "group": "maximum-sequence-length",
+                "formFields": ["maxSequenceLength"],
+                "transform": "identity",
+            },
+        },
+        required_block_params=["max_sequence_length"],
+    )
+
 
 WAN_T2V_NODE_SPECS = {
     "controlnet": None,
@@ -1242,6 +1475,7 @@ WAN_T2V_NODE_SPECS = {
         "inputs": [
             PipelineParam.prompt(),
             PipelineParam.negative_prompt(),
+            _wan_max_sequence_length_param(),
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
@@ -1275,7 +1509,7 @@ WAN_T2V_NODE_SPECS = {
 WAN_T2V_PIPELINE_CONFIG = PipelineConfig(
     node_specs=WAN_T2V_NODE_SPECS,
     label="WAN2 T2V",
-    default_repo="Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
+    default_repo=WAN_T2V_REPOSITORY,
     default_dtype="bfloat16",
     guider_options=NON_LAYER_GUIDER_OPTIONS,
     scheduler_options=COMPATIBLE_SCHEDULER_OPTIONS,
@@ -1358,6 +1592,7 @@ WAN_I2V_NODE_SPECS = {
         "inputs": [
             PipelineParam.prompt(),
             PipelineParam.negative_prompt(),
+            _wan_max_sequence_length_param(),
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
@@ -1621,11 +1856,25 @@ def _initialize_registry(registry: ModiffPipelineRegistry):
         logger.warning(f"Failed to register FluxKontextModularPipeline: {e}")
 
     try:
+        from diffusers import Flux2ModularPipeline
+
+        registry.register(Flux2ModularPipeline, FLUX_2_PIPELINE_CONFIG)
+    except Exception as e:
+        logger.warning(f"Failed to register Flux2ModularPipeline: {e}")
+
+    try:
         from diffusers import Flux2KleinModularPipeline
 
         registry.register(Flux2KleinModularPipeline, FLUX_2_KLEIN_DISTILLED_PIPELINE_CONFIG)
     except Exception as e:
         logger.warning(f"Failed to register Flux2KleinModularPipeline: {e}")
+
+    try:
+        from diffusers import Flux2KleinBaseModularPipeline
+
+        registry.register(Flux2KleinBaseModularPipeline, FLUX_2_KLEIN_BASE_PIPELINE_CONFIG)
+    except Exception as e:
+        logger.warning(f"Failed to register Flux2KleinBaseModularPipeline: {e}")
 
     try:
         from diffusers import ZImageModularPipeline
@@ -1648,6 +1897,86 @@ def _initialize_registry(registry: ModiffPipelineRegistry):
     except Exception as e:
         logger.warning(f"Failed to register WanImage2VideoModularPipeline: {e}")
 
+    try:
+        from diffusers import MiniMaxMusic3ModularPipeline
+
+        registry.register(MiniMaxMusic3ModularPipeline, MINIMAX_MUSIC3_PIPELINE_CONFIG)
+    except Exception as e:
+        logger.warning(f"Failed to register MiniMaxMusic3ModularPipeline: {e}")
+
+    try:
+        from diffusers import MiniMaxH3ModularPipeline
+
+        registry.register(MiniMaxH3ModularPipeline, MINIMAX_H3_PIPELINE_CONFIG)
+    except Exception as e:
+        logger.warning(f"Failed to register MiniMaxH3ModularPipeline: {e}")
+
+    try:
+        from diffusers import AnimaModularPipeline
+
+        registry.register(AnimaModularPipeline, ANIMA_PIPELINE_CONFIG)
+    except Exception as e:
+        logger.warning(f"Failed to register AnimaModularPipeline: {e}")
+
+    try:
+        from diffusers import HeliosModularPipeline
+
+        registry.register(HeliosModularPipeline, HELIOS_PIPELINE_CONFIG)
+    except Exception as e:
+        logger.warning(f"Failed to register HeliosModularPipeline: {e}")
+
+    try:
+        from diffusers import HeliosPyramidModularPipeline
+
+        registry.register(HeliosPyramidModularPipeline, HELIOS_PYRAMID_PIPELINE_CONFIG)
+    except Exception as e:
+        logger.warning(f"Failed to register HeliosPyramidModularPipeline: {e}")
+
+    try:
+        from diffusers import HeliosPyramidDistilledModularPipeline
+
+        registry.register(
+            HeliosPyramidDistilledModularPipeline,
+            HELIOS_PYRAMID_DISTILLED_PIPELINE_CONFIG,
+        )
+    except Exception as e:
+        logger.warning(f"Failed to register HeliosPyramidDistilledModularPipeline: {e}")
+
+    try:
+        from diffusers import HunyuanVideo15ModularPipeline
+
+        registry.register(HunyuanVideo15ModularPipeline, HUNYUAN_VIDEO_15_PIPELINE_CONFIG)
+    except Exception as e:
+        logger.warning(f"Failed to register HunyuanVideo15ModularPipeline: {e}")
+
+    try:
+        from diffusers import WanAnimate2ModularPipeline
+
+        registry.register(WanAnimate2ModularPipeline, WAN_ANIMATE_2_PIPELINE_CONFIG)
+    except Exception as e:
+        logger.warning(f"Failed to register WanAnimate2ModularPipeline: {e}")
+
+    try:
+        from diffusers import WanAnimate2DistilledModularPipeline
+
+        registry.register(WanAnimate2DistilledModularPipeline, WAN_ANIMATE_2_DISTILLED_PIPELINE_CONFIG)
+    except Exception as e:
+        logger.warning(f"Failed to register WanAnimate2DistilledModularPipeline: {e}")
+
+    try:
+        from diffusers import Cosmos3OmniModularPipeline
+
+        registry.register(Cosmos3OmniModularPipeline, COSMOS3_NANO_PIPELINE_CONFIG)
+    except Exception as e:
+        logger.warning(f"Failed to register Cosmos3OmniModularPipeline: {e}")
+
+    try:
+        from diffusers import Cosmos3DistilledModularPipeline
+
+        registry.register(Cosmos3DistilledModularPipeline, COSMOS3_DISTILLED_PIPELINE_CONFIG)
+    except Exception as e:
+        logger.warning(f"Failed to register Cosmos3DistilledModularPipeline: {e}")
+
     registry._initialized = True
 
 
@@ -1660,7 +1989,7 @@ def _get_registry_instance():
     return MODULAR_REGISTRY
 
 
-def get_all_model_types() -> Dict[str, str]:
+def get_all_model_types(*, include_contract_only: bool = False) -> Dict[str, str]:
     """Get all registered model types with their labels for UI dropdowns.
 
     Returns:
@@ -1674,11 +2003,14 @@ def get_all_model_types() -> Dict[str, str]:
             "FluxModularPipeline": "Flux",
         }
     """
-    registry = _get_registry_instance().get_all()
     all_labels = {"": ""}
-    for pipeline_cls, config in registry.items():
-        model_type = pipeline_cls.__name__
-        all_labels[model_type] = config.label
+    for pipeline_cls, config in _get_registry_instance().get_all().items():
+        all_labels[pipeline_cls.__name__] = config.label
+    if include_contract_only:
+        all_labels.update(
+            (specification.class_name, specification.label)
+            for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
+        )
     return all_labels
 
 
@@ -1688,8 +2020,27 @@ def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:
     Returns model_type, label, default_repo, default_dtype, and node_params.
     The custom preview marker also declares ``execution_status=contract_only``.
     """
-    registry = _get_registry_instance().get_all()
-    for pipeline_cls, config in registry.items():
+    specification = CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME.get(model_type)
+    if specification is not None:
+        return {
+            "model_type": model_type,
+            "label": specification.label,
+            "default_repo": "",
+            "default_dtype": "bfloat16",
+            "loader_component_outputs": [],
+            "layer_block_options": [],
+            "guider_options": [],
+            "scheduler_options": [],
+            "denoise_image_latent_dimensions": [],
+            "node_params": {},
+            "execution_status": "contract_only",
+            "contract_batch": specification.batch,
+            "auto_eligible": False,
+            "template_eligible": False,
+            "gallery_eligible": False,
+        }
+
+    for pipeline_cls, config in _get_registry_instance().get_all().items():
         if pipeline_cls.__name__ == model_type:
             metadata = {
                 "model_type": model_type,

@@ -1,0 +1,120 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "downloadCatalogExposed": true,
+    "executableModes": [
+      "AuraFlowPipeline:text_to_image"
+    ],
+    "galleryEligible": false,
+    "liveQualified": false,
+    "remoteOnly": true,
+    "runtimeCatalogExposed": true,
+    "status": "source_complete_execution_pending",
+    "unresolvedGates": [
+      "remote_real_weight_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "AuraFlow",
+  "format": "safetensors",
+  "license": {
+    "acceptanceRequired": false,
+    "evidence": "Pinned model-card metadata and Apache-2.0 LICENSE bytes",
+    "id": "apache-2.0",
+    "licenseSha256": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1"
+  },
+  "metadataSha256": {
+    "modelCard": "4b06a70c7afb2f2a3ab7fbc043373c37c291c5a348a63000e47fde18d5609e11",
+    "modelIndex": "7ffee10ae3277f136a341bac357405d615961f7c949f7c2e231075f8c7d18541",
+    "schedulerConfig": "484263e607c38c2940d914d53fbf80c6391e180009846689bb2da970d5605f14",
+    "textEncoderConfig": "4fd2fce0b91e37ddfd44b4afec50a4bb8a433e348d15c30e4c412e9556490edc",
+    "tokenizerConfig": "fa2f9e9fd7368f824e2bf44a60761055534b5c8039f2735ad61305bef57d2853",
+    "transformerConfig": "f80724bd8e8ba2ee0d723c1eb68589bc6d497b2a247af11c23043eb791f7a562",
+    "transformerFp16Index": "6791b87e20fd2ae14e7c0f42edb299f232cb941f6363a38de06d60a689067692",
+    "vaeConfig": "bf2daa82c70fb8437853a3e9cd901c775a3f7a9af9b49227663ad86e93be3bc7"
+  },
+  "pinnedDiffusers": {
+    "callbackOnStepEndAvailable": true,
+    "pipelineClass": "AuraFlowPipeline",
+    "pipelineSha256": "783e6e14ad294b89e98195ee58b5e832e1b5a86c01d447b13e17b94b21bea7f7",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "transformerClass": "AuraFlowTransformer2DModel",
+    "transformerSha256": "bb43860b13e59b4b578a054b3849a0de472e2b868f398ced6853c13d5de27a44",
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContract": {
+    "defaultGuidanceScale": 3.5,
+    "defaultHeight": 768,
+    "defaultNumInferenceSteps": 50,
+    "defaultWidth": 1536,
+    "maxSequenceLength": 256,
+    "maximumMoDiffInferenceSteps": 50,
+    "maximumMoDiffOutputSide": 1536,
+    "modes": [
+      "text_to_image"
+    ],
+    "outputType": "ImagePipelineOutput",
+    "supportsNegativePrompt": true,
+    "upstreamPipelineDefaultHeight": 1024,
+    "upstreamPipelineDefaultWidth": 1024
+  },
+  "remoteResourceEnvelope": {
+    "minimumAcceleratorMemoryBytesEstimate": 25769803776,
+    "minimumSelectiveDiskBytes": 25769803776,
+    "minimumSystemRamBytes": 51539607552,
+    "notes": [
+      "The estimate applies to the admitted unquantized float16 loading route with model or sequential CPU offload.",
+      "The upstream bitsandbytes and GGUF examples are not part of this admission.",
+      "No local or remote measurement has qualified this envelope."
+    ],
+    "status": "estimate_only_qualification_pending"
+  },
+  "repository": {
+    "gated": false,
+    "modelIndexClass": "AuraFlowPipeline",
+    "private": false,
+    "pythonFilesPresent": false,
+    "repository": "fal/AuraFlow-v0.3",
+    "repositoryBytes": 65964186183,
+    "revision": "2cd8588f04c886002be4571697d84654a50e3af3",
+    "trustRemoteCodeRequired": false,
+    "weightBytes": 16835036374,
+    "weightFileCount": 4,
+    "weightInventorySha256": "08b20538fd7658fe123c9ddcee3751abebb1c979e65e74990c57f2a177495e90"
+  },
+  "schemaVersion": 1,
+  "weightFiles": [
+    {
+      "byteSize": 2950448704,
+      "path": "text_encoder/model.fp16.safetensors",
+      "sha256": "decf9b70814ed5e9965bfca9fbd0483462e2bf743790663025b7742f8c014c72"
+    },
+    {
+      "byteSize": 9942269216,
+      "path": "transformer/diffusion_pytorch_model-00001-of-00002.fp16.safetensors",
+      "sha256": "6a40b011f287452dbca80face78e667055904c5ad97eb2097ade3200259b2203"
+    },
+    {
+      "byteSize": 3774983112,
+      "path": "transformer/diffusion_pytorch_model-00002-of-00002.fp16.safetensors",
+      "sha256": "e46f7a419b9531c293398d8ac012e10fe99f98228bdd71ce0b7dbb51688a36c0"
+    },
+    {
+      "byteSize": 167335342,
+      "path": "vae/diffusion_pytorch_model.fp16.safetensors",
+      "sha256": "bcb60880a46b63dea58e9bc591abe15f8350bde47b405f9c38f4be70c6161e68"
+    }
+  ]
+}

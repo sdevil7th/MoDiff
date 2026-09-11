@@ -438,6 +438,18 @@ def _exact_adapter_name(value: Any) -> str:
     return value
 
 
+def generated_lora_adapter_name(name_seed: str, node_id: str) -> str:
+    """Stable generated identity that is legal as a PyTorch ModuleDict key."""
+    original = f"{name_seed or 'lora'}_{node_id}"
+    safe = re.sub(r"[^A-Za-z0-9_-]", "_", original)
+    if safe == original and len(safe) <= 256:
+        return safe
+    # Keep sanitized filenames and nested graph identities distinct; the
+    # artifact's original filename remains unchanged in the descriptor.
+    digest = hashlib.sha256(original.encode("utf-8")).hexdigest()[:16]
+    return f"{safe[:239]}_{digest}"
+
+
 def _exact_scale(value: Any) -> float:
     if isinstance(value, bool):
         raise ValueError("A LoRA scale must be a finite number between -20 and 20.")
@@ -677,6 +689,37 @@ def _graph_param_value(node: Mapping[str, Any], key: str, default: Any = None) -
     return param.get("value", param.get("default", default))
 
 
+def lora_resource_requirement(node_id: str, node: Mapping[str, Any]) -> dict[str, Any]:
+    """Inspect pinned Modular LoRA bytes and shapes without loading tensors.
+
+    Budget float32 copies for loading/conversion plus the largest dense update.
+    Shape compatibility remains the existing Diffusers adapter boundary's job.
+    """
+    if (node.get("module"), node.get("action")) != ("modules.ModularDiffusers", "Lora"):
+        raise ValueError("This adapter does not declare a workflow Auto memory envelope.")
+    params = node.get("params", {})
+    if any(isinstance(param, Mapping) and param.get("sourceId") for param in params.values()):
+        raise ValueError("Auto needs the adapter's exact artifact and settings before model loading.")
+    # Reuse all path, hash, scheduler and scalar checks from graph admission.
+    receipt = controlled_lora_receipts_from_graph({"nodes": {node_id: node}, "paths": [[node_id]]})[0]
+    selection = _graph_param_value(node, "model")
+    artifact = receipt["artifact"]
+    if artifact["source"] == "hub":
+        alias, _ = _managed_hub_alias(artifact["repository"], artifact["revision"], artifact["weightName"])
+    else:
+        _, alias, _ = _local_selection_alias(selection.get("value"), _graph_param_value(node, "weight_name"))
+    from safetensors import safe_open
+
+    with safe_open(alias, framework="np", device="cpu") as handle:
+        shapes = [handle.get_slice(key).get_shape() for key in handle.keys()]
+    elements = sum(math.prod(shape) for shape in shapes)
+    # A LoRA rank decomposition can produce a dense matrix larger than either
+    # factor. The largest dimension squared bounds that temporary update.
+    largest_dimension = max((max(shape, default=0) for shape in shapes), default=0)
+    budget = elements * 4 * 3 + largest_dimension * largest_dimension * 4
+    return {"systemRamBytes": budget, "vramBytes": budget, "artifact": artifact, "tensorCount": len(shapes)}
+
+
 def controlled_lora_receipts_from_graph(graph: Any) -> list[dict[str, Any]]:
     """Validate executable controlled LoRA nodes and return exact safe receipts.
 
@@ -754,7 +797,7 @@ def controlled_lora_receipts_from_graph(graph: Any) -> list[dict[str, Any]]:
                 name_seed = PurePosixPath(
                     str(selection.get("value") or "").replace("\\", "/")
                 ).stem
-            adapter_name = f"{name_seed or 'lora'}_{node_id}"
+            adapter_name = generated_lora_adapter_name(name_seed, node_id)
         else:
             adapter_name = _graph_param_value(node, "adapter_name", default_adapter_name)
 

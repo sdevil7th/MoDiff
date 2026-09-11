@@ -23,12 +23,34 @@
       "type": "default"
     },
     {
+      "className": "category-modular_route_state",
+      "data": {
+        "connectionType": "modular_route_state"
+      },
+      "edgeType": "default",
+      "id": "edge-02",
+      "markerEnd": {
+        "color": "hsl(49 76% 70%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-01",
+      "sourceHandle": "route_state_out",
+      "style": {
+        "stroke": "hsl(49 76% 70%)"
+      },
+      "target": "node-04",
+      "targetHandle": "route_state_in",
+      "type": "default"
+    },
+    {
       "className": "category-diffusers_auto_model",
       "data": {
         "connectionType": "diffusers_auto_model"
       },
       "edgeType": "default",
-      "id": "edge-02",
+      "id": "edge-03",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
@@ -50,7 +72,7 @@
         "connectionType": "image"
       },
       "edgeType": "default",
-      "id": "edge-03",
+      "id": "edge-04",
       "markerEnd": {
         "color": "#60A5FA",
         "height": 18,
@@ -72,7 +94,7 @@
         "connectionType": "latents"
       },
       "edgeType": "default",
-      "id": "edge-04",
+      "id": "edge-05",
       "markerEnd": {
         "color": "#6366F1",
         "height": 18,
@@ -89,12 +111,34 @@
       "type": "default"
     },
     {
+      "className": "category-modular_route_state",
+      "data": {
+        "connectionType": "modular_route_state"
+      },
+      "edgeType": "default",
+      "id": "edge-06",
+      "markerEnd": {
+        "color": "hsl(49 76% 70%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-04",
+      "sourceHandle": "route_state_out",
+      "style": {
+        "stroke": "hsl(49 76% 70%)"
+      },
+      "target": "node-03",
+      "targetHandle": "route_state_in",
+      "type": "default"
+    },
+    {
       "className": "category-image",
       "data": {
         "connectionType": "image"
       },
       "edgeType": "default",
-      "id": "edge-05",
+      "id": "edge-07",
       "markerEnd": {
         "color": "#60A5FA",
         "height": 18,
@@ -116,7 +160,7 @@
         "connectionType": "diffusers_auto_model"
       },
       "edgeType": "default",
-      "id": "edge-06",
+      "id": "edge-08",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
@@ -138,7 +182,7 @@
         "connectionType": "diffusers_auto_models"
       },
       "edgeType": "default",
-      "id": "edge-07",
+      "id": "edge-09",
       "markerEnd": {
         "color": "#8B5CF6",
         "height": 18,
@@ -160,7 +204,7 @@
         "connectionType": "diffusers_auto_model"
       },
       "edgeType": "default",
-      "id": "edge-08",
+      "id": "edge-10",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
@@ -182,7 +226,7 @@
         "connectionType": "diffusers_auto_model"
       },
       "edgeType": "default",
-      "id": "edge-09",
+      "id": "edge-11",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
@@ -204,7 +248,7 @@
         "connectionType": "diffusers_auto_model"
       },
       "edgeType": "default",
-      "id": "edge-10",
+      "id": "edge-12",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
@@ -226,7 +270,7 @@
         "connectionType": "embeddings"
       },
       "edgeType": "default",
-      "id": "edge-11",
+      "id": "edge-13",
       "markerEnd": {
         "color": "#FBBF24",
         "height": 18,
@@ -246,7 +290,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "632a476788fe2dc34da4dd516319a845d7dfa09911be8f1545a36c056fc576a0",
+    "positionHash": "a83e1fa33ac5f631afcc1cf037b9850c4345c94b5ee432cca8e50a6489c23f6e",
     "verticalGap": 72
   },
   "nodes": [
@@ -292,32 +336,16 @@
             "display": "input",
             "isConnected": true,
             "label": "ControlNet Model *",
+            "signal": {
+              "direction": "output"
+            },
             "type": "diffusers_auto_model"
           },
           "controlnet_bundle": {
-            "disabled": false,
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Controlnet",
-            "onSignal": [
-              {
-                "action": "value",
-                "data": {
-                  "DummyCustomPipeline": "DummyCustomPipeline",
-                  "FluxKontextModularPipeline": "FluxKontextModularPipeline",
-                  "FluxModularPipeline": "FluxModularPipeline",
-                  "QwenImageEditModularPipeline": "QwenImageEditModularPipeline",
-                  "QwenImageEditPlusModularPipeline": "QwenImageEditPlusModularPipeline",
-                  "QwenImageModularPipeline": "QwenImageModularPipeline",
-                  "StableDiffusionXLModularPipeline": "StableDiffusionXLModularPipeline"
-                },
-                "target": "model_type"
-              },
-              {
-                "action": "exec",
-                "data": "update_node"
-              }
-            ],
             "signal": {
               "direction": "input"
             },
@@ -352,6 +380,30 @@
             "label": "Model Type",
             "type": "string",
             "value": "QwenImageModularPipeline"
+          },
+          "route_state_in": {
+            "display": "input",
+            "isConnected": false,
+            "label": "Route State",
+            "type": "modular_route_state"
+          },
+          "route_state_out": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Route State",
+            "type": "modular_route_state"
+          },
+          "seed": {
+            "default": 0,
+            "display": "random",
+            "label": "Seed",
+            "max": 4294967295,
+            "min": 0,
+            "type": "int",
+            "value": {
+              "isRandom": false,
+              "value": 5201
+            }
           },
           "vae": {
             "display": "input",
@@ -407,7 +459,7 @@
           "auto_offload": {
             "label": "Enable Auto Offload",
             "type": "boolean",
-            "value": false
+            "value": true
           },
           "device": {
             "label": "Device",
@@ -427,14 +479,6 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
-              },
-              "cuda:0": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "cuda:0",
-                "schemaVersion": 1,
-                "value": "cuda:0"
               }
             },
             "type": "string",
@@ -452,9 +496,10 @@
                 "value": "float32"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "float16 is not supported by the active runtime.",
+                "installationState": "unavailable",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -474,20 +519,59 @@
             "display": "output",
             "isConnected": true,
             "label": "Model",
+            "signal": {
+              "direction": "output",
+              "origin": "model_type"
+            },
             "type": "diffusers_auto_model"
           },
           "model_id": {
+            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "filter": {
                 "hub": {
                   "className": [
-                    ""
+                    "ControlNetModel",
+                    "ControlNetUnionModel",
+                    "ControlNetXSAdapter",
+                    "CosmosControlNetModel",
+                    "FluxControlNetModel",
+                    "FluxMultiControlNetModel",
+                    "HunyuanDiT2DControlNetModel",
+                    "HunyuanDiT2DMultiControlNetModel",
+                    "MultiControlNetModel",
+                    "MultiControlNetUnionModel",
+                    "QwenImageControlNetModel",
+                    "QwenImageMultiControlNetModel",
+                    "SD3ControlNetModel",
+                    "SD3MultiControlNetModel",
+                    "SanaControlNetModel",
+                    "SparseControlNetModel",
+                    "UNetControlNetXSModel",
+                    "ZImageControlNetModel"
                   ]
                 },
                 "local": {
                   "className": [
-                    ""
+                    "ControlNetModel",
+                    "ControlNetUnionModel",
+                    "ControlNetXSAdapter",
+                    "CosmosControlNetModel",
+                    "FluxControlNetModel",
+                    "FluxMultiControlNetModel",
+                    "HunyuanDiT2DControlNetModel",
+                    "HunyuanDiT2DMultiControlNetModel",
+                    "MultiControlNetModel",
+                    "MultiControlNetUnionModel",
+                    "QwenImageControlNetModel",
+                    "QwenImageMultiControlNetModel",
+                    "SD3ControlNetModel",
+                    "SD3MultiControlNetModel",
+                    "SanaControlNetModel",
+                    "SparseControlNetModel",
+                    "UNetControlNetXSModel",
+                    "ZImageControlNetModel"
                   ]
                 }
               },
@@ -505,14 +589,8 @@
             }
           },
           "model_type": {
+            "disabled": false,
             "label": "Model Type",
-            "onChange": [
-              "set_filters",
-              {
-                "action": "signal",
-                "target": "model"
-              }
-            ],
             "options": {
               "": {
                 "availability": "installed",
@@ -612,7 +690,7 @@
               }
             ],
             "type": "string",
-            "value": "none"
+            "value": "model_cpu"
           },
           "revision": {
             "description": "Required exact lowercase 40-character commit hash for every Hub component.",
@@ -621,11 +699,13 @@
             "value": "b13036f066d6dee7c20513e263d3d673055e9de8"
           },
           "subfolder": {
+            "disabled": false,
             "label": "Subfolder",
             "type": "string",
             "value": ""
           },
           "trust_remote_code": {
+            "description": "Repository code execution is disabled for standalone components.",
             "label": "Trust Remote Code",
             "type": "boolean",
             "value": false
@@ -676,7 +756,7 @@
       "id": "node-02",
       "position": {
         "x": 0,
-        "y": 1000
+        "y": 1056
       },
       "type": "custom"
     },
@@ -712,12 +792,17 @@
             "label": "Latents *",
             "type": "latents"
           },
+          "route_state_in": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Route State",
+            "type": "modular_route_state"
+          },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
-            "onSignal": "update_node",
             "signal": {
               "direction": "output"
             },
@@ -739,7 +824,7 @@
       "id": "node-03",
       "position": {
         "x": 1320,
-        "y": 584
+        "y": 612
       },
       "type": "custom"
     },
@@ -782,7 +867,6 @@
           "guidance_scale": {
             "default": 4.5,
             "display": "slider",
-            "hidden": false,
             "label": "Guidance Scale",
             "max": 30,
             "min": 1,
@@ -794,12 +878,6 @@
             "display": "input",
             "isConnected": false,
             "label": "Guider",
-            "onChange": {
-              "false": [
-                "guidance_scale"
-              ],
-              "true": []
-            },
             "signal": {
               "direction": "input",
               "origin": "unet"
@@ -808,7 +886,6 @@
           },
           "height": {
             "default": 1024,
-            "hidden": false,
             "label": "Height",
             "min": 64,
             "step": 8,
@@ -819,15 +896,6 @@
             "display": "input",
             "isConnected": false,
             "label": "Image Latents",
-            "onChange": {
-              "false": [
-                "height",
-                "width"
-              ],
-              "true": [
-                "strength"
-              ]
-            },
             "type": "latents"
           },
           "latents": {
@@ -845,10 +913,25 @@
             "type": "int",
             "value": 36
           },
+          "route_state_in": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Route State",
+            "type": "modular_route_state"
+          },
+          "route_state_out": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Route State",
+            "type": "modular_route_state"
+          },
           "scheduler": {
             "display": "input",
             "isConnected": true,
             "label": "Scheduler *",
+            "signal": {
+              "direction": "output"
+            },
             "type": "diffusers_auto_model"
           },
           "seed": {
@@ -865,7 +948,6 @@
           },
           "strength": {
             "default": 0.5,
-            "hidden": true,
             "label": "Strength",
             "max": 1,
             "min": 0,
@@ -874,21 +956,10 @@
             "value": 0.8
           },
           "unet": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Denoise Model *",
-            "onSignal": [
-              "update_node",
-              {
-                "action": "signal",
-                "target": "guider"
-              },
-              {
-                "action": "signal",
-                "target": "controlnet_bundle"
-              }
-            ],
             "required": true,
             "signal": {
               "direction": "output"
@@ -897,7 +968,6 @@
           },
           "width": {
             "default": 1024,
-            "hidden": false,
             "label": "Width",
             "min": 64,
             "step": 8,
@@ -920,7 +990,7 @@
       "id": "node-04",
       "position": {
         "x": 880,
-        "y": 444
+        "y": 458
       },
       "type": "custom"
     },
@@ -980,7 +1050,7 @@
             },
             "label": false,
             "type": "str",
-            "value": "images/qwen_control_image_layout.control_image_e709g8.png"
+            "value": "@data/images/qwen_control_image_layout.control_image.png"
           },
           "height": {
             "display": "output",
@@ -1030,7 +1100,7 @@
       "id": "node-05",
       "position": {
         "x": 0,
-        "y": 626
+        "y": 682
       },
       "type": "custom"
     },
@@ -1051,7 +1121,7 @@
           "auto_offload": {
             "label": "Enable Auto Offload",
             "type": "boolean",
-            "value": false
+            "value": true
           },
           "device": {
             "label": "Device",
@@ -1071,14 +1141,6 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
-              },
-              "cuda:0": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "cuda:0",
-                "schemaVersion": 1,
-                "value": "cuda:0"
               }
             },
             "type": "string",
@@ -1097,9 +1159,10 @@
                 "value": "float32"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "float16 is not supported by the active runtime.",
+                "installationState": "unavailable",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -1116,12 +1179,13 @@
             "value": "bfloat16"
           },
           "image_encoder": {
+            "disabled": false,
             "display": "output",
             "isConnected": false,
             "label": "Image Encoder",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_model"
           },
@@ -1134,42 +1198,48 @@
           "model_type": {
             "disabled": false,
             "label": "Model Type",
-            "onChange": [
-              "set_filters",
-              {
-                "action": "signal",
-                "target": "unet_out"
-              },
-              {
-                "action": "signal",
-                "target": "text_encoders"
-              },
-              {
-                "action": "signal",
-                "target": "vae_out"
-              },
-              {
-                "action": "signal",
-                "target": "image_encoder"
-              }
-            ],
             "options": {
               "": "",
+              "AnimaModularPipeline": "Anima (Contract only)",
+              "Cosmos3DistilledModularPipeline": "Cosmos 3 Distilled (Contract only)",
+              "Cosmos3OmniModularPipeline": "Cosmos 3 Omni (Contract only)",
               "DummyCustomPipeline": "Custom",
+              "Flux2KleinBaseModularPipeline": "FLUX.2 Klein Base (Contract only)",
               "Flux2KleinModularPipeline": "Flux 2 Klein Distilled",
+              "Flux2ModularPipeline": "FLUX.2 (Contract only)",
               "FluxKontextModularPipeline": "Flux Kontext",
               "FluxModularPipeline": "Flux",
+              "HeliosModularPipeline": "Helios (Contract only)",
+              "HeliosPyramidDistilledModularPipeline": "Helios Pyramid Distilled (Contract only)",
+              "HeliosPyramidModularPipeline": "Helios Pyramid (Contract only)",
+              "HunyuanVideo15ModularPipeline": "HunyuanVideo 1.5 (Contract only)",
+              "Ideogram4ModularPipeline": "Ideogram 4 (Contract only)",
+              "Krea2ModularPipeline": "Krea 2 (Contract only)",
+              "Krea2TurboModularPipeline": "Krea 2 Turbo (Contract only)",
+              "LTX25ModularPipeline": "LTX-2.5 (Contract only)",
+              "LTX2ModularPipeline": "LTX-2 (Contract only)",
+              "MiniMaxH3ModularPipeline": "MiniMax H3 (Contract only)",
+              "MiniMaxMusic3ModularPipeline": "MiniMax Music 3 (Contract only)",
               "QwenImageEditModularPipeline": "Qwen-Image-Edit",
               "QwenImageEditPlusModularPipeline": "Qwen-Image-Edit-2511",
               "QwenImageLayeredModularPipeline": "Qwen-Image-Layered",
               "QwenImageModularPipeline": "Qwen-Image-2512",
+              "StableDiffusion3ModularPipeline": "Stable Diffusion 3 (Contract only)",
               "StableDiffusionXLModularPipeline": "Stable Diffusion XL",
+              "WanAnimate2DistilledModularPipeline": "Wan Animate 2 Distilled (Contract only)",
+              "WanAnimate2ModularPipeline": "Wan Animate 2 (Contract only)",
               "WanImage2VideoModularPipeline": "WAN2 I2V",
               "WanModularPipeline": "WAN2 T2V",
               "ZImageModularPipeline": "Z-Image"
             },
             "type": "string",
             "value": "QwenImageModularPipeline"
+          },
+          "modiff_pipeline_identity": {
+            "hidden": true,
+            "label": "Custom Pipeline Identity",
+            "type": "object",
+            "value": null
           },
           "offload_mode": {
             "default": "model_cpu",
@@ -1217,13 +1287,19 @@
               }
             ],
             "type": "string",
-            "value": "none"
+            "value": "model_cpu"
           },
           "quant_config": {
             "display": "input",
             "isConnected": false,
             "label": "Quant Config",
             "type": "quant_config"
+          },
+          "refresh_pipeline_identity_button": {
+            "display": "ui_button",
+            "hidden": true,
+            "label": "Review and Refresh Custom Contract",
+            "value": false
           },
           "repo_id": {
             "disabled": false,
@@ -1249,23 +1325,38 @@
               "value": "Qwen/Qwen-Image-2512"
             }
           },
+          "revision": {
+            "description": "Required exact 40-character commit hash for Hub custom contracts.",
+            "disabled": false,
+            "label": "Revision",
+            "type": "string",
+            "value": "25468b98e3276ca6700de15c6628e51b7de54a26"
+          },
           "scheduler": {
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Scheduler",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity"
+            },
             "type": "diffusers_auto_model"
           },
           "text_encoders": {
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Text Encoders",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_models"
           },
           "trust_remote_code": {
+            "description": "Repository code execution is disabled; keep this off for contract preview.",
+            "disabled": false,
             "label": "Trust Remote Code",
             "type": "boolean",
             "value": false
@@ -1277,12 +1368,13 @@
             "type": "diffusers_auto_model"
           },
           "unet_out": {
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Denoise Model",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_model"
           },
@@ -1293,20 +1385,15 @@
             "type": "diffusers_auto_model"
           },
           "vae_out": {
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "VAE",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_model"
-          },
-          "revision": {
-            "label": "Revision",
-            "type": "string",
-            "default": "",
-            "value": "25468b98e3276ca6700de15c6628e51b7de54a26"
           }
         },
         "resizable": true,
@@ -1344,7 +1431,7 @@
         "module": "modules.Image",
         "params": {
           "device": {
-            "default": "cuda:0",
+            "default": "cpu:0",
             "hidden": true,
             "options": {
               "cpu": {
@@ -1362,14 +1449,6 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
-              },
-              "cuda:0": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "cuda:0",
-                "schemaVersion": 1,
-                "value": "cuda:0"
               }
             },
             "type": "string"
@@ -1388,19 +1467,6 @@
           "image": {
             "display": "input",
             "isConnected": true,
-            "onChange": {
-              "action": "show",
-              "condition": {
-                "type": "latent"
-              },
-              "data": {
-                "false": [],
-                "true": [
-                  "vae",
-                  "device"
-                ]
-              }
-            },
             "type": [
               "image",
               "latent"
@@ -1440,7 +1506,7 @@
       "id": "node-07",
       "position": {
         "x": 1760,
-        "y": 542
+        "y": 584
       },
       "type": "custom"
     },
@@ -1485,11 +1551,10 @@
             "value": "Packaging objective: turn the supplied control image into an orthographic premium folding-carton design proof for the fictional expedition notebook brand \"NORTHSTAR FIELD NOTES\". Control contract: preserve every outer flap, central and side-panel proportion, fold boundary, main front label rectangle, lower specification modules, circular feature marks, and yellow footer bars from the control image. Directly below the main label, retain two separate outlined specification boxes in their original positions: one small box on the left containing exactly one circular mark, and one wide box on the right containing exactly three circular marks. Keep all four marks inside those two front-panel boxes, never on the side panels. Keep the layout straight-on and centered; do not fold, rotate, crop, merge, relocate, or invent panels. Front-panel copy: set the exact readable brand \"NORTHSTAR FIELD NOTES\" in a compact black grotesk, with the smaller line \"EXPEDITION SERIES 04\". Use the lower modules for short technical copy and icons only; the side panels may carry restrained grid lines and small vertical product information. Material and finish: warm-white FSC paperboard, fine uncoated fiber, crisp black keylines, muted mustard-yellow technical badges, shallow blind emboss on the brand block, precise print registration, subtle scored fold channels, and physically plausible paper thickness along the outer cut edge. Presentation: neutral warm-gray proofing table, orthographic 90-degree camera, even D50 studio light with gentle relief shadows only at score lines, clean prepress/editorial art direction, generous clear space, and sharp readable print detail across the full board."
           },
           "text_encoders": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Text Encoders *",
-            "onSignal": "update_node",
             "signal": {
               "direction": "output"
             },
@@ -1517,8 +1582,8 @@
     }
   ],
   "viewport": {
-    "x": 122.84341637010675,
-    "y": 43,
-    "zoom": 0.4786476868327402
+    "x": 0,
+    "y": 0,
+    "zoom": 1
   }
 }

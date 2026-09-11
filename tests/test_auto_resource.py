@@ -24,8 +24,10 @@ from modiff.auto_resource import (  # noqa: E402
     _requirements_missing,
     _runtime_key,
     _validate_snapshot_shards,
+    artifact_cache_status,
     auto_resource_history_key,
     build_auto_resource_plan,
+    build_auto_resource_plans,
     matching_auto_resource_success_history,
     record_auto_resource_failure,
     record_auto_resource_success,
@@ -47,6 +49,21 @@ GIB = 1024**3
 
 
 class AutoResourcePlanTests(unittest.TestCase):
+    def test_batch_optional_runtime_inspection_is_shared_but_not_cached_across_requests(self):
+        payload = {"forms": [self._qwen_payload()["form"]] * 3, "hardwareOverride": self._hardware()}
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch("modiff.diffusers_profiles.optional_runtime_target", return_value=("linux", "x86_64")),
+            patch("modiff.optional_runtime_execution.public_optional_runtime_catalog", return_value={}) as catalog,
+        ):
+            first = build_auto_resource_plans(payload, runtime_fingerprint=self._runtime(), local_models=[], data_dir=directory)
+            self.assertEqual(catalog.call_count, 1)
+            self.assertEqual(first["count"], 3)
+            requirements = [plan["optionalRuntimeRequirement"] for plan in first["plans"]]
+            self.assertTrue(all(item["state"] == "unavailable" for item in requirements))
+            build_auto_resource_plans(payload, runtime_fingerprint=self._runtime(), local_models=[], data_dir=directory)
+            self.assertEqual(catalog.call_count, 2)
+
     def test_resource_history_uses_stable_resource_fingerprint(self):
         self.assertEqual(
             _runtime_key({"fingerprint": "execution", "resourceFingerprint": "resource"}),
@@ -244,6 +261,77 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertTrue(status["complete"])
         self.assertEqual(status["missingFiles"], [])
         self.assertIn("direct weight files", status["reason"])
+
+    def test_artifact_cache_status_exposes_the_installed_revision_and_file_selection(self):
+        repo = "unit/exact-selection"
+        revision = "a" * 40
+        with tempfile.TemporaryDirectory() as cache_dir:
+            self._write_complete_snapshot(cache_dir, repo, revision)
+            repo_path = self._repo_cache_path(cache_dir, repo)
+            (repo_path / ".modiff_download_plan.json").write_text(
+                json.dumps(
+                    {
+                        "repo_id": repo,
+                        "revision": revision,
+                        "files": [{"name": "model.safetensors", "size": len(b"unit-test")}],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            status = artifact_cache_status(
+                repo,
+                [{"id": repo, "cache_dir": cache_dir, "revisions": [{"hash": revision}]}],
+            )
+
+        self.assertTrue(status["complete"])
+        self.assertEqual(status["plannedRevision"], revision)
+        self.assertEqual(status["plannedFiles"], ["model.safetensors"])
+
+    def test_artifact_cache_status_recovers_an_installed_catalog_pin_from_a_legacy_plan(self):
+        repo = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
+        revision = "b8fff7315c768468a5333511427288870b2e9635"
+        with tempfile.TemporaryDirectory() as cache_dir:
+            self._write_complete_snapshot(cache_dir, repo, revision)
+            repo_path = self._repo_cache_path(cache_dir, repo)
+            (repo_path / ".modiff_download_plan.json").write_text(
+                json.dumps(
+                    {
+                        "repo_id": repo,
+                        "files": [{"name": "model.safetensors", "size": len(b"unit-test")}],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            status = artifact_cache_status(
+                repo,
+                [{"id": repo, "cache_dir": cache_dir, "revisions": [{"hash": revision}]}],
+            )
+
+        self.assertTrue(status["complete"])
+        self.assertEqual(status["plannedRevision"], revision)
+
+    def test_artifact_cache_status_does_not_assign_catalog_pin_to_another_revision(self):
+        repo = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"
+        other_revision = "c" * 40
+        with tempfile.TemporaryDirectory() as cache_dir:
+            self._write_complete_snapshot(cache_dir, repo, other_revision)
+            repo_path = self._repo_cache_path(cache_dir, repo)
+            (repo_path / ".modiff_download_plan.json").write_text(
+                json.dumps(
+                    {
+                        "repo_id": repo,
+                        "files": [{"name": "model.safetensors", "size": len(b"unit-test")}],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            status = artifact_cache_status(
+                repo,
+                [{"id": repo, "cache_dir": cache_dir, "revisions": [{"hash": other_revision}]}],
+            )
+
+        self.assertTrue(status["complete"])
+        self.assertIsNone(status["plannedRevision"])
 
     def _write_incomplete_index_snapshot(self, cache_dir, repo, revision="unit"):
         snapshot = self._repo_cache_path(cache_dir, repo) / "snapshots" / revision
@@ -636,7 +724,7 @@ class AutoResourcePlanTests(unittest.TestCase):
                 {
                     "schemaVersion": 1,
                     "id": "qwen-image-edit:edit-image:v1",
-                    "contentHash": "studio-spec-v1-ae6a6ce8",
+                    "contentHash": "studio-spec-v1-3bb31293",
                     "executionProfileId": "qwen-edit:modular",
                 },
             )
@@ -744,7 +832,7 @@ class AutoResourcePlanTests(unittest.TestCase):
             {
                 "schemaVersion": 1,
                 "id": "z-image:text-to-image:v1",
-                "contentHash": "studio-spec-v1-0d3c1205",
+                "contentHash": "studio-spec-v1-adcead30",
                 "executionProfileId": "z-image:auto",
             },
         )
@@ -777,6 +865,45 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(selected["qualityTier"], "official-bf16-native-quality")
         self.assertEqual(selected["generation"]["width"], 1328)
         self.assertEqual(selected["generation"]["height"], 1328)
+
+    def test_qwen_modular_same_family_selection_is_authoritative_and_never_substituted(self):
+        base_repo = "Qwen/Qwen-Image"
+        plan = self._plan(
+            {
+                "form": {
+                    "modelType": "QwenImageModularPipeline",
+                    "mode": "modular_text_to_image",
+                    "modelRepo": base_repo,
+                    "maxSequenceLength": 512,
+                }
+            },
+            runtime=self._runtime(vram_gib=98, free_gib=96),
+            repos=[base_repo, QWEN_IMAGE_2512_REPO],
+            hardware=self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120),
+        )
+
+        self.assertEqual(plan["status"], "ready")
+        self.assertEqual(plan["selectedCandidate"]["resolvedArtifact"], base_repo)
+        self.assertTrue(
+            all(
+                candidate.get("resolvedArtifact") == base_repo
+                for candidate in plan["candidates"]
+            )
+        )
+
+        with self.assertRaisesRegex(ValueError, "not a reviewed variant"):
+            self._plan(
+                {
+                    "form": {
+                        "modelType": "QwenImageModularPipeline",
+                        "mode": "modular_text_to_image",
+                        "modelRepo": "Qwen/Qwen-Image-Edit-2511",
+                    }
+                },
+                runtime=self._runtime(vram_gib=98, free_gib=96),
+                repos=["Qwen/Qwen-Image-Edit-2511"],
+                hardware=self._hardware(vram_gib=98, free_gib=96, system_ram_gib=120),
+            )
 
     def test_qwen_native_candidate_preserves_requested_portrait_dimensions(self):
         payload = self._qwen_payload()
@@ -1110,7 +1237,32 @@ class AutoResourcePlanTests(unittest.TestCase):
         self.assertEqual(candidate["executionPath"], "direct-diffusers-video")
         self.assertEqual(candidate["pipelineClass"], "WanImageToVideoPipeline")
         self.assertEqual(candidate["quantizedComponents"], [])
+        self.assertEqual(candidate["offloadMode"], "group_disk")
+        self.assertEqual(candidate["requirementsMissing"], [])
+
+    def test_wan_i2v_auto_rejects_every_a14b_offload_route_without_safe_headroom(self):
+        requirements = AUTO_MODEL_REQUIREMENTS["WanImageToVideoPipeline"]
+        plan = self._plan(
+            {
+                "form": {
+                    "modelType": "WanImageToVideoPipeline",
+                    "mode": "image_to_video",
+                    "offloadMode": "model_cpu",
+                },
+            },
+            runtime=self._runtime(vram_gib=2, free_gib=1.5),
+            repos=[requirements["defaultRepo"]],
+            hardware=self._shared_rocm_hardware(
+                accessible_gib=128,
+                system_ram_gib=121,
+                disk_free_gib=100,
+            ),
+        )
+
+        self.assertNotEqual(plan["status"], "ready")
+        candidate = plan["candidates"][0]
         self.assertEqual(candidate["offloadMode"], "model_cpu")
+        self.assertIn("System memory requires at least 160 GiB total", candidate["requirementsMissing"])
 
     def test_generic_auto_ignores_a_stale_expert_no_offload_value_on_constrained_hardware(self):
         requirements = AUTO_MODEL_REQUIREMENTS["AceStepAudioPipeline"]
@@ -1716,20 +1868,34 @@ class AutoResourcePlanTests(unittest.TestCase):
     def test_each_current_studio_model_has_requirements_metadata(self):
         expected = {
             "ZImageModularPipeline",
+            "ZImageModularPipeline:modular_text_to_image",
+            "ZImageModularPipeline:modular_image_to_image",
             "QwenImageModularPipeline:text_to_image",
             "QwenImageModularPipeline:control_image",
+            "QwenImageModularPipeline:image_to_image",
+            "QwenImageModularPipeline:inpainting",
+            "QwenImageModularPipeline:control_edit_image",
+            "QwenImageModularPipeline:control_inpaint",
+            "QwenImageModularPipeline",
             "QwenImageEditModularPipeline",
+            "QwenImageEditModularPipeline:modular_inpainting",
             "QwenImageEditPlusModularPipeline",
             "QwenImageLayeredModularPipeline",
             "WanVACEPipeline",
             "WanVideoPipeline",
             "WanVideoPipeline:text_to_video",
             "WanImageToVideoPipeline",
+            "WanImage2VideoModularPipeline",
+            "WanModularPipeline",
             "WanTI2VPipeline",
             "LTXVideoPipeline",
             "AceStepAudioPipeline",
             "FluxSchnellPipeline",
             "FluxDevPipeline",
+            "FluxModularPipeline",
+            "FluxKontextModularPipeline",
+            "Flux2KleinModularPipeline",
+            "Flux2KleinBaseModularPipeline",
             "Flux2KleinPipeline",
             "FluxKreaPipeline",
             "FluxKontextPipeline",
@@ -1737,6 +1903,7 @@ class AutoResourcePlanTests(unittest.TestCase):
             "FluxDepthPipeline",
             "FluxCannyPipeline",
             "FluxReduxPipeline",
+            "StableDiffusionXLModularPipeline",
         }
         self.assertEqual(expected, set(AUTO_MODEL_REQUIREMENTS))
         for key in expected:
@@ -1814,6 +1981,46 @@ class AutoResourcePlanTests(unittest.TestCase):
                 self.assertTrue(specification["loaderAction"])
                 self.assertTrue(specification["executionPath"])
 
+    def test_sdxl_union_auto_candidate_carries_the_reviewed_base_revision(self):
+        plan = self._plan(
+            {
+                "form": {
+                    "modelType": "StableDiffusionXLModularPipeline",
+                    "mode": "control_union_image",
+                    "width": 512,
+                    "height": 512,
+                    "steps": 4,
+                }
+            },
+            repos=[
+                "stabilityai/stable-diffusion-xl-base-1.0",
+                "xinsir/controlnet-union-sdxl-1.0",
+            ],
+            hardware=self._hardware(vram_gib=32, free_gib=28, system_ram_gib=64),
+        )
+
+        selected = plan["selectedCandidate"]
+        self.assertIsNotNone(selected)
+        self.assertEqual(
+            selected["artifactResolution"]["base"]["revision"],
+            "462165984030d82259a11f4367a4eed129e94a7b",
+        )
+        self.assertEqual(
+            selected["artifactResolution"]["resolved"]["revision"],
+            "462165984030d82259a11f4367a4eed129e94a7b",
+        )
+        self.assertEqual(
+            selected["modelDependencies"],
+            [
+                {
+                    "id": "sdxl-controlnet-union",
+                    "kind": "controlnet",
+                    "repo": "xinsir/controlnet-union-sdxl-1.0",
+                    "revision": "801a4a3fa3d4c936f4feea95b98607bc6726f80c",
+                }
+            ],
+        )
+
     def test_qwen_effective_targets_follow_exact_mode_profiles(self):
         expected = {
             ("QwenImageModularPipeline", "text_to_image"): (
@@ -1835,6 +2042,11 @@ class AutoResourcePlanTests(unittest.TestCase):
                 "modules.DiffusersImage",
                 "LoadPipeline",
                 "direct-diffusers-image",
+            ),
+            ("QwenImageEditModularPipeline", "modular_inpainting"): (
+                "modules.ModularDiffusers",
+                "ModelsLoader",
+                "modular-diffusers",
             ),
             ("QwenImageEditPlusModularPipeline", "edit_image"): (
                 "modules.ModularDiffusers",
@@ -1865,8 +2077,12 @@ class AutoResourcePlanTests(unittest.TestCase):
         )
         self.assertNotIn("preferredLowerMemoryRepo", edit_specification)
 
-    def test_wan_modular_remains_auto_undeclared_without_a_profile_target(self):
-        self.assertIsNone(_auto_requirements_for_pair("WanModularPipeline", "text_to_video"))
+    def test_wan_modular_uses_the_exact_modular_profile_target(self):
+        specification = _auto_requirements_for_pair("WanModularPipeline", "text_to_video")
+        self.assertEqual(specification["loaderModule"], "modules.ModularDiffusers")
+        self.assertEqual(specification["loaderAction"], "ModelsLoader")
+        self.assertEqual(specification["executionPath"], "modular-diffusers")
+        self.assertEqual(specification["pipelineClass"], "WanModularPipeline")
         plan = self._plan(
             {
                 "form": {
@@ -1877,10 +2093,9 @@ class AutoResourcePlanTests(unittest.TestCase):
                 }
             }
         )
-        self.assertFalse(plan["exactPairDeclared"])
-        self.assertIsNone(plan["selectedCandidate"])
-        self.assertIsNone(plan["candidates"][0]["loaderModule"])
-        self.assertIsNone(plan["candidates"][0]["loaderAction"])
+        self.assertTrue(plan["exactPairDeclared"])
+        self.assertEqual(plan["candidates"][0]["loaderModule"], "modules.ModularDiffusers")
+        self.assertEqual(plan["candidates"][0]["loaderAction"], "ModelsLoader")
 
     def test_resource_planner_accepts_supported_ram_vram_os_matrix(self):
         ram_tiers = (8, 16, 32, 64, 96)

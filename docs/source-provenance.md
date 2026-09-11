@@ -19,7 +19,7 @@ and are not claimed to be the exact revisions used for the original import.
 | Treatment | Paths |
 | --- | --- |
 | Prominent in-file modification comment | `README.md`, `run.sh`, `main.py`, `modiff/{NodeBase,client,config,modelstore,server}.py`, `config.example.ini`, `pyproject.toml`, `modules/__init__.py`, retained adapted sources under `modules/{Color,Image,ImageFilters,ModularDiffusers,Primitive,Spandrel,Tensor,Text,Video}/`, and `utils/{huggingface,memory_menager,paths,torch_utils}.py` |
-| Project-level notice because JSON has no comments | `data/graphs/modular_diffusers/{dynamic_node,image_to_image,multiple_image_edit,quantization,text_to_image}.json` |
+| Project-level notice because JSON has no comments | `data/graphs/modular_diffusers/{image_to_image,multiple_image_edit,quantization,text_to_image}.json`; the inherited `dynamic_node.json` was removed when its invalid repository-specific default was retired |
 | Project-level notice because files are generated or binary | historical files under `web/`; these must be regenerated from the compatible client rather than hand-edited |
 | No MoDiff-modification header because the current file matched the comparison baseline byte-for-byte during the audit | `.python-version`, `LICENSE`, `custom/.gitkeep`, `utils/image.py`, and `modules/ModularDiffusers/main.py` |
 

@@ -1,0 +1,210 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "liveQualified": false,
+    "remoteOnly": true,
+    "runtimeCatalogExposed": false,
+    "status": "reviewed_not_admitted_deprecated_noncommercial",
+    "unresolvedGates": [
+      "upstream_pipeline_deprecated_after_diffusers_0.35.2",
+      "noncommercial_research_license",
+      "backend_owned_two_stage_cascade_contract",
+      "independently_pinned_connected_pipeline_loading",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ],
+    "userVisible": false
+  },
+  "family": "Stable Cascade",
+  "format": "safetensors",
+  "genericContractReview": {
+    "candidateInputContracts": [
+      "text_to_image",
+      "image_variation"
+    ],
+    "candidateOutputKind": "image",
+    "currentMoDiffAdapterPresent": false,
+    "requiredExecutionBoundary": "separately load and pin prior and decoder, pass reviewed image embeddings between stages"
+  },
+  "license": {
+    "commercialUseAllowed": false,
+    "distributionNotice": "This Stability AI Model is licensed under the Stability AI Non-Commercial Research Community License, Copyright (c) Stability AI Ltd. All Rights Reserved.",
+    "evidence": "Identical LICENSE bytes embedded in both immutable repositories",
+    "hostedServiceAllowed": false,
+    "id": "stable-cascade-nc-community",
+    "licenseSha256": "d1aca0f2c1a212c45a3a55bdb9d35fc07b450697ab0fbd5acf4c4e062874038d",
+    "productionUseAllowed": false
+  },
+  "pinnedDiffusers": {
+    "deprecated": true,
+    "lastSupportedVersion": "0.35.2",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "sourceSha256": {
+      "combinedPipeline": "633d404a7396f635e1ec140f3202c39536b358135acf595d465eed1eb53d46b3",
+      "decoderPipeline": "3f297c13a44151e86be2a95a89c34f3ab96d5532a64aeeef00e69d27243884e7",
+      "paellaVqModel": "42ca95801a929b9591dbc73a35722cb5c1a93c0d0873d1f4cb76bc5dfd76f6c9",
+      "priorPipeline": "445fdeb40c7f3feaa3aee380715266d9a763d39c4c6b103bfca51d266f4d0e10",
+      "stableCascadeUnet": "7bb77a1a1c1b2ecc0dd0624ae99a95f98ad3af811b753342eff376aa47953815"
+    },
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContracts": {
+    "combined": {
+      "callbackOnBothStages": true,
+      "class": "StableCascadeCombinedPipeline",
+      "defaultDecoderGuidanceScale": 0.0,
+      "defaultDecoderSteps": 12,
+      "defaultHeight": 512,
+      "defaultPriorGuidanceScale": 4.0,
+      "defaultPriorSteps": 60,
+      "defaultWidth": 512,
+      "safeForImmutableAdmission": false
+    },
+    "decoder": {
+      "callbackOnStepEnd": true,
+      "class": "StableCascadeDecoderPipeline",
+      "defaultGuidanceScale": 0.0,
+      "defaultNumInferenceSteps": 10,
+      "requiredInputs": [
+        "image_embeddings"
+      ],
+      "returnType": "ImagePipelineOutput"
+    },
+    "prior": {
+      "callbackOnStepEnd": true,
+      "class": "StableCascadePriorPipeline",
+      "defaultGuidanceScale": 4.0,
+      "defaultHeight": 1024,
+      "defaultNumInferenceSteps": 20,
+      "defaultWidth": 1024,
+      "requiredOneOf": [
+        "prompt",
+        "prompt_embeds"
+      ],
+      "returnFields": [
+        "image_embeddings",
+        "prompt_embeds",
+        "prompt_embeds_pooled",
+        "negative_prompt_embeds",
+        "negative_prompt_embeds_pooled"
+      ]
+    }
+  },
+  "repositories": [
+    {
+      "fullRepositoryBytes": 33724376722,
+      "fullWeightBytes": 33711820976,
+      "fullWeightFileCount": 8,
+      "fullWeightInventorySha256": "be5d88b12163af68b66b8d97e2127666d9ef365d75537bd1caf2154533f274c1",
+      "gated": false,
+      "modelCardSha256": "d58fe66d047f52593e765e0c82b6b821fd5fc2a8f9ae1fe8825acea099e93c94",
+      "modelIndexSha256": "8e98f1353f0c9f91f145034b0d503893abb61fe1cb9f6ad24f5fe76e9e129c5f",
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "stabilityai/stable-cascade-prior",
+      "revision": "7ca32c21c3b4d4e35bbb94fcfedfb4fa2259bd91",
+      "role": "prior_stage_c",
+      "schedulerConfigSha256": "e2c72481b491f9e219ca487580f14a9c83269545dd40ce1de4174b180fdef95c",
+      "selectedWeightBytes": 9175740992,
+      "selectedWeightFileCount": 3,
+      "selectedWeightInventorySha256": "7018ce4492f68946f66b69a4d4a1cd8c495613d168be127b1918287f8b3aae1c",
+      "trustRemoteCodeRequired": false
+    },
+    {
+      "connectedPriorMetadata": "stabilityai/stable-cascade-prior",
+      "fullRepositoryBytes": 87326863435,
+      "fullWeightBytes": 87313286876,
+      "fullWeightFileCount": 25,
+      "fullWeightInventorySha256": "0d75eb49a7a9d9567ecd77e2d3657b4b3eaa7221b0084c47f36ba97d01f80fa3",
+      "gated": false,
+      "modelCardSha256": "fac1ea38330cb92617d4e46f2ddc8e117fb4db45b74786d89da40a34c91c0569",
+      "modelIndexSha256": "0c8c28b033d3f7462c7b63ba0e891efad044766a147f5fdee8257e03aaa749f9",
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "stabilityai/stable-cascade",
+      "revision": "a89f66d459ae653e3b4d4f992a7c3789d0dc4d16",
+      "role": "decoder_stages_b_a",
+      "schedulerConfigSha256": "e2c72481b491f9e219ca487580f14a9c83269545dd40ce1de4174b180fdef95c",
+      "selectedWeightBytes": 4552279604,
+      "selectedWeightFileCount": 3,
+      "selectedWeightInventorySha256": "d19c546932e5151a9d6f4048b1fe4a83c752bc5e79b1a4242adaf4bbb93ef4d8",
+      "trustRemoteCodeRequired": false
+    }
+  ],
+  "resourceEnvelope": {
+    "combinedSelectedWeightBytes": 13728020596,
+    "minimumAcceleratorMemoryBytesEstimate": 17179869184,
+    "minimumSelectiveDiskBytes": 34359738368,
+    "minimumSystemRamBytes": 34359738368,
+    "notes": [
+      "The estimate assumes the exact full-size bf16 component partitions and sequential prior/decoder model CPU offload.",
+      "The two repository snapshots contain 121,051,240,157 bytes in aggregate because they retain full precision, lite, original-format, duplicate stage, and control alternatives that are excluded from the selected partition.",
+      "No local or remote measurement has qualified this envelope."
+    ],
+    "status": "estimate_only_qualification_pending"
+  },
+  "reviewedRecipe": {
+    "decoder": {
+      "dtype": "float16",
+      "guidanceScale": 0.0,
+      "modelCpuOffload": true,
+      "numInferenceSteps": 10,
+      "variant": "bf16"
+    },
+    "height": 1024,
+    "prior": {
+      "dtype": "bfloat16",
+      "guidanceScale": 4.0,
+      "modelCpuOffload": true,
+      "numInferenceSteps": 20,
+      "variant": "bf16"
+    },
+    "route": "separate_prior_then_decoder",
+    "width": 1024
+  },
+  "schemaVersion": 1,
+  "selectedWeightFiles": {
+    "decoder": [
+      {
+        "byteSize": 3126071088,
+        "path": "decoder/diffusion_pytorch_model.bf16.safetensors",
+        "sha256": "1f9575dfa6c2535ad65733d6257d17a7b1e1b54b7eafb251ce9556595f3bc0c9"
+      },
+      {
+        "byteSize": 1389382688,
+        "path": "text_encoder/model.bf16.safetensors",
+        "sha256": "260e0127aca3c89db813637ae659ebb822cb07af71fedc16cbd980e9518dfdcd"
+      },
+      {
+        "byteSize": 36825828,
+        "path": "vqgan/diffusion_pytorch_model.bf16.safetensors",
+        "sha256": "3ac32fab5177329dac907b2480c8c00aeefc712dfd92c2d52263a9c64b426b26"
+      }
+    ],
+    "prior": [
+      {
+        "byteSize": 607980488,
+        "path": "image_encoder/model.bf16.safetensors",
+        "sha256": "e4b33d864f89a793357a768cb07d0dc18d6a14e6664f4110a0d535ca9ba78da8"
+      },
+      {
+        "byteSize": 7178377816,
+        "path": "prior/diffusion_pytorch_model.bf16.safetensors",
+        "sha256": "44a4cd9540f327f2fb4ac09179e4e87912a01cdb1b3b86c79f0f853976fb4c98"
+      },
+      {
+        "byteSize": 1389382688,
+        "path": "text_encoder/model.bf16.safetensors",
+        "sha256": "260e0127aca3c89db813637ae659ebb822cb07af71fedc16cbd980e9518dfdcd"
+      }
+    ]
+  },
+  "unsafeCombinedLoaderReason": {
+    "connectedRepositoryRevisionEmbedded": false,
+    "decoderRevision": "a89f66d459ae653e3b4d4f992a7c3789d0dc4d16",
+    "priorRevision": "7ca32c21c3b4d4e35bbb94fcfedfb4fa2259bd91",
+    "reason": "The decoder model card names the connected prior repository but does not embed its immutable revision; a single shared revision cannot identify both snapshots.",
+    "requiredBehavior": "Load prior and decoder separately with their exact revisions and pass image embeddings explicitly."
+  }
+}

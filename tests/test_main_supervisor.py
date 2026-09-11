@@ -5,6 +5,7 @@ import signal
 import sys
 from types import ModuleType, SimpleNamespace
 import unittest
+from tempfile import TemporaryDirectory
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -20,6 +21,33 @@ def load_main_module():
 
 
 class MainSupervisorTests(unittest.TestCase):
+    def setUp(self):
+        self.test_data = TemporaryDirectory(prefix="modiff-supervisor-test-")
+        self.addCleanup(self.test_data.cleanup)
+        # A port-zero supervisor is not filesystem-isolated. Startup recovery
+        # otherwise rewrites the real worker's durable queue during unit tests.
+        module = load_main_module()
+        data_patch = patch.dict(module.CONFIG.paths, {"data": self.test_data.name})
+        data_patch.start()
+        self.addCleanup(data_patch.stop)
+
+    def test_supervisor_uses_isolated_test_queue(self):
+        module = load_main_module()
+        worker = Mock(wait=Mock(return_value=0))
+        worker.poll.return_value = None
+        with (
+            patch.object(module.subprocess, "Popen", return_value=worker),
+            patch.object(module.signal, "signal"),
+            patch("modiff.supervisor_control.SupervisorController") as controller_class,
+            patch("modiff.supervisor_control.SupervisorControlServer"),
+        ):
+            controller_class.return_value.consume_restart_request.return_value = False
+            self.assertEqual(module.run_supervisor(), 0)
+        self.assertEqual(
+            controller_class.call_args.args[0],
+            Path(self.test_data.name) / "runtime" / "supervisor-queue.json",
+        )
+
     def test_importing_supervisor_never_activates_runtime_overlay(self):
         optimization_module = ModuleType("modiff.optimization_packages")
         activation = Mock(side_effect=AssertionError("supervisor imported an overlay"))
@@ -112,6 +140,31 @@ class MainSupervisorTests(unittest.TestCase):
             worker_env = call.kwargs["env"]
             self.assertEqual(command[-1], "--worker")
             self.assertEqual(worker_env["MODIFF_WORKER_SUPERVISED"], "1")
+
+    def test_unexpected_worker_exit_is_reconciled_and_replaced(self):
+        module = load_main_module()
+        workers = [
+            Mock(pid=4242, wait=Mock(return_value=-9)),
+            Mock(pid=4243, wait=Mock(return_value=0)),
+        ]
+        for worker in workers:
+            worker.poll.return_value = None
+
+        with (
+            patch.object(module.subprocess, "Popen", side_effect=workers) as popen,
+            patch.object(module.signal, "signal"),
+            patch("modiff.supervisor_control.SupervisorController") as controller_class,
+            patch("modiff.supervisor_control.SupervisorControlServer") as server_class,
+            patch.dict(os.environ, {"MODIFF_SUPERVISOR_CONTROL_PORT": "0"}),
+        ):
+            controller = controller_class.return_value
+            controller.consume_restart_request.return_value = False
+            controller.reconcile_interrupted_worker.side_effect = [False, True]
+            self.assertEqual(module.run_supervisor(), 0)
+
+        self.assertEqual(popen.call_count, 2)
+        controller.reconcile_interrupted_worker.assert_any_call(worker_pid=4242, return_code=-9)
+        server_class.return_value.close.assert_called_once_with()
 
     def test_shutdown_signal_is_forwarded_to_the_active_worker(self):
         module = load_main_module()

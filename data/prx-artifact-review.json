@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "family": "PRX",
+  "repository": {
+    "repository": "Photoroom/prx-512-t2i-sft",
+    "revision": "2996423bc26e8eaca48774fac1797484214dfea0",
+    "private": false,
+    "gated": false,
+    "pythonFilesPresent": false,
+    "pythonFilesSelected": false,
+    "trustRemoteCodeRequired": false,
+    "modelIndexClass": "PRXPipeline",
+    "reportedUsedStorageBytes": 15514095644,
+    "snapshotDownloadBytes": 15514188109,
+    "snapshotFileCount": 19,
+    "weightFileCount": 5,
+    "weightBytes": 15475492212,
+    "weightInventorySha256": "904dd28db844654bc6cafd74ab58b5900e6fa3a3f25809be247834624a4f54d1",
+    "modelCardLicenseTag": "apache-2.0",
+    "licenseFilePresent": true,
+    "noticeFilePresent": true
+  },
+  "selectedFiles": [
+    ".gitattributes",
+    "LICENSE",
+    "NOTICE",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00003.safetensors",
+    "text_encoder/model-00002-of-00003.safetensors",
+    "text_encoder/model-00003-of-00003.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer.model",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors"
+  ],
+  "weightFiles": [
+    {
+      "path": "text_encoder/model-00001-of-00003.safetensors",
+      "byteSize": 4992603592,
+      "sha256": "e7a37fef2b11c87a9a2a43c26fcd7199c1d1b203ef11e10863a56611c8fdb57f"
+    },
+    {
+      "path": "text_encoder/model-00002-of-00003.safetensors",
+      "byteSize": 4983442512,
+      "sha256": "49da6c85ed4ff10f7f1afaa5a37a0b292fdb58aa855916ef584d697155a9bf58"
+    },
+    {
+      "path": "text_encoder/model-00003-of-00003.safetensors",
+      "byteSize": 481353352,
+      "sha256": "1a6361ba65805092625aa4e2b3b8d42b810ab836682ddc8277088c9a251b4084"
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model.safetensors",
+      "byteSize": 4682786544,
+      "sha256": "73ce9d3ab7ad9cc798d50963739aaac13c2b89f5212e12acbf2a03977959cdc5"
+    },
+    {
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "byteSize": 335306212,
+      "sha256": "8c717328c8ad41faab2ccfd52ae17332505c6833cf176aad56e7b58f2c4d4c94"
+    }
+  ],
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "entries": ["path", "byteSize", "sha256"],
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "metadataBlobReceipts": {
+    "licenseGitBlob": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+    "noticeGitBlob": "29fe3a903bd80934aad1f38869143b51df5f40fa",
+    "modelIndexGitBlob": "45fcd30744d03928bf1a0932ad3dc6f2999c6955",
+    "schedulerConfigGitBlob": "cc0eff6aeeddf894383da4cb724c95b14121e240",
+    "textEncoderConfigGitBlob": "0c563254aaaa935aff04aa99a073465b21256f03",
+    "textEncoderIndexGitBlob": "3bb75fd2ea5328d9d43839a0bd4f8940c1174d92",
+    "tokenizerSpecialTokensGitBlob": "8d6368f7e735fbe4781bf6e956b7c6ad0586df80",
+    "tokenizerJsonGitBlob": "55fbda7411a5eb9973350fb98651bf5b8e037bfc",
+    "tokenizerModelGitBlob": "796efe9ab515c15e146ce7588e6d7b9b8134dbf8",
+    "tokenizerConfigGitBlob": "a40f25378d53abfc8b4fab5226b202f8f1aa41ca",
+    "transformerConfigGitBlob": "e886758a2b50f72dcf15bec2bbc0c78f94f3160a",
+    "vaeConfigGitBlob": "3d657e7d773eaf188cea3dd9896cc682a3438bed"
+  },
+  "metadataContentReceipts": {
+    "licenseSha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "noticeSha256": "409b1abdd05f14bd9817f466dfd6b0a177cafc84bf0444dc379ab74b1057d7ca",
+    "modelIndexSha256": "17149e179603dbf06ecdf405a46b997a6a72907c82a9af16a94d441f77f644c9",
+    "schedulerConfigSha256": "5a1b0ebb7ab9337ce7885fd8bc00936679fde7afaecec553eaed4bd5c0a803e5",
+    "textEncoderConfigSha256": "d21eccac54e5bee57dbd6976d01f75f736a340ee924c72193168054f7aed72bb",
+    "textEncoderIndexSha256": "d24341d7c4d9bbe4e2e600e392474defd15912e64ae2fa8b77cca2e13de68a7d",
+    "tokenizerSpecialTokensSha256": "baec30ea10906f16adb8c18af7a34023002c1746542612b8b41c9f09e1351351",
+    "tokenizerJsonSha256": "7794135caa3ea73918949c902a781cc61dab674a4b59c17d85931c77c1114cbd",
+    "tokenizerModelSha256": "61a7b147390c64585d6c3543dd6fc636906c9af3865a5548f27f31aee1d4c8e2",
+    "tokenizerConfigSha256": "16d022305a7dba121a049ee6b00d39ef550544b2c4485cd7eff2e0a8af44c6e6",
+    "transformerConfigSha256": "f1ec054d5dfc950886c35aa27dee649214af8d486525e4aaa8f4398fd67cffd3",
+    "vaeConfigSha256": "a848d53f3f142c09fb13cc997056aafb45dcc728bbe76ce8072d5526c71c623c"
+  },
+  "pinnedRuntime": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "diffusersVersion": "0.40.0.dev0",
+    "pipelineSha256": "63d787ba667bd6b03b6203536d4d04eea1d52b89f09fc3f4628ac1a3a2f32bff",
+    "transformerSha256": "94cc49a013f098e70c70d26963f032658b272baff209476e27553ad76261557c",
+    "requiredDiffusersSymbols": ["PRXPipeline", "PRXTransformer2DModel"],
+    "requiredTransformersSymbols": [
+      "GemmaTokenizerFast",
+      "transformers.models.t5gemma.modeling_t5gemma:T5GemmaEncoder"
+    ]
+  },
+  "pipelineContract": {
+    "pipelineClass": "PRXPipeline",
+    "modes": ["text_to_image"],
+    "defaultWidth": 512,
+    "defaultHeight": 512,
+    "moDiffMinimumSide": 352,
+    "moDiffMaximumSide": 704,
+    "dimensionMultiple": 32,
+    "moDiffMaximumOutputPixels": 262144,
+    "defaultNumInferenceSteps": 28,
+    "moDiffMaximumInferenceSteps": 28,
+    "defaultGuidanceScale": 5.0,
+    "maximumSequenceLength": 256,
+    "pipelineSequenceLengthParameter": "tokenizer_max_length",
+    "modelCpuOffloadSequence": "text_encoder->transformer->vae"
+  },
+  "cancellationAndSafety": {
+    "callbackOnStepEndAvailable": true,
+    "interruptFlagAvailable": false,
+    "interruptFlagReadByDenoisingLoop": false,
+    "serverStopPropagatesThroughCallback": true,
+    "packageSafetyCheckerPresent": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "notes": [
+      "The generic MoDiff step callback raises InterruptedError at a denoising-step boundary when a run is stopped.",
+      "The exact selected artifact surface contains no Python files and requires no remote-code trust.",
+      "No live output is accepted until remote safety and quality review is complete."
+    ]
+  },
+  "license": {
+    "id": "apache-2.0-plus-incorporated-gemma-terms",
+    "modelCardLicenseTag": "apache-2.0",
+    "modelSnapshotLicenseFilePresent": true,
+    "modelSnapshotNoticeFilePresent": true,
+    "licenseGitBlob": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+    "licenseSha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "noticeGitBlob": "29fe3a903bd80934aad1f38869143b51df5f40fa",
+    "noticeSha256": "409b1abdd05f14bd9817f466dfd6b0a177cafc84bf0444dc379ab74b1057d7ca",
+    "additionalTerms": ["T5-Gemma terms", "Gemma prohibited-use policy"]
+  },
+  "remoteResourceEnvelope": {
+    "status": "estimate_only_qualification_pending",
+    "minimumSnapshotDiskBytes": 19327352832,
+    "minimumSystemRamBytes": 25769803776,
+    "minimumAcceleratorMemoryBytesWithModelOffloadEstimate": 10737418240,
+    "notes": [
+      "The estimates cover the approximately 15.48 GB weight surface plus decode and framework overhead.",
+      "No local real-weight inference or generated output has qualified these estimates."
+    ]
+  },
+  "appDownloadQueue": {
+    "submittedThroughAppOnly": true,
+    "directWeightDownloadPerformed": false,
+    "olderModelsDeleted": false,
+    "preflightFreeBytes": 567349919744,
+    "preflightExistingQueuedReservationBytes": 474119351599,
+    "snapshotReservationBytes": 15514188109,
+    "reserveBytes": 68719476736,
+    "aggregateFits": true,
+    "aggregateHeadroomAfterReserveBytes": 8996903300,
+    "statusAtReview": "queued"
+  },
+  "admission": {
+    "status": "source_complete_execution_pending",
+    "runtimeCatalogExposed": true,
+    "downloadCatalogExposed": true,
+    "capabilityExposed": true,
+    "canonicalWorkflowsAdded": 1,
+    "clientSurfaceAdded": true,
+    "remoteOnly": true,
+    "liveQualified": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "unresolvedGates": [
+      "remote_real_weight_execution_and_memory_measurement",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  }
+}

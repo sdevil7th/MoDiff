@@ -19,13 +19,16 @@ import zipfile
 from modiff import optimization_packages
 from modiff import runtime_overlays
 from modiff import install as modiff_install
-from modiff.optional_runtimes import TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
+from modiff.optional_runtimes import (
+    GALLERY_MEDIA_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+)
 
 
 class RuntimeOverlayArtifactTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         self.archive_root = self.root / "artifacts"
         self.archive_root.mkdir()
         self.site_packages = self.root / "site-packages"
@@ -33,6 +36,20 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
 
     def tearDown(self):
         self.temporary.cleanup()
+
+    def test_wheel_data_directory_markers_do_not_block_reviewed_scripts(self):
+        self.assertEqual(
+            runtime_overlays._wheel_target_path("ninja-1.13.0.data"),
+            ".modiff-wheel-data/ninja-1.13.0.data",
+        )
+        self.assertEqual(
+            runtime_overlays._wheel_target_path("ninja-1.13.0.data/scripts"),
+            ".modiff-wheel-data/ninja-1.13.0.data/scripts",
+        )
+        self.assertEqual(
+            runtime_overlays._wheel_target_path("ninja-1.13.0.data/scripts/ninja"),
+            "bin/ninja",
+        )
 
     @staticmethod
     def _with_complete_record(members, dist_info):
@@ -351,6 +368,93 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
             self.assertRaisesRegex(RuntimeError, "artifact lock is invalid"),
         ):
             optimization_packages._artifact_install_plan(replace(profile, artifact_locks=tuple(malformed)))
+
+    def test_gallery_media_runtime_has_exact_opencv_and_pyav_linux_wheels(self):
+        from packaging import tags
+
+        profile = optimization_packages.OPTIONAL_RUNTIME_PROFILES[
+            GALLERY_MEDIA_RUNTIME_PROFILE_ID
+        ]
+        linux_tags = set(
+            tags.cpython_tags(
+                python_version=(3, 12),
+                abis=["cp312"],
+                platforms=[
+                    "manylinux_2_28_x86_64",
+                    "manylinux_2_17_x86_64",
+                ],
+            )
+        ) | set(
+            tags.compatible_tags(
+                python_version=(3, 12),
+                interpreter="cp312",
+                platforms=[
+                    "manylinux_2_28_x86_64",
+                    "manylinux_2_17_x86_64",
+                ],
+            )
+        )
+        with (
+            mock.patch.object(optimization_packages, "_platform_name", return_value="linux"),
+            mock.patch.object(optimization_packages, "_machine_name", return_value="x86_64"),
+            mock.patch.object(tags, "sys_tags", return_value=iter(linux_tags)),
+        ):
+            selected = optimization_packages._artifact_install_plan(profile)
+        self.assertEqual(len(selected), 12)
+        self.assertEqual(
+            [item["distribution"] for item in selected[-2:]],
+            ["opencv-python-headless", "av"],
+        )
+        self.assertEqual(
+            selected[-2]["sha256"],
+            "ed709fdf9aa0bd1f2ed8549e71d19449b03a675bb581eb292285f6861953be37",
+        )
+        self.assertEqual(
+            selected[-1]["sha256"],
+            "8a032e8d8ebc73dec079364b9b4a6837638a2d106e8472314e685ffbf163e700",
+        )
+
+    def test_gallery_composite_alias_requires_both_current_exact_digests(self):
+        gallery = optimization_packages.OPTIONAL_RUNTIME_PROFILES[
+            GALLERY_MEDIA_RUNTIME_PROFILE_ID
+        ]
+        main = optimization_packages.OPTIONAL_RUNTIME_PROFILES[
+            TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
+        ]
+        # The gallery composite satisfies the Linux main profile, not the
+        # cross-platform release profile used here as a negative control.
+        gallery_spec = {
+            "kind": "optional_runtime",
+            "id": gallery.id,
+            "specDigest": gallery.spec_digest,
+        }
+        main_public = {
+            "id": main.id,
+            "specDigest": main.spec_digest,
+        }
+        self.assertFalse(
+            optimization_packages._environment_spec_satisfies_optional_profile(
+                gallery_spec,
+                main_public,
+            )
+        )
+        linux_main_id, linux_main_digest = gallery.satisfies_profiles[0]
+        linux_main_public = {
+            "id": linux_main_id,
+            "specDigest": linux_main_digest,
+        }
+        self.assertTrue(
+            optimization_packages._environment_spec_satisfies_optional_profile(
+                gallery_spec,
+                linux_main_public,
+            )
+        )
+        self.assertFalse(
+            optimization_packages._environment_spec_satisfies_optional_profile(
+                {**gallery_spec, "specDigest": "sha256:" + "0" * 64},
+                linux_main_public,
+            )
+        )
 
     def test_base_installer_records_the_exact_uv_executable_for_overlay_reuse(self):
         managed = self.root / "tool-managed"
@@ -964,9 +1068,22 @@ finally:
         profile = optimization_packages.OPTIONAL_RUNTIME_PROFILES[
             TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
         ]
+        pending = replace(
+            profile,
+            contract_state="candidate_unqualified",
+            cutover_ready=False,
+            install_action_available=False,
+            activation_available=False,
+            target_contracts=(),
+        )
         selector = mock.Mock(side_effect=AssertionError("selector must not run"))
         reserve = mock.Mock(side_effect=AssertionError("lease must not be reserved"))
         with (
+            mock.patch.object(
+                optimization_packages,
+                "OPTIONAL_RUNTIME_PROFILES",
+                {pending.id: pending},
+            ),
             mock.patch.object(optimization_packages, "_artifact_install_plan", selector),
             mock.patch.object(optimization_packages, "reserve_install", reserve),
             mock.patch.object(
@@ -977,7 +1094,7 @@ finally:
             self.assertRaisesRegex(RuntimeError, "not qualified for installation"),
         ):
             optimization_packages.validate_optional_runtime_install_request(
-                profile.id, profile.spec_digest, consent=True
+                pending.id, pending.spec_digest, consent=True
             )
 
         selector.assert_not_called()
@@ -993,6 +1110,7 @@ finally:
         reserve = mock.Mock(side_effect=AssertionError("lease must not be reserved"))
         installer = mock.Mock(side_effect=AssertionError("installer must not be selected"))
         with (
+            mock.patch("modiff.optional_runtimes.optional_runtime_target", return_value=("linux", "x86_64")),
             mock.patch.object(
                 optimization_packages,
                 "OPTIONAL_RUNTIME_PROFILES",

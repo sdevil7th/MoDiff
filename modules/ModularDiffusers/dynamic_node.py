@@ -1,4 +1,5 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
+import logging
 from collections.abc import Mapping
 from copy import deepcopy
 
@@ -7,25 +8,35 @@ from .pipeline_schema import MoDiffPipelineConfig as PipelineConfig
 
 from modiff.NodeBase import NodeBase
 from modiff.diffusers_offload import (
+    DEFAULT_GROUP_COMPONENTS,
     OFFLOAD_MODE_GROUP_CPU,
     OFFLOAD_MODE_GROUP_DISK,
     OFFLOAD_MODE_MODEL_CPU,
     OFFLOAD_MODE_NONE,
+    apply_component_group_offload,
+    configure_components_manager_offload,
+    normalize_offload_mode,
     offload_mode_param,
 )
-from modiff.model_artifact_catalog import resolve_model_revision
-from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST
+from modiff.modular_workflow_discovery import (
+    reviewed_modular_workflow_contract,
+    select_modular_workflow,
+)
+from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
 
 from . import components
+from .custom_pipeline import (
+    CUSTOM_PIPELINE_IDENTITY_FIELD,
+    CustomPipelineExecutionIdentity,
+    resolve_custom_pipeline_binding,
+)
+from .loaders import record_pipeline_component_runtime_policy, reusable_component_ids
 from .modular_utils import require_immutable_hub_revision
+from .utils import collect_model_ids
 
 
 _DECLARATIVE_SIDECAR_ACTIONS = {"show", "hide", "value", "signal"}
-_EXECUTION_UNSUPPORTED_MESSAGE = (
-    "Dynamic Block Node is contract-preview only in this release. Upstream Modular configs can direct imports of "
-    "installed libraries even when trust_remote_code is disabled, so execution remains unavailable until MoDiff "
-    "has a reviewed component-library allowlist. Use the built-in generic Modular Diffusers nodes to run models."
-)
+logger = logging.getLogger("modiff")
 
 
 def _require_json_boolean_trust(value):
@@ -98,7 +109,7 @@ def _validate_sidecar_field_action(value, *, field_name, event_name, field_defin
                 )
 
 
-def _custom_node_contract(custom_config):
+def _custom_node_contract(custom_config, workflow_contract=None):
     """Return an isolated, declarative-only DynamicBlock node contract."""
 
     node_params = custom_config.node_params
@@ -144,6 +155,89 @@ def _custom_node_contract(custom_config):
         value = contract.get(text_key)
         if value is not None and not isinstance(value, str):
             raise ValueError(f"Dynamic Block sidecar custom.{text_key} must be a string when provided.")
+
+    if workflow_contract is not None:
+        if "workflow" in sanitized_params:
+            raise ValueError("Dynamic Block sidecars must not replace the backend-owned workflow selector.")
+        reviewed_workflows = workflow_contract["workflows"]
+        if not reviewed_workflows:
+            raise ValueError("The reviewed Modular workflow contract has no executable tasks.")
+        visibility = {}
+        all_workflow_fields = {
+            field["name"] for workflow in reviewed_workflows for field in workflow["inputs"]
+        }
+        all_workflow_outputs = {
+            field["name"] for workflow in reviewed_workflows for field in workflow["outputs"]
+        }
+        unknown_inputs = sorted(set(contract["input_names"]) - all_workflow_fields)
+        pipeline_output_names = {
+            name[4:] if name.startswith("out_") else name for name in contract["output_names"]
+        }
+        # ``doc`` is a framework-owned synthetic output populated from
+        # ``pipeline.blocks.doc`` after upstream execution; it is not a
+        # PipelineState field and therefore does not appear in workflow outputs.
+        pipeline_output_names.discard("doc")
+        unknown_outputs = sorted(pipeline_output_names - all_workflow_outputs)
+        if unknown_inputs or unknown_outputs:
+            details = []
+            if unknown_inputs:
+                details.append(f"inputs: {', '.join(unknown_inputs)}")
+            if unknown_outputs:
+                details.append(f"outputs: {', '.join(unknown_outputs)}")
+            raise ValueError(
+                "Dynamic Block sidecar fields are absent from the reviewed upstream workflow contract ("
+                + "; ".join(details)
+                + ")."
+            )
+        sidecar_inputs = set(contract["input_names"])
+        workflows = [
+            workflow
+            for workflow in reviewed_workflows
+            if set(workflow["requiredInputs"]).issubset(sidecar_inputs)
+        ]
+        if not workflows:
+            raise ValueError("Dynamic Block sidecar cannot carry the required inputs for any reviewed workflow.")
+        for workflow in workflows:
+            input_names = {field["name"] for field in workflow["inputs"]}
+            output_names = {field["name"] for field in workflow["outputs"]}
+            visible = []
+            for field_name, definition in sanitized_params.items():
+                pipeline_name = field_name[4:] if field_name.startswith("out_") else field_name
+                display = definition.get("display")
+                if field_name in contract["model_input_names"]:
+                    visible.append(field_name)
+                elif display == "output" and pipeline_name in output_names:
+                    visible.append(field_name)
+                elif field_name in input_names:
+                    visible.append(field_name)
+                elif display != "output" and field_name not in all_workflow_fields:
+                    visible.append(field_name)
+            visibility[workflow["taskId"]] = visible
+        first_task = workflows[0]["taskId"]
+        initially_visible = set(visibility[first_task])
+        managed_fields = {
+            field_name
+            for field_name, definition in sanitized_params.items()
+            if field_name in all_workflow_fields
+            or (
+                definition.get("display") == "output"
+                and (field_name[4:] if field_name.startswith("out_") else field_name) in all_workflow_outputs
+            )
+        }
+        for field_name in managed_fields:
+            sanitized_params[field_name]["hidden"] = field_name not in initially_visible
+        sanitized_params = {
+            "workflow": {
+                "label": "Task",
+                "type": "string",
+                "value": first_task,
+                "options": {workflow["taskId"]: workflow["label"] for workflow in workflows},
+                "onChange": {"action": "show", "data": visibility},
+                "description": "Tasks and fields come from the reviewed pinned upstream workflow contract.",
+            },
+            **sanitized_params,
+        }
+        contract["params"] = sanitized_params
     return contract
 
 
@@ -187,16 +281,11 @@ class DynamicBlockNode(NodeBase):
 
     params = {
         "repo_id": {
-            "label": "Custom Block",
-            "display": "autocomplete",
+            "label": "Repository",
+            "display": "modelselect",
             "type": "string",
-            "default": "",
-            "value": "",
-            "options": {
-                "": "",
-                "diffusers/FLUX.2-klein-4B-modular": "FLUX.2-klein-4B",
-            },
-            "fieldOptions": {"noValidation": True},
+            "value": {"source": "hub", "value": ""},
+            "fieldOptions": {"noValidation": True, "sources": ["hub"]},
         },
         "load_block_button": {
             "label": "Preview Custom Block Contract",
@@ -213,13 +302,19 @@ class DynamicBlockNode(NodeBase):
             "label": "Trust Remote Code",
             "type": "boolean",
             "value": False,
-            "description": "Execution is disabled on this contract-preview-only legacy node.",
+            "description": "Repository Python requires a fresh task-scoped authorization and is not restored from workflows.",
         },
         "revision": {
             "label": "Revision",
             "type": "string",
             "value": "",
             "description": "Required immutable 40-character Hugging Face commit hash.",
+        },
+        "modiff_pipeline_identity": {
+            "label": "Reviewed Pipeline Identity",
+            "type": "object",
+            "value": None,
+            "hidden": True,
         },
         "doc": {
             "label": "Doc",
@@ -239,7 +334,6 @@ class DynamicBlockNode(NodeBase):
         super().__del__()
 
     def _get_verified_custom_config(self, repo_id, revision=None):
-        revision = resolve_model_revision(repo_id, revision)
         revision = require_immutable_hub_revision(repo_id, revision, required=True)
         return PipelineConfig.load_verified(
             repo_id,
@@ -253,8 +347,18 @@ class DynamicBlockNode(NodeBase):
         return self._get_verified_custom_config(repo_id, revision).config
 
     def update_node(self, values, ref):
-        if not values.get("repo_id", ""):
+        repo_selector = values.get("repo_id", "")
+        if isinstance(repo_selector, Mapping):
+            source = repo_selector.get("source")
+            repo_id = repo_selector.get("value")
+        else:
+            source = "hub"
+            repo_id = repo_selector
+        if source != "hub":
+            raise ValueError("Dynamic Block execution requires an immutable Hub repository selection.")
+        if not isinstance(repo_id, str) or not repo_id.strip():
             self.send_node_definition({})
+            self.set_field_value({CUSTOM_PIPELINE_IDENTITY_FIELD: None})
             return
 
         trust_remote_code = _require_json_boolean_trust(values.get("trust_remote_code", False))
@@ -263,10 +367,19 @@ class DynamicBlockNode(NodeBase):
                 "Dynamic Block contract preview requires Trust Remote Code off; repository code is not "
                 "authorized by this legacy node."
             )
-        repo_id = values.get("repo_id", "")
+        repo_id = repo_id.strip()
         revision = values.get("revision")
-        verified_config = self._get_verified_custom_config(repo_id, revision)
-        node_config = _custom_node_contract(verified_config.config)
+        revision = require_immutable_hub_revision(repo_id, revision, required=True)
+        binding = resolve_custom_pipeline_binding(
+            source="hub",
+            repo_id=repo_id,
+            revision=revision,
+            trust_remote_code=False,
+            expected_identity=None,
+        )
+        workflow_contract = reviewed_modular_workflow_contract(binding.execution_contract.pipeline_class_name)
+        node_config = _custom_node_contract(binding.pipeline_config(), workflow_contract)
+        self.set_field_value({CUSTOM_PIPELINE_IDENTITY_FIELD: binding.identity.to_dict()})
 
         custom_params = node_config["params"]
         self._model_input_names = node_config.get("model_input_names", [])
@@ -291,7 +404,132 @@ class DynamicBlockNode(NodeBase):
         trust_remote_code,
         offload_mode=OFFLOAD_MODE_MODEL_CPU,
         revision=None,
+        modiff_pipeline_identity=None,
         **kwargs,
     ):
         _require_json_boolean_trust(trust_remote_code)
-        raise ValueError(_EXECUTION_UNSUPPORTED_MESSAGE)
+        if trust_remote_code:
+            raise ValueError(
+                "Repository Python requires a fresh task-scoped operator authorization; imported workflow data "
+                "and a persisted trust checkbox are not consent."
+            )
+        if not isinstance(repo_id, Mapping) or repo_id.get("source") != "hub":
+            raise ValueError("Dynamic Block execution requires an explicit immutable Hub repository selection.")
+        repository = repo_id.get("value")
+        if not isinstance(repository, str) or not repository.strip():
+            raise ValueError("Dynamic Block execution requires a non-empty Hub repository ID.")
+        if not isinstance(modiff_pipeline_identity, Mapping):
+            raise ValueError(
+                "Dynamic Block execution requires a backend-issued reviewed identity. Preview the repository first."
+            )
+        identity = CustomPipelineExecutionIdentity.from_value(modiff_pipeline_identity)
+        binding = resolve_custom_pipeline_binding(
+            source="hub",
+            repo_id=repository.strip(),
+            revision=str(revision or "").strip() or None,
+            trust_remote_code=False,
+            expected_identity=identity,
+        )
+        offload_mode = normalize_offload_mode(offload_mode, auto_offload=auto_offload, device=device)
+        if offload_mode not in {
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        }:
+            raise ValueError(f"Dynamic Modular Diffusers blocks do not support {offload_mode} offload.")
+
+        custom_config = binding.pipeline_config()
+        workflow_contract = reviewed_modular_workflow_contract(binding.execution_contract.pipeline_class_name)
+        node_config = _custom_node_contract(custom_config, workflow_contract)
+        available_task_ids = node_config["params"]["workflow"]["options"]
+        task_id = kwargs.pop("workflow", next(iter(available_task_ids)))
+        if task_id not in available_task_ids:
+            raise ValueError(f"Unknown Modular workflow task {task_id!r}, or task unsupported by this sidecar.")
+        workflow = select_modular_workflow(workflow_contract, task_id, kwargs)
+        pipeline = binding.instantiate(components_manager=components, collection=self.node_id)
+        torch_dtype = str_to_dtype(custom_config.default_dtype or "bfloat16")
+        configure_components_manager_offload(components, mode=offload_mode, device=device)
+
+        for param_name, param_config in node_config["params"].items():
+            if param_name not in kwargs or kwargs[param_name] is None:
+                continue
+            if param_config.get("type") == "float":
+                kwargs[param_name] = float(kwargs[param_name])
+            elif param_config.get("type") == "int":
+                kwargs[param_name] = int(kwargs[param_name])
+
+        model_input_names = node_config.get("model_input_names", [])
+        expected_component_names = pipeline.pretrained_component_names
+        model_ids = collect_model_ids(
+            kwargs,
+            target_key_names=model_input_names,
+            target_model_names=expected_component_names,
+        )
+        components_update_dict = (
+            components.get_components_by_ids(ids=model_ids, return_dict_with_names=True) if model_ids else {}
+        )
+        components_to_load = []
+        for component_name in pipeline.pretrained_component_names:
+            if component_name in components_update_dict:
+                continue
+            component_spec = pipeline.get_component_spec(component_name)
+            reusable_ids = reusable_component_ids(
+                components,
+                name=component_name,
+                load_id=component_spec.load_id,
+                dtype=torch_dtype,
+                requested_quantization=None,
+                offload_mode=offload_mode,
+                device=device,
+                node_id=self.node_id,
+            )
+            if reusable_ids:
+                components_update_dict[component_name] = components.get_one(component_id=reusable_ids[0])
+            else:
+                components_to_load.append(component_name)
+        pipeline.update_components(**components_update_dict)
+        pipeline.load_components(names=components_to_load, torch_dtype=torch_dtype)
+
+        if offload_mode in {OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK}:
+            result = apply_component_group_offload(
+                pipeline,
+                component_names=DEFAULT_GROUP_COMPONENTS,
+                device=device,
+                mode=offload_mode,
+                node_id=self.node_id,
+                scope="dynamic-modular",
+            )
+            if not result.applied:
+                raise RuntimeError("No compatible custom Modular Diffusers component was available to offload.")
+        elif offload_mode == OFFLOAD_MODE_NONE:
+            pipeline.to(device)
+        record_pipeline_component_runtime_policy(
+            pipeline,
+            offload_mode=offload_mode,
+            device=device,
+            node_id=self.node_id,
+        )
+
+        workflow_input_names = {field["name"] for field in workflow["inputs"]}
+        inputs = {
+            name: kwargs[name]
+            for name in node_config["input_names"]
+            if name in workflow_input_names and name in kwargs
+        }
+        workflow_output_names = {field["name"] for field in workflow["outputs"]}
+        output_pairs = [
+            (name, name[4:] if name.startswith("out_") else name)
+            for name in node_config["output_names"]
+            if (name[4:] if name.startswith("out_") else name) in workflow_output_names
+        ]
+        node_output_names = [name for name, _ in output_pairs]
+        pipeline_output_names = [name for _, name in output_pairs]
+        pipeline_outputs = pipeline(**inputs, output=pipeline_output_names)
+        final_outputs = {
+            node_name: pipeline_outputs[pipeline_name]
+            for node_name, pipeline_name in zip(node_output_names, pipeline_output_names)
+            if pipeline_name in pipeline_outputs
+        }
+        final_outputs["doc"] = pipeline.blocks.doc
+        return final_outputs

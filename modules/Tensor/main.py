@@ -2,6 +2,82 @@
 import torch
 from modiff.NodeBase import NodeBase
 
+class SeededGenerator(NodeBase):
+    """Create a fresh Torch Generator for explicit Diffusers generator inputs."""
+
+    label = "Seeded Generator"
+    category = "primitive"
+    params = {
+        "seed": {"label": "Seed", "type": "int", "default": 0, "min": 0, "max": 4294967295},
+        "device": {"label": "Device", "type": "string", "default": "cpu",
+                   "description": "CPU generators are portable across Diffusers CPU/CUDA/ROCm runs."},
+        "generator": {"label": "Generator", "type": "generator", "display": "output"},
+    }
+
+    def _cache_params_equal(self, previous, current):
+        # Generators are mutable: a previous consumer has advanced their state.
+        # Reusing that cached object would change the next run with an unchanged
+        # seed. One graph execution creates one generator, shared by its consumers.
+        return False
+
+    def __call__(self, **kwargs):
+        raw = kwargs.get("seed", 0)
+        try:
+            seed = int(raw)
+            if isinstance(raw, bool) or float(raw) != seed or not 0 <= seed <= 4294967295:
+                raise ValueError
+        except (TypeError, ValueError, OverflowError):
+            raise ValueError("Seed must be an integer between 0 and 4294967295.") from None
+        return super().__call__(**{**kwargs, "seed": seed})
+
+    def execute(self, **kwargs):
+        seed = kwargs.get("seed", 0)
+        device = kwargs.get("device", "cpu")
+        if isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed <= 4294967295:
+            raise ValueError("Seed must be an integer between 0 and 4294967295.")
+        try:
+            generator = torch.Generator(device=device).manual_seed(seed)
+        except (RuntimeError, TypeError, ValueError) as exc:
+            raise ValueError(f"Cannot create a Generator on device {device!r}; choose an available device or cpu.") from exc
+        return {"generator": generator}
+
+class AttentionArguments(NodeBase):
+    """Build data-only attention kwargs without exposing processors or callbacks."""
+
+    label = "Attention Arguments"
+    category = "primitive"
+    params = {
+        "attention_mask": {"label": "Attention Mask", "type": "tensor", "display": "input",
+            "description": "Optional boolean or additive Tensor. Its shape must broadcast to the consumer's attention scores and its device/dtype must match that consumer."},
+        "enable_lora_scale": {"label": "Set LoRA Scale", "type": "bool", "default": False},
+        "lora_scale": {"label": "LoRA Scale", "type": "float", "default": 1.0,
+            "min": -100.0, "max": 100.0, "step": 0.01,
+            "description": "Used only when Set LoRA Scale is enabled; does not load an adapter."},
+        "options": {"label": "Attention Arguments", "type": "object", "display": "output"},
+    }
+
+    def execute(self, attention_mask=None, enable_lora_scale=False, lora_scale=1.0, **kwargs):
+        import math
+        from modiff.attention_arguments import validate_attention_mask
+
+        if type(enable_lora_scale) is not bool:
+            raise ValueError('enable_lora_scale must be a boolean.')
+        options = {}
+        if enable_lora_scale:
+            try:
+                if isinstance(lora_scale, bool):
+                    raise ValueError
+                scale = float(lora_scale)
+                if not math.isfinite(scale) or not -100 <= scale <= 100:
+                    raise ValueError
+            except (TypeError, ValueError, OverflowError):
+                raise ValueError('lora_scale must be a finite number between -100 and 100.') from None
+            options['scale'] = scale
+        if attention_mask is not None:
+            options['attention_mask'] = validate_attention_mask(attention_mask)
+        return {"options": options}
+
+
 class AddTensorNoise(NodeBase):
     label = "Add Tensor Noise"
     category = "primitive"

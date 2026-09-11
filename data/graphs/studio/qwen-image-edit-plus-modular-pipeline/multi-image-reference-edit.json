@@ -45,12 +45,34 @@
       "type": "default"
     },
     {
+      "className": "category-modular_route_state",
+      "data": {
+        "connectionType": "modular_route_state"
+      },
+      "edgeType": "default",
+      "id": "edge-03",
+      "markerEnd": {
+        "color": "hsl(49 76% 70%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "route_state_out",
+      "style": {
+        "stroke": "hsl(49 76% 70%)"
+      },
+      "target": "node-01",
+      "targetHandle": "route_state_in",
+      "type": "default"
+    },
+    {
       "className": "category-latents",
       "data": {
         "connectionType": "latents"
       },
       "edgeType": "default",
-      "id": "edge-03",
+      "id": "edge-04",
       "markerEnd": {
         "color": "#6366F1",
         "height": 18,
@@ -67,12 +89,34 @@
       "type": "default"
     },
     {
+      "className": "category-modular_route_state",
+      "data": {
+        "connectionType": "modular_route_state"
+      },
+      "edgeType": "default",
+      "id": "edge-05",
+      "markerEnd": {
+        "color": "hsl(49 76% 70%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-03",
+      "sourceHandle": "route_state_out",
+      "style": {
+        "stroke": "hsl(49 76% 70%)"
+      },
+      "target": "node-02",
+      "targetHandle": "route_state_in",
+      "type": "default"
+    },
+    {
       "className": "category-image",
       "data": {
         "connectionType": "image"
       },
       "edgeType": "default",
-      "id": "edge-04",
+      "id": "edge-06",
       "markerEnd": {
         "color": "#60A5FA",
         "height": 18,
@@ -94,7 +138,7 @@
         "connectionType": "image"
       },
       "edgeType": "default",
-      "id": "edge-05",
+      "id": "edge-07",
       "markerEnd": {
         "color": "#60A5FA",
         "height": 18,
@@ -116,7 +160,7 @@
         "connectionType": "custom_lora"
       },
       "edgeType": "default",
-      "id": "edge-06",
+      "id": "edge-08",
       "markerEnd": {
         "color": "#F0ABFC",
         "height": 18,
@@ -138,7 +182,7 @@
         "connectionType": "diffusers_auto_model"
       },
       "edgeType": "default",
-      "id": "edge-07",
+      "id": "edge-09",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
@@ -160,7 +204,7 @@
         "connectionType": "diffusers_auto_models"
       },
       "edgeType": "default",
-      "id": "edge-08",
+      "id": "edge-10",
       "markerEnd": {
         "color": "#8B5CF6",
         "height": 18,
@@ -182,7 +226,7 @@
         "connectionType": "diffusers_auto_model"
       },
       "edgeType": "default",
-      "id": "edge-09",
+      "id": "edge-11",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
@@ -204,7 +248,7 @@
         "connectionType": "diffusers_auto_model"
       },
       "edgeType": "default",
-      "id": "edge-10",
+      "id": "edge-12",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
@@ -226,7 +270,7 @@
         "connectionType": "diffusers_auto_model"
       },
       "edgeType": "default",
-      "id": "edge-11",
+      "id": "edge-13",
       "markerEnd": {
         "color": "#A78BFA",
         "height": 18,
@@ -248,7 +292,7 @@
         "connectionType": "embeddings"
       },
       "edgeType": "default",
-      "id": "edge-12",
+      "id": "edge-14",
       "markerEnd": {
         "color": "#FBBF24",
         "height": 18,
@@ -268,7 +312,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "d3ae8841468d4e3a0ae78e3e444cc2b5377ef8f712ce152fa1a3f0c820cac5b3",
+    "positionHash": "6746a4ea00c1c6a793d0b988a5ab42e76537938bef12eddd4cb9991371a7a71c",
     "verticalGap": 72
   },
   "nodes": [
@@ -304,14 +348,19 @@
             "label": "Latents *",
             "type": "latents"
           },
+          "route_state_in": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Route State",
+            "type": "modular_route_state"
+          },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
-            "onSignal": "update_node",
             "signal": {
-              "direction": "input"
+              "direction": "output"
             },
             "type": "diffusers_auto_model"
           }
@@ -376,16 +425,6 @@
             "display": "input",
             "isConnected": false,
             "label": "Guider",
-            "onChange": {
-              "false": [
-                "guidance_scale"
-              ],
-              "true": []
-            },
-            "signal": {
-              "direction": "input",
-              "origin": "unet"
-            },
             "type": "custom_guider"
           },
           "image_latents": {
@@ -409,10 +448,25 @@
             "type": "int",
             "value": 4
           },
+          "route_state_in": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Route State",
+            "type": "modular_route_state"
+          },
+          "route_state_out": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Route State",
+            "type": "modular_route_state"
+          },
           "scheduler": {
             "display": "input",
             "isConnected": true,
             "label": "Scheduler *",
+            "signal": {
+              "direction": "output"
+            },
             "type": "diffusers_auto_model"
           },
           "seed": {
@@ -428,24 +482,13 @@
             }
           },
           "unet": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Denoise Model *",
-            "onSignal": [
-              "update_node",
-              {
-                "action": "signal",
-                "target": "guider"
-              },
-              {
-                "action": "signal",
-                "target": "controlnet_bundle"
-              }
-            ],
             "required": true,
             "signal": {
-              "direction": "input"
+              "direction": "output"
             },
             "type": "diffusers_auto_model"
           }
@@ -465,7 +508,7 @@
       "id": "node-02",
       "position": {
         "x": 1320,
-        "y": 145
+        "y": 131
       },
       "type": "custom"
     },
@@ -515,14 +558,31 @@
             "label": "Image Latents",
             "type": "latents"
           },
+          "route_state_out": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Route State",
+            "type": "modular_route_state"
+          },
+          "seed": {
+            "default": 0,
+            "display": "random",
+            "label": "Seed",
+            "max": 4294967295,
+            "min": 0,
+            "type": "int",
+            "value": {
+              "isRandom": false,
+              "value": 6201
+            }
+          },
           "vae": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "VAE *",
-            "onSignal": "update_node",
             "signal": {
-              "direction": "input"
+              "direction": "output"
             },
             "type": "diffusers_auto_model"
           }
@@ -542,7 +602,7 @@
       "id": "node-03",
       "position": {
         "x": 880,
-        "y": 360
+        "y": 346
       },
       "type": "custom"
     },
@@ -603,8 +663,8 @@
             "label": false,
             "type": "str",
             "value": [
-              "images/qwen_product_ad_composite.reference_image_1_HquO9m.webp",
-              "images/qwen_product_ad_composite.reference_image_2_UbQnUD.webp"
+              "@data/images/qwen_product_ad_composite.reference_image_1.webp",
+              "@data/images/qwen_product_ad_composite.reference_image_2.webp"
             ]
           },
           "height": {
@@ -655,7 +715,7 @@
       "id": "node-04",
       "position": {
         "x": 0,
-        "y": 346
+        "y": 374
       },
       "type": "custom"
     },
@@ -792,14 +852,6 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
-              },
-              "cuda:0": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "cuda:0",
-                "schemaVersion": 1,
-                "value": "cuda:0"
               }
             },
             "type": "string",
@@ -818,9 +870,10 @@
                 "value": "float32"
               },
               {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "float16 is not supported by the active runtime.",
+                "installationState": "unavailable",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -837,12 +890,13 @@
             "value": "bfloat16"
           },
           "image_encoder": {
+            "disabled": false,
             "display": "output",
             "isConnected": false,
             "label": "Image Encoder",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_model"
           },
@@ -855,42 +909,48 @@
           "model_type": {
             "disabled": false,
             "label": "Model Type",
-            "onChange": [
-              "set_filters",
-              {
-                "action": "signal",
-                "target": "unet_out"
-              },
-              {
-                "action": "signal",
-                "target": "text_encoders"
-              },
-              {
-                "action": "signal",
-                "target": "vae_out"
-              },
-              {
-                "action": "signal",
-                "target": "image_encoder"
-              }
-            ],
             "options": {
               "": "",
+              "AnimaModularPipeline": "Anima (Contract only)",
+              "Cosmos3DistilledModularPipeline": "Cosmos 3 Distilled (Contract only)",
+              "Cosmos3OmniModularPipeline": "Cosmos 3 Omni (Contract only)",
               "DummyCustomPipeline": "Custom",
+              "Flux2KleinBaseModularPipeline": "FLUX.2 Klein Base (Contract only)",
               "Flux2KleinModularPipeline": "Flux 2 Klein Distilled",
+              "Flux2ModularPipeline": "FLUX.2 (Contract only)",
               "FluxKontextModularPipeline": "Flux Kontext",
               "FluxModularPipeline": "Flux",
+              "HeliosModularPipeline": "Helios (Contract only)",
+              "HeliosPyramidDistilledModularPipeline": "Helios Pyramid Distilled (Contract only)",
+              "HeliosPyramidModularPipeline": "Helios Pyramid (Contract only)",
+              "HunyuanVideo15ModularPipeline": "HunyuanVideo 1.5 (Contract only)",
+              "Ideogram4ModularPipeline": "Ideogram 4 (Contract only)",
+              "Krea2ModularPipeline": "Krea 2 (Contract only)",
+              "Krea2TurboModularPipeline": "Krea 2 Turbo (Contract only)",
+              "LTX25ModularPipeline": "LTX-2.5 (Contract only)",
+              "LTX2ModularPipeline": "LTX-2 (Contract only)",
+              "MiniMaxH3ModularPipeline": "MiniMax H3 (Contract only)",
+              "MiniMaxMusic3ModularPipeline": "MiniMax Music 3 (Contract only)",
               "QwenImageEditModularPipeline": "Qwen-Image-Edit",
               "QwenImageEditPlusModularPipeline": "Qwen-Image-Edit-2511",
               "QwenImageLayeredModularPipeline": "Qwen-Image-Layered",
               "QwenImageModularPipeline": "Qwen-Image-2512",
+              "StableDiffusion3ModularPipeline": "Stable Diffusion 3 (Contract only)",
               "StableDiffusionXLModularPipeline": "Stable Diffusion XL",
+              "WanAnimate2DistilledModularPipeline": "Wan Animate 2 Distilled (Contract only)",
+              "WanAnimate2ModularPipeline": "Wan Animate 2 (Contract only)",
               "WanImage2VideoModularPipeline": "WAN2 I2V",
               "WanModularPipeline": "WAN2 T2V",
               "ZImageModularPipeline": "Z-Image"
             },
             "type": "string",
             "value": "QwenImageEditPlusModularPipeline"
+          },
+          "modiff_pipeline_identity": {
+            "hidden": true,
+            "label": "Custom Pipeline Identity",
+            "type": "object",
+            "value": null
           },
           "offload_mode": {
             "default": "model_cpu",
@@ -946,6 +1006,12 @@
             "label": "Quant Config",
             "type": "quant_config"
           },
+          "refresh_pipeline_identity_button": {
+            "display": "ui_button",
+            "hidden": true,
+            "label": "Review and Refresh Custom Contract",
+            "value": false
+          },
           "repo_id": {
             "disabled": false,
             "display": "modelselect",
@@ -970,23 +1036,38 @@
               "value": "Qwen/Qwen-Image-Edit-2511"
             }
           },
+          "revision": {
+            "description": "Required exact 40-character commit hash for Hub custom contracts.",
+            "disabled": false,
+            "label": "Revision",
+            "type": "string",
+            "value": "6f3ccc0b56e431dc6a0c2b2039706d7d26f22cb9"
+          },
           "scheduler": {
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Scheduler",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity"
+            },
             "type": "diffusers_auto_model"
           },
           "text_encoders": {
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Text Encoders",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_models"
           },
           "trust_remote_code": {
+            "description": "Repository code execution is disabled; keep this off for contract preview.",
+            "disabled": false,
             "label": "Trust Remote Code",
             "type": "boolean",
             "value": false
@@ -998,12 +1079,13 @@
             "type": "diffusers_auto_model"
           },
           "unet_out": {
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "Denoise Model",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_model"
           },
@@ -1014,20 +1096,15 @@
             "type": "diffusers_auto_model"
           },
           "vae_out": {
+            "disabled": true,
             "display": "output",
             "isConnected": true,
             "label": "VAE",
             "signal": {
               "direction": "output",
-              "origin": "model_type"
+              "origin": "modiff_pipeline_identity"
             },
             "type": "diffusers_auto_model"
-          },
-          "revision": {
-            "label": "Revision",
-            "type": "string",
-            "default": "",
-            "value": "6f3ccc0b56e431dc6a0c2b2039706d7d26f22cb9"
           }
         },
         "resizable": true,
@@ -1046,7 +1123,7 @@
       "id": "node-06",
       "position": {
         "x": 440,
-        "y": 47
+        "y": 33
       },
       "type": "custom"
     },
@@ -1065,7 +1142,7 @@
         "module": "modules.Image",
         "params": {
           "device": {
-            "default": "cuda:0",
+            "default": "cpu:0",
             "hidden": true,
             "options": {
               "cpu": {
@@ -1083,14 +1160,6 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
-              },
-              "cuda:0": {
-                "availability": "installed",
-                "compatibility": "compatible",
-                "installationState": "installed",
-                "label": "cuda:0",
-                "schemaVersion": 1,
-                "value": "cuda:0"
               }
             },
             "type": "string"
@@ -1109,19 +1178,6 @@
           "image": {
             "display": "input",
             "isConnected": true,
-            "onChange": {
-              "action": "show",
-              "condition": {
-                "type": "latent"
-              },
-              "data": {
-                "false": [],
-                "true": [
-                  "vae",
-                  "device"
-                ]
-              }
-            },
             "type": [
               "image",
               "latent"
@@ -1161,7 +1217,7 @@
       "id": "node-07",
       "position": {
         "x": 2200,
-        "y": 187
+        "y": 201
       },
       "type": "custom"
     },
@@ -1212,13 +1268,12 @@
             "value": "Create one premium magazine advertisement by combining the two supplied references. Input 1 defines the restrained editorial grid, generous warm-white margins and disciplined typography hierarchy. Input 2 defines the immutable ASTERMIST lavender sleep-spray bottle. Build a believable bedside ritual context: place exactly one ASTERMIST bottle at normal cosmetic scale on a honed limestone nightstand beside one folded linen eye mask and a small dried-lavender stem. A softly blurred bed and dawn window belong to the same quiet room; every object rests on the same physical surface with coherent perspective, contact shadows and window light. Preserve the bottle’s pale-lavender glass, liquid level, dip tube, satin-silver atomizer, clear cap and rectangular label. Keep both exact label lines readable: “ASTERMIST” and “LAVENDER SLEEP SPRAY”. Do not enlarge it into architecture, a sculpture or a surreal monument. Use Input 1 only for layout discipline. Add exactly one clean headline in the upper negative space: “NIGHT RITUAL”. Include no other campaign copy. Use black editorial type, warm stone, muted lavender and natural blue dawn light with realistic glass refraction and premium photographic grain. The output must read as one real-location commercial photograph, not a pasted packshot or fantasy composite: matching scale, lens, light direction, color spill, focus falloff and surface contact, with no collage edge, halo, floating product, unrelated scenery or arbitrary object replacement."
           },
           "text_encoders": {
-            "disabled": false,
+            "disabled": true,
             "display": "input",
             "isConnected": true,
             "label": "Text Encoders *",
-            "onSignal": "update_node",
             "signal": {
-              "direction": "input"
+              "direction": "output"
             },
             "type": "diffusers_auto_models"
           }
@@ -1238,14 +1293,14 @@
       "id": "node-08",
       "position": {
         "x": 880,
-        "y": 42
+        "y": 28
       },
       "type": "custom"
     }
   ],
   "viewport": {
-    "x": 207.46700659868026,
-    "y": 43,
-    "zoom": 0.32273545290941813
+    "x": 0,
+    "y": 0,
+    "zoom": 1
   }
 }

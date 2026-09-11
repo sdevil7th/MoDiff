@@ -1,0 +1,231 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "downloadCatalogExposed": true,
+    "executableModes": [
+      "SanaVideoPipeline:text_to_video",
+      "SanaImageToVideoPipeline:image_to_video"
+    ],
+    "galleryEligible": false,
+    "liveQualified": false,
+    "remoteOnly": true,
+    "runtimeCatalogExposed": true,
+    "status": "source_complete_execution_pending",
+    "unresolvedGates": [
+      "remote_heavy_hardware_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "excludedFamilyRepositories": [
+    {
+      "id": "original-480p-unsafe-pytorch",
+      "reason": "The original-format repository is redundant with the admitted Diffusers conversion and contains only unsafe-deserialized .pth model weights.",
+      "repository": "Efficient-Large-Model/SANA-Video_2B_480p",
+      "repositoryBytes": 8752789197,
+      "revision": "7dd4f2fcddc7db57597238d728e1f430129827ff",
+      "unsafeWeightBytes": 8752770870,
+      "unsafeWeightFiles": [
+        {
+          "byteSize": 8245160990,
+          "path": "checkpoints/SANA_Video_2B_480p.pth",
+          "sha256": "052c4022488949153fe6400631725bcb8c739362a6d34edeab26236d8a23f1e7"
+        },
+        {
+          "byteSize": 507609880,
+          "path": "vae/Wan2.1_VAE.pth",
+          "sha256": "38071ab59bd94681c686fa51d75a1968f64e470262043be31f7a094e442fd981"
+        }
+      ]
+    },
+    {
+      "id": "original-720p-unsafe-pytorch",
+      "reason": "The original-format 720p repository contains an unsafe-deserialized .pth checkpoint and is outside this bounded 480p admission.",
+      "repository": "Efficient-Large-Model/SANA-Video_2B_720p",
+      "repositoryBytes": 8234525505,
+      "revision": "dee6b63d48ebbc47682b30fcb3fb6525ea0018a6",
+      "unsafeWeightBytes": 8234507050,
+      "unsafeWeightFiles": [
+        {
+          "byteSize": 8234507050,
+          "path": "checkpoints/SANA_Video_2B_720p.pth",
+          "sha256": "f42d69586806d38bd2546d36a9f4b3dd9dedb98ced011f5e3e8e3e9349ed3e9c"
+        }
+      ]
+    },
+    {
+      "id": "diffusers-720p-unreviewed-heavy-variant",
+      "reason": "The 720p LTX2-VAE variant is a distinct 18.35 GB weight partition and is not silently substituted for the reviewed 480p Wan-VAE contract.",
+      "repository": "Efficient-Large-Model/SANA-Video_2B_720p_diffusers",
+      "repositoryBytes": 18386062862,
+      "revision": "82de0b2398cd16435d3f6621778f9e89ffa096cb",
+      "safeWeightBytes": 18347310668,
+      "safeWeightFileCount": 5
+    },
+    {
+      "id": "original-longlive-unsafe-pytorch",
+      "reason": "The minute-length LongLive source is a separate execution contract and contains unsafe-deserialized .pth weights.",
+      "repository": "Efficient-Large-Model/SANA-Video_2B_480p_LongLive",
+      "repositoryBytes": 4630936055,
+      "revision": "3ae329e6195c5184114e4dd18cb9a3f391197500",
+      "unsafeWeightBytes": 4630923100,
+      "unsafeWeightFiles": [
+        {
+          "byteSize": 4123313220,
+          "path": "checkpoints/SANA_Video_2B_480p_LongLive.pth",
+          "sha256": "31962d36ec8ec898293fe7a78f2280dea7f1b17869404178a4e11e8af673b218"
+        },
+        {
+          "byteSize": 507609880,
+          "path": "vae/Wan2.1_VAE.pth",
+          "sha256": "38071ab59bd94681c686fa51d75a1968f64e470262043be31f7a094e442fd981"
+        }
+      ]
+    },
+    {
+      "duplicatedRootAndSubfolderWeightBytes": 27927626840,
+      "id": "diffusers-longlive-duplicate-partitions",
+      "reason": "The minute-length conversion duplicates equivalent complete root and longsana subfolder partitions; neither is part of the bounded five-second admission.",
+      "repository": "Efficient-Large-Model/SANA-Video_2B_480p_LongLive_diffusers",
+      "repositoryBytes": 28005104683,
+      "revision": "bb45a523bfd675f627bf5b409776b885365f7877"
+    }
+  ],
+  "family": "SANA-Video 2B 480p",
+  "format": "safetensors",
+  "license": {
+    "acceptanceRequired": false,
+    "evidence": "The immutable model card identifies Apache-2.0 and links the repository's complete Apache License 2.0 file.",
+    "id": "apache-2.0",
+    "licenseFilePresent": true,
+    "licenseSha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  "metadataSha256": {
+    "license": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "modelCard": "371050f803e4c4bb801c1ec1f1c511040358dae9570ba67f3adee0e2cb5492c8",
+    "modelIndex": "e0a267cdbebb9fc98f562e8280899001cee05d58050f16c120126379bc53f7dd",
+    "schedulerConfig": "5dc4f825f8966ed1fb6112ac9a2544b1b63ff396e24657a0f22a8404417a0afb",
+    "textEncoderConfig": "96f080062373153486e5bf58452902fe105fa09815ed51239a1fbd3c892376db",
+    "textEncoderSafetensorsIndex": "a3d95b2242186a4acd96d0a1c38dc294d8c580c0fb37cc07ce7fa6cf0ff60d63",
+    "tokenizerConfig": "5db39e7ccbeceb1dc1136ff54d717f6f84f3556893e6cc30ee4972c408ed4dc2",
+    "transformerConfig": "36acafc6cf0aab45576d78b63fe9df09e115bd5fe73a0988785849e03170dcd2",
+    "transformerSafetensorsIndex": "b84adecb384c69fbfe5d7fc7803a7e181f2c5089085d7b79aab81a07c45c28cf",
+    "vaeConfig": "5d84a9027623f422569ce8ff36932bac7eb71d790517bcd340f66126c783f0fc"
+  },
+  "pinnedDiffusers": {
+    "autoencoderClass": "AutoencoderKLWan",
+    "autoencoderSha256": "a38de0c53adcb81887a0b48d44e3fb59737d7b1e4779a666febe83be666e8fa8",
+    "callbackOnStepEndAvailable": true,
+    "decodeOomWarningMayLeaveVideoUndefined": true,
+    "imageToVideoPipelineClass": "SanaImageToVideoPipeline",
+    "imageToVideoPipelineSha256": "e70a0ba17c6e0091b76f084b13ce81dd254d98d966733820c531de04878efa9d",
+    "modelCpuOffloadSequence": "text_encoder->transformer->vae",
+    "mpsRotaryFrequencyDtypeWorkaroundPresent": true,
+    "pipelineOutputClass": "SanaVideoPipelineOutput",
+    "pipelineOutputSha256": "e7bff68c4278a42e51cf3bc88c3ae3aef97ec2a3711c5aa5efd0955eb6e23ed7",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "schedulerClass": "DPMSolverMultistepScheduler",
+    "schedulerSha256": "0dd5333bd7b900b117d34f151adfc4b181dbb2062ca860105658037a0fe5dc06",
+    "textToVideoPipelineClass": "SanaVideoPipeline",
+    "textToVideoPipelineSha256": "4d57af9cbccc138cd86b73482a4271ba0c5646c2bb3168d70cd2b7f845521dd0",
+    "transformerClass": "SanaVideoTransformer3DModel",
+    "transformerSha256": "0773c8798efbdbf299c1f24a71aeb6810c9543722c14bbc463d2e3db057a6d0e",
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContract": {
+    "admittedGuidanceScale": 6.0,
+    "admittedHeight": 480,
+    "admittedMotionScore": 30,
+    "admittedNumFrames": 81,
+    "admittedNumInferenceSteps": 50,
+    "admittedWidth": 832,
+    "defaultGuidanceScale": 6.0,
+    "defaultHeight": 480,
+    "defaultNumFrames": 81,
+    "defaultNumInferenceSteps": 50,
+    "defaultNumVideosPerPrompt": 1,
+    "defaultWidth": 832,
+    "documentedFramesPerSecond": 16,
+    "heightWidthDivisibility": 32,
+    "imageToVideoExactlyOneOpeningImage": true,
+    "maxGuidanceScale": 12.0,
+    "maxSequenceLength": 300,
+    "modes": [
+      "text_to_video",
+      "image_to_video"
+    ],
+    "numFramesCongruence": "num_frames = 4n + 1",
+    "outputType": "pil",
+    "resolutionBinning": false,
+    "safetyCheckerPresent": false,
+    "schedulerFlowShift": 8.0,
+    "textEncoderTorchDtype": "bfloat16",
+    "transformerTorchDtype": "bfloat16",
+    "vaeTilingRequired": true,
+    "vaeTorchDtype": "float32"
+  },
+  "remoteResourceEnvelope": {
+    "minimumAcceleratorMemoryBytes": 25769803776,
+    "minimumSelectiveDiskBytes": 25769803776,
+    "minimumSystemRamBytes": 51539607552,
+    "notes": [
+      "The publisher describes deployment on RTX 5090 and reports 60-second H100 latency for 480p generation, but does not publish a peak-memory measurement for this exact Diffusers graph.",
+      "MoDiff reserves a conservative estimate-only envelope for the 13.96 GB mixed-precision partition, mandatory VAE tiling, and sequential CPU offload.",
+      "Exact memory, latency, safety, and output quality remain unqualified until a remote real-weight run is retained."
+    ],
+    "status": "estimate_only_modiff_qualification_pending"
+  },
+  "repository": {
+    "gated": false,
+    "licenseFilePresent": true,
+    "modelIndexClass": "SanaVideoPipeline",
+    "private": false,
+    "pythonFilesPresent": false,
+    "repository": "Efficient-Large-Model/SANA-Video_2B_480p_diffusers",
+    "repositoryBytes": 14002562288,
+    "repositoryFileCount": 20,
+    "revision": "db5f398b13ca086d09a50ce156c20527773841b1",
+    "safetensorsDtypeParameterCounts": {
+      "BF16": 2614341888,
+      "F32": 2183754675
+    },
+    "trustRemoteCodeRequired": false,
+    "weightBytes": 13963813420,
+    "weightFileCount": 5,
+    "weightInventorySha256": "a1101398a29242a179d8de7e7e3e228d3cbf1f264942fc7a5a6633d6850d1d9d"
+  },
+  "schemaVersion": 1,
+  "weightFiles": [
+    {
+      "byteSize": 4988024144,
+      "path": "text_encoder/model-00001-of-00002.safetensors",
+      "sha256": "e909230aabafad02d097c7dc02f2ae062b4e6b0593477c1f07679d277e09ce71"
+    },
+    {
+      "byteSize": 240691624,
+      "path": "text_encoder/model-00002-of-00002.safetensors",
+      "sha256": "48e14f6b7a917e54cabc4ff2047ac2bfe0dae663e771eed3a8acf4ea27dcac18"
+    },
+    {
+      "byteSize": 4949628208,
+      "path": "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+      "sha256": "714048c98ea3ce4debd901576ea7fdfabec8c27225011510290c984aa2bd876e"
+    },
+    {
+      "byteSize": 3277877552,
+      "path": "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+      "sha256": "a1d92ca24d0b03386b6bf050b1a532c2d2a42a374a72c2f9c64b2fab87a655af"
+    },
+    {
+      "byteSize": 507591892,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "d6e524b3fffede1787a74e81b30976dce5400c4439ba64222168e607ed19e793"
+    }
+  ]
+}

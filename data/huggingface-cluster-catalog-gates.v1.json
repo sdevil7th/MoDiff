@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "kind": "huggingface_cluster_catalog_only_execution_gates",
+  "families": [
+    {
+      "id": "cosmos-3",
+      "pipelineClasses": [
+        "Cosmos3DistilledModularPipeline",
+        "Cosmos3OmniModularPipeline"
+      ],
+      "evidencePath": "data/cosmos3-artifact-review.json",
+      "evidenceSha256": "c2f375e7a270de8661903d3fe85b84142b86a0255671e1ef05e659446ba22007",
+      "blockers": [
+        "remaining_route_specific_graph_admission",
+        "distilled_tensor_parallel_resource_and_output_qualification",
+        "cosmos_guardrail_hub_access_and_license_acknowledgement",
+        "cosmos_guardrail_optional_runtime_and_revision_binding",
+        "nano_snapshot_installation_and_resource_qualification",
+        "remote_heavy_hardware_execution",
+        "physical_macos_execution"
+      ]
+    },
+    {
+      "id": "ideogram-4",
+      "pipelineClasses": [
+        "Ideogram4ModularPipeline"
+      ],
+      "evidencePath": "data/ideogram4-source-review.json",
+      "evidenceSha256": "0339eb9bac95f69786465dd78a01d668c1cb18234b1cd0819e800fdee33c94ce",
+      "blockers": [
+        "task_scoped_ideogram4_gate_and_terms_acceptance",
+        "product_legal_approval_or_separate_commercial_agreement",
+        "authenticated_model_index_component_config_and_exact_lfs_identity_review",
+        "backend_owned_nf4_bitsandbytes_cuda_loading_contract",
+        "backend_owned_generation_guidance_and_resource_bounds",
+        "product_owned_safety_filter_human_oversight_and_disclosure_contract",
+        "remote_heavy_hardware_execution",
+        "physical_macos_execution"
+      ]
+    },
+    {
+      "id": "krea-2",
+      "pipelineClasses": [
+        "Krea2ModularPipeline",
+        "Krea2TurboModularPipeline"
+      ],
+      "evidencePath": "data/krea2-artifact-review.json",
+      "evidenceSha256": "89e3d7ffee1f0173481c708977d3668b7fcb2135b601fb6ca83b71eea3b4a299",
+      "blockers": [
+        "task_scoped_model_license_and_acceptable_use_acceptance",
+        "commercial_eligibility_and_legal_product_approval",
+        "downstream_terms_notice_and_content_filter_implementation",
+        "immutable_acceptable_use_policy_receipt",
+        "backend_owned_bounds_and_optional_runtime_contract",
+        "app_storage_capacity",
+        "remote_real_weight_execution_and_output_review",
+        "physical_macos_execution"
+      ]
+    },
+    {
+      "id": "ltx-2.5",
+      "pipelineClasses": [
+        "LTX25ModularPipeline"
+      ],
+      "evidencePath": "data/ltx-2.5-artifact-review.json",
+      "evidenceSha256": "b9d375da4f05c67f8552a0e61cbcf3d1fb096ae3d856b2bb4c8a97539f48e359",
+      "blockers": [
+        "gated_component_index_access",
+        "license_acceptance",
+        "exact_selected_partition_review",
+        "remote_heavy_hardware_execution",
+        "physical_macos_execution"
+      ]
+    },
+    {
+      "id": "stable-diffusion-3",
+      "pipelineClasses": [
+        "StableDiffusion3ModularPipeline"
+      ],
+      "evidencePath": "data/stable-diffusion-3-artifact-review.json",
+      "evidenceSha256": "da9188d4f3ee580fc610cc8e2bb0686f78d004fbf7e1209b2702350ba8a6e116",
+      "blockers": [
+        "task_scoped_license_acceptance",
+        "commercial_license_and_legal_product_approval",
+        "authenticated_model_index_and_component_review",
+        "backend_owned_bounds_and_optional_runtime_contract",
+        "app_storage_capacity",
+        "remote_real_weight_execution_and_output_review",
+        "physical_macos_execution"
+      ]
+    }
+  ],
+  "contentHash": "sha256:56d5ffd548331733c9df1af5af2e321b51b8f7a949ce2835d6e4217dc3617be1"
+}

@@ -17,6 +17,8 @@ from utils.huggingface import CONFIG
 UPSCALER_REVISION = "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094"
 ACE_REVISION = "200ba991ae448051e14b0183157e35c2d27c9fb0"
 LTX_REVISION = "7c64400e1861cc0d7b98d570a1926d5408ec60cd"
+SD15_REVISION = "451f4fe16113bff5a5d2269ed5ad43b0592e9a14"
+SD15_CONTROLNET_REVISION = "115a470d547982438f70198e353a921996e2e819"
 
 
 def _node(module, action, **params):
@@ -28,6 +30,45 @@ def _node(module, action, **params):
 
 
 class ControlledArtifactReceiptTests(unittest.TestCase):
+    def test_conditioned_image_pipeline_receipt_binds_the_auxiliary_component(self):
+        graph = {
+            "nodes": {
+                "pipeline": _node(
+                    "modules.DiffusersImage",
+                    "LoadPipeline",
+                    model_id={"source": "hub", "value": "stable-diffusion-v1-5/stable-diffusion-v1-5"},
+                    revision=SD15_REVISION,
+                    pipeline_class="StableDiffusionControlNetPipeline",
+                    mode="control_image",
+                    conditioning_kind="controlnet",
+                    conditioning_model_id={
+                        "source": "hub",
+                        "value": "lllyasviel/control_v11p_sd15_canny",
+                    },
+                    conditioning_revision=SD15_CONTROLNET_REVISION,
+                ),
+                "preview": _node("modules.Image", "Preview"),
+            },
+            "paths": [["pipeline", "preview"]],
+        }
+
+        receipts = controlled_artifact_receipts_from_graph(
+            graph,
+            primary_candidate={
+                "loaderModule": "modules.DiffusersImage",
+                "loaderAction": "LoadPipeline",
+                "pipelineClass": "StableDiffusionControlNetPipeline",
+            },
+        )
+
+        self.assertEqual(len(receipts), 1)
+        receipt = receipts[0]
+        self.assertEqual(receipt["kind"], "diffusers_conditioning_component")
+        self.assertEqual(receipt["artifact"]["revision"], SD15_CONTROLNET_REVISION)
+        self.assertEqual(receipt["componentClass"], "ControlNetModel")
+        self.assertEqual(receipt["componentParameter"], "controlnet")
+        self.assertTrue(receipt["safeSerializationRequired"])
+
     def test_executable_upscaler_is_rehashed_and_disconnected_copy_is_ignored(self):
         with tempfile.TemporaryDirectory() as directory:
             cache_root = Path(directory)

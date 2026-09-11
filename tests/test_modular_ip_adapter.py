@@ -1,16 +1,16 @@
 import inspect
 import gc
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import torch
 from diffusers import ClassifierFreeGuidance, StableDiffusionXLModularPipeline
 from diffusers.models import ImageProjection
 from diffusers.models.attention_processor import IPAdapterAttnProcessor
 from PIL import Image
-from transformers import CLIPImageProcessor
 
 from modiff.auxiliary_ip_adapter import ResolvedSDXLIPAdapter
 from modules.ModularDiffusers.ip_adapter import IPAdapter
@@ -28,6 +28,19 @@ from modules.ModularDiffusers.route_state import (
 SDXL = "StableDiffusionXLModularPipeline"
 
 
+class FixtureCLIPImageProcessor:
+    size = {"shortest_edge": 224}
+    crop_size = {"height": 224, "width": 224}
+    do_convert_rgb = True
+    do_resize = True
+    do_rescale = True
+    rescale_factor = 1 / 255
+    do_normalize = True
+    do_center_crop = True
+    image_mean = [0.48145466, 0.4578275, 0.40821073]
+    image_std = [0.26862954, 0.26130258, 0.27577711]
+
+
 class FixtureEncoder(torch.nn.Module):
     def __init__(self):
         super().__init__()
@@ -36,12 +49,12 @@ class FixtureEncoder(torch.nn.Module):
             (),
             {
                 "image_size": 224,
-                "hidden_size": 1280,
+                "hidden_size": 1664,
                 "patch_size": 14,
                 "num_channels": 3,
-                "num_hidden_layers": 32,
+                "num_hidden_layers": 48,
                 "num_attention_heads": 16,
-                "projection_dim": 1024,
+                "projection_dim": 1280,
             },
         )()
 
@@ -84,7 +97,7 @@ class FixturePipeline:
     def __init__(self, *, swap_manager=None, fail_call=False):
         self._execution_device = torch.device("cpu")
         self.blocks = type("FixtureBlocksDocument", (), {"doc": "fixture"})()
-        self.feature_extractor = CLIPImageProcessor(size=224, crop_size=224)
+        self.feature_extractor = FixtureCLIPImageProcessor()
         self.swap_manager = swap_manager
         self.fail_call = fail_call
         self.load_calls = []
@@ -98,7 +111,7 @@ class FixturePipeline:
         self.load_calls.append((path, dict(kwargs)))
         self.unet.encoder_hid_proj = type("FixtureProjection", (), {})()
         self.unet.encoder_hid_proj.image_projection_layers = torch.nn.ModuleList(
-            [ImageProjection(image_embed_dim=1024, cross_attention_dim=8, num_image_text_embeds=4)]
+            [ImageProjection(image_embed_dim=1280, cross_attention_dim=8, num_image_text_embeds=4)]
         )
         self.unet.attn_processors = {
             "down_blocks.0.attentions.0.transformer_blocks.0.attn2.processor": IPAdapterAttnProcessor(
@@ -128,8 +141,8 @@ class FixturePipeline:
             raise RuntimeError("fixture encoder failure")
         self.call_kwargs = dict(kwargs)
         return {
-            "ip_adapter_embeds": [torch.zeros((1, 1, 1024))],
-            "negative_ip_adapter_embeds": [torch.ones((1, 1, 1024))],
+            "ip_adapter_embeds": [torch.zeros((1, 1, 1280))],
+            "negative_ip_adapter_embeds": [torch.ones((1, 1, 1280))],
         }
 
 
@@ -143,6 +156,157 @@ class FixtureBlocks:
 
 
 class ModularIPAdapterTests(unittest.TestCase):
+    def test_connected_guider_schema_cannot_inject_a_local_guidance_scale(self):
+        _blocks, config = require_modiff_node_contract(
+            StableDiffusionXLModularPipeline,
+            "ip_adapter",
+            resolve_blocks=False,
+        )
+
+        self.assertNotIn("guidance_scale", config["params"])
+        self.assertNotIn("onChange", config["params"]["guider"])
+
+    def test_separate_node_instances_reuse_one_exact_managed_image_encoder(self):
+        encoder_class = type("CLIPVisionModelWithProjection", (FixtureEncoder,), {})
+        candidate = encoder_class()
+        candidate.dtype = torch.float32
+        candidate._diffusers_load_id = "h94/IP-Adapter|sdxl_models/image_encoder|null|" + "0" * 40
+        artifact = ResolvedSDXLIPAdapter(
+            repository="h94/IP-Adapter",
+            revision="0" * 40,
+            weight_name="ip-adapter_sdxl.safetensors",
+            content_sha256="1" * 64,
+            byte_size=1,
+            image_encoder_subfolder="sdxl_models/image_encoder",
+            image_encoder_class="CLIPVisionModelWithProjection",
+            load_directory=Path("/unused"),
+        )
+        nodes = (IPAdapter("first-ip-adapter"), IPAdapter("second-ip-adapter"))
+        transformers_module = type(sys)("transformers")
+        transformers_module.CLIPVisionModelWithProjection = encoder_class
+
+        with (
+            patch.dict(sys.modules, {"transformers": transformers_module}),
+            patch(
+                "modules.ModularDiffusers.ip_adapter.components.get_ids",
+                return_value=["image_encoder_fixture"],
+            ) as get_ids,
+            patch(
+                "modules.ModularDiffusers.ip_adapter.components.get_components_by_ids",
+                return_value={"image_encoder_fixture": candidate},
+            ) as get_components,
+            patch("modules.ModularDiffusers.ip_adapter.sdxl_ip_adapter_image_encoder_contract"),
+            patch("modules.ModularDiffusers.ip_adapter.ComponentSpec.load") as load,
+        ):
+            resolved = [
+                node._load_image_encoder(artifact, dtype=torch.float32, device=torch.device("cpu"))
+                for node in nodes
+            ]
+
+        self.assertEqual(resolved, [candidate, candidate])
+        self.assertEqual(get_ids.call_count, 2)
+        self.assertEqual(
+            get_ids.call_args.kwargs,
+            {"names": "image_encoder"},
+        )
+        self.assertEqual(get_components.call_count, 2)
+        self.assertEqual(
+            get_components.call_args.kwargs,
+            {
+                "ids": ["image_encoder_fixture"],
+                "return_dict_with_names": False,
+            },
+        )
+        load.assert_not_called()
+
+    def test_ambiguous_or_wrong_dtype_managed_image_encoder_fails_closed(self):
+        encoder_class = type("CLIPVisionModelWithProjection", (FixtureEncoder,), {})
+        artifact = ResolvedSDXLIPAdapter(
+            repository="h94/IP-Adapter",
+            revision="0" * 40,
+            weight_name="ip-adapter_sdxl.safetensors",
+            content_sha256="1" * 64,
+            byte_size=1,
+            image_encoder_subfolder="sdxl_models/image_encoder",
+            image_encoder_class="CLIPVisionModelWithProjection",
+            load_directory=Path("/unused"),
+        )
+        compatible = encoder_class()
+        compatible.dtype = torch.float32
+        compatible._diffusers_load_id = "h94/IP-Adapter|sdxl_models/image_encoder|null|" + "0" * 40
+        incompatible = encoder_class()
+        incompatible.dtype = torch.float16
+        incompatible._diffusers_load_id = compatible._diffusers_load_id
+        transformers_module = type(sys)("transformers")
+        transformers_module.CLIPVisionModelWithProjection = encoder_class
+
+        for resident, message in (
+            (
+                {"image_encoder_one": compatible, "image_encoder_two": compatible},
+                "multiple compatible",
+            ),
+            ({"image_encoder_wrong_dtype": incompatible}, "incompatible class or dtype"),
+        ):
+            with (
+                self.subTest(message=message),
+                patch.dict(sys.modules, {"transformers": transformers_module}),
+                patch(
+                    "modules.ModularDiffusers.ip_adapter.components.get_ids",
+                    return_value=list(resident),
+                ),
+                patch(
+                    "modules.ModularDiffusers.ip_adapter.components.get_components_by_ids",
+                    return_value=resident,
+                ),
+                self.assertRaisesRegex(ValueError, message),
+            ):
+                IPAdapter("fixture-ip-adapter")._load_image_encoder(
+                    artifact,
+                    dtype=torch.float32,
+                    device=torch.device("cpu"),
+                )
+
+    def test_first_image_encoder_load_handles_an_empty_components_manager(self):
+        encoder_class = type("CLIPVisionModelWithProjection", (FixtureEncoder,), {})
+        loaded = encoder_class()
+        loaded.dtype = torch.float32
+        loaded.to = Mock(return_value=loaded)
+        artifact = ResolvedSDXLIPAdapter(
+            repository="h94/IP-Adapter",
+            revision="0" * 40,
+            weight_name="ip-adapter_sdxl.safetensors",
+            content_sha256="1" * 64,
+            byte_size=1,
+            image_encoder_subfolder="sdxl_models/image_encoder",
+            image_encoder_class="CLIPVisionModelWithProjection",
+            load_directory=Path("/unused"),
+        )
+        transformers_module = type(sys)("transformers")
+        transformers_module.CLIPVisionModelWithProjection = encoder_class
+
+        with (
+            patch.dict(sys.modules, {"transformers": transformers_module}),
+            patch("modules.ModularDiffusers.ip_adapter.components.get_ids", return_value=[]),
+            patch(
+                "modules.ModularDiffusers.ip_adapter.components.get_components_by_ids",
+                return_value={},
+            ),
+            patch(
+                "modules.ModularDiffusers.ip_adapter.ComponentSpec.load",
+                return_value=loaded,
+            ) as load,
+            patch("modules.ModularDiffusers.ip_adapter.sdxl_ip_adapter_image_encoder_contract"),
+        ):
+            result = IPAdapter("fixture-ip-adapter")._load_image_encoder(
+                artifact,
+                dtype=torch.float32,
+                device=torch.device("cpu"),
+            )
+
+        self.assertIs(result, loaded)
+        load.assert_called_once_with(local_files_only=True, torch_dtype=torch.float32)
+        loaded.to.assert_called_once_with(device=torch.device("cpu"))
+
     def _execute(self, *, pipeline=None, manager_swap=False, fail_call=False):
         token, outputs = _loader_output()
         unet = FixtureUNet()
@@ -158,7 +322,7 @@ class ModularIPAdapterTests(unittest.TestCase):
                 weight_name="ip-adapter_sdxl.safetensors",
                 content_sha256="1" * 64,
                 byte_size=1,
-                image_encoder_subfolder="models/image_encoder",
+                image_encoder_subfolder="sdxl_models/image_encoder",
                 image_encoder_class="CLIPVisionModelWithProjection",
                 load_directory=Path(directory),
             )
@@ -276,11 +440,25 @@ class ModularIPAdapterTests(unittest.TestCase):
         vae = FixtureVAE()
         scheduler = object()
         calls = []
-        real_blocks, config = require_modiff_node_contract(StableDiffusionXLModularPipeline, "denoise")
+        _blocks, config = require_modiff_node_contract(
+            StableDiffusionXLModularPipeline,
+            "denoise",
+            resolve_blocks=False,
+        )
+        block_component_names = ["unet", "vae", "scheduler", "guider"]
+        block_input_names = [
+            "prompt_embeds",
+            "negative_prompt_embeds",
+            "pooled_prompt_embeds",
+            "negative_pooled_prompt_embeds",
+            "generator",
+            "ip_adapter_embeds",
+            "negative_ip_adapter_embeds",
+        ]
 
         class FixtureDenoisePipeline:
             _execution_device = torch.device("cpu")
-            component_names = list(real_blocks.component_names)
+            component_names = list(block_component_names)
             blocks = type("FixtureDenoiseDocument", (), {"doc": "fixture"})()
             transformer = None
 
@@ -295,8 +473,8 @@ class ModularIPAdapterTests(unittest.TestCase):
         pipeline = FixtureDenoisePipeline()
 
         class FixtureDenoiseBlocks:
-            component_names = list(real_blocks.component_names)
-            input_names = list(real_blocks.input_names)
+            component_names = list(block_component_names)
+            input_names = list(block_input_names)
 
             def __deepcopy__(self, memo):
                 return self
@@ -341,10 +519,18 @@ class ModularIPAdapterTests(unittest.TestCase):
             )
 
         self.assertEqual(len(calls), 1)
-        self.assertIs(calls[0]["ip_adapter_embeds"], fixture["result"]["ip_adapter"]["ip_adapter_embeds"])
+        self.assertIsNot(calls[0]["ip_adapter_embeds"], fixture["result"]["ip_adapter"]["ip_adapter_embeds"])
         self.assertIs(
+            calls[0]["ip_adapter_embeds"][0],
+            fixture["result"]["ip_adapter"]["ip_adapter_embeds"][0],
+        )
+        self.assertIsNot(
             calls[0]["negative_ip_adapter_embeds"],
             fixture["result"]["ip_adapter"]["negative_ip_adapter_embeds"],
+        )
+        self.assertIs(
+            calls[0]["negative_ip_adapter_embeds"][0],
+            fixture["result"]["ip_adapter"]["negative_ip_adapter_embeds"][0],
         )
         self.assertNotIn("ip_adapter", calls[0])
         self.assertNotIn("_IPAdapterStateKey", repr(calls[0]))

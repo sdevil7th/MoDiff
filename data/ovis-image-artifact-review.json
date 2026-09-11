@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "family": "Ovis Image",
+  "repository": {
+    "repository": "ATH-MaaS/Ovis-Image-7B",
+    "revision": "41be1c5821a92c970d63d7eb595a2fd3fe32b22e",
+    "private": false,
+    "gated": false,
+    "pythonFilesPresentOutsideSelection": true,
+    "pythonFilesSelected": false,
+    "trustRemoteCodeRequired": false,
+    "modelIndexClass": "OvisImagePipeline",
+    "reportedUsedStorageBytes": 56760499384,
+    "snapshotDownloadBytes": 21806937901,
+    "snapshotFileCount": 21,
+    "weightFileCount": 5,
+    "weightBytes": 21790968814,
+    "weightInventorySha256": "187288d5de6e3025c567d7a651196ee4d316a9bae4d6143564fb37e120482def",
+    "modelCardLicenseTag": "apache-2.0",
+    "licenseFilePresent": true,
+    "noticeFilePresent": true
+  },
+  "selectedFiles": [
+    "LICENSE",
+    "NOTICE",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model-00001-of-00002.safetensors",
+    "text_encoder/model-00002-of-00002.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "tokenizer/added_tokens.json",
+    "tokenizer/chat_template.jinja",
+    "tokenizer/merges.txt",
+    "tokenizer/special_tokens_map.json",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "tokenizer/vocab.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors"
+  ],
+  "excludedSurfaces": {
+    "rootNativeCheckpoints": ["ovis_image.safetensors", "ae.safetensors"],
+    "bundledRepository": "Ovis2.5-2B/",
+    "bundledPythonFiles": [
+      "Ovis2.5-2B/configuration_ovis2_5.py",
+      "Ovis2.5-2B/modeling_ovis2_5.py"
+    ],
+    "reason": "The package-owned Diffusers pipeline needs neither the duplicate native-format checkpoints nor the bundled repository. Excluding the entire subtree prevents repository Python from entering the managed snapshot."
+  },
+  "weightFiles": [
+    {
+      "path": "text_encoder/model-00001-of-00002.safetensors",
+      "byteSize": 4969538328,
+      "sha256": "7d7489c13e12ab8bae21c43c7aab93782fc188d284a6eeb5dc06093eb72a8aff"
+    },
+    {
+      "path": "text_encoder/model-00002-of-00002.safetensors",
+      "byteSize": 1912795064,
+      "sha256": "f252831dfac8bfd8b5d557426c4e3b48863602a8b0996758ed2b9f5e34eabcd4"
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+      "byteSize": 9982976024,
+      "sha256": "c9f3fdf7fb030497a4e7907cc1bc97362fc30180ae087970d35dddb90767794b"
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+      "byteSize": 4757992496,
+      "sha256": "b7ceb6befeb153e856f09d85a04427939541e92093a6f848c8b0df9d307a097a"
+    },
+    {
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "byteSize": 167666902,
+      "sha256": "f5b59a26851551b67ae1fe58d32e76486e1e812def4696a4bea97f16604d40a3"
+    }
+  ],
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "entries": ["path", "byteSize", "sha256"],
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "metadataBlobReceipts": {
+    "licenseGitBlob": "7fcaa30e3ebf90c97106d294769991062b67f660",
+    "noticeGitBlob": "aee774d4f5982604fd333b34f7b7e10e630645ee",
+    "modelIndexGitBlob": "7ea601d984fd867b4f1fcb4e7090922711cefdb0",
+    "schedulerConfigGitBlob": "a64d1e8763bef5828984682680673fb97829734b",
+    "textEncoderConfigGitBlob": "cc44a0a66f6ea0325b526ba1e015147201f687a6",
+    "textEncoderIndexGitBlob": "b12103cc3646d0055f4221584d3db59fabc886dd",
+    "transformerConfigGitBlob": "5686dacec50329bc63106ad013b2f20fe348a763",
+    "transformerIndexGitBlob": "cfef138bba45465382693c8280791b4257773f09",
+    "vaeConfigGitBlob": "b43170fd41bbf0bf6989d0dfb20cd8994091711a"
+  },
+  "metadataContentReceipts": {
+    "licenseSha256": "cfc0f97fa9fd504121f86a8478bc42e8f49f1aa7d11d29b200b95286635988cc",
+    "noticeSha256": "1a5d95a5a311b685ddca03adc65b1473020b9cdfe4394a0b3e23a69f3194cfe5",
+    "modelIndexSha256": "8389696f4175bcf1ae057dde8d47a30971d7922bccda5ad6eb0665f8d88f720c",
+    "schedulerConfigSha256": "63b6d2fa93579e383a308009bfd5ae12e61f8950017dd749302f8d54bb3520b6",
+    "textEncoderConfigSha256": "1e949e30f10307b4c15081123d4109daf7b34866a444864a98acb3e11717c73a",
+    "transformerConfigSha256": "c92b97b1bb5f0484c17daf0841d0178eb283db12b3eb2d6d719bfda2f9cd5ee3",
+    "vaeConfigSha256": "bc1e208f414a315365fbecf426838f43b87c9d5c051219e0968a56e2644b2998"
+  },
+  "pinnedRuntime": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "diffusersVersion": "0.40.0.dev0",
+    "pipelineSha256": "3ee918d44896f8ec1b467ccef2a157abce757e5f67d1731b22801db14eba07a1",
+    "transformerSha256": "3d3b185a02d02d8a7bd91ff97c470664fae5b1387de46d172fbc11cda02b6f58",
+    "requiredDiffusersSymbols": ["OvisImagePipeline", "OvisImageTransformer2DModel"],
+    "requiredTransformersSymbols": ["Qwen2TokenizerFast", "Qwen3Model"]
+  },
+  "pipelineContract": {
+    "pipelineClass": "OvisImagePipeline",
+    "modes": ["text_to_image"],
+    "defaultWidth": 1024,
+    "defaultHeight": 1024,
+    "moDiffMinimumSide": 512,
+    "moDiffMaximumSide": 2048,
+    "dimensionMultiple": 16,
+    "moDiffMaximumOutputPixels": 1048576,
+    "defaultNumInferenceSteps": 50,
+    "moDiffMaximumInferenceSteps": 50,
+    "defaultGuidanceScale": 5.0,
+    "maximumSequenceLength": 256,
+    "modelCpuOffloadSequence": "text_encoder->transformer->vae"
+  },
+  "cancellationAndSafety": {
+    "callbackOnStepEndAvailable": true,
+    "interruptFlagAvailable": true,
+    "interruptFlagReadByDenoisingLoop": true,
+    "serverStopPropagatesThroughCallback": true,
+    "packageSafetyCheckerPresent": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "notes": [
+      "The pinned package checks its interrupt flag inside the denoising loop and invokes the generic step-end callback.",
+      "The exact selected artifact surface contains no Python files and requires no remote-code trust.",
+      "No live output is accepted until remote safety and quality review is complete."
+    ]
+  },
+  "license": {
+    "id": "apache-2.0",
+    "modelCardLicenseTag": "apache-2.0",
+    "modelSnapshotLicenseFilePresent": true,
+    "modelSnapshotNoticeFilePresent": true,
+    "licenseGitBlob": "7fcaa30e3ebf90c97106d294769991062b67f660",
+    "licenseSha256": "cfc0f97fa9fd504121f86a8478bc42e8f49f1aa7d11d29b200b95286635988cc",
+    "noticeGitBlob": "aee774d4f5982604fd333b34f7b7e10e630645ee",
+    "noticeSha256": "1a5d95a5a311b685ddca03adc65b1473020b9cdfe4394a0b3e23a69f3194cfe5"
+  },
+  "remoteResourceEnvelope": {
+    "status": "estimate_only_qualification_pending",
+    "minimumSnapshotDiskBytes": 25769803776,
+    "minimumSystemRamBytes": 34359738368,
+    "minimumAcceleratorMemoryBytesWithModelOffloadEstimate": 12884901888,
+    "notes": [
+      "The estimates cover the approximately 21.79 GB selected weight surface plus decode and framework overhead.",
+      "No local real-weight inference or generated output has qualified these estimates."
+    ]
+  },
+  "appDownloadQueue": {
+    "submittedThroughAppOnly": true,
+    "directWeightDownloadPerformed": false,
+    "olderModelsDeleted": false,
+    "preflightFreeBytes": 590321881088,
+    "preflightExistingQueuedReservationBytes": 489903040881,
+    "snapshotReservationBytes": 21806937901,
+    "reserveBytes": 68719476736,
+    "aggregateFits": true,
+    "aggregateHeadroomAfterReserveBytes": 9892425570,
+    "statusAtReview": "queued"
+  },
+  "admission": {
+    "status": "source_complete_execution_pending",
+    "runtimeCatalogExposed": true,
+    "downloadCatalogExposed": true,
+    "capabilityExposed": true,
+    "canonicalWorkflowsAdded": 1,
+    "clientSurfaceAdded": true,
+    "remoteOnly": true,
+    "liveQualified": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "unresolvedGates": [
+      "remote_real_weight_execution_and_memory_measurement",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  }
+}

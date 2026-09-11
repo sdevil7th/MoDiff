@@ -62,6 +62,21 @@ MISSING_EMBEDDINGS_MESSAGE = (
 )
 
 _DENOISE_IMAGE_LATENT_DIMENSIONS = ("height", "width")
+_MUTATED_UPSTREAM_LIST_INPUTS = frozenset({"ip_adapter_embeds", "negative_ip_adapter_embeds"})
+
+
+def _isolate_mutated_upstream_input(name, value):
+    """Keep upstream list normalization from rewriting a backend receipt.
+
+    SDXL's reviewed before-denoise block assigns ``torch.cat`` results back
+    into both IP-Adapter embedding lists, including when batch size is one.
+    A shallow list copy lets upstream perform that documented normalization
+    without changing the backend-issued bundle or its tensor provenance.
+    """
+
+    if name in _MUTATED_UPSTREAM_LIST_INPUTS and type(value) is list:
+        return list(value)
+    return value
 
 
 def _apply_image_latent_dimension_contract(model_type, node_kwargs):
@@ -1038,7 +1053,7 @@ class Denoise(NodeBase):
             elif isinstance(value, dict) and name not in blocks.input_names:
                 for k, v in value.items():
                     if k in blocks.input_names:
-                        node_kwargs[k] = v
+                        node_kwargs[k] = _isolate_mutated_upstream_input(k, v)
                     else:
                         expected_inputs = "\n  - ".join(blocks.input_names)
                         logger.warning(
@@ -1083,7 +1098,14 @@ class Denoise(NodeBase):
         if route_output_declared:
             output_names.remove(ROUTE_STATE_OUTPUT)
             outputs[ROUTE_STATE_OUTPUT] = None
-        pipeline_output_names = list(output_names)
+        # node_spec_to_modiff_dict prefixes outputs that duplicate an input as
+        # out_<name>. Diffusers PipelineState still uses the original state
+        # name, so request and later map the canonical name explicitly.
+        output_state_names = {
+            name: name[4:] if name.startswith("out_") and name[4:] in input_names else name
+            for name in output_names
+        }
+        pipeline_output_names = list(dict.fromkeys(output_state_names.values()))
         if route_uses_hidden_denoise_mask(self._model_type) and "mask" not in pipeline_output_names:
             pipeline_output_names.append("mask")
 
@@ -1191,7 +1213,7 @@ class Denoise(NodeBase):
             reset_wrapped_forward_signature(signature_state)
 
         for name in output_names:
-            outputs[name] = node_outputs.get(name)
+            outputs[name] = node_outputs.get(output_state_names[name])
         if supported_route_model:
             self._require_route_component_inputs(
                 kwargs,

@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 2,
+  "definitionId": "user:nested-preview-fixture",
+  "displayName": "Nested image and text preview fixture",
+  "contentHash": "block-definition-v2-16703f94",
+  "source": {
+    "kind": "user"
+  },
+  "graph": {
+    "nodes": [
+      {
+        "nodeId": "stage",
+        "nodeType": "group",
+        "data": {
+          "type": "group",
+          "label": "Stage",
+          "params": {}
+        },
+        "modularDiffusers": {
+          "kind": "upstream_block",
+          "pipelineClass": "ExamplePipeline",
+          "blocksClass": "ExampleBlocks",
+          "workflowId": "text2image",
+          "libraryRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "runtimeRole": "stage",
+          "blockDefinitionId": "example:stage",
+          "blockClass": "ExampleStage",
+          "blockKind": "sequential",
+          "blockContractHash": "sha256:example-stage",
+          "placementPath": [
+            "stage"
+          ],
+          "componentNames": []
+        },
+        "containerInterface": {
+          "schemaVersion": 1,
+          "boundary": {
+            "mode": "explicit",
+            "inputs": [
+              {
+                "portId": "prompt",
+                "label": "Scene",
+                "valueType": "string",
+                "required": true,
+                "binding": {
+                  "nodeId": "generate",
+                  "fieldOrPortId": "prompt"
+                }
+              }
+            ],
+            "outputs": [
+              {
+                "portId": "images",
+                "label": "Images",
+                "valueType": "image",
+                "required": false,
+                "binding": {
+                  "nodeId": "generate",
+                  "fieldOrPortId": "images"
+                }
+              }
+            ]
+          },
+          "controls": [
+            {
+              "controlId": "prompt",
+              "label": "Scene",
+              "valueType": "string",
+              "binding": {
+                "nodeId": "generate",
+                "fieldId": "prompt"
+              },
+              "order": 0
+            }
+          ],
+          "previews": [
+            {
+              "nodeId": "generate",
+              "outputPortId": "images",
+              "mediaType": "image"
+            },
+            {
+              "nodeId": "caption",
+              "outputPortId": "text",
+              "mediaType": "text",
+              "primary": true
+            }
+          ]
+        }
+      },
+      {
+        "nodeId": "generate",
+        "nodeType": "custom",
+        "data": {
+          "type": "custom",
+          "label": "Generate",
+          "module": "modules.Test",
+          "action": "Generate",
+          "params": {
+            "prompt": {
+              "type": "string",
+              "value": "a detailed greenhouse",
+              "isInput": true
+            },
+            "images": {
+              "type": "image",
+              "display": "output"
+            },
+            "steps": {
+              "type": "int",
+              "value": 20
+            }
+          }
+        },
+        "modularDiffusers": {
+          "kind": "upstream_block",
+          "pipelineClass": "ExamplePipeline",
+          "blocksClass": "ExampleBlocks",
+          "workflowId": "text2image",
+          "libraryRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "runtimeRole": "generate",
+          "blockDefinitionId": "example:generate",
+          "blockClass": "ExampleGenerate",
+          "blockKind": "block",
+          "blockContractHash": "sha256:example-generate",
+          "placementPath": [
+            "stage",
+            "generate"
+          ],
+          "parentPlacementPath": [
+            "stage"
+          ],
+          "componentNames": []
+        }
+      },
+      {
+        "nodeId": "sibling",
+        "nodeType": "custom",
+        "data": {
+          "type": "custom",
+          "label": "Sibling",
+          "module": "modules.Test",
+          "action": "Text",
+          "params": {
+            "prompt": {
+              "type": "string",
+              "value": "unrelated"
+            },
+            "text": {
+              "type": "string",
+              "display": "output"
+            }
+          }
+        }
+      },
+      {
+        "nodeId": "caption",
+        "nodeType": "custom",
+        "parentNodeId": "stage",
+        "data": {
+          "type": "custom",
+          "label": "Caption",
+          "module": "modules.Test",
+          "action": "Text",
+          "params": {
+            "text": {
+              "type": "string",
+              "display": "output"
+            }
+          }
+        }
+      }
+    ],
+    "edges": [],
+    "executionOrder": [
+      "stage",
+      "generate",
+      "sibling",
+      "caption"
+    ],
+    "graphHash": "block-graph-v2-10f27c84"
+  },
+  "boundary": {
+    "mode": "explicit",
+    "inputs": [],
+    "outputs": []
+  },
+  "controls": [],
+  "previews": [
+    {
+      "nodeId": "generate",
+      "outputPortId": "images",
+      "mediaType": "image",
+      "primary": true
+    }
+  ],
+  "ownership": {
+    "kind": "user",
+    "definitionMutable": true
+  }
+}

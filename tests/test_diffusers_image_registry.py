@@ -1,4 +1,5 @@
 import hashlib
+import importlib.util
 import inspect
 import json
 import os
@@ -15,9 +16,34 @@ from PIL import Image
 import modules as module_registry
 from modiff.model_artifact_catalog import catalog_revision
 from modiff.server import WebServer
-from modules.DiffusersImage import ControlGenerate, Edit, Generate, Inpaint, LoadAdapter, LoadPipeline, MODULE_MAP
+from modules.DiffusersImage import (
+    ControlEdit,
+    ControlGenerate,
+    ControlInpaint,
+    Edit,
+    Generate,
+    Inpaint,
+    LayerDecompose,
+    LoadAdapter,
+    LoadPipeline,
+    MODULE_MAP,
+    PredictMap,
+    UnconditionalGenerate,
+)
 from modules.DiffusersImage.main import (
+    AURAFLOW_V03_REPO,
+    CHROMA1_HD_REPO,
+    COGVIEW3_PLUS_REPO,
+    COGVIEW4_6B_REPO,
+    CONSISTENCY_IMAGENET64_REPO,
+    DDPM_CIFAR10_REPO,
+    DREAMLITE_BASE_REPO,
+    DREAMLITE_MOBILE_REPO,
+    ERNIE_IMAGE_TURBO_REPO,
+    GLM_IMAGE_REPO,
+    FLUX2_DEV_REPO,
     FLUX2_KLEIN_REPO,
+    FLUX2_KLEIN_KV_REPO,
     FLUX_CANNY_REPO,
     FLUX_DEPTH_REPO,
     FLUX_DEV_REPO,
@@ -25,12 +51,33 @@ from modules.DiffusersImage.main import (
     FLUX_KONTEXT_REPO,
     FLUX_KREA_REPO,
     FLUX_SCHNELL_REPO,
+    HUNYUAN_DIT_CONTROLNET_CANNY_REPO,
+    HUNYUAN_DIT_DISTILLED_REPO,
+    JOYIMAGE_EDIT_PLUS_REPO,
+    JOYIMAGE_EDIT_REPO,
+    KANDINSKY3_REPO,
     IMAGE_MODE_FIELD_CONTRACTS,
     IMAGE_PIPELINE_CLASSES,
     QWEN_IMAGE_2512_REPO,
     QWEN_IMAGE_EDIT_PLUS_REPO,
     QWEN_IMAGE_EDIT_REPO,
+    QWEN_IMAGE_LAYERED_REPO,
+    LCM_DREAMSHAPER_REPO,
+    MARIGOLD_DEPTH_LCM_REPO,
+    OMNIGEN_REPO,
+    OVIS_IMAGE_REPO,
+    PRX_REPO,
+    NUCLEUS_IMAGE_REPO,
+    PIXART_SIGMA_REPO,
+    SD15_BASE_REPO,
+    SD15_CONTROLNET_CANNY_REPO,
+    SANA_REPO,
+    SANA_SPRINT_REPO,
     SDXL_BASE_REPO,
+    SDXL_CONTROLNET_CANNY_REPO,
+    SDXL_INSTRUCT_PIX2PIX_REPO,
+    SDXL_T2I_ADAPTER_CANNY_REPO,
+    SDXL_TURBO_REPO,
     Z_IMAGE_REPO,
     FluxReduxPipelineBundle,
     ImageModeFieldContract,
@@ -39,6 +86,7 @@ from modules.DiffusersImage.main import (
     image_pipeline_contract,
     output_image_dimensions,
     pipeline_class_from_name,
+    preflight_image_action,
     quant_config_for,
     resolve_image_model_selection,
     resolve_image_pipeline_revision,
@@ -49,6 +97,10 @@ from utils.huggingface import resolve_managed_hf_cache_file
 
 CUSTOM_IMAGE_REVISION = "a" * 40
 HUB_ADAPTER_REVISION = "b" * 40
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
+)
 
 
 def tag_test_image_pipeline(pipeline, pipeline_class, mode, *, repo=None, revision=None):
@@ -56,16 +108,287 @@ def tag_test_image_pipeline(pipeline, pipeline_class, mode, *, repo=None, revisi
     pipeline.__class__.__name__ = adapter.allowed_runtime_classes[0]
     repository = repo or adapter.default_repo
     resolved_revision = revision or catalog_revision(repository) or CUSTOM_IMAGE_REVISION
-    _tag_image_pipeline(pipeline, adapter, mode, repository, "hub", resolved_revision)
+    conditioning_repo = adapter.default_conditioning_repo
+    _tag_image_pipeline(
+        pipeline,
+        adapter,
+        mode,
+        repository,
+        "hub",
+        resolved_revision,
+        conditioning_repo=conditioning_repo,
+        conditioning_revision=(catalog_revision(conditioning_repo) if conditioning_repo else None),
+    )
     return pipeline
 
 
 class DiffusersImageRegistryTests(unittest.TestCase):
+    def test_missing_pinned_snapshot_explains_model_manager_recovery_without_download(self):
+        from huggingface_hub.errors import LocalEntryNotFoundError
+        from modules.DiffusersImage.main import load_cached_image_component
+
+        factory = Mock()
+        error = LocalEntryNotFoundError("No local snapshot")
+        factory.from_pretrained.side_effect = error
+        with self.assertRaisesRegex(FileNotFoundError, "Model Manager") as raised:
+            load_cached_image_component(factory, FLUX_CANNY_REPO,
+                revision="a" * 40, local_files_only=True, use_safetensors=True)
+        self.assertIn(FLUX_CANNY_REPO, str(raised.exception))
+        self.assertIn("a" * 40, str(raised.exception))
+        self.assertIs(raised.exception.__cause__, error)
+        factory.from_pretrained.assert_called_once_with(FLUX_CANNY_REPO,
+            revision="a" * 40, local_files_only=True, use_safetensors=True)
+        factory.from_pretrained.side_effect = RuntimeError("out of memory")
+        with self.assertRaisesRegex(RuntimeError, "out of memory"):
+            load_cached_image_component(factory, FLUX_CANNY_REPO, revision="a" * 40,
+                local_files_only=True)
+
     def test_output_dimensions_support_pil_numpy_and_torch_layouts(self):
         self.assertEqual(output_image_dimensions([Image.new("RGB", (31, 19))], "pil"), (31, 19))
         self.assertEqual(output_image_dimensions(np.zeros((2, 19, 31, 3)), "np"), (31, 19))
         fake_tensor = SimpleNamespace(shape=(2, 3, 19, 31), size=lambda: 2 * 3 * 19 * 31)
         self.assertEqual(output_image_dimensions(fake_tensor, "pt"), (31, 19))
+
+    def test_unconditional_adapters_are_exact_generic_pipeline_pairs(self):
+        expected = {
+            "DDPMPipeline": (DDPM_CIFAR10_REPO, ()),
+            "DDIMPipeline": (DDPM_CIFAR10_REPO, ("eta",)),
+            "ConsistencyModelPipeline": (CONSISTENCY_IMAGENET64_REPO, ("class_label",)),
+        }
+        for pipeline_class, (repo, optional_fields) in expected.items():
+            with self.subTest(pipeline=pipeline_class):
+                adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_class]
+                self.assertEqual(adapter.default_repo, repo)
+                self.assertEqual(adapter.mode_options, ("unconditional_image",))
+                self.assertEqual(adapter.unconditional_optional_fields, optional_fields)
+                contract = image_pipeline_contract(adapter, "unconditional_image")
+                self.assertEqual(contract["actions"], {"UnconditionalGenerate": ["unconditional_image"]})
+
+    def test_unconditional_generate_normalizes_outputs_and_only_passes_supported_arguments(self):
+        cases = (
+            ("DDPMPipeline", {}, {"batch_size", "generator", "num_inference_steps", "output_type", "return_dict"}),
+            (
+                "DDIMPipeline",
+                {"eta": 0.25},
+                {"batch_size", "generator", "num_inference_steps", "eta", "output_type", "return_dict"},
+            ),
+            (
+                "ConsistencyModelPipeline",
+                {"class_label": 145},
+                {
+                    "batch_size",
+                    "class_labels",
+                    "generator",
+                    "num_inference_steps",
+                    "output_type",
+                    "return_dict",
+                    "callback",
+                    "callback_steps",
+                },
+            ),
+        )
+        for pipeline_class, extra, expected_keys in cases:
+            with self.subTest(pipeline=pipeline_class):
+                received = {}
+
+                def call(self, **kwargs):
+                    received.update(kwargs)
+                    if callback := kwargs.get("callback"):
+                        callback(0, 0, object())
+                    return SimpleNamespace(images=[Image.new("RGB", (32, 24), "white")])
+
+                parameters = {
+                    "batch_size": inspect.Parameter("batch_size", inspect.Parameter.KEYWORD_ONLY),
+                    "generator": inspect.Parameter("generator", inspect.Parameter.KEYWORD_ONLY),
+                    "num_inference_steps": inspect.Parameter("num_inference_steps", inspect.Parameter.KEYWORD_ONLY),
+                    "output_type": inspect.Parameter("output_type", inspect.Parameter.KEYWORD_ONLY),
+                    "return_dict": inspect.Parameter("return_dict", inspect.Parameter.KEYWORD_ONLY),
+                }
+                if pipeline_class == "DDIMPipeline":
+                    parameters["eta"] = inspect.Parameter("eta", inspect.Parameter.KEYWORD_ONLY)
+                if pipeline_class == "ConsistencyModelPipeline":
+                    parameters.update(
+                        {
+                            "class_labels": inspect.Parameter("class_labels", inspect.Parameter.KEYWORD_ONLY),
+                            "callback": inspect.Parameter("callback", inspect.Parameter.KEYWORD_ONLY),
+                            "callback_steps": inspect.Parameter("callback_steps", inspect.Parameter.KEYWORD_ONLY),
+                        }
+                    )
+                call.__signature__ = inspect.Signature(
+                    [inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD), *parameters.values()]
+                )
+                fake_type = type(pipeline_class, (), {"_execution_device": "cpu", "__call__": call})
+                pipeline = tag_test_image_pipeline(fake_type(), pipeline_class, "unconditional_image")
+                node = UnconditionalGenerate()
+                node.progress = Mock()
+
+                result = node.execute(
+                    pipeline=pipeline,
+                    batch_size=1,
+                    seed=7,
+                    num_inference_steps=2,
+                    output_type="pil",
+                    **extra,
+                )
+
+                self.assertEqual(set(received), expected_keys)
+                self.assertEqual((result["width_out"], result["height_out"]), (32, 24))
+                self.assertEqual(len(result["images"]), 1)
+
+    @requires_transformers
+    def test_marigold_depth_uses_the_generic_versioned_prediction_map_contract(self):
+        adapter = IMAGE_PIPELINE_ADAPTERS["MarigoldDepthPipeline"]
+        self.assertEqual(adapter.default_repo, MARIGOLD_DEPTH_LCM_REPO)
+        self.assertEqual(adapter.mode_options, ("depth_estimation",))
+        contract = image_pipeline_contract(adapter, "depth_estimation")
+        self.assertEqual(contract["actions"], {"PredictMap": ["depth_estimation"]})
+        self.assertEqual(
+            contract["predictionMap"],
+            {
+                "schemaVersion": 1,
+                "kinds": ["depth"],
+                "semantics": "relative_depth",
+                "layout": "NHWC",
+                "dtype": "float32",
+                "valueRange": [0.0, 1.0],
+                "nearValue": 0.0,
+                "farValue": 1.0,
+            },
+        )
+        parameters = set(inspect.signature(pipeline_class_from_name("MarigoldDepthPipeline").__call__).parameters)
+        self.assertTrue(
+            {
+                "image",
+                "num_inference_steps",
+                "ensemble_size",
+                "processing_resolution",
+                "match_input_resolution",
+                "generator",
+                "output_type",
+                "output_uncertainty",
+                "output_latent",
+                "return_dict",
+            }.issubset(parameters)
+        )
+
+    def test_predict_map_normalizes_depth_and_passes_only_the_reviewed_upstream_request(self):
+        received = {}
+
+        def call(
+            self,
+            *,
+            image,
+            num_inference_steps,
+            ensemble_size,
+            processing_resolution,
+            match_input_resolution,
+            generator,
+            output_type,
+            output_uncertainty,
+            output_latent,
+            return_dict,
+        ):
+            received.update(locals())
+            return SimpleNamespace(
+                prediction=np.array(
+                    [[[[0.0], [0.25]], [[0.75], [1.0]]]],
+                    dtype=np.float64,
+                )
+            )
+
+        fake_type = type("MarigoldDepthPipeline", (), {"_execution_device": "cpu", "__call__": call})
+        pipeline = tag_test_image_pipeline(fake_type(), "MarigoldDepthPipeline", "depth_estimation")
+        source = Image.new("RGB", (16, 12), "white")
+        result = PredictMap("depth-probe").execute(
+            pipeline=pipeline,
+            image=[source],
+            prediction_kind="depth",
+            seed=7,
+            num_inference_steps=1,
+            processing_resolution=768,
+            match_input_resolution=True,
+        )
+
+        self.assertEqual(
+            set(received) - {"self", "received"},
+            {
+                "image",
+                "num_inference_steps",
+                "ensemble_size",
+                "processing_resolution",
+                "match_input_resolution",
+                "generator",
+                "output_type",
+                "output_uncertainty",
+                "output_latent",
+                "return_dict",
+            },
+        )
+        self.assertIs(received["image"], source)
+        self.assertEqual(received["ensemble_size"], 1)
+        self.assertEqual(received["output_type"], "np")
+        self.assertFalse(received["output_uncertainty"])
+        prediction_map = result["prediction_map"]
+        self.assertEqual(
+            {key: value for key, value in prediction_map.items() if key != "prediction"},
+            {
+                "schemaVersion": 1,
+                "kind": "depth",
+                "semantics": "relative_depth",
+                "layout": "NHWC",
+                "dtype": "float32",
+                "shape": [1, 2, 2, 1],
+                "valueRange": [0.0, 1.0],
+                "nearValue": 0.0,
+                "farValue": 1.0,
+                "width": 2,
+                "height": 2,
+            },
+        )
+        self.assertEqual(prediction_map["prediction"].dtype, np.float32)
+        self.assertEqual(result["preview_images"][0].size, (2, 2))
+        self.assertEqual(result["preview_images"][0].mode, "RGB")
+        self.assertEqual((result["width_out"], result["height_out"]), (2, 2))
+
+    def test_predict_map_rejects_malformed_inputs_and_outputs(self):
+        class MarigoldDepthPipeline:
+            _execution_device = "cpu"
+
+            def __init__(self, prediction):
+                self.prediction = prediction
+
+            def __call__(self, **_kwargs):
+                return SimpleNamespace(prediction=self.prediction)
+
+        source = Image.new("RGB", (16, 16), "white")
+        for label, prediction, message in (
+            ("batch", np.zeros((2, 4, 4, 1)), "exactly one single-channel"),
+            ("channels", np.zeros((1, 4, 4, 3)), "exactly one single-channel"),
+            ("nonfinite", np.full((1, 4, 4, 1), np.nan), "only finite"),
+            ("range", np.full((1, 4, 4, 1), 1.1), "normalized"),
+        ):
+            with self.subTest(label=label):
+                pipeline = tag_test_image_pipeline(
+                    MarigoldDepthPipeline(prediction),
+                    "MarigoldDepthPipeline",
+                    "depth_estimation",
+                )
+                with self.assertRaisesRegex(ValueError, message):
+                    PredictMap(f"invalid-{label}").execute(pipeline=pipeline, image=source)
+
+        valid_pipeline = tag_test_image_pipeline(
+            MarigoldDepthPipeline(np.zeros((1, 4, 4, 1))),
+            "MarigoldDepthPipeline",
+            "depth_estimation",
+        )
+        for values, message in (
+            ({"image": [source, source]}, "at most 1"),
+            ({"image": source, "prediction_kind": "normal"}, "exactly depth"),
+            ({"image": source, "match_input_resolution": 1}, "must be a boolean"),
+            ({"image": source, "processing_resolution": 65}, "increments of 8"),
+        ):
+            with self.subTest(values=values), self.assertRaisesRegex(ValueError, message):
+                PredictMap("invalid-input").execute(pipeline=valid_pipeline, **values)
 
     def test_torchao_int8_weight_only_passes_an_aobase_config_instance(self):
         int8_config = object()
@@ -161,7 +484,10 @@ class DiffusersImageRegistryTests(unittest.TestCase):
     def test_inherited_nodes_are_registered_with_their_live_contracts(self):
         expected_inputs = {
             "Edit": {"pipeline", "image"},
+            "LayerDecompose": {"pipeline", "image"},
+            "ControlEdit": {"pipeline", "image", "control_image"},
             "Inpaint": {"pipeline", "image", "mask_image"},
+            "ControlInpaint": {"pipeline", "image", "mask_image", "control_image"},
             "ControlGenerate": {"pipeline", "control_image"},
         }
 
@@ -177,16 +503,225 @@ class DiffusersImageRegistryTests(unittest.TestCase):
     def test_graph_contract_marks_mode_independent_image_inputs_as_required(self):
         self.assertTrue(Edit.params["pipeline"]["required"])
         self.assertTrue(Edit.params["image"]["required"])
+        self.assertTrue(LayerDecompose.params["image"]["required"])
+        self.assertTrue(ControlEdit.params["control_image"]["required"])
         self.assertTrue(Inpaint.params["mask_image"]["required"])
+        self.assertTrue(ControlInpaint.params["control_image"]["required"])
         self.assertTrue(ControlGenerate.params["control_image"]["required"])
         self.assertTrue(LoadAdapter.params["pipeline"]["required"])
 
     def test_registered_classes_can_be_constructed(self):
-        for node_class in (Edit, Inpaint, ControlGenerate):
+        for node_class in (Edit, LayerDecompose, ControlEdit, Inpaint, ControlInpaint, ControlGenerate):
             with self.subTest(node=node_class.__name__):
                 node = node_class("registry-probe")
                 self.assertEqual(node.node_id, "registry-probe")
                 self.assertTrue(node.resizable)
+
+    def test_reviewed_combined_control_adapters_reuse_only_immutable_existing_artifacts(self):
+        expected = {
+            "StableDiffusionControlNetPAGPipeline": (
+                "control_image", SD15_BASE_REPO, "StableDiffusionPipeline", "controlnet", None
+            ),
+            "StableDiffusionXLControlNetPAGPipeline": (
+                "control_image", SDXL_BASE_REPO, "StableDiffusionXLPipeline", "controlnet", "fp16"
+            ),
+            "StableDiffusionControlNetImg2ImgPipeline": (
+                "control_edit_image", SD15_BASE_REPO, "StableDiffusionPipeline", "controlnet", None
+            ),
+            "StableDiffusionXLControlNetImg2ImgPipeline": (
+                "control_edit_image", SDXL_BASE_REPO, "StableDiffusionXLPipeline", "controlnet", "fp16"
+            ),
+            "StableDiffusionXLControlNetPAGImg2ImgPipeline": (
+                "control_edit_image", SDXL_BASE_REPO, "StableDiffusionXLPipeline", "controlnet", "fp16"
+            ),
+            "FluxControlImg2ImgPipeline": (
+                "control_edit_image", FLUX_DEPTH_REPO, "FluxControlPipeline", None, None
+            ),
+            "StableDiffusionControlNetInpaintPipeline": (
+                "control_inpaint", SD15_BASE_REPO, "StableDiffusionPipeline", "controlnet", None
+            ),
+            "StableDiffusionControlNetPAGInpaintPipeline": (
+                "control_inpaint", SD15_BASE_REPO, "StableDiffusionPipeline", "controlnet", None
+            ),
+            "StableDiffusionXLControlNetInpaintPipeline": (
+                "control_inpaint", SDXL_BASE_REPO, "StableDiffusionXLPipeline", "controlnet", "fp16"
+            ),
+            "FluxControlInpaintPipeline": (
+                "control_inpaint", FLUX_DEPTH_REPO, "FluxControlPipeline", None, None
+            ),
+        }
+        action_for_mode = {
+            "control_image": "ControlGenerate",
+            "control_edit_image": "ControlEdit",
+            "control_inpaint": "ControlInpaint",
+        }
+        for pipeline_class, (mode, repo, artifact_class, conditioning_kind, variant) in expected.items():
+            with self.subTest(pipeline=pipeline_class):
+                adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_class]
+                self.assertEqual(adapter.mode_options, (mode,))
+                self.assertEqual(adapter.default_repo, repo)
+                self.assertIn(artifact_class, adapter.artifact_pipeline_classes)
+                self.assertTrue(adapter.safe_serialization_required)
+                self.assertEqual(adapter.conditioning_kind, conditioning_kind)
+                self.assertEqual(adapter.weight_variant, variant)
+                if conditioning_kind is None:
+                    self.assertIsNone(adapter.default_conditioning_repo)
+                    self.assertEqual(
+                        adapter.compatible_repos,
+                        frozenset({FLUX_CANNY_REPO, "fuliucansheng/FLUX.1-Canny-dev-diffusers"}),
+                    )
+                else:
+                    expected_conditioning_repo = (
+                        SDXL_CONTROLNET_CANNY_REPO if repo == SDXL_BASE_REPO else SD15_CONTROLNET_CANNY_REPO
+                    )
+                    self.assertEqual(adapter.default_conditioning_repo, expected_conditioning_repo)
+                contract = image_pipeline_contract(adapter, mode)
+                self.assertEqual(contract["actions"], {action_for_mode[mode]: [mode]})
+
+    def test_reviewed_combined_control_actions_execute_exact_model_neutral_inputs_without_downloads(self):
+        source = Image.new("RGB", (16, 16), "red")
+        control = Image.new("RGB", (16, 16), "blue")
+        mask = Image.new("L", (16, 16), "white")
+        cases = (
+            ("StableDiffusionControlNetPAGPipeline", "control_image", ControlGenerate, {"control_image": control}),
+            (
+                "StableDiffusionXLControlNetPAGPipeline",
+                "control_image",
+                ControlGenerate,
+                {"control_image": control},
+            ),
+            (
+                "StableDiffusionControlNetImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": source, "control_image": control},
+            ),
+            (
+                "StableDiffusionXLControlNetImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": source, "control_image": control},
+            ),
+            (
+                "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": source, "control_image": control},
+            ),
+            (
+                "FluxControlImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": source, "control_image": control},
+            ),
+            (
+                "StableDiffusionControlNetInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": source, "mask_image": mask, "control_image": control},
+            ),
+            (
+                "StableDiffusionControlNetPAGInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": source, "mask_image": mask, "control_image": control},
+            ),
+            (
+                "StableDiffusionXLControlNetInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": source, "mask_image": mask, "control_image": control},
+            ),
+            (
+                "FluxControlInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": source, "mask_image": mask, "control_image": control},
+            ),
+        )
+        for pipeline_class, mode, action_class, media in cases:
+            with self.subTest(pipeline=pipeline_class):
+                adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_class]
+                received = {}
+
+                def call(_self, **kwargs):
+                    received.update(kwargs)
+                    return SimpleNamespace(images=[Image.new("RGB", (16, 16), "white")])
+
+                parameters = {
+                    name: inspect.Parameter(name, inspect.Parameter.KEYWORD_ONLY)
+                    for name in (
+                        "prompt",
+                        "image",
+                        "control_image",
+                        "mask_image",
+                        "negative_prompt",
+                        "width",
+                        "height",
+                        "strength",
+                        "num_inference_steps",
+                        "guidance_scale",
+                        "generator",
+                        "output_type",
+                        "return_dict",
+                        "max_sequence_length",
+                        "padding_mask_crop",
+                        "pag_scale",
+                        "pag_adaptive_scale",
+                        "controlnet_conditioning_scale",
+                    )
+                }
+                if pipeline_class.startswith("Flux"):
+                    for name in (
+                        "negative_prompt",
+                        "pag_scale",
+                        "pag_adaptive_scale",
+                        "controlnet_conditioning_scale",
+                    ):
+                        parameters.pop(name)
+                elif "PAG" not in pipeline_class:
+                    parameters.pop("pag_scale")
+                    parameters.pop("pag_adaptive_scale")
+                call.__signature__ = inspect.Signature(
+                    [inspect.Parameter("self", inspect.Parameter.POSITIONAL_OR_KEYWORD), *parameters.values()]
+                )
+                fake_type = type(pipeline_class, (), {"_execution_device": "cpu", "__call__": call})
+                pipeline = tag_test_image_pipeline(fake_type(), pipeline_class, mode)
+                with patch("modules.DiffusersImage.main.add_progress_callback"):
+                    result = action_class(f"no-download-{pipeline_class}").execute(
+                        pipeline=pipeline,
+                        prompt="reviewed control fixture",
+                        negative_prompt="artifact",
+                        width=16,
+                        height=16,
+                        num_inference_steps=1,
+                        guidance_scale=4.0,
+                        strength=0.75,
+                        conditioning_scale=0.65,
+                        pag_scale=3.0,
+                        pag_adaptive_scale=0.25,
+                        output_type="pil",
+                        **media,
+                    )
+
+                expected_control_parameter = adapter.control_image_parameter
+                self.assertIs(received[expected_control_parameter], control)
+                if action_class is not ControlGenerate:
+                    self.assertIs(received[adapter.image_parameter], source)
+                if action_class is ControlInpaint:
+                    self.assertIs(received["mask_image"], mask)
+                if adapter.conditioning_scale_parameter:
+                    self.assertEqual(received[adapter.conditioning_scale_parameter], 0.65)
+                else:
+                    self.assertNotIn("controlnet_conditioning_scale", received)
+                if "PAG" in pipeline_class:
+                    self.assertEqual(received["pag_scale"], 3.0)
+                    self.assertEqual(received["pag_adaptive_scale"], 0.25)
+                else:
+                    self.assertNotIn("pag_scale", received)
+                if pipeline_class.startswith("Flux"):
+                    self.assertNotIn("negative_prompt", received)
+                self.assertEqual((result["width_out"], result["height_out"]), (16, 16))
 
     def test_loader_rejects_missing_null_malformed_and_noncanonical_class_or_mode_before_nodebase(self):
         invalid_values = (
@@ -242,6 +777,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 "pipeline_class": "FluxPipeline",
                 "mode": "text_to_image",
                 "revision": expected_revision,
+                "conditioning_kind": "none",
+                "conditioning_model_id": {"source": "hub", "value": ""},
+                "conditioning_revision": "",
             },
         )
         self.assertIs(result["pipeline"], pipeline)
@@ -318,6 +856,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
     def test_class_only_changes_replace_the_inherited_managed_repository(self):
         cases = {
             "ZImagePipeline": ("text_to_image", Z_IMAGE_REPO),
+            "Flux2Pipeline": ("text_to_image", FLUX2_DEV_REPO),
             "Flux2KleinPipeline": ("text_to_image", FLUX2_KLEIN_REPO),
             "FluxFillPipeline": ("inpaint", FLUX_FILL_REPO),
             "FluxControlPipeline": ("control_image", FLUX_DEPTH_REPO),
@@ -399,6 +938,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 )
 
     def test_image_field_contracts_cover_every_adapter_mode_and_selected_values(self):
+        from modules.DiffusersImage.call_inputs import PIPELINE_CALL_INPUTS
         self.assertEqual(set(IMAGE_MODE_FIELD_CONTRACTS), set(IMAGE_PIPELINE_ADAPTERS))
         expected_fields = {
             "negative_prompt",
@@ -409,6 +949,16 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             "padding_mask_crop",
             "max_sequence_length",
             "reference_strength",
+            "pag_scale",
+            "pag_adaptive_scale",
+            "conditioning_scale",
+            "image_guidance_scale",
+            "control_guidance_start",
+            "control_guidance_end",
+            "layers",
+            "resolution",
+            "cfg_normalize",
+            "use_en_prompt",
         }
         for pipeline_class, adapter in IMAGE_PIPELINE_ADAPTERS.items():
             with self.subTest(pipeline_class=pipeline_class):
@@ -416,12 +966,19 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 for mode in adapter.mode_options:
                     self.assertEqual(
                         set(image_pipeline_contract(adapter, mode)["fieldParams"]),
-                        expected_fields,
+                        expected_fields | ({"guidance_scale_2", "use_guidance_scale_2"}
+                                           if adapter.secondary_guidance_parameter else set())
+                        | set(PIPELINE_CALL_INPUTS.get(adapter.load_pipeline_class, ()))
+                        | ({'output_type', 'latents_out'} if adapter.load_pipeline_class in PIPELINE_CALL_INPUTS
+                           and adapter.load_pipeline_class != 'FluxReduxPipeline' else set()),
                     )
 
         flux_text = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["FluxPipeline"], "text_to_image")
         self.assertTrue(flux_text["fieldParams"]["strength"]["hidden"])
         self.assertTrue(flux_text["fieldParams"]["padding_mask_crop"]["hidden"])
+        flux_fill = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["FluxFillPipeline"], "inpaint")
+        self.assertEqual(flux_fill["fieldParams"]["guidance_scale"]["max"], 30.0)
+        self.assertNotIn("max", flux_text["fieldParams"]["guidance_scale"])
         sdxl_edit = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLImg2ImgPipeline"], "edit_image")
         self.assertFalse(sdxl_edit["fieldParams"]["strength"]["hidden"])
         self.assertTrue(sdxl_edit["fieldParams"]["width"]["hidden"])
@@ -434,15 +991,610 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         )
         self.assertTrue(qwen_edit["fieldParams"]["strength"]["hidden"])
         self.assertTrue(qwen_edit["fieldParams"]["reference_strength"]["hidden"])
+        pag = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["StableDiffusionPAGPipeline"], "text_to_image")
+        self.assertFalse(pag["fieldParams"]["pag_scale"]["hidden"])
+        self.assertFalse(pag["fieldParams"]["pag_adaptive_scale"]["hidden"])
+        sdxl_pag = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLPAGPipeline"], "text_to_image"
+        )
+        self.assertFalse(sdxl_pag["fieldParams"]["pag_scale"]["hidden"])
+        self.assertFalse(sdxl_pag["fieldParams"]["pag_adaptive_scale"]["hidden"])
+        for pipeline_name in (
+            "HunyuanDiTPAGPipeline",
+            "PixArtSigmaPAGPipeline",
+            "SanaPAGPipeline",
+        ):
+            with self.subTest(pag_text_to_image=pipeline_name):
+                contract = image_pipeline_contract(
+                    IMAGE_PIPELINE_ADAPTERS[pipeline_name], "text_to_image"
+                )
+                for field in (
+                    "negative_prompt",
+                    "width",
+                    "height",
+                    "guidance_scale",
+                    "pag_scale",
+                    "pag_adaptive_scale",
+                ):
+                    self.assertFalse(contract["fieldParams"][field]["hidden"])
+                self.assertEqual(contract["actions"], {"Generate": ["text_to_image"]})
+        hunyuan_pag = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["HunyuanDiTPAGPipeline"], "text_to_image"
+        )
+        self.assertTrue(hunyuan_pag["fieldParams"]["max_sequence_length"]["hidden"])
+        for pipeline_name in ("PixArtSigmaPAGPipeline", "SanaPAGPipeline"):
+            with self.subTest(pag_prompt_length=pipeline_name):
+                contract = image_pipeline_contract(
+                    IMAGE_PIPELINE_ADAPTERS[pipeline_name], "text_to_image"
+                )
+                self.assertFalse(contract["fieldParams"]["max_sequence_length"]["hidden"])
+                self.assertEqual(contract["fieldParams"]["max_sequence_length"]["max"], 300)
+        sana = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["SanaPipeline"], "text_to_image")
+        self.assertFalse(sana["fieldParams"]["negative_prompt"]["hidden"])
+        self.assertFalse(sana["fieldParams"]["max_sequence_length"]["hidden"])
+        auraflow = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["AuraFlowPipeline"], "text_to_image")
+        self.assertEqual(auraflow["fieldParams"]["width"]["max"], 1536)
+        self.assertEqual(auraflow["fieldParams"]["height"]["max"], 1536)
+        chroma = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["ChromaPipeline"], "text_to_image")
+        self.assertEqual(chroma["fieldParams"]["width"]["max"], 1024)
+        self.assertEqual(chroma["fieldParams"]["height"]["max"], 1024)
+        cogview3 = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["CogView3PlusPipeline"], "text_to_image"
+        )
+        for field in ("width", "height"):
+            self.assertEqual(
+                {key: cogview3["fieldParams"][field][key] for key in ("min", "max", "step")},
+                {"min": 512, "max": 2048, "step": 32},
+            )
+        cogview4 = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["CogView4Pipeline"], "text_to_image")
+        for field in ("width", "height"):
+            self.assertEqual(
+                {key: cogview4["fieldParams"][field][key] for key in ("min", "max", "step")},
+                {"min": 512, "max": 2048, "step": 32},
+            )
+        self.assertEqual(cogview4["maxOutputPixels"], 2**21)
+        self.assertEqual(cogview4["fieldParams"]["max_sequence_length"]["max"], 1024)
+        ernie = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["ErnieImagePipeline"], "text_to_image")
+        for field in ("width", "height"):
+            self.assertEqual(
+                {key: ernie["fieldParams"][field][key] for key in ("min", "max", "step")},
+                {"min": 1024, "max": 1024, "step": 32},
+            )
+        self.assertEqual(ernie["maxOutputPixels"], 1024 * 1024)
+        self.assertTrue(ernie["fieldParams"]["negative_prompt"]["hidden"])
+        self.assertTrue(ernie["fieldParams"]["guidance_scale"]["hidden"])
+        self.assertTrue(ernie["fieldParams"]["max_sequence_length"]["hidden"])
+        glm_image = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["GlmImagePipeline"], "text_to_image")
+        for field in ("width", "height"):
+            self.assertEqual(
+                {key: glm_image["fieldParams"][field][key] for key in ("min", "max", "step")},
+                {"min": 1024, "max": 1024, "step": 32},
+            )
+        self.assertEqual(glm_image["maxOutputPixels"], 1024 * 1024)
+        self.assertEqual(
+            IMAGE_PIPELINE_ADAPTERS["GlmImagePipeline"].component_dtype_overrides,
+            (("text_encoder", "float32"),),
+        )
+        self.assertEqual(
+            IMAGE_PIPELINE_ADAPTERS["DreamLitePipeline"].component_dtype_overrides,
+            (("text_encoder", "bfloat16"),),
+        )
+        self.assertEqual(
+            IMAGE_PIPELINE_ADAPTERS["DreamLiteMobilePipeline"].component_dtype_overrides,
+            (("text_encoder", "bfloat16"),),
+        )
+        self.assertTrue(glm_image["fieldParams"]["negative_prompt"]["hidden"])
+        self.assertFalse(glm_image["fieldParams"]["guidance_scale"]["hidden"])
+        self.assertFalse(glm_image["fieldParams"]["max_sequence_length"]["hidden"])
+        for pipeline_name, mode in (
+            ("JoyImageEditPipeline", "text_to_image"),
+            ("JoyImageEditPipeline", "edit_image"),
+            ("JoyImageEditPlusPipeline", "edit_image"),
+            ("JoyImageEditPlusPipeline", "multi_image_reference_edit"),
+        ):
+            with self.subTest(joyimage_prompt_length=(pipeline_name, mode)):
+                joyimage = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS[pipeline_name], mode)
+                self.assertFalse(joyimage["fieldParams"]["max_sequence_length"]["hidden"])
+                self.assertEqual(joyimage["fieldParams"]["max_sequence_length"]["max"], 4096)
+        sana_sprint = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["SanaSprintPipeline"], "text_to_image"
+        )
+        self.assertTrue(sana_sprint["fieldParams"]["negative_prompt"]["hidden"])
+        self.assertFalse(sana_sprint["fieldParams"]["max_sequence_length"]["hidden"])
+        sana_sprint_edit = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["SanaSprintImg2ImgPipeline"], "edit_image"
+        )
+        self.assertFalse(sana_sprint_edit["fieldParams"]["width"]["hidden"])
+        self.assertFalse(sana_sprint_edit["fieldParams"]["height"]["hidden"])
+        self.assertFalse(sana_sprint_edit["fieldParams"]["strength"]["hidden"])
+        for pipeline_name, mode in (
+            ("Kandinsky3Pipeline", "text_to_image"),
+            ("Kandinsky3Img2ImgPipeline", "edit_image"),
+        ):
+            kandinsky3 = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS[pipeline_name], mode)
+            self.assertTrue(kandinsky3["fieldParams"]["max_sequence_length"]["hidden"])
+            self.assertEqual(kandinsky3["fieldParams"]["max_sequence_length"]["default"], 128)
+            self.assertEqual(kandinsky3["fieldParams"]["max_sequence_length"]["max"], 128)
+        for pipeline_name, mode in (
+            ("StableDiffusionXLPAGImg2ImgPipeline", "edit_image"),
+            ("StableDiffusionXLPAGInpaintPipeline", "inpaint"),
+            ("StableDiffusionPAGImg2ImgPipeline", "edit_image"),
+            ("StableDiffusionPAGInpaintPipeline", "inpaint"),
+        ):
+            with self.subTest(pipeline=pipeline_name):
+                contract = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS[pipeline_name], mode)
+                self.assertFalse(contract["fieldParams"]["pag_scale"]["hidden"])
+                self.assertFalse(contract["fieldParams"]["pag_adaptive_scale"]["hidden"])
+                self.assertFalse(contract["fieldParams"]["strength"]["hidden"])
+        controlnet = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["StableDiffusionControlNetPipeline"], "control_image"
+        )
+        self.assertFalse(controlnet["fieldParams"]["conditioning_scale"]["hidden"])
+        sdxl_controlnet = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLControlNetPipeline"], "control_image"
+        )
+        self.assertFalse(sdxl_controlnet["fieldParams"]["conditioning_scale"]["hidden"])
+        sdxl_adapter = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLAdapterPipeline"], "control_image"
+        )
+        self.assertFalse(sdxl_adapter["fieldParams"]["conditioning_scale"]["hidden"])
+        turbo = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLTurboPipeline"], "text_to_image"
+        )
+        self.assertTrue(turbo["fieldParams"]["negative_prompt"]["hidden"])
+        self.assertTrue(turbo["fieldParams"]["guidance_scale"]["hidden"])
+        instruct = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLInstructPix2PixPipeline"], "edit_image"
+        )
+        self.assertFalse(instruct["fieldParams"]["image_guidance_scale"]["hidden"])
+        self.assertTrue(instruct["fieldParams"]["strength"]["hidden"])
+        lcm_img2img = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["LatentConsistencyModelImg2ImgPipeline"], "edit_image"
+        )
+        self.assertEqual(lcm_img2img["actions"], {"Edit": ["edit_image"]})
+        self.assertFalse(lcm_img2img["fieldParams"]["guidance_scale"]["hidden"])
+        self.assertFalse(lcm_img2img["fieldParams"]["strength"]["hidden"])
+        self.assertTrue(lcm_img2img["fieldParams"]["negative_prompt"]["hidden"])
+        self.assertTrue(lcm_img2img["fieldParams"]["width"]["hidden"])
+        self.assertTrue(lcm_img2img["fieldParams"]["height"]["hidden"])
 
     def test_image_field_contract_rejects_unknown_or_duplicate_visibility_fields(self):
         for fields in (("unknown",), ("strength", "strength")):
             with self.subTest(fields=fields), self.assertRaisesRegex(ValueError, "unique reviewed"):
                 ImageModeFieldContract(fields)
 
+    def test_pag_text_to_image_adapters_bind_exact_reviewed_sources_and_bounds(self):
+        expected = {
+            "HunyuanDiTPAGPipeline": {
+                "repo": HUNYUAN_DIT_DISTILLED_REPO,
+                "revision": "ba991d1546d8c50936c4c16398ed0a87b9b99fb1",
+                "artifact_classes": ("HunyuanDiTPipeline",),
+                "max_steps": 25,
+                "output_bounds": (1024, 1024, 32, 1024 * 1024),
+                "max_sequence_length": 256,
+                "variant": None,
+                "component_dtypes": (),
+                "visible_fields": (
+                    "negative_prompt",
+                    "width",
+                    "height",
+                    "guidance_scale",
+                    "pag_scale",
+                    "pag_adaptive_scale",
+                ),
+            },
+            "PixArtSigmaPAGPipeline": {
+                "repo": PIXART_SIGMA_REPO,
+                "revision": "e102b3591cc82e97071b8b4cb90d834d0c487207",
+                "artifact_classes": ("PixArtSigmaPipeline",),
+                "max_steps": 50,
+                "output_bounds": (16, 2048, 16, 2048 * 2048),
+                "max_sequence_length": 300,
+                "variant": None,
+                "component_dtypes": (),
+                "visible_fields": (
+                    "negative_prompt",
+                    "width",
+                    "height",
+                    "guidance_scale",
+                    "max_sequence_length",
+                    "pag_scale",
+                    "pag_adaptive_scale",
+                ),
+            },
+            "SanaPAGPipeline": {
+                "repo": SANA_REPO,
+                "revision": "28f3af7689de15f3883d5863059a2fca0aa9b829",
+                "artifact_classes": ("SanaPipeline",),
+                "max_steps": 100,
+                "output_bounds": (16, 2048, 16, 2048 * 2048),
+                "max_sequence_length": 300,
+                "variant": "fp16",
+                "component_dtypes": (("text_encoder", "bfloat16"), ("vae", "bfloat16")),
+                "visible_fields": (
+                    "negative_prompt",
+                    "width",
+                    "height",
+                    "guidance_scale",
+                    "max_sequence_length",
+                    "pag_scale",
+                    "pag_adaptive_scale",
+                ),
+            },
+        }
+        for pipeline_name, contract in expected.items():
+            with self.subTest(pipeline=pipeline_name):
+                adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_name]
+                self.assertEqual(adapter.default_repo, contract["repo"])
+                self.assertEqual(catalog_revision(adapter.default_repo), contract["revision"])
+                self.assertEqual(adapter.model_filter_classes, contract["artifact_classes"])
+                self.assertEqual(adapter.load_pipeline_class, pipeline_name)
+                self.assertEqual(adapter.allowed_runtime_classes, (pipeline_name,))
+                self.assertEqual(adapter.mode_options, ("text_to_image",))
+                self.assertTrue(adapter.safe_serialization_required)
+                self.assertEqual(adapter.max_inference_steps, contract["max_steps"])
+                self.assertEqual(
+                    (
+                        adapter.min_output_side,
+                        adapter.max_output_side,
+                        adapter.output_side_step,
+                        adapter.max_output_pixels,
+                    ),
+                    contract["output_bounds"],
+                )
+                self.assertEqual(adapter.max_sequence_length, contract["max_sequence_length"])
+                self.assertEqual(adapter.weight_variant, contract["variant"])
+                self.assertEqual(adapter.component_dtype_overrides, contract["component_dtypes"])
+                self.assertEqual(
+                    IMAGE_MODE_FIELD_CONTRACTS[pipeline_name]["text_to_image"].visible_fields,
+                    contract["visible_fields"],
+                )
+
+    def test_pag_text_to_image_generation_passes_only_each_reviewed_call_surface(self):
+        received = {}
+
+        class HunyuanDiTPAGPipeline:
+            _execution_device = "cpu"
+
+            def __call__(
+                self,
+                *,
+                prompt,
+                height,
+                width,
+                num_inference_steps,
+                guidance_scale,
+                negative_prompt,
+                generator,
+                output_type,
+                return_dict,
+                pag_scale,
+                pag_adaptive_scale,
+            ):
+                call_values = dict(locals())
+                call_values.pop("received", None)
+                received[type(self).__name__] = call_values
+                return SimpleNamespace(images=[Image.new("RGB", (16, 16), "white")])
+
+        class PixArtSigmaPAGPipeline:
+            _execution_device = "cpu"
+
+            def __call__(
+                self,
+                *,
+                prompt,
+                negative_prompt,
+                num_inference_steps,
+                guidance_scale,
+                height,
+                width,
+                generator,
+                output_type,
+                return_dict,
+                max_sequence_length,
+                pag_scale,
+                pag_adaptive_scale,
+            ):
+                call_values = dict(locals())
+                call_values.pop("received", None)
+                received[type(self).__name__] = call_values
+                return SimpleNamespace(images=[Image.new("RGB", (16, 16), "white")])
+
+        class SanaPAGPipeline(PixArtSigmaPAGPipeline):
+            pass
+
+        pipelines = {
+            "HunyuanDiTPAGPipeline": HunyuanDiTPAGPipeline(),
+            "PixArtSigmaPAGPipeline": PixArtSigmaPAGPipeline(),
+            "SanaPAGPipeline": SanaPAGPipeline(),
+        }
+        expected_keys = {
+            "HunyuanDiTPAGPipeline": {
+                "self",
+                "prompt",
+                "height",
+                "width",
+                "num_inference_steps",
+                "guidance_scale",
+                "negative_prompt",
+                "generator",
+                "output_type",
+                "return_dict",
+                "pag_scale",
+                "pag_adaptive_scale",
+            },
+            "PixArtSigmaPAGPipeline": {
+                "self",
+                "prompt",
+                "negative_prompt",
+                "num_inference_steps",
+                "guidance_scale",
+                "height",
+                "width",
+                "generator",
+                "output_type",
+                "return_dict",
+                "max_sequence_length",
+                "pag_scale",
+                "pag_adaptive_scale",
+            },
+            "SanaPAGPipeline": {
+                "self",
+                "prompt",
+                "negative_prompt",
+                "num_inference_steps",
+                "guidance_scale",
+                "height",
+                "width",
+                "generator",
+                "output_type",
+                "return_dict",
+                "max_sequence_length",
+                "pag_scale",
+                "pag_adaptive_scale",
+            },
+        }
+        with patch("modules.DiffusersImage.main.add_progress_callback"):
+            for pipeline_name, pipeline in pipelines.items():
+                with self.subTest(pipeline=pipeline_name):
+                    tag_test_image_pipeline(pipeline, pipeline_name, "text_to_image")
+                    adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_name]
+                    result = Generate(f"{pipeline_name}-surface-probe").execute(
+                        pipeline=pipeline,
+                        prompt="render the reviewed PAG fixture",
+                        negative_prompt="artifact",
+                        width=max(1024, adapter.min_output_side),
+                        height=max(1024, adapter.min_output_side),
+                        num_inference_steps=min(20, adapter.max_inference_steps),
+                        guidance_scale=4.5,
+                        max_sequence_length=adapter.max_sequence_length,
+                        pag_scale=3.0,
+                        pag_adaptive_scale=0.25,
+                        output_type="pil",
+                    )
+                    self.assertEqual(set(received[pipeline_name]), expected_keys[pipeline_name])
+                    self.assertEqual(received[pipeline_name]["pag_scale"], 3.0)
+                    self.assertEqual(received[pipeline_name]["pag_adaptive_scale"], 0.25)
+                    self.assertEqual((result["width_out"], result["height_out"]), (16, 16))
+        self.assertNotIn("max_sequence_length", received["HunyuanDiTPAGPipeline"])
+
+    def test_pag_text_to_image_family_bounds_fail_before_inference(self):
+        calls = []
+        pipelines = {}
+        for pipeline_name in (
+            "HunyuanDiTPAGPipeline",
+            "PixArtSigmaPAGPipeline",
+            "SanaPAGPipeline",
+        ):
+            pipeline_type = type(
+                pipeline_name,
+                (),
+                {"__call__": lambda _self, **_kwargs: calls.append(True)},
+            )
+            pipelines[pipeline_name] = tag_test_image_pipeline(
+                pipeline_type(), pipeline_name, "text_to_image"
+            )
+
+        invalid = (
+            ("HunyuanDiTPAGPipeline", {"width": 992}, "between 1024 and 1024"),
+            ("HunyuanDiTPAGPipeline", {"num_inference_steps": 26}, "between 1 and 25"),
+            ("HunyuanDiTPAGPipeline", {"max_sequence_length": 257}, "between 1 and 256"),
+            ("PixArtSigmaPAGPipeline", {"num_inference_steps": 51}, "between 1 and 50"),
+            ("PixArtSigmaPAGPipeline", {"max_sequence_length": 301}, "between 1 and 300"),
+            ("SanaPAGPipeline", {"num_inference_steps": 101}, "between 1 and 100"),
+            ("SanaPAGPipeline", {"max_sequence_length": 301}, "between 1 and 300"),
+        )
+        for pipeline_name, values, message in invalid:
+            with self.subTest(pipeline=pipeline_name, values=values):
+                request = {
+                    "pipeline": pipelines[pipeline_name],
+                    "prompt": "render the reviewed PAG fixture",
+                    "width": 1024,
+                    "height": 1024,
+                    "num_inference_steps": 20,
+                    "guidance_scale": 4.5,
+                    "max_sequence_length": 256,
+                    "pag_scale": 3.0,
+                    "pag_adaptive_scale": 0.0,
+                    **values,
+                }
+                with self.assertRaisesRegex(ValueError, message):
+                    Generate(f"{pipeline_name}-bounds-probe").execute(**request)
+        self.assertEqual(calls, [])
+
+    @requires_transformers
     def test_new_standard_image_adapters_match_pinned_generic_action_signatures(self):
         expected = {
+            "StableDiffusionPAGPipeline": ({"text_to_image"}, SD15_BASE_REPO, {"prompt"}),
+            "StableDiffusionPAGImg2ImgPipeline": (
+                {"edit_image"},
+                SD15_BASE_REPO,
+                {"prompt", "image"},
+            ),
+            "StableDiffusionPAGInpaintPipeline": (
+                {"inpaint"},
+                SD15_BASE_REPO,
+                {"prompt", "image", "mask_image"},
+            ),
+            "LatentConsistencyModelPipeline": ({"text_to_image"}, LCM_DREAMSHAPER_REPO, {"prompt"}),
+            "LatentConsistencyModelImg2ImgPipeline": (
+                {"edit_image"},
+                LCM_DREAMSHAPER_REPO,
+                {"prompt", "image", "strength"},
+            ),
+            "StableDiffusionPipeline": ({"text_to_image"}, SD15_BASE_REPO, {"prompt"}),
+            "StableDiffusionControlNetPipeline": (
+                {"control_image"},
+                SD15_BASE_REPO,
+                {"prompt", "image"},
+            ),
+            "StableDiffusionControlNetImg2ImgPipeline": (
+                {"control_edit_image"},
+                SD15_BASE_REPO,
+                {"prompt", "image", "control_image", "strength"},
+            ),
+            "StableDiffusionControlNetInpaintPipeline": (
+                {"control_inpaint"},
+                SD15_BASE_REPO,
+                {"prompt", "image", "mask_image", "control_image", "strength"},
+            ),
+            "StableDiffusionControlNetPAGPipeline": (
+                {"control_image"},
+                SD15_BASE_REPO,
+                {"prompt", "image", "pag_scale", "pag_adaptive_scale"},
+            ),
+            "StableDiffusionControlNetPAGInpaintPipeline": (
+                {"control_inpaint"},
+                SD15_BASE_REPO,
+                {"prompt", "image", "mask_image", "control_image", "pag_scale", "pag_adaptive_scale"},
+            ),
+            "StableDiffusionImg2ImgPipeline": ({"edit_image"}, SD15_BASE_REPO, {"prompt", "image"}),
+            "StableDiffusionInpaintPipeline": (
+                {"inpaint", "outpaint"},
+                SD15_BASE_REPO,
+                {"prompt", "image", "mask_image"},
+            ),
             "StableDiffusionXLPipeline": ({"text_to_image"}, SDXL_BASE_REPO, {"prompt"}),
+            "StableDiffusionXLTurboPipeline": ({"text_to_image"}, SDXL_TURBO_REPO, {"prompt"}),
+            "StableDiffusionXLInstructPix2PixPipeline": (
+                {"edit_image"},
+                SDXL_INSTRUCT_PIX2PIX_REPO,
+                {"prompt", "image", "image_guidance_scale"},
+            ),
+            "StableDiffusionXLControlNetPipeline": (
+                {"control_image"},
+                SDXL_BASE_REPO,
+                {"prompt", "image"},
+            ),
+            "StableDiffusionXLControlNetImg2ImgPipeline": (
+                {"control_edit_image"},
+                SDXL_BASE_REPO,
+                {"prompt", "image", "control_image", "strength"},
+            ),
+            "StableDiffusionXLControlNetInpaintPipeline": (
+                {"control_inpaint"},
+                SDXL_BASE_REPO,
+                {"prompt", "image", "mask_image", "control_image", "strength"},
+            ),
+            "StableDiffusionXLControlNetPAGPipeline": (
+                {"control_image"},
+                SDXL_BASE_REPO,
+                {"prompt", "image", "pag_scale", "pag_adaptive_scale"},
+            ),
+            "StableDiffusionXLControlNetPAGImg2ImgPipeline": (
+                {"control_edit_image"},
+                SDXL_BASE_REPO,
+                {"prompt", "image", "control_image", "pag_scale", "pag_adaptive_scale"},
+            ),
+            "HunyuanDiTPipeline": ({"text_to_image"}, HUNYUAN_DIT_DISTILLED_REPO, {"prompt"}),
+            "HunyuanDiTPAGPipeline": (
+                {"text_to_image"},
+                HUNYUAN_DIT_DISTILLED_REPO,
+                {"prompt", "pag_scale", "pag_adaptive_scale"},
+            ),
+            "HunyuanDiTControlNetPipeline": (
+                {"control_image"},
+                HUNYUAN_DIT_DISTILLED_REPO,
+                {"prompt", "control_image"},
+            ),
+            "StableDiffusionXLAdapterPipeline": (
+                {"control_image"},
+                SDXL_BASE_REPO,
+                {"prompt", "image"},
+            ),
+            "StableDiffusionXLPAGPipeline": ({"text_to_image"}, SDXL_BASE_REPO, {"prompt"}),
+            "StableDiffusionXLPAGImg2ImgPipeline": (
+                {"edit_image"},
+                SDXL_BASE_REPO,
+                {"prompt", "image"},
+            ),
+            "StableDiffusionXLPAGInpaintPipeline": (
+                {"inpaint"},
+                SDXL_BASE_REPO,
+                {"prompt", "image", "mask_image"},
+            ),
+            "SanaPipeline": ({"text_to_image"}, SANA_REPO, {"prompt"}),
+            "SanaPAGPipeline": (
+                {"text_to_image"},
+                SANA_REPO,
+                {"prompt", "pag_scale", "pag_adaptive_scale"},
+            ),
+            "SanaSprintPipeline": ({"text_to_image"}, SANA_SPRINT_REPO, {"prompt"}),
+            "SanaSprintImg2ImgPipeline": (
+                {"edit_image"},
+                SANA_SPRINT_REPO,
+                {"prompt", "image"},
+            ),
+            "PixArtSigmaPipeline": ({"text_to_image"}, PIXART_SIGMA_REPO, {"prompt"}),
+            "PixArtSigmaPAGPipeline": (
+                {"text_to_image"},
+                PIXART_SIGMA_REPO,
+                {"prompt", "pag_scale", "pag_adaptive_scale"},
+            ),
+            "Kandinsky3Pipeline": ({"text_to_image"}, KANDINSKY3_REPO, {"prompt"}),
+            "Kandinsky3Img2ImgPipeline": (
+                {"edit_image"},
+                KANDINSKY3_REPO,
+                {"prompt", "image"},
+            ),
+            "OmniGenPipeline": (
+                {"text_to_image", "edit_image", "multi_image_reference_edit"},
+                OMNIGEN_REPO,
+                {"prompt", "input_images", "img_guidance_scale"},
+            ),
+            "OvisImagePipeline": (
+                {"text_to_image"},
+                OVIS_IMAGE_REPO,
+                {"prompt"},
+            ),
+            "PRXPipeline": ({"text_to_image"}, PRX_REPO, {"prompt"}),
+            "NucleusMoEImagePipeline": ({"text_to_image"}, NUCLEUS_IMAGE_REPO, {"prompt"}),
+            "AuraFlowPipeline": ({"text_to_image"}, AURAFLOW_V03_REPO, {"prompt"}),
+            "ChromaPipeline": ({"text_to_image"}, CHROMA1_HD_REPO, {"prompt"}),
+            "CogView3PlusPipeline": ({"text_to_image"}, COGVIEW3_PLUS_REPO, {"prompt"}),
+            "CogView4Pipeline": ({"text_to_image"}, COGVIEW4_6B_REPO, {"prompt"}),
+            "ErnieImagePipeline": ({"text_to_image"}, ERNIE_IMAGE_TURBO_REPO, {"prompt"}),
+            "GlmImagePipeline": ({"text_to_image"}, GLM_IMAGE_REPO, {"prompt"}),
+            "JoyImageEditPipeline": (
+                {"text_to_image", "edit_image"},
+                JOYIMAGE_EDIT_REPO,
+                {"prompt", "image"},
+            ),
+            "JoyImageEditPlusPipeline": (
+                {"edit_image", "multi_image_reference_edit"},
+                JOYIMAGE_EDIT_PLUS_REPO,
+                {"prompt", "images"},
+            ),
+            "DreamLitePipeline": (
+                {"text_to_image", "edit_image"},
+                DREAMLITE_BASE_REPO,
+                {"prompt", "image"},
+            ),
+            "DreamLiteMobilePipeline": (
+                {"text_to_image", "edit_image"},
+                DREAMLITE_MOBILE_REPO,
+                {"prompt", "image"},
+            ),
             "StableDiffusionXLImg2ImgPipeline": ({"edit_image"}, SDXL_BASE_REPO, {"prompt", "image"}),
             "StableDiffusionXLInpaintPipeline": (
                 {"inpaint", "outpaint"},
@@ -454,6 +1606,22 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"inpaint", "outpaint"},
                 QWEN_IMAGE_2512_REPO,
                 {"prompt", "image", "mask_image"},
+            ),
+            "QwenImageControlNetPipeline": (
+                {"control_image"},
+                QWEN_IMAGE_2512_REPO,
+                {
+                    "prompt",
+                    "control_image",
+                    "control_guidance_start",
+                    "control_guidance_end",
+                    "controlnet_conditioning_scale",
+                },
+            ),
+            "QwenImageLayeredPipeline": (
+                {"layer_decomposition"},
+                QWEN_IMAGE_LAYERED_REPO,
+                {"image", "prompt", "layers", "resolution", "cfg_normalize", "use_en_prompt"},
             ),
             "QwenImageEditPipeline": ({"edit_image"}, QWEN_IMAGE_EDIT_REPO, {"prompt", "image"}),
             "QwenImageEditPlusPipeline": (
@@ -477,43 +1645,178 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 FLUX2_KLEIN_REPO,
                 {"prompt", "image", "mask_image"},
             ),
+            "Flux2Pipeline": (
+                {"text_to_image", "edit_image", "multi_image_reference_edit"},
+                FLUX2_DEV_REPO,
+                {"prompt", "image"},
+            ),
+            "FluxControlImg2ImgPipeline": (
+                {"control_edit_image"},
+                FLUX_DEPTH_REPO,
+                {"prompt", "image", "control_image", "strength"},
+            ),
+            "FluxControlInpaintPipeline": (
+                {"control_inpaint"},
+                FLUX_DEPTH_REPO,
+                {"prompt", "image", "mask_image", "control_image", "strength"},
+            ),
         }
         for pipeline_name, (modes, repository, required_inputs) in expected.items():
             with self.subTest(pipeline=pipeline_name):
                 adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_name]
-                parameters = set(inspect.signature(pipeline_class_from_name(pipeline_name).__call__).parameters)
+                parameters = set(
+                    inspect.signature(pipeline_class_from_name(adapter.load_pipeline_class).__call__).parameters
+                )
                 self.assertEqual(adapter.modes, frozenset(modes))
                 self.assertEqual(adapter.default_repo, repository)
                 self.assertTrue(required_inputs.issubset(parameters))
                 self.assertIn("num_inference_steps", parameters)
                 self.assertIn("generator", parameters)
                 self.assertIn("output_type", parameters)
-                self.assertIn(adapter.guidance_parameter, parameters)
+                if adapter.guidance_parameter is not None:
+                    self.assertIn(adapter.guidance_parameter, parameters)
 
+        new_flux_modes = {
+            "Flux2KleinKVPipeline": ({"text_to_image", "edit_image", "multi_image_reference_edit"}, FLUX2_KLEIN_KV_REPO, {"prompt", "image"}),
+            "FluxControlNetPipeline": ({"control_image"}, FLUX_DEV_REPO, {"prompt", "control_image"}),
+            "FluxControlNetImg2ImgPipeline": ({"control_edit_image"}, FLUX_DEV_REPO, {"prompt", "image", "control_image", "strength"}),
+            "FluxControlNetInpaintPipeline": ({"control_inpaint"}, FLUX_DEV_REPO, {"prompt", "image", "mask_image", "control_image", "strength"}),
+        }
+        for name, (modes, repository, required) in new_flux_modes.items():
+            with self.subTest(pipeline=name):
+                adapter = IMAGE_PIPELINE_ADAPTERS[name]
+                params = set(inspect.signature(pipeline_class_from_name(adapter.load_pipeline_class).__call__).parameters)
+                self.assertEqual(adapter.modes, frozenset(modes))
+                self.assertEqual(adapter.default_repo, repository)
+                self.assertTrue(required <= params)
+                self.assertTrue({"num_inference_steps", "generator", "output_type"} <= params)
+                if adapter.guidance_parameter is not None:
+                    self.assertIn(adapter.guidance_parameter, params)
         for deferred in (
-            "Flux2Pipeline",
-            "Flux2KleinKVPipeline",
-            "FluxControlImg2ImgPipeline",
-            "FluxControlInpaintPipeline",
-            "FluxControlNetPipeline",
-            "FluxControlNetImg2ImgPipeline",
-            "FluxControlNetInpaintPipeline",
-            "QwenImageControlNetPipeline",
             "QwenImageControlNetInpaintPipeline",
-            "QwenImageLayeredPipeline",
             "ZImageControlNetPipeline",
             "ZImageControlNetInpaintPipeline",
             "ZImageOmniPipeline",
-            "StableDiffusionXLInstructPix2PixPipeline",
         ):
             with self.subTest(deferred=deferred):
                 self.assertNotIn(deferred, IMAGE_PIPELINE_ADAPTERS)
 
+    @requires_transformers
     def test_new_standard_image_adapters_execute_only_their_pinned_signature(self):
         image = Image.new("RGB", (16, 16), "black")
         mask = Image.new("L", (16, 16), "white")
         cases = (
+            ("StableDiffusionPAGPipeline", "text_to_image", Generate, {}),
+            ("StableDiffusionPAGImg2ImgPipeline", "edit_image", Edit, {"image": image}),
+            (
+                "StableDiffusionPAGInpaintPipeline",
+                "inpaint",
+                Inpaint,
+                {"image": image, "mask_image": mask},
+            ),
+            ("LatentConsistencyModelPipeline", "text_to_image", Generate, {}),
+            (
+                "LatentConsistencyModelImg2ImgPipeline",
+                "edit_image",
+                Edit,
+                {"image": image},
+            ),
+            ("StableDiffusionPipeline", "text_to_image", Generate, {}),
+            (
+                "StableDiffusionControlNetImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": image, "control_image": image},
+            ),
+            (
+                "StableDiffusionControlNetInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": image, "mask_image": mask, "control_image": image},
+            ),
+            (
+                "StableDiffusionControlNetPAGPipeline",
+                "control_image",
+                ControlGenerate,
+                {"control_image": image},
+            ),
+            (
+                "StableDiffusionControlNetPAGInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": image, "mask_image": mask, "control_image": image},
+            ),
+            ("StableDiffusionImg2ImgPipeline", "edit_image", Edit, {"image": image}),
+            ("StableDiffusionInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
             ("StableDiffusionXLPipeline", "text_to_image", Generate, {}),
+            (
+                "StableDiffusionXLControlNetImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": image, "control_image": image},
+            ),
+            (
+                "StableDiffusionXLControlNetInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": image, "mask_image": mask, "control_image": image},
+            ),
+            (
+                "StableDiffusionXLControlNetPAGPipeline",
+                "control_image",
+                ControlGenerate,
+                {"control_image": image},
+            ),
+            (
+                "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": image, "control_image": image},
+            ),
+            ("StableDiffusionXLTurboPipeline", "text_to_image", Generate, {}),
+            ("HunyuanDiTPipeline", "text_to_image", Generate, {}),
+            ("HunyuanDiTPAGPipeline", "text_to_image", Generate, {}),
+            ("StableDiffusionXLPAGPipeline", "text_to_image", Generate, {}),
+            ("StableDiffusionXLPAGImg2ImgPipeline", "edit_image", Edit, {"image": image}),
+            (
+                "StableDiffusionXLPAGInpaintPipeline",
+                "inpaint",
+                Inpaint,
+                {"image": image, "mask_image": mask},
+            ),
+            ("SanaPipeline", "text_to_image", Generate, {}),
+            ("SanaPAGPipeline", "text_to_image", Generate, {}),
+            ("SanaSprintPipeline", "text_to_image", Generate, {}),
+            ("SanaSprintImg2ImgPipeline", "edit_image", Edit, {"image": image}),
+            ("PixArtSigmaPipeline", "text_to_image", Generate, {}),
+            ("PixArtSigmaPAGPipeline", "text_to_image", Generate, {}),
+            ("Kandinsky3Pipeline", "text_to_image", Generate, {}),
+            ("Kandinsky3Img2ImgPipeline", "edit_image", Edit, {"image": image}),
+            ("OmniGenPipeline", "text_to_image", Generate, {}),
+            ("OmniGenPipeline", "edit_image", Edit, {"image": image}),
+            ("OvisImagePipeline", "text_to_image", Generate, {}),
+            ("PRXPipeline", "text_to_image", Generate, {}),
+            ("NucleusMoEImagePipeline", "text_to_image", Generate, {}),
+            ("AuraFlowPipeline", "text_to_image", Generate, {}),
+            ("ChromaPipeline", "text_to_image", Generate, {}),
+            ("CogView3PlusPipeline", "text_to_image", Generate, {}),
+            ("CogView4Pipeline", "text_to_image", Generate, {}),
+            ("ErnieImagePipeline", "text_to_image", Generate, {}),
+            ("GlmImagePipeline", "text_to_image", Generate, {}),
+            ("JoyImageEditPipeline", "text_to_image", Generate, {}),
+            ("JoyImageEditPipeline", "edit_image", Edit, {"image": image}),
+            ("JoyImageEditPlusPipeline", "edit_image", Edit, {"image": image}),
+            ("DreamLitePipeline", "text_to_image", Generate, {}),
+            ("DreamLitePipeline", "edit_image", Edit, {"image": image}),
+            ("DreamLiteMobilePipeline", "text_to_image", Generate, {}),
+            ("DreamLiteMobilePipeline", "edit_image", Edit, {"image": image}),
+            ("StableDiffusionXLInstructPix2PixPipeline", "edit_image", Edit, {"image": image}),
+            (
+                "HunyuanDiTControlNetPipeline",
+                "control_image",
+                ControlGenerate,
+                {"control_image": image},
+            ),
             ("StableDiffusionXLImg2ImgPipeline", "edit_image", Edit, {"image": image}),
             ("StableDiffusionXLInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
             ("QwenImageImg2ImgPipeline", "edit_image", Edit, {"image": image}),
@@ -524,19 +1827,36 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("ZImageInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
             ("FluxKontextInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
             ("Flux2KleinInpaintPipeline", "inpaint", Inpaint, {"image": image, "mask_image": mask}),
+            (
+                "FluxControlImg2ImgPipeline",
+                "control_edit_image",
+                ControlEdit,
+                {"image": image, "control_image": image},
+            ),
+            (
+                "FluxControlInpaintPipeline",
+                "control_inpaint",
+                ControlInpaint,
+                {"image": image, "mask_image": mask, "control_image": image},
+            ),
         )
         aliases = {
             "negative_prompt": "negative_prompt",
             "width": "width",
             "height": "height",
-            "max_sequence_length": "max_sequence_length",
             "strength": "strength",
             "padding_mask_crop": "padding_mask_crop",
             "reference_strength": "reference_strength",
+            "pag_scale": "pag_scale",
+            "pag_adaptive_scale": "pag_adaptive_scale",
+            "image_guidance_scale": "image_guidance_scale",
         }
         for pipeline_name, mode, action_class, action_inputs in cases:
             with self.subTest(pipeline=pipeline_name):
-                upstream_signature = inspect.signature(pipeline_class_from_name(pipeline_name).__call__)
+                adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_name]
+                upstream_signature = inspect.signature(
+                    pipeline_class_from_name(adapter.load_pipeline_class).__call__
+                )
                 upstream_parameters = set(upstream_signature.parameters)
                 received = {}
 
@@ -546,22 +1866,40 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
                 call.__signature__ = upstream_signature
                 fake_type = type(
-                    pipeline_name,
+                    adapter.load_pipeline_class,
                     (),
                     {"_execution_device": "cpu", "__call__": call},
                 )
                 pipeline = tag_test_image_pipeline(fake_type(), pipeline_name, mode)
+                # This is a signature fixture, not a model proof. Mirror the
+                # explicit mixed-dtype encoder boundary used by current adapters.
+                if adapter.prompt_embedding_dtype_component is not None:
+                    import torch
+                    setattr(pipeline, adapter.prompt_embedding_dtype_component, SimpleNamespace(dtype=torch.float32))
+                    def encode_prompt(prompt=None, *, dtype=None, **kwargs):
+                        return torch.zeros(1, 2, 4, dtype=dtype), torch.zeros(1, 2, 4, dtype=dtype)
+                    pipeline.encode_prompt = encode_prompt
+                    if mode in adapter.prompt_embedding_mask_modes:
+                        pipeline.vae_image_processor = SimpleNamespace(resize_center_crop=lambda image, size: image)
+                        pipeline.encode_prompt_multiple_images = lambda **kwargs: (
+                            torch.zeros(1, 2, 4), torch.ones(1, 2, dtype=torch.bool)
+                        )
                 values = {
                     "pipeline": pipeline,
                     "prompt": "render the reviewed fixture",
                     "negative_prompt": "artifact",
-                    "width": 32,
-                    "height": 32,
+                    "width": max(32, adapter.min_output_side),
+                    "height": max(32, adapter.min_output_side),
                     "num_inference_steps": 2,
-                    "guidance_scale": 4.0,
+                    "guidance_scale": (
+                        adapter.fixed_guidance_scale if adapter.fixed_guidance_scale is not None else 4.0
+                    ),
                     "strength": 0.75,
                     "padding_mask_crop": 16,
                     "max_sequence_length": 128,
+                    "pag_scale": 3.0,
+                    "pag_adaptive_scale": 0.5,
+                    "image_guidance_scale": 1.5,
                     "output_type": "pil",
                     **action_inputs,
                 }
@@ -573,22 +1911,68 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     "return_dict",
                     *action_inputs.keys(),
                 }
+                if action_class is Edit and "image" in initial:
+                    initial.remove("image")
+                    initial.add(adapter.image_parameter)
+                if action_class is ControlGenerate and "control_image" in initial:
+                    initial.remove("control_image")
+                    initial.add(adapter.control_image_parameter)
                 if action_class is Generate:
                     initial.update({"width", "height"})
-                adapter = IMAGE_PIPELINE_ADAPTERS[pipeline_name]
                 expected_keys = initial | {
                     destination
                     for source, destination in aliases.items()
                     if values.get(source) is not None and destination in upstream_parameters
+                    and source not in adapter.ignored_generation_parameters
                 }
-                expected_keys.add(adapter.guidance_parameter)
+                if (
+                    values.get("max_sequence_length") is not None
+                    and adapter.max_sequence_length_parameter in upstream_parameters
+                    and "max_sequence_length" not in adapter.ignored_generation_parameters
+                ):
+                    expected_keys.add(adapter.max_sequence_length_parameter)
+                if adapter.guidance_parameter is not None:
+                    expected_keys.add(adapter.guidance_parameter)
+                if (
+                    adapter.image_guidance_parameter is not None
+                    and "image_guidance_scale" not in adapter.ignored_generation_parameters
+                    and adapter.image_guidance_parameter in upstream_parameters
+                ):
+                    expected_keys.add(adapter.image_guidance_parameter)
+                if adapter.max_input_image_size is not None and "max_input_image_size" in upstream_parameters:
+                    expected_keys.add("max_input_image_size")
+                if adapter.conditioning_scale_parameter is not None:
+                    expected_keys.add(adapter.conditioning_scale_parameter)
+                    for parameter in ("control_guidance_start", "control_guidance_end"):
+                        if parameter in upstream_parameters:
+                            expected_keys.add(parameter)
+
+                if adapter.prompt_embedding_dtype_component is not None and not adapter.native_prompt_encoding and (
+                    not adapter.prompt_embedding_mask_modes or mode in adapter.prompt_embedding_mask_modes
+                ):
+                    expected_keys.discard("prompt")
+                    expected_keys.update({"prompt_embeds", "negative_prompt_embeds"})
+                    if mode in adapter.prompt_embedding_mask_modes:
+                        expected_keys.discard("negative_prompt")
+                        expected_keys.update({"prompt_embeds_mask", "negative_prompt_embeds_mask"})
 
                 with patch("modules.DiffusersImage.main.add_progress_callback"):
                     action_class(f"signature-{pipeline_name}").execute(**values)
 
                 self.assertEqual(set(received), expected_keys)
-                self.assertEqual(received[adapter.guidance_parameter], 4.0)
-                if "negative_prompt" in upstream_parameters:
+                if adapter.guidance_parameter is not None:
+                    self.assertEqual(
+                        received[adapter.guidance_parameter],
+                        adapter.fixed_guidance_scale if adapter.fixed_guidance_scale is not None else 4.0,
+                    )
+                else:
+                    self.assertNotIn("guidance_scale", received)
+                if adapter.conditioning_scale_parameter is not None:
+                    if "control_guidance_start" in upstream_parameters:
+                        self.assertEqual(received["control_guidance_start"], 0.0)
+                    if "control_guidance_end" in upstream_parameters:
+                        self.assertEqual(received["control_guidance_end"], 1.0)
+                if "negative_prompt" in expected_keys:
                     self.assertEqual(received["negative_prompt"], "artifact")
 
     def test_modern_flux_true_cfg_and_negative_prompt_use_the_reviewed_parameters(self):
@@ -621,16 +2005,25 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     {"negative_prompt": "artifact", "true_cfg_scale": 5.0},
                 )
 
-    def test_flux_controlnet_is_not_advertised_without_component_assembly(self):
-        self.assertNotIn("FluxControlNetPipeline", IMAGE_PIPELINE_CLASSES)
-        node = LoadPipeline("removed-controlnet-probe")
+    def test_flux_controlnet_requires_separate_reviewed_component_assembly(self):
+        for name in ("FluxControlNetPipeline", "FluxControlNetImg2ImgPipeline", "FluxControlNetInpaintPipeline"):
+            adapter = IMAGE_PIPELINE_ADAPTERS[name]
+            self.assertIn(name, IMAGE_PIPELINE_CLASSES)
+            self.assertEqual(adapter.conditioning_component_class, "FluxControlNetModel")
+            self.assertEqual(adapter.conditioning_component_parameter, "controlnet")
+            self.assertEqual(adapter.default_conditioning_repo, "InstantX/FLUX.1-dev-Controlnet-Canny")
+            self.assertEqual(adapter.artifact_pipeline_classes, ("FluxPipeline", name))
+
+    def test_t2i_adapter_is_not_advertised_with_legacy_only_official_weights(self):
+        self.assertNotIn("StableDiffusionAdapterPipeline", IMAGE_PIPELINE_CLASSES)
+        node = LoadPipeline("removed-t2i-adapter-probe")
         with (
             patch("modules.DiffusersImage.main.pipeline_class_from_name") as resolve_pipeline,
-            self.assertRaisesRegex(ValueError, "requires a separately loaded FluxControlNetModel"),
+            self.assertRaisesRegex(ValueError, "legacy PyTorch .bin weights only"),
         ):
             node(
-                model_id=FLUX_DEV_REPO,
-                pipeline_class="FluxControlNetPipeline",
+                model_id=SD15_BASE_REPO,
+                pipeline_class="StableDiffusionAdapterPipeline",
                 mode="control_image",
             )
         resolve_pipeline.assert_not_called()
@@ -700,6 +2093,20 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"image_contract": selected},
                 {"key": "pipeline"},
             )
+
+    def test_control_generate_field_action_accepts_the_exact_sd15_controlnet_contract(self):
+        node = ControlGenerate("sd15-controlnet-contract-action")
+        node.set_field_params = Mock()
+        selected = image_pipeline_contract(
+            IMAGE_PIPELINE_ADAPTERS["StableDiffusionControlNetPipeline"],
+            "control_image",
+        )
+
+        node.update_image_contract({"image_contract": selected}, {"key": "pipeline"})
+
+        updates = {call.args[0]: call.args[1] for call in node.set_field_params.call_args_list}
+        self.assertEqual(updates["conditioning_scale"], {"hidden": False})
+        self.assertEqual(updates["strength"], {"hidden": True})
 
     def test_model_field_action_couples_repository_and_exact_revision_without_stale_pins(self):
         node = LoadPipeline("image-model-revision-action")
@@ -1104,6 +2511,18 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 {"control_image": image, "guidance_scale": float("nan")},
                 "guidance_scale",
             ),
+            (
+                ControlEdit(),
+                pipeline("FluxControlImg2ImgPipeline"),
+                {"image": image, "control_image": "not-an-image"},
+                "PIL image, NumPy array, or Torch tensor",
+            ),
+            (
+                ControlInpaint(),
+                pipeline("FluxControlInpaintPipeline"),
+                {"image": image, "mask_image": mask, "control_image": []},
+                "empty image list",
+            ),
             (Edit(), pipeline("FluxImg2ImgPipeline"), {"image": []}, "empty image list"),
             (
                 Inpaint(),
@@ -1128,6 +2547,69 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 self.assertNotIn("torch halted", str(raised.exception))
         self.assertEqual(calls, [])
 
+    def test_flux_fill_accepts_the_official_guidance_scale_without_weakening_generic_bounds(self):
+        image = Image.new("RGB", (16, 16), "black")
+        mask = Image.new("L", (16, 16), "white")
+        fill = tag_test_image_pipeline(type("FluxFillPipeline", (), {})(), "FluxFillPipeline", "inpaint")
+        _adapter, values = preflight_image_action(
+            fill,
+            "Inpaint",
+            {
+                "image": image,
+                "mask_image": mask,
+                "prompt": "replace the masked object",
+                "guidance_scale": 30,
+                "num_inference_steps": 50,
+            },
+        )
+        self.assertEqual(values["guidance_scale"], 30.0)
+        with self.assertRaisesRegex(ValueError, "between 0.0 and 30.0"):
+            preflight_image_action(fill, "Inpaint", {"image": image, "mask_image": mask, "guidance_scale": 30.1})
+
+        generic = tag_test_image_pipeline(type("FluxPipeline", (), {})(), "FluxPipeline", "text_to_image")
+        with self.assertRaisesRegex(ValueError, "between 0.0 and 20.0"):
+            preflight_image_action(generic, "Generate", {"guidance_scale": 30})
+
+    def test_flux_control_modes_accept_creator_guidance_without_changing_values(self):
+        image = Image.new("RGB", (32, 32), "black")
+        mask = Image.new("L", (32, 32), "white")
+        for name, mode, action, inputs in (
+            ("FluxControlPipeline", "control_image", "ControlGenerate", {"control_image": image}),
+            ("FluxControlImg2ImgPipeline", "control_edit_image", "ControlEdit", {"image": image, "control_image": image}),
+            ("FluxControlInpaintPipeline", "control_inpaint", "ControlInpaint", {"image": image, "control_image": image, "mask_image": mask}),
+        ):
+            for repo in (FLUX_CANNY_REPO, FLUX_DEPTH_REPO):
+                with self.subTest(pipeline=name, repo=repo):
+                    pipeline = tag_test_image_pipeline(type(name, (), {})(), name, mode, repo=repo)
+                    submitted = {**inputs, "guidance_scale": 30, "num_inference_steps": 50}
+                    _, values = preflight_image_action(pipeline, action, submitted)
+                    self.assertEqual(values["guidance_scale"], 30.0)
+                    self.assertEqual(submitted["guidance_scale"], 30)
+                    contract = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS[name], mode)
+                    self.assertEqual(contract["fieldParams"]["guidance_scale"]["max"], 30.0)
+                    with self.assertRaisesRegex(ValueError, "between 0.0 and 30.0"):
+                        preflight_image_action(pipeline, action, {**inputs, "guidance_scale": 30.1})
+
+    def test_control_guidance_bound_update_accepts_exact_saved_contract_only(self):
+        from copy import deepcopy
+        from modules.DiffusersImage.main import _compatible_image_contract
+        for name, mode in (("FluxControlImg2ImgPipeline", "control_edit_image"),
+                           ("FluxControlInpaintPipeline", "control_inpaint")):
+            expected = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS[name], mode)
+            old = deepcopy(expected)
+            old['fieldParams']['guidance_scale'].pop('max', None)
+            before = deepcopy(old)
+            self.assertTrue(_compatible_image_contract(old, expected))
+            self.assertEqual(old, before)
+            for mutate in (
+                lambda value: value.update(pipelineClass='FluxPipeline'),
+                lambda value: value['fieldParams']['guidance_scale'].update(max=99),
+                lambda value: value.update(mode='text_to_image'),
+            ):
+                forged = deepcopy(old)
+                mutate(forged)
+                self.assertFalse(_compatible_image_contract(forged, expected))
+
     def test_generate_preflight_rejects_every_declared_bound_and_nonfinite_value(self):
         class FluxPipeline:
             def __call__(self, **_kwargs):
@@ -1139,10 +2621,12 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             ("seed", 4294967296),
             ("num_inference_steps", 101),
             ("guidance_scale", float("inf")),
+            ("pag_scale", -0.1),
+            ("pag_adaptive_scale", float("inf")),
             ("strength", -0.01),
             ("padding_mask_crop", 7),
             ("max_sequence_length", 513),
-            ("output_type", "latent"),
+            ("output_type", "unreviewed-output"),
         )
         for field, value in invalid:
             with self.subTest(field=field, value=value), patch.dict(sys.modules, {"torch": None}):
@@ -1233,6 +2717,79 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 pipeline=single_mode,
                 image=[Image.new("RGB", (1, 1)), Image.new("RGB", (1, 1))],
             )
+
+    def test_flux2_standard_pipeline_executes_text_and_ordered_reference_workflows(self):
+        class Flux2Pipeline:
+            _execution_device = "cpu"
+
+            def __init__(self):
+                self.calls = []
+
+            def __call__(
+                self,
+                image=None,
+                prompt=None,
+                height=None,
+                width=None,
+                num_inference_steps=50,
+                guidance_scale=4.0,
+                generator=None,
+                output_type="pil",
+                return_dict=True,
+                callback_on_step_end=None,
+                callback_on_step_end_tensor_inputs=None,
+                max_sequence_length=512,
+            ):
+                self.calls.append(
+                    {
+                        "image": image,
+                        "prompt": prompt,
+                        "height": height,
+                        "width": width,
+                        "num_inference_steps": num_inference_steps,
+                        "guidance_scale": guidance_scale,
+                        "output_type": output_type,
+                        "return_dict": return_dict,
+                        "max_sequence_length": max_sequence_length,
+                    }
+                )
+                return SimpleNamespace(images=[Image.new("RGB", (width or 64, height or 64), "blue")])
+
+        text_pipeline = tag_test_image_pipeline(Flux2Pipeline(), "Flux2Pipeline", "text_to_image")
+        generated = Generate().execute(
+            pipeline=text_pipeline,
+            prompt="A precise studio photograph of a blue ceramic sculpture",
+            width=768,
+            height=768,
+            num_inference_steps=12,
+            guidance_scale=3.5,
+            max_sequence_length=512,
+            seed=7,
+        )
+        self.assertEqual(generated["width_out"], 768)
+        self.assertEqual(text_pipeline.calls[0]["image"], None)
+        self.assertEqual(text_pipeline.calls[0]["guidance_scale"], 3.5)
+
+        reference_pipeline = tag_test_image_pipeline(
+            Flux2Pipeline(),
+            "Flux2Pipeline",
+            "multi_image_reference_edit",
+        )
+        references = [Image.new("RGB", (64, 64), "red"), Image.new("RGB", (64, 64), "green")]
+        edited = Edit().execute(
+            pipeline=reference_pipeline,
+            image=references,
+            prompt="Combine the subject and material references into one coherent product photograph",
+            width=768,
+            height=768,
+            num_inference_steps=10,
+            guidance_scale=4.0,
+            max_sequence_length=512,
+            seed=11,
+        )
+        self.assertEqual(edited["height_out"], 768)
+        self.assertEqual(reference_pipeline.calls[0]["image"], references)
+        self.assertEqual(reference_pipeline.calls[0]["prompt"], "Combine the subject and material references into one coherent product photograph")
 
     def test_generate_preflight_preserves_valid_zero_and_boundary_values(self):
         received = {}
@@ -1333,6 +2890,1249 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         self.assertEqual(loaded, ["org/flux-compatible-a", "org/flux-compatible-b"])
 
+    def test_sdxl_turbo_loads_the_reviewed_upstream_fp16_safetensors_variant(self):
+        loaded = {}
+
+        class StableDiffusionXLPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+        node = LoadPipeline("sdxl-turbo-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=StableDiffusionXLPipeline,
+            ) as resolve_pipeline,
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=SDXL_TURBO_REPO,
+                pipeline_class="StableDiffusionXLTurboPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(SDXL_TURBO_REPO),
+                dtype="float16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        resolve_pipeline.assert_called_once_with("StableDiffusionXLPipeline")
+        self.assertEqual(loaded["repo"], SDXL_TURBO_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(SDXL_TURBO_REPO))
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertEqual(loaded["kwargs"]["variant"], "fp16")
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        self.assertEqual(result["pipeline"]._modiff_image_pipeline_class, "StableDiffusionXLTurboPipeline")
+
+    def test_sdxl_turbo_rejects_non_native_steps_and_guidance(self):
+        class StableDiffusionXLPipeline:
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid Turbo settings must fail before inference")
+
+        pipeline = tag_test_image_pipeline(
+            StableDiffusionXLPipeline(),
+            "StableDiffusionXLTurboPipeline",
+            "text_to_image",
+        )
+        for kwargs, message in (
+            ({"num_inference_steps": 5, "guidance_scale": 0.0}, "between 1 and 4"),
+            ({"num_inference_steps": 1, "guidance_scale": 0.1}, "requires guidance_scale=0"),
+        ):
+            with self.subTest(kwargs=kwargs), self.assertRaisesRegex(ValueError, message):
+                Generate("sdxl-turbo-native-contract").execute(
+                    pipeline=pipeline,
+                    prompt="reviewed fixture",
+                    width=32,
+                    height=32,
+                    **kwargs,
+                )
+
+    def test_sdxl_pag_loads_the_reviewed_fp16_safetensors_variant(self):
+        for pipeline_name, mode in (
+            ("StableDiffusionXLPAGPipeline", "text_to_image"),
+            ("StableDiffusionXLPAGImg2ImgPipeline", "edit_image"),
+            ("StableDiffusionXLPAGInpaintPipeline", "inpaint"),
+        ):
+            with self.subTest(pipeline=pipeline_name):
+                loaded = {}
+
+                class ReviewedPAGPipeline:
+                    @classmethod
+                    def from_pretrained(cls, repo, **kwargs):
+                        loaded.update({"repo": repo, "kwargs": kwargs})
+                        return cls()
+
+                node = LoadPipeline(f"sdxl-pag-load-probe-{mode}")
+                node.progress = lambda *args, **kwargs: None
+                node.mm_add = lambda *args, **kwargs: None
+                with (
+                    patch(
+                        "modules.DiffusersImage.main.pipeline_class_from_name",
+                        return_value=ReviewedPAGPipeline,
+                    ) as resolve_pipeline,
+                    patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+                ):
+                    result = node.execute(
+                        model_id=SDXL_BASE_REPO,
+                        pipeline_class=pipeline_name,
+                        mode=mode,
+                        revision=catalog_revision(SDXL_BASE_REPO),
+                        dtype="float16",
+                        auto_offload=False,
+                        offload_mode="none",
+                    )
+
+                resolve_pipeline.assert_called_once_with(pipeline_name)
+                self.assertEqual(loaded["repo"], SDXL_BASE_REPO)
+                self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(SDXL_BASE_REPO))
+                self.assertTrue(loaded["kwargs"]["use_safetensors"])
+                self.assertEqual(loaded["kwargs"]["variant"], "fp16")
+                self.assertNotIn("trust_remote_code", loaded["kwargs"])
+                self.assertEqual(result["pipeline"]._modiff_image_pipeline_class, pipeline_name)
+
+    def test_pag_text_to_image_loads_only_reviewed_pinned_safetensors(self):
+        loads = []
+
+        class PrecisionComponent:
+            def __init__(self):
+                self.to_calls = []
+
+            def to(self, dtype):
+                self.to_calls.append(dtype)
+                return self
+
+        class ReviewedPAGPipeline:
+            def __init__(self):
+                self.text_encoder = PrecisionComponent()
+                self.vae = PrecisionComponent()
+
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                pipeline = cls()
+                loads.append((repo, kwargs, pipeline))
+                return pipeline
+
+        cases = (
+            (
+                "HunyuanDiTPAGPipeline",
+                HUNYUAN_DIT_DISTILLED_REPO,
+                None,
+                (),
+                ["blocks.14"],
+            ),
+            (
+                "PixArtSigmaPAGPipeline",
+                PIXART_SIGMA_REPO,
+                None,
+                (),
+                ["blocks.14"],
+            ),
+            (
+                "SanaPAGPipeline",
+                SANA_REPO,
+                "fp16",
+                (("text_encoder", "bfloat16"), ("vae", "bfloat16")),
+                None,
+            ),
+        )
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=ReviewedPAGPipeline,
+            ) as resolve_pipeline,
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            for pipeline_name, repo, variant, component_dtypes, pag_applied_layers in cases:
+                with self.subTest(pipeline=pipeline_name):
+                    node = LoadPipeline(f"{pipeline_name}-load-probe")
+                    node.progress = lambda *args, **kwargs: None
+                    node.mm_add = lambda *args, **kwargs: None
+                    result = node.execute(
+                        model_id=repo,
+                        pipeline_class=pipeline_name,
+                        mode="text_to_image",
+                        revision=catalog_revision(repo),
+                        dtype="float16",
+                        auto_offload=False,
+                        offload_mode="none",
+                    )
+
+                    loaded_repo, load_kwargs, pipeline = loads[-1]
+                    self.assertEqual(loaded_repo, repo)
+                    self.assertEqual(load_kwargs["revision"], catalog_revision(repo))
+                    self.assertEqual(load_kwargs["torch_dtype"], "float16")
+                    self.assertTrue(load_kwargs["use_safetensors"])
+                    self.assertNotIn("trust_remote_code", load_kwargs)
+                    if variant is None:
+                        self.assertNotIn("variant", load_kwargs)
+                    else:
+                        self.assertEqual(load_kwargs["variant"], variant)
+                    if pag_applied_layers is None:
+                        self.assertNotIn("pag_applied_layers", load_kwargs)
+                    else:
+                        self.assertEqual(load_kwargs["pag_applied_layers"], pag_applied_layers)
+                    for component_name, component_dtype in component_dtypes:
+                        self.assertEqual(getattr(pipeline, component_name).to_calls, [component_dtype])
+                    self.assertEqual(result["pipeline"]._modiff_image_pipeline_class, pipeline_name)
+                    self.assertEqual(result["pipeline"]._modiff_image_repo, repo)
+                    self.assertEqual(
+                        result["pipeline"]._modiff_image_revision,
+                        catalog_revision(repo),
+                    )
+
+        self.assertEqual(
+            [call.args[0] for call in resolve_pipeline.call_args_list],
+            [pipeline_name for pipeline_name, _repo, _variant, _components, _pag_layers in cases],
+        )
+
+    def test_sana_loads_the_reviewed_mixed_precision_safetensors_variant(self):
+        loaded = {}
+
+        class PrecisionComponent:
+            def __init__(self):
+                self.to_calls = []
+
+            def to(self, dtype):
+                self.to_calls.append(dtype)
+                return self
+
+        class SanaPipeline:
+            def __init__(self):
+                self.text_encoder = PrecisionComponent()
+                self.vae = PrecisionComponent()
+
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+        node = LoadPipeline("sana-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch("modules.DiffusersImage.main.pipeline_class_from_name", return_value=SanaPipeline),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=SANA_REPO,
+                pipeline_class="SanaPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(SANA_REPO),
+                dtype="float16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], SANA_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(SANA_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "float16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertEqual(loaded["kwargs"]["variant"], "fp16")
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        self.assertEqual(result["pipeline"].text_encoder.to_calls, ["bfloat16"])
+        self.assertEqual(result["pipeline"].vae.to_calls, ["bfloat16"])
+
+    def test_sana_sprint_loads_native_bfloat16_safetensors_and_bounds_steps(self):
+        loaded = {}
+
+        class SanaSprintPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid Sprint settings must fail before inference")
+
+        node = LoadPipeline("sana-sprint-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch("modules.DiffusersImage.main.pipeline_class_from_name", return_value=SanaSprintPipeline),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=SANA_SPRINT_REPO,
+                pipeline_class="SanaSprintPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(SANA_SPRINT_REPO),
+                dtype="bfloat16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], SANA_SPRINT_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(SANA_SPRINT_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "bfloat16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        with self.assertRaisesRegex(ValueError, "between 1 and 4"):
+            Generate("sana-sprint-step-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=32,
+                height=32,
+                num_inference_steps=5,
+                guidance_scale=4.5,
+            )
+
+    def test_pixart_sigma_loads_only_the_pinned_safetensors_and_bounds_recipe(self):
+        loaded = {}
+
+        class PixArtSigmaPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid PixArt settings must fail before inference")
+
+        node = LoadPipeline("pixart-sigma-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=PixArtSigmaPipeline,
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=PIXART_SIGMA_REPO,
+                pipeline_class="PixArtSigmaPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(PIXART_SIGMA_REPO),
+                dtype="float16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], PIXART_SIGMA_REPO)
+        self.assertEqual(
+            loaded["kwargs"]["revision"],
+            catalog_revision(PIXART_SIGMA_REPO),
+        )
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "float16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        with self.assertRaisesRegex(ValueError, "between 1 and 50"):
+            Generate("pixart-sigma-step-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=51,
+                guidance_scale=4.5,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 300"):
+            Generate("pixart-sigma-sequence-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=20,
+                guidance_scale=4.5,
+                max_sequence_length=301,
+            )
+
+    def test_kandinsky3_loads_exact_fp16_safetensors_and_bounds_both_routes(self):
+        loads = []
+
+        class Kandinsky3Pipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loads.append((cls.__name__, repo, kwargs))
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid Kandinsky 3 settings must fail before inference")
+
+        class Kandinsky3Img2ImgPipeline(Kandinsky3Pipeline):
+            pass
+
+        pipeline_classes = {
+            "Kandinsky3Pipeline": Kandinsky3Pipeline,
+            "Kandinsky3Img2ImgPipeline": Kandinsky3Img2ImgPipeline,
+        }
+        loaded_pipelines = {}
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                side_effect=lambda name: pipeline_classes[name],
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            for mode, pipeline_class in (
+                ("text_to_image", "Kandinsky3Pipeline"),
+                ("edit_image", "Kandinsky3Img2ImgPipeline"),
+            ):
+                node = LoadPipeline(f"kandinsky3-{mode}-load-probe")
+                node.progress = lambda *args, **kwargs: None
+                node.mm_add = lambda *args, **kwargs: None
+                loaded_pipelines[mode] = node.execute(
+                    model_id=KANDINSKY3_REPO,
+                    pipeline_class=pipeline_class,
+                    mode=mode,
+                    revision=catalog_revision(KANDINSKY3_REPO),
+                    dtype="float16",
+                    auto_offload=False,
+                    offload_mode="none",
+                )["pipeline"]
+
+        self.assertEqual(
+            [item[0] for item in loads],
+            ["Kandinsky3Pipeline", "Kandinsky3Img2ImgPipeline"],
+        )
+        for _pipeline_class, repo, kwargs in loads:
+            self.assertEqual(repo, KANDINSKY3_REPO)
+            self.assertEqual(kwargs["revision"], catalog_revision(KANDINSKY3_REPO))
+            self.assertEqual(kwargs["torch_dtype"], "float16")
+            self.assertTrue(kwargs["use_safetensors"])
+            self.assertEqual(kwargs["variant"], "fp16")
+            self.assertNotIn("trust_remote_code", kwargs)
+
+        with self.assertRaisesRegex(ValueError, "between 1024 and 1024"):
+            Generate("kandinsky3-size-contract").execute(
+                pipeline=loaded_pipelines["text_to_image"],
+                prompt="reviewed fixture",
+                width=960,
+                height=1024,
+                num_inference_steps=25,
+                guidance_scale=3.0,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 50"):
+            Generate("kandinsky3-step-contract").execute(
+                pipeline=loaded_pipelines["text_to_image"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=51,
+                guidance_scale=3.0,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 128"):
+            Generate("kandinsky3-sequence-contract").execute(
+                pipeline=loaded_pipelines["text_to_image"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=25,
+                guidance_scale=3.0,
+                max_sequence_length=129,
+            )
+        with self.assertRaisesRegex(ValueError, "1048576-pixel cumulative input limit"):
+            Edit("kandinsky3-input-contract").execute(
+                pipeline=loaded_pipelines["edit_image"],
+                image=Image.new("RGB", (1025, 1024), "black"),
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=25,
+                guidance_scale=3.0,
+                strength=0.75,
+                max_sequence_length=128,
+            )
+
+    def test_auraflow_loads_only_the_pinned_fp16_partition_and_bounds_native_recipe(self):
+        loaded = {}
+
+        class AuraFlowPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid AuraFlow settings must fail before inference")
+
+        node = LoadPipeline("auraflow-v0.3-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=AuraFlowPipeline,
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=AURAFLOW_V03_REPO,
+                pipeline_class="AuraFlowPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(AURAFLOW_V03_REPO),
+                dtype="float16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], AURAFLOW_V03_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(AURAFLOW_V03_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "float16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertEqual(loaded["kwargs"]["variant"], "fp16")
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        for field, value in (("width", 1552), ("height", 1552)):
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "between 16 and 1536"):
+                Generate(f"auraflow-{field}-contract").execute(
+                    pipeline=result["pipeline"],
+                    prompt="reviewed fixture",
+                    width=value if field == "width" else 1536,
+                    height=value if field == "height" else 768,
+                    num_inference_steps=50,
+                    guidance_scale=3.5,
+                    max_sequence_length=256,
+                )
+        with self.assertRaisesRegex(ValueError, "between 1 and 50"):
+            Generate("auraflow-step-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1536,
+                height=768,
+                num_inference_steps=51,
+                guidance_scale=3.5,
+                max_sequence_length=256,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 256"):
+            Generate("auraflow-sequence-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1536,
+                height=768,
+                num_inference_steps=50,
+                guidance_scale=3.5,
+                max_sequence_length=257,
+            )
+
+    def test_chroma_loads_only_the_pinned_safe_partition_and_bounds_reviewed_recipe(self):
+        loaded = {}
+
+        class ChromaPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid Chroma settings must fail before inference")
+
+        node = LoadPipeline("chroma1-hd-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=ChromaPipeline,
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=CHROMA1_HD_REPO,
+                pipeline_class="ChromaPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(CHROMA1_HD_REPO),
+                dtype="bfloat16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], CHROMA1_HD_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(CHROMA1_HD_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "bfloat16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        for field, value in (("width", 1040), ("height", 1040)):
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, "between 16 and 1024"):
+                Generate(f"chroma-{field}-contract").execute(
+                    pipeline=result["pipeline"],
+                    prompt="reviewed fixture",
+                    width=value if field == "width" else 1024,
+                    height=value if field == "height" else 1024,
+                    num_inference_steps=40,
+                    guidance_scale=3.0,
+                    max_sequence_length=512,
+                )
+        with self.assertRaisesRegex(ValueError, "between 1 and 40"):
+            Generate("chroma-step-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=41,
+                guidance_scale=3.0,
+                max_sequence_length=512,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 512"):
+            Generate("chroma-sequence-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=40,
+                guidance_scale=3.0,
+                max_sequence_length=513,
+            )
+
+    def test_cogview3_loads_only_the_pinned_bfloat16_partition_and_bounds_native_recipe(self):
+        loaded = {}
+
+        class CogView3PlusPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid CogView3 settings must fail before inference")
+
+        node = LoadPipeline("cogview3-plus-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=CogView3PlusPipeline,
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=COGVIEW3_PLUS_REPO,
+                pipeline_class="CogView3PlusPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(COGVIEW3_PLUS_REPO),
+                dtype="bfloat16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], COGVIEW3_PLUS_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(COGVIEW3_PLUS_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "bfloat16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        for field, value, message in (
+            ("width", 480, "between 512 and 2048"),
+            ("height", 2080, "between 512 and 2048"),
+            ("width", 528, "increments of 32 from 512"),
+        ):
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, message):
+                Generate(f"cogview3-{field}-{value}-contract").execute(
+                    pipeline=result["pipeline"],
+                    prompt="reviewed fixture",
+                    width=value if field == "width" else 1024,
+                    height=value if field == "height" else 1024,
+                    num_inference_steps=50,
+                    guidance_scale=7.0,
+                    max_sequence_length=224,
+                )
+        with self.assertRaisesRegex(ValueError, "between 1 and 50"):
+            Generate("cogview3-step-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=51,
+                guidance_scale=7.0,
+                max_sequence_length=224,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 224"):
+            Generate("cogview3-sequence-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=50,
+                guidance_scale=7.0,
+                max_sequence_length=225,
+            )
+
+    def test_cogview4_loads_only_the_pinned_bfloat16_partition_and_bounds_native_recipe(self):
+        loaded = {}
+
+        class CogView4Pipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid CogView4 settings must fail before inference")
+
+        node = LoadPipeline("cogview4-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=CogView4Pipeline,
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=COGVIEW4_6B_REPO,
+                pipeline_class="CogView4Pipeline",
+                mode="text_to_image",
+                revision=catalog_revision(COGVIEW4_6B_REPO),
+                dtype="bfloat16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], COGVIEW4_6B_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(COGVIEW4_6B_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "bfloat16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        for field, value, message in (
+            ("width", 480, "between 512 and 2048"),
+            ("height", 2080, "between 512 and 2048"),
+            ("width", 528, "increments of 32 from 512"),
+        ):
+            with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, message):
+                Generate(f"cogview4-{field}-{value}-contract").execute(
+                    pipeline=result["pipeline"],
+                    prompt="reviewed fixture",
+                    width=value if field == "width" else 1024,
+                    height=value if field == "height" else 1024,
+                    num_inference_steps=50,
+                    guidance_scale=3.5,
+                    max_sequence_length=1024,
+                )
+        with self.assertRaisesRegex(ValueError, "cannot exceed 2097152 pixels"):
+            Generate("cogview4-pixel-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=2048,
+                height=1056,
+                num_inference_steps=50,
+                guidance_scale=3.5,
+                max_sequence_length=1024,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 50"):
+            Generate("cogview4-step-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=51,
+                guidance_scale=3.5,
+                max_sequence_length=1024,
+            )
+        with self.assertRaisesRegex(ValueError, "between 1 and 1024"):
+            Generate("cogview4-sequence-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="reviewed fixture",
+                width=1024,
+                height=1024,
+                num_inference_steps=50,
+                guidance_scale=3.5,
+                max_sequence_length=1025,
+            )
+
+    def test_ernie_image_turbo_loads_safe_bfloat16_and_enforces_the_exact_recipe(self):
+        loaded = {}
+        called = {}
+
+        class ErnieImagePipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(
+                self,
+                prompt=None,
+                negative_prompt="",
+                height=1024,
+                width=1024,
+                num_inference_steps=50,
+                guidance_scale=4.0,
+                generator=None,
+                output_type="pil",
+                return_dict=True,
+                callback_on_step_end=None,
+                callback_on_step_end_tensor_inputs=None,
+                use_pe=True,
+            ):
+                called.update(locals())
+                return SimpleNamespace(images=[Image.new("RGB", (width, height))])
+
+        node = LoadPipeline("ernie-image-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=ErnieImagePipeline,
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=ERNIE_IMAGE_TURBO_REPO,
+                pipeline_class="ErnieImagePipeline",
+                mode="text_to_image",
+                revision=catalog_revision(ERNIE_IMAGE_TURBO_REPO),
+                dtype="bfloat16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], ERNIE_IMAGE_TURBO_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(ERNIE_IMAGE_TURBO_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "bfloat16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+
+        generate = Generate("ernie-image-generate-probe")
+        generate.progress = lambda *args, **kwargs: None
+        generated = generate.execute(
+            pipeline=result["pipeline"],
+            prompt="reviewed fixture",
+            negative_prompt="",
+            width=1024,
+            height=1024,
+            num_inference_steps=8,
+            guidance_scale=1.0,
+            max_sequence_length=2048,
+            seed=7,
+            output_type="pil",
+        )
+        self.assertEqual(generated["width_out"], 1024)
+        self.assertEqual(generated["height_out"], 1024)
+        self.assertEqual(called["num_inference_steps"], 8)
+        self.assertEqual(called["guidance_scale"], 1.0)
+        self.assertTrue(called["use_pe"])
+        self.assertNotIn("max_sequence_length", called)
+
+        for field, value, message in (
+            ("width", 1008, "between 1024 and 1024"),
+            ("height", 1056, "between 1024 and 1024"),
+            ("num_inference_steps", 9, "between 1 and 8"),
+            ("guidance_scale", 1.1, "requires guidance_scale=1"),
+        ):
+            values = {
+                "pipeline": result["pipeline"],
+                "prompt": "reviewed fixture",
+                "width": 1024,
+                "height": 1024,
+                "num_inference_steps": 8,
+                "guidance_scale": 1.0,
+                "max_sequence_length": 2048,
+            }
+            values[field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, message):
+                Generate(f"ernie-image-{field}-contract").execute(**values)
+
+    def test_glm_image_loads_safe_bfloat16_with_matching_t5_and_enforces_the_exact_recipe(self):
+        loaded = {}
+        called = {}
+        encoded = {}
+        prior = {}
+        placements = []
+
+        class TextEncoder:
+            def to(self, dtype):
+                placements.append(dtype)
+                return self
+
+        class GlmImagePipeline:
+            def __init__(self):
+                self.text_encoder = TextEncoder()
+                self.transformer = SimpleNamespace(dtype="bfloat16")
+                self._execution_device = "cpu"
+
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(
+                self,
+                prompt=None,
+                height=1024,
+                width=1024,
+                num_inference_steps=50,
+                guidance_scale=1.5,
+                max_sequence_length=2048,
+                negative_prompt_embeds=None,
+                prompt_embeds=None,
+                prior_token_ids=None,
+                prior_token_image_ids=None,
+                source_image_grid_thw=None,
+                generator=None,
+                output_type="pil",
+                return_dict=True,
+                callback_on_step_end=None,
+                callback_on_step_end_tensor_inputs=None,
+            ):
+                if prompt is not None and prompt_embeds is not None:
+                    raise ValueError("Cannot forward both prompt and prompt_embeds")
+                called.update(locals())
+                self.generate_prior_tokens(prompt, None, height, width, self._execution_device, generator)
+                self.encode_prompt(
+                    prompt, do_classifier_free_guidance=guidance_scale > 1,
+                    device=self._execution_device, dtype="float32",
+                    max_sequence_length=max_sequence_length,
+                )
+                return SimpleNamespace(images=[Image.new("RGB", (width, height))])
+
+            def generate_prior_tokens(self, prompt, image, height, width, device, generator):
+                prior.update(locals())
+                return "prior-token-ids", None, None
+
+            def encode_prompt(
+                self,
+                prompt,
+                do_classifier_free_guidance=True,
+                num_images_per_prompt=1,
+                device=None,
+                dtype=None,
+                max_sequence_length=2048,
+            ):
+                encoded.update(locals())
+                return "bfloat16-prompt-embeds", "bfloat16-negative-prompt-embeds"
+
+        node = LoadPipeline("glm-image-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=GlmImagePipeline,
+            ),
+            patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=GLM_IMAGE_REPO,
+                pipeline_class="GlmImagePipeline",
+                mode="text_to_image",
+                revision=catalog_revision(GLM_IMAGE_REPO),
+                dtype="bfloat16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        self.assertEqual(loaded["repo"], GLM_IMAGE_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(GLM_IMAGE_REPO))
+        self.assertEqual(loaded["kwargs"]["torch_dtype"], "bfloat16")
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+        self.assertEqual(placements, ["float32"])
+
+        generate = Generate("glm-image-generate-probe")
+        generate.progress = lambda *args, **kwargs: None
+        generated = generate.execute(
+            pipeline=result["pipeline"],
+            prompt="reviewed fixture",
+            negative_prompt="must not reach the package API",
+            width=1024,
+            height=1024,
+            num_inference_steps=50,
+            guidance_scale=1.5,
+            max_sequence_length=2048,
+            seed=7,
+            output_type="pil",
+        )
+        self.assertEqual(generated["width_out"], 1024)
+        self.assertEqual(generated["height_out"], 1024)
+        self.assertEqual(called["num_inference_steps"], 50)
+        self.assertEqual(called["guidance_scale"], 1.5)
+        self.assertEqual(called["max_sequence_length"], 2048)
+        self.assertIsNone(called["prompt_embeds"])
+        self.assertIsNone(called["negative_prompt_embeds"])
+        self.assertEqual(called["prompt"], "reviewed fixture")
+        self.assertIsNone(called["prior_token_ids"])
+        self.assertEqual(prior["prompt"], "reviewed fixture")
+        self.assertIsNone(prior["image"])
+        self.assertEqual(prior["height"], 1024)
+        self.assertEqual(prior["width"], 1024)
+        self.assertEqual(encoded["prompt"], "reviewed fixture")
+        self.assertTrue(encoded["do_classifier_free_guidance"])
+        self.assertEqual(encoded["dtype"], "bfloat16")
+        self.assertEqual(encoded["max_sequence_length"], 2048)
+
+        for field, value, message in (
+            ("width", 992, "between 1024 and 1024"),
+            ("height", 1056, "between 1024 and 1024"),
+            ("num_inference_steps", 51, "between 1 and 50"),
+            ("max_sequence_length", 2049, "between 1 and 2048"),
+        ):
+            values = {
+                "pipeline": result["pipeline"],
+                "prompt": "reviewed fixture",
+                "width": 1024,
+                "height": 1024,
+                "num_inference_steps": 50,
+                "guidance_scale": 1.5,
+                "max_sequence_length": 2048,
+            }
+            values[field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, message):
+                Generate(f"glm-image-{field}-contract").execute(**values)
+
+    def test_glm_text_encoder_stays_float32_and_embeddings_cross_the_bfloat16_boundary(self):
+        import torch
+
+        adapter = IMAGE_PIPELINE_ADAPTERS["GlmImagePipeline"]
+        override = dict(adapter.component_dtype_overrides)
+        self.assertEqual(override, {"text_encoder": "float32"})
+        self.assertEqual(adapter.prompt_embedding_dtype_component, "transformer")
+        self.assertTrue(adapter.native_prompt_encoding)
+
+        text_encoder = torch.nn.Linear(4, 4).to(getattr(torch, override["text_encoder"]))
+        float32_activations = torch.ones((1, 4), dtype=torch.float32)
+        glyph_embeddings = text_encoder(float32_activations)
+        self.assertEqual(glyph_embeddings.dtype, torch.float32)
+
+        # The adapter requests this cast explicitly because pinned Diffusers'
+        # pipeline-wide dtype property otherwise resolves to the float32 T5.
+        diffusion_embeddings = glyph_embeddings.to(torch.bfloat16)
+        diffusion_transformer = torch.nn.Linear(4, 4).to(torch.bfloat16)
+        self.assertEqual(diffusion_transformer(diffusion_embeddings).dtype, torch.bfloat16)
+
+    def test_joyimage_edit_prepares_finite_float32_multimodal_embeddings_at_the_bfloat16_boundary(self):
+        import torch
+
+        adapter = IMAGE_PIPELINE_ADAPTERS["JoyImageEditPipeline"]
+        self.assertEqual(adapter.prompt_embedding_dtype_component, "transformer")
+        self.assertEqual(adapter.prompt_embedding_encoder_dtype, "float32")
+        self.assertEqual(adapter.prompt_embedding_mask_modes, frozenset({"edit_image"}))
+
+        calls = []
+
+        class Processor:
+            @staticmethod
+            def resize_center_crop(image, size):
+                calls.append(("resize", image, size))
+                return "processed-image"
+
+        class Pipeline:
+            _execution_device = torch.device("cpu")
+            transformer = torch.nn.Linear(4, 4).to(torch.bfloat16)
+            vae_image_processor = Processor()
+
+            @staticmethod
+            def encode_prompt_multiple_images(**kwargs):
+                calls.append(("encode", kwargs))
+                value = 2.0 if kwargs["prompt"] else -2.0
+                return torch.full((1, 3, 4), value, dtype=torch.float32), torch.ones((1, 3), dtype=torch.long)
+
+        pipeline = tag_test_image_pipeline(Pipeline(), "JoyImageEditPipeline", "edit_image")
+        source = Image.new("RGB", (64, 64), "orange")
+        target = {
+            "prompt": "Move the camera.",
+            "negative_prompt": "",
+            "image": source,
+            "height": 1024,
+            "width": 1024,
+        }
+        adapter.prepare_prompt_embeddings(pipeline, {"max_sequence_length": 4096}, target)
+
+        self.assertNotIn("prompt", target)
+        self.assertNotIn("negative_prompt", target)
+        self.assertEqual(target["prompt_embeds"].dtype, torch.bfloat16)
+        self.assertEqual(target["negative_prompt_embeds"].dtype, torch.bfloat16)
+        self.assertTrue(bool(torch.isfinite(target["prompt_embeds"]).all()))
+        self.assertTrue(bool(torch.isfinite(target["negative_prompt_embeds"]).all()))
+        self.assertEqual(calls[0], ("resize", source, (1024, 1024)))
+        self.assertEqual(calls[1][1]["images"], "processed-image")
+        self.assertEqual(calls[1][1]["max_sequence_length"], 4096)
+        self.assertEqual(calls[2][1]["prompt"], "")
+
+    def test_joyimage_loader_places_only_the_edit_text_encoder_in_float32(self):
+        loaded = []
+
+        class Encoder:
+            def __init__(self):
+                self.to_calls = []
+
+            def to(self, dtype):
+                self.to_calls.append(dtype)
+                return self
+
+        class JoyImageEditPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                pipeline = cls()
+                pipeline.text_encoder = Encoder()
+                loaded.append((repo, kwargs, pipeline))
+                return pipeline
+
+        for mode, expected_calls in (("text_to_image", []), ("edit_image", ["float32"])):
+            node = LoadPipeline(f"joyimage-{mode}-dtype-probe")
+            node.progress = lambda *args, **kwargs: None
+            node.mm_add = lambda *args, **kwargs: None
+            with (
+                patch(
+                    "modules.DiffusersImage.main.pipeline_class_from_name",
+                    return_value=JoyImageEditPipeline,
+                ),
+                patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+                patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+            ):
+                node.execute(
+                    model_id=JOYIMAGE_EDIT_REPO,
+                    pipeline_class="JoyImageEditPipeline",
+                    mode=mode,
+                    revision=catalog_revision(JOYIMAGE_EDIT_REPO),
+                    dtype="bfloat16",
+                    auto_offload=False,
+                    offload_mode="none",
+                )
+            self.assertEqual(loaded[-1][2].text_encoder.to_calls, expected_calls)
+
+    def test_dreamlite_loaders_are_exact_safe_and_bound_base_and_mobile_recipes(self):
+        loaded = {}
+
+        def pipeline_class(name):
+            class Encoder:
+                def __init__(self):
+                    self.to_calls = []
+
+                def to(self, dtype):
+                    self.to_calls.append(dtype)
+                    return self
+
+            def from_pretrained(cls, repo, **kwargs):
+                pipeline = cls()
+                pipeline.text_encoder = Encoder()
+                loaded[name] = {"repo": repo, "kwargs": kwargs, "pipeline": pipeline}
+                return pipeline
+
+            def call(self, **_kwargs):
+                raise AssertionError("invalid DreamLite settings must fail before inference")
+
+            return type(name, (), {"from_pretrained": classmethod(from_pretrained), "__call__": call})
+
+        for name, repository, mode in (
+            ("DreamLitePipeline", DREAMLITE_BASE_REPO, "text_to_image"),
+            ("DreamLiteMobilePipeline", DREAMLITE_MOBILE_REPO, "edit_image"),
+        ):
+            with self.subTest(pipeline=name):
+                node = LoadPipeline(f"{name}-load-probe")
+                node.progress = lambda *args, **kwargs: None
+                node.mm_add = lambda *args, **kwargs: None
+                with (
+                    patch(
+                        "modules.DiffusersImage.main.pipeline_class_from_name",
+                        return_value=pipeline_class(name),
+                    ),
+                    patch("modules.DiffusersImage.main.str_to_dtype", side_effect=lambda value: value),
+                    patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+                ):
+                    node.execute(
+                        model_id=repository,
+                        pipeline_class=name,
+                        mode=mode,
+                        revision=catalog_revision(repository),
+                        dtype="bfloat16",
+                        auto_offload=False,
+                        offload_mode="none",
+                    )
+
+                self.assertEqual(loaded[name]["repo"], repository)
+                self.assertEqual(loaded[name]["kwargs"]["revision"], catalog_revision(repository))
+                self.assertEqual(loaded[name]["kwargs"]["torch_dtype"], "bfloat16")
+                self.assertTrue(loaded[name]["kwargs"]["use_safetensors"])
+                self.assertNotIn("variant", loaded[name]["kwargs"])
+                self.assertNotIn("trust_remote_code", loaded[name]["kwargs"])
+                self.assertEqual(loaded[name]["pipeline"].text_encoder.to_calls, ["bfloat16"])
+
+        base = tag_test_image_pipeline(
+            pipeline_class("DreamLitePipeline")(),
+            "DreamLitePipeline",
+            "text_to_image",
+        )
+        with self.assertRaisesRegex(ValueError, "between 1 and 50"):
+            Generate("dreamlite-base-step-contract").execute(
+                pipeline=base,
+                prompt="reviewed fixture",
+                num_inference_steps=51,
+                guidance_scale=3.5,
+            )
+
+        mobile = tag_test_image_pipeline(
+            pipeline_class("DreamLiteMobilePipeline")(),
+            "DreamLiteMobilePipeline",
+            "text_to_image",
+        )
+        with self.assertRaisesRegex(ValueError, "requires guidance_scale=0"):
+            Generate("dreamlite-mobile-guidance-contract").execute(
+                pipeline=mobile,
+                prompt="reviewed fixture",
+                num_inference_steps=4,
+                guidance_scale=1.0,
+            )
+
+    def test_sdxl_instruct_pix2pix_loads_safetensors_and_enforces_image_guidance(self):
+        loaded = {}
+
+        class StableDiffusionXLInstructPix2PixPipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+            def __call__(self, **_kwargs):
+                raise AssertionError("invalid image guidance must fail before inference")
+
+        node = LoadPipeline("sdxl-instruct-load-probe")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                return_value=StableDiffusionXLInstructPix2PixPipeline,
+            ) as resolve_pipeline,
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            result = node.execute(
+                model_id=SDXL_INSTRUCT_PIX2PIX_REPO,
+                pipeline_class="StableDiffusionXLInstructPix2PixPipeline",
+                mode="edit_image",
+                revision=catalog_revision(SDXL_INSTRUCT_PIX2PIX_REPO),
+                dtype="float16",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        resolve_pipeline.assert_called_once_with("StableDiffusionXLInstructPix2PixPipeline")
+        self.assertEqual(loaded["repo"], SDXL_INSTRUCT_PIX2PIX_REPO)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(SDXL_INSTRUCT_PIX2PIX_REPO))
+        self.assertTrue(loaded["kwargs"]["use_safetensors"])
+        self.assertNotIn("variant", loaded["kwargs"])
+        self.assertNotIn("trust_remote_code", loaded["kwargs"])
+
+        with self.assertRaisesRegex(ValueError, "image_guidance_scale must be finite and between 1.0 and 20.0"):
+            Edit("sdxl-instruct-guidance-contract").execute(
+                pipeline=result["pipeline"],
+                prompt="turn the sky cloudy",
+                image=Image.new("RGB", (16, 16), "blue"),
+                num_inference_steps=30,
+                guidance_scale=3.0,
+                image_guidance_scale=0.9,
+            )
+
     def test_execution_recipe_controls_load_placement_attention_and_offload(self):
         loaded = {}
         offload = {}
@@ -1399,6 +4199,70 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(offload["mode"], "group_cpu")
         self.assertEqual(offload["device"], "cuda:0")
         self.assertEqual(result["pipeline"].transformer.backends, ["native"])
+
+    def test_flux_schnell_assembles_only_the_exact_reviewed_gguf_transformer(self):
+        loaded = {}
+
+        class FakePipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                loaded.update({"repo": repo, "kwargs": kwargs})
+                return cls()
+
+        component = SimpleNamespace(
+            _modiff_prequantized_component_contract={
+                "schemaVersion": 1,
+                "artifactRepo": "city96/FLUX.1-schnell-gguf",
+                "artifactRevision": "f495746ed9c5efcf4661f53ef05401dceadc17d2",
+                "filename": "flux1-schnell-Q4_0.gguf",
+                "sha256": "90a393d3a44bec691c707003f434fdde06064b870bb3c206eb7a4f109b25ff4e",
+                "byteSize": 6_770_707_360,
+                "componentClass": "FluxTransformer2DModel",
+                "baseConfigRepo": FLUX_SCHNELL_REPO,
+                "baseConfigRevision": catalog_revision(FLUX_SCHNELL_REPO),
+                "subfolder": "transformer",
+                "computeDtype": "bfloat16",
+            }
+        )
+        node = LoadPipeline("flux-schnell-reviewed-gguf-assembly")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch("modules.DiffusersImage.main.pipeline_class_from_name", return_value=FakePipeline),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+        ):
+            node.execute(
+                model_id={"source": "hub", "value": FLUX_SCHNELL_REPO},
+                pipeline_class="FluxPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(FLUX_SCHNELL_REPO),
+                dtype="bfloat16",
+                quantization_mode="none",
+                quantized_components=[],
+                prequantized_transformer=component,
+                auto_offload=False,
+                offload_mode="none",
+                device="cpu",
+            )
+
+        self.assertEqual(loaded["repo"], FLUX_SCHNELL_REPO)
+        self.assertIs(loaded["kwargs"]["transformer"], component)
+        self.assertEqual(loaded["kwargs"]["revision"], catalog_revision(FLUX_SCHNELL_REPO))
+        self.assertNotIn("quantization_config", loaded["kwargs"])
+
+        component._modiff_prequantized_component_contract["filename"] = "flux1-schnell-Q5_0.gguf"
+        with self.assertRaisesRegex(ValueError, "reviewed FLUX.1-schnell Q4_0"):
+            node.execute(
+                model_id={"source": "hub", "value": FLUX_SCHNELL_REPO},
+                pipeline_class="FluxPipeline",
+                mode="text_to_image",
+                revision=catalog_revision(FLUX_SCHNELL_REPO),
+                dtype="bfloat16",
+                prequantized_transformer=component,
+                auto_offload=False,
+                offload_mode="none",
+                device="cpu",
+            )
 
     def test_execution_recipe_applies_cache_and_compile_to_direct_image_pipeline(self):
         applied = {}
@@ -1595,6 +4459,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(loaded[1][2]["text_encoder_2"], "t5")
         self.assertEqual(loaded[1][2]["tokenizer"], "clip-tokenizer")
         self.assertEqual(loaded[1][2]["tokenizer_2"], "t5-tokenizer")
+        self.assertTrue(loaded[0][2]["use_safetensors"])
+        self.assertTrue(loaded[1][2]["use_safetensors"])
         self.assertTrue(loaded[0][2]["local_files_only"])
         self.assertTrue(loaded[1][2]["local_files_only"])
         self.assertIsNone(result["pipeline"].base.text_encoder)
@@ -1635,6 +4501,382 @@ class DiffusersImageRegistryTests(unittest.TestCase):
 
         self.assertEqual(loaded[0][1]["revision"], "741f7c3ce8b383c54771c7003378a50191e9efe9")
         self.assertEqual(len(loaded), 1)
+
+    def test_conditioned_loader_assembles_pinned_safetensors_component(self):
+        calls = {}
+
+        class FakeControlNet:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["component"] = (repo, kwargs)
+                return cls()
+
+        class FakePipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["pipeline"] = (repo, kwargs)
+                return cls()
+
+        node = LoadPipeline("sd15-controlnet-assembly")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                side_effect=lambda name: {
+                    "ControlNetModel": FakeControlNet,
+                    "StableDiffusionControlNetPipeline": FakePipeline,
+                }[name],
+            ),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+            patch(
+                "modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline",
+                return_value={},
+            ),
+        ):
+            result = node.execute(
+                model_id={"source": "hub", "value": SD15_BASE_REPO},
+                revision=catalog_revision(SD15_BASE_REPO),
+                pipeline_class="StableDiffusionControlNetPipeline",
+                mode="control_image",
+                conditioning_kind="controlnet",
+                conditioning_model_id={"source": "hub", "value": SD15_CONTROLNET_CANNY_REPO},
+                conditioning_revision=catalog_revision(SD15_CONTROLNET_CANNY_REPO),
+                dtype="float32",
+                device="cpu",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        component_repo, component_kwargs = calls["component"]
+        self.assertEqual(component_repo, SD15_CONTROLNET_CANNY_REPO)
+        self.assertEqual(component_kwargs["revision"], catalog_revision(SD15_CONTROLNET_CANNY_REPO))
+        self.assertTrue(component_kwargs["use_safetensors"])
+        self.assertNotIn("trust_remote_code", component_kwargs)
+        pipeline_repo, pipeline_kwargs = calls["pipeline"]
+        self.assertEqual(pipeline_repo, SD15_BASE_REPO)
+        self.assertEqual(pipeline_kwargs["revision"], catalog_revision(SD15_BASE_REPO))
+        self.assertTrue(pipeline_kwargs["use_safetensors"])
+        self.assertIsInstance(pipeline_kwargs["controlnet"], FakeControlNet)
+        self.assertEqual(result["pipeline"]._modiff_conditioning_kind, "controlnet")
+        self.assertEqual(
+            result["pipeline"]._modiff_conditioning_revision,
+            catalog_revision(SD15_CONTROLNET_CANNY_REPO),
+        )
+
+    def test_sdxl_conditioned_loader_uses_only_pinned_fp16_safetensors_variants(self):
+        calls = {}
+
+        class FakeControlNet:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["component"] = (repo, kwargs)
+                return cls()
+
+        class FakePipeline:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["pipeline"] = (repo, kwargs)
+                return cls()
+
+        node = LoadPipeline("sdxl-controlnet-assembly")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                side_effect=lambda name: {
+                    "ControlNetModel": FakeControlNet,
+                    "StableDiffusionXLControlNetPipeline": FakePipeline,
+                }[name],
+            ),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+            patch(
+                "modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline",
+                return_value={},
+            ),
+        ):
+            result = node.execute(
+                model_id={"source": "hub", "value": SDXL_BASE_REPO},
+                revision=catalog_revision(SDXL_BASE_REPO),
+                pipeline_class="StableDiffusionXLControlNetPipeline",
+                mode="control_image",
+                conditioning_kind="controlnet",
+                conditioning_model_id={"source": "hub", "value": SDXL_CONTROLNET_CANNY_REPO},
+                conditioning_revision=catalog_revision(SDXL_CONTROLNET_CANNY_REPO),
+                dtype="float16",
+                device="cpu",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        component_repo, component_kwargs = calls["component"]
+        self.assertEqual(component_repo, SDXL_CONTROLNET_CANNY_REPO)
+        self.assertEqual(component_kwargs["revision"], catalog_revision(SDXL_CONTROLNET_CANNY_REPO))
+        self.assertTrue(component_kwargs["use_safetensors"])
+        self.assertEqual(component_kwargs["variant"], "fp16")
+        self.assertNotIn("trust_remote_code", component_kwargs)
+        pipeline_repo, pipeline_kwargs = calls["pipeline"]
+        self.assertEqual(pipeline_repo, SDXL_BASE_REPO)
+        self.assertEqual(pipeline_kwargs["revision"], catalog_revision(SDXL_BASE_REPO))
+        self.assertTrue(pipeline_kwargs["use_safetensors"])
+        self.assertEqual(pipeline_kwargs["variant"], "fp16")
+        self.assertIsInstance(pipeline_kwargs["controlnet"], FakeControlNet)
+        self.assertEqual(result["pipeline"]._modiff_conditioning_kind, "controlnet")
+        self.assertEqual(
+            result["pipeline"]._modiff_conditioning_revision,
+            catalog_revision(SDXL_CONTROLNET_CANNY_REPO),
+        )
+
+    def test_hunyuan_dit_controlnet_uses_exact_safe_assembly_and_bounded_canny_action(self):
+        calls = {}
+
+        class FakeControlNet:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["component"] = (repo, kwargs)
+                return cls()
+
+        class HunyuanDiTControlNetPipeline:
+            _execution_device = "cpu"
+
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["pipeline"] = (repo, kwargs)
+                return cls()
+
+            def __call__(
+                self,
+                prompt=None,
+                control_image=None,
+                controlnet_conditioning_scale=1.0,
+                width=None,
+                height=None,
+                **kwargs,
+            ):
+                calls["generation"] = {
+                    "prompt": prompt,
+                    "control_image": control_image,
+                    "controlnet_conditioning_scale": controlnet_conditioning_scale,
+                    "width": width,
+                    "height": height,
+                    "kwargs": kwargs,
+                }
+                return SimpleNamespace(images=[Image.new("RGB", (width, height), "white")])
+
+        loader = LoadPipeline("hunyuan-dit-controlnet-assembly")
+        loader.progress = lambda *args, **kwargs: None
+        loader.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                side_effect=lambda name: {
+                    "HunyuanDiT2DControlNetModel": FakeControlNet,
+                    "HunyuanDiTControlNetPipeline": HunyuanDiTControlNetPipeline,
+                }[name],
+            ),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+            patch(
+                "modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline",
+                return_value={},
+            ),
+        ):
+            result = loader.execute(
+                model_id={"source": "hub", "value": HUNYUAN_DIT_DISTILLED_REPO},
+                revision=catalog_revision(HUNYUAN_DIT_DISTILLED_REPO),
+                pipeline_class="HunyuanDiTControlNetPipeline",
+                mode="control_image",
+                conditioning_kind="controlnet",
+                conditioning_model_id={"source": "hub", "value": HUNYUAN_DIT_CONTROLNET_CANNY_REPO},
+                conditioning_revision=catalog_revision(HUNYUAN_DIT_CONTROLNET_CANNY_REPO),
+                dtype="float16",
+                device="cpu",
+                auto_offload=True,
+                offload_mode="model_cpu",
+            )
+
+        component_repo, component_kwargs = calls["component"]
+        self.assertEqual(component_repo, HUNYUAN_DIT_CONTROLNET_CANNY_REPO)
+        self.assertEqual(component_kwargs["revision"], catalog_revision(HUNYUAN_DIT_CONTROLNET_CANNY_REPO))
+        self.assertTrue(component_kwargs["use_safetensors"])
+        self.assertNotIn("trust_remote_code", component_kwargs)
+        base_repo, base_kwargs = calls["pipeline"]
+        self.assertEqual(base_repo, HUNYUAN_DIT_DISTILLED_REPO)
+        self.assertEqual(base_kwargs["revision"], catalog_revision(HUNYUAN_DIT_DISTILLED_REPO))
+        self.assertTrue(base_kwargs["use_safetensors"])
+        self.assertIsInstance(base_kwargs["controlnet"], FakeControlNet)
+
+        control_image = Image.new("RGB", (1024, 1024), "black")
+        action = ControlGenerate("hunyuan-dit-controlnet-generate")
+        generated = action.execute(
+            pipeline=result["pipeline"],
+            prompt="a bilingual controlled image",
+            negative_prompt="artifact",
+            control_image=control_image,
+            width=1024,
+            height=1024,
+            num_inference_steps=50,
+            guidance_scale=6,
+            conditioning_scale=1,
+            seed=42,
+            output_type="pil",
+        )
+        self.assertEqual(generated["width_out"], 1024)
+        self.assertEqual(generated["height_out"], 1024)
+        self.assertIs(calls["generation"]["control_image"], control_image)
+        self.assertEqual(calls["generation"]["controlnet_conditioning_scale"], 1)
+        with self.assertRaisesRegex(ValueError, "between 1024 and 1024"):
+            action.execute(
+                pipeline=result["pipeline"],
+                prompt="reject an unreviewed size",
+                control_image=control_image,
+                width=768,
+                height=1024,
+                num_inference_steps=50,
+                guidance_scale=6,
+                output_type="pil",
+            )
+
+    def test_sdxl_t2i_adapter_loader_and_action_use_pinned_generic_contract(self):
+        calls = {}
+
+        class FakeAdapter:
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["component"] = (repo, kwargs)
+                return cls()
+
+        class StableDiffusionXLAdapterPipeline:
+            device = "cpu"
+
+            @classmethod
+            def from_pretrained(cls, repo, **kwargs):
+                calls["pipeline"] = (repo, kwargs)
+                return cls()
+
+            def __call__(
+                self,
+                prompt=None,
+                image=None,
+                adapter_conditioning_scale=1.0,
+                width=None,
+                height=None,
+                **kwargs,
+            ):
+                calls["generation"] = {
+                    "prompt": prompt,
+                    "image": image,
+                    "adapter_conditioning_scale": adapter_conditioning_scale,
+                    "kwargs": kwargs,
+                }
+                return SimpleNamespace(images=[Image.new("RGB", (width, height), "white")])
+
+        node = LoadPipeline("sdxl-t2i-adapter-assembly")
+        node.progress = lambda *args, **kwargs: None
+        node.mm_add = lambda *args, **kwargs: None
+        with (
+            patch(
+                "modules.DiffusersImage.main.pipeline_class_from_name",
+                side_effect=lambda name: {
+                    "T2IAdapter": FakeAdapter,
+                    "StableDiffusionXLAdapterPipeline": StableDiffusionXLAdapterPipeline,
+                }[name],
+            ),
+            patch("modules.DiffusersImage.main.apply_pipeline_offload"),
+            patch(
+                "modules.DiffusersRuntime.main.apply_execution_recipe_to_pipeline",
+                return_value={},
+            ),
+        ):
+            result = node.execute(
+                model_id={"source": "hub", "value": SDXL_BASE_REPO},
+                revision=catalog_revision(SDXL_BASE_REPO),
+                pipeline_class="StableDiffusionXLAdapterPipeline",
+                mode="control_image",
+                conditioning_kind="t2i_adapter",
+                conditioning_model_id={"source": "hub", "value": SDXL_T2I_ADAPTER_CANNY_REPO},
+                conditioning_revision=catalog_revision(SDXL_T2I_ADAPTER_CANNY_REPO),
+                dtype="float16",
+                device="cpu",
+                auto_offload=False,
+                offload_mode="none",
+            )
+
+        component_repo, component_kwargs = calls["component"]
+        self.assertEqual(component_repo, SDXL_T2I_ADAPTER_CANNY_REPO)
+        self.assertEqual(component_kwargs["revision"], catalog_revision(SDXL_T2I_ADAPTER_CANNY_REPO))
+        self.assertTrue(component_kwargs["use_safetensors"])
+        self.assertEqual(component_kwargs["variant"], "fp16")
+        self.assertNotIn("trust_remote_code", component_kwargs)
+        pipeline_repo, pipeline_kwargs = calls["pipeline"]
+        self.assertEqual(pipeline_repo, SDXL_BASE_REPO)
+        self.assertEqual(pipeline_kwargs["revision"], catalog_revision(SDXL_BASE_REPO))
+        self.assertTrue(pipeline_kwargs["use_safetensors"])
+        self.assertEqual(pipeline_kwargs["variant"], "fp16")
+        self.assertIsInstance(pipeline_kwargs["adapter"], FakeAdapter)
+        self.assertEqual(result["pipeline"]._modiff_conditioning_kind, "t2i_adapter")
+
+        control = Image.new("RGB", (32, 32), "black")
+        generated = ControlGenerate("sdxl-t2i-adapter-generate").execute(
+            pipeline=result["pipeline"],
+            control_image=control,
+            prompt="rights-safe edge fixture",
+            width=32,
+            height=32,
+            num_inference_steps=30,
+            guidance_scale=7.5,
+            conditioning_scale=0.8,
+        )
+        self.assertEqual(generated["images"][0].size, (32, 32))
+        self.assertIs(calls["generation"]["image"], control)
+        self.assertEqual(calls["generation"]["adapter_conditioning_scale"], 0.8)
+
+    def test_conditioned_control_action_uses_upstream_image_and_scale_parameters(self):
+        calls = {}
+
+        class StableDiffusionControlNetPipeline:
+            device = "cpu"
+
+            def __call__(
+                self,
+                prompt=None,
+                image=None,
+                controlnet_conditioning_scale=1.0,
+                width=None,
+                height=None,
+                **kwargs,
+            ):
+                calls.update(
+                    prompt=prompt,
+                    image=image,
+                    controlnet_conditioning_scale=controlnet_conditioning_scale,
+                    kwargs=kwargs,
+                )
+                return SimpleNamespace(images=[Image.new("RGB", (width, height), "white")])
+
+        pipeline = StableDiffusionControlNetPipeline()
+        tag_test_image_pipeline(
+            pipeline,
+            "StableDiffusionControlNetPipeline",
+            "control_image",
+        )
+        control = Image.new("RGB", (32, 32), "black")
+        result = ControlGenerate("sd15-controlnet-generate").execute(
+            pipeline=pipeline,
+            control_image=control,
+            prompt="rights-safe edge fixture",
+            width=32,
+            height=32,
+            num_inference_steps=1,
+            guidance_scale=1.0,
+            conditioning_scale=0.65,
+        )
+
+        self.assertIs(calls["image"], control)
+        self.assertEqual(calls["controlnet_conditioning_scale"], 0.65)
+        self.assertNotIn("control_image", calls["kwargs"])
+        self.assertEqual(result["width_out"], 32)
+        self.assertEqual(result["height_out"], 32)
 
     def test_flux_redux_bundle_delegates_multiple_reference_fusion_to_diffusers(self):
         import torch
@@ -1888,6 +5130,22 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             call_kwargs["callback_on_step_end"](pipeline, 0, 1, {})
 
         self.assertTrue(pipeline._interrupt)
+
+    def test_generic_step_callback_sets_num_timesteps_before_first_tick(self):
+        class FakePipeline:
+            _interrupt = False
+
+            def __call__(self, *, callback_on_step_end=None, callback_on_step_end_tensor_inputs=None):
+                pass
+
+        node = Inpaint("timesteps-probe")
+        node.progress = lambda *args, **kwargs: None
+        pipeline = FakePipeline()
+        call_kwargs = {}
+        add_progress_callback(node, pipeline, call_kwargs, 4)
+        self.assertEqual(pipeline._num_timesteps, 4)
+        call_kwargs["callback_on_step_end"](pipeline, 0, 1, {})
+        self.assertEqual(pipeline._num_timesteps, 4)
 
     def test_generic_execution_exposes_active_pipeline_during_inference(self):
         node = Inpaint("active-pipeline-probe")
@@ -2425,7 +5683,14 @@ class DiffusersImageNodeRouteTests(unittest.IsolatedAsyncioTestCase):
         response = await server.nodes(FakeRequest())
         nodes = json.loads(response.text)["nodes"]
 
-        for action in ("Edit", "Inpaint", "ControlGenerate"):
+        for action in (
+            "Edit",
+            "LayerDecompose",
+            "ControlEdit",
+            "Inpaint",
+            "ControlInpaint",
+            "ControlGenerate",
+        ):
             with self.subTest(node=action):
                 key = f"modules.DiffusersImage.{action}"
                 self.assertIn(key, nodes)

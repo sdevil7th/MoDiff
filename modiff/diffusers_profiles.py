@@ -10,12 +10,14 @@ from modiff.diffusers_offload_modes import (
     OFFLOAD_MODE_NONE,
     OFFLOAD_MODE_SEQUENTIAL_CPU,
 )
-from modiff.modular_workflow_contracts import (
-    FLUX_MODULAR_CONTROL_UNSUPPORTED,
-)
+from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
+from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
 from modiff.model_artifact_catalog import require_catalog_revision
 from modiff.optional_runtimes import (
+    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+    optional_runtime_target,
     public_optional_runtime_profiles,
 )
 from modiff.studio_execution_specs import (
@@ -23,7 +25,6 @@ from modiff.studio_execution_specs import (
     FLUX_CANNY_VERIFIED_REPAIR_REPO as FLUX_CANNY_VERIFIED_REPAIR_REPO,
     FLUX_DEPTH_REPO as FLUX_DEPTH_REPO,
     FLUX_DEV_FP8_REPO as FLUX_DEV_FP8_REPO,
-    FLUX_DEV_REPO,
     FLUX_KREA_REPO as FLUX_KREA_REPO,
     FLUX_KONTEXT_NVFP4_REPO as FLUX_KONTEXT_NVFP4_REPO,
     FLUX_KONTEXT_REPO as FLUX_KONTEXT_REPO,
@@ -52,8 +53,48 @@ VERIFIED_REPAIR_SOURCES = {
 OPTIONAL_RUNTIME_REQUIREMENT_SCHEMA_VERSION = 1
 OPTIONAL_RUNTIME_DELIVERY_BASE = "base"
 OPTIONAL_RUNTIME_DELIVERY_OVERLAY = "optional_overlay"
-OPTIONAL_RUNTIME_DELIVERIES = frozenset(
-    {OPTIONAL_RUNTIME_DELIVERY_BASE, OPTIONAL_RUNTIME_DELIVERY_OVERLAY}
+OPTIONAL_RUNTIME_DELIVERIES = frozenset({OPTIONAL_RUNTIME_DELIVERY_BASE, OPTIONAL_RUNTIME_DELIVERY_OVERLAY})
+OPTIONAL_RUNTIME_PLATFORM_CONTRACTS = (
+    (
+        "linux",
+        "x86_64",
+        OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
+        (TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,),
+    ),
+    (
+        "linux",
+        "arm64",
+        OPTIONAL_RUNTIME_DELIVERY_BASE,
+        (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
+    ),
+    (
+        "macos",
+        "x86_64",
+        OPTIONAL_RUNTIME_DELIVERY_BASE,
+        (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
+    ),
+    (
+        "macos",
+        "arm64",
+        OPTIONAL_RUNTIME_DELIVERY_BASE,
+        (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
+    ),
+    (
+        "windows",
+        "x86_64",
+        OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
+        (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
+    ),
+    (
+        "windows",
+        "arm64",
+        OPTIONAL_RUNTIME_DELIVERY_BASE,
+        (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
+    ),
+)
+OPTIONAL_RUNTIME_PLATFORM_DELIVERIES = tuple(
+    (platform_name, machine, delivery)
+    for platform_name, machine, delivery, _profile_ids in OPTIONAL_RUNTIME_PLATFORM_CONTRACTS
 )
 _OPTIONAL_RUNTIME_PROFILE_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]{0,127}")
 _EXECUTION_PROFILE_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9._:-]{0,127}")
@@ -165,9 +206,7 @@ class ExpertMpsPolicy:
 
 
 MPS_UNQUALIFIED_POLICY = ExpertMpsPolicy(1, "unqualified", "open_setup")
-MPS_UNQUALIFIED_WITH_Z_IMAGE_FALLBACK_POLICY = ExpertMpsPolicy(
-    1, "unqualified", "switch_to_z_image"
-)
+MPS_UNQUALIFIED_WITH_Z_IMAGE_FALLBACK_POLICY = ExpertMpsPolicy(1, "unqualified", "switch_to_z_image")
 MPS_EXPERIMENTAL_POLICY = ExpertMpsPolicy(1, "experimental", "open_setup")
 
 
@@ -194,28 +233,74 @@ class DiffusersExecutionProfile:
     # ``optional_runtime_profiles=()`` rather than inheriting this composite.
     optional_runtime_profiles: tuple[str, ...] = (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,)
     # Keep optional-runtime discovery metadata separate from executable
-    # delivery.  Every current profile is still satisfied by the reviewed base
-    # environment; only the atomic dependency cutover may change this to
-    # ``optional_overlay`` and make first-use status an execution prerequisite.
-    optional_runtime_delivery: str = OPTIONAL_RUNTIME_DELIVERY_BASE
+    # delivery. Linux/Windows x86-64 use the qualified overlay; unqualified
+    # architectures remain explicitly base-delivered.
+    optional_runtime_delivery: str = OPTIONAL_RUNTIME_DELIVERY_OVERLAY
+    optional_runtime_platform_deliveries: tuple[tuple[str, str, str], ...] = OPTIONAL_RUNTIME_PLATFORM_DELIVERIES
     compatible_repos: tuple[str, ...] = ()
     expert_quantization_modes: tuple[str, ...] = ()
     expert_cuda_policy: ExpertCudaPolicy | None = None
     expert_quantization_policy: ExpertQuantizationPolicy | None = None
     expert_mps_policy: ExpertMpsPolicy | None = None
+    public: bool = True
 
     def __post_init__(self) -> None:
         expected_loader = {
             "modular-diffusers": ("modules.ModularDiffusers", "ModelsLoader"),
+            "dynamic-modular": ("modules.ModularDiffusers", "DynamicBlockNode"),
             "direct-diffusers-image": ("modules.DiffusersImage", "LoadPipeline"),
             "direct-diffusers-video": ("modules.DiffusersVideo", "LoadPipeline"),
             "direct-wan-vace": ("modules.DiffusersVideo", "LoadPipeline"),
             "direct-diffusers-audio": ("modules.DiffusersAudio", "LoadPipeline"),
+            "direct-diffusers-three-d": ("modules.DiffusersThreeD", "LoadPipeline"),
+            "direct-huggingface-speech": (
+                "modules.HuggingFaceSpeech",
+                "LoadSpeechRecognitionModel",
+            ),
+            "direct-huggingface-speech-ctc": (
+                "modules.HuggingFaceSpeech",
+                "LoadCTCSpeechRecognitionModel",
+            ),
+            "direct-huggingface-transformers-text": (
+                "modules.HuggingFaceTransformers",
+                "LoadTextGenerationModel",
+            ),
+            "direct-huggingface-transformers-image-text": (
+                "modules.HuggingFaceTransformers",
+                "LoadImageTextToTextModel",
+            ),
+            "direct-huggingface-transformers-any-to-any": (
+                "modules.HuggingFaceTransformers",
+                "LoadAnyToAnyModel",
+            ),
+            "builtin-image-operation": (
+                "modules.ImageOperations",
+                "ProcessImage",
+            ),
+            "builtin-audio-operation": (
+                "modules.Audio",
+                "ProcessAudio",
+            ),
+            "builtin-data-operation": (
+                "modules.Text",
+                "ProcessText",
+            ),
+            "builtin-video-operation": (
+                "modules.Video",
+                "ProcessVideo",
+            ),
+            "spandrel-video-upscale": (
+                "modules.Video",
+                "UpscaleVideo",
+            ),
+            "spandrel-image-upscale": (
+                "modules.Spandrel",
+                "Upscaler",
+            ),
         }.get(self.execution_path)
         if expected_loader is None:
             raise ValueError(
-                f"Diffusers execution profile {self.id!r} has unsupported execution path "
-                f"{self.execution_path!r}."
+                f"Diffusers execution profile {self.id!r} has unsupported execution path {self.execution_path!r}."
             )
         if (self.loader_module, self.loader_action) != expected_loader:
             raise ValueError(
@@ -229,17 +314,73 @@ class DiffusersExecutionProfile:
             "quanto_float8",
             "torchao_float8",
         }
-        if (
-            len(set(self.expert_quantization_modes)) != len(self.expert_quantization_modes)
-            or not set(self.expert_quantization_modes).issubset(reviewed_quantization_modes)
-        ):
+        if len(set(self.expert_quantization_modes)) != len(self.expert_quantization_modes) or not set(
+            self.expert_quantization_modes
+        ).issubset(reviewed_quantization_modes):
             raise ValueError(f"Diffusers execution profile {self.id!r} has invalid Expert quantization modes.")
+        targets = tuple(
+            (platform_name, machine)
+            for platform_name, machine, delivery in self.optional_runtime_platform_deliveries
+            if delivery in OPTIONAL_RUNTIME_DELIVERIES
+        )
+        if (
+            self.optional_runtime_delivery not in OPTIONAL_RUNTIME_DELIVERIES
+            or len(targets) != len(self.optional_runtime_platform_deliveries)
+            or len(set(targets)) != len(targets)
+        ):
+            raise ValueError(f"Diffusers execution profile {self.id!r} has invalid optional-runtime delivery targets.")
 
     @property
     def backend_path(self) -> str:
         """Return the legacy combined loader key from the explicit target."""
 
         return f"{self.loader_module}.{self.loader_action}"
+
+    def optional_runtime_delivery_for_target(
+        self,
+        *,
+        platform_name: str | None = None,
+        machine: str | None = None,
+    ) -> str:
+        """Resolve reviewed delivery for one explicit OS/architecture target."""
+
+        if not self.optional_runtime_platform_deliveries:
+            return self.optional_runtime_delivery
+        selected_platform, selected_machine = optional_runtime_target(
+            platform_name=platform_name,
+            machine=machine,
+        )
+        matches = tuple(
+            delivery
+            for target_platform, target_machine, delivery in self.optional_runtime_platform_deliveries
+            if target_platform == selected_platform and target_machine == selected_machine
+        )
+        return matches[0] if len(matches) == 1 else "invalid"
+
+    def optional_runtime_profile_ids_for_target(
+        self,
+        *,
+        platform_name: str | None = None,
+        machine: str | None = None,
+    ) -> tuple[str, ...]:
+        """Resolve exact profile IDs from the reviewed target delivery table."""
+
+        if not self.optional_runtime_profiles:
+            return ()
+        if not self.optional_runtime_platform_deliveries:
+            return self.optional_runtime_profiles
+        if self.optional_runtime_profiles != (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,):
+            return self.optional_runtime_profiles
+        selected_platform, selected_machine = optional_runtime_target(
+            platform_name=platform_name,
+            machine=machine,
+        )
+        matches = tuple(
+            profile_ids
+            for target_platform, target_machine, _delivery, profile_ids in OPTIONAL_RUNTIME_PLATFORM_CONTRACTS
+            if target_platform == selected_platform and target_machine == selected_machine
+        )
+        return matches[0] if len(matches) == 1 else ()
 
     def to_public_dict(
         self,
@@ -249,6 +390,12 @@ class DiffusersExecutionProfile:
     ) -> dict:
         data = asdict(self)
         public = {key: list(value) if isinstance(value, tuple) else value for key, value in data.items()}
+        public["optional_runtime_delivery"] = self.optional_runtime_delivery_for_target()
+        public["optional_runtime_profiles"] = list(self.optional_runtime_profile_ids_for_target())
+        public["optional_runtime_platform_deliveries"] = [
+            {"platform": platform_name, "machine": machine, "delivery": delivery}
+            for platform_name, machine, delivery in self.optional_runtime_platform_deliveries
+        ]
         if self.expert_cuda_policy:
             public["expert_cuda_policy"] = {
                 **public["expert_cuda_policy"],
@@ -284,6 +431,54 @@ class DiffusersExecutionProfile:
 
 
 DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
+    "custom-modular:reviewed-loader": DiffusersExecutionProfile(
+        id="custom-modular:reviewed-loader",
+        model_type="DummyCustomPipeline",
+        modes=("reviewed_repository",),
+        loader_module="modules.ModularDiffusers",
+        loader_action="ModelsLoader",
+        execution_path="modular-diffusers",
+        pipeline_class="DummyCustomPipeline",
+        default_repo="",
+        fallback_repo=None,
+        quantizable_components=(),
+        default_quantized_components=(),
+        supported_offload_modes=(
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
+        retry_offload_modes=(OFFLOAD_MODE_GROUP_DISK,),
+        max_low_memory_side=None,
+        max_low_memory_steps=None,
+        live_proof=False,
+        public=False,
+    ),
+    "custom-modular:reviewed-block": DiffusersExecutionProfile(
+        id="custom-modular:reviewed-block",
+        model_type="DummyCustomPipeline",
+        modes=("reviewed_repository",),
+        loader_module="modules.ModularDiffusers",
+        loader_action="DynamicBlockNode",
+        execution_path="dynamic-modular",
+        pipeline_class="DummyCustomPipeline",
+        default_repo="",
+        fallback_repo=None,
+        quantizable_components=(),
+        default_quantized_components=(),
+        supported_offload_modes=(
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
+        retry_offload_modes=(OFFLOAD_MODE_GROUP_DISK,),
+        max_low_memory_side=None,
+        max_low_memory_steps=None,
+        live_proof=False,
+        public=False,
+    ),
     "z-image:auto": DiffusersExecutionProfile(
         id="z-image:auto",
         model_type="ZImageModularPipeline",
@@ -296,7 +491,12 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         fallback_repo=None,
         quantizable_components=(),
         default_quantized_components=(),
-        supported_offload_modes=(OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        supported_offload_modes=(
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
         retry_offload_modes=(OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_DISK),
         max_low_memory_side=1024,
         max_low_memory_steps=8,
@@ -338,7 +538,12 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
         default_quantized_components=("transformer", "text_encoder"),
-        supported_offload_modes=(OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        supported_offload_modes=(
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
         retry_offload_modes=(OFFLOAD_MODE_GROUP_DISK,),
         max_low_memory_side=768,
         max_low_memory_steps=28,
@@ -380,7 +585,12 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
         default_quantized_components=("transformer", "text_encoder"),
-        supported_offload_modes=(OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        supported_offload_modes=(
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
         retry_offload_modes=(OFFLOAD_MODE_GROUP_DISK,),
         max_low_memory_side=768,
         max_low_memory_steps=24,
@@ -398,7 +608,12 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
         default_quantized_components=("transformer", "text_encoder"),
-        supported_offload_modes=(OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        supported_offload_modes=(
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
         retry_offload_modes=(OFFLOAD_MODE_GROUP_DISK,),
         max_low_memory_side=768,
         max_low_memory_steps=24,
@@ -416,7 +631,12 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
         default_quantized_components=("transformer", "text_encoder"),
-        supported_offload_modes=(OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        supported_offload_modes=(
+            OFFLOAD_MODE_NONE,
+            OFFLOAD_MODE_MODEL_CPU,
+            OFFLOAD_MODE_GROUP_CPU,
+            OFFLOAD_MODE_GROUP_DISK,
+        ),
         retry_offload_modes=(OFFLOAD_MODE_GROUP_DISK,),
         max_low_memory_side=768,
         max_low_memory_steps=30,
@@ -462,11 +682,17 @@ DIFFUSERS_EXECUTION_PROFILES.update(
 
 for profile_id in (
     "qwen-image:t2i-direct",
+    "qwen-image:img2img-direct",
+    "qwen-image:inpaint-direct",
     "qwen-image:modular",
     "qwen-edit:direct-inpaint",
     "qwen-edit:modular",
     "qwen-edit-plus:modular",
     "qwen-layered:modular",
+    "qwen-image-controlnet:direct",
+    "qwen-image-layered:direct",
+    "qwen-image-edit:direct",
+    "qwen-image-edit-plus:direct",
 ):
     DIFFUSERS_EXECUTION_PROFILES[profile_id] = replace(
         DIFFUSERS_EXECUTION_PROFILES[profile_id],
@@ -481,6 +707,7 @@ for profile_id in (
     )
 
 for profile_id in (
+    "janus-pro-1b:direct",
     "wan-vace:direct",
     "wan-22-image-to-video:direct",
     "wan-22-ti2v-5b:direct",
@@ -500,82 +727,7 @@ DIFFUSERS_EXECUTION_PROFILES["z-image:auto"] = replace(
 
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 
-EXPERIMENTAL_DIFFUSERS_PIPELINES = [
-    {
-        "modelType": "StableDiffusionXLModularPipeline",
-        "label": "Stable Diffusion XL (Modular)",
-        "mediaKind": "image",
-        "defaultRepo": SDXL_BASE_REPO,
-        "pipelineClasses": ["StableDiffusionXLModularPipeline"],
-        "backendPath": "modules.ModularDiffusers.ModelsLoader",
-        "executionKind": "modular",
-        "runnableModes": ["text_to_image", "image_to_image", "control_image", "inpaint"],
-        "inputContracts": {
-            "image_to_image": {"requiredImages": ["referenceImages"]},
-            "control_image": {"requiredImages": ["controlImage"]},
-            "inpaint": {"requiredImages": ["referenceImages", "maskImage"]},
-        },
-        "qualificationStatus": "contract_only",
-        "revisionCandidates": [require_catalog_revision(SDXL_BASE_REPO)],
-        "autoEligible": False,
-        "templateEligible": False,
-        "galleryEligible": False,
-    },
-    {
-        "modelType": "FluxModularPipeline",
-        "label": "FLUX (Modular)",
-        "mediaKind": "image",
-        "pipelineClasses": ["FluxModularPipeline"],
-        "backendPath": "modules.ModularDiffusers.ModelsLoader",
-        "executionKind": "modular",
-        "runnableModes": ["text_to_image", "image_to_image"],
-        "unsupportedModes": {"control_image": FLUX_MODULAR_CONTROL_UNSUPPORTED},
-    },
-    {
-        # Auto uses the established direct DiffusersImage facade for this
-        # model/task pair. Keep the separately supported Modular workflow
-        # visible as an Expert capability without creating a second Auto
-        # execution profile for the same exact pair.
-        "modelType": "ZImageModularPipeline",
-        "label": "Z-Image (Modular)",
-        "mediaKind": "image",
-        "defaultRepo": "Tongyi-MAI/Z-Image-Turbo",
-        "pipelineClasses": ["ZImageModularPipeline"],
-        "backendPath": "modules.ModularDiffusers.ModelsLoader",
-        "executionKind": "modular",
-        "runnableModes": ["text_to_image"],
-    },
-    {
-        "modelType": "Flux2KleinModularPipeline",
-        "label": "FLUX.2 Klein (Standard Diffusers)",
-        "mediaKind": "image",
-        "defaultRepo": "black-forest-labs/FLUX.2-klein-4B",
-        "pipelineClasses": ["Flux2KleinPipeline"],
-        "backendPath": "modules.DiffusersImage.LoadPipeline",
-        "executionKind": "standard",
-        "executionModelType": "Flux2KleinPipeline",
-        "executionProfileIds": ["flux2-klein:direct"],
-        "runnableModes": ["text_to_image", "edit_image", "multi_image_reference_edit"],
-    },
-    {
-        "modelType": "WanModularPipeline",
-        "label": "Wan Text to Video (Modular)",
-        "mediaKind": "video",
-        "pipelineClasses": ["WanModularPipeline"],
-        "backendPath": "modules.ModularDiffusers.ModelsLoader",
-        "executionKind": "modular",
-        "runnableModes": ["text_to_video"],
-    },
-    {
-        "modelType": "WanImage2VideoModularPipeline",
-        "label": "Wan Image to Video (Modular)",
-        "mediaKind": "video",
-        "pipelineClasses": ["WanImage2VideoModularPipeline"],
-        "backendPath": "modules.ModularDiffusers.ModelsLoader",
-        "executionKind": "modular",
-        "runnableModes": ["image_to_video"],
-    },
-]
+EXPERIMENTAL_DIFFUSERS_PIPELINES = []
 
 
 # These adapters have a reviewed generic loader/action contract, but no Auto
@@ -587,74 +739,7 @@ EXPERIMENTAL_DIFFUSERS_PIPELINES = [
 # The registry tests compare this table with the task-module adapter maps and
 # the immutable artifact catalog.  A new class therefore cannot be published
 # here by copying a Diffusers name alone.
-CONTRACT_ONLY_DIFFUSERS_PIPELINES = (
-    # Standard image adapters.  The final eleven were admitted by P0.3c.4;
-    # FLUX img2img/inpaint were already implemented but likewise unprofiled.
-    ("StableDiffusionXLPipeline", "image", SDXL_BASE_REPO, ("text_to_image",)),
-    (
-        "StableDiffusionXLImg2ImgPipeline",
-        "image",
-        SDXL_BASE_REPO,
-        ("edit_image",),
-    ),
-    (
-        "StableDiffusionXLInpaintPipeline",
-        "image",
-        SDXL_BASE_REPO,
-        ("inpaint", "outpaint"),
-    ),
-    ("QwenImageImg2ImgPipeline", "image", QWEN_IMAGE_2512_REPO, ("edit_image",)),
-    ("QwenImageInpaintPipeline", "image", QWEN_IMAGE_2512_REPO, ("inpaint", "outpaint")),
-    ("QwenImageEditPipeline", "image", "Qwen/Qwen-Image-Edit", ("edit_image",)),
-    (
-        "QwenImageEditPlusPipeline",
-        "image",
-        "Qwen/Qwen-Image-Edit-2511",
-        ("edit_image", "multi_image_reference_edit"),
-    ),
-    ("ZImageImg2ImgPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("edit_image",)),
-    ("ZImageInpaintPipeline", "image", "Tongyi-MAI/Z-Image-Turbo", ("inpaint", "outpaint")),
-    ("FluxImg2ImgPipeline", "image", FLUX_DEV_REPO, ("edit_image",)),
-    ("FluxInpaintPipeline", "image", FLUX_DEV_REPO, ("inpaint",)),
-    (
-        "FluxKontextInpaintPipeline",
-        "image",
-        FLUX_KONTEXT_REPO,
-        ("inpaint", "outpaint"),
-    ),
-    ("Flux2KleinInpaintPipeline", "image", FLUX2_KLEIN_REPO, ("inpaint", "outpaint")),
-    # Implemented generic video adapters which intentionally have no execution
-    # profile yet.  Qualification and templates remain later remote work.
-    ("Wan22Pipeline", "video", "Wan-AI/Wan2.2-T2V-A14B-Diffusers", ("text_to_video",)),
-    (
-        "WanAnimatePipeline",
-        "video",
-        "Wan-AI/Wan2.2-Animate-14B-Diffusers",
-        ("character_animate", "character_replace"),
-    ),
-    (
-        "LTXI2VLongMultiPromptPipeline",
-        "video",
-        LTX_VIDEO_REPO,
-        ("image_to_video",),
-    ),
-    (
-        "LTX2ConditionPipeline",
-        "video",
-        "Lightricks/LTX-2",
-        ("text_to_video", "image_to_video", "video_to_video", "reference_to_video"),
-    ),
-    (
-        "HunyuanVideoFramepackPipeline",
-        "video",
-        "lllyasviel/FramePackI2V_HY",
-        ("image_to_video",),
-    ),
-    # Stable Audio already runs through the generic Diffusers audio facade; it
-    # remains Expert/contract-only until its graph and live resource envelope
-    # are qualified.
-    ("StableAudioPipeline", "audio", "stabilityai/stable-audio-open-1.0", ("text_to_audio",)),
-)
+CONTRACT_ONLY_DIFFUSERS_PIPELINES = ()
 
 
 _CONTRACT_ONLY_BACKEND_PATHS = {
@@ -712,13 +797,42 @@ def _contract_only_pipeline_capability(
 
 
 EXPERIMENTAL_DIFFUSERS_PIPELINES.extend(
-    _contract_only_pipeline_capability(*contract)
-    for contract in CONTRACT_ONLY_DIFFUSERS_PIPELINES
+    _contract_only_pipeline_capability(*contract) for contract in CONTRACT_ONLY_DIFFUSERS_PIPELINES
+)
+
+
+def _contract_only_modular_capability(specification) -> dict:
+    workflow_contract = reviewed_modular_workflow_contract(specification.class_name)
+    return {
+        "modelType": specification.class_name,
+        "label": specification.label,
+        "mediaKind": specification.batch,
+        "pipelineClasses": [specification.class_name],
+        "backendPath": "modules.ModularDiffusers.ModelsLoader",
+        "executionKind": "modular",
+        "runnableModes": [],
+        "upstreamWorkflows": [workflow["taskId"] for workflow in workflow_contract["workflows"]],
+        "workflowContractSchemaVersion": workflow_contract["schemaVersion"],
+        "contractBatch": specification.batch,
+        "qualificationStatus": "contract_only",
+        "expertVisible": True,
+        "autoEligible": False,
+        "templateEligible": False,
+        "galleryEligible": False,
+        "optionalRuntimeProfileIds": [],
+    }
+
+
+EXPERIMENTAL_DIFFUSERS_PIPELINES.extend(
+    _contract_only_modular_capability(specification) for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
 )
 
 
 def optional_runtime_requirement_for_profiles(
     profiles: tuple[DiffusersExecutionProfile, ...] | list[DiffusersExecutionProfile],
+    *,
+    platform_name: str | None = None,
+    machine: str | None = None,
 ) -> dict:
     """Describe whether selected execution profiles require an overlay now.
 
@@ -735,24 +849,27 @@ def optional_runtime_requirement_for_profiles(
     execution_profile_ids: list[str] = []
     base_profile_with_optional_ids = False
     for profile in selected:
-        if (
-            isinstance(profile.id, str)
-            and _EXECUTION_PROFILE_ID_PATTERN.fullmatch(profile.id)
-        ):
+        if isinstance(profile.id, str) and _EXECUTION_PROFILE_ID_PATTERN.fullmatch(profile.id):
             if profile.id in execution_profile_ids:
                 invalid_profile_ids = True
             else:
                 execution_profile_ids.append(profile.id)
         else:
             invalid_profile_ids = True
-        delivery = profile.optional_runtime_delivery
+        delivery = profile.optional_runtime_delivery_for_target(
+            platform_name=platform_name,
+            machine=machine,
+        )
         if delivery not in OPTIONAL_RUNTIME_DELIVERIES:
             deliveries.add("invalid")
         else:
             deliveries.add(delivery)
         valid_ids_for_profile = 0
         profile_seen_ids: set[str] = set()
-        for raw_profile_id in profile.optional_runtime_profiles:
+        for raw_profile_id in profile.optional_runtime_profile_ids_for_target(
+            platform_name=platform_name,
+            machine=machine,
+        ):
             if (
                 not isinstance(raw_profile_id, str)
                 or not _OPTIONAL_RUNTIME_PROFILE_ID_PATTERN.fullmatch(raw_profile_id)
@@ -815,8 +932,7 @@ def execution_profiles_for_execution(
     return tuple(
         profile
         for profile in DIFFUSERS_EXECUTION_PROFILES.values()
-        if profile.model_type == normalized_model_type
-        and (not normalized_mode or normalized_mode in profile.modes)
+        if profile.model_type == normalized_model_type and (not normalized_mode or normalized_mode in profile.modes)
     )
 
 
@@ -826,9 +942,7 @@ def optional_runtime_requirement_for_execution(
 ) -> dict:
     """Return declarative optional-runtime delivery for one exact pair."""
 
-    return optional_runtime_requirement_for_profiles(
-        execution_profiles_for_execution(model_type, mode)
-    )
+    return optional_runtime_requirement_for_profiles(execution_profiles_for_execution(model_type, mode))
 
 
 def resolve_execution_profiles_for_loader(
@@ -847,34 +961,117 @@ def resolve_execution_profiles_for_loader(
 
     backend_path = f"{str(module or '').strip()}.{str(action or '').strip()}"
     backend_profiles = tuple(
-        profile
-        for profile in DIFFUSERS_EXECUTION_PROFILES.values()
-        if profile.backend_path == backend_path
+        profile for profile in DIFFUSERS_EXECUTION_PROFILES.values() if profile.backend_path == backend_path
     )
     if not backend_profiles:
         return (), None
     if not isinstance(values, dict):
         return backend_profiles, "loader_parameters_invalid"
 
+    def selected_optional_runtime(profiles: tuple[DiffusersExecutionProfile, ...]):
+        quantization_mode = values.get("quantization_mode")
+        if quantization_mode != "quanto_float8":
+            return profiles
+        return tuple(
+            replace(
+                profile,
+                optional_runtime_profiles=(TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,),
+            )
+            if quantization_mode in profile.expert_quantization_modes
+            and profile.optional_runtime_delivery_for_target() == OPTIONAL_RUNTIME_DELIVERY_OVERLAY
+            else profile
+            for profile in profiles
+        )
+
+    raw_execution_profile_id = values.get("execution_profile_id")
+    if raw_execution_profile_id not in (None, ""):
+        if (
+            not isinstance(raw_execution_profile_id, str)
+            or raw_execution_profile_id != raw_execution_profile_id.strip()
+        ):
+            return selected_optional_runtime(backend_profiles), "loader_execution_profile_invalid"
+        exact_profile = next(
+            (profile for profile in backend_profiles if profile.id == raw_execution_profile_id),
+            None,
+        )
+        if exact_profile is None:
+            return selected_optional_runtime(backend_profiles), "loader_execution_profile_unregistered"
+
+        identity_key = "model_type" if action == "ModelsLoader" else "pipeline_class"
+        raw_identity = "DummyCustomPipeline" if action == "DynamicBlockNode" else values.get(identity_key)
+        identity = raw_identity.strip() if isinstance(raw_identity, str) else ""
+        expected_identity = exact_profile.model_type if action == "ModelsLoader" else exact_profile.pipeline_class
+        if not identity:
+            return selected_optional_runtime((exact_profile,)), "loader_identity_missing"
+        if identity != expected_identity:
+            return selected_optional_runtime((exact_profile,)), "loader_execution_profile_mismatch"
+
+        raw_mode = values.get("mode")
+        if raw_mode is not None:
+            if not isinstance(raw_mode, str) or not raw_mode.strip():
+                return selected_optional_runtime((exact_profile,)), "loader_mode_invalid"
+            if raw_mode.strip() not in exact_profile.modes:
+                return selected_optional_runtime((exact_profile,)), "loader_execution_profile_mismatch"
+
+        raw_repository = values.get("model_id") or values.get("repo_id")
+        if isinstance(raw_repository, str):
+            repository = raw_repository.strip()
+            repository_source = "hub"
+        elif (
+            isinstance(raw_repository, dict)
+            and set(raw_repository).issubset({"source", "value"})
+            and raw_repository.get("source") in {"hub", "local"}
+            and isinstance(raw_repository.get("value"), str)
+        ):
+            repository = raw_repository["value"].strip()
+            repository_source = raw_repository["source"]
+        else:
+            repository = ""
+            repository_source = ""
+        if repository and repository_source == "hub" and repository not in {
+            exact_profile.default_repo,
+            exact_profile.fallback_repo,
+            *exact_profile.compatible_repos,
+        }:
+            return selected_optional_runtime((exact_profile,)), "loader_execution_profile_mismatch"
+        return selected_optional_runtime((exact_profile,)), None
+
     identity_key = "model_type" if action == "ModelsLoader" else "pipeline_class"
-    raw_identity = values.get(identity_key)
+    raw_identity = "DummyCustomPipeline" if action == "DynamicBlockNode" else values.get(identity_key)
     identity = raw_identity.strip() if isinstance(raw_identity, str) else ""
     if not identity:
-        return backend_profiles, "loader_identity_missing"
+        return selected_optional_runtime(backend_profiles), "loader_identity_missing"
 
     matching = tuple(
         profile
         for profile in backend_profiles
-        if (
-            profile.model_type == identity
-            if action == "ModelsLoader"
-            else profile.pipeline_class == identity
-        )
+        if (profile.model_type == identity if action == "ModelsLoader" else profile.pipeline_class == identity)
     )
     if not matching:
-        return backend_profiles, "loader_selection_unregistered"
+        return selected_optional_runtime(backend_profiles), "loader_selection_unregistered"
     if len(matching) == 1:
-        return matching, None
+        return selected_optional_runtime(matching), None
+
+    # A retained private compatibility alias must not make a current public
+    # loader ambiguous. Explicit IDs above still select that exact old route.
+    # Keep sole private/custom loaders: visibility is not execution permission.
+    public_matching = tuple(profile for profile in matching if profile.public)
+    if public_matching:
+        matching = public_matching
+        if len(matching) == 1:
+            return selected_optional_runtime(matching), None
+
+    raw_mode = values.get("mode")
+    if raw_mode is not None:
+        if not isinstance(raw_mode, str) or not raw_mode.strip():
+            return selected_optional_runtime(matching), "loader_mode_invalid"
+        mode = raw_mode.strip()
+        mode_matches = tuple(profile for profile in matching if mode in profile.modes)
+        if not mode_matches:
+            return selected_optional_runtime(matching), "loader_mode_unregistered"
+        matching = mode_matches
+        if len(matching) == 1:
+            return selected_optional_runtime(matching), None
 
     raw_repository = values.get("model_id") or values.get("repo_id")
     if isinstance(raw_repository, str):
@@ -895,13 +1092,12 @@ def resolve_execution_profiles_for_loader(
         repository_matches = tuple(
             profile
             for profile in matching
-            if repository
-            in {profile.default_repo, profile.fallback_repo, *profile.compatible_repos}
+            if repository in {profile.default_repo, profile.fallback_repo, *profile.compatible_repos}
         )
         if len(repository_matches) == 1:
-            return repository_matches, None
+            return selected_optional_runtime(repository_matches), None
 
-    return matching, "loader_profile_ambiguous"
+    return selected_optional_runtime(matching), "loader_profile_ambiguous"
 
 
 def public_experimental_pipelines(
@@ -937,12 +1133,8 @@ def public_experimental_pipelines(
             backend_path = None
             qualification_status = "invalid_contract"
         elif execution_profiles:
-            runnable_modes = list(
-                dict.fromkeys(mode for profile in execution_profiles for mode in profile["modes"])
-            )
-            pipeline_classes = list(
-                dict.fromkeys(profile["pipeline_class"] for profile in execution_profiles)
-            )
+            runnable_modes = list(dict.fromkeys(mode for profile in execution_profiles for mode in profile["modes"]))
+            pipeline_classes = list(dict.fromkeys(profile["pipeline_class"] for profile in execution_profiles))
             backend_paths = {profile["backend_path"] for profile in execution_profiles}
             backend_path = next(iter(backend_paths)) if len(backend_paths) == 1 else None
             qualification_status = pipeline.get("qualificationStatus", "unqualified")
@@ -961,8 +1153,9 @@ def public_experimental_pipelines(
         )
         if not optional_runtime_profile_ids:
             optional_runtime_profile_ids = list(
-                pipeline.get("optionalRuntimeProfileIds")
-                or (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,)
+                pipeline["optionalRuntimeProfileIds"]
+                if "optionalRuntimeProfileIds" in pipeline
+                else (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,)
             )
         selected_profile_contracts = tuple(
             DIFFUSERS_EXECUTION_PROFILES[profile_id]
@@ -979,9 +1172,7 @@ def public_experimental_pipelines(
                 catalog_resolver=optional_runtime_catalog_resolver,
             )
         else:
-            optional_runtime_requirement = optional_runtime_requirement_for_profiles(
-                selected_profile_contracts
-            )
+            optional_runtime_requirement = optional_runtime_requirement_for_profiles(selected_profile_contracts)
 
         public_pipelines.append(
             {
@@ -1008,16 +1199,8 @@ def public_experimental_pipelines(
                 ),
                 "qualificationStatus": qualification_status,
                 "optionalRuntimeProfileIds": optional_runtime_profile_ids,
-                "optionalRuntimeProfiles": public_optional_runtime_profiles(
-                    optional_runtime_profile_ids
-                ),
-                **(
-                    {
-                        "optionalRuntimeRequirement": optional_runtime_requirement
-                    }
-                    if execution_profiles
-                    else {}
-                ),
+                "optionalRuntimeProfiles": public_optional_runtime_profiles(optional_runtime_profile_ids),
+                **({"optionalRuntimeRequirement": optional_runtime_requirement} if execution_profiles else {}),
             }
         )
     return public_pipelines
@@ -1034,18 +1217,25 @@ def public_execution_profiles(
             optional_runtime_catalog_resolver=optional_runtime_catalog_resolver,
         )
         for profile in DIFFUSERS_EXECUTION_PROFILES.values()
+        if profile.public
     ]
 
 
 def optional_runtime_profile_ids_for_execution(
     model_type: str,
     mode: str | None = None,
+    *,
+    platform_name: str | None = None,
+    machine: str | None = None,
 ) -> tuple[str, ...]:
     """Resolve optional runtime IDs for one declared model/mode pair."""
 
     profile_ids: list[str] = []
     for profile in execution_profiles_for_execution(model_type, mode):
-        for profile_id in profile.optional_runtime_profiles:
+        for profile_id in profile.optional_runtime_profile_ids_for_target(
+            platform_name=platform_name,
+            machine=machine,
+        ):
             if profile_id not in profile_ids:
                 profile_ids.append(profile_id)
     return tuple(profile_ids)

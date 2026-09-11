@@ -1,0 +1,300 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "galleryEligible": false,
+    "liveQualified": false,
+    "runtimeCatalogExposed": false,
+    "status": "review_complete_not_admitted_noncommercial",
+    "unresolvedGates": [
+      "noncommercial_research_only_license",
+      "legal_product_admission_approval",
+      "backend_owned_resolution_frame_step_and_batch_bounds",
+      "remote_heavy_hardware_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "AnyFlow",
+  "format": "safetensors",
+  "license": {
+    "acceptanceRequiredForDownload": false,
+    "commercialUseAllowed": false,
+    "derivativeWorksRetainUseLimitation": true,
+    "evidence": "The complete identical LICENSE.md in all four immutable repositories restricts the work and derivatives to non-commercial research activities or non-commercial research publications.",
+    "id": "nvidia-one-way-noncommercial-license-nsclv1",
+    "licenseFilePresent": true,
+    "licenseFileSha256": "053e0667ca9faf522b6a18851bde3bd56a12e986e2d8df0940703014559a9e37",
+    "redistributionRequiresLicenseAndNotices": true
+  },
+  "modelCardPackageApiMismatch": {
+    "currentPackageConditioningArgument": "video",
+    "immutableFarCardsConditioningArgument": "context_sequence",
+    "immutableCardsImportCustomUpstreamPipeline": true,
+    "resolution": "The package-owned Diffusers API and official Diffusers documentation supersede the stale custom-code examples, but runtime admission remains closed by license and qualification gates."
+  },
+  "pinnedDiffusers": {
+    "bidirectionalPipelineClass": "AnyFlowPipeline",
+    "bidirectionalPipelineSha256": "aaa07584f122e9d6bc6b58061bca74ae18bebc4c966deca2a2d39c4cdb027793",
+    "bidirectionalTransformerClass": "AnyFlowTransformer3DModel",
+    "bidirectionalTransformerSha256": "371d1129735f4846eeceef9bff76649bba55f98e7f15c232741288b701d8aa94",
+    "callbackOnStepEndAvailable": true,
+    "farPipelineClass": "AnyFlowFARPipeline",
+    "farPipelineSha256": "b0eaf44b3f67d9eb668c8b13883b9b5e3b4f12ed8135b6f75be4d604d028eb80",
+    "farTransformerClass": "AnyFlowFARTransformer3DModel",
+    "farTransformerSha256": "050ce2d366cc2b122e6a3e3d0e899e94ffc1c5dbe4ece93fe1add59dc8860775",
+    "modelCpuOffloadSequence": "text_encoder->transformer->vae",
+    "outputClass": "AnyFlowPipelineOutput",
+    "outputSha256": "08eee6747edea758c05b4b27377af2a29f53afe642b899f65da81151f6674b38",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "schedulerClass": "FlowMapEulerDiscreteScheduler",
+    "schedulerSha256": "cf3d53351b8487fc26f5289b91bfc4bd360eb81af411d0daceebe4a195d75ffe",
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContract": {
+    "bidirectionalTasks": [
+      "text-to-video"
+    ],
+    "callbackTensorInputs": [
+      "latents",
+      "prompt_embeds",
+      "negative_prompt_embeds"
+    ],
+    "defaultGuidanceScale": 1.0,
+    "defaultHeight": 480,
+    "defaultMaxSequenceLength": 512,
+    "defaultNumFrames": 81,
+    "defaultNumInferenceSteps": 50,
+    "defaultWidth": 832,
+    "documentedFramesPerSecond": 16,
+    "documentedNumInferenceSteps": 4,
+    "farChunkPartition": [
+      1,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      2
+    ],
+    "farTasks": [
+      "text-to-video",
+      "image-to-video",
+      "video-to-video"
+    ],
+    "heightWidthDivisibility": 16,
+    "modelCardResolutionLabel": "480P",
+    "numFramesCongruence": "num_frames = 4n + 1",
+    "packageValidationGaps": [
+      "no maximum batch or videos-per-prompt bound",
+      "no maximum resolution or cumulative output-pixel bound",
+      "no maximum output-frame bound",
+      "no maximum denoising-step or custom-schedule-length bound",
+      "out-of-congruence frame counts are rounded with a warning instead of rejected"
+    ],
+    "releasedCheckpointDtype": "bfloat16",
+    "releasedCheckpointsFuseClassifierFreeGuidance": true
+  },
+  "remoteResourceEnvelopes": {
+    "14b": {
+      "minimumAcceleratorMemoryBytesEstimate": 68719476736,
+      "minimumSelectiveDiskBytes": 64424509440,
+      "minimumSystemRamBytes": 103079215104,
+      "status": "estimate_only_remote_qualification_pending"
+    },
+    "1.3b": {
+      "minimumAcceleratorMemoryBytesEstimate": 34359738368,
+      "minimumSelectiveDiskBytes": 34359738368,
+      "minimumSystemRamBytes": 51539607552,
+      "status": "estimate_only_remote_qualification_pending"
+    },
+    "notes": [
+      "The publisher provides no measured accelerator-memory or system-memory envelope for the four Diffusers snapshots.",
+      "The 1.3B repositories contain approximately 26.08 GB of selected weights and the 14B repositories contain approximately 51.86 GB.",
+      "All resource values are conservative MoDiff estimates and do not qualify execution."
+    ]
+  },
+  "repositories": [
+    {
+      "gated": false,
+      "hubSafetensorsDtypeParameterMetadata": {
+        "BF16": 1421752384
+      },
+      "licenseFilePresent": true,
+      "modelCardSha256": "40967dd84ee06d471186d9f2ebcd31792384e75a2bee18bc572067c8a7eb93e6",
+      "modelIndexClass": "AnyFlowPipeline",
+      "modelIndexSha256": "9ff603f93e058a5e5edcd530f9e43176ed87fb609b8eb93823fd5b7721fb6e62",
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "nvidia/AnyFlow-Wan2.1-T2V-1.3B-Diffusers",
+      "repositoryBytes": 26099102514,
+      "revision": "4c2ec05c7fa4dbafbca131ad32430905c7ff2974",
+      "schedulerConfigSha256": "696215633e694f3411613032e164f321cba8372eda1568d30ef494b3965fd358",
+      "transformerConfigSha256": "a72bc7169c3316888718f0315d5825a49e55a2bda10c7e7eefc5cefd4b4c624e",
+      "trustRemoteCodeRequired": false,
+      "vaeConfigSha256": "c02cc4bc2fa93a840436a00e09a51b58b17432f6534ce184aa06b0fb19d6a8ab",
+      "variant": "bidirectional-1.3b",
+      "variantWeightFiles": [
+        {
+          "byteSize": 2843589400,
+          "path": "transformer/diffusion_pytorch_model.safetensors",
+          "sha256": "2b6fee76a341e425da9f916f78ca0b5376ad4d4eaf8dbb341fb92f960a40ba26"
+        }
+      ],
+      "weightBytes": 26074853036,
+      "weightFileCount": 7,
+      "weightInventorySha256": "600762ef7fa5a81be70fe9d03b7c5a268695bfacaae6e39f5d463fe73a719b30"
+    },
+    {
+      "gated": false,
+      "hubSafetensorsDtypeParameterMetadata": {
+        "BF16": 14316026944
+      },
+      "licenseFilePresent": true,
+      "modelCardSha256": "aeb8bc7ee986ab9575304f52e177043555577f6ca352c144312bdfe345c0440c",
+      "modelIndexClass": "AnyFlowPipeline",
+      "modelIndexSha256": "cbaa4e694cee5b429c0125e2398b0379a01d0b903d39bcf8eeef074411d40ec0",
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "nvidia/AnyFlow-Wan2.1-T2V-14B-Diffusers",
+      "repositoryBytes": 51887777756,
+      "revision": "ed91e001c08a88df8bbdc18f29b43b8078459627",
+      "schedulerConfigSha256": "696215633e694f3411613032e164f321cba8372eda1568d30ef494b3965fd358",
+      "transformerConfigSha256": "428349e7bdf116009afa6cbd65675327f61fbfeffe05073f5d3c76cbdd70165a",
+      "trustRemoteCodeRequired": false,
+      "vaeConfigSha256": "d381d8b8d10b703b88578b9b43a71ade1138d8465724d98d946ed6f199ff56b0",
+      "variant": "bidirectional-14b",
+      "variantWeightFiles": [
+        {
+          "byteSize": 9997165456,
+          "path": "transformer/diffusion_pytorch_model-00001-of-00003.safetensors",
+          "sha256": "a5fc3ad397c998e74dbd083df112e5fc100f3d7ea0cceaed958dac7d5e65904d"
+        },
+        {
+          "byteSize": 9996417832,
+          "path": "transformer/diffusion_pytorch_model-00002-of-00003.safetensors",
+          "sha256": "10d20214f213a8a4fade185f02232bbe673197eacad13b519718effb914cb737"
+        },
+        {
+          "byteSize": 8638583616,
+          "path": "transformer/diffusion_pytorch_model-00003-of-00003.safetensors",
+          "sha256": "dcd94cda96ede73c77b144a8a2f4908a9fba3cdf822c01fc57b05453bbb29e47"
+        }
+      ],
+      "weightBytes": 51863430540,
+      "weightFileCount": 9,
+      "weightInventorySha256": "9e05938eeb4703580bf29fd4169974ea47eb71a905759aa757e05db6e2f077cd"
+    },
+    {
+      "gated": false,
+      "hubSafetensorsDtypeParameterMetadata": {
+        "BF16": 1422147136
+      },
+      "licenseFilePresent": true,
+      "modelCardSha256": "4508a493bf5a0e5b93f4d6de37df0c3ec508702ac50c321ca583644f213d9fcf",
+      "modelIndexClass": "AnyFlowFARPipeline",
+      "modelIndexSha256": "5e2389ffd4c9919c950a1cdaba7178c421771b5b70f39d05f5ef237d4318c1ba",
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "nvidia/AnyFlow-FAR-Wan2.1-1.3B-Diffusers",
+      "repositoryBytes": 26099894568,
+      "revision": "915af337434035df8545797ecc910d79fa78cf29",
+      "schedulerConfigSha256": "696215633e694f3411613032e164f321cba8372eda1568d30ef494b3965fd358",
+      "transformerConfigSha256": "a6ad22169dc90bbf6c38621d64e7acf838bb6ed1a8ccf3b78ee15ce5c12b4caf",
+      "trustRemoteCodeRequired": false,
+      "vaeConfigSha256": "c02cc4bc2fa93a840436a00e09a51b58b17432f6534ce184aa06b0fb19d6a8ab",
+      "variant": "far-1.3b",
+      "variantWeightFiles": [
+        {
+          "byteSize": 2844379104,
+          "path": "transformer/diffusion_pytorch_model.safetensors",
+          "sha256": "cb52e9899ac7ec0cbe4687594b950600aa58f2f72588c8d16bcb5f8035a90f75"
+        }
+      ],
+      "weightBytes": 26075642740,
+      "weightFileCount": 7,
+      "weightInventorySha256": "16b6f3ff1665b939778e5413c10036e13da503b769fd8c00b2abe50c044caf6f"
+    },
+    {
+      "gated": false,
+      "hubSafetensorsDtypeParameterMetadata": {
+        "BF16": 14317342784
+      },
+      "licenseFilePresent": true,
+      "modelCardSha256": "787ec64f55ca16396cca6f8030c01819416ad3519fa5c441311c4c0e729883a8",
+      "modelIndexClass": "AnyFlowFARPipeline",
+      "modelIndexSha256": "07f8679394aad2869d3b98f5caf575f71466737007401f3f3bcbf9f5006501f7",
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "nvidia/AnyFlow-FAR-Wan2.1-14B-Diffusers",
+      "repositoryBytes": 51890412166,
+      "revision": "6207c4512a306d2a5a564df66b04a78668923740",
+      "schedulerConfigSha256": "696215633e694f3411613032e164f321cba8372eda1568d30ef494b3965fd358",
+      "transformerConfigSha256": "c011d62aeb1ec7fda468131c44036aef193a833681a2a182df2de16944fe93d8",
+      "trustRemoteCodeRequired": false,
+      "vaeConfigSha256": "d381d8b8d10b703b88578b9b43a71ade1138d8465724d98d946ed6f199ff56b0",
+      "variant": "far-14b",
+      "variantWeightFiles": [
+        {
+          "byteSize": 9997165456,
+          "path": "transformer/diffusion_pytorch_model-00001-of-00003.safetensors",
+          "sha256": "8bfe2b415a5da9110ca792c474fc31f074c1dc0870f39e5d5b98603692ef01a3"
+        },
+        {
+          "byteSize": 9996417832,
+          "path": "transformer/diffusion_pytorch_model-00002-of-00003.safetensors",
+          "sha256": "96a2f5dac97648aeb578fd5e1bd54af4219998be04638d21fa8678b2f40a7df7"
+        },
+        {
+          "byteSize": 8641215504,
+          "path": "transformer/diffusion_pytorch_model-00003-of-00003.safetensors",
+          "sha256": "075657a0cc450add5510967858691e9bf9e6d06a38d885bc8aaf70680bb903b5"
+        }
+      ],
+      "weightBytes": 51866062428,
+      "weightFileCount": 9,
+      "weightInventorySha256": "03d87681bbf39fd8a3d92c844a7147a3fff8acf40cd424e71618524fe9b39323"
+    }
+  ],
+  "schemaVersion": 1,
+  "sharedWeightFiles": [
+    {
+      "byteSize": 4972389712,
+      "path": "text_encoder/model-00001-of-00005.safetensors",
+      "sha256": "c0ef3a140898e228a3520c9adec60743d2e8e5b3d229651bb37f1a3921919f99"
+    },
+    {
+      "byteSize": 4899225672,
+      "path": "text_encoder/model-00002-of-00005.safetensors",
+      "sha256": "481c7b2b39771c44df6dd8d13ee12ed072d731b4a650bd092885d4d52db229ad"
+    },
+    {
+      "byteSize": 4966309504,
+      "path": "text_encoder/model-00003-of-00005.safetensors",
+      "sha256": "f93148bcc04052a169e1e49bfcf6125df6cf9bf243cb9c627da75266cf8e35c3"
+    },
+    {
+      "byteSize": 4999880704,
+      "path": "text_encoder/model-00004-of-00005.safetensors",
+      "sha256": "a451792c739c05bca4606190cc2dd16731411bac03b4cf6aacc5767321f857c9"
+    },
+    {
+      "byteSize": 2885866152,
+      "path": "text_encoder/model-00005-of-00005.safetensors",
+      "sha256": "7e76e18d224531b8197a46231cb53daf7f2f6ca707130252becf933026ac4eea"
+    },
+    {
+      "byteSize": 507591892,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "d6e524b3fffede1787a74e81b30976dce5400c4439ba64222168e607ed19e793"
+    }
+  ]
+}

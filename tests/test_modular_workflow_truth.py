@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import unittest
 from pathlib import Path
@@ -7,9 +8,15 @@ import diffusers
 
 import modules as module_registry
 from modiff.diffusers_profiles import public_execution_profiles, public_experimental_pipelines
+from modiff.huggingface_cluster_admission import (
+    REVIEWED_CLUSTER_EXECUTION_CANDIDATES,
+    _ACTION_ROLE_CONTRACTS,
+)
+from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
 from modiff.modular_workflow_contracts import (
     PINNED_DIFFUSERS_REVISION,
     PINNED_MODULAR_WORKFLOW_TRUTH,
+    reviewed_modular_weight_variant,
 )
 from modiff.server import WebServer
 from modules.ModularDiffusers.loaders import ModelsLoader
@@ -20,7 +27,31 @@ from modules.ModularDiffusers.modular_utils import (
 )
 
 
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
+)
 MODULAR_BACKEND_PATH = "modules.ModularDiffusers.ModelsLoader"
+EXPECTED_SDXL_RUNNABLE_MODES = [
+    "text_to_image",
+    "edit_image",
+    "inpaint",
+    "control_image",
+    "control_edit_image",
+    "control_inpaint",
+    "control_union_image",
+    "control_union_edit_image",
+    "control_union_inpaint",
+    "ip_adapter_image",
+    "ip_adapter_edit_image",
+    "ip_adapter_inpaint",
+    "ip_adapter_control_image",
+    "ip_adapter_control_edit_image",
+    "ip_adapter_control_inpaint",
+    "ip_adapter_control_union_image",
+    "ip_adapter_control_union_edit_image",
+    "ip_adapter_control_union_inpaint",
+]
 
 
 def _pipeline_blocks(model_type):
@@ -36,7 +67,9 @@ def _advertised_modular_modes():
     for capability in public_experimental_pipelines():
         if capability.get("executionKind") != "modular":
             continue
-        advertised.setdefault(capability["modelType"], set()).update(capability["runnableModes"])
+        runnable_modes = capability["runnableModes"]
+        if runnable_modes:
+            advertised.setdefault(capability["modelType"], set()).update(runnable_modes)
     for profile in public_execution_profiles():
         if profile["backend_path"] != MODULAR_BACKEND_PATH:
             continue
@@ -45,11 +78,50 @@ def _advertised_modular_modes():
 
 
 class ModularWorkflowTruthTests(unittest.TestCase):
-    def test_matrix_covers_all_eleven_registered_pipelines(self):
+    def test_reviewed_weight_variants_are_exact_and_repository_scoped(self):
+        self.assertEqual(
+            reviewed_modular_weight_variant(
+                "StableDiffusionXLModularPipeline",
+                "stabilityai/stable-diffusion-xl-base-1.0",
+            ),
+            "fp16",
+        )
+        self.assertIsNone(
+            reviewed_modular_weight_variant(
+                "StableDiffusionXLModularPipeline",
+                "stabilityai/sdxl-turbo",
+            )
+        )
+        self.assertIsNone(
+            reviewed_modular_weight_variant(
+                "QwenImageModularPipeline",
+                "Qwen/Qwen-Image-2512",
+            )
+        )
+
+    def test_registered_pipelines_have_exact_truth_or_whole_workflow_adapters(self):
         registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
-        self.assertEqual(len(PINNED_MODULAR_WORKFLOW_TRUTH), 11)
-        self.assertEqual(set(PINNED_MODULAR_WORKFLOW_TRUTH), registered)
-        self.assertEqual(PINNED_DIFFUSERS_REVISION, "13a7bee4878d62fccc8d25f97e480e68de96fa03")
+        self.assertEqual(len(PINNED_MODULAR_WORKFLOW_TRUTH), 22)
+        whole_workflow_only = registered - set(PINNED_MODULAR_WORKFLOW_TRUTH)
+        self.assertEqual(
+            whole_workflow_only,
+            {"Cosmos3DistilledModularPipeline", "MiniMaxH3ModularPipeline"},
+        )
+        self.assertEqual(set(PINNED_MODULAR_WORKFLOW_TRUTH) | whole_workflow_only, registered)
+        for model_type in whole_workflow_only:
+            candidates = [
+                candidate
+                for candidate in REVIEWED_CLUSTER_EXECUTION_CANDIDATES
+                if candidate["pipelineClass"] == model_type
+            ]
+            self.assertTrue(candidates)
+            for candidate in candidates:
+                self.assertEqual(candidate["adapterSource"], "workflow")
+                self.assertIsNotNone(
+                    reviewed_whole_workflow_graph_adapter(model_type, candidate["workflowId"]),
+                    f"{model_type}:{candidate['workflowId']} lacks its exact reviewed whole-workflow adapter",
+                )
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "2f7e0154a9db246e95c9ede43edba7db5b130805")
         dependency_contract = Path("pyproject.toml").read_text(encoding="utf-8")
         self.assertIn(
             f"diffusers.git@{PINNED_DIFFUSERS_REVISION}",
@@ -57,6 +129,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
             "A Diffusers pin update requires an explicit review of the Modular workflow truth matrix.",
         )
 
+    @requires_transformers
     def test_pinned_workflow_maps_and_fixed_sequences_are_exact(self):
         for model_type, truth in PINNED_MODULAR_WORKFLOW_TRUTH.items():
             with self.subTest(model_type=model_type):
@@ -77,7 +150,11 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                     for workflow_name, required_inputs in expected.items():
                         workflow = blocks.get_workflow(workflow_name)
                         self.assertTrue(tuple(workflow.block_names))
-                        self.assertTrue(set(required_inputs).issubset(workflow.input_names))
+                        # Workflow extraction may seal a dispatch selector
+                        # instead of exposing it as a call input (Cosmos sound
+                        # routes seal ``enable_sound=True``). The exact dispatch
+                        # map is asserted above; executable route inputs are
+                        # asserted separately against the graph adapter.
                         self.assertTrue(workflow.output_names)
                 else:
                     self.assertTrue(truth.fixed_block_sequence)
@@ -88,51 +165,216 @@ class ModularWorkflowTruthTests(unittest.TestCase):
 
     def test_flux_qwen_and_wan_advertised_modular_modes_are_exact(self):
         expected = {
-            "StableDiffusionXLModularPipeline": {
-                "text_to_image",
-                "image_to_image",
-                "control_image",
-                "inpaint",
+            "AnimaModularPipeline": {"text_to_image", "image_to_image"},
+            "HeliosModularPipeline": {"text_to_video", "image_to_video", "video_to_video"},
+            "HeliosPyramidModularPipeline": {"text_to_video", "image_to_video", "video_to_video"},
+            "HeliosPyramidDistilledModularPipeline": {
+                "text_to_video",
+                "image_to_video",
+                "video_to_video",
             },
-            "QwenImageModularPipeline": {"control_image"},
-            "QwenImageEditModularPipeline": {"edit_image"},
+            "HunyuanVideo15ModularPipeline": {"text_to_video", "image_to_video"},
+            "WanAnimate2ModularPipeline": {"character_animate"},
+            "WanAnimate2DistilledModularPipeline": {"character_animate"},
+            "StableDiffusionXLModularPipeline": {
+                *EXPECTED_SDXL_RUNNABLE_MODES,
+            },
+            "QwenImageModularPipeline": {
+                "modular_text_to_image",
+                "control_image",
+                "image_to_image",
+                "inpainting",
+                "control_edit_image",
+                "control_inpaint",
+            },
+            "QwenImageEditModularPipeline": {"edit_image", "modular_inpainting"},
             "QwenImageEditPlusModularPipeline": {"edit_image", "multi_image_reference_edit"},
             "QwenImageLayeredModularPipeline": {"layer_decomposition"},
             "FluxModularPipeline": {"text_to_image", "image_to_image"},
-            "ZImageModularPipeline": {"text_to_image"},
+            "FluxKontextModularPipeline": {"text_to_image", "edit_image"},
+            "Flux2KleinModularPipeline": {"text_to_image", "edit_image"},
+            "Flux2KleinBaseModularPipeline": {"text_to_image", "edit_image"},
+            "ZImageModularPipeline": {"modular_text_to_image", "modular_image_to_image"},
             "WanModularPipeline": {"text_to_video"},
-            "WanImage2VideoModularPipeline": {"image_to_video"},
+            "WanImage2VideoModularPipeline": {"image_to_video", "single_image_to_video"},
+            "MiniMaxMusic3ModularPipeline": {"text_to_audio"},
+            "Cosmos3DistilledModularPipeline": {"text_to_image", "image_to_video"},
+            "MiniMaxH3ModularPipeline": {
+                "text_to_video_with_audio",
+                "first_last_frame_to_video_with_audio",
+                "reference_to_video_with_audio",
+            },
+            "Cosmos3OmniModularPipeline": {
+                "text_to_image",
+                "text_to_video",
+                "image_to_video",
+                "video_to_video",
+                "text_to_video_with_audio",
+                "image_to_video_with_audio",
+                "video_to_video_with_audio",
+            },
         }
+        expected["Flux2ModularPipeline"] = {"text_to_image", "edit_image"}
         self.assertEqual(_advertised_modular_modes(), expected)
+        truth_modes = {
+            model_type: set(dict(truth.modes)) for model_type, truth in PINNED_MODULAR_WORKFLOW_TRUTH.items()
+        }
         self.assertEqual(
-            {model_type: set(dict(truth.modes)) for model_type, truth in PINNED_MODULAR_WORKFLOW_TRUTH.items()},
+            truth_modes["StableDiffusionXLModularPipeline"],
+            {"text_to_image", "image_to_image", "control_image", "control_edit_image", "control_inpaint", "inpaint"},
+        )
+        self.assertEqual(
+            {
+                model_type: modes
+                for model_type, modes in truth_modes.items()
+                if model_type
+                not in {
+                    "StableDiffusionXLModularPipeline",
+                    "QwenImageModularPipeline",
+                    "WanImage2VideoModularPipeline",
+                    "ZImageModularPipeline",
+                    "QwenImageEditModularPipeline",
+                    "Cosmos3OmniModularPipeline",
+                }
+            },
             {
                 model_type: expected.get(model_type, set())
-                for model_type in PINNED_MODULAR_WORKFLOW_TRUTH
+                for model_type in truth_modes
+                if model_type
+                not in {
+                    "StableDiffusionXLModularPipeline",
+                    "QwenImageModularPipeline",
+                    "WanImage2VideoModularPipeline",
+                    "ZImageModularPipeline",
+                    "QwenImageEditModularPipeline",
+                    "Cosmos3OmniModularPipeline",
+                }
             },
         )
-        self.assertNotIn("FluxKontextModularPipeline", expected)
-        self.assertNotIn("Flux2KleinModularPipeline", expected)
+        self.assertEqual(truth_modes["QwenImageModularPipeline"], {"text_to_image", "control_image"})
+        self.assertEqual(truth_modes["WanImage2VideoModularPipeline"], {"image_to_video"})
+        self.assertEqual(truth_modes["ZImageModularPipeline"], {"text_to_image", "image_to_image"})
+        self.assertEqual(truth_modes["QwenImageEditModularPipeline"], {"edit_image"})
+        self.assertEqual(truth_modes["Cosmos3OmniModularPipeline"], {"text_to_image", "text_to_video"})
+        self.assertEqual(
+            {name for name, _state_flow in PINNED_MODULAR_WORKFLOW_TRUTH["QwenImageEditModularPipeline"].state_flows},
+            {"image_conditioned_inpainting"},
+        )
+        self.assertEqual(
+            {name for name, _state_flow in PINNED_MODULAR_WORKFLOW_TRUTH["QwenImageModularPipeline"].state_flows},
+            {"image2image", "inpainting", "controlnet_image2image", "controlnet_inpainting"},
+        )
+        self.assertEqual(truth_modes["FluxKontextModularPipeline"], {"text_to_image", "edit_image"})
+        self.assertEqual(truth_modes["Flux2KleinModularPipeline"], {"text_to_image", "edit_image"})
+        self.assertEqual(truth_modes["Flux2KleinBaseModularPipeline"], {"text_to_image", "edit_image"})
 
+    @requires_transformers
     def test_every_advertised_mode_has_a_constructible_action_and_state_contract(self):
         for model_type, modes in _advertised_modular_modes().items():
-            truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
-            pipeline_class, _blocks = _pipeline_blocks(model_type)
+            truth = PINNED_MODULAR_WORKFLOW_TRUTH.get(model_type)
+            pipeline_class = getattr(diffusers, model_type)
+            if truth is not None:
+                pipeline_class, _blocks = _pipeline_blocks(model_type)
             metadata = get_model_type_metadata(model_type)
             self.assertIsNotNone(metadata)
 
             for mode in sorted(modes):
                 with self.subTest(model_type=model_type, mode=mode):
-                    mode_truth = truth.mode(mode)
+                    candidates = [
+                        candidate
+                        for candidate in REVIEWED_CLUSTER_EXECUTION_CANDIDATES
+                        if candidate["pipelineClass"] == model_type
+                        and candidate["studioMode"] == mode
+                    ]
+                    self.assertEqual(
+                        len(candidates),
+                        1,
+                        f"{model_type}:{mode} must select one exact reviewed Cluster admission candidate",
+                    )
+                    candidate = candidates[0]
+                    adapter_source = candidate["adapterSource"]
+                    adapter_id = candidate["adapterId"]
+                    if adapter_source == "workflow":
+                        workflow_adapter = reviewed_whole_workflow_graph_adapter(
+                            model_type,
+                            candidate["workflowId"],
+                        )
+                        self.assertIsNotNone(workflow_adapter)
+                        for action in workflow_adapter["actionSequence"]:
+                            self.assertIn(action, _ACTION_ROLE_CONTRACTS)
+                            _role, node_key = _ACTION_ROLE_CONTRACTS[action]
+                            module_name, action_name = node_key.rsplit(".", 1)
+                            self.assertIn(module_name, module_registry.MODULE_MAP)
+                            self.assertIn(action_name, module_registry.MODULE_MAP[module_name])
+
+                        # Older reviewed pipelines additionally carry the
+                        # detailed upstream dispatch truth. New exact
+                        # whole-workflow routes are intentionally represented
+                        # by their package-owned top-level block adapter.
+                        mode_truth = truth.mode(mode) if truth is not None else None
+                        if mode_truth is not None:
+                            self.assertEqual(
+                                frozenset(workflow_adapter["requiredInputs"]),
+                                mode_truth.required_upstream_inputs,
+                            )
+                            self.assertEqual(
+                                tuple(workflow_adapter["actionSequence"]),
+                                mode_truth.action_sequence,
+                            )
+                            reviewed_top_level_blocks = []
+                            for block_path in mode_truth.upstream_block_sequence:
+                                top_level_block = block_path.split(".", 1)[0]
+                                if not reviewed_top_level_blocks or reviewed_top_level_blocks[-1] != top_level_block:
+                                    reviewed_top_level_blocks.append(top_level_block)
+                            self.assertEqual(
+                                tuple(workflow_adapter["upstreamBlockSequence"]),
+                                tuple(reviewed_top_level_blocks),
+                            )
+                            self.assertEqual(
+                                tuple(
+                                    (
+                                        edge["producerAction"],
+                                        edge["producerOutput"],
+                                        edge["consumerAction"],
+                                        edge["consumerInput"],
+                                    )
+                                    for edge in workflow_adapter["stateEdges"]
+                                ),
+                                tuple(
+                                    (
+                                        edge.producer_action,
+                                        edge.producer_output,
+                                        edge.consumer_action,
+                                        edge.consumer_input,
+                                    )
+                                    for edge in mode_truth.state_edges
+                                ),
+                            )
+                        continue
+
+                    self.assertIsNotNone(
+                        truth,
+                        f"{model_type}:{mode} has neither detailed workflow truth nor a whole-workflow adapter",
+                    )
+                    if adapter_source == "mode":
+                        mode_truth = truth.mode(adapter_id)
+                    elif adapter_source == "state_flow":
+                        mode_truth = truth.state_flow(adapter_id)
+                    else:
+                        self.fail(
+                            f"{model_type}:{mode} uses unsupported reviewed adapter source {adapter_source!r}"
+                        )
                     self.assertIsNotNone(mode_truth, f"{model_type}:{mode} has no reviewed MoDiff mode contract")
 
                     if mode_truth.upstream_workflow is not None:
                         workflows = {workflow.name: workflow for workflow in truth.workflows}
                         self.assertIn(mode_truth.upstream_workflow, workflows)
-                        self.assertEqual(
-                            mode_truth.required_upstream_inputs,
-                            workflows[mode_truth.upstream_workflow].required_inputs,
-                        )
+                        # The dispatch map describes branch selectors. Extracted
+                        # workflows can seal selectors (Cosmos text2image fixes
+                        # num_frames=1) and can expose required execution inputs
+                        # not used for dispatch (Cosmos num_inference_steps).
+                        # Exact executable inputs are therefore asserted against
+                        # the reviewed whole-workflow adapter below.
                     else:
                         self.assertTrue(truth.fixed_block_sequence)
 
@@ -193,6 +435,24 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                 ("denoise", "latents", "decoder", "latents"),
                 ("denoise", "route_state_out", "decoder", "route_state_in"),
             ),
+            "control_edit_image": (
+                ("text_encoder", "embeddings", "denoise", "embeddings"),
+                ("vae_encoder", "image_latents", "denoise", "image_latents"),
+                ("vae_encoder", "route_state_out", "denoise", "route_state_in"),
+                ("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+                ("denoise", "latents", "decoder", "latents"),
+                ("denoise", "route_state_out", "decoder", "route_state_in"),
+            ),
+            "control_inpaint": (
+                ("text_encoder", "embeddings", "denoise", "embeddings"),
+                ("vae_encoder", "image_latents", "denoise", "image_latents"),
+                ("vae_encoder", "mask", "denoise", "mask"),
+                ("vae_encoder", "masked_image_latents", "denoise", "masked_image_latents"),
+                ("vae_encoder", "route_state_out", "denoise", "route_state_in"),
+                ("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+                ("denoise", "latents", "decoder", "latents"),
+                ("denoise", "route_state_out", "decoder", "route_state_in"),
+            ),
             "inpaint": (
                 ("text_encoder", "embeddings", "denoise", "embeddings"),
                 ("vae_encoder", "image_latents", "denoise", "image_latents"),
@@ -218,6 +478,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                 )
                 self.assertEqual(actual_edges, expected_edges[name])
 
+    @requires_transformers
     def test_sdxl_base_inpaint_state_flow_is_exact_constructible_and_contract_only(
         self,
     ):
@@ -234,6 +495,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                 "inpainting",
                 "controlnet_image2image",
                 "controlnet_inpainting",
+                "controlnet_union_text2image",
                 "controlnet_union_image2image",
                 "controlnet_union_inpainting",
                 "ip_adapter_text2image",
@@ -249,11 +511,11 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         )
         self.assertEqual(
             set(dict(truth.modes)),
-            {"text_to_image", "image_to_image", "control_image", "inpaint"},
+            {"text_to_image", "image_to_image", "control_image", "control_edit_image", "control_inpaint", "inpaint"},
         )
         self.assertEqual(
             _advertised_modular_modes()[model_type],
-            {"text_to_image", "image_to_image", "control_image", "inpaint"},
+            set(EXPECTED_SDXL_RUNNABLE_MODES),
         )
         inpaint_mode = truth.mode("inpaint")
         self.assertIsNotNone(inpaint_mode)
@@ -331,6 +593,8 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         )
         self.assertEqual(denoise_contract["params"]["vae"]["display"], "input")
         self.assertEqual(ModelsLoader.params["vae_out"]["display"], "output")
+        self.assertEqual(ModelsLoader.params["controlnet"]["display"], "input")
+        self.assertEqual(ModelsLoader.params["controlnet"]["type"], "diffusers_auto_model")
 
         action_inputs = {
             input_name
@@ -380,7 +644,8 @@ class ModularWorkflowTruthTests(unittest.TestCase):
             self.assertEqual(producer_param["type"], field_type)
             self.assertEqual(consumer_param["type"], field_type)
 
-    def test_sdxl_controlnet_vae_state_flows_are_exact_constructible_and_nonadvertised(self):
+    @requires_transformers
+    def test_sdxl_controlnet_vae_state_flows_are_exact_and_constructible(self):
         model_type = "StableDiffusionXLModularPipeline"
         truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
         pipeline_class, blocks = _pipeline_blocks(model_type)
@@ -418,7 +683,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
 
         self.assertEqual(
             _advertised_modular_modes()[model_type],
-            {"text_to_image", "image_to_image", "control_image", "inpaint"},
+            set(EXPECTED_SDXL_RUNNABLE_MODES),
         )
         for name, contract in expected.items():
             with self.subTest(state_flow=name):
@@ -474,6 +739,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                         action_contracts[edge.consumer_action]["input_names"],
                     )
 
+    @requires_transformers
     def test_sdxl_ip_adapter_state_flows_match_all_nine_pinned_upstream_compositions(self):
         model_type = "StableDiffusionXLModularPipeline"
         truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
@@ -495,7 +761,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         self.assertEqual(set(actual), expected_names)
         self.assertEqual(
             _advertised_modular_modes()[model_type],
-            {"text_to_image", "image_to_image", "control_image", "inpaint"},
+            set(EXPECTED_SDXL_RUNNABLE_MODES),
         )
 
         for name, state_flow in actual.items():
@@ -541,7 +807,8 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         self.assertEqual(ip_contract["params"]["ip_adapter"]["display"], "output")
         self.assertEqual(metadata["node_params"]["denoise"]["params"]["ip_adapter"]["display"], "input")
 
-    def test_qwen_state_flows_are_exact_constructible_and_nonadvertised(self):
+    @requires_transformers
+    def test_qwen_state_flows_are_exact_constructible_and_advertised(self):
         model_type = "QwenImageModularPipeline"
         truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
         pipeline_class, blocks = _pipeline_blocks(model_type)
@@ -555,8 +822,18 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         }
 
         self.assertEqual(set(dict(truth.state_flows)), expected_names)
-        self.assertEqual(set(dict(truth.modes)), {"control_image"})
-        self.assertEqual(_advertised_modular_modes()[model_type], {"control_image"})
+        self.assertEqual(set(dict(truth.modes)), {"text_to_image", "control_image"})
+        self.assertEqual(
+            _advertised_modular_modes()[model_type],
+            {
+                "modular_text_to_image",
+                "control_image",
+                "image_to_image",
+                "inpainting",
+                "control_edit_image",
+                "control_inpaint",
+            },
+        )
 
         for name, state_flow in truth.state_flows:
             with self.subTest(state_flow=name):
@@ -659,47 +936,58 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                 )
                 self.assertEqual(actual_edges, expected_edges[name])
 
-    def test_completed_sdxl_inpaint_is_contract_only_while_false_flux_claims_remain_unsupported(self):
+    def test_reviewed_sdxl_and_flux_workflows_are_promoted(self):
         experimental = {item["modelType"]: item for item in public_experimental_pipelines()}
+        self.assertNotIn("StableDiffusionXLModularPipeline", experimental)
+        sdxl_profile = {
+            profile["id"]: profile for profile in public_execution_profiles()
+        }["sdxl-base:modular"]
+        self.assertEqual(sdxl_profile["modes"], EXPECTED_SDXL_RUNNABLE_MODES)
+        self.assertEqual(sdxl_profile["default_repo"], "stabilityai/stable-diffusion-xl-base-1.0")
+        self.assertFalse(sdxl_profile["live_proof"])
 
-        sdxl = experimental["StableDiffusionXLModularPipeline"]
-        self.assertIn("inpaint", sdxl["runnableModes"])
-        self.assertNotIn("inpaint", sdxl["unsupportedModes"])
-        self.assertEqual(sdxl["qualificationStatus"], "contract_only")
-        self.assertEqual(sdxl["defaultRepo"], "stabilityai/stable-diffusion-xl-base-1.0")
-        self.assertEqual(sdxl["revisionCandidates"], ["462165984030d82259a11f4367a4eed129e94a7b"])
-        self.assertFalse(sdxl["autoEligible"])
-        self.assertFalse(sdxl["templateEligible"])
-        self.assertFalse(sdxl["galleryEligible"])
+        self.assertNotIn("FluxModularPipeline", experimental)
+        flux_profile = {
+            profile["id"]: profile for profile in public_execution_profiles()
+        }["flux-dev:modular"]
+        self.assertEqual(flux_profile["modes"], ["text_to_image", "image_to_image"])
+        self.assertEqual(flux_profile["pipeline_class"], "FluxModularPipeline")
+        self.assertFalse(flux_profile["live_proof"])
+
+        profiles = {profile["id"]: profile for profile in public_execution_profiles()}
+        for profile_id, pipeline_class in (
+            ("flux-kontext:modular", "FluxKontextModularPipeline"),
+            ("flux2-klein:modular", "Flux2KleinModularPipeline"),
+            ("flux2-klein-base:modular", "Flux2KleinBaseModularPipeline"),
+        ):
+            with self.subTest(profile=profile_id):
+                self.assertNotIn(pipeline_class, experimental)
+                self.assertEqual(profiles[profile_id]["modes"], ["text_to_image", "edit_image"])
+                self.assertEqual(profiles[profile_id]["pipeline_class"], pipeline_class)
+                self.assertFalse(profiles[profile_id]["live_proof"])
+
+    def test_flux2_klein_standard_and_modular_paths_have_distinct_model_types(self):
+        profiles = {profile["id"]: profile for profile in public_execution_profiles()}
+        self.assertEqual(profiles["flux2-klein:direct"]["model_type"], "Flux2KleinPipeline")
+        self.assertEqual(profiles["flux2-klein:direct"]["pipeline_class"], "Flux2KleinPipeline")
+        self.assertEqual(profiles["flux2-klein:modular"]["model_type"], "Flux2KleinModularPipeline")
+        self.assertEqual(profiles["flux2-klein:modular"]["pipeline_class"], "Flux2KleinModularPipeline")
         self.assertEqual(
-            sdxl["inputContracts"]["inpaint"]["requiredImages"],
-            ["referenceImages", "maskImage"],
+            profiles["flux2-klein-base:modular"]["model_type"],
+            "Flux2KleinBaseModularPipeline",
         )
-
-        flux = experimental["FluxModularPipeline"]
-        self.assertNotIn("control_image", flux["runnableModes"])
-        self.assertIn("control_image", flux["unsupportedModes"])
-
-        self.assertEqual(PINNED_MODULAR_WORKFLOW_TRUTH["FluxKontextModularPipeline"].modes, ())
-        self.assertEqual(PINNED_MODULAR_WORKFLOW_TRUTH["Flux2KleinModularPipeline"].modes, ())
-
-    def test_flux2_klein_legacy_model_type_publishes_only_the_standard_execution_path(self):
-        flux2 = {
-            item["modelType"]: item for item in public_experimental_pipelines()
-        }["Flux2KleinModularPipeline"]
-
-        self.assertEqual(flux2["modelType"], "Flux2KleinModularPipeline")
-        self.assertEqual(flux2["label"], "FLUX.2 Klein (Standard Diffusers)")
-        self.assertEqual(flux2["executionKind"], "standard")
-        self.assertEqual(flux2["executionModelType"], "Flux2KleinPipeline")
-        self.assertEqual(flux2["pipelineClasses"], ["Flux2KleinPipeline"])
-        self.assertEqual(flux2["backendPath"], "modules.DiffusersImage.LoadPipeline")
-        self.assertEqual(len(flux2["executionProfiles"]), 1)
-        profile = flux2["executionProfiles"][0]
-        self.assertEqual(profile["id"], "flux2-klein:direct")
-        self.assertEqual(profile["model_type"], "Flux2KleinPipeline")
-        self.assertEqual(flux2["runnableModes"], profile["modes"])
-        self.assertNotIn("Flux2KleinModularPipeline", flux2["pipelineClasses"])
+        self.assertEqual(
+            profiles["flux2-klein-base:modular"]["pipeline_class"],
+            "Flux2KleinBaseModularPipeline",
+        )
+        self.assertNotIn(
+            "Flux2KleinModularPipeline",
+            {item["modelType"] for item in public_experimental_pipelines()},
+        )
+        self.assertNotIn(
+            "Flux2KleinBaseModularPipeline",
+            {item["modelType"] for item in public_experimental_pipelines()},
+        )
 
     def test_dangling_experimental_profile_reference_fails_closed(self):
         invalid = {
@@ -731,21 +1019,32 @@ class ModularWorkflowCapabilitySerializationTests(unittest.IsolatedAsyncioTestCa
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
+        supported = {item["modelType"]: item for item in payload["capabilities"]}
 
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertNotIn("inpaint", experimental["StableDiffusionXLModularPipeline"]["unsupportedModes"])
-        self.assertIn("inpaint", experimental["StableDiffusionXLModularPipeline"]["runnableModes"])
+        self.assertNotIn("StableDiffusionXLModularPipeline", experimental)
         self.assertEqual(
-            experimental["StableDiffusionXLModularPipeline"]["qualificationStatus"],
-            "contract_only",
+            supported["StableDiffusionXLModularPipeline"]["runnableModes"],
+            sorted(EXPECTED_SDXL_RUNNABLE_MODES),
+        )
+        self.assertEqual(supported["StableDiffusionXLModularPipeline"]["executionStatus"], "expert_only")
+        self.assertNotIn("Flux2KleinModularPipeline", experimental)
+        self.assertEqual(
+            supported["Flux2KleinModularPipeline"]["runnableModes"],
+            ["edit_image", "text_to_image"],
         )
         self.assertEqual(
-            experimental["Flux2KleinModularPipeline"]["pipelineClasses"],
-            ["Flux2KleinPipeline"],
+            supported["Flux2KleinModularPipeline"]["executionProfiles"][0]["id"],
+            "flux2-klein:modular",
+        )
+        self.assertNotIn("Flux2KleinBaseModularPipeline", experimental)
+        self.assertEqual(
+            supported["Flux2KleinBaseModularPipeline"]["runnableModes"],
+            ["edit_image", "text_to_image"],
         )
         self.assertEqual(
-            experimental["Flux2KleinModularPipeline"]["executionProfiles"][0]["id"],
-            "flux2-klein:direct",
+            supported["Flux2KleinBaseModularPipeline"]["executionProfiles"][0]["id"],
+            "flux2-klein-base:modular",
         )
 
 

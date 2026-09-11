@@ -143,6 +143,7 @@ class AppManagedAuxiliaryModelTests(unittest.TestCase):
                 loader.assert_not_called()
 
     def test_exact_upscaler_selection_is_revalidated_before_model_load(self):
+        managed_path = Path("C:/managed/exact.pth")
         selection = {
             "source": "hub",
             "value": "nateraw/real-esrgan/RealESRGAN_x2plus.pth",
@@ -158,7 +159,10 @@ class AppManagedAuxiliaryModelTests(unittest.TestCase):
         with (
             patch(
                 "modiff.controlled_artifacts.resolve_upscaler_artifact",
-                return_value=SimpleNamespace(path=Path("C:/managed/exact.pth")),
+                return_value=SimpleNamespace(
+                    path=managed_path,
+                    receipt={"artifact": {"weightName": "exact.pth"}},
+                ),
             ) as resolve,
             patch("modules.Spandrel.main.ModelLoader") as loader,
         ):
@@ -166,7 +170,38 @@ class AppManagedAuxiliaryModelTests(unittest.TestCase):
             self.assertEqual(node.execute(image=object(), model_id=selection, device="cpu"), {"output": []})
 
         resolve.assert_called_once_with(selection)
-        loader.return_value.load_from_file.assert_called_once_with("C:\\managed\\exact.pth")
+        loader.return_value.load_from_file.assert_called_once_with(str(managed_path))
+
+    def test_exact_upscaler_preserves_the_reviewed_suffix_for_an_extensionless_cache_blob(self):
+        selection = {
+            "source": "hub",
+            "value": "nateraw/real-esrgan/RealESRGAN_x2plus.pth",
+            "revision": "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094",
+            "sha256": "4" * 64,
+            "byteSize": 123,
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            blob = Path(directory) / "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb"
+            blob.write_bytes(b"reviewed-upscaler")
+            receipt = {"artifact": {"weightName": "RealESRGAN_x2plus.pth"}}
+            node = Upscaler("extensionless-exact-upscaler")
+            model = MagicMock()
+            model.eval.return_value = model
+            node.mm_add = MagicMock()
+            node.mm_exec = MagicMock(return_value=[])
+            with (
+                patch.dict("modules.Spandrel.main.CONFIG.paths", {"temp": directory}),
+                patch(
+                    "modiff.controlled_artifacts.resolve_upscaler_artifact",
+                    return_value=SimpleNamespace(path=blob, receipt=receipt),
+                ),
+                patch("modules.Spandrel.main.ModelLoader") as loader,
+            ):
+                loader.return_value.load_from_file.return_value = model
+                self.assertEqual(node.execute(image=object(), model_id=selection, device="cpu"), {"output": []})
+                loaded_path = Path(loader.return_value.load_from_file.call_args.args[0])
+                self.assertEqual(loaded_path.suffix, ".pth")
+                self.assertFalse(loaded_path.exists())
 
     def test_upscaler_tiles_and_stitches_model_agnostic_integer_scale(self):
         class FakeUpscaler:

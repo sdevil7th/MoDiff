@@ -1,5 +1,6 @@
 import asyncio
 import json
+import threading
 import unittest
 from unittest import mock
 
@@ -12,6 +13,28 @@ class FakeRequest:
 
 
 class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
+    @staticmethod
+    def _space_plan(**overrides):
+        return {
+            "repoId": "unit/exact-model",
+            "revision": "a" * 40,
+            "snapshotCommit": "a" * 40,
+            "selectionLimited": False,
+            "requestedFiles": [],
+            "totalBytes": 100,
+            "completedBytes": 0,
+            "remainingBytes": 100,
+            "totalFileCount": 2,
+            "sizeKnown": True,
+            "planError": None,
+            "cacheRoot": "/app-cache",
+            "freeBytes": 1000,
+            "totalFilesystemBytes": 2000,
+            "reserveBytes": 200,
+            "fits": True,
+            **overrides,
+        }
+
     async def test_app_download_forwards_exact_commit_to_hub_snapshot(self):
         server = WebServer(modules={})
         server.loop = asyncio.get_running_loop()
@@ -29,33 +52,285 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         async def run_callback(callback, **_kwargs):
             return callback()
 
+        observed_reservations = []
+
+        def fake_download(_repo_id, progress_cb, *_args):
+            progress_cb({"progress": 0.75, "remaining_bytes": 25})
+            observed_reservations.append(entry["reserved_bytes"])
+            return {"repo_id": "unit/exact-model", "complete": True}
+
         with (
             mock.patch.object(server, "_run_executor_callback", side_effect=run_callback),
             mock.patch(
+                "modiff.server.plan_hub_model_download",
+                return_value=self._space_plan(revision=revision, snapshotCommit=revision),
+            ),
+            mock.patch(
                 "modiff.server.download_hub_model",
-                return_value={"repo_id": "unit/exact-model", "complete": True},
+                side_effect=fake_download,
             ) as download,
         ):
             await server._run_hf_download_task("unit/exact-model", entry)
 
         self.assertEqual(download.call_args.args[-1], revision)
+        self.assertEqual(observed_reservations, [25])
+        self.assertEqual(entry["reserved_bytes"], 0)
+
+    async def test_app_refuses_download_when_queue_and_reserve_do_not_fit(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        server.hf_download_tasks["unit/already-queued"] = {"reserved_bytes": 500}
+        revision = "a" * 40
+
+        with (
+            mock.patch(
+                "modiff.server.plan_hub_model_download",
+                return_value=self._space_plan(
+                    revision=revision,
+                    snapshotCommit=revision,
+                    remainingBytes=400,
+                    freeBytes=1000,
+                    reserveBytes=200,
+                ),
+            ),
+            mock.patch("modiff.server.download_hub_model") as download,
+        ):
+            response = await server.hf_download(
+                FakeRequest(repo_id="unit/exact-model", revision=revision)
+            )
+
+        payload = json.loads(response.text)
+        self.assertEqual(response.status, 507)
+        self.assertEqual(payload["code"], "insufficient_model_download_space")
+        self.assertFalse(payload["repair_required"])
+        self.assertEqual(payload["result"]["downloadPlan"]["queuedReservationBytes"], 500)
+        download.assert_not_called()
+
+    async def test_concurrent_model_admissions_reserve_space_serially(self):
+        server = WebServer(modules={})
+        first = {"requested_files": [], "revision": "a" * 40}
+        second = {"requested_files": [], "revision": "b" * 40}
+        server.hf_download_tasks = {"unit/first": first, "unit/second": second}
+        plan = self._space_plan(remainingBytes=500, freeBytes=1000, reserveBytes=100)
+
+        with mock.patch("modiff.server.plan_hub_model_download", return_value=plan):
+            results = await asyncio.gather(
+                server._reserve_hf_download_space("unit/first", first),
+                server._reserve_hf_download_space("unit/second", second),
+            )
+
+        self.assertEqual(sum(result is None for result in results), 1)
+        failure = next(result for result in results if result is not None)
+        self.assertEqual(failure["httpStatus"], 507)
+        self.assertEqual(sum(entry.get("reserved_bytes", 0) for entry in (first, second)), 500)
+
+    async def test_reservation_reclaims_interrupted_exact_attempts_then_replans(self):
+        server = WebServer(modules={})
+        entry = {
+            "requested_files": ["model.safetensors"],
+            "revision": "a" * 40,
+            "started_at": 1_700_000_000.0,
+        }
+        before = self._space_plan(
+            remainingBytes=700,
+            freeBytes=800,
+            effectiveFreeBytes=1100,
+            reserveBytes=300,
+            reclaimableIncompleteBytes=300,
+            reclaimableIncompleteFileCount=2,
+        )
+        after = self._space_plan(
+            remainingBytes=700,
+            freeBytes=1100,
+            effectiveFreeBytes=1100,
+            reserveBytes=300,
+            reclaimableIncompleteBytes=0,
+            reclaimableIncompleteFileCount=0,
+        )
+        cleanup_receipt = {
+            "removed": ["blobs/hash.1234abcd.incomplete", "blobs/hash.5678abcd.incomplete"],
+            "logical_bytes": 300,
+            "allocated_bytes": 300,
+        }
+
+        with mock.patch(
+            "modiff.server.plan_hub_model_download", side_effect=[before, after]
+        ) as plan, mock.patch(
+            "modiff.server.cleanup_interrupted_hub_download_files",
+            return_value=cleanup_receipt,
+        ) as cleanup:
+            failure = await server._reserve_hf_download_space("unit/exact-model", entry)
+
+        self.assertIsNone(failure)
+        self.assertEqual(entry["reserved_bytes"], 700)
+        self.assertEqual(entry["interrupted_partial_cleanup"], cleanup_receipt)
+        self.assertEqual(plan.call_count, 2)
+        cleanup.assert_called_once_with(
+            "unit/exact-model",
+            "/app-cache",
+            ["model.safetensors"],
+            "a" * 40,
+            older_than=1_700_000_000.0,
+        )
+
+    async def test_app_refuses_download_when_immutable_size_is_unknown(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        revision = "a" * 40
+
+        with (
+            mock.patch(
+                "modiff.server.plan_hub_model_download",
+                return_value=self._space_plan(
+                    revision=revision,
+                    snapshotCommit=revision,
+                    totalBytes=None,
+                    remainingBytes=None,
+                    sizeKnown=False,
+                    fits=False,
+                ),
+            ),
+            mock.patch("modiff.server.download_hub_model") as download,
+        ):
+            response = await server.hf_download(
+                FakeRequest(repo_id="unit/exact-model", revision=revision)
+            )
+
+        payload = json.loads(response.text)
+        self.assertEqual(response.status, 503)
+        self.assertEqual(payload["code"], "huggingface_download_size_unknown")
+        self.assertFalse(payload["repair_required"])
+        download.assert_not_called()
+
+    async def test_app_status_exposes_active_downloads_without_file_paths(self):
+        server = WebServer(modules={})
+        server.hf_download_tasks = {
+            "unit/later": {
+                "task_id": "task-later",
+                "started_at": 20.0,
+                "revision": "b" * 40,
+                "repair": True,
+                "requested_files": ["model.safetensors"],
+                "reserved_bytes": 80,
+                "progress": {
+                    "type": "hf_download_progress",
+                    "repo_id": "unit/later",
+                    "task_id": "task-later",
+                    "download_id": "task-later",
+                    "status": "downloading",
+                    "phase": "downloading",
+                    "progress": 0.2,
+                    "remaining_bytes": 80,
+                    "started_at": 20.0,
+                    "updated_at": 21.0,
+                },
+            },
+            "unit/first": {
+                "task_id": "task-first",
+                "started_at": 10.0,
+                "revision": "a" * 40,
+                "repair": False,
+                "requested_files": ["config.json", "weights/model.safetensors"],
+                "reserved_bytes": 40,
+                "interrupted_partial_cleanup": {
+                    "removed": ["blobs/hash.1234abcd.incomplete"],
+                    "logical_bytes": 42,
+                    "allocated_bytes": 4096,
+                },
+                "download_plan": {
+                    "totalBytes": 100,
+                    "completedBytes": 60,
+                    "totalFileCount": 2,
+                    "sizeKnown": True,
+                    "cacheRoot": "/app-cache",
+                },
+            },
+        }
+        server.template_gallery_reserved_bytes = 7
+
+        response = await server.hf_download_status(FakeRequest())
+        payload = json.loads(response.text)
+
+        self.assertEqual(payload["schemaVersion"], 1)
+        self.assertEqual(payload["activeCount"], 2)
+        self.assertEqual(payload["queuedReservationBytes"], 120)
+        self.assertEqual(payload["templateGalleryReservationBytes"], 7)
+        self.assertEqual([item["repo_id"] for item in payload["downloads"]], ["unit/first", "unit/later"])
+        first = payload["downloads"][0]
+        self.assertEqual(first["status"], "queued")
+        self.assertEqual(first["revision"], "a" * 40)
+        self.assertEqual(first["requested_file_count"], 2)
+        self.assertEqual(first["remaining_bytes"], 40)
+        self.assertEqual(first["total_bytes"], 100)
+        self.assertEqual(first["reclaimed_interrupted_bytes"], 4096)
+        self.assertEqual(first["reclaimed_interrupted_file_count"], 1)
+        self.assertNotIn("requested_files", first)
+        self.assertNotIn("interrupted_partial_cleanup", first)
+
+    async def test_app_plan_does_not_double_count_an_identical_active_download(self):
+        server = WebServer(modules={})
+        revision = "a" * 40
+        server.template_gallery_reserved_bytes = 50
+        server.hf_download_tasks = {
+            "unit/exact-model": {
+                "task_id": "active-task",
+                "revision": revision,
+                "requested_files": ["model.safetensors"],
+                "reserved_bytes": 400,
+            },
+            "unit/other": {"reserved_bytes": 300},
+        }
+        plan = self._space_plan(
+            revision=revision,
+            snapshotCommit=revision,
+            remainingBytes=400,
+            freeBytes=1_000,
+            reserveBytes=200,
+        )
+
+        with mock.patch("modiff.server.plan_hub_model_download", return_value=plan):
+            joined_response = await server.hf_download_plan(
+                FakeRequest(repo_id="unit/exact-model", revision=revision, file="model.safetensors")
+            )
+            conflict_response = await server.hf_download_plan(
+                FakeRequest(repo_id="unit/exact-model", revision=revision, file="different.safetensors")
+            )
+
+        joined = json.loads(joined_response.text)
+        self.assertTrue(joined["alreadyQueued"])
+        self.assertEqual(joined["taskId"], "active-task")
+        self.assertEqual(joined["queuedReservationBytes"], 350)
+        self.assertTrue(joined["fitsWithQueue"])
+
+        conflict = json.loads(conflict_response.text)
+        self.assertFalse(conflict["alreadyQueued"])
+        self.assertIsNone(conflict["taskId"])
+        self.assertEqual(conflict["queuedReservationBytes"], 750)
+        self.assertFalse(conflict["fitsWithQueue"])
 
     async def test_shared_memory_runtime_serializes_graph_and_download_model_io(self):
         server = WebServer(modules={})
         server.loop = asyncio.get_running_loop()
         server.serialize_model_io = True
         called = []
+        started = []
 
         await server.model_io_lock.acquire()
         pending = asyncio.create_task(
-            server._run_executor_callback(lambda: called.append(True), serialize_model_io=True)
+            server._run_executor_callback(
+                lambda: called.append(True),
+                serialize_model_io=True,
+                on_start=lambda: started.append(True),
+            )
         )
         await asyncio.sleep(0.02)
         self.assertFalse(called)
+        self.assertFalse(started)
         self.assertFalse(pending.done())
 
         server.model_io_lock.release()
         await pending
+        self.assertTrue(started)
         self.assertTrue(called)
 
     async def test_discrete_runtime_keeps_model_io_concurrent(self):
@@ -70,6 +345,68 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         finally:
             server.model_io_lock.release()
         self.assertTrue(called)
+
+    async def test_app_runs_two_ordinary_snapshot_transfers_concurrently(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        server.serialize_model_io = False
+        two_entered = threading.Event()
+        release = threading.Event()
+        state_lock = threading.Lock()
+        active = 0
+        maximum_active = 0
+        started = []
+
+        def fake_download(repo_id, *_args):
+            nonlocal active, maximum_active
+            with state_lock:
+                active += 1
+                maximum_active = max(maximum_active, active)
+                started.append(repo_id)
+                if active == 2:
+                    two_entered.set()
+            try:
+                self.assertTrue(release.wait(timeout=3))
+                return {"repo_id": repo_id, "complete": True}
+            finally:
+                with state_lock:
+                    active -= 1
+
+        async def run_callback(callback, **_kwargs):
+            return await asyncio.to_thread(callback)
+
+        entries = [
+            {
+                "task_id": f"task-{index}",
+                "sids": set(),
+                "started_at": 1.0,
+                "repair": False,
+                "repair_source_repo_id": None,
+                "requested_files": [],
+                "revision": chr(ord("a") + index) * 40,
+            }
+            for index in range(3)
+        ]
+
+        with (
+            mock.patch.object(server, "_run_executor_callback", side_effect=run_callback),
+            mock.patch("modiff.server.download_hub_model", side_effect=fake_download),
+            mock.patch("modiff.server.modelstore.actualize"),
+        ):
+            tasks = [
+                asyncio.create_task(server._run_reserved_hf_download(f"unit/model-{index}", entry, mock.Mock()))
+                for index, entry in enumerate(entries)
+            ]
+            try:
+                self.assertTrue(await asyncio.to_thread(two_entered.wait, 3))
+                await asyncio.sleep(0.05)
+                self.assertEqual(len(started), 2)
+            finally:
+                release.set()
+            await asyncio.gather(*tasks)
+
+        self.assertEqual(maximum_active, 2)
+        self.assertCountEqual(started, ["unit/model-0", "unit/model-1", "unit/model-2"])
 
     async def test_concurrent_requests_join_one_app_download(self):
         server = WebServer(modules={})
@@ -133,11 +470,474 @@ class HuggingFaceDownloadConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         payload = json.loads(response.text)
 
         self.assertFalse(payload["error"])
-        self.assertEqual(len(captured["requested_files"]), 22)
+        self.assertEqual(len(captured["requested_files"]), 34)
         self.assertIn("model_index.json", captured["requested_files"])
         self.assertIn("transformer/diffusion_pytorch_model.safetensors.index.json", captured["requested_files"])
         self.assertIn("text_encoder/model-00004-of-00004.safetensors", captured["requested_files"])
+        self.assertIn("vae/text_encoder/model-00004-of-00004.safetensors", captured["requested_files"])
+        self.assertIn(
+            "vae/transformer/diffusion_pytorch_model-00006-of-00006.safetensors",
+            captured["requested_files"],
+        )
         self.assertNotIn("ltxv-13b-0.9.8-dev.safetensors", captured["requested_files"])
+
+    async def test_framepack_auxiliary_plan_and_download_use_the_reviewed_component_selection(self):
+        cases = {
+            "hunyuanvideo-community/HunyuanVideo": (21, "transformer/config.json"),
+            "lllyasviel/flux_redux_bfl": (5, "image_embedder/config.json"),
+        }
+        for repo_id, (file_count, excluded_file) in cases.items():
+            with self.subTest(repo_id=repo_id):
+                server = WebServer(modules={})
+                server.loop = asyncio.get_running_loop()
+                captured = {}
+                with mock.patch(
+                    "modiff.server.plan_hub_model_download",
+                    return_value=self._space_plan(),
+                ) as plan:
+                    response = await server.hf_download_plan(FakeRequest(repo_id=repo_id))
+                self.assertFalse(json.loads(response.text)["error"])
+                planned_files = plan.call_args.args[1]
+
+                async def fake_download(download_repo_id, entry):
+                    captured.update(entry)
+                    return {"repo_id": download_repo_id, "complete": True, "repair_required": False}
+
+                server._run_hf_download_task = fake_download
+                response = await server.hf_download(FakeRequest(repo_id=repo_id))
+                self.assertFalse(json.loads(response.text)["error"])
+                self.assertEqual(planned_files, captured["requested_files"])
+                self.assertEqual(len(planned_files), file_count)
+                self.assertNotIn(excluded_file, planned_files)
+
+    async def test_remaining_admitted_models_plan_and_download_only_reviewed_components(self):
+        cases = {
+            "meituan-longcat/LongCat-Image": (31, "assets/gallery.jpeg"),
+            "meituan-longcat/LongCat-Image-Edit": (32, "assets/test.png"),
+            "Wan-AI/Wan2.2-T2V-A14B-Diffusers": (43, "assets/logo.png"),
+            "Wan-AI/Wan2.1-FLF2V-14B-720P-diffusers": (41, "assets/video_dit_arch.jpg"),
+        }
+        for repo_id, (file_count, excluded_file) in cases.items():
+            with self.subTest(repo_id=repo_id):
+                server = WebServer(modules={})
+                server.loop = asyncio.get_running_loop()
+                captured = {}
+                with mock.patch(
+                    "modiff.server.plan_hub_model_download",
+                    return_value=self._space_plan(),
+                ) as plan:
+                    response = await server.hf_download_plan(FakeRequest(repo_id=repo_id))
+                self.assertFalse(json.loads(response.text)["error"])
+                planned_files = plan.call_args.args[1]
+
+                async def fake_download(download_repo_id, entry):
+                    captured.update(entry)
+                    return {"repo_id": download_repo_id, "complete": True, "repair_required": False}
+
+                server._run_hf_download_task = fake_download
+                response = await server.hf_download(FakeRequest(repo_id=repo_id))
+                self.assertFalse(json.loads(response.text)["error"])
+                self.assertEqual(planned_files, captured["requested_files"])
+                self.assertEqual(len(planned_files), file_count)
+                self.assertNotIn(excluded_file, planned_files)
+
+    async def test_auraflow_app_download_automatically_selects_only_reviewed_fp16_files(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        captured = {}
+
+        async def fake_download(repo_id, entry):
+            captured.update(entry)
+            return {"repo_id": repo_id, "complete": True, "repair_required": False}
+
+        server._run_hf_download_task = fake_download
+        response = await server.hf_download(FakeRequest(repo_id="fal/AuraFlow-v0.3"))
+        payload = json.loads(response.text)
+
+        self.assertFalse(payload["error"])
+        self.assertEqual(len(captured["requested_files"]), 18)
+        self.assertIn("model_index.json", captured["requested_files"])
+        self.assertIn("text_encoder/model.fp16.safetensors", captured["requested_files"])
+        self.assertIn(
+            "transformer/diffusion_pytorch_model.safetensors.fp16.index.json",
+            captured["requested_files"],
+        )
+        self.assertNotIn("aura_flow_0.3.safetensors", captured["requested_files"])
+        self.assertNotIn("text_encoder/model.safetensors", captured["requested_files"])
+
+    async def test_auraflow_space_plan_uses_the_same_reviewed_fp16_selection(self):
+        server = WebServer(modules={})
+        revision = "2cd8588f04c886002be4571697d84654a50e3af3"
+
+        with mock.patch(
+            "modiff.server.plan_hub_model_download",
+            return_value=self._space_plan(revision=revision, snapshotCommit=revision),
+        ) as plan:
+            response = await server.hf_download_plan(FakeRequest(repo_id="fal/AuraFlow-v0.3"))
+
+        payload = json.loads(response.text)
+        self.assertFalse(payload["error"])
+        self.assertEqual(plan.call_args.args[0], "fal/AuraFlow-v0.3")
+        self.assertEqual(plan.call_args.args[2], revision)
+        self.assertEqual(len(plan.call_args.args[1]), 18)
+        self.assertIn("text_encoder/model.fp16.safetensors", plan.call_args.args[1])
+        self.assertNotIn("text_encoder/model.safetensors", plan.call_args.args[1])
+
+    async def test_chroma_plan_and_download_use_the_same_reviewed_diffusers_selection(self):
+        server = WebServer(modules={})
+        server.loop = asyncio.get_running_loop()
+        captured = {}
+        revision = "0e0c60ece1e82b17cb7f77342d765ba5024c40c0"
+
+        with mock.patch(
+            "modiff.server.plan_hub_model_download",
+            return_value=self._space_plan(revision=revision, snapshotCommit=revision),
+        ) as plan:
+            response = await server.hf_download_plan(FakeRequest(repo_id="lodestones/Chroma1-HD"))
+        self.assertFalse(json.loads(response.text)["error"])
+        planned_files = plan.call_args.args[1]
+        self.assertEqual(plan.call_args.args[2], revision)
+
+        async def fake_download(repo_id, entry):
+            captured.update(entry)
+            return {"repo_id": repo_id, "complete": True, "repair_required": False}
+
+        server._run_hf_download_task = fake_download
+        response = await server.hf_download(FakeRequest(repo_id="lodestones/Chroma1-HD"))
+        self.assertFalse(json.loads(response.text)["error"])
+        self.assertEqual(planned_files, captured["requested_files"])
+        self.assertEqual(len(planned_files), 18)
+        self.assertIn("transformer/diffusion_pytorch_model.safetensors.index.json", planned_files)
+        self.assertNotIn("Chroma1-HD.safetensors", planned_files)
+        self.assertNotIn("ComfyUI_Chroma1-HD_T2I-workflow.json", planned_files)
+
+    async def test_media_plan_and_download_share_each_reviewed_safe_selection(self):
+        cases = {
+            "ACE-Step/acestep-v15-xl-turbo-diffusers": (
+                "200ba991ae448051e14b0183157e35c2d27c9fb0",
+                21,
+                "silence_latent.pt",
+            ),
+            "Efficient-Large-Model/Sana_Sprint_0.6B_1024px_diffusers": (
+                "aa76e7f4f4928f378716b6716a2130fba3caf5b1",
+                17,
+                "diffusion_pytorch_model.bin",
+            ),
+            "carlofkl/DreamLite-base": (
+                "751cb8dbb9072a8c8ffd8684e0f254b50f20531b",
+                27,
+                "unet/diffusion_pytorch_model.bin",
+            ),
+            "carlofkl/DreamLite-mobile": (
+                "6695c3f4be230f0493fa5dbf78be3bc4d3bb2ab4",
+                27,
+                "unet/diffusion_pytorch_model.bin",
+            ),
+            "zai-org/CogView4-6B": (
+                "63a52b7f6dace7033380cd6da14d0915eab3e6b5",
+                21,
+                "transformer/diffusion_pytorch_model.bin",
+            ),
+            "baidu/ERNIE-Image-Turbo": (
+                "bc68c81e2a1730a394d5fc9fae70713dee940140",
+                24,
+                "transformer/diffusion_pytorch_model.bin",
+            ),
+            "zai-org/GLM-Image": (
+                "2c433cc0cbc293bde2ac8ca9624f279b5d23fcf4",
+                27,
+                "vision_language_encoder/pytorch_model.bin",
+            ),
+            "Qwen/Qwen-Image-2512": (
+                "25468b98e3276ca6700de15c6628e51b7de54a26",
+                30,
+                "transformer/diffusion_pytorch_model.bin",
+            ),
+            "Qwen/Qwen-Image-Edit": (
+                "ac7f9318f633fc4b5778c59367c8128225f1e3de",
+                39,
+                "transformer/diffusion_pytorch_model.bin",
+            ),
+            "Qwen/Qwen-Image-Edit-2511": (
+                "6f3ccc0b56e431dc6a0c2b2039706d7d26f22cb9",
+                35,
+                "transformer/diffusion_pytorch_model.bin",
+            ),
+            "Qwen/Qwen-Image-Layered": (
+                "8f0ca708dfff6ba1dd5f2d85d78f8c108a040bcf",
+                33,
+                "transformer/diffusion_pytorch_model.bin",
+            ),
+            "InstantX/Qwen-Image-ControlNet-Union": (
+                "b13036f066d6dee7c20513e263d3d673055e9de8",
+                4,
+                "controlnet_qwenimage.py",
+            ),
+            "jdopensource/JoyAI-Image-Edit-Diffusers": (
+                "4b41fb25d961f37668750178ccbb380da326201c",
+                38,
+                "test_images/output1_predicted.png",
+            ),
+            "jdopensource/JoyAI-Image-Edit-Plus-Diffusers": (
+                "c2686460c7b64d8aa11bc4d0da423fb316b33f9e",
+                29,
+                "inference.py",
+            ),
+            "Wan-AI/Wan2.1-T2V-1.3B-Diffusers": (
+                "0fad780a534b6463e45facd96134c9f345acfa5b",
+                21,
+                "examples/i2v_input.JPG",
+            ),
+            "Wan-AI/Wan2.1-VACE-1.3B-diffusers": (
+                "ec4d2cb062b548996b179d493fdd05340de702a1",
+                19,
+                "assets/comp_effic.png",
+            ),
+            "Wan-AI/Wan2.2-I2V-A14B-Diffusers": (
+                "596658fd9ca6b7b71d5057529bbf319ecbc61d74",
+                43,
+                "examples/i2v_input.JPG",
+            ),
+            "Wan-AI/Wan2.2-TI2V-5B-Diffusers": (
+                "b8fff7315c768468a5333511427288870b2e9635",
+                22,
+                "assets/moe_arch.png",
+            ),
+            "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS": (
+                "e102b3591cc82e97071b8b4cb90d834d0c487207",
+                15,
+                "asset/4K_image.jpg",
+            ),
+            "Tongyi-MAI/Z-Image-Turbo": (
+                "f332072aa78be7aecdf3ee76d5c247082da564a6",
+                21,
+                "assets/Z-Image-Gallery.pdf",
+            ),
+            "stable-diffusion-v1-5/stable-diffusion-v1-5": (
+                "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+                21,
+                "v1-5-pruned.safetensors",
+            ),
+            "lllyasviel/control_v11p_sd15_canny": (
+                "115a470d547982438f70198e353a921996e2e819",
+                4,
+                "diffusion_pytorch_model.bin",
+            ),
+            "guoyww/animatediff-motion-adapter-v1-5-2": (
+                "6167b88ffe39b4441fdf2113e77b99a6f56b7906",
+                4,
+                "diffusion_pytorch_model.safetensors",
+            ),
+            "wangfuyun/AnimateLCM": (
+                "3d4d00fc113225e1040f4d3bec504b6ec750c10c",
+                5,
+                "AnimateLCM_sd15_t2v.ckpt",
+            ),
+            "black-forest-labs/FLUX.1-schnell": (
+                "741f7c3ce8b383c54771c7003378a50191e9efe9",
+                25,
+                "flux1-schnell.safetensors",
+            ),
+            "black-forest-labs/FLUX.1-dev": (
+                "3de623fc3c33e44ffbe2bad470d0f45bccf2eb21",
+                26,
+                "flux1-dev.safetensors",
+            ),
+            "black-forest-labs/FLUX.1-Krea-dev": (
+                "8162a9c7b05a641be098422bf2fcf335615c2f28",
+                26,
+                "flux1-krea-dev.safetensors",
+            ),
+            "black-forest-labs/FLUX.1-Depth-dev": (
+                "fb5e9b1bae41b8c8adcea4ea2a87b74dd298f07a",
+                28,
+                "flux1-depth-dev.safetensors",
+            ),
+            "black-forest-labs/FLUX.1-Canny-dev": (
+                "27c3d8bdc17509b47cf4fd9ba25ab1c7508a69a2",
+                28,
+                "flux1-canny-dev.safetensors",
+            ),
+            "black-forest-labs/FLUX.1-Fill-dev": (
+                "358293da0354175698b67ec8299acf928313a78a",
+                26,
+                "flux1-fill-dev.safetensors",
+            ),
+            "black-forest-labs/FLUX.1-Kontext-dev": (
+                "24e9dedc4ef646698dc8eb4e18ae2cec3c9fea0d",
+                26,
+                "flux1-kontext-dev.safetensors",
+            ),
+            "black-forest-labs/FLUX.1-Redux-dev": (
+                "c95859fbf7703ca4d6824b4da4407d7cd0434f81",
+                9,
+                "flux1-redux-dev.safetensors",
+            ),
+            "black-forest-labs/FLUX.2-klein-4B": (
+                "e7b7dc27f91deacad38e78976d1f2b499d76a294",
+                21,
+                "flux-2-klein-4b.safetensors",
+            ),
+            "Efficient-Large-Model/Sana_600M_1024px_diffusers": (
+                "28f3af7689de15f3883d5863059a2fca0aa9b829",
+                17,
+                "transformer/diffusion_pytorch_model.safetensors",
+            ),
+            "stabilityai/stable-diffusion-xl-base-1.0": (
+                "462165984030d82259a11f4367a4eed129e94a7b",
+                21,
+                "sd_xl_base_1.0.safetensors",
+            ),
+            "TencentARC/t2i-adapter-canny-sdxl-1.0": (
+                "2d7244ba45ded9129cfbf8e96a4befb7f6094210",
+                4,
+                "diffusion_pytorch_model.safetensors",
+            ),
+            "diffusers/controlnet-canny-sdxl-1.0": (
+                "eb115a19a10d14909256db740ed109532ab1483c",
+                4,
+                "diffusion_pytorch_model.fp16.bin",
+            ),
+            "stabilityai/sdxl-turbo": (
+                "71153311d3dbb46851df1931d3ca6e939de83304",
+                21,
+                "sd_xl_turbo_1.0_fp16.safetensors",
+            ),
+            "diffusers/sdxl-instructpix2pix-768": (
+                "06653d47f8d22f2c2205a5884d6a24c5e76d2ca7",
+                20,
+                "validation_images/step_9900_val_img_3.png",
+            ),
+            "zai-org/CogView3-Plus-3B": (
+                "5d70e40732ac0efac98524c51a7fa9c82707f1e5",
+                20,
+                "configuration.json",
+            ),
+            "kandinsky-community/kandinsky-3": (
+                "bf79e6c219da8a94abb50235fdc4567eb8fb4632",
+                19,
+                "assets/kandinsky.jpg",
+            ),
+            "Tencent-Hunyuan/HunyuanDiT-v1.2-Diffusers-Distilled": (
+                "ba991d1546d8c50936c4c16398ed0a87b9b99fb1",
+                20,
+                "pytorch_model.bin",
+            ),
+            "Tencent-Hunyuan/HunyuanDiT-v1.2-ControlNet-Diffusers-Canny": (
+                "b2d21391ebcf78939344cfec84891932f9d53aa0",
+                4,
+                "canny.jpg",
+            ),
+            "Alpha-VLLM/Lumina-Next-SFT-diffusers": (
+                "0ee5ec90043acf5cb41fe96274af36eb7fad8d95",
+                16,
+                "consolidated.00-of-01.pth",
+            ),
+            "Shitao/OmniGen-v1-diffusers": (
+                "016e2f61d12a98303f6bbdf122687694d7984268",
+                11,
+                "pytorch_model.bin",
+            ),
+            "SimianLuo/LCM_Dreamshaper_v7": (
+                "a85df6a8bd976cdd08b4fd8f3b73f229c9e54df5",
+                17,
+                "LCM_Dreamshaper_v7_4k.safetensors",
+            ),
+            "google/ddpm-cifar10-32": (
+                "267b167dc01f0e4e61923ea244e8b988f84deb80",
+                6,
+                "diffusion_pytorch_model.bin",
+            ),
+            "openai/diffusers-cd_imagenet64_l2": (
+                "5f462e4403fc37b72ec6004e806c71805db22387",
+                6,
+                "unet/diffusion_pytorch_model.bin",
+            ),
+            "openai/whisper-tiny": (
+                "169d4a4341b33bc18d8881c4b69c2e104e1cc0af",
+                13,
+                "pytorch_model.bin",
+            ),
+            "prs-eth/marigold-depth-lcm-v1-0": (
+                "04a73502f7fd8fc5e59947b9df3b2266d71d6849",
+                14,
+                "unet/diffusion_pytorch_model.bin",
+            ),
+            "cvssp/audioldm2": (
+                "c8e7e189d324425c05c4c2f81214041ef4107983",
+                28,
+                "language_model/pytorch_model.bin",
+            ),
+            "openai/shap-e": (
+                "7bd337afdea1c17842e1c3cc45c4e268356dba40",
+                14,
+                "shap_e_renderer/diffusion_pytorch_model.bin",
+            ),
+            "stabilityai/stable-audio-open-1.0": (
+                "f21265c1e2710b3bd2386596943f0007f55f802e",
+                19,
+                "model.ckpt",
+            ),
+            "ruixiangma/LongCat-AudioDiT-1B-Diffusers": (
+                "f4c063ea37f262ba5e6129ebd80095a6d6a9de4d",
+                13,
+                "text_encoder/pytorch_model.bin",
+            ),
+            "stabilityai/stable-video-diffusion-img2vid-xt-1-1": (
+                "043843887ccd51926e3efed36270444a838e7861",
+                12,
+                "svd_xt_1_1.safetensors",
+            ),
+            "zai-org/CogVideoX-2b": (
+                "1137dacfc2c9c012bed6a0793f4ecf2ca8e7ba01",
+                17,
+                "README_zh.md",
+            ),
+            "Efficient-Large-Model/SANA-Video_2B_480p_diffusers": (
+                "db5f398b13ca086d09a50ce156c20527773841b1",
+                20,
+                "transformer/diffusion_pytorch_model.bin",
+            ),
+            "rhymes-ai/Allegro": (
+                "c1b9207bb5cb79e2aa08f3d139c17d26c0de55b6",
+                18,
+                "text_encoder/pytorch_model-00001-of-00002.bin",
+            ),
+            "maxin-cn/Latte-1": (
+                "0653024365272f061fc44d1078134df22842b687",
+                18,
+                "t2v_v20240523.pt",
+            ),
+            "genmo/mochi-1-preview": (
+                "14be5fcea23095ed330cb214647916a451e38b6e",
+                21,
+                "transformer/diffusion_pytorch_model-00001-of-00005.safetensors",
+            ),
+        }
+        for repo_id, (revision, file_count, excluded_file) in cases.items():
+            with self.subTest(repo_id=repo_id):
+                server = WebServer(modules={})
+                server.loop = asyncio.get_running_loop()
+                captured = {}
+                with mock.patch(
+                    "modiff.server.plan_hub_model_download",
+                    return_value=self._space_plan(revision=revision, snapshotCommit=revision),
+                ) as plan:
+                    response = await server.hf_download_plan(FakeRequest(repo_id=repo_id))
+                self.assertFalse(json.loads(response.text)["error"])
+                planned_files = plan.call_args.args[1]
+                self.assertEqual(plan.call_args.args[2], revision)
+
+                async def fake_download(repo_id, entry):
+                    captured.update(entry)
+                    return {"repo_id": repo_id, "complete": True, "repair_required": False}
+
+                server._run_hf_download_task = fake_download
+                response = await server.hf_download(FakeRequest(repo_id=repo_id))
+                self.assertFalse(json.loads(response.text)["error"])
+                self.assertEqual(planned_files, captured["requested_files"])
+                self.assertEqual(len(planned_files), file_count)
+                self.assertNotIn(excluded_file, planned_files)
 
     async def test_custom_download_carries_exact_commit_into_app_owned_task(self):
         server = WebServer(modules={})

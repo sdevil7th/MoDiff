@@ -40,7 +40,7 @@ import zipfile
 
 PYPI_SIMPLE_INDEX = "https://pypi.org/simple"
 PINNED_DIFFUSERS_SOURCE_URL = "https://github.com/huggingface/diffusers.git"
-PINNED_DIFFUSERS_COMMIT = "13a7bee4878d62fccc8d25f97e480e68de96fa03"
+PINNED_DIFFUSERS_COMMIT = "2f7e0154a9db246e95c9ede43edba7db5b130805"
 PINNED_DIFFUSERS_VERSION = "0.40.0.dev0"
 _DIGEST_PREFIX = "sha256:"
 MANAGED_ROOT = Path(
@@ -1083,9 +1083,18 @@ def _wheel_target_path(member_name: str) -> str:
             raise RuntimeError("A locked wheel contains a Windows-unsafe member path.")
     parts = list(path.parts)
     if parts[0].endswith(".data"):
-        if len(parts) < 3 or parts[1] not in {"purelib", "platlib", "scripts"}:
+        # Wheel archives commonly include explicit directory entries for the
+        # ``.data`` root and its scheme before the authenticated files. Give
+        # those inert markers deterministic internal targets while preserving
+        # the normal Wheel mapping for actual scheme members.
+        if len(parts) == 1:
+            parts = [".modiff-wheel-data", parts[0]]
+        elif len(parts) == 2 and parts[1] in {"purelib", "platlib", "scripts"}:
+            parts = [".modiff-wheel-data", *parts]
+        elif len(parts) < 3 or parts[1] not in {"purelib", "platlib", "scripts"}:
             raise RuntimeError("A locked wheel uses an unsupported data installation scheme.")
-        parts = (["bin"] if parts[1] == "scripts" else []) + parts[2:]
+        else:
+            parts = (["bin"] if parts[1] == "scripts" else []) + parts[2:]
     if not parts:
         raise RuntimeError("A locked wheel member has no install target.")
     target = PurePosixPath(*parts).as_posix()

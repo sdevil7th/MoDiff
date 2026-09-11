@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "family": "Lumina Image",
+  "repositories": {
+    "luminaNext": {
+      "repository": "Alpha-VLLM/Lumina-Next-SFT-diffusers",
+      "revision": "0ee5ec90043acf5cb41fe96274af36eb7fad8d95",
+      "private": false,
+      "gated": false,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "modelIndexClass": "LuminaText2ImgPipeline",
+      "reportedUsedStorageBytes": 49489381334,
+      "snapshotDownloadBytes": 8878690722,
+      "weightFileCount": 4,
+      "weightBytes": 8856869956,
+      "weightInventorySha256": "4142fea22c8105a81d5322a41611b09ebe2a3f1fcc69dbde1c124a4c0a162815",
+      "modelCardLicenseTag": "apache-2.0",
+      "licenseFilePresent": false
+    },
+    "lumina2": {
+      "repository": "Alpha-VLLM/Lumina-Image-2.0",
+      "revision": "53504abd8178b30685b6c4c7a4cd181ff78b73e9",
+      "private": false,
+      "gated": false,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "modelIndexClass": "Lumina2Pipeline",
+      "reportedUsedStorageBytes": 52652435085,
+      "selectedDownloadBytes": 21253711141,
+      "selectedDownloadFileCount": 17,
+      "weightFileCount": 6,
+      "weightBytes": 21231830092,
+      "weightInventorySha256": "70ba5c0121d5e6e7d89e3cbab5ab77633982a2ffbdc469a9fee7a9af418fb471",
+      "excludedLegacyPickleFiles": [
+        {"path": "consolidated.00-of-01.pth", "byteSize": 10439286770, "sha256": "a7c09ebae62996a8289782161338a3cdba58c11d2d849c50b2d6502e152b0d6d"},
+        {"path": "model_args.pth", "byteSize": 1964, "sha256": "291ae050720fcc5d2ed6d51a7d4b2f80f83972e2469e9b0362fce490b2fd1d6b"}
+      ],
+      "excludedDemoAsset": {"path": "Demo.png", "byteSize": 22596981, "sha256": "d7f37d31b2becb95288fc0ce67235cc4b0bda4d0310f8e8b719e927fb075422b"},
+      "modelCardLicenseTag": "apache-2.0",
+      "licenseFilePresent": false
+    }
+  },
+  "weightFiles": {
+    "luminaNext": [
+      {"path": "text_encoder/model-00001-of-00002.safetensors", "byteSize": 4945241304, "sha256": "01676b4c6e765f737a5e9854a315de3887e939c370cae116d505777729099a68"},
+      {"path": "text_encoder/model-00002-of-00002.safetensors", "byteSize": 67121584, "sha256": "a5df19ba067f127d5c9588e2c50f034cf34fdd1b7fe3e16e4dbd5cb0fd7f3149"},
+      {"path": "transformer/diffusion_pytorch_model.safetensors", "byteSize": 3509863800, "sha256": "371153b7c7b7a64899d4016970c7cc472039f9c9b21ebe073adf0b8525cdf1bd"},
+      {"path": "vae/diffusion_pytorch_model.safetensors", "byteSize": 334643268, "sha256": "1598f3d24932bcfe6634e8b618ea1e30ab1d57f5aad13a6d2de446d2199f2341"}
+    ],
+    "lumina2": [
+      {"path": "text_encoder/model-00001-of-00003.safetensors", "byteSize": 4992575568, "sha256": "d61628bc793240439e608c5ae744f55ec8770f684abb63602648a24cb6da60bc"},
+      {"path": "text_encoder/model-00002-of-00003.safetensors", "byteSize": 4983442368, "sha256": "fbd38d35b33ad210d436cd7e9b13339474e6cb9c533e00d91517e60457cf7dbd"},
+      {"path": "text_encoder/model-00003-of-00003.safetensors", "byteSize": 481381280, "sha256": "e8ea83fa72a2c554b9bd80398d7688a07e48acb354ab64122905b3a6c362b368"},
+      {"path": "transformer/diffusion_pytorch_model-00001-of-00002.safetensors", "byteSize": 9957078112, "sha256": "132b4d213fdd3cfc14333746fc3eb8bbe6358cd73c3bc95ac4ccec230b97dca3"},
+      {"path": "transformer/diffusion_pytorch_model-00002-of-00002.safetensors", "byteSize": 482046552, "sha256": "b9660a895cdedf3a023b131b9c655c32f7d0cd824d6b3f91f0810812bb592947"},
+      {"path": "vae/diffusion_pytorch_model.safetensors", "byteSize": 335306212, "sha256": "8c717328c8ad41faab2ccfd52ae17332505c6833cf176aad56e7b58f2c4d4c94"}
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "entries": ["path", "byteSize", "sha256"],
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "metadataBlobReceipts": {
+    "luminaNext": {
+      "modelIndexGitBlob": "3d2348bcf491a693a4cb17bbac888c56aa0772c2",
+      "textEncoderConfigGitBlob": "dd80714ce407147c9ec417bcb9eed8e55ca2a69b",
+      "transformerConfigGitBlob": "b9089aada88a0064d939eec30127eae4a0a429fc",
+      "vaeConfigGitBlob": "b0464ff8047e6156ae7549be38d83894643493a8"
+    },
+    "lumina2": {
+      "modelIndexGitBlob": "b58a765d4215a36d540b94fb40d7e84c7cb668dd",
+      "textEncoderConfigGitBlob": "db14f6ba4fa8e5a06e117c0f5e807ed82a7ed5a8",
+      "transformerConfigGitBlob": "da0d1a693c94fb797ee0ebe8a1d52847a0d70263",
+      "vaeConfigGitBlob": "9eaa731f2941de820ce5c466f3719d89dccf6d0e"
+    }
+  },
+  "pinnedRuntime": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "diffusersVersion": "0.40.0.dev0",
+    "luminaPipelineSha256": "ff890508d6f6ac75edf0c3c606642dc5ed55e58a150837c1e9e7d8f69c92d741",
+    "lumina2PipelineSha256": "94080cd27d674e414df98dff2e2083c7eb36e139b6b26fd6d2be4b32937d607e",
+    "luminaTransformerSha256": "425447317dc918a09b15dccfa2fec0ab90cdfa8bb8688c47bd04da46cf42ac53",
+    "lumina2TransformerSha256": "00ff868c414ba0ed27f441a05c06e20c820af272e762837a30d233347c7f058e",
+    "requiredDiffusersSymbols": [
+      "LuminaPipeline",
+      "LuminaNextDiT2DModel",
+      "Lumina2Pipeline",
+      "Lumina2Transformer2DModel"
+    ],
+    "requiredTransformersSymbols": [
+      "GemmaModel",
+      "Gemma2Model",
+      "GemmaPreTrainedModel",
+      "Gemma2PreTrainedModel",
+      "GemmaTokenizer",
+      "GemmaTokenizerFast"
+    ]
+  },
+  "pipelineContracts": {
+    "luminaNext": {
+      "pipelineClass": "LuminaPipeline",
+      "artifactPipelineClass": "LuminaText2ImgPipeline",
+      "defaultWidth": 1024,
+      "defaultHeight": 1024,
+      "moDiffMinimumSide": 512,
+      "moDiffMaximumSide": 2048,
+      "dimensionMultiple": 16,
+      "moDiffMaximumOutputPixels": 1048576,
+      "defaultNumInferenceSteps": 30,
+      "moDiffMaximumInferenceSteps": 50,
+      "defaultGuidanceScale": 4.0,
+      "maximumPromptTokens": 256,
+      "moDiffCleanCaption": false,
+      "negativePromptAvailable": true,
+      "modelCpuOffloadSequence": "text_encoder->transformer->vae"
+    },
+    "lumina2": {
+      "pipelineClass": "Lumina2Pipeline",
+      "defaultWidth": 1024,
+      "defaultHeight": 1024,
+      "moDiffMinimumSide": 512,
+      "moDiffMaximumSide": 2048,
+      "dimensionMultiple": 16,
+      "moDiffMaximumOutputPixels": 1048576,
+      "modelCardNumInferenceSteps": 50,
+      "moDiffMaximumInferenceSteps": 50,
+      "modelCardGuidanceScale": 4.0,
+      "maximumPromptTokens": 256,
+      "moDiffCfgTruncRatio": 0.25,
+      "moDiffCfgNormalization": true,
+      "negativePromptAvailable": true,
+      "modelCpuOffloadSequence": "text_encoder->transformer->vae"
+    }
+  },
+  "cancellationAndSafety": {
+    "callbackOnStepEndAvailable": true,
+    "interruptFlagAvailable": false,
+    "serverStopPropagatesThroughCallback": true,
+    "packageSafetyCheckerPresent": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "notes": [
+      "Both package loops invoke the callback after every denoising step; MoDiff's generic callback owns cancellation and progress.",
+      "No live output is accepted until remote safety and quality review is complete."
+    ]
+  },
+  "license": {
+    "id": "apache-2.0",
+    "modelSnapshotLicenseFilePresent": false,
+    "luminaNextUpstream": {
+      "repository": "Alpha-VLLM/Lumina-T2X",
+      "revision": "1c606962f95899da711633ee3a333d21c753e2d9",
+      "licenseId": "mit",
+      "licenseGitBlob": "46737c3ab8c7050b124fd9ff6af07dccf2128db9",
+      "licenseSha256": "74e587e533f4f609a2f9e3c0fedd355c7f7683907a699d3bc8956e3755cd97ee"
+    },
+    "lumina2Upstream": {
+      "repository": "Alpha-VLLM/Lumina-Image-2.0",
+      "revision": "4a4d6f856115db07e8ae127280ebcc3d9f65004e",
+      "licenseId": "apache-2.0",
+      "licenseGitBlob": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+      "licenseSha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    "modelSnapshotLicenseClarificationPending": true
+  },
+  "remoteResourceEnvelope": {
+    "status": "estimate_only_qualification_pending",
+    "luminaNextMinimumSelectiveDiskBytes": 12884901888,
+    "lumina2MinimumSelectiveDiskBytes": 30064771072,
+    "minimumSystemRamBytes": 34359738368,
+    "minimumAcceleratorMemoryBytesWithModelOffloadEstimate": 12884901888,
+    "notes": [
+      "The conservative system-memory estimate covers the larger approximately 21.23 GB selected weight surface plus decode and framework overhead.",
+      "No local real-weight inference or generated output has qualified these estimates."
+    ]
+  },
+  "appDownloadQueue": {
+    "submittedThroughAppOnly": true,
+    "directWeightDownloadPerformed": false,
+    "olderModelsDeleted": false,
+    "preflightFreeBytes": 625606197248,
+    "preflightExistingQueuedReservationBytes": 487559232373,
+    "luminaNextReservationBytes": 8878690722,
+    "lumina2ReservationBytes": 21253711141,
+    "reserveBytes": 68719476736,
+    "aggregateFits": true,
+    "aggregateHeadroomAfterReserveBytes": 39195086276,
+    "statusAtReview": "queued"
+  },
+  "admission": {
+    "status": "source_complete_execution_pending",
+    "runtimeCatalogExposed": true,
+    "downloadCatalogExposed": true,
+    "capabilityExposed": true,
+    "canonicalWorkflowsAdded": 2,
+    "clientSurfaceAdded": true,
+    "remoteOnly": true,
+    "liveQualified": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "unresolvedGates": [
+      "remote_real_weight_execution_and_memory_measurement",
+      "live_output_safety_and_quality_review",
+      "model_snapshot_license_file_clarification",
+      "physical_macos_execution"
+    ]
+  }
+}

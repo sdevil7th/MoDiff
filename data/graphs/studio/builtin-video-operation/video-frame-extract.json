@@ -1,0 +1,444 @@
+{
+  "edges": [
+    {
+      "className": "category-image",
+      "data": {
+        "connectionType": "image"
+      },
+      "edgeType": "default",
+      "id": "edge-01",
+      "markerEnd": {
+        "color": "#60A5FA",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "images",
+      "style": {
+        "stroke": "#60A5FA"
+      },
+      "target": "node-01",
+      "targetHandle": "image",
+      "type": "default"
+    }
+  ],
+  "layout": {
+    "algorithm": "modiff-layered-v1",
+    "horizontalGap": 140,
+    "positionHash": "0b76160c76b51d92f54d6815038d635a549d15bccc2f95af56e1fec9c0fdcfd6",
+    "verticalGap": 72
+  },
+  "nodes": [
+    {
+      "data": {
+        "action": "Preview",
+        "cache": false,
+        "category": "image",
+        "description": "Preview an image",
+        "label": "Preview Image",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Image",
+        "params": {
+          "device": {
+            "default": "cpu:0",
+            "hidden": true,
+            "options": {
+              "cpu": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              },
+              "cpu:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
+              }
+            },
+            "type": "string"
+          },
+          "export": {
+            "default": "0",
+            "description": "Export the image at the given index. Leave empty to export all images.",
+            "type": "str"
+          },
+          "filtered": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Selected image",
+            "type": "image"
+          },
+          "image": {
+            "display": "input",
+            "isConnected": true,
+            "type": [
+              "image",
+              "latent"
+            ]
+          },
+          "output": {
+            "display": "output",
+            "isConnected": false,
+            "label": "All images",
+            "type": "image"
+          },
+          "preview": {
+            "dataSource": "output",
+            "display": "ui_image",
+            "type": "url"
+          },
+          "vae": {
+            "display": "input",
+            "hidden": true,
+            "isConnected": false,
+            "label": "VAE",
+            "type": "pipeline"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "preview",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-01",
+      "position": {
+        "x": 440,
+        "y": 173
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "ProcessVideo",
+        "cache": false,
+        "category": "Video",
+        "description": "Dispatch reviewed install-free video tasks through existing bounded nodes.",
+        "label": "Video.Process",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Video",
+        "params": {
+          "background": {
+            "default": "black",
+            "label": "Tile Background",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "black",
+                "schemaVersion": 1,
+                "value": "black"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "white",
+                "schemaVersion": 1,
+                "value": "white"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "gray",
+                "schemaVersion": 1,
+                "value": "gray"
+              }
+            ],
+            "type": "string"
+          },
+          "columns": {
+            "default": 2,
+            "label": "Tile Columns",
+            "max": 4,
+            "min": 1,
+            "type": "int"
+          },
+          "end_seconds": {
+            "default": 0,
+            "label": "Trim End (0 = end)",
+            "max": 86400,
+            "min": 0,
+            "type": "float"
+          },
+          "every_n": {
+            "default": 16,
+            "label": "Every N Frames",
+            "max": 14400,
+            "min": 1,
+            "type": "int"
+          },
+          "fps": {
+            "default": 24,
+            "label": "Output FPS",
+            "max": 120,
+            "min": 1,
+            "type": "float"
+          },
+          "gap": {
+            "default": 0,
+            "label": "Tile Gap",
+            "max": 256,
+            "min": 0,
+            "type": "int"
+          },
+          "images": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Extracted Frames",
+            "type": "image"
+          },
+          "indices": {
+            "default": "0,-1",
+            "label": "Frame Indices",
+            "type": "string"
+          },
+          "interpolation_fps": {
+            "default": 60,
+            "label": "Interpolation FPS",
+            "max": 120,
+            "min": 1,
+            "step": 0.01,
+            "type": "float"
+          },
+          "operation": {
+            "default": "video_frame_extract",
+            "label": "Operation",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_frame_extract",
+                "schemaVersion": 1,
+                "value": "video_frame_extract"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "frame_interpolation",
+                "schemaVersion": 1,
+                "value": "frame_interpolation"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_stitch",
+                "schemaVersion": 1,
+                "value": "video_stitch"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_trim",
+                "schemaVersion": 1,
+                "value": "video_trim"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_reverse",
+                "schemaVersion": 1,
+                "value": "video_reverse"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "video_tile",
+                "schemaVersion": 1,
+                "value": "video_tile"
+              }
+            ],
+            "type": "string",
+            "value": "video_frame_extract"
+          },
+          "pipeline_class": {
+            "default": "BuiltinVideoOperationV1",
+            "hidden": true,
+            "label": "Built-in Contract",
+            "type": "string",
+            "value": "BuiltinVideoOperationV1"
+          },
+          "selected_indices": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Indices",
+            "type": "collection"
+          },
+          "selection_mode": {
+            "default": "first_last",
+            "label": "Frame Selection",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "first",
+                "schemaVersion": 1,
+                "value": "first"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "last",
+                "schemaVersion": 1,
+                "value": "last"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "first_last",
+                "schemaVersion": 1,
+                "value": "first_last"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "indices",
+                "schemaVersion": 1,
+                "value": "indices"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "timecodes",
+                "schemaVersion": 1,
+                "value": "timecodes"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "every_n",
+                "schemaVersion": 1,
+                "value": "every_n"
+              }
+            ],
+            "type": "string"
+          },
+          "start_seconds": {
+            "default": 0,
+            "label": "Trim Start",
+            "max": 86400,
+            "min": 0,
+            "type": "float"
+          },
+          "sync": {
+            "default": "longest_hold",
+            "label": "Tile Length",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "shortest",
+                "schemaVersion": 1,
+                "value": "shortest"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "longest_hold",
+                "schemaVersion": 1,
+                "value": "longest_hold"
+              }
+            ],
+            "type": "string"
+          },
+          "timecodes": {
+            "default": "0",
+            "label": "Times (seconds)",
+            "type": "string"
+          },
+          "timestamps": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Timestamps",
+            "type": "collection"
+          },
+          "transition_seconds": {
+            "default": 0,
+            "label": "Crossfade",
+            "max": 5,
+            "min": 0,
+            "step": 0.05,
+            "type": "float"
+          },
+          "video": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Processed Video",
+            "type": "video"
+          },
+          "videos": {
+            "display": "filebrowser",
+            "fieldOptions": {
+              "fileTypes": [
+                "video"
+              ],
+              "multiple": true
+            },
+            "label": "Videos",
+            "type": "str",
+            "value": ""
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "videoOperation",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom",
+        "uiState": {}
+      },
+      "id": "node-02",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "type": "custom"
+    }
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}
