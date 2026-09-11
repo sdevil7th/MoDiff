@@ -21,7 +21,11 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
         import modiff.optional_runtimes as optional_runtimes
 
         before = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[qualification.PROFILE_ID]
-        result = qualification.qualification_preflight()
+        with (
+            mock.patch.object(qualification, "_platform_name", return_value="linux"),
+            mock.patch.object(qualification, "_machine_name", return_value="x86_64"),
+        ):
+            result = qualification.qualification_preflight()
         after = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[qualification.PROFILE_ID]
 
         self.assertIs(before, after)
@@ -48,7 +52,7 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
         import modiff.optional_runtimes as optional_runtimes
 
         candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[qualification.PROFILE_ID]
-        current = candidate.contract_for_target()
+        current = candidate.contract_for_target(platform_name="linux", machine="x86_64")
         with self.assertRaisesRegex(ValueError, "Invalid optional-runtime target contract"):
             replace(current, activation_available=False)
 

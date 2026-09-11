@@ -28,7 +28,7 @@ from modiff.optional_runtimes import (
 class RuntimeOverlayArtifactTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         self.archive_root = self.root / "artifacts"
         self.archive_root.mkdir()
         self.site_packages = self.root / "site-packages"
@@ -1110,6 +1110,7 @@ finally:
         reserve = mock.Mock(side_effect=AssertionError("lease must not be reserved"))
         installer = mock.Mock(side_effect=AssertionError("installer must not be selected"))
         with (
+            mock.patch("modiff.optional_runtimes.optional_runtime_target", return_value=("linux", "x86_64")),
             mock.patch.object(
                 optimization_packages,
                 "OPTIONAL_RUNTIME_PROFILES",

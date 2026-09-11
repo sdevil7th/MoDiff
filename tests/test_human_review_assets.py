@@ -25,7 +25,7 @@ from modiff.local_review_receipts import build_local_review_ledger, canonical_co
 class HumanReviewAssetTests(unittest.TestCase):
     def setUp(self):
         self.temporary = TemporaryDirectory()
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         data = self.root / "data"
         (data / "images").mkdir(parents=True)
         image = Image.new("RGB", (8, 8), (12, 64, 128))

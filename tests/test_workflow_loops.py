@@ -152,7 +152,7 @@ class WorkflowLoopTests(unittest.TestCase):
 
     def test_durable_loop_resumes_retained_segments_after_process_replacement(self):
         with TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             retained_root = root / "retained"
             retained_root.mkdir()
             assets = []

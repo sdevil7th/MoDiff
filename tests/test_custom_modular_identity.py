@@ -213,7 +213,7 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
 
     def test_only_modiff_sidecar_filename_is_accepted_without_fallback(self):
         with tempfile.TemporaryDirectory() as directory:
-            repository = Path(directory)
+            repository = Path(directory).resolve()
             (repository / "mellon_pipeline_config.json").write_bytes(_config_bytes())
             (repository / "pipeline_config.json").write_bytes(_config_bytes())
             with patch("modules.ModularDiffusers.pipeline_schema.hf_hub_download") as hub_download:
@@ -451,7 +451,7 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
 
     def test_manifest_detects_loader_metadata_and_python_drift_but_not_weights(self):
         with tempfile.TemporaryDirectory() as directory:
-            repository = Path(directory)
+            repository = Path(directory).resolve()
             _write_sidecar(repository)
             (repository / "pipeline_a.py").write_text("class PipelineA: pass\n", encoding="utf-8")
             (repository / "pipeline_b.py").write_text("class PipelineB: pass\n", encoding="utf-8")
@@ -486,7 +486,7 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
 
     def test_manifest_enforces_file_count_size_and_local_symlink_boundaries(self):
         with tempfile.TemporaryDirectory() as directory:
-            repository = Path(directory)
+            repository = Path(directory).resolve()
             _write_sidecar(repository)
             (repository / "a.py").write_bytes(b"123456789")
             (repository / "b.py").write_bytes(b"pass\n")
@@ -513,7 +513,7 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
     def test_hub_manifest_allows_only_this_repository_blob_symlinks(self):
         revision = "c" * 40
         with tempfile.TemporaryDirectory() as directory:
-            repo_cache = Path(directory, "models--owner--pipeline")
+            repo_cache = Path(directory, "models--owner--pipeline").resolve()
             blobs = repo_cache / "blobs"
             snapshot = repo_cache / "snapshots" / revision
             blobs.mkdir(parents=True)
@@ -563,7 +563,7 @@ class VerifiedPipelineSidecarTests(unittest.TestCase):
                 verified = MoDiffPipelineConfig.load_verified("owner/pipeline", source="hub", revision=revision)
             self.assertRegex(verified.executable_manifest_sha256, r"^[0-9a-f]{64}$")
 
-            outside = Path(directory, "outside.py")
+            outside = Path(directory, "outside.py").resolve()
             outside.write_text("raise RuntimeError\n", encoding="utf-8")
 
             def escaping_resolve(path, strict=False):
@@ -1698,7 +1698,7 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
         from modules.ModularDiffusers.loaders import _preflight_reviewed_diffusers_component
 
         with tempfile.TemporaryDirectory() as directory:
-            repository = Path(directory)
+            repository = Path(directory).resolve()
             component_directory = repository / "transformer"
             component_directory.mkdir()
             (repository / "model_index.json").write_text(

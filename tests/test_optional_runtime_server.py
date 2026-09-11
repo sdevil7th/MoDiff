@@ -377,8 +377,9 @@ class OptionalRuntimeServerTests(unittest.IsolatedAsyncioTestCase):
             "token": "secret-install-token",
             "command": ["uv", "--token", "secret-install-token"],
         }
-        with mock.patch(
-            "modiff.optimization_packages.active_install", return_value=active
+        with (
+            mock.patch("modiff.optimization_packages.active_install", return_value=active),
+            mock.patch("modiff.optional_runtimes.optional_runtime_target", return_value=("linux", "x86_64")),
         ):
             response = await self.server.runtime_optional_runtimes(object())
         body = response_json(response)

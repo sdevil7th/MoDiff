@@ -77,7 +77,10 @@ class OptimizationPackageTests(unittest.TestCase):
         self.assertIn("immutable artifact lock", by_id["torchao"]["disabledReason"])
 
     def test_reviewed_nvidia_base_bitsandbytes_is_execution_available(self):
-        with mock.patch.object(optimizations, "_package_version", return_value="0.50.0"):
+        with (
+            mock.patch.object(optimizations, "_package_version", return_value="0.50.0"),
+            mock.patch.object(optimizations, "_normalized_platform", return_value="linux"),
+        ):
             catalog = optimizations.public_catalog(
                 runtime_profile={"installed": "nvidia-cuda"},
                 hardware={"torch": {"version": "2.8.0"}},
@@ -101,7 +104,10 @@ class OptimizationPackageTests(unittest.TestCase):
                 }
             ]
         }
-        with mock.patch.object(optimizations, "_package_version", return_value="0.2.7"):
+        with (
+            mock.patch.object(optimizations, "_package_version", return_value="0.2.7"),
+            mock.patch.object(optimizations, "_normalized_platform", return_value="linux"),
+        ):
             catalog = optimizations.public_catalog(
                 runtime_profile={"installed": "amd-rocm-linux"},
                 hardware={"torch": {"version": "2.9.1+rocm7.2"}},

@@ -53,6 +53,7 @@ class AutoResourcePlanTests(unittest.TestCase):
         payload = {"forms": [self._qwen_payload()["form"]] * 3, "hardwareOverride": self._hardware()}
         with (
             tempfile.TemporaryDirectory() as directory,
+            patch("modiff.diffusers_profiles.optional_runtime_target", return_value=("linux", "x86_64")),
             patch("modiff.optional_runtime_execution.public_optional_runtime_catalog", return_value={}) as catalog,
         ):
             first = build_auto_resource_plans(payload, runtime_fingerprint=self._runtime(), local_models=[], data_dir=directory)
