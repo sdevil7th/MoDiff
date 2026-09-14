@@ -55,7 +55,25 @@ def test_config_loads_huggingface_token_from_explicit_dotenv(tmp_path: Path):
     assert config.hf["token_source"] == "dotenv"
 
 
-def test_set_dotenv_value_preserves_unrelated_entries_and_restricts_permissions(tmp_path: Path):
+@pytest.mark.parametrize("inherited_core_modules", [
+    False,
+    pytest.param(True, marks=pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell environment")),
+])
+def test_set_dotenv_value_preserves_unrelated_entries_and_restricts_permissions(
+    tmp_path: Path, monkeypatch, inherited_core_modules: bool,
+):
+    if inherited_core_modules:
+        # Reproduce pwsh -> Python -> powershell.exe inheriting Core-only modules.
+        module_root = tmp_path / "core-modules"
+        module = module_root / "Microsoft.PowerShell.Security"
+        module.mkdir(parents=True)
+        (module / "Microsoft.PowerShell.Security.psd1").write_text(
+            "@{ModuleVersion='7.0.0';PowerShellVersion='7.0';"
+            "NestedModules='Microsoft.PowerShell.Security.dll';CmdletsToExport=@('Get-Acl')}",
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("PSModulePath", str(module_root))
+
     dotenv_path = tmp_path / ".env"
     dotenv_path.write_text(
         "UNRELATED=value\nHF_TOKEN=old-token\nexport HF_TOKEN=duplicate-token\n",
@@ -70,12 +88,15 @@ def test_set_dotenv_value_preserves_unrelated_entries_and_restricts_permissions(
     if os.name == "nt":
         # Inspect the OS ACL independently of the implementation, not chmod's
         # read-only flag (which is not a Windows confidentiality boundary).
-        environment = {**os.environ, "MODIFF_TEST_SECRET_PATH": str(dotenv_path)}
+        # Let Windows PowerShell rebuild its own module path instead of loading
+        # incompatible PowerShell 7 modules inherited through a Python process.
+        environment = {key: value for key, value in os.environ.items() if key.upper() != "PSMODULEPATH"}
+        environment["MODIFF_TEST_SECRET_PATH"] = str(dotenv_path)
         result = subprocess.run(
             ["powershell", "-NoProfile", "-NonInteractive", "-Command",
-             "$acl = Get-Acl -LiteralPath $env:MODIFF_TEST_SECRET_PATH; "
+             "$ErrorActionPreference = 'Stop'; $acl = Get-Acl -LiteralPath $env:MODIFF_TEST_SECRET_PATH; "
              "@{protected=$acl.AreAccessRulesProtected;sddl=$acl.Sddl} | ConvertTo-Json -Compress"],
-            check=True, capture_output=True, text=True, env=environment,
+            check=True, capture_output=True, text=True, env=environment, timeout=30,
         )
         acl = json.loads(result.stdout)
         assert acl["protected"] is True
