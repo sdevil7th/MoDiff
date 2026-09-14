@@ -1,6 +1,6 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 from utils.torch_utils import DEVICE_LIST, DEFAULT_DEVICE
-from modiff.modelstore import modelstore
+from modiff.upscaler_contracts import real_esrgan_x2_model_selection
 
 MODULE_MAP = {
     "Upscaler": {
@@ -17,7 +17,7 @@ MODULE_MAP = {
                 "label": "Model",
                 "display": "modelselect",
                 "type": "string",
-                "default": { 'source': 'local', 'value': next(iter(modelstore.get_local_ids(name="upscalers")), '') },
+                "default": real_esrgan_x2_model_selection(),
                 "fieldOptions": {
                     "noValidation": True,
                     "sources": ['hub', 'local'],
@@ -28,13 +28,6 @@ MODULE_MAP = {
                 },
             },
 
-            # "model_id": {
-            #     "label": "Model",
-            #     "display": "autocomplete",
-            #     "type": ["string", "filelist"],
-            #     "options": [model.replace("upscalers/", "") for model in modelstore.get_local_ids(name="upscalers")],
-            #     "fieldOptions": { "optionLabel": "label", "noValidation": True }
-            # },
             "downscale": { "label": "Downscale", "type": "float", "default": 1.0, "min": 0.1, "max": 1.0, "step": 0.01, "display": "slider", "description": "Post downscaling factor. After the image is upscaled, it is downscaled by this factor." },
             "tile_size": { "label": "Tile size", "type": "int", "default": 256, "min": 0, "max": 2048, "step": 32, "description": "Input tile size. Use 0 only when full-frame inference is known to fit." },
             "tile_overlap": { "label": "Tile overlap", "type": "int", "default": 32, "min": 0, "max": 256, "step": 8, "description": "Context overlap cropped from each tile boundary before CPU-side stitching." },

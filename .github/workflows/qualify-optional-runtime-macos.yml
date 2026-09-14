@@ -1,0 +1,100 @@
+name: Qualify optional runtime on macOS
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: optional-runtime-macos-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  qualify-macos-arm64:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Verify hosted target
+        run: |
+          test "$(uname -m)" = "arm64"
+          sw_vers
+
+      - name: Prepare prospective clean base
+        run: |
+          cat > "$RUNNER_TEMP/prospective-base.patch" <<'PATCH'
+          diff --git a/pyproject.toml b/pyproject.toml
+          --- a/pyproject.toml
+          +++ b/pyproject.toml
+          @@ -12,16 +12,14 @@ dependencies = [
+             "aiohttp-cors>=0.7.0",
+             "kornia>=0.8.1",
+             "nanoid>=2.0.0",
+             # Keep unqualified targets base-delivered until their executable qualifier
+             # passes; Linux/Windows x86-64 receive the exact optional overlay on use.
+          -  "peft>=0.17.0; sys_platform == 'darwin' or platform_machine == 'aarch64' or platform_machine == 'arm64' or platform_machine == 'ARM64'",
+             "protobuf>=6.31.1",
+             "scipy>=1.15.2",
+             "sentencepiece>=0.2.0",
+             "torch>=2.6.0",
+             "torchsde>=0.2.6",
+             "torchvision>=0.21.0",
+          -  "transformers>=4.49.0; sys_platform == 'darwin' or platform_machine == 'aarch64' or platform_machine == 'arm64' or platform_machine == 'ARM64'",
+             "diffusers @ git+https://github.com/huggingface/diffusers.git@2f7e0154a9db246e95c9ede43edba7db5b130805",
+             "ftfy>=6.3.1",
+             "huggingface-hub>=1.23.0,<2.0",
+          PATCH
+          git apply --check "$RUNNER_TEMP/prospective-base.patch"
+          git apply "$RUNNER_TEMP/prospective-base.patch"
+          test "$(git diff --name-only)" = "pyproject.toml"
+          git diff --check
+          git diff -- pyproject.toml > "$RUNNER_TEMP/prospective-base.diff"
+          git config user.name "MoDiff qualification"
+          git config user.email "qualification@modiff.invalid"
+          git add -- pyproject.toml
+          git commit -m "chore: prepare prospective macOS qualification base"
+          test -z "$(git status --porcelain)"
+
+      - name: Install isolated CPU base
+        run: ./install.sh --accelerator cpu --backend-only --non-interactive
+
+      - name: Require clean-base qualification readiness
+        run: |
+          ./scripts/with-runtime-env.sh ./.venv/bin/python \
+            scripts/qualify_optional_runtime.py --preflight-only \
+            --profile-id huggingface-transformers-main-96fe6dce-peft-0.20.0 \
+            | tee "$RUNNER_TEMP/preflight.json"
+          ./.venv/bin/python -c 'import json, os, pathlib; value=json.loads(pathlib.Path(os.environ["RUNNER_TEMP"], "preflight.json").read_text()); assert value["status"] == "ready"; assert value["profileId"] == "huggingface-transformers-main-96fe6dce-peft-0.20.0"; assert value["platform"] == "macos"; assert value["machine"] == "arm64"; assert value["sourceRevisionReady"] is True; assert value["cleanBase"] is True; assert value["stagedPackagesPresent"] == []'
+
+      - name: Run explicit-consent qualification
+        run: |
+          ./scripts/with-runtime-env.sh ./.venv/bin/python \
+            scripts/qualify_optional_runtime.py --consent \
+            --profile-id huggingface-transformers-main-96fe6dce-peft-0.20.0 \
+            --evidence "$RUNNER_TEMP/optional-runtime-macos-arm64.json"
+          ./.venv/bin/python -c 'import json, os, pathlib; value=json.loads(pathlib.Path(os.environ["RUNNER_TEMP"], "optional-runtime-macos-arm64.json").read_text()); assert value["status"] == "passed"; assert value["profileId"] == "huggingface-transformers-main-96fe6dce-peft-0.20.0"; assert value["platform"] == "macos"; assert value["machine"] == "arm64"; assert value["sourceRevisionReady"] is True; assert value["cleanBase"] is True; assert value["managedStateRetained"] is False; assert value["sourceFlagsChanged"] is False'
+
+      - name: Record bounded target context
+        if: ${{ always() }}
+        run: |
+          {
+            git rev-parse HEAD
+            uname -m
+            sw_vers
+            test ! -x ./.venv/bin/python || ./.venv/bin/python --version
+          } > "$RUNNER_TEMP/target-context.txt"
+
+      - name: Upload review evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: optional-runtime-macos-arm64-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/optional-runtime-macos-arm64.json
+            ${{ runner.temp }}/preflight.json
+            ${{ runner.temp }}/prospective-base.diff
+            ${{ runner.temp }}/target-context.txt
+          if-no-files-found: warn
+          retention-days: 14

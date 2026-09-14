@@ -100,6 +100,8 @@ def profile_for_installed_torch(
     selected_profile: str | None = None,
 ) -> str | None:
     if torch_state.get("hip_version"):
+        if normalized_os(os_name) == "linux" and selected_profile == "amd-instinct-rocm-linux":
+            return selected_profile
         return "amd-pytorch-windows" if normalized_os(os_name) == "windows" else "amd-rocm-linux"
     if torch_state.get("cuda_version"):
         return "nvidia-cuda"
@@ -190,7 +192,7 @@ def _device_tensor_probe(profile: str, torch_version: str | None) -> dict[str, A
     del torch_version
     try:
         torch = importlib.import_module("torch")
-        if profile in {"nvidia-cuda", "amd-rocm-linux", "amd-pytorch-windows"}:
+        if profile in {"nvidia-cuda", "amd-rocm-linux", "amd-instinct-rocm-linux", "amd-pytorch-windows"}:
             device = "cuda:0"
         elif profile == "apple-mps":
             device = "mps:0"
@@ -198,6 +200,10 @@ def _device_tensor_probe(profile: str, torch_version: str | None) -> dict[str, A
             device = "xpu:0"
         else:
             device = "cpu"
+        if profile == "amd-instinct-rocm-linux":
+            architecture = str(getattr(torch.cuda.get_device_properties(0), "gcnArchName", "")).split(":", 1)[0]
+            if architecture != "gfx942":
+                raise RuntimeError(f"The Instinct preview requires gfx942 on cuda:0; detected {architecture or 'unknown'}.")
         value = torch.ones(1, device=device)
         observed = float(value.detach().cpu().item())
         if observed != 1.0:
@@ -300,7 +306,7 @@ def runtime_profile(
         )
     torch_state = hardware.get("torch", {})
     backend_usable = bool(torch_state.get("available"))
-    if installed in {"nvidia-cuda", "amd-rocm-linux", "amd-pytorch-windows"}:
+    if installed in {"nvidia-cuda", "amd-rocm-linux", "amd-instinct-rocm-linux", "amd-pytorch-windows"}:
         backend_usable = backend_usable and bool(torch_state.get("cuda_available"))
     elif installed == "apple-mps":
         backend_usable = backend_usable and bool(torch_state.get("mps_available"))
@@ -344,10 +350,22 @@ def runtime_profile(
                 "message": "The managed Intel XPU profile requires Torch 2.12.1 from the reviewed XPU index.",
             }
         )
+    if saved and selected == "amd-instinct-rocm-linux" and spec:
+        if str(torch_state.get("version") or "") != spec["torch"] or str(
+            torch_state.get("hip_version") or ""
+        ).split(".")[:2] != spec["rocm"].split("."):
+            issues.append(
+                {
+                    "code": "profile-version-mismatch",
+                    "severity": "error",
+                    "message": f"The managed Instinct preview requires Torch {spec['torch']} / ROCm {spec['rocm']}.",
+                }
+            )
     ready = backend_usable and not any(i["severity"] == "error" for i in issues)
     repair_accelerator = {
         "nvidia-cuda": "nvidia",
         "amd-rocm-linux": "amd",
+        "amd-instinct-rocm-linux": "amd-instinct",
         "amd-pytorch-windows": "amd",
         "apple-mps": "mps",
         "intel-xpu": "intel",
@@ -390,7 +408,13 @@ def runtime_profile(
 def runtime_contract_paths(requirement: Path) -> tuple[Path, ...]:
     """Files shared by the selected profile's runtime contract."""
 
-    return (Path(requirement), PROJECT_METADATA_PATH)
+    paths = (Path(requirement), PROJECT_METADATA_PATH)
+    for spec in load_manifest()["profiles"].values():
+        if spec.get("uv_config") and (PROJECT_ROOT / spec["requirements"]).resolve() == Path(requirement).resolve():
+            # Include even a missing config: launch must report an unavailable
+            # contract, not silently fall back to another package index.
+            return (*paths, PROJECT_ROOT / spec["uv_config"])
+    return paths
 
 
 def lock_digest(

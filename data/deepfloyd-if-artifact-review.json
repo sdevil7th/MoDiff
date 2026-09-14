@@ -1,0 +1,336 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "liveQualified": false,
+    "remoteOnly": true,
+    "runtimeCatalogExposed": false,
+    "status": "reviewed_not_admitted_gated_noncommercial_remote_heavy",
+    "unresolvedGates": [
+      "deepfloyd_license_acceptance_and_noncommercial_restriction",
+      "gated_model_index_and_component_config_review",
+      "backend_owned_three_stage_cascade_contract",
+      "backend_owned_resource_and_input_bounds",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ],
+    "userVisible": false
+  },
+  "family": "DeepFloyd IF",
+  "format": "safetensors",
+  "genericContractReview": {
+    "candidateInputContracts": [
+      "text_to_image",
+      "image_variation",
+      "inpaint"
+    ],
+    "candidateOutputKind": "image",
+    "currentMoDiffAdapterPresent": false,
+    "requiredExecutionBoundary": "run three independently pinned package-owned stages, preserve prompt embeddings and intermediate tensors, and reuse mandatory safety and watermark modules"
+  },
+  "licenseReview": {
+    "deepfloydStages": {
+      "acceptanceRequired": true,
+      "attributionNotice": "DeepFloyd is licensed under the DeepFloyd License, Copyright (c) Stability AI Ltd. All Rights Reserved.",
+      "commercialUseAllowed": false,
+      "distributionAllowedOnlyForNoncommercialResearch": true,
+      "evidence": "The public gated model page exposes the DeepFloyd License Agreement and requires contact-sharing acceptance before repository file access.",
+      "id": "deepfloyd-if-license",
+      "productionUseAllowed": false,
+      "restrictedOutputData": true
+    },
+    "stageThree": {
+      "acceptanceRequired": false,
+      "id": "openrail++"
+    }
+  },
+  "metadataAccess": {
+    "artifactInventorySource": "immutable Hugging Face model API metadata with blob sizes and LFS SHA-256 values",
+    "gatedConfigHttpStatus": 401,
+    "gatedConfigPayloadsReviewed": false,
+    "publicModelCardAndLicenseReviewed": true,
+    "stageThreeConfigPayloadsReviewed": true
+  },
+  "pinnedDiffusers": {
+    "deprecated": false,
+    "legacyPerStepCallbackAvailable": true,
+    "packageOwnedClasses": [
+      "IFPipeline",
+      "IFSuperResolutionPipeline",
+      "IFImg2ImgPipeline",
+      "IFImg2ImgSuperResolutionPipeline",
+      "IFInpaintingPipeline",
+      "IFInpaintingSuperResolutionPipeline",
+      "StableDiffusionUpscalePipeline"
+    ],
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "sourceSha256": {
+      "ifImg2ImgPipeline": "a95a60da2acf66be74f5fa81d944b4c4bd04c13ada7217aff0ad9c1151c5d76f",
+      "ifImg2ImgSuperResolutionPipeline": "276eff994a2b6d2a6157341a9f977712cdd99f7465933f990d17ad9fd09a17bd",
+      "ifInpaintingPipeline": "78beb7fb1f680903eeb60cde0043a58517fd87e326171276ab8aeb4ea377f0ea",
+      "ifInpaintingSuperResolutionPipeline": "fb4e6d5a1cc46bd07bb46f3e3c069ac99f7506eda8a74e4dbe7c2bfd9856a24b",
+      "ifPipeline": "7de6ef3eb72d1c80fb0f1aa49877344320a52a98577145788812e1af04071d45",
+      "ifSafetyChecker": "cea374cf832f7fb02daf19546faa80a22c3f42ec4674393eea3b3962e6abc53a",
+      "ifSuperResolutionPipeline": "58eeef5fb8c70e55743fa5ae7614fedb25e1b62de2c282d087a5c0cf8060478e",
+      "ifWatermarker": "6ca0e471b1b9484e5764869017282e5d2adf0011a6ecc993b65c46a48ac51b3e",
+      "stableDiffusionUpscalePipeline": "ea3765ba0b827c9cc59624d1c8de545e91eab9c849ad4b843ccac56955364a02"
+    },
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContracts": {
+    "imageVariation": {
+      "stageOne": {
+        "class": "IFImg2ImgPipeline",
+        "defaultGuidanceScale": 10.0,
+        "defaultNumInferenceSteps": 80,
+        "defaultStrength": 0.7
+      },
+      "stageTwo": {
+        "class": "IFImg2ImgSuperResolutionPipeline",
+        "defaultGuidanceScale": 4.0,
+        "defaultNoiseLevel": 250,
+        "defaultNumInferenceSteps": 50,
+        "defaultStrength": 0.8
+      }
+    },
+    "inpaint": {
+      "stageOne": {
+        "class": "IFInpaintingPipeline",
+        "defaultGuidanceScale": 7.0,
+        "defaultNumInferenceSteps": 50,
+        "defaultStrength": 1.0
+      },
+      "stageTwo": {
+        "class": "IFInpaintingSuperResolutionPipeline",
+        "defaultGuidanceScale": 4.0,
+        "defaultNoiseLevel": 0,
+        "defaultNumInferenceSteps": 100,
+        "defaultStrength": 0.8
+      }
+    },
+    "sharedSafety": {
+      "safetyCheckerRequired": true,
+      "stageOneModulesPassedToStageThree": [
+        "feature_extractor",
+        "safety_checker",
+        "watermarker"
+      ],
+      "watermarkerRequired": true
+    },
+    "textToImage": {
+      "stageOne": {
+        "class": "IFPipeline",
+        "defaultGuidanceScale": 7.0,
+        "defaultNumInferenceSteps": 100,
+        "nativeResolution": 64,
+        "promptTokenLimit": 77
+      },
+      "stageThree": {
+        "class": "StableDiffusionUpscalePipeline",
+        "defaultGuidanceScale": 9.0,
+        "defaultNoiseLevel": 20,
+        "defaultNumInferenceSteps": 75,
+        "maximumNoiseLevel": 350,
+        "nativeResolution": 1024
+      },
+      "stageTwo": {
+        "class": "IFSuperResolutionPipeline",
+        "defaultGuidanceScale": 4.0,
+        "defaultNoiseLevel": 250,
+        "defaultNumInferenceSteps": 50,
+        "nativeResolution": 256,
+        "promptTokenLimit": 77
+      }
+    },
+    "unboundedByPackage": [
+      "prompt_character_length",
+      "batch_size",
+      "num_images_per_prompt",
+      "num_inference_steps",
+      "stage_one_height",
+      "stage_one_width",
+      "stage_two_height",
+      "stage_two_width"
+    ]
+  },
+  "repositories": [
+    {
+      "fullRepositoryBytes": 140927647910,
+      "fullWeightBytes": 66157053038,
+      "fullWeightFileCount": 10,
+      "fullWeightInventorySha256": "e8a2bce757a2e38d94dd9f38cbb30cd30edcbbb58de0f36327cc4696ef8fd3f4",
+      "gated": true,
+      "gatingMode": "auto",
+      "metadataBlobSha1": {
+        "modelCard": "1d7e8c2ec79689748f0b884abd4873dbc576343c",
+        "modelIndex": "7085bf124c220fac60de17034df0056b909b29c0",
+        "schedulerConfig": "6279123eb20bb33f54e8baebb04bf8b3a127dded",
+        "textEncoderConfig": "0b100db2c06bd17c52d991f78fc3cee9b696c0f5",
+        "unetConfig": "75c6fdfacac64c4c27d6530f38cd0cdbc04bdb68"
+      },
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "DeepFloyd/IF-I-XL-v1.0",
+      "revision": "c03d510e9b75bce9f9db5bb85148c1402ad7e694",
+      "role": "stage_one_64px",
+      "selectedWeightBytes": 20755397515,
+      "selectedWeightFileCount": 5,
+      "selectedWeightInventorySha256": "3c4828ce2e26d761da3e3d08a77f9b6aec116fdff70277c599d093d15653a978",
+      "trustRemoteCodeRequired": false
+    },
+    {
+      "fullRepositoryBytes": 98067315830,
+      "fullWeightBytes": 47788579909,
+      "fullWeightFileCount": 10,
+      "fullWeightInventorySha256": "0051de32fbf544c9fd85a494487fc4205b679628b72653afcc7b2497c5b73d7d",
+      "gated": true,
+      "gatingMode": "auto",
+      "metadataBlobSha1": {
+        "imageNoisingSchedulerConfig": "03be03e1b4ad554235f41609e8810336b29a3d91",
+        "modelCard": "de33a2a9c0275dfbf778a7cdaee172356525735f",
+        "modelIndex": "850651eb7420053e92fba2097ce990f4c03b4e18",
+        "schedulerConfig": "f5b4c08790b715c8e2b64ccaca1a38f46e1f5c3c",
+        "unetConfig": "f7eee79eb024df53fdbbecdb294ebe3877bf0b39"
+      },
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "DeepFloyd/IF-II-L-v1.0",
+      "revision": "609476ce702b2d94aff7d1f944dcc54d4f972901",
+      "role": "stage_two_256px",
+      "selectedWeightBytes": 3094664803,
+      "selectedWeightFileCount": 3,
+      "selectedWeightInventorySha256": "ad8b47985e8d3a52a0633db6ded684fc277ef6502587e7c71988071527bc6ca2",
+      "trustRemoteCodeRequired": false
+    },
+    {
+      "fullRepositoryBytes": 17495008005,
+      "fullWeightBytes": 8746242736,
+      "fullWeightFileCount": 7,
+      "fullWeightInventorySha256": "3a274fe1cf52c9ca803aa59e7cc2f1d455515b18ffc614f957fe029aca15c459",
+      "gated": false,
+      "gatingMode": null,
+      "metadataSha256": {
+        "modelCard": "af9d3577f11b3d4c5bc0f6c91955a2708fc927d5bdcbd6ce03c90c54b1cae864",
+        "modelIndex": "5d2fd5b153217e11aac41b8bd5fc7535704aa72df49a9ec8b7f7f4407af4eb7d"
+      },
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "stabilityai/stable-diffusion-x4-upscaler",
+      "revision": "572c99286543a273bfd17fac263db5a77be12c4c",
+      "role": "stage_three_1024px",
+      "selectedWeightBytes": 3476599143,
+      "selectedWeightFileCount": 3,
+      "selectedWeightInventorySha256": "195375ba1b5836ff9c5f283d3c8ecdf0faa7104b0ff1cf920f4df00028aa9e80",
+      "trustRemoteCodeRequired": false
+    }
+  ],
+  "resourceEnvelope": {
+    "aggregateRepositoryBytes": 256489971745,
+    "aggregateSafetensorsBytes": 122691875683,
+    "deduplicatedSelectedWeightBytes": 26718655226,
+    "minimumAcceleratorMemoryBytesEstimate": 15032385536,
+    "minimumSelectiveDiskBytesEstimate": 34359738368,
+    "minimumSystemRamBytesEstimate": 68719476736,
+    "notes": [
+      "The official recipe advertises model CPU offload with as little as 14 GB of accelerator memory; MoDiff has not reproduced that claim.",
+      "Repository-scoped selected bytes count the identical safety-checker and watermarker blobs in both gated stages, while the deduplicated value counts those immutable blobs once.",
+      "Full repositories retain unsafe pickle weights, full-precision duplicates, an 8-bit text encoder, and a monolithic stage-three checkpoint that are excluded from the selected partition.",
+      "No local or remote measurement has qualified this envelope."
+    ],
+    "repositoryScopedSelectedWeightBytes": 27326661461,
+    "status": "estimate_only_qualification_pending"
+  },
+  "reviewedRecipe": {
+    "mode": "text_to_image",
+    "offload": "model_cpu_offload_each_stage",
+    "stageOne": {
+      "guidanceScale": 7.0,
+      "numInferenceSteps": 100,
+      "outputResolution": 64,
+      "outputType": "pt",
+      "variant": "fp16"
+    },
+    "stageThree": {
+      "guidanceScale": 9.0,
+      "noiseLevel": 100,
+      "numInferenceSteps": 75,
+      "outputResolution": 1024,
+      "reusedStageOneSafetyModules": true,
+      "variant": null
+    },
+    "stageTwo": {
+      "guidanceScale": 4.0,
+      "noiseLevel": 250,
+      "numInferenceSteps": 50,
+      "outputResolution": 256,
+      "outputType": "pt",
+      "reusePromptEmbeddings": true,
+      "textEncoderLoaded": false,
+      "variant": "fp16"
+    }
+  },
+  "schemaVersion": 1,
+  "selectedWeightFiles": {
+    "stageOne": [
+      {
+        "byteSize": 607990743,
+        "path": "safety_checker/model.fp16.safetensors",
+        "sha256": "4c917ec4f9e64a1b45156c7fb81999c0f6e6379ec79cc3a576ad144ffb5bf572"
+      },
+      {
+        "byteSize": 9960786792,
+        "path": "text_encoder/model.fp16-00001-of-00002.safetensors",
+        "sha256": "82c990c09b55affae9b36b51d4d7ba071dea3b467c71c3cc88e0d77735bb3b59"
+      },
+      {
+        "byteSize": 1577127548,
+        "path": "text_encoder/model.fp16-00002-of-00002.safetensors",
+        "sha256": "42818a228ad7133141e6b1319faaa7fdc591c7b02873da3622a4f482cd266f9c"
+      },
+      {
+        "byteSize": 8609476940,
+        "path": "unet/diffusion_pytorch_model.fp16.safetensors",
+        "sha256": "f5ce5e1d0d6ecf9da8988fbf7595c867386f0c98085732e2660fe2c37f04df4b"
+      },
+      {
+        "byteSize": 15492,
+        "path": "watermarker/diffusion_pytorch_model.safetensors",
+        "sha256": "ad38e4ca986f391bbd3641064650aab83122b701bdb143effc8e084425df6110"
+      }
+    ],
+    "stageThree": [
+      {
+        "byteSize": 1361597018,
+        "path": "text_encoder/model.safetensors",
+        "sha256": "cce6febb0b6d876ee5eb24af35e27e764eb4f9b1d0b7c026c8c3333d4cfc916c"
+      },
+      {
+        "byteSize": 1893675621,
+        "path": "unet/diffusion_pytorch_model.safetensors",
+        "sha256": "b6dc05aaae1ba43c230612932492a81e431126582481fd6c7d94c6b15f9ce584"
+      },
+      {
+        "byteSize": 221326504,
+        "path": "vae/diffusion_pytorch_model.safetensors",
+        "sha256": "33478c297ec29218100f8ee86007b3ab4c2701896d5ca5c9e3a84fc29f678183"
+      }
+    ],
+    "stageTwo": [
+      {
+        "byteSize": 607990743,
+        "path": "safety_checker/model.fp16.safetensors",
+        "sha256": "4c917ec4f9e64a1b45156c7fb81999c0f6e6379ec79cc3a576ad144ffb5bf572"
+      },
+      {
+        "byteSize": 2486658568,
+        "path": "unet/diffusion_pytorch_model.fp16.safetensors",
+        "sha256": "c8d32cddbf4701f91fd67b2ba62bb40a0a17a7c427fe1a3ad55a9cc348e9376a"
+      },
+      {
+        "byteSize": 15492,
+        "path": "watermarker/diffusion_pytorch_model.safetensors",
+        "sha256": "ad38e4ca986f391bbd3641064650aab83122b701bdb143effc8e084425df6110"
+      }
+    ]
+  }
+}

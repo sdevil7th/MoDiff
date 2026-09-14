@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass
 from pathlib import Path
+from tempfile import mkdtemp
 from typing import Iterable
 
 import torch
@@ -135,6 +136,18 @@ def _apply_group_to_module(module, *, component_name, device, node_id, scope, mo
     if _is_group_offloaded(module):
         return component_name
 
+    # FLUX.2 pipelines read VAE BatchNorm statistics directly, without calling
+    # BatchNorm.forward. Disk offload replaces its buffers with uninitialized
+    # storage until that hook runs, corrupting latent normalization. Keep this
+    # VAE on synchronous CPU leaf offload; the large denoiser/encoders retain
+    # the requested disk strategy. No prompt/precision/generation values change.
+    direct_vae_statistics = component_name == "vae" and isinstance(
+        getattr(module, "bn", None), torch.nn.BatchNorm2d
+    )
+    if mode == OFFLOAD_MODE_GROUP_DISK and direct_vae_statistics:
+        logger.info("Keeping VAE normalization buffers in CPU memory under group-disk offload.")
+        mode = OFFLOAD_MODE_GROUP_CPU
+
     try:
         from diffusers.hooks import apply_group_offloading
     except Exception as exc:
@@ -142,8 +155,14 @@ def _apply_group_to_module(module, *, component_name, device, node_id, scope, mo
 
     offload_to_disk_path = None
     if mode == OFFLOAD_MODE_GROUP_DISK:
-        offload_to_disk_path = str(_disk_path(node_id, scope, component_name))
-    use_stream = _streaming_offload_allowed(device, mode)
+        # Upstream names files by internal group name and reuses any existing
+        # file. A node can load different weights later; component separation
+        # alone cannot make those old files safe. Allocate storage per hook
+        # owner/load, beneath the node's existing recursive cleanup boundary.
+        offload_to_disk_path = mkdtemp(
+            prefix="load-", dir=_disk_path(node_id, scope, component_name)
+        )
+    use_stream = False if direct_vae_statistics else _streaming_offload_allowed(device, mode)
 
     try:
         apply_group_offloading(
@@ -438,8 +457,23 @@ def apply_pipeline_offload(
     if mode in (OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK):
         disk_path = str(_disk_path(node_id, scope)) if mode == OFFLOAD_MODE_GROUP_DISK else None
         use_stream = _streaming_offload_allowed(normalized_device, mode)
-        if prefer_pipeline_group and hasattr(pipeline, "enable_group_offload"):
+        # The pipeline-wide upstream helper shares one disk directory across
+        # components. Transformer/ControlNet group names collide, silently
+        # substituting equal-shaped weights (or failing for unequal shapes).
+        # Enumerate genuine owned components, including auxiliary encoders and
+        # ControlNets not present in our default component-name fallback.
+        component_names = tuple(component_names)
+        if mode == OFFLOAD_MODE_GROUP_DISK:
+            owned_components = getattr(pipeline, "components", {})
+            if isinstance(owned_components, dict):
+                component_names = tuple(dict.fromkeys((*component_names, *(
+                    name for name, module in owned_components.items()
+                    if isinstance(module, torch.nn.Module)
+                ))))
+        if mode != OFFLOAD_MODE_GROUP_DISK and prefer_pipeline_group and hasattr(pipeline, "enable_group_offload"):
             try:
+                leaf_components = sorted(name for name in LEAF_LEVEL_GROUP_COMPONENTS
+                                         if isinstance(getattr(pipeline, name, None), torch.nn.Module))
                 pipeline.enable_group_offload(
                     onload_device=normalized_device,
                     offload_device=torch.device("cpu"),
@@ -450,7 +484,19 @@ def apply_pipeline_offload(
                     non_blocking=use_stream,
                     use_stream=use_stream,
                     record_stream=False,
+                    exclude_modules=leaf_components,
                 )
+                # The pipeline-wide block-level helper hooks `forward`, but
+                # pipelines call VAE encode/decode directly. Exclude those
+                # components from that helper and install the same leaf-level
+                # policy used by our component fallback. All other components
+                # (including auxiliary ControlNet/image encoders) stay owned by
+                # the upstream pipeline helper.
+                if leaf_components:
+                    apply_component_group_offload(
+                        pipeline, component_names=leaf_components,
+                        device=normalized_device, mode=mode, node_id=node_id, scope=scope,
+                    )
                 detail = "Pinned asynchronous prefetch enabled." if use_stream else "Synchronous group transfers."
                 return OffloadResult(
                     mode=mode,

@@ -1,0 +1,171 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "galleryEligible": false,
+    "liveQualified": false,
+    "runtimeCatalogExposed": false,
+    "status": "review_complete_not_admitted_noncommercial_nonproduction",
+    "unresolvedGates": [
+      "noncommercial_nonproduction_license",
+      "legal_product_admission_approval",
+      "immutable_in_repository_license_and_aup_terms",
+      "backend_owned_resolution_frame_step_batch_and_prompt_bounds",
+      "remote_heavy_hardware_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "Lucy Edit",
+  "format": "safetensors",
+  "license": {
+    "acceptanceRequiredForDownload": false,
+    "acceptableUsePolicyIncorporatedByReference": true,
+    "commercialUseAllowed": false,
+    "distributionIncludesHostedRemoteAccess": true,
+    "evidence": "The license linked by the immutable model card grants self-hosted use and distribution solely for non-commercial purposes, expressly excludes production and user-facing commercial use, and defines hosted remote access as distribution.",
+    "externalLicenseLastUpdated": "2025-11-13",
+    "externalLicensePdfRetrievedAt": "2026-08-13",
+    "externalLicensePdfSha256": "b9b402c0bf71ada725bd8f25b23bcfc9dd8b5878422147be0763d2d53f4a8807",
+    "externalLicenseUrl": "https://drive.google.com/file/d/1pX34A-UOEl9CErMUZKdKzhoWhtSI1TJK/view?usp=drive_link",
+    "id": "lucy-edit-5b-model-community-license",
+    "licenseFilePresent": false,
+    "mutableExternalTerms": true,
+    "outputCommercialUseAllowed": false,
+    "productionUseAllowed": false,
+    "redistributionRequiresAgreementAndAttribution": true
+  },
+  "metadataSha256": {
+    "modelCard": "1f57fae825150d41e0ab43ee4c0182865e53af5f6a38ce61b93ab10b71e418cc",
+    "modelIndex": "064ab16ae67b340bec8f61370e0a053d277bb164aef518bda7cc6f2ade8054c9",
+    "schedulerConfig": "571a3eed68bcd943a61b9fea8efa9e141472216ada59f928c8b5128ce24b32e0",
+    "specialTokensMap": "456b58fd240a06c743a7c2cf8008bec501240d68ebd1fc4018ea569505fea270",
+    "textEncoderConfig": "a2bcb24699f6c009a2427432bdd483ef8b2b42a712abc9503759cdc77d171f07",
+    "textEncoderSafetensorsIndex": "31c4c7bcce679eaa0dd4667462394ddb013dc2f748e0bffc893dc9146a320dab",
+    "tokenizerConfig": "1d8d2a216bf8e70ac15b7ddcea566c4dd0433c024b39a58ca5e4c66bd78defbd",
+    "transformerConfig": "ece74237cd45c13d5496df372eb79a9ff455c8187ce8ea05101b7667d268a15f",
+    "vaeConfig": "d996c340fe9a7df5d7371f76a7d8d6956f6c98256080074d8434fa5eeac11360"
+  },
+  "modelIndexContract": {
+    "boundaryRatio": null,
+    "expandTimesteps": true,
+    "pipelineClass": "LucyEditPipeline",
+    "schedulerClass": "UniPCMultistepScheduler",
+    "textEncoderClass": "UMT5EncoderModel",
+    "transformerClass": "WanTransformer3DModel",
+    "transformer2Present": false,
+    "vaeClass": "AutoencoderKLWan"
+  },
+  "pinnedDiffusers": {
+    "callbackOnStepEndAvailable": true,
+    "modelCpuOffloadSequence": "text_encoder->transformer->transformer_2->vae",
+    "outputClass": "LucyPipelineOutput",
+    "outputSha256": "b3720850ecf680a928afd8d50e7473bcd053847f40e122373b959c62d10d2a68",
+    "pipelineClass": "LucyEditPipeline",
+    "pipelineSha256": "1bc3250554982041f1273fb687a89ced8f6d13e233aed7efb00feb4ac4fe6a7b",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "transformerClass": "WanTransformer3DModel",
+    "transformerSha256": "74741d74c9fa4b9d02be83de9840b37a732080a795aa2d19037c03e312c76907",
+    "vaeClass": "AutoencoderKLWan",
+    "vaeSha256": "a38de0c53adcb81887a0b48d44e3fb59737d7b1e4779a666febe83be666e8fa8",
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContract": {
+    "callbackTensorInputs": [
+      "latents",
+      "prompt_embeds",
+      "negative_prompt_embeds"
+    ],
+    "defaultGuidanceScale": 5.0,
+    "defaultHeight": 480,
+    "defaultMaxSequenceLength": 512,
+    "defaultNumFrames": 81,
+    "defaultNumInferenceSteps": 50,
+    "defaultNumVideosPerPrompt": 1,
+    "defaultOutputType": "np",
+    "defaultWidth": 832,
+    "documentedFramesPerSecond": 24,
+    "heightWidthDivisibility": 16,
+    "input": "one RGB video frame sequence plus one edit instruction",
+    "modelCardRecommendedPromptWords": "20-30",
+    "numFramesCongruence": "num_frames = 4n + 1",
+    "output": "one edited video frame sequence",
+    "packageSafetyCheckerPresent": false,
+    "packageValidationGaps": [
+      "no maximum batch or videos-per-prompt bound",
+      "no maximum resolution or cumulative output-pixel bound",
+      "no maximum input or output-frame bound",
+      "no maximum denoising-step bound",
+      "num_frames is normalized but is not used to select or validate the input video's frame count",
+      "out-of-congruence frame counts are rounded with a warning instead of rejected"
+    ],
+    "releasedSafetensorsDtype": "float32",
+    "recommendedLoadDtypes": {
+      "pipeline": "bfloat16",
+      "vae": "float32"
+    }
+  },
+  "remoteResourceEnvelope": {
+    "minimumAcceleratorMemoryBytesEstimate": 51539607552,
+    "minimumSelectiveDiskBytes": 42949672960,
+    "minimumSystemRamBytes": 68719476736,
+    "notes": [
+      "The publisher provides no measured accelerator-memory or system-memory envelope.",
+      "All values are conservative MoDiff estimates and do not qualify execution."
+    ],
+    "status": "estimate_only_license_and_remote_qualification_pending"
+  },
+  "repository": {
+    "gated": false,
+    "hubSafetensorsDtypeParameterMetadata": {
+      "F32": 5000377536
+    },
+    "licenseFilePresent": false,
+    "modelIndexClass": "LucyEditPipeline",
+    "private": false,
+    "pythonFilesPresent": false,
+    "repository": "decart-ai/Lucy-Edit-Dev",
+    "repositoryBytes": 34203808765,
+    "repositoryFileCount": 18,
+    "revision": "cb201fdec1bca6e7c362e127392c1632c92d2576",
+    "trustRemoteCodeRequired": false,
+    "weightBytes": 34182223896,
+    "weightFileCount": 5,
+    "weightInventorySha256": "c8043eff88bcd2f5cbdcc10234450aae6ded78a654a63d1c1ec4c821314d7b93"
+  },
+  "schemaVersion": 1,
+  "weightFiles": [
+    {
+      "byteSize": 4935812536,
+      "path": "text_encoder/model-00001-of-00003.safetensors",
+      "sha256": "a8e861969c7433e707cc5a74065d795d36cca07ec96eb6763eb4083df7248f58"
+    },
+    {
+      "byteSize": 4983103192,
+      "path": "text_encoder/model-00002-of-00003.safetensors",
+      "sha256": "d57d948ece4837d850b7a859a4415121d57cacf8b9ee1d4db200c67f592902d7"
+    },
+    {
+      "byteSize": 1442935480,
+      "path": "text_encoder/model-00003-of-00003.safetensors",
+      "sha256": "0da9ee284e21d1406df708788db1d502d95d75f69faa25cd26151bf8829b7c5f"
+    },
+    {
+      "byteSize": 20001594880,
+      "path": "transformer/diffusion_pytorch_model.safetensors",
+      "sha256": "3436d091660b99dd4fa2f8b664ae0fad5535ec7b67d689cbe31c2b7af5d0d468"
+    },
+    {
+      "byteSize": 2818777808,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "62cd18f19438e35b32ac63020e2852f566e9b02f46b6cdbd87972a356e3c6f4b"
+    }
+  ]
+}

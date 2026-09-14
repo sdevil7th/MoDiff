@@ -1,0 +1,1052 @@
+import importlib.util
+import json
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+import diffusers
+
+import modules as module_registry
+from modiff.diffusers_profiles import public_execution_profiles, public_experimental_pipelines
+from modiff.huggingface_cluster_admission import (
+    REVIEWED_CLUSTER_EXECUTION_CANDIDATES,
+    _ACTION_ROLE_CONTRACTS,
+)
+from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
+from modiff.modular_workflow_contracts import (
+    PINNED_DIFFUSERS_REVISION,
+    PINNED_MODULAR_WORKFLOW_TRUTH,
+    reviewed_modular_weight_variant,
+)
+from modiff.server import WebServer
+from modules.ModularDiffusers.loaders import ModelsLoader
+from modules.ModularDiffusers.modular_utils import (
+    get_all_model_types,
+    get_model_type_metadata,
+    require_modiff_node_contract,
+)
+
+
+requires_transformers = unittest.skipUnless(
+    importlib.util.find_spec("transformers"),
+    "requires the staged optional Transformers runtime",
+)
+MODULAR_BACKEND_PATH = "modules.ModularDiffusers.ModelsLoader"
+EXPECTED_SDXL_RUNNABLE_MODES = [
+    "text_to_image",
+    "edit_image",
+    "inpaint",
+    "control_image",
+    "control_edit_image",
+    "control_inpaint",
+    "control_union_image",
+    "control_union_edit_image",
+    "control_union_inpaint",
+    "ip_adapter_image",
+    "ip_adapter_edit_image",
+    "ip_adapter_inpaint",
+    "ip_adapter_control_image",
+    "ip_adapter_control_edit_image",
+    "ip_adapter_control_inpaint",
+    "ip_adapter_control_union_image",
+    "ip_adapter_control_union_edit_image",
+    "ip_adapter_control_union_inpaint",
+]
+
+
+def _pipeline_blocks(model_type):
+    truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
+    pipeline_class = getattr(diffusers, model_type)
+    constructor_config = dict(truth.constructor_config)
+    pipeline = pipeline_class(config_dict=constructor_config) if constructor_config else pipeline_class()
+    return pipeline_class, pipeline.blocks
+
+
+def _advertised_modular_modes():
+    advertised = {}
+    for capability in public_experimental_pipelines():
+        if capability.get("executionKind") != "modular":
+            continue
+        runnable_modes = capability["runnableModes"]
+        if runnable_modes:
+            advertised.setdefault(capability["modelType"], set()).update(runnable_modes)
+    for profile in public_execution_profiles():
+        if profile["backend_path"] != MODULAR_BACKEND_PATH:
+            continue
+        advertised.setdefault(profile["pipeline_class"], set()).update(profile["modes"])
+    return advertised
+
+
+class ModularWorkflowTruthTests(unittest.TestCase):
+    def test_reviewed_weight_variants_are_exact_and_repository_scoped(self):
+        self.assertEqual(
+            reviewed_modular_weight_variant(
+                "StableDiffusionXLModularPipeline",
+                "stabilityai/stable-diffusion-xl-base-1.0",
+            ),
+            "fp16",
+        )
+        self.assertIsNone(
+            reviewed_modular_weight_variant(
+                "StableDiffusionXLModularPipeline",
+                "stabilityai/sdxl-turbo",
+            )
+        )
+        self.assertIsNone(
+            reviewed_modular_weight_variant(
+                "QwenImageModularPipeline",
+                "Qwen/Qwen-Image-2512",
+            )
+        )
+
+    def test_registered_pipelines_have_exact_truth_or_whole_workflow_adapters(self):
+        registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
+        self.assertEqual(len(PINNED_MODULAR_WORKFLOW_TRUTH), 22)
+        whole_workflow_only = registered - set(PINNED_MODULAR_WORKFLOW_TRUTH)
+        self.assertEqual(
+            whole_workflow_only,
+            {"Cosmos3DistilledModularPipeline", "MiniMaxH3ModularPipeline"},
+        )
+        self.assertEqual(set(PINNED_MODULAR_WORKFLOW_TRUTH) | whole_workflow_only, registered)
+        for model_type in whole_workflow_only:
+            candidates = [
+                candidate
+                for candidate in REVIEWED_CLUSTER_EXECUTION_CANDIDATES
+                if candidate["pipelineClass"] == model_type
+            ]
+            self.assertTrue(candidates)
+            for candidate in candidates:
+                self.assertEqual(candidate["adapterSource"], "workflow")
+                self.assertIsNotNone(
+                    reviewed_whole_workflow_graph_adapter(model_type, candidate["workflowId"]),
+                    f"{model_type}:{candidate['workflowId']} lacks its exact reviewed whole-workflow adapter",
+                )
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "2f7e0154a9db246e95c9ede43edba7db5b130805")
+        dependency_contract = Path("pyproject.toml").read_text(encoding="utf-8")
+        self.assertIn(
+            f"diffusers.git@{PINNED_DIFFUSERS_REVISION}",
+            dependency_contract,
+            "A Diffusers pin update requires an explicit review of the Modular workflow truth matrix.",
+        )
+
+    @requires_transformers
+    def test_pinned_workflow_maps_and_fixed_sequences_are_exact(self):
+        for model_type, truth in PINNED_MODULAR_WORKFLOW_TRUTH.items():
+            with self.subTest(model_type=model_type):
+                _pipeline_class, blocks = _pipeline_blocks(model_type)
+                self.assertEqual(type(blocks).__name__, truth.blocks_class)
+
+                if truth.workflows:
+                    self.assertFalse(truth.fixed_block_sequence)
+                    expected = {workflow.name: workflow.required_inputs for workflow in truth.workflows}
+                    actual_map = blocks._workflow_map
+                    self.assertIsNotNone(actual_map)
+                    actual = {
+                        name: frozenset(input_name for input_name, required in inputs.items() if required)
+                        for name, inputs in actual_map.items()
+                    }
+                    self.assertEqual(actual, expected)
+                    self.assertEqual(set(blocks.available_workflows), set(expected))
+                    for workflow_name, required_inputs in expected.items():
+                        workflow = blocks.get_workflow(workflow_name)
+                        self.assertTrue(tuple(workflow.block_names))
+                        # Workflow extraction may seal a dispatch selector
+                        # instead of exposing it as a call input (Cosmos sound
+                        # routes seal ``enable_sound=True``). The exact dispatch
+                        # map is asserted above; executable route inputs are
+                        # asserted separately against the graph adapter.
+                        self.assertTrue(workflow.output_names)
+                else:
+                    self.assertTrue(truth.fixed_block_sequence)
+                    self.assertIsNone(blocks._workflow_map)
+                    with self.assertRaises(NotImplementedError):
+                        _ = blocks.available_workflows
+                    self.assertEqual(tuple(blocks.block_names), truth.fixed_block_sequence)
+
+    def test_flux_qwen_and_wan_advertised_modular_modes_are_exact(self):
+        expected = {
+            "AnimaModularPipeline": {"text_to_image", "image_to_image"},
+            "HeliosModularPipeline": {"text_to_video", "image_to_video", "video_to_video"},
+            "HeliosPyramidModularPipeline": {"text_to_video", "image_to_video", "video_to_video"},
+            "HeliosPyramidDistilledModularPipeline": {
+                "text_to_video",
+                "image_to_video",
+                "video_to_video",
+            },
+            "HunyuanVideo15ModularPipeline": {"text_to_video", "image_to_video"},
+            "WanAnimate2ModularPipeline": {"character_animate"},
+            "WanAnimate2DistilledModularPipeline": {"character_animate"},
+            "StableDiffusionXLModularPipeline": {
+                *EXPECTED_SDXL_RUNNABLE_MODES,
+            },
+            "QwenImageModularPipeline": {
+                "modular_text_to_image",
+                "control_image",
+                "image_to_image",
+                "inpainting",
+                "control_edit_image",
+                "control_inpaint",
+            },
+            "QwenImageEditModularPipeline": {"edit_image", "modular_inpainting"},
+            "QwenImageEditPlusModularPipeline": {"edit_image", "multi_image_reference_edit"},
+            "QwenImageLayeredModularPipeline": {"layer_decomposition"},
+            "FluxModularPipeline": {"text_to_image", "image_to_image"},
+            "FluxKontextModularPipeline": {"text_to_image", "edit_image"},
+            "Flux2KleinModularPipeline": {"text_to_image", "edit_image"},
+            "Flux2KleinBaseModularPipeline": {"text_to_image", "edit_image"},
+            "ZImageModularPipeline": {"modular_text_to_image", "modular_image_to_image"},
+            "WanModularPipeline": {"text_to_video"},
+            "WanImage2VideoModularPipeline": {"image_to_video", "single_image_to_video"},
+            "MiniMaxMusic3ModularPipeline": {"text_to_audio"},
+            "Cosmos3DistilledModularPipeline": {"text_to_image", "image_to_video"},
+            "MiniMaxH3ModularPipeline": {
+                "text_to_video_with_audio",
+                "first_last_frame_to_video_with_audio",
+                "reference_to_video_with_audio",
+            },
+            "Cosmos3OmniModularPipeline": {
+                "text_to_image",
+                "text_to_video",
+                "image_to_video",
+                "video_to_video",
+                "text_to_video_with_audio",
+                "image_to_video_with_audio",
+                "video_to_video_with_audio",
+            },
+        }
+        expected["Flux2ModularPipeline"] = {"text_to_image", "edit_image"}
+        self.assertEqual(_advertised_modular_modes(), expected)
+        truth_modes = {
+            model_type: set(dict(truth.modes)) for model_type, truth in PINNED_MODULAR_WORKFLOW_TRUTH.items()
+        }
+        self.assertEqual(
+            truth_modes["StableDiffusionXLModularPipeline"],
+            {"text_to_image", "image_to_image", "control_image", "control_edit_image", "control_inpaint", "inpaint"},
+        )
+        self.assertEqual(
+            {
+                model_type: modes
+                for model_type, modes in truth_modes.items()
+                if model_type
+                not in {
+                    "StableDiffusionXLModularPipeline",
+                    "QwenImageModularPipeline",
+                    "WanImage2VideoModularPipeline",
+                    "ZImageModularPipeline",
+                    "QwenImageEditModularPipeline",
+                    "Cosmos3OmniModularPipeline",
+                }
+            },
+            {
+                model_type: expected.get(model_type, set())
+                for model_type in truth_modes
+                if model_type
+                not in {
+                    "StableDiffusionXLModularPipeline",
+                    "QwenImageModularPipeline",
+                    "WanImage2VideoModularPipeline",
+                    "ZImageModularPipeline",
+                    "QwenImageEditModularPipeline",
+                    "Cosmos3OmniModularPipeline",
+                }
+            },
+        )
+        self.assertEqual(truth_modes["QwenImageModularPipeline"], {"text_to_image", "control_image"})
+        self.assertEqual(truth_modes["WanImage2VideoModularPipeline"], {"image_to_video"})
+        self.assertEqual(truth_modes["ZImageModularPipeline"], {"text_to_image", "image_to_image"})
+        self.assertEqual(truth_modes["QwenImageEditModularPipeline"], {"edit_image"})
+        self.assertEqual(truth_modes["Cosmos3OmniModularPipeline"], {"text_to_image", "text_to_video"})
+        self.assertEqual(
+            {name for name, _state_flow in PINNED_MODULAR_WORKFLOW_TRUTH["QwenImageEditModularPipeline"].state_flows},
+            {"image_conditioned_inpainting"},
+        )
+        self.assertEqual(
+            {name for name, _state_flow in PINNED_MODULAR_WORKFLOW_TRUTH["QwenImageModularPipeline"].state_flows},
+            {"image2image", "inpainting", "controlnet_image2image", "controlnet_inpainting"},
+        )
+        self.assertEqual(truth_modes["FluxKontextModularPipeline"], {"text_to_image", "edit_image"})
+        self.assertEqual(truth_modes["Flux2KleinModularPipeline"], {"text_to_image", "edit_image"})
+        self.assertEqual(truth_modes["Flux2KleinBaseModularPipeline"], {"text_to_image", "edit_image"})
+
+    @requires_transformers
+    def test_every_advertised_mode_has_a_constructible_action_and_state_contract(self):
+        for model_type, modes in _advertised_modular_modes().items():
+            truth = PINNED_MODULAR_WORKFLOW_TRUTH.get(model_type)
+            pipeline_class = getattr(diffusers, model_type)
+            if truth is not None:
+                pipeline_class, _blocks = _pipeline_blocks(model_type)
+            metadata = get_model_type_metadata(model_type)
+            self.assertIsNotNone(metadata)
+
+            for mode in sorted(modes):
+                with self.subTest(model_type=model_type, mode=mode):
+                    candidates = [
+                        candidate
+                        for candidate in REVIEWED_CLUSTER_EXECUTION_CANDIDATES
+                        if candidate["pipelineClass"] == model_type
+                        and candidate["studioMode"] == mode
+                    ]
+                    self.assertEqual(
+                        len(candidates),
+                        1,
+                        f"{model_type}:{mode} must select one exact reviewed Cluster admission candidate",
+                    )
+                    candidate = candidates[0]
+                    adapter_source = candidate["adapterSource"]
+                    adapter_id = candidate["adapterId"]
+                    if adapter_source == "workflow":
+                        workflow_adapter = reviewed_whole_workflow_graph_adapter(
+                            model_type,
+                            candidate["workflowId"],
+                        )
+                        self.assertIsNotNone(workflow_adapter)
+                        for action in workflow_adapter["actionSequence"]:
+                            self.assertIn(action, _ACTION_ROLE_CONTRACTS)
+                            _role, node_key = _ACTION_ROLE_CONTRACTS[action]
+                            module_name, action_name = node_key.rsplit(".", 1)
+                            self.assertIn(module_name, module_registry.MODULE_MAP)
+                            self.assertIn(action_name, module_registry.MODULE_MAP[module_name])
+
+                        # Older reviewed pipelines additionally carry the
+                        # detailed upstream dispatch truth. New exact
+                        # whole-workflow routes are intentionally represented
+                        # by their package-owned top-level block adapter.
+                        mode_truth = truth.mode(mode) if truth is not None else None
+                        if mode_truth is not None:
+                            self.assertEqual(
+                                frozenset(workflow_adapter["requiredInputs"]),
+                                mode_truth.required_upstream_inputs,
+                            )
+                            self.assertEqual(
+                                tuple(workflow_adapter["actionSequence"]),
+                                mode_truth.action_sequence,
+                            )
+                            reviewed_top_level_blocks = []
+                            for block_path in mode_truth.upstream_block_sequence:
+                                top_level_block = block_path.split(".", 1)[0]
+                                if not reviewed_top_level_blocks or reviewed_top_level_blocks[-1] != top_level_block:
+                                    reviewed_top_level_blocks.append(top_level_block)
+                            self.assertEqual(
+                                tuple(workflow_adapter["upstreamBlockSequence"]),
+                                tuple(reviewed_top_level_blocks),
+                            )
+                            self.assertEqual(
+                                tuple(
+                                    (
+                                        edge["producerAction"],
+                                        edge["producerOutput"],
+                                        edge["consumerAction"],
+                                        edge["consumerInput"],
+                                    )
+                                    for edge in workflow_adapter["stateEdges"]
+                                ),
+                                tuple(
+                                    (
+                                        edge.producer_action,
+                                        edge.producer_output,
+                                        edge.consumer_action,
+                                        edge.consumer_input,
+                                    )
+                                    for edge in mode_truth.state_edges
+                                ),
+                            )
+                        continue
+
+                    self.assertIsNotNone(
+                        truth,
+                        f"{model_type}:{mode} has neither detailed workflow truth nor a whole-workflow adapter",
+                    )
+                    if adapter_source == "mode":
+                        mode_truth = truth.mode(adapter_id)
+                    elif adapter_source == "state_flow":
+                        mode_truth = truth.state_flow(adapter_id)
+                    else:
+                        self.fail(
+                            f"{model_type}:{mode} uses unsupported reviewed adapter source {adapter_source!r}"
+                        )
+                    self.assertIsNotNone(mode_truth, f"{model_type}:{mode} has no reviewed MoDiff mode contract")
+
+                    if mode_truth.upstream_workflow is not None:
+                        workflows = {workflow.name: workflow for workflow in truth.workflows}
+                        self.assertIn(mode_truth.upstream_workflow, workflows)
+                        # The dispatch map describes branch selectors. Extracted
+                        # workflows can seal selectors (Cosmos text2image fixes
+                        # num_frames=1) and can expose required execution inputs
+                        # not used for dispatch (Cosmos num_inference_steps).
+                        # Exact executable inputs are therefore asserted against
+                        # the reviewed whole-workflow adapter below.
+                    else:
+                        self.assertTrue(truth.fixed_block_sequence)
+
+                    action_contracts = {}
+                    for action in mode_truth.action_sequence:
+                        action_contract = metadata["node_params"].get(action)
+                        self.assertIsNotNone(action_contract, f"{model_type}:{mode} lacks action {action}")
+                        action_contracts[action] = action_contract
+                        blocks, resolved_contract = require_modiff_node_contract(
+                            pipeline_class,
+                            action,
+                            require_blocks=not (
+                                action == "controlnet"
+                                and action_contract.get("block_name") is None
+                            ),
+                        )
+                        self.assertIsNotNone(resolved_contract)
+                        if action_contract.get("block_name") is not None:
+                            self.assertIsNotNone(blocks)
+
+                    action_inputs = {
+                        input_name
+                        for contract in action_contracts.values()
+                        for input_name in contract["input_names"]
+                    }
+                    self.assertTrue(mode_truth.required_upstream_inputs.issubset(action_inputs))
+
+                    for edge in mode_truth.state_edges:
+                        self.assertIn(edge.producer_action, action_contracts)
+                        self.assertIn(edge.consumer_action, action_contracts)
+                        self.assertIn(
+                            edge.producer_output,
+                            action_contracts[edge.producer_action]["output_names"],
+                        )
+                        self.assertIn(
+                            edge.consumer_input,
+                            action_contracts[edge.consumer_action]["input_names"],
+                        )
+
+    def test_sdxl_public_mode_edges_are_route_aware_and_exact(self):
+        truth = PINNED_MODULAR_WORKFLOW_TRUTH["StableDiffusionXLModularPipeline"]
+        expected_edges = {
+            "text_to_image": (
+                ("text_encoder", "embeddings", "denoise", "embeddings"),
+                ("denoise", "latents", "decoder", "latents"),
+                ("denoise", "route_state_out", "decoder", "route_state_in"),
+            ),
+            "image_to_image": (
+                ("text_encoder", "embeddings", "denoise", "embeddings"),
+                ("vae_encoder", "image_latents", "denoise", "image_latents"),
+                ("vae_encoder", "route_state_out", "denoise", "route_state_in"),
+                ("denoise", "latents", "decoder", "latents"),
+                ("denoise", "route_state_out", "decoder", "route_state_in"),
+            ),
+            "control_image": (
+                ("text_encoder", "embeddings", "denoise", "embeddings"),
+                ("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+                ("denoise", "latents", "decoder", "latents"),
+                ("denoise", "route_state_out", "decoder", "route_state_in"),
+            ),
+            "control_edit_image": (
+                ("text_encoder", "embeddings", "denoise", "embeddings"),
+                ("vae_encoder", "image_latents", "denoise", "image_latents"),
+                ("vae_encoder", "route_state_out", "denoise", "route_state_in"),
+                ("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+                ("denoise", "latents", "decoder", "latents"),
+                ("denoise", "route_state_out", "decoder", "route_state_in"),
+            ),
+            "control_inpaint": (
+                ("text_encoder", "embeddings", "denoise", "embeddings"),
+                ("vae_encoder", "image_latents", "denoise", "image_latents"),
+                ("vae_encoder", "mask", "denoise", "mask"),
+                ("vae_encoder", "masked_image_latents", "denoise", "masked_image_latents"),
+                ("vae_encoder", "route_state_out", "denoise", "route_state_in"),
+                ("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+                ("denoise", "latents", "decoder", "latents"),
+                ("denoise", "route_state_out", "decoder", "route_state_in"),
+            ),
+            "inpaint": (
+                ("text_encoder", "embeddings", "denoise", "embeddings"),
+                ("vae_encoder", "image_latents", "denoise", "image_latents"),
+                ("vae_encoder", "mask", "denoise", "mask"),
+                ("vae_encoder", "masked_image_latents", "denoise", "masked_image_latents"),
+                ("vae_encoder", "route_state_out", "denoise", "route_state_in"),
+                ("denoise", "latents", "decoder", "latents"),
+                ("denoise", "route_state_out", "decoder", "route_state_in"),
+            ),
+        }
+
+        self.assertEqual(set(dict(truth.modes)), set(expected_edges))
+        for name, mode in truth.modes:
+            with self.subTest(mode=name):
+                actual_edges = tuple(
+                    (
+                        edge.producer_action,
+                        edge.producer_output,
+                        edge.consumer_action,
+                        edge.consumer_input,
+                    )
+                    for edge in mode.state_edges
+                )
+                self.assertEqual(actual_edges, expected_edges[name])
+
+    @requires_transformers
+    def test_sdxl_base_inpaint_state_flow_is_exact_constructible_and_contract_only(
+        self,
+    ):
+        model_type = "StableDiffusionXLModularPipeline"
+        truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
+        pipeline_class, blocks = _pipeline_blocks(model_type)
+        metadata = get_model_type_metadata(model_type)
+        workflows = {workflow.name: workflow for workflow in truth.workflows}
+        state_flow = truth.state_flow("inpainting")
+
+        self.assertEqual(
+            set(dict(truth.state_flows)),
+            {
+                "inpainting",
+                "controlnet_image2image",
+                "controlnet_inpainting",
+                "controlnet_union_text2image",
+                "controlnet_union_image2image",
+                "controlnet_union_inpainting",
+                "ip_adapter_text2image",
+                "ip_adapter_image2image",
+                "ip_adapter_inpainting",
+                "ip_adapter_controlnet_text2image",
+                "ip_adapter_controlnet_image2image",
+                "ip_adapter_controlnet_inpainting",
+                "ip_adapter_controlnet_union_text2image",
+                "ip_adapter_controlnet_union_image2image",
+                "ip_adapter_controlnet_union_inpainting",
+            },
+        )
+        self.assertEqual(
+            set(dict(truth.modes)),
+            {"text_to_image", "image_to_image", "control_image", "control_edit_image", "control_inpaint", "inpaint"},
+        )
+        self.assertEqual(
+            _advertised_modular_modes()[model_type],
+            set(EXPECTED_SDXL_RUNNABLE_MODES),
+        )
+        inpaint_mode = truth.mode("inpaint")
+        self.assertIsNotNone(inpaint_mode)
+        self.assertEqual(inpaint_mode.upstream_workflow, "inpainting")
+        self.assertEqual(inpaint_mode.required_upstream_inputs, state_flow.required_upstream_inputs)
+        self.assertEqual(inpaint_mode.upstream_block_sequence, state_flow.upstream_block_sequence)
+        self.assertEqual(inpaint_mode.action_sequence, state_flow.action_sequence)
+        self.assertEqual(inpaint_mode.state_edges, state_flow.state_edges)
+        self.assertIsNotNone(state_flow)
+        self.assertEqual(state_flow.upstream_workflow, "inpainting")
+        self.assertEqual(
+            state_flow.required_upstream_inputs,
+            frozenset({"mask_image", "image", "prompt"}),
+        )
+        self.assertEqual(state_flow.required_upstream_inputs, workflows["inpainting"].required_inputs)
+        self.assertEqual(
+            state_flow.upstream_block_sequence,
+            (
+                "text_encoder",
+                "vae_encoder",
+                "denoise.input",
+                "denoise.before_denoise.set_timesteps",
+                "denoise.before_denoise.prepare_latents",
+                "denoise.before_denoise.prepare_add_cond",
+                "denoise.denoise",
+                "decode",
+            ),
+        )
+        self.assertEqual(
+            state_flow.action_sequence,
+            ("text_encoder", "vae_encoder", "denoise", "decoder"),
+        )
+
+        workflow = blocks.get_workflow("inpainting")
+        self.assertEqual(tuple(workflow.block_names), state_flow.upstream_block_sequence)
+        self.assertTrue(state_flow.required_upstream_inputs.issubset(workflow.input_names))
+        for output_name in (
+            "image_latents",
+            "mask",
+            "masked_image_latents",
+            "crops_coords",
+            "latents",
+            "images",
+        ):
+            self.assertIn(output_name, workflow.output_names)
+
+        action_contracts = {}
+        action_blocks = {}
+        for action in state_flow.action_sequence:
+            action_contract = metadata["node_params"].get(action)
+            self.assertIsNotNone(
+                action_contract,
+                f"{model_type}:inpainting lacks action {action}",
+            )
+            action_contracts[action] = action_contract
+            resolved_blocks, resolved_contract = require_modiff_node_contract(
+                pipeline_class,
+                action,
+            )
+            self.assertIsNotNone(resolved_blocks)
+            self.assertIsNotNone(resolved_contract)
+            action_blocks[action] = resolved_blocks
+
+        denoise_contract = action_contracts["denoise"]
+        decoder_contract = action_contracts["decoder"]
+        self.assertIn("vae", denoise_contract["model_input_names"])
+        self.assertIn("vae", action_blocks["denoise"].component_names)
+        self.assertEqual(
+            denoise_contract["params"]["vae"]["type"],
+            decoder_contract["params"]["vae"]["type"],
+        )
+        self.assertEqual(
+            denoise_contract["params"]["vae"]["type"],
+            ModelsLoader.params["vae_out"]["type"],
+        )
+        self.assertEqual(denoise_contract["params"]["vae"]["display"], "input")
+        self.assertEqual(ModelsLoader.params["vae_out"]["display"], "output")
+        self.assertEqual(ModelsLoader.params["controlnet"]["display"], "input")
+        self.assertEqual(ModelsLoader.params["controlnet"]["type"], "diffusers_auto_model")
+
+        action_inputs = {
+            input_name
+            for contract in action_contracts.values()
+            for input_name in contract["input_names"]
+        }
+        self.assertTrue(state_flow.required_upstream_inputs.issubset(action_inputs))
+
+        expected_edges = (
+            ("text_encoder", "embeddings", "denoise", "embeddings"),
+            ("vae_encoder", "image_latents", "denoise", "image_latents"),
+            ("vae_encoder", "mask", "denoise", "mask"),
+            ("vae_encoder", "masked_image_latents", "denoise", "masked_image_latents"),
+            ("vae_encoder", "route_state_out", "denoise", "route_state_in"),
+            ("denoise", "latents", "decoder", "latents"),
+            ("denoise", "route_state_out", "decoder", "route_state_in"),
+        )
+        actual_edges = tuple(
+            (
+                edge.producer_action,
+                edge.producer_output,
+                edge.consumer_action,
+                edge.consumer_input,
+            )
+            for edge in state_flow.state_edges
+        )
+        self.assertEqual(actual_edges, expected_edges)
+
+        for edge in state_flow.state_edges:
+            self.assertIn(
+                edge.producer_output,
+                action_contracts[edge.producer_action]["output_names"],
+            )
+            self.assertIn(
+                edge.consumer_input,
+                action_contracts[edge.consumer_action]["input_names"],
+            )
+
+        for field_name, field_type in (
+            ("mask", "latent_mask"),
+            ("masked_image_latents", "masked_latents"),
+        ):
+            producer_param = action_contracts["vae_encoder"]["params"][field_name]
+            consumer_param = action_contracts["denoise"]["params"][field_name]
+            self.assertEqual(producer_param["display"], "output")
+            self.assertEqual(consumer_param["display"], "input")
+            self.assertEqual(producer_param["type"], field_type)
+            self.assertEqual(consumer_param["type"], field_type)
+
+    @requires_transformers
+    def test_sdxl_controlnet_vae_state_flows_are_exact_and_constructible(self):
+        model_type = "StableDiffusionXLModularPipeline"
+        truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
+        pipeline_class, blocks = _pipeline_blocks(model_type)
+        metadata = get_model_type_metadata(model_type)
+        workflows = {workflow.name: workflow for workflow in truth.workflows}
+        expected = {
+            "controlnet_image2image": {
+                "inputs": frozenset({"control_image", "image", "prompt"}),
+                "vae_edges": ("image_latents",),
+            },
+            "controlnet_inpainting": {
+                "inputs": frozenset({"control_image", "mask_image", "image", "prompt"}),
+                "vae_edges": ("image_latents", "mask", "masked_image_latents"),
+            },
+            "controlnet_union_image2image": {
+                "inputs": frozenset({"control_image", "control_mode", "image", "prompt"}),
+                "vae_edges": ("image_latents",),
+            },
+            "controlnet_union_inpainting": {
+                "inputs": frozenset({"control_image", "control_mode", "mask_image", "image", "prompt"}),
+                "vae_edges": ("image_latents", "mask", "masked_image_latents"),
+            },
+        }
+        expected_blocks = (
+            "text_encoder",
+            "vae_encoder",
+            "denoise.input",
+            "denoise.before_denoise.set_timesteps",
+            "denoise.before_denoise.prepare_latents",
+            "denoise.before_denoise.prepare_add_cond",
+            "denoise.controlnet_input",
+            "denoise.denoise",
+            "decode",
+        )
+
+        self.assertEqual(
+            _advertised_modular_modes()[model_type],
+            set(EXPECTED_SDXL_RUNNABLE_MODES),
+        )
+        for name, contract in expected.items():
+            with self.subTest(state_flow=name):
+                state_flow = truth.state_flow(name)
+                self.assertIsNotNone(state_flow)
+                self.assertEqual(state_flow.required_upstream_inputs, contract["inputs"])
+                self.assertEqual(state_flow.required_upstream_inputs, workflows[name].required_inputs)
+                self.assertEqual(state_flow.upstream_block_sequence, expected_blocks)
+                self.assertEqual(
+                    state_flow.action_sequence,
+                    ("text_encoder", "vae_encoder", "controlnet", "denoise", "decoder"),
+                )
+                workflow = blocks.get_workflow(name)
+                self.assertEqual(tuple(workflow.block_names), expected_blocks)
+                self.assertTrue(contract["inputs"].issubset(workflow.input_names))
+
+                action_contracts = {}
+                for action in state_flow.action_sequence:
+                    resolved_blocks, resolved_contract = require_modiff_node_contract(
+                        pipeline_class,
+                        action,
+                        require_blocks=(action != "controlnet"),
+                    )
+                    self.assertIsNotNone(resolved_contract)
+                    self.assertEqual(resolved_contract, metadata["node_params"][action])
+                    if action == "controlnet":
+                        self.assertIsNone(resolved_blocks)
+                    else:
+                        self.assertIsNotNone(resolved_blocks)
+                    action_contracts[action] = resolved_contract
+
+                edge_names = {
+                    (edge.producer_action, edge.producer_output, edge.consumer_action, edge.consumer_input)
+                    for edge in state_flow.state_edges
+                }
+                for vae_output in contract["vae_edges"]:
+                    self.assertIn(("vae_encoder", vae_output, "denoise", vae_output), edge_names)
+                self.assertIn(
+                    ("vae_encoder", "route_state_out", "denoise", "route_state_in"),
+                    edge_names,
+                )
+                self.assertIn(
+                    ("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+                    edge_names,
+                )
+                for edge in state_flow.state_edges:
+                    self.assertIn(
+                        edge.producer_output,
+                        action_contracts[edge.producer_action]["output_names"],
+                    )
+                    self.assertIn(
+                        edge.consumer_input,
+                        action_contracts[edge.consumer_action]["input_names"],
+                    )
+
+    @requires_transformers
+    def test_sdxl_ip_adapter_state_flows_match_all_nine_pinned_upstream_compositions(self):
+        model_type = "StableDiffusionXLModularPipeline"
+        truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
+        pipeline_class, blocks = _pipeline_blocks(model_type)
+        metadata = get_model_type_metadata(model_type)
+        workflows = {workflow.name: workflow for workflow in truth.workflows}
+        expected_names = {
+            "ip_adapter_text2image",
+            "ip_adapter_image2image",
+            "ip_adapter_inpainting",
+            "ip_adapter_controlnet_text2image",
+            "ip_adapter_controlnet_image2image",
+            "ip_adapter_controlnet_inpainting",
+            "ip_adapter_controlnet_union_text2image",
+            "ip_adapter_controlnet_union_image2image",
+            "ip_adapter_controlnet_union_inpainting",
+        }
+        actual = {name: flow for name, flow in truth.state_flows if name.startswith("ip_adapter_")}
+        self.assertEqual(set(actual), expected_names)
+        self.assertEqual(
+            _advertised_modular_modes()[model_type],
+            set(EXPECTED_SDXL_RUNNABLE_MODES),
+        )
+
+        for name, state_flow in actual.items():
+            with self.subTest(state_flow=name):
+                self.assertEqual(state_flow.required_upstream_inputs, workflows[name].required_inputs)
+                workflow = blocks.get_workflow(name)
+                self.assertEqual(tuple(workflow.block_names), state_flow.upstream_block_sequence)
+                self.assertIn("ip_adapter", workflow.block_names)
+                self.assertIn("ip_adapter", state_flow.action_sequence)
+
+                action_contracts = {}
+                for action in state_flow.action_sequence:
+                    action_contract = metadata["node_params"].get(action)
+                    self.assertIsNotNone(action_contract)
+                    action_contracts[action] = action_contract
+                    resolved_blocks, resolved_contract = require_modiff_node_contract(
+                        pipeline_class,
+                        action,
+                        require_blocks=action != "controlnet",
+                    )
+                    self.assertIsNotNone(resolved_contract)
+                    if action == "controlnet":
+                        self.assertIsNone(resolved_blocks)
+                    else:
+                        self.assertIsNotNone(resolved_blocks)
+
+                edges = {
+                    (edge.producer_action, edge.producer_output, edge.consumer_action, edge.consumer_input)
+                    for edge in state_flow.state_edges
+                }
+                self.assertIn(("ip_adapter", "ip_adapter", "denoise", "ip_adapter"), edges)
+                if "controlnet" in state_flow.action_sequence:
+                    self.assertIn(("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"), edges)
+                if "vae_encoder" in state_flow.action_sequence:
+                    self.assertIn(("vae_encoder", "route_state_out", "denoise", "route_state_in"), edges)
+                for edge in state_flow.state_edges:
+                    self.assertIn(edge.producer_output, action_contracts[edge.producer_action]["output_names"])
+                    self.assertIn(edge.consumer_input, action_contracts[edge.consumer_action]["input_names"])
+
+        ip_contract = metadata["node_params"]["ip_adapter"]
+        self.assertEqual(ip_contract["params"]["ip_adapter_image"]["type"], "image")
+        self.assertEqual(ip_contract["params"]["ip_adapter"]["type"], "custom_ip_adapter")
+        self.assertEqual(ip_contract["params"]["ip_adapter"]["display"], "output")
+        self.assertEqual(metadata["node_params"]["denoise"]["params"]["ip_adapter"]["display"], "input")
+
+    @requires_transformers
+    def test_qwen_state_flows_are_exact_constructible_and_advertised(self):
+        model_type = "QwenImageModularPipeline"
+        truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
+        pipeline_class, blocks = _pipeline_blocks(model_type)
+        metadata = get_model_type_metadata(model_type)
+        workflows = {workflow.name: workflow for workflow in truth.workflows}
+        expected_names = {
+            "image2image",
+            "inpainting",
+            "controlnet_image2image",
+            "controlnet_inpainting",
+        }
+
+        self.assertEqual(set(dict(truth.state_flows)), expected_names)
+        self.assertEqual(set(dict(truth.modes)), {"text_to_image", "control_image"})
+        self.assertEqual(
+            _advertised_modular_modes()[model_type],
+            {
+                "modular_text_to_image",
+                "control_image",
+                "image_to_image",
+                "inpainting",
+                "control_edit_image",
+                "control_inpaint",
+            },
+        )
+
+        for name, state_flow in truth.state_flows:
+            with self.subTest(state_flow=name):
+                self.assertEqual(name, state_flow.upstream_workflow)
+                self.assertIn(name, workflows)
+                self.assertEqual(state_flow.required_upstream_inputs, workflows[name].required_inputs)
+
+                workflow = blocks.get_workflow(name)
+                self.assertEqual(tuple(workflow.block_names), state_flow.upstream_block_sequence)
+                self.assertTrue(state_flow.required_upstream_inputs.issubset(workflow.input_names))
+                self.assertIn("latents", workflow.output_names)
+                self.assertIn("images", workflow.output_names)
+
+                action_contracts = {}
+                for action in state_flow.action_sequence:
+                    action_contract = metadata["node_params"].get(action)
+                    self.assertIsNotNone(action_contract, f"{model_type}:{name} lacks action {action}")
+                    action_contracts[action] = action_contract
+                    resolved_blocks, resolved_contract = require_modiff_node_contract(
+                        pipeline_class,
+                        action,
+                        require_blocks=not (action == "controlnet" and action_contract.get("block_name") is None),
+                    )
+                    self.assertIsNotNone(resolved_contract)
+                    if action_contract.get("block_name") is not None:
+                        self.assertIsNotNone(resolved_blocks)
+
+                action_inputs = {
+                    input_name
+                    for contract in action_contracts.values()
+                    for input_name in contract["input_names"]
+                }
+                self.assertTrue(state_flow.required_upstream_inputs.issubset(action_inputs))
+
+                for edge in state_flow.state_edges:
+                    self.assertIn(edge.producer_action, action_contracts)
+                    self.assertIn(edge.consumer_action, action_contracts)
+                    self.assertIn(edge.producer_output, action_contracts[edge.producer_action]["output_names"])
+                    self.assertIn(edge.consumer_input, action_contracts[edge.consumer_action]["input_names"])
+
+                is_inpaint = name.endswith("inpainting") or name == "inpainting"
+                is_control = name.startswith("controlnet_")
+                self.assertEqual("processed_mask_image" in workflow.output_names, is_inpaint)
+                self.assertEqual("mask_overlay_kwargs" in workflow.output_names, is_inpaint)
+                self.assertEqual("mask" in workflow.output_names, is_inpaint)
+                self.assertEqual("control_image_latents" in workflow.output_names, is_control)
+
+    def test_qwen_state_flow_edges_are_exact_and_ordered(self):
+        truth = PINNED_MODULAR_WORKFLOW_TRUTH["QwenImageModularPipeline"]
+        expected_edges = {
+            "image2image": (
+                ("text_encoder", "embeddings", "denoise", "embeddings"),
+                ("vae_encoder", "image_latents", "denoise", "image_latents"),
+                ("vae_encoder", "route_state_out", "denoise", "route_state_in"),
+                ("denoise", "latents", "decoder", "latents"),
+                ("denoise", "route_state_out", "decoder", "route_state_in"),
+            ),
+            "inpainting": (
+                ("text_encoder", "embeddings", "denoise", "embeddings"),
+                ("vae_encoder", "image_latents", "denoise", "image_latents"),
+                ("vae_encoder", "route_state_out", "denoise", "route_state_in"),
+                ("denoise", "latents", "decoder", "latents"),
+                ("denoise", "route_state_out", "decoder", "route_state_in"),
+            ),
+            "controlnet_image2image": (
+                ("text_encoder", "embeddings", "denoise", "embeddings"),
+                ("vae_encoder", "image_latents", "denoise", "image_latents"),
+                ("vae_encoder", "route_state_out", "controlnet", "route_state_in"),
+                ("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+                ("controlnet", "route_state_out", "denoise", "route_state_in"),
+                ("denoise", "latents", "decoder", "latents"),
+                ("denoise", "route_state_out", "decoder", "route_state_in"),
+            ),
+            "controlnet_inpainting": (
+                ("text_encoder", "embeddings", "denoise", "embeddings"),
+                ("vae_encoder", "image_latents", "denoise", "image_latents"),
+                ("vae_encoder", "route_state_out", "controlnet", "route_state_in"),
+                ("controlnet", "controlnet_bundle", "denoise", "controlnet_bundle"),
+                ("controlnet", "route_state_out", "denoise", "route_state_in"),
+                ("denoise", "latents", "decoder", "latents"),
+                ("denoise", "route_state_out", "decoder", "route_state_in"),
+            ),
+        }
+
+        self.assertEqual(len(truth.state_flows), 4)
+        self.assertEqual(
+            {name for name, _state_flow in truth.state_flows},
+            {"image2image", "inpainting", "controlnet_image2image", "controlnet_inpainting"},
+        )
+        for name, state_flow in truth.state_flows:
+            with self.subTest(state_flow=name):
+                actual_edges = tuple(
+                    (
+                        edge.producer_action,
+                        edge.producer_output,
+                        edge.consumer_action,
+                        edge.consumer_input,
+                    )
+                    for edge in state_flow.state_edges
+                )
+                self.assertEqual(actual_edges, expected_edges[name])
+
+    def test_reviewed_sdxl_and_flux_workflows_are_promoted(self):
+        experimental = {item["modelType"]: item for item in public_experimental_pipelines()}
+        self.assertNotIn("StableDiffusionXLModularPipeline", experimental)
+        sdxl_profile = {
+            profile["id"]: profile for profile in public_execution_profiles()
+        }["sdxl-base:modular"]
+        self.assertEqual(sdxl_profile["modes"], EXPECTED_SDXL_RUNNABLE_MODES)
+        self.assertEqual(sdxl_profile["default_repo"], "stabilityai/stable-diffusion-xl-base-1.0")
+        self.assertFalse(sdxl_profile["live_proof"])
+
+        self.assertNotIn("FluxModularPipeline", experimental)
+        flux_profile = {
+            profile["id"]: profile for profile in public_execution_profiles()
+        }["flux-dev:modular"]
+        self.assertEqual(flux_profile["modes"], ["text_to_image", "image_to_image"])
+        self.assertEqual(flux_profile["pipeline_class"], "FluxModularPipeline")
+        self.assertFalse(flux_profile["live_proof"])
+
+        profiles = {profile["id"]: profile for profile in public_execution_profiles()}
+        for profile_id, pipeline_class in (
+            ("flux-kontext:modular", "FluxKontextModularPipeline"),
+            ("flux2-klein:modular", "Flux2KleinModularPipeline"),
+            ("flux2-klein-base:modular", "Flux2KleinBaseModularPipeline"),
+        ):
+            with self.subTest(profile=profile_id):
+                self.assertNotIn(pipeline_class, experimental)
+                self.assertEqual(profiles[profile_id]["modes"], ["text_to_image", "edit_image"])
+                self.assertEqual(profiles[profile_id]["pipeline_class"], pipeline_class)
+                self.assertFalse(profiles[profile_id]["live_proof"])
+
+    def test_flux2_klein_standard_and_modular_paths_have_distinct_model_types(self):
+        profiles = {profile["id"]: profile for profile in public_execution_profiles()}
+        self.assertEqual(profiles["flux2-klein:direct"]["model_type"], "Flux2KleinPipeline")
+        self.assertEqual(profiles["flux2-klein:direct"]["pipeline_class"], "Flux2KleinPipeline")
+        self.assertEqual(profiles["flux2-klein:modular"]["model_type"], "Flux2KleinModularPipeline")
+        self.assertEqual(profiles["flux2-klein:modular"]["pipeline_class"], "Flux2KleinModularPipeline")
+        self.assertEqual(
+            profiles["flux2-klein-base:modular"]["model_type"],
+            "Flux2KleinBaseModularPipeline",
+        )
+        self.assertEqual(
+            profiles["flux2-klein-base:modular"]["pipeline_class"],
+            "Flux2KleinBaseModularPipeline",
+        )
+        self.assertNotIn(
+            "Flux2KleinModularPipeline",
+            {item["modelType"] for item in public_experimental_pipelines()},
+        )
+        self.assertNotIn(
+            "Flux2KleinBaseModularPipeline",
+            {item["modelType"] for item in public_experimental_pipelines()},
+        )
+
+    def test_dangling_experimental_profile_reference_fails_closed(self):
+        invalid = {
+            "modelType": "LegacyModularPipeline",
+            "label": "Invalid fixture",
+            "mediaKind": "image",
+            "pipelineClasses": ["LegacyModularPipeline"],
+            "backendPath": MODULAR_BACKEND_PATH,
+            "executionKind": "standard",
+            "executionProfileIds": ["missing:profile"],
+            "runnableModes": ["text_to_image"],
+        }
+        with patch("modiff.diffusers_profiles.EXPERIMENTAL_DIFFUSERS_PIPELINES", [invalid]):
+            capability = public_experimental_pipelines()[0]
+
+        self.assertEqual(capability["executionProfiles"], [])
+        self.assertEqual(capability["pipelineClasses"], [])
+        self.assertEqual(capability["runnableModes"], [])
+        self.assertIsNone(capability["backendPath"])
+        self.assertEqual(capability["qualificationStatus"], "invalid_contract")
+
+
+class FakeRequest:
+    query = {}
+
+
+class ModularWorkflowCapabilitySerializationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_public_endpoint_serializes_unsupported_and_execution_truth(self):
+        response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
+        payload = json.loads(response.text)
+        experimental = {item["modelType"]: item for item in payload["experimentalCapabilities"]}
+        supported = {item["modelType"]: item for item in payload["capabilities"]}
+
+        self.assertEqual(payload["schemaVersion"], 2)
+        self.assertNotIn("StableDiffusionXLModularPipeline", experimental)
+        self.assertEqual(
+            supported["StableDiffusionXLModularPipeline"]["runnableModes"],
+            sorted(EXPECTED_SDXL_RUNNABLE_MODES),
+        )
+        self.assertEqual(supported["StableDiffusionXLModularPipeline"]["executionStatus"], "expert_only")
+        self.assertNotIn("Flux2KleinModularPipeline", experimental)
+        self.assertEqual(
+            supported["Flux2KleinModularPipeline"]["runnableModes"],
+            ["edit_image", "text_to_image"],
+        )
+        self.assertEqual(
+            supported["Flux2KleinModularPipeline"]["executionProfiles"][0]["id"],
+            "flux2-klein:modular",
+        )
+        self.assertNotIn("Flux2KleinBaseModularPipeline", experimental)
+        self.assertEqual(
+            supported["Flux2KleinBaseModularPipeline"]["runnableModes"],
+            ["edit_image", "text_to_image"],
+        )
+        self.assertEqual(
+            supported["Flux2KleinBaseModularPipeline"]["executionProfiles"][0]["id"],
+            "flux2-klein-base:modular",
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

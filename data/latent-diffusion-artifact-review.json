@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "family": "Latent Diffusion",
+  "repository": {
+    "repository": "CompVis/ldm-text2im-large-256",
+    "revision": "30de525ca11a880baea4962827fb6cb0bb268955",
+    "private": false,
+    "gated": false,
+    "pythonFilesPresent": false,
+    "trustRemoteCodeRequired": false,
+    "modelIndexClass": "LDMTextToImagePipeline",
+    "modelIndexBertLibrary": "latent_diffusion",
+    "reportedUsedStorageBytes": 16136827885,
+    "selectedWeightFileCount": 3,
+    "selectedWeightBytes": 6152286891,
+    "selectedWeightInventorySha256": "d6e5f578f369d7e7fc579822be8f55b23073fc742ca15316a1dd9bf562b7eb62",
+    "safetensorsWeightFileCount": 0,
+    "licenseFilePresent": false,
+    "modelCardLicenseTag": "apache-2.0"
+  },
+  "selectedWeightFiles": [
+    {
+      "path": "bert/pytorch_model.bin",
+      "byteSize": 2328106869,
+      "sha256": "0f946e73c5df896feef89add8becc37f92ddf4359d816d0b3c4825f28d008bd1",
+      "serialization": "pytorch_pickle_bin"
+    },
+    {
+      "path": "unet/diffusion_pytorch_model.bin",
+      "byteSize": 3489472805,
+      "sha256": "61459453cb8e411842ff1c109da94129f94349d46e579dbec303449aa74f07bf",
+      "serialization": "pytorch_pickle_bin"
+    },
+    {
+      "path": "vqvae/diffusion_pytorch_model.bin",
+      "byteSize": 334707217,
+      "sha256": "1b134cded8eb78b184aefb8805b6b572f36fa77b255c483665dda931fa0130c5",
+      "serialization": "pytorch_pickle_bin"
+    }
+  ],
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256",
+      "serialization"
+    ],
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "metadataSha256": {
+    "modelCard": "b4e2d52af0ce421b63510b65260e5e7c356ec3f8ab9261d2a759a15ced6a7627",
+    "modelIndex": "c180349b884de80a01fac3680980910d27728e7962e067ba71c2af675ba70db3",
+    "bertConfig": "4b73492934911c4d6c4b6ceab0556884dbb5e99aa13a1f1581bae26ca0f7470b",
+    "schedulerConfig": "9eb2933fdf96f393defa77d4b7054611cf2e750a44aca8d10d0c156d8aabb127",
+    "specialTokensMap": "b6d346be366a7d1d48332dbc9fdf3bf8960b5d879522b7799ddba59e76237ee3",
+    "tokenizerConfig": "2cc2a2e7c41ebc0589e2e6689b84b83b8aaa33f7dec2baae73268721bb039e65",
+    "tokenizerVocab": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+    "unetConfig": "7c6bdcf7474b54510bd3a070914644d1768ca77f128a2734c3a3e3ba8842dea3",
+    "vqvaeConfig": "aa96f16c2dc6a46efa8c89cb6350466429c23f5e7b5e0013ab67efbd7c3c9259"
+  },
+  "pinnedDiffusers": {
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "version": "0.40.0.dev0",
+    "pipelineClass": "LDMTextToImagePipeline",
+    "packageOwnedBertClass": "LDMBertModel",
+    "pipelineSha256": "2912598df998b76d7fde16531e8249761d2872fc96608dca44396ce721f3987b",
+    "callbackOnStepEndAvailable": false,
+    "interruptFlagAvailable": false,
+    "safetyCheckerAvailable": false,
+    "modelCpuOffloadSequence": "bert->unet->vqvae"
+  },
+  "pipelineContract": {
+    "modes": [
+      "text_to_image"
+    ],
+    "defaultHeight": 256,
+    "defaultWidth": 256,
+    "dimensionMultiple": 8,
+    "defaultNumInferenceSteps": 50,
+    "defaultGuidanceScale": 1.0,
+    "documentedExampleGuidanceScale": 6.0,
+    "documentedExampleEta": 0.3,
+    "effectivePromptTokenLimit": 77,
+    "negativePromptAvailable": false,
+    "packageUpperBounds": {
+      "numInferenceSteps": null,
+      "height": null,
+      "width": null,
+      "outputPixels": null
+    }
+  },
+  "serializationReview": {
+    "safeSerializationAvailable": false,
+    "allRequiredWeightsUsePickleContainers": true,
+    "hubScannerObservedTypicalTorchPickleRebuildImports": true,
+    "staticScannerResultMakesPickleSafeForMoDiff": false,
+    "reason": "MoDiff's managed artifact policy requires a safetensors partition; a scanner allowlist cannot make executable pickle deserialization an admissible default."
+  },
+  "licenseReview": {
+    "modelCardLicenseTag": "apache-2.0",
+    "snapshotLicenseFilePresent": false,
+    "immutableLicenseReceiptComplete": false,
+    "clarificationRequiredBeforeRedistribution": true
+  },
+  "remoteResourceEnvelope": {
+    "status": "estimate_only_not_admitted",
+    "selectedWeightBytes": 6152286891,
+    "minimumSelectiveDiskBytes": 10737418240,
+    "minimumSystemRamBytes": 25769803776,
+    "minimumAcceleratorMemoryBytesEstimate": 12884901888,
+    "notes": [
+      "The estimate covers the legacy float32 256px text-to-image route only.",
+      "No model weight bytes were downloaded and no local or remote real-weight measurement qualified this envelope."
+    ]
+  },
+  "admission": {
+    "status": "review_complete_blocked_unsafe_serialization_and_cancellation",
+    "runtimeCatalogExposed": false,
+    "downloadCatalogExposed": false,
+    "capabilityExposed": false,
+    "canonicalWorkflowsAdded": 0,
+    "clientSurfaceAdded": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "liveQualified": false,
+    "modelWeightsDownloaded": false,
+    "remoteWeightBytesFetched": 0,
+    "blockingReasons": [
+      "All three required model components are legacy PyTorch pickle .bin artifacts and the immutable repository has no safetensors alternative.",
+      "The package pipeline exposes neither a step callback nor an interrupt flag, so MoDiff cannot cooperatively cancel the full job.",
+      "The package does not bound inference steps, output sides, or output pixels.",
+      "The package has no output safety checker.",
+      "The model card declares Apache-2.0 but the immutable snapshot contains no license file."
+    ],
+    "unresolvedGates": [
+      "safe_official_safetensors_artifacts",
+      "cooperative_full_job_cancellation",
+      "backend_owned_resource_and_output_bounds",
+      "immutable_model_license_receipt",
+      "remote_real_weight_execution_and_output_review",
+      "physical_macos_execution"
+    ]
+  }
+}

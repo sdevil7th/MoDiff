@@ -8,7 +8,7 @@ class AcceleratorManifestTests(unittest.TestCase):
         manifest = load_manifest()
         self.assertEqual(
             set(manifest["profiles"]),
-            {"nvidia-cuda", "amd-rocm-linux", "amd-pytorch-windows", "intel-xpu", "apple-mps", "cpu"},
+            {"nvidia-cuda", "amd-rocm-linux", "amd-instinct-rocm-linux", "amd-pytorch-windows", "intel-xpu", "apple-mps", "cpu"},
         )
         for name, profile in manifest["profiles"].items():
             with self.subTest(name=name):

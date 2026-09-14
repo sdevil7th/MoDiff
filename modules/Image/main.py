@@ -48,6 +48,30 @@ def decode_vae_latents(model, latents, size=None):
 def collapse_single(values):
     return values[0] if len(values) == 1 else values
 
+
+def flatten_pil_image_collection(value):
+    """Normalize nested Diffusers image batches at the preview boundary.
+
+    Some Diffusers pipelines preserve their batch grouping in the public
+    output.  Qwen Image Layered, for example, returns one list of layer images
+    per batch item.  That is already decoded media, not VAE latents.  Keep the
+    pipeline value untouched upstream and flatten only for MoDiff's image
+    preview/output node, whose contract is a single image or a flat image
+    collection.
+    """
+
+    if isinstance(value, Image.Image):
+        return [value]
+    if isinstance(value, (list, tuple)):
+        images = []
+        for item in value:
+            nested = flatten_pil_image_collection(item)
+            if nested is None:
+                return None
+            images.extend(nested)
+        return images
+    return None
+
 def alpha_to_mask(image):
     if "A" in image.getbands():
         return image.getchannel("A").convert("L")
@@ -295,10 +319,11 @@ class Preview(NodeBase):
         if image is None:
             return {"output": None, "filtered": None}
 
-        output = image
+        decoded_images = flatten_pil_image_collection(image)
+        output = collapse_single(decoded_images) if decoded_images else image
 
         # if image is an Image or an array of Images, pass it to the preview
-        if not (isinstance(image, Image.Image) or (isinstance(image, list) and len(image) > 0 and isinstance(image[0], Image.Image))):
+        if decoded_images is None:
             pipeline = kwargs["vae"]
             device = kwargs["device"]
             if pipeline is None:

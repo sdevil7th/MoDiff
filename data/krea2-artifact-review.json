@@ -1,0 +1,298 @@
+{
+  "schemaVersion": 1,
+  "family": "Krea 2",
+  "reviewedAt": "2026-08-14T00:00:00+05:30",
+  "repositories": {
+    "raw": {
+      "repository": "krea/Krea-2-Raw",
+      "revision": "6b0ece7fffb640c5e3bcbe0a7f10f66b8e60a603",
+      "private": false,
+      "gated": "auto",
+      "repositoryFileCount": 55,
+      "reportedUsedStorageBytes": 62074859962,
+      "appPlannedSnapshotBytes": 62005215359,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "modelIndexClassFromRepositoryTag": "Krea2Pipeline",
+      "modelIndexAccessibleWithoutAcceptedGate": false,
+      "gatedArtifactHttpStatus": 401,
+      "selectedDiffusersFileCount": 17,
+      "selectedDiffusersBytes": 35678286362,
+      "selectedWeightFileCount": 5,
+      "selectedWeightBytes": 35666644396,
+      "selectedWeightInventorySha256": "0d5bc71cbb5039c08a8703e601969873748fd303a10080dfdae09788fa61ff70",
+      "excludedPublisherMediaFileCount": 37,
+      "excludedRootNativeCheckpoint": {
+        "path": "raw.safetensors",
+        "byteSize": 26283332608,
+        "sha256": "f99bb0ff8e362b77342bc4994e0c50906fe7ef7074864b181b7d48d2fa6d03d7"
+      }
+    },
+    "turbo": {
+      "repository": "krea/Krea-2-Turbo",
+      "revision": "98e0fe118d17c9e3547fbb2e25acdbae2cadf7c7",
+      "private": false,
+      "gated": "auto",
+      "repositoryFileCount": 55,
+      "reportedUsedStorageBytes": 62523449250,
+      "appPlannedSnapshotBytes": 61995040979,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "modelIndexClassFromRepositoryTag": "Krea2Pipeline",
+      "modelIndexAccessibleWithoutAcceptedGate": false,
+      "gatedArtifactHttpStatus": 401,
+      "selectedDiffusersFileCount": 17,
+      "selectedDiffusersBytes": 35678286813,
+      "selectedWeightFileCount": 5,
+      "selectedWeightBytes": 35666644396,
+      "selectedWeightInventorySha256": "140e5fe3cae9549fcca71fa12fad294456c0ca4e573459d3ea3307b5626219cc",
+      "excludedPublisherMediaFileCount": 37,
+      "excludedRootNativeCheckpoint": {
+        "path": "turbo.safetensors",
+        "byteSize": 26283332608,
+        "sha256": "78bbf8f4165eda19cea3cb06c78089221932a39e2eed8af9da741f942c47ffb3"
+      }
+    }
+  },
+  "candidateDiffusersFiles": [
+    ".gitattributes",
+    "LICENSE.pdf",
+    "README.md",
+    "model_index.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.safetensors",
+    "tokenizer/chat_template.jinja",
+    "tokenizer/tokenizer.json",
+    "tokenizer/tokenizer_config.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model-00003-of-00003.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors"
+  ],
+  "weightFiles": {
+    "raw": [
+      {
+        "path": "text_encoder/model.safetensors",
+        "byteSize": 8875715136,
+        "sha256": "8434db05292f95e0041589a7c82abeb39385be59c85b54ae11caa7b45e9f4f13"
+      },
+      {
+        "path": "transformer/diffusion_pytorch_model-00001-of-00003.safetensors",
+        "byteSize": 9970652128,
+        "sha256": "aeed04b3fd933ff35ffb898548a585a32f2146ee6681700e2b50e4478d52d58a"
+      },
+      {
+        "path": "transformer/diffusion_pytorch_model-00002-of-00003.safetensors",
+        "byteSize": 9829444456,
+        "sha256": "e606797c9fbfeb820b9a0222823915ac1459d11a27caa84d53aba150c85f2b26"
+      },
+      {
+        "path": "transformer/diffusion_pytorch_model-00003-of-00003.safetensors",
+        "byteSize": 6483240784,
+        "sha256": "9300cac5c4cdbc33bbccadf176c0e5a8314b6a4aabefae7a2781782d50d78e7d"
+      },
+      {
+        "path": "vae/diffusion_pytorch_model.safetensors",
+        "byteSize": 507591892,
+        "sha256": "ab1b61103959913d6c7e628cf793dbb2ca4726a40a3b3ae206c52b8e75bf6f08"
+      }
+    ],
+    "turbo": [
+      {
+        "path": "text_encoder/model.safetensors",
+        "byteSize": 8875715136,
+        "sha256": "8434db05292f95e0041589a7c82abeb39385be59c85b54ae11caa7b45e9f4f13"
+      },
+      {
+        "path": "transformer/diffusion_pytorch_model-00001-of-00003.safetensors",
+        "byteSize": 9970652128,
+        "sha256": "9ca6a4951e447d8465cf64e0d7324b65da1a44d373d7d1b7d610fc395b164861"
+      },
+      {
+        "path": "transformer/diffusion_pytorch_model-00002-of-00003.safetensors",
+        "byteSize": 9829444456,
+        "sha256": "d092b7b22d2febe37354a54f2cfa4891b4fda397e27a3a465ee64f7597ecaad3"
+      },
+      {
+        "path": "transformer/diffusion_pytorch_model-00003-of-00003.safetensors",
+        "byteSize": 6483240784,
+        "sha256": "df51a0e537a56ba2ebf06c0d190d3f8571f967ae1f8e7b8acf05c33b5821cdce"
+      },
+      {
+        "path": "vae/diffusion_pytorch_model.safetensors",
+        "byteSize": 507591892,
+        "sha256": "ab1b61103959913d6c7e628cf793dbb2ca4726a40a3b3ae206c52b8e75bf6f08"
+      }
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "entries": ["path", "byteSize", "sha256"],
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "metadataBlobReceipts": {
+    "sharedLicenseGitBlob": "78cb4aa4bb89da0b52b0619663b485a918d7d596",
+    "rawReadmeGitBlob": "e389a627a46d45668109be6366dcc8d5543c5603",
+    "turboReadmeGitBlob": "63e4b03e20c8624d3b24a81197c355bc2bb70dd4",
+    "rawModelIndexGitBlob": "00912991a420c8ecea57d630549a7ae8db93a7eb",
+    "turboModelIndexGitBlob": "889dbf53a26b78303ec0d9782c9bd3a1a13e2483",
+    "schedulerConfigGitBlob": "204c6206e278b595772d8ddaf69d9371de2d23b2",
+    "textEncoderConfigGitBlob": "259091957835d33e698926946f7a86189240ae30",
+    "tokenizerChatTemplateGitBlob": "124386803f142761528f710e77ae483f5f8c4fc4",
+    "tokenizerJsonGitBlob": "c7afbed2efcdf019f88ab0572ec29d3bf595dfe2",
+    "tokenizerConfigGitBlob": "f23dc7a19faf556b079ef8110de34a186f5c7dbe",
+    "transformerConfigGitBlob": "a1bbdd4203a18e23ee90aa3b0c9fca5cff0b72ef",
+    "transformerIndexGitBlob": "e959598c3b2daa75125a2bc1f52ee864291314aa",
+    "vaeConfigGitBlob": "9dd30f0ac610d69cca7d1ececb454ffe5918f27d"
+  },
+  "pinnedDiffusers": {
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "version": "0.40.0.dev0",
+    "pipelineClass": "Krea2Pipeline",
+    "transformerClass": "Krea2Transformer2DModel",
+    "textEncoderClass": "Qwen3VLModel",
+    "tokenizerClass": "AutoTokenizer",
+    "autoencoderClass": "AutoencoderKLQwenImage",
+    "schedulerClass": "FlowMatchEulerDiscreteScheduler",
+    "sourceSha256": {
+      "pipeline": "7416018ad2a81b2f907c884012d5c2d3f6673a6a8e891b7885d03637178daf75",
+      "transformer": "557de19374be322bf1fe974314b859286105dc6592b26a99d7544c068d9cba6b",
+      "output": "7eb052dcb404198e678928682306b76f128189a3f451efa9730b4deea655438a",
+      "baseModularBlocks": "90a2ecaec7cdc94e3bc2d2ea28b67680662dba954a9244add7b2d90d3cecc601",
+      "turboModularBlocks": "44cebed556e0ff0075b2a6e8615515fbc889b97c3cbac8115a51e0cb95a0e8cb"
+    },
+    "callbackOnStepEndAvailable": true,
+    "interruptFlagAvailable": true,
+    "interruptFlagReadByDenoisingLoop": true,
+    "safetyCheckerAvailable": false,
+    "modelCpuOffloadSequence": "text_encoder->transformer->vae"
+  },
+  "pipelineContract": {
+    "modes": ["text_to_image"],
+    "defaultHeight": 1024,
+    "defaultWidth": 1024,
+    "dimensionMultiple": 16,
+    "defaultMaxSequenceLength": 512,
+    "base": {
+      "isDistilled": false,
+      "numInferenceSteps": 28,
+      "guidanceScale": 4.5,
+      "negativePromptAvailable": true,
+      "resolutionAwareShift": true
+    },
+    "turbo": {
+      "isDistilled": true,
+      "numInferenceSteps": 8,
+      "guidanceScale": 0.0,
+      "negativePromptAvailable": false,
+      "fixedShift": 1.15
+    },
+    "packageUpperBounds": {
+      "maxSequenceLength": null,
+      "numInferenceSteps": null,
+      "height": null,
+      "width": null,
+      "outputPixels": null
+    }
+  },
+  "licenseReview": {
+    "id": "krea-2-community-license-v1",
+    "date": "2026-06-22",
+    "modelCardLicenseTag": "other",
+    "gateAcceptanceRequired": true,
+    "taskScopedProductAcceptanceObtained": false,
+    "licenseLinkCommit": "db3984fbc6e13b34c0064990fc2d95ac64d00058",
+    "licensePdfByteSize": 137711,
+    "licensePdfSha256": "b82a2805162bde714a4eb27b9063c4fc3345d08a30be055134a6160e5430ba74",
+    "acceptanceTriggeredByDownloadAccessCopyUseOrDistribution": true,
+    "commercialUseAnnualRevenueThresholdUsdExclusive": 1000000,
+    "enterpriseLicenseRequiredAtOrAboveThreshold": true,
+    "licenseRevocableNonTransferableNonSublicensable": true,
+    "distributionRequiresRecipientAcceptanceLicenseCopyKreaNamePrefixAndNotice": true,
+    "contentFiltersRequiredForDeployment": true,
+    "acceptableUsePolicyIncorporatedByReference": true,
+    "acceptableUsePolicyUrlImmutable": false,
+    "acceptableUsePolicyPublishedAndModifiedDate": "2026-06-22",
+    "terminationForConvenienceWithThirtyDaysNotice": true,
+    "terminationRequiresCessationAndCopyDestruction": true,
+    "legalAndProductApprovalComplete": false
+  },
+  "resourceEnvelopes": {
+    "raw": {
+      "status": "estimate_only_not_admitted",
+      "selectedWeightBytes": 35666644396,
+      "minimumSelectiveDiskBytes": 48318382080,
+      "minimumSystemRamBytes": 68719476736,
+      "minimumAcceleratorMemoryBytesWithModelOffloadEstimate": 25769803776
+    },
+    "turbo": {
+      "status": "estimate_only_not_admitted",
+      "selectedWeightBytes": 35666644396,
+      "minimumSelectiveDiskBytes": 48318382080,
+      "minimumSystemRamBytes": 68719476736,
+      "minimumAcceleratorMemoryBytesWithModelOffloadEstimate": 25769803776
+    }
+  },
+  "appDownloadPreflight": {
+    "transportPolicy": "app_only",
+    "planRequestedThroughApp": true,
+    "submissionAttempted": false,
+    "termsAcceptedByMoDiff": false,
+    "directWeightDownloadPerformed": false,
+    "olderModelsDeleted": false,
+    "preflightFreeBytes": 528238714880,
+    "preflightExistingQueuedReservationBytes": 450696547273,
+    "reserveBytes": 68719476736,
+    "preSnapshotHeadroomAfterReserveBytes": 8822690871,
+    "raw": {
+      "remainingBytes": 62005215359,
+      "standaloneFits": true,
+      "fitsWithQueue": false,
+      "additionalBytesRequired": 53182524488
+    },
+    "turbo": {
+      "remainingBytes": 61995040979,
+      "standaloneFits": true,
+      "fitsWithQueue": false,
+      "additionalBytesRequired": 53172350108
+    }
+  },
+  "admission": {
+    "status": "review_complete_blocked_custom_model_license_and_capacity",
+    "runtimeCatalogExposed": false,
+    "downloadCatalogExposed": false,
+    "capabilityExposed": false,
+    "canonicalWorkflowsAdded": 0,
+    "clientSurfaceAdded": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "liveQualified": false,
+    "modelWeightsDownloaded": false,
+    "remoteWeightBytesFetched": 0,
+    "blockingReasons": [
+      "The Hugging Face gates require affirmative acceptance of the Krea 2 Community License and Acceptable Use Policy, which this source review did not perform for the product or user.",
+      "Commercial use at or above one million USD in trailing company-wide annual revenue requires a separate enterprise license.",
+      "Distribution carries recipient-acceptance, license-copy, model-naming, and notice obligations that require legal and product implementation.",
+      "Deployment requires content filters, while the package pipeline contains no safety checker and MoDiff has not qualified a replacement guardrail.",
+      "The moving Acceptable Use Policy is incorporated by reference without an immutable revision.",
+      "The package does not bound steps, sequence length, or output pixels.",
+      "Neither full app snapshot fits beside the existing download queue and safety reserve."
+    ],
+    "unresolvedGates": [
+      "task_scoped_model_license_and_acceptable_use_acceptance",
+      "commercial_eligibility_and_legal_product_approval",
+      "downstream_terms_notice_and_content_filter_implementation",
+      "immutable_acceptable_use_policy_receipt",
+      "backend_owned_bounds_and_optional_runtime_contract",
+      "app_storage_capacity",
+      "remote_real_weight_execution_and_output_review",
+      "physical_macos_execution"
+    ]
+  }
+}

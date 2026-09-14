@@ -1,0 +1,144 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "downloadCatalogExposed": true,
+    "executableModes": [
+      "DreamLitePipeline:text_to_image",
+      "DreamLitePipeline:edit_image",
+      "DreamLiteMobilePipeline:text_to_image",
+      "DreamLiteMobilePipeline:edit_image"
+    ],
+    "galleryEligible": false,
+    "liveQualified": false,
+    "runtimeCatalogExposed": true,
+    "status": "source_complete_execution_pending",
+    "unresolvedGates": [
+      "remote_real_weight_execution",
+      "physical_macos_execution",
+      "upstream_step_callback_unavailable"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "DreamLite",
+  "format": "safetensors",
+  "license": {
+    "commercialUseAllowed": false,
+    "evidence": "Pinned model-card metadata and README text on both repositories",
+    "id": "cc-by-nc-4.0"
+  },
+  "pinnedDiffusersSources": {
+    "basePipelineSha256": "9633094a5695545bfdc59280cc19f7574ddf6e2b485d6101686197c608040177",
+    "mobilePipelineSha256": "04d37a801a571defe3dc632737e91739c93c26576f475b0478803b3a376f3951",
+    "transformerSha256": "bbb18eb365cb1a0d88abeb6f189edeec1bcc024bce37de09a193c9dc9fa3491b",
+    "unetSha256": "ad81ea018eaa53f9accbf9c47e8e20b1d89ad5d0ab02b9abeb40472d307bfc97"
+  },
+  "pipelineContracts": [
+    {
+      "defaultGuidanceScale": 3.5,
+      "defaultHeight": 1024,
+      "defaultImageGuidanceScale": 1.5,
+      "defaultNumInferenceSteps": 30,
+      "defaultWidth": 1024,
+      "maxSequenceLength": 200,
+      "modes": [
+        "text_to_image",
+        "edit_image"
+      ],
+      "pipelineClass": "DreamLitePipeline",
+      "recommendedNumInferenceSteps": 28,
+      "stepCallbackSupported": false
+    },
+    {
+      "defaultGuidanceScale": null,
+      "defaultHeight": 1024,
+      "defaultImageGuidanceScale": null,
+      "defaultNumInferenceSteps": 4,
+      "defaultWidth": 1024,
+      "guidanceInputsIgnored": true,
+      "maxNumInferenceSteps": 8,
+      "maxSequenceLength": 200,
+      "modes": [
+        "text_to_image",
+        "edit_image"
+      ],
+      "pipelineClass": "DreamLiteMobilePipeline",
+      "stepCallbackSupported": false
+    }
+  ],
+  "remoteResourceEnvelope": {
+    "minimumAcceleratorMemoryBytesEstimate": 8589934592,
+    "minimumSelectiveDiskBytes": 10737418240,
+    "minimumSystemRamBytes": 17179869184,
+    "status": "estimate_only_qualification_pending"
+  },
+  "repositories": [
+    {
+      "gated": false,
+      "modelCardSha256": "a95bc5460ccb42e8e13a99e0cb032d35b32f72bc16a43aacd1c9f18344991407",
+      "modelIndexSha256": "3d1251d8f79ef0aacf6149969637fb7d4e80b48becac7710a3ff45b6504bd539",
+      "pipelineClass": "DreamLitePipeline",
+      "private": false,
+      "repository": "carlofkl/DreamLite-base",
+      "revision": "751cb8dbb9072a8c8ffd8684e0f254b50f20531b",
+      "revisionSource": "diffusers branch resolved to immutable commit",
+      "role": "base",
+      "weightBytes": 5040118270,
+      "weightFileCount": 3,
+      "weightInventorySha256": "ce6643a15280cee77c4bc35c120963797bc36d857165296b22015aa46c2fdbde"
+    },
+    {
+      "gated": false,
+      "modelCardSha256": "c0014d63777639ce43e3716e0a6a3f811e0f18048581cded5de024b19b3c5865",
+      "modelIndexSha256": "f22a14037405626f103502679632e72875b12f9a1632b2d1ed8e5a0314f7fa06",
+      "pipelineClass": "DreamLiteMobilePipeline",
+      "private": false,
+      "repository": "carlofkl/DreamLite-mobile",
+      "revision": "6695c3f4be230f0493fa5dbf78be3bc4d3bb2ab4",
+      "revisionSource": "diffusers branch resolved to immutable commit",
+      "role": "mobile",
+      "weightBytes": 5040118270,
+      "weightFileCount": 3,
+      "weightInventorySha256": "f6acc87c16cca2b4765d55df203a5998aa828e106f029fa601d0b2cd86a0e9e4"
+    }
+  ],
+  "repositoryCode": {
+    "pythonFilesPresent": false,
+    "trustRemoteCodeRequired": false,
+    "upstreamLibraryClassesOnly": true
+  },
+  "schemaVersion": 1,
+  "sharedWeightFiles": [
+    {
+      "byteSize": 4255140312,
+      "path": "text_encoder/model.safetensors",
+      "sha256": "7de1838c87a5349b016c26a1c3f7d2bc400a3d485f95ef39a7059ffd734977a0"
+    },
+    {
+      "byteSize": 4903270,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "e175c3284b8514a2ecb1a70f004b0b09320decd6842e77dfebbdb5dbbdf0312b"
+    }
+  ],
+  "variantWeightFiles": {
+    "base": {
+      "byteSize": 780074688,
+      "path": "unet/diffusion_pytorch_model.safetensors",
+      "sha256": "f983bd1710344cb44f7d12d05c0ca961984b48391dcbb095ad710609cbde3246"
+    },
+    "mobile": {
+      "byteSize": 780074688,
+      "path": "unet/diffusion_pytorch_model.safetensors",
+      "sha256": "d3b46c229731e4c0c967176fdead58dd24bd3c29132c7f1c2204442cfeb99dc7"
+    }
+  }
+}

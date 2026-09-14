@@ -1,0 +1,176 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "downloadCatalogExposed": true,
+    "executableModes": [
+      "Kandinsky3Pipeline:text_to_image",
+      "Kandinsky3Pipeline:edit_image"
+    ],
+    "galleryEligible": false,
+    "liveQualified": false,
+    "remoteOnly": true,
+    "runtimeCatalogExposed": true,
+    "status": "source_complete_execution_pending",
+    "unresolvedGates": [
+      "remote_real_weight_execution",
+      "live_output_safety_and_quality_review",
+      "model_snapshot_license_file_clarification",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "Kandinsky 3",
+  "format": "safetensors",
+  "license": {
+    "acceptanceRequired": false,
+    "evidence": "The immutable model card declares Apache-2.0 but contains no license file. The exact reviewed upstream source revision contains the full Apache-2.0 text.",
+    "id": "apache-2.0",
+    "modelSnapshotLicenseFilePresent": false,
+    "upstreamLicenseSha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "upstreamRepository": "ai-forever/Kandinsky-3",
+    "upstreamRevision": "a4c9e92e4d9b2a57081b7e33a2e82373c99ddbfc"
+  },
+  "metadataSha256": {
+    "modelCard": "b2dc591f2c95099c97f8fd67d41521a8180be696a44297846b49babf23472be7",
+    "modelIndex": "6b437e9e2d1d66fbf9dc99f6871da3705d1ba67591a9298b3b5b4e4ddc050b49",
+    "movqConfig": "f6943ecf69ea1fd24aabcf74fa5a244e8d79c1d01e7c942046314d3a70b6576d",
+    "schedulerConfig": "9e05a641fe4024b17b85cba59f894fc2b5324c148ea31b10c5cb12f3c0cb5471",
+    "textEncoderConfig": "b90d3446a476f7bb04a4c3252ef3df0b7ae29997a623150345079fe476d9ffba",
+    "textEncoderFp16Index": "f78893f120f7e17d98a2f4336d5c22a1e94c699c69b97d674608c2a9c0821e57",
+    "tokenizerConfig": "dbe0f3be808f3d0aa27548ead286f164226724212fe6b8587c5e0386ecc7156b",
+    "unetConfig": "f94b4b98017a72081a5b0ca31f8e922588c4a3755b8643be3f57154671a75d0e"
+  },
+  "pinnedDiffusers": {
+    "callbackOnStepEndAvailable": true,
+    "cooperativeCancellationAvailable": true,
+    "imageToImagePipelineClass": "Kandinsky3Img2ImgPipeline",
+    "imageToImagePipelineSha256": "3f566401734fc8d588d3bcce9aee9ce9a804dc7993ced8391d2e2b96f56391f7",
+    "pipelineClass": "Kandinsky3Pipeline",
+    "pipelineSha256": "22b05f6f7aab0974364b4938bdae7f5e1ddcb96e1b10d41bd502e4e6cf1f786f",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "unetClass": "Kandinsky3UNet",
+    "unetSha256": "2911255915b633fedbf5908a0d2ccbfd34e57b034e9613953aa6d1c9fcd77dc4",
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContracts": {
+    "Kandinsky3Img2ImgPipeline": {
+      "defaultGuidanceScale": 3.0,
+      "defaultNumInferenceSteps": 25,
+      "defaultStrength": 0.3,
+      "documentedExampleStrength": 0.75,
+      "maximumMoDiffInferenceSteps": 50,
+      "maximumMoDiffInputPixels": 1048576,
+      "maximumPromptTokens": 128,
+      "outputType": "ImagePipelineOutput",
+      "requiredInputs": [
+        "prompt",
+        "image"
+      ],
+      "supportsNegativePrompt": true
+    },
+    "Kandinsky3Pipeline": {
+      "defaultGuidanceScale": 3.0,
+      "defaultHeight": 1024,
+      "defaultNumInferenceSteps": 25,
+      "defaultWidth": 1024,
+      "maximumMoDiffInferenceSteps": 50,
+      "maximumMoDiffOutputPixels": 1048576,
+      "maximumPromptTokens": 128,
+      "outputType": "ImagePipelineOutput",
+      "requiredInputs": [
+        "prompt"
+      ],
+      "supportsNegativePrompt": true
+    }
+  },
+  "remoteResourceEnvelope": {
+    "minimumAcceleratorMemoryBytesEstimate": 34359738368,
+    "minimumSelectiveDiskBytes": 42949672960,
+    "minimumSystemRamBytes": 68719476736,
+    "notes": [
+      "The estimate applies to the admitted unquantized float16 loading route with model or sequential CPU offload.",
+      "The selected 21.74 GB text encoder is the largest component and dominates the offloaded memory envelope.",
+      "No local or remote real-weight measurement has qualified this envelope."
+    ],
+    "status": "estimate_only_qualification_pending"
+  },
+  "repository": {
+    "gated": false,
+    "modelIndexClass": "Kandinsky3Pipeline",
+    "private": false,
+    "pythonFilesPresent": false,
+    "repository": "kandinsky-community/kandinsky-3",
+    "repositoryBytes": 28393380331,
+    "revision": "bf79e6c219da8a94abb50235fdc4567eb8fb4632",
+    "trustRemoteCodeRequired": false,
+    "weightBytes": 28390829958,
+    "weightFileCount": 7,
+    "weightInventorySha256": "c35c900a0b73e039807162cd9b2e424ea8cdde182b1728999fbc57b6813cdb2b"
+  },
+  "runtime": {
+    "diffusersRequiredSymbols": [
+      "Kandinsky3Pipeline",
+      "Kandinsky3Img2ImgPipeline",
+      "Kandinsky3UNet"
+    ],
+    "optionalProfile": "huggingface-transformers-peft-5.14.1-0.20.0",
+    "transformersRequiredSymbols": [
+      "T5EncoderModel",
+      "T5Tokenizer"
+    ]
+  },
+  "safety": {
+    "autoDisabled": true,
+    "galleryDisabled": true,
+    "packageSafetyCheckerPresent": false,
+    "reason": "The package exposes no output safety checker, so only explicit Expert workflows are admitted pending remote output review."
+  },
+  "schemaVersion": 1,
+  "weightFiles": [
+    {
+      "byteSize": 541388942,
+      "path": "movq/diffusion_pytorch_model.fp16.safetensors",
+      "sha256": "8a4705625c160c49025e1f9b98776aaf5287240ca0d5ed39a1a235598fc39244"
+    },
+    {
+      "byteSize": 4994491352,
+      "path": "text_encoder/model.fp16-00001-of-00005.safetensors",
+      "sha256": "2745f08c74c13536c67282afc1e5ba80daf67e5ded7925845f3cb5e1983a2826"
+    },
+    {
+      "byteSize": 4932632832,
+      "path": "text_encoder/model.fp16-00002-of-00005.safetensors",
+      "sha256": "a1c184e0f3a2e8c80360379ada2d9fce40bee23647a63e3baefa00d837084408"
+    },
+    {
+      "byteSize": 4831960880,
+      "path": "text_encoder/model.fp16-00003-of-00005.safetensors",
+      "sha256": "3a6e4c548e5c2e6aa080a5eefad31e973dbba55b6918f95fb77af97fce341c94"
+    },
+    {
+      "byteSize": 4999741472,
+      "path": "text_encoder/model.fp16-00004-of-00005.safetensors",
+      "sha256": "3e7652beb11f33c5549d391c2affacd6642d9ca21bc0d4319cba60fe1b357ff0"
+    },
+    {
+      "byteSize": 1979772184,
+      "path": "text_encoder/model.fp16-00005-of-00005.safetensors",
+      "sha256": "f41b9aea886f3d583c026011cb7251ff21f615774ad604264aaaa01605e02326"
+    },
+    {
+      "byteSize": 6110842296,
+      "path": "unet/diffusion_pytorch_model.fp16.safetensors",
+      "sha256": "805179fe9c10cd1e01c59057f0c2bb07ce57834ad343f721e50ca16bef6952f6"
+    }
+  ]
+}

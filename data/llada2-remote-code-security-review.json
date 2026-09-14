@@ -1,0 +1,200 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "liveQualified": false,
+    "reason": "The immutable repository Python has no evident file, network, process, or dynamic-execution primitive in the reviewed snapshot, but AutoModelForCausalLM still requires trust_remote_code and imports that code with backend-process permissions. This review is evidence, not task-scoped operator authorization.",
+    "runtimeCatalogExposed": false,
+    "status": "blocked_remote_code",
+    "unresolvedGates": [
+      "task_scoped_operator_authorization_for_exact_remote_code",
+      "backend_owned_resource_caps_and_cancellation",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "LLaDA2",
+  "format": "safetensors_with_repository_python",
+  "license": {
+    "evidence": "Pinned model-card metadata",
+    "id": "apache-2.0",
+    "metadataOnly": true
+  },
+  "pinnedDiffusers": {
+    "llada2PipelineExported": true,
+    "pipelineClass": "LLaDA2Pipeline",
+    "pipelineSourceSha256": "6a24f6ac27deb993c80b9e91f9244f628104ced273d90dd04e59e071233047ca",
+    "schedulerSourceSha256": "0195f2597dab0621753396aef67ab6391ef2489b5df82178a70d294dd22392c4"
+  },
+  "pipelineInputReview": {
+    "boundedPositiveChecks": [
+      "gen_length",
+      "block_length",
+      "steps",
+      "minimal_topk"
+    ],
+    "resourceAllocationsDerivedFrom": [
+      "prompt_token_count",
+      "gen_length",
+      "block_length",
+      "steps",
+      "max_post_steps"
+    ],
+    "upperBoundsPresent": false,
+    "requiredFutureControls": [
+      "prompt_token_limit",
+      "generation_length_limit",
+      "block_length_limit",
+      "step_limits",
+      "output_byte_limit",
+      "cooperative_cancellation"
+    ]
+  },
+  "remoteCodeReview": {
+    "autoMap": {
+      "AutoConfig": "configuration_llada2_moe.LLaDA2MoeConfig",
+      "AutoModel": "modeling_llada2_moe.LLaDA2MoeModel",
+      "AutoModelForCausalLM": "modeling_llada2_moe.LLaDA2MoeModelLM"
+    },
+    "files": [
+      {
+        "byteSize": 3157,
+        "gitBlobSha1": "1151aa44b4fc8d2a553d8d96d754a5b0c124a72f",
+        "lineCount": 88,
+        "path": "configuration_llada2_moe.py",
+        "sha256": "618ba95f31bcdd08fd5f92d47d7a3404c5dd5e24bef1c3847f7126025dc263e4"
+      },
+      {
+        "byteSize": 60421,
+        "gitBlobSha1": "4836e341a2ba0cfdcf2e718396ef6cde42013e7a",
+        "lineCount": 1439,
+        "path": "modeling_llada2_moe.py",
+        "sha256": "fe5c809d4d0e3e489eff649a976300daaf0f1086dd411ef72da602fa8097be46"
+      }
+    ],
+    "forbiddenPrimitiveCounts": {
+      "ctypes_or_ffi": 0,
+      "dynamic_code_execution": 0,
+      "dynamic_import": 0,
+      "file_io": 0,
+      "network_or_http": 0,
+      "process_execution": 0,
+      "unsafe_deserialization": 0
+    },
+    "imports": [
+      "math",
+      "typing",
+      "torch",
+      "transformers",
+      ".configuration_llada2_moe"
+    ],
+    "importTimeSideEffects": [
+      {
+        "effect": "ALL_LAYERNORM_LAYERS.append(LLaDA2MoeRMSNorm)",
+        "line": 89,
+        "scope": "process_global_transformers_registry"
+      }
+    ],
+    "method": [
+      "full_source_visual_review",
+      "python_ast_top_level_statement_review",
+      "python_ast_call_target_review",
+      "string_and_import_scan"
+    ],
+    "result": "no_prohibited_effect_found_but_not_safe_execution_proof",
+    "scopeLimitations": [
+      "Static review cannot prove runtime safety or dependency behavior.",
+      "Repository Python executes with the backend process filesystem, network, CPU, and accelerator permissions.",
+      "The model implementation can allocate unbounded work unless MoDiff owns and enforces request limits.",
+      "A prior review does not substitute for fresh task-scoped operator authorization."
+    ],
+    "topLevelExecutableCallSideEffects": [
+      "ALL_LAYERNORM_LAYERS.append(LLaDA2MoeRMSNorm)"
+    ]
+  },
+  "repository": {
+    "config": {
+      "architecture": "LLaDA2MoeModelLM",
+      "configSha256": "6b1db3737e1d173a0326cd0bb740d7ae81515f5ea9468903fa008dadca9cffde",
+      "expertsPerToken": 8,
+      "hiddenSize": 2048,
+      "maxPositionEmbeddings": 32768,
+      "numAttentionHeads": 16,
+      "numExperts": 256,
+      "numHiddenLayers": 20,
+      "dtype": "bfloat16",
+      "transformersVersion": "4.57.1",
+      "vocabSize": 157184
+    },
+    "gated": false,
+    "modelCardSha256": "b96541953be3008e0031c20058de32705fda65a3a62d0a5ed0eaf725a299c69b",
+    "modelIndexSha256": "42bc76b39efa3bbb71de6d7580d490f986334299b6cdd976b966e1a854ac6a44",
+    "private": false,
+    "repository": "inclusionAI/LLaDA2.1-mini",
+    "revision": "20e64e2ad21644d0e5248586ed9c942cdd45de0f",
+    "tokenizerConfigSha256": "053a74db9233c69408762c4e70043cf9811504d1a59220adb0d00c956cf7749c",
+    "transformersAutoModelRequiresTrustRemoteCode": true,
+    "weightBytes": 32513130952,
+    "weightFileCount": 8,
+    "weightIndex": {
+      "fileCount": 8,
+      "tensorCount": 14813,
+      "totalTensorBytes": 32511296512
+    },
+    "weightInventorySha256": "b687fb52419763788122e347d170928bd14188498e84c22c321843a99875250c"
+  },
+  "schemaVersion": 1,
+  "weightFiles": [
+    {
+      "byteSize": 5735111000,
+      "path": "model-00000-of-00008.safetensors",
+      "sha256": "21a904092ad20835b30400a1ee939f765d88214381e0256f1a5b598da9b425cc"
+    },
+    {
+      "byteSize": 3825430152,
+      "path": "model-00001-of-00008.safetensors",
+      "sha256": "6f89a9d7bffaa06dffee29ecca93c870657ae670cb9a848c052adeb84487f4df"
+    },
+    {
+      "byteSize": 3825430152,
+      "path": "model-00002-of-00008.safetensors",
+      "sha256": "441c1b58669f0cabc1c6f22ab83a56f8c2e38eba2a2e534d01257d7c8247695a"
+    },
+    {
+      "byteSize": 3825431744,
+      "path": "model-00003-of-00008.safetensors",
+      "sha256": "602798afb9acfccefe5f2186a59ee24b4847f3f587f3fa589173f02fc917c4a6"
+    },
+    {
+      "byteSize": 3825431976,
+      "path": "model-00004-of-00008.safetensors",
+      "sha256": "7bd5fc04fc64bc8ef9e54dbbb630c570417dc45ee2bbd47b0d71dffc61830ccf"
+    },
+    {
+      "byteSize": 3825431976,
+      "path": "model-00005-of-00008.safetensors",
+      "sha256": "a7b097875ab571ecfb710cecb3cacb46b4de67a88b5eacdf8942a8133384e03a"
+    },
+    {
+      "byteSize": 3825431976,
+      "path": "model-00006-of-00008.safetensors",
+      "sha256": "d77a97241a25a79c973aaed3395eb21f8c940e40da71a1279ae19ea8431ba5ee"
+    },
+    {
+      "byteSize": 3825431976,
+      "path": "model-00007-of-00008.safetensors",
+      "sha256": "61f8f4a0c54780d41250b9265075169971f2e4fe6b52f4ccd766ddd2305bc764"
+    }
+  ]
+}

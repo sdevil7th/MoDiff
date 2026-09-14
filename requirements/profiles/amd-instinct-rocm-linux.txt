@@ -1,0 +1,16 @@
+# Preview MI300X/gfx942 profile. SDK/device wheels provide ROCm userspace;
+# do not install the Ryzen driver stack or resolve a generic CUDA Torch wheel.
+# The managed installer supplies the adjacent .uv.toml index configuration.
+
+torch[device-gfx942]==2.10.0+rocm7.14.0
+torchvision[device-gfx942]==0.25.0+rocm7.14.0
+torchaudio==2.10.0+rocm7.14.0
+triton==3.6.0+rocm7.14.0
+rocm==7.14.0
+rocm-bootstrap==0.1.0
+rocm-sdk-core==7.14.0
+rocm-sdk-libraries==7.14.0
+rocm-sdk-device-gfx942==7.14.0
+amd-torch-device-gfx942==2.10.0+rocm7.14.0
+amd-torchvision-device-gfx942==0.25.0+rocm7.14.0
+-e .

@@ -392,11 +392,17 @@ def _probe_cuda(
         dedicated_used = _safe_int(region.get("vram_used")) if region else None
         shared_total = _safe_int(region.get("gtt_total")) if region else None
         shared_used = _safe_int(region.get("gtt_used")) if region else None
+        # A large discrete accelerator can have almost as much VRAM as host
+        # RAM (for example MI300X 192 GiB on a 240 GiB VM). Confirmed local
+        # DRM capacity takes precedence over that capacity-only APU heuristic.
+        # Explicit integrated names and a runtime aperture larger than local
+        # VRAM still identify shared devices below.
+        local_capacity_confirmed = bool(region and dedicated_total and runtime_total and dedicated_total >= runtime_total)
         shared = bool(
             hip_version
             and (
                 (dedicated_total and runtime_total and runtime_total >= dedicated_total * 2)
-                or _shared_memory_device(name, runtime_total, ram_total)
+                or _shared_memory_device(name, runtime_total, None if local_capacity_confirmed else ram_total)
             )
         )
         vram_total = dedicated_total if shared and dedicated_total else runtime_total

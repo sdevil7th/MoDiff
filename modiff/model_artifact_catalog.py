@@ -111,6 +111,38 @@ def catalog_repository_pin(repo: str, *, model_type: str | None = None) -> dict[
     return None
 
 
+def catalog_artifact_file(repo: str, filename: str) -> dict[str, Any] | None:
+    """Return one exact reviewed file contract from a cataloged artifact."""
+
+    pin = catalog_repository_pin(repo)
+    if pin is None or pin.get("kind") != "artifact":
+        return None
+    selected = str(filename or "").strip()
+    matches = [
+        item
+        for item in pin.get("files") or []
+        if isinstance(item, dict) and item.get("filename") == selected
+    ]
+    if len(matches) > 1:
+        raise ValueError(f"Cataloged artifact {repo!r} has duplicate file contracts for {selected!r}.")
+    if not matches:
+        return None
+    contract = matches[0]
+    digest = str(contract.get("sha256") or "").lower()
+    byte_size = contract.get("byteSize")
+    if (
+        not selected.lower().endswith(".gguf")
+        or "/" in selected
+        or "\\" in selected
+        or not re.fullmatch(r"[0-9a-f]{64}", digest)
+        or isinstance(byte_size, bool)
+        or not isinstance(byte_size, int)
+        or byte_size <= 0
+    ):
+        raise ValueError(f"Cataloged artifact {repo!r} has an invalid immutable file contract.")
+    return {**contract, "sha256": digest}
+
+
 def catalog_revision(repo: str, *, model_type: str | None = None) -> str | None:
     """Return and validate the immutable revision recorded for ``repo``."""
 

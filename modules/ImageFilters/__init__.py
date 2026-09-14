@@ -11,6 +11,7 @@ MODULE_MAP = {
             "image": { "label": "Image", "type": "image", "display": "input" },
             "low_threshold": { "label": "Low Threshold", "type": "float", "default": 0.1, "min": 0.01, "max": 1, "step": 0.01, "display": "slider" },
             "high_threshold": { "label": "High Threshold", "type": "float", "default": 0.2, "min": 0.01, "max": 1, "step": 0.01, "display": "slider" },
+            "output_mode": { "label": "Output Mode", "type": "string", "default": "L", "options": ["L", "RGB"], "description": "L preserves single-channel edges. Choose RGB for consumers requiring a three-channel condition; edge values stay identical." },
             "device": { "label": "Device", "type": "string", "default": CPU_DEVICE, "options": DEVICE_LIST },
             "output": { "label": "Image", "type": "image", "display": "output" },
         }

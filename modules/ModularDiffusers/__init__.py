@@ -9,7 +9,15 @@ from modiff.diffusers_offload import (  # noqa: F401 - preloaded for AST registr
     offload_mode_param,
 )
 
-from .modular_utils import ModiffPipelineRegistry
+from .modular_utils import (
+    FLUX_LAYER_BLOCK_OPTIONS,
+    QWEN_IMAGE_LAYER_BLOCK_OPTIONS,
+    SDXL_LAYER_BLOCK_OPTIONS,
+    ModiffPipelineRegistry,
+    get_modular_guider_options,
+    get_modular_layer_block_options,
+    get_modular_scheduler_options,
+)
 
 
 MESSAGE_DURATION = 5000
@@ -25,31 +33,29 @@ MODULE_PARSE = [
     "denoise",
     "embeddings",
     "guiders",
+    "ip_adapter",
     "latents",
     "loaders",
     "schedulers",
     "dynamic_node",
+    "workflow_blocks",
+    "reviewed_blocks",
 ]
 
-SDXL_BLOCKS = [
-    "down_blocks.1.attentions.0.transformer_blocks",
-    "down_blocks.1.attentions.1.transformer_blocks",
-    "down_blocks.2.attentions.0.transformer_blocks",
-    "down_blocks.2.attentions.1.transformer_blocks",
-    "mid_block.attentions.0.transformer_blocks",
-    "up_blocks.0.attentions.0.transformer_blocks",
-    "up_blocks.0.attentions.1.transformer_blocks",
-    "up_blocks.0.attentions.2.transformer_blocks",
-    "up_blocks.1.attentions.0.transformer_blocks",
-    "up_blocks.1.attentions.1.transformer_blocks",
-    "up_blocks.1.attentions.2.transformer_blocks",
-]
-
-QWEN_IMAGE_BLOCKS = ["transformer_blocks"]
-
-FLUX_BLOCKS = ["transformer_blocks", "single_transformer_blocks"]
+SDXL_BLOCKS = list(SDXL_LAYER_BLOCK_OPTIONS)
+QWEN_IMAGE_BLOCKS = list(QWEN_IMAGE_LAYER_BLOCK_OPTIONS)
+FLUX_BLOCKS = list(FLUX_LAYER_BLOCK_OPTIONS)
+MODULAR_LAYER_BLOCK_OPTIONS = get_modular_layer_block_options()
+MODULAR_GUIDER_OPTIONS = get_modular_guider_options()
+MODULAR_SCHEDULER_OPTIONS = get_modular_scheduler_options()
 
 # The static node-registry parser resolves schema constants against this
-# package object. Export the Guider options so the public /nodes contract
-# contains the actual mapping instead of the unresolved identifier string.
+# package object. Export reviewed dynamic options so the public /nodes
+# contract contains mappings instead of unresolved identifier strings.
 from .guiders import GUIDER_OPTIONS as GUIDER_OPTIONS  # noqa: E402,F401
+from .reviewed_blocks import (  # noqa: E402,F401
+    _REVIEWED_BLOCK_INPUT_PARAMS as _REVIEWED_BLOCK_INPUT_PARAMS,
+    _REVIEWED_BLOCK_INPUT_ALIASES as _REVIEWED_BLOCK_INPUT_ALIASES,
+    _REVIEWED_BLOCK_OUTPUT_PARAMS as _REVIEWED_BLOCK_OUTPUT_PARAMS,
+    _REVIEWED_LOOP_PORT_PARAMS as _REVIEWED_LOOP_PORT_PARAMS,
+)

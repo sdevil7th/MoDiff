@@ -24,10 +24,66 @@ families and the treatment of formats that cannot carry comments.
 
 Portions of `modules/ModularDiffusers/pipeline_schema.py` are derived from
 Hugging Face Diffusers' `src/diffusers/modular_pipelines/mellon_node_utils.py`
-at commit `13a7bee4878d62fccc8d25f97e480e68de96fa03`. Diffusers is licensed under
+at commit `bb56997d4b7e87f0743f26a612f49ec4e7ce7213`. Diffusers is licensed under
 the Apache License 2.0; the project `LICENSE` contains that license text.
 
-Source: <https://github.com/huggingface/diffusers/blob/13a7bee4878d62fccc8d25f97e480e68de96fa03/src/diffusers/modular_pipelines/mellon_node_utils.py>
+Source: <https://github.com/huggingface/diffusers/blob/bb56997d4b7e87f0743f26a612f49ec4e7ce7213/src/diffusers/modular_pipelines/mellon_node_utils.py>
+
+That commit remains the provenance of the adapted source. The separately
+reviewed executable Diffusers dependency is currently pinned to
+`2f7e0154a9db246e95c9ede43edba7db5b130805`.
+
+## Comfy workflow template research metadata
+
+`data/research/comfy-workflow-catalog.v1.json` contains classified catalog
+metadata derived from
+[`Comfy-Org/workflow_templates`](https://github.com/Comfy-Org/workflow_templates)
+at commit `d9e66019b85da231b7c936ad9cb7ff08cec16557`, Copyright (c) 2023-present
+Comfy Org. The upstream catalog is licensed under the MIT License. MoDiff does
+not copy or execute the catalog's workflow graphs; the ledger records only
+source provenance, classifications, and conservative semantic candidates.
+
+MIT License
+
+Copyright (c) 2023-present Comfy Org
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+## Janus-Pro-1B model weights
+
+MoDiff's reviewed artifact catalog can acquire
+[`deepseek-community/Janus-Pro-1B`](https://huggingface.co/deepseek-community/Janus-Pro-1B)
+at immutable revision `1655280bb75959cc1cb85529a2a8b26e7016072e` through the
+app. The repository distinguishes its MIT-licensed code from its model
+weights. The weights are governed by the retained **DEEPSEEK LICENSE
+AGREEMENT, Version 1.0** (identified in MoDiff policy metadata as the DeepSeek
+Model License Agreement v1.0), not the MIT License. That agreement includes use
+restrictions and
+notice, distribution, hosted-use, and downstream-compliance obligations.
+
+The exact reviewed license text is retained at
+`licenses/DeepSeek-Model-License-1.0.txt`. It is sourced from
+[`deepseek-ai/DeepSeek-LLM`](https://github.com/deepseek-ai/DeepSeek-LLM/blob/6712a86bfb7dd25c73383c5ad2eb7a8db540258b/LICENSE-MODEL)
+at revision `6712a86bfb7dd25c73383c5ad2eb7a8db540258b` and has SHA-256
+`09b2b4b4614509ff8baccd3c220e9d9b99e55152925b501f0d5f8b5e36eea982`.
+Catalog availability and a user's acknowledgement do not constitute product or
+legal approval; product and user compliance review remains required.
 
 ## Font software
 

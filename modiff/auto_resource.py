@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from copy import deepcopy
+from functools import cache
 import json
+import math
 import os
+import re
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from modiff.optimization_packages import qualified_auto_overrides, workload_key_for_form
 
@@ -17,25 +21,34 @@ from modiff.diffusers_offload_modes import (
 )
 from modiff.diffusers_profiles import (
     ACE_STEP_REPO,
-    FLUX_CANNY_REPO,
-    FLUX_DEPTH_REPO,
-    FLUX_DEV_REPO,
-    FLUX_FILL_REPO,
-    FLUX_KONTEXT_REPO,
-    FLUX_KREA_REPO,
-    FLUX_REDUX_REPO,
-    FLUX_SCHNELL_REPO,
-    FLUX2_KLEIN_REPO,
+    FLUX_CANNY_REPO as FLUX_CANNY_REPO,
+    FLUX_DEPTH_REPO as FLUX_DEPTH_REPO,
+    FLUX_DEV_FP8_REPO as FLUX_DEV_FP8_REPO,
+    FLUX_KONTEXT_NVFP4_REPO as FLUX_KONTEXT_NVFP4_REPO,
+    FLUX_KONTEXT_REPO as FLUX_KONTEXT_REPO,
+    FLUX_KREA_REPO as FLUX_KREA_REPO,
+    FLUX_REDUX_REPO as FLUX_REDUX_REPO,
+    FLUX_SCHNELL_REPO as FLUX_SCHNELL_REPO,
     LTX_VIDEO_REPO,
     QWEN_IMAGE_2512_PREQUANTIZED_REPO,
     QWEN_IMAGE_2512_REPO,
+    execution_profiles_for_execution,
+    optional_runtime_profile_ids_for_execution,
 )
 from modiff.hardware import disk_snapshot, get_hardware_snapshot, system_memory_snapshot
 from modiff.model_artifact_catalog import (
     AUTO_TRUST_LEVELS,
     catalog_artifact,
     catalog_model,
+    catalog_revision,
     community_artifact_is_discoverable,
+)
+from modiff.optional_runtimes import public_optional_runtime_profiles
+from modiff.optional_runtime_execution import optional_runtime_requirement_for_execution
+from modiff.studio_execution_specs import (
+    studio_auto_model_requirements,
+    studio_execution_spec_for_pair,
+    studio_model_dependencies_for_pair,
 )
 
 
@@ -58,13 +71,11 @@ QWEN_IMAGE_EDIT_PREQUANTIZED_REPO = "ovedrive/qwen-image-edit-4bit"
 QWEN_IMAGE_EDIT_PLUS_REPO = "Qwen/Qwen-Image-Edit-2511"
 QWEN_IMAGE_LAYERED_REPO = "Qwen/Qwen-Image-Layered"
 WAN_VACE_REPO = "Wan-AI/Wan2.1-VACE-1.3B-diffusers"
-FLUX_DEV_FP8_REPO = "black-forest-labs/FLUX.1-dev-FP8"
-FLUX_KONTEXT_NVFP4_REPO = "black-forest-labs/FLUX.1-Kontext-dev-NVFP4"
 
 READY_PROOF_STATUSES = {"passed", "declared_safe", "live_proven"}
 PROVEN_PROOF_STATUSES = READY_PROOF_STATUSES
 FAILED_HERE_PROOF_STATUS = "failed_here_before"
-AUTO_HISTORY_VERSION = 2
+AUTO_HISTORY_VERSION = 8
 AUTO_RESOURCE_SCHEMA_VERSION = 2
 AUTO_HISTORY_RELATIVE_PATH = Path("auto_resource") / "history.json"
 
@@ -96,7 +107,7 @@ AUTO_MODEL_REQUIREMENTS: dict[str, dict[str, Any]] = {
     "ZImageModularPipeline": {
         "supportedTasks": ["text_to_image"],
         "defaultRepo": Z_IMAGE_REPO,
-        "executionPath": "modular-diffusers",
+        "executionPath": "direct-diffusers-image",
         "qualityDefaults": {"width": 1024, "height": 1024, "steps": 8, "guidanceScale": 1},
         "minimum": {"accelerator": "gpu_or_cpu", "vramBytes": 0, "systemRamBytes": 8 * GIB},
         "recommended": {"accelerator": "gpu", "vramBytes": 8 * GIB, "systemRamBytes": 16 * GIB},
@@ -196,7 +207,7 @@ AUTO_MODEL_REQUIREMENTS: dict[str, dict[str, Any]] = {
         "guardedReason": "Prefer the Apache-2.0 Diffusers-compatible prequantized Qwen Image Edit artifact on nominal 16 GiB CUDA systems before attempting official BF16 disk offload.",
     },
     "QwenImageEditPlusModularPipeline": {
-        "supportedTasks": ["edit_image", "multi_image_reference_edit", "inpaint"],
+        "supportedTasks": ["edit_image", "multi_image_reference_edit"],
         "defaultRepo": QWEN_IMAGE_EDIT_PLUS_REPO,
         "executionPath": "modular-diffusers",
         "pipelineClass": "QwenImageEditPlusModularPipeline",
@@ -278,22 +289,6 @@ AUTO_MODEL_REQUIREMENTS: dict[str, dict[str, Any]] = {
             OFFLOAD_MODE_NONE,
         ],
     },
-    "WanVideoPipeline:text_to_video": {
-        "supportedTasks": ["text_to_video"],
-        "defaultRepo": "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
-        "executionPath": "direct-diffusers-video",
-        "pipelineClass": "WanPipeline",
-        "qualityDefaults": {"width": 832, "height": 480, "steps": 30, "guidanceScale": 5, "numFrames": 81},
-        "minimum": {"accelerator": "cuda", "vramBytes": 10 * GIB, "systemRamBytes": 24 * GIB},
-        "recommended": {"accelerator": "cuda", "vramBytes": 12 * GIB, "systemRamBytes": 32 * GIB},
-        "highQuality": {"accelerator": "cuda", "vramBytes": 24 * GIB, "systemRamBytes": 48 * GIB},
-        "supportedOffloadModes": [
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-            OFFLOAD_MODE_NONE,
-        ],
-    },
     "LTXVideoPipeline": {
         "supportedTasks": ["text_to_video", "image_to_video", "video_to_video", "reference_to_video"],
         "defaultRepo": LTX_VIDEO_REPO,
@@ -346,219 +341,103 @@ AUTO_MODEL_REQUIREMENTS: dict[str, dict[str, Any]] = {
         ],
         "requiredPackages": ["diffusers", "transformers", "accelerate", "torch", "scipy"],
     },
-    "FluxSchnellPipeline": {
-        "supportedTasks": ["text_to_image"],
-        "defaultRepo": FLUX_SCHNELL_REPO,
-        "executionPath": "direct-diffusers-image",
-        "pipelineClass": "FluxPipeline",
-        "qualityDefaults": {"width": 1024, "height": 1024, "steps": 4, "guidanceScale": 0, "maxSequenceLength": 256},
-        "minimum": {"accelerator": "cuda", "vramBytes": 12 * GIB, "systemRamBytes": 24 * GIB, "diskFreeBytes": 25 * GIB},
-        "recommended": {"accelerator": "cuda", "vramBytes": 16 * GIB, "systemRamBytes": 32 * GIB, "diskFreeBytes": 35 * GIB},
-        "fullResidency": HIGH_MEMORY_FULL_RESIDENCY,
-        "supportedOffloadModes": [
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-            OFFLOAD_MODE_NONE,
-        ],
-        "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
-    },
-    "FluxDevPipeline": {
-        "supportedTasks": ["text_to_image"],
-        "defaultRepo": FLUX_DEV_REPO,
-        "preferredLowerMemoryRepo": FLUX_DEV_FP8_REPO,
-        "executionPath": "direct-diffusers-image",
-        "pipelineClass": "FluxPipeline",
-        "qualityDefaults": {"width": 768, "height": 768, "steps": 20, "guidanceScale": 3.5, "maxSequenceLength": 256},
-        "minimum": {"accelerator": "cuda", "vramBytes": 24 * GIB, "systemRamBytes": 48 * GIB, "diskFreeBytes": 45 * GIB},
-        "recommended": {"accelerator": "cuda", "vramBytes": 32 * GIB, "systemRamBytes": 64 * GIB, "diskFreeBytes": 60 * GIB},
-        "fullResidency": HIGH_MEMORY_FULL_RESIDENCY,
-        "lowerMemory": {
-            "accelerator": "cuda",
-            "vramBytes": 16 * GIB,
-            "systemRamBytes": 32 * GIB,
-            "diskFreeBytes": 45 * GIB,
-            "quantizationMode": "quanto_float8",
-            "quantizedComponents": ["transformer", "text_encoder_2"],
-        },
-        "supportedOffloadModes": [
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-            OFFLOAD_MODE_NONE,
-        ],
-        "requiredPackages": ["diffusers", "transformers", "accelerate", "torch", "optimum-quanto"],
-    },
-    "Flux2KleinPipeline": {
-        "supportedTasks": ["text_to_image", "edit_image", "multi_image_reference_edit"],
-        "defaultRepo": FLUX2_KLEIN_REPO,
-        "executionPath": "direct-diffusers-image",
-        "pipelineClass": "Flux2KleinPipeline",
-        "qualityDefaults": {"width": 1024, "height": 1024, "steps": 4, "guidanceScale": 1, "maxSequenceLength": 512},
-        "minimum": {"accelerator": "cuda", "vramBytes": 13 * GIB, "systemRamBytes": 24 * GIB, "diskFreeBytes": 25 * GIB},
-        "recommended": {"accelerator": "cuda", "vramBytes": 20 * GIB, "systemRamBytes": 32 * GIB, "diskFreeBytes": 35 * GIB},
-        "fullResidency": HIGH_MEMORY_FULL_RESIDENCY,
-        "supportedOffloadModes": [OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK],
-        "requiredPackages": ["diffusers", "transformers", "accelerate", "torch"],
-    },
-    "FluxKreaPipeline": {
-        "supportedTasks": ["text_to_image"],
-        "defaultRepo": FLUX_KREA_REPO,
-        "executionPath": "direct-diffusers-image",
-        "pipelineClass": "FluxPipeline",
-        "qualityDefaults": {"width": 768, "height": 768, "steps": 24, "guidanceScale": 3.5, "maxSequenceLength": 256},
-        "minimum": {"accelerator": "cuda", "vramBytes": 24 * GIB, "systemRamBytes": 48 * GIB, "diskFreeBytes": 45 * GIB},
-        "recommended": {"accelerator": "cuda", "vramBytes": 32 * GIB, "systemRamBytes": 64 * GIB, "diskFreeBytes": 60 * GIB},
-        "fullResidency": HIGH_MEMORY_FULL_RESIDENCY,
-        "onLoadQuantization": {
-            "accelerator": "cuda",
-            "vramBytes": 16 * GIB,
-            "systemRamBytes": 32 * GIB,
-            "diskFreeBytes": 45 * GIB,
-            "quantizationMode": "quanto_float8",
-            "quantizedComponents": ["transformer", "text_encoder_2"],
-        },
-        "supportedOffloadModes": [
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-            OFFLOAD_MODE_NONE,
-        ],
-        "requiredPackages": ["diffusers", "transformers", "accelerate", "torch", "optimum-quanto"],
-        "guardedReason": "FLUX Krea has broad guarded Auto coverage through on-load float8 quantization and Diffusers offload.",
-    },
-    "FluxKontextPipeline": {
-        "supportedTasks": ["edit_image"],
-        "defaultRepo": FLUX_KONTEXT_REPO,
-        "preferredLowerMemoryRepo": FLUX_KONTEXT_NVFP4_REPO,
-        "executionPath": "direct-diffusers-image",
-        "pipelineClass": "FluxKontextPipeline",
-        "qualityDefaults": {"width": 768, "height": 768, "steps": 24, "guidanceScale": 3.5, "maxSequenceLength": 256},
-        "minimum": {"accelerator": "cuda", "vramBytes": 24 * GIB, "systemRamBytes": 48 * GIB, "diskFreeBytes": 45 * GIB},
-        "recommended": {"accelerator": "cuda", "vramBytes": 32 * GIB, "systemRamBytes": 64 * GIB, "diskFreeBytes": 60 * GIB},
-        "fullResidency": HIGH_MEMORY_FULL_RESIDENCY,
-        "lowerMemory": {
-            "accelerator": "cuda",
-            "vramBytes": 16 * GIB,
-            "systemRamBytes": 32 * GIB,
-            "diskFreeBytes": 45 * GIB,
-            "quantizationMode": "torchao_float8",
-            "quantizedComponents": ["transformer", "text_encoder_2"],
-        },
-        "supportedOffloadModes": [
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-            OFFLOAD_MODE_NONE,
-        ],
-        "requiredPackages": ["diffusers", "transformers", "accelerate", "torch", "torchao"],
-        "guardedReason": "FLUX Kontext uses the NVFP4 lower-memory artifact when available; failures are remembered for this machine.",
-    },
-    "FluxFillPipeline": {
-        "supportedTasks": ["inpaint", "outpaint"],
-        "defaultRepo": FLUX_FILL_REPO,
-        "executionPath": "direct-diffusers-image",
-        "pipelineClass": "FluxFillPipeline",
-        "qualityDefaults": {"width": 768, "height": 768, "steps": 24, "guidanceScale": 30, "maxSequenceLength": 256},
-        "minimum": {"accelerator": "cuda", "vramBytes": 24 * GIB, "systemRamBytes": 48 * GIB, "diskFreeBytes": 45 * GIB},
-        "recommended": {"accelerator": "cuda", "vramBytes": 32 * GIB, "systemRamBytes": 64 * GIB, "diskFreeBytes": 60 * GIB},
-        "fullResidency": HIGH_MEMORY_FULL_RESIDENCY,
-        "onLoadQuantization": {
-            "accelerator": "cuda",
-            "vramBytes": 16 * GIB,
-            "systemRamBytes": 32 * GIB,
-            "diskFreeBytes": 45 * GIB,
-            "quantizationMode": "quanto_float8",
-            "quantizedComponents": ["transformer", "text_encoder_2"],
-        },
-        "supportedOffloadModes": [
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-            OFFLOAD_MODE_NONE,
-        ],
-        "requiredPackages": ["diffusers", "transformers", "accelerate", "torch", "optimum-quanto"],
-        "guardedReason": "FLUX Fill has guarded Auto coverage through generic Diffusers inpaint/outpaint nodes and on-load quantization.",
-    },
-    "FluxDepthPipeline": {
-        "supportedTasks": ["control_image"],
-        "defaultRepo": FLUX_DEPTH_REPO,
-        "executionPath": "direct-diffusers-image",
-        "pipelineClass": "FluxControlPipeline",
-        "qualityDefaults": {"width": 768, "height": 768, "steps": 24, "guidanceScale": 10, "maxSequenceLength": 256},
-        "minimum": {"accelerator": "cuda", "vramBytes": 24 * GIB, "systemRamBytes": 48 * GIB, "diskFreeBytes": 45 * GIB},
-        "recommended": {"accelerator": "cuda", "vramBytes": 32 * GIB, "systemRamBytes": 64 * GIB, "diskFreeBytes": 60 * GIB},
-        "fullResidency": HIGH_MEMORY_FULL_RESIDENCY,
-        "onLoadQuantization": {
-            "accelerator": "cuda",
-            "vramBytes": 16 * GIB,
-            "systemRamBytes": 32 * GIB,
-            "diskFreeBytes": 45 * GIB,
-            "quantizationMode": "quanto_float8",
-            "quantizedComponents": ["transformer", "text_encoder_2"],
-        },
-        "supportedOffloadModes": [
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-            OFFLOAD_MODE_NONE,
-        ],
-        "requiredPackages": ["diffusers", "transformers", "accelerate", "torch", "optimum-quanto"],
-        "guardedReason": "FLUX Depth has guarded Auto coverage through generic control-image Diffusers nodes.",
-    },
-    "FluxCannyPipeline": {
-        "supportedTasks": ["control_image"],
-        "defaultRepo": FLUX_CANNY_REPO,
-        "executionPath": "direct-diffusers-image",
-        "pipelineClass": "FluxControlPipeline",
-        "qualityDefaults": {"width": 768, "height": 768, "steps": 24, "guidanceScale": 10, "maxSequenceLength": 256},
-        "minimum": {"accelerator": "cuda", "vramBytes": 24 * GIB, "systemRamBytes": 48 * GIB, "diskFreeBytes": 45 * GIB},
-        "recommended": {"accelerator": "cuda", "vramBytes": 32 * GIB, "systemRamBytes": 64 * GIB, "diskFreeBytes": 60 * GIB},
-        "fullResidency": HIGH_MEMORY_FULL_RESIDENCY,
-        "onLoadQuantization": {
-            "accelerator": "cuda",
-            "vramBytes": 16 * GIB,
-            "systemRamBytes": 32 * GIB,
-            "diskFreeBytes": 45 * GIB,
-            "quantizationMode": "quanto_float8",
-            "quantizedComponents": ["transformer", "text_encoder_2"],
-        },
-        "supportedOffloadModes": [
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-            OFFLOAD_MODE_NONE,
-        ],
-        "requiredPackages": ["diffusers", "transformers", "accelerate", "torch", "optimum-quanto"],
-        "guardedReason": "FLUX Canny has guarded Auto coverage through generic control-image Diffusers nodes.",
-    },
-    "FluxReduxPipeline": {
-        "supportedTasks": ["edit_image", "multi_image_reference_edit"],
-        "defaultRepo": FLUX_REDUX_REPO,
-        "executionPath": "direct-diffusers-image",
-        "pipelineClass": "FluxReduxPipeline",
-        "qualityDefaults": {"width": 768, "height": 768, "steps": 24, "guidanceScale": 3.5, "maxSequenceLength": 256},
-        "minimum": {"accelerator": "cuda", "vramBytes": 24 * GIB, "systemRamBytes": 48 * GIB, "diskFreeBytes": 45 * GIB},
-        "recommended": {"accelerator": "cuda", "vramBytes": 32 * GIB, "systemRamBytes": 64 * GIB, "diskFreeBytes": 60 * GIB},
-        "fullResidency": HIGH_MEMORY_FULL_RESIDENCY,
-        "onLoadQuantization": {
-            "accelerator": "cuda",
-            "vramBytes": 16 * GIB,
-            "systemRamBytes": 32 * GIB,
-            "diskFreeBytes": 45 * GIB,
-            "quantizationMode": "quanto_float8",
-            "quantizedComponents": ["transformer", "text_encoder_2"],
-        },
-        "supportedOffloadModes": [
-            OFFLOAD_MODE_MODEL_CPU,
-            OFFLOAD_MODE_SEQUENTIAL_CPU,
-            OFFLOAD_MODE_GROUP_DISK,
-            OFFLOAD_MODE_NONE,
-        ],
-        "requiredPackages": ["diffusers", "transformers", "accelerate", "torch", "optimum-quanto"],
-        "guardedReason": "FLUX Redux has guarded Auto coverage through generic Diffusers image/reference nodes.",
-    },
 }
+
+AUTO_MODEL_REQUIREMENTS.update(studio_auto_model_requirements())
+
+
+def _auto_requirements_for_pair(model_type: str, mode: str) -> dict[str, Any] | None:
+    """Return the exact effective Auto specification for one declared pair.
+
+    Resource requirements may be shared by several modes, but their loader
+    target is never inferred from a pipeline-class name or a stale generic
+    execution-path hint.  One unique execution profile owns the effective
+    module, action, execution path, and pipeline class.
+    """
+
+    normalized_model = str(model_type or "").strip()
+    normalized_mode = str(mode or "").strip()
+    if not normalized_model or not normalized_mode:
+        return None
+
+    exact_key = f"{normalized_model}:{normalized_mode}"
+    if exact_key in AUTO_MODEL_REQUIREMENTS:
+        requirements = AUTO_MODEL_REQUIREMENTS[exact_key]
+    else:
+        requirements = AUTO_MODEL_REQUIREMENTS.get(normalized_model)
+    if not isinstance(requirements, dict):
+        return None
+
+    supported_tasks = {
+        str(task).strip()
+        for task in requirements.get("supportedTasks") or []
+        if str(task).strip()
+    }
+    if normalized_mode not in supported_tasks:
+        return None
+
+    profiles = execution_profiles_for_execution(normalized_model, normalized_mode)
+    if len(profiles) != 1:
+        return None
+    profile = profiles[0]
+    effective = {
+        **requirements,
+        "supportedTasks": [normalized_mode],
+        "executionProfileId": profile.id,
+        "loaderModule": profile.loader_module,
+        "loaderAction": profile.loader_action,
+        "executionPath": profile.execution_path,
+        "pipelineClass": profile.pipeline_class,
+        "defaultRepo": profile.default_repo,
+        "fallbackRepo": profile.fallback_repo,
+        "compatibleRepos": list(profile.compatible_repos),
+        "modelDependencies": studio_model_dependencies_for_pair(normalized_model, normalized_mode),
+    }
+    allowed_lower_memory_repos = {
+        repo
+        for repo in (profile.fallback_repo, *profile.compatible_repos)
+        if isinstance(repo, str) and repo
+    }
+    if effective.get("preferredLowerMemoryRepo") not in allowed_lower_memory_repos:
+        effective.pop("preferredLowerMemoryRepo", None)
+    return effective
+
+
+def auto_resource_pair_is_declared(model_type: str, mode: str) -> bool:
+    """Return whether both Auto requirements and an execution profile declare a pair."""
+
+    return _auto_requirements_for_pair(model_type, mode) is not None
+
+
+def _declared_auto_modes(model_type: str) -> list[str]:
+    normalized_model = str(model_type or "").strip()
+    modes = set()
+    for key, requirements in AUTO_MODEL_REQUIREMENTS.items():
+        if key != normalized_model and not key.startswith(f"{normalized_model}:"):
+            continue
+        modes.update(
+            str(task).strip()
+            for task in requirements.get("supportedTasks") or []
+            if str(task).strip()
+        )
+    return sorted(mode for mode in modes if _auto_requirements_for_pair(normalized_model, mode) is not None)
+
+
+def _public_auto_model_requirements() -> dict[str, dict[str, Any]]:
+    """Publish only exact pair specifications with one canonical loader target."""
+
+    specifications: dict[str, dict[str, Any]] = {}
+    model_types = {
+        str(key).split(":", 1)[0]
+        for key in AUTO_MODEL_REQUIREMENTS
+        if str(key).split(":", 1)[0]
+    }
+    for model_type in sorted(model_types):
+        for mode in _declared_auto_modes(model_type):
+            specification = _auto_requirements_for_pair(model_type, mode)
+            if specification is not None:
+                specifications[f"{model_type}:{mode}"] = specification
+    return specifications
 
 
 def _now_ms() -> int:
@@ -632,7 +511,7 @@ def _repo_plan_path(repo_id: str, cache_dir: str | os.PathLike[str]) -> Path:
     return _hf_repo_cache_dir(repo_id, cache_dir) / ".modiff_download_plan.json"
 
 
-def _expected_files_for_repo(repo_id: str, cache_dirs: list[str]) -> list[dict[str, Any]]:
+def _download_plan_for_repo(repo_id: str, cache_dirs: list[str]) -> dict[str, Any] | None:
     for cache_dir in cache_dirs:
         plan_path = _repo_plan_path(repo_id, cache_dir)
         if not plan_path.exists():
@@ -642,9 +521,16 @@ def _expected_files_for_repo(repo_id: str, cache_dirs: list[str]) -> list[dict[s
                 plan = json.load(handle)
         except (OSError, json.JSONDecodeError, TypeError):
             continue
-        files = plan.get("files") if isinstance(plan, dict) else None
-        if isinstance(files, list):
-            return [item for item in files if isinstance(item, dict)]
+        if isinstance(plan, dict):
+            return plan
+    return None
+
+
+def _expected_files_for_repo(repo_id: str, cache_dirs: list[str]) -> list[dict[str, Any]]:
+    plan = _download_plan_for_repo(repo_id, cache_dirs)
+    files = plan.get("files") if isinstance(plan, dict) else None
+    if isinstance(files, list):
+        return [item for item in files if isinstance(item, dict)]
     return []
 
 
@@ -866,7 +752,31 @@ def _artifact_cache_status(repo_id: str, local_models: list[dict[str, Any]] | No
         }
 
     cache_dirs = _cache_dirs_for_record(record)
-    expected_files = _expected_files_for_repo(repo_id, cache_dirs)
+    download_plan = _download_plan_for_repo(repo_id, cache_dirs)
+    expected_files = (
+        [item for item in download_plan.get("files", []) if isinstance(item, dict)]
+        if isinstance(download_plan, dict)
+        else []
+    )
+    planned_revision = str(download_plan.get("revision") or "") if isinstance(download_plan, dict) else ""
+    # Download-plan receipts created before immutable catalog pins were added
+    # do not contain ``revision`` even though the scanned cache record does.
+    # Recover the catalog pin only when that exact snapshot is actually
+    # indexed locally.  This keeps an older/different revision from satisfying
+    # the frontend's exact model-selection contract.
+    if not planned_revision and isinstance(download_plan, dict):
+        try:
+            pinned_revision = str(catalog_revision(repo_id) or "").lower()
+        except ValueError:
+            pinned_revision = ""
+        indexed_revisions = {
+            str(item.get("hash") or "").lower()
+            for item in record.get("revisions") or []
+            if isinstance(item, dict)
+        }
+        if pinned_revision and pinned_revision in indexed_revisions:
+            planned_revision = pinned_revision
+    planned_files = [str(item.get("name")) for item in expected_files if item.get("name")]
     active_files: list[str] = []
     for cache_dir in cache_dirs:
         active_files.extend(_active_repo_download_files(_hf_repo_cache_dir(repo_id, cache_dir)))
@@ -906,6 +816,8 @@ def _artifact_cache_status(repo_id: str, local_models: list[dict[str, Any]] | No
                 "activeFiles": active_files[:25],
                 "snapshots": checked,
                 "expectedFileCount": len(expected_files),
+                "plannedRevision": planned_revision or None,
+                "plannedFiles": planned_files,
             }
 
     first_reason = checked[0].get("reason") if checked else "Artifact snapshot could not be validated."
@@ -930,6 +842,8 @@ def _artifact_cache_status(repo_id: str, local_models: list[dict[str, Any]] | No
         "activeFiles": active_files[:25],
         "snapshots": checked,
         "expectedFileCount": len(expected_files),
+        "plannedRevision": planned_revision or None,
+        "plannedFiles": planned_files,
     }
 
 
@@ -942,6 +856,37 @@ def artifact_cache_status(repo_id: str, local_models: list[dict[str, Any]] | Non
     of treating every scanned revision as installed.
     """
     return _artifact_cache_status(repo_id, local_models)
+
+
+def artifact_revision_cache_status(
+    repo_id: str,
+    revision: str,
+    local_models: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Validate one exact immutable Hub snapshot instead of any repo revision.
+
+    Expert execution still needs the same installed-artifact integrity boundary
+    as Auto.  Filtering the indexed cache record to the requested commit makes
+    the existing shard/plan validation inspect only that snapshot and prevents
+    another healthy revision of the same repository from satisfying the check.
+    """
+
+    normalized_revision = str(revision or "").strip().lower()
+    if re.fullmatch(r"[0-9a-f]{40}", normalized_revision) is None:
+        raise ValueError("An immutable 40-character Hugging Face revision is required.")
+    record = _local_model_record(local_models, repo_id)
+    if not isinstance(record, dict):
+        status = _artifact_cache_status(repo_id, local_models)
+    else:
+        exact_record = deepcopy(record)
+        exact_record["revisions"] = [{"hash": normalized_revision}]
+        status = _artifact_cache_status(repo_id, [exact_record])
+    return {
+        **status,
+        "repo": str(repo_id),
+        "revision": normalized_revision,
+        "exactRevisionComplete": bool(status.get("complete")),
+    }
 
 
 def _runtime_key(runtime_fingerprint: dict[str, Any] | None) -> str:
@@ -998,12 +943,16 @@ def _candidate_history_signature(
     *,
     runtime_fingerprint: dict[str, Any] | None = None,
     hardware: dict[str, Any] | None = None,
+    history_schema_version: int = AUTO_HISTORY_VERSION,
 ) -> dict[str, Any]:
     resolution = candidate.get("artifactResolution") if isinstance(candidate.get("artifactResolution"), dict) else {}
     resolved = resolution.get("resolved") if isinstance(resolution.get("resolved"), dict) else {}
     workload = _candidate_workload_signature(candidate)
     return {
+        "historySchemaVersion": history_schema_version,
+        "autoResourceSchemaVersion": _safe_int(candidate.get("autoResourceSchemaVersion")) or 0,
         "hardwareFingerprint": _hardware_history_key(runtime_fingerprint, hardware),
+        "executionProfileId": str(candidate.get("executionProfileId") or ""),
         "modelType": str(candidate.get("modelType") or ""),
         "mode": str(candidate.get("mode") or ""),
         "artifact": str(candidate.get("resolvedArtifact") or candidate.get("artifact") or candidate.get("modelRepo") or ""),
@@ -1020,9 +969,290 @@ def _candidate_history_signature(
         "channelsLast": bool(candidate.get("channelsLast")),
         "layerwiseCasting": bool(candidate.get("layerwiseCasting")),
         "pipelineClass": str(candidate.get("pipelineClass") or ""),
+        "loaderModule": str(candidate.get("loaderModule") or ""),
+        "loaderAction": str(candidate.get("loaderAction") or ""),
         "executionPath": str(candidate.get("executionPath") or ""),
+        "optionalRuntime": _candidate_optional_runtime_signature(candidate),
+        "studioExecutionSpec": _candidate_studio_execution_spec_signature(candidate),
+        "modelDependencies": _candidate_model_dependencies_signature(candidate),
+        "controlledArtifacts": _candidate_controlled_artifacts_signature(candidate),
         "workload": workload,
     }
+
+
+def _candidate_optional_runtime_signature(candidate: dict[str, Any]) -> dict[str, Any] | None:
+    profile_ids = candidate.get("optionalRuntimeProfileIds")
+    requirement = candidate.get("optionalRuntimeRequirement")
+    if (
+        not isinstance(profile_ids, list)
+        or any(not isinstance(item, str) for item in profile_ids)
+        or not isinstance(requirement, dict)
+    ):
+        return None
+    requirement_profile_ids = requirement.get("profileIds")
+    execution_profile_ids = requirement.get("executionProfileIds")
+    if (
+        isinstance(requirement.get("schemaVersion"), bool)
+        or not isinstance(requirement.get("schemaVersion"), int)
+        or not isinstance(requirement.get("delivery"), str)
+        or type(requirement.get("requiredNow")) is not bool
+        or not isinstance(requirement_profile_ids, list)
+        or any(not isinstance(item, str) for item in requirement_profile_ids)
+        or not isinstance(execution_profile_ids, list)
+        or any(not isinstance(item, str) for item in execution_profile_ids)
+    ):
+        return None
+    return {
+        "profileIds": list(profile_ids),
+        "requirement": {
+            "schemaVersion": requirement["schemaVersion"],
+            "delivery": requirement["delivery"],
+            "requiredNow": requirement["requiredNow"],
+            "profileIds": list(requirement_profile_ids),
+            "executionProfileIds": list(execution_profile_ids),
+        },
+    }
+
+
+def _candidate_studio_execution_spec_signature(candidate: dict[str, Any]) -> dict[str, Any] | None:
+    contract = candidate.get("studioExecutionSpecContract")
+    if not isinstance(contract, dict) or set(contract) != {
+        "schemaVersion",
+        "id",
+        "contentHash",
+        "executionProfileId",
+    }:
+        return None
+    if (
+        isinstance(contract.get("schemaVersion"), bool)
+        or not isinstance(contract.get("schemaVersion"), int)
+        or not isinstance(contract.get("id"), str)
+        or not isinstance(contract.get("contentHash"), str)
+        or not isinstance(contract.get("executionProfileId"), str)
+    ):
+        return None
+    return {
+        "schemaVersion": contract["schemaVersion"],
+        "id": contract["id"],
+        "contentHash": contract["contentHash"],
+        "executionProfileId": contract["executionProfileId"],
+    }
+
+
+def _candidate_model_dependencies_signature(candidate: dict[str, Any]) -> list[dict[str, str]] | None:
+    dependencies = candidate.get("modelDependencies")
+    if not isinstance(dependencies, list) or len(dependencies) > 32:
+        return None
+    output = []
+    for dependency in dependencies:
+        if not isinstance(dependency, dict) or set(dependency) != {"id", "kind", "repo", "revision"}:
+            return None
+        if not all(isinstance(dependency.get(key), str) and dependency[key] for key in dependency):
+            return None
+        output.append({key: dependency[key] for key in ("id", "kind", "repo", "revision")})
+    if len({dependency["id"] for dependency in output}) != len(output):
+        return None
+    return sorted(output, key=lambda dependency: (dependency["kind"], dependency["id"], dependency["repo"]))
+
+
+def _candidate_controlled_artifacts_signature(candidate: dict[str, Any]) -> list[dict[str, Any]] | None:
+    receipts = candidate.get("controlledArtifacts")
+    if receipts is None:
+        return []
+    if not isinstance(receipts, list) or len(receipts) > 32:
+        return None
+    output = []
+    for receipt in receipts:
+        kind = receipt.get("kind") if isinstance(receipt, dict) else None
+        if kind in {"spandrel_upscaler", "diffusers_pipeline"}:
+            expected_keys = {
+                "schemaVersion",
+                "kind",
+                "module",
+                "action",
+                "artifact",
+                "descriptorSha256",
+                *({"pipelineClass"} if kind == "diffusers_pipeline" else set()),
+            }
+            artifact = receipt.get("artifact") if isinstance(receipt, dict) else None
+            source = artifact.get("source") if isinstance(artifact, dict) else None
+            expected_artifact_keys = (
+                {"source", "repository", "revision", "weightName", "sha256"}
+                if kind == "spandrel_upscaler" and source == "hub"
+                else {"source", "weightName", "sha256"}
+                if kind == "spandrel_upscaler" and source == "local"
+                else {"source", "repository", "revision"}
+                if kind == "diffusers_pipeline" and source == "hub"
+                else None
+            )
+            module_action = (receipt.get("module"), receipt.get("action")) if isinstance(receipt, dict) else None
+            expected_module_action = (
+                ("modules.Spandrel", "Upscaler")
+                if kind == "spandrel_upscaler"
+                else {
+                    ("modules.DiffusersAudio", "LoadPipeline"),
+                    ("modules.DiffusersVideo", "LoadPipeline"),
+                }
+            )
+            module_action_matches = (
+                module_action == expected_module_action
+                if kind == "spandrel_upscaler"
+                else module_action in expected_module_action
+            )
+            descriptor_sha256 = receipt.get("descriptorSha256") if isinstance(receipt, dict) else None
+            pipeline_class = receipt.get("pipelineClass") if isinstance(receipt, dict) else None
+            if (
+                not isinstance(receipt, dict)
+                or set(receipt) != expected_keys
+                or receipt.get("schemaVersion") != 1
+                or not module_action_matches
+                or not isinstance(artifact, dict)
+                or set(artifact) != expected_artifact_keys
+                or not all(
+                    isinstance(artifact.get(key), str)
+                    and artifact[key]
+                    and len(artifact[key]) <= 1024
+                    and not any(ord(character) < 32 for character in artifact[key])
+                    for key in artifact
+                )
+                or not isinstance(descriptor_sha256, str)
+                or len(descriptor_sha256) != 64
+                or any(character not in "0123456789abcdef" for character in descriptor_sha256)
+                or source == "hub"
+                and (
+                    len(artifact.get("revision", "")) != 40
+                    or any(character not in "0123456789abcdef" for character in artifact.get("revision", ""))
+                )
+                or kind == "spandrel_upscaler"
+                and (
+                    len(artifact.get("sha256", "")) != 64
+                    or any(character not in "0123456789abcdef" for character in artifact.get("sha256", ""))
+                )
+                or kind == "diffusers_pipeline"
+                and (
+                    not isinstance(pipeline_class, str)
+                    or not pipeline_class
+                    or len(pipeline_class) > 256
+                    or not pipeline_class.replace("_", "a").isalnum()
+                    or pipeline_class[0].isdigit()
+                )
+            ):
+                return None
+            try:
+                payload = {key: value for key, value in receipt.items() if key != "descriptorSha256"}
+                encoded_payload = json.dumps(
+                    payload,
+                    allow_nan=False,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+                import hashlib
+
+                if hashlib.sha256(encoded_payload.encode("utf-8")).hexdigest() != descriptor_sha256:
+                    return None
+                encoded = json.dumps(
+                    receipt,
+                    allow_nan=False,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            except (RecursionError, TypeError, ValueError):
+                return None
+            if len(encoded.encode("utf-8")) > 32 * 1024:
+                return None
+            output.append(json.loads(encoded))
+            continue
+        if not isinstance(receipt, dict) or set(receipt) != {
+            "schemaVersion",
+            "kind",
+            "module",
+            "action",
+            "artifact",
+            "adapterName",
+            "scale",
+            "scheduler",
+            "replaceExisting",
+            "descriptorSha256",
+        }:
+            return None
+        module = receipt.get("module")
+        action = receipt.get("action")
+        if not isinstance(module, str) or not isinstance(action, str) or (module, action) not in {
+            ("modules.ModularDiffusers", "Lora"),
+            ("modules.DiffusersImage", "LoadAdapter"),
+            ("modules.DiffusersAudio", "LoadAdapter"),
+        }:
+            return None
+        artifact = receipt.get("artifact")
+        if not isinstance(artifact, dict):
+            return None
+        source = artifact.get("source")
+        expected_artifact_keys = (
+            {"source", "repository", "revision", "weightName", "sha256"}
+            if source == "hub"
+            else {"source", "weightName", "sha256"}
+            if source == "local"
+            else None
+        )
+        scale = receipt.get("scale")
+        descriptor_sha256 = receipt.get("descriptorSha256")
+        if (
+            receipt.get("schemaVersion") != 1
+            or receipt.get("kind") != "diffusers_lora"
+            or set(artifact) != expected_artifact_keys
+            or not all(
+                isinstance(artifact.get(key), str)
+                and artifact[key]
+                and len(artifact[key]) <= 1024
+                for key in artifact
+            )
+            or not isinstance(receipt.get("adapterName"), str)
+            or not receipt["adapterName"]
+            or len(receipt["adapterName"]) > 256
+            or any(ord(character) < 32 for character in receipt["adapterName"])
+            or isinstance(scale, bool)
+            or type(scale) not in {int, float}
+            or not math.isfinite(float(scale))
+            or not -20 <= float(scale) <= 20
+            or receipt.get("replaceExisting") is not None
+            and type(receipt.get("replaceExisting")) is not bool
+            or not isinstance(descriptor_sha256, str)
+            or len(descriptor_sha256) != 64
+            or any(character not in "0123456789abcdef" for character in descriptor_sha256)
+            or len(artifact.get("sha256", "")) != 64
+            or any(character not in "0123456789abcdef" for character in artifact.get("sha256", ""))
+            or source == "hub"
+            and (
+                len(artifact.get("revision", "")) != 40
+                or any(character not in "0123456789abcdef" for character in artifact.get("revision", ""))
+            )
+        ):
+            return None
+        scheduler = receipt.get("scheduler")
+        if scheduler is not None and (
+            not isinstance(scheduler, dict)
+            or set(scheduler) != {"class_name", "config"}
+            or not isinstance(scheduler.get("class_name"), str)
+            or len(scheduler["class_name"]) > 128
+            or not isinstance(scheduler.get("config"), dict)
+        ):
+            return None
+        try:
+            encoded = json.dumps(
+                receipt,
+                allow_nan=False,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+        except (RecursionError, TypeError, ValueError):
+            return None
+        if len(encoded.encode("utf-8")) > 32 * 1024:
+            return None
+        output.append(json.loads(encoded))
+    return output
 
 
 def _candidate_workload_signature(candidate: dict[str, Any]) -> dict[str, Any]:
@@ -1082,7 +1312,10 @@ def _runtime_candidate_from_hints(runtime_hints: dict[str, Any] | None) -> dict[
         "channelsLast": runtime_hints.get("channelsLast"),
         "layerwiseCasting": runtime_hints.get("layerwiseCasting"),
         "pipelineClass": runtime_hints.get("pipelineClass"),
+        "loaderModule": runtime_hints.get("loaderModule"),
+        "loaderAction": runtime_hints.get("loaderAction"),
         "executionPath": runtime_hints.get("executionPath"),
+        "controlledArtifacts": runtime_hints.get("controlledArtifacts"),
         "generation": runtime_hints.get("generation") if isinstance(runtime_hints.get("generation"), dict) else {},
         "artifactResolution": runtime_hints.get("artifactResolution") if isinstance(runtime_hints.get("artifactResolution"), dict) else {},
     }
@@ -1093,6 +1326,8 @@ def _history_candidate_summary(candidate: dict[str, Any]) -> dict[str, Any]:
     resolved = resolution.get("resolved") if isinstance(resolution.get("resolved"), dict) else {}
     return {
         "id": candidate.get("id"),
+        "autoResourceSchemaVersion": candidate.get("autoResourceSchemaVersion"),
+        "executionProfileId": candidate.get("executionProfileId"),
         "modelType": candidate.get("modelType"),
         "mode": candidate.get("mode"),
         "artifact": candidate.get("resolvedArtifact") or candidate.get("artifact") or candidate.get("modelRepo"),
@@ -1109,7 +1344,26 @@ def _history_candidate_summary(candidate: dict[str, Any]) -> dict[str, Any]:
         "channelsLast": bool(candidate.get("channelsLast")),
         "layerwiseCasting": bool(candidate.get("layerwiseCasting")),
         "pipelineClass": candidate.get("pipelineClass"),
+        "loaderModule": candidate.get("loaderModule"),
+        "loaderAction": candidate.get("loaderAction"),
         "executionPath": candidate.get("executionPath"),
+        "optionalRuntimeProfileIds": (
+            candidate.get("optionalRuntimeProfileIds")
+            if isinstance(candidate.get("optionalRuntimeProfileIds"), list)
+            else None
+        ),
+        "optionalRuntimeRequirement": (
+            candidate.get("optionalRuntimeRequirement")
+            if isinstance(candidate.get("optionalRuntimeRequirement"), dict)
+            else None
+        ),
+        "studioExecutionSpecContract": (
+            candidate.get("studioExecutionSpecContract")
+            if isinstance(candidate.get("studioExecutionSpecContract"), dict)
+            else None
+        ),
+        "modelDependencies": _candidate_model_dependencies_signature(candidate),
+        "controlledArtifacts": _candidate_controlled_artifacts_signature(candidate),
         "generation": candidate.get("generation") if isinstance(candidate.get("generation"), dict) else {},
     }
 
@@ -1149,7 +1403,10 @@ def record_auto_resource_success(
     measurement: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     candidate = _runtime_candidate_from_hints(runtime_hints)
-    if not candidate:
+    if not candidate or _auto_requirements_for_pair(
+        str(candidate.get("modelType") or ""),
+        str(candidate.get("mode") or ""),
+    ) is None:
         return None
     history = read_auto_resource_history(data_dir)
     key = auto_resource_history_key(candidate, runtime_fingerprint=runtime_fingerprint)
@@ -1526,6 +1783,9 @@ def _apply_catalog_hardware_support(
     output: list[dict[str, Any]] = []
     for candidate in candidates:
         item = _clone_candidate(candidate)
+        if item.get("exactPairDeclared") is False:
+            output.append(item)
+            continue
         artifact = catalog_artifact(str(item.get("modelType") or ""), str(item.get("artifact") or ""))
         missing: list[str] = []
         if artifact:
@@ -1576,10 +1836,14 @@ def _apply_community_confirmation(
     output: list[dict[str, Any]] = []
     for candidate in candidates:
         item = _clone_candidate(candidate)
+        if item.get("exactPairDeclared") is False:
+            output.append(item)
+            continue
         repo = str(item.get("resolvedArtifact") or item.get("artifact") or "").strip().lower()
         if (
             repo == confirmed
             and item.get("requiresConfirmation")
+            and item.get("profileArtifactCompatible") is not False
             and item.get("installed")
             and not item.get("requirementsMissing")
         ):
@@ -1814,6 +2078,8 @@ def _candidate(
     model_type: str,
     mode: str,
     execution_path: str,
+    loader_module: str | None,
+    loader_action: str | None,
     artifact: str,
     dtype: str,
     quantization_mode: str,
@@ -1832,6 +2098,7 @@ def _candidate(
     required_packages: list[str] | None = None,
     install_action_label: str | None = None,
     device_map: str | None = None,
+    reviewed_native_artifact: bool = False,
 ) -> dict[str, Any]:
     missing = list(requirements_missing or [])
     known_bad = list(known_bad_reasons or [])
@@ -1865,13 +2132,27 @@ def _candidate(
     )
     model_catalog = catalog_model(model_type) or {}
     artifact_catalog = catalog_artifact(model_type, artifact) or {}
-    base_artifact = str(model_catalog.get("baseRepo") or artifact)
-    trust = str(artifact_catalog.get("trust") or ("official" if artifact == base_artifact else "community"))
-    artifact_format = str(artifact_catalog.get("format") or ("native" if artifact == base_artifact else "prequantized"))
+    base_artifact = artifact if reviewed_native_artifact else str(model_catalog.get("baseRepo") or artifact)
+    trust = str(
+        artifact_catalog.get("trust")
+        or ("modiff_qualified" if reviewed_native_artifact else "official" if artifact == base_artifact else "community")
+    )
+    artifact_format = str(
+        artifact_catalog.get("format")
+        or ("native" if reviewed_native_artifact or artifact == base_artifact else "prequantized")
+    )
     is_prequantized_artifact = artifact.lower() != base_artifact.lower() and artifact_format != "native"
     loaded_quantization = artifact_format if is_prequantized_artifact else quantization_mode
+    base_revision = (
+        catalog_revision(base_artifact, model_type=model_type)
+        if reviewed_native_artifact
+        else model_catalog.get("baseRevision")
+        or catalog_revision(base_artifact, model_type=model_type)
+    )
     resolved_revision = artifact_catalog.get("revision") or (
-        model_catalog.get("baseRevision") if artifact.lower() == base_artifact.lower() else None
+        base_revision
+        if artifact.lower() == base_artifact.lower()
+        else catalog_revision(artifact, model_type=model_type)
     )
     if trust not in AUTO_TRUST_LEVELS:
         health_badge = "Community option"
@@ -1893,6 +2174,8 @@ def _candidate(
         "rank": rank,
         "modelType": model_type,
         "mode": mode,
+        "loaderModule": loader_module,
+        "loaderAction": loader_action,
         "executionPath": execution_path,
         "pipelineClass": pipeline_class,
         "artifact": artifact,
@@ -1901,7 +2184,7 @@ def _candidate(
         "modelRepo": artifact,
         "resolvedArtifact": artifact,
         "artifactResolution": {
-            "base": {"repo": base_artifact, "revision": model_catalog.get("baseRevision")},
+            "base": {"repo": base_artifact, "revision": base_revision},
             "resolved": {
                 "repo": artifact,
                 "revision": resolved_revision,
@@ -1975,12 +2258,15 @@ def _catalog_community_candidates(
     *,
     model_type: str,
     mode: str,
+    loader_module: str,
+    loader_action: str,
     execution_path: str,
     pipeline_class: str,
     generation: dict[str, Any],
     local_models: list[dict[str, Any]] | None,
     hardware: dict[str, Any],
     requirements: dict[str, Any],
+    profile_artifacts: set[str],
     existing_artifacts: set[str],
 ) -> list[dict[str, Any]]:
     model = catalog_model(model_type) or {}
@@ -2003,6 +2289,8 @@ def _catalog_community_candidates(
             rank=70 + index,
             model_type=model_type,
             mode=mode,
+            loader_module=loader_module,
+            loader_action=loader_action,
             execution_path=execution_path,
             artifact=repo,
             dtype="bfloat16",
@@ -2023,6 +2311,7 @@ def _catalog_community_candidates(
         candidate["healthBadge"] = "Community option"
         candidate["compatibilityEvidence"]["label"] = "Community option"
         candidate["requiresConfirmation"] = True
+        candidate["profileArtifactCompatible"] = repo in profile_artifacts
         output.append(candidate)
     return output
 
@@ -2056,6 +2345,13 @@ def _qwen_text_to_image_candidates(
     prequantized_installed = bool(prequantized_cache_status.get("installed")) or _has_installed(QWEN_IMAGE_2512_PREQUANTIZED_REPO, installed)
     model_type = str(form.get("modelType") or "QwenImageModularPipeline")
     mode = str(form.get("mode") or "text_to_image")
+    specification = _auto_requirements_for_pair(model_type, mode)
+    if specification is None:
+        return _undeclared_pair_candidates(form)
+    loader_module = str(specification["loaderModule"])
+    loader_action = str(specification["loaderAction"])
+    execution_path = str(specification["executionPath"])
+    pipeline_class = str(specification["pipelineClass"])
 
     offload_mode = _qwen_auto_offload_for(hardware)
     native_offload_mode = _qwen_native_offload_for(hardware)
@@ -2088,7 +2384,9 @@ def _qwen_text_to_image_candidates(
             rank=1,
             model_type=model_type,
             mode=mode,
-            execution_path="direct-diffusers-image",
+            loader_module=loader_module,
+            loader_action=loader_action,
+            execution_path=execution_path,
             artifact=QWEN_IMAGE_2512_PREQUANTIZED_REPO,
             dtype="bfloat16",
             quantization_mode="none",
@@ -2100,13 +2398,16 @@ def _qwen_text_to_image_candidates(
             installed=prequantized_installed,
             requirements_missing=prequantized_missing + prequantized_cache_missing,
             artifact_status=prequantized_cache_status,
+            pipeline_class=pipeline_class,
         ),
         _candidate(
             candidate_id="qwen-t2i-prequantized-sequential-cpu",
             rank=2,
             model_type=model_type,
             mode=mode,
-            execution_path="direct-diffusers-image",
+            loader_module=loader_module,
+            loader_action=loader_action,
+            execution_path=execution_path,
             artifact=QWEN_IMAGE_2512_PREQUANTIZED_REPO,
             dtype="bfloat16",
             quantization_mode="none",
@@ -2118,13 +2419,16 @@ def _qwen_text_to_image_candidates(
             installed=prequantized_installed,
             requirements_missing=prequantized_missing + prequantized_cache_missing,
             artifact_status=prequantized_cache_status,
+            pipeline_class=pipeline_class,
         ),
         _candidate(
             candidate_id="qwen-t2i-prequantized-group-disk",
             rank=3,
             model_type=model_type,
             mode=mode,
-            execution_path="direct-diffusers-image",
+            loader_module=loader_module,
+            loader_action=loader_action,
+            execution_path=execution_path,
             artifact=QWEN_IMAGE_2512_PREQUANTIZED_REPO,
             dtype="bfloat16",
             quantization_mode="none",
@@ -2143,13 +2447,16 @@ def _qwen_text_to_image_candidates(
                 offload_mode=OFFLOAD_MODE_GROUP_DISK,
             ) + prequantized_cache_missing,
             artifact_status=prequantized_cache_status,
+            pipeline_class=pipeline_class,
         ),
         _candidate(
             candidate_id="qwen-t2i-official-bf16-native",
             rank=4,
             model_type=model_type,
             mode=mode,
-            execution_path="direct-diffusers-image",
+            loader_module=loader_module,
+            loader_action=loader_action,
+            execution_path=execution_path,
             artifact=QWEN_IMAGE_2512_REPO,
             dtype="bfloat16",
             quantization_mode="none",
@@ -2162,13 +2469,16 @@ def _qwen_text_to_image_candidates(
             installed=official_installed,
             requirements_missing=official_missing + official_cache_missing,
             artifact_status=official_cache_status,
+            pipeline_class=pipeline_class,
         ),
         _candidate(
             candidate_id="qwen-t2i-official-transformer-bnb4-manual",
             rank=5,
             model_type=model_type,
             mode=mode,
-            execution_path="direct-diffusers-image",
+            loader_module=loader_module,
+            loader_action=loader_action,
+            execution_path=execution_path,
             artifact=QWEN_IMAGE_2512_REPO,
             dtype="bfloat16",
             quantization_mode="bnb_4bit",
@@ -2180,6 +2490,7 @@ def _qwen_text_to_image_candidates(
             installed=official_installed,
             manual_only_reason="On-the-fly BnB quantization is not an Auto default because package/kernel compatibility varies; use Manual if you want this configuration.",
             artifact_status=official_cache_status,
+            pipeline_class=pipeline_class,
         ),
     ]
     return candidates
@@ -2218,6 +2529,16 @@ def _requirements_for_candidate(requirements: dict[str, Any], key: str, fallback
     return value if isinstance(value, dict) else fallback
 
 
+def _requirements_for_offload(
+    requirements: dict[str, Any],
+    offload_mode: str,
+    fallback: dict[str, Any],
+) -> dict[str, Any]:
+    by_offload = requirements.get("offloadRequirements")
+    value = by_offload.get(offload_mode) if isinstance(by_offload, dict) else None
+    return value if isinstance(value, dict) else fallback
+
+
 def _requirements_missing_for_dict(
     hardware: dict[str, Any],
     requirement: dict[str, Any],
@@ -2240,6 +2561,49 @@ def _cache_missing_for_status(status: dict[str, Any], label: str) -> list[str]:
     return []
 
 
+def _undeclared_pair_candidates(form: dict[str, Any]) -> list[dict[str, Any]]:
+    model_type = str(form.get("modelType") or "").strip()
+    mode = str(form.get("mode") or "").strip()
+    pair_label = f"{model_type or '<missing model type>'}:{mode or '<missing mode>'}"
+    declared_modes = _declared_auto_modes(model_type)
+    if declared_modes:
+        reason = (
+            f"No Auto recipe is declared for the exact model/task pair '{pair_label}'. "
+            f"Declared Auto modes for {model_type} are: {', '.join(declared_modes)}. "
+            "This workflow remains available for explicit Expert configuration when its graph structure "
+            "and runtime inputs are valid."
+        )
+    else:
+        reason = (
+            f"No Auto recipe is declared for the exact model/task pair '{pair_label}'. "
+            "This workflow remains available for explicit Expert configuration when its graph structure "
+            "and runtime inputs are valid."
+        )
+
+    candidate = _candidate(
+        candidate_id=f"{model_type or 'studio'}-{mode or 'mode'}-expert-only",
+        rank=99,
+        model_type=model_type,
+        mode=mode,
+        loader_module=None,
+        loader_action=None,
+        execution_path=str(form.get("executionPath") or ""),
+        artifact=str(form.get("defaultRepo") or form.get("modelRepo") or ""),
+        dtype=str(form.get("dtype") or "bfloat16"),
+        quantization_mode="none",
+        quantized_components=[],
+        offload_mode=str(form.get("offloadMode") or OFFLOAD_MODE_NONE),
+        quality_tier="expert-only",
+        reason=reason,
+        generation=_generation_for_requirements(model_type, form, {}),
+        installed=True,
+        manual_only_reason=reason,
+        pipeline_class=str(form.get("pipelineClass") or "") or None,
+    )
+    candidate["exactPairDeclared"] = False
+    return [candidate]
+
+
 def _declared_profile_candidates(
     form: dict[str, Any],
     local_models: list[dict[str, Any]] | None,
@@ -2248,13 +2612,33 @@ def _declared_profile_candidates(
     model_type = str(form.get("modelType") or "")
     mode = str(form.get("mode") or "")
     installed = _repo_id_set(local_models)
-    key = f"{model_type}:{mode}" if f"{model_type}:{mode}" in AUTO_MODEL_REQUIREMENTS else model_type
-    requirements = AUTO_MODEL_REQUIREMENTS.get(key) or {}
-    default_repo = str(requirements.get("defaultRepo") or form.get("defaultRepo") or form.get("modelRepo") or "")
-    lower_memory_repo = str(requirements.get("preferredLowerMemoryRepo") or "")
+    requirements = _auto_requirements_for_pair(model_type, mode)
+    if requirements is None:
+        return _undeclared_pair_candidates(form)
+    declared_default_repo = str(requirements.get("defaultRepo") or form.get("defaultRepo") or "")
+    requested_repo = str(form.get("modelRepo") or "").strip()
+    admitted_repositories = {
+        str(repository)
+        for repository in (
+            requirements.get("defaultRepo"),
+            requirements.get("fallbackRepo"),
+            *(requirements.get("compatibleRepos") or []),
+        )
+        if isinstance(repository, str) and repository
+    }
+    if requested_repo and requested_repo not in admitted_repositories:
+        raise ValueError(
+            f"Model repository {requested_repo!r} is not a reviewed variant for {model_type}:{mode}."
+        )
+    default_repo = requested_repo or declared_default_repo
+    # An explicit same-family checkpoint choice is authoritative. Auto may
+    # tune its recipe but must not substitute a lower-memory repository.
+    lower_memory_repo = "" if requested_repo else str(requirements.get("preferredLowerMemoryRepo") or "")
     manual_only_reason = requirements.get("manualOnlyReason")
-    execution_path = str(requirements.get("executionPath") or ("direct-wan-vace" if model_type == "WanVACEPipeline" else "modular-diffusers"))
-    pipeline_class = str(requirements.get("pipelineClass") or "")
+    loader_module = str(requirements["loaderModule"])
+    loader_action = str(requirements["loaderAction"])
+    execution_path = str(requirements["executionPath"])
+    pipeline_class = str(requirements["pipelineClass"])
     generation_defaults = requirements.get("qualityDefaults") if isinstance(requirements.get("qualityDefaults"), dict) else {}
 
     minimum = requirements.get("minimum") if isinstance(requirements.get("minimum"), dict) else requirements.get("recommended")
@@ -2269,9 +2653,22 @@ def _declared_profile_candidates(
     # preference order. Several modular profiles list `none` first so the UI
     # can offer it in Expert mode; treating that as Auto's fallback silently
     # selected full residency even when the full-residency requirements failed.
+    constrained_modes = [str(mode) for mode in supported_offload if str(mode) != OFFLOAD_MODE_NONE]
     constrained_offload = next(
-        (mode for mode in supported_offload if str(mode) != OFFLOAD_MODE_NONE),
-        OFFLOAD_MODE_NONE if OFFLOAD_MODE_NONE in supported_offload else OFFLOAD_MODE_MODEL_CPU,
+        (
+            offload_mode
+            for offload_mode in constrained_modes
+            if not _requirements_missing_for_dict(
+                hardware,
+                _requirements_for_offload(requirements, offload_mode, minimum),
+                offload_mode=offload_mode,
+            )
+        ),
+        constrained_modes[0]
+        if constrained_modes
+        else OFFLOAD_MODE_NONE
+        if OFFLOAD_MODE_NONE in supported_offload
+        else OFFLOAD_MODE_MODEL_CPU,
     )
     accelerator = hardware.get("accelerator") if isinstance(hardware.get("accelerator"), dict) else {}
     accelerator_kind = str(accelerator.get("kind") or "cpu")
@@ -2302,6 +2699,8 @@ def _declared_profile_candidates(
             rank=10,
             model_type=model_type,
             mode=mode,
+            loader_module=loader_module,
+            loader_action=loader_action,
             execution_path=execution_path,
             artifact=lower_memory_repo,
             dtype=str(form.get("dtype") or "bfloat16"),
@@ -2329,7 +2728,7 @@ def _declared_profile_candidates(
         ))
 
     if default_repo:
-        native_req = requirements.get("minimum") if isinstance(requirements.get("minimum"), dict) else minimum
+        native_req = _requirements_for_offload(requirements, preferred_offload, minimum)
         native_missing = _requirements_missing_for_dict(hardware, native_req, offload_mode=preferred_offload)
         default_cache_status = _artifact_cache_status(default_repo, local_models)
         candidates.append(_candidate(
@@ -2337,6 +2736,8 @@ def _declared_profile_candidates(
             rank=5 if full_residency_ready else 30,
             model_type=model_type,
             mode=mode,
+            loader_module=loader_module,
+            loader_action=loader_action,
             execution_path=execution_path,
             artifact=default_repo,
             dtype=str(form.get("dtype") or "bfloat16"),
@@ -2357,24 +2758,38 @@ def _declared_profile_candidates(
                 "recommended": requirements.get("recommended"),
                 "fullResidency": requirements.get("fullResidency"),
                 "supportedOffloadModes": requirements.get("supportedOffloadModes"),
+                "offloadRequirements": requirements.get("offloadRequirements"),
                 "coldLoadTarget": requirements.get("coldLoadTarget"),
             },
             required_packages=required_packages,
+            reviewed_native_artifact=bool(requested_repo),
         ))
 
     existing_artifacts = {
         str(candidate.get("resolvedArtifact") or candidate.get("artifact") or "").lower()
         for candidate in candidates
     }
+    profile_artifacts = {requested_repo} if requested_repo else {
+        str(repo)
+        for repo in (
+            requirements.get("defaultRepo"),
+            requirements.get("fallbackRepo"),
+            *(requirements.get("compatibleRepos") or []),
+        )
+        if isinstance(repo, str) and repo
+    }
     candidates.extend(_catalog_community_candidates(
         model_type=model_type,
         mode=mode,
+        loader_module=loader_module,
+        loader_action=loader_action,
         execution_path=execution_path,
         pipeline_class=pipeline_class,
         generation=generation,
         local_models=local_models,
         hardware=hardware,
         requirements=requirements,
+        profile_artifacts=profile_artifacts,
         existing_artifacts=existing_artifacts,
     ))
 
@@ -2384,6 +2799,8 @@ def _declared_profile_candidates(
             rank=99,
             model_type=model_type,
             mode=mode,
+            loader_module=loader_module,
+            loader_action=loader_action,
             execution_path=execution_path,
             artifact=default_repo,
             dtype=str(form.get("dtype") or "bfloat16"),
@@ -2412,6 +2829,8 @@ def _normalized_history_entry_signature(entry: dict[str, Any]) -> dict[str, Any]
         return None
     candidate = _clone_candidate(candidate)
     for key in (
+        "autoResourceSchemaVersion",
+        "executionProfileId",
         "modelType",
         "mode",
         "artifact",
@@ -2428,13 +2847,24 @@ def _normalized_history_entry_signature(entry: dict[str, Any]) -> dict[str, Any]
         "channelsLast",
         "layerwiseCasting",
         "pipelineClass",
+        "loaderModule",
+        "loaderAction",
         "executionPath",
+        "optionalRuntimeProfileIds",
+        "optionalRuntimeRequirement",
+        "studioExecutionSpecContract",
+        "modelDependencies",
+        "controlledArtifacts",
     ):
         if candidate.get(key) is None and stored.get(key) is not None:
             candidate[key] = stored[key]
     hardware_fingerprint = stored.get("hardwareFingerprint")
     hardware = {"runtimeFingerprint": hardware_fingerprint} if hardware_fingerprint else None
-    return _candidate_history_signature(candidate, hardware=hardware)
+    return _candidate_history_signature(
+        candidate,
+        hardware=hardware,
+        history_schema_version=_safe_int(stored.get("historySchemaVersion")) or 0,
+    )
 
 
 def _history_signatures_are_compatible(current: dict[str, Any], stored: dict[str, Any]) -> bool:
@@ -2450,6 +2880,30 @@ def _history_signatures_are_compatible(current: dict[str, Any], stored: dict[str
     # could not record. Every dimension the older receipt did record must still
     # match; missing new dimensions are accepted only for this migration path.
     return all(key in current_workload and current_workload[key] == value for key, value in stored_workload.items())
+
+
+def matching_auto_resource_success_history(
+    data_dir: str | os.PathLike[str],
+    *,
+    candidate: dict[str, Any],
+    runtime_fingerprint: dict[str, Any] | None,
+    history: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    """Return only exact current-schema success evidence for one runtime candidate."""
+
+    current = _candidate_history_signature(candidate, runtime_fingerprint=runtime_fingerprint)
+    key = auto_resource_history_key(candidate, runtime_fingerprint=runtime_fingerprint)
+    history = history if isinstance(history, dict) else read_auto_resource_history(data_dir)
+    entries = history.get("entries") if isinstance(history.get("entries"), dict) else {}
+    entry = entries.get(key) if isinstance(entries.get(key), dict) else None
+    if (
+        not entry
+        or not entry.get("successCount")
+        or int(entry.get("lastFailureAt") or 0) > int(entry.get("lastSuccessAt") or 0)
+        or _normalized_history_entry_signature(entry) != current
+    ):
+        return None
+    return deepcopy(entry)
 
 
 def _compatible_success_history_entry(
@@ -2513,6 +2967,10 @@ def _apply_history_to_candidates(
     for candidate in candidates:
         item = _clone_candidate(candidate)
         key = auto_resource_history_key(item, hardware=hardware)
+        if item.get("exactPairDeclared") is False:
+            item["historyKey"] = key
+            output.append(item)
+            continue
         entry = entries.get(key) if isinstance(entries.get(key), dict) else None
         compatible_key = None
         if entry is None:
@@ -2821,6 +3279,7 @@ def build_auto_resource_plan(
     local_models: list[dict[str, Any]] | None,
     data_dir: str | os.PathLike[str],
     history: dict[str, Any] | None = None,
+    optional_runtime_catalog_resolver: Callable[[], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     payload = request_payload if isinstance(request_payload, dict) else {}
     form = payload.get("form") if isinstance(payload.get("form"), dict) else payload
@@ -2830,10 +3289,49 @@ def build_auto_resource_plan(
     hardware_override = payload.get("hardwareOverride") if isinstance(payload.get("hardwareOverride"), dict) else None
     hardware = hardware_override or _hardware_snapshot(runtime_fingerprint, data_dir)
 
-    if model_type == "QwenImageModularPipeline" and mode == "text_to_image":
+    exact_pair_requirements = _auto_requirements_for_pair(model_type, mode)
+    if exact_pair_requirements is None:
+        candidates = _undeclared_pair_candidates(form)
+    elif model_type == "QwenImageModularPipeline" and mode == "text_to_image":
         candidates = _qwen_text_to_image_candidates(form, local_models, hardware)
     else:
         candidates = _declared_profile_candidates(form, local_models, hardware)
+
+    exact_pair_declared = exact_pair_requirements is not None
+    optional_runtime_profile_ids = optional_runtime_profile_ids_for_execution(
+        model_type,
+        mode,
+    )
+    optional_runtime_profiles = public_optional_runtime_profiles(
+        optional_runtime_profile_ids
+    )
+    optional_runtime_requirement = optional_runtime_requirement_for_execution(
+        model_type,
+        mode,
+        catalog_resolver=optional_runtime_catalog_resolver,
+    )
+    studio_execution_spec = studio_execution_spec_for_pair(model_type, mode)
+    studio_execution_spec_contract = (
+        {
+            "schemaVersion": studio_execution_spec["schemaVersion"],
+            "id": studio_execution_spec["id"],
+            "contentHash": studio_execution_spec["contentHash"],
+            "executionProfileId": studio_execution_spec["executionProfileId"],
+        }
+        if studio_execution_spec is not None
+        else None
+    )
+    execution_profile_id = str((exact_pair_requirements or {}).get("executionProfileId") or "")
+    for candidate in candidates:
+        candidate["autoResourceSchemaVersion"] = AUTO_RESOURCE_SCHEMA_VERSION
+        if exact_pair_declared:
+            candidate["executionProfileId"] = execution_profile_id
+        candidate["exactPairDeclared"] = exact_pair_declared
+        candidate["optionalRuntimeProfileIds"] = list(optional_runtime_profile_ids)
+        candidate["optionalRuntimeRequirement"] = dict(optional_runtime_requirement)
+        candidate["modelDependencies"] = deepcopy((exact_pair_requirements or {}).get("modelDependencies") or [])
+        if studio_execution_spec_contract is not None:
+            candidate["studioExecutionSpecContract"] = dict(studio_execution_spec_contract)
 
     candidates = _apply_catalog_hardware_support(candidates, hardware)
     candidates = _apply_community_confirmation(candidates, form)
@@ -2846,6 +3344,8 @@ def build_auto_resource_plan(
     )
     workload_key = workload_key_for_form(form)
     for candidate in candidates:
+        if candidate.get("exactPairDeclared") is False:
+            continue
         artifact = str(
             candidate.get("resolvedArtifact")
             or candidate.get("artifact")
@@ -2869,7 +3369,8 @@ def build_auto_resource_plan(
 
     ready = [
         candidate for candidate in candidates
-        if candidate.get("proof", {}).get("status") in READY_PROOF_STATUSES
+        if candidate.get("exactPairDeclared") is not False
+        and candidate.get("proof", {}).get("status") in READY_PROOF_STATUSES
     ]
     manual_only = [
         candidate for candidate in candidates
@@ -2930,6 +3431,10 @@ def build_auto_resource_plan(
         "schemaVersion": AUTO_RESOURCE_SCHEMA_VERSION,
         "resourceMode": "auto",
         "resourcePreference": preference,
+        "exactPairDeclared": exact_pair_declared,
+        "optionalRuntimeProfileIds": list(optional_runtime_profile_ids),
+        "optionalRuntimeProfiles": optional_runtime_profiles,
+        "optionalRuntimeRequirement": optional_runtime_requirement,
         "status": status,
         "readiness": readiness,
         "statusLabel": status_label,
@@ -2951,7 +3456,10 @@ def build_auto_resource_plan(
         "nextCandidate": next((candidate for candidate in candidates if candidate is not selected and candidate.get("proof", {}).get("status") in READY_PROOF_STATUSES), None),
         "hardware": hardware,
         "hardwareSnapshot": hardware,
-        "modelRequirements": AUTO_MODEL_REQUIREMENTS,
+        # Aggregate model-only requirements cannot faithfully represent models
+        # whose modes use different loaders.  Schema v2 publishes one exact
+        # specification per model/task pair instead.
+        "modelRequirements": _public_auto_model_requirements(),
         "requirementsMatched": selected.get("requirementsMatched") if isinstance(selected, dict) else [],
         "requirementsMissing": requirements_missing,
         "candidateReasons": list(dict.fromkeys(candidate_reasons)),
@@ -2970,6 +3478,12 @@ def build_auto_resource_plans(
     payload = request_payload if isinstance(request_payload, dict) else {}
     forms = payload.get("forms") if isinstance(payload.get("forms"), list) else []
     history = read_auto_resource_history(data_dir)
+    # One live snapshot per request, not one expensive environment inspection
+    # per form. Lazy resolution preserves base-runtime/non-installing behavior;
+    # the next request and actual graph admission always recheck runtime state.
+    from modiff.optional_runtime_execution import public_optional_runtime_catalog
+
+    catalog_snapshot = cache(public_optional_runtime_catalog)
     plans = []
     for index, form in enumerate(forms):
         if not isinstance(form, dict):
@@ -2980,6 +3494,7 @@ def build_auto_resource_plans(
             local_models=local_models,
             data_dir=data_dir,
             history=history,
+            optional_runtime_catalog_resolver=catalog_snapshot,
         )
         plan["requestIndex"] = index
         plan_key = payload.get("keys", [])[index] if isinstance(payload.get("keys"), list) and index < len(payload.get("keys", [])) else None

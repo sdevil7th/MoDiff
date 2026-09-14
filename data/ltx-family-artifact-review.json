@@ -1,0 +1,293 @@
+{
+  "admission": {
+    "existingStandardGraphSurfacesPreserved": [
+      "LTXVideoPipeline:text_to_video",
+      "LTXVideoPipeline:image_to_video",
+      "LTXVideoPipeline:video_to_video",
+      "LTXVideoPipeline:reference_to_video",
+      "LTX2ConditionPipeline:text_to_video",
+      "LTX2ConditionPipeline:image_to_video",
+      "LTX2ConditionPipeline:video_to_video",
+      "LTX2ConditionPipeline:reference_to_video"
+    ],
+    "liveQualified": false,
+    "ltx2ModularStatus": "contract_only",
+    "ltxModularStatus": "contract_only",
+    "newDownloadCatalogEntryAdded": false,
+    "reason": "The exact selected partitions are approximately 47.63 GB for LTX-Video 13B Distilled and 92.03 GB for LTX-2, their production recipes remain remote-only, and the LTX-2.x license requires entity-specific commercial review.",
+    "runtimeCatalogWidened": false,
+    "status": "existing_graph_surfaces_modular_contract_only",
+    "unresolvedGates": [
+      "ltx_video_immutable_license_text",
+      "ltx2_commercial_license_acceptance",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "fallbackCorrection": {
+    "candidateRepository": "Lightricks/LTX-Video",
+    "candidateRevision": "8984fa25007f376c1a299016d0957a37a2f797bb",
+    "keptInArtifactCatalogForExplicitReview": true,
+    "removedFromPublishedExecutionCandidates": true,
+    "reason": "Its standard model index selects a two-shard 2B transformer, so it is not an identity-preserving fallback for the six-shard 13B distilled default.",
+    "removedFromLtx13BExecutionProfiles": true
+  },
+  "format": "safetensors",
+  "licenses": {
+    "ltx2": {
+      "byteSize": 21474,
+      "commercialUseAgreementThresholdUsdAnnualRevenue": 10000000,
+      "derivativeTransferObligations": true,
+      "entityRevenueAggregatesAffiliates": true,
+      "id": "ltx-2.x-community-license-agreement",
+      "path": "LICENSE",
+      "repositoryRole": "ltx2",
+      "sha256": "191ee7ebecd395ef20b98fa55c803d2d0bfc50cdbefaa0eafbaef3e79f4d2475"
+    },
+    "ltxVideo": {
+      "embeddedLicenseFilePresent": false,
+      "id": "other",
+      "immutableRepositoryLicenseTextReviewed": false,
+      "repositoryRoles": [
+        "classic13B",
+        "classicFamilyCandidate"
+      ]
+    }
+  },
+  "ltxModularContract": {
+    "blocksClass": "LTXAutoBlocks",
+    "pipelineClass": "LTXModularPipeline",
+    "workflows": {
+      "image2video": {
+        "defaultHeight": 512,
+        "defaultNumFrames": 161,
+        "defaultNumInferenceSteps": 50,
+        "defaultWidth": 704,
+        "requiredInputs": [
+          "image",
+          "prompt"
+        ],
+        "taskId": "image_to_video"
+      },
+      "text2video": {
+        "defaultHeight": 512,
+        "defaultNumFrames": 161,
+        "defaultNumInferenceSteps": 50,
+        "defaultWidth": 704,
+        "requiredInputs": [
+          "prompt"
+        ],
+        "taskId": "text_to_video"
+      }
+    }
+  },
+  "remoteResourceEnvelopes": {
+    "classic13B": {
+      "minimumAcceleratorMemoryBytesWithOffloadEstimate": 17179869184,
+      "minimumSelectiveDiskBytes": 68719476736,
+      "minimumSystemRamBytes": 68719476736,
+      "status": "estimate_only_qualification_pending"
+    },
+    "ltx2": {
+      "minimumAcceleratorMemoryBytesWithSequentialOffloadEstimate": 25769803776,
+      "minimumSelectiveDiskBytes": 128849018880,
+      "minimumSystemRamBytes": 137438953472,
+      "status": "estimate_only_qualification_pending"
+    }
+  },
+  "repositories": [
+    {
+      "excludedWeightGroups": [
+        {
+          "byteSize": 45134547816,
+          "fileCount": 10,
+          "reason": "Nested duplicate text-encoder and transformer shards under vae/ are not selected by model_index.json.",
+          "selector": "vae/text_encoder/ and vae/transformer/"
+        }
+      ],
+      "fullWeightBytes": 92762951244,
+      "fullWeightFileCount": 21,
+      "fullWeightInventorySha256": "56b91fe4135de154a23b358739455534cdcfdb7d9fe69bab4de43fcec1e33652",
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 421,
+        "className": "LTXConditionPipeline",
+        "sha256": "580e1bc145b6ac5d394497caa7babd15c3f0848331f9e5cf1dd732537d3c745a"
+      },
+      "private": false,
+      "repository": "Lightricks/LTX-Video-0.9.8-13B-distilled",
+      "revision": "7c64400e1861cc0d7b98d570a1926d5408ec60cd",
+      "role": "classic13B",
+      "selectedComponents": {
+        "text_encoder": {
+          "indexSha256": "a545bb25dc0f423d84be7b577311bba8bb7c6931f1eefcea65fc8b0a61a60a76",
+          "weightBytes": 19049269744,
+          "weightFileCount": 4
+        },
+        "transformer": {
+          "indexSha256": "00c6d25da7e3a4208d5f77c2d57bed381791e207b8834d92ed799c33cba04ac7",
+          "weightBytes": 26085278072,
+          "weightFileCount": 6
+        },
+        "vae": {
+          "sha256": "3419989c7059923ee4134b858e0511d0b294a7c88b7745169763b37ebc4db7f0",
+          "weightBytes": 2493855612,
+          "weightFileCount": 1
+        }
+      },
+      "selectedWeightBytes": 47628403428,
+      "selectedWeightFileCount": 11,
+      "selectedWeightInventorySha256": "f21ecd9910ee24a88a6b5e835d189d66305e27e99bf2b344c41920e0a3850db1"
+    },
+    {
+      "excludedWeightGroups": [
+        {
+          "byteSize": 225389322196,
+          "fileCount": 20,
+          "reason": "The root contains multiple 2B/13B/dev/distilled/FP8 versions and upscalers; none is selected by model_index.json.",
+          "selector": "root safetensors"
+        }
+      ],
+      "fullWeightBytes": 253809013320,
+      "fullWeightFileCount": 27,
+      "fullWeightInventorySha256": "e13df7144beeb53867b22c0b045171e611260e39126d71e6fe51c93fc8f219da",
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 412,
+        "className": "LTXConditionPipeline",
+        "sha256": "7feb8da8aaa6606b5ce8552724b42b74fb09d499e00260b32105dd16ef74d68e"
+      },
+      "private": false,
+      "repository": "Lightricks/LTX-Video",
+      "revision": "8984fa25007f376c1a299016d0957a37a2f797bb",
+      "role": "classicFamilyCandidate",
+      "selectedComponents": {
+        "text_encoder": {
+          "indexSha256": "a545bb25dc0f423d84be7b577311bba8bb7c6931f1eefcea65fc8b0a61a60a76",
+          "weightBytes": 19049269744,
+          "weightFileCount": 4
+        },
+        "transformer": {
+          "indexSha256": "3a99763d8e06f985e6e4323a927b404c8354dadc41e1a693c5c5052de591a630",
+          "weightBytes": 7693622848,
+          "weightFileCount": 2
+        },
+        "vae": {
+          "sha256": "265ca87cb5dff5e37f924286e957324e282fe7710a952a7dafc0df43883e2010",
+          "weightBytes": 1676798532,
+          "weightFileCount": 1
+        }
+      },
+      "selectedWeightBytes": 28419691124,
+      "selectedWeightFileCount": 7,
+      "selectedWeightInventorySha256": "6b36fd57397811a726c3932ded639572c299708068790bec1720c67d8f842141"
+    },
+    {
+      "excludedWeightGroups": [
+        {
+          "byteSize": 995743482,
+          "fileCount": 1,
+          "reason": "The latent upsampler is a separate second-stage component and is not selected by LTX2Pipeline model_index.json.",
+          "selector": "latent_upsampler/"
+        },
+        {
+          "byteSize": 169648255268,
+          "fileCount": 8,
+          "reason": "Alternative dev/distilled/FP4/FP8/LoRA/upscaler single-file artifacts are not selected by model_index.json.",
+          "selector": "root safetensors"
+        },
+        {
+          "byteSize": 51612415096,
+          "fileCount": 12,
+          "reason": "Gemma's Diffusers-named twelve-shard layout is concurrent with the Transformers model index, which selects the eleven model-* shards.",
+          "selector": "text_encoder/diffusion_pytorch_model-*"
+        }
+      ],
+      "fullWeightBytes": 314290794056,
+      "fullWeightFileCount": 44,
+      "fullWeightInventorySha256": "2442f012fcc617eeb34cbf00e315f8573986715081f8427fed30dcb57dbd633e",
+      "gated": false,
+      "modelIndex": {
+        "byteSize": 616,
+        "className": "LTX2Pipeline",
+        "sha256": "5cd61e88b2db9f205cd803b2c4bdca96520a1e94f26cf0574c245f99d9697d4a"
+      },
+      "private": false,
+      "repository": "Lightricks/LTX-2",
+      "revision": "47da56e2ad66ce4125a9922b4a8826bf407f9d0a",
+      "role": "ltx2",
+      "selectedComponents": {
+        "audio_vae": {
+          "sha256": "b36ce4066065ce0aa5ff4d7cf96a3e3bc0859c6fefcf864663e3fe686c5c181c",
+          "weightBytes": 106507972,
+          "weightFileCount": 1
+        },
+        "connectors": {
+          "sha256": "c7c0ad36c2d0706fb229193d5c698f0ef50c9b33678140b4ee84723a047b4032",
+          "weightBytes": 2862957976,
+          "weightFileCount": 1
+        },
+        "text_encoder": {
+          "indexSha256": "9c85ee65d0de363846bebbe921f43a641c8e0979471560ba8a76f6eec35693c8",
+          "weightBytes": 48749441672,
+          "weightFileCount": 11
+        },
+        "transformer": {
+          "indexSha256": "f719058d15b7c00fb84d355ec4950f8bda736a8c09af2328ce34b54145c47c99",
+          "weightBytes": 37759286096,
+          "weightFileCount": 8
+        },
+        "vae": {
+          "sha256": "107cc359e3c4bce18c53d98686f4b3fe10c4207b6665d89b38b0741270514bfb",
+          "weightBytes": 2444982370,
+          "weightFileCount": 1
+        },
+        "vocoder": {
+          "sha256": "15855fc59233b9cac50bdd1f0d2ccea4a5eaedbd7fd7549b16d5ebd6cc47d92a",
+          "weightBytes": 111204124,
+          "weightFileCount": 1
+        }
+      },
+      "selectedWeightBytes": 92034380210,
+      "selectedWeightFileCount": 23,
+      "selectedWeightInventorySha256": "32a39b17b010c1307e3980d90cf2de9761ebe390a310cdc59adc9caf6836a268"
+    }
+  ],
+  "reviewedRecipes": {
+    "classic13BDistilled": {
+      "exactDiffusersRecipePresentInPinnedModelCard": false,
+      "modelCardDiffusersExampleTargets": "Lightricks/LTX-Video-0.9.8-dev",
+      "reason": "The 13B Distilled model card links its distilled YAML label to the dev YAML and its Diffusers example loads the dev repository; that recipe is not accepted as proof for this artifact."
+    },
+    "ltx2TwoStage": {
+      "frameRate": 24.0,
+      "height": 512,
+      "numFrames": 121,
+      "stage1": {
+        "guidanceScale": 4.0,
+        "numInferenceSteps": 40,
+        "outputType": "latent"
+      },
+      "stage2": {
+        "guidanceScale": 1.0,
+        "latentUpsampler": "LTX2LatentUpsamplerModel",
+        "numInferenceSteps": 3,
+        "reusesStage1AudioLatents": true,
+        "sigmaSchedule": "STAGE_2_DISTILLED_SIGMA_VALUES"
+      },
+      "width": 768
+    }
+  },
+  "schemaVersion": 1
+}

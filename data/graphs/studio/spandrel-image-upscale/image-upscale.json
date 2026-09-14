@@ -1,0 +1,413 @@
+{
+  "edges": [
+    {
+      "className": "category-image",
+      "data": {
+        "connectionType": "image"
+      },
+      "edgeType": "default",
+      "id": "edge-01",
+      "markerEnd": {
+        "color": "#60A5FA",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-01",
+      "sourceHandle": "output",
+      "style": {
+        "stroke": "#60A5FA"
+      },
+      "target": "node-03",
+      "targetHandle": "image",
+      "type": "default"
+    },
+    {
+      "className": "category-image",
+      "data": {
+        "connectionType": "image"
+      },
+      "edgeType": "default",
+      "id": "edge-02",
+      "markerEnd": {
+        "color": "#60A5FA",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "image",
+      "style": {
+        "stroke": "#60A5FA"
+      },
+      "target": "node-01",
+      "targetHandle": "image",
+      "type": "default"
+    }
+  ],
+  "layout": {
+    "algorithm": "modiff-layered-v1",
+    "horizontalGap": 140,
+    "positionHash": "78de0222995d125d5fe636c4ce5202a69aeec9a80700046b4c32f3393c814df6",
+    "verticalGap": 72
+  },
+  "nodes": [
+    {
+      "data": {
+        "action": "Upscaler",
+        "cache": false,
+        "category": "upscaler",
+        "description": "",
+        "label": "Image.Upscale",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Spandrel",
+        "params": {
+          "device": {
+            "default": "cuda:0",
+            "label": "Device",
+            "options": {
+              "cpu": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              },
+              "cpu:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
+              }
+            },
+            "type": "string",
+            "value": "cuda:0"
+          },
+          "downscale": {
+            "default": 1,
+            "description": "Post downscaling factor. After the image is upscaled, it is downscaled by this factor.",
+            "display": "slider",
+            "label": "Downscale",
+            "max": 1,
+            "min": 0.1,
+            "step": 0.01,
+            "type": "float"
+          },
+          "image": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Image or video frames",
+            "required": true,
+            "type": [
+              "image",
+              "video"
+            ]
+          },
+          "model_id": {
+            "default": {
+              "byteSize": 67061725,
+              "license": "bsd-3-clause",
+              "revision": "42efb9c3eeed1f5c0c8a626cf5f7f4481dfbb094",
+              "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
+              "source": "hub",
+              "value": "nateraw/real-esrgan/RealESRGAN_x2plus.pth"
+            },
+            "display": "modelselect",
+            "fieldOptions": {
+              "filter": {
+                "hub": {},
+                "local": {
+                  "id": "^upscalers/"
+                }
+              },
+              "noValidation": true,
+              "sources": [
+                "hub",
+                "local"
+              ]
+            },
+            "label": "Model",
+            "type": "string"
+          },
+          "output": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Upscaled frames",
+            "type": [
+              "image",
+              "video"
+            ]
+          },
+          "tile_overlap": {
+            "default": 32,
+            "description": "Context overlap cropped from each tile boundary before CPU-side stitching.",
+            "label": "Tile overlap",
+            "max": 256,
+            "min": 0,
+            "step": 8,
+            "type": "int"
+          },
+          "tile_size": {
+            "default": 256,
+            "description": "Input tile size. Use 0 only when full-frame inference is known to fit.",
+            "label": "Tile size",
+            "max": 2048,
+            "min": 0,
+            "step": 32,
+            "type": "int"
+          }
+        },
+        "resizable": false,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "imageUpscaler",
+        "style": "",
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom",
+        "uiState": {}
+      },
+      "id": "node-01",
+      "position": {
+        "x": 440,
+        "y": 14
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "Load",
+        "cache": false,
+        "category": "image",
+        "description": "Load an image from a file",
+        "label": "Load Image",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Image",
+        "params": {
+          "alpha_channel": {
+            "default": "ignore",
+            "label": "Alpha Channel",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ignore",
+                "schemaVersion": 1,
+                "value": "ignore"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "add alpha",
+                "schemaVersion": 1,
+                "value": "add alpha"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "remove alpha",
+                "schemaVersion": 1,
+                "value": "remove alpha"
+              }
+            ],
+            "type": "string",
+            "value": "ignore"
+          },
+          "file": {
+            "display": "filebrowser",
+            "fieldOptions": {
+              "fileTypes": [
+                "image"
+              ],
+              "multiple": true
+            },
+            "label": false,
+            "type": "str",
+            "value": []
+          },
+          "height": {
+            "display": "output",
+            "isConnected": false,
+            "type": "int"
+          },
+          "image": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Image",
+            "type": "image"
+          },
+          "label": {
+            "display": "ui_label",
+            "value": "Load Image"
+          },
+          "mask": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Alpha mask",
+            "type": "image"
+          },
+          "source_hash": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Source hash",
+            "type": "str"
+          },
+          "width": {
+            "display": "output",
+            "isConnected": false,
+            "type": "int"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "loadImage",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-02",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "Preview",
+        "cache": false,
+        "category": "image",
+        "description": "Preview an image",
+        "label": "Preview Image",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Image",
+        "params": {
+          "device": {
+            "default": "cuda:0",
+            "hidden": true,
+            "options": {
+              "cpu": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              },
+              "cpu:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
+              }
+            },
+            "type": "string"
+          },
+          "export": {
+            "default": "0",
+            "description": "Export the image at the given index. Leave empty to export all images.",
+            "type": "str"
+          },
+          "filtered": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Selected image",
+            "type": "image"
+          },
+          "image": {
+            "display": "input",
+            "isConnected": true,
+            "type": [
+              "image",
+              "latent"
+            ]
+          },
+          "output": {
+            "display": "output",
+            "isConnected": false,
+            "label": "All images",
+            "type": "image"
+          },
+          "preview": {
+            "dataSource": "output",
+            "display": "ui_image",
+            "type": "url"
+          },
+          "vae": {
+            "display": "input",
+            "hidden": true,
+            "isConnected": false,
+            "label": "VAE",
+            "type": "pipeline"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "preview",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-03",
+      "position": {
+        "x": 880,
+        "y": 14
+      },
+      "type": "custom"
+    }
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

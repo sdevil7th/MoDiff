@@ -50,11 +50,25 @@ def _read_json(path: Path) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def _replace_queue_snapshot(temporary: Path, path: Path) -> None:
+    # Windows readers can briefly prevent replacing the old snapshot. Retain
+    # the pending update and retry that publication, never delete the old file
+    # or wait for another progress event to eventually publish terminal state.
+    for attempt in range(5):
+        try:
+            os.replace(temporary, path)
+            return
+        except PermissionError as error:
+            if os.name != "nt" or getattr(error, "winerror", None) not in {5, 32} or attempt == 4:
+                raise
+            time.sleep(0.01)
+
+
 def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-    os.replace(temporary, path)
+    _replace_queue_snapshot(temporary, path)
 
 
 def compact_task_history(tasks: Any) -> list[dict[str, Any]]:
@@ -74,9 +88,9 @@ def compact_task_history(tasks: Any) -> list[dict[str, Any]]:
         summary = {key: value for key, value in task.items() if key != "workflow_snapshot"}
         runtime_fingerprint = summary.get("runtimeFingerprint")
         if isinstance(runtime_fingerprint, dict):
-            summary["runtimeFingerprint"] = runtime_fingerprint.get("resourceFingerprint") or runtime_fingerprint.get(
-                "fingerprint"
-            )
+            # Match the execution receipt's identity. resourceFingerprint is a
+            # separate cache/admission key and cannot corroborate provenance.
+            summary["runtimeFingerprint"] = runtime_fingerprint.get("fingerprint")
         summary["has_workflow_snapshot"] = isinstance(task.get("workflow_snapshot"), dict)
         compacted.append(summary)
     return compacted
@@ -107,6 +121,78 @@ class SupervisorController:
             requested = self._restart_requested
             self._restart_requested = False
             return requested
+
+    def reconcile_interrupted_worker(
+        self,
+        *,
+        worker_pid: int | None = None,
+        return_code: int | None = None,
+    ) -> bool:
+        """Move work owned by a vanished worker into durable terminal history.
+
+        Graph callables and futures live only in the worker process, so an
+        unexpected worker exit cannot safely resume either the active run or
+        its queued successors.  Preserve their navigation/workflow snapshots
+        and make the interruption explicit before a replacement worker starts.
+        """
+
+        with self._lock:
+            state = _read_json(self.queue_state_path)
+            state_worker_pid = state.get("workerPid")
+            if worker_pid is not None and state_worker_pid != worker_pid:
+                return False
+
+            current = state.get("current")
+            queued = state.get("queued") if isinstance(state.get("queued"), dict) else {}
+            if not isinstance(current, dict) and not queued:
+                return False
+
+            completed_at = time.time()
+            terminal = []
+            if isinstance(current, dict):
+                exit_detail = f" (exit code {return_code})" if return_code is not None else ""
+                terminal.append(
+                    {
+                        **current,
+                        "status": "failed",
+                        "completed_at": completed_at,
+                        "updated_at": completed_at,
+                        "message": f"The backend worker exited unexpectedly during execution{exit_detail}.",
+                        "error": "The model runtime stopped before the run completed.",
+                        "exception_type": "BackendWorkerExit",
+                        "category": "runtime",
+                        "error_code": "backend_worker_exited",
+                        "recovery_hint": (
+                            "The backend restarted and released model memory. Retry with a lower-memory "
+                            "resource plan when the interruption occurred while loading or running a model."
+                        ),
+                        "backend_restart": True,
+                    }
+                )
+            terminal.extend(
+                {
+                    **task,
+                    "status": "cancelled",
+                    "completed_at": completed_at,
+                    "updated_at": completed_at,
+                    "message": "Cancelled because the backend worker restarted after an unexpected exit.",
+                    "backend_restart": True,
+                }
+                for task in queued.values()
+                if isinstance(task, dict)
+            )
+            prior_recent = state.get("recent") if isinstance(state.get("recent"), list) else []
+            _write_json_atomic(
+                self.queue_state_path,
+                {
+                    "workerPid": state_worker_pid,
+                    "updatedAt": completed_at,
+                    "queued": {},
+                    "current": None,
+                    "recent": [*terminal, *prior_recent][:30],
+                },
+            )
+            return True
 
     def status(self) -> dict[str, Any]:
         with self._lock:

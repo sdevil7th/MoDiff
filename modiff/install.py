@@ -9,12 +9,14 @@ import os
 import platform
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
 import tempfile
 import time
 import urllib.request
+import uuid
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -33,6 +35,7 @@ from modiff.runtime_profile import (
     runtime_contract_paths,
 )
 from modiff.setup_catalog import CATALOG, PHASES, enrich_issue
+from modiff.tool_locks import UV_TOOL_LOCKS
 
 ROOT = Path(__file__).resolve().parents[1]
 VENV = ROOT / ".venv"
@@ -45,9 +48,10 @@ DIAGNOSTICS_DIR = MANAGED_ROOT / "diagnostics"
 WEB_ROOT = ROOT / "web"
 
 TOOL_ARCHIVES = {
-    ("linux", "x86_64", "uv"): ("https://github.com/astral-sh/uv/releases/download/0.11.26/uv-x86_64-unknown-linux-gnu.tar.gz", "6426a73c3837e6e2483ee344cbc00f36394d179afcba6183cb77437e67db4af0"),
-    ("macos", "arm64", "uv"): ("https://github.com/astral-sh/uv/releases/download/0.11.26/uv-aarch64-apple-darwin.tar.gz", "8f7fbf1708399b921857bce71e1d60f0d3ccf52a30caebc1c1a2f175dce13ab6"),
-    ("windows", "x86_64", "uv"): ("https://github.com/astral-sh/uv/releases/download/0.11.26/uv-x86_64-pc-windows-msvc.zip", "4e1278ede866be6c0bf32d2f466cc6de7a9fb399ecf20c9ce2d186e52424be47"),
+    **{
+        (os_name, machine, "uv"): (str(lock["url"]), str(lock["archiveSha256"]))
+        for (os_name, machine), lock in UV_TOOL_LOCKS.items()
+    },
     ("linux", "x86_64", "node"): ("https://nodejs.org/dist/v24.12.0/node-v24.12.0-linux-x64.tar.xz", "bdebee276e58d0ef5448f3d5ac12c67daa963dd5e0a9bb621a53d1cefbc852fd"),
     ("macos", "arm64", "node"): ("https://nodejs.org/dist/v24.12.0/node-v24.12.0-darwin-arm64.tar.gz", "319f221adc5e44ff0ed57e8a441b2284f02b8dc6fc87b8eb92a6a93643fd8080"),
     ("windows", "x86_64", "node"): ("https://nodejs.org/dist/v24.12.0/node-v24.12.0-win-x64.zip", "9c125f61ae947b52e779095830f9cac267846a043ef7192183c84016aaad2812"),
@@ -154,6 +158,17 @@ def _drm_vendor_ids() -> set[str]:
     return vendors
 
 
+def _rocminfo_architectures(text: str) -> list[str]:
+    """Read concrete agent names, not ISA compatibility aliases or errors.
+
+    ROCm 7.14 also prints ``amdgcn-amd-amdhsa--gfx9-4-generic``. Searching
+    the whole output for gfx tokens misidentifies that alias as another GPU
+    named gfx9 and rejects a valid MI300X host as mixed hardware.
+    """
+
+    return sorted(set(re.findall(r"^\s*Name:\s*(gfx[0-9a-f]+)(?=[:\s]|$)", text.lower(), re.MULTILINE | re.IGNORECASE)))
+
+
 def detect_host() -> dict[str, Any]:
     """Detect candidates without importing Torch and separate presence from usability."""
     os_name = normalized_os()
@@ -190,8 +205,7 @@ def detect_host() -> dict[str, Any]:
         )
     )
     rocminfo = _command(["rocminfo"], timeout=15) if shutil.which("rocminfo") else None
-    rocm_text = f"{rocminfo['stdout']}\n{rocminfo['stderr']}" if rocminfo else ""
-    architectures = sorted(set(re.findall(r"\bgfx\d+[a-z0-9]*\b", rocm_text.lower())))
+    architectures = _rocminfo_architectures(rocminfo["stdout"]) if rocminfo else []
     kfd = Path("/dev/kfd")
     render_nodes = sorted(str(path) for path in Path("/dev/dri").glob("renderD*"))
     groups = _groups()
@@ -237,13 +251,21 @@ def detect_host() -> dict[str, Any]:
     }
 
 
+def _amd_profile_for_host(host: dict[str, Any]) -> str:
+    if host["os"] == "windows":
+        return "amd-pytorch-windows"
+    if "gfx942" in host.get("amd_architectures", []):
+        return "amd-instinct-rocm-linux"
+    return "amd-rocm-linux"
+
+
 def resolve_profile(accelerator: str, host: dict[str, Any], *, allow_experimental: bool = False, non_interactive: bool = False) -> str:
-    aliases = {"nvidia": "nvidia-cuda", "intel": "intel-xpu", "mps": "apple-mps"}
+    aliases = {"nvidia": "nvidia-cuda", "intel": "intel-xpu", "mps": "apple-mps", "amd-instinct": "amd-instinct-rocm-linux"}
     if accelerator not in {"auto", "amd", "cpu", *aliases}:
         raise ValueError(f"Unknown accelerator: {accelerator}")
     if accelerator != "auto":
         if accelerator == "amd":
-            return "amd-pytorch-windows" if host["os"] == "windows" else "amd-rocm-linux"
+            return _amd_profile_for_host(host)
         return aliases.get(accelerator, accelerator)
     if host.get("wsl"):
         return "cpu"
@@ -256,7 +278,7 @@ def resolve_profile(accelerator: str, host: dict[str, Any], *, allow_experimenta
         experimental = host.get("os") == "linux" and host.get("os_version") == "26.04"
         if experimental and non_interactive and not allow_experimental:
             return "cpu"
-        return "amd-pytorch-windows" if host["os"] == "windows" else "amd-rocm-linux"
+        return _amd_profile_for_host(host)
     if host.get("intel_xpu_candidate"):
         return "intel-xpu"
     if host.get("mps_candidate"):
@@ -326,6 +348,34 @@ def _amd_qualification(host: dict[str, Any], spec: dict[str, Any]) -> tuple[str,
     return tier, issues
 
 
+def _amd_instinct_qualification(host: dict[str, Any], spec: dict[str, Any]) -> tuple[str, list[dict[str, Any]]]:
+    """Inspect a provider-prepared Instinct host without proposing driver mutations.
+
+    This profile installs versioned Python SDK userspace. Ryzen's ldconfig
+    library list and driver remediation must never run on this path. A real
+    staged GPU tensor and architecture check are still mandatory.
+    """
+    issues = []
+    if host.get("os_id") != "ubuntu" or host.get("os_version") not in spec["allowed_os_versions"]:
+        issues.append(_issue("unsupported-os", "The Instinct preview requires the reviewed Ubuntu 24.04 image."))
+    if _kernel_tuple(host.get("kernel", "")) < _kernel_tuple(spec["minimum_kernel"]):
+        issues.append(_issue("kernel-too-old", f"The Instinct preview requires kernel {spec['minimum_kernel']} or newer."))
+    if not host.get("kfd_present") or not host.get("render_nodes"):
+        issues.append(_issue("gpu-device-nodes-missing", "Expose /dev/kfd and DRM render devices to the application before installing."))
+    if not host.get("kfd_accessible"):
+        issues.append(_issue("kfd-permission-denied", "The application user needs read/write access to /dev/kfd."))
+    if host.get("rocminfo_returncode") != 0:
+        issues.append(_issue("rocminfo-failed", host.get("rocminfo_error") or "The provider ROCm probe must enumerate the GPU successfully."))
+    detected = set(host.get("amd_architectures", []))
+    if not detected:
+        issues.append(_issue("amd-architecture-unverified", "Verify gfx942 with the provider's rocminfo before installing."))
+    elif not detected.issubset(set(spec["device_families"])):
+        issues.append(_issue("unsupported-amd-architecture", f"This preview requires only gfx942; detected {', '.join(sorted(detected))}."))
+    if host.get("wsl"):
+        issues.append(_issue("unsupported-platform", "The Instinct preview does not qualify WSL."))
+    return "preview", issues
+
+
 def build_plan(args: argparse.Namespace) -> dict[str, Any]:
     host = detect_host()
     profile = resolve_profile(args.accelerator, host, allow_experimental=args.allow_experimental, non_interactive=args.non_interactive)
@@ -340,6 +390,9 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         issues.extend(amd_issues)
         if tier == "experimental" and not args.allow_experimental:
             issues.append(_issue("experimental-opt-in-required", "Ubuntu 26.04 AMD setup requires --allow-experimental."))
+    elif profile == "amd-instinct-rocm-linux":
+        tier, amd_issues = _amd_instinct_qualification(host, spec)
+        issues.extend(amd_issues)
     elif profile == "amd-pytorch-windows":
         tier = "conditional"
         issues.append(_issue(
@@ -350,6 +403,9 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
     requirement = ROOT / spec["requirements"]
     if not requirement.is_file():
         issues.append(_issue("profile-lock-missing", f"Profile requirements are missing: {requirement}"))
+    uv_config = ROOT / spec["uv_config"] if spec.get("uv_config") else None
+    if uv_config is not None and not uv_config.is_file():
+        issues.append(_issue("profile-lock-missing", f"Profile package-index configuration is missing: {uv_config}"))
     if host["os"] == "windows":
         cpu_fallback_command = r".\install.ps1 -Accelerator cpu"
         resume_command = r".\install.ps1 -Accelerator auto -Resume"
@@ -357,7 +413,8 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
             resume_command += " -AllowExperimental"
     else:
         cpu_fallback_command = "./install.sh --accelerator cpu"
-        resume_command = "./install.sh --accelerator auto --resume"
+        resume_accelerator = "amd-instinct" if profile == "amd-instinct-rocm-linux" else "auto"
+        resume_command = f"./install.sh --accelerator {resume_accelerator} --resume"
         if tier == "experimental":
             resume_command += " --allow-experimental"
     steps = [
@@ -376,6 +433,7 @@ def build_plan(args: argparse.Namespace) -> dict[str, Any]:
         "profile": profile,
         "support_tier": tier,
         "requirements": str(requirement),
+        "uv_config": str(uv_config) if uv_config is not None else None,
         "requirements_exist": requirement.is_file(),
         "issues": issues,
         "steps": steps,
@@ -449,6 +507,36 @@ def _render_plan(plan: dict[str, Any]) -> None:
 
 def _run(command: list[str], *, cwd: Path = ROOT, env: dict[str, str] | None = None) -> None:
     subprocess.run(command, cwd=cwd, check=True, env=env)
+
+
+def _dependency_environment() -> dict[str, str]:
+    """Build reviewed Git dependencies with canonical source line endings."""
+    environment = os.environ.copy()
+    count = int(environment.get("GIT_CONFIG_COUNT", "0"))
+    for key, value in (("core.autocrlf", "false"), ("core.eol", "lf")):
+        environment[f"GIT_CONFIG_KEY_{count}"] = key
+        environment[f"GIT_CONFIG_VALUE_{count}"] = value
+        count += 1
+    environment["GIT_CONFIG_COUNT"] = str(count)
+    return environment
+
+
+def _install_reviewed_diffusers(uv: str, python: Path) -> None:
+    # Read the executable contract, avoiding another independently maintained
+    # revision. A prior uv cache may contain a wheel built from CRLF checkout
+    # bytes; bypass that cache only for this VCS dependency, not Torch.
+    project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    matches = re.findall(
+        r'"(diffusers @ git\+https://github\.com/huggingface/diffusers\.git@[0-9a-f]{40})"',
+        project,
+    )
+    if len(matches) != 1:
+        raise RuntimeError("The executable Diffusers dependency must name one immutable reviewed commit.")
+    _run(
+        [uv, "pip", "install", "--python", str(python), "--no-cache", "--no-deps",
+         "--reinstall-package", "diffusers", matches[0]],
+        env=_dependency_environment(),
+    )
 
 
 def _ensure_venv(uv: str, target: Path) -> Path:
@@ -529,24 +617,77 @@ def _find_executable(root: Path, names: tuple[str, ...]) -> str | None:
     return None
 
 
+def _validate_uv_directory(managed_uv: Path) -> None:
+    managed_info = managed_uv.lstat()
+    if (
+        not stat.S_ISDIR(managed_info.st_mode)
+        or stat.S_ISLNK(managed_info.st_mode)
+        or bool(
+            getattr(managed_info, "st_file_attributes", 0)
+            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+        )
+    ):
+        raise RuntimeError("The app-local uv tool directory is unsafe")
+
+
 def _ensure_uv() -> str:
     managed_uv = MANAGED_ROOT / "tools" / "uv"
-    uv = _find_executable(managed_uv, ("uv.exe", "uv")) if managed_uv.exists() else None
-    if not uv:
-        uv = _find_executable(_download_tool("uv"), ("uv.exe", "uv"))
-    if not uv:
+    key = (normalized_os(), normalized_arch())
+    lock = UV_TOOL_LOCKS.get(key)
+    if lock is None:
+        raise RuntimeError("The app-local uv executable has no reviewed platform lock")
+    if managed_uv.exists() or managed_uv.is_symlink():
+        _validate_uv_directory(managed_uv)
+    # A copied checkout may contain another platform's uv. Only the exact
+    # reviewed path for this host can satisfy setup; never execute a name match.
+    executable = managed_uv / lock["executable"]
+    if not executable.exists() and not executable.is_symlink():
+        _download_tool("uv")
+    _validate_uv_directory(managed_uv)
+    if not executable.is_file():
         raise RuntimeError("The app-local uv archive did not contain the expected executable")
-    return uv
+    info = executable.lstat()
+    if stat.S_ISLNK(info.st_mode) or bool(
+        getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    ):
+        raise RuntimeError("The app-local uv executable is linked")
+    executable = executable.resolve(strict=True)
+    try:
+        relative = executable.relative_to(managed_uv.resolve(strict=True)).as_posix()
+    except ValueError as exc:
+        raise RuntimeError("The app-local uv executable escapes its managed directory") from exc
+    executable_hash = hashlib.sha256(executable.read_bytes()).hexdigest()
+    if relative != lock["executable"] or executable_hash != lock["executableSha256"]:
+        raise RuntimeError("The app-local uv executable failed its reviewed integrity check")
+    executable.chmod(executable.stat().st_mode | 0o111)
+    receipt = {
+        "schemaVersion": 1,
+        "archiveSha256": lock["archiveSha256"],
+        "executable": relative,
+        "executableSha256": executable_hash,
+    }
+    temporary = managed_uv / f".receipt.{uuid.uuid4().hex}.tmp"
+    try:
+        with temporary.open("x", encoding="utf-8", newline="\n") as output:
+            output.write(json.dumps(receipt, sort_keys=True, separators=(",", ":")) + "\n")
+            output.flush()
+            os.fsync(output.fileno())
+        temporary.replace(managed_uv / "receipt.json")
+    finally:
+        temporary.unlink(missing_ok=True)
+    return str(executable)
 
 
 def _ensure_node() -> dict[str, str]:
     managed_node = MANAGED_ROOT / "tools" / "node"
-    node = _find_executable(managed_node, ("node.exe", "node")) if managed_node.exists() else None
-    npm_names = ("npm.cmd", "npm") if os.name == "nt" else ("npm", "npm.cmd")
+    windows = normalized_os() == "windows"
+    node_names = ("node.exe",) if windows else ("node",)
+    npm_names = ("npm.cmd",) if windows else ("npm",)
+    node = _find_executable(managed_node, node_names) if managed_node.exists() else None
     npm = _find_executable(managed_node, npm_names) if managed_node.exists() else None
     if not node or not npm:
         managed_node = _download_tool("node")
-        node = _find_executable(managed_node, ("node.exe", "node"))
+        node = _find_executable(managed_node, node_names)
         npm = _find_executable(managed_node, npm_names)
     if not node or not npm:
         raise RuntimeError("The app-local Node archive did not contain the expected executables")
@@ -792,7 +933,7 @@ def _install_client(*, backend_only: bool, python: Path | None = None) -> dict[s
 
 
 def _smoke_script(profile: str) -> str:
-    expected = {"amd-rocm-linux": "rocm", "amd-pytorch-windows": "rocm", "nvidia-cuda": "cuda", "intel-xpu": "xpu", "apple-mps": "mps", "cpu": "cpu"}.get(profile, "cpu")
+    expected = {"amd-rocm-linux": "rocm", "amd-instinct-rocm-linux": "rocm", "amd-pytorch-windows": "rocm", "nvidia-cuda": "cuda", "intel-xpu": "xpu", "apple-mps": "mps", "cpu": "cpu"}.get(profile, "cpu")
     return f"""
 import json, torch
 detected_backend = 'rocm' if torch.version.hip else ('cuda' if torch.version.cuda else ('xpu' if hasattr(torch, 'xpu') and torch.xpu.is_available() else ('mps' if torch.backends.mps.is_built() else 'cpu')))
@@ -807,6 +948,11 @@ else:
     assert backend == {expected!r}, (backend, {expected!r})
 device = 'cuda:0' if backend in ('cuda', 'rocm') else ('xpu:0' if backend == 'xpu' else ('mps:0' if backend == 'mps' else 'cpu:0'))
 assert device == 'cpu:0' or (torch.cuda.is_available() if device.startswith('cuda') else (torch.xpu.is_available() if device.startswith('xpu') else torch.backends.mps.is_available()))
+if {profile!r} == 'amd-instinct-rocm-linux':
+    assert str(torch.__version__) == '2.10.0+rocm7.14.0', torch.__version__
+    assert str(torch.version.hip).split('.')[:2] == ['7', '14'], torch.version.hip
+    architecture = str(getattr(torch.cuda.get_device_properties(0), 'gcnArchName', '')).split(':', 1)[0]
+    assert architecture == 'gfx942', ('Expected gfx942 on cuda:0', architecture)
 dtype = torch.float16 if backend in ('cuda', 'rocm', 'xpu', 'mps') else torch.float32
 x = torch.tensor([1.0, 2.0], device=device, dtype=dtype)
 y = x * 2 + 1
@@ -855,6 +1001,7 @@ def install(args: argparse.Namespace) -> dict[str, Any]:
         status="running", current_phase="plan", profile=plan["profile"], support_tier=plan["support_tier"],
         manifest_revision=plan["manifest_revision"], steps=plan["steps"], resume_command=plan["resume_command"],
         completed_phases=["detect", "plan"], rollback={"performed": False},
+        next_action=plan["resume_command"],
     )
     experimental_issue = next((item for item in plan["issues"] if item["id"] == "experimental-opt-in-required"), None)
     if experimental_issue and not args.non_interactive and _confirm("This platform is experimental. Continue with the GPU profile?"):
@@ -911,7 +1058,10 @@ def install(args: argparse.Namespace) -> dict[str, Any]:
     if STAGED_VENV.exists():
         shutil.rmtree(STAGED_VENV)
     python = _ensure_venv(uv, STAGED_VENV)
-    _run([uv, "pip", "install", "--python", str(python), "-r", plan["requirements"]])
+    _install_reviewed_diffusers(uv, python)
+    index_options = ["--config-file", plan["uv_config"]] if plan.get("uv_config") else []
+    _run([uv, "pip", "install", "--python", str(python), *index_options, "-r", plan["requirements"]],
+         env=_dependency_environment())
     smoke_environment = _rocm_environment() if plan["profile"] == "amd-rocm-linux" else os.environ.copy()
     smoke = _command([str(python), "-c", _smoke_script(plan["profile"])], timeout=60, env=smoke_environment)
     if smoke["returncode"] != 0:
@@ -976,7 +1126,7 @@ def install(args: argparse.Namespace) -> dict[str, Any]:
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
-    result.add_argument("--accelerator", default="auto", choices=["auto", "nvidia", "amd", "intel", "mps", "cpu"])
+    result.add_argument("--accelerator", default="auto", choices=["auto", "nvidia", "amd", "amd-instinct", "intel", "mps", "cpu"])
     result.add_argument("--dry-run", action="store_true")
     result.add_argument("--non-interactive", action="store_true")
     result.add_argument("--repair", action="store_true")
@@ -991,6 +1141,7 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
+    resume_command = r".\install.ps1 -Accelerator auto -Resume" if os.name == "nt" else "./install.sh --accelerator auto --resume"
     if args.json:
         args.non_interactive = True
     if _read_journal().get("consent", {}).get("experimental-platform") is True:
@@ -1008,6 +1159,7 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"  Next:   {item['failure_help']}")
             return 0
         preview = build_plan(args)
+        resume_command = preview["resume_command"]
         if not args.json:
             _render_plan(preview)
         if args.dry_run or args.system_check:
@@ -1025,9 +1177,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result.get("status") in {"complete", "reboot-required"} else 2
     except Exception as exc:
         journal = _read_journal()
-        _write_journal(status="failed", failure=str(exc), next_action=journal.get("next_action", "./install.sh --resume"))
+        _write_journal(status="failed", failure=str(exc), next_action=resume_command)
         payload = {"error": str(exc), "completed": journal.get("completed_phases", []), "rollback": journal.get("rollback"),
-                   "resume_command": journal.get("next_action", "./install.sh --resume"), "journal": str(JOURNAL_PATH)}
+                   "resume_command": resume_command, "journal": str(JOURNAL_PATH)}
         if args.json:
             print(json.dumps(payload, indent=2), file=sys.stderr)
         else:

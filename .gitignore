@@ -9,8 +9,31 @@ config.ini
 *.local
 
 artifacts/
+# Local review notes, evidence, recordings, and handoff checkpoints.
+/review/
+/reviews/
+/review-assets/
+/checkpoints/
+/maintenance/
+/output/
+/playwright-report/
+/playwright-report-*/
+/blob-report/
+/test-results/
+/test-results-*/
+review-pending/
+review-approved/
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+build/
 *.egg-info/
 
 # Installer-managed downloads, toolchains, journals, and diagnostics.
@@ -23,6 +46,22 @@ custom/*
 
 data/*
 !data/model-artifact-catalog.json
+!data/huggingface-cluster-promotion-receipts.v1.json
+!data/huggingface-cluster-promotion-receipts.v2.json
+!data/huggingface-cluster-catalog-gates.v1.json
+!data/legacy-cluster-semantic-equivalence-receipts.v1.json
+!data/legacy-cluster-archived-definitions.v1.json
+!data/legacy-cluster-compiler-mappings.v1.json
+!data/legacy-cluster-studio-spec-evidence.v1.json
+!data/legacy-cluster-studio-spec-partial-reviews.v1.json
+!data/modular-block-contracts.json
+!data/modular-conditional-contracts.json
+!data/modular-workflow-contracts.json
+!data/anima-artifact-review.json
+!data/flux2-klein-base-4b-artifact-review.json
+!data/minimax-music3-artifact-review.json
+!data/qualification-graphs/
+!data/qualification-graphs/**
 !data/graphs/
 !data/workflow-library-manifest.json
 data/graphs/*

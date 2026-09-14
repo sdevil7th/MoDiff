@@ -1,0 +1,207 @@
+{
+  "schemaVersion": 1,
+  "family": "Diffusion Transformer (DiT)",
+  "reviewedAt": "2026-08-13T00:00:00+05:30",
+  "officialRepositoryDiscovery": {
+    "provider": "Hugging Face Hub model API",
+    "query": "author=facebook&search=DiT&limit=100&full=true",
+    "exactFacebookResults": [
+      {
+        "repository": "facebook/DiT-XL-2-256",
+        "revision": "eab87f77abd5aef071a632f08807fbaab0b704d0"
+      },
+      {
+        "repository": "facebook/DiT-XL-2-512",
+        "revision": "101a3d462b22d64c4afdd4d0c8c59a2c0b961b99"
+      }
+    ],
+    "exactFacebookResultCount": 2,
+    "safetensorsSnapshotsFound": 0,
+    "communityConversionsReviewedForAdmission": false
+  },
+  "repositories": {
+    "imagenet256": {
+      "repository": "facebook/DiT-XL-2-256",
+      "revision": "eab87f77abd5aef071a632f08807fbaab0b704d0",
+      "private": false,
+      "gated": false,
+      "declaredLicense": "cc-by-nc-4.0",
+      "licenseFilePresent": false,
+      "repositoryFileCount": 8,
+      "repositoryBytes": 3334284997,
+      "weightFileCount": 2,
+      "weightBytes": 3334245438,
+      "safetensorsFileCount": 0,
+      "legacyPytorchBinFileCount": 2,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "outputResolution": [256, 256],
+      "latentSampleSize": 32
+    },
+    "imagenet512": {
+      "repository": "facebook/DiT-XL-2-512",
+      "revision": "101a3d462b22d64c4afdd4d0c8c59a2c0b961b99",
+      "private": false,
+      "gated": false,
+      "declaredLicense": "cc-by-nc-4.0",
+      "licenseFilePresent": false,
+      "repositoryFileCount": 8,
+      "repositoryBytes": 3334284997,
+      "weightFileCount": 2,
+      "weightBytes": 3334245438,
+      "safetensorsFileCount": 0,
+      "legacyPytorchBinFileCount": 2,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "outputResolution": [512, 512],
+      "latentSampleSize": 64
+    }
+  },
+  "weightFiles": {
+    "imagenet256": [
+      {
+        "path": "transformer/diffusion_pytorch_model.bin",
+        "sha256": "e592d64df5a579691e65d2b245641a00bb070b652e2c5ca775cce20a729ce9d9",
+        "byteSize": 2999533581,
+        "serialization": "legacy_pytorch_pickle_bin"
+      },
+      {
+        "path": "vae/diffusion_pytorch_model.bin",
+        "sha256": "4ec99ed96663e2418dba665762930f9eae8884e6b0a223fd53507931e8446eba",
+        "byteSize": 334711857,
+        "serialization": "legacy_pytorch_pickle_bin"
+      }
+    ],
+    "imagenet512": [
+      {
+        "path": "transformer/diffusion_pytorch_model.bin",
+        "sha256": "b00d4be3612dd89bda715ffdcd9efe1635605f52d292ddd6f600dd0c8097517a",
+        "byteSize": 2999533581,
+        "serialization": "legacy_pytorch_pickle_bin"
+      },
+      {
+        "path": "vae/diffusion_pytorch_model.bin",
+        "sha256": "4ec99ed96663e2418dba665762930f9eae8884e6b0a223fd53507931e8446eba",
+        "byteSize": 334711857,
+        "serialization": "legacy_pytorch_pickle_bin"
+      }
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending variant then path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256",
+    "weightInventorySha256": "c81bf2e7b0608dc851af874628143d7a15e6fae84c0434d9ba8976d1ec588583"
+  },
+  "metadataSha256": {
+    "imagenet256": {
+      "modelCard": "2166e22bf21b4efc29aeb136422affd8b2f01e4861da4fc1ea25dcccb5d334b6",
+      "modelIndex": "685dd8124152d9126f07528b728253041c5719426458c43176bd2f96c6f39f70",
+      "schedulerConfig": "265b971d5a725e033ede706220f19bbdd4573804cc9b86deb470108674708742",
+      "transformerConfig": "26f9e069aa6d89fbb1f97acce3dba1628a41b3030879c98c0407562595c84bc4",
+      "vaeConfig": "44b0169010f4a071272f69d03ead58b0661415bb9c88702a5e0ac631b80f7ee2"
+    },
+    "imagenet512": {
+      "modelCard": "2166e22bf21b4efc29aeb136422affd8b2f01e4861da4fc1ea25dcccb5d334b6",
+      "modelIndex": "685dd8124152d9126f07528b728253041c5719426458c43176bd2f96c6f39f70",
+      "schedulerConfig": "265b971d5a725e033ede706220f19bbdd4573804cc9b86deb470108674708742",
+      "transformerConfig": "ae36c41953cc63bc855e2631ac122638d467b268a83f23959e08f30bfc32c2e7",
+      "vaeConfig": "9e3acc1e38dfaa50d5a387ae9f25880e5b64f2d12f070fdb53985f967809ac6f"
+    }
+  },
+  "repositoryContract": {
+    "modelIndexPipelineClass": "DiTPipeline",
+    "modelIndexTransformerClass": "Transformer2DModel",
+    "installedCompatibilityTransformerClass": "DiTTransformer2DModel",
+    "schedulerClass": "DDIMScheduler",
+    "vaeClass": "AutoencoderKL",
+    "imageNetClassCount": 1000,
+    "minimumClassLabel": 0,
+    "maximumClassLabel": 999,
+    "classifierFreeGuidanceNullClass": 1000,
+    "transformerPatchSize": 2,
+    "transformerLayerCount": 28,
+    "transformerAttentionHeadCount": 16,
+    "transformerAttentionHeadDimension": 72,
+    "vaeScaleFactor": 8
+  },
+  "pinnedDiffusers": {
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "version": "0.40.0.dev0",
+    "pipelineClass": "DiTPipeline",
+    "pipelineSha256": "129845618fc1b034449c2de6167222ef87b8e24bf69bbd0c7e51d656de690e46",
+    "transformerClass": "DiTTransformer2DModel",
+    "transformerSha256": "cc8b92b67c2a7897650363eb54d2f638838274db3cbc9ec7b0d3b88fea986534",
+    "autoencoderClass": "AutoencoderKL",
+    "autoencoderSha256": "091d72ea9ae2f45f465e70f05142e04850d1153052dca520291ceb707bda8c98",
+    "schedulerClass": "DDIMScheduler",
+    "schedulerSha256": "a61e4d99402d1186d2aec1bec8b0f336108b06d72c07e7eb2eb837a44a9b196c",
+    "pipelineUtilsSha256": "9c751d37677e3e6a265fc7b0831fa0cb4f9789011a6bab70553d978e80339a2a",
+    "initSignature": "(self, transformer: DiTTransformer2DModel, vae: AutoencoderKL, scheduler: KarrasDiffusionSchedulers, id2label: dict[int, str] | None = None)",
+    "callSignature": "(self, class_labels: list[int], guidance_scale: float = 4.0, generator: torch.Generator | list[torch.Generator] | None = None, num_inference_steps: int = 50, output_type: str | None = 'pil', return_dict: bool = True) -> ImagePipelineOutput | tuple",
+    "outputClass": "ImagePipelineOutput",
+    "modelCpuOffloadSequence": "transformer->vae",
+    "callbackOnStepEndAvailable": false,
+    "cooperativeCancellationAvailable": false,
+    "safetyCheckerAvailable": false,
+    "defaultGuidanceScale": 4.0,
+    "callDefaultInferenceSteps": 50,
+    "docstringDefaultInferenceSteps": 250,
+    "officialExampleInferenceSteps": 25,
+    "officialExampleSchedulerOverride": "DPMSolverMultistepScheduler",
+    "outputTypeDefault": "pil"
+  },
+  "licenseReview": {
+    "declaredLicense": "cc-by-nc-4.0",
+    "bundledLicenseTextPresent": false,
+    "commercialUsePermitted": false,
+    "attributionRequired": true,
+    "licenseAndChangesNoticeRequiredWhenSharing": true,
+    "productLegalApprovalRequired": true,
+    "commercialProductAdmissionPermitted": false
+  },
+  "resourceEnvelopes": {
+    "imagenet256": {
+      "status": "estimate_only_modiff_qualification_pending",
+      "minimumAcceleratorMemoryBytes": 12884901888,
+      "minimumSelectiveDiskBytes": 8589934592,
+      "minimumSystemRamBytes": 17179869184
+    },
+    "imagenet512": {
+      "status": "estimate_only_modiff_qualification_pending",
+      "minimumAcceleratorMemoryBytes": 17179869184,
+      "minimumSelectiveDiskBytes": 8589934592,
+      "minimumSystemRamBytes": 25769803776
+    }
+  },
+  "admission": {
+    "status": "review_complete_blocked",
+    "runtimeCatalogExposed": false,
+    "downloadCatalogExposed": false,
+    "capabilityExposed": false,
+    "canonicalWorkflowsAdded": 0,
+    "clientSurfaceAdded": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "fullWeightFilesDownloaded": false,
+    "remoteWeightBytesFetched": 0,
+    "blockingReasons": [
+      "both official Facebook snapshots publish only legacy pickle-based PyTorch .bin weights and no safetensors partition",
+      "the CC BY-NC 4.0 model license does not permit commercial product use",
+      "neither exact model snapshot contains a bundled license file",
+      "the package pipeline has no safety checker or equivalent output guardrail",
+      "the package pipeline has no step callback for cooperative cancellation"
+    ],
+    "unresolvedGates": [
+      "official_safetensors_artifacts",
+      "commercial_product_weight_rights",
+      "bundled_license_receipt",
+      "backend_owned_loader_and_bounds",
+      "cooperative_cancellation",
+      "remote_heavy_hardware_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  }
+}

@@ -1,0 +1,281 @@
+{
+  "schemaVersion": 1,
+  "family": "Nucleus Image",
+  "repository": {
+    "repository": "NucleusAI/Nucleus-Image",
+    "revision": "5e963db4fd0a65c7e4faf53ca2d4eca567c4dcfa",
+    "private": false,
+    "gated": false,
+    "pythonFilesPresent": false,
+    "pythonFilesSelected": false,
+    "trustRemoteCodeRequired": false,
+    "modelIndexClass": "NucleusMoEImagePipeline",
+    "reportedUsedStorageBytes": 85492705438,
+    "snapshotDownloadBytes": 51656728957,
+    "snapshotFileCount": 38,
+    "weightFileCount": 12,
+    "weightBytes": 51633577862,
+    "weightInventorySha256": "ba043055c15a8b087a9d9770bda05d70f8e43a7dc49fb8e7d842c868cf06f6be",
+    "modelCardLicenseTag": "apache-2.0",
+    "licenseFilePresent": false,
+    "noticeFilePresent": false
+  },
+  "selectedFiles": [
+    ".gitattributes",
+    "README.md",
+    "model_index.json",
+    "processor/chat_template.json",
+    "processor/config.json",
+    "processor/merges.txt",
+    "processor/preprocessor_config.json",
+    "processor/tokenizer.json",
+    "processor/tokenizer_config.json",
+    "processor/video_preprocessor_config.json",
+    "processor/vocab.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/README.md",
+    "text_encoder/chat_template.json",
+    "text_encoder/config.json",
+    "text_encoder/generation_config.json",
+    "text_encoder/merges.txt",
+    "text_encoder/model-00001-of-00004.safetensors",
+    "text_encoder/model-00002-of-00004.safetensors",
+    "text_encoder/model-00003-of-00004.safetensors",
+    "text_encoder/model-00004-of-00004.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "text_encoder/preprocessor_config.json",
+    "text_encoder/tokenizer.json",
+    "text_encoder/tokenizer_config.json",
+    "text_encoder/video_preprocessor_config.json",
+    "text_encoder/vocab.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00007.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00007.safetensors",
+    "transformer/diffusion_pytorch_model-00003-of-00007.safetensors",
+    "transformer/diffusion_pytorch_model-00004-of-00007.safetensors",
+    "transformer/diffusion_pytorch_model-00005-of-00007.safetensors",
+    "transformer/diffusion_pytorch_model-00006-of-00007.safetensors",
+    "transformer/diffusion_pytorch_model-00007-of-00007.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors"
+  ],
+  "weightFiles": [
+    {
+      "path": "text_encoder/model-00001-of-00004.safetensors",
+      "byteSize": 4902275944,
+      "sha256": "d5d0aef0eb170fc7453a296c43c0849a56f510555d3588e4fd662bb35490aefa"
+    },
+    {
+      "path": "text_encoder/model-00002-of-00004.safetensors",
+      "byteSize": 4915962496,
+      "sha256": "8be88fb5501e4d5719a6d4cc212e6a13480330e74f3e8c77daa1a68f199106b5"
+    },
+    {
+      "path": "text_encoder/model-00003-of-00004.safetensors",
+      "byteSize": 4999831048,
+      "sha256": "83de00eafe6e0d57ccd009dbcf71c9974d74df2f016c27afb7e95aafd16b2192"
+    },
+    {
+      "path": "text_encoder/model-00004-of-00004.safetensors",
+      "byteSize": 2716270024,
+      "sha256": "0a88b98e9f96270973f567e6a2c103ede6ccdf915ca3075e21c755604d0377a5"
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00001-of-00007.safetensors",
+      "byteSize": 5359982584,
+      "sha256": "ad0a79d47a0ea15e1f746cf64ed9b85b210b577e6769f1196075d80e6d5b46d7"
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00002-of-00007.safetensors",
+      "byteSize": 5368036944,
+      "sha256": "1d1c04d5ae3e81c7c699dcbb9e2d9ccd2a086f50bad889d0617ca2bdf11da3fd"
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00003-of-00007.safetensors",
+      "byteSize": 5119271264,
+      "sha256": "ba2dc218dee2032e2e9bbd89548b7962901f28f2f92d63f23ecd6c138e04d612"
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00004-of-00007.safetensors",
+      "byteSize": 5368036944,
+      "sha256": "d00f85e512a49b881513f0ca0123d70dc9963c3d5531a6986aa2fe929b62d2bf"
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00005-of-00007.safetensors",
+      "byteSize": 4977690112,
+      "sha256": "1ef5a35ddd6f01a8fe26a475dc8e2ffc56585cd8797e8a0525578ddea109b681"
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00006-of-00007.safetensors",
+      "byteSize": 5368036864,
+      "sha256": "ceb86f9bb8b934dae6ff9bc562482f6a493c97df50a1b8897a3b9e7d64cedf8d"
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00007-of-00007.safetensors",
+      "byteSize": 2284376672,
+      "sha256": "f5a767727147f0686615eb3424b5200d2313548b0c1931ab90b88e90c56de197"
+    },
+    {
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "byteSize": 253806966,
+      "sha256": "0c8bc8b758c649abef9ea407b95408389a3b2f610d0d10fcb054fe171d0a8344"
+    }
+  ],
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "entries": ["path", "byteSize", "sha256"],
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "metadataBlobReceipts": {
+    "gitattributesGitBlob": "96bd88d2a5f6324ca2d1a63e2cc3b7049c40cc0d",
+    "readmeGitBlob": "cbeda79a2564b24a79a55da114aa2b710fd45820",
+    "modelIndexGitBlob": "31e44642e2bfc2b833cde2ce0db6bb3cd5f83069",
+    "processorChatTemplateGitBlob": "1081bacf1af7c7c6de4a585ce02cd0fd34e382da",
+    "processorConfigGitBlob": "0e2df614c5fe1ad2b6b540c8625bebf2d7ec43ca",
+    "processorMergesGitBlob": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0",
+    "processorPreprocessorConfigGitBlob": "2ea84a437d448ff71b08df68fdd949d5cc4ebb64",
+    "processorTokenizerJsonGitBlob": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421",
+    "processorTokenizerConfigGitBlob": "d3d3763207692c78780f4bf42d4dadf49a5c8012",
+    "processorVideoPreprocessorConfigGitBlob": "3ba673a5ad7d4d13f54155ecd38b2a94a6dac8fe",
+    "processorVocabGitBlob": "4783fe10ac3adce15ac8f358ef5462739852c569",
+    "schedulerConfigGitBlob": "0eec8e1d4d48d91f651f6094d4c203872fd3a5aa",
+    "textEncoderReadmeGitBlob": "06fb2c8220b4fb51ccca87dd694ef9d240c36745",
+    "textEncoderGenerationConfigGitBlob": "e116347d7ef42621c7a5957f82c015c38d939c1f",
+    "textEncoderIndexGitBlob": "5857ec62530eb589b1876034dd5386f1d98131a6",
+    "transformerConfigGitBlob": "4561ad0e2093c5cd086a34e150426b0bdff24282",
+    "transformerIndexGitBlob": "0dcad01f034b2ef81dda9e8cf95fd8a83404aba5",
+    "vaeConfigGitBlob": "ebc479e2fe5a2265f4bcaf1e1073df64a2d4e33e"
+  },
+  "metadataContentReceipts": {
+    "gitattributesSha256": "c8db5620140d03233c3c1966cffd94930d34fb6d19eafa0c67dcb9d7d0362ead",
+    "readmeSha256": "f1ad2cc39a2324d8872485741178e3e63ce4db1f410ffbc78881f6e4f6e0679d",
+    "modelIndexSha256": "a208848da0ad1aea122f059626534009edc0249ac14a40817201df0cbaff1a4e",
+    "processorChatTemplateSha256": "5c72a170d2a4a1a3bc5adad2e689ae28138a9700e5b8c96c0266331e86c0acce",
+    "processorConfigSha256": "5cd452860dc1e9c29dd71cc3cef7f39b338b7a40793f7a260655c2d3568f3661",
+    "processorMergesSha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+    "processorPreprocessorConfigSha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+    "processorTokenizerJsonSha256": "60e197037dd168a69a28ffd42a2b9f5b567fd336458897dbf3a572bc414b56a3",
+    "processorTokenizerConfigSha256": "c2da771801886ad9ae98181793ffd3dfb7f1af30f6f7c6a4e15d7dbba52e2399",
+    "processorVideoPreprocessorConfigSha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13",
+    "processorVocabSha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+    "schedulerConfigSha256": "918a64ec1d4e8e89f07163c63c8b81de9c340fc90ec5d6262dd1ab19af699b70",
+    "textEncoderReadmeSha256": "6d5d06e0c3f069097002445d30dce9ee107db3afaf15563f09e6df49b8dcb4d7",
+    "textEncoderGenerationConfigSha256": "8469742d1fce0de951c8909b26a2c0c0d8490837ce476efb114da9e0cefc4d44",
+    "textEncoderIndexSha256": "520b2e05079402e9468a8701d03d1154d14b2599593afb6effa7fb60c1bff070",
+    "transformerConfigSha256": "4a47e26e79ee0d9549d4e3f34ff4ef5f45bc1da730b316417cf56778f15bc42d",
+    "transformerIndexSha256": "bb425015d6df1223011d9e634c0fa594aafcf91dbfb2f3078bbd5cb3ebee5acb",
+    "vaeConfigSha256": "c448160dba5ce79c965cb075ee02e18d1c42eb6424f787e5869790d577b56a65"
+  },
+  "pinnedRuntime": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "diffusersVersion": "0.40.0.dev0",
+    "pipelineSha256": "d02b0caaebb56d837d43f3d9f1b0c345677a219e15d398e84e0151623d9eb2b3",
+    "transformerSha256": "35fbf645cd59aa7d2ba45c52ea9b756c11356609be1b1ce3652b7a161044571e",
+    "requiredDiffusersSymbols": [
+      "NucleusMoEImagePipeline",
+      "NucleusMoEImageTransformer2DModel",
+      "AutoencoderKLQwenImage"
+    ],
+    "requiredTransformersSymbols": ["Qwen3VLForConditionalGeneration", "Qwen3VLProcessor"]
+  },
+  "pipelineContract": {
+    "pipelineClass": "NucleusMoEImagePipeline",
+    "modes": ["text_to_image"],
+    "defaultWidth": 1024,
+    "defaultHeight": 1024,
+    "officialAspectBuckets": [
+      [1024, 1024],
+      [1344, 768],
+      [768, 1344],
+      [1184, 896],
+      [896, 1184],
+      [1248, 832],
+      [832, 1248]
+    ],
+    "moDiffMinimumSide": 768,
+    "moDiffMaximumSide": 1344,
+    "dimensionMultiple": 32,
+    "moDiffMaximumOutputPixels": 1060864,
+    "defaultNumInferenceSteps": 50,
+    "moDiffMaximumInferenceSteps": 50,
+    "defaultGuidanceScale": 4.0,
+    "maximumSequenceLength": 1024,
+    "modelCpuOffloadSequence": "text_encoder->transformer->vae"
+  },
+  "cancellationAndSafety": {
+    "callbackOnStepEndAvailable": true,
+    "interruptFlagAvailable": true,
+    "interruptFlagReadByDenoisingLoop": true,
+    "serverStopPropagatesThroughCallback": true,
+    "packageSafetyCheckerPresent": false,
+    "baseCheckpointWithoutPostTraining": true,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "notes": [
+      "The pinned package checks its interrupt flag inside the denoising loop and invokes the generic step-end callback.",
+      "The exact artifact surface contains no Python files and requires no remote-code trust.",
+      "No live output is accepted until remote safety and quality review is complete."
+    ]
+  },
+  "license": {
+    "id": "apache-2.0-declared-license-file-absent",
+    "modelCardLicenseTag": "apache-2.0",
+    "modelSnapshotLicenseFilePresent": false,
+    "modelSnapshotNoticeFilePresent": false,
+    "clarificationRequired": true,
+    "notes": [
+      "The model card metadata declares Apache-2.0, but the exact immutable snapshot contains no LICENSE or NOTICE file.",
+      "Broader exposure remains blocked until the repository owner supplies or identifies the governing license text."
+    ]
+  },
+  "remoteResourceEnvelope": {
+    "status": "estimate_only_qualification_pending",
+    "minimumSnapshotDiskBytes": 64424509440,
+    "minimumSystemRamBytes": 68719476736,
+    "minimumAcceleratorMemoryBytesWithModelOffloadEstimate": 25769803776,
+    "notes": [
+      "The estimates cover the approximately 51.63 GB weight surface plus decode and framework overhead.",
+      "No local real-weight inference or generated output has qualified these estimates."
+    ]
+  },
+  "appDownloadQueue": {
+    "downloadTransportPolicy": "app_only",
+    "submissionAttempted": false,
+    "submittedThroughAppOnly": false,
+    "submissionBlockedBySpace": true,
+    "directWeightDownloadPerformed": false,
+    "olderModelsDeleted": false,
+    "preflightFreeBytes": 535900401664,
+    "preflightExistingQueuedReservationBytes": 451832786377,
+    "snapshotReservationBytes": 51656728957,
+    "reserveBytes": 68719476736,
+    "standaloneFits": true,
+    "aggregateFits": false,
+    "preSnapshotHeadroomAfterReserveBytes": 15348138551,
+    "aggregateHeadroomAfterReserveBytes": -36308590406,
+    "additionalBytesRequired": 36308590406,
+    "statusAtReview": "not_submitted_insufficient_queue_aware_space"
+  },
+  "admission": {
+    "status": "source_complete_execution_pending",
+    "runtimeCatalogExposed": true,
+    "downloadCatalogExposed": true,
+    "capabilityExposed": true,
+    "canonicalWorkflowsAdded": 1,
+    "clientSurfaceAdded": true,
+    "remoteOnly": true,
+    "liveQualified": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "unresolvedGates": [
+      "license_file_or_owner_clarification",
+      "queue_aware_storage_capacity",
+      "remote_real_weight_execution_and_memory_measurement",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  }
+}

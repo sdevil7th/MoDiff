@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "repository": {
+    "repository": "circlestone-labs/Anima-Base-v1.0-Diffusers",
+    "revision": "073c3a9db359c31ad0e8aa268d15775473c2176c",
+    "private": false,
+    "gated": false,
+    "fullRepositoryFileCount": 18,
+    "fullRepositoryBytes": 5642034551,
+    "selectedFileCount": 16,
+    "selectedBytes": 5642032794,
+    "selectedFiles": [
+      "LICENSE.md",
+      "modular_model_index.json",
+      "scheduler/scheduler_config.json",
+      "t5_tokenizer/tokenizer.json",
+      "t5_tokenizer/tokenizer_config.json",
+      "text_conditioner/config.json",
+      "text_conditioner/diffusion_pytorch_model.safetensors",
+      "text_encoder/config.json",
+      "text_encoder/model.safetensors",
+      "tokenizer/chat_template.jinja",
+      "tokenizer/tokenizer.json",
+      "tokenizer/tokenizer_config.json",
+      "transformer/config.json",
+      "transformer/diffusion_pytorch_model.safetensors",
+      "vae/config.json",
+      "vae/diffusion_pytorch_model.safetensors"
+    ],
+    "excludedFiles": [".gitattributes", "README.md"]
+  },
+  "weightFileCount": 4,
+  "weightBytes": 5628156702,
+  "weightFiles": [
+    {
+      "path": "text_conditioner/diffusion_pytorch_model.safetensors",
+      "byteSize": 269339400,
+      "sha256": "fdcf606524892e35b270b96fc8bbd8d77e615ab882675a049f6e7c2ff6b71da3"
+    },
+    {
+      "path": "text_encoder/model.safetensors",
+      "byteSize": 1192133232,
+      "sha256": "75e8db94adb374b61baca3d898fc2c0d5086d20689a96d4e74576546433a0526"
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model.safetensors",
+      "byteSize": 3912877104,
+      "sha256": "81dc5915fc3c3b170684534ca11ed6c535ddea5658793a801fac53b8d5281065"
+    },
+    {
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "byteSize": 253806966,
+      "sha256": "0c8bc8b758c649abef9ea407b95408389a3b2f610d0d10fcb054fe171d0a8344"
+    }
+  ],
+  "modularIndex": {
+    "sha256": "043c257f13165131c3141160ba39018bfc273f681e8e21ac85fb39d1490ad04b",
+    "pipelineClass": "AnimaModularPipeline",
+    "blocksClass": "AnimaAutoBlocks",
+    "components": [
+      "scheduler",
+      "t5_tokenizer",
+      "text_conditioner",
+      "text_encoder",
+      "tokenizer",
+      "transformer",
+      "vae"
+    ],
+    "allRemoteComponentsSelfReferenceRepository": true,
+    "componentRevisionsAreNull": true
+  },
+  "licenseReview": {
+    "id": "CircleStone Labs Non-Commercial License v1.0",
+    "modelCardLicenseTag": null,
+    "embeddedLicenseFilePresent": true,
+    "licenseFileSha256": "3ab19eea6d1a4a08d1256851c32e5df533dfd7b760313c56797b78ee2ee24724",
+    "revisionBoundAcknowledgementRequired": true,
+    "modelAndDerivativeUseScope": "noncommercial_only",
+    "commercialOutputUseAllowedSubjectToRestrictions": true,
+    "competingModelTrainingFromOutputsProhibited": true,
+    "distributionAttributionRequired": true
+  },
+  "reviewedWorkflows": [
+    {
+      "workflowId": "text2image",
+      "taskId": "text_to_image",
+      "requiredInputs": ["prompt"],
+      "upstreamBlockSequence": ["text_encoder", "denoise", "decode"],
+      "runtimeActionSequence": [
+        "workflow_text_encoder",
+        "workflow_image_denoise",
+        "workflow_image_decoder"
+      ]
+    },
+    {
+      "workflowId": "img2img",
+      "taskId": "image_to_image",
+      "requiredInputs": ["image", "prompt"],
+      "upstreamBlockSequence": ["text_encoder", "vae_encoder", "denoise", "decode"],
+      "runtimeActionSequence": [
+        "workflow_text_encoder",
+        "workflow_image_encoder",
+        "workflow_image_denoise",
+        "workflow_image_decoder"
+      ]
+    }
+  ],
+  "admission": {
+    "status": "graph_qualified_execution_pending",
+    "executableModes": ["text_to_image", "image_to_image"],
+    "downloadCatalogExposed": true,
+    "runtimeCatalogExposed": true,
+    "liveQualified": false,
+    "unresolvedGates": ["license_acknowledgement", "model_download", "live_execution", "generated_output_review"]
+  }
+}

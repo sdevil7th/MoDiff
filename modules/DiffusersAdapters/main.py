@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from modiff.NodeBase import NodeBase
+from modiff.auxiliary_lora import resolve_lora_descriptor, resolve_lora_descriptors
 
 
 def _string_list(value: Any) -> list[str]:
@@ -17,39 +18,6 @@ def _string_list(value: Any) -> list[str]:
     else:
         values = [value]
     return [str(item).strip() for item in values if str(item).strip()]
-
-
-def _resolve_local_adapter(selection: Any, weight_name: str | None = None) -> tuple[Path, str | None]:
-    if isinstance(selection, dict):
-        value = str(selection.get("value") or "").strip()
-        source = selection.get("source") or "hub"
-    else:
-        value = str(selection or "").strip()
-        source = "local" if Path(value).expanduser().exists() else "hub"
-    if not value:
-        raise ValueError("A LoRA adapter is required.")
-    weight_name = str(weight_name or "").strip() or None
-    if source == "hub":
-        from utils.huggingface import cached_file_path
-
-        repo_id = value
-        if not weight_name:
-            parts = value.split("/")
-            if len(parts) >= 3:
-                repo_id, weight_name = "/".join(parts[:2]), "/".join(parts[2:])
-        if not weight_name:
-            raise ValueError("A Hub LoRA needs a pinned weight name installed through Model Manager.")
-        cached = cached_file_path(repo_id, weight_name)
-        if not cached:
-            raise FileNotFoundError(f"LoRA {repo_id}/{weight_name} is not installed.")
-        path = Path(cached)
-        return path.parent, path.name
-    path = Path(value).expanduser()
-    if path.is_file():
-        return path.parent, path.name
-    if not path.is_dir():
-        raise FileNotFoundError(f"LoRA path does not exist: {path}")
-    return path, weight_name
 
 
 def inspect_lora_file(path: Path, *, base_model: str = "") -> dict[str, Any]:
@@ -105,16 +73,6 @@ def inspect_lora_file(path: Path, *, base_model: str = "") -> dict[str, Any]:
     }
 
 
-def _adapter_descriptor(value: Any) -> dict[str, Any]:
-    if not isinstance(value, dict):
-        raise TypeError("LoRA operations need adapter objects from a LoRA node.")
-    required = ("lora_path", "adapter_name")
-    missing = [name for name in required if not value.get(name)]
-    if missing:
-        raise ValueError(f"LoRA adapter is missing: {', '.join(missing)}.")
-    return dict(value)
-
-
 def active_adapter_names(pipeline: Any) -> set[str]:
     getter = getattr(pipeline, "get_list_adapters", None)
     if not callable(getter):
@@ -128,28 +86,48 @@ def active_adapter_names(pipeline: Any) -> set[str]:
 def apply_lora_mix(pipeline: Any, adapters: Any) -> dict[str, Any]:
     if pipeline is None:
         raise ValueError("LoRA Stack / Mix needs a pipeline.")
-    values = adapters if isinstance(adapters, list) else [adapters]
-    values = [_adapter_descriptor(item) for item in values if item is not None]
-    if not values:
-        raise ValueError("LoRA Stack / Mix needs at least one adapter.")
+    resolved = resolve_lora_descriptors(adapters)
+    if any(item.scheduler_class_name is not None for item in resolved):
+        raise ValueError(
+            "Diffusers LoRA Stack / Mix cannot apply scheduler-bearing descriptors; "
+            "connect them through the Modular models loader instead."
+        )
     load = getattr(pipeline, "load_lora_weights", None)
     activate = getattr(pipeline, "set_adapters", None)
     if not callable(load) or not callable(activate):
         raise ValueError("This Diffusers pipeline does not expose the multi-adapter LoRA API.")
     loaded = active_adapter_names(pipeline)
+    identities = dict(getattr(pipeline, "_modiff_lora_identities", {}) or {})
+    replace = {
+        item.adapter_name
+        for item in resolved
+        if item.adapter_name in loaded and identities.get(item.adapter_name) != item.descriptor_sha256
+    }
+    delete = getattr(pipeline, "delete_adapters", None)
+    if replace and not callable(delete):
+        raise ValueError("This Diffusers pipeline cannot replace a loaded adapter with a new immutable identity.")
+
     names = []
     weights = []
-    for adapter in values:
-        name = str(adapter["adapter_name"])
+    for item in resolved:
+        name = item.adapter_name
+        if name in replace:
+            delete(name)
+            loaded.remove(name)
+            identities.pop(name, None)
         if name not in loaded:
-            load_kwargs = {"adapter_name": name}
-            if adapter.get("weight_name"):
-                load_kwargs["weight_name"] = adapter["weight_name"]
-            load(adapter["lora_path"], **load_kwargs)
+            load(
+                str(item.load_directory),
+                weight_name=item.weight_name,
+                adapter_name=name,
+                use_safetensors=True,
+            )
             loaded.add(name)
+            identities[name] = item.descriptor_sha256
         names.append(name)
-        weights.append(float(adapter.get("scale", 1.0)))
+        weights.append(item.scale)
     activate(names, weights)
+    pipeline._modiff_lora_identities = identities
     return {"adapter_names": names, "adapter_weights": weights}
 
 
@@ -158,8 +136,12 @@ class LoRAInspectValidate(NodeBase):
     category = "Diffusers Adapters"
     resizable = True
     params = {
-        "adapter": {"label": "Adapter", "display": "modelselect", "type": "string", "fieldOptions": {"noValidation": True, "sources": ["hub", "local"]}},
-        "weight_name": {"label": "Weight Name", "type": "string", "default": ""},
+        "adapter": {
+            "label": "Adapter",
+            "display": "input",
+            "type": "custom_lora",
+            "required": True,
+        },
         "base_model": {"label": "Expected Base Model", "type": "string", "default": ""},
         "report": {"label": "Inspection", "display": "output", "type": "string"},
         "compatibility": {"label": "Compatibility", "display": "output", "type": "string"},
@@ -167,16 +149,8 @@ class LoRAInspectValidate(NodeBase):
     }
 
     def execute(self, **kwargs):
-        directory, weight_name = _resolve_local_adapter(kwargs.get("adapter"), kwargs.get("weight_name"))
-        if not weight_name:
-            candidates = sorted(directory.glob("*.safetensors"))
-            if len(candidates) != 1:
-                raise ValueError("Choose a weight name when the adapter directory does not contain exactly one Safetensors file.")
-            path = candidates[0]
-        else:
-            path = directory / weight_name
-        if not path.is_file():
-            raise FileNotFoundError(f"LoRA weight file does not exist: {path}")
+        adapter = resolve_lora_descriptor(kwargs.get("adapter"))
+        path = adapter.load_directory / adapter.weight_name
         report = inspect_lora_file(path, base_model=kwargs.get("base_model") or "")
         return {
             "report": json.dumps(report, sort_keys=True),
@@ -212,15 +186,30 @@ class LoRAHotswap(NodeBase):
 
     def execute(self, **kwargs):
         pipeline = kwargs.get("pipeline")
-        adapter = _adapter_descriptor(kwargs.get("replacement"))
+        adapter = resolve_lora_descriptor(kwargs.get("replacement"))
+        if adapter.scheduler_class_name is not None:
+            raise ValueError(
+                "Diffusers LoRA hotswap cannot apply a scheduler-bearing descriptor; "
+                "connect it through the Modular models loader instead."
+            )
         slot = str(kwargs.get("slot_name") or "default_0")
         if slot not in active_adapter_names(pipeline):
             raise ValueError(f"LoRA hotswap slot {slot!r} is not loaded. Load the initial adapter before hotswapping it.")
-        load_kwargs = {"adapter_name": slot, "hotswap": True}
-        if adapter.get("weight_name"):
-            load_kwargs["weight_name"] = adapter["weight_name"]
-        pipeline.load_lora_weights(adapter["lora_path"], **load_kwargs)
-        pipeline.set_adapters([slot], [float(adapter.get("scale", 1.0))])
+        load = getattr(pipeline, "load_lora_weights", None)
+        activate = getattr(pipeline, "set_adapters", None)
+        if not callable(load) or not callable(activate):
+            raise ValueError("This Diffusers pipeline does not expose the reviewed LoRA hotswap API.")
+        load(
+            str(adapter.load_directory),
+            weight_name=adapter.weight_name,
+            adapter_name=slot,
+            hotswap=True,
+            use_safetensors=True,
+        )
+        activate([slot], [adapter.scale])
+        identities = dict(getattr(pipeline, "_modiff_lora_identities", {}) or {})
+        identities[slot] = adapter.descriptor_sha256
+        pipeline._modiff_lora_identities = identities
         return {"output": pipeline}
 
 

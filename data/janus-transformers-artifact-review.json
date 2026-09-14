@@ -1,0 +1,262 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-08-15T01:15:58+05:30",
+  "family": "Janus Pro native Transformers representative",
+  "format": "safetensors",
+  "repository": {
+    "modelType": "HuggingFaceAnyToAnyModel",
+    "repository": "deepseek-community/Janus-Pro-1B",
+    "revision": "1655280bb75959cc1cb85529a2a8b26e7016072e",
+    "private": false,
+    "gated": false,
+    "disabled": false,
+    "pipelineTag": "any-to-any",
+    "libraryName": "transformers",
+    "pythonFilesPresent": false,
+    "trustRemoteCodeRequired": false,
+    "configuration": {
+      "modelType": "janus",
+      "architectures": [
+        "JanusForConditionalGeneration"
+      ],
+      "autoMapPresent": false,
+      "textModelType": "llama",
+      "maxPositionEmbeddings": 16384,
+      "visionModelType": "janus_vision_model",
+      "imageSize": 384,
+      "patchSize": 16,
+      "numImageTokens": 576,
+      "vqModelType": "janus_vqgan",
+      "vqCodebookSize": 16384
+    },
+    "processor": {
+      "processorClass": "JanusProcessor",
+      "imageProcessorClass": "JanusImageProcessor",
+      "imageHeight": 384,
+      "imageWidth": 384
+    },
+    "metadataSha256": {
+      "modelCard": "aa4645c510580ced8ce1be183a8f88888519ff8c431c9a1f6ed03802969a30d0",
+      "configuration": "931a5d566cbaed44fe0114412755c7b1efe76bf8e30c7d04ee3e337b121805aa",
+      "generationConfiguration": "cb3fe41f2dbb0cf759909e9346b01cbd946d27a4a27c56d54d1fed02db0869be",
+      "chatTemplate": "ca86eba863fa87feee121798ddc615b986b2642757e8e472d66d82fe256124a2",
+      "preprocessorConfiguration": "00bc5d559ff85d8a11452ef01e42ec478feee6de880ba921f5e74381002a984d",
+      "processorConfiguration": "b9df983688f30166d870e495de7ac9882d320e76205f96c34da97fc538bca870",
+      "specialTokensMap": "0427a4e49abdd6028f4152fc841009b6c892009107b91fc067e518741f077e92",
+      "tokenizerConfiguration": "867aca294b5e986d9551939db41dbf9d8f05b2c061f50824b20a704285b63b96"
+    },
+    "selectedFiles": [
+      {
+        "path": ".gitattributes",
+        "byteSize": 1577,
+        "blobId": "5a0ba693dd8f366d5e1badf3657d953235798bde"
+      },
+      {
+        "path": "README.md",
+        "byteSize": 4971,
+        "blobId": "0486aedab1f3e771f0de8dd7cc3925257947041a"
+      },
+      {
+        "path": "chat_template.jinja",
+        "byteSize": 1027,
+        "blobId": "e6d74d2fabf22385370e4d0ca3b64dffc22ad90f"
+      },
+      {
+        "path": "config.json",
+        "byteSize": 1939,
+        "blobId": "13427ca7501e8bafadbc8a0464d627e6fa7b8494"
+      },
+      {
+        "path": "generation_config.json",
+        "byteSize": 233,
+        "blobId": "d18b65ce90ab7e77862e1e09149bd6f31a0c1e63"
+      },
+      {
+        "path": "model.safetensors",
+        "byteSize": 4153396574,
+        "sha256": "9d1a416f95fb58d6e02858623c9c676003d66006d51fb5d5cc93348ba78cb942"
+      },
+      {
+        "path": "preprocessor_config.json",
+        "byteSize": 465,
+        "blobId": "c4eeec0bb407f6a2c64fc0046cb51fe8f7048a58"
+      },
+      {
+        "path": "processor_config.json",
+        "byteSize": 79,
+        "blobId": "3f4c1a20855400f93d774ea21f59e32d53ea9c8e"
+      },
+      {
+        "path": "special_tokens_map.json",
+        "byteSize": 792,
+        "blobId": "d8c775ae48c54085e36e40c1a22c72691d659c7f"
+      },
+      {
+        "path": "tokenizer.json",
+        "byteSize": 7611780,
+        "blobId": "9319e013fb14be377c1c969fd9719ab0d9e3b2c7"
+      },
+      {
+        "path": "tokenizer_config.json",
+        "byteSize": 105922,
+        "blobId": "4b168f9c5737e19957656e1ec95c4a8e78dc35fb"
+      }
+    ],
+    "selectedBytes": 4161125359,
+    "weightFiles": [
+      {
+        "path": "model.safetensors",
+        "byteSize": 4153396574,
+        "sha256": "9d1a416f95fb58d6e02858623c9c676003d66006d51fb5d5cc93348ba78cb942"
+      }
+    ],
+    "weightFileCount": 1,
+    "weightBytes": 4153396574,
+    "safetensorsParameterCount": 2076636811,
+    "weightInventorySha256": "f64c3a05f958d1673417e7d00d8af7f6f27ae7ebbc71936983d747e020e64fb2",
+    "reviewEvidence": "https://huggingface.co/api/models/deepseek-community/Janus-Pro-1B/revision/1655280bb75959cc1cb85529a2a8b26e7016072e?blobs=true"
+  },
+  "rightsReview": {
+    "state": "reviewed_use_restricted_model_license",
+    "modelCardLicenseTag": "mit",
+    "modelCardLicenseName": "deepseek",
+    "codeLicense": "MIT",
+    "weightsLicense": "DeepSeek Model License Agreement v1.0",
+    "modelSnapshotLicenseFilePresent": false,
+    "modelCardDistinguishesCodeAndWeightTerms": true,
+    "immutableExternalModelLicense": {
+      "repository": "deepseek-ai/DeepSeek-LLM",
+      "revision": "6712a86bfb7dd25c73383c5ad2eb7a8db540258b",
+      "path": "LICENSE-MODEL",
+      "byteSize": 13718,
+      "sha256": "09b2b4b4614509ff8baccd3c220e9d9b99e55152925b501f0d5f8b5e36eea982"
+    },
+    "immutableExternalCodeLicense": {
+      "repository": "deepseek-ai/DeepSeek-LLM",
+      "revision": "6712a86bfb7dd25c73383c5ad2eb7a8db540258b",
+      "path": "LICENSE-CODE",
+      "byteSize": 1065,
+      "sha256": "6e4c38e1172f42fdbff13edf9a7a017679fb82b0fde415a3e8b3c31c6ed4a4e4"
+    },
+    "modelUseGrantedSubjectToRestrictions": true,
+    "commercialUseNotCategoricallyProhibited": true,
+    "distributionAndHostedUseCarryLicenseDuties": true,
+    "useRestrictionsPresent": true,
+    "licensorClaimsNoRightsInOutputsExceptAsStated": true,
+    "productAndUserComplianceReviewRequired": true,
+    "licenseMustNotBeFlattenedToMit": true
+  },
+  "security": {
+    "localFilesOnly": true,
+    "trustRemoteCode": false,
+    "safetensorsOnly": true,
+    "hostedInferenceAllowed": false,
+    "selectedPythonFiles": false,
+    "unsafePickleWeightsSelected": false
+  },
+  "pinnedRuntime": {
+    "baseProfileId": "huggingface-transformers-peft-5.14.1-0.20.0",
+    "baseTransformersVersion": "5.14.1",
+    "baseTransformersWheelSha256": "9db974c4079ede2d1a3ea7ca5a240df33f2cc26fc2b36ba64c5f2a4f43b6e725",
+    "linuxX86_64SourceRevision": "a597f974857b3d92939971296bc0deb93d33d780",
+    "sourceVersion": "5.16.0.dev0",
+    "nativeSymbols": [
+      "AnyToAnyPipeline",
+      "AutoModelForMultimodalLM",
+      "AutoProcessor",
+      "JanusForConditionalGeneration",
+      "JanusProcessor"
+    ],
+    "probeDownloadedWeights": false
+  },
+  "downloadPolicy": {
+    "appOnly": true,
+    "directWeightDownloadPerformed": false,
+    "modelInstallStatus": "complete",
+    "olderModelsDeleted": false,
+    "requiredPreflight": "The running app checked the exact plan twice before submission and twice after completion; each matching plan preserved the 64 GiB reserve."
+  },
+  "operationalReceipt": {
+    "schemaVersion": 1,
+    "recordedAt": "2026-08-15T03:33:18+05:30",
+    "scope": "linux_app_cache_install_only",
+    "admissionSnapshot": {
+      "reviewedAt": "2026-08-15T01:15:58+05:30",
+      "modelInstallStatusAtReview": "not_started",
+      "probeDownloadedWeights": false
+    },
+    "artifact": {
+      "repository": "deepseek-community/Janus-Pro-1B",
+      "revision": "1655280bb75959cc1cb85529a2a8b26e7016072e",
+      "selectedFileCount": 11,
+      "selectedBytes": 4161125359,
+      "weight": {
+        "path": "model.safetensors",
+        "byteSize": 4153396574,
+        "sha256": "9d1a416f95fb58d6e02858623c9c676003d66006d51fb5d5cc93348ba78cb942"
+      }
+    },
+    "transport": {
+      "appOnly": true,
+      "directWeightDownloadPerformed": false,
+      "olderModelsDeleted": false,
+      "activeQueueAfterCompletion": 0
+    },
+    "preSubmissionPlanPair": {
+      "matchingPlanCount": 2,
+      "totalBytes": 4161125359,
+      "completedBytes": 0,
+      "remainingBytes": 4161125359,
+      "freeBytes": 75320348672,
+      "reserveBytes": 68719476736,
+      "fitsWithQueue": true,
+      "headroomAfterReserveBytes": 2439746577
+    },
+    "postCompletionPlanPair": {
+      "matchingPlanCount": 2,
+      "totalBytes": 4161125359,
+      "completedBytes": 4161125359,
+      "remainingBytes": 0,
+      "freeBytes": 71108456448,
+      "reserveBytes": 68719476736,
+      "fitsWithQueue": true,
+      "headroomAfterReserveBytes": 2388979712
+    },
+    "modelFingerprints": {
+      "installed": true,
+      "complete": true,
+      "repairRequired": false,
+      "fingerprint": "sha256:48dfc7e9692ebaa057356e2093f8440e314a8c862b7c4420a9c11633135f0246"
+    },
+    "proofScope": {
+      "linuxAppCacheInstall": true,
+      "liveInference": false,
+      "galleryQualification": false,
+      "autoQualification": false,
+      "generatedOutput": false,
+      "outputQualityReview": false,
+      "crossPlatformQualification": false
+    }
+  },
+  "admission": {
+    "status": "source_complete_execution_and_product_review_pending",
+    "executableModes": [
+      "HuggingFaceAnyToAnyModel:text_generation",
+      "HuggingFaceAnyToAnyModel:image_to_text",
+      "HuggingFaceAnyToAnyModel:text_to_image"
+    ],
+    "downloadCatalogExposed": true,
+    "runtimeCatalogExposed": true,
+    "templateEligible": true,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "liveQualified": false,
+    "unresolvedGates": [
+      "real_weight_text_execution",
+      "real_weight_image_execution",
+      "human_output_review",
+      "product_and_user_license_compliance_review",
+      "physical_macos_execution"
+    ]
+  }
+}

@@ -1,0 +1,160 @@
+import configparser
+import json
+import os
+from pathlib import Path
+import subprocess
+from unittest.mock import patch
+
+import pytest
+
+from modiff.config import Config
+from modiff.secret_config import dotenv_value, huggingface_token, set_dotenv_value
+
+
+def test_dotenv_reader_ignores_unrelated_entries_and_accepts_export(tmp_path: Path):
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text(
+        "# local secrets\nUNRELATED=value\nexport HF_TOKEN='dotenv-token'\n",
+        encoding="utf-8",
+    )
+
+    assert dotenv_value(dotenv_path, "HF_TOKEN") == "dotenv-token"
+    assert dotenv_value(dotenv_path, "MISSING") is None
+
+
+def test_huggingface_token_prefers_environment_then_dotenv_then_config(tmp_path: Path):
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text("HF_TOKEN=dotenv-token\n", encoding="utf-8")
+    cfg = configparser.ConfigParser()
+    cfg.read_string("[huggingface]\ntoken = config-token\n")
+
+    with patch.dict("os.environ", {"HF_TOKEN": "environment-token"}, clear=True):
+        assert huggingface_token(cfg, dotenv_path) == (
+            "environment-token",
+            "environment:HF_TOKEN",
+        )
+
+    with patch.dict("os.environ", {}, clear=True):
+        assert huggingface_token(cfg, dotenv_path) == ("dotenv-token", "dotenv")
+
+    dotenv_path.unlink()
+    with patch.dict("os.environ", {}, clear=True):
+        assert huggingface_token(cfg, dotenv_path) == ("config-token", "config")
+
+
+def test_config_loads_huggingface_token_from_explicit_dotenv(tmp_path: Path):
+    config_path = tmp_path / "config.ini"
+    config_path.write_text("[huggingface]\nonline_status = Auto\n", encoding="utf-8")
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text("HF_TOKEN=dotenv-token\n", encoding="utf-8")
+
+    with patch.dict("os.environ", {}, clear=True):
+        config = Config(config_path=config_path, dotenv_path=dotenv_path)
+
+    assert config.hf["token"] == "dotenv-token"
+    assert config.hf["token_source"] == "dotenv"
+
+
+@pytest.mark.parametrize("inherited_core_modules", [
+    False,
+    pytest.param(True, marks=pytest.mark.skipif(os.name != "nt", reason="Windows PowerShell environment")),
+])
+def test_set_dotenv_value_preserves_unrelated_entries_and_restricts_permissions(
+    tmp_path: Path, monkeypatch, inherited_core_modules: bool,
+):
+    if inherited_core_modules:
+        # Reproduce pwsh -> Python -> powershell.exe inheriting Core-only modules.
+        module_root = tmp_path / "core-modules"
+        module = module_root / "Microsoft.PowerShell.Security"
+        module.mkdir(parents=True)
+        (module / "Microsoft.PowerShell.Security.psd1").write_text(
+            "@{ModuleVersion='7.0.0';PowerShellVersion='7.0';"
+            "NestedModules='Microsoft.PowerShell.Security.dll';CmdletsToExport=@('Get-Acl')}",
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("PSModulePath", str(module_root))
+
+    dotenv_path = tmp_path / ".env"
+    dotenv_path.write_text(
+        "UNRELATED=value\nHF_TOKEN=old-token\nexport HF_TOKEN=duplicate-token\n",
+        encoding="utf-8",
+    )
+
+    set_dotenv_value(dotenv_path, "HF_TOKEN", "new-token")
+
+    assert dotenv_path.read_text(encoding="utf-8") == (
+        "UNRELATED=value\nHF_TOKEN=new-token\n"
+    )
+    if os.name == "nt":
+        # Inspect the OS ACL independently of the implementation, not chmod's
+        # read-only flag (which is not a Windows confidentiality boundary).
+        # Let Windows PowerShell rebuild its own module path instead of loading
+        # incompatible PowerShell 7 modules inherited through a Python process.
+        environment = {key: value for key, value in os.environ.items() if key.upper() != "PSMODULEPATH"}
+        environment["MODIFF_TEST_SECRET_PATH"] = str(dotenv_path)
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command",
+             "$ErrorActionPreference = 'Stop'; $acl = Get-Acl -LiteralPath $env:MODIFF_TEST_SECRET_PATH; "
+             "@{protected=$acl.AreAccessRulesProtected;sddl=$acl.Sddl} | ConvertTo-Json -Compress"],
+            check=True, capture_output=True, text=True, env=environment, timeout=30,
+        )
+        acl = json.loads(result.stdout)
+        assert acl["protected"] is True
+        assert acl["sddl"].split("D:", 1)[1] in {"P(A;;FA;;;OW)", "PAI(A;;FA;;;OW)"}
+    else:
+        assert dotenv_path.stat().st_mode & 0o777 == 0o600
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows uses its ACL API without POSIX fchmod")
+def test_set_dotenv_value_without_fchmod(tmp_path: Path, monkeypatch):
+    monkeypatch.delattr(os, "fchmod", raising=False)
+    dotenv_path = tmp_path / ".env"
+    set_dotenv_value(dotenv_path, "HF_TOKEN", "synthetic-token")
+    assert dotenv_value(dotenv_path, "HF_TOKEN") == "synthetic-token"
+    assert list(tmp_path.iterdir()) == [dotenv_path]
+
+
+def test_secret_permission_failure_preserves_original_and_removes_temporary(tmp_path):
+    path = tmp_path / ".env"
+    path.write_bytes(b"UNRELATED=original\n")
+    descriptors = []
+
+    def fail(descriptor):
+        descriptors.append(descriptor)
+        assert os.fstat(descriptor).st_size == 0
+        raise PermissionError("cannot restrict secret")
+
+    with patch("modiff.secret_config._restrict_secret_descriptor", side_effect=fail):
+        with pytest.raises(PermissionError, match="cannot restrict secret"):
+            set_dotenv_value(path, "HF_TOKEN", "never-written")
+    assert path.read_bytes() == b"UNRELATED=original\n"
+    assert list(tmp_path.iterdir()) == [path]
+    with pytest.raises(OSError):
+        os.fstat(descriptors[0])
+
+
+def test_set_dotenv_value_rejects_multiline_values_and_symlinks(tmp_path: Path):
+    dotenv_path = tmp_path / ".env"
+
+    try:
+        set_dotenv_value(dotenv_path, "HF_TOKEN", "first\nsecond")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("multiline dotenv values must be rejected")
+
+    target = tmp_path / "target"
+    target.write_text("HF_TOKEN=unchanged\n", encoding="utf-8")
+    try:
+        dotenv_path.symlink_to(target)
+    except OSError as error:
+        if os.name == "nt" and error.winerror == 1314:
+            pytest.skip("Windows symlink creation requires Developer Mode or privilege")
+        raise
+    try:
+        set_dotenv_value(dotenv_path, "HF_TOKEN", "replacement")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("symlinked dotenv files must be rejected")
+    assert target.read_text(encoding="utf-8") == "HF_TOKEN=unchanged\n"
