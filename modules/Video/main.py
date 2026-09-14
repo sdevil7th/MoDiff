@@ -1174,16 +1174,15 @@ def _file_asset_collection(value):
 
 
 def _video_filter(asset, label, *, width, height, fps, duration=None):
-    # Normalize timestamps/rate before geometry filters. FFmpeg 7.1 scale
-    # clears frame duration metadata; a subsequent fps filter can then discard
-    # the last frame. setpts also clears the negotiated rate, so it must precede
-    # fps for the CFR inputs required by xfade.
+    # Normalize timestamps/rate before scale negotiates the pixel format.
+    # FFmpeg 7's scale link can lose the final frame duration; a downstream
+    # fps filter then drops that real frame. fps also sets the common time
+    # base needed by xfade, so a later settb is unnecessary here.
     fps_text = f"{float(fps):.12g}"
     expression = (
         f"[{label}:v]setpts=PTS-STARTPTS,fps={fps_text},"
         f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
-        f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1,"
-        f"settb=expr=1/{fps_text}"
+        f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,setsar=1"
     )
     if duration is not None:
         expression += f",tpad=stop_mode=clone:stop_duration={max(0.0, duration)}"
@@ -1306,10 +1305,11 @@ class ConcatenateAssets(NodeBase):
                 filters.append(
                     f"[{previous}][v{index}]xfade=transition=fade:duration={usable}:offset={offset}[{raw_output}]"
                 )
-                # xfade preserves the normalized timestamps and frame rate.
-                # Resetting PTS here would clear that rate; resampling again
-                # can drop the last frame after the geometry filters above.
-                filters.append(f"[{raw_output}]settb=expr=1/{fps_text}[{output}]")
+                # Keep CFR metadata for the next xfade without resetting the
+                # established timeline: setpts/settb here can discard the EOF
+                # duration and cause fps to drop the final real frame.
+                normalizer = f"fps={fps_text}" if index < len(sources) - 1 else "null"
+                filters.append(f"[{raw_output}]{normalizer}[{output}]")
                 previous = output
                 elapsed += float(source["duration_seconds"]) - usable
         asset_id, destination = allocate_video_path(task_id=current_task_id())

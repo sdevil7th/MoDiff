@@ -17,6 +17,50 @@ from utils import huggingface  # noqa: E402
 
 
 class HuggingFaceDownloadProgressTests(unittest.TestCase):
+    def test_allocated_file_bytes_uses_blocks_instead_of_logical_length(self):
+        self.assertEqual(
+            huggingface._allocated_file_bytes(Path("unused"), SimpleNamespace(st_blocks=8, st_size=10**9)),
+            4096,
+        )
+
+    @unittest.skipUnless(os.name == "nt", "Windows sparse file allocation")
+    def test_windows_sparse_partial_does_not_promise_its_logical_size_as_free_space(self):
+        import ctypes
+        from ctypes import wintypes
+        import msvcrt
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.DeviceIoControl.argtypes = (
+            wintypes.HANDLE, wintypes.DWORD, ctypes.c_void_p, wintypes.DWORD,
+            ctypes.c_void_p, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD), ctypes.c_void_p,
+        )
+        kernel32.DeviceIoControl.restype = wintypes.BOOL
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "partial.incomplete"
+            with path.open("wb") as output:
+                returned = wintypes.DWORD()
+                self.assertTrue(kernel32.DeviceIoControl(
+                    msvcrt.get_osfhandle(output.fileno()), 0x000900C4,  # FSCTL_SET_SPARSE
+                    None, 0, None, 0, ctypes.byref(returned), None,
+                ))
+                output.truncate(512 * 1024**2)
+                # Extending via the Windows CRT can materialize zero-filled
+                # blocks even after SET_SPARSE. Explicitly create the hole this
+                # allocation test requires instead of relying on that timing.
+                class ZeroRange(ctypes.Structure):
+                    _fields_ = [("start", ctypes.c_longlong), ("end", ctypes.c_longlong)]
+
+                zero_range = ZeroRange(0, 512 * 1024**2)
+                self.assertTrue(kernel32.DeviceIoControl(
+                    msvcrt.get_osfhandle(output.fileno()), 0x000980C8,  # FSCTL_SET_ZERO_DATA
+                    ctypes.byref(zero_range), ctypes.sizeof(zero_range),
+                    None, 0, ctypes.byref(returned), None,
+                ))
+            self.assertEqual(path.stat().st_size, 512 * 1024**2)
+            allocated = huggingface._allocated_file_bytes(path, path.stat())
+            self.assertGreaterEqual(allocated, 0)
+            self.assertLess(allocated, path.stat().st_size // 2)
+
     def test_repo_exists_wrapper_delegates_to_hugging_face_hub(self):
         with patch.object(huggingface, "hf_repo_exists", return_value=True) as upstream, patch.object(
             huggingface.CONFIG,
@@ -287,11 +331,13 @@ class HuggingFaceDownloadProgressTests(unittest.TestCase):
             partial = blobs / f"{expected_hash}.1234abcd.incomplete"
             partial.write_bytes(b"x" * 1024)
             (blobs / f"{unrelated_hash}.1234abcd.incomplete").write_bytes(b"y" * 1024)
-            allocated = getattr(partial.stat(), 'st_blocks', 0) * 512
+            allocated = 4096
             with patch.dict(
                 huggingface.CONFIG.hf, {"cache_dir": cache_dir, "token": None}
             ), patch.object(
                 huggingface, "_repo_download_plan", return_value=upstream_plan
+            ), patch.object(
+                huggingface, "_allocated_file_bytes", return_value=allocated
             ), patch.object(
                 huggingface.shutil,
                 "disk_usage",

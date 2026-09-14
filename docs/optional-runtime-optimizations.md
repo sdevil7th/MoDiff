@@ -22,6 +22,11 @@ Linux ARM64, Windows ARM64, and both macOS architectures remain
 `candidate_unqualified` and base-delivered. Merely finding the requested
 versions—or merely publishing the locks—does not make either profile runnable.
 
+Deterministic source extraction normalizes timestamps with non-following POSIX
+operations or validated Windows file handles, rejecting reparse points and
+multiply linked files. Windows' limited `chmod` flags do not define wheel
+permissions: the wheel assembler still emits the exact reviewed metadata bytes.
+
 ## Product contract
 
 1. Setup and the runtime API show reviewed contracts and their qualification

@@ -50,11 +50,25 @@ def _read_json(path: Path) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def _replace_queue_snapshot(temporary: Path, path: Path) -> None:
+    # Windows readers can briefly prevent replacing the old snapshot. Retain
+    # the pending update and retry that publication, never delete the old file
+    # or wait for another progress event to eventually publish terminal state.
+    for attempt in range(5):
+        try:
+            os.replace(temporary, path)
+            return
+        except PermissionError as error:
+            if os.name != "nt" or getattr(error, "winerror", None) not in {5, 32} or attempt == 4:
+                raise
+            time.sleep(0.01)
+
+
 def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-    os.replace(temporary, path)
+    _replace_queue_snapshot(temporary, path)
 
 
 def compact_task_history(tasks: Any) -> list[dict[str, Any]]:

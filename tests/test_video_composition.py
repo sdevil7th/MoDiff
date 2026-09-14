@@ -98,3 +98,29 @@ def test_retained_segments_stitch_and_mux_audio_without_materializing_the_join(t
     assert muxed["frames"] == joined["frames"]
     assert muxed["duration_seconds"] == joined["duration_seconds"]
     assert media_assets.coerce_video_asset(muxed["asset"])["path"] == muxed["file"]
+
+
+@pytest.mark.parametrize("transition,expected", [(0, 24), (0.25, 20), (0.5, 16)])
+def test_three_retained_segments_keep_exact_timeline_and_endpoint_frames(tmp_path, monkeypatch, transition, expected):
+    import imageio.v2 as imageio
+
+    monkeypatch.setattr(media_assets, "asset_root", lambda root=None: tmp_path)
+    clips = [
+        ExportAsset(f"retain-{color}").execute(
+            video=solid(color, count=8, size=(32, 32)), fps=8, pin=True,
+        )["asset"]
+        for color in ("red", "green", "blue")
+    ]
+    joined = ConcatenateAssets("join-three").execute(
+        clips=clips, transition_seconds=transition, pin=True,
+    )
+    # Decode the actual file, independently of its retained-asset metadata.
+    reader = imageio.get_reader(joined["file"], "ffmpeg")
+    try:
+        frames = list(reader.iter_data())
+    finally:
+        reader.close()
+    assert len(frames) == joined["frames"] == expected
+    assert joined["duration_seconds"] == expected / 8
+    assert frames[0][:, :, 0].mean() > 240
+    assert frames[-1][:, :, 2].mean() > 240

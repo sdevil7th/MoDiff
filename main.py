@@ -103,6 +103,20 @@ Speak Friend and Enter: {CONFIG.server['scheme']}://{CONFIG.server['ip']}:{CONFI
         logger.info(f"{ColorCodes.BLUE}Namárië!")
 
 
+def worker_process_command(worker_env):
+    """Launch the process that owns execution, retaining the managed venv."""
+    executable = sys.executable
+    if sys.platform == "win32" and sys.prefix != sys.base_prefix:
+        # Windows venv python.exe is a redirector: Popen otherwise owns its
+        # launcher PID, not the child that writes queue state and holds models.
+        # Use CPython's own venv-launcher handoff to start that child directly.
+        executable = getattr(sys, "_base_executable", None)
+        if not executable:
+            raise RuntimeError("The Windows virtual environment has no base Python executable.")
+        worker_env["__PYVENV_LAUNCHER__"] = sys.executable
+    return [executable, os.path.abspath(__file__), "--worker"]
+
+
 def run_supervisor():
     from modiff.supervisor_control import SupervisorController, SupervisorControlServer
 
@@ -149,7 +163,7 @@ def run_supervisor():
             worker_env = os.environ.copy()
             worker_env["MODIFF_WORKER_SUPERVISED"] = "1"
             worker_env["MODIFF_SUPERVISOR_QUEUE_STATE"] = str(queue_state_path)
-            worker = subprocess.Popen([sys.executable, os.path.abspath(__file__), "--worker"], env=worker_env)
+            worker = subprocess.Popen(worker_process_command(worker_env), env=worker_env)
             controller.set_worker(worker)
             return_code = worker.wait()
             restart_requested = controller.consume_restart_request()

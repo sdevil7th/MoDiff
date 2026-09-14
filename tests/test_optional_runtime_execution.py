@@ -159,14 +159,22 @@ def base_delivery(profile_id=EXECUTION_PROFILE_ID, **changes):
         yield updated
 
 
+def isolate_linux_runtime_fixture(test_case):
+    """These exact-main catalogs model Linux; explicit target matrix cases stay explicit."""
+    def target(*, platform_name=None, machine=None):
+        return optional_runtime_target(
+            platform_name=platform_name or "linux", machine=machine or "x86_64"
+        )
+
+    for module in ("modiff.optional_runtimes", "modiff.diffusers_profiles"):
+        patcher = mock.patch(f"{module}.optional_runtime_target", side_effect=target)
+        patcher.start()
+        test_case.addCleanup(patcher.stop)
+
+
 class OptionalRuntimeRequirementTests(unittest.TestCase):
     def setUp(self):
-        self.enterContext(mock.patch(
-            "modiff.diffusers_profiles.optional_runtime_target",
-            side_effect=lambda *, platform_name=None, machine=None: optional_runtime_target(
-                platform_name=platform_name or "linux", machine=machine or "x86_64"
-            ),
-        ))
+        isolate_linux_runtime_fixture(self)
         # These catalog fixtures describe a base worker unless a case explicitly
         # selects active/recovery status. Keep that unit-test world independent
         # of the validated overlay used to launch the surrounding pytest suite.
@@ -1131,12 +1139,7 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
 
 class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
-        self.enterContext(mock.patch(
-            "modiff.diffusers_profiles.optional_runtime_target",
-            side_effect=lambda *, platform_name=None, machine=None: optional_runtime_target(
-                platform_name=platform_name or "linux", machine=machine or "x86_64"
-            ),
-        ))
+        isolate_linux_runtime_fixture(self)
         self.temporary = tempfile.TemporaryDirectory()
         self.environment = mock.patch.dict(
             os.environ,
@@ -1751,12 +1754,7 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
             self.calls.append((values, ref))
 
     def setUp(self):
-        self.enterContext(mock.patch(
-            "modiff.diffusers_profiles.optional_runtime_target",
-            side_effect=lambda *, platform_name=None, machine=None: optional_runtime_target(
-                platform_name=platform_name or "linux", machine=machine or "x86_64"
-            ),
-        ))
+        isolate_linux_runtime_fixture(self)
         self.temporary = tempfile.TemporaryDirectory()
         self.environment = mock.patch.dict(
             os.environ,

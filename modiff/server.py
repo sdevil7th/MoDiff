@@ -53,7 +53,7 @@ from modiff.path_identifiers import (
     resolve_managed_path_identifier,
 )
 from modiff.disk_activity import DiskActivitySampler
-from modiff.supervisor_control import compact_task_history
+from modiff.supervisor_control import compact_task_history, _write_json_atomic
 from modiff.template_gallery import (
     TEMPLATE_GALLERY_SOURCE_PATH,
     TemplateGalleryError,
@@ -1957,9 +1957,7 @@ class WebServer:
             }
             temporary = path.with_suffix(path.suffix + ".tmp")
             try:
-                path.parent.mkdir(parents=True, exist_ok=True)
-                temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-                os.replace(temporary, path)
+                _write_json_atomic(path, payload)
                 self._supervisor_queue_last_write = now
             except Exception:
                 logger.warning("Could not persist supervisor queue state", exc_info=True)

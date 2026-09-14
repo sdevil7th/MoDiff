@@ -561,8 +561,7 @@ class SourceArchiveSecurityTests(SourceBuildFixture):
         ):
             path = destination / relative
             self.assertTrue(path.is_file())
-            if os.name != "nt":
-                self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o644)
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o666 if os.name == "nt" else 0o644)
             self.assertEqual(int(path.stat().st_mtime), 315_532_800)
 
     def test_archive_rejects_traversal_collisions_links_and_incomplete_selection(self):

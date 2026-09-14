@@ -25,6 +25,11 @@ All model/adapter files use the existing Hugging Face Hub resolver and immutable
 catalog revisions. Optional-runtime, resource, trust and local-file boundaries
 are unchanged. No downloads occur merely from catalog discovery.
 
+Component quantization constructs each config through its owning library.
+Diffusers-only transformer quantization does not import the optional Transformers
+package. Text-encoder quantization requires the reviewed, explicitly activated
+Transformers + PEFT runtime and reports that action when it is absent.
+
 ## Optional typed call inputs
 
 Ordinary FLUX actions expose the selected pipeline's reviewed optional inputs as

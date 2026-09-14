@@ -747,6 +747,22 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
                     double_quant=True,
                 )
             return
+        transformer_only = build_qwen_pipeline_quantization_config(
+            components=["transformer"],
+            quantization_mode="bnb_4bit",
+            compute_dtype=torch.bfloat16,
+            quant_type="nf4",
+            double_quant=True,
+        )
+        self.assertEqual(list(transformer_only.quant_mapping.keys()), ["transformer"])
+        if find_spec("transformers") is None:
+            with self.assertRaisesRegex(RuntimeError, "reviewed Transformers.*optional runtime"):
+                build_qwen_pipeline_quantization_config(
+                    components=["transformer", "text_encoder"],
+                    quantization_mode="bnb_4bit",
+                    compute_dtype=torch.bfloat16,
+                )
+            return
         quant_config = build_qwen_pipeline_quantization_config(
             components=["transformer", "text_encoder"],
             quantization_mode="bnb_4bit",
@@ -756,15 +772,6 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         )
         self.assertIsNotNone(quant_config)
         self.assertEqual(sorted(quant_config.quant_mapping.keys()), ["text_encoder", "transformer"])
-
-        transformer_only = build_qwen_pipeline_quantization_config(
-            components=["transformer"],
-            quantization_mode="bnb_4bit",
-            compute_dtype=torch.bfloat16,
-            quant_type="nf4",
-            double_quant=True,
-        )
-        self.assertEqual(list(transformer_only.quant_mapping.keys()), ["transformer"])
 
     def test_strict_component_loading_raises_for_required_component_oom(self):
         original = RuntimeError("CUDA out of memory while loading text_encoder")

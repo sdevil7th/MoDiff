@@ -3681,7 +3681,12 @@ def build_qwen_pipeline_quantization_config(
         )
     from diffusers import BitsAndBytesConfig as DiffusersBitsAndBytesConfig
     from diffusers.quantizers import PipelineQuantizationConfig
-    from transformers import BitsAndBytesConfig as TransformersBitsAndBytesConfig
+
+    if "text_encoder" in components and find_spec("transformers") is None:
+        raise RuntimeError(
+            "Text encoder quantization requires the reviewed Transformers + PEFT optional runtime. "
+            "Install and activate it through MoDiff's runtime manager."
+        )
 
     quant_mapping = {}
     if "transformer" in components:
@@ -3692,6 +3697,8 @@ def build_qwen_pipeline_quantization_config(
             bnb_4bit_use_double_quant=bool(double_quant),
         )
     if "text_encoder" in components:
+        from transformers import BitsAndBytesConfig as TransformersBitsAndBytesConfig
+
         quant_mapping["text_encoder"] = TransformersBitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type=quant_type,

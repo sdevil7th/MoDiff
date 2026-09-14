@@ -37,6 +37,8 @@ from modiff.runtime_overlays import (
     MAX_LOCKED_ARCHIVE_BYTES,
     OverlayCancelled,
     _wheel_target_path,
+    _windows_close_handle,
+    _windows_open_path,
     locked_artifact_file_seal,
     locked_artifact_path,
 )
@@ -58,6 +60,30 @@ _SHA256_CHARACTERS = frozenset("0123456789abcdef")
 _WINDOWS_RESERVED_NAMES = {"CON", "PRN", "AUX", "NUL"} | {
     f"{prefix}{index}" for prefix in ("COM", "LPT") for index in range(1, 10)
 }
+
+
+def _set_source_timestamp(path: Path, epoch: int, *, directory: bool = False) -> None:
+    """Normalize metadata without following a substituted link or reparse point."""
+    if os.name != "nt":
+        os.utime(path, (epoch, epoch), follow_symlinks=False)
+        return
+    import ctypes
+    from ctypes import wintypes
+
+    handle, _ = _windows_open_path(path, directory=directory, write_attributes=True)
+    try:
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        filetime_pointer = ctypes.POINTER(wintypes.FILETIME)
+        kernel32.SetFileTime.argtypes = (
+            wintypes.HANDLE, filetime_pointer, filetime_pointer, filetime_pointer,
+        )
+        kernel32.SetFileTime.restype = wintypes.BOOL
+        ticks = epoch * 10_000_000 + 116_444_736_000_000_000
+        timestamp = wintypes.FILETIME(ticks & 0xFFFFFFFF, ticks >> 32)
+        if not kernel32.SetFileTime(handle, None, ctypes.byref(timestamp), ctypes.byref(timestamp)):
+            raise ctypes.WinError(ctypes.get_last_error())
+    finally:
+        _windows_close_handle(handle)
 
 
 @dataclass(frozen=True)
@@ -103,17 +129,6 @@ def _safe_regular_details(details: os.stat_result) -> bool:
 def _canonical_digest(value: Any) -> str:
     body = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return f"sha256:{hashlib.sha256(body).hexdigest()}"
-
-
-def _set_source_timestamp(path: Path, epoch: int) -> None:
-    # Extraction owns this private workspace. Recheck links/reparse points
-    # immediately before metadata writes, including on Python 3.12 Windows
-    # where utime does not implement follow_symlinks=False.
-    details = path.lstat()
-    if not (_safe_regular_details(details) or _safe_directory_details(details)):
-        raise RuntimeError("A source timestamp target is unsafe.")
-    options = {"follow_symlinks": False} if os.utime in os.supports_follow_symlinks else {}
-    os.utime(path, (epoch, epoch), **options)
 
 
 def _normalized_distribution(value: Any) -> str:
@@ -677,9 +692,9 @@ def extract_locked_source_tree(
         if not _safe_directory_details(directory.lstat()):
             raise RuntimeError("The extracted source tree contains a link.")
         directory.chmod(0o755)
-        _set_source_timestamp(directory, normalized["sourceDateEpoch"])
+        _set_source_timestamp(directory, normalized["sourceDateEpoch"], directory=True)
     destination_root.chmod(0o755)
-    _set_source_timestamp(destination_root, normalized["sourceDateEpoch"])
+    _set_source_timestamp(destination_root, normalized["sourceDateEpoch"], directory=True)
     return {
         "schemaVersion": 1,
         "archiveSha256": source["sha256"],
