@@ -1,3 +1,5 @@
+from source_contract_helpers import source_sha256
+
 import hashlib
 import json
 from pathlib import Path
@@ -199,7 +201,7 @@ class WanAnimate2ArtifactReviewTests(unittest.TestCase):
         reviewed_hashes = []
         for source in self.review["sourceReview"]["files"]:
             relative = Path(source["path"]).relative_to("src/diffusers")
-            current_hashes.append(hashlib.sha256((diffusers_root / relative).read_bytes()).hexdigest())
+            current_hashes.append(source_sha256(diffusers_root / relative))
             reviewed_hashes.append(source["sha256"])
         self.assertEqual(current_hashes, reviewed_hashes)
         self.assertEqual(self.review["admission"]["status"], "graph_qualified")

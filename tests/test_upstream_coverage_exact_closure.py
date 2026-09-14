@@ -1,5 +1,6 @@
+from source_contract_helpers import source_sha256
+
 from collections import Counter
-import hashlib
 from pathlib import Path
 import unittest
 
@@ -49,7 +50,7 @@ class UpstreamCoverageExactClosureTests(unittest.TestCase):
     def test_exact_pin_closes_with_the_reviewed_finite_partition(self):
         source = Path(diffusers.__file__).resolve().parent
         self.assertEqual(PINNED_DIFFUSERS_REVISION, "2f7e0154a9db246e95c9ede43edba7db5b130805")
-        self.assertEqual(hashlib.sha256((source / "__init__.py").read_bytes()).hexdigest(), PINNED_EXPORT_SHA256)
+        self.assertEqual(source_sha256(source / "__init__.py"), PINNED_EXPORT_SHA256)
         self.assertTrue(PROMOTED_PIPELINES.isdisjoint(_REVIEWED_PIPELINE_DECISIONS))
 
         version, items = _pipeline_coverage(ROOT, source)

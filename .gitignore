@@ -57,6 +57,9 @@ data/*
 !data/modular-block-contracts.json
 !data/modular-conditional-contracts.json
 !data/modular-workflow-contracts.json
+!data/anima-artifact-review.json
+!data/flux2-klein-base-4b-artifact-review.json
+!data/minimax-music3-artifact-review.json
 !data/qualification-graphs/
 !data/qualification-graphs/**
 !data/graphs/

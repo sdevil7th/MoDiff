@@ -57,7 +57,7 @@ class FakeSourceResponse:
 class SourceBuildFixture(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary.name)
+        self.root = Path(self.temporary.name).resolve()
         self.cache = self.root / "artifacts"
         self.cache.mkdir()
         self.commit = "a" * 40

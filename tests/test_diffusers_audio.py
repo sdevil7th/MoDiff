@@ -201,8 +201,19 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                 )
 
     @requires_transformers
-    def test_audioldm2_generation_helper_matches_the_reviewed_optional_runtime(self):
-        from modules.DiffusersAudio.main import _reviewed_audioldm2_generation_helper
+    def test_audioldm2_generation_helper_accepts_only_the_reviewed_optional_runtime(self):
+        import transformers
+        from modules.DiffusersAudio.main import (
+            _AUDIO_LDM2_TRANSFORMERS_VERSION,
+            _reviewed_audioldm2_generation_helper,
+        )
+
+        # The macOS base may contain Transformers without the reviewed main
+        # overlay. Presence alone must not bypass this exact-version boundary.
+        if transformers.__version__ != _AUDIO_LDM2_TRANSFORMERS_VERSION:
+            with self.assertRaisesRegex(RuntimeError, "has not been reviewed"):
+                _reviewed_audioldm2_generation_helper()
+            return
 
         gpt2_model, helper = _reviewed_audioldm2_generation_helper()
         self.assertEqual(gpt2_model.__name__, "GPT2Model")
@@ -1622,7 +1633,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         self.assertEqual(pipeline.calls, [])
 
         with tempfile.TemporaryDirectory() as temporary:
-            temporary_path = Path(temporary)
+            temporary_path = Path(temporary).resolve()
             adapter_file = temporary_path / "installed.safetensors"
             adapter_file.write_bytes(b"installed-audio-lora")
 

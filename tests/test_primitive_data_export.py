@@ -11,7 +11,7 @@ from modules.Primitive.main import ExportData, MAX_DATA_EXPORT_BYTES
 class PrimitiveDataExportTests(unittest.TestCase):
     def test_json_export_is_bounded_deterministic_and_app_owned(self):
         with tempfile.TemporaryDirectory(prefix="modiff-data-export-") as temporary:
-            data_root = Path(temporary) / "data"
+            data_root = Path(temporary).resolve() / "data"
             data_root.mkdir()
             output = data_root / "review" / "result.json"
             with patch.dict(CONFIG.paths, {"data": str(data_root)}):
@@ -36,7 +36,7 @@ class PrimitiveDataExportTests(unittest.TestCase):
 
     def test_text_and_json_string_outputs_remain_truthful(self):
         with tempfile.TemporaryDirectory(prefix="modiff-data-export-") as temporary:
-            data_root = Path(temporary) / "data"
+            data_root = Path(temporary).resolve() / "data"
             data_root.mkdir()
             with patch.dict(CONFIG.paths, {"data": str(data_root)}):
                 text = ExportData("data-export-text")(
@@ -55,7 +55,7 @@ class PrimitiveDataExportTests(unittest.TestCase):
 
     def test_export_rejects_unsafe_unbounded_or_mismatched_outputs(self):
         with tempfile.TemporaryDirectory(prefix="modiff-data-export-") as temporary:
-            data_root = Path(temporary) / "data"
+            data_root = Path(temporary).resolve() / "data"
             data_root.mkdir()
             with patch.dict(CONFIG.paths, {"data": str(data_root)}):
                 node = ExportData()

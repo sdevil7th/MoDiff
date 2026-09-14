@@ -84,6 +84,15 @@ def test_set_dotenv_value_preserves_unrelated_entries_and_restricts_permissions(
         assert dotenv_path.stat().st_mode & 0o777 == 0o600
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows uses its ACL API without POSIX fchmod")
+def test_set_dotenv_value_without_fchmod(tmp_path: Path, monkeypatch):
+    monkeypatch.delattr(os, "fchmod", raising=False)
+    dotenv_path = tmp_path / ".env"
+    set_dotenv_value(dotenv_path, "HF_TOKEN", "synthetic-token")
+    assert dotenv_value(dotenv_path, "HF_TOKEN") == "synthetic-token"
+    assert list(tmp_path.iterdir()) == [dotenv_path]
+
+
 def test_secret_permission_failure_preserves_original_and_removes_temporary(tmp_path):
     path = tmp_path / ".env"
     path.write_bytes(b"UNRELATED=original\n")
@@ -115,7 +124,12 @@ def test_set_dotenv_value_rejects_multiline_values_and_symlinks(tmp_path: Path):
 
     target = tmp_path / "target"
     target.write_text("HF_TOKEN=unchanged\n", encoding="utf-8")
-    dotenv_path.symlink_to(target)
+    try:
+        dotenv_path.symlink_to(target)
+    except OSError as error:
+        if os.name == "nt" and error.winerror == 1314:
+            pytest.skip("Windows symlink creation requires Developer Mode or privilege")
+        raise
     try:
         set_dotenv_value(dotenv_path, "HF_TOKEN", "replacement")
     except ValueError:
