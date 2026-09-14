@@ -1,6 +1,11 @@
 import configparser
+import json
+import os
 from pathlib import Path
+import subprocess
 from unittest.mock import patch
+
+import pytest
 
 from modiff.config import Config
 from modiff.secret_config import dotenv_value, huggingface_token, set_dotenv_value
@@ -62,7 +67,40 @@ def test_set_dotenv_value_preserves_unrelated_entries_and_restricts_permissions(
     assert dotenv_path.read_text(encoding="utf-8") == (
         "UNRELATED=value\nHF_TOKEN=new-token\n"
     )
-    assert dotenv_path.stat().st_mode & 0o777 == 0o600
+    if os.name == "nt":
+        # Inspect the OS ACL independently of the implementation, not chmod's
+        # read-only flag (which is not a Windows confidentiality boundary).
+        environment = {**os.environ, "MODIFF_TEST_SECRET_PATH": str(dotenv_path)}
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command",
+             "$acl = Get-Acl -LiteralPath $env:MODIFF_TEST_SECRET_PATH; "
+             "@{protected=$acl.AreAccessRulesProtected;sddl=$acl.Sddl} | ConvertTo-Json -Compress"],
+            check=True, capture_output=True, text=True, env=environment,
+        )
+        acl = json.loads(result.stdout)
+        assert acl["protected"] is True
+        assert acl["sddl"].split("D:", 1)[1] in {"P(A;;FA;;;OW)", "PAI(A;;FA;;;OW)"}
+    else:
+        assert dotenv_path.stat().st_mode & 0o777 == 0o600
+
+
+def test_secret_permission_failure_preserves_original_and_removes_temporary(tmp_path):
+    path = tmp_path / ".env"
+    path.write_bytes(b"UNRELATED=original\n")
+    descriptors = []
+
+    def fail(descriptor):
+        descriptors.append(descriptor)
+        assert os.fstat(descriptor).st_size == 0
+        raise PermissionError("cannot restrict secret")
+
+    with patch("modiff.secret_config._restrict_secret_descriptor", side_effect=fail):
+        with pytest.raises(PermissionError, match="cannot restrict secret"):
+            set_dotenv_value(path, "HF_TOKEN", "never-written")
+    assert path.read_bytes() == b"UNRELATED=original\n"
+    assert list(tmp_path.iterdir()) == [path]
+    with pytest.raises(OSError):
+        os.fstat(descriptors[0])
 
 
 def test_set_dotenv_value_rejects_multiline_values_and_symlinks(tmp_path: Path):

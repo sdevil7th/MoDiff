@@ -153,6 +153,7 @@ def _windows_open_path(
     *,
     directory: bool,
     writable: bool = False,
+    write_attributes: bool = False,
 ) -> tuple[Any, tuple[int, int]]:
     import ctypes
     from ctypes import wintypes
@@ -168,7 +169,11 @@ def _windows_open_path(
         wintypes.HANDLE,
     )
     kernel32.CreateFileW.restype = wintypes.HANDLE
+    kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+    kernel32.CloseHandle.restype = wintypes.BOOL
     desired_access = 0x00010000 | 0x00000080 | 0x00100000
+    if write_attributes:
+        desired_access |= 0x00000100  # FILE_WRITE_ATTRIBUTES
     if writable:
         desired_access |= 0x40000000  # GENERIC_WRITE
     if directory:
@@ -211,7 +216,7 @@ def _windows_open_path(
         raise ctypes.WinError(error)
     is_directory = bool(info.attributes & 0x00000010)
     is_reparse = bool(info.attributes & 0x00000400)
-    if is_directory != directory or is_reparse:
+    if is_directory != directory or is_reparse or (not directory and info.links != 1):
         kernel32.CloseHandle(handle)
         raise OverlayStorageUnsafe("A managed runtime entry is not an exact regular path.")
     identity = (int(info.volume_serial), (int(info.index_high) << 32) | int(info.index_low))
@@ -220,9 +225,13 @@ def _windows_open_path(
 
 def _windows_close_handle(handle: Any) -> None:
     import ctypes
+    from ctypes import wintypes
 
     if handle is not None:
-        ctypes.WinDLL("kernel32", use_last_error=True).CloseHandle(handle)
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+        kernel32.CloseHandle.restype = wintypes.BOOL
+        kernel32.CloseHandle(handle)
 
 
 def _windows_rename_directory(

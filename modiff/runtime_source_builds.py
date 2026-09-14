@@ -37,6 +37,8 @@ from modiff.runtime_overlays import (
     MAX_LOCKED_ARCHIVE_BYTES,
     OverlayCancelled,
     _wheel_target_path,
+    _windows_close_handle,
+    _windows_open_path,
     locked_artifact_file_seal,
     locked_artifact_path,
 )
@@ -58,6 +60,30 @@ _SHA256_CHARACTERS = frozenset("0123456789abcdef")
 _WINDOWS_RESERVED_NAMES = {"CON", "PRN", "AUX", "NUL"} | {
     f"{prefix}{index}" for prefix in ("COM", "LPT") for index in range(1, 10)
 }
+
+
+def _set_source_timestamp(path: Path, epoch: int, *, directory: bool = False) -> None:
+    """Normalize metadata without following a substituted link or reparse point."""
+    if os.name != "nt":
+        os.utime(path, (epoch, epoch), follow_symlinks=False)
+        return
+    import ctypes
+    from ctypes import wintypes
+
+    handle, _ = _windows_open_path(path, directory=directory, write_attributes=True)
+    try:
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        filetime_pointer = ctypes.POINTER(wintypes.FILETIME)
+        kernel32.SetFileTime.argtypes = (
+            wintypes.HANDLE, filetime_pointer, filetime_pointer, filetime_pointer,
+        )
+        kernel32.SetFileTime.restype = wintypes.BOOL
+        ticks = epoch * 10_000_000 + 116_444_736_000_000_000
+        timestamp = wintypes.FILETIME(ticks & 0xFFFFFFFF, ticks >> 32)
+        if not kernel32.SetFileTime(handle, None, ctypes.byref(timestamp), ctypes.byref(timestamp)):
+            raise ctypes.WinError(ctypes.get_last_error())
+    finally:
+        _windows_close_handle(handle)
 
 
 @dataclass(frozen=True)
@@ -648,11 +674,7 @@ def extract_locked_source_tree(
             if observed != member.size:
                 raise RuntimeError("A reviewed source member was truncated.")
             output_path.chmod(0o644)
-            os.utime(
-                output_path,
-                (normalized["sourceDateEpoch"], normalized["sourceDateEpoch"]),
-                follow_symlinks=False,
-            )
+            _set_source_timestamp(output_path, normalized["sourceDateEpoch"])
             selected_files.add(relative)
             for tree in source_trees:
                 if relative.startswith(f"{tree}/"):
@@ -670,17 +692,9 @@ def extract_locked_source_tree(
         if not _safe_directory_details(directory.lstat()):
             raise RuntimeError("The extracted source tree contains a link.")
         directory.chmod(0o755)
-        os.utime(
-            directory,
-            (normalized["sourceDateEpoch"], normalized["sourceDateEpoch"]),
-            follow_symlinks=False,
-        )
+        _set_source_timestamp(directory, normalized["sourceDateEpoch"], directory=True)
     destination_root.chmod(0o755)
-    os.utime(
-        destination_root,
-        (normalized["sourceDateEpoch"], normalized["sourceDateEpoch"]),
-        follow_symlinks=False,
-    )
+    _set_source_timestamp(destination_root, normalized["sourceDateEpoch"], directory=True)
     return {
         "schemaVersion": 1,
         "archiveSha256": source["sha256"],

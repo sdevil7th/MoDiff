@@ -26,6 +26,12 @@ A package being part of the Hugging Face ecosystem is distinct from a model bein
 
 MoDiff reads a Hugging Face token from `HF_TOKEN` in the process environment, then an ignored local `.env`, then the legacy `[huggingface] token` in `config.ini`. Local secret files are plaintext and are not protected by an operating-system credential store. The Models UI validates a token and atomically updates only `HF_TOKEN` in `.env` with owner-only file permissions.
 
+Before writing secret bytes, the held temporary file receives POSIX mode `0600`
+or a protected Windows DACL granting full access only to its owner. Windows'
+read-only file flag is not used as a confidentiality control. If restricting
+access fails, the descriptor is closed, the temporary file is removed, and the
+existing `.env` remains unchanged.
+
 - Use a least-privilege Hugging Face read token.
 - Keep local `.env` and `config.ini` permission-restricted. Never commit or share them, private keys, or authenticated URLs.
 - Rotate a token immediately if it appears in logs, screenshots, workflow packages, shell history, or a commit.

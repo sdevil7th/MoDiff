@@ -509,6 +509,36 @@ def _run(command: list[str], *, cwd: Path = ROOT, env: dict[str, str] | None = N
     subprocess.run(command, cwd=cwd, check=True, env=env)
 
 
+def _dependency_environment() -> dict[str, str]:
+    """Build reviewed Git dependencies with canonical source line endings."""
+    environment = os.environ.copy()
+    count = int(environment.get("GIT_CONFIG_COUNT", "0"))
+    for key, value in (("core.autocrlf", "false"), ("core.eol", "lf")):
+        environment[f"GIT_CONFIG_KEY_{count}"] = key
+        environment[f"GIT_CONFIG_VALUE_{count}"] = value
+        count += 1
+    environment["GIT_CONFIG_COUNT"] = str(count)
+    return environment
+
+
+def _install_reviewed_diffusers(uv: str, python: Path) -> None:
+    # Read the executable contract, avoiding another independently maintained
+    # revision. A prior uv cache may contain a wheel built from CRLF checkout
+    # bytes; bypass that cache only for this VCS dependency, not Torch.
+    project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    matches = re.findall(
+        r'"(diffusers @ git\+https://github\.com/huggingface/diffusers\.git@[0-9a-f]{40})"',
+        project,
+    )
+    if len(matches) != 1:
+        raise RuntimeError("The executable Diffusers dependency must name one immutable reviewed commit.")
+    _run(
+        [uv, "pip", "install", "--python", str(python), "--no-cache", "--no-deps",
+         "--reinstall-package", "diffusers", matches[0]],
+        env=_dependency_environment(),
+    )
+
+
 def _ensure_venv(uv: str, target: Path) -> Path:
     python = target / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     version = _command([str(python), "-c", "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"]) if python.exists() else None
@@ -587,13 +617,7 @@ def _find_executable(root: Path, names: tuple[str, ...]) -> str | None:
     return None
 
 
-def _ensure_uv() -> str:
-    managed_uv = MANAGED_ROOT / "tools" / "uv"
-    uv = _find_executable(managed_uv, ("uv.exe", "uv")) if managed_uv.exists() else None
-    if not uv:
-        uv = _find_executable(_download_tool("uv"), ("uv.exe", "uv"))
-    if not uv:
-        raise RuntimeError("The app-local uv archive did not contain the expected executable")
+def _validate_uv_directory(managed_uv: Path) -> None:
     managed_info = managed_uv.lstat()
     if (
         not stat.S_ISDIR(managed_info.st_mode)
@@ -604,11 +628,30 @@ def _ensure_uv() -> str:
         )
     ):
         raise RuntimeError("The app-local uv tool directory is unsafe")
+
+
+def _ensure_uv() -> str:
+    managed_uv = MANAGED_ROOT / "tools" / "uv"
     key = (normalized_os(), normalized_arch())
     lock = UV_TOOL_LOCKS.get(key)
-    executable = Path(uv).resolve(strict=True)
-    if lock is None or executable.is_symlink():
+    if lock is None:
         raise RuntimeError("The app-local uv executable has no reviewed platform lock")
+    if managed_uv.exists() or managed_uv.is_symlink():
+        _validate_uv_directory(managed_uv)
+    # A copied checkout may contain another platform's uv. Only the exact
+    # reviewed path for this host can satisfy setup; never execute a name match.
+    executable = managed_uv / lock["executable"]
+    if not executable.exists() and not executable.is_symlink():
+        _download_tool("uv")
+    _validate_uv_directory(managed_uv)
+    if not executable.is_file():
+        raise RuntimeError("The app-local uv archive did not contain the expected executable")
+    info = executable.lstat()
+    if stat.S_ISLNK(info.st_mode) or bool(
+        getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    ):
+        raise RuntimeError("The app-local uv executable is linked")
+    executable = executable.resolve(strict=True)
     try:
         relative = executable.relative_to(managed_uv.resolve(strict=True)).as_posix()
     except ValueError as exc:
@@ -616,6 +659,7 @@ def _ensure_uv() -> str:
     executable_hash = hashlib.sha256(executable.read_bytes()).hexdigest()
     if relative != lock["executable"] or executable_hash != lock["executableSha256"]:
         raise RuntimeError("The app-local uv executable failed its reviewed integrity check")
+    executable.chmod(executable.stat().st_mode | 0o111)
     receipt = {
         "schemaVersion": 1,
         "archiveSha256": lock["archiveSha256"],
@@ -631,17 +675,19 @@ def _ensure_uv() -> str:
         temporary.replace(managed_uv / "receipt.json")
     finally:
         temporary.unlink(missing_ok=True)
-    return uv
+    return str(executable)
 
 
 def _ensure_node() -> dict[str, str]:
     managed_node = MANAGED_ROOT / "tools" / "node"
-    node = _find_executable(managed_node, ("node.exe", "node")) if managed_node.exists() else None
-    npm_names = ("npm.cmd", "npm") if os.name == "nt" else ("npm", "npm.cmd")
+    windows = normalized_os() == "windows"
+    node_names = ("node.exe",) if windows else ("node",)
+    npm_names = ("npm.cmd",) if windows else ("npm",)
+    node = _find_executable(managed_node, node_names) if managed_node.exists() else None
     npm = _find_executable(managed_node, npm_names) if managed_node.exists() else None
     if not node or not npm:
         managed_node = _download_tool("node")
-        node = _find_executable(managed_node, ("node.exe", "node"))
+        node = _find_executable(managed_node, node_names)
         npm = _find_executable(managed_node, npm_names)
     if not node or not npm:
         raise RuntimeError("The app-local Node archive did not contain the expected executables")
@@ -955,6 +1001,7 @@ def install(args: argparse.Namespace) -> dict[str, Any]:
         status="running", current_phase="plan", profile=plan["profile"], support_tier=plan["support_tier"],
         manifest_revision=plan["manifest_revision"], steps=plan["steps"], resume_command=plan["resume_command"],
         completed_phases=["detect", "plan"], rollback={"performed": False},
+        next_action=plan["resume_command"],
     )
     experimental_issue = next((item for item in plan["issues"] if item["id"] == "experimental-opt-in-required"), None)
     if experimental_issue and not args.non_interactive and _confirm("This platform is experimental. Continue with the GPU profile?"):
@@ -1011,8 +1058,10 @@ def install(args: argparse.Namespace) -> dict[str, Any]:
     if STAGED_VENV.exists():
         shutil.rmtree(STAGED_VENV)
     python = _ensure_venv(uv, STAGED_VENV)
+    _install_reviewed_diffusers(uv, python)
     index_options = ["--config-file", plan["uv_config"]] if plan.get("uv_config") else []
-    _run([uv, "pip", "install", "--python", str(python), *index_options, "-r", plan["requirements"]])
+    _run([uv, "pip", "install", "--python", str(python), *index_options, "-r", plan["requirements"]],
+         env=_dependency_environment())
     smoke_environment = _rocm_environment() if plan["profile"] == "amd-rocm-linux" else os.environ.copy()
     smoke = _command([str(python), "-c", _smoke_script(plan["profile"])], timeout=60, env=smoke_environment)
     if smoke["returncode"] != 0:
@@ -1092,6 +1141,7 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
+    resume_command = r".\install.ps1 -Accelerator auto -Resume" if os.name == "nt" else "./install.sh --accelerator auto --resume"
     if args.json:
         args.non_interactive = True
     if _read_journal().get("consent", {}).get("experimental-platform") is True:
@@ -1109,6 +1159,7 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"  Next:   {item['failure_help']}")
             return 0
         preview = build_plan(args)
+        resume_command = preview["resume_command"]
         if not args.json:
             _render_plan(preview)
         if args.dry_run or args.system_check:
@@ -1126,9 +1177,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result.get("status") in {"complete", "reboot-required"} else 2
     except Exception as exc:
         journal = _read_journal()
-        _write_journal(status="failed", failure=str(exc), next_action=journal.get("next_action", "./install.sh --resume"))
+        _write_journal(status="failed", failure=str(exc), next_action=resume_command)
         payload = {"error": str(exc), "completed": journal.get("completed_phases", []), "rollback": journal.get("rollback"),
-                   "resume_command": journal.get("next_action", "./install.sh --resume"), "journal": str(JOURNAL_PATH)}
+                   "resume_command": resume_command, "journal": str(JOURNAL_PATH)}
         if args.json:
             print(json.dumps(payload, indent=2), file=sys.stderr)
         else:

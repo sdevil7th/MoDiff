@@ -281,12 +281,11 @@ class GuidedInstallerTests(unittest.TestCase):
         patch_check = subprocess.run(
             ["git", "apply", "--check", "-"],
             cwd=root,
-            input=patch_body,
-            text=True,
+            input=patch_body.encode("utf-8"),
             capture_output=True,
             check=False,
         )
-        self.assertEqual(patch_check.returncode, 0, patch_check.stderr)
+        self.assertEqual(patch_check.returncode, 0, patch_check.stderr.decode("utf-8", errors="replace"))
         self.assertIn("scripts/qualify_optional_runtime.py --preflight-only", workflow)
         self.assertIn("scripts/qualify_optional_runtime.py --consent", workflow)
         self.assertEqual(

@@ -798,6 +798,27 @@ def _download_progress_snapshot(
     }
 
 
+def _allocated_file_bytes(path: Path, details) -> int:
+    """Measure occupied disk space, including sparse/compressed Windows files."""
+    if hasattr(details, 'st_blocks'):
+        return details.st_blocks * 512
+    if os.name != 'nt':
+        return 0  # Unknown allocation cannot safely be promised as reclaimable.
+    import ctypes
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel32.GetCompressedFileSizeW.argtypes = (wintypes.LPCWSTR, ctypes.POINTER(wintypes.DWORD))
+    kernel32.GetCompressedFileSizeW.restype = wintypes.DWORD
+    high = wintypes.DWORD()
+    ctypes.set_last_error(0)
+    low = kernel32.GetCompressedFileSizeW(str(path), ctypes.byref(high))
+    error = ctypes.get_last_error()
+    if low == 0xFFFFFFFF and error:
+        raise ctypes.WinError(error)
+    return (high.value << 32) | low
+
+
 def _interrupted_download_partials(
     repo_id: str,
     cache_dir: str | None,
@@ -840,7 +861,7 @@ def _interrupted_download_partials(
                     'path': partial,
                     'relative_path': partial.relative_to(repo_path).as_posix(),
                     'logical_bytes': stat.st_size,
-                    'allocated_bytes': stat.st_blocks * 512,
+                    'allocated_bytes': _allocated_file_bytes(partial, stat),
                     'modified_at': stat.st_mtime,
                 }
             )

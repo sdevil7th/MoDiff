@@ -4,6 +4,64 @@ from pathlib import Path
 import tempfile
 
 
+def _restrict_secret_descriptor(descriptor: int) -> None:
+    """Restrict the held temporary file before writing any secret bytes."""
+    if os.name != "nt":
+        os.fchmod(descriptor, 0o600)
+        return
+
+    import ctypes
+    from ctypes import wintypes
+    import msvcrt
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
+    pointer = ctypes.c_void_p
+    kernel32.ReOpenFile.argtypes = (wintypes.HANDLE, wintypes.DWORD, wintypes.DWORD, wintypes.DWORD)
+    kernel32.ReOpenFile.restype = wintypes.HANDLE
+    kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+    kernel32.CloseHandle.restype = wintypes.BOOL
+    kernel32.LocalFree.argtypes = (pointer,)
+    kernel32.LocalFree.restype = pointer
+    advapi32.ConvertStringSecurityDescriptorToSecurityDescriptorW.argtypes = (
+        wintypes.LPCWSTR, wintypes.DWORD, ctypes.POINTER(pointer), pointer,
+    )
+    advapi32.ConvertStringSecurityDescriptorToSecurityDescriptorW.restype = wintypes.BOOL
+    advapi32.GetSecurityDescriptorDacl.argtypes = (
+        pointer, ctypes.POINTER(wintypes.BOOL), ctypes.POINTER(pointer), ctypes.POINTER(wintypes.BOOL),
+    )
+    advapi32.GetSecurityDescriptorDacl.restype = wintypes.BOOL
+    advapi32.SetSecurityInfo.argtypes = (
+        wintypes.HANDLE, wintypes.DWORD, wintypes.DWORD, pointer, pointer, pointer, pointer,
+    )
+    advapi32.SetSecurityInfo.restype = wintypes.DWORD
+    # Reopen the same object, never a pathname, for WRITE_DAC. OW grants only
+    # the file owner access; the protected DACL removes inherited grants.
+    handle = kernel32.ReOpenFile(msvcrt.get_osfhandle(descriptor), 0x00060000, 0x3, 0)
+    if handle == wintypes.HANDLE(-1).value:
+        raise ctypes.WinError(ctypes.get_last_error())
+    security = pointer()
+    try:
+        if not advapi32.ConvertStringSecurityDescriptorToSecurityDescriptorW(
+            "D:P(A;;FA;;;OW)", 1, ctypes.byref(security), None,
+        ):
+            raise ctypes.WinError(ctypes.get_last_error())
+        present, defaulted, dacl = wintypes.BOOL(), wintypes.BOOL(), pointer()
+        if not advapi32.GetSecurityDescriptorDacl(
+            security, ctypes.byref(present), ctypes.byref(dacl), ctypes.byref(defaulted),
+        ):
+            raise ctypes.WinError(ctypes.get_last_error())
+        if not present.value or not dacl.value:
+            raise OSError("An owner-only secret DACL could not be constructed.")
+        error = advapi32.SetSecurityInfo(handle, 1, 0x80000004, None, None, dacl, None)
+        if error:
+            raise ctypes.WinError(error)
+    finally:
+        if security.value:
+            kernel32.LocalFree(security)
+        kernel32.CloseHandle(handle)
+
+
 def dotenv_value(path: Path, key: str) -> str | None:
     """Read one simple dotenv value without exporting unrelated entries."""
 
@@ -91,13 +149,12 @@ def set_dotenv_value(path: Path, key: str, value: str) -> None:
     try:
         descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
         temporary_path = Path(temporary_name)
-        os.fchmod(descriptor, 0o600)
         with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            _restrict_secret_descriptor(handle.fileno())
             handle.write("\n".join(updated_lines) + "\n")
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(temporary_path, path)
-        os.chmod(path, 0o600)
     finally:
         if temporary_path is not None:
             temporary_path.unlink(missing_ok=True)

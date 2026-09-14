@@ -1,8 +1,11 @@
 import asyncio
 import importlib.util
+import json
 import os
 import signal
+import subprocess
 import sys
+import time
 from types import ModuleType, SimpleNamespace
 import unittest
 from tempfile import TemporaryDirectory
@@ -47,6 +50,125 @@ class MainSupervisorTests(unittest.TestCase):
             controller_class.call_args.args[0],
             Path(self.test_data.name) / "runtime" / "supervisor-queue.json",
         )
+
+    def test_windows_worker_launch_uses_base_python_with_venv_identity(self):
+        module = load_main_module()
+        worker_env = {"MODIFF_WORKER_SUPERVISED": "1"}
+        with (
+            patch.object(module.sys, "platform", "win32"),
+            patch.object(module.sys, "prefix", "venv"),
+            patch.object(module.sys, "base_prefix", "base"),
+            patch.object(module.sys, "executable", "venv-python.exe"),
+            patch.object(module.sys, "_base_executable", "base-python.exe"),
+        ):
+            self.assertEqual(
+                module.worker_process_command(worker_env),
+                ["base-python.exe", str(MAIN_PATH), "--worker"],
+            )
+        self.assertEqual(worker_env, {
+            "MODIFF_WORKER_SUPERVISED": "1",
+            "__PYVENV_LAUNCHER__": "venv-python.exe",
+        })
+
+    def test_other_worker_launches_keep_the_current_python_and_environment(self):
+        module = load_main_module()
+        for platform, prefix in (("linux", "venv"), ("darwin", "venv"), ("win32", "base")):
+            with (
+                self.subTest(platform=platform, prefix=prefix),
+                patch.object(module.sys, "platform", platform),
+                patch.object(module.sys, "prefix", prefix),
+                patch.object(module.sys, "base_prefix", "base"),
+                patch.object(module.sys, "executable", "current-python"),
+            ):
+                worker_env = {"MODIFF_WORKER_SUPERVISED": "1"}
+                self.assertEqual(
+                    module.worker_process_command(worker_env),
+                    ["current-python", str(MAIN_PATH), "--worker"],
+                )
+                self.assertEqual(worker_env, {"MODIFF_WORKER_SUPERVISED": "1"})
+
+    def test_windows_worker_launch_rejects_missing_base_python(self):
+        module = load_main_module()
+        with (
+            patch.object(module.sys, "platform", "win32"),
+            patch.object(module.sys, "prefix", "venv"),
+            patch.object(module.sys, "base_prefix", "base"),
+            patch.object(module.sys, "_base_executable", None),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "no base Python executable"):
+                module.worker_process_command({})
+
+    @unittest.skipUnless(
+        sys.platform == "win32" and sys.prefix != sys.base_prefix,
+        "requires a real Windows virtual environment",
+    )
+    def test_windows_worker_owns_queue_and_stop_preserves_virtual_environment(self):
+        from modiff.supervisor_control import SupervisorController
+
+        module = load_main_module()
+        directory = Path(self.test_data.name)
+        probe = directory / "worker_probe.py"
+        probe.write_text(
+            "import importlib.util, json, os, sys\n"
+            "from pathlib import Path\n"
+            "state = json.loads(os.environ['MODIFF_PROBE_STATE'])\n"
+            "state['workerPid'] = os.getpid()\n"
+            "Path(os.environ['MODIFF_SUPERVISOR_QUEUE_STATE']).write_text(json.dumps(state))\n"
+            "identity = dict(pid=os.getpid(), executable=sys.executable, prefix=sys.prefix, "
+            "torch=importlib.util.find_spec('torch').origin)\n"
+            "Path(os.environ['MODIFF_PROBE_IDENTITY']).write_text(json.dumps(identity))\n"
+            "sys.stdin.readline()\n",
+            encoding="utf-8",
+        )
+        for has_current in (True, False):
+            with self.subTest(has_current=has_current):
+                state_path = directory / f"queue-{has_current}.json"
+                identity_path = directory / f"identity-{has_current}.json"
+                current = {"task_id": "active", "status": "running"} if has_current else None
+                queued = {"next": {"task_id": "next", "status": "queued"}}
+                worker_env = os.environ.copy()
+                worker_env.update(
+                    MODIFF_SUPERVISOR_QUEUE_STATE=str(state_path),
+                    MODIFF_PROBE_IDENTITY=str(identity_path),
+                    MODIFF_PROBE_STATE=json.dumps({"current": current, "queued": queued}),
+                )
+                with patch.object(module, "__file__", str(probe)):
+                    command = module.worker_process_command(worker_env)
+                worker = subprocess.Popen(
+                    command, env=worker_env, stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                )
+                try:
+                    deadline = time.monotonic() + 10
+                    while not identity_path.exists() and time.monotonic() < deadline:
+                        if worker.poll() is not None:
+                            break
+                        time.sleep(0.01)
+                    self.assertTrue(identity_path.exists(), "worker did not publish its identity")
+                    identity = json.loads(identity_path.read_text())
+                    controller = SupervisorController(state_path)
+                    controller.set_worker(worker)
+                    self.assertEqual(controller.queue()["current"], current)
+                    self.assertEqual(controller.queue()["queued"], queued)
+                    self.assertEqual(worker.pid, identity["pid"])
+                    self.assertEqual(identity["executable"], sys.executable)
+                    self.assertEqual(identity["prefix"], sys.prefix)
+                    self.assertEqual(identity["torch"], importlib.util.find_spec("torch").origin)
+                    status, response = controller.stop()
+                    self.assertEqual(status, 200)
+                    self.assertFalse(response["snapshot_recovery"])
+                    self.assertEqual(response["cancelled_queued_task_ids"], ["next"])
+                    self.assertNotEqual(worker.wait(timeout=5), 0)
+                    persisted = json.loads(state_path.read_text())
+                    self.assertIsNone(persisted["current"])
+                    self.assertEqual(persisted["queued"], {})
+                    self.assertEqual(len(persisted["recent"]), 2 if has_current else 1)
+                    self.assertTrue(all(task["status"] == "cancelled" for task in persisted["recent"]))
+                finally:
+                    # Let both launcher and child exit even when the original
+                    # PID mismatch makes an assertion fail before Stop.
+                    worker.communicate(input="\n" if worker.poll() is None else None, timeout=5)
 
     def test_importing_supervisor_never_activates_runtime_overlay(self):
         optimization_module = ModuleType("modiff.optimization_packages")

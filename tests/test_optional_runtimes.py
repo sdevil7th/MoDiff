@@ -209,6 +209,8 @@ class OptionalRuntimeContractTests(unittest.TestCase):
         profile = public_optional_runtime_profiles(
             [TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID],
             version_resolver=_version_resolver(versions),
+            platform_name="linux",
+            machine="x86_64",
         )[0]
 
         self.assertEqual(profile["schemaVersion"], 1)

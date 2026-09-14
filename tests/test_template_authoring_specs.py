@@ -47,7 +47,7 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         validated = validate_template_authoring_spec_ledger(self.ledger, root=ROOT)
         self.assertEqual(validated, self.ledger)
         self.assertEqual(build_template_authoring_spec_ledger(ROOT), self.ledger)
-        self.assertEqual(render_template_authoring_spec_ledger(self.ledger), LEDGER_PATH.read_text())
+        self.assertEqual(render_template_authoring_spec_ledger(self.ledger), LEDGER_PATH.read_text(encoding="utf-8"))
         self.assertEqual(
             self.ledger["summary"],
             {

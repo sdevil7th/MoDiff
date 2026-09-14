@@ -529,7 +529,7 @@ def _load_generation_research(root: Path, workflow_id: str, fixture_provenance: 
             "Generation research must match the workflow and contain an exact recipe plus official source findings."
         )
     return {
-        "path": str(research_path.relative_to(root)),
+        "path": research_path.relative_to(root).as_posix(),
         "sha256": _sha256_file(research_path),
         "recipeContentHash": canonical_content_hash(recipe),
         "officialSources": sources,
@@ -565,7 +565,7 @@ def _load_frozen_campaign_acceptances(receipts_root: Path | None) -> dict[tuple[
         ):
             raise HumanReviewAssetError(f"Frozen campaign acceptance has an invalid execution contract: {path}")
         evidence = {
-            "path": str(path.relative_to(receipts_root)),
+            "path": path.relative_to(receipts_root).as_posix(),
             "sha256": _sha256_file(path),
             "receipt": receipt,
         }

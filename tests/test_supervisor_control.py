@@ -1,19 +1,95 @@
 import json
+import os
 import tempfile
+import threading
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from http.client import HTTPConnection
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+
+import modiff.supervisor_control as supervisor_control
 
 from modiff.supervisor_control import (
     SupervisorControlServer,
     SupervisorController,
     _allowed_browser_origin,
     compact_task_history,
+    _read_json,
+    _replace_queue_snapshot,
+    _write_json_atomic,
 )
 
 
 class SupervisorControlTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == "nt", "requires Windows file sharing")
+    def test_queue_publication_recovers_after_a_concurrent_reader_closes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "supervisor-queue.json"
+            previous = {"workerPid": 4242, "current": {"task_id": "active", "progress": 1}, "label": "图像"}
+            updated = {**previous, "current": {"task_id": "active", "progress": 2}}
+            completed = {**previous, "current": None, "recent": [{"task_id": "active", "status": "completed"}]}
+            _write_json_atomic(state_path, previous)
+            real_replace = os.replace
+            for next_snapshot in (updated, completed):
+                contended = threading.Event()
+
+                def observe_replace(*args):
+                    try:
+                        return real_replace(*args)
+                    except PermissionError:
+                        contended.set()
+                        raise
+
+                # The worker must keep its pending update while the supervisor
+                # finishes a real read, then publish without another UI event.
+                reader = state_path.open("r", encoding="utf-8")
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    with patch.object(supervisor_control.os, "replace", side_effect=observe_replace):
+                        future = executor.submit(_write_json_atomic, state_path, next_snapshot)
+                        try:
+                            self.assertTrue(contended.wait(timeout=2))
+                            self.assertEqual(json.load(reader), previous)
+                        finally:
+                            reader.close()
+                        future.result(timeout=2)
+                self.assertEqual(_read_json(state_path), next_snapshot)
+                previous = next_snapshot
+
+    def test_queue_replacement_retries_are_bounded_and_preserve_other_errors(self):
+        source, target = Path("snapshot.tmp"), Path("snapshot.json")
+        for platform, error, winerror, attempts in (
+            ("nt", PermissionError("blocked"), 5, 5),
+            ("nt", PermissionError("shared"), 32, 5),
+            ("nt", PermissionError("privilege"), 1314, 1),
+            ("posix", PermissionError("denied"), 5, 1),
+            ("nt", FileNotFoundError("missing"), 2, 1),
+        ):
+            error.winerror = winerror
+            with (
+                self.subTest(platform=platform, error=type(error).__name__, winerror=winerror),
+                patch.object(supervisor_control.os, "name", platform),
+                patch.object(supervisor_control.os, "replace", side_effect=error) as replace,
+                patch.object(supervisor_control.time, "sleep") as sleep,
+            ):
+                with self.assertRaises(type(error)) as raised:
+                    _replace_queue_snapshot(source, target)
+                self.assertIs(raised.exception, error)
+                self.assertEqual(replace.call_count, attempts)
+                self.assertEqual(sleep.call_count, attempts - 1)
+
+    def test_unavailable_or_invalid_queue_snapshots_remain_empty(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "supervisor-queue.json"
+            self.assertEqual(_read_json(state_path), {})
+            for value in (b"", b"{incomplete", b"[]", b"null", b"\xff"):
+                with self.subTest(value=value):
+                    state_path.write_bytes(value)
+                    self.assertEqual(_read_json(state_path), {})
+                    # A failed decode must release its file handle as well.
+                    _write_json_atomic(state_path, {"current": None})
+                    self.assertEqual(_read_json(state_path), {"current": None})
+
     def test_compaction_does_not_invent_execution_identity_from_resource_only_receipt(self):
         task = {"runtimeFingerprint": {"resourceFingerprint": "sha256:resource"}}
         self.assertIsNone(compact_task_history([task])[0]["runtimeFingerprint"])
