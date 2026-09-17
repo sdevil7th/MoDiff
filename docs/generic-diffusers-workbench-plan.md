@@ -23,8 +23,9 @@ M1 is complete: audience-appropriate discovery and shared typed drag-to-add
 matching are implemented and validated. M2 is complete: independent authoring
 and resource controls, stable field lifetimes, and persistence/Run regressions
 passed their final validation.
-M3.1's backend action/library inventory and M3.2a's generic Modular operation
-declarations are complete. M3.2b/M3.2c, M3.3–M3.5 and M4–M8 remain pending.
+M3.1's backend action/library inventory, M3.2a's generic Modular declarations,
+and M3.2b1's standard pipeline/loader declarations are complete. M3.2b2/M3.2c,
+M3.3–M3.5 and M4–M8 remain pending.
 These changes do not establish generic cross-family execution, runtime cache
 correctness, or new custom-code support.
 
@@ -35,16 +36,16 @@ record its commit under the milestone. **In progress** remains unchecked.
 Keep this tracker and the detailed checklists below synchronized in both repos.
 Model execution, hardware qualification, and UI tests are separate evidence.
 
-| Milestone                                          | Status      | Remaining work                                                                         |
-| -------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
-| M1 — Audience-appropriate discovery                | Complete    | None within M1; generic execution and model adaptation remain in M3/M4                 |
-| M2 — Independent authoring/resource modes          | Complete    | None within M2; real model/cache lifetime qualification remains in M5                  |
-| M3 — Canonical operations and capability inventory | In progress | M3.1/M3.2a complete; remaining contracts, upstream coverage, adapters and fallback     |
-| M4 — Stage authoring and model/task switching      | Not started | Small starters, dynamic ports, atomic compatible changes, implementation inspection    |
-| M5 — Reuse and selective recomputation             | Not started | Reproduction, cache identities, component lifetime, eviction diagnostics               |
-| M6 — Custom-node developer experience              | Not started | Unified install/discovery, explicit code trust, reload/debug and invalidation          |
-| M7 — Developer setup and service prototyping       | Not started | Tested uv/npm setup, platform guidance and reproducible API export                     |
-| M8 — Consolidation and product qualification       | Not started | Legacy-compatible retirement, terminology, complete user journeys and runtime evidence |
+| Milestone                                          | Status      | Remaining work                                                                                        |
+| -------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
+| M1 — Audience-appropriate discovery                | Complete    | None within M1; generic execution and model adaptation remain in M3/M4                                |
+| M2 — Independent authoring/resource modes          | Complete    | None within M2; real model/cache lifetime qualification remains in M5                                 |
+| M3 — Canonical operations and capability inventory | In progress | M3.1/M3.2a/M3.2b1 complete; Modular loader/stage semantics, readiness, coverage, binding and fallback |
+| M4 — Stage authoring and model/task switching      | Not started | Small starters, dynamic ports, atomic compatible changes, implementation inspection                   |
+| M5 — Reuse and selective recomputation             | Not started | Reproduction, cache identities, component lifetime, eviction diagnostics                              |
+| M6 — Custom-node developer experience              | Not started | Unified install/discovery, explicit code trust, reload/debug and invalidation                         |
+| M7 — Developer setup and service prototyping       | Not started | Tested uv/npm setup, platform guidance and reproducible API export                                    |
+| M8 — Consolidation and product qualification       | Not started | Legacy-compatible retirement, terminology, complete user journeys and runtime evidence                |
 
 Completed foundation: plan committed in both repos; implementation branches
 created from `develop`. M1 catalog views were committed in client `df50a30` and backend
@@ -309,6 +310,11 @@ Completion evidence:
 - [ ] **M3.2b** Extend the same operation contract to loaders, standard pipelines and
       specialized stages through their existing owners; declare richer port semantics
       needed for compatibility instead of relying on socket type or name alone.
+- [x] **M3.2b1** Project standard image/video/audio/rendered-3D loaders and whole-pipeline
+      actions by task; preserve port visibility, requiredness and pipeline handles.
+      Validate the version 2 client contract and version 1 compatibility.
+- [ ] **M3.2b2** Project Modular loader details and specialized workflow stages; add
+      richer conditioning/latent semantics needed for compatibility decisions.
 - [ ] **M3.2c** Publish per-pipeline/task execution and decomposition support, linked to
       actual adapters and optional-runtime requirements independently of template receipts.
 - [ ] **M3.3** Map all pinned upstream pipelines and tasks into the coverage matrix. Keep
@@ -343,8 +349,9 @@ union. Older backends may omit the catalog; malformed or failed refreshes clear
 operation metadata. The parser loads on demand and concurrent discovery callers
 still share one request. This foundation does not yet change node insertion,
 model/task switching, execution authorization, custom-code trust or model reuse.
-Loader/standard/specialized contracts and richer compatibility/support semantics
-remain in M3.2b/M3.2c; M3.2 as a whole stays incomplete.
+M3.2b1 below adds standard loader/pipeline declarations. Modular loader details,
+specialized stages and richer compatibility/support semantics remain in
+M3.2b2/M3.2c; M3.2 as a whole stays incomplete.
 
 The matching client build was mirrored into `web/`. The coverage generator's
 workflow/template projection confirmed all **200 workflow records and 78 public
@@ -382,6 +389,69 @@ M3.2a completion evidence:
   errors. The client parser separately accepted all 55 captured HTTP declarations.
 - These are metadata, contract, HTTP and startup checks. They do not qualify model
   generation, model swapping or cache reuse. No downloaded model files were changed.
+
+M3.2b1 implementation:
+
+The existing standard adapter owners now project their loaders and task-level
+operations through the same discovery endpoint. Schema version 2 adds task
+identity, port visibility, pipeline-handle roles, and explicit loader versus
+whole-pipeline decomposition. Image, video, audio and rendered-3D declarations
+retain their real task fields and outputs; synchronized audio is limited to
+capable adapters, prediction maps retain their type, and rendered 3D advertises
+an orbit video rather than a mesh. Deprecated aliases remain callable without
+creating duplicate entries. No new runtime actions or frontend family dispatch
+were added.
+
+Discovery and ordinary dynamic nodes share their existing adapter field overlays.
+The parity regression exposed a missing `update_adapter_modes` callback on
+`GenerateVideoAudio`; that node now delegates to the existing video callback,
+which also fixes the retained `GenerateLTX2` alias. Query filtering includes
+pipeline classes linked from matching capabilities as well as direct class
+matches, including adapters without Studio catalog rows. The client validates
+version 2 and normalizes the previous stage-only schema.
+
+This completes only the standard projection portion of M3.2b.
+Modular loader details, specialized workflow stages and richer tensor/conditioning
+semantics remain in M3.2b2; M3.2c owns execution/dependency readiness. Insertion,
+atomic model/task switching, selective recomputation and developer extension
+work remain pending. Presentation visibility and `support: declared` confer no
+execution permission or cross-model compatibility.
+
+M3.2b1 completion evidence:
+
+- Client code: `c7fcef2`; backend code and matching served bundle: `b08c703`.
+- Public discovery now reports **389 declarations across 136 pipeline classes**:
+  55 Modular stages, 164 standard loader/task pairs and 170 standard pipeline/task
+  operations. This is adapter metadata, not 136 newly qualified executable models.
+- Backend gate passed: `uvx --from ruff==0.12.7 ruff check . --select E9,F`,
+  `uv pip check --python .venv/bin/python`,
+  `./scripts/with-runtime-env.sh ./.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error`,
+  and `./scripts/with-runtime-env.sh ./.venv/bin/python -m pytest -q`.
+  The final suite reports **3,052 passed, 509 skipped, 8,200 subtests passed**.
+- `./scripts/with-runtime-env.sh .venv/bin/python scripts/test_reviewed_optional_runtime.py -q`
+  passed **131 tests and 1,597 subtests** against `test_operation_contracts.py`,
+  `test_standard_operation_contracts.py`, `test_model_capabilities.py`,
+  `test_pipeline_schema.py`, `test_studio_execution_specs.py` and
+  `test_modular_diffusers_upstream_contract.py` in `tests/`. The installed runtime
+  was verified, not reinstalled. Tests compare actual dynamic field callbacks
+  with declarations and exercise discovery with network/process/node creation blocked.
+- Client `npm run check` passed **1,119 Node tests**, formatting, lint, types,
+  catalog/style checks, production build and unchanged bundle limits. Startup
+  JavaScript is **601.8 KiB** (602 limit), deferred **193.7 KiB** (194 limit).
+  The focused node-store request suite passed **46 tests**, including schema 1
+  normalization, task identity, pipeline handles and rejection of malformed data.
+- A fresh backend with isolated data paths passed three capability HTTP checks
+  (389 unfiltered records, 76 Flux records, zero unmatched records), five exact
+  served-file comparisons, and synchronous field-action HTTP checks for both
+  `GenerateVideoAudio` and `GenerateLTX2`. A production Chromium startup completed,
+  loaded the deferred parser and reported no page/asset errors. The client parser
+  accepted all 389 captured HTTP records with exact value equality.
+- All 200 canonical workflow and 78 public template records were unchanged before
+  refreshing bundle/content fingerprints and the four dependent generated ledgers.
+  Their changes are hashes only; no qualification or admission was upgraded.
+- These are metadata, contract, HTTP and startup checks. No live model inference,
+  cross-model swapping, cache-lifetime qualification or new installation was run.
+  No downloaded model files were changed.
 
 Inventory findings (M3.1):
 
