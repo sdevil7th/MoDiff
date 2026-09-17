@@ -832,6 +832,12 @@ M5 completion validation:
   final implementation. The owned smoke server was stopped only after the queue
   was empty. No downloaded model files were deleted.
 
+M5 completion implementation commits: backend
+`b2e8ec5af979f1a08088a82d406c6515da72a155` and client
+`c3a6fb128c3987fc5b2dca7d950d236c270ae273`. The client CI backend pin
+references this completed runtime implementation. Both repositories remain on
+`feat/generic-diffusers-workbench`; no branch was pushed.
+
 ### M6 — Make custom node development a coherent product flow
 
 - [ ] **M6.1** Document and unify discovery of existing local/Git Python modules and Hub
