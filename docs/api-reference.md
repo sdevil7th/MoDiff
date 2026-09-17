@@ -1136,63 +1136,129 @@ still inspect the same generic node fields from `/nodes`. Templates, resource
 qualification, live media, and Gallery publication require later graph and
 remote qualification gates.
 
-### Generic operation declarations
+### Generic operations and pipeline coverage
 
-`GET /model_capabilities` publishes `operationContractSchemaVersion: 2` and
-`operationContracts`. These declarations project existing generic Modular stage
-configs and standard image, video, audio and rendered-3D adapters. They do not
-introduce runtime actions. Qwen, Flux and SDXL Modular adapters retain
-`modules.ModularDiffusers.Denoise` with the public operation identity
-`diffusion.denoise` and separate `pipelineClass` declarations.
+`GET /model_capabilities` publishes `operationContractSchemaVersion: 3`,
+`operationContracts`, `pipelineSupportSchemaVersion: 1` and `pipelineSupport`.
+These project the existing generic Modular configs, reviewed workflow adapters,
+standard image/video/audio/rendered-3D adapters and optional-runtime profiles.
+They do not add runtime actions or an alternate graph executor.
 
-Each declaration includes `pipelineClass`, `task`, `operationId`, `nodeType`,
-`nodeKey`, `blockName`, `decomposition`, `support: "declared"`, and `ports`.
-Identity is the tuple `(pipelineClass, operationId, task)`. Generic Modular
-stages currently have `task: null`; standard declarations retain each existing
-adapter task name, including separate generation, editing and conditioning tasks.
+An operation has `pipelineClass`, `task`, `operationId`, `nodeType`, `nodeKey`,
+`blockName`, `decomposition`, `support: "declared"`, `workflowId`, `binding` and
+`ports`. Identity is `(pipelineClass, operationId, task)`. Task-scoped bindings
+are independently authorable; the retained `task: null` declarations describe
+individual generic stages without claiming a complete task path.
 
 | Decomposition | Meaning |
 | --- | --- |
-| `block` | Named upstream Modular block (`blockName` is non-null) |
-| `bundle` | Existing Modular stage bundle |
-| `loader` | Standard pipeline loader, scoped to an adapter task |
-| `pipeline` | Whole-pipeline action, not an editable Modular decomposition |
+| `block` | Named upstream Modular stage; `blockName` is non-null |
+| `bundle` | Existing component or typed media helper; no invented upstream stage |
+| `loader` | Existing Modular or standard loader for this task |
+| `pipeline` | Whole-pipeline call without editable Modular stages |
 
-Standard operation identities describe loading, image generation, prediction
-maps, layer decomposition, video generation, synchronized video/audio generation,
-audio generation and rendered 3D. The rendered-3D action outputs an orbit video;
-it does not advertise a mesh. Synchronized audio is declared only for adapters
-that publish audio output. Historical aliases such as `GenerateLTX2` remain
-executable but do not create duplicate operation entries.
+Canonical IDs include `diffusion.load_models`, `diffusion.encode_prompt`,
+`diffusion.denoise` and `diffusion.decode_latents`. Specialized operations retain
+separate identities for prompt rewriting, duration preparation, semantic
+conditioning, reference assembly/encoding, media preparation/postprocessing,
+video, synchronized video/audio, prediction maps, layer decomposition and
+rendered 3D. Rendered 3D produces an orbit video, not a mesh. Reference assembly
+uses the existing decoded-media helper, not a new file/URL loading path.
 
-A port carries its existing formatted `name`, original `semanticName`,
-`direction`, `types`, `required` and `hidden` flags, and `roles`. Roles are `value`,
-`component` (or both for a conditioning bundle), or `pipeline` for a standard
-pipeline handle. Output ports are not required. Direction distinguishes an input
-and output with the same name. Visibility is presentation metadata: hidden fields
-may carry internal signals or optional controls. These records do not replace
-field defaults/options, conditional execution preflight or richer tensor contracts.
-Keep the enclosing pipeline and task with every port; equal types or names do not
-prove that conditioning or latents are interchangeable across pipelines.
+`binding.pipelineClass` identifies the actual implementation. It may differ
+from the selected `pipelineClass` for an existing reviewed standard fallback.
+`binding.values` contains only the exact lightweight selectors needed by the
+existing action, such as `model_type`, `pipeline_class`, `workflow_id` or
+`block_path`. Full field defaults and output signals are resolved on demand.
+Fallbacks retain public execution-profile task limits and reviewed local aliases.
+A task with Modular stages retains one coherent Modular loader/stage path;
+fallback generators are not mixed with that loader. Saved actions, including
+historical aliases such as `GenerateLTX2`, remain executable without duplicate
+canonical discovery entries.
 
-Discovery uses existing adapter field overlays without constructing nodes or
-pipelines, resolving blocks, downloading models or installing packages. Missing
-actions and unbound custom configurations are not inferred as supported. Query
-filtering includes classes linked from matching model capabilities and direct
-pipeline-class matches, so adapters without Studio catalog rows remain discoverable.
+Each port retains `name`, original `semanticName`, `direction`, `types`,
+`required`, `hidden` and `roles` (`value`, `component`, or `pipeline`). Some
+conditioning bundles carry both value and component roles. Output ports are not
+required. Hidden fields can carry internal signals or optional controls.
+Modular loader ports with no declared component are hidden, while the full
+component bundle remains explicit.
 
-The bounded client parser accepts versions 1 and 2, normalizing version 1 to
-`task: null` and `hidden: false`. Older backends may omit both catalog fields.
-Malformed/duplicate records and unknown schema versions are rejected. Version 1
-clients require the matching updated client bundle for the version 2 response.
+The additional `semantics` object contains:
 
-`declared` describes an adapter schema. It does not establish installed optional
-dependencies, executable task coverage, upstream-block qualification, loaded
-weights, or successful inference. Existing execution and resource checks remain
-authoritative. These contracts contain no template identity or execution receipt.
-Modular loader details, specialized workflow stages, richer compatibility
-semantics, task readiness and full pinned-upstream coverage remain subsequent M3
-work. Node insertion and atomic model/task switching remain later milestones.
+- `kind`: value, media, component, conditioning, latents, state, pipeline or opaque.
+- `scope`: actual pipeline identity, or pipeline plus workflow for sealed stage
+  state; plain values and decoded media have no model scope.
+- `state`: the completed/required preceding stage for sealed workflow state.
+- `owner`: `same_loader` for model-owned objects, otherwise `none`.
+- `members`: declared component or stage input/output names and upstream types.
+  These are descriptions, not inferred tensor dimensions or universal adapters.
+
+Advisory matching rejects incompatible domains, component requirements and
+state stages. Model-owned or opaque values still require runtime validation.
+Equal socket types, names or shapes never prove cross-family conditioning or
+latent compatibility. An unknown representation stays opaque. Existing
+preflight and loader/state ownership checks remain authoritative.
+
+Each `pipelineSupport` record carries the reviewed upstream coverage decision,
+reason, equivalence targets, declared `upstreamTasks` and task-level bindings.
+A task has `execution` (`adapter`, `declared`, `unavailable`), `decomposition`
+(`stages`, `pipeline`, `none`), operation/profile IDs, `dependencies`
+(`ready`, `blocked`, `unknown`) and exact `runtimeRequirements`.
+
+`adapter` requires existing task operations and a matching loader execution
+profile; it does not establish live inference, available weights or adequate
+memory. Modular task support comes from reviewed workflow owners, independently
+of Studio's narrower curated profile-mode menu. Dependency observation uses the
+existing optional-runtime gate, including extra media requirements. A missing
+runtime does not erase an adapter. `declared` retains schemas without an
+executable profile; contract-only models do not become runnable. An upstream
+task name with no exact operation binding remains unavailable even if a related
+adapter task has a different name.
+
+The checked `data/diffusers-operation-inventory.v1.json` accounts for all 330
+pipeline exports at the pinned Diffusers revision, all declared AutoPipeline
+mapping entries (including conditional registrations), and all reviewed Modular
+workflow/task entries. Other exports retain `pipeline_call` as their call
+surface and the existing explicit review decision. This audits named upstream
+surfaces; it does not infer every possible mode from optional `__call__`
+arguments. Local adapter aliases remain additional support records.
+Regenerate/check without model downloads:
+
+```bash
+./scripts/with-runtime-env.sh .venv/bin/python scripts/generate_operation_inventory.py
+./scripts/with-runtime-env.sh .venv/bin/python scripts/generate_operation_inventory.py --check
+```
+
+Discovery reads checked metadata without constructing nodes or pipelines,
+resolving executable blocks, downloading models or installing packages. Query
+filtering includes linked model classes and direct pipeline-class matches.
+The bounded client parsers reject malformed/duplicate records, invalid support
+references and unknown versions. Operation versions 1 and 2 remain readable;
+version 1 normalizes `task: null` and `hidden: false`. Older backends may omit the
+new catalogs. The version 3 response requires the matching updated client.
+
+`POST /operations/resolve` is a read-only authoring request:
+
+```json
+{"pipelineClass":"AnimaModularPipeline","task":"text_to_image","operationId":"diffusion.denoise"}
+```
+
+The response is `{ "schemaVersion": 1, "operation": <v3 contract>, "node":
+<ordinary /nodes definition> }`. Invalid/unknown selections return HTTP 400.
+The exact existing action receives its dynamic fields, selectors, canonical
+label and selected loader output signals. This constructs no runtime node,
+loads no weights, creates no graph or receipt, and grants no execution permission.
+The user can insert the result through the normal graph node factory, connect
+it and save it using the existing graph representation.
+
+In Expert's Stages catalog, choose a pipeline and task, then click a canonical
+operation to add one ordinary node. Adapter and runtime status remain separate.
+Bound implementation entries are consolidated there; Advanced retains raw
+nodes and aliases for inspection. Auto's Essentials catalog and existing saved
+graphs retain their behavior. Changing picker selections does not change nodes
+already on the canvas. In-flight insertion is cancelled when its selection,
+active workflow or catalog view changes. Cross-model graph migration and
+small preconnected starters belong to the subsequent workbench milestone.
 
 ### Studio execution specifications
 

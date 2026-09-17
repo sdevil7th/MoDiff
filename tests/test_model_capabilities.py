@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import modules as module_registry
 from modiff.config import CONFIG
@@ -49,6 +49,23 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await server.model_capabilities(SimpleNamespace(query={"q": "no-such-pipeline"}))
         self.assertEqual(json.loads(response.text)["operationContracts"], [])
 
+    async def test_operation_resolution_returns_an_ordinary_schema_without_execution(self):
+        server = WebServer(module_registry.MODULE_MAP)
+        selection = {"pipelineClass": "AnimaModularPipeline", "task": "text_to_image", "operationId": "diffusion.denoise"}
+        with patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("Constructed node")):
+            response = await server.resolve_operation(SimpleNamespace(json=AsyncMock(return_value=selection)))
+        payload = json.loads(response.text)
+        self.assertEqual(response.status, 200)
+        self.assertEqual(payload["schemaVersion"], 1)
+        self.assertEqual(payload["node"]["action"], "WorkflowImageDenoise")
+        self.assertEqual(payload["node"]["params"]["pipeline_class"]["value"], "AnimaModularPipeline")
+        self.assertEqual(payload["operation"]["operationId"], selection["operationId"])
+        self.assertNotIn("executionSpecId", payload)
+        invalid = await server.resolve_operation(SimpleNamespace(json=AsyncMock(return_value={**selection, "templateId": "arbitrary"})))
+        self.assertEqual(invalid.status, 400)
+        malformed = await server.resolve_operation(SimpleNamespace(json=AsyncMock(side_effect=ValueError("invalid JSON"))))
+        self.assertEqual(malformed.status, 400)
+
     async def test_public_runtime_aggregate_excludes_hidden_legacy_execution_profiles(self):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         capabilities = json.loads(response.text)["capabilities"]
@@ -92,7 +109,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(payload["operationContractSchemaVersion"], 2)
+        self.assertEqual(payload["operationContractSchemaVersion"], 3)
         contracts = payload["operationContracts"]
         self.assertGreater(len(contracts), 0)
         self.assertTrue(all(contract["support"] == "declared" for contract in contracts))

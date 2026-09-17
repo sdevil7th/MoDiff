@@ -1428,6 +1428,7 @@ class WebServer:
                 web.get("/ws", self.websocket),
                 web.get(r"/nodes{id:/?([\w\d_-]+/[\w\d_-]+)?}", self.nodes),
                 web.post("/fields/action", self.field_action),
+                web.post("/operations/resolve", self.resolve_operation),
                 web.get("/cache/{node}/{field}", self.cache),
                 web.get("/cache/{node}/{field}/{index}", self.cache),
                 web.delete("/cache", self.delete_cache),
@@ -2776,6 +2777,23 @@ class WebServer:
             }
         )
 
+    def _describe_registered_node(self, module, action, values):
+        return {
+            "module": module,
+            "action": action,
+            "type": values.get("type", "custom"),
+            "label": values.get("label", f"{module}: {action}"),
+            "category": values.get("category", "default"),
+            "description": values.get("description", ""),
+            "resizable": values.get("resizable", False),
+            "skipParamsCheck": values.get("skipParamsCheck", False),
+            "style": values.get("style", ""),
+            "params": self.describe_node_params(values.get("params", {})),
+            "time": [0, 0, 0],
+            "memory": [0, 0, 0],
+            "cache": False,
+        }
+
     async def nodes(self, request):
         id = request.match_info.get("id", "").strip("/")
         modules = self.modules
@@ -2801,23 +2819,7 @@ class WebServer:
             for action, values in actions.items():
                 if values.get("hidden", False) and not id:
                     continue
-                params = self.describe_node_params(values.get("params", {}))
-
-                output[f"{module}.{action}"] = {
-                    "module": module,
-                    "action": action,
-                    "type": values.get("type", "custom"),
-                    "label": values.get("label", f"{module}: {action}"),
-                    "category": values.get("category", "default"),
-                    "description": values.get("description", ""),
-                    "resizable": values.get("resizable", False),
-                    "skipParamsCheck": values.get("skipParamsCheck", False),
-                    "style": values.get("style", ""),
-                    "params": params,
-                    "time": [0, 0, 0],
-                    "memory": [0, 0, 0],
-                    "cache": False,
-                }
+                output[f"{module}.{action}"] = self._describe_registered_node(module, action, values)
 
         return web.json_response({"instance": self.instance, "nodes": output})
 
@@ -13481,11 +13483,7 @@ class WebServer:
     def _build_model_capabilities_payload(self, query=""):
         from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
         from modiff.operation_contracts import OPERATION_CONTRACT_SCHEMA_VERSION
-        from modules.ModularDiffusers.modular_utils import get_modular_operation_contracts
-        from modules.DiffusersImage.main import get_image_operation_contracts
-        from modules.DiffusersVideo.main import get_video_operation_contracts
-        from modules.DiffusersAudio.main import get_audio_operation_contracts
-        from modules.DiffusersThreeD.main import get_three_d_operation_contracts
+        from modiff.operation_catalog import build_operation_catalog
         from modiff.optional_runtime_execution import optional_runtime_requirement_for_profiles
 
         optional_runtime_catalog_snapshot = None
@@ -13621,14 +13619,9 @@ class WebServer:
                     specification["mode"] for specification in capability["studioExecutionSpecs"]
                 )
             capabilities.append(capability)
-        operation_contracts = [
-            contract
-            for discover in (
-                get_modular_operation_contracts, get_image_operation_contracts,
-                get_video_operation_contracts, get_audio_operation_contracts, get_three_d_operation_contracts,
-            )
-            for contract in discover(self.modules)
-        ]
+        operation_contracts, pipeline_support = build_operation_catalog(
+            self.modules, published_execution_profiles, catalog_resolver=request_optional_runtime_catalog,
+        )
         task_template_contracts = build_task_template_contracts(capabilities, execution_specs)
         task_contracts_by_model = {}
         for contract in task_template_contracts:
@@ -13656,6 +13649,10 @@ class WebServer:
                 contract for contract in operation_contracts
                 if contract["pipelineClass"] in returned_pipelines or query in contract["pipelineClass"].lower()
             ]
+            pipeline_support = [
+                item for item in pipeline_support
+                if item["pipelineClass"] in returned_pipelines or query in item["pipelineClass"].lower()
+            ]
             task_template_contracts = [
                 contract for contract in task_template_contracts if contract["modelType"] in returned_models
             ]
@@ -13669,6 +13666,8 @@ class WebServer:
             "taskTemplateContracts": task_template_contracts,
             "operationContractSchemaVersion": OPERATION_CONTRACT_SCHEMA_VERSION,
             "operationContracts": operation_contracts,
+            "pipelineSupportSchemaVersion": 1,
+            "pipelineSupport": pipeline_support,
             "diffusersExecutionProfiles": published_execution_profiles,
             "studioExecutionSpecs": execution_specs,
             "optionalRuntimeProfiles": public_optional_runtime_profiles(),
@@ -13712,6 +13711,28 @@ class WebServer:
         query = str(request.query.get("q", "")).lower().strip()
         body = await self._model_capabilities_response(query)
         return web.Response(body=body, content_type="application/json")
+
+    async def resolve_operation(self, request):
+        """Read-only authoring schema over the same ordinary registered actions."""
+        from modiff.operation_catalog import resolve_operation
+
+        try:
+            selection = await request.json()
+            catalog_bytes = await self._model_capabilities_response("")
+
+            def describe():
+                contracts = json.loads(catalog_bytes)["operationContracts"]
+                resolved = resolve_operation(self.modules, contracts, selection)
+                return {
+                    "schemaVersion": 1,
+                    "operation": resolved["operation"],
+                    "node": self._describe_registered_node(resolved["module"], resolved["action"], resolved),
+                }
+
+            payload = await asyncio.to_thread(describe)
+        except ValueError as exc:
+            return web.json_response({"error": str(exc)}, status=400)
+        return web.json_response(payload)
 
     def _auto_resource_runtime_block(self):
         cached = (

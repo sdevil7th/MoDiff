@@ -10,7 +10,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 import re
 
-OPERATION_CONTRACT_SCHEMA_VERSION = 2
+OPERATION_CONTRACT_SCHEMA_VERSION = 3
 
 
 @dataclass(frozen=True)
@@ -30,6 +30,21 @@ MODULAR_STAGE_OPERATIONS = {
     "controlnet": ModularStageOperation("diffusion.controlnet", "Controlnet", "ControlNet"),
     "ip_adapter": ModularStageOperation("diffusion.ip_adapter", "IPAdapter", "IP-Adapter Embeddings"),
 }
+
+# Upstream stage names, shared across families. Additional media processing
+# stages retain their own identities instead of being forced into denoising.
+WORKFLOW_STAGE_OPERATIONS = {
+    **{key: value.id for key, value in MODULAR_STAGE_OPERATIONS.items()},
+    "decode": "diffusion.decode_latents",
+    "video_encoder": "diffusion.encode_video",
+    "semantic_generator": "diffusion.generate_semantics",
+    "prompt_upsample": "diffusion.rewrite_prompt",
+    "before_encode": "diffusion.prepare_media",
+    "after_decode": "diffusion.postprocess_media",
+    "duration": "diffusion.prepare_duration",
+    "condition_encoder": "diffusion.encode_condition",
+    "reference_encoder": "diffusion.encode_reference",
+}
 _IDENTIFIER = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,127}\Z")
 _RESERVED = frozenset({"__proto__", "prototype", "constructor"})
 
@@ -45,6 +60,45 @@ def _port_types(raw_types):
     if not isinstance(types, (list, tuple)) or not 1 <= len(types) <= 16:
         raise ValueError("Invalid operation-contract port types.")
     return sorted({_identifier(value) for value in types})
+
+
+def with_operation_semantics(contract, *, workflow_id=None, values=None):
+    """Add scoped semantic and binding metadata without claiming type equivalence."""
+    from copy import deepcopy
+
+    result = deepcopy(contract)
+    result["workflowId"] = workflow_id
+    result["binding"] = {"values": dict(values or {})}
+    for port in result["ports"]:
+        types = set(port["types"])
+        name = port["semanticName"]
+        kind = "value"
+        if "pipeline" in port["roles"]:
+            kind = "pipeline"
+        elif "component" in port["roles"]:
+            kind = "component"
+        elif types & {"modular_workflow_state", "modular_route_state"}:
+            kind = "state"
+        elif types & {"embeddings", "image_embeddings", "conditioning", "controlnet_bundle", "ip_adapter_bundle"}:
+            kind = "conditioning"
+        elif "latent" in name and types & {"tensor", "latents"}:
+            kind = "latents"
+        elif types & {"tensor", "object", "dict", "list", "custom_lora", "quant_config"}:
+            kind = "opaque"
+        elif types & {"image", "video", "audio", "prediction_map"}:
+            kind = "media"
+        elif not types <= {"string", "str", "int", "float", "number", "bool", "boolean", "seed"}:
+            kind = "opaque"
+        scoped = kind in {"component", "conditioning", "latents", "state", "pipeline", "opaque"}
+        port["semantics"] = {
+            "kind": kind,
+            "scope": (f"{result['pipelineClass']}:{workflow_id}" if kind == "state" and workflow_id
+                      else result["pipelineClass"]) if scoped else None,
+            "state": None,
+            "owner": "same_loader" if kind in {"component", "conditioning", "latents", "state", "pipeline"} else "none",
+            "members": [],
+        }
+    return result
 
 
 def build_pipeline_operation_contract(
