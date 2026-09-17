@@ -1136,6 +1136,39 @@ still inspect the same generic node fields from `/nodes`. Templates, resource
 qualification, live media, and Gallery publication require later graph and
 remote qualification gates.
 
+### Generic operation declarations
+
+`GET /model_capabilities` also publishes `operationContractSchemaVersion: 1`
+and `operationContracts`. The initial catalog projects the seven existing generic
+Modular stage identities from `ModiffPipelineRegistry` / `MoDiffPipelineConfig`.
+It does not introduce new runtime actions. For example, Qwen, Flux and SDXL
+adapters retain `modules.ModularDiffusers.Denoise` with the same public
+`operationId: "diffusion.denoise"` and separate `pipelineClass` declarations.
+
+Each declaration includes `nodeType`, `nodeKey`, `blockName`, `decomposition`
+(`block` for a named upstream block, otherwise `bundle`), `support: "declared"`,
+and `ports`. A port carries its existing formatted `name`, original
+`semanticName`, `direction`, `types`, `required` flag, and `roles` (`value`,
+`component`, or both). One existing conditioning socket may supply values and
+components. Direction disambiguates an input and output with the same name.
+Keep the enclosing `pipelineClass` with every port: equal types or names are not
+proof that conditioning or latents are interchangeable across pipelines.
+
+Discovery reads existing configurations without constructing pipelines, resolving
+blocks, downloading models or installing packages. Absent stages, absent runtime
+actions and unbound custom configurations are not inferred as supported. Records
+are deterministic and query-filtered alongside model capabilities. The bounded
+client parser rejects malformed/duplicate records and unknown schema versions;
+older backends may omit both new fields.
+
+`declared` describes the adapter schema only. It does not claim installed optional
+dependencies, executable task coverage, upstream-block qualification, loaded
+weights or successful inference. Existing execution and resource checks remain
+authoritative. These contracts contain no template identity or execution receipt
+and do not impose an exact template on ordinary graph authoring. The initial
+catalog covers registered generic Modular stages; loader, standard pipeline,
+specialized stage and full pinned-upstream/task coverage are subsequent M3 work.
+
 ### Studio execution specifications
 
 For migrated exact pairs, `GET /model_capabilities` publishes a

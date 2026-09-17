@@ -11,6 +11,7 @@ from typing import Any, Dict, Optional
 import torch
 from diffusers import Flux2KleinModularPipeline
 from modiff.model_artifact_catalog import resolve_model_revision
+from modiff.operation_contracts import MODULAR_STAGE_OPERATIONS, build_modular_operation_contracts
 from modiff.modular_contract_only_registry import (
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME,
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES,
@@ -2115,15 +2116,13 @@ def pipeline_class_to_modiff_node_config(pipeline_class, node_type=None, *, reso
     return node_type_blocks, node_params
 
 
-_MODIFF_NODE_ACTION_LABELS = {
-    "text_encoder": "Encode Prompt",
-    "image_encoder": "Image Embeddings",
-    "vae_encoder": "Encode Image",
-    "denoise": "Denoise",
-    "decoder": "Decode Latents",
-    "controlnet": "ControlNet",
-    "ip_adapter": "IP-Adapter Embeddings",
-}
+_MODIFF_NODE_ACTION_LABELS = {stage: operation.label for stage, operation in MODULAR_STAGE_OPERATIONS.items()}
+
+
+def get_modular_operation_contracts(modules):
+    """Describe registered generic stages without resolving executable blocks."""
+    configs = {pipeline.__name__: config for pipeline, config in _get_registry_instance().get_all().items()}
+    return build_modular_operation_contracts(configs, modules)
 
 
 def require_modiff_node_contract(pipeline_class, node_type, *, require_blocks=True, resolve_blocks=True):

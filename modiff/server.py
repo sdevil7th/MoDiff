@@ -13480,6 +13480,8 @@ class WebServer:
 
     def _build_model_capabilities_payload(self, query=""):
         from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+        from modiff.operation_contracts import OPERATION_CONTRACT_SCHEMA_VERSION
+        from modules.ModularDiffusers.modular_utils import get_modular_operation_contracts
         from modiff.optional_runtime_execution import optional_runtime_requirement_for_profiles
 
         optional_runtime_catalog_snapshot = None
@@ -13615,6 +13617,7 @@ class WebServer:
                     specification["mode"] for specification in capability["studioExecutionSpecs"]
                 )
             capabilities.append(capability)
+        operation_contracts = get_modular_operation_contracts(self.modules)
         task_template_contracts = build_task_template_contracts(capabilities, execution_specs)
         task_contracts_by_model = {}
         for contract in task_template_contracts:
@@ -13635,6 +13638,9 @@ class WebServer:
                 or query in capability.get("defaultRepo", "").lower()
             ]
             returned_models = {capability["modelType"] for capability in capabilities}
+            operation_contracts = [
+                contract for contract in operation_contracts if contract["pipelineClass"] in returned_models
+            ]
             task_template_contracts = [
                 contract for contract in task_template_contracts if contract["modelType"] in returned_models
             ]
@@ -13646,6 +13652,8 @@ class WebServer:
             "capabilities": capabilities,
             "taskTemplateContractSchemaVersion": TASK_TEMPLATE_CONTRACT_SCHEMA_VERSION,
             "taskTemplateContracts": task_template_contracts,
+            "operationContractSchemaVersion": OPERATION_CONTRACT_SCHEMA_VERSION,
+            "operationContracts": operation_contracts,
             "diffusersExecutionProfiles": published_execution_profiles,
             "studioExecutionSpecs": execution_specs,
             "optionalRuntimeProfiles": public_optional_runtime_profiles(),

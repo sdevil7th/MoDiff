@@ -64,6 +64,12 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
+        self.assertEqual(payload["operationContractSchemaVersion"], 1)
+        contracts = payload["operationContracts"]
+        self.assertGreater(len(contracts), 0)
+        self.assertTrue(all(contract["support"] == "declared" for contract in contracts))
+        self.assertTrue(all("executionSpecId" not in contract for contract in contracts))
+        self.assertEqual(len({(c["pipelineClass"], c["operationId"]) for c in contracts}), len(contracts))
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 5)
         self.assertEqual(
             len(payload["experimentalCapabilities"]),

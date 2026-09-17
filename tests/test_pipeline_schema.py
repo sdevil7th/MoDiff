@@ -1,3 +1,4 @@
+from contextlib import ExitStack
 import tempfile
 import unittest
 from pathlib import Path
@@ -142,6 +143,47 @@ class PipelineSchemaTests(unittest.TestCase):
         self.assertEqual(config.node_params["denoise"]["params"]["steps"]["default"], 4)
         self.assertIn("unet", second["params"])
         self.assertEqual(second["params"]["steps"]["default"], 4)
+
+
+class ModularOperationDiscoveryTests(unittest.TestCase):
+    def test_registered_stage_contracts_are_offline_and_do_not_construct_pipelines(self):
+        from modules import MODULE_MAP
+        from modules.ModularDiffusers import MODULAR_REGISTRY
+        from modules.ModularDiffusers.modular_utils import get_modular_operation_contracts
+
+        configs = MODULAR_REGISTRY.get_all()
+        with ExitStack() as stack:
+            stack.enter_context(patch("socket.socket.connect", side_effect=AssertionError("Discovery used network")))
+            for pipeline in configs:
+                stack.enter_context(
+                    patch.object(pipeline, "__init__", side_effect=AssertionError("Constructed pipeline"))
+                )
+            contracts = get_modular_operation_contracts(MODULE_MAP)
+        self.assertGreater(len(contracts), 0)
+        by_class = {pipeline.__name__: config for pipeline, config in configs.items()}
+        for contract in contracts:
+            with self.subTest(pipeline=contract["pipelineClass"], stage=contract["nodeType"]):
+                params = by_class[contract["pipelineClass"]].node_params[contract["nodeType"]]
+                self.assertEqual(contract["blockName"], params["block_name"])
+                self.assertEqual(
+                    {(p["direction"], p["name"]) for p in contract["ports"]},
+                    {("input", name) for name in params["input_names"] + params["model_input_names"]}
+                    | {("output", name) for name in params["output_names"]},
+                )
+                self.assertEqual(contract["support"], "declared")
+        # Different families expose one operation identity, through one saved action.
+        denoisers = [
+            c
+            for c in contracts
+            if c["pipelineClass"]
+            in {"QwenImageModularPipeline", "FluxModularPipeline", "StableDiffusionXLModularPipeline"}
+            and c["operationId"] == "diffusion.denoise"
+        ]
+        self.assertEqual(len(denoisers), 3)
+        self.assertEqual({c["nodeKey"] for c in denoisers}, {"modules.ModularDiffusers.Denoise"})
+        qwen = next(c for c in denoisers if c["pipelineClass"] == "QwenImageModularPipeline")
+        bundle = next(p for p in qwen["ports"] if p["name"] == "controlnet_bundle")
+        self.assertEqual(bundle["roles"], ["value", "component"])
 
 
 if __name__ == "__main__":

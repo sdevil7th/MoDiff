@@ -4,6 +4,7 @@ from copy import deepcopy
 import json
 from typing import Any
 
+from modiff.operation_contracts import MODULAR_STAGE_OPERATIONS
 from modiff.diffusers_offload_modes import (
     OFFLOAD_MODE_GROUP_CPU,
     OFFLOAD_MODE_GROUP_DISK,
@@ -17936,13 +17937,8 @@ def _param_types(param: dict[str, Any]) -> set[str]:
 
 
 _MODULAR_NODE_TYPES = {
-    "modules.ModularDiffusers.EncodePrompt": "text_encoder",
-    "modules.ModularDiffusers.ImageEmbeddings": "image_encoder",
-    "modules.ModularDiffusers.ImageEncode": "vae_encoder",
-    "modules.ModularDiffusers.Denoise": "denoise",
-    "modules.ModularDiffusers.DecodeLatents": "decoder",
-    "modules.ModularDiffusers.Controlnet": "controlnet",
-    "modules.ModularDiffusers.IPAdapter": "ip_adapter",
+    f"modules.ModularDiffusers.{operation.action}": stage
+    for stage, operation in MODULAR_STAGE_OPERATIONS.items()
 }
 
 
