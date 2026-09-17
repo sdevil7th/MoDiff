@@ -1,4 +1,4 @@
-"""Read-only operation identities projected from existing Modular node configs.
+"""Read-only operation identities projected from existing node/adapter configs.
 
 These declarations are neither graph recipes nor execution/connection authority.
 In particular, equal tensor types or semantic names do not establish compatible
@@ -10,7 +10,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 import re
 
-OPERATION_CONTRACT_SCHEMA_VERSION = 1
+OPERATION_CONTRACT_SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -38,6 +38,58 @@ def _identifier(value):
     if not isinstance(value, str) or not _IDENTIFIER.fullmatch(value) or value in _RESERVED:
         raise ValueError("Invalid operation-contract identifier.")
     return value
+
+
+def _port_types(raw_types):
+    types = [raw_types] if isinstance(raw_types, str) else raw_types
+    if not isinstance(types, (list, tuple)) or not 1 <= len(types) <= 16:
+        raise ValueError("Invalid operation-contract port types.")
+    return sorted({_identifier(value) for value in types})
+
+
+def build_pipeline_operation_contract(
+    modules: Mapping, *, pipeline_class: str, task: str, operation_id: str,
+    node_key: str, field_overrides: Mapping | None = None, loader: bool = False,
+) -> dict | None:
+    """Describe an existing whole-pipeline action using its owner's field overlay.
+
+    Hidden fields remain declared: visibility is presentation, not readiness or
+    permission. Options, defaults, conditional requirements and tensor semantics
+    still belong to the existing dynamic schema and execution preflight.
+    """
+    _identifier(pipeline_class)
+    _identifier(task)
+    if len(operation_id.split(".")) != 2 or len(node_key.split(".")) != 3 or not node_key.startswith("modules."):
+        raise ValueError("Invalid operation-contract action.")
+    for part in (*operation_id.split("."), *node_key.split(".")):
+        _identifier(part)
+    module, action = node_key.rsplit(".", 1)
+    declaration = modules.get(module, {}).get(action)
+    if declaration is None:
+        return None
+    ports = []
+    for name, base in declaration["params"].items():
+        field = {**base, **(field_overrides or {}).get(name, {})}
+        if "type" not in field or field.get("display") == "button":
+            continue
+        direction = "output" if field.get("display") == "output" else "input"
+        ports.append({
+            "name": _identifier(name),
+            "semanticName": name,
+            "direction": direction,
+            "roles": ["pipeline" if name == "pipeline" else "value"],
+            "types": _port_types(field["type"]),
+            "required": direction == "input" and field.get("required") is True,
+            "hidden": field.get("hidden") is True,
+        })
+    if len(ports) > 128:
+        raise ValueError("Too many operation-contract ports.")
+    decomposition = "loader" if loader else "pipeline"
+    return {
+        "pipelineClass": pipeline_class, "task": task, "operationId": operation_id,
+        "nodeKey": node_key, "nodeType": decomposition, "blockName": None,
+        "decomposition": decomposition, "support": "declared", "ports": ports,
+    }
 
 
 def build_modular_operation_contracts(configs: Mapping, modules: Mapping) -> list[dict]:
@@ -76,11 +128,7 @@ def build_modular_operation_contracts(configs: Mapping, modules: Mapping) -> lis
                 for param, name in zip(params, names, strict=True):
                     _identifier(name)
                     _identifier(param.name)
-                    raw_types = param.to_dict().get("type")
-                    types = [raw_types] if isinstance(raw_types, str) else raw_types
-                    if not isinstance(types, (list, tuple)) or not 1 <= len(types) <= 16:
-                        raise ValueError("Invalid operation-contract port types.")
-                    types = sorted({_identifier(value) for value in types})
+                    types = _port_types(param.to_dict().get("type"))
                     key = (direction, name)
                     if key in ports_by_key:
                         existing = ports_by_key[key]
@@ -102,6 +150,7 @@ def build_modular_operation_contracts(configs: Mapping, modules: Mapping) -> lis
                         "roles": [kind],
                         "types": types,
                         "required": param.name in required,
+                        "hidden": param.to_dict().get("hidden") is True,
                     }
                     ports_by_key[key] = port
                     ports.append(port)
@@ -113,6 +162,7 @@ def build_modular_operation_contracts(configs: Mapping, modules: Mapping) -> lis
             result.append(
                 {
                     "pipelineClass": pipeline_class,
+                    "task": None,
                     "operationId": operation.id,
                     "nodeKey": f"modules.ModularDiffusers.{operation.action}",
                     "nodeType": node_type,

@@ -98,3 +98,46 @@ class OperationContractTests(unittest.TestCase):
         self.assertEqual(len(inputs), 1)
         self.assertEqual(inputs[0]["roles"], ["value", "component"])
         self.assertTrue(inputs[0]["required"])
+
+
+class PipelineOperationContractTests(unittest.TestCase):
+    def test_pipeline_projection_preserves_task_visibility_and_pipeline_role(self):
+        from modiff.operation_contracts import build_pipeline_operation_contract
+
+        modules = {"modules.Example": {"Generate": {"params": {
+            "pipeline": {"type": "image_pipeline", "display": "input", "required": True},
+            "image": {"type": "image", "display": "input", "hidden": True},
+            "width": {"type": "int", "default": 512},
+            "images": {"type": "image", "display": "output"},
+            "refresh": {"display": "button", "type": "bool"},
+        }}}}
+        before = deepcopy(modules)
+        result = build_pipeline_operation_contract(
+            modules, pipeline_class="NewPipeline", task="edit_image",
+            operation_id="diffusion.generate_image", node_key="modules.Example.Generate",
+            field_overrides={"image": {"hidden": False, "required": True}, "width": {"hidden": True}},
+        )
+        self.assertEqual(result["decomposition"], "pipeline")
+        self.assertEqual(result["task"], "edit_image")
+        ports = {port["name"]: port for port in result["ports"]}
+        self.assertEqual(ports["pipeline"]["roles"], ["pipeline"])
+        self.assertTrue(ports["image"]["required"])
+        self.assertFalse(ports["image"]["hidden"])
+        self.assertTrue(ports["width"]["hidden"])
+        self.assertNotIn("refresh", ports)
+        self.assertEqual(modules, before)
+
+    def test_missing_actions_are_not_advertised_and_loader_outputs_keep_pipeline_role(self):
+        from modiff.operation_contracts import build_pipeline_operation_contract
+
+        arguments = dict(pipeline_class="NewPipeline", task="text_to_image",
+                         operation_id="diffusion.load_models", node_key="modules.Example.Load", loader=True)
+        self.assertIsNone(build_pipeline_operation_contract({}, **arguments))
+        result = build_pipeline_operation_contract(
+            {"modules.Example": {"Load": {"params": {
+                "pipeline": {"type": "image_pipeline", "display": "output"},
+            }}}}, **arguments,
+        )
+        self.assertEqual(result["decomposition"], "loader")
+        self.assertEqual(result["ports"][0]["roles"], ["pipeline"])
+        self.assertFalse(result["ports"][0]["required"])

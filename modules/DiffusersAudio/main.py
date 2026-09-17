@@ -468,6 +468,24 @@ def _require_lowercase_safetensors_filename(value: str, *, label: str) -> str:
     return value
 
 
+def get_audio_operation_contracts(modules) -> list[dict]:
+    from modiff.operation_contracts import build_pipeline_operation_contract
+
+    result = []
+    for pipeline_class, adapter in sorted(AUDIO_PIPELINE_ADAPTERS.items()):
+        for contract in adapter.mode_contracts:
+            for action, operation in (("LoadPipeline", "diffusion.load_models"), ("Generate", "diffusion.generate_audio")):
+                record = build_pipeline_operation_contract(
+                    modules, pipeline_class=pipeline_class, task=contract.mode, operation_id=operation,
+                    node_key=f"modules.DiffusersAudio.{action}",
+                    field_overrides=contract.field_param_overlay() if action == "Generate" else None,
+                    loader=action == "LoadPipeline",
+                )
+                if record is not None:
+                    result.append(record)
+    return result
+
+
 def _audio_contract_signal(adapter: AudioPipelineAdapter, mode: str, model_selection: Any) -> dict[str, Any]:
     # Static registry construction must not inspect the process working
     # directory. Runtime/action callers normalize the selection first.

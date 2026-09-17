@@ -1138,36 +1138,61 @@ remote qualification gates.
 
 ### Generic operation declarations
 
-`GET /model_capabilities` also publishes `operationContractSchemaVersion: 1`
-and `operationContracts`. The initial catalog projects the seven existing generic
-Modular stage identities from `ModiffPipelineRegistry` / `MoDiffPipelineConfig`.
-It does not introduce new runtime actions. For example, Qwen, Flux and SDXL
-adapters retain `modules.ModularDiffusers.Denoise` with the same public
-`operationId: "diffusion.denoise"` and separate `pipelineClass` declarations.
+`GET /model_capabilities` publishes `operationContractSchemaVersion: 2` and
+`operationContracts`. These declarations project existing generic Modular stage
+configs and standard image, video, audio and rendered-3D adapters. They do not
+introduce runtime actions. Qwen, Flux and SDXL Modular adapters retain
+`modules.ModularDiffusers.Denoise` with the public operation identity
+`diffusion.denoise` and separate `pipelineClass` declarations.
 
-Each declaration includes `nodeType`, `nodeKey`, `blockName`, `decomposition`
-(`block` for a named upstream block, otherwise `bundle`), `support: "declared"`,
-and `ports`. A port carries its existing formatted `name`, original
-`semanticName`, `direction`, `types`, `required` flag, and `roles` (`value`,
-`component`, or both). One existing conditioning socket may supply values and
-components. Direction disambiguates an input and output with the same name.
-Keep the enclosing `pipelineClass` with every port: equal types or names are not
-proof that conditioning or latents are interchangeable across pipelines.
+Each declaration includes `pipelineClass`, `task`, `operationId`, `nodeType`,
+`nodeKey`, `blockName`, `decomposition`, `support: "declared"`, and `ports`.
+Identity is the tuple `(pipelineClass, operationId, task)`. Generic Modular
+stages currently have `task: null`; standard declarations retain each existing
+adapter task name, including separate generation, editing and conditioning tasks.
 
-Discovery reads existing configurations without constructing pipelines, resolving
-blocks, downloading models or installing packages. Absent stages, absent runtime
-actions and unbound custom configurations are not inferred as supported. Records
-are deterministic and query-filtered alongside model capabilities. The bounded
-client parser rejects malformed/duplicate records and unknown schema versions;
-older backends may omit both new fields.
+| Decomposition | Meaning |
+| --- | --- |
+| `block` | Named upstream Modular block (`blockName` is non-null) |
+| `bundle` | Existing Modular stage bundle |
+| `loader` | Standard pipeline loader, scoped to an adapter task |
+| `pipeline` | Whole-pipeline action, not an editable Modular decomposition |
 
-`declared` describes the adapter schema only. It does not claim installed optional
+Standard operation identities describe loading, image generation, prediction
+maps, layer decomposition, video generation, synchronized video/audio generation,
+audio generation and rendered 3D. The rendered-3D action outputs an orbit video;
+it does not advertise a mesh. Synchronized audio is declared only for adapters
+that publish audio output. Historical aliases such as `GenerateLTX2` remain
+executable but do not create duplicate operation entries.
+
+A port carries its existing formatted `name`, original `semanticName`,
+`direction`, `types`, `required` and `hidden` flags, and `roles`. Roles are `value`,
+`component` (or both for a conditioning bundle), or `pipeline` for a standard
+pipeline handle. Output ports are not required. Direction distinguishes an input
+and output with the same name. Visibility is presentation metadata: hidden fields
+may carry internal signals or optional controls. These records do not replace
+field defaults/options, conditional execution preflight or richer tensor contracts.
+Keep the enclosing pipeline and task with every port; equal types or names do not
+prove that conditioning or latents are interchangeable across pipelines.
+
+Discovery uses existing adapter field overlays without constructing nodes or
+pipelines, resolving blocks, downloading models or installing packages. Missing
+actions and unbound custom configurations are not inferred as supported. Query
+filtering includes classes linked from matching model capabilities and direct
+pipeline-class matches, so adapters without Studio catalog rows remain discoverable.
+
+The bounded client parser accepts versions 1 and 2, normalizing version 1 to
+`task: null` and `hidden: false`. Older backends may omit both catalog fields.
+Malformed/duplicate records and unknown schema versions are rejected. Version 1
+clients require the matching updated client bundle for the version 2 response.
+
+`declared` describes an adapter schema. It does not establish installed optional
 dependencies, executable task coverage, upstream-block qualification, loaded
-weights or successful inference. Existing execution and resource checks remain
-authoritative. These contracts contain no template identity or execution receipt
-and do not impose an exact template on ordinary graph authoring. The initial
-catalog covers registered generic Modular stages; loader, standard pipeline,
-specialized stage and full pinned-upstream/task coverage are subsequent M3 work.
+weights, or successful inference. Existing execution and resource checks remain
+authoritative. These contracts contain no template identity or execution receipt.
+Modular loader details, specialized workflow stages, richer compatibility
+semantics, task readiness and full pinned-upstream coverage remain subsequent M3
+work. Node insertion and atomic model/task switching remain later milestones.
 
 ### Studio execution specifications
 

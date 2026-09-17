@@ -1,8 +1,12 @@
 import json
 import unittest
+from pathlib import Path
+import tempfile
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import modules as module_registry
+from modiff.config import CONFIG
 from modiff.auto_resource import AUTO_MODEL_REQUIREMENTS
 from modiff.diffusers_profiles import (
     CONTRACT_ONLY_DIFFUSERS_PIPELINES,
@@ -21,6 +25,30 @@ class FakeRequest:
 
 
 class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        directory = self.enterContext(tempfile.TemporaryDirectory(prefix="modiff-capabilities-"))
+        paths = {key: str(Path(directory) / key) for key in CONFIG.paths if key != "app_root"}
+        for path in paths.values():
+            Path(path).mkdir(parents=True, exist_ok=True)
+        self.enterContext(patch.dict(CONFIG.paths, paths))
+
+    async def test_operation_query_includes_linked_pipeline_classes_and_direct_class_matches(self):
+        server = WebServer(module_registry.MODULE_MAP)
+        response = await server.model_capabilities(SimpleNamespace(query={"q": "schnell"}))
+        payload = json.loads(response.text)
+        self.assertIn("FluxSchnellPipeline", {c["modelType"] for c in payload["capabilities"]})
+        self.assertIn("FluxPipeline", {c["pipelineClass"] for c in payload["operationContracts"]})
+        # New adapter metadata remains discoverable before a Studio catalog row exists.
+        from dataclasses import replace
+        adapter = replace(next(iter(AUDIO_PIPELINE_ADAPTERS.values())), pipeline_class="FutureAudioPipeline")
+        with patch.dict(AUDIO_PIPELINE_ADAPTERS, {"FutureAudioPipeline": adapter}):
+            response = await server.model_capabilities(SimpleNamespace(query={"q": "futureaudio"}))
+        payload = json.loads(response.text)
+        self.assertEqual(payload["capabilities"], [])
+        self.assertEqual({c["pipelineClass"] for c in payload["operationContracts"]}, {"FutureAudioPipeline"})
+        response = await server.model_capabilities(SimpleNamespace(query={"q": "no-such-pipeline"}))
+        self.assertEqual(json.loads(response.text)["operationContracts"], [])
+
     async def test_public_runtime_aggregate_excludes_hidden_legacy_execution_profiles(self):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         capabilities = json.loads(response.text)["capabilities"]
@@ -64,12 +92,12 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
-        self.assertEqual(payload["operationContractSchemaVersion"], 1)
+        self.assertEqual(payload["operationContractSchemaVersion"], 2)
         contracts = payload["operationContracts"]
         self.assertGreater(len(contracts), 0)
         self.assertTrue(all(contract["support"] == "declared" for contract in contracts))
         self.assertTrue(all("executionSpecId" not in contract for contract in contracts))
-        self.assertEqual(len({(c["pipelineClass"], c["operationId"]) for c in contracts}), len(contracts))
+        self.assertEqual(len({(c["pipelineClass"], c["operationId"], c["task"]) for c in contracts}), len(contracts))
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 5)
         self.assertEqual(
             len(payload["experimentalCapabilities"]),

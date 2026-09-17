@@ -13482,6 +13482,10 @@ class WebServer:
         from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
         from modiff.operation_contracts import OPERATION_CONTRACT_SCHEMA_VERSION
         from modules.ModularDiffusers.modular_utils import get_modular_operation_contracts
+        from modules.DiffusersImage.main import get_image_operation_contracts
+        from modules.DiffusersVideo.main import get_video_operation_contracts
+        from modules.DiffusersAudio.main import get_audio_operation_contracts
+        from modules.DiffusersThreeD.main import get_three_d_operation_contracts
         from modiff.optional_runtime_execution import optional_runtime_requirement_for_profiles
 
         optional_runtime_catalog_snapshot = None
@@ -13617,7 +13621,14 @@ class WebServer:
                     specification["mode"] for specification in capability["studioExecutionSpecs"]
                 )
             capabilities.append(capability)
-        operation_contracts = get_modular_operation_contracts(self.modules)
+        operation_contracts = [
+            contract
+            for discover in (
+                get_modular_operation_contracts, get_image_operation_contracts,
+                get_video_operation_contracts, get_audio_operation_contracts, get_three_d_operation_contracts,
+            )
+            for contract in discover(self.modules)
+        ]
         task_template_contracts = build_task_template_contracts(capabilities, execution_specs)
         task_contracts_by_model = {}
         for contract in task_template_contracts:
@@ -13638,8 +13649,12 @@ class WebServer:
                 or query in capability.get("defaultRepo", "").lower()
             ]
             returned_models = {capability["modelType"] for capability in capabilities}
+            returned_pipelines = returned_models | {
+                pipeline for capability in capabilities for pipeline in capability["pipelineClasses"]
+            }
             operation_contracts = [
-                contract for contract in operation_contracts if contract["pipelineClass"] in returned_models
+                contract for contract in operation_contracts
+                if contract["pipelineClass"] in returned_pipelines or query in contract["pipelineClass"].lower()
             ]
             task_template_contracts = [
                 contract for contract in task_template_contracts if contract["modelType"] in returned_models

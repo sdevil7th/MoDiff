@@ -2498,6 +2498,45 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
     return contract
 
 
+def image_action_field_params(contract: dict[str, Any], action: str) -> dict:
+    """The same task overlay for dynamic nodes and read-only operation discovery."""
+    if action == "UnconditionalGenerate":
+        return contract.get("actionFieldParams", {})
+    if action == "PredictMap":
+        return {}
+    fields = {
+        field: {"hidden": True}
+        for field in ("use_guidance_scale_2", "guidance_scale_2", "latents_out", *CALL_INPUT_PARAMS)
+    }
+    return {**fields, **contract["fieldParams"]}
+
+
+def get_image_operation_contracts(modules) -> list[dict]:
+    from modiff.operation_contracts import build_pipeline_operation_contract
+
+    result = []
+    for pipeline_class, adapter in sorted(IMAGE_PIPELINE_ADAPTERS.items()):
+        for mode in adapter.mode_options:
+            contract = image_pipeline_contract(adapter, mode)
+            actions = [("LoadPipeline", "diffusion.load_models", image_loader_field_params(adapter))]
+            for action, modes in contract["actions"].items():
+                if mode in modes:
+                    operation = {
+                        "PredictMap": "diffusion.predict_map",
+                        "LayerDecompose": "diffusion.decompose_layers",
+                    }.get(action, "diffusion.generate_image")
+                    actions.append((action, operation, image_action_field_params(contract, action)))
+            for action, operation, fields in actions:
+                record = build_pipeline_operation_contract(
+                    modules, pipeline_class=pipeline_class, task=mode, operation_id=operation,
+                    node_key=f"modules.DiffusersImage.{action}", field_overrides=fields,
+                    loader=action == "LoadPipeline",
+                )
+                if record is not None:
+                    result.append(record)
+    return result
+
+
 def _compatible_image_contract(signal: Any, expected: dict[str, Any]) -> bool:
     """Accept only the exact pre-secondary-guidance form, never arbitrary drift.
 
@@ -4565,7 +4604,7 @@ class UnconditionalGenerate(NodeBase):
             raise ValueError("The connected image pipeline published a stale or mismatched task contract.")
         if mode not in expected_signal["actions"].get(self.class_name, ()):
             raise ValueError("The connected image pipeline does not support unconditional image generation.")
-        for field, params in expected_signal.get("actionFieldParams", {}).items():
+        for field, params in image_action_field_params(expected_signal, self.class_name).items():
             if field in self.__class__.params:
                 self.set_field_params(field, params)
 
@@ -4942,12 +4981,9 @@ class Generate(NodeBase):
         if mode not in expected_signal["actions"].get(self.class_name, ()):
             raise ValueError("The connected image pipeline does not support this generic image action.")
 
-        for field in ("use_guidance_scale_2", "guidance_scale_2", 'latents_out', *CALL_INPUT_PARAMS):
-            if field not in expected_signal["fieldParams"]:
-                self.set_field_params(field, {"hidden": True})
         if 'output_type' not in expected_signal['fieldParams']:
             self.set_field_params('output_type', {'options': _image_output_options(adapter, self.class_name)})
-        for field, params in expected_signal["fieldParams"].items():
+        for field, params in image_action_field_params(expected_signal, self.class_name).items():
             if field in self.__class__.params:
                 self.set_field_params(field, params)
 

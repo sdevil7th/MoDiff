@@ -1034,6 +1034,28 @@ def _pipeline_adapter(pipeline: Any) -> VideoPipelineAdapter:
     )
 
 
+def get_video_operation_contracts(modules) -> list[dict]:
+    from modiff.operation_contracts import build_pipeline_operation_contract
+
+    result = []
+    for pipeline_class, adapter in sorted(VIDEO_PIPELINE_ADAPTERS.items()):
+        for mode in adapter.modes:
+            fields = get_video_mode_field_contract(adapter, mode).field_param_overlay()
+            actions = [("LoadPipeline", "diffusion.load_models"), ("Generate", "diffusion.generate_video")]
+            if "audio" in adapter.output_media:
+                actions.append(("GenerateVideoAudio", "diffusion.generate_video_audio"))
+            for action, operation in actions:
+                record = build_pipeline_operation_contract(
+                    modules, pipeline_class=pipeline_class, task=mode, operation_id=operation,
+                    node_key=f"modules.DiffusersVideo.{action}",
+                    field_overrides=fields if action != "LoadPipeline" else None,
+                    loader=action == "LoadPipeline",
+                )
+                if record is not None:
+                    result.append(record)
+    return result
+
+
 def _adapter_signal(adapter: VideoPipelineAdapter) -> dict[str, Any]:
     return {
         "schemaVersion": 1,
@@ -4571,6 +4593,11 @@ class GenerateVideoAudio(NodeBase):
         "sample_rate_out": {"label": "Sample Rate", "display": "output", "type": "int"},
         "duration_seconds": {"label": "Audio Duration", "display": "output", "type": "float"},
     }
+
+    def update_adapter_modes(self, values, ref):
+        # The shared pipeline socket and mode control declare this callback.
+        # Keep the same adapter-owned fields as video-only generation.
+        return Generate.update_adapter_modes(self, values, ref)
 
     def __call__(self, **kwargs):
         values = dict(kwargs)
