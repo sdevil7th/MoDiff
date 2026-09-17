@@ -177,10 +177,14 @@ class ReviewedModularWorkflowStepTests(unittest.TestCase):
                     value, bundle=None, pipeline_class=PIPELINE_CLASS, workflow_id=WORKFLOW_ID,
                     execution_scope="unpruned_pipeline", composition_hash=incompatible,
                 )
-        self.assertIs(reviewed_blocks._continued_runtime(
+        token, continued, state = reviewed_blocks._continued_runtime(
             value, bundle=None, pipeline_class=PIPELINE_CLASS, workflow_id=WORKFLOW_ID,
             execution_scope="unpruned_pipeline", composition_hash="sha256:edited",
-        )[1], pipeline)
+        )
+        self.assertIs(token, value._token)
+        self.assertIsNot(continued, pipeline)
+        self.assertEqual(continued._modiff_composition_hash, pipeline._modiff_composition_hash)
+        self.assertIsNot(state, value._state)
 
     def test_sound_socket_preserves_actual_sample_rate_without_mutating_pipeline_state(self):
         state = FakeState()

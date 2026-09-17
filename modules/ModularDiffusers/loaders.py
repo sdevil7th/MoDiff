@@ -2121,6 +2121,26 @@ class ModelsLoader(NodeBase):
         with self._pipeline_identity_lock:
             self._pipeline_identity_generation += 1
 
+    def rebind_cache_owner(self, node_id):
+        """Transfer live ownership without removing hooks, weights or load files."""
+        if node_id == self.node_id:
+            return
+        if components.collections.get(node_id):
+            raise ValueError("Cannot adopt a loader into an occupied component collection.")
+        owned = components.collections.get(self.node_id, ())
+        disk_ids = {key for key in owned
+                    if getattr(components.components[key], "_modiff_offload_node_id", None) == str(self.node_id)}
+        if any(disk_ids.intersection(ids) for owner, ids in components.collections.items() if owner != self.node_id):
+            raise ValueError("Cannot transfer a disk-offload owner with shared component ownership.")
+        for key in disk_ids:
+            components.components[key]._modiff_offload_node_id = str(node_id)
+        owned = components.collections.pop(self.node_id, None)
+        if owned is not None:
+            components.collections[node_id] = owned
+        if self.loader is not None:
+            self.loader._collection = node_id
+        self.node_id = node_id
+
     def __del__(self):
         node_comp_ids = components._lookup_ids(collection=self.node_id)
         for comp_id in node_comp_ids:

@@ -54,6 +54,13 @@ it does not offload discarded weights or rebuild unrelated models' hooks. A run
 waiting for cache ownership reports `waiting_for_node_cache`; cancelling that
 wait does not start model work afterward.
 
+Release also removes cached consumers that retain the selected node's pipelines,
+state or tensors, including transitive consumers. The response lists these cache
+entries as well. Other component owners keep their weights and hooks; published
+media and downloaded model files are unaffected. Moving an unchanged loader
+between workflow node ids transfers its component collection and exclusive disk
+offload ownership without rebuilding hooks or copying weights.
+
 Use `{ "nodes": ["node-id"], "scope": "outputs" }` to request recomputation on
 the next Run without destroying node instances, model owners or offload hooks.
 The response is `{ "error": false, "scope": "outputs", "nodes": [...],
@@ -68,9 +75,39 @@ node-destruction behavior. Use `POST /runtime/gpu_cleanup` for idle process-wide
 model release.
 
 Node `executed` WebSocket messages include a bounded reason in `message`,
-distinguishing unchanged inputs, invalidation, changed inputs, and retained objects
+distinguishing unchanged inputs, invalidation, changed inputs/loaded implementation, and retained objects
 with changed usage settings. CPU offload keeps weights available for reuse; it is
 not a weight reload or a model release.
+
+Cache identity is process-local. Validated execution inputs include model and
+component revisions, adapters, dtype and resource settings; ordinary canvas
+position, selection, collapse and view-mode metadata never enter node arguments.
+Input snapshots detect edits to nested data, images, arrays and ordinary
+versioned tensors without copying model weights. The existing Modular authority
+checks still run before reuse. Replacing a loaded node class or callback invalidates
+its output; editing a custom source file requires the existing explicit module
+refresh to load that code. Merely editing a file does not execute it.
+
+Opaque objects remain bound to their producer's identity. Custom nodes that mutate
+an opaque model must execute and publish the change through the normal graph;
+untracked writes through tensor `.data` or external native pointers are not a
+supported cache invalidation mechanism. Upstream recomputation invalidates its
+consumers even when it returns the same model object.
+
+Expanded Modular steps fork the preceding Pipeline State and mutable pipeline
+components, including schedulers and guiders, while retaining neural weights and
+their manager. Generator continuations start at the saved stream position without
+advancing the cached snapshot. Branches and retries therefore cannot mutate a
+preceding stage's reusable state. Failed/cancelled graph attempts discard runtime
+caches before another attempt can use them. Completed model-call traceback frames
+are released after capturing diagnostics, so exceptions retained by futures cannot
+keep the failed attempt's tensors alive. Suspended queue coroutines remain intact.
+
+Graph model work and teardown use a dedicated worker thread to bound accelerator
+workspaces retained per thread. HTTP/control requests remain independent, and
+downloads retain the configured model-I/O serialization policy. Auto retains
+owners when their combined envelope fits and uses the existing owner-release
+schedule otherwise; actual free memory is checked before the next owner loads.
 
 ### Managed file identifiers
 

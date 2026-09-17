@@ -619,7 +619,18 @@ def _continued_runtime(value, *, bundle, pipeline_class, workflow_id, execution_
         raise ValueError("The connected block state belongs to another Modular workflow.")
     if getattr(value._pipeline, "_modiff_composition_hash", None) != composition_hash:
         raise ValueError("The connected Pipeline State belongs to a different edited Modular composition. Re-run its upstream nodes.")
-    return token, value._pipeline, value._state
+    # A cached step owns a snapshot. Later branches/retries must not advance its
+    # scheduler, guider, generator or tensors. Share only resident neural weights
+    # and the manager; deepcopy also preserves aliases within this continuation.
+    pipeline = value._pipeline
+    manager = getattr(pipeline, "_components_manager", None)
+    memo = {id(manager): manager} if manager is not None else {}
+    for name in getattr(pipeline, "pretrained_component_names", ()):
+        component = getattr(pipeline, name, None)
+        if isinstance(component, torch.nn.Module):
+            memo[id(component)] = component
+    forked_pipeline, forked_state = deepcopy((pipeline, value._state), memo)
+    return token, forked_pipeline, forked_state
 
 
 def _loop_member_descriptor(kwargs, path, block):

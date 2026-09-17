@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from modiff.modelstore import modelstore
 from modiff.execution_input_provenance import capture_generation_inputs
+from modiff.node_cache_identity import implementation_identity, input_snapshot
 from utils.memory_menager import memory_manager
 import numpy as np
 import torch
@@ -333,6 +334,8 @@ class NodeBase:
         self._cache_invalidated = False
         self._cache_valid = False
         self._cache_reason = "empty"
+        self._cache_input_snapshot = None
+        self._cache_implementation = None
         self._execution_time = { 'last': None, 'min': None, 'max': None }
         self._memory_usage = { 'last': None, 'min': None, 'max': None }
         self._mm_models = []
@@ -478,18 +481,26 @@ class NodeBase:
             key: value for key, value in params.items() if key in ignored_cache_params
         }
         ignored_params_changed = not deep_equal(previous_ignored_params, current_ignored_params)
+        snapshot = input_snapshot(current_cache_params)
+        implementation = implementation_identity(self)
+        # Authority checks in Modular adapters must run even when the frozen
+        # snapshot detects an in-place edit. Never turn tampering into a miss
+        # that bypasses their pre-dispatch validation.
+        params_equal = self._cache_invalidated or self._cache_params_equal(previous_cache_params, current_cache_params)
 
         # If any load-relevant value changed, or no successful result exists, execute the
         # node. Validated passthrough inputs are still recorded below so
         # diagnostics reflect the current graph invocation.
         self._cache_reason = (
             "invalidated" if self._cache_invalidated
-            else "inputs_changed" if not self._cache_params_equal(previous_cache_params, current_cache_params)
+            else "implementation_changed" if self._cache_valid and self._cache_implementation != implementation
+            else "inputs_changed" if self._cache_valid and self._cache_input_snapshot != snapshot
+            else "inputs_changed" if not params_equal
             else "empty" if not self._cache_valid
             else "usage_changed" if ignored_params_changed
             else "unchanged_inputs"
         )
-        if self._cache_reason in {"invalidated", "inputs_changed", "empty"}:
+        if self._cache_reason in {"invalidated", "inputs_changed", "implementation_changed", "empty"}:
             self._cache_invalidated = False
             self._cache_valid = False
             self._has_changed = True
@@ -538,6 +549,8 @@ class NodeBase:
             # returned mapping (or fully populated trigger outputs) is reusable;
             # an exception or a missing result must leave this node invalid.
             self._cache_valid = isinstance(output, dict) or all(v is not None for v in self.output.values())
+            self._cache_input_snapshot = snapshot
+            self._cache_implementation = implementation
         else:
             # A cache-ignored value can reconfigure the same resident output
             # without repeating its expensive construction.  Preserve that

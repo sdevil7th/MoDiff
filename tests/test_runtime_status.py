@@ -867,6 +867,8 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         events = []
 
         async def run_callback(_callback, *, serialize_model_io=False, on_start=None):
+            if on_start is None:
+                return _callback()
             if on_start is not None:
                 on_start()
             if "first" not in events:
@@ -973,6 +975,21 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         release.assert_called_once_with()
         self.assertEqual(messages[0]["type"], "runtime_resource_cleanup")
         self.assertEqual(messages[0]["resourceMode"], "expert")
+
+    def test_identical_multiple_loaders_keep_the_survivors_cleanup_recipe(self):
+        loader = {'module': 'modules.ModularDiffusers', 'action': 'ModelsLoader', 'params': {
+            'model_type': {'value': 'StableDiffusionXLModularPipeline'},
+            'repo_id': {'value': {'source': 'hub', 'value': 'test/model'}},
+            'revision': {'value': 'a' * 40}, 'dtype': {'value': 'float16'},
+            'offload_mode': {'value': 'model_cpu'},
+        }}
+        single = self.server._runtime_cleanup_hints_for_graph({'a': loader}, {'resourceMode': 'expert'})
+        multiple = self.server._runtime_cleanup_hints_for_graph({'a': loader, 'b': loader}, {'resourceMode': 'expert'})
+        self.assertEqual(self.server._auto_candidate_cache_signature(single), self.server._auto_candidate_cache_signature(multiple))
+        loader['params']['revision']['value'] = 'b' * 40
+        changed = self.server._runtime_cleanup_hints_for_graph({'a': loader}, {'resourceMode': 'expert'})
+        self.assertNotEqual(self.server._auto_candidate_cache_signature(single), self.server._auto_candidate_cache_signature(changed))
+        self.assertNotIn('autoResourcePlan', multiple)
 
     def test_structurally_customized_graph_derives_cleanup_identity_without_route_authority(self):
         graph_nodes = {

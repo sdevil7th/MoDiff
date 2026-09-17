@@ -19,6 +19,53 @@ from modiff.NodeBase import NodeBase, deep_equal, node_message_context  # noqa: 
 
 
 class NodeBaseDeepEqualTests(unittest.TestCase):
+    def test_snapshot_bounds_branching_cycles_and_detects_nested_edits(self):
+        from modiff.node_cache_identity import input_snapshot
+        value = {'items': [1]}
+        value['left'] = value
+        value['right'] = value
+        before = input_snapshot(value)
+        self.assertEqual(input_snapshot(value), before)
+        value['items'].append(2)
+        self.assertNotEqual(input_snapshot(value), before)
+
+    def test_cache_detects_in_place_inputs_and_replaced_implementation(self):
+        import torch
+        from PIL import Image
+
+        class Consumer(NodeBase):
+            def execute(self, **kwargs):
+                self.calls += 1
+                return {"result": self.calls}
+
+        module = '.'.join(Consumer.__module__.split('.')[:-1])
+        definition = {module: {'Consumer': {'skipParamsCheck': True, 'params': {}}}}
+        with patch('modiff.NodeBase._module_map', return_value=definition):
+            node = Consumer('consumer')
+        node.calls = 0
+        tensor = torch.zeros(2)
+        array = np.zeros(2)
+        image = Image.new('RGB', (2, 2))
+        value = {'nested': [1], 'tensor': tensor, 'array': array, 'image': image}
+        node(value=value)
+        node(value=value)
+        self.assertEqual(node.calls, 1)
+        for mutate in (
+            lambda: value['nested'].append(2), lambda: tensor.add_(1),
+            lambda: array.fill(1), lambda: image.putpixel((0, 0), (1, 2, 3)),
+        ):
+            before = node.calls
+            mutate()
+            node(value=value)
+            self.assertEqual(node.calls, before + 1)
+            node(value=value)
+            self.assertEqual(node.calls, before + 1)
+        def replacement(self, **kwargs):
+            self.calls += 1
+            return {'result': 'new implementation'}
+        with patch.object(Consumer, 'execute', replacement):
+            self.assertEqual(node(value=value)['result'], 'new implementation')
+
     def test_optional_outputs_cache_success_but_not_failed_or_invalid_results(self):
         class OptionalNode(NodeBase):
             def execute(self, mode):

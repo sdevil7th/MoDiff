@@ -19,6 +19,95 @@ class NodeCacheCleanupTests(unittest.IsolatedAsyncioTestCase):
     def request(self, nodes):
         return SimpleNamespace(json=AsyncMock(return_value={"nodes": nodes}))
 
+    async def test_failed_worker_releases_exception_tensor_references_before_next_task(self):
+        import gc
+        import weakref
+        server = self.server()
+        server.loop = asyncio.get_running_loop()
+        refs, observations = [], []
+        class Model: pass
+        def allocate_then_fail():
+            model = Model()
+            refs.append(weakref.ref(model))
+            try:
+                raise RuntimeError('HIP out of memory')
+            except RuntimeError as cause:
+                raise RuntimeError('Error executing model') from cause
+        def retry():
+            gc.collect()
+            observations.append(refs[0]() is None)
+        future = server.loop.create_future()
+        await server.queue_task(allocate_then_fail, (), future, 'test', name='Failure probe')
+        await server.queue_task(retry, (), None, 'test', name='Retry probe')
+        server.main_queue.put_nowait(None)
+        try:
+            with patch.object(server, '_best_effort_device_cache_clear', return_value=[]):
+                await asyncio.wait_for(server._main_worker(), timeout=10)
+            self.assertEqual(observations, [True])
+            error = future.exception()
+            self.assertEqual(server._classify_exception(error)['category'], 'oom')
+            self.assertEqual(server.recent_tasks[0]['status'], 'completed')
+            self.assertEqual(server.recent_tasks[1]['status'], 'failed')
+        finally:
+            if future.done():
+                future.exception()
+            await server.cleanup()
+
+    async def test_release_drops_transitive_consumers_but_preserves_unrelated_shared_owner(self):
+        server = self.server()
+        node = lambda *sources: SimpleNamespace(_cache_input_sources=frozenset(sources), _mm_models=[])
+        server.node_cache = {'load': node(), 'encode': node('load'), 'denoise': node('encode'),
+                             'other-load': node(), 'other-output': node('other-load')}
+        shared = object()
+        manager = SimpleNamespace(collections={'load': {'weights'}, 'other-load': {'weights'}},
+                                  components={'weights': shared})
+        with patch.dict(sys.modules, {'modules.ModularDiffusers': SimpleNamespace(components=manager)}):
+            result = json.loads((await server.delete_cache(self.request(['load']))).text)
+        self.assertEqual(set(result['nodes']), {'load', 'encode', 'denoise'})
+        self.assertEqual(set(server.node_cache), {'other-load', 'other-output'})
+        self.assertIs(manager.components['weights'], shared)
+
+    async def test_standard_release_preserves_shared_models_without_cpu_offload(self):
+        server = self.server()
+        removed, shared = object(), object()
+        class Owner:
+            def __init__(self, ids):
+                self._mm_models = ids
+            def __del__(self):
+                for key in self._mm_models:
+                    manager.remove(key)
+        manager = SimpleNamespace(cache={'removed': removed, 'shared': shared}, remove=Mock())
+        server.node_cache = {'remove': Owner(['removed', 'shared']), 'keep': Owner(['shared'])}
+        with patch('modiff.server.memory_manager', manager):
+            await server.delete_cache(self.request(['remove']))
+        self.assertEqual(manager.cache, {'shared': shared})
+        self.assertEqual(server.node_cache['keep']._mm_models, ['shared'])
+        manager.remove.assert_not_called()
+        server.node_cache['keep']._mm_models = []
+
+    async def test_model_callbacks_keep_one_worker_while_http_pool_remains_available(self):
+        server = self.server()
+        try:
+            ids = [await server._run_executor_callback(threading.get_ident) for _ in range(5)]
+            self.assertEqual(len(set(ids)), 1)
+            started, release = threading.Event(), threading.Event()
+            def block():
+                started.set()
+                release.wait(2)
+            task = asyncio.create_task(server._run_executor_callback(block))
+            while not started.is_set():
+                await asyncio.sleep(0.001)
+            try:
+                control_id = await asyncio.wait_for(
+                    server._run_executor_callback(threading.get_ident, model_work=False), timeout=0.5,
+                )
+                self.assertNotEqual(control_id, ids[0])
+            finally:
+                release.set()
+                await task
+        finally:
+            await server.cleanup()
+
     async def test_output_invalidation_retains_component_owners_and_objects(self):
         server = self.server()
         loader = SimpleNamespace(_mm_models=[], invalidate_cache=Mock())

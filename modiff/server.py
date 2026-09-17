@@ -22,6 +22,7 @@ import hashlib
 import html
 import ipaddress
 import io
+import inspect
 import json
 import nanoid
 import random
@@ -30,6 +31,7 @@ import shutil
 import stat
 import subprocess
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from utils.paths import list_files
 from pathlib import Path
 import sys
@@ -1283,6 +1285,7 @@ class WebServer:
         self._supervisor_queue_state_lock = threading.RLock() if supervisor_queue_state else None
         self._supervisor_queue_last_write = 0.0
         self.node_cache = {}
+        self._model_executor = None
         self._active_graph_node_ids = set()
         self._last_auto_model_family = None
         self._last_auto_resource_signature = None
@@ -1685,6 +1688,9 @@ class WebServer:
         # Cleanup the runner.
         if self.runner:
             await self.runner.cleanup()
+        if self._model_executor is not None:
+            self._model_executor.shutdown(wait=False, cancel_futures=True)
+            self._model_executor = None
 
     """
     ╭───────────────╮
@@ -2286,6 +2292,7 @@ class WebServer:
                         await asyncio.sleep(0.05)
                     terminal_status = "completed"
                     failure_payload = None
+                    failure = None
                     try:
                         if isinstance(args, tuple):
                             callback = partial(task, *args)
@@ -2408,8 +2415,12 @@ class WebServer:
                             # inside third-party model loading, so teardown runs
                             # immediately after that call returns and before the
                             # worker advances the queue.
+                            def release_failed_attempt():
+                                self._release_exception_frames(failure)
+                                return self._release_runtime_caches_for_retry()
+
                             runtime_cleanup = await self._with_node_cache_lease(
-                                lambda: asyncio.to_thread(self._release_runtime_caches_for_retry)
+                                lambda: self._run_executor_callback(release_failed_attempt)
                             )
                             self._last_auto_model_family = None
                             self._last_auto_resource_signature = None
@@ -2490,8 +2501,15 @@ class WebServer:
                 raise asyncio.CancelledError
             return result
 
-    async def _run_executor_callback(self, callback, *, serialize_model_io=False, on_start=None):
+    async def _run_executor_callback(self, callback, *, serialize_model_io=False, on_start=None, model_work=True):
         loop = self.loop or asyncio.get_running_loop()
+        # Accelerator libraries retain workspaces per thread. The shared HTTP
+        # pool rotates workers between runs, accumulating one workspace per
+        # worker. Keep model calls/teardown on one thread, separate from control
+        # requests, while retaining the existing graph and ownership leases.
+        if model_work and self._model_executor is None:
+            self._model_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="modiff-model")
+        executor = self._model_executor if model_work else None
 
         def run_after_resource_probe():
             # A probe that began while idle must finish before model allocator
@@ -2505,10 +2523,10 @@ class WebServer:
             async with self.model_io_lock:
                 if on_start is not None:
                     on_start()
-                return await loop.run_in_executor(None, run_after_resource_probe)
+                return await loop.run_in_executor(executor, run_after_resource_probe)
         if on_start is not None:
             on_start()
-        return await loop.run_in_executor(None, run_after_resource_probe)
+        return await loop.run_in_executor(executor, run_after_resource_probe)
 
     async def _background_worker(self):
         try:
@@ -3335,10 +3353,24 @@ class WebServer:
                         cached.invalidate_cache()
                         invalidated.append(node_id)
                 return {"nodes": invalidated, "retainedModelNodes": retained}
+            targets = self._dependent_cache_nodes(targets)
             released_components = self._release_node_modular_components(targets)
+            # The standard manager also has shared owners. Destruction must
+            # neither offload discarded weights nor remove a surviving owner's
+            # model. Clear node destructor ownership only after pruning entries.
+            surviving_models = {model_id for key, node in self.node_cache.items() if key not in targets
+                                for model_id in getattr(node, "_mm_models", ())}
+            for key in targets:
+                cached = self.node_cache.get(key)
+                for model_id in getattr(cached, "_mm_models", ()):
+                    if model_id not in surviving_models:
+                        memory_manager.cache.pop(model_id, None)
+                if cached is not None and hasattr(cached, "_mm_models"):
+                    cached._mm_models = []
+            cached = None
             for node in targets:
                 self.node_cache.pop(node, None)
-            if released_components:
+            if targets or released_components:
                 gc.collect()
                 self._best_effort_device_cache_clear()
                 self._best_effort_allocator_trim()
@@ -8891,6 +8923,38 @@ class WebServer:
             pass
         return measurement
 
+    @staticmethod
+    def _release_exception_frames(error):
+        """Keep diagnostics/types but release tensors held by completed frames.
+
+        Futures and exception chains can outlive a failed attempt. Empty model
+        registries alone cannot release locals retained by their tracebacks.
+        Call on the model worker after formatting the diagnostic traceback.
+        """
+        pending, seen = [error], set()
+        while pending:
+            current = pending.pop()
+            if current is None or id(current) in seen:
+                continue
+            seen.add(id(current))
+            pending.extend((current.__cause__, current.__context__))
+            if isinstance(current, BaseExceptionGroup):
+                pending.extend(current.exceptions)
+            if current.__traceback__ is not None:
+                frame_trace = current.__traceback__
+                while frame_trace is not None:
+                    frame = frame_trace.tb_frame
+                    # The async queue worker is suspended awaiting this very
+                    # cleanup. Clearing a suspended coroutine closes it; only
+                    # finished ordinary model-call frames may be cleared here.
+                    if not frame.f_code.co_flags & (inspect.CO_COROUTINE | inspect.CO_ASYNC_GENERATOR | inspect.CO_GENERATOR):
+                        try:
+                            frame.clear()
+                        except RuntimeError:  # A synchronous retry's caller is still executing.
+                            pass
+                    frame_trace = frame_trace.tb_next
+                current.__traceback__ = None
+
     def _release_runtime_caches_for_retry(self):
         errors = []
         released = {
@@ -8981,6 +9045,7 @@ class WebServer:
             # Those resident objects are not interchangeable.
             "loaderContract": runtime_hints.get("loaderContract"),
             "dtype": candidate.get("dtype") or runtime_hints.get("dtype"),
+            "modelRevision": candidate.get("revision") or runtime_hints.get("modelRevision"),
             "quantizationMode": (candidate.get("quantizationMode") or runtime_hints.get("quantizationMode")),
             "quantizedComponents": sorted(
                 str(item)
@@ -9046,7 +9111,16 @@ class WebServer:
             for node in nodes.values()
             if isinstance(node, dict) and node.get("action") in loader_actions
         ]
-        if len(loaders) != 1:
+        if not loaders:
+            return hints or None
+        if len(loaders) > 1:
+            # Identical independent owners do not change the resident recipe.
+            # Keep their common identity when one is later removed; otherwise
+            # a multi-owner run records an empty identity and forces a needless
+            # process-wide reload of the surviving owner on the next run.
+            derived = [self._runtime_cleanup_hints_for_graph({"loader": loader}, hints) for loader in loaders]
+            if len({self._auto_candidate_cache_signature(item) for item in derived}) == 1:
+                return derived[0]
             return hints or None
         loader = loaders[0]
         params = loader.get("params") if isinstance(loader.get("params"), dict) else {}
@@ -9065,6 +9139,7 @@ class WebServer:
             "pretrained_model_name_or_path",
         )
         dtype = self._graph_loader_param_value(params, "dtype", "torch_dtype")
+        revision = self._graph_loader_param_value(params, "revision")
         offload_mode = self._graph_loader_param_value(params, "offload_mode")
         device_map = self._graph_loader_param_value(params, "device_map")
         if not hints.get("resourceMode"):
@@ -9081,6 +9156,8 @@ class WebServer:
             hints["modelRepo"] = str(artifact)
         if dtype and not hints.get("dtype"):
             hints["dtype"] = str(dtype)
+        if revision and not hints.get("modelRevision"):
+            hints["modelRevision"] = str(revision)
         if offload_mode and not hints.get("offloadMode"):
             hints["offloadMode"] = str(offload_mode)
         if device_map and not hints.get("deviceMap"):
@@ -10191,6 +10268,7 @@ class WebServer:
                     }
                 )
                 self.queue_message(cleanup_progress)
+                self._release_exception_frames(e)
                 cleanup = self._release_runtime_caches_for_retry()
                 self.queue_message(
                     {
@@ -10551,6 +10629,13 @@ class WebServer:
             prepare_for_reuse = getattr(cached_node, "prepare_for_workflow_reuse", None)
             if callable(prepare_for_reuse):
                 prepare_for_reuse()
+            rebind_owner = getattr(cached_node, "rebind_cache_owner", None)
+            if callable(rebind_owner):
+                rebind_owner(node_id)
+            for dependent in self.node_cache.values():
+                sources = getattr(dependent, "_cache_input_sources", ())
+                if cached_id in sources:
+                    dependent._cache_input_sources = frozenset(node_id if source == cached_id else source for source in sources)
             self.node_cache.pop(cached_id, None)
             cached_node.node_id = node_id
             self.node_cache[node_id] = cached_node
@@ -10669,9 +10754,11 @@ class WebServer:
         # through a cached instance whose executable identity no longer
         # matches the current graph.
         cached_node = self.node_cache.get(id)
+        loaded_action = getattr(sys.modules.get(f"{module}.main"), action, None)
         if cached_node is not None and (
             getattr(cached_node, "module_name", None) != module
             or getattr(cached_node, "class_name", None) != action
+            or (isinstance(loaded_action, type) and type(cached_node) is not loaded_action)
         ):
             self.node_cache.pop(id, None)
 
@@ -10703,6 +10790,10 @@ class WebServer:
 
         # set the session id, it can be used to send messages from the node back to the client
         self.node_cache[id]._sid = sid
+        self.node_cache[id]._cache_input_sources = frozenset(
+            field["sourceId"] for key, field in params.items()
+            if field.get("sourceId") and key in args and key not in (param_overrides or {})
+        )
         if upstream_changed:
             invalidate_cache = getattr(self.node_cache[id], "invalidate_cache", None)
             if callable(invalidate_cache):
@@ -10878,6 +10969,7 @@ class WebServer:
                         "empty": "Computed: no reusable output was available.",
                         "invalidated": "Recomputed: output was invalidated by an upstream change or recompute request.",
                         "inputs_changed": "Recomputed: node inputs changed.",
+                        "implementation_changed": "Recomputed: loaded node implementation changed.",
                         "usage_changed": "Resident object reused; changed usage settings invalidate dependent outputs.",
                         "unchanged_inputs": "Cached result reused: node inputs are unchanged.",
                     }.get(getattr(self.node_cache[id], "_cache_reason", None), "Node completed."),
@@ -13208,6 +13300,16 @@ class WebServer:
             logger.debug("malloc_trim failed during accelerator cleanup", exc_info=True)
             return False, [f"malloc_trim: {e}"]
 
+    def _dependent_cache_nodes(self, node_ids):
+        """Include cached consumers retaining pipelines, tensors or adapter state."""
+        targets = set(node_ids)
+        while True:
+            added = {key for key, node in self.node_cache.items()
+                     if key not in targets and targets.intersection(getattr(node, "_cache_input_sources", ())) }
+            if not added:
+                return list(dict.fromkeys([*node_ids, *(key for key in self.node_cache if key in targets)]))
+            targets.update(added)
+
     def _release_node_modular_components(self, node_ids):
         """Destroy unshared ownership without offloading soon-to-be-dead models.
 
@@ -13336,7 +13438,7 @@ class WebServer:
                 status=409,
             )
 
-        return await self._with_node_cache_lease(lambda: asyncio.to_thread(self._runtime_gpu_cleanup_idle))
+        return await self._with_node_cache_lease(lambda: self._run_executor_callback(self._runtime_gpu_cleanup_idle))
 
     def _runtime_gpu_cleanup_idle(self):
         before = self._cuda_memory_snapshot()
@@ -15396,6 +15498,7 @@ class WebServer:
                     entry.get("revision"),
                 ),
                 serialize_model_io=True,
+                model_work=False,
             )
             if result:
                 await self._refresh_model_indexes()
