@@ -935,6 +935,13 @@ M6 completion evidence:
 M7 (developer setup/service prototyping) and M8 (consolidation/qualification) remain
 unchecked. No new live diffusion-model or Windows hardware qualification is claimed.
 
+M6 implementation commits: backend
+`12fb46efd9c886bb55e70121a0f003d071972a7f` and client
+`1e232ac6a5f88a69e7c3d549ebbcb8fb2fbea80b`. The client CI backend pin
+references this completed implementation. Both repositories remain on
+`feat/generic-diffusers-workbench`; no branch was pushed. The owned live smoke
+server was stopped after verifying that its queue was empty.
+
 ### M7 — Add transparent developer setup and service prototyping
 
 - [ ] **M7.1** Design a documented `uv` backend path and `npm` client path for the supported
