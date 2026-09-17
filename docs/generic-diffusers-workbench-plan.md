@@ -736,6 +736,12 @@ cleanup reduced this to 0.68 GB. Stable component identity and completed runs do
 not establish bounded memory. Diagnose retained references and repeat without
 instrumentation before closing M5.4 or the constrained-memory acceptance gate.
 
+M5 checkpoint implementation commits: backend
+`897e27a9f3292f6ecd84fa54bb088c3c4ebf5fba` and client
+`7523fc347502176b8f91fc3b104a46f75e13c960`. Both remain on
+`feat/generic-diffusers-workbench`; no branch was pushed. The client's CI backend
+pin references this backend checkpoint. M5 remains in progress.
+
 M5 checkpoint validation:
 
 - Backend: `uvx --from ruff==0.12.7 ruff check . --select E9,F`,
@@ -745,7 +751,7 @@ M5 checkpoint validation:
   9,311 subtests passed**, with two existing upstream/runtime warnings.
 - Verified optional-runtime gate: **126 passed, 6 subtests passed** across
   workflow continuation, LTX-2.5 contract, NodeBase, owner planning and cache
-  cleanup tests. No package or model installation was performed. An initial
+  cleanup tests. No runtime repair or model installation was performed. An initial
   concurrent activation could not acquire the startup lease; the sequential
   retry passed without changing the runtime.
 - Client: `npm ci`, `npm run check`, and the final documentation formatting gate
