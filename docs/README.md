@@ -27,6 +27,10 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 
 ## Required Engineering Procedure
 
+The [generic Diffusers workbench plan](generic-diffusers-workbench-plan.md)
+defines the staged Auto/Expert authoring redesign, compatibility requirements,
+and acceptance criteria. Planned behavior is not a current support claim.
+
 Read [Cluster engineering lessons](cluster-engineering-lessons.md) before
 node/Block, hierarchy, execution, qualification or cross-machine integration work.
 The [runtime support matrix](runtime-support-matrix.md#model-families-and-support-boundaries)
