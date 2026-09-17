@@ -1248,6 +1248,12 @@ mask branches.
 
 ### Auto resource compatibility
 
+`form.resourceMode` and runtime-hint `resourceMode` remain execution-policy fields:
+`auto` requests automatic planning; `expert` uses explicit resource settings.
+The client's global Auto/Expert authoring preference is presentation only and is
+not an execution-policy input. Either view can use either saved resource policy.
+Older client bundles still couple those controls; the wire values remain compatible.
+
 Both planning endpoints gather runtime/model snapshots, evaluate candidates,
 and serialize their responses off the HTTP event loop. A Model Manager batch
 must not block health, library, or cancellation requests while planning is
