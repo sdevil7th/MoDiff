@@ -23,9 +23,10 @@ M1 is complete: audience-appropriate discovery and shared typed drag-to-add
 matching are implemented and validated. M2 is complete: independent authoring
 and resource controls, stable field lifetimes, and persistence/Run regressions
 passed their final validation.
-M3.1's backend action and library inventory is complete. M3.2–M3.5 and M4–M8
-remain pending. These changes do not establish generic cross-family execution,
-runtime cache correctness, or new custom-code support.
+M3.1's backend action/library inventory and M3.2a's generic Modular operation
+declarations are complete. M3.2b/M3.2c, M3.3–M3.5 and M4–M8 remain pending.
+These changes do not establish generic cross-family execution, runtime cache
+correctness, or new custom-code support.
 
 ## Progress tracker
 
@@ -38,7 +39,7 @@ Model execution, hardware qualification, and UI tests are separate evidence.
 | -------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
 | M1 — Audience-appropriate discovery                | Complete    | None within M1; generic execution and model adaptation remain in M3/M4                 |
 | M2 — Independent authoring/resource modes          | Complete    | None within M2; real model/cache lifetime qualification remains in M5                  |
-| M3 — Canonical operations and capability inventory | In progress | M3.1 complete; capability contracts, pinned-upstream coverage, adapters and fallback   |
+| M3 — Canonical operations and capability inventory | In progress | M3.1/M3.2a complete; remaining contracts, upstream coverage, adapters and fallback     |
 | M4 — Stage authoring and model/task switching      | Not started | Small starters, dynamic ports, atomic compatible changes, implementation inspection    |
 | M5 — Reuse and selective recomputation             | Not started | Reproduction, cache identities, component lifetime, eviction diagnostics               |
 | M6 — Custom-node developer experience              | Not started | Unified install/discovery, explicit code trust, reload/debug and invalidation          |
@@ -303,6 +304,13 @@ Completion evidence:
       Classify exact aliases separately from semantically overlapping implementations.
 - [ ] **M3.2** Extend backend-owned contracts with operation identity, stage capabilities,
       semantic ports, and execution/decomposition support levels.
+- [x] **M3.2a** Project registered generic Modular stage declarations into the existing
+      capabilities response and validate/store them in the client without family dispatch.
+- [ ] **M3.2b** Extend the same operation contract to loaders, standard pipelines and
+      specialized stages through their existing owners; declare richer port semantics
+      needed for compatibility instead of relying on socket type or name alone.
+- [ ] **M3.2c** Publish per-pipeline/task execution and decomposition support, linked to
+      actual adapters and optional-runtime requirements independently of template receipts.
 - [ ] **M3.3** Map all pinned upstream pipelines and tasks into the coverage matrix. Keep
       unavailable optional dependencies distinct from missing adapter support.
 - [ ] **M3.4** Bind existing generic stage nodes to supported implementations; consolidate
@@ -313,6 +321,67 @@ Completion evidence:
 Acceptance: parsers reject malformed capabilities; declarations agree with actual
 upstream components and inputs; every inventory entry has an honest support state.
 No template-specific receipt is required merely to author an ordinary valid graph.
+
+M3.2a implementation:
+
+The existing `/model_capabilities` endpoint now exposes versioned operation
+contracts derived from `ModiffPipelineRegistry` / `MoDiffPipelineConfig`, without
+another executor or implementation catalog. The inspected runtime publishes
+**55 declarations across 13 pipeline classes and seven generic stage operations**.
+Saved module/action identities remain the same. The shared operation descriptors
+also supply the existing Studio role mapping and Modular stage labels.
+
+Declarations preserve the formatted port identity, original semantic name,
+direction, requiredness, declared types, and value/component roles. One socket
+may supply both conditioning values and model components. They retain their
+pipeline scope and explicitly report `support: declared`; matching names/types
+alone does not establish cross-model compatibility or runtime readiness. Block
+and bundle decomposition are distinguished without constructing pipelines.
+
+The client validates and stores these declarations without its Studio family
+union. Older backends may omit the catalog; malformed or failed refreshes clear
+operation metadata. The parser loads on demand and concurrent discovery callers
+still share one request. This foundation does not yet change node insertion,
+model/task switching, execution authorization, custom-code trust or model reuse.
+Loader/standard/specialized contracts and richer compatibility/support semantics
+remain in M3.2b/M3.2c; M3.2 as a whole stays incomplete.
+
+The matching client build was mirrored into `web/`. The coverage generator's
+workflow/template projection confirmed all **200 workflow records and 78 public
+template records** were unchanged before updating the bundle fingerprint and its
+content hash. The four dependent ledgers were refreshed with their existing
+generators; their diffs contain source/content hashes only, with no new admission,
+execution or qualification claims.
+
+M3.2a completion evidence:
+
+- Client code: `4d3826f`; backend code and matching served bundle: `0f16764`.
+- Backend gate passed: `uvx --from ruff==0.12.7 ruff check . --select E9,F`,
+  `uv pip check --python .venv/bin/python`,
+  `./scripts/with-runtime-env.sh ./.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error`,
+  and `./scripts/with-runtime-env.sh ./.venv/bin/python -m pytest -q`.
+  The final suite reports **3,045 passed, 509 skipped, 7,358 subtests passed**.
+- The validated installed optional runtime passed **124 tests and 755 subtests**
+  through `scripts/test_reviewed_optional_runtime.py -q` against
+  `tests/test_operation_contracts.py`, `tests/test_model_capabilities.py`,
+  `tests/test_pipeline_schema.py`, `tests/test_studio_execution_specs.py` and
+  `tests/test_modular_diffusers_upstream_contract.py`. The wrapper was
+  `./scripts/with-runtime-env.sh .venv/bin/python`; no runtime was installed.
+  Discovery was also tested with pipeline constructors and network access blocked.
+- The six ledger/helper test files passed **65 tests and 817 subtests**, with
+  one optional full-source-regeneration test skipped. That test requires the
+  separately reviewed source checkouts/wheel inputs; this does not complete M3.3.
+- Client `npm run check` passed **1,117 Node tests**, formatting, lint, types,
+  catalog/style checks, production build and unchanged bundle budgets.
+  Startup JavaScript is **601.8 KiB** (602 KiB limit); deferred JavaScript is
+  **193.5 KiB** (194 KiB limit). The request suite accounts for **95 passing tests**.
+- A fresh isolated backend passed three capability HTTP checks (55 unfiltered
+  declarations, 20 Flux declarations, and an empty unmatched query), five exact
+  served-file comparisons, and a Chromium production startup check. The browser
+  loaded the deferred parser, completed workspace startup and reported no page
+  errors. The client parser separately accepted all 55 captured HTTP declarations.
+- These are metadata, contract, HTTP and startup checks. They do not qualify model
+  generation, model swapping or cache reuse. No downloaded model files were changed.
 
 Inventory findings (M3.1):
 
