@@ -25,9 +25,11 @@ and resource controls, stable field lifetimes, and persistence/Run regressions
 passed their final validation.
 M3 is complete: canonical operations, scoped port semantics, pipeline/task
 coverage, existing-node resolution, Expert discovery consolidation and reviewed
-whole-pipeline fallbacks are implemented and validated. M4–M8 remain pending.
-These changes do not establish generic cross-family execution, runtime cache
-correctness, or new custom-code support.
+whole-pipeline fallbacks are implemented and validated. M4 is complete: connected
+starters, model/task previews, ordinary graph transactions, retained settings and
+shared generator inputs passed their authoring and scoped real-execution checks.
+M5–M8 remain pending. This does not qualify every declared model/task or establish
+runtime cache correctness or new custom-code support.
 
 ## Progress tracker
 
@@ -38,10 +40,10 @@ Model execution, hardware qualification, and UI tests are separate evidence.
 
 | Milestone                                          | Status      | Remaining work                                                                         |
 | -------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
-| M1 — Audience-appropriate discovery                | Complete    | None within M1; graph-wide model adaptation remains in M4                              |
+| M1 — Audience-appropriate discovery                | Complete    | None within M1; model/task authoring is delivered in M4                                |
 | M2 — Independent authoring/resource modes          | Complete    | None within M2; real model/cache lifetime qualification remains in M5                  |
-| M3 — Canonical operations and capability inventory | Complete    | None within M3; starters and graph-wide model/task adaptation remain M4                |
-| M4 — Stage authoring and model/task switching      | Not started | Small starters, dynamic ports, atomic compatible changes, implementation inspection    |
+| M3 — Canonical operations and capability inventory | Complete    | None within M3; stage authoring is delivered in M4                                     |
+| M4 — Stage authoring and model/task switching      | Complete    | None within M4; broader model/hardware qualification remains explicitly scoped         |
 | M5 — Reuse and selective recomputation             | Not started | Reproduction, cache identities, component lifetime, eviction diagnostics               |
 | M6 — Custom-node developer experience              | Not started | Unified install/discovery, explicit code trust, reload/debug and invalidation          |
 | M7 — Developer setup and service prototyping       | Not started | Tested uv/npm setup, platform guidance and reproducible API export                     |
@@ -571,20 +573,92 @@ optional dependencies, contract-only entries and genuinely missing adapters.
 
 ### M4 — Deliver stage-first authoring and atomic model/task changes
 
-- [ ] **M4.1** Create small generic starters from capabilities and support the equivalent
+- [x] **M4.1** Create small generic starters from capabilities and support the equivalent
       graph constructed manually through typed connections.
-- [ ] **M4.2** Adapt fields/ports from the selected loader contract. Preserve connected values
+- [x] **M4.2** Adapt fields/ports from the selected loader contract. Preserve connected values
       and distinguish defaults, user overrides, and retained unsupported settings.
-- [ ] **M4.3** Plan model changes before applying them. Commit compatible changes as one
+- [x] **M4.3** Plan model changes before applying them. Commit compatible changes as one
       transaction; preserve incompatible custom nodes with actionable diagnostics.
-- [ ] **M4.4** Extend tasks by connecting required conditioning. Use actual upstream task
+- [x] **M4.4** Extend tasks by connecting required conditioning. Use actual upstream task
       selection rules; do not assume img2img and instruction editing are identical.
-- [ ] **M4.5** Expose implementation inspection separately from optional structural editing.
+- [x] **M4.5** Expose implementation inspection separately from optional structural editing.
       Preserve existing deep Blocks without lossy automatic conversion.
+
+M4 completion:
+
+- Connected drafts derive ordinary nodes and exact state/component wires from
+  the existing backend owners (`POST /operations/starter`). All 250 task bindings
+  with operations pass endpoint and single-writer checks without constructing nodes
+  or accessing the network. Output Preview/Save/Export nodes remain an explicit
+  typed connection, documented in the starter preview.
+- Native manual wiring and reload pass for Qwen, Anima and standard Stable Audio.
+  The Qwen → Flux → image-to-image journey passes native prompt editing, retained
+  negative-prompt inspection, Undo/Redo and Save/reopen.
+- Pure planning and the existing history transaction cover custom-node retention,
+  incompatible wires, unchanged IDs/positions, new IDs for changed Python actions,
+  stale previews, shared-loader rejection and rollback. Initial field defaults
+  and the native random-seed object have separate regression coverage.
+- Implementation inspection remains read-only. Existing nested Blocks retain
+  their structure and their existing composition/structural editing commands.
+- The live SDXL check exposed a missing required VAE wire. Drafts now complete
+  exact required component bundles from their operation contracts, with regression
+  coverage that does not invent that dependency for Flux or Qwen.
+- Stateful task changes exposed a seed mismatch between a new image encoder and
+  the retained denoiser. Backend-declared shared seed groups now preserve the
+  authored value, mirror native edits under one Undo transaction, reuse one
+  random draw per run, and preserve a connected custom source. Imported hints
+  cannot cross loader branches, act on malformed bindings, or rewrite Blocks.
+  Runtime seed/state validation is unchanged.
+
+- [x] **M4 acceptance** Validate the integrated build and representative real
+      executions, retaining submitted and consumed inputs separately from UI/schema proof.
 
 Acceptance: native editing, drag-to-connect, Save/reopen, Undo/Redo, model switching,
 and task changes pass across representative distinct families and modalities.
 Real executions verify effective inputs, not just successful schema construction.
+
+M4 implementation commits: backend `3d89d99026bf35177ec508bab76bc4ed9bbda48d`
+(includes the matching compiled client), client
+`c08b02b81d8d869c8ceef96be9486e40fb979a38` (pins CI to that backend).
+Both remain on `feat/generic-diffusers-workbench`.
+
+M4 validation:
+
+- Backend gate: `uvx --from ruff==0.12.7 ruff check . --select E9,F`,
+  `uv pip check --python .venv/bin/python`, wrapped `python -m modiff.preflight
+--json --check-port 8088 --fail-on-error`, and wrapped `python -m pytest -q`
+  pass. The base suite records **3,072 passed, 509 skipped and 9,311 subtests**.
+- Verified optional-runtime entry point: operation starters/catalogs, Modular
+  upstream/workflow contracts, standard operations and workflow blocks record
+  **118 passed and 2,453 subtests**. The skipped base tests are not counted as
+  model execution coverage.
+- Client: `npm ci`, `npm run check`, and final formatting/lint/type checks pass.
+  Thirteen authoring regression tests include rollback, retained values, default
+  initialization, native seed objects, shared edits/random export, connected
+  sources, persistence and malformed/detached hints. All **250** fresh backend
+  starter payloads also pass the strict client parser.
+- Native Chromium: **six tests** pass via `npx playwright test
+tests/e2e/studio-mocked/studio-mocked.spec.ts --grep 'operation starters preserve|operation stages can|Expert resolves canonical|stateful task changes'`.
+  These cover model/task changes, seed editing, manual wiring, Undo/Redo,
+  Save/reopen and stale selection; they use genuine backend schemas with mocked
+  execution and make no weight/runtime claim.
+- Production HTTP/UI: six served assets match the checked build byte-for-byte.
+  Startup JavaScript is **603.0 KiB gzip**, deferred JavaScript **203.9 KiB**;
+  bounded ceilings are 604/204 KiB with unchanged individual chunk limits.
+  Bundle evidence refresh preserves all **200 workflow** and **78 template**
+  semantic records; only their bundle-dependent hashes change.
+- Real execution: production Chromium authors the SDXL four-stage graph, adds a
+  typed Preview, changes it to image-to-image, and uploads the generated image
+  through a normal Load Image node. SDXL revision
+  `462165984030d82259a11f4367a4eed129e94a7b` runs locally on ROCm/gfx1151 using
+  existing cached weights, float16 and model CPU offload. Submitted and consumed
+  receipts agree on the authored prompts, 512×512 dimensions, 20 configured steps,
+  fixed seeds 4109/4111, and one shared random seed in both stateful stages.
+  Text-to-image and both fixed/random image-to-image runs complete with retained
+  image artifacts and no browser errors. Logs, receipts, media and isolated
+  server workspaces stay outside the repositories. No weights are downloaded
+  or removed. This qualifies those authored checks on this host, not every
+  family, modality, operating system, GPU or M5 cache behavior.
 
 ### M5 — Make repeated runs reuse components and unaffected results
 
