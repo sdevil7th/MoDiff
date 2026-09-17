@@ -332,6 +332,7 @@ class NodeBase:
         self._has_changed = False
         self._cache_invalidated = False
         self._cache_valid = False
+        self._cache_reason = "empty"
         self._execution_time = { 'last': None, 'min': None, 'max': None }
         self._memory_usage = { 'last': None, 'min': None, 'max': None }
         self._mm_models = []
@@ -481,11 +482,14 @@ class NodeBase:
         # If any load-relevant value changed, or no successful result exists, execute the
         # node. Validated passthrough inputs are still recorded below so
         # diagnostics reflect the current graph invocation.
-        if (
-            self._cache_invalidated
-            or (not self._cache_params_equal(previous_cache_params, current_cache_params))
-            or not self._cache_valid
-        ):
+        self._cache_reason = (
+            "invalidated" if self._cache_invalidated
+            else "inputs_changed" if not self._cache_params_equal(previous_cache_params, current_cache_params)
+            else "empty" if not self._cache_valid
+            else "usage_changed" if ignored_params_changed
+            else "unchanged_inputs"
+        )
+        if self._cache_reason in {"invalidated", "inputs_changed", "empty"}:
             self._cache_invalidated = False
             self._cache_valid = False
             self._has_changed = True

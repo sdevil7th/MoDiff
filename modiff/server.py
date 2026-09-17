@@ -3301,6 +3301,9 @@ class WebServer:
         data = await request.json()
         if not isinstance(data, dict):
             return web.json_response({"error": True, "message": "Cache deletion requires an object."}, status=400)
+        scope = data.get("scope", "all")
+        if scope not in ("all", "outputs"):
+            return web.json_response({"error": True, "message": "Cache scope must be all or outputs."}, status=400)
         nodes = data.get("nodes", [])
         if isinstance(nodes, str):
             nodes = nodes if nodes == "*" else [nodes]
@@ -3314,6 +3317,24 @@ class WebServer:
             # Drop its exact length-prefixed runtime namespace as well.
             prefixes = tuple(f"block-v2-node:{len(node.encode('utf-16-le')) // 2}:{node}:" for node in targets)
             targets = list(dict.fromkeys([*targets, *(key for key in self.node_cache if key.startswith(prefixes))]))
+            if scope == "outputs":
+                # Preserve component lifetime, model identity tokens and offload
+                # hooks. Re-execution invalidates connected descendants through
+                # the ordinary executor on the next Run. Published media stays
+                # available until its producer successfully replaces it.
+                manager = getattr(sys.modules.get("modules.ModularDiffusers"), "components", None)
+                collections = getattr(manager, "collections", {})
+                invalidated, retained = [], []
+                for node_id in targets:
+                    cached = self.node_cache.get(node_id)
+                    if cached is None:
+                        continue
+                    if collections.get(node_id) or getattr(cached, "_mm_models", ()):
+                        retained.append(node_id)
+                    elif callable(getattr(cached, "invalidate_cache", None)):
+                        cached.invalidate_cache()
+                        invalidated.append(node_id)
+                return {"nodes": invalidated, "retainedModelNodes": retained}
             released_components = self._release_node_modular_components(targets)
             for node in targets:
                 self.node_cache.pop(node, None)
@@ -3334,6 +3355,8 @@ class WebServer:
                 self._node_cache_teardown_active = False
 
         removed = await self._with_node_cache_lease(release_in_background)
+        if scope == "outputs":
+            return web.json_response({"error": False, "scope": scope, **removed})
         return web.json_response({"error": False, "nodes": removed})
 
     """
@@ -10851,6 +10874,13 @@ class WebServer:
                     "progress": 100,
                     "current_node": id,
                     "hasChanged": self.node_cache[id]._has_changed,
+                    "message": {
+                        "empty": "Computed: no reusable output was available.",
+                        "invalidated": "Recomputed: output was invalidated by an upstream change or recompute request.",
+                        "inputs_changed": "Recomputed: node inputs changed.",
+                        "usage_changed": "Resident object reused; changed usage settings invalidate dependent outputs.",
+                        "unchanged_inputs": "Cached result reused: node inputs are unchanged.",
+                    }.get(getattr(self.node_cache[id], "_cache_reason", None), "Node completed."),
                     "executionTime": self.node_cache[id]._execution_time,
                     "memoryUsage": self.node_cache[id]._memory_usage,
                 }

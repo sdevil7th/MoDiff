@@ -287,9 +287,14 @@ class NodeBaseDeepEqualTests(unittest.TestCase):
             self.assertEqual(node(value=4), {"result": 8})
             self.assertFalse(node._has_changed)
             self.assertEqual(node.execution_count, 1)
+            self.assertEqual(node._cache_reason, "unchanged_inputs")
             self.assertEqual(node(value=5), {"result": 10})
+            self.assertEqual(node._cache_reason, "inputs_changed")
+            node.invalidate_cache()
+            self.assertEqual(node(value=5), {"result": 10})
+            self.assertEqual(node._cache_reason, "invalidated")
             self.assertTrue(node._has_changed)
-            self.assertEqual(node.execution_count, 2)
+            self.assertEqual(node.execution_count, 3)
 
     def test_changed_upstream_node_invalidates_consumer_of_same_mutable_object(self):
         from modiff.server import WebServer

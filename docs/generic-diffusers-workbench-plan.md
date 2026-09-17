@@ -28,7 +28,7 @@ coverage, existing-node resolution, Expert discovery consolidation and reviewed
 whole-pipeline fallbacks are implemented and validated. M4 is complete: connected
 starters, model/task previews, ordinary graph transactions, retained settings and
 shared generator inputs passed their authoring and scoped real-execution checks.
-M5–M8 remain pending. This does not qualify every declared model/task or establish
+M5 is in progress; M6–M8 remain pending. This does not qualify every declared model/task or establish
 runtime cache correctness or new custom-code support.
 
 ## Progress tracker
@@ -44,7 +44,7 @@ Model execution, hardware qualification, and UI tests are separate evidence.
 | M2 — Independent authoring/resource modes          | Complete    | None within M2; real model/cache lifetime qualification remains in M5                  |
 | M3 — Canonical operations and capability inventory | Complete    | None within M3; stage authoring is delivered in M4                                     |
 | M4 — Stage authoring and model/task switching      | Complete    | None within M4; broader model/hardware qualification remains explicitly scoped         |
-| M5 — Reuse and selective recomputation             | Not started | Reproduction, cache identities, component lifetime, eviction diagnostics               |
+| M5 — Reuse and selective recomputation             | In progress | Identity/state audit and live shared-owner, pressure and recovery qualification        |
 | M6 — Custom-node developer experience              | Not started | Unified install/discovery, explicit code trust, reload/debug and invalidation          |
 | M7 — Developer setup and service prototyping       | Not started | Tested uv/npm setup, platform guidance and reproducible API export                     |
 | M8 — Consolidation and product qualification       | Not started | Legacy-compatible retirement, terminology, complete user journeys and runtime evidence |
@@ -662,7 +662,7 @@ tests/e2e/studio-mocked/studio-mocked.spec.ts --grep 'operation starters preserv
 
 ### M5 — Make repeated runs reuse components and unaffected results
 
-- [ ] **M5.1** Reproduce repeated-run behavior and capture loader, encoder, denoiser, and
+- [x] **M5.1** Reproduce repeated-run behavior and capture loader, encoder, denoiser, and
       decoder execution counts alongside component ownership and memory placement.
 - [ ] **M5.2** Separate component lifetime from node-output cache lifetime. Cache identity
       includes consumed inputs, model/component revisions, relevant adapters, dtype,
@@ -679,6 +679,88 @@ prompt edits re-encode only affected stages; model/adapter/code changes invalida
 dependent data; mode/layout changes do not reload; cancellation and OOM recovery
 do not reuse invalid state. Test shared components and real constrained-memory
 runs separately. CPU offload is not equivalent to destruction/reload.
+
+M5 implementation checkpoint (milestone remains **In progress**):
+
+- [x] Measure real SDXL stage execution, component object identity, collection
+      ownership and placement across unchanged, seed, step and prompt edits.
+- [x] Separate explicit output invalidation from node destruction. The backend
+      retains model owners and current previews; native context/toolbar actions
+      expose **Recompute on next Run** and **Release node cache**.
+- [x] Publish bounded per-node reuse/recompute reasons through the existing
+      execution messages and node status, without serializing runtime objects.
+- [x] Retain independent Auto owners when the combined memory envelope fits.
+      Existing release scheduling still handles lower-capacity cases; shared
+      memory is counted against system RAM. Validate both strategies and shared
+      ownership with focused executor/planner tests.
+- [x] Reproduce and fix cached generator mutation in official split-workflow
+      continuations. Each consuming call clones the saved _current_ random state,
+      retaining stream position without advancing the reusable upstream snapshot.
+      Seed/device checks remain enforced. This is contract/test evidence for the
+      affected workflow adapter, not live LTX-2.5 model qualification.
+- [ ] Complete the consumed-input and implementation/custom-code identity audit,
+      including mutable inputs and adapter/component replacement.
+- [ ] Complete the expanded Pipeline State and scheduler lifetime audit. Preserve
+      exact route-state authority and deliberate sharing within one execution.
+- [ ] Qualify retained/shared owners, targeted release, pressure eviction and
+      cancellation/OOM recovery with real model execution. Individual loader
+      removal does not establish that downstream pipeline references are freed;
+      verify actual live references and memory, not just registry removal.
+
+The real SDXL production-browser matrix uses cached pinned weights, 512×512,
+float16 and model CPU offload. Counts below exclude the ordinary preview node:
+
+| Run/edit                                | Loader calls | Prompt encoder calls | Denoiser calls | Decoder calls |
+| --------------------------------------- | ------------ | -------------------- | -------------- | ------------- |
+| Cold run                                | 1            | 1                    | 1              | 1             |
+| Unchanged run                           | 0            | 0                    | 0              | 0             |
+| Seed only                               | 0            | 0                    | 1              | 1             |
+| Steps only                              | 0            | 0                    | 1              | 1             |
+| Prompt only                             | 0            | 1                    | 1              | 1             |
+| Auto/Expert view toggle and Arrange     | 0            | 0                    | 0              | 0             |
+| Explicit prompt-output recomputation    | 0            | 1                    | 1              | 1             |
+| Explicit loader cache release, then Run | 1            | 1                    | 1              | 1             |
+
+Component objects stayed identical through the first seven runs. Explicit loader
+release caused new component objects on the eighth run. All eight runs completed
+with retained output receipts and no browser errors. This establishes selective
+recomputation for this SDXL path; it does not qualify every family or prove that
+all references were freed by individual loader removal. Downloaded model files
+were preserved. An unchanged Run reused outputs and is not an additional
+independent inference-quality proof.
+
+Memory qualification is still open: the instrumented SDXL process reported
+about 7.17 GB allocated after the cold run and 7.62 GB after the recomputation
+sequence, then 14.78 GB after individual loader release/reload. Idle process-wide
+cleanup reduced this to 0.68 GB. Stable component identity and completed runs do
+not establish bounded memory. Diagnose retained references and repeat without
+instrumentation before closing M5.4 or the constrained-memory acceptance gate.
+
+M5 checkpoint validation:
+
+- Backend: `uvx --from ruff==0.12.7 ruff check . --select E9,F`,
+  `uv pip check --python .venv/bin/python` (67 packages), and the managed-runtime
+  preflight with `--check-port 8088 --fail-on-error` passed.
+  Final managed-runtime `python -m pytest -q`: **3,083 passed, 509 skipped,
+  9,311 subtests passed**, with two existing upstream/runtime warnings.
+- Verified optional-runtime gate: **126 passed, 6 subtests passed** across
+  workflow continuation, LTX-2.5 contract, NodeBase, owner planning and cache
+  cleanup tests. No package or model installation was performed. An initial
+  concurrent activation could not acquire the startup lease; the sequential
+  retry passed without changing the runtime.
+- Client: `npm ci`, `npm run check`, and the final documentation formatting gate
+  passed. Three native Playwright scenarios passed: cache controls, model/task
+  authoring, and shared-seed task changes. The response parser rejects an older
+  backend's incompatible recomputation response.
+- The first full backend gate found a historical assertion requiring identical
+  Generator objects. Its replacement retains exact continuous-stream comparison
+  and adds cached-state preservation/retry assertions; the final full gate passed.
+- Production assets matched all **67** generated files and six fresh HTTP asset
+  responses. Dependent coverage ledgers changed only their bundle/source hashes;
+  all **200** canonical workflows and **78** template entries stayed unchanged.
+- The new controls measured **204.1 KiB** of deferred JavaScript against the
+  previous 204 KiB cap. The bounded cap is now **205 KiB**; startup (603.3 KiB)
+  remains within 604 KiB, and both individual chunk limits are unchanged.
 
 ### M6 — Make custom node development a coherent product flow
 

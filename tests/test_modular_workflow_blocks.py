@@ -1744,7 +1744,8 @@ class ModularWorkflowBlockTests(unittest.TestCase):
         self.assertEqual(reference_pipeline.calls[0]["reference_downscale_factor"], 2)
         self.assertEqual(reference_pipeline.calls[0]["conditioning_attention_strength"], 0.75)
         self.assertIs(reference_pipeline.calls[0]["conditioning_attention_mask"], attention_mask)
-        self.assertIs(reference_pipeline.calls[0]["generator"], generator)
+        self.assertIsNot(reference_pipeline.calls[0]["generator"], generator)
+        self.assertTrue(torch.equal(reference_pipeline.calls[0]["generator"].get_state(), generator.get_state()))
 
         denoised_state = FakeState(latents="video", audio_latents="audio")
         denoise_pipeline = RecordingPipeline(denoised_state)
@@ -1771,7 +1772,8 @@ class ModularWorkflowBlockTests(unittest.TestCase):
             denoise_pipeline.calls[0]["sigmas"],
             [1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875],
         )
-        self.assertIs(denoise_pipeline.calls[0]["generator"], generator)
+        self.assertIsNot(denoise_pipeline.calls[0]["generator"], generator)
+        self.assertTrue(torch.equal(denoise_pipeline.calls[0]["generator"].get_state(), generator.get_state()))
         self.assertEqual(denoise_pipeline.guider.guidance_scale, 1.0)
         self.assertEqual(denoise_pipeline.guider.stg_scale, 0.0)
         self.assertEqual(denoise_pipeline.guider.modality_scale, 1.0)
@@ -1799,7 +1801,8 @@ class ModularWorkflowBlockTests(unittest.TestCase):
                 seed=89,
             )
         self.assertEqual(decode_pipeline.calls[0]["output_type"], "pil")
-        self.assertIs(decode_pipeline.calls[0]["generator"], generator)
+        self.assertIsNot(decode_pipeline.calls[0]["generator"], generator)
+        self.assertTrue(torch.equal(decode_pipeline.calls[0]["generator"].get_state(), generator.get_state()))
         configure.assert_called_once_with(decode_pipeline)
         self.assertEqual(output["video"], frames)
         self.assertEqual(output["sample_rate"], 48_000)
@@ -1891,7 +1894,8 @@ class ModularWorkflowBlockTests(unittest.TestCase):
                 seed=97,
             )
 
-        self.assertIs(denoise_pipeline.calls[0]["generator"], generator)
+        self.assertIsNot(denoise_pipeline.calls[0]["generator"], generator)
+        self.assertTrue(torch.equal(denoise_pipeline.calls[0]["generator"].get_state(), generator.get_state()))
 
     def test_ltx25_denoise_rejects_step_count_substitution(self):
         pipeline_class = "LTX25ModularPipeline"
@@ -2039,7 +2043,8 @@ class ModularWorkflowBlockTests(unittest.TestCase):
                 seed=103,
             )
         self.assertIs(reference_pipeline.calls[0]["reference_conditions"][0], reference)
-        self.assertIs(reference_pipeline.calls[0]["generator"], generator)
+        self.assertIsNot(reference_pipeline.calls[0]["generator"], generator)
+        self.assertTrue(torch.equal(reference_pipeline.calls[0]["generator"].get_state(), generator.get_state()))
 
         reference_pipeline.calls.clear()
         reference.frames = torch.zeros((2, 5, 3, 16, 16))

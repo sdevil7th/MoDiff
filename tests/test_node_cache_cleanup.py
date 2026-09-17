@@ -19,6 +19,48 @@ class NodeCacheCleanupTests(unittest.IsolatedAsyncioTestCase):
     def request(self, nodes):
         return SimpleNamespace(json=AsyncMock(return_value={"nodes": nodes}))
 
+    async def test_output_invalidation_retains_component_owners_and_objects(self):
+        server = self.server()
+        loader = SimpleNamespace(_mm_models=[], invalidate_cache=Mock())
+        standard = SimpleNamespace(_mm_models=['pipeline'], invalidate_cache=Mock())
+        encode = SimpleNamespace(_mm_models=[], invalidate_cache=Mock())
+        nested = 'block-v2-node:5:block:6:encode'
+        server.node_cache = {'load': loader, 'standard': standard, nested: encode}
+        manager = SimpleNamespace(collections={'load': {'weights'}}, components={'weights': object()})
+        before = dict(server.node_cache)
+        request = SimpleNamespace(json=AsyncMock(return_value={'nodes': ['load', 'standard', 'block'], 'scope': 'outputs'}))
+        with patch.dict(sys.modules, {'modules.ModularDiffusers': SimpleNamespace(components=manager)}):
+            response = await server.delete_cache(request)
+        result = json.loads(response.text)
+        self.assertEqual(result['nodes'], [nested])
+        self.assertEqual(result['retainedModelNodes'], ['load', 'standard'])
+        self.assertEqual(server.node_cache, before)
+        self.assertEqual(set(manager.components), {'weights'})
+        encode.invalidate_cache.assert_called_once_with()
+        loader.invalidate_cache.assert_not_called()
+        standard.invalidate_cache.assert_not_called()
+
+    async def test_output_invalidation_waits_for_active_execution(self):
+        server = self.server()
+        node = SimpleNamespace(_mm_models=[], invalidate_cache=Mock())
+        server.node_cache['encode'] = node
+        await server._node_cache_lock.acquire()
+        request = SimpleNamespace(json=AsyncMock(return_value={'nodes': ['encode'], 'scope': 'outputs'}))
+        action = asyncio.create_task(server.delete_cache(request))
+        await asyncio.sleep(0.02)
+        node.invalidate_cache.assert_not_called()
+        server._node_cache_lock.release()
+        self.assertEqual((await action).status, 200)
+        node.invalidate_cache.assert_called_once_with()
+        self.assertIs(server.node_cache['encode'], node)
+
+    async def test_unknown_cache_scope_cannot_destroy_model_objects(self):
+        server = self.server()
+        server.node_cache['load'] = object()
+        request = SimpleNamespace(json=AsyncMock(return_value={'nodes': '*', 'scope': 'typo'}))
+        self.assertEqual((await server.delete_cache(request)).status, 400)
+        self.assertIn('load', server.node_cache)
+
     def test_selective_component_destruction_preserves_shared_owners_and_hooks(self):
         server = self.server()
         a, b, shared = object(), object(), object()

@@ -351,10 +351,15 @@ def _build_workflow_auto_plan(
     retained_total = dict(total)
     from modiff.workflow_auto_lifecycle import plan_owner_lifetimes
     schedule = plan_owner_lifetimes(material, planned, adapters)
-    # Independent owners use their lower live envelope even when the retained
-    # estimate happens to fit. Dispatch-time recipe/history selection must not
-    # silently discard a release plan and keep two large pipelines resident.
-    use_schedule = len(planned) > 1 and bool(schedule["releases"]) and any(
+    # Retain independent owners when their combined envelope fits. A release
+    # schedule is needed only under pressure; dispatch rechecks this same
+    # envelope against current capacity before allocating any model.
+    retained_demand = {**total, "systemRamBytes": total["systemRamBytes"] + (total["vramBytes"] if shared else 0)}
+    retention_fits = all(
+        not required or required <= (_number(available[key]) or 0)
+        for key, required in retained_demand.items()
+    )
+    use_schedule = not retention_fits and len(planned) > 1 and bool(schedule["releases"]) and any(
         schedule["peak"][key] < total[key] for key in ("systemRamBytes", "vramBytes")
     )
     if use_schedule:

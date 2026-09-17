@@ -1,8 +1,8 @@
 """Runtime helpers shared by split official Modular Diffusers workflows.
 
 The upstream ``ModularPipeline`` receives one ``torch.Generator`` object for a
-whole call.  A visual split workflow must therefore continue that same object
-from its sealed process-local block state.  Recreating a generator from the
+whole call. A visual split workflow must continue that random stream from its
+sealed process-local block state. Recreating a generator from the
 same seed at every stage resets the random stream and is not equivalent to the
 upstream pipeline.
 """
@@ -26,7 +26,7 @@ def _workflow_state_value(state, name):
 
 
 def continuation_generator_from_seed(seed, pipeline, state=None):
-    """Create the workflow generator once, then reuse it from block state.
+    """Continue from the preceding stage without advancing its cached snapshot.
 
     ``state`` is issued by MoDiff's process-local workflow-state authority, so
     accepting its generator does not expose a graph-supplied Python object.
@@ -53,4 +53,8 @@ def continuation_generator_from_seed(seed, pipeline, state=None):
         )
     if torch.device(existing.device) != torch.device(execution_device):
         raise ValueError("The Modular workflow generator belongs to a different execution device.")
-    return existing
+    # ModularPipeline deep-copies ``state``, but then applies keyword arguments
+    # without copying them. Passing the cached Generator here would advance the
+    # preceding stage's snapshot, changing a retry or a downstream-only edit.
+    # Clone the *current* stream position, not just its initial seed.
+    return existing.clone_state()

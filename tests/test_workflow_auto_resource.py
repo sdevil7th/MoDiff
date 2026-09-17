@@ -51,8 +51,9 @@ def test_multiple_blocks_count_separate_model_owners_and_preserve_graph(setup):
     assert len(result["loaders"]) == 2
     assert len(requests) == 1  # Same recipe inspected once; owners still counted twice.
     assert result["retainedRequirements"]["systemRamBytes"] == 600
-    assert result["requirements"]["systemRamBytes"] == 300
-    assert result["strategy"] == "dependency_order_release_owners"
+    assert result["requirements"]["systemRamBytes"] == 600
+    assert result["strategy"] == "dependency_order_retained_owners"
+    assert result["schedule"] is None
     assert result["loaders"][0]["consumers"] == ["generate"]
     assert g == before
 
@@ -547,3 +548,27 @@ def test_release_rejects_a_model_reference_that_survives_ownership_cleanup(monke
                           _best_effort_allocator_trim=lambda: (True, []))
     with pytest.raises(ValueError, match='model references remain alive'):
         release_owner_caches(app, {'nodeIds': ['expired'], 'ownerIds': ['expired'], 'retainOutputs': {}}, SimpleNamespace(cache={}))
+
+
+@pytest.mark.parametrize("shared, ram, vram, release", [
+    (False, 1000, 1000, False), (False, 450, 1000, True),
+    (False, 1000, 300, True), (True, 1000, 1000, False),
+    (True, 800, 1000, True),
+])
+def test_owner_retention_uses_the_combined_live_memory_envelope(setup, shared, ram, vram, release):
+    plan, _, hardware, _ = setup
+    hardware['systemMemory']['availableBytes'] = ram
+    hardware['accelerator'].update(freeBytes=vram, memoryKind='shared' if shared else 'dedicated')
+    result = plan(graph(two=True))
+    assert result['canAutoRun']
+    assert (result['schedule'] is not None) is release
+    assert result['retainedRequirements']['systemRamBytes'] == 600
+
+
+def test_owner_retention_normalizes_numeric_hardware_values(setup):
+    plan, _, hardware, _ = setup
+    hardware['systemMemory']['availableBytes'] = '1000'
+    hardware['accelerator']['freeBytes'] = '1000'
+    result = plan(graph(two=True))
+    assert result['canAutoRun']
+    assert result['schedule'] is None

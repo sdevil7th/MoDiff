@@ -40,7 +40,7 @@ resolve to loopback.
 
 ## Core response contracts
 
-### Node cache deletion
+### Node cache recomputation and release
 
 `DELETE /cache` accepts `{ "nodes": ["node-id"] }`, a single node-id string,
 or `{ "nodes": "*" }`. Invalid id shapes return HTTP 400. The response retains
@@ -53,6 +53,24 @@ Modular cleanup drops only selected collection ownership and unshared components
 it does not offload discarded weights or rebuild unrelated models' hooks. A run
 waiting for cache ownership reports `waiting_for_node_cache`; cancelling that
 wait does not start model work afterward.
+
+Use `{ "nodes": ["node-id"], "scope": "outputs" }` to request recomputation on
+the next Run without destroying node instances, model owners or offload hooks.
+The response is `{ "error": false, "scope": "outputs", "nodes": [...],
+"retainedModelNodes": [...] }`: `nodes` lists invalidated result producers and
+`retainedModelNodes` lists component owners whose output identities remain valid.
+Root Block ids also cover their cached runtime descendants. Current previews
+remain available; the normal executor propagates invalidation when the producer
+reruns. This action waits for the same execution lease as release. It does not
+run a graph, change its parameters, install weights or remove downloaded files.
+Unknown scopes return HTTP 400. Omitted scope (or `"all"`) retains the existing
+node-destruction behavior. Use `POST /runtime/gpu_cleanup` for idle process-wide
+model release.
+
+Node `executed` WebSocket messages include a bounded reason in `message`,
+distinguishing unchanged inputs, invalidation, changed inputs, and retained objects
+with changed usage settings. CPU offload keeps weights available for reuse; it is
+not a weight reload or a model release.
 
 ### Managed file identifiers
 
@@ -1978,7 +1996,7 @@ The response includes `canAutoRun`, `issues`, `loaders`, `adapters`, `requiremen
 
 Requests carry `runtimeHints.workflowAutoPlan` with `schemaVersion: 1`, `graphHash` and optional `resourceControlGroups` (arrays of `{nodeId, field}` bindings for shared offload controls). The backend verifies the graph hash, prepares supported data-only suppliers through the existing executor when needed, validates mirrored settings, and replans from fresh outputs. It emits existing `auto_resource_plan_applied` events with optional `resourceUpdates` containing `{nodeId, field, value, previousValue}`. The client applies those updates only to the owning workflow with unchanged fields. `runtimePreparation.workflowAuto` in task receipts records resolved fields, applied updates, preparation nodes, schedule and actual releases.
 
-Shared loaders count once. Independent loaders remain separate owners. Single/shared-owner caches remain reusable. Independent owners use a dependency-respecting lifetime plan when it lowers peak memory; the same executor releases completed model caches and checks actual free memory before each subsequent owner. Detached material outputs survive, shared ownership stays live, and opaque model/device outputs block unsafe release. Loops retain all participating owners until the loop finishes. Release notifications use `auto_resource_cleanup`.
+Shared loaders count once. Independent loaders remain separate owners. Single/shared-owner caches remain reusable. Independent owners are retained when their combined envelope fits current capacity. When it does not fit, they use a dependency-respecting lifetime plan if it lowers peak memory; the same executor releases completed model caches and checks actual free memory before each subsequent owner. Detached material outputs survive, shared ownership stays live, and opaque model/device outputs block unsafe release. Loops retain all participating owners until the loop finishes. Release notifications use `auto_resource_cleanup`.
 
 Unknown model recipes, unreviewed custom/model-dependent resource suppliers, missing artifact evidence, nondefault accelerators and insufficient peak capacity produce explicit blockers. Expert preserves existing validation and explicit settings. Workflow receipts do not grant catalog, publication or model qualification authority.
 
