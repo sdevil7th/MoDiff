@@ -20,10 +20,12 @@ and counts follow the selected view. Existing insertion paths and saved User
 Nodes are retained. Unit and native browser regressions cover the new policy.
 
 M1 is complete: audience-appropriate discovery and shared typed drag-to-add
-matching are implemented and validated. M2's dependency inventory is complete;
-its behavior changes remain pending. M3–M8 have not started.
-Catalog changes do not establish generic cross-family execution, mode
-independence, cache correctness, or new custom-code support.
+matching are implemented and validated. M2 is complete: independent authoring
+and resource controls, stable field lifetimes, and persistence/Run regressions
+passed their final validation.
+M3.1's backend action and library inventory is complete. M3.2–M3.5 and M4–M8
+remain pending. These changes do not establish generic cross-family execution,
+runtime cache correctness, or new custom-code support.
 
 ## Progress tracker
 
@@ -35,8 +37,8 @@ Model execution, hardware qualification, and UI tests are separate evidence.
 | Milestone                                          | Status      | Remaining work                                                                         |
 | -------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
 | M1 — Audience-appropriate discovery                | Complete    | None within M1; generic execution and model adaptation remain in M3/M4                 |
-| M2 — Independent authoring/resource modes          | In progress | Inventory complete; implement separate controls and preserve saved execution settings  |
-| M3 — Canonical operations and capability inventory | Not started | Backend contracts, complete pinned-upstream inventory, adapters and fallback           |
+| M2 — Independent authoring/resource modes          | Complete    | None within M2; real model/cache lifetime qualification remains in M5                  |
+| M3 — Canonical operations and capability inventory | In progress | M3.1 complete; capability contracts, pinned-upstream coverage, adapters and fallback   |
 | M4 — Stage authoring and model/task switching      | Not started | Small starters, dynamic ports, atomic compatible changes, implementation inspection    |
 | M5 — Reuse and selective recomputation             | Not started | Reproduction, cache identities, component lifetime, eviction diagnostics               |
 | M6 — Custom-node developer experience              | Not started | Unified install/discovery, explicit code trust, reload/debug and invalidation          |
@@ -63,7 +65,7 @@ catalog, so restricted views exposed internal blocks and reference-only
 components. M1's catalog increment corrected this. Both repositories contain the smaller
 Load Models / Encode Prompt / Denoise / Decode Latents / Preview template.
 
-The Auto/Expert control currently also changes resource planning policy.
+Before M2, the Auto/Expert control also changed resource planning policy.
 Custom local/Git modules and custom Hub Modular blocks use different installation
 and execution paths. Existing cache reuse coexists with pressure- and
 schedule-driven model eviction. Each issue needs a distinct change and proof.
@@ -199,11 +201,11 @@ Completion evidence:
 
 - [x] **M2.1** Inventory all reads/writes of `studioViewMode` and `resourceMode`, including Run,
       selected-node execution, workflow tabs, persistence, imports, and recovery.
-- [ ] **M2.2** Introduce explicit authoring state and resource-policy state with a migration
+- [x] **M2.2** Introduce explicit authoring state and resource-policy state with a migration
       that preserves existing execution settings. Define old-client compatibility.
-- [ ] **M2.3** Remove mode-driven model/schema rebuilds; preserve the active graph and cache.
-- [ ] **M2.4** Expose automatic resource management in Expert and a clear override control.
-- [ ] **M2.5** Update Auto/Expert design documentation and policy tests together.
+- [x] **M2.3** Remove mode-driven model/schema rebuilds; preserve the active graph and cache.
+- [x] **M2.4** Expose automatic resource management in Expert and a clear override control.
+- [x] **M2.5** Update Auto/Expert design documentation and policy tests together.
 
 Acceptance: mode changes preserve exported graph, effective values, active task,
 and loaded-model identity; saved documents round-trip through refresh and Undo.
@@ -211,14 +213,14 @@ Unsupported automatic planning remains explicit, without forcing a UI mode chang
 
 Inventory and migration decisions:
 
-| Existing owner                                                                            | Responsibility and required change                                                                                                                                                                                                                       |
-| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `useSettingsStore.studioViewMode`                                                         | Persisted global authoring preference; retain its key and existing `manual`-to-`expert` compatibility reader. Library, inspector, export and workspace visibility read it.                                                                               |
-| `useStudioStore.form.resourceMode`                                                        | Per-workflow execution setting; retained in tab snapshots, saved workflows, imports, output restoration and packages. Keep the existing legacy resource-mode normalizer and backend values.                                                              |
-| `TopBar`                                                                                  | The switch handler currently writes both states and synchronizes/rebuilds managed graphs. A reconciliation effect mirrors resource mode back into authoring and forces invalid graphs into Expert. Split these paths and keep invalid planning explicit. |
-| `blockAutoAuthorityV2`                                                                    | Currently reads the authoring preference and can rewrite saved resource policy before execution. Make only the workflow's resource policy authoritative.                                                                                                 |
-| `useStudioRunActions`, `runCoordinator`, `workflowAutoExecutionV2`, `blockRuntimeHintsV2` | Use resource policy for planning, selected-node/whole-workflow execution and submitted hints. Preserve these execution boundaries.                                                                                                                       |
-| `GraphFixDialog`, `RunIssuesDialog`                                                       | Opening an inspector selects Expert presentation. It must not change resource policy or trigger graph rebuilding.                                                                                                                                        |
+| Existing owner                                                                            | Responsibility and required change                                                                                                                                                                                 |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `useSettingsStore.studioViewMode`                                                         | Persisted global authoring preference; retain its key and existing `manual`-to-`expert` compatibility reader. Library, inspector, export and workspace visibility read it.                                         |
+| `useStudioStore.form.resourceMode`                                                        | Per-workflow execution setting; retained in tab snapshots, saved workflows, imports, output restoration and packages. Keep the existing legacy resource-mode normalizer and backend values.                        |
+| `TopBar`                                                                                  | View changes now update only the authoring preference. A separate Resources handler retains deliberate graph synchronization. Removed policy-to-view mirroring and silent fallback for invalid automatic planning. |
+| `blockAutoAuthorityV2`                                                                    | Uses only the workflow's resource policy. Opening Expert authoring tools cannot bypass registered-Block planning or rewrite the saved policy.                                                                      |
+| `useStudioRunActions`, `runCoordinator`, `workflowAutoExecutionV2`, `blockRuntimeHintsV2` | Use resource policy for planning, selected-node/whole-workflow execution and submitted hints. Preserve these execution boundaries.                                                                                 |
+| `GraphFixDialog`, `RunIssuesDialog`                                                       | Opening an inspector selects Expert presentation. It must not change resource policy or trigger graph rebuilding.                                                                                                  |
 
 The two persisted fields already exist; avoid a second settings store or a new
 workflow schema. Preserve both saved values, remove implicit cross-writes, and
@@ -227,7 +229,7 @@ resource settings; new workflows retain the existing automatic default. Older
 clients can read the same workflow fields but retain their coupled UI behavior;
 independent controls require the matching updated client bundle.
 
-Implementation sequence for the next increment:
+Implementation and validation sequence:
 
 1. Add regression coverage for an Expert authoring preference paired with automatic
    resources, and an Auto authoring preference paired with explicit overrides.
@@ -239,8 +241,10 @@ Implementation sequence for the next increment:
    Planner failures must remain failures; selecting Expert presentation must not
    silently bypass them. Unsupported automatic planning stays visible and can be
    resolved by an explicit execution-policy choice.
-4. Reconcile Studio resource summaries and inspector actions with the independent
-   controls. Retain existing saved keys, legacy normalization and tab restoration.
+4. Remove the permanently disabled duplicate Studio resource header and its unused
+   handlers. Retain existing saved keys, legacy normalization and tab restoration.
+   Keep field groups mounted across disclosure/view changes so unchanged advanced
+   custom controls do not repeat initial schema actions.
 5. Audit browser helpers and expectations: tests that intend to change execution
    must operate the resource control explicitly. Presentation tests must not use
    helpers that change both settings and conceal accidental coupling.
@@ -260,9 +264,42 @@ These checks establish state and request-boundary behavior. Actual retained
 component/cache behavior still requires M5's runtime instrumentation and execution
 proof; unchanged UI values alone do not establish that models stayed resident.
 
+Completion evidence:
+
+- Client `19eeebf` and backend bundle/API documentation `9e289b6`.
+  Auto/Expert view writes only the global editing preference. Resources explicitly
+  selects the workflow's automatic planning or Expert overrides policy.
+- Both existing persisted fields and their legacy normalizers are retained;
+  no new workflow format or settings migration is necessary. Older clients can
+  read the values but need the updated bundle for independent controls.
+- Native regressions cover unchanged graph/form/plan state across view changes,
+  independent Save/reopen and tab restoration, Undo/Redo, and automatic planning
+  in Expert view for whole-workflow and selected-Block Run. Planner rejection
+  does not fall through to an override policy.
+- A custom advanced control reproduced a second schema request on an unchanged
+  Expert → Auto → Expert round trip. Stable mounted field groups fix it; native
+  view/disclosure toggles now preserve initialization while real edits still
+  dispatch their declared actions. Existing tests that intended a resource edit
+  now operate Resources explicitly instead of relying on the old coupled switch.
+- Removed the permanently disabled duplicate Studio resource header, unused
+  planning summaries and handlers. The top bar owns the policy selector.
+- `npm run check`: passed, including **1,112 Node tests**, production build and
+  unchanged bundle budgets. Final `npm run check:ui`: **2 shared-control and 150
+  Studio browser tests passed**. Updated documentation passed formatting and local
+  Markdown-link validation.
+- A fresh backend using the normal optional-runtime activation path returned
+  HTTP 200 and exact client build bytes for `/`, `/assets/index.js`,
+  `/assets/studio-templates.js`, `/assets/NodeList.js` and
+  `/assets/NodeSearchDialog.js`. The bundle mirror preserved `web/user/` and
+  installed `web/template-gallery/` content.
+- Backend Python execution code did not change in M2. These checks establish
+  UI/state/request and HTTP behavior; actual retained model components,
+  selective recomputation, constrained-memory execution and crash recovery
+  remain M5 work. No downloaded models were deleted or installed by this work.
+
 ### M3 — Establish canonical operations and complete capability inventory
 
-- [ ] **M3.1** Inventory ordinary actions, stage adapters, registered Blocks, and aliases.
+- [x] **M3.1** Inventory ordinary actions, stage adapters, registered Blocks, and aliases.
       Classify exact aliases separately from semantically overlapping implementations.
 - [ ] **M3.2** Extend backend-owned contracts with operation identity, stage capabilities,
       semantic ports, and execution/decomposition support levels.
@@ -276,6 +313,53 @@ proof; unchanged UI values alone do not establish that models stayed resident.
 Acceptance: parsers reject malformed capabilities; declarations agree with actual
 upstream components and inputs; every inventory entry has an honest support state.
 No template-specific receipt is required merely to author an ordinary valid graph.
+
+Inventory findings (M3.1):
+
+The backend registry at runtime baseline `9e289b6` contains **228 ordinary actions
+in 24 built-in modules**. This is the application inventory, not the complete
+upstream pipeline inventory required by M3.3. It was inspected through the normal
+verified optional-runtime entry point without downloading weights or running
+model inference. All 228 action names resolved to their backend classes.
+
+| Existing surface                                | Count | Owner and consolidation direction                                                                                                                                                                                                                                                    |
+| ----------------------------------------------- | ----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Modular stages and supporting operations        |    18 | `modules/ModularDiffusers`: includes `ModelsLoader`, `EncodePrompt`, `Denoise`, `DecodeLatents`, `ImageEncode`, component/adaptor utilities, `DynamicBlockNode` and `ReviewedModularWorkflowStep`; preserve these execution identities while defining public operation capabilities. |
+| Modular workflow-stage adapters                 |    57 | `modules/ModularDiffusers/workflow_blocks.py`: shared and family-specific `Workflow*` actions. Bind their real input/state/component contracts behind generic operations; do not infer equivalence from their labels.                                                                |
+| Standard image pipelines and tasks              |    15 | `modules/DiffusersImage`: `LoadPipeline`, generation/edit/control/prediction tasks and supporting operations. Reuse this path for whole-pipeline execution where decomposition is unavailable.                                                                                       |
+| Standard video pipelines and orchestration      |     8 | `modules/DiffusersVideo`: loading, video/audio generation, shots and sequences. Preserve additional temporal and audio contracts.                                                                                                                                                    |
+| Standard audio pipelines and adapters           |     5 | `modules/DiffusersAudio`: loading, generation and adapter controls. Keep audio-specific inputs and outputs.                                                                                                                                                                          |
+| Standard 3D pipelines                           |     2 | `modules/DiffusersThreeD`: loading and rendered-artifact generation; do not force a text/image four-stage representation.                                                                                                                                                            |
+| Diffusers resource operations                   |     9 | `modules/DiffusersRuntime`: component inspection/loading, execution recipes, memory planning and release. Most belong in resource configuration or deliberate advanced authoring.                                                                                                    |
+| Diffusers adapter operations                    |     7 | `modules/DiffusersAdapters`: LoRA loading/mixing, inspection, hotswap, fuse, unload and comparison jobs; consolidate discovery without replacing runtime semantics.                                                                                                                  |
+| Other official-library tasks                    |    10 | `modules/HuggingFaceSpeech` and `modules/HuggingFaceTransformers`; keep their optional-runtime and task contracts distinct.                                                                                                                                                          |
+| Media, tensor, primitive and workflow utilities |    97 | Remaining built-in modules; these are useful composition operations, not duplicate diffusion stages.                                                                                                                                                                                 |
+
+The separately validated HF library at Diffusers revision
+`2f7e0154a9db246e95c9ede43edba7db5b130805` contains **49 task contracts,
+135 workflow definitions (127 Diffusers and 8 Transformers), and 559 reusable
+block definitions**. Its authoritative source is
+`modiff/huggingface_node_library.py` plus the reviewed workflow/block snapshots.
+A workflow definition binds a pipeline and task; block definitions describe shared
+or nested implementation pieces. These counts do not represent 559 independent
+user operations or 135 qualified model executions. M1 already keeps these deeper
+layers out of the default discovery views.
+
+| Apparent duplication                                                                                | Classification and required treatment                                                                                                                                                                                                                    |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Multiple catalog keys for the same runtime identity                                                 | Exact discovery aliases: the client's `nodeCatalogEntries` already deduplicates them and retains their search terms. No two of the 228 inspected backend action names were bound to the same class object; that alone does not prove distinct semantics. |
+| `DiffusersVideo.GenerateLTX2` and `GenerateVideoAudio`                                              | An explicit deprecated compatibility subclass, not another public operation. Keep the saved action readable; consolidate new discovery and retire only after M8 compatibility proof.                                                                     |
+| `Denoise`, `WorkflowImageDenoise`, family-specific `Workflow*Denoise`, and reviewed block execution | Overlapping purpose with different bindings, states and component contracts. M3.2/M3.4 need common operation metadata and reviewed backend adapter selection, rather than deleting classes or renaming serialized graphs.                                |
+| Standard `Generate` and a Modular stage chain                                                       | Different decomposition levels. Expose callable whole-pipeline support honestly when a stage implementation is unavailable.                                                                                                                              |
+| Family/task workflow definitions and their nested blocks                                            | Composition and implementation layers. Public task/stage selection should resolve these underneath; deeper inspection remains deliberate.                                                                                                                |
+
+Existing extension points are `ModiffPipelineRegistry` / `PipelineConfig.node_specs`
+for generic Modular fields and implementations, modality adapter registries for
+standard pipelines, and the bounded reviewed HF workflow/block/task contracts.
+M3.2 must add a common operation/capability description to these owners. It must
+not create another catalog of independent runtime implementations. M3.3 still
+needs to reconcile every pinned upstream pipeline/task, including unavailable
+optional dependencies, contract-only entries and genuinely missing adapters.
 
 ### M4 — Deliver stage-first authoring and atomic model/task changes
 
