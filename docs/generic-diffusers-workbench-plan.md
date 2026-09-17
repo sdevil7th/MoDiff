@@ -13,9 +13,16 @@ repository. Keep changes in reviewable commits with their validation results.
 No model weights, local configuration, generated media, or user workflows are
 part of this change or its cleanup scope.
 
-The first implementation increment is catalog discovery (M1). The remaining
-milestones are pending. Passing M1 does not establish generic cross-family
-execution, mode independence, cache correctness, or new custom-code support.
+The first implementation increment delivers M1's catalog-view changes: Expert
+defaults to Stages; Auto/Essentials scopes the HF catalog to insertable,
+graph-qualified task Blocks; implementation entries remain in Advanced; search
+and counts follow the selected view. Existing insertion paths and saved User
+Nodes are retained. Unit and native browser regressions cover the new policy.
+
+M1 remains in progress: aligning drag-to-add suggestions with the shared
+connection-compatibility rules is the next increment. M2–M8 remain pending.
+Catalog changes do not establish generic cross-family execution, mode
+independence, cache correctness, or new custom-code support.
 
 ## Diagnosis
 
