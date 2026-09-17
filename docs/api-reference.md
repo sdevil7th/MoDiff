@@ -1257,8 +1257,36 @@ Bound implementation entries are consolidated there; Advanced retains raw
 nodes and aliases for inspection. Auto's Essentials catalog and existing saved
 graphs retain their behavior. Changing picker selections does not change nodes
 already on the canvas. In-flight insertion is cancelled when its selection,
-active workflow or catalog view changes. Cross-model graph migration and
-small preconnected starters belong to the subsequent workbench milestone.
+active workflow or catalog view changes. Graph-wide changes use the explicit
+preview and transaction described below.
+
+`POST /operations/starter` accepts exactly `pipelineClass` and a non-null `task`.
+It returns schema version 1, the selected pipeline/task/workflow ID, `nodes` (each
+containing its v3 `operation` and ordinary `node` schema), `edges`, `requiredInputs`, `sharedInputs`
+and `upstreamBlocks`. Edges use canonical operation IDs temporarily as `source`
+and `target`, and real field names as `sourceHandle`/`targetHandle`. The client
+assigns ordinary canvas node/edge IDs at insertion; these authoring references
+are never an alternate executable graph format or an execution receipt.
+
+Connections reuse the reviewed workflow's exact state and component bindings,
+including required component ports beyond the minimum admission edges. Shared
+seed groups describe stages continuing one generator through native or sealed
+state. The client keeps their ordinary values aligned and resolves random mode
+once per group/run. Existing runtime seed/state validation remains authoritative;
+these relationships are not receipts or hidden execution parameters.
+Required auxiliary models and conditioning remain visible as unbound inputs;
+standard pipelines remain a loader and whole call. Effective output dimensions
+feed the decoder where the generic adapter declares them. This endpoint does
+not construct nodes, install packages, download weights or mutate a workflow.
+Unknown/ambiguous selections return HTTP 400. Runtime, artifact, resource and
+actual connected-object validation still happen through the existing executor.
+
+The client previews model/task changes before applying one history transaction.
+Compatible user values and custom nodes survive; unsupported settings are retained
+in an advisory annotation outside execution. A changed Python action gets a fresh
+runtime ID, avoiding a stale cached field-action instance. Existing Blocks are not
+converted; inspection and structural editing remain separate commands. Users
+connect the final output to a Preview, Save or Export node to run their draft.
 
 ### Studio execution specifications
 

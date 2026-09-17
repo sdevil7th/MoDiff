@@ -87,7 +87,7 @@ def with_operation_semantics(contract, *, workflow_id=None, values=None):
             kind = "opaque"
         elif types & {"image", "video", "audio", "prediction_map"}:
             kind = "media"
-        elif not types <= {"string", "str", "int", "float", "number", "bool", "boolean", "seed"}:
+        elif not types <= {"string", "str", "text", "int", "float", "number", "bool", "boolean", "seed"}:
             kind = "opaque"
         scoped = kind in {"component", "conditioning", "latents", "state", "pipeline", "opaque"}
         port["semantics"] = {

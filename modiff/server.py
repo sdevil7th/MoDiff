@@ -1429,6 +1429,7 @@ class WebServer:
                 web.get(r"/nodes{id:/?([\w\d_-]+/[\w\d_-]+)?}", self.nodes),
                 web.post("/fields/action", self.field_action),
                 web.post("/operations/resolve", self.resolve_operation),
+                web.post("/operations/starter", self.resolve_operation_starter),
                 web.get("/cache/{node}/{field}", self.cache),
                 web.get("/cache/{node}/{field}/{index}", self.cache),
                 web.delete("/cache", self.delete_cache),
@@ -13728,6 +13729,29 @@ class WebServer:
                     "operation": resolved["operation"],
                     "node": self._describe_registered_node(resolved["module"], resolved["action"], resolved),
                 }
+
+            payload = await asyncio.to_thread(describe)
+        except ValueError as exc:
+            return web.json_response({"error": str(exc)}, status=400)
+        return web.json_response(payload)
+
+    async def resolve_operation_starter(self, request):
+        """Describe ordinary nodes and reviewed wires; never execute or install."""
+        from modiff.operation_starters import resolve_operation_starter
+
+        try:
+            selection = await request.json()
+            catalog_bytes = await self._model_capabilities_response("")
+
+            def describe():
+                contracts = json.loads(catalog_bytes)["operationContracts"]
+                payload = resolve_operation_starter(self.modules, contracts, selection)
+                payload["nodes"] = [
+                    {"operation": node["operation"],
+                     "node": self._describe_registered_node(node["module"], node["action"], node)}
+                    for node in payload["nodes"]
+                ]
+                return payload
 
             payload = await asyncio.to_thread(describe)
         except ValueError as exc:

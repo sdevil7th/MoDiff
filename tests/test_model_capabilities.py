@@ -78,6 +78,22 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("flux2-modular:equivalent-standard", DIFFUSERS_EXECUTION_PROFILES)
         self.assertFalse(DIFFUSERS_EXECUTION_PROFILES["flux2-modular:equivalent-standard"].public)
 
+    async def test_starter_endpoint_describes_nodes_without_construction_or_receipts(self):
+        server = WebServer(module_registry.MODULE_MAP)
+        selection = {"pipelineClass": "AnimaModularPipeline", "task": "text_to_image"}
+        with patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("Constructed node")):
+            response = await server.resolve_operation_starter(SimpleNamespace(json=AsyncMock(return_value=selection)))
+        payload = json.loads(response.text)
+        self.assertEqual(response.status, 200)
+        self.assertEqual(len(payload["nodes"]), 4)
+        self.assertEqual(len(payload["edges"]), 5)
+        for entry in payload["nodes"]:
+            self.assertEqual(entry["node"]["type"], "custom")
+            self.assertNotIn("values", entry["node"])
+            self.assertNotIn("operation", entry["node"])
+        invalid = await server.resolve_operation_starter(SimpleNamespace(json=AsyncMock(return_value={**selection, "execute": True})))
+        self.assertEqual(invalid.status, 400)
+
     async def test_capabilities_publish_only_app_delivered_quantization_as_available(self):
         catalog = {
             "capabilities": [
