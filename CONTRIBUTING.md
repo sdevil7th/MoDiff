@@ -38,6 +38,10 @@ Do not commit `config.ini`, `.env` files, model caches, generated outputs, local
 - Treat file access, custom-module installation, remote code, token handling, and mutating routes as security-sensitive changes.
 - Avoid importing the full model registry from lightweight diagnostics such as preflight.
 
+### Custom node development
+
+For local/Git Python nodes and pinned Hub Modular blocks, follow [Custom node development](docs/custom-nodes.md). Stage and inspect without imports, explicitly enable the exact code hash, then review/reload after edits. Do not add an unconditional startup import or install dependencies from discovery. Test stale code, relative helper isolation, approval rejection, import diagnostics, and cache ownership through ordinary graph dispatch.
+
 ### Adding a node module
 
 Built-in node packages live under `modules/<Name>/` and normally contain:

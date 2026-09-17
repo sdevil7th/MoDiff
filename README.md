@@ -290,6 +290,10 @@ See [docs/api-reference.md](docs/api-reference.md) for route groups and trust im
 
 The Modular Diffusers integration is documented in [modules/ModularDiffusers/README.md](modules/ModularDiffusers/README.md). MoDiff owns the pipeline configuration schema used by its dynamic node contracts while relying on upstream Diffusers for model and pipeline execution.
 
+## Custom nodes
+
+In Expert, open **Nodes → Custom nodes** to stage, inspect and explicitly enable local Python, pinned Git code or Hub Modular blocks. See [Developing custom nodes](docs/custom-nodes.md) for model-free examples, typed fields, dependency review, reload and Auto resource contracts.
+
 ## Updating and recovery
 
 Stop the foreground application with `Ctrl+C` and update both sibling

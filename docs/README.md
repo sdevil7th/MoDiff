@@ -25,6 +25,8 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Understand the local-only trust boundary or report a vulnerability       | [Security policy](../SECURITY.md)                                                           |
 | Understand expected conduct in project spaces                            | [Code of conduct](../CODE_OF_CONDUCT.md)                                                    |
 
+Custom Python and Hub block authors: [Developing custom nodes](custom-nodes.md).
+
 ## Required Engineering Procedure
 
 The [generic Diffusers workbench plan](generic-diffusers-workbench-plan.md)

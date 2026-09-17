@@ -13,7 +13,7 @@ AIOHTTP_CONTENT_TYPES.add_type("image/webp", ".webp")
 
 logging.getLogger("asyncio").setLevel(logging.WARNING)
 from functools import partial
-from importlib import import_module, metadata, invalidate_caches
+from importlib import import_module, metadata
 import os
 import platform
 import base64
@@ -557,7 +557,8 @@ from modiff.task_template_contracts import (
     build_task_template_contracts,
 )
 from modiff.modelstore import modelstore
-from modules import MODULE_MAP, parse_module_map
+from modules import MODULE_MAP
+from modiff.custom_extension_api import CustomExtensionAPI
 from utils.huggingface import (
     cleanup_interrupted_hub_download_files,
     delete_model,
@@ -1252,7 +1253,7 @@ def studio_download_files_for_repo(repo_id):
     return list(next(iter(normalized), ()))
 
 
-class WebServer:
+class WebServer(CustomExtensionAPI):
     def __init__(
         self,
         modules: dict = {},
@@ -1531,6 +1532,8 @@ class WebServer:
                 web.post("/custom_modules/refresh", self.custom_modules_refresh),
                 web.post("/custom_modules/install", self.custom_modules_install),
                 web.post("/custom_modules/{name}/update", self.custom_modules_update),
+                web.post("/custom_modules/{name}/inspect", self.custom_modules_inspect),
+                web.post("/custom_modules/{name}/reload", self.custom_modules_reload),
                 web.post("/custom_modules/{name}/disable", self.custom_modules_disable),
                 web.post("/custom_modules/{name}/enable", self.custom_modules_enable),
                 web.get("/studio_outputs", self.studio_outputs_get),
@@ -2583,13 +2586,12 @@ class WebServer:
     async def user_assets(self, request):
         module = request.match_info.get("module")
         file = request.match_info.get("file")
-        fileName = f"custom/{module}/web/{file}"
-
-        if not Path(fileName).exists():
-            return web.HTTPNotFound(text="File not found")
-
-        response = web.FileResponse(fileName)
-        # response.headers["Content-Type"] = "application/javascript"
+        try:
+            content = await asyncio.to_thread(self._extension_store().asset, module, file)
+        except (ValueError, OSError):
+            return web.HTTPNotFound(text="Approved custom asset not found")
+        import mimetypes
+        response = web.Response(body=content, content_type=mimetypes.guess_type(file)[0] or 'application/octet-stream')
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
@@ -2863,6 +2865,7 @@ class WebServer:
         values,
         ref,
     ):
+        self._require_custom_module_enabled(module)
         assert_optional_runtime_ready(
             field_action_optional_runtime_requirement(
                 module,
@@ -2911,6 +2914,7 @@ class WebServer:
 
         if not all(isinstance(value, str) and value for value in (module, action, field_key, method_name)):
             raise ValueError("Field actions require non-empty module, action, fieldKey, and fn strings.")
+        self._require_custom_module_enabled(module)
         module_definition = self.modules.get(module)
         if not isinstance(module_definition, dict):
             raise ValueError(f"Unknown field-action module {module!r}.")
@@ -3315,6 +3319,32 @@ class WebServer:
             filename=filename,
         )
 
+    def _release_cached_nodes(self, targets):
+        """Release selected owners and dependents while holding the model/cache lease."""
+        targets = self._dependent_cache_nodes(targets)
+        released_components = self._release_node_modular_components(targets)
+        # The standard manager also has shared owners. Destruction must
+        # neither offload discarded weights nor remove a surviving owner's
+        # model. Clear node destructor ownership only after pruning entries.
+        surviving_models = {model_id for key, node in self.node_cache.items() if key not in targets
+                            for model_id in getattr(node, "_mm_models", ())}
+        for key in targets:
+            cached = self.node_cache.get(key)
+            for model_id in getattr(cached, "_mm_models", ()):
+                if model_id not in surviving_models:
+                    memory_manager.cache.pop(model_id, None)
+            if cached is not None and hasattr(cached, "_mm_models"):
+                cached._mm_models = []
+        cached = None
+        for node in targets:
+            self.node_cache.pop(node, None)
+        if targets or released_components:
+            gc.collect()
+            self._best_effort_device_cache_clear()
+            self._best_effort_allocator_trim()
+        logger.debug(f"Removed {len(targets)} nodes from cache.")
+        return targets
+
     async def delete_cache(self, request):
         data = await request.json()
         if not isinstance(data, dict):
@@ -3353,29 +3383,7 @@ class WebServer:
                         cached.invalidate_cache()
                         invalidated.append(node_id)
                 return {"nodes": invalidated, "retainedModelNodes": retained}
-            targets = self._dependent_cache_nodes(targets)
-            released_components = self._release_node_modular_components(targets)
-            # The standard manager also has shared owners. Destruction must
-            # neither offload discarded weights nor remove a surviving owner's
-            # model. Clear node destructor ownership only after pruning entries.
-            surviving_models = {model_id for key, node in self.node_cache.items() if key not in targets
-                                for model_id in getattr(node, "_mm_models", ())}
-            for key in targets:
-                cached = self.node_cache.get(key)
-                for model_id in getattr(cached, "_mm_models", ()):
-                    if model_id not in surviving_models:
-                        memory_manager.cache.pop(model_id, None)
-                if cached is not None and hasattr(cached, "_mm_models"):
-                    cached._mm_models = []
-            cached = None
-            for node in targets:
-                self.node_cache.pop(node, None)
-            if targets or released_components:
-                gc.collect()
-                self._best_effort_device_cache_clear()
-                self._best_effort_allocator_trim()
-            logger.debug(f"Removed {len(targets)} nodes from cache.")
-            return targets
+            return self._release_cached_nodes(targets)
 
         async def release_in_background():
             self._node_cache_teardown_active = True
@@ -10653,6 +10661,8 @@ class WebServer:
         if action not in self.modules[module]:
             raise ValueError(f"Invalid action: {action}")
 
+        self._require_custom_module_enabled(module)
+
         # get the arguments values
         args = {}
         ui_fields = {}
@@ -14418,319 +14428,6 @@ class WebServer:
         if not isinstance(diagnostics, dict):
             raise RuntimeError("Model cache diagnostics did not return a JSON object.")
         return web.json_response(diagnostics)
-
-    def _custom_modules_root(self):
-        root = Path("custom").resolve()
-        root.mkdir(parents=True, exist_ok=True)
-        return root
-
-    def _disabled_custom_modules_root(self):
-        root = (self._custom_modules_root() / ".disabled").resolve()
-        root.mkdir(parents=True, exist_ok=True)
-        return root
-
-    def _safe_custom_module_name(self, value):
-        name = str(value or "").strip()
-        if not name:
-            raise ValueError("Module name is required.")
-        if not re.match(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$", name):
-            raise ValueError(
-                "Module name may only contain letters, numbers, dot, underscore, and dash, and must not start with a dot."
-            )
-        return name
-
-    def _derive_custom_module_name(self, source):
-        source_text = str(source or "").strip().rstrip("/\\")
-        if not source_text:
-            raise ValueError("Module source is required.")
-        source_text = source_text[:-4] if source_text.endswith(".git") else source_text
-        name = re.split(r"[/\\:]", source_text)[-1]
-        name = re.sub(r"[^A-Za-z0-9_.-]+", "-", name).strip(".-")
-        return self._safe_custom_module_name(name)
-
-    def _custom_module_path(self, name, disabled=False):
-        safe_name = self._safe_custom_module_name(name)
-        root = self._disabled_custom_modules_root() if disabled else self._custom_modules_root()
-        target = (root / safe_name).resolve()
-        if target.parent != root:
-            raise ValueError("Resolved custom module path escaped the custom module directory.")
-        return target
-
-    def _is_git_source(self, source):
-        source = str(source or "").strip().lower()
-        return source.startswith(("https://", "http://", "ssh://", "git@")) or source.endswith(".git")
-
-    def _run_git(self, args, cwd=None, timeout=300):
-        git_bin = shutil.which("git")
-        if not git_bin:
-            raise RuntimeError("git is not available in the MoDiff backend environment.")
-
-        completed = subprocess.run(
-            [git_bin, *args],
-            cwd=str(cwd) if cwd else None,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            shell=False,
-        )
-        result = {
-            "returncode": completed.returncode,
-            "stdout": completed.stdout.strip(),
-            "stderr": completed.stderr.strip(),
-        }
-        if completed.returncode != 0:
-            message = result["stderr"] or result["stdout"] or f"git exited with {completed.returncode}"
-            raise RuntimeError(message)
-        return result
-
-    def _git_value(self, module_path, args):
-        try:
-            return self._run_git(args, cwd=module_path, timeout=10).get("stdout", "")
-        except Exception:
-            return ""
-
-    def _custom_module_git_info(self, module_path):
-        is_git = bool(self._git_value(module_path, ["rev-parse", "--is-inside-work-tree"]))
-        if not is_git:
-            return {
-                "hasGit": False,
-                "canUpdate": False,
-            }
-        return {
-            "hasGit": True,
-            "canUpdate": True,
-            "remote": self._git_value(module_path, ["config", "--get", "remote.origin.url"]),
-            "branch": self._git_value(module_path, ["rev-parse", "--abbrev-ref", "HEAD"]),
-            "commit": self._git_value(module_path, ["rev-parse", "--short", "HEAD"]),
-        }
-
-    def _custom_module_info(self, name, module_path, enabled=True):
-        module_key = f"custom.{name}"
-        node_actions = sorted((self.modules.get(module_key) or {}).keys()) if enabled else []
-        git_info = self._custom_module_git_info(module_path)
-        return {
-            "name": name,
-            "moduleKey": module_key,
-            "source": "custom",
-            "enabled": enabled,
-            "status": "enabled" if enabled else "disabled",
-            "path": str(module_path),
-            "hasInit": (module_path / "__init__.py").exists(),
-            "hasMain": (module_path / "main.py").exists(),
-            "nodeCount": len(node_actions),
-            "nodes": node_actions,
-            "canDisable": enabled,
-            "canEnable": not enabled,
-            **git_info,
-        }
-
-    def _list_custom_modules(self):
-        root = self._custom_modules_root()
-        disabled_root = self._disabled_custom_modules_root()
-        modules = []
-
-        for entry in sorted(root.iterdir(), key=lambda item: item.name.lower()):
-            if not entry.is_dir() or entry.name.startswith(".") or entry.name == "__pycache__":
-                continue
-            modules.append(self._custom_module_info(entry.name, entry, enabled=True))
-
-        for entry in sorted(disabled_root.iterdir(), key=lambda item: item.name.lower()):
-            if not entry.is_dir() or entry.name.startswith(".") or entry.name == "__pycache__":
-                continue
-            modules.append(self._custom_module_info(entry.name, entry, enabled=False))
-
-        return modules
-
-    def _refresh_custom_module_registry(self):
-        for key in list(MODULE_MAP.keys()):
-            if key.startswith("custom."):
-                MODULE_MAP.pop(key, None)
-
-        for key in list(sys.modules.keys()):
-            if key == "custom" or key.startswith("custom."):
-                sys.modules.pop(key, None)
-
-        invalidate_caches()
-        custom_root = self._custom_modules_root()
-        if custom_root.exists():
-            parse_module_map("custom")
-
-        self.modules = MODULE_MAP
-        self.instance = nanoid.generate(size=10)
-        return self._list_custom_modules()
-
-    def _prune_custom_node_cache(self, module_key=None):
-        removed = []
-        for node_id, cached_node in list(self.node_cache.items()):
-            cached_module = getattr(cached_node, "module_name", "")
-            if module_key is None:
-                should_remove = str(cached_module).startswith("custom.")
-            else:
-                should_remove = cached_module == module_key
-            if should_remove:
-                self.node_cache.pop(node_id, None)
-                removed.append(node_id)
-        return removed
-
-    def _custom_modules_payload(self):
-        modules = self._list_custom_modules()
-        return {
-            "error": False,
-            "root": str(self._custom_modules_root()),
-            "disabledRoot": str(self._disabled_custom_modules_root()),
-            "count": len(modules),
-            "modules": modules,
-        }
-
-    async def custom_modules_list(self, request):
-        return web.json_response(self._custom_modules_payload())
-
-    async def custom_modules_refresh(self, request):
-        self._prune_custom_node_cache()
-        modules = self._refresh_custom_module_registry()
-        return web.json_response(
-            {
-                "error": False,
-                "message": "Custom module registry refreshed.",
-                "instance": self.instance,
-                "count": len(modules),
-                "modules": modules,
-            }
-        )
-
-    async def custom_modules_install(self, request):
-        try:
-            data = await request.json()
-            source = str(data.get("source") or data.get("url") or "").strip()
-            name = self._safe_custom_module_name(data.get("name") or self._derive_custom_module_name(source))
-            target = self._custom_module_path(name)
-            disabled_target = self._custom_module_path(name, disabled=True)
-
-            if target.exists() or disabled_target.exists():
-                return web.json_response(
-                    {"error": True, "message": f"Custom module `{name}` already exists."}, status=409
-                )
-
-            if self._is_git_source(source):
-                self._run_git(["clone", source, str(target)], timeout=900)
-            else:
-                source_path = Path(source).expanduser().resolve()
-                if not source_path.is_dir():
-                    return web.json_response(
-                        {"error": True, "message": "Source must be a Git URL or an existing local directory."},
-                        status=400,
-                    )
-                shutil.copytree(
-                    source_path, target, ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache", ".mypy_cache")
-                )
-
-            modules = self._refresh_custom_module_registry()
-            return web.json_response(
-                {
-                    "error": False,
-                    "message": f"Custom module `{name}` installed.",
-                    "module": next((item for item in modules if item["name"] == name), None),
-                    "modules": modules,
-                    "instance": self.instance,
-                }
-            )
-        except Exception as e:
-            logger.error(f"Error installing custom module: {e}", exc_info=True)
-            return web.json_response({"error": True, "message": str(e)}, status=500)
-
-    async def custom_modules_update(self, request):
-        try:
-            name = self._safe_custom_module_name(request.match_info.get("name"))
-            enabled_path = self._custom_module_path(name)
-            disabled_path = self._custom_module_path(name, disabled=True)
-            module_path = enabled_path if enabled_path.exists() else disabled_path
-            if not module_path.exists():
-                return web.json_response(
-                    {"error": True, "message": f"Custom module `{name}` was not found."}, status=404
-                )
-
-            if not (module_path / ".git").exists():
-                return web.json_response(
-                    {"error": True, "message": f"Custom module `{name}` is not a Git checkout."}, status=400
-                )
-
-            git_result = self._run_git(["pull", "--ff-only"], cwd=module_path, timeout=900)
-            removed_cache_nodes = self._prune_custom_node_cache(f"custom.{name}")
-            modules = self._refresh_custom_module_registry() if enabled_path.exists() else self._list_custom_modules()
-            return web.json_response(
-                {
-                    "error": False,
-                    "message": f"Custom module `{name}` updated.",
-                    "git": git_result,
-                    "removedCacheNodes": removed_cache_nodes,
-                    "module": next((item for item in modules if item["name"] == name), None),
-                    "modules": modules,
-                    "instance": self.instance,
-                }
-            )
-        except Exception as e:
-            logger.error(f"Error updating custom module: {e}", exc_info=True)
-            return web.json_response({"error": True, "message": str(e)}, status=500)
-
-    async def custom_modules_disable(self, request):
-        try:
-            name = self._safe_custom_module_name(request.match_info.get("name"))
-            source = self._custom_module_path(name)
-            target = self._custom_module_path(name, disabled=True)
-            if not source.exists():
-                return web.json_response(
-                    {"error": True, "message": f"Custom module `{name}` is not enabled."}, status=404
-                )
-            if target.exists():
-                return web.json_response(
-                    {"error": True, "message": f"Disabled custom module `{name}` already exists."}, status=409
-                )
-
-            shutil.move(str(source), str(target))
-            removed_cache_nodes = self._prune_custom_node_cache(f"custom.{name}")
-            modules = self._refresh_custom_module_registry()
-            return web.json_response(
-                {
-                    "error": False,
-                    "message": f"Custom module `{name}` disabled.",
-                    "removedCacheNodes": removed_cache_nodes,
-                    "module": next((item for item in modules if item["name"] == name), None),
-                    "modules": modules,
-                    "instance": self.instance,
-                }
-            )
-        except Exception as e:
-            logger.error(f"Error disabling custom module: {e}", exc_info=True)
-            return web.json_response({"error": True, "message": str(e)}, status=500)
-
-    async def custom_modules_enable(self, request):
-        try:
-            name = self._safe_custom_module_name(request.match_info.get("name"))
-            source = self._custom_module_path(name, disabled=True)
-            target = self._custom_module_path(name)
-            if not source.exists():
-                return web.json_response(
-                    {"error": True, "message": f"Custom module `{name}` is not disabled."}, status=404
-                )
-            if target.exists():
-                return web.json_response(
-                    {"error": True, "message": f"Enabled custom module `{name}` already exists."}, status=409
-                )
-
-            shutil.move(str(source), str(target))
-            modules = self._refresh_custom_module_registry()
-            return web.json_response(
-                {
-                    "error": False,
-                    "message": f"Custom module `{name}` enabled.",
-                    "module": next((item for item in modules if item["name"] == name), None),
-                    "modules": modules,
-                    "instance": self.instance,
-                }
-            )
-        except Exception as e:
-            logger.error(f"Error enabling custom module: {e}", exc_info=True)
-            return web.json_response({"error": True, "message": str(e)}, status=500)
 
     @staticmethod
     def _template_gallery_error_response(error, *, plan=None):

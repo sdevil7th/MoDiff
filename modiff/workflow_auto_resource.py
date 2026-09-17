@@ -190,9 +190,22 @@ def _build_workflow_auto_plan(
     issues: list[str] = []
     loaders: dict[str, Any] = {}
     data_nodes: set[str] = set()
+    custom_nodes: set[str] = set()
     preparation_nodes: set[str] = set()
     deferred_fields: list[dict] = []
     for node_id, node in nodes.items():
+        if node['module'].startswith('custom.'):
+            from modiff.custom_extensions import ExtensionStore
+            try:
+                extension = ExtensionStore().require_enabled(node['module'].removeprefix('custom.'))
+                if extension['runtimeRole'] == 'manual':
+                    raise ValueError('this custom source declares manual resource management; use Expert or review its data/connected-components contract.')
+                custom_nodes.add(node_id)
+                if extension['runtimeRole'] == 'data':
+                    data_nodes.add(node_id)
+            except (ValueError, OSError, SyntaxError) as error:
+                issues.append(f'{node_id}: {error}')
+            continue
         if (node["module"], node["action"]) in _DATA_ACTIONS:
             data_nodes.add(node_id)
             continue
@@ -359,7 +372,9 @@ def _build_workflow_auto_plan(
         not required or required <= (_number(available[key]) or 0)
         for key, required in retained_demand.items()
     )
-    use_schedule = not retention_fits and len(planned) > 1 and bool(schedule["releases"]) and any(
+    # Custom Python can retain references outside the graph. Its approval grants
+    # execution, not a proof that early model eviction is safe.
+    use_schedule = not custom_nodes and not retention_fits and len(planned) > 1 and bool(schedule["releases"]) and any(
         schedule["peak"][key] < total[key] for key in ("systemRamBytes", "vramBytes")
     )
     if use_schedule:

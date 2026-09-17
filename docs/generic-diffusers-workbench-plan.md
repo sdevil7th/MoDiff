@@ -30,8 +30,10 @@ starters, model/task previews, ordinary graph transactions, retained settings an
 shared generator inputs passed their authoring and scoped real-execution checks.
 M5 is complete: selective recomputation, component ownership, isolated mutable
 state, bounded memory and failure recovery passed their scoped validation.
-M6–M8 remain pending. This does not qualify every
-declared model/task, hardware configuration or new custom-code support.
+M6 is complete: unified custom-source review, explicit code approval, ordinary
+node and Modular block execution, reload and targeted invalidation passed their
+scoped validation. M7–M8 remain pending. This does not qualify every declared
+model/task, hardware configuration or third-party extension.
 
 ## Progress tracker
 
@@ -47,7 +49,7 @@ Model execution, hardware qualification, and UI tests are separate evidence.
 | M3 — Canonical operations and capability inventory | Complete    | None within M3; stage authoring is delivered in M4                                     |
 | M4 — Stage authoring and model/task switching      | Complete    | None within M4; broader model/hardware qualification remains explicitly scoped         |
 | M5 — Reuse and selective recomputation             | Complete    | None within M5; broader family/hardware qualification remains scoped                   |
-| M6 — Custom-node developer experience              | Not started | Unified install/discovery, explicit code trust, reload/debug and invalidation          |
+| M6 — Custom-node developer experience              | Complete    | None within M6; arbitrary extensions still need code/dependency/resource review        |
 | M7 — Developer setup and service prototyping       | Not started | Tested uv/npm setup, platform guidance and reproducible API export                     |
 | M8 — Consolidation and product qualification       | Not started | Legacy-compatible retirement, terminology, complete user journeys and runtime evidence |
 
@@ -840,22 +842,98 @@ references this completed runtime implementation. Both repositories remain on
 
 ### M6 — Make custom node development a coherent product flow
 
-- [ ] **M6.1** Document and unify discovery of existing local/Git Python modules and Hub
+- [x] **M6.1** Document and unify discovery of existing local/Git Python modules and Hub
       Modular blocks. Reuse schema-derived UI and compatible Diffusers metadata.
-- [ ] **M6.2** Design an explicit install/enable boundary for executable code. Expert mode
+- [x] **M6.2** Design an explicit install/enable boundary for executable code. Expert mode
       alone is not authorization; browsing/import preview does not execute code.
-- [ ] **M6.3** Revise SECURITY/AGENTS/contributor policy together with the executable path.
+- [x] **M6.3** Revise SECURITY/AGENTS/contributor policy together with the executable path.
       Retain immutable Hub revisions, dependency visibility, input/path validation,
       and the local single-user boundary. Do not bypass the current checks ad hoc.
-- [ ] **M6.4** Provide local developer reload, import diagnostics, exact-code identity, and
+- [x] **M6.4** Provide local developer reload, import diagnostics, exact-code identity, and
       targeted cache invalidation. Do not mislabel the process as a Python sandbox.
-- [ ] **M6.5** Register installed custom nodes in normal search and typed suggestions; allow
+- [x] **M6.5** Register installed custom nodes in normal search and typed suggestions; allow
       installed nodes to be used in Auto without granting additional permissions.
 
 Acceptance: create a small local node and a pinned custom Modular block, render
 their declared UI without frontend changes, connect and execute them, edit/reload,
 and observe correct cache invalidation. Test rejection/cancellation paths and no
 installation during discovery. Custom support must not create another executor.
+
+M6 completion:
+
+- Expert → Nodes → Custom nodes and Models share one source review panel for
+  local folders, immutable Git commits and pinned Hub Modular blocks. Stage and
+  inspect read bounded source/metadata without importing submitted Python,
+  installing dependencies, copying model weights or granting approval. Existing
+  directories require review before startup imports resume.
+- Enable and reload require explicit consent for the inspected source and declared
+  installed dependency hash. Approvals live outside source packages. Changed code
+  is rejected before graph/cached-node or custom-field execution. Missing packages,
+  failed imports and malformed metadata have visible diagnostics. Moving-branch
+  updates are retired; a new remote revision is staged and reviewed explicitly.
+- Enabled definitions use the existing node registry, schema renderer, normal
+  search, typed suggestions, executor and cache. The new panel loads on demand.
+  Auto uses approved data nodes and connected-component contracts without new
+  trust; manual resource declarations require Expert. These declarations do not
+  grant model/hardware qualification or execute custom suppliers during planning.
+- Custom Modular blocks use native Diffusers `from_config`, `init_pipeline`,
+  pipeline calls and the existing ComponentsManager. Isolated approved Python
+  snapshots avoid stale bytecode and shared upstream local-package aliases;
+  source `main.py` also stays separate from MoDiff's dispatch adapter. Connected
+  weights remain shared; the adapter never implicitly loads default model repos.
+  The historical contract-only Dynamic Block path remains fail closed.
+- Reload/disable use the existing executor/cache lease, reject running or queued
+  work, and release only affected cached nodes and transitive consumers. A cancelled
+  HTTP request cannot drop the lease while an approved import is still executing.
+  Unrelated component owners remain resident. Python import side effects can still
+  require a restart; this is not a sandbox. Schema edits require reinserting or
+  updating existing nodes rather than silently rewriting saved parameters.
+- Backend `docs/custom-nodes.md` includes runnable PromptTools and ModularPrompt
+  examples, source layout, typed fields, dependency/resource declarations and API
+  requests. SECURITY, AGENTS and contributor guidance were updated in both repos.
+
+M6 completion evidence:
+
+- Backend full base gate: `./scripts/with-runtime-env.sh .venv/bin/python -m pytest -q`
+  — **3,121 passed, 510 skipped, 9,311 subtests passed**, with two existing
+  upstream/runtime warnings. Ruff E9/F, dependency compatibility (67 packages)
+  and managed preflight passed.
+- Verified optional-runtime gate: `scripts/test_reviewed_optional_runtime.py -q`
+  over `tests/test_custom_extensions.py`, `tests/test_custom_modular_identity.py`,
+  `tests/test_workflow_auto_resource.py` and `tests/test_node_cache_cleanup.py`
+  — **165 passed, 133 subtests passed**, with one upstream warning. It used the
+  approved runtime wrapper and installed no packages. The **28** extension cases
+  include dependency/source drift, approval cancellation, import failure, relative
+  helpers, separate packages, `main.py`, disabled browser assets, bounded paths,
+  Windows Git drive paths, native connected Torch components and startup approvals.
+- Client `npm ci` and `npm run check` passed, including **1,142 Node tests** across
+  the unit and bundle checks. `npm run check:ui` passed **160 native Chromium
+  scenarios**: 2 shared-control and 158 mocked-backend scenarios. The new scenario
+  verifies review cancellation/consent, normal insertion, typed wiring and Auto
+  discovery. The complete production startup measures **604.1 KiB**, bounded at
+  **605 KiB**; deferred code measures **206.2 KiB**, bounded at **207 KiB**.
+  Individual startup/deferred chunk limits are unchanged.
+- A fresh production browser staged and enabled both model-free examples, then
+  authored Text Value → Prompt Prefix → Modular Prompt → Data Viewer using normal
+  controls and typed drag suggestions. Four real backend runs verified cold output,
+  unchanged reuse, changed output after approved reload, and unchanged reuse in
+  Auto. Reload released exactly the three custom/downstream cached nodes; the Text
+  Value cache survived. There were no browser page errors. Screenshots, graph
+  requests, terminal receipts and read-only cache observations were retained privately.
+- Git staging exercised an actual local Git transport at an exact commit without
+  checking out weights. Hub staging used a pinned snapshot transport fixture and
+  executed its real native Modular block; this is not a live external Hub download
+  or a third-party model qualification claim. Earlier live harness attempts had
+  incorrect control/accessible-name selectors and canvas timing; corrected native
+  interactions passed without changing production behavior or weakening guards.
+- All **69** generated client files match the backend bundle. The fresh server's
+  HTML and six checked HTTP assets match, and its process-start source fingerprint
+  matches the final executable source. Existing Gallery data and downloaded models
+  were preserved. Five dependent ledgers changed only **18 hash bindings**; all
+  **200** canonical workflow and **78** public template records stayed unchanged.
+
+M7 (developer setup/service prototyping) and M8 (consolidation/qualification) remain
+unchecked. No new live diffusion-model or Windows hardware qualification is claimed.
 
 ### M7 — Add transparent developer setup and service prototyping
 

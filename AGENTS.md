@@ -36,6 +36,12 @@ These rules apply to AI-assisted work in this repository. `CONTRIBUTING.md` is t
 - Never commit `config.ini`, tokens, local paths, generated outputs, model caches, qualification workspaces, virtual environments, logs, or template media.
 - Public template media belongs in the configured public Hugging Face Dataset repository. Keep only its versioned source descriptor, hashes, and documentation in Git.
 
+## Custom extensions
+
+- Read [Custom node development](docs/custom-nodes.md) before changing extension discovery, staging, enable, reload, or execution. Keep approvals outside source packages and bind them to inspected source and declared dependency versions.
+- Preserve the historical contract-only Dynamic Block path. Executable custom Python uses the explicit Custom nodes enable boundary and the existing executor; Expert mode, preview, and graph import are not consent.
+- A custom resource declaration is operator-reviewed code metadata, not catalog or hardware qualification. Do not execute custom suppliers during Auto inspection or assume their Python references are safe for early model eviction.
+
 ## Quality And Evidence
 
 - Add a regression test that fails for the original defect and covers related instances of the same pattern.
