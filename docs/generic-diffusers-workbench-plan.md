@@ -19,10 +19,35 @@ graph-qualified task Blocks; implementation entries remain in Advanced; search
 and counts follow the selected view. Existing insertion paths and saved User
 Nodes are retained. Unit and native browser regressions cover the new policy.
 
-M1 remains in progress: aligning drag-to-add suggestions with the shared
-connection-compatibility rules is the next increment. M2–M8 remain pending.
+M1 is complete: audience-appropriate discovery and shared typed drag-to-add
+matching are implemented and validated. M2's dependency inventory is complete;
+its behavior changes remain pending. M3–M8 have not started.
 Catalog changes do not establish generic cross-family execution, mode
 independence, cache correctness, or new custom-code support.
+
+## Progress tracker
+
+Check a task only after its implementation and applicable validation pass, then
+record its commit under the milestone. **In progress** remains unchecked.
+Keep this tracker and the detailed checklists below synchronized in both repos.
+Model execution, hardware qualification, and UI tests are separate evidence.
+
+| Milestone                                          | Status      | Remaining work                                                                         |
+| -------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
+| M1 — Audience-appropriate discovery                | Complete    | None within M1; generic execution and model adaptation remain in M3/M4                 |
+| M2 — Independent authoring/resource modes          | In progress | Inventory complete; implement separate controls and preserve saved execution settings  |
+| M3 — Canonical operations and capability inventory | Not started | Backend contracts, complete pinned-upstream inventory, adapters and fallback           |
+| M4 — Stage authoring and model/task switching      | Not started | Small starters, dynamic ports, atomic compatible changes, implementation inspection    |
+| M5 — Reuse and selective recomputation             | Not started | Reproduction, cache identities, component lifetime, eviction diagnostics               |
+| M6 — Custom-node developer experience              | Not started | Unified install/discovery, explicit code trust, reload/debug and invalidation          |
+| M7 — Developer setup and service prototyping       | Not started | Tested uv/npm setup, platform guidance and reproducible API export                     |
+| M8 — Consolidation and product qualification       | Not started | Legacy-compatible retirement, terminology, complete user journeys and runtime evidence |
+
+Completed foundation: plan committed in both repos; implementation branches
+created from `develop`. M1 catalog views were committed in client `df50a30` and backend
+`aa2340c`: client quality gate and 148 browser tests passed; backend base gate
+passed with 3,038 tests and 509 skips; fresh HTTP serving matched the client
+bundle. This evidence does not qualify live model generation.
 
 ## Diagnosis
 
@@ -32,10 +57,10 @@ family/task clusters, individual upstream blocks, component reference entries,
 and user compositions. Exact aliases are already deduplicated. Different
 implementations with similar purposes are not necessarily execution duplicates.
 
-The client currently defaults Expert to the broad Advanced catalog. Its ordinary
-node visibility filter does not govern the separately rendered Hugging Face
-catalog. This makes a nominally restricted library expose internal blocks and
-reference-only components. Both repositories already contain the smaller
+Before M1, the client defaulted Expert to the broad Advanced catalog. Its ordinary
+node visibility filter did not govern the separately rendered Hugging Face
+catalog, so restricted views exposed internal blocks and reference-only
+components. M1's catalog increment corrected this. Both repositories contain the smaller
 Load Models / Encode Prompt / Denoise / Decode Latents / Preview template.
 
 The Auto/Expert control currently also changes resource planning policy.
@@ -132,51 +157,121 @@ Client ownership: `nodeCatalog`, `huggingFaceNodeCatalog`, `NodeList`, connectio
 search, and their existing unit/browser fixtures. Backend ownership: publish the
 validated client bundle and keep the paired plan/documentation aligned.
 
-1. Reproduce internal HF catalog leakage in Auto/Essentials and broad Expert
-   startup with focused catalog and rendered/browser assertions.
-2. Give Expert an explicit default Stages view containing existing generic Modular
-   stages, useful ordinary operations, and installed custom nodes. Keep full
-   implementation discovery available through explicit catalog selection.
-3. Apply the same effective view to ordinary entries and HF sections. Auto keeps
-   usable task Blocks; implementation blocks and reference components are opt-in.
-4. Preserve exact identifiers and existing insertion functions. Do not delete
-   backend classes, user Blocks, catalog definitions, or saved graph formats.
-5. Make search and empty states explain the selected scope; selecting an advanced
-   view must not change execution policy or graph state.
-6. Follow with direction-aware, type-compatible drag-to-add search using the same
-   compatibility rules as connection insertion. Installed custom nodes participate.
+- [x] **M1.1** Reproduce internal HF catalog leakage in Auto/Essentials and broad Expert
+      startup with focused catalog and rendered/browser assertions.
+- [x] **M1.2** Give Expert an explicit default Stages view containing existing generic Modular
+      stages, useful ordinary operations, and installed custom nodes. Keep full
+      implementation discovery available through explicit catalog selection.
+- [x] **M1.3** Apply the same effective view to ordinary entries and HF sections. Auto keeps
+      usable task Blocks; implementation blocks and reference components are opt-in.
+- [x] **M1.4** Preserve exact identifiers and existing insertion functions. Do not delete
+      backend classes, user Blocks, catalog definitions, or saved graph formats.
+- [x] **M1.5** Make search and empty states explain the selected scope; selecting an advanced
+      view must not change execution policy or graph state.
+- [x] **M1.6** Add direction-aware, type-compatible drag-to-add search using the same
+      compatibility rules as connection insertion. Installed custom nodes participate.
 
 Acceptance: native mode/catalog navigation exposes the intended entries; a generic
 stage can be inserted; hidden internals are still available deliberately; existing
 graphs and saved Blocks survive. Record catalog/UI evidence separately from model
 execution. No additional runtime capability is claimed by this milestone.
 
+Completion evidence:
+
+- Catalog views: client `df50a30`, backend bundle `aa2340c`.
+- Shared typed suggestions and insertion: client `7320ab5`, backend bundle
+  `5d03622`. Installed custom controls, normalized types, wildcard contracts,
+  direction filtering, exact-alias deduplication and contextual search are covered.
+- `npm run check`: passed, including 1,111 Node tests and the unchanged bundle
+  budgets. `npm run check:ui`: final full run passed 2 shared-control and 148
+  Studio browser tests. Native drag-to-add coverage checks both directions,
+  keyboard/mouse selection, incompatible results and refresh persistence.
+- The first full browser attempt had one existing template-dropdown dismissal
+  failure. That test then passed three isolated runs on both the unchanged branch
+  and changed code, followed by the complete passing run. No assertion was relaxed.
+- Fresh-backend HTTP checks matched the exact built bytes for `/`,
+  `/assets/index.js`, `/assets/NodeList.js` and `/assets/NodeSearchDialog.js`.
+  Backend-owned user fields and local Gallery content were preserved.
+- This is source, mocked-browser and HTTP proof. No new live model execution,
+  cross-family adaptation or model-residency claim is made.
+
 ### M2 — Separate authoring mode from execution resource policy
 
-1. Inventory all reads/writes of `studioViewMode` and `resourceMode`, including Run,
-   selected-node execution, workflow tabs, persistence, imports, and recovery.
-2. Introduce explicit authoring state and resource-policy state with a migration
-   that preserves existing execution settings. Define old-client compatibility.
-3. Remove mode-driven model/schema rebuilds; preserve the active graph and cache.
-4. Expose automatic resource management in Expert and a clear override control.
-5. Update Auto/Expert design documentation and policy tests together.
+- [x] **M2.1** Inventory all reads/writes of `studioViewMode` and `resourceMode`, including Run,
+      selected-node execution, workflow tabs, persistence, imports, and recovery.
+- [ ] **M2.2** Introduce explicit authoring state and resource-policy state with a migration
+      that preserves existing execution settings. Define old-client compatibility.
+- [ ] **M2.3** Remove mode-driven model/schema rebuilds; preserve the active graph and cache.
+- [ ] **M2.4** Expose automatic resource management in Expert and a clear override control.
+- [ ] **M2.5** Update Auto/Expert design documentation and policy tests together.
 
 Acceptance: mode changes preserve exported graph, effective values, active task,
 and loaded-model identity; saved documents round-trip through refresh and Undo.
 Unsupported automatic planning remains explicit, without forcing a UI mode change.
 
+Inventory and migration decisions:
+
+| Existing owner                                                                            | Responsibility and required change                                                                                                                                                                                                                       |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `useSettingsStore.studioViewMode`                                                         | Persisted global authoring preference; retain its key and existing `manual`-to-`expert` compatibility reader. Library, inspector, export and workspace visibility read it.                                                                               |
+| `useStudioStore.form.resourceMode`                                                        | Per-workflow execution setting; retained in tab snapshots, saved workflows, imports, output restoration and packages. Keep the existing legacy resource-mode normalizer and backend values.                                                              |
+| `TopBar`                                                                                  | The switch handler currently writes both states and synchronizes/rebuilds managed graphs. A reconciliation effect mirrors resource mode back into authoring and forces invalid graphs into Expert. Split these paths and keep invalid planning explicit. |
+| `blockAutoAuthorityV2`                                                                    | Currently reads the authoring preference and can rewrite saved resource policy before execution. Make only the workflow's resource policy authoritative.                                                                                                 |
+| `useStudioRunActions`, `runCoordinator`, `workflowAutoExecutionV2`, `blockRuntimeHintsV2` | Use resource policy for planning, selected-node/whole-workflow execution and submitted hints. Preserve these execution boundaries.                                                                                                                       |
+| `GraphFixDialog`, `RunIssuesDialog`                                                       | Opening an inspector selects Expert presentation. It must not change resource policy or trigger graph rebuilding.                                                                                                                                        |
+
+The two persisted fields already exist; avoid a second settings store or a new
+workflow schema. Preserve both saved values, remove implicit cross-writes, and
+show separate authoring and resource controls. Existing workflows keep their
+resource settings; new workflows retain the existing automatic default. Older
+clients can read the same workflow fields but retain their coupled UI behavior;
+independent controls require the matching updated client bundle.
+
+Implementation sequence for the next increment:
+
+1. Add regression coverage for an Expert authoring preference paired with automatic
+   resources, and an Auto authoring preference paired with explicit overrides.
+   Assert the effective run policy instead of merely inspecting switch labels.
+2. Make the top-bar authoring switch update only `studioViewMode`. Introduce a
+   separately labelled resource-policy control in both presentations. Keep managed
+   graph synchronization behind deliberate resource or generation-input edits.
+3. Remove the authoring override from registered-Block Auto authority preparation.
+   Planner failures must remain failures; selecting Expert presentation must not
+   silently bypass them. Unsupported automatic planning stays visible and can be
+   resolved by an explicit execution-policy choice.
+4. Reconcile Studio resource summaries and inspector actions with the independent
+   controls. Retain existing saved keys, legacy normalization and tab restoration.
+5. Audit browser helpers and expectations: tests that intend to change execution
+   must operate the resource control explicitly. Presentation tests must not use
+   helpers that change both settings and conceal accidental coupling.
+
+| Regression case                                                | Required invariant                                                                                                                            |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Managed workflow: Auto to Expert and back                      | Same graph IDs, topology, user values, task and effective resource policy; no schema refresh or planner request caused solely by presentation |
+| Registered Block: Expert presentation with automatic resources | Automatic planning and receipt validation still apply; a planner rejection never falls through to manual execution                            |
+| Auto presentation with explicit overrides                      | Resource summary reports the actual overrides; presentation does not overwrite them                                                           |
+| Inspect a run issue or graph fix                               | Inspector opens without changing the saved execution policy or rebuilding the graph                                                           |
+| Save, refresh and switch workflow tabs                         | Global authoring preference and each workflow's resource settings restore independently                                                       |
+| Legacy values and older packages                               | Existing normalizers preserve the intended execution policy; no mass graph conversion or storage-key replacement                              |
+| Undo/Redo after a presentation switch                          | Graph edit history remains intact; switching presentation adds no topology transaction                                                        |
+| Whole-workflow and selected-node Run                           | Both use the workflow resource policy, regardless of authoring presentation                                                                   |
+
+These checks establish state and request-boundary behavior. Actual retained
+component/cache behavior still requires M5's runtime instrumentation and execution
+proof; unchanged UI values alone do not establish that models stayed resident.
+
 ### M3 — Establish canonical operations and complete capability inventory
 
-1. Inventory ordinary actions, stage adapters, registered Blocks, and aliases.
-   Classify exact aliases separately from semantically overlapping implementations.
-2. Extend backend-owned contracts with operation identity, stage capabilities,
-   semantic ports, and execution/decomposition support levels.
-3. Map all pinned upstream pipelines and tasks into the coverage matrix. Keep
-   unavailable optional dependencies distinct from missing adapter support.
-4. Bind existing generic stage nodes to supported implementations; consolidate
-   discovery without changing persisted backend action names prematurely.
-5. Add standard-pipeline fallback operations for non-Modular paths. Preserve
-   special stages for video, audio, 3D, and unusual conditioning.
+- [ ] **M3.1** Inventory ordinary actions, stage adapters, registered Blocks, and aliases.
+      Classify exact aliases separately from semantically overlapping implementations.
+- [ ] **M3.2** Extend backend-owned contracts with operation identity, stage capabilities,
+      semantic ports, and execution/decomposition support levels.
+- [ ] **M3.3** Map all pinned upstream pipelines and tasks into the coverage matrix. Keep
+      unavailable optional dependencies distinct from missing adapter support.
+- [ ] **M3.4** Bind existing generic stage nodes to supported implementations; consolidate
+      discovery without changing persisted backend action names prematurely.
+- [ ] **M3.5** Add standard-pipeline fallback operations for non-Modular paths. Preserve
+      special stages for video, audio, 3D, and unusual conditioning.
 
 Acceptance: parsers reject malformed capabilities; declarations agree with actual
 upstream components and inputs; every inventory entry has an honest support state.
@@ -184,16 +279,16 @@ No template-specific receipt is required merely to author an ordinary valid grap
 
 ### M4 — Deliver stage-first authoring and atomic model/task changes
 
-1. Create small generic starters from capabilities and support the equivalent
-   graph constructed manually through typed connections.
-2. Adapt fields/ports from the selected loader contract. Preserve connected values
-   and distinguish defaults, user overrides, and retained unsupported settings.
-3. Plan model changes before applying them. Commit compatible changes as one
-   transaction; preserve incompatible custom nodes with actionable diagnostics.
-4. Extend tasks by connecting required conditioning. Use actual upstream task
-   selection rules; do not assume img2img and instruction editing are identical.
-5. Expose implementation inspection separately from optional structural editing.
-   Preserve existing deep Blocks without lossy automatic conversion.
+- [ ] **M4.1** Create small generic starters from capabilities and support the equivalent
+      graph constructed manually through typed connections.
+- [ ] **M4.2** Adapt fields/ports from the selected loader contract. Preserve connected values
+      and distinguish defaults, user overrides, and retained unsupported settings.
+- [ ] **M4.3** Plan model changes before applying them. Commit compatible changes as one
+      transaction; preserve incompatible custom nodes with actionable diagnostics.
+- [ ] **M4.4** Extend tasks by connecting required conditioning. Use actual upstream task
+      selection rules; do not assume img2img and instruction editing are identical.
+- [ ] **M4.5** Expose implementation inspection separately from optional structural editing.
+      Preserve existing deep Blocks without lossy automatic conversion.
 
 Acceptance: native editing, drag-to-connect, Save/reopen, Undo/Redo, model switching,
 and task changes pass across representative distinct families and modalities.
@@ -201,17 +296,17 @@ Real executions verify effective inputs, not just successful schema construction
 
 ### M5 — Make repeated runs reuse components and unaffected results
 
-1. Reproduce repeated-run behavior and capture loader, encoder, denoiser, and
-   decoder execution counts alongside component ownership and memory placement.
-2. Separate component lifetime from node-output cache lifetime. Cache identity
-   includes consumed inputs, model/component revisions, relevant adapters, dtype,
-   implementation revision, and custom-code revision.
-3. Exclude layout, collapse, selection, mode presentation, and progress metadata.
-   Keep mutable generators per execution; never share stale mutable pipeline state.
-4. Prefer retained components when memory permits. Make pressure eviction and
-   multi-owner scheduling explicit and preserve shared-owner references.
-5. Publish bounded reuse/reload/offload reasons and provide deliberate output
-   recomputation and model-release controls.
+- [ ] **M5.1** Reproduce repeated-run behavior and capture loader, encoder, denoiser, and
+      decoder execution counts alongside component ownership and memory placement.
+- [ ] **M5.2** Separate component lifetime from node-output cache lifetime. Cache identity
+      includes consumed inputs, model/component revisions, relevant adapters, dtype,
+      implementation revision, and custom-code revision.
+- [ ] **M5.3** Exclude layout, collapse, selection, mode presentation, and progress metadata.
+      Keep mutable generators per execution; never share stale mutable pipeline state.
+- [ ] **M5.4** Prefer retained components when memory permits. Make pressure eviction and
+      multi-owner scheduling explicit and preserve shared-owner references.
+- [ ] **M5.5** Publish bounded reuse/reload/offload reasons and provide deliberate output
+      recomputation and model-release controls.
 
 Acceptance matrix: seed-only and step-only edits reuse unaffected conditioning;
 prompt edits re-encode only affected stages; model/adapter/code changes invalidate
@@ -221,17 +316,17 @@ runs separately. CPU offload is not equivalent to destruction/reload.
 
 ### M6 — Make custom node development a coherent product flow
 
-1. Document and unify discovery of existing local/Git Python modules and Hub
-   Modular blocks. Reuse schema-derived UI and compatible Diffusers metadata.
-2. Design an explicit install/enable boundary for executable code. Expert mode
-   alone is not authorization; browsing/import preview does not execute code.
-3. Revise SECURITY/AGENTS/contributor policy together with the executable path.
-   Retain immutable Hub revisions, dependency visibility, input/path validation,
-   and the local single-user boundary. Do not bypass the current checks ad hoc.
-4. Provide local developer reload, import diagnostics, exact-code identity, and
-   targeted cache invalidation. Do not mislabel the process as a Python sandbox.
-5. Register installed custom nodes in normal search and typed suggestions; allow
-   installed nodes to be used in Auto without granting additional permissions.
+- [ ] **M6.1** Document and unify discovery of existing local/Git Python modules and Hub
+      Modular blocks. Reuse schema-derived UI and compatible Diffusers metadata.
+- [ ] **M6.2** Design an explicit install/enable boundary for executable code. Expert mode
+      alone is not authorization; browsing/import preview does not execute code.
+- [ ] **M6.3** Revise SECURITY/AGENTS/contributor policy together with the executable path.
+      Retain immutable Hub revisions, dependency visibility, input/path validation,
+      and the local single-user boundary. Do not bypass the current checks ad hoc.
+- [ ] **M6.4** Provide local developer reload, import diagnostics, exact-code identity, and
+      targeted cache invalidation. Do not mislabel the process as a Python sandbox.
+- [ ] **M6.5** Register installed custom nodes in normal search and typed suggestions; allow
+      installed nodes to be used in Auto without granting additional permissions.
 
 Acceptance: create a small local node and a pinned custom Modular block, render
 their declared UI without frontend changes, connect and execute them, edit/reload,
@@ -240,16 +335,16 @@ installation during discovery. Custom support must not create another executor.
 
 ### M7 — Add transparent developer setup and service prototyping
 
-1. Design a documented `uv` backend path and `npm` client path for the supported
-   runtime profiles. Keep guided installation and existing environments working.
-2. Reconcile `uv` management, constraints, platform Torch sources, optional
-   runtimes, and reproducibility before documenting commands as supported.
-3. Publish working Windows and Linux commands; test clean environments without
-   replacing a user's accelerator packages or downloading inference weights.
-4. Reuse API graph export for a reproducible execution package with dependencies,
-   model revisions, custom-node identities, and named service inputs/outputs.
-5. Treat standalone Python generation for arbitrary graphs as a separate feature;
-   avoid claiming that a MoDiff API package is independent Diffusers Python.
+- [ ] **M7.1** Design a documented `uv` backend path and `npm` client path for the supported
+      runtime profiles. Keep guided installation and existing environments working.
+- [ ] **M7.2** Reconcile `uv` management, constraints, platform Torch sources, optional
+      runtimes, and reproducibility before documenting commands as supported.
+- [ ] **M7.3** Publish working Windows and Linux commands; test clean environments without
+      replacing a user's accelerator packages or downloading inference weights.
+- [ ] **M7.4** Reuse API graph export for a reproducible execution package with dependencies,
+      model revisions, custom-node identities, and named service inputs/outputs.
+- [ ] **M7.5** Treat standalone Python generation for arbitrary graphs as a separate feature;
+      avoid claiming that a MoDiff API package is independent Diffusers Python.
 
 Acceptance: clean setup and health checks on supported platforms; a saved workflow
 executes through the documented API with equivalent resolved inputs. Credentials
@@ -257,15 +352,15 @@ and local machine paths do not enter portable packages.
 
 ### M8 — Retire redundant public surfaces and qualify the product
 
-1. Promote canonical operations after replacement coverage exists. Keep legacy
-   identities loadable and offer explicit migration where semantics change.
-2. Rename cluster presentation to Blocks consistently, without bulk ID rewriting.
-3. Replace default implementation catalogs with contextual inspection. Retain
-   templates as optional starters and user-owned Blocks as independent revisions.
-4. Validate the complete Auto and Expert journeys, accessibility, nested editing,
-   persistence, API export, repeated runs, and compatibility with older workflows.
-5. Retire backend implementations only after proving replacement equivalence and
-   migration behavior; similar labels are not sufficient evidence for deletion.
+- [ ] **M8.1** Promote canonical operations after replacement coverage exists. Keep legacy
+      identities loadable and offer explicit migration where semantics change.
+- [ ] **M8.2** Rename cluster presentation to Blocks consistently, without bulk ID rewriting.
+- [ ] **M8.3** Replace default implementation catalogs with contextual inspection. Retain
+      templates as optional starters and user-owned Blocks as independent revisions.
+- [ ] **M8.4** Validate the complete Auto and Expert journeys, accessibility, nested editing,
+      persistence, API export, repeated runs, and compatibility with older workflows.
+- [ ] **M8.5** Retire backend implementations only after proving replacement equivalence and
+      migration behavior; similar labels are not sufficient evidence for deletion.
 
 ## Sequencing and validation
 
