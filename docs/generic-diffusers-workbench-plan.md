@@ -23,9 +23,9 @@ M1 is complete: audience-appropriate discovery and shared typed drag-to-add
 matching are implemented and validated. M2 is complete: independent authoring
 and resource controls, stable field lifetimes, and persistence/Run regressions
 passed their final validation.
-M3.1's backend action/library inventory, M3.2a's generic Modular declarations,
-and M3.2b1's standard pipeline/loader declarations are complete. M3.2b2/M3.2c,
-M3.3–M3.5 and M4–M8 remain pending.
+M3 is complete: canonical operations, scoped port semantics, pipeline/task
+coverage, existing-node resolution, Expert discovery consolidation and reviewed
+whole-pipeline fallbacks are implemented and validated. M4–M8 remain pending.
 These changes do not establish generic cross-family execution, runtime cache
 correctness, or new custom-code support.
 
@@ -36,16 +36,16 @@ record its commit under the milestone. **In progress** remains unchecked.
 Keep this tracker and the detailed checklists below synchronized in both repos.
 Model execution, hardware qualification, and UI tests are separate evidence.
 
-| Milestone                                          | Status      | Remaining work                                                                                        |
-| -------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
-| M1 — Audience-appropriate discovery                | Complete    | None within M1; generic execution and model adaptation remain in M3/M4                                |
-| M2 — Independent authoring/resource modes          | Complete    | None within M2; real model/cache lifetime qualification remains in M5                                 |
-| M3 — Canonical operations and capability inventory | In progress | M3.1/M3.2a/M3.2b1 complete; Modular loader/stage semantics, readiness, coverage, binding and fallback |
-| M4 — Stage authoring and model/task switching      | Not started | Small starters, dynamic ports, atomic compatible changes, implementation inspection                   |
-| M5 — Reuse and selective recomputation             | Not started | Reproduction, cache identities, component lifetime, eviction diagnostics                              |
-| M6 — Custom-node developer experience              | Not started | Unified install/discovery, explicit code trust, reload/debug and invalidation                         |
-| M7 — Developer setup and service prototyping       | Not started | Tested uv/npm setup, platform guidance and reproducible API export                                    |
-| M8 — Consolidation and product qualification       | Not started | Legacy-compatible retirement, terminology, complete user journeys and runtime evidence                |
+| Milestone                                          | Status      | Remaining work                                                                         |
+| -------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
+| M1 — Audience-appropriate discovery                | Complete    | None within M1; graph-wide model adaptation remains in M4                              |
+| M2 — Independent authoring/resource modes          | Complete    | None within M2; real model/cache lifetime qualification remains in M5                  |
+| M3 — Canonical operations and capability inventory | Complete    | None within M3; starters and graph-wide model/task adaptation remain M4                |
+| M4 — Stage authoring and model/task switching      | Not started | Small starters, dynamic ports, atomic compatible changes, implementation inspection    |
+| M5 — Reuse and selective recomputation             | Not started | Reproduction, cache identities, component lifetime, eviction diagnostics               |
+| M6 — Custom-node developer experience              | Not started | Unified install/discovery, explicit code trust, reload/debug and invalidation          |
+| M7 — Developer setup and service prototyping       | Not started | Tested uv/npm setup, platform guidance and reproducible API export                     |
+| M8 — Consolidation and product qualification       | Not started | Legacy-compatible retirement, terminology, complete user journeys and runtime evidence |
 
 Completed foundation: plan committed in both repos; implementation branches
 created from `develop`. M1 catalog views were committed in client `df50a30` and backend
@@ -303,32 +303,102 @@ Completion evidence:
 
 - [x] **M3.1** Inventory ordinary actions, stage adapters, registered Blocks, and aliases.
       Classify exact aliases separately from semantically overlapping implementations.
-- [ ] **M3.2** Extend backend-owned contracts with operation identity, stage capabilities,
+- [x] **M3.2** Extend backend-owned contracts with operation identity, stage capabilities,
       semantic ports, and execution/decomposition support levels.
 - [x] **M3.2a** Project registered generic Modular stage declarations into the existing
       capabilities response and validate/store them in the client without family dispatch.
-- [ ] **M3.2b** Extend the same operation contract to loaders, standard pipelines and
+- [x] **M3.2b** Extend the same operation contract to loaders, standard pipelines and
       specialized stages through their existing owners; declare richer port semantics
       needed for compatibility instead of relying on socket type or name alone.
 - [x] **M3.2b1** Project standard image/video/audio/rendered-3D loaders and whole-pipeline
       actions by task; preserve port visibility, requiredness and pipeline handles.
       Validate the version 2 client contract and version 1 compatibility.
-- [ ] **M3.2b2** Project Modular loader details and specialized workflow stages; add
+- [x] **M3.2b2** Project Modular loader details and specialized workflow stages; add
       richer conditioning/latent semantics needed for compatibility decisions.
-- [ ] **M3.2c** Publish per-pipeline/task execution and decomposition support, linked to
+- [x] **M3.2c** Publish per-pipeline/task execution and decomposition support, linked to
       actual adapters and optional-runtime requirements independently of template receipts.
-- [ ] **M3.3** Map all pinned upstream pipelines and tasks into the coverage matrix. Keep
+- [x] **M3.3** Map all pinned upstream pipelines and tasks into the coverage matrix. Keep
       unavailable optional dependencies distinct from missing adapter support.
-- [ ] **M3.4** Bind existing generic stage nodes to supported implementations; consolidate
+- [x] **M3.4** Bind existing generic stage nodes to supported implementations; consolidate
       discovery without changing persisted backend action names prematurely.
-- [ ] **M3.5** Add standard-pipeline fallback operations for non-Modular paths. Preserve
+- [x] **M3.5** Add standard-pipeline fallback operations for non-Modular paths. Preserve
       special stages for video, audio, 3D, and unusual conditioning.
 
 Acceptance: parsers reject malformed capabilities; declarations agree with actual
 upstream components and inputs; every inventory entry has an honest support state.
 No template-specific receipt is required merely to author an ordinary valid graph.
 
-M3.2a implementation:
+M3 completion:
+
+- The backend publishes operation schema 3 and pipeline-support schema 1 through
+  `/model_capabilities`. **861 declarations use 24 canonical operation IDs across
+  157 pipeline/alias classes**. Discovery constructs no nodes or pipelines and
+  performs no installation or model download.
+- Modular loaders and all reviewed task stage sequences retain their existing
+  actions. Component inventories, model-owned conditioning/latents, sealed state
+  predecessors and opaque media references remain explicit. Numeric latent
+  controls are not misclassified as latent tensors.
+- `/operations/resolve` returns one ordinary node schema with its existing action,
+  exact selectors, dynamic fields, canonical label and correct loader signals.
+  It does not create a graph, template receipt or execution permission. Every
+  published binding is exercised by the no-construction resolver regression.
+- The pinned inventory accounts for **all 330 upstream exports**, declared
+  AutoPipeline mappings (including conditional entries) and Modular tasks.
+  Together with local aliases, support discovery has **335 pipeline records and
+  524 task records**. Exports without named tasks retain `pipeline_call`; missing
+  bindings and runtime requirements stay separate. This does not infer arbitrary
+  modes from every optional pipeline-call argument.
+- Reviewed standard fallbacks preserve exact public profile modes and aliases.
+  A Modular stage path is not mixed with a standard generator requiring a
+  different loader. Video/audio, media preparation/postprocessing, reference
+  assembly and rendered-3D operations remain separate where needed.
+- Expert → Stages provides a pipeline/task picker and one entry per bound
+  operation. It initially chooses a task with an operation binding when one
+  exists. Clicking adds an ordinary node. Pending insertion is cancelled after
+  selection/workflow changes. Advanced retains underlying implementations;
+  Auto/Essentials and saved action IDs retain their behavior.
+- Client schemas validate bindings, scoped semantics and support references;
+  malformed refreshes clear both operation and support state. Older operation
+  schemas remain readable. No frontend model-family dispatch table was added.
+
+M3 completion evidence:
+
+- Client code: `7fed2d6`; backend code and matching served bundle: `1ebe608`.
+- Backend: `uvx --from ruff==0.12.7 ruff check . --select E9,F`,
+  `uv pip check --python .venv/bin/python`, and
+  `./scripts/with-runtime-env.sh .venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error`
+  passed. Complete base suite:
+  `./scripts/with-runtime-env.sh .venv/bin/python -m pytest -q` —
+  **3,065 passed, 509 skipped, 9,061 subtests passed**.
+- Verified installed optional runtime: `scripts/test_reviewed_optional_runtime.py`
+  over operation catalog, Modular catalog, upstream-contract/workflow truth,
+  standard operations and Modular workflow-block tests — **112 passed, 2,203
+  subtests passed**. It performed no installation or model inference.
+- Pinned inventory generator `--check` passed. All 200 canonical workflows and
+  78 public template records remained unchanged when refreshing bundle hashes.
+  After the final bundle mirror, coverage/authoring/Comfy ledgers and operation
+  regressions passed **77 tests and 1,844 subtests**; one separate full-source
+  ledger regeneration test remained skipped because it requires additional
+  reviewed source/wheel inputs. The M3 Diffusers inventory check itself passed.
+- Client: `npm ci` and `npm run check` passed, including **1,126 Node tests**.
+  The complete production startup remains under **602 KiB**; the new lazy picker,
+  resolver and contract validation measure about **198.1 KiB** across deferred
+  code, bounded at **199 KiB**. Individual chunk limits remain unchanged.
+- Native Chromium: shared controls plus canonical insertion/cancellation and
+  Auto/Expert catalog regressions — **4 passed**. Actual backend HTTP checks
+  resolved Modular stages/loaders, a standard fallback and a contract-only
+  schema, rejected invalid selection, and served matching production assets.
+  A production browser inserted an Anima Denoise node through the real endpoint
+  with no page errors. The source client parsers accepted the full HTTP catalog.
+
+These are source, schema, no-weight runtime, HTTP and browser proofs. They do not
+establish new live model output, universal cross-family tensor compatibility,
+artifact availability, hardware qualification or cache performance. **M4** owns
+small starters, connected graph authoring improvements and atomic model/task
+adaptation. **M5** owns selective recomputation and model residency. **M6–M8**
+remain pending. No downloaded AI models were deleted or changed.
+
+M3.2a implementation (earlier checkpoint):
 
 The existing `/model_capabilities` endpoint now exposes versioned operation
 contracts derived from `ModiffPipelineRegistry` / `MoDiffPipelineConfig`, without
@@ -347,11 +417,10 @@ and bundle decomposition are distinguished without constructing pipelines.
 The client validates and stores these declarations without its Studio family
 union. Older backends may omit the catalog; malformed or failed refreshes clear
 operation metadata. The parser loads on demand and concurrent discovery callers
-still share one request. This foundation does not yet change node insertion,
-model/task switching, execution authorization, custom-code trust or model reuse.
-M3.2b1 below adds standard loader/pipeline declarations. Modular loader details,
-specialized stages and richer compatibility/support semantics remain in
-M3.2b2/M3.2c; M3.2 as a whole stays incomplete.
+still share one request. At this earlier checkpoint, insertion and richer
+support/compatibility semantics were not included. The M3 completion section
+above records their delivery; graph-wide model/task switching remains M4,
+model reuse remains M5 and custom extension work remains M6.
 
 The matching client build was mirrored into `web/`. The coverage generator's
 workflow/template projection confirmed all **200 workflow records and 78 public
@@ -377,7 +446,8 @@ M3.2a completion evidence:
   Discovery was also tested with pipeline constructors and network access blocked.
 - The six ledger/helper test files passed **65 tests and 817 subtests**, with
   one optional full-source-regeneration test skipped. That test requires the
-  separately reviewed source checkouts/wheel inputs; this does not complete M3.3.
+  separately reviewed source checkouts/wheel inputs. The later M3 inventory audit
+  has its own reproducible Diffusers-only check described above.
 - Client `npm run check` passed **1,117 Node tests**, formatting, lint, types,
   catalog/style checks, production build and unchanged bundle budgets.
   Startup JavaScript is **601.8 KiB** (602 KiB limit); deferred JavaScript is
@@ -390,7 +460,7 @@ M3.2a completion evidence:
 - These are metadata, contract, HTTP and startup checks. They do not qualify model
   generation, model swapping or cache reuse. No downloaded model files were changed.
 
-M3.2b1 implementation:
+M3.2b1 implementation (earlier checkpoint):
 
 The existing standard adapter owners now project their loaders and task-level
 operations through the same discovery endpoint. Schema version 2 adds task
@@ -410,12 +480,11 @@ pipeline classes linked from matching capabilities as well as direct class
 matches, including adapters without Studio catalog rows. The client validates
 version 2 and normalizes the previous stage-only schema.
 
-This completes only the standard projection portion of M3.2b.
-Modular loader details, specialized workflow stages and richer tensor/conditioning
-semantics remain in M3.2b2; M3.2c owns execution/dependency readiness. Insertion,
-atomic model/task switching, selective recomputation and developer extension
-work remain pending. Presentation visibility and `support: declared` confer no
-execution permission or cross-model compatibility.
+This earlier checkpoint covered only standard projection. The M3 completion
+above adds Modular loaders, specialized stages, richer semantics, readiness and
+ordinary insertion. Atomic model/task switching, selective recomputation and
+developer extension work remain M4–M6. Presentation visibility and
+`support: declared` confer no execution permission or cross-model compatibility.
 
 M3.2b1 completion evidence:
 
@@ -495,9 +564,9 @@ layers out of the default discovery views.
 Existing extension points are `ModiffPipelineRegistry` / `PipelineConfig.node_specs`
 for generic Modular fields and implementations, modality adapter registries for
 standard pipelines, and the bounded reviewed HF workflow/block/task contracts.
-M3.2 must add a common operation/capability description to these owners. It must
-not create another catalog of independent runtime implementations. M3.3 still
-needs to reconcile every pinned upstream pipeline/task, including unavailable
+M3 adds a common operation/capability description to these owners without
+creating independent runtime implementations. The completed M3.3 inventory
+reconciles every pinned upstream pipeline/task, including unavailable
 optional dependencies, contract-only entries and genuinely missing adapters.
 
 ### M4 — Deliver stage-first authoring and atomic model/task changes
