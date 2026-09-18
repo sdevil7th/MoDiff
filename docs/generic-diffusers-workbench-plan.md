@@ -54,7 +54,7 @@ Model execution, hardware qualification, and UI tests are separate evidence.
 | M5 — Reuse and selective recomputation             | Complete    | None within M5; broader family/hardware qualification remains scoped            |
 | M6 — Custom-node developer experience              | Complete    | None within M6; arbitrary extensions still need code/dependency/resource review |
 | M7 — Developer setup and service prototyping       | Implemented | Windows qualification deferred by the operator until after publication          |
-| M8 — Consolidation and product qualification       | Implemented | Push blocked by authentication; Windows/model qualification remains scoped      |
+| M8 — Consolidation and product qualification       | Implemented | Push blocked; DDPM recipe follow-up and Windows qualification remain open       |
 
 Completed foundation: plan committed in both repos; implementation branches
 created from `develop`. M1 catalog views were committed in client `df50a30` and backend
@@ -1163,6 +1163,68 @@ publication checkbox open until both branch tips are verified on GitHub. The
 client CI must pin the paired backend implementation commit, and the backend
 branch must be pushed first so that pin is reachable. All original local feature
 history remains intact.
+
+#### Downloaded-model validation on Linux — 2026-09-18
+
+- [x] Inventory existing cached revisions and use an isolated production server,
+      native browser gestures and ordinary graph dispatch with Hub offline mode.
+- [x] Validate SDXL, FLUX.2 Klein, Qwen Image 2512 and Z-Image Turbo through the
+      same four Modular stages plus Preview; preserve graph node identities and
+      compatible user inputs when switching families through the operation panel.
+- [x] Verify unchanged, seed-edit, prompt-edit and explicit-recompute behavior for
+      each family. SDXL additionally covers step edits, layout-only changes and
+      explicit model release/reload. Preserve actual consumed inputs, component
+      identities, durable receipts, pixel hashes and native screenshots locally.
+- [x] Fix and retest offline sharded component loading; backend implementation
+      commit `3424faf` preserves normal online loading behavior.
+- [x] Execute the DDPM whole-pipeline fallback with explicit float32, offload Off
+      and Auto offload disabled; cold, unchanged and seed-edit runs passed.
+- [ ] Resolve DDPM starter recipe compatibility: model CPU offload fails with a
+      CPU/CUDA tensor mismatch, and resident bfloat16 fails during NumPy conversion.
+      The explicit float32 resident recipe is a separate result, not a default pass.
+- [x] Verify the DDPM Auto resource boundary: the planner reports that no Auto
+      recipe is declared for this exact model/task pair and no graph is submitted.
+- [ ] Qualify Windows in the separate Windows session; do not infer its results
+      from this Linux host or these reduced-resolution image tests.
+
+The four Modular families completed 23 execution/lifecycle checks. All used
+512 × 512 images: SDXL at 20 steps (21 for the step edit), FLUX.2 Klein at four,
+Qwen at 20, and Z-Image at nine. These explicit test settings do not change
+creator defaults or promote public template qualification. DDPM uses its native
+32 × 32 output at 50 steps; its pixels are visibly noisy, so this is execution
+and reuse evidence, not image-quality qualification. Cold means first execution of the newly loaded graph
+with weights already downloaded; it does not mean a cleared OS disk cache.
+
+| Pipeline        | Cold execution | Unchanged repeat | Scope                                 |
+| --------------- | -------------: | ---------------: | ------------------------------------- |
+| SDXL            |         8.47 s |           0.38 s | Eight lifecycle cases                 |
+| FLUX.2 Klein 4B |        11.31 s |           0.42 s | Five lifecycle cases                  |
+| Qwen Image 2512 |        65.72 s |           0.76 s | Five cases after the offline fix      |
+| Z-Image Turbo   |        18.96 s |           0.47 s | Five lifecycle cases                  |
+| DDPM CIFAR-10   |         2.13 s |           0.46 s | Explicit float32 resident recipe only |
+
+Unchanged runs reused cached outputs. Seed/step edits retained prompt encoding;
+prompt edits retained loaded models. Explicit recomputation reproduced pixels
+for the same inputs, and SDXL release/reload replaced the component identities.
+Restored FLUX, Qwen and Z-Image previews matched the durable output byte hashes.
+Generated pixels were inspected separately from execution status. This Radeon
+8060S ROCm shared-memory machine has approximately 121 GiB system RAM; Qwen
+retained approximately 57.9 GB in Torch allocations. This does not establish fit
+on a discrete 16 GB GPU. No downloaded weights or user workflows were removed.
+
+Qwen's original run failed before inference despite all required shards being
+cached. The pinned Diffusers sharded loader queries Hub metadata unless
+`local_files_only=True` is explicit. Pipeline and standalone Modular component
+loading now pass that flag when `HF_HUB_OFFLINE` is enabled, while online calls
+retain their prior kwargs. Focused regressions passed in both base and verified
+optional runtimes; the complete base gate passed 3,149 tests with 510 skips and
+9,314 subtests. Lint, dependency checks and runtime preflight also passed.
+Original failures and successful retests remain in isolated local evidence.
+The DDPM Expert sequence passed twice; an initial Auto harness expected a graph
+submission instead of inspecting the planner denial. The captured denial is
+preserved and is not counted as successful Auto inference. Final checks matched
+all 71 client bundle files on disk and the 69 served HTML/asset files over HTTP;
+all 90 inventoried cached-weight snapshots remain present without broken links.
 
 ## Sequencing and validation
 
