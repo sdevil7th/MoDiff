@@ -968,14 +968,21 @@ because Windows commands and a CI job exist.
 
 M7.3 platform evidence:
 
+- [x] Publish the exact uv/npm developer flow in the backend guide and client
+      Windows/Linux guides, including preservation of existing environments and
+      the optional guided launchers. Contributor and documentation indexes link
+      to this path.
 - [x] Linux: isolated clean CPU installation through the exact documented uv command;
       preflight reports ready; script-free supervised launch responds to health;
       saved API graph and Manual/Auto service calls produce equivalent text output.
 - [x] Linux client: `npm ci` and the complete client quality gate.
 - [ ] Windows: run the committed CPU setup/check/service CI job or the documented
-      commands in a clean Windows environment and record the result. No Windows
-      runner is available in this session. Accelerator/model qualification remains
-      separate from this CPU setup check.
+      commands in a clean Windows environment and record the result. This host
+      is Linux with no Windows runtime. GitHub repository access is available,
+      but the feature branches are unpublished and a noninteractive Git push
+      dry run failed because this shell has no GitHub credentials. Publication
+      is pending the operator response; no Windows job was started.
+      Accelerator/model qualification remains separate from this CPU setup check.
 
 Delivered behavior:
 
