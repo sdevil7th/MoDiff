@@ -33,8 +33,10 @@ state, bounded memory and failure recovery passed their scoped validation.
 M6 is complete: unified custom-source review, explicit code approval, ordinary
 node and Modular block execution, reload and targeted invalidation passed their
 scoped validation. M7 implementation and Linux validation are complete; Windows
-clean-install execution remains pending under M7.3. M8 remains pending. This does
-not qualify every declared model/task, hardware configuration or third-party extension.
+clean-install execution is deferred by the operator until a Windows machine is
+available. M8 implementation and scoped local qualification are complete;
+feature-branch publication is blocked by Git authentication. This does not qualify every declared
+model/task, hardware configuration or third-party extension.
 
 ## Progress tracker
 
@@ -43,16 +45,16 @@ record its commit under the milestone. **In progress** remains unchecked.
 Keep this tracker and the detailed checklists below synchronized in both repos.
 Model execution, hardware qualification, and UI tests are separate evidence.
 
-| Milestone                                          | Status      | Remaining work                                                                         |
-| -------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
-| M1 — Audience-appropriate discovery                | Complete    | None within M1; model/task authoring is delivered in M4                                |
-| M2 — Independent authoring/resource modes          | Complete    | None within M2; representative runtime reuse is validated in M5                        |
-| M3 — Canonical operations and capability inventory | Complete    | None within M3; stage authoring is delivered in M4                                     |
-| M4 — Stage authoring and model/task switching      | Complete    | None within M4; broader model/hardware qualification remains explicitly scoped         |
-| M5 — Reuse and selective recomputation             | Complete    | None within M5; broader family/hardware qualification remains scoped                   |
-| M6 — Custom-node developer experience              | Complete    | None within M6; arbitrary extensions still need code/dependency/resource review        |
-| M7 — Developer setup and service prototyping       | In progress | Windows clean-install/health/service execution evidence (M7.3)                         |
-| M8 — Consolidation and product qualification       | Not started | Legacy-compatible retirement, terminology, complete user journeys and runtime evidence |
+| Milestone                                          | Status      | Remaining work                                                                  |
+| -------------------------------------------------- | ----------- | ------------------------------------------------------------------------------- |
+| M1 — Audience-appropriate discovery                | Complete    | None within M1; model/task authoring is delivered in M4                         |
+| M2 — Independent authoring/resource modes          | Complete    | None within M2; representative runtime reuse is validated in M5                 |
+| M3 — Canonical operations and capability inventory | Complete    | None within M3; stage authoring is delivered in M4                              |
+| M4 — Stage authoring and model/task switching      | Complete    | None within M4; broader model/hardware qualification remains explicitly scoped  |
+| M5 — Reuse and selective recomputation             | Complete    | None within M5; broader family/hardware qualification remains scoped            |
+| M6 — Custom-node developer experience              | Complete    | None within M6; arbitrary extensions still need code/dependency/resource review |
+| M7 — Developer setup and service prototyping       | Implemented | Windows qualification deferred by the operator until after publication          |
+| M8 — Consolidation and product qualification       | Implemented | Push blocked by authentication; Windows/model qualification remains scoped      |
 
 Completed foundation: plan committed in both repos; implementation branches
 created from `develop`. M1 catalog views were committed in client `df50a30` and backend
@@ -962,9 +964,10 @@ and local machine paths do not enter portable packages.
 
 #### M7 implementation and validation — 2026-09-18
 
-The implementation is complete on both feature branches. M7 remains **in progress**
-because Windows execution has not been performed here. Do not check M7.3 merely
-because Windows commands and a CI job exist.
+The implementation is complete on both feature branches. The operator deferred
+Windows execution until after implementation and publication, when a Windows
+machine will be provided. M7.3 remains an explicit qualification task; it does
+not block M8 implementation or the authorized feature-branch push.
 
 M7.3 platform evidence:
 
@@ -979,9 +982,10 @@ M7.3 platform evidence:
 - [ ] Windows: run the committed CPU setup/check/service CI job or the documented
       commands in a clean Windows environment and record the result. This host
       is Linux with no Windows runtime. GitHub repository access is available,
-      but the feature branches are unpublished and a noninteractive Git push
-      dry run failed because this shell has no GitHub credentials. Publication
-      is pending the operator response; no Windows job was started.
+      and publication is authorized. This shell has no GitHub credentials for a
+      history-preserving push. The connected GitHub integration also rejects blob
+      creation with HTTP 403. No feature branch has been published or Windows job
+      started. Windows execution evidence is pending.
       Accelerator/model qualification remains separate from this CPU setup check.
 
 Delivered behavior:
@@ -1056,15 +1060,101 @@ Windows or new model/hardware qualification.
 
 ### M8 — Retire redundant public surfaces and qualify the product
 
-- [ ] **M8.1** Promote canonical operations after replacement coverage exists. Keep legacy
+- [x] **M8.1** Promote canonical operations after replacement coverage exists. Keep legacy
       identities loadable and offer explicit migration where semantics change.
-- [ ] **M8.2** Rename cluster presentation to Blocks consistently, without bulk ID rewriting.
-- [ ] **M8.3** Replace default implementation catalogs with contextual inspection. Retain
+- [x] **M8.2** Rename cluster presentation to Blocks consistently, without bulk ID rewriting.
+- [x] **M8.3** Replace default implementation catalogs with contextual inspection. Retain
       templates as optional starters and user-owned Blocks as independent revisions.
-- [ ] **M8.4** Validate the complete Auto and Expert journeys, accessibility, nested editing,
+- [x] **M8.4** Validate the complete Auto and Expert journeys, accessibility, nested editing,
       persistence, API export, repeated runs, and compatibility with older workflows.
-- [ ] **M8.5** Retire backend implementations only after proving replacement equivalence and
+- [x] **M8.5** Retire backend implementations only after proving replacement equivalence and
       migration behavior; similar labels are not sufficient evidence for deletion.
+
+#### M8 implementation checklist
+
+- [x] Consolidate raw-node discovery behind exact bound canonical operations;
+      preserve Advanced access and fallback for older/incomplete catalogs.
+- [x] Include ordinary text/value utilities in Expert Stages.
+- [x] Present registered compositions as Blocks and the reusable library as Saved
+      Blocks; retain serialized identities, names, revisions and legacy group keys.
+- [x] Open stage implementation/settings from its canvas selection, independently
+      of the pipeline picker; keep inspection read-only and scoped to the workflow.
+- [x] Verify the deprecated video/audio alias still delegates to its canonical
+      implementation. Retain distinct backend adapters and legacy readers.
+- [x] Run local contract/browser journeys, rebuild the paired bundle, validate
+      backend gates and served bytes, and commit the reviewed result.
+- [ ] Push both feature branches and record their exact published commits.
+
+Windows clean installation and live Windows/model qualification are deferred by
+operator instruction. Local UI, API and contract checks remain required. No new
+hardware/model support is implied by consolidation or by publishing this branch.
+
+#### M8 implementation and local evidence — 2026-09-18
+
+Expert Stages now suppresses an ordinary runtime entry only when an exact bound
+canonical operation has matching pipeline/task support. Incomplete or older
+catalogs retain the ordinary fallback; Advanced keeps implementation access.
+Text/value utilities and enabled custom nodes remain available in Stages.
+The full runtime registry and saved workflow action identities are untouched.
+
+Public composition controls use Blocks and Saved Blocks. Serialized categories,
+library group keys, IDs, revisions and embedded snapshots remain compatible.
+Existing migration preview/apply and legacy readers are preserved. The stage
+inspector is shared between the operation panel and the canvas selection toolbar;
+it works with the library closed, uses native dialog focus management, and closes
+when its selection, workflow or authoring mode becomes invalid. Inspection does
+not resolve a new graph, load models or change saved parameters.
+
+M8.5 review found no further backend deletion justified by replacement evidence.
+The deprecated `GenerateLTX2` action already inherits the generic
+`GenerateVideoAudio` implementation. A strengthened verified-runtime test checks
+its execute method, parameter object and adapter callback identity. The hidden
+alias stays loadable. Other adapters have distinct state/component contracts;
+similar presentation is not evidence that they are interchangeable.
+
+Validation commands and scope:
+
+- Client `npm run check`: 1,145 Node tests, formatting, lint, types, catalog byte
+  golden checks, production build and bundle budgets. Startup is 604.3 KiB gzip;
+  deferred code is 209.3 KiB. The lazy shared inspector increases the deferred
+  ceiling from 209 to 210 KiB; startup and individual-chunk ceilings stay fixed.
+- `MODIFF_E2E_TEMPLATE_INPUT_CACHE=<existing-installed-input-cache> npm run check:ui`:
+  two shared-control tests passed; the full mocked sweep initially passed 158/159.
+  The remaining Anima wiring test captured handles during Arrange animation.
+  Native actionability checks now precede coordinate capture; all three pipeline
+  wiring cases passed twice (six passes), preserving the actual pointer gesture.
+- The new canvas inspector test verifies visible content, Enter/Escape, focus
+  restoration, unchanged graph and Auto/Expert visibility. Its initial repeated
+  run exposed asynchronous model validation changing the baseline snapshot.
+  Waiting for the fixture's `ModelsLoader` validation before capture fixed the
+  harness; three final repetitions passed. No application focus workaround was
+  introduced. Initial failure traces are retained outside the repositories.
+- Backend `uvx --from ruff==0.12.7 ruff check . --select E9,F`, `uv pip check
+--python .venv/bin/python`, runtime-wrapped `python -m modiff.preflight --json
+--check-port 8088 --fail-on-error`, and runtime-wrapped `python -m pytest -q`:
+  ready; 3,147 passed, 510 skipped, 9,311 subtests and two existing warnings.
+- Verified optional-runtime alias regression through
+  `scripts/test_reviewed_optional_runtime.py`: one passed, 115 deselected.
+- A fresh isolated production server and native browser checked stage inspection
+  with the library closed, Text Value discovery in Stages, typed Data Viewer
+  insertion, named service export, API graph equivalence, normal queue execution
+  and durable text output. CLI repetition returned the same named result.
+  The process source fingerprint and served HTML/assets matched disk; all 71
+  emitted client files matched the backend bundle. The owned server was stopped
+  only after its queue was empty. This is model-free API/UI proof.
+- Bundle evidence regeneration changes hashes only: 200 canonical workflows and
+  78 public template records retain their existing semantics and qualification.
+  Models, Gallery media, saved Blocks and user workflows were preserved.
+
+Publication is authorized but blocked by credentials. Noninteractive HTTPS Git
+push fails because no username/credential helper is configured. SSH has no agent
+or default identity configured. The connected GitHub integration can read the
+repositories, but `create_blob` returns HTTP 403, "Resource not accessible by
+integration." No remote source, branch or snapshot commit was created. Keep the
+publication checkbox open until both branch tips are verified on GitHub. The
+client CI must pin the paired backend implementation commit, and the backend
+branch must be pushed first so that pin is reachable. All original local feature
+history remains intact.
 
 ## Sequencing and validation
 

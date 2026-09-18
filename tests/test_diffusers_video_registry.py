@@ -2060,6 +2060,14 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
     def test_legacy_ltx2_action_uses_generic_video_audio_contract_but_is_hidden(self):
         self.assertTrue(issubclass(GenerateLTX2, GenerateVideoAudio))
+        self.assertIs(GenerateLTX2.execute, GenerateVideoAudio.execute)
+        self.assertIs(GenerateLTX2.params, GenerateVideoAudio.params)
+        self.assertIs(GenerateLTX2.update_adapter_modes, GenerateVideoAudio.update_adapter_modes)
+        # Retiring discovery must preserve the saved action's exact callable
+        # and field contract, including future fixes on the canonical action.
+        canonical = module_registry.MODULE_MAP["modules.DiffusersVideo"]["GenerateVideoAudio"]
+        legacy = module_registry.MODULE_MAP["modules.DiffusersVideo"]["GenerateLTX2"]
+        self.assertEqual(legacy["params"], canonical["params"])
         self.assertTrue(module_registry.MODULE_MAP["modules.DiffusersVideo"]["GenerateLTX2"]["hidden"])
         self.assertIn("GenerateVideoAudio", module_registry.MODULE_MAP["modules.DiffusersVideo"])
 
