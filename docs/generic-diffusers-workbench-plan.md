@@ -1031,7 +1031,7 @@ Validation:
   after custom source edits passed. No inference weights were downloaded.
 - **70 generated client files** match the backend bundle; HTML and its **six**
   referenced assets matched HTTP bytes, and the worker source fingerprint matched
-  current source. Both temporary server queues were empty before shutdown.
+  current source. All owned test queues were empty before shutdown.
 - Startup gzip is **604.2 KiB** under the unchanged **605 KiB** ceiling. The lazy
   service dialog takes deferred aggregate gzip to **208.3 KiB**, bounded at
   **209 KiB**; both per-chunk ceilings stay unchanged. The five generated evidence
@@ -1040,6 +1040,12 @@ Validation:
 
 Downloaded models, the installed Gallery cache and backend-owned `web/user`
 were preserved. M8 was not started. Both branches remain local; no push occurred.
+
+M7 implementation commits: backend
+`875176b3596ee569debfb0f185df3e68a1e24591` and client
+`8061db1a90210af1467f45fccda0e7782f12b878`. Client CI pins this backend implementation.
+M7.3 Windows execution remains unchecked. These local commits do not constitute
+Windows or new model/hardware qualification.
 
 ### M8 — Retire redundant public surfaces and qualify the product
 
