@@ -97,6 +97,24 @@ def _standard_schema(contract, modules):
             model_id={"source": "hub", "value": adapter.default_repo},
             revision=getattr(adapter, "revision", None) or catalog_revision(adapter.default_repo) or "",
         )
+        if "execution_profile_id" in params:
+            from modiff.diffusers_profiles import (
+                execution_profiles_for_execution,
+                resolve_execution_profiles_for_loader,
+            )
+
+            _, reason = resolve_execution_profiles_for_loader(module, action, values)
+            if reason == "loader_profile_ambiguous":
+                # Direct and reviewed equivalent identities can share a loader.
+                # Bind only the unique public route the user actually selected.
+                # Keep this runtime value out of identifier-only discovery hints.
+                selected = [
+                    profile for profile in execution_profiles_for_execution(contract["pipelineClass"], task)
+                    if profile.public and profile.pipeline_class == pipeline
+                    and profile.loader_module == module and profile.loader_action == action
+                ]
+                if len(selected) == 1:
+                    values["execution_profile_id"] = selected[0].id
         params["pipeline"]["signal"]["value"] = deepcopy(signal)
         if "audio_contract" in params:
             values["audio_contract"] = signal

@@ -1336,6 +1336,13 @@ not construct nodes, install packages, download weights or mutate a workflow.
 Unknown/ambiguous selections return HTTP 400. Runtime, artifact, resource and
 actual connected-object validation still happen through the existing executor.
 
+When distinct public model identities share a standard loader and pipeline
+class, a new operation binds the unique execution profile for the selected
+identity and task. This preserves the distinction between a direct pipeline
+and its reviewed Modular equivalent at optional-runtime dispatch. It does not
+rewrite saved loaders or resolve multiple profiles for the same identity by
+guessing; runtime profile and artifact validation still apply.
+
 The client previews model/task changes before applying one history transaction.
 Compatible user values and custom nodes survive; unsupported settings are retained
 in an advisory annotation outside execution. A changed Python action gets a fresh

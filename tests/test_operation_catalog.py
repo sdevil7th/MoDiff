@@ -5,6 +5,42 @@ from modules import MODULE_MAP
 
 
 class OperationCatalogTests(unittest.TestCase):
+    def test_shared_standard_pipeline_starters_retain_the_selected_public_profile(self):
+        from modiff.diffusers_profiles import public_execution_profiles, resolve_execution_profiles_for_loader
+        from modiff.operation_catalog import build_operation_catalog
+        from modiff.operation_starters import resolve_operation_starter
+
+        contracts, _ = build_operation_catalog(MODULE_MAP, public_execution_profiles(), catalog_resolver=lambda: {})
+        for pipeline, expected in (
+            ("WanImageToVideoPipeline", "wan-22-image-to-video:direct"),
+            ("Wan22Image2VideoModularPipeline", "wan22-i2v:equivalent-standard"),
+        ):
+            with self.subTest(pipeline=pipeline):
+                starter = resolve_operation_starter(
+                    MODULE_MAP, contracts, {"pipelineClass": pipeline, "task": "image_to_video"}
+                )
+                loader = next(node for node in starter["nodes"] if node["action"] == "LoadPipeline")
+                self.assertEqual(loader["values"].get("execution_profile_id"), expected)
+                profiles, reason = resolve_execution_profiles_for_loader(
+                    loader["module"], loader["action"], loader["values"]
+                )
+                self.assertIsNone(reason)
+                self.assertEqual([profile.id for profile in profiles], [expected])
+
+    def test_shared_pipeline_binding_does_not_guess_between_profiles_for_one_identity(self):
+        from dataclasses import replace
+        from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES, public_execution_profiles
+        from modiff.operation_catalog import build_operation_catalog, resolve_operation
+
+        duplicate = replace(DIFFUSERS_EXECUTION_PROFILES["wan-22-image-to-video:direct"], id="another-reviewed-route")
+        with patch.dict(DIFFUSERS_EXECUTION_PROFILES, {duplicate.id: duplicate}):
+            contracts, _ = build_operation_catalog(MODULE_MAP, public_execution_profiles(), catalog_resolver=lambda: {})
+            loader = resolve_operation(MODULE_MAP, contracts, {
+                "pipelineClass": "WanImageToVideoPipeline", "task": "image_to_video",
+                "operationId": "diffusion.load_models",
+            })
+        self.assertNotIn("execution_profile_id", loader["values"])
+
     def test_support_separates_adapters_dependencies_and_editable_stages(self):
         from modiff.operation_catalog import build_operation_catalog
         from modiff.diffusers_profiles import public_execution_profiles
