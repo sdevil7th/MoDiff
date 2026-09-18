@@ -1091,6 +1091,14 @@ hardware/model support is implied by consolidation or by publishing this branch.
 
 #### M8 implementation and local evidence — 2026-09-18
 
+Local implementation commits: backend
+`9931f22b5c0a11a42ce55ea6c37106a984886b35`; client
+`2cd222d86c74cdc2932b236296bf191e58e67701`. The subsequent client
+publication-preparation commit pins CI to that backend commit. Documentation and
+CI-pin commits do not change the tested runtime or the bundled frontend source.
+Final bundle SHA-256:
+`b93f21468d0147c2f0f21bc3916627657db69ff2d3c5d5367440d11c06d2e23b`.
+
 Expert Stages now suppresses an ordinary runtime entry only when an exact bound
 canonical operation has matching pipeline/task support. Incomplete or older
 catalogs retain the ordinary fallback; Advanced keeps implementation access.
