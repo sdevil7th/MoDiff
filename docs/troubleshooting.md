@@ -96,6 +96,18 @@ active model-download reservations, and the 64 GiB safety reserve fit. It does
 not delete cached models. After it completes, wait for active downloads to
 finish, restart MoDiff, and then verify `/template-gallery/manifest.json`.
 
+## Loading models without network access
+
+Set `HF_HUB_OFFLINE=1` before starting the backend to use Hugging Face's offline
+mode. Modular pipeline and standalone component loaders pass this choice to
+Diffusers explicitly, including sharded weights whose metadata otherwise triggers
+a Hub request. This preserves normal online loading when offline mode is unset.
+
+The exact selected revision, every required weight shard, and its configuration,
+tokenizer and processor files must already be cached. If a required file is absent,
+finish its installation through Models while online, then restart offline.
+The presence of some weight files alone does not establish a complete model.
+
 ## CUDA is not detected
 
 - Check `hardware.devices` and `hardware.torch` in preflight or `GET /system_stats`.

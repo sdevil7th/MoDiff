@@ -16,6 +16,7 @@ import torch
 from diffusers import ComponentSpec, ModularPipeline
 from diffusers.utils import logging as diffusers_logging
 from huggingface_hub import get_hf_file_metadata, hf_hub_download, hf_hub_url
+from huggingface_hub import constants as hub_constants
 from huggingface_hub.utils import EntryNotFoundError, HfHubHTTPError, LocalEntryNotFoundError
 
 from modiff.NodeBase import NodeBase
@@ -999,6 +1000,10 @@ def component_load_kwargs_for(name, kwargs):
             component_load_kwargs[key] = value[name]
         elif "default" in value:
             component_load_kwargs[key] = value["default"]
+    # Diffusers' sharded loader queries model_info unless this flag is explicit,
+    # even when every pinned shard is cached and Hub offline mode is enabled.
+    if hub_constants.HF_HUB_OFFLINE:
+        component_load_kwargs["local_files_only"] = True
     return component_load_kwargs
 
 
@@ -1900,7 +1905,7 @@ class AutoModelLoader(NodeBase):
                 message=f"Loading {model_type} weights from {real_model_id}",
             )
             with self.diffusers_loading_progress():
-                model = spec.load(torch_dtype=dtype)
+                model = spec.load(**component_load_kwargs_for(model_type, {"torch_dtype": dtype}))
             self.progress(
                 99,
                 phase="component_placement",

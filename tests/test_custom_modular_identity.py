@@ -1424,6 +1424,12 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
         self.assertEqual(diagnostics["components_loaded"], ["transformer"])
 
     def test_auto_model_trust_false_preserves_existing_download_behavior(self):
+        self._assert_auto_model_load_kwargs(offline=False)
+
+    def test_auto_model_load_honors_offline_mode(self):
+        self._assert_auto_model_load_kwargs(offline=True)
+
+    def _assert_auto_model_load_kwargs(self, *, offline):
         node = AutoModelLoader("auto-model-download-contract")
         node.diffusers_loading_progress = Mock(return_value=nullcontext())
         revision = "a" * 40
@@ -1436,6 +1442,7 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
             load=Mock(side_effect=RuntimeError("stop after load kwargs")),
         )
         with (
+            patch("huggingface_hub.constants.HF_HUB_OFFLINE", offline),
             patch("modules.ModularDiffusers.loaders.ComponentSpec", return_value=spec) as component_spec,
             patch(
                 "modules.ModularDiffusers.loaders._preflight_reviewed_diffusers_component",
@@ -1469,7 +1476,10 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
             variant=None,
             revision=revision,
         )
-        spec.load.assert_called_once_with(torch_dtype=torch.float32)
+        expected_kwargs = {"torch_dtype": torch.float32}
+        if offline:
+            expected_kwargs["local_files_only"] = True
+        spec.load.assert_called_once_with(**expected_kwargs)
 
     def test_auto_model_selector_spoofing_fails_before_node_cache(self):
         node = AutoModelLoader("auto-model-selector-cache-guard")

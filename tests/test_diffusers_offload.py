@@ -822,6 +822,24 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
             {"torch_dtype": "float16", "variant": "fp16"},
         )
 
+    @patch("huggingface_hub.constants.HF_HUB_OFFLINE", True)
+    def test_strict_component_loading_honors_offline_mode(self):
+        for requested in ({}, {"local_files_only": False}, {"local_files_only": {"transformer": False}}):
+            with self.subTest(requested=requested):
+                pipeline = FakeStrictPipeline({"transformer": FakeComponentSpec("transformer")})
+                load_components_strict(
+                    pipeline,
+                    ["transformer"],
+                    required_names={"transformer"},
+                    model_id="Qwen/Qwen-Image-2512",
+                    dtype="bfloat16",
+                    offload_mode=OFFLOAD_MODE_NONE,
+                    quant_config=None,
+                    diagnostics={},
+                    component_load_kwargs=requested,
+                )
+                self.assertIs(pipeline.registered["transformer"]["kwargs"]["local_files_only"], True)
+
     def test_incremental_group_offload_does_not_require_a_quantization_override(self):
         self.assertTrue(
             should_incrementally_group_offload(
