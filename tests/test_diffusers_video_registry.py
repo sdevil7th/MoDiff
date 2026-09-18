@@ -2973,6 +2973,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         )
         node = LoadPipeline("animatelcm-loader")
         with (
+            patch.dict("modules.DiffusersVideo.main.CONFIG.hf", {"cache_dir": "reviewed-test-cache"}),
             patch("diffusers.MotionAdapter.from_pretrained", return_value=object()) as load_motion,
             patch("diffusers.AnimateDiffPipeline.from_pretrained", return_value=pipeline),
             patch("diffusers.LCMScheduler.from_config", return_value=replacement_scheduler) as lcm_scheduler,
@@ -3001,6 +3002,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             revision=ANIMATELCM_MOTION_REVISION,
             local_files_only=True,
             use_safetensors=True,
+            cache_dir="reviewed-test-cache",
         )
         pipeline.set_adapters.assert_called_once_with(
             [ANIMATELCM_LORA_ADAPTER_NAME],

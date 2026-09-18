@@ -142,7 +142,7 @@ def test_pinned_hub_modular_block_executes_through_native_upstream_and_reloads(s
     klass = sys.modules["custom.Example.main"].Block
     assert klass("custom-block").execute(text="test") == {"out_result": "test — modular"}
     code = Path(item["path"]) / "block.py"
-    code.write_text(code.read_text().replace(" — modular", " — changed"))
+    code.write_text(code.read_text(encoding="utf-8").replace(" — modular", " — changed"), encoding="utf-8")
     changed = store.inspect("Example")
     store.enable("Example", code_hash=changed["codeHash"], consent=True)
     assert sys.modules["custom.Example.main"].Block("custom-block").execute(text="test") == {
@@ -273,12 +273,12 @@ def test_two_modular_packages_keep_relative_helpers_isolated(store, tmp_path, mo
             config.write_text(config.read_text().replace("block.PromptSuffix", f"{entry_name}.PromptSuffix"))
             code = source / f"{entry_name}.py"
             code.write_text(
-                code.read_text().replace(
+                code.read_text(encoding="utf-8").replace(
                     "        state.set(",
                     f"        from .{entry_name} import PromptSuffix\n        assert isinstance(self, PromptSuffix)\n        state.set(",
-                )
+                ), encoding="utf-8"
             )
-            code.write_text("from .helper import SUFFIX\n" + code.read_text().replace('" — modular"', "SUFFIX"))
+            code.write_text("from .helper import SUFFIX\n" + code.read_text(encoding="utf-8").replace('" — modular"', "SUFFIX"), encoding="utf-8")
             (source / "helper.py").write_text(f"SUFFIX = {suffix!r}\n")
             item = store.stage(kind="local", source=str(source), name=name)
             registry = store.enable(name, code_hash=item["codeHash"], consent=True)
@@ -411,7 +411,10 @@ def test_git_stages_exact_commit_without_checking_out_weights(store, tmp_path, m
     assert not any("checkout" in args for args in calls)
     assert not (store.path("Example") / "model.safetensors").exists()
     assert (source / "model.safetensors").read_bytes() == b"preserved fixture weights"
-    assert (store.path("Example") / "main.py").read_bytes() == (source / "main.py").read_bytes()
+    # Git staging owns committed blob bytes, not the checkout's CRLF conversion.
+    assert (store.path("Example") / "main.py").read_bytes() == subprocess.check_output(
+        ["git", "-C", str(source), "show", f"{revision}:main.py"]
+    )
 
 
 def test_global_remote_code_disable_still_blocks_modular_activation(store, monkeypatch):
@@ -473,12 +476,13 @@ def test_modular_connected_weights_reuse_native_manager_and_survive_custom_relea
     code = source / "block.py"
     code.write_text(
         "import torch\nfrom diffusers.modular_pipelines import ComponentSpec\n"
-        + code.read_text()
+        + code.read_text(encoding="utf-8")
         .replace(
             "    @property\n    def inputs(self):",
             '    @property\n    def expected_components(self):\n        return [ComponentSpec(name="weights", type_hint=torch.nn.Linear)]\n\n    @property\n    def inputs(self):',
         )
-        .replace('state.get("text") + " — modular"', 'state.get("text") + str(int(pipeline.weights.weight[0, 0]))')
+        .replace('state.get("text") + " — modular"', 'state.get("text") + str(int(pipeline.weights.weight[0, 0]))'),
+        encoding="utf-8",
     )
     sidecar = source / "mellon_pipeline_config.json"
     data = json.loads(sidecar.read_text())

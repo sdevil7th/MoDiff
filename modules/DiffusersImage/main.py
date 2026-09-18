@@ -2360,6 +2360,18 @@ def image_model_field_options(adapter: ImagePipelineAdapter) -> dict[str, Any]:
     }
 
 
+def image_operation_loader_defaults(adapter: ImagePipelineAdapter) -> dict[str, Any]:
+    """Seed new canonical operations with the reviewed task's loading recipe.
+
+    Some unconditional samplers lack execution-device-aware offload or
+    convert tensors directly to NumPy. Their existing creator recipe is
+    resident float32. Do not rewrite saved loaders or their generic schema.
+    """
+    if adapter.modes == frozenset({"unconditional_image"}):
+        return {"dtype": "float32", "auto_offload": False, "offload_mode": OFFLOAD_MODE_NONE}
+    return {}
+
+
 def image_loader_field_params(adapter: ImagePipelineAdapter) -> dict[str, dict[str, Any]]:
     """Selected loader presentation shared by ordinary fields and compiled Blocks.
 
@@ -4122,7 +4134,8 @@ class LoadPipeline(NodeBase):
             "label": "Pre-quantized Transformer",
             "display": "input",
             "type": "any",
-            "description": "Reviewed single-file transformer component for exact base-pipeline assembly.",
+            "required": False,
+            "description": "Optional reviewed single-file transformer component for exact base-pipeline assembly.",
         },
         "image_prompt_adapter": {"label": "Image Prompt Adapter", "display": "input",
             "type": "diffusers_image_prompt_adapter",

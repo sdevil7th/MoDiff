@@ -76,6 +76,67 @@ class OperationStarterTests(unittest.TestCase):
         self.assertEqual(len(result["edges"]), 1)
         self.assertEqual(result["edges"][0]["targetHandle"], "pipeline")
 
+    def test_standard_loader_starters_do_not_require_an_execution_recipe_override(self):
+        # All ordinary loaders can use their own resource fields. A connected
+        # starter must not ask Fix to add an optional recipe source.
+        from modiff.operation_catalog import resolve_operation
+
+        checked = set()
+        for contract in self.contracts:
+            if not contract.get("nodeKey", "").endswith(".LoadPipeline"):
+                continue
+            node = resolve_operation(MODULE_MAP, self.contracts, {
+                "pipelineClass": contract["pipelineClass"], "task": contract["task"],
+                "operationId": contract["operationId"],
+            })
+            if "execution_recipe" not in node["params"]:
+                continue
+            with self.subTest(pipeline=contract["pipelineClass"], task=contract["task"]):
+                self.assertIs(node["params"]["execution_recipe"].get("required"), False)
+            checked.add(node["module"])
+        self.assertEqual(checked, {"modules.DiffusersImage", "modules.DiffusersVideo",
+                                   "modules.DiffusersAudio", "modules.DiffusersThreeD"})
+
+    def test_unconditional_starters_keep_the_reviewed_resident_float32_recipe(self):
+        # These upstream samplers do not share the text-to-image loader's
+        # bfloat16/model-offload recipe. Check individual insertion as well as
+        # the connected starter; existing generic schemas must stay unchanged.
+        from copy import deepcopy
+        from modiff.operation_catalog import resolve_operation
+
+        original = deepcopy(MODULE_MAP["modules.DiffusersImage"]["LoadPipeline"])
+        for pipeline in ("DDPMPipeline", "DDIMPipeline", "ConsistencyModelPipeline"):
+            with self.subTest(pipeline=pipeline):
+                draft = self.resolve(pipeline, "unconditional_image")
+                loader = next(n for n in draft["nodes"] if n["action"] == "LoadPipeline")
+                single = resolve_operation(MODULE_MAP, self.contracts, {
+                    "pipelineClass": pipeline, "task": "unconditional_image",
+                    "operationId": loader["operation"]["operationId"],
+                })
+                for node in (loader, single):
+                    for field, expected in {"dtype": "float32", "auto_offload": False,
+                                            "offload_mode": "none"}.items():
+                        self.assertEqual(node["values"].get(field), expected)
+                        self.assertEqual(node["params"][field]["value"], expected)
+                    self.assertEqual(node["values"].get("conditioning_model_id"), "")
+                    self.assertEqual(node["values"].get("conditioning_revision"), "")
+        self.assertEqual(MODULE_MAP["modules.DiffusersImage"]["LoadPipeline"], original)
+
+    def test_loader_defaults_keep_conditioned_models_and_other_task_recipes(self):
+        from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
+
+        for pipeline, task in (("FluxPipeline", "text_to_image"),
+                               ("FluxControlNetPipeline", "control_image")):
+            with self.subTest(pipeline=pipeline):
+                loader = next(n for n in self.resolve(pipeline, task)["nodes"] if n["action"] == "LoadPipeline")
+                self.assertNotIn("dtype", loader["values"])
+                self.assertNotIn("offload_mode", loader["values"])
+                auxiliary = IMAGE_PIPELINE_ADAPTERS[pipeline].default_conditioning_repo
+                self.assertEqual(loader["values"]["conditioning_model_id"],
+                                 {"source": "hub", "value": auxiliary} if auxiliary else "")
+                if auxiliary:
+                    self.assertEqual(len(loader["values"]["conditioning_revision"]), 40)
+
     def test_all_task_drafts_have_existing_visible_endpoints_and_one_writer(self):
         with (
             patch("socket.socket.connect", side_effect=AssertionError("Network during authoring")),

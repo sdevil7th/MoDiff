@@ -32,10 +32,13 @@ M5 is complete: selective recomputation, component ownership, isolated mutable
 state, bounded memory and failure recovery passed their scoped validation.
 M6 is complete: unified custom-source review, explicit code approval, ordinary
 node and Modular block execution, reload and targeted invalidation passed their
-scoped validation. M7 implementation and Linux validation are complete; Windows
-clean-install execution is deferred by the operator until a Windows machine is
-available. M8 implementation and scoped local qualification are complete;
-feature-branch publication is blocked by Git authentication. This does not qualify every declared
+scoped validation. M7 is complete: clean Windows CPU and NVIDIA setup, health,
+preservation and model-free service execution now complement the Linux evidence.
+M8 implementation and scoped UI/contract qualification are complete. The prior
+feature-branch tips are published, and the DDPM starter recipe is corrected;
+the approved optional runtime and scoped Windows image, audio and video runs now pass.
+Broader release acceptance also reports missing/stale Gallery and release evidence.
+This does not qualify every declared
 model/task, hardware configuration or third-party extension.
 
 ## Progress tracker
@@ -53,8 +56,8 @@ Model execution, hardware qualification, and UI tests are separate evidence.
 | M4 — Stage authoring and model/task switching      | Complete    | None within M4; broader model/hardware qualification remains explicitly scoped  |
 | M5 — Reuse and selective recomputation             | Complete    | None within M5; broader family/hardware qualification remains scoped            |
 | M6 — Custom-node developer experience              | Complete    | None within M6; arbitrary extensions still need code/dependency/resource review |
-| M7 — Developer setup and service prototyping       | Implemented | Windows qualification deferred by the operator until after publication          |
-| M8 — Consolidation and product qualification       | Implemented | Push blocked; DDPM recipe follow-up and Windows qualification remain open       |
+| M7 — Developer setup and service prototyping       | Complete    | None within setup and model-free service scope                                  |
+| M8 — Consolidation and product qualification       | Implemented | Broader release evidence and the documented concurrent-authoring finding        |
 
 Completed foundation: plan committed in both repos; implementation branches
 created from `develop`. M1 catalog views were committed in client `df50a30` and backend
@@ -951,7 +954,7 @@ server was stopped after verifying that its queue was empty.
       runtime profiles. Keep guided installation and existing environments working.
 - [x] **M7.2** Reconcile `uv` management, constraints, platform Torch sources, optional
       runtimes, and reproducibility before documenting commands as supported.
-- [ ] **M7.3** Publish working Windows and Linux commands; test clean environments without
+- [x] **M7.3** Publish working Windows and Linux commands; test clean environments without
       replacing a user's accelerator packages or downloading inference weights.
 - [x] **M7.4** Reuse API graph export for a reproducible execution package with dependencies,
       model revisions, custom-node identities, and named service inputs/outputs.
@@ -964,10 +967,9 @@ and local machine paths do not enter portable packages.
 
 #### M7 implementation and validation — 2026-09-18
 
-The implementation is complete on both feature branches. The operator deferred
-Windows execution until after implementation and publication, when a Windows
-machine will be provided. M7.3 remains an explicit qualification task; it does
-not block M8 implementation or the authorized feature-branch push.
+The implementation is complete on both feature branches. Windows execution was
+initially deferred and has now passed on the Windows/NVIDIA host documented in
+the Windows follow-up below. This closes M7.3 within its setup/service scope.
 
 M7.3 platform evidence:
 
@@ -979,13 +981,10 @@ M7.3 platform evidence:
       preflight reports ready; script-free supervised launch responds to health;
       saved API graph and Manual/Auto service calls produce equivalent text output.
 - [x] Linux client: `npm ci` and the complete client quality gate.
-- [ ] Windows: run the committed CPU setup/check/service CI job or the documented
-      commands in a clean Windows environment and record the result. This host
-      is Linux with no Windows runtime. GitHub repository access is available,
-      and publication is authorized. This shell has no GitHub credentials for a
-      history-preserving push. The connected GitHub integration also rejects blob
-      creation with HTTP 403. No feature branch has been published or Windows job
-      started. Windows execution evidence is pending.
+- [x] Windows: clean CPU and NVIDIA installations through the documented exact-uv
+      developer entry point, verified device/profile checks, supervised health,
+      and model-free saved-graph/Manual/Auto/custom service smoke tests passed.
+      Existing-environment setup refusal preserved the managed installation.
       Accelerator/model qualification remains separate from this CPU setup check.
 
 Delivered behavior:
@@ -1055,8 +1054,8 @@ were preserved. M8 was not started. Both branches remain local; no push occurred
 M7 implementation commits: backend
 `875176b3596ee569debfb0f185df3e68a1e24591` and client
 `8061db1a90210af1467f45fccda0e7782f12b878`. Client CI pins this backend implementation.
-M7.3 Windows execution remains unchecked. These local commits do not constitute
-Windows or new model/hardware qualification.
+Those implementation commits did not constitute Windows or new model/hardware
+qualification. The subsequent Windows setup/service evidence is recorded below.
 
 ### M8 — Retire redundant public surfaces and qualify the product
 
@@ -1083,10 +1082,11 @@ Windows or new model/hardware qualification.
       implementation. Retain distinct backend adapters and legacy readers.
 - [x] Run local contract/browser journeys, rebuild the paired bundle, validate
       backend gates and served bytes, and commit the reviewed result.
-- [ ] Push both feature branches and record their exact published commits.
+- [x] Push both feature branches and record their exact published commits (prior
+      implementation tips verified below; the Windows follow-up is published separately).
 
-Windows clean installation and live Windows/model qualification are deferred by
-operator instruction. Local UI, API and contract checks remain required. No new
+Windows clean installation and the scoped native image, audio and video runs
+below are validated. Broader release qualification remains open. No additional
 hardware/model support is implied by consolidation or by publishing this branch.
 
 #### M8 implementation and local evidence — 2026-09-18
@@ -1154,7 +1154,7 @@ Validation commands and scope:
   78 public template records retain their existing semantics and qualification.
   Models, Gallery media, saved Blocks and user workflows were preserved.
 
-Publication is authorized but blocked by credentials. Noninteractive HTTPS Git
+At the Linux checkpoint, publication was authorized but blocked by credentials. Noninteractive HTTPS Git
 push fails because no username/credential helper is configured. SSH has no agent
 or default identity configured. The connected GitHub integration can read the
 repositories, but `create_blob` returns HTTP 403, "Resource not accessible by
@@ -1162,7 +1162,11 @@ integration." No remote source, branch or snapshot commit was created. Keep the
 publication checkbox open until both branch tips are verified on GitHub. The
 client CI must pin the paired backend implementation commit, and the backend
 branch must be pushed first so that pin is reachable. All original local feature
-history remains intact.
+history remains intact. This blocker is superseded: Windows `git ls-remote
+--exit-code origin refs/heads/feat/generic-diffusers-workbench` verified backend
+`b533a69deb3a247fe5bee40c26678ed4b7574a32` and client
+`2cbf42ce939a2d2abe3ab4585261527ca0f7fa7f` as published tips. This does not publish
+the subsequent Windows fixes automatically.
 
 #### Downloaded-model validation on Linux — 2026-09-18
 
@@ -1179,13 +1183,17 @@ history remains intact.
       commit `3424faf` preserves normal online loading behavior.
 - [x] Execute the DDPM whole-pipeline fallback with explicit float32, offload Off
       and Auto offload disabled; cold, unchanged and seed-edit runs passed.
-- [ ] Resolve DDPM starter recipe compatibility: model CPU offload fails with a
+- [x] Resolve DDPM starter recipe compatibility: model CPU offload fails with a
       CPU/CUDA tensor mismatch, and resident bfloat16 fails during NumPy conversion.
-      The explicit float32 resident recipe is a separate result, not a default pass.
+      New canonical unconditional loaders/starters now select float32 resident
+      loading and clear irrelevant auxiliary models. Existing saved values remain
+      intact. Contract regressions and tiny CUDA sampler diagnostics pass; the
+      new default also passed the Windows graph and lifecycle checks below.
 - [x] Verify the DDPM Auto resource boundary: the planner reports that no Auto
       recipe is declared for this exact model/task pair and no graph is submitted.
-- [ ] Qualify Windows in the separate Windows session; do not infer its results
-      from this Linux host or these reduced-resolution image tests.
+- [x] Run scoped Windows image/audio/video and lifecycle checks in the separate
+      Windows session. Results and remaining release limits are recorded below;
+      no Linux result is counted as Windows evidence.
 
 The four Modular families completed 23 execution/lifecycle checks. All used
 512 × 512 images: SDXL at 20 steps (21 for the step edit), FLUX.2 Klein at four,
@@ -1225,6 +1233,214 @@ submission instead of inspecting the planner denial. The captured denial is
 preserved and is not counted as successful Auto inference. Final checks matched
 all 71 client bundle files on disk and the 69 served HTML/asset files over HTTP;
 all 90 inventoried cached-weight snapshots remain present without broken links.
+
+#### Windows follow-up — 2026-09-18
+
+Host: Windows 11 build 26200, NVIDIA RTX 4080 (16 GiB), driver 596.36,
+32 GiB system RAM. Two isolated checkouts received clean CPU and NVIDIA
+installations using the reviewed Python 3.12/uv 0.11.26 flow. The original
+environment, workflows, custom sources and cached weights were preserved.
+The original environment has an unverified accelerator profile and an
+incompatible Transformers/kernels import; it was not used as qualified evidence.
+
+Delivered fixes:
+
+- New DDPM, DDIM and Consistency operation loaders and connected starters use
+  the existing reviewed unconditional recipe: float32, offload Off, Auto offload
+  disabled. New unconditioned image operations clear hidden ControlNet defaults.
+  Saved loader values and the generic registry schema are unchanged.
+- Windows extension fixtures explicitly use UTF-8 and compare staged Git bytes
+  with the committed blob instead of a CRLF checkout. The AnimateLCM fixture now
+  controls its cache setting instead of depending on the operator's configuration.
+- Mocked browser fixtures honor `MODIFF_BACKEND_PYTHON`; the live library test
+  uses the M8 labels and creates/removes its own model-free Saved Block fixture.
+
+Validation commands and results (run in the indicated checkout; `.venv` denotes
+that checkout's managed environment):
+
+| Command / proof                                                                                                                             | Result                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `uvx --from uv==0.11.26 uv run --no-project --no-sync --python 3.12 -m modiff.dev setup --accelerator cpu --backend-only --non-interactive` | Clean install passed, Torch 2.8.0+cpu                                                                |
+| Same setup command with `--accelerator nvidia`                                                                                              | Clean install passed, Torch 2.8.0+cu128; CUDA tensor/device validation passed                        |
+| Repeat CPU setup without `--repair`                                                                                                         | Expected exit 2; existing environment preserved                                                      |
+| `uvx --from uv==0.11.26 uv run --no-project --no-sync --python 3.12 -m modiff.dev run`                                                      | CPU and NVIDIA supervised servers responded to health on isolated loopback ports                     |
+| `.venv/Scripts/python.exe -m modiff.preflight --json --check-port 18196 --fail-on-error`                                                    | NVIDIA ready; reviewed runtime contract verified                                                     |
+| `.venv/Scripts/python.exe scripts/smoke_service_package.py` in each checkout                                                                | Health, saved graph, Manual/Auto service and custom-source drift checks passed; zero model downloads |
+| `.venv/Scripts/python.exe -m pytest -q` in clean CPU checkout                                                                               | 3,158 passed, 502 skipped, 9,316 subtests; one existing warning                                      |
+| Managed NVIDIA Python `-m pytest -q` against the working backend                                                                            | 3,161 passed, 499 skipped, 9,316 subtests; one existing warning                                      |
+| Managed CPU Python `-m pytest -q tests/test_operation_starters.py` after the final extra regression                                         | 8 passed, 255 subtests                                                                               |
+| `uvx --from ruff==0.12.7 ruff check . --select E9,F`; `uv pip check --python <managed-python>`                                              | Passed; dependency checks passed in both environments                                                |
+| Client `npm ci`; `npm run check` with `MODIFF_BACKEND_PYTHON` selecting managed CPU Python                                                  | Passed; 1,145 Node tests, formatting/lint/types, catalog and build/bundle gates                      |
+| Client `npm run check:ui` with the same interpreter and cached public runtime inputs                                                        | 2 shared-control and 159 Studio browser tests passed                                                 |
+| Client `npm run test:live-backend-contract` against the isolated NVIDIA server                                                              | Passed; 227-node HTTP contract, not model generation                                                 |
+| Live `workflow-backend-sync-lifecycle.spec.ts` and corrected `node-library-hierarchy.spec.ts`                                               | 3 browser tests passed against the real backend                                                      |
+| Client `npm run workflows:verify`; `npm run gallery:coverage:check`                                                                         | Passed; 200 supported portable workflows verified                                                    |
+
+Native production-browser evidence separately covers authoring and wiring a
+Text Value/Data Viewer graph, Automatic Run, service export, equivalent CLI text
+output, saved workflow restoration after server/browser restart and another Run.
+A stale exported service is rejected after backend source changes, as required.
+Native DDPM Run without the reviewed optional runtime returns 409 with a visible
+error and no queued graph. Tiny randomly initialized CUDA DDPM/DDIM diagnostics
+reproduce the bfloat16 conversion failure; DDPM model CPU offload reproduces its
+device mismatch. Both resident float32 samplers execute. These diagnostics do
+not establish downloaded-model graph execution or image quality.
+
+All 71 emitted client files match the paired backend bundle; 70 also match over
+HTTP. Direct retrieval of `THIRD_PARTY_LICENSES.txt` returns 404 and is retained
+in the probe result, not counted as a served-file pass. All 383 inventoried
+user files retain their original byte hashes; all 18 inventoried model snapshots
+remain present without broken links. Raw failures, successful retests, browser
+screenshots and preservation manifests remain in ignored local review storage.
+Both owned supervised servers were stopped after confirming empty queues.
+
+Open qualification work at the first Windows checkpoint (superseded where noted below):
+
+- Optional-runtime consent was initially pending; the operator subsequently
+  approved it. The reviewed profile was installed and activated through its
+  public consent endpoints. Composition metadata and DDPM live execution now
+  pass; the initial missing-Transformers failure remains in the raw evidence.
+- Cached image/audio/video coverage is bounded by this 16 GiB GPU/32 GiB RAM
+  host. It does not establish fit for every model tested on the earlier
+  121 GiB shared-memory Linux host.
+- `npm run check:acceptance` does not pass. Materializing the exact public asset
+  descriptor verifies 356 asset byte hashes, but `npm run gallery:verify` reports
+  stale template locks/model provenance, a missing Ghibli image, an ACE-Step
+  duration mismatch, and decoded-video/audiovisual hash mismatches. The video
+  hash currently covers the complete FFmpeg framemd5 output, including headers;
+  byte identity alone does not resolve that decoder-dependent check. No hashes
+  or qualification records were rewritten to suppress failures.
+- `npm run release:contract:verify` and `npm run release:qualification:gate` lack
+  the required local `data/release-contract.v1.json` evidence. A separate run
+  against the original checkout also encounters an existing ignored Experiments
+  directory without an initializer. No user directory was removed to pass it.
+- The Windows follow-up can be reviewed and published on the feature branches
+  with these limits recorded; publication does not close the release gates.
+
+M7 is closed within its documented setup/service scope. M8's Windows follow-up
+now includes the scoped native model evidence below; its broader release gates
+remain open. Passing unit, mock-browser or HTTP tests is not substituted for
+those proof levels.
+
+#### Approved Windows M8 runtime follow-up — 2026-09-18
+
+The operator explicitly approved the reviewed Transformers/PEFT optional profile.
+Installation, validation, activation and the supervised worker restart completed
+through the public runtime endpoints. The original unmanaged environment and
+user model caches were preserved. No seal or package validation was bypassed.
+
+Native production-browser DDPM evidence uses a newly inserted connected starter,
+its corrected float32/resident defaults, a manually wired Preview and Expert
+resource overrides. The downloaded, pinned CIFAR-10 model completed its default
+50-step run (2.90 s), unchanged repeat (0.18 s), seed edit (1.21 s), sampler-cache
+release/recompute (1.05 s), and loader release/reload (1.57 s). Unchanged and
+explicitly recomputed inputs reproduced the pixel hashes; the seed edit changed
+them. Saved/reloaded previews matched durable output bytes. A 16-image, 1,000-step
+run completed after cancellation/restart (20.98 s). These native 32 × 32 outputs
+establish execution and lifecycle behavior, not image-quality qualification.
+Switching that graph to Automatic produced the expected missing-Auto-recipe
+message and no submission.
+
+A native Stop attempt exposed a production configuration defect: the bundle
+baked in the development supervisor port. Production now derives recovery from
+the serving backend address; explicit supervisor overrides remain supported.
+The regression builds the real configuration for alternate/default ports and an
+explicit override. The failing test is preserved, then all 11 server-action tests
+passed. Native Stop subsequently reached the correct supervisor, durably cancelled
+the task, restarted the worker and allowed a subsequent real CUDA run.
+
+The verified optional-runtime suite initially exposed 21 stale decode fixtures.
+The adapter intentionally forks mutable pipeline state; the tests incorrectly
+read the preceding state. They now check that the input remains unchanged and
+read the returned state, retaining exact upstream pixel equality, shape checks
+and malformed-latent rejection. All 21 focused tests and the full 3,701-test
+optional suite then passed (12 skips; 9,909 subtests). The real composition metadata
+browser test also passed after activation.
+
+Native creator testing found one false graph-repair issue: the pre-quantized
+transformer loader override was not declared optional. Its schema now says so;
+ordinary pipeline loading requires no fabricated connection. A failing schema
+regression became green; the image-registry suite passed 119 tests with three
+optional-runtime skips and 409 subtests. Regenerating the dependent catalog changed
+27 of 122 compiled definitions. A recursive comparison confirmed only this input's
+metadata and dependent hashes changed: admissions, artifact revisions, graph
+wiring, saved values and layout are identical. The exact route pins were updated,
+without changing qualification records.
+
+The complete mocked browser gate passed two shared-control and 159 Studio tests.
+Mocked/contract success is recorded separately from the native model runs above.
+Initial failures, interrupted runs, screenshots, output hashes and detailed
+receipts remain in ignored local review storage.
+
+New canonical loader stages also declare their Execution Recipe override optional.
+A native VACE starter exposed the same false-repair pattern; regression coverage
+checks 164 image, video, audio and 3D loader/task combinations. The focused suite
+passes nine tests and 419 subtests. This presentation overlay does not mutate the
+generic registry, saved resource values or compiled Block definitions.
+
+Further native CUDA evidence:
+
+- Z-Image Turbo: the Auto model-CPU-offload attempt filled GPU memory and exhausted
+  most available host commit headroom before its first sampling step. It was
+  explicitly cancelled after 108 seconds; no output or OOM exception is claimed.
+  Supervisor cancellation/restart released the memory. Expert SSD group offload
+  completed 640 x 640, eight-step generation in 173.65 s. Its unchanged repeat
+  took 0.42 s with identical pixels; seed 43 took 120.76 s with different pixels.
+  The saved/reloaded workflow retained seed 43 and the durable preview. The
+  inspected image depicts the requested red teapot beside a window.
+- An earlier SSD attempt failed after temporary offload files disappeared while
+  unit cleanup tests were running in the same isolated checkout. That run is
+  retained as contaminated evidence, not a product qualification result. The
+  successful retry ran after those tests ended with newly loaded components.
+- ACE-Step XL Turbo: a natively created template with explicit 12-second,
+  eight-step instrumental settings completed under Automatic resources in
+  12.76 s. The unchanged repeat took 0.35 s with identical WAV/PCM hashes; a seed
+  change took 1.55 s and changed them. Each output decodes as 48 kHz stereo,
+  exactly 12 seconds, non-silent and without clipped samples. This is execution,
+  export and signal validation, not a listening-quality or 75-second template
+  qualification. Creating the audio graph during active image sampling timed
+  out on its loader contract; creating it with the backend idle passed.
+- Wan VACE 1.3B: an Expert connected starter plus a manually wired Video Export
+  used its existing pinned cache with Hub offline mode. Explicit test controls
+  were 256 x 256, nine frames, eight steps and 8 fps. Generation/export completed
+  in 28.97 s. The MP4 decodes to nine distinct frames at 256 x 256, lasting 1.125 s;
+  the inspected frame contains the requested red ball on a table. This small
+  execution probe does not remove the existing full-length text-only VACE
+  motion-quality restriction or promote its blocked Gallery template.
+  The unchanged repeat took 32.19 s and reproduced the MP4 bytes, but reloaded
+  components because available host memory crossed the safety floor; this is
+  pressure cleanup evidence, not a cache hit. Seed 1 took 34.62 s and produced
+  different bytes with the same valid frame count, dimensions and duration.
+
+Final qualification including the canonical-only optional-recipe overlay:
+verified optional suite: 3,703 passed, 12 skipped, 10,073 subtests; base suite:
+3,163 passed, 500 skipped, 9,482 subtests. Client `npm run check` passed (1,146
+reported Node tests across the gate); `npm run check:ui` passed two shared-control
+and all 159 Studio tests after the schema and route-pin refresh. Startup gzip is
+618,860 bytes against the unchanged 619,520-byte budget. Four live backend browser
+cases and the 227-node HTTP contract passed against the rebuilt production server.
+The six regenerated-ledger test files passed 60 tests, one skip and 848 subtests;
+recursive comparison confirms only bundle/source hash propagation in those files.
+Four focused creator, cache-control and save/reload mocked browser cases also
+passed after the final canonical overlay. The final backend commands were managed
+CPU Python `-m pytest -q tests` against the working checkout and managed NVIDIA
+Python `scripts/test_reviewed_optional_runtime.py -q tests` in the isolated GPU
+checkout. The latter validates and activates the approved environment before
+running tests; neither command ran concurrently with native model execution.
+
+All 71 emitted frontend files match both backend bundles on disk. The 70 served
+files match over HTTP, including HTML through `/`; the known license-text 404
+remains recorded. All 383 original inventoried user files are byte-identical,
+and all 18 original model snapshots remain present without broken links.
+The final HTTP starter checks confirmed optional recipe inputs for DDPM, Wan VACE
+and Stable Audio. The isolated test server was stopped with an empty queue, and
+its original cache configuration was restored. This Windows follow-up is prepared
+for feature-branch publication with the client CI pinned to its matching backend
+commit. The earlier published tips above identify the preceding checkpoint;
+the exact follow-up revisions are recorded in Git history.
+Raw paths, task identifiers, generated media and runtime installation records
+remain local and ignored. No Gallery media hashes, runtime seals, model pins or
+release-readiness records were altered to suppress qualification failures.
 
 ## Sequencing and validation
 

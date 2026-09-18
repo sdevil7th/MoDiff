@@ -37,6 +37,7 @@ def _standard_schema(contract, modules):
             IMAGE_PIPELINE_ADAPTERS,
             image_pipeline_contract,
             image_loader_field_params,
+            image_operation_loader_defaults,
             image_action_field_params,
             _image_output_options,
         )
@@ -51,6 +52,8 @@ def _standard_schema(contract, modules):
         if action != "LoadPipeline" and "output_type" not in fields:
             fields["output_type"] = {"options": _image_output_options(adapter, action)}
         values = {"pipeline_class": pipeline, "mode": task} if action == "LoadPipeline" else {"image_contract": signal}
+        if action == "LoadPipeline":
+            values.update(image_operation_loader_defaults(adapter))
     elif module == "modules.DiffusersVideo":
         from modules.DiffusersVideo.main import VIDEO_PIPELINE_ADAPTERS, get_video_mode_field_contract, _adapter_signal
 
@@ -86,6 +89,10 @@ def _standard_schema(contract, modules):
     if action == "LoadPipeline":
         from modiff.model_artifact_catalog import catalog_revision
 
+        if "execution_recipe" in params:
+            # These loaders use their own resource fields when no override is
+            # connected. New stage drafts must not propose a spurious repair.
+            params["execution_recipe"]["required"] = False
         values.update(
             model_id={"source": "hub", "value": adapter.default_repo},
             revision=getattr(adapter, "revision", None) or catalog_revision(adapter.default_repo) or "",
@@ -100,6 +107,11 @@ def _standard_schema(contract, modules):
             if adapter.default_conditioning_repo:
                 values["conditioning_model_id"] = {"source": "hub", "value": adapter.default_conditioning_repo}
                 values["conditioning_revision"] = catalog_revision(adapter.default_conditioning_repo) or ""
+            else:
+                # A new unconditioned operation must not inherit the generic
+                # loader's hidden ControlNet model and demand its installation.
+                values["conditioning_model_id"] = ""
+                values["conditioning_revision"] = ""
         if "mode" in params:
             params["mode"]["options"] = [adapter.mode] if module == "modules.DiffusersThreeD" else list(adapter.modes)
     # Selector defaults must agree with the resolved operation before any field

@@ -123,6 +123,13 @@ def tag_test_image_pipeline(pipeline, pipeline_class, mode, *, repo=None, revisi
 
 
 class DiffusersImageRegistryTests(unittest.TestCase):
+    def test_prequantized_transformer_is_an_optional_loader_input(self):
+        # Ordinary pipelines load their own transformer. Graph repair must not
+        # invent a connection to an unrelated `any` output for this override.
+        param = LoadPipeline.params["prequantized_transformer"]
+        self.assertEqual(param["display"], "input")
+        self.assertIs(param.get("required"), False)
+
     def test_missing_pinned_snapshot_explains_model_manager_recovery_without_download(self):
         from huggingface_hub.errors import LocalEntryNotFoundError
         from modules.DiffusersImage.main import load_cached_image_component
