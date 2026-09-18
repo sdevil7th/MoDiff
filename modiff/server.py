@@ -559,6 +559,7 @@ from modiff.task_template_contracts import (
 from modiff.modelstore import modelstore
 from modules import MODULE_MAP
 from modiff.custom_extension_api import CustomExtensionAPI
+from modiff.service_api import ServiceAPI
 from utils.huggingface import (
     cleanup_interrupted_hub_download_files,
     delete_model,
@@ -1253,7 +1254,7 @@ def studio_download_files_for_repo(repo_id):
     return list(next(iter(normalized), ()))
 
 
-class WebServer(CustomExtensionAPI):
+class WebServer(CustomExtensionAPI, ServiceAPI):
     def __init__(
         self,
         modules: dict = {},
@@ -1451,6 +1452,7 @@ class WebServer(CustomExtensionAPI):
                 web.get("/media/preview", self.media_preview),
                 web.get("/preview", self.preview),
                 web.post("/graph", self.graph),
+                web.post("/service_package", self.service_package),
                 web.get("/queue", self.get_queue),
                 web.get("/runs/{task_id}", self.get_run),
                 web.delete("/queue/{task_id}", self.delete_task),
@@ -9864,6 +9866,8 @@ class WebServer(CustomExtensionAPI):
             self._restore_execution_process_state(process_state, graph)
 
     def _execute_graph(self, graph):
+        if "servicePackage" in graph:
+            self._validate_service_graph(graph)
         sid = graph["sid"]
         nodes = graph["nodes"]
         # API paths share ancestor prefixes. Visit each outer graph node once

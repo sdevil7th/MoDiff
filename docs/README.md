@@ -48,3 +48,6 @@ Public documentation should describe the supported current behavior and make its
 Do not publish credentials, private media, personal paths, machine inventories, unredacted provenance, or dated internal execution trackers. Document supported product identifiers and contracts exactly as they appear in the current implementation.
 
 When behavior changes, update the root README and the narrow guide in the same contribution. Verify repository-relative links and run the validation described in [CONTRIBUTING.md](../CONTRIBUTING.md) before requesting review.
+
+- [Developer setup with uv and npm](developer-setup.md)
+- [Service prototyping with API graphs](service-prototyping.md)

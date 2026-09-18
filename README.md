@@ -194,9 +194,15 @@ cp config.example.ini config.ini
 
 `config.ini` is intentionally ignored because it may contain a Hugging Face token and machine-local paths.
 
+## Developer setup and service prototyping
+
+Developers can use the [script-free uv/npm setup](docs/developer-setup.md) and
+[export a named service interface](docs/service-prototyping.md) from Expert mode.
+Services reuse the existing API graph and local runtime.
+
 ## Managed installation profiles
 
-MoDiff's installer owns the executable Python/Torch environment. The project is intentionally marked `uv`-unmanaged, so `uv sync` and `uv run` are not supported setup or launch commands. The installer stages a fresh environment, checks its package policy and a real device tensor, then atomically promotes it to `.venv/` while retaining the previous environment for rollback. When the sibling client is installed, setup also downloads and SHA-256 verifies the pinned rights-approved Template Gallery snapshot and bundles it under `web/template-gallery` so normal use does not wait on Hub media requests. Four permission-dependent preview files are currently unavailable; their templates remain usable and do not request those files.
+MoDiff's installer owns the executable Python/Torch environment. The project is intentionally marked `uv`-unmanaged, so ordinary `uv sync` and `uv run` are not supported setup or launch commands. The explicit `uv run --no-project --no-sync ... -m modiff.dev` bootstrap described above delegates to this same installer without project resolution. The installer stages a fresh environment, checks its package policy and a real device tensor, then atomically promotes it to `.venv/` while retaining the previous environment for rollback. When the sibling client is installed, setup also downloads and SHA-256 verifies the pinned rights-approved Template Gallery snapshot and bundles it under `web/template-gallery` so normal use does not wait on Hub media requests. Four permission-dependent preview files are currently unavailable; their templates remain usable and do not request those files.
 
 | Installer choice | Managed profile | Current scope |
 | --- | --- | --- |

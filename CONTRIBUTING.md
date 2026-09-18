@@ -10,6 +10,8 @@ integrating another machine's work, read and follow
 
 ## Development setup
 
+For script-free `uv`/`npm` setup, use [Developer setup](docs/developer-setup.md).
+
 Use Python 3.12 and create the same managed CPU profile used by baseline CI:
 
 ```bash
@@ -26,7 +28,7 @@ uv pip install --python .venv/Scripts/python.exe -r requirements/test.txt
 .\.venv\Scripts\python.exe -m modiff.preflight --json --check-port 8088 --fail-on-error
 ```
 
-Choose the qualified accelerator profile relevant to a hardware-specific change and report that validation separately. Do not use `uv sync` or `uv run`: the project is intentionally `uv`-unmanaged because the installer, not the generic resolver, owns the executable Torch profile.
+Choose the qualified accelerator profile relevant to a hardware-specific change and report that validation separately. Do not use `uv sync` or ordinary `uv run` (the documented `uv run --no-project --no-sync ... -m modiff.dev` bootstrap is the explicit exception): the project is intentionally `uv`-unmanaged because the installer, not the generic resolver, owns the executable Torch profile.
 
 Do not commit `config.ini`, `.env` files, model caches, generated outputs, local logs, virtual environments, or test caches.
 

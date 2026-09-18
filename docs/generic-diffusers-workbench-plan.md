@@ -32,8 +32,9 @@ M5 is complete: selective recomputation, component ownership, isolated mutable
 state, bounded memory and failure recovery passed their scoped validation.
 M6 is complete: unified custom-source review, explicit code approval, ordinary
 node and Modular block execution, reload and targeted invalidation passed their
-scoped validation. M7–M8 remain pending. This does not qualify every declared
-model/task, hardware configuration or third-party extension.
+scoped validation. M7 implementation and Linux validation are complete; Windows
+clean-install execution remains pending under M7.3. M8 remains pending. This does
+not qualify every declared model/task, hardware configuration or third-party extension.
 
 ## Progress tracker
 
@@ -50,7 +51,7 @@ Model execution, hardware qualification, and UI tests are separate evidence.
 | M4 — Stage authoring and model/task switching      | Complete    | None within M4; broader model/hardware qualification remains explicitly scoped         |
 | M5 — Reuse and selective recomputation             | Complete    | None within M5; broader family/hardware qualification remains scoped                   |
 | M6 — Custom-node developer experience              | Complete    | None within M6; arbitrary extensions still need code/dependency/resource review        |
-| M7 — Developer setup and service prototyping       | Not started | Tested uv/npm setup, platform guidance and reproducible API export                     |
+| M7 — Developer setup and service prototyping       | In progress | Windows clean-install/health/service execution evidence (M7.3)                         |
 | M8 — Consolidation and product qualification       | Not started | Legacy-compatible retirement, terminology, complete user journeys and runtime evidence |
 
 Completed foundation: plan committed in both repos; implementation branches
@@ -932,8 +933,8 @@ M6 completion evidence:
   were preserved. Five dependent ledgers changed only **18 hash bindings**; all
   **200** canonical workflow and **78** public template records stayed unchanged.
 
-M7 (developer setup/service prototyping) and M8 (consolidation/qualification) remain
-unchecked. No new live diffusion-model or Windows hardware qualification is claimed.
+At M6 close, M7 and M8 were still pending; the current M7 status is recorded below.
+No new live diffusion-model or Windows hardware qualification is claimed.
 
 M6 implementation commits: backend
 `12fb46efd9c886bb55e70121a0f003d071972a7f` and client
@@ -944,20 +945,101 @@ server was stopped after verifying that its queue was empty.
 
 ### M7 — Add transparent developer setup and service prototyping
 
-- [ ] **M7.1** Design a documented `uv` backend path and `npm` client path for the supported
+- [x] **M7.1** Design a documented `uv` backend path and `npm` client path for the supported
       runtime profiles. Keep guided installation and existing environments working.
-- [ ] **M7.2** Reconcile `uv` management, constraints, platform Torch sources, optional
+- [x] **M7.2** Reconcile `uv` management, constraints, platform Torch sources, optional
       runtimes, and reproducibility before documenting commands as supported.
 - [ ] **M7.3** Publish working Windows and Linux commands; test clean environments without
       replacing a user's accelerator packages or downloading inference weights.
-- [ ] **M7.4** Reuse API graph export for a reproducible execution package with dependencies,
+- [x] **M7.4** Reuse API graph export for a reproducible execution package with dependencies,
       model revisions, custom-node identities, and named service inputs/outputs.
-- [ ] **M7.5** Treat standalone Python generation for arbitrary graphs as a separate feature;
+- [x] **M7.5** Treat standalone Python generation for arbitrary graphs as a separate feature;
       avoid claiming that a MoDiff API package is independent Diffusers Python.
 
 Acceptance: clean setup and health checks on supported platforms; a saved workflow
 executes through the documented API with equivalent resolved inputs. Credentials
 and local machine paths do not enter portable packages.
+
+#### M7 implementation and validation — 2026-09-18
+
+The implementation is complete on both feature branches. M7 remains **in progress**
+because Windows execution has not been performed here. Do not check M7.3 merely
+because Windows commands and a CI job exist.
+
+M7.3 platform evidence:
+
+- [x] Linux: isolated clean CPU installation through the exact documented uv command;
+      preflight reports ready; script-free supervised launch responds to health;
+      saved API graph and Manual/Auto service calls produce equivalent text output.
+- [x] Linux client: `npm ci` and the complete client quality gate.
+- [ ] Windows: run the committed CPU setup/check/service CI job or the documented
+      commands in a clean Windows environment and record the result. No Windows
+      runner is available in this session. Accelerator/model qualification remains
+      separate from this CPU setup check.
+
+Delivered behavior:
+
+- `modiff.dev` is a standard-library bootstrap for the existing installer and
+  runtime. `plan` is read-only, `setup` refuses an existing `.venv` unless `--repair`
+  is explicit, and `check`/`run` use the installed Python and accelerator process
+  environment. Guided launchers, reviewed Torch sources, optional-runtime consent,
+  staged promotion and rollback remain shared.
+- Expert's lazy **Export → Service package** dialog reuses the existing API export
+  and Modular/Block lowering. It declares required named scalar inputs and named
+  persisted preview outputs, rejects duplicate/invalid names, and refuses stale
+  graph/context changes. Auto retains its existing Export menu.
+- Backend `/service_package` inspection/build/preparation records the existing
+  concrete graph, backend source identity, Python/profile/dependency contract,
+  observed installed versions, required optional profiles, explicit immutable
+  model references and approved custom-node code/dependency identities. Active
+  overlay distributions take precedence over shadowed base packages.
+- Named inputs omit their current values. Session/UI snapshots are excluded;
+  execution hints remain subject to portability checks. Detected credentials,
+  local paths/models, mutable model revisions and connected model selectors block
+  export with an actionable error. This first interface supports scalar values;
+  custom Python's hidden dependencies cannot be inferred automatically.
+- The CLI prepares and submits through ordinary `/graph`, then retrieves exact
+  task/node/field results from `/runs`. Multi-item durable media references are
+  projected without copying private graph snapshots. Timeouts do not resubmit or
+  cancel work. Requirements are checked again when execution begins; Auto gets a
+  fresh receipt for the invocation's resolved values. No alternate executor,
+  automatic package/code install, model download, or code approval was added.
+- Developer setup and service-prototyping guides plus a model-free API graph,
+  interface and inputs example are committed. Standalone arbitrary-graph Python
+  generation is explicitly separate.
+
+Validation:
+
+- Backend final gate: Ruff E9/F and `uv pip check` passed; preflight ready;
+  **3,147 passed, 510 skipped, 9,311 subtests**, two existing warnings.
+- Verified optional-runtime entry point, service/setup/custom-extension tests:
+  **54 passed**. These are no-download contracts/custom-node tests, not diffusion
+  model output qualification.
+- Client `npm ci` and `npm run check` passed, including **1,144 Node tests**.
+- `npm run check:ui`: shared controls **2 passed**; initial mocked suite
+  **155 passed, 3 failed**. The StableAudio native-drag case passed on unchanged
+  rerun. Two template cases encountered remote asset HTTP 503/queue errors and
+  passed using the existing `MODIFF_E2E_TEMPLATE_INPUT_CACHE` hook against the
+  installed content-addressed assets, with normal checksums enforced. Every case
+  has a passing result; the initial full sweep was not a single green run.
+- Fresh production browser: authored Text Value → Data Viewer using native
+  controls, exported raw API and named service JSON, verified equivalent prepared
+  node parameters/paths, and completed the service through the real queue with
+  the expected durable output. No browser page errors.
+- HTTP smoke in both existing and clean Linux CPU environments: health, saved
+  graph, Manual/Auto service reuse, explicitly approved custom source, and rejection
+  after custom source edits passed. No inference weights were downloaded.
+- **70 generated client files** match the backend bundle; HTML and its **six**
+  referenced assets matched HTTP bytes, and the worker source fingerprint matched
+  current source. Both temporary server queues were empty before shutdown.
+- Startup gzip is **604.2 KiB** under the unchanged **605 KiB** ceiling. The lazy
+  service dialog takes deferred aggregate gzip to **208.3 KiB**, bounded at
+  **209 KiB**; both per-chunk ceilings stay unchanged. The five generated evidence
+  files changed only bundle/content-hash bindings: all **200 workflows** and
+  **78 templates** retain their semantic evidence.
+
+Downloaded models, the installed Gallery cache and backend-owned `web/user`
+were preserved. M8 was not started. Both branches remain local; no push occurred.
 
 ### M8 — Retire redundant public surfaces and qualify the product
 
