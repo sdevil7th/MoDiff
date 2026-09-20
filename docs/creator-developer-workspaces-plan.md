@@ -390,8 +390,17 @@ acceptance, W5–W10 and Windows memory qualification remain open.
       definitions, compatible interfaces and crossing connections.
 - [ ] Complete model/task replacement for existing upstream Modular compositions
       and the full interface/modification matrix; retain their current editing path.
+- [x] Preserve compatible outside inputs during generic Block task changes;
+      extend shared input connections from their existing source without changing
+      public port identities, and reject competing sources or sealed destinations.
 - [ ] Make compatible model changes retain inputs and adaptable fields; preserve
       unsupported values without execution. Handle disconnected and shared loaders.
+- [ ] Resolve Automatic memory planning for generic multi-task Modular workflows.
+      Live SDXL text-to-image → image-to-image authoring preserved the graph, but
+      Automatic rejected execution because the task was ambiguous. Keep this
+      separate from execution with explicit Custom memory settings.
+- [ ] Derive output-history task metadata from the authored generic graph; the
+      successful SDXL image-to-image run still inherited a text-to-image label.
 - [ ] Add required image/mask/reference operations through actual task contracts.
       Respect dimensions, shared generator identity and upstream state writers.
 - [ ] Preserve custom nodes and explicit diagnostic edges when no safe automatic
@@ -407,8 +416,12 @@ W5 owning-Block checkpoint: generic operation graphs expose model/task changes o
 collapsed Blocks and expanded loader inspectors. The shared planner updates one
 instance, retains semantic IDs even when implementation classes change, and uses
 the existing Undo/rollback transaction. Incompatible public bindings and bound
-values are rejected before mutation. Outside inputs cannot acquire a competing
-internal driver or silently change shared-group wiring. This does not claim that
+values are rejected before mutation. Outside inputs are included as read-only
+sources in the existing planner, so they
+keep precedence over starter connections. Added shared consumers receive reviewed
+crossing wires from the same source. Competing sources, sealed controls and
+incompatible bound fields still stop the preview without changing the workflow.
+This does not claim that
 arbitrary upstream Modular compositions can be switched through the generic path,
 or qualify any model execution. Remaining W5 modification and execution rows stay
 open.
