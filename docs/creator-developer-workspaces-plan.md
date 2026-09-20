@@ -120,7 +120,7 @@ visible and does not count as a pass or a completed release requirement.
 | W1  | Baseline, artifact classification and executable test ledger | In progress: inventory/path ledger       | W0                              |
 | W2  | Workspace switch, independent memory labels and migration    | In progress: controls and persistence    | W1                              |
 | W3  | Creator entry and Developer Workflows modal                  | Complete: entry flows                    | W2                              |
-| W4  | Unified Nodes library and contextual inspector               | Planned                                  | W2                              |
+| W4  | Unified Nodes library and contextual inspector               | In progress — inspector implemented      | W2                              |
 | W5  | Generic model/task changes and workflow modification         | Planned                                  | W3, W4                          |
 | W6  | HF/local custom-node workflow                                | Planned                                  | W4, W5                          |
 | W7  | Concurrent authoring, reuse and recovery                     | Planned                                  | W5, W6                          |
@@ -170,10 +170,10 @@ Implemented W2 foundation: keyboard-accessible Creator/Developer control,
 Automatic/Custom memory labels, compatible preference migration, and per-workspace
 panel restoration. Unit and native browser checks cover migration, graph/value
 preservation and memory-policy independence. Full W2 acceptance remains open for
-loaded models/active execution and the remaining audience-control audit. In
-particular, diagnostic inspection still changes workspace automatically; resolve
-that with the shared contextual inspector in W4. Startup and discovery still use
-the previous surfaces until W3/W4 land.
+loaded models/active execution and the remaining audience-control audit. W4 now
+keeps diagnostic inspection in the selected workspace; the native Run-blocked and
+Fix paths are covered separately. W3 startup is complete; discovery consolidation
+remains in W4.
 
 ### W3 — Entry flows and Workflows modal
 
@@ -200,7 +200,7 @@ visible executable graph. Opening/selecting tasks performs no model allocation.
       in both directions with the same connection validation as the canvas.
 - [ ] Retain legacy search aliases and actionable access to distinct implementations
       without presenting duplicates as separate generic operations.
-- [ ] Use the selected node/Block inspector for Parameters, Interface, Implementation,
+- [x] Use the selected node/Block inspector for Parameters, Interface, Implementation,
       Docs and Run details. Developer emphasizes diagnostic/source tools.
 - [ ] Keep nested graph editing, public sockets, output previews and ordinary node
       behavior shared across both workspaces. Do not confuse Python blocks with
@@ -209,6 +209,31 @@ visible executable graph. Opening/selecting tasks performs no model allocation.
 Acceptance: library and canvas tests cover built-ins, enabled custom nodes, saved
 compositions, type aliases, unsupported connections, keyboard use and legacy load.
 Inspecting metadata never mutates execution or assumes the library was already open.
+
+W4 inspection checkpoint: one shared inspector now serves ordinary nodes,
+registered/saved Blocks and enabled custom nodes through the Studio side panel and
+canvas dialog in both workspaces. The operation-only inspector is removed.
+Parameters reuse the canvas controls; metadata sections show declared sockets,
+connections, implementation/source identities, retained settings, help and current
+run diagnostics. Opening details sends no field actions and grants no code consent.
+Run-blocked and Fix actions focus the affected node without switching workspace or
+memory policy. Native checks cover unchanged graph contents, keyboard/Escape focus,
+parameter edits/Undo, Block controls and approved custom source metadata. A cold
+production Qwen workflow passed inspection in both workspaces, edit/save/reload and
+narrow layout without inference. The complete model campaign remains W8.
+
+Checkpoint validation: `npm run check` passed; `npm run check:ui` passed all
+174 cases (2 shared controls and 172 Studio cases). The backend base gate passed
+3,160 tests and 9,767 subtests, with 510 skips; lint, dependency and preflight checks
+passed. The published bundle matches all 78 client build files; regenerated
+coverage ledgers changed only 18 hash fields. All 104 downloaded-model snapshot
+file lists remain unchanged. These results do not complete real-model execution,
+Windows memory qualification or release acceptance.
+
+W4 remains in progress: consolidated discovery, shared insertion/suggestion coverage
+and the remaining presentation/terminology audit are not marked complete by this
+inspection checkpoint. The existing library still exposes its previous catalog
+views pending that work.
 
 ### W5 — Model/task changes and editable workflows
 
@@ -426,10 +451,10 @@ Reuse the current owners rather than adding another runtime or workflow format:
 
 | Area                               | Existing owners to inspect/change                                                                                                                                  |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Workspace / entry / discovery      | Client settings and Studio stores, TopBar, TaskLauncher, TemplateBrowserDialog, NodeList                                                                           |
+| Workspace / entry / discovery      | Client settings and Studio stores, TopBar, DeveloperWorkflowLauncher, WorkflowEntryActions, TemplateBrowserDialog, NodeList                                        |
 | Canonical creation and changes     | OperationCatalogPanel, OperationGraphControls, operationAuthoring, operationGraphTransaction, backend operation_catalog / operation_starters / operation_contracts |
 | Dynamic controls and compatibility | Registry field actions, ModelSelectField, shared connection matching, operation schemas                                                                            |
-| Context and extensions             | OperationStageInspector, CustomExtensionsPanel, backend custom_extensions / custom_extension_api                                                                   |
+| Context and extensions             | GraphNodeInputs, NodeInspectorDialog, NodeInspectionDetails, CustomExtensionsPanel, backend custom_extensions / custom_extension_api                               |
 | Reuse and responsiveness           | Backend server handlers, node_cache_identity, workflow_auto_resource / workflow_auto_lifecycle, existing executor and component manager                            |
 | Persistence and services           | Existing flow/Studio/Block stores and lowering, service_package / service_api / service CLI                                                                        |
 
