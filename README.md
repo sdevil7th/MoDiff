@@ -227,7 +227,17 @@ Open the URL printed by Vite. These uv commands invoke MoDiff's shared managed
 installer through Python; they are not `uv sync` or a new dependency resolver.
 See [developer setup](docs/developer-setup.md) for environment details and
 [service prototyping](docs/service-prototyping.md) to export a named service
-interface from Expert mode. Services reuse the existing API graph and local runtime.
+interface from the Developer workspace. Services reuse the existing API graph and local runtime.
+
+The frontend offers **Creator** (Templates as the starting point) and **Developer**
+(a task-first Workflows chooser). Both use one editable canvas and Nodes library,
+including enabled custom nodes and Saved Blocks. Double-click the canvas to search;
+drag from a socket to find compatible nodes and Blocks. **Show implementation
+nodes** reveals underlying adapters and upstream Python block implementations.
+A graph Block can be expanded and edited; its source identity is available in
+**Inspect Block → Implementation**. **Memory: Automatic / Custom** is independent
+of workspace selection. See the [workspace implementation plan](docs/creator-developer-workspaces-plan.md)
+for completed acceptance and the remaining model-execution campaign.
 
 ## Managed installation profiles
 

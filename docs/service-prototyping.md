@@ -1,11 +1,11 @@
 # Service prototyping with an API graph
 
-In Expert mode, choose **Export → Service package**. MoDiff lowers the same graph
+In the Developer workspace, choose **Export → Service package**. MoDiff lowers the same graph
 used by API graph export, including expanded Blocks and Modular composition.
 Name the scalar controls callers should supply and the preview outputs they
 should receive. Leave a field blank to keep it internal. Named inputs have no
 exported default: supply every value on every invocation. At least one preview
-output is required. Auto mode keeps its existing compact Export menu.
+output is required. The Creator workspace keeps its compact Export menu.
 
 The resulting `modiff-service-v1` file contains the existing API graph, a named
 interface, and an observed execution manifest. It runs through the local MoDiff

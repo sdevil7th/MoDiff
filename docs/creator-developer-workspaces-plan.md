@@ -114,20 +114,20 @@ Attach exact commits and sanitized results to its review; retain raw receipts,
 machine inventories and media in ignored review storage. A blocked case remains
 visible and does not count as a pass or a completed release requirement.
 
-| ID  | Milestone                                                    | Status                                      | Depends on                      |
-| --- | ------------------------------------------------------------ | ------------------------------------------- | ------------------------------- |
-| W0  | Accepted design and detailed implementation/test plan        | Complete: plan only                         | User direction                  |
-| W1  | Baseline, artifact classification and executable test ledger | In progress: inventory/path ledger          | W0                              |
-| W2  | Workspace switch, independent memory labels and migration    | In progress: controls and persistence       | W1                              |
-| W3  | Creator entry and Developer Workflows modal                  | Complete: entry flows                       | W2                              |
-| W4  | Unified Nodes library and contextual inspector               | In progress — library, search and inspector | W2                              |
-| W5  | Generic model/task changes and workflow modification         | Planned                                     | W3, W4                          |
-| W6  | HF/local custom-node workflow                                | Planned                                     | W4, W5                          |
-| W7  | Concurrent authoring, reuse and recovery                     | Planned                                     | W5, W6                          |
-| W8  | All-local-image execution and modification campaign          | Planned                                     | Stable W2–W7 build              |
-| W9  | Other modalities and real service-export campaign            | Planned                                     | Stable W2–W7 build; W8 fixtures |
-| W10 | Release acceptance, documentation and publication            | Planned                                     | W8, W9                          |
-| H1  | Windows Qwen 16 GB VRAM / 32 GB RAM qualification            | Deferred until main UI/UX implementation    | W2–W7; Windows host             |
+| ID  | Milestone                                                    | Status                                   | Depends on                      |
+| --- | ------------------------------------------------------------ | ---------------------------------------- | ------------------------------- |
+| W0  | Accepted design and detailed implementation/test plan        | Complete: plan only                      | User direction                  |
+| W1  | Baseline, artifact classification and executable test ledger | In progress: inventory/path ledger       | W0                              |
+| W2  | Workspace switch, independent memory labels and migration    | In progress: controls and persistence    | W1                              |
+| W3  | Creator entry and Developer Workflows modal                  | Complete: entry flows                    | W2                              |
+| W4  | Unified Nodes library and contextual inspector               | Complete: authoring acceptance           | W2                              |
+| W5  | Generic model/task changes and workflow modification         | Planned                                  | W3, W4                          |
+| W6  | HF/local custom-node workflow                                | Planned                                  | W4, W5                          |
+| W7  | Concurrent authoring, reuse and recovery                     | Planned                                  | W5, W6                          |
+| W8  | All-local-image execution and modification campaign          | Planned                                  | Stable W2–W7 build              |
+| W9  | Other modalities and real service-export campaign            | Planned                                  | Stable W2–W7 build; W8 fixtures |
+| W10 | Release acceptance, documentation and publication            | Planned                                  | W8, W9                          |
+| H1  | Windows Qwen 16 GB VRAM / 32 GB RAM qualification            | Deferred until main UI/UX implementation | W2–W7; Windows host             |
 
 ### W1 — Baseline and test ledger
 
@@ -215,7 +215,7 @@ visible executable graph. Opening/selecting tasks performs no model allocation.
       transaction, with retry and cancellation in both workspaces.
 - [x] Use the selected node/Block inspector for Parameters, Interface, Implementation,
       Docs and Run details. Developer emphasizes diagnostic/source tools.
-- [ ] Keep nested graph editing, public sockets, output previews and ordinary node
+- [x] Keep nested graph editing, public sockets, output previews and ordinary node
       behavior shared across both workspaces. Do not confuse Python blocks with
       editable graph compositions.
 
@@ -355,10 +355,24 @@ wiring, atomic Undo/Redo, explicit Save as and reload. The canonical qualified
 entry remains distinguishable from existing Saved Block revisions. Served build
 bytes match. These checks requested no generation, installation or download.
 
-W4 remains in progress for the remaining terminology/shared nested-editing,
-public-socket and preview acceptance. W7 active-generation authoring, W8 local
-model execution/modification coverage, Windows memory qualification and release
-acceptance remain separate, unfinished work.
+W4 shared-editing acceptance is complete. The detailed Saved Block lifecycle,
+collapsed-control layout, connected/disconnected adoption, registered public-port
+editing, protected replacements and nested preview-interface cases now run in
+both Creator and Developer. Each case additionally switches workspaces and back,
+comparing the full authored nodes/edges and independent memory policy. The tests
+retain their existing Undo/Redo, reload, unchanged-sibling/source, invalid-edit,
+geometry and visible-connector assertions. No separate workspace renderer or
+runtime behavior was needed.
+
+Validation: all 12 expanded native cases and the full client gate passed. A cold
+production Qwen authoring check passed prompt editing, expanded public sockets,
+workspace switching, root and nested interface inspection, explicit Save as and
+reload. The production build remains byte-identical across all 82 files. Both
+READMEs now describe the implemented entry flows; obsolete Nodes → Stages guidance
+is removed, and service export uses Developer workspace terminology. All 104
+recorded model snapshot file lists remain unchanged. No inference or generation
+quality is claimed by this authoring checkpoint; W2 loaded-model/active-run
+acceptance, W5–W10 and Windows memory qualification remain open.
 
 ### W5 — Model/task changes and editable workflows
 
