@@ -29,6 +29,11 @@ Custom Python and Hub block authors: [Developing custom nodes](custom-nodes.md).
 
 ## Required Engineering Procedure
 
+The [Creator / Developer workspaces plan](creator-developer-workspaces-plan.md)
+is the accepted next implementation plan: audience-specific starting points,
+one editable graph, the Developer Workflows modal, and model/modification tests.
+Its unchecked milestones are planned work, not current support claims.
+
 The [generic Diffusers workbench plan](generic-diffusers-workbench-plan.md)
 defines the staged Auto/Expert authoring redesign, compatibility requirements,
 and acceptance criteria. Planned behavior is not a current support claim.

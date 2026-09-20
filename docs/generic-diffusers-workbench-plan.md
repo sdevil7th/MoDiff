@@ -1,5 +1,11 @@
 # Generic Diffusers workbench implementation plan
 
+The accepted [Creator / Developer workspaces plan](creator-developer-workspaces-plan.md)
+supersedes this document's audience labels, startup flow and catalog presentation.
+It adds the Developer Workflows modal and broader model/modification acceptance.
+Keep the implementation and evidence below as historical scope, not qualification
+of the revised interface. New work is tracked under W1–W10 in the replacement plan.
+
 ## Purpose and status
 
 This is the accepted direction for implementation, not a description of features
