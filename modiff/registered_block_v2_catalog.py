@@ -162,3 +162,32 @@ def registered_block_v2_definition_pins() -> dict[str, tuple[str, str]]:
             entry["compiledDefinitionCanonicalSha256"],
         )
     return result
+
+
+def registered_block_v2_interfaces() -> dict[str, Any]:
+    """Public sockets for discovery, from the validated compiled definitions only.
+
+    No graph, instance values, field actions or runtime admission are returned.
+    The client still verifies and inserts the full pinned definition on selection.
+    """
+    return {
+        "schemaVersion": 1,
+        "error": False,
+        "entries": [
+            {
+                "catalogDefinitionId": entry["catalogDefinitionId"],
+                "catalogDefinitionContentHash": entry["catalogDefinitionContentHash"],
+                "admissionId": entry["admissionId"],
+                "compiledDefinitionContentHash": entry["definition"]["contentHash"],
+                "compiledDefinitionCanonicalSha256": entry["compiledDefinitionCanonicalSha256"],
+                **{
+                    direction: [
+                        {"portId": port["portId"], "valueType": copy.deepcopy(port["valueType"])}
+                        for port in entry["definition"]["boundary"][direction]
+                    ]
+                    for direction in ("inputs", "outputs")
+                },
+            }
+            for entry in _catalog().values()
+        ],
+    }

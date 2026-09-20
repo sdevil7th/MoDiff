@@ -196,7 +196,7 @@ visible executable graph. Opening/selecting tasks performs no model allocation.
 
 - [x] Consolidate canonical discovery, utilities, installed custom nodes and Saved
       Blocks under one searchable library. Keep distinct saved revisions.
-- [ ] Support click/drag insertion, canvas search and dangling-link suggestions
+- [x] Support click/drag insertion, canvas search and dangling-link suggestions
       in both directions with the same connection validation as the canvas.
 - [x] Retain legacy search aliases and actionable access to distinct implementations
       without presenting duplicates as separate generic operations.
@@ -210,6 +210,9 @@ visible executable graph. Opening/selecting tasks performs no model allocation.
 - [x] Drag bound library nodes onto the canvas or into expanded nested Blocks in
       both workspaces, retaining exact contracts, one-step Undo and reload; cancel
       resolution when its selection, document, catalog or destination changes.
+- [x] Include reviewed catalog Blocks and upstream implementations in canvas search;
+      use exact compiled public ports for typed suggestions and one atomic insertion
+      transaction, with retry and cancellation in both workspaces.
 - [x] Use the selected node/Block inspector for Parameters, Interface, Implementation,
       Docs and Run details. Developer emphasizes diagnostic/source tools.
 - [ ] Keep nested graph editing, public sockets, output previews and ordinary node
@@ -315,9 +318,47 @@ backend also passed Qwen and Anima bound drag, exact defaults/provenance, Undo/R
 and reload across both workspaces. Served entry/library bytes match the build;
 no generation, installation or download was requested.
 
-W4 remains in progress: upstream catalog insertion across the remaining entry
-points and remaining terminology/shared nested-editing acceptance are still open. Real-model and concurrent-generation qualification remain
-separate W7/W8 work.
+At the bound-drag checkpoint, catalog search insertion and remaining shared
+editing acceptance were still open.
+
+W4 catalog-search checkpoint: canvas search now includes reviewed task Blocks
+and the same upstream leaf/container implementations as the sidebar. Normal
+search shows graph-qualified task Blocks; Show implementation nodes reveals
+composable upstream entries and catalog-only structural Blocks. Distinct Saved
+Block revisions remain distinct. Typed suggestions read exact public interfaces
+from a compact backend index, verify all source/admission/compiled pins, and use
+the actual leaf node sockets. Containers without public sockets remain available
+through plain search. No internal socket or model-family adapter is invented.
+
+Insertion uses the existing hash-verified factories and canvas connection commit.
+The node and wire share one Undo/Redo transaction; a failure leaves the picker and
+original connection available for retry. Escape and workflow/discovery changes
+cancel pending insertion. Library, picker and factory callers share metadata
+requests. Metadata browsing does not load models or enable source code.
+
+Catalog-search validation: the full client gate passed. All 19 focused native
+browser cases passed on frozen product source, covering both workspaces, both
+wire directions, keyboard/click, saved revisions, exact catalog identities,
+upstream leaves/containers, catalog-only Blocks, Undo/Redo/reload and delayed
+failure/cancellation. Contract checks cover the public interfaces of all 122
+compiled admissions; they do not establish model execution. The backend gate
+passed 3,161 tests and 9,767 subtests with 510 skips. Final bundle checks passed
+60 tests and 848 subtests with 1 skip. All 82 published build files match;
+regenerated ledgers changed only 18 hash fields. Startup remains within its
+existing budget; this feature adds 1.8 KiB of deferred code, bounded at 222 KiB.
+All 104 downloaded-model snapshot file lists remain unchanged. Original failures
+and corrected test fixtures are retained in review evidence.
+
+Cold production checks against the real backend passed Qwen catalog insertion in
+Creator and Anima insertion in Developer from an image input, with exact public
+wiring, atomic Undo/Redo, explicit Save as and reload. The canonical qualified
+entry remains distinguishable from existing Saved Block revisions. Served build
+bytes match. These checks requested no generation, installation or download.
+
+W4 remains in progress for the remaining terminology/shared nested-editing,
+public-socket and preview acceptance. W7 active-generation authoring, W8 local
+model execution/modification coverage, Windows memory qualification and release
+acceptance remain separate, unfinished work.
 
 ### W5 — Model/task changes and editable workflows
 

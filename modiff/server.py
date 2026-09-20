@@ -457,7 +457,7 @@ from modiff.diffusers_profiles import (
 from modiff.hardware import format_hardware_summary, get_hardware_snapshot, legacy_torch_status
 from modiff.runtime_telemetry import active_accelerator_snapshot, accelerator_cuda_diagnostic
 from modiff.huggingface_node_library import reviewed_huggingface_node_library
-from modiff.registered_block_v2_catalog import registered_block_v2_catalog_entry
+from modiff.registered_block_v2_catalog import registered_block_v2_catalog_entry, registered_block_v2_interfaces
 from modiff.huggingface_cluster_runtime import (
     qualify_huggingface_cluster_auto_authority,
     qualify_huggingface_cluster_expert_runtime,
@@ -1499,6 +1499,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 web.get("/media_assets", self.media_assets_list),
                 web.delete("/media_assets", self.media_assets_cleanup),
                 web.get("/huggingface/node-library", self.huggingface_node_library),
+                web.get("/huggingface/registered-block-interfaces", self.huggingface_registered_block_interfaces),
                 web.get(
                     "/huggingface/registered-block-v2",
                     self.huggingface_registered_block_v2,
@@ -13527,6 +13528,14 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
 
     async def huggingface_node_library(self, _request):
         return web.json_response(await asyncio.to_thread(reviewed_huggingface_node_library))
+
+    async def huggingface_registered_block_interfaces(self, _request):
+        try:
+            interfaces = await asyncio.to_thread(registered_block_v2_interfaces)
+        except ValueError as exc:
+            logger.exception("Could not validate the registered Block interfaces")
+            return web.json_response({"error": True, "message": str(exc)}, status=500)
+        return web.json_response(interfaces)
 
     async def huggingface_registered_block_v2(self, request):
         definition_id = request.query.get("definition_id", "")

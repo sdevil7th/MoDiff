@@ -44,6 +44,40 @@ class HuggingFaceNodeLibraryApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sum(admission["status"] == "admitted" for admission in admissions), 122)
         self.assertTrue(all(admission["executable"] is False for admission in admissions))
 
+    async def test_registered_interfaces_match_every_compiled_boundary_and_are_detached(self):
+        from modiff.registered_block_v2_catalog import registered_block_v2_catalog_entry
+
+        client = TestClient(TestServer(WebServer({}).app))
+        await client.start_server()
+        try:
+            response = await client.get("/huggingface/registered-block-interfaces")
+            self.assertEqual(response.status, 200)
+            payload = await response.json()
+            self.assertEqual(payload["schemaVersion"], 1)
+            self.assertFalse(payload["error"])
+            self.assertGreater(len(payload["entries"]), 100)
+            for row in payload["entries"]:
+                compiled = registered_block_v2_catalog_entry(row["catalogDefinitionId"], row["admissionId"])
+                self.assertEqual(row["compiledDefinitionContentHash"], compiled["definition"]["contentHash"])
+                self.assertEqual(row["compiledDefinitionCanonicalSha256"], compiled["compiledDefinitionCanonicalSha256"])
+                self.assertEqual(row["catalogDefinitionContentHash"], compiled["catalogDefinitionContentHash"])
+                for direction in ("inputs", "outputs"):
+                    self.assertEqual(row[direction], [
+                        {"portId": port["portId"], "valueType": port["valueType"]}
+                        for port in compiled["definition"]["boundary"][direction]
+                    ])
+                self.assertNotIn("graph", row)
+                self.assertNotIn("values", row)
+            payload["entries"][0]["inputs"].clear()
+            repeated = await (await client.get("/huggingface/registered-block-interfaces")).json()
+            self.assertNotEqual(repeated["entries"][0]["inputs"], [])
+            with patch("modiff.server.registered_block_v2_interfaces", side_effect=ValueError("Catalog is invalid")):
+                failed = await client.get("/huggingface/registered-block-interfaces")
+                self.assertEqual(failed.status, 500)
+                self.assertTrue((await failed.json())["error"])
+        finally:
+            await client.close()
+
     async def test_registered_block_v2_endpoint_serves_one_detached_hash_pinned_definition(self):
         server = WebServer({})
         client = TestClient(TestServer(server.app))

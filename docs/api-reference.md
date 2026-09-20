@@ -29,7 +29,7 @@ resolve to loopback.
 | Optimizations           | `GET /runtime/optimizations`, `/jobs/{job_id}`, `/receipts`; `POST /runtime/optimizations/install`, `/activate`, `/rollback`, `/enable`, `/probe`, `/qualify`, `/jobs/{job_id}/cancel`                                                                                                               | Inspect runtime features and legacy package contracts, manage recovery, and record bounded local qualification evidence. Hashless package install and activation are unavailable.         |
 | Optional model runtimes | `GET /runtime/optional-runtimes`, `/jobs/{job_id}`; `POST /runtime/optional-runtimes/install`, `/activate`, `/rollback`, `/jobs/{job_id}/cancel`                                                                                                                                                     | Publish the reviewed optional-library contract and its fail-closed staged lifecycle. The current candidate exposes no executable install or activation action.                            |
 | Auto resource           | `POST /auto_resource/plan`, `POST /auto_resource/plans`, `POST /auto_resource/workflow`, `GET /auto_resource/history`, `DELETE /auto_resource/history`                                                                                                                                                                               | Plan hardware-aware model recipes and manage local planner history.                                                                                                                       |
-| Models                  | `GET /huggingface/node-library`, `/huggingface/modular-conditionals`, `/huggingface/registered-block-v2`, `/model_capabilities`, `/model_artifact_catalog`, `/model_fingerprints`, `/local_models`, `/hf_cache`, `/model_cache/diagnostics`, `/hf_hub`, `/hf_download/plan`; `POST /hf_download`, `/hf_token`; `DELETE /hf_cache/{hash}` | Discover reviewed first-party node definitions, exact compiled Block definitions, and unpruned Modular branch contracts; diagnose, space-plan, download, authenticate, fingerprint, and delete model artifacts.              |
+| Models                  | `GET /huggingface/node-library`, `/huggingface/modular-conditionals`, `/huggingface/registered-block-v2`, `/huggingface/registered-block-interfaces`, `/model_capabilities`, `/model_artifact_catalog`, `/model_fingerprints`, `/local_models`, `/hf_cache`, `/model_cache/diagnostics`, `/hf_hub`, `/hf_download/plan`; `POST /hf_download`, `/hf_token`; `DELETE /hf_cache/{hash}` | Discover reviewed first-party node definitions, exact compiled Block definitions, and unpruned Modular branch contracts; diagnose, space-plan, download, authenticate, fingerprint, and delete model artifacts.              |
 | Template Gallery setup  | `GET /template_gallery/status`, `/template_gallery/plan`; `POST /template_gallery/install`                                                                                                                                                                                                           | Inspect, space-plan, and explicitly install or repair the byte-pinned Gallery payload through the local app.                                                                              |
 | Media lifecycle         | `GET /media_assets`, `DELETE /media_assets`                                                                                                                                                                                                                                                          | Inspect temporary media records or remove exact unpinned, task-scoped, or age-scoped files while no generation is active.                                                                 |
 | Custom modules          | `GET /custom_modules`; `POST /custom_modules/refresh`, `/install`, `/{name}/inspect`, `/{name}/reload`, `/{name}/update`, `/{name}/disable`, `/{name}/enable`                                                                                                                                                                             | Stage, inspect, explicitly enable/reload or disable content-bound custom code. See [custom nodes](custom-nodes.md).                                                                                                        |
@@ -269,6 +269,23 @@ qualified, or eligible for Auto. Reading it does not import Diffusers,
 Transformers, or Torch and does not load or download model weights. Built-in
 definitions have `surface: diffusers_cluster_nodes`, `ownership: library`, and
 `mutable: false`; custom blocks remain User Nodes under `/studio/blocks`.
+
+`GET /huggingface/registered-block-interfaces` returns a schema-1 read-only
+index of the public sockets of every validated compiled catalog entry. Each
+entry contains `catalogDefinitionId`, `catalogDefinitionContentHash`,
+`admissionId`, `compiledDefinitionContentHash`,
+`compiledDefinitionCanonicalSha256`, and `inputs`/`outputs` arrays of
+`{portId, valueType}`. `valueType` is a string or a union of strings. The
+response is `{schemaVersion: 1, error: false, entries: [...]}`. Invalid local
+catalog data returns HTTP 500 with `error: true` and a message.
+
+The picker uses this compact index for typed suggestions only when all source,
+admission and compiled pins agree with its registered route. It does not infer
+ports from an internal graph or execute field actions to discover them. This
+endpoint returns no graphs, parameter values, runtime qualification or code
+consent. Selecting a suggestion still fetches and validates the full definition
+below; final canvas connection validation remains authoritative. Browsing this
+index does not import model runtimes, contact the Hub or download weights.
 
 `GET /huggingface/registered-block-v2?definition_id=...&admission_id=...`
 returns one build-time generated `BlockDefinitionV2`, its initial instance
