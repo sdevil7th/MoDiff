@@ -395,12 +395,18 @@ acceptance, W5–W10 and Windows memory qualification remain open.
       public port identities, and reject competing sources or sealed destinations.
 - [ ] Make compatible model changes retain inputs and adaptable fields; preserve
       unsupported values without execution. Handle disconnected and shared loaders.
-- [ ] Resolve Automatic memory planning for generic multi-task Modular workflows.
-      Live SDXL text-to-image → image-to-image authoring preserved the graph, but
-      Automatic rejected execution because the task was ambiguous. Keep this
-      separate from execution with explicit Custom memory settings.
-- [ ] Derive output-history task metadata from the authored generic graph; the
-      successful SDXL image-to-image run still inherited a text-to-image label.
+- [x] Resolve the observed Automatic task-identity gap for recognizable generic
+      Modular operation graphs. Match existing reviewed operations/state edges and
+      map task aliases through their reviewed workflow to existing resource modes.
+      SDXL text-to-image → image-to-image now runs under Automatic memory.
+- [x] Record recognizable model-owner tasks separately from consumed values and
+      apply the correct task label in output history without rewriting saved forms.
+      Ambiguous/partial compositions do not gain a recognized task or resource proof.
+- [ ] Extend task recognition/acceptance to remaining upstream compositions and
+      ambiguous graph signatures; one SDXL run does not qualify every task/model.
+- [ ] Correct stale model display labels and numeric-string summaries in history.
+      Live inspection still showed the old form's model label and “not captured”
+      for numeric strings, despite correct values in the backend input receipt.
 - [ ] Add required image/mask/reference operations through actual task contracts.
       Respect dimensions, shared generator identity and upstream state writers.
 - [ ] Preserve custom nodes and explicit diagnostic edges when no safe automatic

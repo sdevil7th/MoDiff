@@ -199,7 +199,14 @@ def build_resolved_execution_inputs(graph, records, *, task_id, attempt_index, n
     if incomplete:
         unavailable.update(candidates)
         summary = {}
+    from modiff.workflow_task_identity import graph_task_receipts
+
+    graph_tasks = (
+        graph_task_receipts({key: nodes[key] for key in ancestors}, {r["nodeId"]: r for r in captured})
+        if not incomplete and not missing else []
+    )
     return {
+        **({"graphTasks": graph_tasks} if graph_tasks else {}),
         "schemaVersion": 1, "source": "backend-execution", "taskId": str(task_id),
         "attemptIndex": int(attempt_index or 0), "nodeId": str(node_id),
         "nodes": captured, "summary": summary, "ambiguousFields": ambiguous,
@@ -220,6 +227,9 @@ def apply_resolved_execution_inputs(output, receipt):
         return output
     output["resolvedExecutionInputs"] = deepcopy(receipt)
     summary = receipt["summary"]
+    tasks = {item['task'] for item in receipt.get('graphTasks', [])}
+    if len(tasks) == 1 and None not in tasks:
+        output['mode'] = next(iter(tasks))
     for key in OUTPUT_FIELDS:
         if receipt["truncated"] or key in receipt["ambiguousFields"] or key in receipt["unavailableFields"]:
             output.pop(key, None)

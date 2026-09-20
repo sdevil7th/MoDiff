@@ -1962,6 +1962,19 @@ not an unbounded per-iteration trace. This is not
 an assertion about internal library defaults, random seeds generated inside a
 library, output quality, model licensing, or publication qualification.
 
+For concrete Modular graphs, the receipt can also include `graphTasks`, a bounded
+list of `{loaderId, pipelineClass, task}` records for captured model owners in the
+output's actual ancestry. This is recognition of the owner's reviewed operation
+and state-edge contract, separate from captured call arguments. `task: null`
+means that graph does not select one unique public model task; it is not guessed
+from a Block label or an authoring hint. Complete, unambiguous task evidence takes
+precedence over the historical form's task label, without modifying that form.
+Edited upstream compositions, identical task signatures and wrapper workflows
+may remain unresolved. Neither recognition nor the history label grants execution,
+model support or resource qualification. Workflow Auto uses the same recognition
+when existing explicit mode/workflow bindings do not select a task, and still
+requires its ordinary exact-profile, artifact and memory checks.
+
 The allowlist is maintained in `modiff/execution_input_provenance.py` and the
 paired client `resolvedExecutionInputs.ts`. Capture never serializes arbitrary
 model/tensor/media objects or credential fields. Per scalar string/list limits
