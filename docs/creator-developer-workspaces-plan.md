@@ -207,6 +207,9 @@ visible executable graph. Opening/selecting tasks performs no model allocation.
 - [x] Share transient pipeline/task selection and additive discovery filters between
       sidebar and canvas search in both workspaces; resolve bound nodes on insertion
       and cancel pending requests when selection or the destination document changes.
+- [x] Drag bound library nodes onto the canvas or into expanded nested Blocks in
+      both workspaces, retaining exact contracts, one-step Undo and reload; cancel
+      resolution when its selection, document, catalog or destination changes.
 - [x] Use the selected node/Block inspector for Parameters, Interface, Implementation,
       Docs and Run details. Developer emphasizes diagnostic/source tools.
 - [ ] Keep nested graph editing, public sockets, output previews and ordinary node
@@ -287,9 +290,33 @@ Served bytes match the build; all 81 bundle files match, the ledgers changed onl
 18 hash fields, and all 104 model snapshot file lists remain unchanged. This
 increment includes no model-generation or Windows-memory qualification.
 
-W4 remains in progress: bound operation drag insertion, upstream catalog insertion
-across the remaining entry points, and remaining terminology/shared nested-editing
-acceptance are still open. Real-model and concurrent-generation qualification remain
+W4 bound-drag checkpoint: bound library rows now support native drag in both
+workspaces. A single-use local gesture identifies the backend-declared operation;
+the existing resolver and ordinary node factory retain its defaults and provenance.
+The shared drop path adopts it into the deepest expanded Block through the existing
+ownership/history transaction. Selection, workflow, catalog and destination changes
+invalidate pending metadata; a collapsed destination cannot redirect a delayed node
+into the outer graph. Errors leave no orphan and permit retry. Resolution code is
+lazy-loaded, retaining the existing startup and deferred bundle budgets.
+
+Bound-drag validation: `npm run check` passed. All 16 focused native browser cases
+passed on frozen product source, including Qwen and Anima root insertion, nested
+insertion in both workspaces, unchanged siblings/source definitions, Undo/Redo,
+reload, delayed selection/workflow changes, failed resolution/retry and destination
+collapse. Existing catalog drag, click insertion, Saved Block typed insertion and
+prompt-socket regressions passed in that same campaign. Initial test-harness and
+bundle-budget failures remain in review evidence. The backend baseline passed
+3,160 tests and 9,767 subtests with 510 skips; after bundle publication, affected
+contract checks passed 60 tests and 848 subtests with 1 skip. All 81 bundle files
+match; dependent ledgers changed only 18 hash fields. The 104 recorded downloaded
+model snapshot file lists remain unchanged. These are authoring/contract checks,
+not model-generation qualification. Production browser checks against the restarted
+backend also passed Qwen and Anima bound drag, exact defaults/provenance, Undo/Redo
+and reload across both workspaces. Served entry/library bytes match the build;
+no generation, installation or download was requested.
+
+W4 remains in progress: upstream catalog insertion across the remaining entry
+points and remaining terminology/shared nested-editing acceptance are still open. Real-model and concurrent-generation qualification remain
 separate W7/W8 work.
 
 ### W5 — Model/task changes and editable workflows
