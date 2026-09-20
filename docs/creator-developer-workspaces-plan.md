@@ -382,6 +382,9 @@ acceptance, W5–W10 and Windows memory qualification remain open.
 - [x] Protect existing Block route changes from stale workflow/graph replies,
       cancellation and active gestures; validate crossing wires against the actual
       restored draft interface before the atomic history transaction.
+- [x] Preserve generic operation metadata and shared input relationships through
+      Block projection, nested adoption and reuse; update hidden shared controls
+      atomically and retain independent instance seed identity.
 - [ ] Extend owning-Block model/task changes through the existing composition
       transaction, preserving nested source, interface and crossing connections.
 - [ ] Make compatible model changes retain inputs and adaptable fields; preserve
@@ -445,6 +448,16 @@ This fixes the existing switch transaction; it does not extend the older fixed
 route list or claim generic nested Block/task switching. That implementation and
 all-model execution remain open. New modelVariant Blocks keep their current
 checkpoint selector, and no source definition or downloaded model is modified.
+
+W5 shared-input checkpoint: generic operation hints now survive visible and
+execution projections of Blocks. Loader references follow exact semantic IDs when
+a Block is adopted into another Block and receive the destination instance prefix
+when projected. Shared controls use the existing field/value reducers and history;
+root, nested-container and leaf edits update hidden members together. Sealed
+controls reject the whole edit, competing loaders do not gain shared ownership,
+and conflicting shared values still block execution export. Immutable definitions
+remain unchanged. This is a prerequisite for nested model/task changes, not their
+completion. Model execution qualification remains in W8.
 
 ### W6 — Custom-node development
 
