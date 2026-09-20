@@ -117,8 +117,8 @@ visible and does not count as a pass or a completed release requirement.
 | ID  | Milestone                                                    | Status                                   | Depends on                      |
 | --- | ------------------------------------------------------------ | ---------------------------------------- | ------------------------------- |
 | W0  | Accepted design and detailed implementation/test plan        | Complete: plan only                      | User direction                  |
-| W1  | Baseline, artifact classification and executable test ledger | Planned                                  | W0                              |
-| W2  | Workspace switch, independent memory labels and migration    | Planned                                  | W1                              |
+| W1  | Baseline, artifact classification and executable test ledger | In progress: inventory/path ledger       | W0                              |
+| W2  | Workspace switch, independent memory labels and migration    | In progress: controls and persistence    | W1                              |
 | W3  | Creator entry and Developer Workflows modal                  | Planned                                  | W2                              |
 | W4  | Unified Nodes library and contextual inspector               | Planned                                  | W2                              |
 | W5  | Generic model/task changes and workflow modification         | Planned                                  | W3, W4                          |
@@ -153,11 +153,11 @@ downloads, deletions, dependency upgrades or execution-support claims from scann
 
 - [ ] Implement Creator/Developer presentation policy centrally; audit all old
       Auto/Expert checks so audience and resource policy cannot be conflated.
-- [ ] Migrate old Auto view -> Creator and Expert view -> Developer once. Preserve
+- [x] Migrate old Auto view -> Creator and Expert view -> Developer once. Preserve
       independently stored resource settings and legacy graph/API representations.
 - [ ] Preserve graph values/topology, viewport, collapsed state, queue, trust and
       component owners during workspace changes and across reload.
-- [ ] Retain per-workspace panel preferences without letting imported workflows
+- [x] Retain per-workspace panel preferences without letting imported workflows
       change the user's workspace. Expose Automatic/Custom memory in both.
 - [ ] Replace outdated user-facing copy without renaming upstream class names,
       serialized identifiers or historical evidence.
@@ -165,6 +165,15 @@ downloads, deletions, dependency upgrades or execution-support claims from scann
 Acceptance: native switch tests cover old/new storage, both memory policies,
 multiple tabs, loaded models and active runs. Compare execution graph and effective
 settings before/after; verify no load/encode work triggered by presentation alone.
+
+Implemented W2 foundation: keyboard-accessible Creator/Developer control,
+Automatic/Custom memory labels, compatible preference migration, and per-workspace
+panel restoration. Unit and native browser checks cover migration, graph/value
+preservation and memory-policy independence. Full W2 acceptance remains open for
+loaded models/active execution and the remaining audience-control audit. In
+particular, diagnostic inspection still changes workspace automatically; resolve
+that with the shared contextual inspector in W4. Startup and discovery still use
+the previous surfaces until W3/W4 land.
 
 ### W3 — Entry flows and Workflows modal
 
