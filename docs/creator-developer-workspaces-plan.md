@@ -121,7 +121,7 @@ visible and does not count as a pass or a completed release requirement.
 | W2  | Workspace switch, independent memory labels and migration    | In progress: controls and persistence    | W1                              |
 | W3  | Creator entry and Developer Workflows modal                  | Complete: entry flows                    | W2                              |
 | W4  | Unified Nodes library and contextual inspector               | Complete: authoring acceptance           | W2                              |
-| W5  | Generic model/task changes and workflow modification         | Planned                                  | W3, W4                          |
+| W5  | Generic model/task changes and workflow modification         | In progress: loader authoring            | W3, W4                          |
 | W6  | HF/local custom-node workflow                                | Planned                                  | W4, W5                          |
 | W7  | Concurrent authoring, reuse and recovery                     | Planned                                  | W5, W6                          |
 | W8  | All-local-image execution and modification campaign          | Planned                                  | Stable W2–W7 build              |
@@ -376,8 +376,11 @@ acceptance, W5–W10 and Windows memory qualification remain open.
 
 ### W5 — Model/task changes and editable workflows
 
-- [ ] Put model/task changes on the owning loader/Block, reusing current graph-change
-      preview/apply machinery and one Undo/rollback transaction.
+- [x] Put model/task changes on the owning top-level generic loader in both
+      workspaces, reusing current graph-change preview/apply machinery and one
+      Undo/rollback transaction.
+- [ ] Extend owning-Block model/task changes through the existing composition
+      transaction, preserving nested source, interface and crossing connections.
 - [ ] Make compatible model changes retain inputs and adaptable fields; preserve
       unsupported values without execution. Handle disconnected and shared loaders.
 - [ ] Add required image/mask/reference operations through actual task contracts.
@@ -390,6 +393,32 @@ acceptance, W5–W10 and Windows memory qualification remain open.
 Acceptance: the modification matrix below passes in contract/native tests before
 expensive model qualification. Selected paths additionally execute with real models;
 graph-shaped JSON or a successful inspector is not execution evidence.
+
+W5 loader checkpoint: the selected top-level generic loader now exposes
+**Inspect node → Parameters → Change model / task**, also available in the Studio
+side inspector. Replacement choices are local to that owner and use the backend's
+declared pipeline/task contracts. Preview and Apply reuse the existing graph
+planner and history transaction; no second graph representation, executor or
+family dispatch was introduced. The library entry point remains available.
+Nested and legacy Blocks retain their existing composition tools and are not
+silently converted by this control.
+
+The native acceptance covers both workspaces, Qwen → Flux, text-to-image →
+image-to-image, prompt retention, preview cancellation, one-step Undo/Redo,
+explicit Save as and reload. Delayed replies are discarded after a target change,
+inspector close or intervening graph edit, and a fresh request can succeed. The
+new flow exposed and fixed a stale toolbar inspector owner that otherwise reopened
+its dialog after graph replacement and reselection. SDXL shared-seed and keyboard
+inspection regressions were also repeated. An initial SDXL attempt rejected a
+stale preview; the strict guard remains, and wider asynchronous-publication
+acceptance is still part of W5/W7 rather than treated as proven by later passes.
+
+Packaged-browser acceptance uses actual backend metadata for the same Qwen →
+Flux → image-to-image sequence, workspace switches and save/reopen. This is
+**authoring evidence, not model execution**. The complete client gate and affected
+backend bundle/ledger contracts are required for publication. The remaining
+Block-owned switching, modification matrix, W8/W9 model runs and deferred Windows
+memory acceptance remain unchecked.
 
 ### W6 — Custom-node development
 

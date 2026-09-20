@@ -236,7 +236,10 @@ drag from a socket to find compatible nodes and Blocks. **Show implementation
 nodes** reveals underlying adapters and upstream Python block implementations.
 A graph Block can be expanded and edited; its source identity is available in
 **Inspect Block → Implementation**. **Memory: Automatic / Custom** is independent
-of workspace selection. See the [workspace implementation plan](docs/creator-developer-workspaces-plan.md)
+of workspace selection. Select a generic loader and use **Inspect node → Parameters
+→ Change model / task** to review changes to its connected graph; compatible
+inputs survive and Undo restores the change. Nested Blocks retain their composition
+inspector while Block-level switching is being implemented. See the [workspace implementation plan](docs/creator-developer-workspaces-plan.md)
 for completed acceptance and the remaining model-execution campaign.
 
 ## Managed installation profiles
