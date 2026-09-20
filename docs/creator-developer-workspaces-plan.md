@@ -119,7 +119,7 @@ visible and does not count as a pass or a completed release requirement.
 | W0  | Accepted design and detailed implementation/test plan        | Complete: plan only                      | User direction                  |
 | W1  | Baseline, artifact classification and executable test ledger | In progress: inventory/path ledger       | W0                              |
 | W2  | Workspace switch, independent memory labels and migration    | In progress: controls and persistence    | W1                              |
-| W3  | Creator entry and Developer Workflows modal                  | Planned                                  | W2                              |
+| W3  | Creator entry and Developer Workflows modal                  | In progress: Developer entry             | W2                              |
 | W4  | Unified Nodes library and contextual inspector               | Planned                                  | W2                              |
 | W5  | Generic model/task changes and workflow modification         | Planned                                  | W3, W4                          |
 | W6  | HF/local custom-node workflow                                | Planned                                  | W4, W5                          |
@@ -177,13 +177,13 @@ the previous surfaces until W3/W4 land.
 
 ### W3 — Entry flows and Workflows modal
 
-- [ ] Reuse the task-launcher and shared dialog primitives for the Developer
+- [x] Reuse the task-launcher and shared dialog primitives for the Developer
       Workflows modal; route creation through operation capabilities/starters.
-- [ ] Implement task-first selection, downloaded-model ranking, graph/input preview,
+- [x] Implement task-first selection, downloaded-model ranking, graph/input preview,
       Empty/Open/recent workflows and explicit missing-dependency actions.
 - [ ] Keep Creator's Templates/recent/empty path and preserve authored template
       layout. Do not force compact Blocks or a full-screen parameter form.
-- [ ] Add appropriate output nodes and validate actual required component wiring.
+- [x] Add appropriate output nodes and validate actual required component wiring.
       Keep task distinctions such as image-to-image versus instruction editing.
 - [ ] Cover startup restoration, Escape, keyboard navigation, small viewports,
       retry, double click, stale responses and switching tabs while resolving.
@@ -477,3 +477,65 @@ may close within its explicit scope, but outstanding required model rows, active
 authoring failures, undelivered outputs or failed release gates remain open.
 Publish both feature branches with exact paired revisions and the ledger summary;
 never change evidence or silently reduce support to make the aggregate pass.
+
+### W3 Developer entry implementation checkpoint — 2026-09-20
+
+Implemented the task-first **Workflows** chooser using backend operation support,
+with model search and downloaded-file ranking, required-input and connected-node
+preview, Empty/Open/recent actions, and separate setup/model-file actions.
+Creation uses ordinary nodes, typed image/audio/video outputs and the existing
+atomic graph transaction. Existing work restores before a chooser can open.
+Dismissal is persisted per workflow, including empty workflows; explicit New
+workflow offers the chooser again.
+
+The starter API now accepts an optional exact execution profile. This fixes the
+case where selecting two models sharing a pipeline class could create the same
+default loader. Metadata tests exercise all 275 advertised profile/task pairs,
+including immutable repository revisions, without constructing model nodes.
+Six focused native browser tests passed for image generation, image-to-image,
+instruction editing, audio, reload, small viewport/keyboard/Escape, retry,
+double-click and delayed-response cancellation. These tests use backend-generated
+schemas and mocked transport; they are **not model execution qualification**.
+
+W3 remains in progress: the Creator Templates/recent/empty entry refinement and
+remaining acceptance cases are still open. W8/W9 real-model and modification
+campaigns remain unstarted for this workspace redesign. Existing execution
+receipts do not qualify the new chooser or prove all downloaded models work.
+
+The real production-browser check exposed a rapid Qwen → FLUX navigation
+failure: pending field-schema HTTP calls and a signal lookup to a departed
+browser delayed reload. The regression fix aborts nonqueued client waits when
+their document changes or navigation begins, and resolves backend signal futures
+for the disconnected session. Queued action acknowledgements, unrelated sessions
+and the executor's ownership lease remain intact. Regression tests cover each
+boundary. This is a partial recovery fix; it does not close W7's active-inference
+latency, memory reuse or OOM requirements.
+
+After that fix, native production-browser checks passed against the real backend
+for Qwen modular image nodes, FLUX schnell whole-pipeline nodes and Stable Audio:
+exact profile selection, preview, ordinary connected outputs, creation and reload.
+Served entry/chooser JavaScript matched the built files. No inference, install or
+download requests were submitted. All 104 downloaded model snapshot file lists
+remain unchanged.
+
+Validation for this checkpoint:
+
+- Client `npm run check`: passed, including final build and bundle budgets.
+- Shared-control browser suite: 2 passed. Full Studio suite: 166 passed and one
+  notification test retained two old expectations that revisiting a dismissed
+  empty tab reopened its chooser. Both assertions were updated for the accepted
+  per-document dismissal behavior; the complete notification test then passed.
+  All seven new Developer Workflows cases passed in the full run, including
+  recovery through the existing startup-error dialog and capability retry.
+- Backend full base gate: 3,160 tests and 9,767 subtests passed; 510 skipped.
+  Ruff, dependency compatibility and preflight passed. Final regenerated bundle
+  ledgers passed 59 focused tests and 817 subtests, with one skipped; only hash
+  fields changed in those ledgers.
+- Production browser: Qwen modular, FLUX schnell and Stable Audio model selection,
+  connected output creation and reload passed with real backend metadata and
+  exact served-build hashes. No model inference occurred. Test-created workflow
+  documents were archived with the traces and removed from My Workflows.
+
+The optional-runtime execution suite, all-model inference/modification campaign
+and Windows memory qualification were not run for this checkpoint. Keep their
+milestones open.

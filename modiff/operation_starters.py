@@ -21,15 +21,57 @@ def _modular_route(pipeline, task):
     raise ValueError("No reviewed stage route for this task. Add individual operations instead.")
 
 
+def _bind_execution_profile(loader, task, identity):
+    """Select an existing reviewed loader profile without importing model code."""
+    from copy import deepcopy
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES, resolve_execution_profiles_for_loader
+    from modiff.model_artifact_catalog import require_catalog_revision
+
+    if not isinstance(identity, str) or identity != identity.strip():
+        raise ValueError("Select an exact execution profile.")
+    profile = DIFFUSERS_EXECUTION_PROFILES.get(identity)
+    if (
+        profile is None
+        or not profile.public
+        or profile.pipeline_class != loader["operation"]["binding"]["pipelineClass"]
+        or profile.backend_path != f"{loader['module']}.{loader['action']}"
+        or (profile.execution_path != "modular-diffusers" and task not in profile.modes)
+    ):
+        raise ValueError("The execution profile does not belong to this pipeline/task.")
+    params = loader["params"]
+    repo_field = "repo_id" if loader["action"] == "ModelsLoader" else "model_id"
+    if repo_field not in params or "revision" not in params:
+        raise ValueError("This loader does not expose a reviewed model selection.")
+    values = {
+        repo_field: {"source": "hub", "value": profile.default_repo},
+        "revision": require_catalog_revision(profile.default_repo, model_type=profile.model_type),
+    }
+    if "execution_profile_id" in params:
+        values["execution_profile_id"] = profile.id
+    if "reviewed_variant" in params:
+        options = params["reviewed_variant"].get("options", [])
+        values["reviewed_variant"] = profile.default_repo if profile.default_repo in options else ""
+    for key, value in values.items():
+        params[key]["value"] = deepcopy(value)
+        loader["values"][key] = deepcopy(value)
+    resolved, reason = resolve_execution_profiles_for_loader(loader["module"], loader["action"], loader["values"])
+    if reason or profile.id not in {p.id for p in resolved}:
+        raise ValueError("The selected model does not resolve to its reviewed loader profile.")
+
+
 def resolve_operation_starter(modules, contracts, selection):
-    if not isinstance(selection, dict) or set(selection) != {"pipelineClass", "task"}:
+    if not isinstance(selection, dict) or set(selection) not in (
+        {"pipelineClass", "task"},
+        {"pipelineClass", "task", "executionProfileId"},
+    ):
         raise ValueError("Select an exact pipeline and task.")
     pipeline, task = (_identifier(selection[key]) for key in ("pipelineClass", "task"))
+    binding = {"pipelineClass": pipeline, "task": task}
     selected = [c for c in contracts if c["pipelineClass"] == pipeline and c["task"] == task]
     if not selected or sum(c["decomposition"] == "loader" for c in selected) != 1:
         raise ValueError("No complete operation binding for this pipeline/task.")
     nodes = {
-        c["operationId"]: resolve_operation(modules, contracts, {**selection, "operationId": c["operationId"]})
+        c["operationId"]: resolve_operation(modules, contracts, {**binding, "operationId": c["operationId"]})
         for c in selected
     }
     edges = []
@@ -61,6 +103,8 @@ def resolve_operation_starter(modules, contracts, selection):
         targets.add((target, target_handle))
 
     loader = next(c for c in selected if c["decomposition"] == "loader")["operationId"]
+    if "executionProfileId" in selection:
+        _bind_execution_profile(nodes[loader], task, selection["executionProfileId"])
     workflow_id, upstream, required = None, [], set()
     ordered = [loader]
     if any(c["decomposition"] == "pipeline" for c in selected):
@@ -205,7 +249,7 @@ def resolve_operation_starter(modules, contracts, selection):
                 required_inputs.append({"operationId": operation, "field": name})
     return {
         "schemaVersion": 1,
-        **selection,
+        **binding,
         "workflowId": workflow_id,
         "nodes": [nodes[key] for key in ordered],
         "edges": edges,

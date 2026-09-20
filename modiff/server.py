@@ -1275,6 +1275,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         self.modules = modules
         self.ws_sessions = {}
         self.pending_ws_requests = {}
+        self.pending_ws_request_sessions = {}
 
         self.interrupt_flag = False
         self._forced_restart_timer = None
@@ -15504,11 +15505,22 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         except Exception as e:
             logger.error(f"[Websocket] Error: {e}")
         finally:
-            if sid in self.ws_sessions:
-                del self.ws_sessions[sid]
+            if self.ws_sessions.get(sid) is ws:
+                self.ws_sessions.pop(sid, None)
+            self._cancel_session_signal_requests(sid)
             logger.debug(f"Websocket connection closed: {sid}")
 
         return ws
+
+    def _cancel_session_signal_requests(self, sid):
+        """Release schema callbacks when their browser leaves; never release another owner."""
+        for request_id, owner in list(self.pending_ws_request_sessions.items()):
+            if owner != sid:
+                continue
+            self.pending_ws_request_sessions.pop(request_id, None)
+            future = self.pending_ws_requests.pop(request_id, None)
+            if future is not None and not future.done():
+                future.set_result({"__MODIFF_ERROR": "websocket_closed"})
 
     async def broadcast(self, message: dict | bytes, sid: list[str] | str = None, exclude: list[str] | str = None):
         sessions = []
@@ -15529,6 +15541,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             if websocket.closed:
                 if self.ws_sessions.get(session) is websocket:
                     self.ws_sessions.pop(session, None)
+                    self._cancel_session_signal_requests(session)
                 return
             try:
                 if isinstance(message, dict):
@@ -15544,6 +15557,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 # finally block gets scheduled.
                 if self.ws_sessions.get(session) is websocket:
                     self.ws_sessions.pop(session, None)
+                    self._cancel_session_signal_requests(session)
                 if websocket.closed or "closing transport" in str(e).lower():
                     logger.debug(f"[Websocket] Dropped closing session {session}: {e}")
                 else:
@@ -15595,6 +15609,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 request_id = nanoid.generate(size=12)
                 future = self.loop.create_future()
                 self.pending_ws_requests[request_id] = future
+                self.pending_ws_request_sessions[request_id] = sid
                 try:
                     await self.broadcast(
                         {
@@ -15606,9 +15621,15 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                         },
                         sid,
                     )
+                    # Closing between registration and send must also resolve the
+                    # lookup rather than occupy the field-action lease until timeout.
+                    session = self.ws_sessions.get(sid)
+                    if session is None or session.closed:
+                        self._cancel_session_signal_requests(sid)
                     return await asyncio.wait_for(future, timeout=timeout)
                 finally:
                     self.pending_ws_requests.pop(request_id, None)
+                    self.pending_ws_request_sessions.pop(request_id, None)
 
             # The graph executor runs outside the HTTP event-loop thread. Run
             # the complete request there and synchronously await its bounded

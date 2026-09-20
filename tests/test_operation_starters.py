@@ -17,6 +17,85 @@ class OperationStarterTests(unittest.TestCase):
 
         return resolve_operation_starter(MODULE_MAP, self.contracts, {"pipelineClass": pipeline, "task": task})
 
+    def test_exact_profile_selects_shared_pipeline_model_without_constructing_nodes(self):
+        from modiff.operation_starters import resolve_operation_starter
+        from modiff.diffusers_profiles import resolve_execution_profiles_for_loader
+
+        for identity, repository in (
+            ("flux-schnell:direct", "black-forest-labs/FLUX.1-schnell"),
+            ("flux-krea:direct", "black-forest-labs/FLUX.1-Krea-dev"),
+        ):
+            with (
+                self.subTest(profile=identity),
+                patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("constructed")),
+            ):
+                result = resolve_operation_starter(
+                    MODULE_MAP,
+                    self.contracts,
+                    {
+                        "pipelineClass": "FluxPipeline",
+                        "task": "text_to_image",
+                        "executionProfileId": identity,
+                    },
+                )
+                loader = result["nodes"][0]
+                self.assertEqual(loader["params"]["model_id"]["value"], {"source": "hub", "value": repository})
+                self.assertRegex(loader["params"]["revision"]["value"], r"^[0-9a-f]{40}$")
+                profiles, reason = resolve_execution_profiles_for_loader(
+                    loader["module"], loader["action"], loader["values"]
+                )
+                self.assertIsNone(reason)
+                self.assertEqual([p.id for p in profiles], [identity])
+                self.assertNotIn("executionProfileId", result, "Keep the existing response envelope compatible")
+
+    def test_profile_selection_rejects_unrelated_unknown_and_invalid_identities(self):
+        from modiff.operation_starters import resolve_operation_starter
+
+        for identity in ("ace-step-audio:direct", "unknown", [], None, " flux-dev:direct"):
+            with self.subTest(profile=identity), self.assertRaises(ValueError):
+                resolve_operation_starter(
+                    MODULE_MAP,
+                    self.contracts,
+                    {
+                        "pipelineClass": "FluxPipeline",
+                        "task": "text_to_image",
+                        "executionProfileId": identity,
+                    },
+                )
+
+    def test_every_advertised_profile_task_binds_without_constructing_models(self):
+        from modiff.operation_starters import resolve_operation_starter
+        from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES, public_execution_profiles
+
+        contracts, support = build_operation_catalog(
+            MODULE_MAP, public_execution_profiles(), catalog_resolver=lambda: {}
+        )
+        checked = 0
+        with patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("constructed")):
+            for pipeline in support:
+                for task in pipeline["tasks"]:
+                    if not task["operationIds"]:
+                        continue
+                    for identity in task["executionProfileIds"]:
+                        with self.subTest(pipeline=pipeline["pipelineClass"], task=task["task"], profile=identity):
+                            result = resolve_operation_starter(
+                                MODULE_MAP,
+                                contracts,
+                                {
+                                    "pipelineClass": pipeline["pipelineClass"],
+                                    "task": task["task"],
+                                    "executionProfileId": identity,
+                                },
+                            )
+                            loader = result["nodes"][0]
+                            field = "repo_id" if loader["action"] == "ModelsLoader" else "model_id"
+                            self.assertEqual(
+                                loader["values"][field]["value"], DIFFUSERS_EXECUTION_PROFILES[identity].default_repo
+                            )
+                            self.assertRegex(loader["values"]["revision"], r"^[0-9a-f]{40}$")
+                            checked += 1
+        self.assertGreater(checked, 150)
+
     def test_four_stages_are_an_ordinary_draft_with_exact_state_and_component_wires(self):
         with patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("Constructed node")):
             result = self.resolve("AnimaModularPipeline", "text_to_image")
@@ -85,17 +164,24 @@ class OperationStarterTests(unittest.TestCase):
         for contract in self.contracts:
             if not contract.get("nodeKey", "").endswith(".LoadPipeline"):
                 continue
-            node = resolve_operation(MODULE_MAP, self.contracts, {
-                "pipelineClass": contract["pipelineClass"], "task": contract["task"],
-                "operationId": contract["operationId"],
-            })
+            node = resolve_operation(
+                MODULE_MAP,
+                self.contracts,
+                {
+                    "pipelineClass": contract["pipelineClass"],
+                    "task": contract["task"],
+                    "operationId": contract["operationId"],
+                },
+            )
             if "execution_recipe" not in node["params"]:
                 continue
             with self.subTest(pipeline=contract["pipelineClass"], task=contract["task"]):
                 self.assertIs(node["params"]["execution_recipe"].get("required"), False)
             checked.add(node["module"])
-        self.assertEqual(checked, {"modules.DiffusersImage", "modules.DiffusersVideo",
-                                   "modules.DiffusersAudio", "modules.DiffusersThreeD"})
+        self.assertEqual(
+            checked,
+            {"modules.DiffusersImage", "modules.DiffusersVideo", "modules.DiffusersAudio", "modules.DiffusersThreeD"},
+        )
 
     def test_unconditional_starters_keep_the_reviewed_resident_float32_recipe(self):
         # These upstream samplers do not share the text-to-image loader's
@@ -109,13 +195,17 @@ class OperationStarterTests(unittest.TestCase):
             with self.subTest(pipeline=pipeline):
                 draft = self.resolve(pipeline, "unconditional_image")
                 loader = next(n for n in draft["nodes"] if n["action"] == "LoadPipeline")
-                single = resolve_operation(MODULE_MAP, self.contracts, {
-                    "pipelineClass": pipeline, "task": "unconditional_image",
-                    "operationId": loader["operation"]["operationId"],
-                })
+                single = resolve_operation(
+                    MODULE_MAP,
+                    self.contracts,
+                    {
+                        "pipelineClass": pipeline,
+                        "task": "unconditional_image",
+                        "operationId": loader["operation"]["operationId"],
+                    },
+                )
                 for node in (loader, single):
-                    for field, expected in {"dtype": "float32", "auto_offload": False,
-                                            "offload_mode": "none"}.items():
+                    for field, expected in {"dtype": "float32", "auto_offload": False, "offload_mode": "none"}.items():
                         self.assertEqual(node["values"].get(field), expected)
                         self.assertEqual(node["params"][field]["value"], expected)
                     self.assertEqual(node["values"].get("conditioning_model_id"), "")
@@ -125,15 +215,16 @@ class OperationStarterTests(unittest.TestCase):
     def test_loader_defaults_keep_conditioned_models_and_other_task_recipes(self):
         from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
 
-        for pipeline, task in (("FluxPipeline", "text_to_image"),
-                               ("FluxControlNetPipeline", "control_image")):
+        for pipeline, task in (("FluxPipeline", "text_to_image"), ("FluxControlNetPipeline", "control_image")):
             with self.subTest(pipeline=pipeline):
                 loader = next(n for n in self.resolve(pipeline, task)["nodes"] if n["action"] == "LoadPipeline")
                 self.assertNotIn("dtype", loader["values"])
                 self.assertNotIn("offload_mode", loader["values"])
                 auxiliary = IMAGE_PIPELINE_ADAPTERS[pipeline].default_conditioning_repo
-                self.assertEqual(loader["values"]["conditioning_model_id"],
-                                 {"source": "hub", "value": auxiliary} if auxiliary else "")
+                self.assertEqual(
+                    loader["values"]["conditioning_model_id"],
+                    {"source": "hub", "value": auxiliary} if auxiliary else "",
+                )
                 if auxiliary:
                     self.assertEqual(len(loader["values"]["conditioning_revision"]), 40)
 

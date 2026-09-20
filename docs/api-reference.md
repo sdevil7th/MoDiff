@@ -1315,7 +1315,14 @@ already on the canvas. In-flight insertion is cancelled when its selection,
 active workflow or catalog view changes. Graph-wide changes use the explicit
 preview and transaction described below.
 
-`POST /operations/starter` accepts exactly `pipelineClass` and a non-null `task`.
+`POST /operations/starter` accepts `pipelineClass`, a non-null `task`, and an
+optional `executionProfileId`. No other keys are accepted. The optional identity
+selects an exact public profile belonging to that loader and task, including its
+reviewed model repository and immutable revision. This distinguishes models that
+share a pipeline class (for example FLUX dev and schnell). The endpoint checks
+that the resulting ordinary loader values resolve back to that profile; unknown,
+unrelated or ambiguous selections fail before any node is constructed.
+Omitting the identity preserves the existing pipeline/task defaults.
 It returns schema version 1, the selected pipeline/task/workflow ID, `nodes` (each
 containing its v3 `operation` and ordinary `node` schema), `edges`, `requiredInputs`, `sharedInputs`
 and `upstreamBlocks`. Edges use canonical operation IDs temporarily as `source`
@@ -1333,6 +1340,10 @@ Required auxiliary models and conditioning remain visible as unbound inputs;
 standard pipelines remain a loader and whole call. Effective output dimensions
 feed the decoder where the generic adapter declares them. This endpoint does
 not construct nodes, install packages, download weights or mutate a workflow.
+The Developer **Workflows** chooser uses these drafts for task-first model
+selection and adds compatible ordinary output nodes from the live registry.
+A preview is not execution evidence; missing inputs and runtime/model setup
+remain visible. Creating a draft neither downloads nor runs a model.
 Unknown/ambiguous selections return HTTP 400. Runtime, artifact, resource and
 actual connected-object validation still happen through the existing executor.
 
@@ -1844,6 +1855,14 @@ session. Clients must ignore a field/schema mutation when its session,
 workflow, run identity, or canvas epoch no longer owns the visible document.
 The extra fields are additive so older single-document clients remain wire
 compatible.
+
+Nonqueued client field-action waits are cancelled when their workflow ownership
+expires or browser navigation begins. This releases HTTP connections; it does
+not interrupt Python callbacks or grant permission to drop their node-cache
+lease. Queued user actions retain their acknowledgements. When a WebSocket
+session disconnects, its pending signal lookups resolve with
+`{"__MODIFF_ERROR": "websocket_closed"}` rather than waiting for the lookup timeout.
+Other sessions' pending requests retain their ownership.
 
 Client callers must also choose the correct local ownership scope. A normal
 visible form edit is form-scoped and must reject a response after the form
