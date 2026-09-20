@@ -385,8 +385,11 @@ acceptance, W5–W10 and Windows memory qualification remain open.
 - [x] Preserve generic operation metadata and shared input relationships through
       Block projection, nested adoption and reuse; update hidden shared controls
       atomically and retain independent instance seed identity.
-- [ ] Extend owning-Block model/task changes through the existing composition
-      transaction, preserving nested source, interface and crossing connections.
+- [x] Add owning-Block preview/apply for graphs of generic nodes through existing
+      instance reducers and the canvas transaction, preserving nested ownership,
+      definitions, compatible interfaces and crossing connections.
+- [ ] Complete model/task replacement for existing upstream Modular compositions
+      and the full interface/modification matrix; retain their current editing path.
 - [ ] Make compatible model changes retain inputs and adaptable fields; preserve
       unsupported values without execution. Handle disconnected and shared loaders.
 - [ ] Add required image/mask/reference operations through actual task contracts.
@@ -399,6 +402,16 @@ acceptance, W5–W10 and Windows memory qualification remain open.
 Acceptance: the modification matrix below passes in contract/native tests before
 expensive model qualification. Selected paths additionally execute with real models;
 graph-shaped JSON or a successful inspector is not execution evidence.
+
+W5 owning-Block checkpoint: generic operation graphs expose model/task changes on
+collapsed Blocks and expanded loader inspectors. The shared planner updates one
+instance, retains semantic IDs even when implementation classes change, and uses
+the existing Undo/rollback transaction. Incompatible public bindings and bound
+values are rejected before mutation. Outside inputs cannot acquire a competing
+internal driver or silently change shared-group wiring. This does not claim that
+arbitrary upstream Modular compositions can be switched through the generic path,
+or qualify any model execution. Remaining W5 modification and execution rows stay
+open.
 
 W5 loader checkpoint: the selected top-level generic loader now exposes
 **Inspect node → Parameters → Change model / task**, also available in the Studio
