@@ -119,7 +119,7 @@ visible and does not count as a pass or a completed release requirement.
 | W0  | Accepted design and detailed implementation/test plan        | Complete: plan only                      | User direction                  |
 | W1  | Baseline, artifact classification and executable test ledger | In progress: inventory/path ledger       | W0                              |
 | W2  | Workspace switch, independent memory labels and migration    | In progress: controls and persistence    | W1                              |
-| W3  | Creator entry and Developer Workflows modal                  | In progress: Developer entry             | W2                              |
+| W3  | Creator entry and Developer Workflows modal                  | Complete: entry flows                    | W2                              |
 | W4  | Unified Nodes library and contextual inspector               | Planned                                  | W2                              |
 | W5  | Generic model/task changes and workflow modification         | Planned                                  | W3, W4                          |
 | W6  | HF/local custom-node workflow                                | Planned                                  | W4, W5                          |
@@ -181,11 +181,11 @@ the previous surfaces until W3/W4 land.
       Workflows modal; route creation through operation capabilities/starters.
 - [x] Implement task-first selection, downloaded-model ranking, graph/input preview,
       Empty/Open/recent workflows and explicit missing-dependency actions.
-- [ ] Keep Creator's Templates/recent/empty path and preserve authored template
+- [x] Keep Creator's Templates/recent/empty path and preserve authored template
       layout. Do not force compact Blocks or a full-screen parameter form.
 - [x] Add appropriate output nodes and validate actual required component wiring.
       Keep task distinctions such as image-to-image versus instruction editing.
-- [ ] Cover startup restoration, Escape, keyboard navigation, small viewports,
+- [x] Cover startup restoration, Escape, keyboard navigation, small viewports,
       retry, double click, stale responses and switching tabs while resolving.
 
 Acceptance: new Developer starts at Workflows, never Templates automatically.
@@ -497,8 +497,8 @@ instruction editing, audio, reload, small viewport/keyboard/Escape, retry,
 double-click and delayed-response cancellation. These tests use backend-generated
 schemas and mocked transport; they are **not model execution qualification**.
 
-W3 remains in progress: the Creator Templates/recent/empty entry refinement and
-remaining acceptance cases are still open. W8/W9 real-model and modification
+At this checkpoint, W3 remained in progress: Creator entry and the remaining
+acceptance cases were still open; see the shared-entry checkpoint below. W8/W9 real-model and modification
 campaigns remain unstarted for this workspace redesign. Existing execution
 receipts do not qualify the new chooser or prove all downloaded models work.
 
@@ -539,3 +539,55 @@ Validation for this checkpoint:
 The optional-runtime execution suite, all-model inference/modification campaign
 and Windows memory qualification were not run for this checkpoint. Keep their
 milestones open.
+
+### W3 shared entry implementation checkpoint — 2026-09-20
+
+Creator now opens the existing Templates browser directly, with shared Empty,
+Open and recent-workflow actions. The separate task grid is removed. Developer
+retains its task-first Workflows chooser and can deliberately browse Templates.
+Both paths keep the same graph document, node factory and execution system.
+Template creation dismisses the chooser for its new document before asynchronous
+preparation, so it cannot flash a second startup modal while building the graph.
+On narrow screens, expandable filters preserve room for template cards and show
+an active-filter count; desktop filters remain visible.
+
+The real-backend reload check reproduced a startup deadlock: late authoritative
+hydration invalidated the in-flight memory plan without changing its visible form.
+Planning now waits for hydration and tracks document/form epochs, retaining the
+stale-response guard while retrying for the restored owner. A focused browser
+test reproduces the original stuck gate and passes after the fix.
+
+Focused native tests pass for Creator startup, keyboard Empty, narrow viewports,
+recent/Open actions, template creation and unchanged graphs across workspace
+switches. A delayed Developer preview is abandoned on Escape/document change;
+its eventual response cannot replace another document's preview or graph.
+Existing managed-graph regression tests seed their legacy documents explicitly;
+that fixture setup is not counted as native entry-flow proof.
+
+W3 is complete for entry flows and graph-authoring contracts. Validation:
+
+- Client `npm run check` passed, including lint, type checking, unit/contract
+  tests, the production build and existing bundle limits.
+- Shared controls: 2 passed. Full Studio browser run: 170 passed; one model-change
+  test captured a late schema/validation publication after its preview. Its setup
+  now waits for a settled source document; all original preservation assertions
+  passed in three consecutive native reruns. The graph ownership guard remains
+  unchanged. All 173 unique browser cases are covered across these runs.
+- Backend base gate: 3,160 passed, 510 skipped, 9,767 subtests passed; Ruff,
+  dependency checks and preflight passed. After the final bundle refresh, the
+  dependent ledger tests passed: 59 passed, 1 skipped, 817 subtests. All 18 ledger
+  changes are fingerprints; no qualification status was promoted.
+- Native production checks passed for Creator template creation, workspace
+  switching, reload, recents, keyboard Empty and narrow-screen browsing, plus
+  Developer Qwen modular, FLUX schnell and Stable Audio creation/reload. Served
+  assets matched the final build. Reload comparisons retain all authored values,
+  positions and connections while normalizing refreshed callback metadata and
+  materialized defaults.
+- All 104 downloaded model snapshot file lists remain unchanged. No inference,
+  installation or model download was submitted. Sixteen verified smoke-created
+  workflow documents were archived and removed from My Workflows.
+
+W1/W2 remaining acceptance, W4 onward and W8/W9 real-model/modification campaigns
+remain open. These checks do not qualify model execution or the deferred Windows
+Qwen memory target. A W5 follow-up should surface stale model-change preview errors
+inside the review dialog while preserving its ownership guard.
