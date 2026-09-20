@@ -114,20 +114,20 @@ Attach exact commits and sanitized results to its review; retain raw receipts,
 machine inventories and media in ignored review storage. A blocked case remains
 visible and does not count as a pass or a completed release requirement.
 
-| ID  | Milestone                                                    | Status                                   | Depends on                      |
-| --- | ------------------------------------------------------------ | ---------------------------------------- | ------------------------------- |
-| W0  | Accepted design and detailed implementation/test plan        | Complete: plan only                      | User direction                  |
-| W1  | Baseline, artifact classification and executable test ledger | In progress: inventory/path ledger       | W0                              |
-| W2  | Workspace switch, independent memory labels and migration    | In progress: controls and persistence    | W1                              |
-| W3  | Creator entry and Developer Workflows modal                  | Complete: entry flows                    | W2                              |
-| W4  | Unified Nodes library and contextual inspector               | In progress — inspector implemented      | W2                              |
-| W5  | Generic model/task changes and workflow modification         | Planned                                  | W3, W4                          |
-| W6  | HF/local custom-node workflow                                | Planned                                  | W4, W5                          |
-| W7  | Concurrent authoring, reuse and recovery                     | Planned                                  | W5, W6                          |
-| W8  | All-local-image execution and modification campaign          | Planned                                  | Stable W2–W7 build              |
-| W9  | Other modalities and real service-export campaign            | Planned                                  | Stable W2–W7 build; W8 fixtures |
-| W10 | Release acceptance, documentation and publication            | Planned                                  | W8, W9                          |
-| H1  | Windows Qwen 16 GB VRAM / 32 GB RAM qualification            | Deferred until main UI/UX implementation | W2–W7; Windows host             |
+| ID  | Milestone                                                    | Status                                    | Depends on                      |
+| --- | ------------------------------------------------------------ | ----------------------------------------- | ------------------------------- |
+| W0  | Accepted design and detailed implementation/test plan        | Complete: plan only                       | User direction                  |
+| W1  | Baseline, artifact classification and executable test ledger | In progress: inventory/path ledger        | W0                              |
+| W2  | Workspace switch, independent memory labels and migration    | In progress: controls and persistence     | W1                              |
+| W3  | Creator entry and Developer Workflows modal                  | Complete: entry flows                     | W2                              |
+| W4  | Unified Nodes library and contextual inspector               | In progress — inspector and canvas search | W2                              |
+| W5  | Generic model/task changes and workflow modification         | Planned                                   | W3, W4                          |
+| W6  | HF/local custom-node workflow                                | Planned                                   | W4, W5                          |
+| W7  | Concurrent authoring, reuse and recovery                     | Planned                                   | W5, W6                          |
+| W8  | All-local-image execution and modification campaign          | Planned                                   | Stable W2–W7 build              |
+| W9  | Other modalities and real service-export campaign            | Planned                                   | Stable W2–W7 build; W8 fixtures |
+| W10 | Release acceptance, documentation and publication            | Planned                                   | W8, W9                          |
+| H1  | Windows Qwen 16 GB VRAM / 32 GB RAM qualification            | Deferred until main UI/UX implementation  | W2–W7; Windows host             |
 
 ### W1 — Baseline and test ledger
 
@@ -200,6 +200,10 @@ visible executable graph. Opening/selecting tasks performs no model allocation.
       in both directions with the same connection validation as the canvas.
 - [ ] Retain legacy search aliases and actionable access to distinct implementations
       without presenting duplicates as separate generic operations.
+- [x] Preserve registry aliases in canvas search; share Saved Block name, revision
+      and historical-name search with the library.
+- [x] Add Saved Blocks through canvas search and typed suggestions in either
+      direction, with fresh instances, final canvas validation and one-step Undo.
 - [x] Use the selected node/Block inspector for Parameters, Interface, Implementation,
       Docs and Run details. Developer emphasizes diagnostic/source tools.
 - [ ] Keep nested graph editing, public sockets, output previews and ordinary node
@@ -230,10 +234,33 @@ coverage ledgers changed only 18 hash fields. All 104 downloaded-model snapshot
 file lists remain unchanged. These results do not complete real-model execution,
 Windows memory qualification or release acceptance.
 
-W4 remains in progress: consolidated discovery, shared insertion/suggestion coverage
-and the remaining presentation/terminology audit are not marked complete by this
-inspection checkpoint. The existing library still exposes its previous catalog
-views pending that work.
+W4 canvas-search checkpoint: the canvas picker now includes registry nodes and
+Saved Blocks in both workspaces. Exact registry aliases remain searchable after
+contract deduplication. Saved Blocks share the library's search terms, retain
+separate definition/revision identities, display the actual V2 hash suffix rather
+than its shared schema prefix, and use the same instance factory as
+library click and drag insertion. Suggestions read public Block sockets; insertion
+uses the existing canvas connection commit, rolls back rejected connections, and
+records the node and wire together for Undo/Redo. A changed workflow invalidates
+an open search's insertion context. Browsing never enables custom source.
+
+Canvas-search validation: `npm run check` passed with unchanged bundle limits.
+The complete browser campaign passed 2 shared-control cases and 175 Studio cases;
+one SDXL task-change case encountered a correctly rejected stale preview. Its
+test-only settled-source synchronization was corrected, and both model-change
+cases passed three consecutive native repetitions (6 passes). The final 4 Saved
+Block cases also passed with keyboard/click selection in both workspaces. The
+backend base gate passed 3,160 tests and 9,767 subtests, with 510 skips. Cold
+production checks used the existing 160 Saved Blocks and verified insertion,
+revision labels, Undo/Redo, save/reload and exact served bytes without inference.
+All 78 build files match the backend; ledgers changed only 18 hash fields; all
+104 downloaded-model snapshot file lists remain unchanged. Original failures
+remain in review evidence. Concurrent metadata authoring and the model-execution
+campaign are still separate pending acceptance.
+
+W4 remains in progress: the catalog view consolidation, bound operation discovery
+and insertion across every entry point, and remaining terminology/shared-editing
+acceptance are still open. The existing library views remain pending that work.
 
 ### W5 — Model/task changes and editable workflows
 
