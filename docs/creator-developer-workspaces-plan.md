@@ -379,6 +379,9 @@ acceptance, W5–W10 and Windows memory qualification remain open.
 - [x] Put model/task changes on the owning top-level generic loader in both
       workspaces, reusing current graph-change preview/apply machinery and one
       Undo/rollback transaction.
+- [x] Protect existing Block route changes from stale workflow/graph replies,
+      cancellation and active gestures; validate crossing wires against the actual
+      restored draft interface before the atomic history transaction.
 - [ ] Extend owning-Block model/task changes through the existing composition
       transaction, preserving nested source, interface and crossing connections.
 - [ ] Make compatible model changes retain inputs and adaptable fields; preserve
@@ -419,6 +422,29 @@ Flux → image-to-image sequence, workspace switches and save/reopen. This is
 backend bundle/ledger contracts are required for publication. The remaining
 Block-owned switching, modification matrix, W8/W9 model runs and deferred Windows
 memory acceptance remain unchecked.
+
+W5 Block transaction checkpoint: existing saved route-selection Blocks now
+capture their workflow and graph before asynchronous save/metadata work and reject
+obsolete replies. Cancel remains available while the destination loads; an
+unmounted owner aborts its request. Switches cannot merge into an unfinished
+canvas gesture. The route reducer validates connected ports against the actual
+restored draft, including its customized interface, rather than the destination's
+registered defaults. Rejected changes preserve the current graph and Undo history;
+accepted switches retain one Undo/Redo step.
+
+Seven contract cases cover workflow replacement, intervening edits, cancellation,
+active gestures, normal commit/Undo/Redo and both preserved/removed custom output
+ports. Native browser cases use exact backend Qwen/Flux catalog definitions in
+Creator and Developer, with one-time fixture setup representing an existing saved
+route-selection workflow. They cover Cancel/retry, prompt retention, both draft
+and Save-active-route actions, Undo/Redo and Save as/reload. A packaged browser
+check against the live backend validates the same compatibility path without
+inference. The full client gate stays within its existing bundle limits.
+
+This fixes the existing switch transaction; it does not extend the older fixed
+route list or claim generic nested Block/task switching. That implementation and
+all-model execution remain open. New modelVariant Blocks keep their current
+checkpoint selector, and no source definition or downloaded model is modified.
 
 ### W6 — Custom-node development
 
