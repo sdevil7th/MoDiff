@@ -196,9 +196,38 @@ cp config.example.ini config.ini
 
 ## Developer setup and service prototyping
 
-Developers can use the [script-free uv/npm setup](docs/developer-setup.md) and
-[export a named service interface](docs/service-prototyping.md) from Expert mode.
-Services reuse the existing API graph and local runtime.
+For setup without shell or PowerShell launchers, install Git and uv `0.11.26`,
+then run the following from this backend checkout in Linux or Windows PowerShell:
+
+```text
+uv run --no-project --no-sync --python 3.12 -m modiff.dev plan --accelerator cpu --backend-only --json
+uv run --no-project --no-sync --python 3.12 -m modiff.dev setup --accelerator cpu --backend-only --non-interactive
+uv run --no-project --no-sync --python 3.12 -m modiff.dev check --json --check-port 8088 --fail-on-error
+uv run --no-project --no-sync --python 3.12 -m modiff.dev run
+```
+
+The backend serves its checked frontend bundle at <http://127.0.0.1:8088>.
+The CPU profile is a starting point for API/UI development, not large-model
+inference. For GPU setup, replace `cpu` in both `plan` and `setup` with the
+appropriate [accelerator selector](docs/accelerator-installation.md), such as
+`nvidia` or `amd`. Setup preserves an existing `.venv`; inspect it with `check`
+and follow the [developer setup guide](docs/developer-setup.md) for deliberate
+profile repair. Setup installs packages but does not download inference weights.
+
+For editable frontend development, keep that backend terminal running. In a
+second terminal, from the sibling `MoDiff-client` checkout, use Node `24.12.0`
+and npm `11.6.2`:
+
+```text
+npm ci
+npm run dev
+```
+
+Open the URL printed by Vite. These uv commands invoke MoDiff's shared managed
+installer through Python; they are not `uv sync` or a new dependency resolver.
+See [developer setup](docs/developer-setup.md) for environment details and
+[service prototyping](docs/service-prototyping.md) to export a named service
+interface from Expert mode. Services reuse the existing API graph and local runtime.
 
 ## Managed installation profiles
 
