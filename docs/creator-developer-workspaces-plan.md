@@ -763,8 +763,8 @@ execution does not separately cache prompt encoding. Recomputed generation
 returned identical bytes; Resize produced 576 × 448, and the saved Block
 baseline stayed unchanged after its new instance ran with a different seed.
 Original media was decoded and visually inspected. Complex prompt adherence is
-partial, so successful execution is not full visual approval. Live image-to-image
-and the other local-model/task rows remain open.
+partial, so successful execution is not full visual approval. The image-to-image
+checks are recorded below; the remaining local-model/task rows stay open.
 
 Completed execution checks within the LCM DreamShaper whole-pipeline path:
 
@@ -780,7 +780,7 @@ Completed execution checks within the LCM DreamShaper whole-pipeline path:
 
 LCM used float32, model CPU offload, guidance 8.5 and four steps at 512 square;
 subsequent edits used six steps and 640 × 384. Resize produced 320 × 192. All
-11 core native execution checks passed; image-to-image remains open. The original
+11 core native execution checks passed; image-to-image checks are recorded below. The original
 incorrect-default runs and preview/disclosure harness failures remain retained.
 Preview recovery verifies both declared runtime/durable references and exact
 media bytes. No downloaded model or operator approval was changed.
@@ -815,6 +815,23 @@ The original failures and an image-layout timing mistake in the test remain
 retained. Cold asset loading still reached 5.54 seconds in one session; this is
 not a claim that every interaction now meets every responsiveness target.
 Prepared image-edit drafts remain authoring evidence until they execute.
+
+Completed native image-to-image task checks for LCM DreamShaper, Sana Sprint and
+SD 1.5:
+
+- [x] Baseline, unchanged repeat, and changed prompt/seed execution for each model.
+- [x] Replace the source through normal image controls, change strength, and run.
+- [x] Save/reopen, verify the exact restored output, change seed and run again.
+- [x] Audit all 15 outputs, consumed parameters, cache messages and media hashes.
+
+LCM and SD 1.5 followed source dimensions from 1024 square to 1328 square; Sana
+Sprint retained its requested 1024-square output. Every unchanged repeat reused
+all executed nodes and identical image bytes. The original accidental two-image
+LCM submission was rejected before generation and is retained with its recovery.
+These are descriptive image-to-image workflows, not instruction-edit fidelity
+claims. Visual inspection shows source influence but partial prompt adherence;
+SD 1.5's larger result has noticeable distortion. The remaining edit, mask,
+control, processor, adapter and model paths are still open.
 
 Three diagnosed defects are fixed: normal discovery now includes deterministic
 image utilities, and the Sana Sprint backend adapters preserve the requested
