@@ -2530,7 +2530,14 @@ def image_action_field_params(contract: dict[str, Any], action: str) -> dict:
         field: {"hidden": True}
         for field in ("use_guidance_scale_2", "guidance_scale_2", "latents_out", *CALL_INPUT_PARAMS)
     }
-    return {**fields, **contract["fieldParams"]}
+    adapter = get_image_pipeline_adapter(contract["pipelineClass"])
+    return {
+        **fields,
+        **contract["fieldParams"],
+        # Publish the same bound as preflight for each selected model. Keep it
+        # out of the persisted signal identity and do not change authored values.
+        "num_inference_steps": {"min": 1, "max": adapter.max_inference_steps},
+    }
 
 
 def get_image_operation_contracts(modules) -> list[dict]:
