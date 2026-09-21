@@ -21,9 +21,9 @@ def seed_image_operation_defaults(node, profile):
     """
     if node["module"] != "modules.DiffusersImage" or profile.loader_module != node["module"]:
         return
-    from modiff.studio_execution_specs import studio_capability_definitions
+    from modiff.studio_execution_specs import studio_capability_definition
 
-    capability = studio_capability_definitions().get(profile.model_type, {})
+    capability = studio_capability_definition(profile.model_type)
     size = capability.get("defaultSize", {})
     defaults = (
         {"dtype": capability.get("defaultDtype")}

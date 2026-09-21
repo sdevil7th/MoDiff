@@ -1341,6 +1341,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         # those two callers, so protect the shared history file with a small
         # process-local lock as well.
         self.studio_history_file_lock = threading.RLock()
+        self._studio_history_read_cache = None
         self.hf_download_semaphore = asyncio.Semaphore(2)
         self.download_reservation_lock = asyncio.Lock()
         self.hf_cache_mutation_lock = asyncio.Lock()
@@ -4453,18 +4454,53 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             }
         return slots
 
+    @staticmethod
+    def _studio_history_signature(path, info=None):
+        info = path.stat() if info is None else info
+        return (str(path), info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+
+    def _cache_studio_output_state(self, signature, state, encoded_outputs=None):
+        # Keep compact immutable records, not a second retained Python object
+        # graph. Decode each record separately so large histories never monopolize
+        # the GIL in one native JSON decoder call. Readers own their copies.
+        self._studio_history_read_cache = {
+            "signature": signature,
+            "revision": state["revision"],
+            "previewSlots": deepcopy(state["previewSlots"]),
+            "outputs": tuple(encoded_outputs) if encoded_outputs is not None else tuple(
+                json.dumps(output, ensure_ascii=False).encode("utf-8") for output in state["outputs"]
+            ),
+        }
+
     def _read_studio_output_state(self):
-        history_file = self._studio_history_file()
-        if not history_file.exists():
-            return {"revision": 0, "previewSlots": {}, "outputs": []}
+        with self.studio_history_file_lock:
+            history_file = self._studio_history_file()
+            if not history_file.exists():
+                self._studio_history_read_cache = None
+                return {"revision": 0, "previewSlots": {}, "outputs": []}
 
-        try:
-            with open(history_file, "r", encoding="utf-8") as f:
-                payload = json.load(f)
-        except (json.JSONDecodeError, UnicodeDecodeError, OSError) as e:
-            logger.error(f"Error reading Studio output history: {e}")
-            return {"revision": 0, "previewSlots": {}, "outputs": []}
+            try:
+                signature = self._studio_history_signature(history_file)
+                cached = self._studio_history_read_cache
+                if cached is not None and cached["signature"] == signature:
+                    return {
+                        "revision": cached["revision"],
+                        "previewSlots": deepcopy(cached["previewSlots"]),
+                        "outputs": [json.loads(record) for record in cached["outputs"]],
+                    }
+                self._studio_history_read_cache = None
+                with open(history_file, "r", encoding="utf-8") as f:
+                    signature = self._studio_history_signature(history_file, os.fstat(f.fileno()))
+                    payload = json.load(f)
+            except (json.JSONDecodeError, UnicodeDecodeError, OSError) as e:
+                logger.error(f"Error reading Studio output history: {e}")
+                return {"revision": 0, "previewSlots": {}, "outputs": []}
 
+            state = self._normalize_studio_output_state(payload)
+            self._cache_studio_output_state(signature, state)
+            return state
+
+    def _normalize_studio_output_state(self, payload):
         if isinstance(payload, list):
             outputs = payload
             version = 1
@@ -4497,6 +4533,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         return self._read_studio_output_state()["outputs"]
 
     def _write_studio_output_state(self, outputs, preview_slots, *, revision=None):
+        with self.studio_history_file_lock:
+            return self._write_studio_output_state_locked(outputs, preview_slots, revision=revision)
+
+    def _write_studio_output_state_locked(self, outputs, preview_slots, *, revision=None):
         history_file = self._studio_history_file()
         history_file.parent.mkdir(parents=True, exist_ok=True)
         current_ids = {
@@ -4519,6 +4559,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "previewSlots": preview_slots,
             "outputs": bounded_outputs,
         }
+        encoded_outputs = []
         temp_file = history_file.with_suffix(".tmp")
         with open(temp_file, "w", encoding="utf-8") as f:
             # Encode each output with the accelerated encoder. json.dump walks
@@ -4535,12 +4576,24 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     for output_index, output in enumerate(value):
                         if output_index:
                             f.write(", ")
-                        f.write(json.dumps(output, ensure_ascii=False))
+                        encoded = json.dumps(output, ensure_ascii=False)
+                        f.write(encoded)
+                        encoded_outputs.append(encoded.encode("utf-8"))
                     f.write("]")
                 else:
                     f.write(json.dumps(value, ensure_ascii=False))
             f.write("}")
+        written = temp_file.stat()
         temp_file.replace(history_file)
+        signature = self._studio_history_signature(history_file)
+        if signature[1:5] == (written.st_dev, written.st_ino, written.st_size, written.st_mtime_ns):
+            self._cache_studio_output_state(
+                signature, self._normalize_studio_output_state(payload), encoded_outputs,
+            )
+        else:
+            # An external atomic replacement won the race; never cache our
+            # old content under the replacement's filesystem identity.
+            self._studio_history_read_cache = None
         return bounded_outputs
 
     def _write_studio_outputs(self, outputs):
@@ -5193,16 +5246,33 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             if output_id in current_ids and output_id not in response_ids:
                 response_outputs.append(output)
                 response_ids.add(output_id)
-        return self._json_response_bytes(
-            {
-                "error": False,
-                "count": len(outputs),
-                "outputs": response_outputs,
-                "previewSlots": list(state["previewSlots"].values()),
-                "revision": state["revision"],
-                "path": str(self._studio_history_file()),
-            }
-        )
+        payload = {
+            "error": False,
+            "count": len(outputs),
+            "outputs": response_outputs,
+            "previewSlots": list(state["previewSlots"].values()),
+            "revision": state["revision"],
+            "path": str(self._studio_history_file()),
+        }
+        # Current previews can extend past the history limit. Encode their
+        # records individually, just as persistence does, so one native encoder
+        # call cannot hold the GIL across the entire retained collection.
+        parts = [b"{"]
+        for index, (key, value) in enumerate(payload.items()):
+            if index:
+                parts.append(b",")
+            parts.extend((self._json_response_bytes(key), b":"))
+            if key == "outputs":
+                parts.append(b"[")
+                for output_index, output in enumerate(value):
+                    if output_index:
+                        parts.append(b",")
+                    parts.append(self._json_response_bytes(output))
+                parts.append(b"]")
+            else:
+                parts.append(self._json_response_bytes(value))
+        parts.append(b"}")
+        return b"".join(parts)
 
     async def _run_studio_history_mutation(self, builder, *args):
         """Serialize whole file transactions without blocking the HTTP loop.
@@ -5365,15 +5435,19 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
 
     async def studio_blocks_get(self, request):
         limit = min(max(int(request.query.get("limit", 200)), 1), 500)
-        blocks = self._list_studio_blocks()
-        return web.json_response(
-            {
-                "error": False,
-                "count": len(blocks),
-                "blocks": blocks[:limit],
-                "path": str(self._studio_blocks_dir()),
-            }
+        body = await self._coalesced_control_response(
+            ("studio_blocks", limit), lambda: self._studio_blocks_response_bytes(limit)
         )
+        return web.Response(body=body, content_type="application/json")
+
+    def _studio_blocks_response_bytes(self, limit):
+        blocks = self._list_studio_blocks()
+        return self._json_response_bytes({
+            "error": False,
+            "count": len(blocks),
+            "blocks": blocks[:limit],
+            "path": str(self._studio_blocks_dir()),
+        })
 
     async def composite_migration_preview(self, request):
         from modiff.composite_migration import scan_composite_migration_preview

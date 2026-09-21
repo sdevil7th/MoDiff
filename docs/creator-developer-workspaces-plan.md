@@ -792,6 +792,30 @@ focused gate passed 27 tests and 1,661 subtests. The complete backend gate passe
 3,300 tests and 10,029 subtests, with 512 skips; the complete client gate passed.
 These are additional checks, not proof that the remaining model matrix passed.
 
+Additional completed native core campaigns:
+
+- [x] SD 1.5: all 11 core execution cases, including unchanged reuse, parameter
+      changes, mode switching, persistence, Resize and independent Saved Block edits.
+- [x] PixArt Sigma: the same 11 core cases using the selected float32 defaults,
+      20 then 22 steps, and 1024 square then 1152 × 896 output.
+- [x] Correct the diagnosed history/Saved Block responsiveness paths and repeat
+      native concurrent workflow creation, wiring and saving during PixArt generation.
+- [ ] Complete their applicable task variants and separate visual assessment.
+
+The PixArt campaign exposed intermittent authoring stalls during generation.
+Original native preview failures and a GIL profile are retained. The trace shows
+monolithic history JSON work, Saved Block validation on the HTTP thread, and
+unnecessary copying of unrelated model defaults. The correction preserves history
+and preview contracts. The full backend gate
+passes 3,306 tests and 10,029 subtests (512 skips), and the client quality gate
+passes. During the repeated PixArt workload, two native previews opened in 0.37
+and 0.96 seconds against the original five-second bound. The second session also
+created, wired and saved the image-edit workflow while generation continued.
+The original failures and an image-layout timing mistake in the test remain
+retained. Cold asset loading still reached 5.54 seconds in one session; this is
+not a claim that every interaction now meets every responsiveness target.
+Prepared image-edit drafts remain authoring evidence until they execute.
+
 Three diagnosed defects are fixed: normal discovery now includes deterministic
 image utilities, and the Sana Sprint backend adapters preserve the requested
 step count while selecting the compatible upstream schedule, and new ordinary

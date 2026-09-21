@@ -666,3 +666,14 @@ against those exact task references, then verify dimensions and downloaded bytes
 against the retained media hash. Do not require one URL representation or accept
 an unrelated image merely because it decodes; exclude input images and history
 thumbnails from the preview assertion.
+
+A history worker can still stall HTTP requests if one native JSON operation holds
+Python's GIL across the entire retained collection. Profile a real cold browser
+while another workflow generates; distinguish schema work, Saved Block validation,
+history parsing and response encoding. Move validation off the HTTP loop and
+bound native JSON work by individual output records. Preserve older current
+previews, complete graph snapshots, Unicode and revision semantics. If caching
+parsed history, retain immutable record bytes, give readers independent objects,
+and invalidate on file identity/content metadata changes, deletion and corrupt
+replacement. Publish cache state only after a successful atomic write. Never
+trade away output recovery or silently extend a failed responsiveness budget.

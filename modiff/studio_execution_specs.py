@@ -17910,6 +17910,14 @@ def studio_expert_resource_requirements(
     return deepcopy(matches[0]) if len(matches) == 1 else None
 
 
+def studio_capability_definition(model_type: str) -> dict[str, Any]:
+    """Copy only one model's defaults, with the same precedence as the catalog."""
+    for definition in reversed(STUDIO_EXECUTION_SPEC_DEFINITIONS.values()):
+        if definition["modelType"] == model_type and "capability" in definition:
+            return deepcopy(definition["capability"])
+    return {}
+
+
 def studio_capability_definitions() -> dict[str, dict[str, Any]]:
     return {
         definition["modelType"]: deepcopy(definition["capability"])

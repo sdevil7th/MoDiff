@@ -85,3 +85,25 @@ def test_all_public_image_starter_defaults_fit_their_declared_fields(contracts):
                         assert value in field["options"], identity
                     checked += 1
     assert checked > 300
+
+
+def test_selected_defaults_do_not_copy_unrelated_model_capabilities(contracts):
+    class UnrelatedCapability(dict):
+        def __deepcopy__(self, memo):
+            raise AssertionError("copied unrelated model defaults")
+
+    target = {"defaultDtype": "float32", "recommendedSteps": 4, "recommendedGuidance": 8.5,
+              "defaultSize": {"width": 512, "height": 512}}
+    definitions = {
+        "old": {"modelType": "LatentConsistencyModelPipeline", "capability": {"recommendedSteps": 1}},
+        "other": {"modelType": "UnrelatedModel", "capability": UnrelatedCapability()},
+        "selected": {"modelType": "LatentConsistencyModelPipeline", "capability": target},
+    }
+    with patch("modiff.studio_execution_specs.STUDIO_EXECUTION_SPEC_DEFINITIONS", definitions):
+        node = resolve_operation(MODULE_MAP, contracts, {
+            "pipelineClass": "LatentConsistencyModelPipeline", "task": "text_to_image",
+            "operationId": "diffusion.generate_image",
+        })
+    assert node["values"]["num_inference_steps"] == 4
+    node["values"]["width"] = 640
+    assert target["defaultSize"]["width"] == 512

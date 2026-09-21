@@ -32,6 +32,78 @@ class StudioHistoryResponsivenessTests(unittest.IsolatedAsyncioTestCase):
             {"id": "one", "createdAt": 1, "prompt": "older"},
         ])
 
+    async def test_saved_block_validation_and_encoding_are_off_the_http_thread(self):
+        main_thread = threading.get_ident()
+        encoded = self.server._json_response_bytes
+
+        def blocks():
+            self.assertNotEqual(threading.get_ident(), main_thread)
+            return [{"id": "saved", "name": "Saved Block"}]
+
+        def encode(payload):
+            self.assertNotEqual(threading.get_ident(), main_thread)
+            return encoded(payload)
+
+        with (patch.object(self.server, "_list_studio_blocks", side_effect=blocks),
+              patch.object(self.server, "_json_response_bytes", side_effect=encode)):
+            response = await self.server.studio_blocks_get(Request())
+        self.assertEqual(json.loads(response.body)["blocks"], [{"id": "saved", "name": "Saved Block"}])
+
+    async def test_unchanged_history_avoids_monolithic_decode_and_readers_are_independent(self):
+        original = self.server._read_studio_output_state()
+        with patch("modiff.server.json.load", side_effect=AssertionError("decoded unchanged history")):
+            first = self.server._read_studio_output_state()
+            first["outputs"][0]["prompt"] = "only this reader"
+            second = self.server._read_studio_output_state()
+        self.assertEqual(second, original)
+
+    async def test_history_cache_observes_atomic_replacement_removal_and_failed_write(self):
+        original = self.server._read_studio_output_state()
+        with self.assertRaises(TypeError):
+            self.server._write_studio_output_state([{"id": "invalid", "value": object()}], {}, revision=9)
+        self.assertEqual(self.server._read_studio_output_state(), original)
+        target = self.server._studio_history_file()
+        replacement = target.with_suffix(".external")
+        replacement.write_text(json.dumps({"version": 2, "revision": 41, "outputs": [{"id": "external"}], "previewSlots": {}}))
+        replacement.replace(target)
+        self.assertEqual(self.server._read_studio_output_state()["revision"], 41)
+        target.unlink()
+        self.assertEqual(self.server._read_studio_output_state()["outputs"], [])
+        target.write_text(json.dumps([{"id": "legacy", "prompt": "café 雨"}]))
+        self.assertEqual(self.server._read_studio_output_state()["outputs"][0]["id"], "legacy")
+
+    async def test_history_cache_invalidates_in_place_edits_and_corrupt_content(self):
+        self.server._read_studio_output_state()
+        target = self.server._studio_history_file()
+        target.write_text(json.dumps([{"id": "edited", "prompt": "external edit"}]))
+        self.assertEqual(self.server._read_studio_outputs()[0]["id"], "edited")
+        target.write_text("invalid JSON")
+        self.assertEqual(self.server._read_studio_outputs(), [])
+        target.write_text(json.dumps([{"id": "repaired"}]))
+        self.assertEqual(self.server._read_studio_outputs(), [{"id": "repaired"}])
+
+    async def test_history_response_does_not_encode_the_entire_retained_collection_at_once(self):
+        # The accelerated encoder holds the GIL. One call per retained record
+        # bounds that interval without discarding old current previews or graphs.
+        state = {"revision": 8, "outputs": [
+            {"id": "new", "graphSnapshot": {"nodes": [{"prompt": "café 雨"}]}},
+            {"id": "retained", "graphSnapshot": {"nodes": [{"prompt": "original"}]}},
+        ], "previewSlots": {"slot": {"currentOutputId": "retained"}}}
+        encoded = self.server._json_response_bytes
+
+        def encode(value):
+            self.assertFalse(isinstance(value, dict) and "outputs" in value and "previewSlots" in value,
+                             "The whole retained history must not enter one GIL-holding encoder call.")
+            return encoded(value)
+
+        with (patch.object(self.server, "_read_studio_output_state", return_value=state),
+              patch.object(self.server, "_json_response_bytes", side_effect=encode)):
+            response = await self.server.studio_outputs_get(Request())
+        payload = json.loads(response.body)
+        self.assertEqual(payload["outputs"], state["outputs"])
+        self.assertEqual(payload["revision"], 8)
+        self.assertEqual(payload["previewSlots"], list(state["previewSlots"].values()))
+
     async def test_history_write_batches_nested_records_and_preserves_retained_previews(self):
         # Real workflow snapshots contain thousands of nested fields. Streaming
         # json.dump writes each punctuation token while holding the history lock.
