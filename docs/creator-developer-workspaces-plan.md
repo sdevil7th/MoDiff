@@ -808,11 +808,26 @@ Additional completed native core campaigns:
       native concurrent workflow creation, wiring and saving during PixArt generation.
 - [ ] Complete their applicable task variants and separate visual assessment.
 
-PRX completed its baseline, unchanged repeat, prompt edit and seed edit, then
-failed when a UI-accepted 30-step value exceeded the backend adapter's 28-step
-limit. The original failed task is retained. The shared form now publishes the
-selected adapter limit without rewriting authored values; 121 focused tests and
-1,661 subtests pass. The affected native rerun remains open; PRX is not complete.
+- [x] PRX: recover all 11 core native cases after publishing the selected
+      adapter's inference-step bounds in both starter and dynamic controls.
+      The original UI-accepted 30-step rejection remains retained. The recovery
+      keeps 28 steps and tests a guidance edit at that reviewed cap, then size,
+      save/reopen, Creator, recomputation, Resize and Saved Block changes.
+- [x] Both locally cached Depth Anything V2 models: seven native cases each,
+      covering baseline, unchanged cache reuse, processing resolution, source
+      replacement, save/reopen, Creator editing and Saved Block reinsertion.
+      Original media, exact revisions, consumed values and all 14 outputs audited.
+- [x] Both depth Saved Blocks: native model switching and return, exact output
+      hashes after reload, and unchanged saved definitions. Switching back
+      reproduces each original output. The legacy model-control and stale-preview
+      defects have regression coverage and successful live recovery evidence.
+- [ ] Compatible containing control workflows for both depth models. Preview
+      inspection does not establish metric accuracy or downstream compatibility.
+
+Generic depth discovery now accepts backend-published model descriptors outside
+legacy Studio's closed model list. Execution still uses the reviewed optional
+Transformers runtime and bounded native processor adapter; this is not a claim
+that every third-party processor or model configuration works automatically.
 
 The PixArt campaign exposed intermittent authoring stalls during generation.
 Original native preview failures and a GIL profile are retained. The trace shows

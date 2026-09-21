@@ -697,3 +697,19 @@ union. Join bounded backend display metadata to exact published pipeline/profile
 identities, while retaining legacy form validation and backend execution preflight.
 Test an unknown model identity through parsing, search and native creation; a
 backend registry test alone cannot prove that the workflow chooser exposes it.
+
+Test the actual Create Block and Saved Block insertion path before claiming
+model switching inside Blocks. A test-built V2 fixture can miss a legacy snapshot
+still produced by native saving. Adapt only the selected workflow instance during
+an explicit reviewed edit, with conversion and replacement in one Undo transaction.
+Opening controls or cancelling a preview must leave the graph and saved library
+unchanged. Preserve advisory loader references when adapting historical node IDs.
+An exposed model control can override a correctly replaced internal loader;
+update editable controls only when all bound targets agree, and reject sealed or
+unrelated mirrored bindings instead of silently changing other owners.
+
+A current Block media reference must supersede stale artifacts retained in its
+source node. Media widgets can prefer an artifact URL over the displayed value;
+keep source metadata only when its URL and task match the instance preview.
+Test the rendered media after reload, including source fields carrying an older
+successful run, and retain immutable definitions and unrelated preview owners.
