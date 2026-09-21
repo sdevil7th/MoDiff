@@ -691,3 +691,9 @@ with no-download tests before model runs; mocked interfaces cannot establish tha
 contract. Keep native numeric depth separate from a normalized visual preview,
 and carry new consumed controls through both backend receipts and the client's
 strict parser so persistence does not silently discard their execution evidence.
+
+Generic workflow discovery must not depend on the closed legacy Studio model
+union. Join bounded backend display metadata to exact published pipeline/profile
+identities, while retaining legacy form validation and backend execution preflight.
+Test an unknown model identity through parsing, search and native creation; a
+backend registry test alone cannot prove that the workflow chooser exposes it.
