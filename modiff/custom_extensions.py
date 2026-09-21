@@ -348,6 +348,9 @@ class ExtensionStore:
         record = self._state().get(name, {})
         enabled = record.get("enabled") is True and record.get("codeHash") == code_hash
         preview = _preview(files)
+        approved_nodes = record.get("nodes") if enabled else None
+        if not isinstance(approved_nodes, list) or any(not isinstance(node, str) for node in approved_nodes):
+            approved_nodes = list(preview["nodes"])
         return {
             "name": name,
             "moduleKey": f"custom.{name}",
@@ -367,8 +370,8 @@ class ExtensionStore:
             "dependencies": deps,
             "preview": preview,
             "diagnostic": record.get("diagnostic"),
-            "nodes": sorted(preview["nodes"]),
-            "nodeCount": len(preview["nodes"]) if enabled else 0,
+            "nodes": sorted(approved_nodes),
+            "nodeCount": len(approved_nodes) if enabled else 0,
             "hasInit": "__init__.py" in files,
             "hasMain": "main.py" in files,
             "hasGit": record.get("kind") == "git",
@@ -632,7 +635,7 @@ class ExtensionStore:
             record["diagnostic"] = f"{type(error).__name__}: {error}"[:2048]
             self._save(name, record)
             raise ExtensionError(record["diagnostic"]) from error
-        self._save(name, {**record, "enabled": True, "codeHash": code_hash})
+        self._save(name, {**record, "enabled": True, "codeHash": code_hash, "nodes": sorted(registry)})
         return registry
 
     def disable(self, name):

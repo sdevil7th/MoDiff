@@ -122,7 +122,7 @@ visible and does not count as a pass or a completed release requirement.
 | W3  | Creator entry and Developer Workflows modal                  | Complete: entry flows                    | W2                              |
 | W4  | Unified Nodes library and contextual inspector               | Complete: authoring acceptance           | W2                              |
 | W5  | Generic model/task changes and workflow modification         | Complete: W5 acceptance                  | W3, W4                          |
-| W6  | HF/local custom-node workflow                                | In progress: Hub execution               | W4, W5                          |
+| W6  | HF/local custom-node workflow                                | Complete                                 | W4, W5                          |
 | W7  | Concurrent authoring, reuse and recovery                     | Partial fixes; campaign pending          | W5, W6                          |
 | W8  | All-local-image execution and modification campaign          | Planned                                  | Stable W2–W7 build              |
 | W9  | Other modalities and real service-export campaign            | Planned                                  | Stable W2–W7 build; W8 fixtures |
@@ -515,10 +515,13 @@ deferred until the main UI/UX work is ready.
       omits model ports, and publish already-loaded Pipeline Components from every
       Modular Load Models route. Preserve declared fields, source bytes, loader
       ownership and runtime type checks; no family-specific UI or implicit weights.
-- [ ] Provision additional block-specific model repositories through the existing
+- [x] Provision additional block-specific model repositories through the existing
       model/resource boundary, with explicit selection and immutable identities.
-      A connection to existing image-model components does not supply Florence's
-      separate annotator model and processor.
+      Approved blocks with official pretrained component types expose a matching
+      Load Models node. Sources are explicit, pinned and cache-only; precision,
+      device and offload remain explicit. Custom memory is required for these
+      unqualified suppliers. Florence's model and processor now load through this
+      path; connecting an image-generation VAE alone is still insufficient.
 
 Acceptance: an approved local Python node and an HF Modular block execute inside
 existing image workflows, including a saved Block. A generic prompt/image processor
@@ -538,13 +541,14 @@ Focused evidence: six native browser tests with mocked backend responses cover
 entry points, pinned staging, typed discovery in both workspaces, late responses,
 missing dependencies, stale approval and import failure with an unchanged graph.
 Backend tests cover source validation, exact approvals, execution/reload boundaries,
-targeted invalidation and cancellation. The current full backend gate passes 3,226
+targeted invalidation and cancellation. The current full backend gate passes 3,236
 tests and 9,866 subtests, with 510 skips. The installed optional custom-source and
-runtime gate passes 273 tests and 176 subtests. Startup counts now include enabled custom
-nodes; the clean-base dependency test isolates operator extensions. The full
-client gate passes. The published
-bundle matches all 87 generated files; its 18 dependent ledger changes are hashes
-only. The 104 originally inventoried model snapshots retain all their files.
+runtime gate passes 205 tests and 310 subtests; the final optional NodeBase/isolation
+check adds a separate 28 passing tests and 2 subtests. These are overlapping focused
+suites, not an aggregate coverage count. Startup counts now include enabled
+custom nodes; clean-base tests isolate operator extensions, including child
+registry imports. The full client gate passes. The published bundle still matches
+all 87 generated files; this checkpoint changes no client executable code. The 104 originally inventoried model snapshots retain all their files.
 
 Live acceptance completed so far:
 
@@ -586,15 +590,38 @@ Live acceptance completed so far:
       natively; the amount edit resumed in a fresh browser with the Workflows panel
       closed. A later Auto rejection and the original stalled capture remain
       failures to investigate, not a passed uninterrupted UI lifecycle.
-- [ ] Execute a real HF Modular block in an image workflow and verify its component
-      loading/reload path. The published Florence sidecar omits component ports and
-      its required model is not among the original cached image models. Accepting
-      that metadata for review does not provide those components automatically.
+- [x] Execute the real pinned Florence Hub block in a saved/reopened image Block,
+      using its separate pinned model and processor. Four native runs cover an
+      initial "gloves" annotation, unchanged reuse, editing to "lamp", and reviewed
+      source reload with the edited workflow preserved. The input is a retained
+      1024 × 1024 Flux-generated image; these runs execute annotation, not a new
+      Flux denoising job. Original outputs visibly bound the requested objects.
+      Image hashes are identical for unchanged reuse and for the edited output
+      after reload; the prompt edit changes the image. Backend execution took
+      7.18 / 3.84 / 4.03 / 4.64 seconds. Initial graph setup used live-schema
+      fixtures; approval, memory selection, saves, reopening, edits, reload and
+      Run were native UI gestures.
+- [x] Preserve and fix the live cache-selection and root-subfolder failures:
+      cached model selection must not demand unrelated repository files such as
+      .gitattributes, and native Transformers loading requires an empty root
+      subfolder string. Regressions retain cache-only loading, exact revisions,
+      safe snapshot paths and configuration-sensitive reuse.
+- [x] Isolate pytest's default extension store before test collection. Importing
+      the node registry in a base test environment must not disable an operator's
+      approved extension that needs the installed optional runtime. Explicit
+      fixture roots remain unchanged. The cold registry subprocess is isolated too;
+      the full suite must preserve the real approval file byte for byte.
 
-W6 remains in progress. The earlier six prompt-chain image runs used explicit
+W6 acceptance and checkpoint gates are complete. The final full base suite and
+optional isolation checks preserved the installed extension approval file byte for
+byte, including cold child-process registry discovery.
+The earlier six prompt-chain image runs used explicit
 component metadata before the optional-metadata compatibility correction. The
 new image-reconstruction runs exercise omitted metadata and derived Models ports;
-both use local staging, not successful execution of the staged Hub annotator. These
+those use local staging. The separate four-run Hub campaign now verifies the
+staged annotator's loading, execution and reload. One additional pinned Florence
+weight snapshot was downloaded for that campaign; include it when refreshing W8's
+artifact/task inventory. The original 104 snapshot inventories are preserved. These
 checks do not qualify all local models (W8), Windows memory limits (H1), or the full
 concurrent-authoring and service-export campaigns (W7/W9).
 

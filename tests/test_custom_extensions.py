@@ -837,3 +837,118 @@ def test_invalid_approval_records_report_disabled_diagnostics(store, tmp_path):
     store.load_enabled(registry)
     assert not registry
     assert "custom.Example.main" not in sys.modules
+
+
+def test_custom_modular_loader_requires_pins_and_reuses_native_components(backend, store, tmp_path, monkeypatch):
+    from diffusers import AutoencoderKL, ComponentsManager
+    from modules import MODULE_MAP
+    from PIL import Image
+    import torch
+
+    source = Path(__file__).resolve().parents[1] / 'examples/custom_nodes/ModularImageReconstruction'
+    item = store.stage(kind='local', source=str(source), name='Example')
+    assert 'LoadModels' not in item['preview']['nodes']  # No Python imports during inspection.
+    registry = store.enable('Example', code_hash=item['codeHash'], consent=True)
+    assert registry['LoadModels']['params']['pipeline_components']['type'] == 'diffusers_modular_pipeline_components'
+    monkeypatch.setitem(MODULE_MAP, 'custom.Example', registry)
+    backend.modules['custom.Example'] = registry
+    manager = ComponentsManager()
+    monkeypatch.setattr('modules.ModularDiffusers.components', manager)
+    weights = tmp_path / 'models--fixture--vae' / 'snapshots' / ('a' * 40)
+    AutoencoderKL(block_out_channels=(8,), norm_num_groups=4, latent_channels=4).save_pretrained(weights)
+    lookups = []
+    def cached_snapshot(repo_id, *, revision, local_files_only, allow_patterns):
+        assert repo_id == 'fixture/vae' and revision == 'a' * 40 and local_files_only is True
+        assert allow_patterns == ['*config.json']
+        lookups.append(repo_id)
+        return str(weights)
+    monkeypatch.setattr('huggingface_hub.snapshot_download', cached_snapshot)
+    original_load = AutoencoderKL.from_pretrained
+    loads = []
+    def load_cached(repo, **kwargs):
+        assert repo == 'fixture/vae' and kwargs['revision'] == 'a' * 40
+        assert kwargs['subfolder'] == ''
+        assert kwargs['local_files_only'] and kwargs['trust_remote_code'] is False
+        assert kwargs['use_safetensors'] and kwargs['weights_only']
+        loads.append(repo)
+        return original_load(weights, **kwargs)
+    monkeypatch.setattr(AutoencoderKL, 'from_pretrained', load_cached)
+    node = {'module': 'custom.Example', 'action': 'LoadModels', 'params': {
+        'source__vae__repo': {'value': {'source': 'hub', 'value': 'fixture/vae'}},
+        'source__vae__revision': {'value': 'main'},
+        'device': {'value': 'cpu:0'}, 'dtype': {'value': 'float32'}, 'offload_mode': {'value': 'none'},
+    }}
+    with pytest.raises(ValueError, match='40-character'):
+        backend.execute_node('custom-loader', node, 'test', quiet=True)
+    assert not lookups and not manager.components
+    node['params']['source__vae__revision']['value'] = 'a' * 40
+    backend.execute_node('custom-loader', node, 'test', quiet=True)
+    bundle = backend.node_cache['custom-loader'].output['pipeline_components']
+    vae_id = bundle['vae']['model_id']
+    vae = manager.get_one(component_id=vae_id)
+    assert isinstance(vae, AutoencoderKL) and vae.dtype == torch.float32
+    backend.execute_node('custom-loader', node, 'test', quiet=True)
+    assert not backend.node_cache['custom-loader']._has_changed
+    backend.execute_node('second-loader', node, 'test', quiet=True)
+    assert backend.node_cache['second-loader'].output['pipeline_components']['vae']['model_id'] == vae_id
+    assert vae_id in manager.collections['custom-loader'] and vae_id in manager.collections['second-loader']
+    assert len(loads) == 1
+    consumer = {'module': 'custom.Example', 'action': 'Block', 'params': {
+        'pipeline_components': {'sourceId': 'custom-loader', 'sourceKey': 'pipeline_components'},
+        'image': {'value': Image.new('RGB', (16, 16), 'red')}, 'amount': {'value': 0.5},
+    }}
+    backend.execute_node('custom-consumer', consumer, 'test', quiet=True)
+    assert backend.node_cache['custom-consumer'].output['out_images'][0].size == (16, 16)
+    # Metadata drift must not hit either the node cache or another owner's old
+    # component, while the old owner keeps its exact loaded object.
+    config = json.loads((weights / 'config.json').read_text())
+    config['scaling_factor'] = 0.25
+    (weights / 'config.json').write_text(json.dumps(config))
+    backend.execute_node('custom-loader', node, 'test', quiet=True)
+    replacement_id = backend.node_cache['custom-loader'].output['pipeline_components']['vae']['model_id']
+    assert replacement_id != vae_id and len(loads) == 2
+    assert manager.get_one(component_id=vae_id) is vae
+    assert manager.get_one(component_id=replacement_id).config.scaling_factor == 0.25
+    # Validation must precede cached reuse, including selectors a graph cannot authorize.
+    node['params']['source__vae__repo']['value'] = {'source': 'local', 'value': str(weights)}
+    with pytest.raises(ValueError, match='Hub'):
+        backend.execute_node('custom-loader', node, 'test', quiet=True)
+    assert manager.get_one(component_id=vae_id) is vae
+    backend._release_node_modular_components(['custom-loader'])
+    assert replacement_id not in manager.components
+    assert manager.get_one(component_id=vae_id) is vae
+
+
+def test_custom_model_supplier_requires_manual_policy_even_for_connected_source(store, tmp_path, monkeypatch):
+    from modiff.workflow_auto_resource import build_workflow_auto_plan
+    source = Path(__file__).resolve().parents[1] / 'examples/custom_nodes/ModularImageReconstruction'
+    item = store.stage(kind='local', source=str(source), name='Example')
+    store.enable('Example', code_hash=item['codeHash'], consent=True)
+    assert store.inspect('Example')['nodeCount'] == 2
+    assert store.inspect('Example')['nodes'] == ['Block', 'LoadModels']
+    monkeypatch.setattr('modiff.custom_extensions.ExtensionStore', lambda: store)
+    monkeypatch.setattr(store, '_load', lambda *_: pytest.fail('planning must not import custom Python'))
+    graph = {'nodes': {'models': {'module': 'custom.Example', 'action': 'LoadModels', 'params': {}}}, 'paths': [['models']]}
+    result = build_workflow_auto_plan(graph, runtime_fingerprint={}, local_models=[], data_dir=str(tmp_path),
+                                     hardware={'accelerator': {}, 'systemMemory': {}, 'offloadDisk': {}})
+    assert not result['canAutoRun']
+    assert 'Custom memory policy' in ' '.join(result['issues'])
+
+
+@pytest.mark.parametrize('field,value', [
+    ('revision', ''), ('revision', 'main'), ('revision', 'A' * 40),
+    ('repo', {'source': 'hub', 'value': '../outside'}),
+    ('subfolder', '../outside'), ('variant', '../weights'),
+])
+def test_custom_model_source_validation_precedes_cache_lookup(store, monkeypatch, field, value):
+    from modules import MODULE_MAP
+    source = Path(__file__).resolve().parents[1] / 'examples/custom_nodes/ModularImageReconstruction'
+    item = store.stage(kind='local', source=str(source), name='Example')
+    registry = store.enable('Example', code_hash=item['codeHash'], consent=True)
+    monkeypatch.setitem(MODULE_MAP, 'custom.Example', registry)
+    monkeypatch.setattr('huggingface_hub.snapshot_download', lambda *a, **k: pytest.fail('invalid selector reached cache'))
+    args = {'source__vae__repo': {'source': 'hub', 'value': 'fixture/vae'},
+            'source__vae__revision': 'a' * 40, 'source__vae__subfolder': '', 'source__vae__variant': ''}
+    args['source__vae__' + field] = value
+    with pytest.raises(ValueError):
+        sys.modules['custom.Example.main'].LoadModels('invalid-selection')(**args)

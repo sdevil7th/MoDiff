@@ -184,6 +184,8 @@ def _build_workflow_auto_plan(
             from modiff.custom_extensions import ExtensionStore
             try:
                 extension = ExtensionStore().require_enabled(node['module'].removeprefix('custom.'))
+                if extension['preview']['kind'] == 'modular' and node['action'] == 'LoadModels':
+                    raise ValueError('loading additional custom block models requires Custom memory policy; this supplier is not Auto-qualified.')
                 if extension['runtimeRole'] == 'manual':
                     raise ValueError('this custom source declares manual resource management; use Expert or review its data/connected-components contract.')
                 custom_nodes.add(node_id)

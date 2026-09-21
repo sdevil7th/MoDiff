@@ -346,6 +346,9 @@ Approved Modular blocks without model ports receive a **Models** input when thei
 Python contract requires components. Connect **Load Models → Pipeline Components**
 to reuse compatible loaded weights. The [VAE reconstruction example](examples/custom_nodes/ModularImageReconstruction)
 demonstrates this without separate family-specific nodes or implicit model downloads.
+For additional weights, approved blocks with official component types also expose
+**Load Models — [block name]**. Select pinned, downloaded component sources and use
+**Custom** memory policy; connect the resulting components to the block's Models input.
 
 ## Updating and recovery
 

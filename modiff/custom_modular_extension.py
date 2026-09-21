@@ -111,7 +111,13 @@ def load_modular_extension(item, files):
     )
     main = ModuleType(key + ".main")
     main.Block = klass
+    from modiff.custom_modular_models import build_models_loader
+
+    registry = {"Block": node_definition}
+    model_loader = build_models_loader(blocks, key, node_definition["label"])
+    if model_loader is not None:
+        main.LoadModels, registry["LoadModels"] = model_loader
     package.main = main
     sys.modules[key] = package
     sys.modules[key + ".main"] = main
-    return {"Block": node_definition}
+    return registry

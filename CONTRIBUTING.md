@@ -106,6 +106,11 @@ and child generators. Generated `__pycache__` files inside a sealed overlay are
 integrity drift, not files to whitelist. Keep base-gate and optional-runtime
 results separate; skipped model-library tests are not execution coverage.
 
+Pytest redirects the default extension store to a temporary directory before
+collection so registry imports cannot execute or change the operator's installed
+custom sources. Extension tests use explicit temporary roots. Subprocess tests
+must also isolate extension discovery; they do not inherit Python monkeypatches.
+
 On a host with Git Bash or a POSIX shell:
 
 ```bash

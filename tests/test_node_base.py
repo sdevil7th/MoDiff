@@ -799,14 +799,27 @@ class NodeBaseDeepEqualTests(unittest.TestCase):
     def test_direct_node_base_imports_preserve_complete_module_registry(self):
         script = """
 import json
+import tempfile
+from modiff.custom_extensions import ExtensionStore
+
+# This is a cold built-in registry test. It must not execute or disable the
+# operator's approved extensions when the child has only the base runtime.
+directory = tempfile.TemporaryDirectory(prefix='modiff-registry-test-')
+original_init = ExtensionStore.__init__
+def isolated_init(self, root=None):
+    original_init(self, root if root is not None else directory.name)
+ExtensionStore.__init__ = isolated_init
+
 from modiff.NodeBase import NodeBase
 import modules
+assert not any(name.startswith('custom.') for name in modules.MODULE_MAP)
 print(json.dumps({
     "module_count": len(modules.MODULE_MAP),
     "node_count": modules.total_nodes,
     "recomputed_node_count": sum(len(nodes) for nodes in modules.MODULE_MAP.values()),
     "module_names": sorted(modules.MODULE_MAP),
 }))
+directory.cleanup()
 """
         result = subprocess.run(
             [sys.executable, "-c", script],

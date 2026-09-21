@@ -121,10 +121,28 @@ Its component type is compatible with multiple image pipelines; VAEs of differen
 classes still require a suitable block implementation. Image dimensions must be
 appropriate for the connected VAE's spatial scale.
 
-This connection path does not yet provision arbitrary block-specific model
-repositories. For example, a Florence annotator needs its own model and processor;
-connecting an image-generation loader's VAE is insufficient. Support for those
-additional components remains separate from accepting the Mellon sidecar.
+When all pretrained component types resolve to installed official Diffusers or
+Transformers classes, enabling the block also registers **Load Models — [block
+name]**. This source-specific supplier uses the same component manager and node
+executor as ordinary loaders; it does not add a model-family implementation.
+It appears only after approval, alongside the block in Custom nodes.
+
+Use it when the block needs additional weights, such as an annotator's model and
+processor. Select a Hub repository, exact lowercase 40-character revision,
+subfolder and optional weight variant for each component. Download those revisions
+in Models before Run: this loader is cache-only and never installs packages or
+executes model-repository Python. Select precision, device and offload policy, set
+the workflow's Memory policy to **Custom**, and connect its **Pipeline Components**
+output to the block's **Models** input. Existing connected model sockets continue
+to work. Compatible loaded components are shared; source configuration changes
+invalidate reuse without replacing another workflow's component.
+
+Source approval is not resource qualification. Additional custom model suppliers
+require Custom memory even when the processing block declares connected-component
+resource use. Arbitrary Python component classes, local weight directories and
+remote model code are not handled by this supplier; an approved block can still
+accept compatible components from existing loaders. Model/type compatibility and
+the upstream block's tensor/task semantics remain distinct.
 
 The older Hub **User Node import** remains a declarative contract/library preview
 and retains its fail-closed Dynamic Block checks. **Manage executable custom
