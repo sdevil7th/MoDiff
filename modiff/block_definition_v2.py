@@ -1796,8 +1796,9 @@ def _validate_route_selection_v1(value: Any) -> BlockRouteSelectionV1:
             raise ValueError(f"{path}.routeKey must match its inactiveDrafts key.")
         definition = validate_block_definition_v2(draft["definitionSnapshot"])
         if (
-            definition["ownership"] != {"kind": "registered", "definitionMutable": False}
-            or definition["source"]["kind"] not in _CATALOG_SOURCE_KINDS
+            not (route_set_id == "diffusers.definition-switch:v1" and definition["source"]["kind"] == "user")
+            and (definition["ownership"] != {"kind": "registered", "definitionMutable": False}
+                 or definition["source"]["kind"] not in _CATALOG_SOURCE_KINDS)
         ):
             raise ValueError(f"{path} must contain one immutable registered definition.")
         validated = validate_block_instance_v2(

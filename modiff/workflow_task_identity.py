@@ -6,30 +6,90 @@ This does not qualify a model or a resource recipe, or modify the submitted grap
 """
 
 from collections import Counter
+import json
 import re
 
-from modiff.modular_action_bindings import MODULAR_ACTION_BINDINGS
-from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
+from modiff.modular_action_bindings import MODULAR_ACTION_BINDINGS, MODULAR_AUXILIARY_OPERATION_BINDINGS
+from modiff.modular_task_adapters import modular_task_adapters
+from modiff.modular_workflow_discovery import load_reviewed_modular_workflow_snapshot
+
+
+def _composition_tasks(stages, pipeline_class, workflows):
+    """Recognize the pinned selected workflow of a validated explicit composition.
+
+    Placement validation is the runtime's read-only validator. It grants neither
+    executable-code trust nor a resource recipe. Partial non-media scopes stay
+    unlabeled, as do mixed workflow owners or invalid imported selectors.
+    """
+    from modiff.modular_composition import validate_modular_composition_recipe
+    from modiff.huggingface_node_library import reviewed_huggingface_node_library
+    from modiff.modular_conditional_contracts import reviewed_modular_conditional_snapshot
+    from modules.ModularDiffusers.reviewed_blocks import _reviewed_placement
+
+    selected = set()
+    media = False
+    library = reviewed_huggingface_node_library()
+    snapshot = None
+    compositions = {}
+    for node in stages.values():
+        if node['action'] != 'ReviewedModularWorkflowStep':
+            return set()
+        values = {k: p.get('value') for k, p in node.get('params', {}).items() if isinstance(p, dict)}
+        if values.get('pipeline_class') != pipeline_class:
+            return set()
+        try:
+            recipe = values.get('composition_recipe')
+            composition = None
+            if recipe is not None:
+                key = json.dumps(recipe, sort_keys=True, allow_nan=False)
+                if key not in compositions:
+                    compositions[key] = validate_modular_composition_recipe(recipe, library=library)
+                composition = compositions[key]
+            if snapshot is None and (composition is not None or values.get('execution_scope') == 'unpruned_pipeline'
+                                     or values.get('workflow_id') == 'default'):
+                snapshot = reviewed_modular_conditional_snapshot()
+            _, block = _reviewed_placement(
+                pipeline_class=pipeline_class, workflow_id=values.get('workflow_id'),
+                execution_scope=values.get('execution_scope') or 'selected_workflow',
+                placement_path=tuple(values.get('placement_path') or ()),
+                block_definition_id=values.get('block_definition_id'), block_class=values.get('block_class'),
+                block_hash=values.get('block_contract_hash'), composition=composition, library=library, snapshot=snapshot,
+            )
+        except (ValueError, TypeError, KeyError):
+            return set()
+        selected.add(values.get('workflow_id'))
+        media |= any(p['name'] in {'images', 'videos', 'audio', 'audios', 'sound'} for p in block['outputs'])
+    if len(selected) != 1 or not media:
+        return set()
+    return {task for workflow in workflows if workflow['id'] in selected
+            for task, _ in modular_task_adapters(pipeline_class, workflow)}
 
 
 def modular_graph_tasks(nodes, loader_id, consumer_ids, pipeline_class):
-    truth = PINNED_MODULAR_WORKFLOW_TRUTH.get(pipeline_class)
-    if truth is None:
+    workflows = next((p['workflows'] for p in load_reviewed_modular_workflow_snapshot()['contracts']
+                      if p['pipelineClass'] == pipeline_class), ())
+    if not workflows:
         return set()
+    helpers = {binding[1] for binding in MODULAR_AUXILIARY_OPERATION_BINDINGS.values()}
     stages = {
         key: nodes[key]
         for key in consumer_ids
         if key != loader_id and key in nodes and nodes[key].get("module") == "modules.ModularDiffusers"
+        and f"{nodes[key]['module']}.{nodes[key]['action']}" not in helpers
     }
+    if any(n['action'] == 'ReviewedModularWorkflowStep' for n in stages.values()):
+        return _composition_tasks(stages, pipeline_class, workflows)
     identities = Counter(f"{n['module']}.{n['action']}" for n in stages.values())
     candidates = []
-    for task, route in truth.modes:
+    routes = [(task, adapter, workflow['id']) for workflow in workflows
+              for task, adapter in modular_task_adapters(pipeline_class, workflow)]
+    for task, route, workflow_id in routes:
         names = {
             action: MODULAR_ACTION_BINDINGS[action][1]
-            for action in route.action_sequence
+            for action in route["actionSequence"]
             if action in MODULAR_ACTION_BINDINGS
         }
-        if len(names) != len(route.action_sequence) or Counter(names.values()) != identities:
+        if len(names) != len(route["actionSequence"]) or Counter(names.values()) != identities:
             continue
         if any(count != 1 for count in identities.values()):
             continue  # Several branches cannot be labeled as one operation chain.
@@ -37,9 +97,18 @@ def modular_graph_tasks(nodes, loader_id, consumer_ids, pipeline_class):
             action: next(key for key, node in stages.items() if f"{node['module']}.{node['action']}" == name)
             for action, name in names.items()
         }
+        # Whole-workflow stages bind exact executable selectors. A partial or
+        # conflicting selection is not rescued by advisory authoring metadata.
+        if any(node.get('params', {}).get('pipeline_class', {}).get('value') != pipeline_class
+               or node.get('params', {}).get('workflow_id', {}).get('value') != workflow_id
+               for node in stages.values() if node['action'].startswith('Workflow')):
+            continue
+        selected_workflow = nodes.get(loader_id, {}).get('params', {}).get('workflow_id', {}).get('value')
+        if selected_workflow and selected_workflow != workflow_id:
+            continue
         expected = {
-            (ids[e.producer_action], e.producer_output, ids[e.consumer_action], e.consumer_input)
-            for e in route.state_edges
+            (ids[e['producerAction']], e['producerOutput'], ids[e['consumerAction']], e['consumerInput'])
+            for e in route['stateEdges']
         }
         actual = {
             (param["sourceId"], param.get("sourceKey"), key, field)
@@ -56,18 +125,27 @@ def modular_graph_tasks(nodes, loader_id, consumer_ids, pipeline_class):
             candidates.append((task, route))
     # Some tasks share actions/wires but differ in optional conditioning inputs.
     # Only discriminate the fields declared by those exact candidate contracts.
-    discriminators = set().union(*(r.required_upstream_inputs for _, r in candidates)) if candidates else set()
-    common = set.intersection(*(set(r.required_upstream_inputs) for _, r in candidates)) if candidates else set()
+    discriminators = set().union(*(set(r["requiredInputs"]) for _, r in candidates)) if candidates else set()
+    common = set.intersection(*(set(r["requiredInputs"]) for _, r in candidates)) if candidates else set()
     discriminators -= common
+    # Numeric defaults (for example a control selector at zero) do not prove
+    # which optional branch a generic node selected. Retain that ambiguity.
+    discriminators -= {
+        field for node in [nodes.get(loader_id, {}), *stages.values()]
+        for field, param in node.get("params", {}).items()
+        if isinstance(param, dict) and not param.get("sourceId")
+        and isinstance(param.get("value"), (int, float, bool))
+    }
     supplied = {
         field
-        for node in stages.values()
+        for node in [nodes.get(loader_id, {}), *stages.values()]
         for field, param in node.get("params", {}).items()
         if field in discriminators
         and isinstance(param, dict)
-        and (param.get("sourceId") or param.get("value") not in (None, "", [], {}))
+        and (param.get("sourceId") or (not isinstance(param.get("value"), (int, float, bool))
+                                     and param.get("value") not in (None, "", [], {})))
     }
-    return {task for task, route in candidates if set(route.required_upstream_inputs) & discriminators == supplied}
+    return {task for task, route in candidates if set(route["requiredInputs"]) & discriminators == supplied}
 
 
 _RESOURCE_LINK = re.compile(r"pipeline|component|state|model|encoder|unet|vae|loop_member", re.I)
@@ -89,7 +167,13 @@ def resource_consumers(nodes: dict, loader_id: str, loader_ids: set[str]) -> lis
             p["sourceId"]
             for node_id in found
             for key, p in nodes[node_id]["params"].items()
-            if p.get("sourceId") and "loop_member" in str(p.get("sourceKey", "")) and p["sourceId"] not in found
+            if p.get("sourceId") in nodes and p["sourceId"] not in found | loader_ids
+            # Follow upstream component/state suppliers, not images produced by
+            # a completed model owner. Crossing a media edge would merge owners
+            # and prevent the existing sequential resource-release schedule.
+            and nodes[p["sourceId"]].get("module") == "modules.ModularDiffusers"
+            and re.search(r"pipeline|component|state|model|encoder|unet|vae|loop_member|controlnet|adapter",
+                          str(p.get("sourceKey", "")) + " " + key, re.I)
         )
         if not additions:
             return sorted(found - {loader_id})

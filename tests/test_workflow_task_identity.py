@@ -210,17 +210,17 @@ def test_conflicting_explicit_modes_remain_unresolved_even_for_a_single_mode_pro
 
 
 def test_ambiguous_declared_tasks_missing_owner_capture_and_unrelated_nodes_stay_explicit(monkeypatch):
-    from dataclasses import replace
     from modiff import workflow_task_identity as identity
 
     pipeline = "StableDiffusionXLModularPipeline"
     nodes = modular_graph(pipeline, "text_to_image")["nodes"]
-    truth = identity.PINNED_MODULAR_WORKFLOW_TRUTH[pipeline]
-    monkeypatch.setitem(
-        identity.PINNED_MODULAR_WORKFLOW_TRUTH,
-        pipeline,
-        replace(truth, modes=(*truth.modes, ("other_task", truth.mode("text_to_image")))),
-    )
+    adapters = identity.modular_task_adapters
+
+    def ambiguous(pipeline_class, workflow):
+        result = adapters(pipeline_class, workflow)
+        return result + [("other_task", adapter) for task, adapter in result if task == "text_to_image"]
+
+    monkeypatch.setattr(identity, "modular_task_adapters", ambiguous)
     assert identity.modular_graph_tasks(nodes, "loader", list(nodes)[1:], pipeline) == {"text_to_image", "other_task"}
     records = {"loader": {"fields": {"model_type": {"value": pipeline}}}}
     assert identity.graph_task_receipts(nodes, records)[0]["task"] is None
@@ -285,3 +285,69 @@ def test_actual_profiles_use_their_existing_resource_mode_alias(tmp_path, pipeli
     )
     assert requests and requests[0]["form"]["mode"] == resource_mode
     assert not result["canAutoRun"], "The existing resource profile still needs a valid recipe."
+
+
+def test_every_published_modular_starter_recognizes_its_task_without_claiming_unique_aliases():
+    from modules import MODULE_MAP
+    from modiff.operation_catalog import build_operation_catalog
+    from modiff.operation_starters import resolve_operation_starter
+    from modiff.workflow_task_identity import modular_graph_tasks, resource_consumers
+
+    contracts, _ = build_operation_catalog(MODULE_MAP, [], catalog_resolver=lambda: {})
+    selections = sorted({(c['pipelineClass'], c['task']) for c in contracts
+                         if c['task'] and c['nodeKey'].startswith('modules.ModularDiffusers.')})
+    failures = []
+    for pipeline, task in selections:
+        starter = resolve_operation_starter(MODULE_MAP, contracts, {'pipelineClass': pipeline, 'task': task})
+        nodes = {
+            n['operation']['operationId']: {
+                'module': n['module'], 'action': n['action'],
+                'params': {k: {'value': p.get('value', p.get('default'))}
+                           for k, p in n['params'].items() if p.get('display') != 'output'},
+            } for n in starter['nodes']
+        }
+        for edge in starter['edges']:
+            nodes[edge['target']]['params'][edge['targetHandle']] = {
+                'sourceId': edge['source'], 'sourceKey': edge['sourceHandle'],
+            }
+        for required in starter['requiredInputs']:
+            nodes[required['operationId']]['params'][required['field']] = {
+                'sourceId': 'external', 'sourceKey': required['field'],
+            }
+        nodes['external'] = {'module': 'custom.Source', 'action': 'Values', 'params': {}}
+        loader = starter['nodes'][0]['operation']['operationId']
+        before = deepcopy(nodes)
+        actual = modular_graph_tasks(nodes, loader, resource_consumers(nodes, loader, {loader}), pipeline)
+        if task not in actual:
+            failures.append((pipeline, task, actual))
+        assert nodes == before
+    assert not failures, repr(failures)
+
+
+def test_explicit_upstream_composition_uses_validated_placements_and_rejects_partial_or_forged_scope():
+    from modiff.huggingface_node_library import reviewed_huggingface_node_library
+    from modiff.workflow_task_identity import modular_graph_tasks
+
+    library = reviewed_huggingface_node_library()
+    definition = next(d for d in library['definitions'] if d.get('pipelineClass') == 'QwenImageModularPipeline'
+                      and d.get('workflowId') == 'text2image')
+    blocks = {b['id']: b for b in library['blockDefinitions']}
+    nodes = {'loader': {'module': 'modules.ModularDiffusers', 'action': 'ModelsLoader', 'params': {}}}
+    for i, placement in enumerate(definition['blockPlacements']):
+        block = blocks[placement['blockDefinitionId']]
+        if block['kind'] not in ('block', 'loop'):
+            continue
+        values = {'pipeline_class': 'QwenImageModularPipeline', 'workflow_id': 'text2image',
+                  'placement_path': placement['path'], 'block_definition_id': block['id'],
+                  'block_class': block['className'], 'block_contract_hash': block['contentHash']}
+        nodes[f'step-{i}'] = {'module': 'modules.ModularDiffusers', 'action': 'ReviewedModularWorkflowStep',
+                             'params': {k: {'value': v} for k, v in values.items()}}
+    before = deepcopy(nodes)
+    assert modular_graph_tasks(nodes, 'loader', list(nodes)[1:], 'QwenImageModularPipeline') == {'text_to_image'}
+    assert nodes == before
+    partial = [k for k, n in nodes.items() if k != 'loader' and 'Text' in n['params']['block_class']['value']]
+    assert partial
+    assert modular_graph_tasks(nodes, 'loader', partial, 'QwenImageModularPipeline') == set()
+    first = next(k for k in nodes if k != 'loader')
+    nodes[first]['params']['block_contract_hash']['value'] = 'sha256:' + '0' * 64
+    assert modular_graph_tasks(nodes, 'loader', list(nodes)[1:], 'QwenImageModularPipeline') == set()

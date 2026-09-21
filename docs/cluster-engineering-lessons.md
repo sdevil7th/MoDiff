@@ -516,10 +516,17 @@ the visible leaf or nearest collapsed ancestor for rendering and to the same
 leaf for execution. Removing the last connection removes the derived socket.
 Reusable saving retains only contained nodes and deliberately declared ports.
 
-Run Block isolates the selected containment subtree before resolving external
-dependencies, including dependencies through existing declared inputs. Use stored
-fallbacks or report missing inputs. Whole-graph execution retains crossing edges.
-Test all enabled local terminal branches, not only the first preview.
+Run Block selects the contained terminal outputs and retains their transitive
+upstream dependencies, including ordinary nodes and other Blocks connected through
+public or derived crossing inputs. Nested selection also retains required sibling
+suppliers in its owner. Exclude downstream outputs and unrelated drafts before
+validation; never silently replace a connected input with its stored fallback.
+Missing or disabled suppliers still receive normal readiness checks. Reusable
+saving remains containment-only: running with an outside dependency does not adopt
+it into the saved Block. Test all enabled local terminal branches, mirrored
+inputs, connected LoRA/seed/media sources, collapsed/expanded persistence and an
+unrelated invalid draft. W5 live multi-reference editing exposed the earlier
+isolation behavior dropping valid image and seed connections before submission.
 
 Plain movement changes presentation and grows containing frames. Only the
 explicit modifier drag or toolbar move changes ownership. Moving a node must

@@ -146,6 +146,14 @@ class OperationStarterTests(unittest.TestCase):
             "targetHandle": "vae",
         }
         self.assertIn(edge, result["edges"])
+        for task in ('image_to_image', 'inpaint'):
+            with self.subTest(task=task):
+                selected = self.resolve('StableDiffusionXLModularPipeline', task)
+                self.assertIn(edge, selected['edges'])
+                denoise = next(n['operation'] for n in selected['nodes']
+                               if n['operation']['operationId'] == 'diffusion.denoise')
+                vae = next(p for p in denoise['ports'] if p['name'] == 'vae')
+                self.assertEqual([m['name'] for m in vae['semantics']['members']], ['vae'])
         image = self.resolve("StableDiffusionXLModularPipeline", "image_to_image")
         self.assertEqual(
             image["sharedInputs"],
@@ -272,3 +280,23 @@ class OperationStarterTests(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 resolve_operation_starter(MODULE_MAP, self.contracts, selection)
+
+
+def test_every_reviewed_starter_wire_retains_compatible_semantic_direction_and_component_names():
+    from modules import MODULE_MAP
+    from modiff.operation_catalog import build_operation_catalog
+    from modiff.operation_starters import resolve_operation_starter
+
+    contracts, _ = build_operation_catalog(MODULE_MAP, [], catalog_resolver=lambda: {})
+    for pipeline, task in sorted({(c['pipelineClass'], c['task']) for c in contracts
+                                  if c['task'] and c['nodeKey'].startswith('modules.ModularDiffusers.')}):
+        starter = resolve_operation_starter(MODULE_MAP, contracts, {'pipelineClass': pipeline, 'task': task})
+        nodes = {n['operation']['operationId']: n['operation'] for n in starter['nodes']}
+        for edge in starter['edges']:
+            left = next(p for p in nodes[edge['source']]['ports'] if p['name'] == edge['sourceHandle'] and p['direction'] == 'output')['semantics']
+            right = next(p for p in nodes[edge['target']]['ports'] if p['name'] == edge['targetHandle'] and p['direction'] == 'input')['semantics']
+            assert (left['kind'], left['scope']) == (right['kind'], right['scope']), (pipeline, task, edge)
+            if right['state'] is not None:
+                assert left['state'] == right['state'], (pipeline, task, edge)
+            if left['kind'] == 'component' and left['members'] and right['members']:
+                assert {m['name'] for m in right['members']} <= {m['name'] for m in left['members']}, (pipeline, task, edge)

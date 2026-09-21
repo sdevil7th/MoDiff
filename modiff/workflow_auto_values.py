@@ -1,6 +1,7 @@
 """Bounded inspection of built-in data controls; runtime preparation markers."""
 from __future__ import annotations
 from contextvars import ContextVar
+import math
 
 RUNTIME_VALUES = ContextVar('workflow_auto_values', default={})
 DATA_MODULES = {'modules.Primitive', 'modules.Text', 'modules.Image', 'modules.ImageOperations', 'modules.Audio', 'modules.Video'}
@@ -36,6 +37,29 @@ def inspect_resource_value(nodes, node_id, field, visited=frozenset()):
     source = nodes[source_id]
     def value(name):
         return inspect_resource_value(nodes, source_id, name, visited | {key})
+    if (
+        (nodes[node_id]['module'], nodes[node_id]['action']) == ('modules.ModularDiffusers', 'DecodeLatents')
+        and (source['module'], source['action']) == ('modules.ModularDiffusers', 'Denoise')
+        and source_field in {'out_width', 'out_height'}
+        and field == source_field.removeprefix('out_')
+        and nodes[node_id]['params'].get('latents', {}).get('sourceId') == source_id
+        and nodes[node_id]['params'].get('latents', {}).get('sourceKey') == 'latents'
+    ):
+        # These split-decoder ports carry the originating denoiser's geometry.
+        # Forecast only its explicitly inspected integer dimension. The normal
+        # executor compares the actual connected output to this captured value
+        # before decoder allocation, so changed/normalized geometry cannot
+        # silently reuse this envelope. Never execute a model during planning.
+        dimension = value(field)
+        if isinstance(dimension, bool):
+            raise ValueError(f'{source_id}.{field} must declare a positive integer dimension.')
+        try:
+            number = float(dimension)
+        except (TypeError, ValueError) as error:
+            raise ValueError(f'{source_id}.{field} must declare a positive integer dimension.') from error
+        if not math.isfinite(number) or number <= 0 or not number.is_integer():
+            raise ValueError(f'{source_id}.{field} must declare a positive integer dimension.')
+        return int(number)
     if source['module'] == 'modules.Primitive':
         if source['action'] in {'String', 'Integer', 'Float', 'Boolean'}:
             return value('value')

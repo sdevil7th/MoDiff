@@ -320,6 +320,63 @@ def test_composed_image_output_is_retained_across_owner_release(setup):
     assert result['schedule']['releases'][0]['retainOutputs'] == {'generate': ['images']}
 
 
+def test_split_decoder_dimension_connections_are_planned_without_executing_denoise(setup):
+    plan, _, _, requests = setup
+    g = graph()
+    g['nodes']['generate']['action'] = 'Denoise'
+    g['nodes']['generate']['params']['width']['value'] = '1024'
+    g['nodes']['decode'] = node(
+        'DecodeLatents', vae={'sourceId': 'load', 'sourceKey': 'vae_out'},
+        latents={'sourceId': 'generate', 'sourceKey': 'latents'},
+        width={'sourceId': 'generate', 'sourceKey': 'out_width'},
+        height={'sourceId': 'generate', 'sourceKey': 'out_height'},
+    )
+    g['paths'] = [list(g['nodes'])]
+    before = deepcopy(g)
+    result = plan(g)
+    assert result['canAutoRun'], result['issues']
+    assert not result['requiresPreparation']
+    # The executor rechecks these integer outputs against its actual connected
+    # arguments before allocating decoder resources; no cached latent is read.
+    assert result['resolvedFields']['decode'] == {'width': 1024, 'height': 1024}
+    assert requests[-1]['form']['width'] == 1024
+    assert g == before
+
+
+@pytest.mark.parametrize('change', ['different_latents', 'unknown_output', 'non_integer'])
+def test_split_decoder_dimension_projection_does_not_authorize_unknown_geometry(setup, change):
+    plan, _, _, _ = setup
+    g = graph()
+    g['nodes']['generate']['action'] = 'Denoise'
+    g['nodes']['decode'] = node(
+        'DecodeLatents', vae={'sourceId': 'load', 'sourceKey': 'vae_out'},
+        latents={'sourceId': 'generate', 'sourceKey': 'latents'},
+        width={'sourceId': 'generate', 'sourceKey': 'out_width'},
+    )
+    if change == 'different_latents':
+        g['nodes']['decode']['params']['latents'] = {'sourceId': 'load', 'sourceKey': 'latents'}
+    elif change == 'unknown_output':
+        g['nodes']['decode']['params']['width']['sourceKey'] = 'estimated_width'
+    else:
+        g['nodes']['generate']['params']['width']['value'] = 1.5
+    g['paths'] = [list(g['nodes'])]
+    assert not plan(g)['canAutoRun']
+
+
+def test_split_decoder_stops_before_allocation_if_actual_geometry_differs():
+    from modiff.server import WebServer
+
+    app = object.__new__(WebServer)
+    app.modules = {'modules.ModularDiffusers': {'DecodeLatents': {}}}
+    app.node_cache = {'denoise': SimpleNamespace(output={'out_width': 2048})}
+    app._workflow_auto_resolved_fields = {'decode': {'width': 1024}}
+    with pytest.raises(RuntimeError, match='decode.width changed after resource planning'):
+        app.execute_node('decode', node('DecodeLatents', width={
+            'sourceId': 'denoise', 'sourceKey': 'out_width',
+        }), 'test')
+    assert 'decode' not in app.node_cache
+
+
 def test_nested_data_selection_and_conversion_resolve_without_executing_nodes(setup):
     plan, _, _, _ = setup
     g = graph()

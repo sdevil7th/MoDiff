@@ -121,7 +121,7 @@ visible and does not count as a pass or a completed release requirement.
 | W2  | Workspace switch, independent memory labels and migration    | In progress: controls and persistence    | W1                              |
 | W3  | Creator entry and Developer Workflows modal                  | Complete: entry flows                    | W2                              |
 | W4  | Unified Nodes library and contextual inspector               | Complete: authoring acceptance           | W2                              |
-| W5  | Generic model/task changes and workflow modification         | In progress: loader authoring            | W3, W4                          |
+| W5  | Generic model/task changes and workflow modification         | Complete: W5 acceptance                  | W3, W4                          |
 | W6  | HF/local custom-node workflow                                | Planned                                  | W4, W5                          |
 | W7  | Concurrent authoring, reuse and recovery                     | Planned                                  | W5, W6                          |
 | W8  | All-local-image execution and modification campaign          | Planned                                  | Stable W2–W7 build              |
@@ -388,12 +388,12 @@ acceptance, W5–W10 and Windows memory qualification remain open.
 - [x] Add owning-Block preview/apply for graphs of generic nodes through existing
       instance reducers and the canvas transaction, preserving nested ownership,
       definitions, compatible interfaces and crossing connections.
-- [ ] Complete model/task replacement for existing upstream Modular compositions
+- [x] Complete model/task replacement for existing upstream Modular compositions
       and the full interface/modification matrix; retain their current editing path.
 - [x] Preserve compatible outside inputs during generic Block task changes;
       extend shared input connections from their existing source without changing
       public port identities, and reject competing sources or sealed destinations.
-- [ ] Make compatible model changes retain inputs and adaptable fields; preserve
+- [x] Make compatible model changes retain inputs and adaptable fields; preserve
       unsupported values without execution. Handle disconnected and shared loaders.
 - [x] Resolve the observed Automatic task-identity gap for recognizable generic
       Modular operation graphs. Match existing reviewed operations/state edges and
@@ -402,7 +402,7 @@ acceptance, W5–W10 and Windows memory qualification remain open.
 - [x] Record recognizable model-owner tasks separately from consumed values and
       apply the correct task label in output history without rewriting saved forms.
       Ambiguous/partial compositions do not gain a recognized task or resource proof.
-- [ ] Extend task recognition/acceptance to remaining upstream compositions and
+- [x] Extend task recognition/acceptance to remaining upstream compositions and
       ambiguous graph signatures; one SDXL run does not qualify every task/model.
 - [x] Correct stale model display labels and numeric-string summaries in history.
       Gallery uses captured identities, separates custom pipeline filters and
@@ -413,92 +413,90 @@ acceptance, W5–W10 and Windows memory qualification remain open.
       image/mask/reference inputs in the resolved execution scope, including
       unexposed Block internals and stale saved declarations. Both workspaces and
       memory policies retain targeted, distinct Fix findings without inventing inputs.
-- [ ] Correct conditional Preview VAE suggestions in Fix: an image input should
+- [x] Correct conditional Preview VAE suggestions in Fix: an image input should
       not be diagnosed as missing the latent decoder, nor offered an unrelated
       wildcard source. Observed during packaged required-media acceptance.
-- [ ] Add required image/mask/reference operations through actual task contracts.
+- [x] Add required image/mask/reference operations through actual task contracts.
       Respect dimensions, shared generator identity and upstream state writers.
-- [ ] Preserve custom nodes and explicit diagnostic edges when no safe automatic
+- [x] Preserve custom nodes and explicit diagnostic edges when no safe automatic
       adaptation exists. Reject stale previews rather than overwriting edits.
-- [ ] Qualify create/modify/save/reinsert/execute on generic nodes and nested Blocks,
+- [x] Qualify create/modify/save/reinsert/execute on generic nodes and nested Blocks,
       including crossing connections, selected-Block execution and legacy instances.
 
 Acceptance: the modification matrix below passes in contract/native tests before
 expensive model qualification. Selected paths additionally execute with real models;
 graph-shaped JSON or a successful inspector is not execution evidence.
 
-W5 owning-Block checkpoint: generic operation graphs expose model/task changes on
-collapsed Blocks and expanded loader inspectors. The shared planner updates one
-instance, retains semantic IDs even when implementation classes change, and uses
-the existing Undo/rollback transaction. Incompatible public bindings and bound
-values are rejected before mutation. Outside inputs are included as read-only
-sources in the existing planner, so they
-keep precedence over starter connections. Added shared consumers receive reviewed
-crossing wires from the same source. Competing sources, sealed controls and
-incompatible bound fields still stop the preview without changing the workflow.
-This does not claim that
-arbitrary upstream Modular compositions can be switched through the generic path,
-or qualify any model execution. Remaining W5 modification and execution rows stay
-open.
+W5 implementation: generic loaders and their owning Blocks expose **Change model /
+task** in both workspaces. Choices come from backend pipeline/task contracts and
+exact declared model profiles. Compatible values, literal media and outside wires
+survive a change; shared consumers use the same supplied seed. Unsupported values
+remain recoverable outside execution. Preview/Apply uses one existing graph/history
+transaction, with cancellation and rejection of stale replies or active gestures.
 
-W5 loader checkpoint: the selected top-level generic loader now exposes
-**Inspect node → Parameters → Change model / task**, also available in the Studio
-side inspector. Replacement choices are local to that owner and use the backend's
-declared pipeline/task contracts. Preview and Apply reuse the existing graph
-planner and history transaction; no second graph representation, executor or
-family dispatch was introduced. The library entry point remains available.
-Nested and legacy Blocks retain their existing composition tools and are not
-silently converted by this control.
+Upstream Modular compositions expose a workflow replacement chooser through the
+existing catalog/compiler. A replacement keeps the exact edited composition in a
+bounded set of eight inactive drafts; restoring a draft recovers custom nodes and
+connections. This is distinct from pretending arbitrary internals can be translated
+across models. Saved Blocks can be reinserted, edited and explicitly updated without
+silently modifying their reusable definition. Legacy route-selection instances
+retain their compatibility path.
 
-The native acceptance covers both workspaces, Qwen → Flux, text-to-image →
-image-to-image, prompt retention, preview cancellation, one-step Undo/Redo,
-explicit Save as and reload. Delayed replies are discarded after a target change,
-inspector close or intervening graph edit, and a fresh request can succeed. The
-new flow exposed and fixed a stale toolbar inspector owner that otherwise reopened
-its dialog after graph replacement and reselection. SDXL shared-seed and keyboard
-inspection regressions were also repeated. An initial SDXL attempt rejected a
-stale preview; the strict guard remains, and wider asynchronous-publication
-acceptance is still part of W5/W7 rather than treated as proven by later passes.
+Required image, mask and reference inputs are checked against executable ports and
+connections, including nested/unexposed inputs. Fix no longer asks for a VAE when
+Preview already receives an image, or proposes an arbitrary wildcard connection.
+Run Block honors transitive outside inputs and required internal siblings while
+excluding downstream outputs and unrelated drafts; reusable saving remains scoped
+to contained nodes. The live nested Qwen case exposed and regression-tested this
+selected-run dependency correction.
 
-Packaged-browser acceptance uses actual backend metadata for the same Qwen →
-Flux → image-to-image sequence, workspace switches and save/reopen. This is
-**authoring evidence, not model execution**. The complete client gate and affected
-backend bundle/ledger contracts are required for publication. The remaining
-Block-owned switching, modification matrix, W8/W9 model runs and deferred Windows
-memory acceptance remain unchecked.
+Backend contracts share the published task adapter definitions. Exact components,
+state edges and reviewed upstream placements identify tasks; partial/ambiguous
+compositions remain unresolved. A loader projection supplies the required inpaint
+VAE connection. Split decoding can forecast explicit denoiser dimensions during
+Automatic planning, with the existing executor checking actual connected dimensions
+before allocation. No frontend family switch or separate executor was added.
 
-W5 Block transaction checkpoint: existing saved route-selection Blocks now
-capture their workflow and graph before asynchronous save/metadata work and reject
-obsolete replies. Cancel remains available while the destination loads; an
-unmounted owner aborts its request. Switches cannot merge into an unfinished
-canvas gesture. The route reducer validates connected ports against the actual
-restored draft, including its customized interface, rather than the destination's
-registered defaults. Rejected changes preserve the current graph and Undo history;
-accepted switches retain one Undo/Redo step.
+Validation distinguishes authoring from execution:
 
-Seven contract cases cover workflow replacement, intervening edits, cancellation,
-active gestures, normal commit/Undo/Redo and both preserved/removed custom output
-ports. Native browser cases use exact backend Qwen/Flux catalog definitions in
-Creator and Developer, with one-time fixture setup representing an existing saved
-route-selection workflow. They cover Cancel/retry, prompt retention, both draft
-and Save-active-route actions, Undo/Redo and Save as/reload. A packaged browser
-check against the live backend validates the same compatibility path without
-inference. The full client gate stays within its existing bundle limits.
+- The no-download modification matrix covers all 86 published Modular task starters
+  in ordinary and Block form. A further 81 directed model/task changes check public
+  inputs, exact drafts and preserved custom graph edits. These are contract proofs.
+- Native Creator/Developer checks cover owning loaders/Blocks, explicit model
+  profiles, required media, shared outside seed, nested interfaces, stale previews,
+  Undo/Redo, legacy routes and upstream draft restoration. Browser tests also inspect
+  selected-run exports after native media wiring and Save as/reload.
+- Real packaged-browser runs cover the following downloaded models and paths.
+  Inputs, submitted graphs, source identities, receipts, screenshots and output
+  hashes are retained in ignored review storage; output images are inspected.
 
-This fixes the existing switch transaction; it does not extend the older fixed
-route list or claim generic nested Block/task switching. That implementation and
-all-model execution remain open. New modelVariant Blocks keep their current
-checkpoint selector, and no source definition or downloaded model is modified.
+| Live path                           | Modification and persistence exercised                                                                              | Parameters / memory                                                                                |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| SDXL generic inpaint                | T2I → inpaint; connect image/mask and shared external seed; save/reload; run and inspect history                    | 1024², 32 requested steps, guidance 6.5, strength 0.62, seed 7319; Automatic                       |
+| Flux generic image-to-image         | T2I → img2img; image, prompt, guidance and external denoiser seed; save/reload                                      | 1024², 32 steps, guidance 3.5, strength 0.62, seed 7319; Automatic                                 |
+| SDXL whole Diffusers image-to-image | Change whole pipeline/task; image, prompt/negative prompt and connected seed; save/reload                           | 1024², 32 steps, guidance 6.5, strength 0.62, seed 7319; Custom, bfloat16, CUDA, model CPU offload |
+| Reviewed upstream Flux composition  | Switch from Qwen; save Block, delete/reinsert, edit, explicitly update, save/reload and Run Block                   | 1024², 30 steps, guidance 3.5, seed 42; Automatic                                                  |
+| Qwen generic multi-reference edit   | T2I → multi-reference edit; connect both encoders, shared seed, save/reload and Run Block; outside Preview excluded | 1024² output, two references, 30 steps, guidance 4, shared external seed 7319; Automatic           |
 
-W5 shared-input checkpoint: generic operation hints now survive visible and
-execution projections of Blocks. Loader references follow exact semantic IDs when
-a Block is adopted into another Block and receive the destination instance prefix
-when projected. Shared controls use the existing field/value reducers and history;
-root, nested-container and leaf edits update hidden members together. Sealed
-controls reject the whole edit, competing loaders do not gain shared ownership,
-and conflicting shared values still block execution export. Immutable definitions
-remain unchanged. This is a prerequisite for nested model/task changes, not their
-completion. Model execution qualification remains in W8.
+The complete backend gate passes **3,188 tests and 9,864 subtests** (510 skips),
+with 75 additional optional resource/task checks. The complete client gate passes,
+including its bundle limits; six focused native media/seed regressions pass after
+the selected-run correction. Other W5 native cases and exact run receipts are
+recorded in the completion review. All 104 downloaded model snapshots remain intact.
+
+The final Qwen run completed in approximately 31 minutes. Its execution receipt
+records both references, seed 7319 at both consumers and the exact pinned model.
+Qwen Edit Plus declares the same action/input signature for `edit_image` and
+`multi_image_reference_edit`, so the captured task label deliberately stays unset
+instead of guessing; the pipeline identity and actual two-image inputs are recorded.
+
+Scope limits: standard Diffusers SDXL image editing has no declared Automatic
+recipe for this exact path, so its live proof uses explicit Custom memory. This
+does not qualify every model or every modification on each model. W8's mandatory
+per-model I01–I12 campaign, W6/W7 custom development and concurrent authoring,
+W9 service export/other modalities, W10 release acceptance, and H1 Windows Qwen
+16 GB VRAM / 32 GB RAM remain separately tracked. Windows memory acceptance is
+deferred until the main UI/UX work is ready.
 
 ### W6 — Custom-node development
 

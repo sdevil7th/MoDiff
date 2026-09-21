@@ -10,12 +10,12 @@ from modiff.operation_contracts import _identifier
 
 def _modular_route(pipeline, task):
     from modiff.modular_workflow_discovery import load_reviewed_modular_workflow_snapshot
-    from modules.ModularDiffusers.operation_contracts import _task_adapters
+    from modiff.modular_task_adapters import modular_task_adapters
 
     for entry in load_reviewed_modular_workflow_snapshot()["contracts"]:
         if entry["pipelineClass"] == pipeline:
             for workflow in entry["workflows"]:
-                for name, adapter in _task_adapters(pipeline, workflow):
+                for name, adapter in modular_task_adapters(pipeline, workflow):
                     if name == task:
                         return workflow["id"], adapter
     raise ValueError("No reviewed stage route for this task. Add individual operations instead.")

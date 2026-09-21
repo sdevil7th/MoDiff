@@ -2,11 +2,10 @@
 
 from copy import deepcopy
 
-from modiff.huggingface_node_library import graph_adapter_contracts
 from modiff.modular_action_bindings import MODULAR_ACTION_BINDINGS, MODULAR_AUXILIARY_OPERATION_BINDINGS
 from modiff.modular_block_contracts import load_reviewed_modular_block_snapshot
 from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
-from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
+from modiff.modular_task_adapters import modular_task_adapters as _task_adapters
 from modiff.modular_workflow_discovery import load_reviewed_modular_workflow_snapshot
 from modiff.operation_contracts import (
     WORKFLOW_STAGE_OPERATIONS,
@@ -62,26 +61,6 @@ def _loader_members(root, blocks, definitions, pipeline_class):
     }
 
 
-def _task_adapters(pipeline, workflow):
-    adapters = graph_adapter_contracts(pipeline, workflow["id"], workflow)
-    whole = reviewed_whole_workflow_graph_adapter(pipeline, workflow["id"])
-    if whole:
-        truth = PINNED_MODULAR_WORKFLOW_TRUTH.get(pipeline)
-        tasks = (
-            [mode for mode, route in truth.modes if (route.upstream_workflow or "default") == workflow["id"]]
-            if truth
-            else []
-        )
-        return [(task, whole) for task in tasks or [workflow["taskId"]]]
-    result = {}
-    for adapter in adapters:
-        if not adapter["actionSequence"] or "full_pipeline" in adapter["actionSequence"]:
-            continue  # A whole standard call does not establish Modular stages.
-        task = adapter["adapterId"] if adapter["source"] == "mode" else workflow["taskId"]
-        result.setdefault(task, adapter)
-    return list(result.items())
-
-
 def get_modular_task_operation_contracts(modules) -> list[dict]:
     """Read schemas only: no node/pipeline construction, installation or weights."""
     if not modules.get("modules.ModularDiffusers"):
@@ -117,6 +96,7 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     node_key="modules.ModularDiffusers.ModelsLoader",
                     loader=True,
                 )
+                members = _loader_members(root, blocks, definitions, pipeline_class)
                 if loader:
                     for port in loader["ports"]:
                         if port["direction"] == "output" or port["name"] in {"unet", "vae", "controlnet"}:
@@ -134,7 +114,6 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
 
                     if workflow_id in REVIEWED_BUILTIN_WORKFLOWS.get(pipeline_class, ()):
                         loader["binding"]["values"]["workflow_id"] = workflow_id
-                    members = _loader_members(root, blocks, definitions, pipeline_class)
                     for port in loader["ports"]:
                         if port["name"] in members:
                             port["semantics"]["members"] = members[port["name"]]
@@ -200,7 +179,19 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                             if "component" in port["roles"]:
                                 components = _members(stage_definitions, "components")
                                 exact = [item for item in components if item["name"] == port["semanticName"]]
-                                port["semantics"]["members"] = exact or components
+                                if not exact:
+                                    # Generic sockets (e.g. unet) can bind a
+                                    # differently named upstream component. Use
+                                    # the loader's declared component projection,
+                                    # not every dependency of the whole block.
+                                    names = {item["name"] for item in members.get(port["name"], [])}
+                                    exact = [item for item in components if item["name"] in names]
+                                # The node wrapper can require a component not
+                                # listed on the selected upstream block (e.g. a
+                                # VAE for inpaint route validation). Preserve its
+                                # exact loader projection instead of claiming all
+                                # denoiser dependencies for that single socket.
+                                port["semantics"]["members"] = exact or members.get(port["name"]) or components
                     # Generic node schemas keep optional media sockets for other
                     # tasks. A selected workflow can require those same sockets.
                     # Publish that requirement on the operation itself as well

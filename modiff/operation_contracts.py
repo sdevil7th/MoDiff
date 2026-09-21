@@ -75,6 +75,10 @@ def with_operation_semantics(contract, *, workflow_id=None, values=None):
         kind = "value"
         if "pipeline" in port["roles"]:
             kind = "pipeline"
+        elif types & {"controlnet_bundle", "custom_controlnet", "ip_adapter_bundle", "custom_ip_adapter"}:
+            # Existing bundles carry conditioning alongside model references.
+            # Both ends use that same bundle contract, not a whole component set.
+            kind = "conditioning"
         elif "component" in port["roles"]:
             kind = "component"
         elif types & {"modular_workflow_state", "modular_route_state"}:
