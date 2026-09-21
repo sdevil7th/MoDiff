@@ -914,7 +914,13 @@ Additional W8 task and correction checkpoint:
 - [x] Backend Ruff, package consistency and preflight; 3,421 tests and 10,057
       subtests passed with 516 skips. The verified optional-runtime focused suite
       separately passed 56 tests and 2,514 subtests.
-- [ ] Publish the paired correction and complete native upscale recovery.
+- [x] Publish the paired correction and complete native Real-ESRGAN x2 recovery:
+      eight executions covering baseline, identical cached repeat, tile/overlap
+      changes, post-scaling, source replacement, save/reopen, Creator editing and
+      Saved Block reinsertion. Exact output hashes, dimensions and submitted
+      artifact/settings were audited; the saved definition stayed unchanged.
+      The baseline retained the source composition on visual inspection. Other
+      cached upscaler weights and detailed tiled-output quality remain open.
 
 The upscale correction adds authoring metadata to an existing executor. It does
 not qualify every Spandrel weight. Original failed discovery evidence remains
