@@ -674,8 +674,16 @@ concurrent-authoring and service-export campaigns (W7/W9).
       lease; the Nodes library asset request waited 119 seconds before dispatch.
       Autosave was pending too. This is a diagnosed failure, not passing authoring
       acceptance; the following metadata-isolation item remains open.
-- [ ] Keep read-only metadata resolution independent of live model allocation and
-      execution locks. Cache immutable metadata with correct identity/invalidation.
+- [x] Isolate reviewed generic Modular loader/filter and node-schema callbacks
+      from live model ownership. Presentation-only contexts reuse existing
+      callbacks without executable constructors, cached nodes or destructors.
+      Preserve authorization, optional-runtime checks and workflow identity.
+      Cancellation drains metadata threads; runtime activation and custom-source
+      mutations remain serialized. Native connected-draft creation, lazy Nodes
+      search, insertion/Undo, autosave and reload pass during real Flux inference.
+- [ ] Audit remaining metadata callbacks and immutable-cache identity/invalidation
+      beyond the reviewed generic Modular actions. Unknown/custom and queued
+      callbacks remain on the model-ownership path until separately reviewed.
 - [x] Apply workflow ownership checks before queue-recovery progress resolves a
       node by ID or label. Background work remains in Session activity; opening
       its owning workflow restores progress. Regression tests cover identical IDs,
@@ -728,8 +736,28 @@ tests with the approved optional runtime, 79 coordinator tests, the focused
 browser recovery case and the full client quality gate. The final bundle matches
 87 generated files; its 18 dependent catalog changes are hashes only. Original
 model inventories and custom-source approvals remain preserved. The diagnosed
-Nodes-library/autosave connection starvation, read-only metadata isolation,
-resident-owner accounting and broader recovery acceptance remain open.
+Nodes-library/autosave connection starvation in that captured generic Modular
+flow is addressed by the following checkpoint. Broader metadata, resident-owner
+accounting and recovery acceptance remain open.
+
+Metadata-isolation checkpoint: with the same complex prompt and cold-worker Flux
+1024 × 1024, 30-step settings, inference completed in 136.3 seconds with identical
+image bytes. During denoising, Qwen text-to-image, Flux Kontext edit and Flux
+text-to-image previews took 0.26–0.93 seconds. Creating the connected Flux draft
+took 210 ms; Nodes search was ready in 843 ms, insertion took 97 ms and Undo
+76 ms. The formerly starved library asset began dispatch after 77 ms instead of
+119 seconds. All 14 captured field-action requests completed within 912 ms.
+The draft reached backend autosave before generation ended and survived reload;
+the original workflow retained its newer prompt and exact-task preview. Queue
+p95 was 10.1 ms across 125 samples. The actual generated image and canvas
+screenshots were inspected. These sampled gestures qualify this reproduced flow,
+not every metadata callback, model or recovery case.
+
+The final gate passes 3,247 backend tests and 9,879 subtests (511 skips). The
+approved optional runtime passes 189 focused tests and 636 subtests, including
+registered generic schema contracts and custom-source boundaries. The client
+quality gate passes; its 87 generated files remain byte-identical to the served
+bundle. Original model inventories and custom-source approvals remain preserved.
 
 Acceptance: while a real model denoises, create another workflow, search/add nodes,
 preview model/task changes, inspect custom sources, edit/save and switch workspace.

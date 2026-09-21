@@ -48,6 +48,7 @@ from modiff.execution_input_provenance import (
     bind_generation_input_origins,
 )
 from modiff.studio_persistence_lock import STUDIO_PERSISTENCE_LOCK
+from modiff.field_metadata import is_metadata_field_action, metadata_field_callback
 from modiff.path_identifiers import (
     data_path_identifier,
     is_data_path_identifier,
@@ -1386,6 +1387,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         # Model destructors can take minutes. Serialize cache ownership without
         # holding the HTTP event loop or racing a same-id loader replacement.
         self._node_cache_lock = asyncio.Lock()
+        # Reviewed presentation callbacks never borrow cached model owners.
+        # Retain ordering and drain cancelled threads separately from inference.
+        self._field_metadata_lock = asyncio.Lock()
         self._node_cache_teardown_active = False
 
         self.main_worker_task = None
@@ -2492,7 +2496,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             logger.debug("Main worker shutting down")
 
     async def _with_node_cache_lease(self, operation):
-        async with self._node_cache_lock:
+        return await self._with_action_lease(self._node_cache_lock, operation)
+
+    async def _with_action_lease(self, lock, operation):
+        async with lock:
             task = asyncio.ensure_future(operation())
             cancelled = False
             while True:
@@ -2937,10 +2944,14 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             )
 
     async def field_action(self, request):
-        return await self._with_node_cache_lease(lambda: self._field_action(request))
-
-    async def _field_action(self, request):
         data = await request.json()
+        metadata_only = is_metadata_field_action(data)
+        lock = self._field_metadata_lock if metadata_only else self._node_cache_lock
+        return await self._with_action_lease(
+            lock, lambda: self._field_action(data, metadata_only=metadata_only)
+        )
+
+    async def _field_action(self, data, *, metadata_only=False):
         if not isinstance(data, dict):
             return web.json_response(
                 {"error": True, "message": "Field action payload must be a JSON object."},
@@ -3008,28 +3019,29 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         if sid:
             message_identity["sid"] = sid
 
-        if node not in self.node_cache:
+        if metadata_only:
+            callback = metadata_field_callback(action, method_name, node_id=node, sid=sid)
+        elif node not in self.node_cache:
             work_module = import_module(f"{module}.main")
             work_action = getattr(work_module, action)
             work_action = work_action(node_id=node)
             self.node_cache[node] = work_action
 
-        cached_node = self.node_cache[node]
-        if (
-            getattr(cached_node, "module_name", None) != module
-            or getattr(cached_node, "class_name", None) != action
-        ):
-            return web.json_response(
-                {
-                    "error": True,
-                    "message": "The cached node does not match the requested field-action module and action.",
-                },
-                status=409,
-            )
-
-        cached_node._sid = sid  # always update the sid as it may change over time
-
-        callback = getattr(cached_node, method_name, None)
+        if not metadata_only:
+            cached_node = self.node_cache[node]
+            if (
+                getattr(cached_node, "module_name", None) != module
+                or getattr(cached_node, "class_name", None) != action
+            ):
+                return web.json_response(
+                    {
+                        "error": True,
+                        "message": "The cached node does not match the requested field-action module and action.",
+                    },
+                    status=409,
+                )
+            cached_node._sid = sid  # always update the sid as it may change over time
+            callback = getattr(cached_node, method_name, None)
         if not callable(callback):
             return web.json_response(
                 {"error": True, "message": "The authorized backend field action is not callable."},
@@ -11665,6 +11677,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             or self.current_task
             or self.queued_tasks
             or self._active_nonruntime_mutations
+            or self._field_metadata_lock.locked()
             or self.hf_download_tasks
             or (self.template_gallery_install_task is not None and not self.template_gallery_install_task.done())
         ):

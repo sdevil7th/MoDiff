@@ -59,11 +59,14 @@ class CustomExtensionAPI:
 
     async def _extension_mutation(self, operation):
         # Do not change imports under either an active graph or a waiting graph.
-        if self.current_task or not self.main_queue.empty() or self._node_cache_lock.locked():
+        if (
+            self.current_task or not self.main_queue.empty()
+            or self._node_cache_lock.locked() or self._field_metadata_lock.locked()
+        ):
             return web.json_response(
                 {
                     "error": True,
-                    "message": "Wait for the running and queued work to finish before changing custom code.",
+                    "message": "Wait for the running and queued work and active field updates to finish before changing custom code.",
                 },
                 status=409,
             )
@@ -76,7 +79,10 @@ class CustomExtensionAPI:
                 self._node_cache_teardown_active = False
 
         try:
-            return web.json_response(await self._with_node_cache_lease(guarded))
+            # Import/reload changes the registry used by presentation callbacks.
+            # Hold both leases, in this order, until even cancelled threads drain.
+            async with self._field_metadata_lock:
+                return web.json_response(await self._with_node_cache_lease(guarded))
         except (ValueError, OSError, SyntaxError) as error:
             # Report resulting disabled state too; a failed import is not rollback
             # of Python side effects, and an earlier approval must not survive it.

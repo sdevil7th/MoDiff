@@ -263,7 +263,7 @@ class NodeCacheCleanupTests(unittest.IsolatedAsyncioTestCase):
         server = self.server()
         server._field_action = AsyncMock(return_value="ok")
         await server._node_cache_lock.acquire()
-        action = asyncio.create_task(server.field_action(None))
+        action = asyncio.create_task(server.field_action(self.request([])))
         await asyncio.sleep(0.02)
         server._field_action.assert_not_awaited()
         server._node_cache_lock.release()

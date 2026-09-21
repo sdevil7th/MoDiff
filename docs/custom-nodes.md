@@ -59,10 +59,12 @@ If you change field names or types, insert a fresh node and reconnect it as need
 reload refreshes the registry but does not rewrite saved graph parameters.
 
 Source resolution, inspection and listing remain available while a workflow runs.
-Staging, enabling, disabling and reloading require an idle system: running or queued work returns a correction to
+Staging, enabling, disabling and reloading require an idle system: running,
+queued or active metadata work returns a correction to
 finish that work first. If an HTTP client disconnects after an approved import
 starts, it cannot stop arbitrary Python safely; the execution lease remains held
-until the operation finishes. Refresh sources to see the result. Failed imports
+until the operation finishes, including its separate metadata lease. Generic
+field updates wait until the registry mutation finishes. Refresh sources to see the result. Failed imports
 leave the module disabled with diagnostics. Python globals, native libraries,
 threads and other import side effects may require a backend restart; disabling
 or reloading cannot undo arbitrary code.

@@ -242,6 +242,11 @@ inputs survive and Undo restores the change. Nested Blocks retain their composit
 inspector while Block-level switching is being implemented. See the [workspace implementation plan](docs/creator-developer-workspaces-plan.md)
 for completed acceptance and the remaining model-execution campaign.
 
+Generic Modular loader and node-field updates can run while another workflow is
+generating, without borrowing its model cache. See the [field-action ownership
+contract](docs/api-reference.md#graph-execution-and-queue-state) for the
+reviewed metadata boundary and callbacks that remain serialized.
+
 ## Managed installation profiles
 
 MoDiff's installer owns the executable Python/Torch environment. The project is intentionally marked `uv`-unmanaged, so ordinary `uv sync` and `uv run` are not supported setup or launch commands. The explicit `uv run --no-project --no-sync ... -m modiff.dev` bootstrap described above delegates to this same installer without project resolution. The installer stages a fresh environment, checks its package policy and a real device tensor, then atomically promotes it to `.venv/` while retaining the previous environment for rollback. When the sibling client is installed, setup also downloads and SHA-256 verifies the pinned rights-approved Template Gallery snapshot and bundles it under `web/template-gallery` so normal use does not wait on Hub media requests. Four permission-dependent preview files are currently unavailable; their templates remain usable and do not request those files.

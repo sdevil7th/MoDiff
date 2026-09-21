@@ -1881,11 +1881,26 @@ compatible.
 
 Nonqueued client field-action waits are cancelled when their workflow ownership
 expires or browser navigation begins. This releases HTTP connections; it does
-not interrupt Python callbacks or grant permission to drop their node-cache
+not interrupt Python callbacks or grant permission to drop their execution
 lease. Queued user actions retain their acknowledgements. When a WebSocket
 session disconnects, its pending signal lookups resolve with
 `{"__MODIFF_ERROR": "websocket_closed"}` rather than waiting for the lookup timeout.
 Other sessions' pending requests retain their ownership.
+
+Nonqueued Modular **Models Loader** filter/identity refreshes and generic **Encode
+Prompt**, **Denoise**, **Decode Latents**, **Encode Image**, and **Image Embeddings**
+schema updates use presentation-only contexts. These exact built-in callbacks
+do not construct, mutate or destroy cached executable nodes, so graph execution
+does not block their field updates. They reuse the existing metadata resolvers
+and request-scoped WebSocket identity; custom contract inspection remains
+declarative and cannot import repository Python. Metadata callbacks have a
+separate ordered lease that survives request cancellation until their threads
+finish. Runtime activation and custom-source mutations remain unavailable while
+that lease is held; custom-source mutations also hold it until imports finish.
+Authoritative field authorization and optional-runtime checks still apply.
+Queued callbacks, custom-node callbacks and all other actions retain the model
+ownership lease. A registry declaration cannot opt an arbitrary callback into
+the metadata path.
 
 Client callers must also choose the correct local ownership scope. A normal
 visible form edit is form-scoped and must reject a response after the form
