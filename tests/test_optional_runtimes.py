@@ -486,6 +486,12 @@ class OptionalRuntimeContractTests(unittest.TestCase):
 import builtins
 import importlib.util
 import sys
+from modiff.custom_extensions import ExtensionStore
+
+# This subprocess represents a clean base installation. Operator-enabled
+# extensions in the developer's checkout may intentionally import dependencies;
+# their separate approval/import contract is exercised by test_custom_extensions.
+ExtensionStore.load_enabled = lambda self, registry: None
 
 original_import = builtins.__import__
 original_find_spec = importlib.util.find_spec

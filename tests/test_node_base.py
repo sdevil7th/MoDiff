@@ -824,6 +824,27 @@ print(json.dumps({
             {"modules.DiffusersImage", "modules.ModularDiffusers"}.issubset(payload["module_names"])
         )
 
+    def test_startup_registry_count_includes_enabled_extensions(self):
+        script = """
+from modiff.custom_extensions import ExtensionStore
+def load_fixture(self, registry):
+    registry['custom.RegistryCountFixture'] = {'First': {}, 'Second': {}}
+ExtensionStore.load_enabled = load_fixture
+from modiff.NodeBase import NodeBase
+import modules
+assert len(modules.MODULE_MAP['custom.RegistryCountFixture']) == 2
+assert modules.total_nodes == sum(len(nodes) for nodes in modules.MODULE_MAP.values())
+"""
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=Path(__file__).resolve().parents[1],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1535,6 +1535,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 web.get("/custom_modules", self.custom_modules_list),
                 web.post("/custom_modules/refresh", self.custom_modules_refresh),
                 web.post("/custom_modules/install", self.custom_modules_install),
+                web.post("/custom_modules/resolve", self.custom_modules_resolve),
                 web.post("/custom_modules/{name}/update", self.custom_modules_update),
                 web.post("/custom_modules/{name}/inspect", self.custom_modules_inspect),
                 web.post("/custom_modules/{name}/reload", self.custom_modules_reload),

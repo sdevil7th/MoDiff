@@ -1585,7 +1585,13 @@ class MoDiffPipelineConfig:
             writer.write(self.to_json_string())
 
     @classmethod
-    def from_json_bytes(cls, raw_bytes: bytes, *, source_label: str = "<memory>") -> "MoDiffPipelineConfig":
+    def from_json_bytes(
+        cls,
+        raw_bytes: bytes,
+        *,
+        source_label: str = "<memory>",
+        allow_omitted_custom_model_inputs: bool = False,
+    ) -> "MoDiffPipelineConfig":
         """Load one bounded, duplicate-free JSON object from an exact byte sequence."""
 
         if len(raw_bytes) > MAX_MODIFF_PIPELINE_CONFIG_BYTES:
@@ -1594,6 +1600,14 @@ class MoDiffPipelineConfig:
                 f"{MAX_MODIFF_PIPELINE_CONFIG_BYTES}-byte limit."
             )
         data = _decode_pipeline_config_bytes(raw_bytes, source_label=source_label)
+        if allow_omitted_custom_model_inputs:
+            # Published Mellon custom sidecars can omit this optional list.
+            # Normalize only the parsed review contract, never source bytes or
+            # an explicitly invalid value. Ordinary pipeline loading stays strict.
+            actions = data.get("node_params")
+            custom = actions.get("custom") if isinstance(actions, dict) else None
+            if isinstance(custom, dict):
+                custom.setdefault("model_input_names", [])
         _validate_pipeline_config_document(data, source_label=source_label)
         return cls.from_dict(data)
 

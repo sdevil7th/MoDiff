@@ -340,7 +340,7 @@ The Modular Diffusers integration is documented in [modules/ModularDiffusers/REA
 
 ## Custom nodes
 
-In Expert, open **Nodes → Custom nodes** to stage, inspect and explicitly enable local Python, pinned Git code or Hub Modular blocks. See [Developing custom nodes](docs/custom-nodes.md) for model-free examples, typed fields, dependency review, reload and Auto resource contracts.
+In Developer, choose **Add from Hugging Face** or **Add local source** in **Workflows**, or open **Nodes → Custom nodes**. Resolve a Hub URL or repository ID to an exact commit, stage it, review its source and dependencies, then explicitly enable that code. Local Python folders and pinned Git sources use the same review flow. See [Developing custom nodes](docs/custom-nodes.md) for runnable examples, typed fields, reload and independent Automatic/Custom memory policies.
 
 ## Updating and recovery
 

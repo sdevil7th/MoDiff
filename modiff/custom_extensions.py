@@ -175,7 +175,9 @@ def _preview(files):
         from modules.ModularDiffusers.pipeline_schema import MoDiffPipelineConfig
         from modules.ModularDiffusers.dynamic_node import _custom_node_contract
 
-        config = MoDiffPipelineConfig.from_json_bytes(files[sidecar], source_label=sidecar)
+        config = MoDiffPipelineConfig.from_json_bytes(
+            files[sidecar], source_label=sidecar, allow_omitted_custom_model_inputs=True
+        )
         contract = _custom_node_contract(config)
         for name in [*contract["input_names"], *contract["model_input_names"]]:
             if name not in contract["params"]:

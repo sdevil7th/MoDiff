@@ -215,4 +215,5 @@ try:
 except (ValueError, OSError) as error:
     logger.error('Custom extension discovery is unavailable: %s', error)
 
+total_nodes = sum(len(nodes) for nodes in MODULE_MAP.values())
 logger.info(f"Loaded {total_nodes} nodes from {len(MODULE_MAP)} modules.")

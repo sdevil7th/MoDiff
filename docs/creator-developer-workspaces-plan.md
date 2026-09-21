@@ -122,7 +122,7 @@ visible and does not count as a pass or a completed release requirement.
 | W3  | Creator entry and Developer Workflows modal                  | Complete: entry flows                    | W2                              |
 | W4  | Unified Nodes library and contextual inspector               | Complete: authoring acceptance           | W2                              |
 | W5  | Generic model/task changes and workflow modification         | Complete: W5 acceptance                  | W3, W4                          |
-| W6  | HF/local custom-node workflow                                | Planned                                  | W4, W5                          |
+| W6  | HF/local custom-node workflow                                | In progress: Hub execution               | W4, W5                          |
 | W7  | Concurrent authoring, reuse and recovery                     | Planned                                  | W5, W6                          |
 | W8  | All-local-image execution and modification campaign          | Planned                                  | Stable W2–W7 build              |
 | W9  | Other modalities and real service-export campaign            | Planned                                  | Stable W2–W7 build; W8 fixtures |
@@ -500,22 +500,78 @@ deferred until the main UI/UX work is ready.
 
 ### W6 — Custom-node development
 
-- [ ] Provide Add from Hugging Face and local-source entry points from Developer
+- [x] Provide Add from Hugging Face and local-source entry points from Developer
       without requiring a template or existing custom-node placeholder.
-- [ ] Resolve user-entered repo URL/ID to an inspectable immutable revision through
+- [x] Resolve user-entered repo URL/ID to an inspectable immutable revision through
       existing Hub/source mechanisms; show revision, source and dependencies.
-- [ ] Render existing Diffusers/Mellon UI metadata with normal registry/field tools.
+- [x] Render existing Diffusers/Mellon UI metadata with normal registry/field tools.
       Require exact code approval before imports; importing a workflow grants none.
-- [ ] Show installed source location and review/reload changes. Preserve targeted
+- [x] Show installed source location and review/reload changes. Preserve targeted
       cache invalidation and reject stale approval or missing dependencies.
-- [ ] Explain idle-only activation/reload without blocking source inspection during
+- [x] Explain idle-only activation/reload without blocking source inspection during
       inference. Verify edit failures preserve unrelated graph/component owners.
+
+- [ ] Complete generic component provisioning for Hub blocks whose Mellon sidecar
+      omits component ports. Keep loading behind the existing model/resource
+      boundary; do not infer family-specific UI or silently load default weights.
 
 Acceptance: an approved local Python node and an HF Modular block execute inside
 existing image workflows, including a saved Block. A generic prompt/image processor
 is tested across distinct model families without family-specific registration.
 Missing dependency, changed helper file, failed import, cancellation and stale
 approval paths retain useful diagnostics. No Python sandbox claim.
+
+W6 implementation progress: Developer Workflows now opens the shared Custom nodes
+review directly for Hub or local sources. Hub metadata resolution accepts a repo
+ID/root URL or tree revision, returns an exact commit, and never stages or imports
+code. Editing, cancelling or closing invalidates an outstanding lookup. The existing
+exact-code approval, dependency checks and typed-node registration remain in place.
+Both READMEs and the custom-node guide describe this flow and independent memory
+policy.
+
+Focused evidence: six native browser tests with mocked backend responses cover
+entry points, pinned staging, typed discovery in both workspaces, late responses,
+missing dependencies, stale approval and import failure with an unchanged graph.
+Backend tests cover source validation, exact approvals, execution/reload boundaries,
+targeted invalidation and cancellation. The final full backend gate passes 3,217
+tests and 9,864 subtests, with 510 skips. The installed optional custom-source
+gate passes 127 tests and 133 subtests. Startup counts now include enabled custom
+nodes; the clean-base dependency test isolates operator extensions. The full
+client gate passes. The published
+bundle matches all 87 generated files; its 18 dependent ledger changes are hashes
+only. The 104 originally inventoried model snapshots retain all their files.
+
+Live acceptance completed so far:
+
+- [x] Locally staged Python Prompt Prefix and upstream Modular Prompt execute in
+      the same prompt chain with SDXL and Flux, inside saved/reopened Blocks.
+      Initial compositions are fixtures from live schemas; source approval, saving,
+      reopening, parameter edits and Run actions use the native packaged UI.
+- [x] Six runs at 1024 × 1024, 30 steps and fixed seed 98131: baseline, unchanged
+      reuse and changed custom-prefix input for each model. SDXL took 35.57 / 4.19 /
+      25.81 seconds; Flux took 144.39 / 4.28 / 123.85 seconds. Unchanged runs kept
+      identical image bytes and reused the resident recipe; edited inputs produced
+      different images with recomputation. Original images were visually inspected.
+- [x] Native source inspection during SDXL denoising completed in about 2.09 seconds
+      including navigation. A real Hub lookup took 0.35 seconds while that same task
+      remained active. This is a sampled interaction, not W7's full latency campaign.
+- [x] Real Hub URL resolution and disabled staging/review of
+      [Florence2 Image Annotator](https://huggingface.co/diffusers/Florence2-image-Annotator/tree/6d110d638eac3be25dbbab5a39667fefcd1e3f82).
+      Staging during an active run returned the intended idle-queue correction and
+      installed nothing. After completion, source review and cancellation succeeded
+      without importing that Python. A discovered omitted `model_input_names` field
+      is normalized only in the custom-source adapter; source bytes and ordinary
+      declarative pipeline validation remain unchanged.
+- [ ] Execute a real HF Modular block in an image workflow and verify its component
+      loading/reload path. The published Florence sidecar omits component ports and
+      its required model is not among the original cached image models. Accepting
+      that metadata for review does not provide those components automatically.
+
+W6 remains in progress. The six image runs used explicit component metadata before
+the final optional-metadata compatibility correction; regression tests cover the
+normalization, and the packaged HF staging test uses the corrected backend. These
+checks do not qualify all local models (W8), Windows memory limits (H1), or the full
+concurrent-authoring and service-export campaigns (W7/W9).
 
 ### W7 — Responsiveness, reuse and recovery
 

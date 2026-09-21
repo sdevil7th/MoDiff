@@ -37,6 +37,19 @@ class CustomExtensionAPI:
     async def custom_modules_refresh(self, request):
         return await self.custom_modules_list(request)
 
+    async def custom_modules_resolve(self, request):
+        # Network metadata inspection stays outside the execution/import lease.
+        from modiff.custom_extension_source import resolve_hub_extension
+
+        try:
+            body = await self._strict_runtime_control_json(
+                request, allowed={"source", "revision"}, required={"source"}
+            )
+            resolved = await asyncio.to_thread(resolve_hub_extension, **body)
+            return web.json_response({"error": False, "source": resolved})
+        except (ValueError, OSError) as error:
+            return web.json_response({"error": True, "message": str(error)}, status=400)
+
     async def custom_modules_inspect(self, request):
         try:
             item = await asyncio.to_thread(self._extension_store().inspect, module_name(request.match_info["name"]))

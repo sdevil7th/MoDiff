@@ -1,8 +1,19 @@
 # Developing custom nodes
 
-In Expert, open **Nodes → Custom nodes** (also available in the Models environment
-panel). Choose a local Python folder, an HTTPS Git source, or a Hub Modular block.
-Remote sources require an exact lowercase 40-character commit. **Stage source**
+In Developer, choose **Add from Hugging Face** or **Add local source** in the
+**Workflows** dialog, or open **Nodes → Custom nodes** (also available in the Models
+environment panel). Adding a source does not create or replace a workflow.
+Choose a local Python folder, an HTTPS Git source, or a Hub Modular block.
+
+For Hugging Face, enter the repository ID or its `https://huggingface.co/owner/repo`
+URL, optionally with `/tree/<revision>`. Select **Resolve revision** to resolve a
+branch, tag or commit (default `main`) to an exact lowercase 40-character commit.
+Check the resolved source and commit, enter a module name, then stage it. Changing
+the source or revision clears that result; cancellation discards late responses.
+Resolution only reads Hub metadata. A bare repository ID with an exact commit can
+also be staged directly. Git sources require an exact commit before staging.
+
+**Stage source**
 copies code and metadata into the backend's `custom/<Name>` directory with
 execution disabled. It does not install Python dependencies or copy model weights.
 
@@ -13,7 +24,7 @@ the backend's permissions. Custom web fields, if present, run in the browser
 origin. This is not a Python sandbox or a source-code security audit.
 
 Refresh, inspect, and cancelling a review do not import the submitted Python.
-Expert mode is not consent. An old directory manually placed in `custom/` also
+Developer workspace selection is not consent. An old directory manually placed in `custom/` also
 requires review; its node identifiers remain the same after enabling. Existing
 `custom/.disabled/<Name>` packages can be reviewed without deleting or relocating
 their source. Names use a letter followed by letters, numbers or underscores.
@@ -24,7 +35,7 @@ Stage `examples/custom_nodes/PromptTools` from this checkout using the module na
 `PromptTools`. Its `main.py` declares a `NodeBase` subclass with `label`, `category`,
 typed `params`, and an `execute` method. `__init__.py` exports that class. Inspect
 and enable it, search for **Prompt Prefix**, and connect its string output to a
-prompt input. The same node appears in Auto's Essentials and Expert's Stages.
+prompt input. The same node appears in the Nodes library in Creator and Developer.
 No frontend code or separate executor is required.
 
 Use `isInput: True` or `display: "input"` to expose an input socket. This
@@ -47,7 +58,8 @@ modules load fresh code. Changed code cannot run using its previous approval.
 If you change field names or types, insert a fresh node and reconnect it as needed;
 reload refreshes the registry but does not rewrite saved graph parameters.
 
-Reload waits for an idle system: running or queued work returns a correction to
+Source resolution, inspection and listing remain available while a workflow runs.
+Staging, enabling, disabling and reloading require an idle system: running or queued work returns a correction to
 finish that work first. If an HTTP client disconnects after an approved import
 starts, it cannot stop arbitrary Python safely; the execution lease remains held
 until the operation finishes. Refresh sources to see the result. Failed imports
@@ -68,7 +80,13 @@ staged with its exact commit. Required files are:
   `output_names` contract.
 
 MoDiff validates and translates the existing Diffusers/Mellon metadata. The
-approved entry point is imported in its own package, constructed with the native
+custom-source adapter treats an omitted `model_input_names` as an empty list,
+as Mellon does, while still rejecting invalid declared values. Normalization
+does not rewrite the staged source or the exact bytes covered by approval.
+This permits inspection; it does not supply models. A block requiring components
+must expose their connected inputs in its sidecar before it can run in MoDiff.
+
+The approved entry point is imported in its own package, constructed with the native
 Diffusers `from_config`, and executed through native `init_pipeline` and pipeline
 calls inside the existing graph executor. It does not use upstream's shared
 `diffusers_modules.local` alias, which can collide between local blocks/helpers
@@ -79,7 +97,7 @@ Sidecar input/output names must match the actual imported block. Fields named
 `out_<name>` map to upstream output `<name>`. Components must come from connected
 MoDiff loaders and the existing ComponentsManager. This adapter does not silently
 download or load a model from a block's default repository. Use the generic
-model-loading stages to select and load model components first. Framework
+Load Models node to select and load model components first. Framework
 construction starts fresh pipeline state while connected weights remain shared.
 
 The older Hub **User Node import** remains a declarative contract/library preview
@@ -87,7 +105,7 @@ and retains its fail-closed Dynamic Block checks. **Manage executable custom
 nodes** opens this explicit extension flow. Importing a saved workflow or setting
 its `trust_remote_code` field does not grant an extension approval.
 
-## Dependencies and Auto
+## Dependencies and memory policy
 
 `requirements.txt`, project dependencies in `pyproject.toml`, and requirements in
 `modular_config.json` are shown with installed versions. Missing, incompatible or
@@ -105,15 +123,15 @@ An optional `modiff_extension.json` declares one resource role:
 
 | `runtimeRole` | Behavior |
 | --- | --- |
-| `data` | Author declares no model loading; the enabled node can run in Auto. |
-| `connected_components` | Author declares reuse of connected models; Auto requires a connected reviewed model owner. |
-| `manual` (default) | Resource use is unmanaged; run in Expert. |
+| `data` | Author declares no model loading; the enabled node can run with Automatic memory. |
+| `connected_components` | Author declares reuse of connected models; Automatic memory requires a connected reviewed model owner. |
+| `manual` (default) | Resource use is unmanaged; select Custom memory in either workspace. |
 
 Review this declaration with the code. It is an operator-approved extension
-contract, not a measured memory guarantee. Auto does not execute custom code
+contract, not a measured memory guarantee. Automatic memory does not execute custom code
 during inspection or grant new execution permissions. Arbitrary custom suppliers
 of dimensions/model identities still need manual resource settings; they are not
-promoted to the built-in preplanning evaluator. Auto retains model owners in a
+promoted to the built-in preplanning evaluator. Automatic memory retains model owners in a
 graph containing custom code rather than assuming that Python has released every
 reference. Insufficient combined memory remains a blocker.
 
@@ -123,6 +141,13 @@ All code mutations use POST, are bounded, and retain the local single-user serve
 boundary. Local staging accepts a path on the backend machine. Source preview and
 approval state are local administrative data; do not publish machine paths or
 approval files in workflow packages.
+
+For a Hub source, first `POST /custom_modules/resolve` with
+`{"source":"https://huggingface.co/owner/repo","revision":"main"}`. The response's
+`source` contains the normalized repository ID, `requestedRevision` and immutable
+`revision`. Pass that exact identity to installation. This optional read-only
+lookup does not stage files, import code or acquire the execution lease. Only Hub
+model repositories are supported here, not Dataset/Space, file or subfolder URLs.
 
 1. `POST /custom_modules/install` with
    `{"kind":"local","source":"examples/custom_nodes/PromptTools","name":"PromptTools"}`.

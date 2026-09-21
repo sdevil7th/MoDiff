@@ -150,6 +150,45 @@ def test_pinned_hub_modular_block_executes_through_native_upstream_and_reloads(s
     }
 
 
+def test_mellon_omitted_model_inputs_are_reviewable_without_changing_approved_bytes(store, tmp_path, monkeypatch):
+    import shutil
+    from modules import MODULE_MAP
+    from modules.ModularDiffusers.pipeline_schema import MoDiffPipelineConfig
+
+    source = tmp_path / "mellon-source"
+    shutil.copytree(Path(__file__).resolve().parents[1] / "examples/custom_nodes/ModularPrompt", source)
+    sidecar = source / "mellon_pipeline_config.json"
+    metadata = json.loads(sidecar.read_bytes())
+    del metadata["node_params"]["custom"]["model_input_names"]
+    raw = json.dumps(metadata).encode()
+    sidecar.write_bytes(raw)
+    # The historical declarative pipeline loader retains its strict contract.
+    with pytest.raises(OSError, match="model_input_names"):
+        MoDiffPipelineConfig.from_json_bytes(raw)
+    item = store.stage(kind="local", source=str(source), name="Example")
+    assert item["preview"]["contract"]["model_input_names"] == []
+    assert (Path(item["path"]) / sidecar.name).read_bytes() == raw
+    assert not item["enabled"] and "custom.Example.main" not in sys.modules
+    registry = store.enable("Example", code_hash=item["codeHash"], consent=True)
+    monkeypatch.setitem(MODULE_MAP, "custom.Example", registry)
+    assert sys.modules["custom.Example.main"].Block("mellon").execute(text="test") == {"out_result": "test — modular"}
+
+
+@pytest.mark.parametrize("value", [None, "", {}, [None], [""]])
+def test_mellon_model_input_defaults_do_not_accept_invalid_declared_values(store, tmp_path, value):
+    import shutil
+
+    source = tmp_path / "mellon-source"
+    shutil.copytree(Path(__file__).resolve().parents[1] / "examples/custom_nodes/ModularPrompt", source)
+    sidecar = source / "mellon_pipeline_config.json"
+    metadata = json.loads(sidecar.read_bytes())
+    metadata["node_params"]["custom"]["model_input_names"] = value
+    sidecar.write_text(json.dumps(metadata))
+    with pytest.raises(OSError, match="model_input_names"):
+        store.stage(kind="local", source=str(source), name="Example")
+    assert not store.path("Example").exists()
+
+
 @pytest.fixture
 def backend(store, tmp_path, monkeypatch):
     from modiff.config import CONFIG
@@ -255,6 +294,103 @@ def test_reload_client_cancellation_keeps_the_existing_execution_lease(backend, 
         assert store.inspect("Example")["enabled"]
 
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("busy", ["running", "queued", "lease"])
+def test_source_resolution_and_inspection_stay_available_during_execution(backend, store, tmp_path, monkeypatch, busy):
+    import asyncio
+    import threading
+
+    item = store.stage(kind="local", source=str(source_node(tmp_path / "source")), name="Example")
+    entered, release = threading.Event(), threading.Event()
+    identity = {"kind": "hub", "source": "example/block", "requestedRevision": "main", "revision": "a" * 40}
+
+    def resolve(**kwargs):
+        assert kwargs == {"source": "example/block"}
+        entered.set()
+        assert release.wait(5)
+        return identity
+
+    monkeypatch.setattr("modiff.custom_extension_source.resolve_hub_extension", resolve)
+
+    async def scenario():
+        if busy == "running":
+            backend.current_task = {"task_id": "running"}
+        elif busy == "queued":
+            await backend.main_queue.put({"task_id": "waiting"})
+        else:
+            await backend._node_cache_lock.acquire()
+        lookup = asyncio.create_task(backend.custom_modules_resolve(request({"source": "example/block"})))
+        try:
+            async with asyncio.timeout(3):
+                while not entered.is_set():
+                    await asyncio.sleep(0.01)
+                inspected = await backend.custom_modules_inspect(request())
+                assert json.loads(inspected.text)["module"]["codeHash"] == item["codeHash"]
+                listed = await backend.custom_modules_list(request())
+                assert listed.status == 200
+                denied = await backend.custom_modules_enable(request({"codeHash": item["codeHash"], "consent": True}))
+                assert denied.status == 409
+                assert "running and queued work" in json.loads(denied.text)["message"]
+                assert "custom.Example.main" not in sys.modules
+        finally:
+            release.set()
+            response = await lookup
+            backend.current_task = None
+            if busy == "queued":
+                backend.main_queue.get_nowait()
+            if busy == "lease":
+                backend._node_cache_lock.release()
+        assert response.status == 200
+        assert json.loads(response.text)["source"] == identity
+        assert not store.inspect("Example")["enabled"]
+
+    asyncio.run(scenario())
+
+
+def test_source_resolution_cancellation_does_not_stage_or_acquire_import_lease(backend, store, monkeypatch):
+    import asyncio
+    import threading
+
+    entered, release, finished = threading.Event(), threading.Event(), threading.Event()
+
+    def resolve(**kwargs):
+        entered.set()
+        assert release.wait(5)
+        finished.set()
+        return {"kind": "hub", "source": "example/block", "requestedRevision": "main", "revision": "a" * 40}
+
+    monkeypatch.setattr("modiff.custom_extension_source.resolve_hub_extension", resolve)
+
+    async def scenario():
+        lookup = asyncio.create_task(backend.custom_modules_resolve(request({"source": "example/block"})))
+        try:
+            async with asyncio.timeout(3):
+                while not entered.is_set():
+                    await asyncio.sleep(0.01)
+                lookup.cancel()
+                with pytest.raises(asyncio.CancelledError):
+                    await lookup
+                assert not backend._node_cache_lock.locked()
+                assert not backend._node_cache_teardown_active
+                assert store.list() == []
+        finally:
+            release.set()
+        async with asyncio.timeout(3):
+            while not finished.is_set():
+                await asyncio.sleep(0.01)
+        assert store.list() == []
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("body", [{}, {"source": "example/block", "consent": True}, {"source": 123}])
+def test_source_resolution_api_rejects_invalid_requests(backend, body):
+    import asyncio
+
+    response = asyncio.run(backend.custom_modules_resolve(request(body)))
+    assert response.status == 400
+    assert json.loads(response.text)["error"] is True
 
 
 @pytest.mark.parametrize("entry_name", ["block", "main"])
