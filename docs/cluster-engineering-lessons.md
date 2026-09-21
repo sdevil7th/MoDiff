@@ -617,3 +617,26 @@ runtimes or rewrite graph inputs.
   values, hierarchy, crossing wires and previews without changing the library.
 - Prove cache destruction and material-output retention in executor tests, then
   retain a real multi-owner model run separately from contract-test evidence.
+
+## Metadata during inference and recovery evidence
+
+- Review field callbacks against the public registry. Isolate only exact built-in
+  callbacks that inspect declarations and publish fields; arbitrary custom or
+  queued callbacks cannot opt themselves out of the execution lease. Explicit
+  model-layer inspection may construct empty models and must remain serialized.
+- A presentation callback must not instantiate an executable node. Constructors,
+  destructors and shared component collections can affect an active owner even
+  without calling `execute`. Copy declarations and borrow only reviewed helpers.
+- Fresh metadata contexts have no previously published schema. Use an unset
+  sentinel distinct from both an empty model selection and `None`; otherwise
+  disconnecting a model can leave stale dynamic fields visible. Test disconnects
+  as well as supported-model selections and invalid inputs.
+- Carry workflow, canvas and form identity on every schema message, including
+  legacy custom Block labels and styles. Cancellation must drain an executing
+  metadata thread before releasing its lease or activating another runtime.
+- Separate native Stop/queue/reconnection proof, actual model reuse messages and
+  controlled allocator-fault recovery. Record fault injection explicitly, retain
+  failed receipts, and require a successful unchanged-settings run afterward.
+- Keep successful/running node status distinct from validation warnings. A new
+  attempt must clear stale node error details while retaining the failed task's
+  history. Inspect the actual recovery UI as well as terminal backend receipts.

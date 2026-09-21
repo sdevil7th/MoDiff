@@ -123,7 +123,7 @@ visible and does not count as a pass or a completed release requirement.
 | W4  | Unified Nodes library and contextual inspector               | Complete: authoring acceptance           | W2                              |
 | W5  | Generic model/task changes and workflow modification         | Complete: W5 acceptance                  | W3, W4                          |
 | W6  | HF/local custom-node workflow                                | Complete                                 | W4, W5                          |
-| W7  | Concurrent authoring, reuse and recovery                     | In progress: measured UI fixes           | W5, W6                          |
+| W7  | Concurrent authoring, reuse and recovery                     | Complete                                 | W5, W6                          |
 | W8  | All-local-image execution and modification campaign          | Planned                                  | Stable W2–W7 build              |
 | W9  | Other modalities and real service-export campaign            | Planned                                  | Stable W2–W7 build; W8 fixtures |
 | W10 | Release acceptance, documentation and publication            | Planned                                  | W8, W9                          |
@@ -627,137 +627,74 @@ concurrent-authoring and service-export campaigns (W7/W9).
 
 ### W7 — Responsiveness, reuse and recovery
 
-- [x] Refresh host-memory availability for idle Auto planning without changing the
-      cached runtime identity or probing accelerators during active inference.
-      A live Flux edit exposed a stale RAM sample that still blocked Run after
-      earlier model caches were released. Regression coverage includes released
-      capacity, new external pressure and unavailable OS samples.
-- [x] Keep workflow Auto preparation failures in the existing Run blocked dialog
-      until dismissed. Cover rejected plans, HTTP/invalid responses, fresh retry,
-      and late responses after tab, graph or memory-policy changes. No fake model
-      task is created. Native live-backend rejection and mocked retry are separate
-      proofs; memory estimates themselves remain unchanged.
-- [x] Bound My workflows rendering to 50 saved rows per page and search the full
-      inventory. A 1,000-entry browser regression covers paging, cross-page search,
-      empty results, reset and narrow-panel containment. Catalog/starter fixture
-      subprocesses now leave operator custom-node approvals untouched.
-- [x] Batch Gallery history serialization by output record while preserving
-      atomic replacement, retained previews, Unicode and the existing JSON format.
-      A nested-workflow regression reproduced token-by-token writes; failed
-      encoding leaves the previous document intact. A retained 105 MB history
-      copy serialized in 0.36 seconds versus 2.41 seconds with identical bytes.
-      This measures serialization, not end-to-end receipt or browser latency.
-- [x] Bound intermediate weight-loading progress to four updates per second per
-      bar, retaining initial/final counts and named component transitions. Cover
-      both iterator and manual-update loaders, interval expiry and final counts
-      with the approved optional runtime. Live cold-load interaction acceptance
-      is recorded separately below.
-- [ ] Complete resident-owner accounting; the preceding sampling and feedback
-      corrections do not qualify every reuse/memory case.
-- [ ] Profile saved-workflow reopening and result delivery with the Workflows panel
-      open. A trace-enabled Flux capture stalled after submission while backend
-      execution completed. A no-trace reuse capture recovered; a later run with
-      the panel closed completed. Preserve the original failure and establish its
-      cause before attributing it to the panel or treating the sequence as passed.
-      The bounded-library fix now has a fresh Flux run with native response and
-      exact-task preview delivery; the earlier failed capture remains retained.
-- [x] Profile and correct the cold-loading progress burst behind slow prompt
-      editing. The original 7.38-second failure is retained. A fresh-worker
-      reproduction took 5.89 seconds with 451 weight-loading messages; the same
-      prompt/settings after rate limiting took 76 ms with nine such messages.
-      The completed image bytes matched the baseline exactly. This closes that
-      reproduced burst, not every possible authoring-latency case.
-- [x] Reproduce/profile model/task preview and loader-contract timeouts during
-      actual inference. Native Qwen text-to-image, Flux Kontext editing and Flux
-      text-to-image previews took 0.28–0.94 seconds in sampled runs. Creating the
-      graph then started seven field actions waiting behind the graph execution
-      lease; the Nodes library asset request waited 119 seconds before dispatch.
-      Autosave was pending too. This is a diagnosed failure, not passing authoring
-      acceptance; the following metadata-isolation item remains open.
-- [x] Isolate reviewed generic Modular loader/filter and node-schema callbacks
-      from live model ownership. Presentation-only contexts reuse existing
-      callbacks without executable constructors, cached nodes or destructors.
-      Preserve authorization, optional-runtime checks and workflow identity.
-      Cancellation drains metadata threads; runtime activation and custom-source
-      mutations remain serialized. Native connected-draft creation, lazy Nodes
-      search, insertion/Undo, autosave and reload pass during real Flux inference.
-- [ ] Audit remaining metadata callbacks and immutable-cache identity/invalidation
-      beyond the reviewed generic Modular actions. Unknown/custom and queued
-      callbacks remain on the model-ownership path until separately reviewed.
-- [x] Apply workflow ownership checks before queue-recovery progress resolves a
-      node by ID or label. Background work remains in Session activity; opening
-      its owning workflow restores progress. Regression tests cover identical IDs,
-      name fallback, and native startup/recovery navigation between saved tabs.
-- [ ] Treat submitted runs as immutable snapshots; edits target the next draft.
-      Progress/history cannot replace newer values or steal the active editing tab.
-- [ ] Preserve per-node/component reuse, exact consumed-input identities, immutable
-      cached generators/state and bounded multi-owner memory behavior.
-- [ ] Retain safe serialization for extension activation, model release and teardown.
-      Do not fix latency by weakening validation or merely increasing timeouts.
-- [ ] Test Stop/restart, durable cancellation, OOM recovery and a successful new run.
+Status: complete. The all-local-model campaign is W8; Windows Qwen on 16 GB VRAM /
+32 GB RAM remains the separate H1 qualification.
 
-Measured library checkpoint: a native profile with 4,553 saved workflows exposed
-unbounded row/action-menu rendering. With the same saved Hub workflow and panel
-open, paging reduced the sampled Run click from 8.25 seconds to 72 ms, subsequent
-blocked-dialog delivery from 6.15 seconds to 251 ms, and workflow opening from
-7.41 seconds to 1.31 seconds. Startup remained about nine seconds. These individual
-idle samples do not establish generation-time p95, full model reuse or Stop/recovery;
-the original failed capture and both CPU profiles are retained. The added deferred
-controls measure 228.2 KiB against a 229 KiB limit; startup/individual limits stay fixed.
+- [x] Refresh idle host-memory availability without changing runtime identity or
+      probing accelerators during inference. Cover released capacity, external
+      pressure and unavailable OS samples.
+- [x] Keep Auto preparation failures in the Run blocked dialog until dismissed;
+      retry from fresh state and ignore responses belonging to an older draft.
+- [x] Page saved workflows in groups of 50 while searching the full inventory.
+      Cover a 1,000-entry library, paging, empty results and narrow layouts.
+- [x] Batch atomic history serialization without changing its format, and bound
+      intermediate loading progress to four updates per second. Preserve failed
+      serialization recovery and initial/final/component progress messages.
+- [x] Complete conservative resident-owner accounting. Count shared loaders once,
+      independent owners separately, and shared/unified memory as one pool.
+      Validate combined retained requirements, actual capacity before scheduled
+      allocations, incompatible recipes, external pressure and survivor ownership.
+      Do not treat process RSS as reclaimable model RAM.
+- [x] Profile saved-workflow reopening, prompt editing and exact-task result
+      delivery with Workflows open. Retain the original failures; independently
+      reproduce and correct unbounded row rendering, loading-progress bursts,
+      history serialization and metadata connection starvation.
+- [x] Isolate reviewed built-in metadata callbacks from model execution. Audit the
+      public registry across Modular selectors and ordinary image/audio/video/3D
+      contracts. Use presentation contexts without executable constructors,
+      destructors or component ownership; clear schemas on model disconnection.
+- [x] Keep queued/custom callbacks and explicit model-layer construction serialized.
+      Preserve authoritative authorization, optional-runtime checks, cancellation
+      draining, runtime activation and custom-source mutation gates.
+- [x] Carry workflow, canvas and form ownership on every dynamic schema message,
+      including legacy Dynamic Block labels/styles. Apply ownership checks before
+      queue-recovery progress resolves a node by ID or label.
+- [x] Treat submitted runs as immutable snapshots. Preserve next-draft edits,
+      autosave, selected tabs and restored workflows while background work runs.
+- [x] Verify node/component reuse and exact consumed inputs. Isolate cached RNG,
+      scheduler, guider and continuation state while sharing appropriate weights.
+- [x] Test native Stop/restart, durable active/queued cancellation, a real controlled
+      GPU OOM and a successful same-settings native retry.
+- [x] Show success/information as node status rather than warnings. Clear stale
+      node error details on a new attempt; retain failed-task history.
 
-Fresh native Flux evidence: the existing saved component workflow completed a
-1024 × 1024, 30-step run in 138.5 seconds with fixed seed 98131, bfloat16 and
-model CPU offload under Custom memory policy. Library search and Creator/Developer
-switching during denoising took 60–90 ms; 124 queue samples had p95 11.6 ms.
-The submitted/consumed prompt remained immutable, while a newer prompt draft
-survived completion and backend persistence. The exact-task image hash matched
-the delivered preview and the retained original was visually inspected. Prompt
-editing took 7.38 seconds in that original failed interaction. The follow-up
-below isolates and corrects its cold-loading burst; neither capture qualifies
-every owner/reuse case or Stop/recovery.
-Previous checkpoint validation: 77 coordinator tests, four focused native mocked-browser
-tests and the full client quality gate pass. The final published backend gate has
-3,236 passing tests and 9,866 subtests, with 510 skips. All 87 generated client files
-match the served bundle; dependent catalog updates change hashes only. Original
-model inventories and operator custom-node approvals remain intact.
+Evidence and scope:
 
-Follow-up cold-run evidence on the published pair: the same Flux 1024 × 1024,
-30-step prompt/seed/precision/offload settings completed in 133.1 seconds with
-byte-identical output. Prompt editing took 76 ms; library search and workspace
-switches took 64–73 ms. Creating a separate connected draft took 719 ms, and its
-nodes remained idle across three supervisor queue polls while the original run
-continued in Session activity. Returning to the run preserved the next prompt,
-which survived completion and backend persistence. Queue p95 was 10.8 ms across
-118 samples. The exact delivered original and both canvas screenshots were
-visually reviewed. These are scoped samples, not an all-model latency guarantee.
+| Case                         | Evidence                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Concurrent native authoring  | Cold Flux inference alongside model/task previews, connected workflow creation, Nodes search, insertion/Undo, autosave, reload and tab switching. Sampled previews took 0.26–0.93 s; connected creation 210 ms; Nodes readiness 843 ms; queue p95 10.1 ms across 125 samples.                                                                                                                |
+| Diagnosed latency            | The original 7.38 s prompt-edit failure is retained. A reproduced cold-loading burst dropped from 5.89 s / 451 weight messages to 76 ms / nine messages, with identical image bytes. Paging was profiled against 4,553 saved workflows. These are sampled flows, not every-model latency guarantees.                                                                                         |
+| Generic Flux reuse           | A native 1024 × 1024, 30-step, bfloat16/model-CPU-offload workflow completed with a complex prompt. Unchanged execution took 4.1 s, reused all five nodes and reproduced identical bytes. Prompt-only changes retained models; seed-only changes also retained conditioning. Consumed receipts, persistent drafts and exact-task previews were checked.                                      |
+| Metadata during inference    | Ordinary Flux, SDXL and Qwen image-contract HTTP callbacks completed in 3–5 ms during denoising. Contract tests cover all declared image/audio/video/3D adapters; that is separate from executing those models.                                                                                                                                                                              |
+| Stop and snapshots           | Native Stop cancelled both the active and queued runs, replaced the worker, and preserved the selected workflow across reconnect/reload. A fresh workflow ran successfully afterward.                                                                                                                                                                                                        |
+| OOM and recovery             | A recorded allocator-budget injection caused a real GPU OOM during prompt encoding. Removing only that injected budget allowed a native retry with unchanged model/creative inputs and byte-identical output to the preceding seed run. The final published client additionally verified decoded browser media, cleared error details and correct status labels.                             |
+| Multiple owners              | A real backend API composition with two Flux owners passed an unchanged cached repeat (4.7 s) and release of one owner while preserving the survivor's cache (3.0 s). Auto ran the same composition with two actual owner releases in 260.2 s; both material output hashes matched Custom execution. This is live executor proof, not native two-owner authoring or all-model qualification. |
+| Mutable state and boundaries | Regression tests cover actual pinned Modular continuation/state contracts, fresh generator attempts, shared-owner release, unknown/custom callback serialization, metadata cancellation draining and runtime activation exclusion.                                                                                                                                                           |
 
-This follow-up passes 3,240 backend tests and 9,868 subtests (510 skips), 66 focused
-tests with the approved optional runtime, 79 coordinator tests, the focused
-browser recovery case and the full client quality gate. The final bundle matches
-87 generated files; its 18 dependent catalog changes are hashes only. Original
-model inventories and custom-source approvals remain preserved. The diagnosed
-Nodes-library/autosave connection starvation in that captured generic Modular
-flow is addressed by the following checkpoint. Broader metadata, resident-owner
-accounting and recovery acceptance remain open.
+Final validation: 3,293 backend tests and 10,029 subtests pass, with 511 skips.
+The approved optional-runtime selection passes 232 tests and 414 subtests.
+All 82 coordinator tests, five focused browser regressions and the full client
+quality gate pass. Ruff, dependency checks and runtime preflight pass. All 87
+client bundle files match the served copy; dependent catalog changes are hashes
+only and do not promote qualification. Original model inventories, additional
+Florence weights and operator custom-source approvals remain preserved.
 
-Metadata-isolation checkpoint: with the same complex prompt and cold-worker Flux
-1024 × 1024, 30-step settings, inference completed in 136.3 seconds with identical
-image bytes. During denoising, Qwen text-to-image, Flux Kontext edit and Flux
-text-to-image previews took 0.26–0.93 seconds. Creating the connected Flux draft
-took 210 ms; Nodes search was ready in 843 ms, insertion took 97 ms and Undo
-76 ms. The formerly starved library asset began dispatch after 77 ms instead of
-119 seconds. All 14 captured field-action requests completed within 912 ms.
-The draft reached backend autosave before generation ended and survived reload;
-the original workflow retained its newer prompt and exact-task preview. Queue
-p95 was 10.1 ms across 125 samples. The actual generated image and canvas
-screenshots were inspected. These sampled gestures qualify this reproduced flow,
-not every metadata callback, model or recovery case.
-
-The final gate passes 3,247 backend tests and 9,879 subtests (511 skips). The
-approved optional runtime passes 189 focused tests and 636 subtests, including
-registered generic schema contracts and custom-source boundaries. The client
-quality gate passes; its 87 generated files remain byte-identical to the served
-bundle. Original model inventories and custom-source approvals remain preserved.
+Original failed captures remain retained. Harness mistakes involving numeric-text
+controls, duplicate workflow titles and fixture initialization were corrected
+without relabeling the failed captures. Successful images, exact input receipts,
+source identities, per-node status messages and recovery records are retained
+separately. W8 still owns the complete local image-model/modification matrix;
+these W7 checks do not certify every model or the deferred Windows memory target.
 
 Acceptance: while a real model denoises, create another workflow, search/add nodes,
 preview model/task changes, inspect custom sources, edit/save and switch workspace.

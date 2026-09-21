@@ -10,20 +10,23 @@ Keep its explicitly borrowed methods under review when changing those callbacks.
 import threading
 from types import MethodType
 
-from modiff.NodeBase import NodeBase
+from modiff.field_metadata_context import FieldMessageContext
 from .denoise import Denoise
 from .embeddings import EncodePrompt, ImageEmbeddings
 from .latents import DecodeLatents, ImageEncode
-from .loaders import ModelsLoader
+from .loaders import ModelsLoader, AutoModelLoader
+from .controlnet import Controlnet
+from .ip_adapter import IPAdapter
+from .schedulers import Scheduler
+from .guiders import Guider, Layers
+from .dynamic_node import DynamicBlockNode
 
 
-class _FieldContext:
-    _queue_dynamic_node_message = NodeBase._queue_dynamic_node_message
-    send_node_definition = NodeBase.send_node_definition
-    set_field_visibility = NodeBase.set_field_visibility
-    set_field_value = NodeBase.set_field_value
-    set_field_params = NodeBase.set_field_params
-    get_signal_value = NodeBase.get_signal_value
+class _FieldContext(FieldMessageContext):
+    _selected_scheduler = Scheduler._selected_scheduler
+    _selected_guider = Guider._selected_guider
+    _selected_blocks = Layers._selected_blocks
+    send_node_definition_with_meta = DynamicBlockNode.send_node_definition_with_meta
 
     # These helpers read declarations and publish UI messages only. Do not bind
     # the loader constructor, execution, cache or component-release methods here.
@@ -37,7 +40,9 @@ class _FieldContext:
         self.node_id = node_id
         self._sid = sid
         self.node_type = node_type
-        self._model_type = ""
+        # No schema has been published by this request, including the empty
+        # selection. A string/None sentinel would suppress disconnect updates.
+        self._model_type = object()
         self._pipeline_class = None
         self.model_types_loaded = False
         self._pipeline_identity_generation = 0
@@ -47,11 +52,18 @@ class _FieldContext:
 def metadata_field_callback(action, method, *, node_id, sid):
     node_class = {
         "ModelsLoader": ModelsLoader,
+        "AutoModelLoader": AutoModelLoader,
         "EncodePrompt": EncodePrompt,
         "Denoise": Denoise,
         "DecodeLatents": DecodeLatents,
         "ImageEncode": ImageEncode,
         "ImageEmbeddings": ImageEmbeddings,
+        "IPAdapter": IPAdapter,
+        "Controlnet": Controlnet,
+        "Scheduler": Scheduler,
+        "Guider": Guider,
+        "Layers": Layers,
+        "DynamicBlockNode": DynamicBlockNode,
     }[action]
     context = _FieldContext(node_id=node_id, sid=sid, node_type=getattr(node_class, "node_type", None))
     return MethodType(getattr(node_class, method), context)

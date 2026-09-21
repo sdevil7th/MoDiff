@@ -4869,6 +4869,9 @@ class GenerateSequence(NodeBase):
         "total_frames": {"label": "Total frames", "display": "output", "type": "int"},
     }
 
+    def update_adapter_modes(self, values, ref):
+        return Generate.update_adapter_modes(self, values, ref)
+
     def execute(self, **kwargs):
         import json
 

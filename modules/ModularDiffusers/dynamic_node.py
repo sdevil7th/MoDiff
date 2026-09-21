@@ -277,7 +277,7 @@ class DynamicBlockNode(NodeBase):
             message["label"] = label
         if header_color:
             message["style"] = {"headerColor": header_color}
-        current_server.queue_message(message, self._sid)
+        self._queue_dynamic_node_message(message)
 
     params = {
         "repo_id": {

@@ -518,6 +518,7 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cached_node.calls, [])
         create_metadata.assert_called_once_with(
             action_name, "refresh_pipeline_identity", node_id="models-loader", sid="field-session",
+            module=module_name,
         )
         self.assertEqual(
             metadata_node.calls,

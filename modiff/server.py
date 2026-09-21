@@ -3020,7 +3020,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             message_identity["sid"] = sid
 
         if metadata_only:
-            callback = metadata_field_callback(action, method_name, node_id=node, sid=sid)
+            callback = metadata_field_callback(action, method_name, node_id=node, sid=sid, module=module)
         elif node not in self.node_cache:
             work_module = import_module(f"{module}.main")
             work_action = getattr(work_module, action)

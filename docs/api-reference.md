@@ -1887,20 +1887,29 @@ session disconnects, its pending signal lookups resolve with
 `{"__MODIFF_ERROR": "websocket_closed"}` rather than waiting for the lookup timeout.
 Other sessions' pending requests retain their ownership.
 
-Nonqueued Modular **Models Loader** filter/identity refreshes and generic **Encode
-Prompt**, **Denoise**, **Decode Latents**, **Encode Image**, and **Image Embeddings**
-schema updates use presentation-only contexts. These exact built-in callbacks
-do not construct, mutate or destroy cached executable nodes, so graph execution
-does not block their field updates. They reuse the existing metadata resolvers
-and request-scoped WebSocket identity; custom contract inspection remains
-declarative and cannot import repository Python. Metadata callbacks have a
-separate ordered lease that survives request cancellation until their threads
-finish. Runtime activation and custom-source mutations remain unavailable while
-that lease is held; custom-source mutations also hold it until imports finish.
-Authoritative field authorization and optional-runtime checks still apply.
-Queued callbacks, custom-node callbacks and all other actions retain the model
-ownership lease. A registry declaration cannot opt an arbitrary callback into
-the metadata path.
+Reviewed nonqueued built-in field callbacks use presentation-only contexts.
+These include Modular loader filters, component selectors, scheduler/guider/layer
+schemas, generic operation schemas and the legacy Dynamic Block contract preview;
+ordinary Diffusers image, audio, video and rendered-3D contract updates use the same
+boundary. The exact allowlist is `modiff/field_metadata.py`, audited against the
+public registry in `tests/test_field_metadata_catalog.py`.
+
+These callbacks do not construct, mutate or destroy cached executable nodes, so
+graph execution does not block their field updates. Each request gets fresh
+presentation state and copied ordinary node declarations. Existing immutable
+pipeline/component identities and verified custom-contract resolvers remain
+unchanged; preview cannot authorize or import repository Python. Dynamic Block
+label/schema messages carry the same request-scoped workflow and form identity
+as ordinary field messages.
+
+Metadata callbacks have a separate ordered lease that survives cancellation
+until their threads finish. Runtime activation and custom-source mutations remain
+unavailable while that lease is held; custom-source mutations also hold it until
+imports finish. Authoritative field authorization and optional-runtime checks
+still apply. Queued and custom-node callbacks retain the model ownership lease.
+The explicit Quantization **Load Model Layers** action also remains serialized:
+it constructs empty models under Accelerate and is not passive metadata.
+A registry declaration cannot opt an arbitrary callback into the metadata path.
 
 Client callers must also choose the correct local ownership scope. A normal
 visible form edit is form-scoped and must reject a response after the form
@@ -2115,6 +2124,17 @@ The response includes `canAutoRun`, `issues`, `loaders`, `adapters`, `requiremen
 Requests carry `runtimeHints.workflowAutoPlan` with `schemaVersion: 1`, `graphHash` and optional `resourceControlGroups` (arrays of `{nodeId, field}` bindings for shared offload controls). The backend verifies the graph hash, prepares supported data-only suppliers through the existing executor when needed, validates mirrored settings, and replans from fresh outputs. It emits existing `auto_resource_plan_applied` events with optional `resourceUpdates` containing `{nodeId, field, value, previousValue}`. The client applies those updates only to the owning workflow with unchanged fields. `runtimePreparation.workflowAuto` in task receipts records resolved fields, applied updates, preparation nodes, schedule and actual releases.
 
 Shared loaders count once. Independent loaders remain separate owners. Single/shared-owner caches remain reusable. Independent owners are retained when their combined envelope fits current capacity. When it does not fit, they use a dependency-respecting lifetime plan if it lowers peak memory; the same executor releases completed model caches and checks actual free memory before each subsequent owner. Detached material outputs survive, shared ownership stays live, and opaque model/device outputs block unsafe release. Loops retain all participating owners until the loop finishes. Release notifications use `auto_resource_cleanup`.
+
+Idle planning refreshes OS host-memory availability and credits only the
+worker's measurable PyTorch accelerator reservations, capped by the accessible
+capacity. Process RSS is not treated as reclaimable model RAM. Shared/unified
+memory remains one physical pool: accelerator requirements also count against
+host memory. This conservative estimate can request an explicit cache release
+when a warm CPU/offload cache leaves insufficient free RAM; it does not promise
+that resident weights make every warm plan admissible. Plans are revalidated at
+execution, and incompatible owner/recipe identities or actual pressure trigger
+existing cache cleanup. Custom memory policy keeps explicit settings and does
+not acquire an Auto capacity guarantee.
 
 Unknown model recipes, unreviewed custom/model-dependent resource suppliers, missing artifact evidence, nondefault accelerators and insufficient peak capacity produce explicit blockers. Expert preserves existing validation and explicit settings. Workflow receipts do not grant catalog, publication or model qualification authority.
 

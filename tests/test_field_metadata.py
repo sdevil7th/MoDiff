@@ -76,6 +76,26 @@ class FieldMetadataTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             metadata_field_callback("ModelsLoader", "execute", node_id="n", sid="s")
 
+    async def test_ordinary_image_fields_do_not_wait_for_model_execution(self):
+        self.server.modules["modules.DiffusersImage"] = {"LoadPipeline": {
+            "params": {"pipeline_class": {"onChange": "update_pipeline_contract"}},
+        }}
+        await self.server._node_cache_lock.acquire()
+        try:
+            with patch("modiff.NodeBase._server", return_value=self.server), patch(
+                "modiff.server.field_action_optional_runtime_requirement", return_value=None,
+            ), patch.object(self.server, "queue_message") as publish:
+                response = await asyncio.wait_for(self.server.field_action(self.request(
+                    module="modules.DiffusersImage", action="LoadPipeline",
+                    fieldKey="pipeline_class", fn="update_pipeline_contract",
+                    values={"pipeline_class": "FluxPipeline", "mode": "text_to_image"},
+                )), timeout=1)
+            self.assertEqual(response.status, 200, response.text)
+            self.assertTrue(publish.called)
+            self.assertEqual(self.server.node_cache, {})
+        finally:
+            self.server._node_cache_lock.release()
+
     async def test_metadata_still_requires_authoritative_field_and_optional_runtime(self):
         with patch("modiff.server.metadata_field_callback") as factory:
             response = await self.server.field_action(self.request(fieldKey="undeclared"))
