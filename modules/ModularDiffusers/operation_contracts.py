@@ -201,6 +201,14 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                                 components = _members(stage_definitions, "components")
                                 exact = [item for item in components if item["name"] == port["semanticName"]]
                                 port["semantics"]["members"] = exact or components
+                    # Generic node schemas keep optional media sockets for other
+                    # tasks. A selected workflow can require those same sockets.
+                    # Publish that requirement on the operation itself as well
+                    # as the connected starter, including individually inserted nodes.
+                    for port in record["ports"]:
+                        if (port["direction"] == "input" and port["semantics"]["kind"] == "media"
+                                and port["name"] in adapter["requiredInputs"]):
+                            port["required"] = True
                     result.append(record)
                     helper_types.update(t for p in record["ports"] if p["direction"] == "input" for t in p["types"])
                 for type_name in sorted(helper_types & MODULAR_AUXILIARY_OPERATION_BINDINGS.keys()):

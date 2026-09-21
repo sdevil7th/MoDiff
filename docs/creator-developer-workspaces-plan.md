@@ -409,6 +409,13 @@ acceptance, W5–W10 and Windows memory qualification remain open.
       displays bounded decimal strings without changing receipts or saved forms.
       Creator/Developer browser checks and the persisted live SDXL output verify
       the model, task, seed, steps and guidance after reload.
+- [x] Publish task-required media on generic operation ports and block missing
+      image/mask/reference inputs in the resolved execution scope, including
+      unexposed Block internals and stale saved declarations. Both workspaces and
+      memory policies retain targeted, distinct Fix findings without inventing inputs.
+- [ ] Correct conditional Preview VAE suggestions in Fix: an image input should
+      not be diagnosed as missing the latent decoder, nor offered an unrelated
+      wildcard source. Observed during packaged required-media acceptance.
 - [ ] Add required image/mask/reference operations through actual task contracts.
       Respect dimensions, shared generator identity and upstream state writers.
 - [ ] Preserve custom nodes and explicit diagnostic edges when no safe automatic

@@ -1347,6 +1347,12 @@ and `target`, and real field names as `sourceHandle`/`targetHandle`. The client
 assigns ordinary canvas node/edge IDs at insertion; these authoring references
 are never an alternate executable graph format or an execution receipt.
 
+Task-specific Modular operation ports include the reviewed workflow's required
+media inputs, even when the reusable node schema makes a socket optional for
+other tasks (for example an inpaint mask or a last video frame). The selected
+operation and starter therefore agree on required media. This metadata describes
+authoring requirements; backend runtime validation remains authoritative.
+
 Connections reuse the reviewed workflow's exact state and component bindings,
 including required component ports beyond the minimum admission edges. Shared
 seed groups describe stages continuing one generator through native or sealed

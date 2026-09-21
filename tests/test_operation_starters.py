@@ -120,6 +120,21 @@ class OperationStarterTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.resolve("FluxModularPipeline", "edit_image")
 
+    def test_task_required_media_is_declared_on_each_operation_port(self):
+        for pipeline, task in sorted({(c['pipelineClass'], c['task']) for c in self.contracts
+                                      if c['task'] and c['nodeKey'].startswith('modules.ModularDiffusers.')}):
+            result = self.resolve(pipeline, task)
+            nodes = {n['operation']['operationId']: n for n in result['nodes']}
+            for required in result['requiredInputs']:
+                ports = nodes[required['operationId']]['operation']['ports']
+                port = next(p for p in ports if p['name'] == required['field'] and p['direction'] == 'input')
+                if port['semantics']['kind'] == 'media':
+                    with self.subTest(pipeline=pipeline, task=task, field=required['field']):
+                        self.assertTrue(port['required'])
+        image = self.resolve('StableDiffusionXLModularPipeline', 'image_to_image')
+        encode = next(n for n in image['nodes'] if n['operation']['operationId'] == 'diffusion.encode_image')
+        self.assertFalse(next(p for p in encode['operation']['ports'] if p['name'] == 'mask_image')['required'])
+
     def test_required_component_contract_completes_denoise_vae_wiring(self):
         # The SDXL runtime requires a managed VAE even for text-to-image.
         # Admission's minimal component edges alone do not describe this input.
