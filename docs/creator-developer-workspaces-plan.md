@@ -802,8 +802,11 @@ Additional completed native core campaigns:
       parameters, unchanged reuse, persistence, recomputation and Saved Block checks.
 - [x] DreamLite Mobile and Base: all 11 core cases each; decoded media and exact
       execution receipts audited. Requested vase placement is only partially achieved.
-- [x] Lumina Next: all 11 core cases, including exact recomputation, 1152 × 896
+- [x] Lumina Next and Lumina 2: all 11 core cases each, including exact recomputation, 1152 × 896
       output, connected Resize and independently edited Saved Block execution.
+- [x] CogView3 Plus: all 11 core cases, including parameter changes, unchanged
+      reuse, exact recomputation, Resize, and independently edited Saved Block
+      execution with exact restored media. Visual placement remains partial.
 - [x] Correct the diagnosed history/Saved Block responsiveness paths and repeat
       native concurrent workflow creation, wiring and saving during PixArt generation.
 - [ ] Complete their applicable task variants and separate visual assessment.
