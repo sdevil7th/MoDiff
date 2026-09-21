@@ -404,9 +404,11 @@ acceptance, W5–W10 and Windows memory qualification remain open.
       Ambiguous/partial compositions do not gain a recognized task or resource proof.
 - [ ] Extend task recognition/acceptance to remaining upstream compositions and
       ambiguous graph signatures; one SDXL run does not qualify every task/model.
-- [ ] Correct stale model display labels and numeric-string summaries in history.
-      Live inspection still showed the old form's model label and “not captured”
-      for numeric strings, despite correct values in the backend input receipt.
+- [x] Correct stale model display labels and numeric-string summaries in history.
+      Gallery uses captured identities, separates custom pipeline filters and
+      displays bounded decimal strings without changing receipts or saved forms.
+      Creator/Developer browser checks and the persisted live SDXL output verify
+      the model, task, seed, steps and guidance after reload.
 - [ ] Add required image/mask/reference operations through actual task contracts.
       Respect dimensions, shared generator identity and upstream state writers.
 - [ ] Preserve custom nodes and explicit diagnostic edges when no safe automatic
