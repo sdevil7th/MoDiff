@@ -123,7 +123,7 @@ visible and does not count as a pass or a completed release requirement.
 | W4  | Unified Nodes library and contextual inspector               | Complete: authoring acceptance           | W2                              |
 | W5  | Generic model/task changes and workflow modification         | Complete: W5 acceptance                  | W3, W4                          |
 | W6  | HF/local custom-node workflow                                | In progress: Hub execution               | W4, W5                          |
-| W7  | Concurrent authoring, reuse and recovery                     | Planned                                  | W5, W6                          |
+| W7  | Concurrent authoring, reuse and recovery                     | Partial fixes; campaign pending          | W5, W6                          |
 | W8  | All-local-image execution and modification campaign          | Planned                                  | Stable W2–W7 build              |
 | W9  | Other modalities and real service-export campaign            | Planned                                  | Stable W2–W7 build; W8 fixtures |
 | W10 | Release acceptance, documentation and publication            | Planned                                  | W8, W9                          |
@@ -511,9 +511,14 @@ deferred until the main UI/UX work is ready.
 - [x] Explain idle-only activation/reload without blocking source inspection during
       inference. Verify edit failures preserve unrelated graph/component owners.
 
-- [ ] Complete generic component provisioning for Hub blocks whose Mellon sidecar
-      omits component ports. Keep loading behind the existing model/resource
-      boundary; do not infer family-specific UI or silently load default weights.
+- [x] Derive one Models socket after approval for Modular blocks whose sidecar
+      omits model ports, and publish already-loaded Pipeline Components from every
+      Modular Load Models route. Preserve declared fields, source bytes, loader
+      ownership and runtime type checks; no family-specific UI or implicit weights.
+- [ ] Provision additional block-specific model repositories through the existing
+      model/resource boundary, with explicit selection and immutable identities.
+      A connection to existing image-model components does not supply Florence's
+      separate annotator model and processor.
 
 Acceptance: an approved local Python node and an HF Modular block execute inside
 existing image workflows, including a saved Block. A generic prompt/image processor
@@ -533,9 +538,9 @@ Focused evidence: six native browser tests with mocked backend responses cover
 entry points, pinned staging, typed discovery in both workspaces, late responses,
 missing dependencies, stale approval and import failure with an unchanged graph.
 Backend tests cover source validation, exact approvals, execution/reload boundaries,
-targeted invalidation and cancellation. The final full backend gate passes 3,217
-tests and 9,864 subtests, with 510 skips. The installed optional custom-source
-gate passes 127 tests and 133 subtests. Startup counts now include enabled custom
+targeted invalidation and cancellation. The current full backend gate passes 3,226
+tests and 9,866 subtests, with 510 skips. The installed optional custom-source and
+runtime gate passes 273 tests and 176 subtests. Startup counts now include enabled custom
 nodes; the clean-base dependency test isolates operator extensions. The full
 client gate passes. The published
 bundle matches all 87 generated files; its 18 dependent ledger changes are hashes
@@ -562,19 +567,51 @@ Live acceptance completed so far:
       without importing that Python. A discovered omitted `model_input_names` field
       is normalized only in the custom-source adapter; source bytes and ordinary
       declarative pipeline validation remain unchanged.
+- [x] A locally staged Modular Image Reconstruction example receives a connected
+      VAE through its derived Models socket, without a model-family selector.
+      SDXL and Flux execute it inside saved/reopened Blocks at 1024 × 1024,
+      30 steps and fixed seed. Unchanged input reuses identical image bytes;
+      editing reconstruction amount reruns the custom block while reusing
+      denoising. Actual AutoencoderKL dispatch, shared ownership, missing/wrong
+      component types, source reload and precision restoration have regressions.
+      The initial SDXL half-precision failure is retained; the example now honors
+      the component's force_upcast configuration and restores its original dtype.
+- [x] Verify final-backend Flux component execution, reuse and a persisted amount
+      edit after fixing stale idle RAM sampling. The baseline ran in 135.6
+      seconds; the final edited run took 6.1 seconds, including 2.0 seconds in the
+      custom block and cached denoising. Match retained image bytes to exact run
+      receipts and inspect originals. This is component execution evidence with
+      a native-delivery gap: the first capture stalled after submission, so that
+      baseline was recovered from its backend receipt. Unchanged reuse completed
+      natively; the amount edit resumed in a fresh browser with the Workflows panel
+      closed. A later Auto rejection and the original stalled capture remain
+      failures to investigate, not a passed uninterrupted UI lifecycle.
 - [ ] Execute a real HF Modular block in an image workflow and verify its component
       loading/reload path. The published Florence sidecar omits component ports and
       its required model is not among the original cached image models. Accepting
       that metadata for review does not provide those components automatically.
 
-W6 remains in progress. The six image runs used explicit component metadata before
-the final optional-metadata compatibility correction; regression tests cover the
-normalization, and the packaged HF staging test uses the corrected backend. These
+W6 remains in progress. The earlier six prompt-chain image runs used explicit
+component metadata before the optional-metadata compatibility correction. The
+new image-reconstruction runs exercise omitted metadata and derived Models ports;
+both use local staging, not successful execution of the staged Hub annotator. These
 checks do not qualify all local models (W8), Windows memory limits (H1), or the full
 concurrent-authoring and service-export campaigns (W7/W9).
 
 ### W7 — Responsiveness, reuse and recovery
 
+- [x] Refresh host-memory availability for idle Auto planning without changing the
+      cached runtime identity or probing accelerators during active inference.
+      A live Flux edit exposed a stale RAM sample that still blocked Run after
+      earlier model caches were released. Regression coverage includes released
+      capacity, new external pressure and unavailable OS samples.
+- [ ] Complete resident-owner accounting and persistent resource-failure feedback;
+      the preceding sampling correction does not qualify every reuse/memory case.
+- [ ] Profile saved-workflow reopening and result delivery with the Workflows panel
+      open. A trace-enabled Flux capture stalled after submission while backend
+      execution completed. A no-trace reuse capture recovered; a later run with
+      the panel closed completed. Preserve the original failure and establish its
+      cause before attributing it to the panel or treating the sequence as passed.
 - [ ] Reproduce/profile model/task preview and loader-contract timeouts during
       actual inference; trace event-loop work, locking and metadata dependencies.
 - [ ] Keep read-only metadata resolution independent of live model allocation and

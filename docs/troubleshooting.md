@@ -219,6 +219,12 @@ solely to switch transports.
 
 Cleanup can release MoDiff's node cache, managed Diffusers components, memory-manager entries, and accelerator cache. It cannot free memory owned by another process, and it does not guarantee that the same workflow fits afterward.
 
+Automatic planning refreshes available host RAM between runs, including after
+cache release. Runtime identity remains cached separately from this capacity
+sample. During active inference, planning retains the existing non-blocking
+snapshot behavior; it does not enter accelerator probes from that control path.
+Available memory and a resident model alone do not qualify a resource recipe.
+
 ## A run is taking much longer than expected
 
 ### Resource monitoring during execution

@@ -596,8 +596,9 @@ def test_unchanged_approval_survives_startup_but_changed_source_does_not(store, 
     assert "custom.Example.main" not in sys.modules
 
 
+@pytest.mark.parametrize("declared_ports", [True, False, "collision"])
 def test_modular_connected_weights_reuse_native_manager_and_survive_custom_release(
-    backend, store, tmp_path, monkeypatch
+    backend, store, tmp_path, monkeypatch, declared_ports
 ):
     import asyncio
     import shutil
@@ -623,11 +624,25 @@ def test_modular_connected_weights_reuse_native_manager_and_survive_custom_relea
     sidecar = source / "mellon_pipeline_config.json"
     data = json.loads(sidecar.read_text())
     contract = data["node_params"]["custom"]
-    contract["model_input_names"] = ["weights"]
-    contract["params"]["weights"] = {"type": "diffusers_auto_model", "display": "input"}
+    explicit = declared_ports is True
+    if explicit:
+        contract["model_input_names"] = ["weights"]
+        contract["params"]["weights"] = {"type": "diffusers_auto_model", "display": "input"}
+    else:
+        del contract["model_input_names"]
+        if declared_ports == "collision":
+            contract["params"]["pipeline_components"] = {"type": "string", "default": "author value"}
     sidecar.write_text(json.dumps(data))
     item = store.stage(kind="local", source=str(source), name="Example")
     registry = store.enable("Example", code_hash=item["codeHash"], consent=True)
+    port = "weights" if explicit else "modiff_pipeline_components" if declared_ports == "collision" else "pipeline_components"
+    assert registry["Block"]["params"][port]["display"] == "input"
+    if not explicit:
+        assert registry["Block"]["params"][port]["type"] == "diffusers_modular_pipeline_components"
+        assert port not in item["preview"]["nodes"]["Block"]["params"]
+        assert store.inspect("Example")["codeHash"] == item["codeHash"]
+    if declared_ports == "collision":
+        assert registry["Block"]["params"]["pipeline_components"] == contract["params"]["pipeline_components"]
     monkeypatch.setitem(MODULE_MAP, "custom.Example", registry)
     backend.modules["custom.Example"] = registry
     manager = ComponentsManager()
@@ -636,14 +651,16 @@ def test_modular_connected_weights_reuse_native_manager_and_survive_custom_relea
     with torch.no_grad():
         weights.weight.fill_(3)
     comp_id = manager.add("weights", weights, collection="loader")
-    backend.node_cache["loader"] = SimpleNamespace(output={"weights": {"model_id": comp_id}}, _has_changed=False)
+    value = {"model_id": comp_id} if explicit else {"weights": {"model_id": comp_id}}
+    backend.node_cache["loader"] = SimpleNamespace(output={"weights": value}, _has_changed=False)
     node = {
         "module": "custom.Example",
         "action": "Block",
-        "params": {"text": {"value": "value="}, "weights": {"sourceId": "loader", "sourceKey": "weights"}},
+        "params": {"text": {"value": "value="}, port: {"sourceId": "loader", "sourceKey": "weights"}},
     }
     backend.execute_node("block", node, "test", quiet=True)
     assert backend.node_cache["block"].output == {"out_result": "value=3"}
+
     backend.execute_node("block", node, "test", quiet=True)
     assert not backend.node_cache["block"]._has_changed
     assert manager.components[comp_id] is weights
@@ -652,6 +669,161 @@ def test_modular_connected_weights_reuse_native_manager_and_survive_custom_relea
     assert comp_id in manager.collections["loader"]
     backend.execute_node("block", node, "test", quiet=True)
     assert backend.node_cache["block"].output == {"out_result": "value=3"}
+
+    # A real upstream call must reject missing/incompatible connected weights,
+    # before the custom body tries to read them. Neither path loads defaults.
+    from diffusers import ModularPipeline
+    monkeypatch.setattr(ModularPipeline, "load_components", lambda *a, **k: pytest.fail("implicit model loading"))
+    action = sys.modules["custom.Example.main"].Block
+    with pytest.raises(ExtensionError, match="Connect loaded components.*weights"):
+        action("missing").execute(text="value=")
+    other = torch.nn.ReLU()
+    other_id = manager.add("weights", other, collection="other-loader")
+    invalid = {"model_id": other_id} if explicit else {"weights": {"model_id": other_id}}
+    with pytest.raises(ValueError, match="expected torch.nn.modules.linear.Linear"):
+        action("incompatible").execute(text="value=", **{port: invalid})
+    assert manager.components[comp_id] is weights
+
+    # Source reload retains the derived socket identity and reuses the loader's
+    # real manager component, without rewriting its immutable sidecar.
+    code = Path(item["path"]) / "block.py"
+    code.write_text(code.read_text().replace('state.get("text") + str(', 'state.get("text") + "reloaded=" + str('))
+    changed = store.inspect("Example")
+    updated = store.enable("Example", code_hash=changed["codeHash"], consent=True)
+    monkeypatch.setitem(MODULE_MAP, "custom.Example", updated)
+    assert updated["Block"]["params"][port] == registry["Block"]["params"][port]
+    assert sys.modules["custom.Example.main"].Block("reloaded").execute(text="value=", **{port: value}) == {
+        "out_result": "value=reloaded=3"
+    }
+
+
+@pytest.mark.parametrize("model_type,denoiser", [
+    ("FluxModularPipeline", "transformer"),
+    ("StableDiffusionXLModularPipeline", "unet"),
+])
+def test_models_loader_publishes_managed_bundle_for_unscoped_pipeline(model_type, denoiser, monkeypatch):
+    """Transport/ownership contract using tiny modules, not model qualification."""
+    import torch
+    from diffusers import ComponentsManager, ModularPipelineBlocks, ModelMixin
+    from diffusers.modular_pipelines import ComponentSpec
+    from modules.ModularDiffusers import loaders
+    from modules.ModularDiffusers.route_state import require_component_binding
+
+    class TinyModel(ModelMixin):
+        def __init__(self):
+            super().__init__()
+            self.projection = torch.nn.Linear(1, 1)
+
+    class TinyBlocks(ModularPipelineBlocks):
+        @property
+        def expected_components(self):
+            return [ComponentSpec(name=name, type_hint=TinyModel) for name in
+                    (denoiser, "vae", "scheduler", "controlnet")]
+
+        def __call__(self, pipeline, state):
+            raise AssertionError("Loader must not execute model blocks")
+
+    manager = ComponentsManager()
+    pipeline = TinyBlocks().init_pipeline(components_manager=manager, collection="bundle-loader")
+    monkeypatch.setattr(loaders, "components", manager)
+    monkeypatch.setattr(loaders.ModelsLoader, "_preflight_reviewed_builtin_selection",
+                        lambda *a, **k: ("hub", "fixture/tiny", "a" * 40, "model_index.json", {}))
+    monkeypatch.setattr(loaders, "_instantiate_reviewed_builtin_pipeline", lambda *a, **k: pipeline)
+    loaded = []
+
+    def load(pipeline, names, **kwargs):
+        assert set(kwargs["required_names"]) == {denoiser, "vae", "scheduler"}
+        for name in names:
+            if name == "controlnet":
+                continue  # An inactive optional component must stay unloaded.
+            loaded.append(name)
+            pipeline.update_components(**{name: TinyModel()})
+
+    monkeypatch.setattr(loaders, "load_components_strict", load)
+    node = loaders.ModelsLoader("bundle-loader")
+    output = node.execute(model_type=model_type, repo_id={"source": "hub", "value": "fixture/tiny"},
+                          device="cpu", dtype=torch.float32, auto_offload=False, offload_mode="none")
+    bundle = output["pipeline_components"]
+    assert set(loaded) == {denoiser, "vae", "scheduler"}
+    assert "controlnet" not in bundle
+    for name in loaded:
+        assert manager.get_one(component_id=bundle[name]["model_id"]) is getattr(pipeline, name)
+        assert bundle[name]["model_id"] in manager.collections["bundle-loader"]
+    assert bundle["vae"]["model_id"] == output["vae_out"]["model_id"]
+    require_component_binding(bundle, label="custom models", expected_model_type=model_type,
+                              expected_role="pipeline_components")
+
+
+@pytest.mark.parametrize("dtype,force_upcast", [("float32", True), ("float16", True), ("float16", False)])
+def test_modular_image_reconstruction_uses_connected_vae_and_native_dispatch(
+    backend, store, monkeypatch, dtype, force_upcast
+):
+    import numpy as np
+    import torch
+    from PIL import Image
+    from types import SimpleNamespace
+    from diffusers import AutoencoderKL, ComponentsManager
+    from modules import MODULE_MAP
+
+    source = Path(__file__).resolve().parents[1] / "examples/custom_nodes/ModularImageReconstruction"
+    item = store.stage(kind="local", source=str(source), name="Example")
+    assert item["runtimeRole"] == "connected_components"
+    registry = store.enable("Example", code_hash=item["codeHash"], consent=True)
+    monkeypatch.setitem(MODULE_MAP, "custom.Example", registry)
+    backend.modules["custom.Example"] = registry
+    manager = ComponentsManager()
+    monkeypatch.setattr("modules.ModularDiffusers.components", manager)
+    original_dtype = getattr(torch, dtype)
+    vae = AutoencoderKL(block_out_channels=(8,), norm_num_groups=4, latent_channels=4,
+                        force_upcast=force_upcast).eval().to(dtype=original_dtype)
+    comp_id = manager.add("vae", vae, collection="loader")
+    original = Image.fromarray(np.arange(16 * 16 * 3, dtype=np.uint8).reshape(16, 16, 3))
+    backend.node_cache["loader"] = SimpleNamespace(
+        output={"models": {"vae": {"model_id": comp_id}}}, _has_changed=False,
+    )
+    node = {"module": "custom.Example", "action": "Block", "params": {
+        "pipeline_components": {"sourceId": "loader", "sourceKey": "models"},
+        "image": {"value": original}, "amount": {"value": "1.0"},
+    }}
+    calls = []
+    handle = vae.register_forward_hook(lambda *args: calls.append(True))
+    observed = []
+    def check_precision(module, args):
+        expected = torch.float32 if force_upcast and original_dtype == torch.float16 else original_dtype
+        assert module.dtype == expected and args[0].dtype == expected
+        observed.append(expected)
+    pre_handle = vae.register_forward_pre_hook(check_precision)
+    try:
+        backend.execute_node("reconstruction", node, "test", quiet=True)
+        first = backend.node_cache["reconstruction"].output["out_images"][0]
+        assert first.size == original.size and first.mode == "RGB"
+        assert first.tobytes() != original.tobytes()
+        backend.execute_node("reconstruction", node, "test", quiet=True)
+        assert len(calls) == 1  # Normal NodeBase cache, not a custom executor.
+        node["params"]["amount"]["value"] = "0.0"
+        backend.execute_node("reconstruction", node, "test", quiet=True)
+        restored = backend.node_cache["reconstruction"].output["out_images"][0]
+        assert restored.tobytes() == original.tobytes()
+        assert len(calls) == 2
+        assert len(observed) == 2 and vae.dtype == original_dtype
+        assert manager.components[comp_id] is vae
+        assert comp_id in manager.collections["loader"]
+        assert all(not parameter.requires_grad or parameter.grad is None for parameter in vae.parameters())
+    finally:
+        handle.remove()
+        pre_handle.remove()
+
+    def fail_forward(*args):
+        raise RuntimeError("test forward failure")
+    failing_handle = vae.register_forward_pre_hook(fail_forward)
+    try:
+        node["params"]["amount"]["value"] = "0.25"
+        with pytest.raises(RuntimeError, match="test forward failure"):
+            backend.execute_node("reconstruction", node, "test", quiet=True)
+        assert vae.dtype == original_dtype
+        assert manager.components[comp_id] is vae
+    finally:
+        failing_handle.remove()
 
 
 def test_invalid_approval_records_report_disabled_diagnostics(store, tmp_path):

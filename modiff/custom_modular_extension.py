@@ -49,14 +49,35 @@ def load_modular_extension(item, files):
     # diffusers_modules.local. Import our isolated package, then use native
     # ConfigMixin construction and init_pipeline instead of that shared alias.
     blocks = block_class.from_config(config)
-    contract = item["preview"]["contract"]
+    contract = deepcopy(item["preview"]["contract"])
     inputs = {field.name for field in blocks.inputs if field.name}
     outputs = {field.name for field in blocks.intermediate_outputs}
     output_names = {name: name.removeprefix("out_") for name in contract["output_names"] if name != "doc"}
     if set(contract["input_names"]) - inputs or set(output_names.values()) - outputs:
         raise ExtensionError("The sidecar input/output names do not match the imported Modular block contract.")
 
+    node_definition = deepcopy(item["preview"]["nodes"]["Block"])
+    pretrained_names = [
+        spec.name for spec in blocks.expected_components if spec.default_creation_method == "from_pretrained"
+    ]
+    # Some published Mellon sidecars omit model ports because Mellon loads the
+    # block's default repositories itself. Derive one bundle socket only after
+    # approval permits inspecting the Python contract. Keep author fields and
+    # their saved identities intact, including a colliding data input name.
+    if pretrained_names and not contract["model_input_names"]:
+        port = "pipeline_components"
+        while port in node_definition["params"] or port in inputs or port in output_names.values():
+            port = "modiff_" + port
+        node_definition["params"][port] = {
+            "label": "Models",
+            "display": "input",
+            "type": "diffusers_modular_pipeline_components",
+            "description": "Connect Pipeline Components from Load Models. Required: " + ", ".join(pretrained_names),
+        }
+        contract["model_input_names"] = [port]
+
     def execute(self, **kwargs):
+        from modiff.modular_requirements import validate_runtime_component_requirements
         from modules.ModularDiffusers import components
         from modules.ModularDiffusers.utils import collect_model_ids
 
@@ -70,6 +91,7 @@ def load_modular_extension(item, files):
         missing = [name for name in pipeline.pretrained_component_names if getattr(pipeline, name, None) is None]
         if missing:
             raise ExtensionError("Connect loaded components before running this custom block: " + ", ".join(missing))
+        validate_runtime_component_requirements(blocks, pipeline, path=(key, "Block"))
         values = {name: kwargs[name] for name in contract["input_names"] if name in kwargs}
         result = pipeline(**values, output=list(output_names.values()))
         mapped = {name: result[pipeline_name] for name, pipeline_name in output_names.items()}
@@ -77,7 +99,6 @@ def load_modular_extension(item, files):
             mapped["doc"] = blocks.doc
         return mapped
 
-    node_definition = deepcopy(item["preview"]["nodes"]["Block"])
     klass = type(
         "Block",
         (NodeBase,),

@@ -83,8 +83,12 @@ MoDiff validates and translates the existing Diffusers/Mellon metadata. The
 custom-source adapter treats an omitted `model_input_names` as an empty list,
 as Mellon does, while still rejecting invalid declared values. Normalization
 does not rewrite the staged source or the exact bytes covered by approval.
-This permits inspection; it does not supply models. A block requiring components
-must expose their connected inputs in its sidecar before it can run in MoDiff.
+After code approval, a block with pretrained component requirements and no declared
+model inputs receives one **Models** socket. Connect **Pipeline Components** from
+**Load Models**. Its tooltip lists the required component names. This interface
+comes from the approved Python block, so it is not available in the import-free
+sidecar preview. Existing sidecar fields and explicit model sockets are preserved;
+insert a fresh node after upgrading if a saved instance lacks the new socket.
 
 The approved entry point is imported in its own package, constructed with the native
 Diffusers `from_config`, and executed through native `init_pipeline` and pipeline
@@ -99,6 +103,28 @@ MoDiff loaders and the existing ComponentsManager. This adapter does not silentl
 download or load a model from a block's default repository. Use the generic
 Load Models node to select and load model components first. Framework
 construction starts fresh pipeline state while connected weights remain shared.
+All Modular Load Models routes publish their already-loaded component bundle.
+Inactive optional components stay absent. Runtime validation checks actual component
+types, including supported upstream Auto factories, rather than pipeline-family
+names. A compatible class does not guarantee compatible tensor dimensions or tasks.
+
+Stage `examples/custom_nodes/ModularImageReconstruction` for an executable example:
+connect a decoded image to **Image** and the loader's **Pipeline Components**
+to **Models**. Put it inside a Block and expose **Amount** as a control through
+Configure Interface (0 to 1). Connect its Image output to Preview Image.
+This block reuses an `AutoencoderKL` through its normal forward/offload hooks and
+blends the reconstructed image with the source (0 retains the source, 1 uses the
+reconstruction). It consumes no random generator and creates no model loader.
+It honors the VAE's declared half-precision `force_upcast` setting for its forward
+call and restores the original dtype even after an error.
+Its component type is compatible with multiple image pipelines; VAEs of different
+classes still require a suitable block implementation. Image dimensions must be
+appropriate for the connected VAE's spatial scale.
+
+This connection path does not yet provision arbitrary block-specific model
+repositories. For example, a Florence annotator needs its own model and processor;
+connecting an image-generation loader's VAE is insufficient. Support for those
+additional components remains separate from accepting the Mellon sidecar.
 
 The older Hub **User Node import** remains a declarative contract/library preview
 and retains its fail-closed Dynamic Block checks. **Manage executable custom

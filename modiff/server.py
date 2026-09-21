@@ -13986,6 +13986,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         remains unavailable, so real external pressure still selects a safer
         plan.
         """
+        cached_identity = isinstance(self._last_runtime_fingerprint, dict)
         fingerprint = self._runtime_fingerprint_for_control_request()
         # During an active model call the cached fingerprint was captured
         # immediately before execution and already describes the capacity that
@@ -13994,6 +13995,27 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         # weights, and a refresh-time planning request must remain responsive.
         if self.current_task:
             return fingerprint
+        if cached_identity and isinstance(fingerprint.get("hardware"), dict):
+            # Runtime identity is cached, but host capacity changes after model
+            # release and with external pressure. An old RAM sample can reject
+            # every subsequent Run even after enough memory becomes available.
+            # Refresh only the inexpensive OS sample; never probe accelerators
+            # here or rewrite the fingerprint used by execution receipts.
+            from modiff.hardware import system_memory_snapshot
+
+            try:
+                memory = system_memory_snapshot()
+            except Exception:
+                memory = {}
+            system = fingerprint["hardware"].setdefault("system", {})
+            if isinstance(system, dict):
+                for field, source in (
+                    ("ram_total", "total_bytes"),
+                    ("ram_free", "free_bytes"),
+                    ("ram_available", "available_bytes"),
+                ):
+                    value = memory.get(source)
+                    system[field] = value if type(value) is int and value >= 0 else None
         if not (self.node_cache or memory_manager.cache):
             return fingerprint
 

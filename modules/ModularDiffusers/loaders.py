@@ -2929,11 +2929,14 @@ class ModelsLoader(NodeBase):
                     manager=components,
                     name="scheduler",
                 )
-            if whole_workflow_components:
-                loaded_components["pipeline_components"] = {
-                    name: node_get_component_info(node_id=self.node_id, manager=components, name=name)
-                    for name in ALL_COMPONENTS
-                }
+            # Every selected pipeline can supply an approved custom block.
+            # Publish the models already loaded by the existing policy; this
+            # must neither require inactive optional components nor load them.
+            loaded_components["pipeline_components"] = {
+                name: node_get_component_info(node_id=self.node_id, manager=components, name=name)
+                for name in ALL_COMPONENTS
+                if getattr(self.loader, name, None) is not None
+            }
 
             loaded_components.update(
                 {

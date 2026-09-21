@@ -342,6 +342,11 @@ The Modular Diffusers integration is documented in [modules/ModularDiffusers/REA
 
 In Developer, choose **Add from Hugging Face** or **Add local source** in **Workflows**, or open **Nodes → Custom nodes**. Resolve a Hub URL or repository ID to an exact commit, stage it, review its source and dependencies, then explicitly enable that code. Local Python folders and pinned Git sources use the same review flow. See [Developing custom nodes](docs/custom-nodes.md) for runnable examples, typed fields, reload and independent Automatic/Custom memory policies.
 
+Approved Modular blocks without model ports receive a **Models** input when their
+Python contract requires components. Connect **Load Models → Pipeline Components**
+to reuse compatible loaded weights. The [VAE reconstruction example](examples/custom_nodes/ModularImageReconstruction)
+demonstrates this without separate family-specific nodes or implicit model downloads.
+
 ## Updating and recovery
 
 Stop the foreground application with `Ctrl+C` and update both sibling

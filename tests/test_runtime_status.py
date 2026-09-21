@@ -2713,6 +2713,27 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(adjusted, fingerprint)
 
+    def test_idle_auto_planning_refreshes_cached_host_memory_without_mutating_identity(self):
+        fingerprint = {"fingerprint": "cached", "resourceFingerprint": "resource", "hardware": hardware_snapshot()}
+        fingerprint["hardware"]["system"].update(ram_total=128 * GIB, ram_free=16 * GIB, ram_available=72 * GIB)
+        self.server._last_runtime_fingerprint = copy.deepcopy(fingerprint)
+        for available in (84 * GIB, 4 * GIB):
+            with self.subTest(available=available), patch("modiff.hardware.system_memory_snapshot", return_value={
+                "total_bytes": 128 * GIB, "free_bytes": 2 * GIB, "available_bytes": available,
+            }), patch.object(self.server, "_runtime_fingerprint", side_effect=AssertionError("no full probe")):
+                adjusted = self.server._auto_planning_runtime_fingerprint()
+            self.assertEqual(adjusted["hardware"]["system"]["ram_available"], available)
+            self.assertEqual(adjusted["hardware"]["system"]["ram_free"], 2 * GIB)
+            self.assertEqual(adjusted["fingerprint"], "cached")
+            self.assertEqual(adjusted["resourceFingerprint"], "resource")
+            self.assertEqual(self.server._last_runtime_fingerprint, fingerprint)
+
+    def test_idle_auto_planning_does_not_reuse_stale_ram_when_sampling_fails(self):
+        self.server._last_runtime_fingerprint = {"hardware": hardware_snapshot()}
+        with patch("modiff.hardware.system_memory_snapshot", side_effect=OSError("probe failed")):
+            adjusted = self.server._auto_planning_runtime_fingerprint()
+        self.assertIsNone(adjusted["hardware"]["system"].get("ram_available"))
+
     async def test_auto_plan_uses_capacity_after_releasing_its_resident_cache(self):
         snapshot = hardware_snapshot()
         snapshot["devices"][0]["vram_free"] = 4 * GIB
