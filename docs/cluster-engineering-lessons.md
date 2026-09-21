@@ -677,3 +677,17 @@ parsed history, retain immutable record bytes, give readers independent objects,
 and invalidate on file identity/content metadata changes, deletion and corrupt
 replacement. Publish cache state only after a successful atomic write. Never
 trade away output recovery or silently extend a failed responsiveness budget.
+
+Generic controls must publish the same bounds enforced by their selected backend
+adapter. A correct model default can still leave a slider offering unsupported
+values. Use the shared field overlay for both connected starters and dynamic
+model changes, test narrow-to-wide and wide-to-narrow transitions, and retain
+authored values and historical signal identities. Verify separate unconditional
+and perception contracts instead of applying prompt-conditioned limits to them.
+
+Optional image processors can expose native structured configuration types rather
+than plain dictionaries. Check real pinned preprocessing and postprocessing APIs
+with no-download tests before model runs; mocked interfaces cannot establish that
+contract. Keep native numeric depth separate from a normalized visual preview,
+and carry new consumed controls through both backend receipts and the client's
+strict parser so persistence does not silently discard their execution evidence.

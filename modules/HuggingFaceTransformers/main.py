@@ -358,6 +358,12 @@ def _load_model(
         preprocessor = transformers.AutoProcessor.from_pretrained(source, **common)
         auto_model = transformers.AutoModelForImageTextToText
         handle_kind = "transformers-image-text-to-text"
+    elif task == "depth-estimation":
+        preprocessor_auto_class = "AutoImageProcessor"
+        model_auto_class = "AutoModelForDepthEstimation"
+        preprocessor = transformers.AutoImageProcessor.from_pretrained(source, **common)
+        auto_model = transformers.AutoModelForDepthEstimation
+        handle_kind = "transformers-depth-estimation"
     else:  # pragma: no cover - internal programming error
         raise RuntimeError("Unsupported internal Transformers task.")
     model_kwargs = {
@@ -637,10 +643,12 @@ def _validated_handle(value: Any, *, task: str) -> tuple[Any, Any, dict[str, Any
     expected_kind = {
         "text-generation": "transformers-causal-lm",
         "image-video-to-text": "transformers-image-text-to-text",
+        "depth-estimation": "transformers-depth-estimation",
     }[task]
     expected_loader = {
         "text-generation": ("AutoTokenizer", "AutoModelForCausalLM"),
         "image-video-to-text": ("AutoProcessor", "AutoModelForImageTextToText"),
+        "depth-estimation": ("AutoImageProcessor", "AutoModelForDepthEstimation"),
     }[task]
     if not isinstance(value, dict) or set(value) != MODEL_HANDLE_KEYS:
         raise ValueError("Generation requires an intact Transformers model handle.")
@@ -648,7 +656,8 @@ def _validated_handle(value: Any, *, task: str) -> tuple[Any, Any, dict[str, Any
         raise ValueError("Generation received the wrong Transformers model handle type.")
     model = value.get("model")
     preprocessor = value.get("preprocessor")
-    if model is None or preprocessor is None or not callable(getattr(model, "generate", None)):
+    method = "forward" if task == "depth-estimation" else "generate"
+    if model is None or preprocessor is None or not callable(getattr(model, method, None)):
         raise ValueError("Generation requires a loaded Transformers model and preprocessor.")
     receipt = value.get("receipt")
     try:
@@ -1519,3 +1528,94 @@ class GenerateAnyToAny(NodeBase):
             receipt=receipt,
             kwargs=kwargs,
         )
+
+
+class LoadDepthEstimationModel(NodeBase):
+    """Load an immutable local-only depth model through the official Auto classes."""
+
+    label = "Load Depth Estimation Model"
+    category = "Hugging Face Transformers"
+    resizable = True
+    params = {
+        "pipeline": {"label": "Model", "display": "output", "type": "transformers_depth_estimation"},
+        "pipeline_class": {"label": "Execution Class", "type": "string", "default": "AutoModelForDepthEstimation", "hidden": True},
+        "execution_profile_id": {"label": "Execution Profile", "type": "string", "default": "", "hidden": True},
+        "model_id": {
+            "label": "Model", "display": "modelselect", "type": "string",
+            "fieldOptions": {"noValidation": True, "sources": ["hub", "local"]},
+        },
+        "revision": {"label": "Exact Hub Commit", "type": "string", "default": ""},
+        "dtype": {"label": "DType", "type": "string", "options": ["float32", "float16", "bfloat16"], "default": "float32"},
+        "device": {"label": "Device", "type": "string", "options": DEVICE_LIST, "default": DEFAULT_DEVICE},
+        "receipt": {"label": "Model Receipt", "display": "output", "type": "object"},
+    }
+
+    def execute(self, **kwargs):
+        if kwargs.get("pipeline_class", "AutoModelForDepthEstimation") != "AutoModelForDepthEstimation":
+            raise ValueError("Depth estimation requires the AutoModelForDepthEstimation execution contract.")
+        model, receipt = _load_model(
+            selection_value=kwargs.get("model_id"), revision_value=kwargs.get("revision"),
+            dtype_value=kwargs.get("dtype"), device_value=kwargs.get("device"), task="depth-estimation",
+        )
+        return {"pipeline": model, "receipt": receipt}
+
+
+class PredictDepth(NodeBase):
+    """Predict a bounded depth map with native values and a separate normalized preview."""
+
+    label = "Predict Depth"
+    category = "Hugging Face Transformers"
+    resizable = True
+    params = {
+        "pipeline": {"label": "Model", "display": "input", "type": "transformers_depth_estimation", "required": True},
+        "image": {"label": "Source Image", "display": "input", "type": "image", "required": True},
+        "processing_resolution": {
+            "label": "Processing Resolution", "type": "int", "default": 0, "min": 0, "max": 2048,
+            "description": "Zero uses the model's image processor size; positive values set its resize target.",
+        },
+        "match_input_resolution": {"label": "Match Input Resolution", "type": "bool", "default": True},
+        "depth_convention": {
+            "label": "Depth Convention", "type": "string", "default": "model_default",
+            "options": ["model_default", "near_is_larger", "far_is_larger"],
+            "description": "Controls conversion to the shared near=0, far=1 preview. Native depth values remain unchanged.",
+        },
+        "prediction_map": {"label": "Prediction Map", "display": "output", "type": "prediction_map"},
+        "preview_images": {"label": "Depth Preview", "display": "output", "type": "image"},
+        "native_depth": {"label": "Native Depth", "display": "output", "type": "tensor"},
+        "width_out": {"label": "Width", "display": "output", "type": "int"},
+        "height_out": {"label": "Height", "display": "output", "type": "int"},
+        "result": {"label": "Depth Details", "display": "output", "type": "object"},
+    }
+
+    def execute(self, **kwargs):
+        from .depth import predict_depth
+
+        model, processor, receipt = _validated_handle(kwargs.get("pipeline"), task="depth-estimation")
+        images = _media_items(kwargs.get("image"), field="image", maximum=1)
+        if len(images) != 1:
+            raise ValueError("Depth estimation requires exactly one source image.")
+        image, _pixels = _normalized_media_item(images[0], field="image")
+        resolution = _bounded_int(kwargs.get("processing_resolution"), field="processing_resolution", default=0, minimum=0, maximum=2048)
+        match_input = _bounded_bool(kwargs.get("match_input_resolution"), field="match_input_resolution", default=True)
+        return predict_depth(
+            model, processor, image, receipt=receipt, resolution=resolution, match_input=match_input,
+            convention=kwargs.get("depth_convention", "model_default"),
+        )
+
+
+def get_depth_operation_contracts(modules):
+    """Expose the same task operations as Diffusers perception without an executor fork."""
+    from modiff.operation_contracts import build_pipeline_operation_contract
+
+    contracts = []
+    for operation, action, loader in (
+        ("diffusion.load_models", "LoadDepthEstimationModel", True),
+        ("diffusion.predict_map", "PredictDepth", False),
+    ):
+        contract = build_pipeline_operation_contract(
+            modules, pipeline_class="AutoModelForDepthEstimation", task="depth_estimation",
+            operation_id=operation, node_key=f"modules.HuggingFaceTransformers.{action}", loader=loader,
+        )
+        if contract is not None:
+            contracts.append(contract)
+    return contracts

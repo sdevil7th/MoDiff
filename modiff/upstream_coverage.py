@@ -362,6 +362,27 @@ _TRANSFORMERS_SEMANTIC_DEFINITIONS = (
         },
     },
     {
+        "id": "bounded-depth-estimation",
+        "label": "Bounded image depth estimation",
+        "status": "executable",
+        "reason": "Generic AutoModel nodes use bounded DPT preprocessing and separate native depth from normalized previews.",
+        "qualification": "source-implemented-mocked-contract-qualified",
+        "modes": ["depth_estimation"],
+        "nodeKeys": [
+            "modules.HuggingFaceTransformers.LoadDepthEstimationModel",
+            "modules.HuggingFaceTransformers.PredictDepth",
+        ],
+        "canonicalWorkflowIds": [],
+        "mainEvidence": {
+            "models/auto/modeling_auto.py": ["AutoModelForDepthEstimation"],
+            "models/dpt/image_processing_dpt.py": ["DPTImageProcessor", "post_process_depth_estimation"],
+        },
+        "productionEvidence": {
+            "models/auto/modeling_auto.py": ["AutoModelForDepthEstimation"],
+            "models/dpt/image_processing_dpt.py": ["DPTImageProcessor", "post_process_depth_estimation"],
+        },
+    },
+    {
         "id": "bounded-causal-text-generation",
         "label": "Bounded causal text generation",
         "status": "executable",

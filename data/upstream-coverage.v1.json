@@ -2339,7 +2339,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:8fbfe3a76707e1ca1acfc69ea5f3b68652da50223e7110cdb2ea699bb40368ff",
+  "contentHash": "sha256:8a11d5a4702b30af2a75c6dcf6f65d5ca92cf240d37a09706c8d9ba05af5cad3",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -8612,7 +8612,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "61d2a4f97441d684adf9405a8a3e18da939e283d0e3fc9deec198ee3fd9100b3",
+    "templateBundleSha256": "b91695540e2d909144b3ec5677f9bd47b7bac70cf870d8904047511c7c2e3510",
     "transformers": {
       "productionRuntime": {
         "byteSize": 11625234,
@@ -8653,12 +8653,12 @@
       "research-blocked": 0,
       "unreviewed": 0
     },
-    "transformersProductionSupportedSemanticCount": 5,
-    "transformersSemanticCount": 6,
+    "transformersProductionSupportedSemanticCount": 6,
+    "transformersSemanticCount": 7,
     "transformersSemanticStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 4,
+      "executable": 5,
       "intentionally-excluded": 0,
       "research-blocked": 2,
       "unreviewed": 0
@@ -8739,6 +8739,68 @@
     },
     {
       "canonicalWorkflowIds": [],
+      "id": "bounded-depth-estimation",
+      "label": "Bounded image depth estimation",
+      "modes": [
+        "depth_estimation"
+      ],
+      "nodeEvidence": [
+        {
+          "actions": [
+            "LoadDepthEstimationModel",
+            "PredictDepth"
+          ],
+          "path": "modules/HuggingFaceTransformers/main.py",
+          "sha256": "0dbed0a6f42dcbecef53aec75f40ae2e965bc5f1eea8c33c4f37941fd7841940"
+        }
+      ],
+      "nodeKeys": [
+        "modules.HuggingFaceTransformers.LoadDepthEstimationModel",
+        "modules.HuggingFaceTransformers.PredictDepth"
+      ],
+      "productionWheelAbsentPaths": [],
+      "productionWheelEvidence": [
+        {
+          "path": "models/auto/modeling_auto.py",
+          "sha256": "bb9ae5973f29cdf8cf71e6a14dd0f0bec9efb4fb1d7ac0f58262fd8f28a4b8b6",
+          "symbols": [
+            "AutoModelForDepthEstimation"
+          ]
+        },
+        {
+          "path": "models/dpt/image_processing_dpt.py",
+          "sha256": "646937f80e26520fa9b0b2ba86aeb30d9a7f673b99ed6bcbdf3f082685d1cd1a",
+          "symbols": [
+            "DPTImageProcessor",
+            "post_process_depth_estimation"
+          ]
+        }
+      ],
+      "productionWheelSupport": true,
+      "publicTemplateEligible": false,
+      "qualification": "source-implemented-mocked-contract-qualified",
+      "reason": "Generic AutoModel nodes use bounded DPT preprocessing and separate native depth from normalized previews.",
+      "reviewedMainEvidence": [
+        {
+          "path": "models/auto/modeling_auto.py",
+          "sha256": "549e9ec1c382d8481028ddef6dd28347080f75a8aad3b1566b3002377b2ed7e0",
+          "symbols": [
+            "AutoModelForDepthEstimation"
+          ]
+        },
+        {
+          "path": "models/dpt/image_processing_dpt.py",
+          "sha256": "646937f80e26520fa9b0b2ba86aeb30d9a7f673b99ed6bcbdf3f082685d1cd1a",
+          "symbols": [
+            "DPTImageProcessor",
+            "post_process_depth_estimation"
+          ]
+        }
+      ],
+      "status": "executable"
+    },
+    {
+      "canonicalWorkflowIds": [],
       "id": "bounded-causal-text-generation",
       "label": "Bounded causal text generation",
       "modes": [
@@ -8751,7 +8813,7 @@
             "LoadTextGenerationModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "1a27da07dd32a3441adafab8d6b983450d545c55d9693a3341b1c37b8958d8a6"
+          "sha256": "0dbed0a6f42dcbecef53aec75f40ae2e965bc5f1eea8c33c4f37941fd7841940"
         }
       ],
       "nodeKeys": [
@@ -8812,7 +8874,7 @@
             "LoadImageTextToTextModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "1a27da07dd32a3441adafab8d6b983450d545c55d9693a3341b1c37b8958d8a6"
+          "sha256": "0dbed0a6f42dcbecef53aec75f40ae2e965bc5f1eea8c33c4f37941fd7841940"
         }
       ],
       "nodeKeys": [
@@ -8887,7 +8949,7 @@
             "LoadAnyToAnyModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "1a27da07dd32a3441adafab8d6b983450d545c55d9693a3341b1c37b8958d8a6"
+          "sha256": "0dbed0a6f42dcbecef53aec75f40ae2e965bc5f1eea8c33c4f37941fd7841940"
         }
       ],
       "nodeKeys": [

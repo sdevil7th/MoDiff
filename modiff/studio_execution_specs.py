@@ -15332,6 +15332,62 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["marigold-depth-lcm-v1-0:depth-estimation:v1"]
     "bindings": _PERCEPTION_GRAPH_BINDINGS,
 }
 
+# These models share the same generic AutoModel/processor nodes. A profile is
+# an immutable artifact identity and recipe, not a separate user-facing node.
+for _depth_id, _depth_model, _depth_label, _depth_repo in (
+    ("depth-anything-v2-small", "DepthAnythingV2Model", "Depth Anything V2 Small", "depth-anything/Depth-Anything-V2-Small-hf"),
+    ("depth-anything-v2-metric-outdoor-small", "DepthAnythingV2MetricModel", "Depth Anything V2 Metric Outdoor Small", "depth-anything/Depth-Anything-V2-Metric-Outdoor-Small-hf"),
+):
+    _depth_profile = {
+        **_MARIGOLD_DEPTH_PROFILE,
+        "id": f"{_depth_id}:direct", "model_type": _depth_model,
+        "loader_module": "modules.HuggingFaceTransformers", "loader_action": "LoadDepthEstimationModel",
+        "execution_path": "direct-huggingface-transformers-depth", "pipeline_class": "AutoModelForDepthEstimation",
+        "default_repo": _depth_repo, "supported_offload_modes": (OFFLOAD_MODE_NONE,),
+        "retry_offload_modes": (), "max_low_memory_side": None, "max_low_memory_steps": None,
+        "live_proof": False,
+    }
+    _depth_capability = {
+        **_MARIGOLD_DEPTH_CAPABILITY,
+        "modelType": _depth_model, "label": _depth_label, "displayName": _depth_label,
+        "family": "Depth Anything", "defaultRepo": _depth_repo,
+        "artifactLabel": "Transformers safetensors repo",
+        "downloadFiles": ["config.json", "preprocessor_config.json", "model.safetensors"],
+        "revisionCandidates": [require_catalog_revision(_depth_repo, model_type=_depth_model)],
+        "defaultSize": {"width": 518, "height": 518, "aspectRatio": "source"},
+        "offloadSupport": {"default": OFFLOAD_MODE_NONE, "lowVram": OFFLOAD_MODE_NONE,
+                           "emergency": OFFLOAD_MODE_NONE, "modes": [OFFLOAD_MODE_NONE]},
+        "lowVram": {"dtype": "float32", "autoOffload": False, "offloadMode": OFFLOAD_MODE_NONE,
+                    "steps": 1, "width": 518, "height": 518},
+        "modeRequirements": {"depth_estimation": {
+            "requiredImages": ["referenceImages"],
+            "note": "Requires one source image. Native depth values and normalized relative preview are separate outputs.",
+        }},
+        "notes": ["Uses the official AutoModelForDepthEstimation and bounded DPT image processor.",
+                  "The prediction-map preview is normalized near=0/far=1; native depth retains the model's numeric scale.",
+                  "Auto and Gallery remain disabled pending live qualification."],
+    }
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[f"{_depth_id}:depth-estimation:v1"] = {
+        "modelType": _depth_model, "mode": "depth_estimation", "profile": _depth_profile,
+        "capability": _depth_capability,
+        "roles": (("depthModel", "modules.HuggingFaceTransformers.LoadDepthEstimationModel", -520, -80),
+                  ("loadImage", "modules.Image.Load", -520, 300),
+                  ("predictDepth", "modules.HuggingFaceTransformers.PredictDepth", -120, -80),
+                  ("preview", "modules.Image.Preview", 500, -80)),
+        "edges": (("depthModel", "pipeline", "predictDepth", "pipeline"),
+                  ("loadImage", "image", "predictDepth", "image"),
+                  ("predictDepth", "preview_images", "preview", "image")),
+        "bindings": (("depthModel", "model_id", "artifact"),
+                     ("depthModel", "revision", "defaultRevision"),
+                     ("depthModel", "pipeline_class", "pipelineClass"),
+                     ("depthModel", "execution_profile_id", "executionProfileId"),
+                     ("depthModel", "dtype", "dtype"), ("depthModel", "device", "device"),
+                     ("loadImage", "file", "referenceImages"),
+                     ("predictDepth", "processing_resolution", "processingResolution"),
+                     ("predictDepth", "match_input_resolution", "matchInputResolution")),
+    }
+
+
 _SMOLLM2_135M_INSTRUCT_PROFILE = {
     "id": "smollm2-135m-instruct:direct",
     "model_type": "HuggingFaceTextGenerationModel",

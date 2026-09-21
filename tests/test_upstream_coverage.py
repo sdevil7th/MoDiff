@@ -83,12 +83,12 @@ class UpstreamCoverageTests(unittest.TestCase):
                     "research-blocked": 0,
                     "unreviewed": 0,
                 },
-                "transformersProductionSupportedSemanticCount": 5,
-                "transformersSemanticCount": 6,
+                "transformersProductionSupportedSemanticCount": 6,
+                "transformersSemanticCount": 7,
                 "transformersSemanticStatusCounts": {
                     "contract-only": 0,
                     "equivalent": 0,
-                    "executable": 4,
+                    "executable": 5,
                     "intentionally-excluded": 0,
                     "research-blocked": 2,
                     "unreviewed": 0,
@@ -268,6 +268,7 @@ class UpstreamCoverageTests(unittest.TestCase):
             set(by_id),
             {
                 "speech-recognition",
+                "bounded-depth-estimation",
                 "bounded-causal-text-generation",
                 "bounded-image-video-to-text",
                 "any-to-any-generation",
@@ -277,6 +278,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         )
         for semantic_id in (
             "speech-recognition",
+            "bounded-depth-estimation",
             "bounded-causal-text-generation",
             "bounded-image-video-to-text",
             "any-to-any-generation",

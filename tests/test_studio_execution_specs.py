@@ -517,6 +517,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("StableDiffusionPAGPipeline", "control_image"),
                 ("StableDiffusionPAGPipeline", "control_inpaint"),
                 ("MarigoldDepthPipeline", "depth_estimation"),
+                ("DepthAnythingV2Model", "depth_estimation"),
+                ("DepthAnythingV2MetricModel", "depth_estimation"),
                 ("HuggingFaceTextGenerationModel", "text_generation"),
                 ("HuggingFaceImageTextToTextModel", "image_to_text"),
                 ("HuggingFaceAnyToAnyModel", "text_generation"),

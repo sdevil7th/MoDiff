@@ -261,6 +261,10 @@ class DiffusersExecutionProfile:
                 "modules.HuggingFaceSpeech",
                 "LoadCTCSpeechRecognitionModel",
             ),
+            "direct-huggingface-transformers-depth": (
+                "modules.HuggingFaceTransformers",
+                "LoadDepthEstimationModel",
+            ),
             "direct-huggingface-transformers-text": (
                 "modules.HuggingFaceTransformers",
                 "LoadTextGenerationModel",

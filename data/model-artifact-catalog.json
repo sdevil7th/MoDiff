@@ -654,6 +654,20 @@
       "baseRevision": "fbdf52fbaaca799592917417eb05f1899f1255ec",
       "baseLicense": "minimax-music3-community-license",
       "artifacts": []
+    },
+    {
+      "modelType": "DepthAnythingV2Model",
+      "baseRepo": "depth-anything/Depth-Anything-V2-Small-hf",
+      "baseRevision": "5426e4f0f36572d16453bbda7a8389317b1bef99",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
+    },
+    {
+      "modelType": "DepthAnythingV2MetricModel",
+      "baseRepo": "depth-anything/Depth-Anything-V2-Metric-Outdoor-Small-hf",
+      "baseRevision": "fd2c22027eaf20374204f14099b8341e1925ad39",
+      "baseLicense": "apache-2.0",
+      "artifacts": []
     }
   ]
 }

@@ -798,9 +798,21 @@ Additional completed native core campaigns:
       changes, mode switching, persistence, Resize and independent Saved Block edits.
 - [x] PixArt Sigma: the same 11 core cases using the selected float32 defaults,
       20 then 22 steps, and 1024 square then 1152 × 896 output.
+- [x] Sana 600M and FLUX Schnell: all 11 core cases each, with exact consumed
+      parameters, unchanged reuse, persistence, recomputation and Saved Block checks.
+- [x] DreamLite Mobile and Base: all 11 core cases each; decoded media and exact
+      execution receipts audited. Requested vase placement is only partially achieved.
+- [x] Lumina Next: all 11 core cases, including exact recomputation, 1152 × 896
+      output, connected Resize and independently edited Saved Block execution.
 - [x] Correct the diagnosed history/Saved Block responsiveness paths and repeat
       native concurrent workflow creation, wiring and saving during PixArt generation.
 - [ ] Complete their applicable task variants and separate visual assessment.
+
+PRX completed its baseline, unchanged repeat, prompt edit and seed edit, then
+failed when a UI-accepted 30-step value exceeded the backend adapter's 28-step
+limit. The original failed task is retained. The shared form now publishes the
+selected adapter limit without rewriting authored values; 121 focused tests and
+1,661 subtests pass. The affected native rerun remains open; PRX is not complete.
 
 The PixArt campaign exposed intermittent authoring stalls during generation.
 Original native preview failures and a GIL profile are retained. The trace shows

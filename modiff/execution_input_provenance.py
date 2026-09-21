@@ -27,6 +27,8 @@ FIELD_NAMES = {
     "control_guidance_start": "controlGuidanceStart", "control_guidance_end": "controlGuidanceEnd",
     "prompt_embeds_scale": "reduxPromptEmbedsScale",
     "pooled_prompt_embeds_scale": "reduxPooledPromptEmbedsScale",
+    "processing_resolution": "processingResolution",
+    "match_input_resolution": "matchInputResolution", "depth_convention": "depthConvention",
 }
 NODE_FIELD_NAMES = {
     ('DiffusersImage', 'ControlComponent'): {

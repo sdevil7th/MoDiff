@@ -48,12 +48,14 @@ def _standard_sources():
     from modules.DiffusersVideo.main import get_video_operation_contracts
     from modules.DiffusersAudio.main import get_audio_operation_contracts
     from modules.DiffusersThreeD.main import get_three_d_operation_contracts
+    from modules.HuggingFaceTransformers.main import get_depth_operation_contracts
 
     return (
         get_image_operation_contracts,
         get_video_operation_contracts,
         get_audio_operation_contracts,
         get_three_d_operation_contracts,
+        get_depth_operation_contracts,
     )
 
 
@@ -116,6 +118,8 @@ def _standard_schema(contract, modules):
         else:
             fields = adapter.signal_value()["fieldParams"]
             values = {"three_d_contract": adapter.signal_value()}
+    elif module == "modules.HuggingFaceTransformers":
+        values = {"pipeline_class": pipeline} if action == "LoadDepthEstimationModel" else {}
     params = deepcopy(modules[module][action]["params"])
     if action == "LoadPipeline":
         from modiff.model_artifact_catalog import catalog_revision
