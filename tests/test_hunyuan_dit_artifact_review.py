@@ -43,13 +43,19 @@ class HunyuanDiTArtifactReviewTests(unittest.TestCase):
         self.assertEqual(pin["revision"], repository["revision"])
         self.assertEqual(pin["license"], "tencent-hunyuan-community")
 
-    def test_bounded_standalone_adapter_and_execution_spec_share_one_exact_contract(self):
+    def test_current_adapter_preserves_reviewed_default_with_bounded_explicit_sizes(self):
         adapter = IMAGE_PIPELINE_ADAPTERS["HunyuanDiTPipeline"]
         contract = self.review["pipelineContract"]
         self.assertEqual(adapter.modes, frozenset({"text_to_image"}))
         self.assertTrue(adapter.safe_serialization_required)
         self.assertEqual(adapter.max_inference_steps, contract["numInferenceSteps"])
-        self.assertEqual((adapter.min_output_side, adapter.max_output_side), (1024, 1024))
+        self.assertEqual((adapter.min_output_side, adapter.max_output_side), (512, 2048))
+        self.assertEqual(adapter.output_side_step, 32)
+        self.assertEqual(adapter.max_output_pixels, contract["width"] * contract["height"])
+        # Preserve the historical upstream review; current explicit dimensions
+        # opt out of its default binning without changing the 1024-square recipe.
+        self.assertTrue(contract["useResolutionBinning"])
+        self.assertIs(adapter.use_resolution_binning, False)
         self.assertEqual(adapter.max_sequence_length, contract["t5TokenLimit"])
 
         definition = STUDIO_EXECUTION_SPEC_DEFINITIONS["hunyuan-dit-v1-2-distilled:text-to-image:v1"]

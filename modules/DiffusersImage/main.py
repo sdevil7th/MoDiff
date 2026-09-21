@@ -177,6 +177,7 @@ class ImagePipelineAdapter:
     max_reference_aspect_ratio: float | None = None
     enable_prompt_rewrite: bool | None = None
     clean_caption: bool | None = None
+    use_resolution_binning: bool | None = None
     cfg_trunc_ratio: float | None = None
     cfg_normalization: bool | None = None
     unconditional_optional_fields: tuple[str, ...] = ()
@@ -290,6 +291,8 @@ class ImagePipelineAdapter:
             raise ValueError("Image reference aspect-ratio bounds must be positive and ordered.")
         if self.enable_prompt_rewrite is not None and type(self.enable_prompt_rewrite) is not bool:
             raise ValueError("Image prompt rewriting must be an exact boolean when configured.")
+        if self.use_resolution_binning is not None and type(self.use_resolution_binning) is not bool:
+            raise ValueError("Image resolution binning must be an exact boolean when configured.")
         if self.clean_caption is not None and type(self.clean_caption) is not bool:
             raise ValueError("Image caption cleaning must be an exact boolean when configured.")
         if self.cfg_trunc_ratio is not None and not 0.0 <= self.cfg_trunc_ratio <= 1.0:
@@ -427,6 +430,10 @@ class ImagePipelineAdapter:
             target[self.conditioning_scale_parameter] = values["conditioning_scale"]
         if self.enable_prompt_rewrite is not None and supports_arg(pipeline, "enable_prompt_rewrite"):
             target["enable_prompt_rewrite"] = self.enable_prompt_rewrite
+        if self.use_resolution_binning is not None:
+            if not supports_arg(pipeline, "use_resolution_binning"):
+                raise ValueError(f"{self.pipeline_class} does not expose its reviewed resolution-binning control.")
+            target["use_resolution_binning"] = self.use_resolution_binning
         if self.clean_caption is not None and supports_arg(pipeline, "clean_caption"):
             target["clean_caption"] = self.clean_caption
         if self.cfg_trunc_ratio is not None and supports_arg(pipeline, "cfg_trunc_ratio"):
@@ -716,10 +723,12 @@ IMAGE_PIPELINE_ADAPTERS = {
         HUNYUAN_DIT_DISTILLED_REPO,
         safe_serialization_required=True,
         max_inference_steps=25,
-        min_output_side=1024,
-        max_output_side=1024,
+        min_output_side=512,
+        max_output_side=2048,
         output_side_step=32,
         max_output_pixels=1024 * 1024,
+        # Honor explicit graph dimensions instead of upstream's nearest preset.
+        use_resolution_binning=False,
         max_sequence_length=256,
     ),
     "HunyuanDiTPAGPipeline": ImagePipelineAdapter(
@@ -729,10 +738,12 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("HunyuanDiTPipeline",),
         safe_serialization_required=True,
         max_inference_steps=25,
-        min_output_side=1024,
-        max_output_side=1024,
+        min_output_side=512,
+        max_output_side=2048,
         output_side_step=32,
         max_output_pixels=1024 * 1024,
+        # Honor explicit graph dimensions instead of upstream's nearest preset.
+        use_resolution_binning=False,
         max_sequence_length=256,
         pag_applied_layers=("blocks.14",),
     ),
@@ -743,10 +754,12 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("HunyuanDiTPipeline",),
         safe_serialization_required=True,
         max_inference_steps=50,
-        min_output_side=1024,
-        max_output_side=1024,
+        min_output_side=512,
+        max_output_side=2048,
         output_side_step=32,
         max_output_pixels=1024 * 1024,
+        # Honor explicit graph dimensions instead of upstream's nearest preset.
+        use_resolution_binning=False,
         max_sequence_length=256,
         conditioning_kind="controlnet",
         default_conditioning_repo=HUNYUAN_DIT_CONTROLNET_CANNY_REPO,
@@ -3777,6 +3790,11 @@ def build_qwen_pipeline_quantization_config(
 
 
 def add_progress_callback(node: NodeBase, pipeline: Any, call_kwargs: dict[str, Any], steps: int):
+    if not supports_arg(pipeline, "callback_on_step_end"):
+        # Some upstream pipelines expose only a console progress bar. Use the
+        # existing indeterminate convention, never a fabricated step or ETA.
+        node.progress(-1, phase="denoising", message="Generating image")
+        return
     node.progress(
         0,
         phase="denoising",
@@ -3788,8 +3806,6 @@ def add_progress_callback(node: NodeBase, pipeline: Any, call_kwargs: dict[str, 
     # ErnieImage and similar pipelines invoke callback_on_step_end before they
     # assign this Diffusers progress field. NodeBase.pipe_callback reads it.
     pipeline._num_timesteps = steps
-    if not supports_arg(pipeline, "callback_on_step_end"):
-        return
 
     def callback(pipe, step_index, timestep, callback_kwargs):
         # NodeBase owns the common cancellation contract. Propagating it here
@@ -4018,8 +4034,19 @@ def load_cached_image_component(factory, model_id: str, **load_kwargs):
     """Keep missing-cache recovery actionable without enabling inference downloads."""
     from huggingface_hub.errors import LocalEntryNotFoundError
 
+    target = model_id
+    if (
+        load_kwargs.get("local_files_only") is True
+        and load_kwargs.get("revision")
+        and getattr(factory, "config_name", None) == "model_index.json"
+    ):
+        from utils.huggingface import exact_cached_snapshot_path
+
+        # Model Manager installs the pipeline's runtime files, not unrelated
+        # weight folders. Preserve its exact commit and managed-cache boundary.
+        target = exact_cached_snapshot_path(model_id, load_kwargs["revision"])
     try:
-        return factory.from_pretrained(model_id, **load_kwargs)
+        return factory.from_pretrained(target, **load_kwargs)
     except LocalEntryNotFoundError as error:
         revision = load_kwargs.get("revision")
         selected = f"{model_id}@{revision}" if revision else model_id

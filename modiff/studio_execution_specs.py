@@ -12702,7 +12702,7 @@ _HUNYUAN_DIT_PAG_CAPABILITY.update(
         "recommendedGuidance": 4.0,
         "notes": [
             "Perturbed-attention guidance reuses the immutable Hunyuan-DiT v1.2 distilled safetensors snapshot without an auxiliary artifact.",
-            "The exact generic recipe is fixed at 1024x1024, at most 25 steps, guidance 4, PAG scale 3, adaptive scale 0, and official transformer layer 14; the reviewed PAG call fixes both encoder lengths internally.",
+            "The default recipe uses 1024x1024, at most 25 steps, guidance 4, PAG scale 3, adaptive scale 0, and official transformer layer 14. Explicit dimensions use 32-pixel increments within the one-megapixel ceiling without upstream resolution binning; the reviewed PAG call fixes both encoder lengths internally.",
             "The Tencent community license and acceptable-use obligations require explicit acknowledgement; Auto and Gallery remain disabled pending live review.",
         ],
     }

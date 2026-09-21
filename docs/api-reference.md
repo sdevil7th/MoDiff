@@ -2161,3 +2161,26 @@ After preparation, the new hash includes precisely the applied patches. Built-in
 this does not admit arbitrary Tensor actions. Shared outer graph ancestors execute
 once per attempt, so consumers share a Generator's advancing state. A new attempt
 creates a fresh Generator. Explicit loop bodies retain their iteration semantics.
+
+### Cached image pipelines and explicit dimensions
+
+Ordinary image pipeline loaders resolve a pinned, local-only Hub selection to
+its exact managed snapshot directory before calling Diffusers. This uses the
+existing cache containment and immutable-revision validation. It avoids treating
+unrelated weight folders in a repository as missing pipeline components. Diffusers
+still validates the selected pipeline's required files; no download, alternate
+revision, remote code, or serialization fallback is enabled by this resolution.
+Individual component loaders and explicit local selections keep their existing
+paths.
+
+Hunyuan-DiT's generic image adapters accept explicit width and height from 512 to
+2048 in 32-pixel increments, with a combined ceiling of 1,048,576 pixels. The
+1024-square default and existing step limits remain unchanged. They disable the
+upstream resolution-binning option so a valid requested size is not silently
+replaced with the nearest preset. The same declared bounds reach node controls
+and backend validation; this is an execution contract, not qualification of every
+size or resource policy.
+
+Pipelines without a step callback emit indeterminate generation progress
+(`progress: -1`, without current/total step counts or an ETA). Callback-capable
+pipelines retain measured per-step progress and the existing interruption checks.

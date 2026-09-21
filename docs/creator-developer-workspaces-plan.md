@@ -927,6 +927,28 @@ not qualify every Spandrel weight. Original failed discovery evidence remains
 retained. The remaining image-model/task campaigns are still in
 progress; this checkpoint does not close W8.
 
+Native image regression follow-up:
+
+- [x] Audit LongCat's 11 native core cases, including exact recomputation,
+      connected Resize, independently edited Saved Blocks and restored media.
+      Complex-prompt objects and placement were visually checked separately.
+- [x] Reproduce Hunyuan's clamped dimension edit and Ovis's rejection of unrelated
+      cached-repository weight folders. Preserve both original failed attempts.
+- [x] Add focused regressions for explicit bounded dimensions, immutable local
+      pipeline loading, and indeterminate progress when upstream has no callback.
+- [x] Run the full client gate and five browser workflow creation/reload checks;
+      all 89 generated bundle files match the existing served build exactly.
+- [x] Final backend gate: 3,435 tests and 10,057 subtests passed, with 521 skips.
+      Verified optional-runtime checks separately passed 145 tests and 545
+      subtests, including the installed classes and their call signatures.
+- [ ] Repeat the complete Hunyuan and Ovis native core campaigns on the fix.
+- [ ] Verify LongCat's indeterminate progress visibly during a full-resolution
+      generation and audit the completed output and unchanged cached repeat.
+
+These corrections keep generic nodes and put upstream differences behind backend
+contracts. Prepared recovery campaigns and unit checks are not live acceptance.
+The remaining model/task, auxiliary and structural matrix remains open.
+
 ### W9 — Other modalities and real service export
 
 - [ ] Run baseline, unchanged, parameter-change and save/reopen cases for each
