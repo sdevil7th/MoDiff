@@ -12,6 +12,37 @@ from modiff.operation_contracts import _identifier, with_operation_semantics
 from modiff.operation_inventory import load_operation_inventory
 
 
+def seed_image_operation_defaults(node, profile):
+    """Initialize a new ordinary image operation from its reviewed model profile.
+
+    This is authoring only: never call it on saved nodes or dynamic field updates.
+    Shared pipeline classes (for example Flux dev/schnell/Krea) must use the
+    selected profile, not whichever repository is the adapter's default.
+    """
+    if node["module"] != "modules.DiffusersImage" or profile.loader_module != node["module"]:
+        return
+    from modiff.studio_execution_specs import studio_capability_definitions
+
+    capability = studio_capability_definitions().get(profile.model_type, {})
+    size = capability.get("defaultSize", {})
+    defaults = (
+        {"dtype": capability.get("defaultDtype")}
+        if node["action"] == "LoadPipeline"
+        else {
+            "num_inference_steps": capability.get("recommendedSteps"),
+            "guidance_scale": capability.get("recommendedGuidance"),
+            "width": size.get("width"),
+            "height": size.get("height"),
+        }
+    )
+    for key, value in defaults.items():
+        field = node["params"].get(key)
+        if value is None or field is None or field.get("hidden") or field.get("display") == "output":
+            continue
+        node["params"][key]["value"] = deepcopy(value)
+        node["values"][key] = deepcopy(value)
+
+
 def _standard_sources():
     from modules.DiffusersImage.main import get_image_operation_contracts
     from modules.DiffusersVideo.main import get_video_operation_contracts
@@ -352,7 +383,20 @@ def resolve_operation(modules, contracts, selection):
         if key not in definition["params"]:
             raise ValueError("Operation binding targets an undeclared field.")
         definition["params"][key]["value"] = deepcopy(value)
-    return {**definition, "module": module, "action": action, "values": values, "operation": deepcopy(contract)}
+    result = {**definition, "module": module, "action": action, "values": values, "operation": deepcopy(contract)}
+    if module == "modules.DiffusersImage":
+        from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
+        from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+
+        adapter = IMAGE_PIPELINE_ADAPTERS[contract["binding"]["pipelineClass"]]
+        profiles = [
+            p for p in DIFFUSERS_EXECUTION_PROFILES.values()
+            if p.public and p.loader_module == module and p.pipeline_class == adapter.pipeline_class
+            and p.default_repo == adapter.default_repo and contract["task"] in p.modes
+        ]
+        if len(profiles) == 1:
+            seed_image_operation_defaults(result, profiles[0])
+    return result
 
 
 def operation_port_compatibility(output, input_):

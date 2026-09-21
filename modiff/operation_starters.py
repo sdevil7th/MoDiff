@@ -4,7 +4,7 @@ This is an authoring projection, not an execution recipe or qualification receip
 Unbound conditioning/components remain explicit. No models are constructed here.
 """
 
-from modiff.operation_catalog import resolve_operation
+from modiff.operation_catalog import resolve_operation, seed_image_operation_defaults
 from modiff.operation_contracts import _identifier
 
 
@@ -105,6 +105,11 @@ def resolve_operation_starter(modules, contracts, selection):
     loader = next(c for c in selected if c["decomposition"] == "loader")["operationId"]
     if "executionProfileId" in selection:
         _bind_execution_profile(nodes[loader], task, selection["executionProfileId"])
+        from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+
+        profile = DIFFUSERS_EXECUTION_PROFILES[selection["executionProfileId"]]
+        for node in nodes.values():
+            seed_image_operation_defaults(node, profile)
     workflow_id, upstream, required = None, [], set()
     ordered = [loader]
     if any(c["decomposition"] == "pipeline" for c in selected):

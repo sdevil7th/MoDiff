@@ -766,9 +766,36 @@ Original media was decoded and visually inspected. Complex prompt adherence is
 partial, so successful execution is not full visual approval. Live image-to-image
 and the other local-model/task rows remain open.
 
-Two diagnosed defects are fixed: normal discovery now includes deterministic
+Completed execution checks within the LCM DreamShaper whole-pipeline path:
+
+- [x] Native Developer creation, unchanged repeat, prompt/seed/step/size edits,
+      save/reopen/edit/run, and Creator/Developer switching.
+- [x] Explicit generation recomputation, connected Resize, Saved Block
+      reinsertion with an independent seed, and exact restored Block media.
+- [x] Diagnose wrong new-workflow defaults; seed new ordinary image nodes and
+      starters from the selected backend profile, including shared-class aliases.
+- [x] Compare the same baseline workload with pinned upstream Diffusers: decoded
+      pixels are identical. The prompt fits the encoder context; weak scene
+      adherence remains a model-quality limitation for this tested workload.
+
+LCM used float32, model CPU offload, guidance 8.5 and four steps at 512 square;
+subsequent edits used six steps and 640 × 384. Resize produced 320 × 192. All
+11 core native execution checks passed; image-to-image remains open. The original
+incorrect-default runs and preview/disclosure harness failures remain retained.
+Preview recovery verifies both declared runtime/durable references and exact
+media bytes. No downloaded model or operator approval was changed.
+
+The defaults fix is authoring-only. Existing workflows retain their edited values;
+resource policy stays independent. New individual nodes and connected starters
+are covered, including distinct model profiles sharing one pipeline class. Its
+focused gate passed 27 tests and 1,661 subtests. The complete backend gate passed
+3,300 tests and 10,029 subtests, with 512 skips; the complete client gate passed.
+These are additional checks, not proof that the remaining model matrix passed.
+
+Three diagnosed defects are fixed: normal discovery now includes deterministic
 image utilities, and the Sana Sprint backend adapters preserve the requested
-step count while selecting the compatible upstream schedule. Focused regression
+step count while selecting the compatible upstream schedule, and new ordinary
+image workflows receive their selected model defaults. Focused regression
 tests reproduced each defect before correction. Validation passed:
 
 - `npm run check` and two focused mocked browser regressions for shared discovery.

@@ -241,7 +241,8 @@ class OperationStarterTests(unittest.TestCase):
         for pipeline, task in (("FluxPipeline", "text_to_image"), ("FluxControlNetPipeline", "control_image")):
             with self.subTest(pipeline=pipeline):
                 loader = next(n for n in self.resolve(pipeline, task)["nodes"] if n["action"] == "LoadPipeline")
-                self.assertNotIn("dtype", loader["values"])
+                self.assertEqual(loader["values"]["dtype"], "bfloat16")
+                self.assertEqual(loader["params"]["dtype"]["value"], "bfloat16")
                 self.assertNotIn("offload_mode", loader["values"])
                 auxiliary = IMAGE_PIPELINE_ADAPTERS[pipeline].default_conditioning_repo
                 self.assertEqual(

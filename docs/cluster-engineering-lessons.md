@@ -651,3 +651,18 @@ steps; other supported counts need the upstream evenly spaced schedule. Preserve
 the user's requested count, adapt the backend call, and test genuine pinned input
 validation and scheduler construction for every declared count and related task.
 A fake pipeline that accepts arbitrary keyword arguments cannot expose this bug.
+
+A successful generic run does not prove that new-workflow defaults belong to the
+selected model. Resolve the exact public execution profile before seeding dtype,
+size, steps and guidance. Shared upstream classes can have different reviewed
+model recipes. Reuse backend-owned capability values for new operations only;
+never rewrite saved values or treat authoring defaults as a runtime constraint.
+Test both individual node insertion and connected starters, profile aliases,
+field bounds and unchanged prior drafts. Inspect the resulting images too.
+
+Restored previews can use the recorded runtime cache URL or its durable media
+URL, with a refreshed cache-busting timestamp. Match the declared output preview
+against those exact task references, then verify dimensions and downloaded bytes
+against the retained media hash. Do not require one URL representation or accept
+an unrelated image merely because it decodes; exclude input images and history
+thumbnails from the preview assertion.
