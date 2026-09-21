@@ -123,7 +123,7 @@ visible and does not count as a pass or a completed release requirement.
 | W4  | Unified Nodes library and contextual inspector               | Complete: authoring acceptance           | W2                              |
 | W5  | Generic model/task changes and workflow modification         | Complete: W5 acceptance                  | W3, W4                          |
 | W6  | HF/local custom-node workflow                                | Complete                                 | W4, W5                          |
-| W7  | Concurrent authoring, reuse and recovery                     | Partial fixes; campaign pending          | W5, W6                          |
+| W7  | Concurrent authoring, reuse and recovery                     | In progress: measured UI fixes           | W5, W6                          |
 | W8  | All-local-image execution and modification campaign          | Planned                                  | Stable W2–W7 build              |
 | W9  | Other modalities and real service-export campaign            | Planned                                  | Stable W2–W7 build; W8 fixtures |
 | W10 | Release acceptance, documentation and publication            | Planned                                  | W8, W9                          |
@@ -632,13 +632,28 @@ concurrent-authoring and service-export campaigns (W7/W9).
       A live Flux edit exposed a stale RAM sample that still blocked Run after
       earlier model caches were released. Regression coverage includes released
       capacity, new external pressure and unavailable OS samples.
-- [ ] Complete resident-owner accounting and persistent resource-failure feedback;
-      the preceding sampling correction does not qualify every reuse/memory case.
+- [x] Keep workflow Auto preparation failures in the existing Run blocked dialog
+      until dismissed. Cover rejected plans, HTTP/invalid responses, fresh retry,
+      and late responses after tab, graph or memory-policy changes. No fake model
+      task is created. Native live-backend rejection and mocked retry are separate
+      proofs; memory estimates themselves remain unchanged.
+- [x] Bound My workflows rendering to 50 saved rows per page and search the full
+      inventory. A 1,000-entry browser regression covers paging, cross-page search,
+      empty results, reset and narrow-panel containment. Catalog/starter fixture
+      subprocesses now leave operator custom-node approvals untouched.
+- [ ] Complete resident-owner accounting; the preceding sampling and feedback
+      corrections do not qualify every reuse/memory case.
 - [ ] Profile saved-workflow reopening and result delivery with the Workflows panel
       open. A trace-enabled Flux capture stalled after submission while backend
       execution completed. A no-trace reuse capture recovered; a later run with
       the panel closed completed. Preserve the original failure and establish its
       cause before attributing it to the panel or treating the sequence as passed.
+      The bounded-library fix now has a fresh Flux run with native response and
+      exact-task preview delivery; the earlier failed capture remains retained.
+- [ ] Profile the 7.38-second prompt edit observed during the new Flux run;
+      successful draft preservation does not satisfy the interaction latency budget.
+      Most of that trace interval precedes textarea resolution; profile the browser
+      during early denoising before attributing it to text handling.
 - [ ] Reproduce/profile model/task preview and loader-contract timeouts during
       actual inference; trace event-loop work, locking and metadata dependencies.
 - [ ] Keep read-only metadata resolution independent of live model allocation and
@@ -650,6 +665,30 @@ concurrent-authoring and service-export campaigns (W7/W9).
 - [ ] Retain safe serialization for extension activation, model release and teardown.
       Do not fix latency by weakening validation or merely increasing timeouts.
 - [ ] Test Stop/restart, durable cancellation, OOM recovery and a successful new run.
+
+Measured library checkpoint: a native profile with 4,553 saved workflows exposed
+unbounded row/action-menu rendering. With the same saved Hub workflow and panel
+open, paging reduced the sampled Run click from 8.25 seconds to 72 ms, subsequent
+blocked-dialog delivery from 6.15 seconds to 251 ms, and workflow opening from
+7.41 seconds to 1.31 seconds. Startup remained about nine seconds. These individual
+idle samples do not establish generation-time p95, full model reuse or Stop/recovery;
+the original failed capture and both CPU profiles are retained. The added deferred
+controls measure 228.2 KiB against a 229 KiB limit; startup/individual limits stay fixed.
+
+Fresh native Flux evidence: the existing saved component workflow completed a
+1024 × 1024, 30-step run in 138.5 seconds with fixed seed 98131, bfloat16 and
+model CPU offload under Custom memory policy. Library search and Creator/Developer
+switching during denoising took 60–90 ms; 124 queue samples had p95 11.6 ms.
+The submitted/consumed prompt remained immutable, while a newer prompt draft
+survived completion and backend persistence. The exact-task image hash matched
+the delivered preview and the retained original was visually inspected. Prompt
+editing took 7.38 seconds and remains a failure to profile. This does not qualify
+new-tab authoring, model/task preview, every owner/reuse case, or Stop/recovery.
+Checkpoint validation: 77 coordinator tests, four focused native mocked-browser
+tests and the full client quality gate pass. The final published backend gate has
+3,236 passing tests and 9,866 subtests, with 510 skips. All 87 generated client files
+match the served bundle; dependent catalog updates change hashes only. Original
+model inventories and operator custom-node approvals remain intact.
 
 Acceptance: while a real model denoises, create another workflow, search/add nodes,
 preview model/task changes, inspect custom sources, edit/save and switch workspace.
