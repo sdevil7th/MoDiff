@@ -8,7 +8,7 @@ from collections import defaultdict
 from copy import deepcopy
 import json
 
-from modiff.operation_contracts import _identifier, with_operation_semantics
+from modiff.operation_contracts import _identifier, operation_owns_model, with_operation_semantics
 from modiff.operation_inventory import load_operation_inventory
 
 
@@ -49,6 +49,7 @@ def _standard_sources():
     from modules.DiffusersAudio.main import get_audio_operation_contracts
     from modules.DiffusersThreeD.main import get_three_d_operation_contracts
     from modules.HuggingFaceTransformers.main import get_depth_operation_contracts
+    from modiff.integrated_operation_contracts import get_integrated_operation_contracts
 
     return (
         get_image_operation_contracts,
@@ -56,6 +57,7 @@ def _standard_sources():
         get_audio_operation_contracts,
         get_three_d_operation_contracts,
         get_depth_operation_contracts,
+        get_integrated_operation_contracts,
     )
 
 
@@ -65,7 +67,11 @@ def _standard_schema(contract, modules):
     pipeline = contract.get("binding", {}).get("pipelineClass", contract["pipelineClass"])
     task = contract["task"]
     fields, values, signal = {}, {}, None
-    if module == "modules.DiffusersImage":
+    if contract["decomposition"] == "integrated":
+        from modiff.integrated_operation_contracts import integrated_operation_values
+
+        values = integrated_operation_values(contract)
+    elif module == "modules.DiffusersImage":
         from modules.DiffusersImage.main import (
             IMAGE_PIPELINE_ADAPTERS,
             image_pipeline_contract,
@@ -259,7 +265,7 @@ def build_operation_catalog(modules, profiles, *, catalog_resolver=None):
         task_records = by_pipeline[pipeline]
         for task in sorted(set(task_records) | {t["task"] for t in entry["upstreamTasks"]}):
             records = task_records.get(task, [])
-            loaders = [c for c in records if c["decomposition"] == "loader"]
+            loaders = [c for c in records if operation_owns_model(c)]
             selected_profiles = [
                 p
                 for p in profiles
@@ -275,7 +281,7 @@ def build_operation_catalog(modules, profiles, *, catalog_resolver=None):
             complete = bool(loaders and any(c["decomposition"] != "loader" for c in records))
             runtime_requirements = [p["optionalRuntimeRequirement"] for p in selected_profiles]
             for contract in records:
-                if contract["decomposition"] == "loader":
+                if operation_owns_model(contract):
                     continue  # Its exact profiles are already accounted for above.
                 module, action = contract["nodeKey"].rsplit(".", 1)
                 requirement = loader_optional_runtime_requirement(
@@ -301,7 +307,7 @@ def build_operation_catalog(modules, profiles, *, catalog_resolver=None):
                     else ("declared" if records else "unavailable"),
                     "decomposition": "stages"
                     if any(c["decomposition"] in {"block", "bundle"} for c in records)
-                    else ("pipeline" if any(c["decomposition"] == "pipeline" for c in records) else "none"),
+                    else ("pipeline" if any(c["decomposition"] in {"pipeline", "integrated"} for c in records) else "none"),
                     "operationIds": sorted(c["operationId"] for c in records),
                     "executionProfileIds": sorted(p["id"] for p in selected_profiles),
                     "dependencies": deps,

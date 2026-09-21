@@ -89,10 +89,18 @@ class OperationStarterTests(unittest.TestCase):
                             )
                             loader = result["nodes"][0]
                             field = "repo_id" if loader["action"] == "ModelsLoader" else "model_id"
-                            self.assertEqual(
-                                loader["values"][field]["value"], DIFFUSERS_EXECUTION_PROFILES[identity].default_repo
-                            )
-                            self.assertRegex(loader["values"]["revision"], r"^[0-9a-f]{40}$")
+                            if loader["operation"]["decomposition"] == "integrated":
+                                from modiff.integrated_operation_contracts import integrated_operation_values
+
+                                self.assertEqual(loader["values"], integrated_operation_values(
+                                    loader["operation"], profile=DIFFUSERS_EXECUTION_PROFILES[identity]
+                                ))
+                                self.assertRegex(loader["values"][field]["revision"], r"^[0-9a-f]{40}$")
+                            else:
+                                self.assertEqual(
+                                    loader["values"][field]["value"], DIFFUSERS_EXECUTION_PROFILES[identity].default_repo
+                                )
+                                self.assertRegex(loader["values"]["revision"], r"^[0-9a-f]{40}$")
                             checked += 1
         self.assertGreater(checked, 150)
 

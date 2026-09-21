@@ -1347,6 +1347,15 @@ and `target`, and real field names as `sourceHandle`/`targetHandle`. The client
 assigns ordinary canvas node/edge IDs at insertion; these authoring references
 are never an alternate executable graph format or an execution receipt.
 
+A v3 operation can declare `decomposition: "integrated"` and
+`nodeType: "integrated"` when its existing action both owns and executes its
+model. It is the starter's single model owner, with no synthetic loader or
+component edges. The image-upscale binding resolves the existing Spandrel action
+and its reviewed immutable file selector. Profile selection validates that exact
+binding; it does not add undeclared pipeline/revision fields to the executable
+node. Required source media stays explicit, and ordinary graph execution still
+rehashes the selected artifact through the existing resolver.
+
 Task-specific Modular operation ports include the reviewed workflow's required
 media inputs, even when the reusable node schema makes a socket optional for
 other tasks (for example an inpaint mask or a last video frame). The selected

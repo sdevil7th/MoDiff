@@ -806,7 +806,8 @@ Additional completed native core campaigns:
       output, connected Resize and independently edited Saved Block execution.
 - [x] CogView3 Plus: all 11 core cases, including parameter changes, unchanged
       reuse, exact recomputation, Resize, and independently edited Saved Block
-      execution with exact restored media. Visual placement remains partial.
+      execution with exact restored media. The requested vase behind the instrument is present;
+      fine-detail quality is assessed separately.
 - [x] Correct the diagnosed history/Saved Block responsiveness paths and repeat
       native concurrent workflow creation, wiring and saving during PixArt generation.
 - [ ] Complete their applicable task variants and separate visual assessment.
@@ -879,6 +880,46 @@ tests reproduced each defect before correction. Validation passed:
   ledgers contain only 18 fingerprint changes, with no qualification promotion.
 - All 112 inventoried snapshots retain their 1,696 files, targets, sizes, mtimes
   and recorded metadata hashes; custom-source approvals are byte-identical.
+
+Additional W8 task and correction checkpoint:
+
+- [x] CogView4 6B: all 11 native core executions at 50 inference steps, including
+      1024-square and 1152 × 896 generation, exact unchanged/recomputed output,
+      Creator editing, connected Resize, independent Saved Block edits and
+      restored media. Visual fine-detail limitations remain separately recorded.
+
+- [x] Marigold depth: nine native executions covering unchanged reuse, processing
+      resolution, source replacement, save/reopen, Creator editing, Saved Block
+      reinsertion, seed and inference-step edits. All output hashes, dimensions,
+      consumed settings and the unchanged saved definition were audited.
+- [x] SDXL Canny ControlNet: five native executions covering unchanged reuse,
+      prompt/seed edits, source replacement and save/reopen. The exact base and
+      fp16 control weights were checked; all nine nodes reused their unchanged
+      results. Source/seed edits retained compatible prompt conditioning.
+- [ ] Complete the processors' containing workflows and ControlNet scale-effect
+      isolation. Marigold's coherent relative depth is not metric-depth validation;
+      ControlNet's partial visual fidelity is retained separately.
+- [x] Reproduce missing Image upscale discovery: its existing combined loading
+      and computation action had no operation-catalog entry.
+- [x] Implement a backend-declared integrated model owner for the existing
+      Upscaler action and shared client ownership handling. Its workflow uses one
+      Upscale node and a connected Preview; it keeps the exact reviewed artifact
+      selector, required source image and editable tile/output controls.
+- [x] Extend the authoring/Block modification matrix to integrated operations.
+      It exposed a shared reducer error on identical internal-node replacement
+      and restoration to the definition. Preserve no-op state and recompute the
+      actual customization state without weakening schema validation.
+- [x] Final client quality gate and two targeted browser checks. Bundle limits
+      remain unchanged; the final total is 859,426 compressed JavaScript bytes.
+- [x] Backend Ruff, package consistency and preflight; 3,421 tests and 10,057
+      subtests passed with 516 skips. The verified optional-runtime focused suite
+      separately passed 56 tests and 2,514 subtests.
+- [ ] Publish the paired correction and complete native upscale recovery.
+
+The upscale correction adds authoring metadata to an existing executor. It does
+not qualify every Spandrel weight. Original failed discovery evidence remains
+retained. The remaining image-model/task campaigns are still in
+progress; this checkpoint does not close W8.
 
 ### W9 — Other modalities and real service export
 

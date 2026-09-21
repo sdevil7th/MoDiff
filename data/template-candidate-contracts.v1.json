@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:61751d28e2a1f0ebddf3a5d5b3e5e0f328c6e1bf110c7e80be6398a1e4cecf5f",
+  "contentHash": "sha256:21122f57e1e3839f03b76a1d140cb66d6b24c4b528fc517b4f5f55c9974958a8",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -6687,9 +6687,9 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:ad9ab79600bff87692effbe7863f481ff4a7e01e60890d2aeab6f7ab2f8343d5",
+      "contentHash": "sha256:93243b869368951654aff8a733d8a2871f0acde57a5b0a1a5049d93e5d9ed430",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:0c0f81a9f4ad5d844f5024fcc6966554b68cdb22de65dd35df1d0e249b61437b"
+      "sha256": "sha256:8554eb9be3c7eda43812d4964c401bd46ca42cd0750a62b6f09aa4d3e217768e"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",

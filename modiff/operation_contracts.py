@@ -49,6 +49,11 @@ _IDENTIFIER = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,127}\Z")
 _RESERVED = frozenset({"__proto__", "prototype", "constructor"})
 
 
+def operation_owns_model(contract):
+    """Model ownership does not require a separate loader node."""
+    return contract["decomposition"] in {"loader", "integrated"}
+
+
 def _identifier(value):
     if not isinstance(value, str) or not _IDENTIFIER.fullmatch(value) or value in _RESERVED:
         raise ValueError("Invalid operation-contract identifier.")

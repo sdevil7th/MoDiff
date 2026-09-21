@@ -5,7 +5,7 @@ Unbound conditioning/components remain explicit. No models are constructed here.
 """
 
 from modiff.operation_catalog import resolve_operation, seed_image_operation_defaults
-from modiff.operation_contracts import _identifier
+from modiff.operation_contracts import _identifier, operation_owns_model
 
 
 def _modular_route(pipeline, task):
@@ -38,6 +38,18 @@ def _bind_execution_profile(loader, task, identity):
         or (profile.execution_path != "modular-diffusers" and task not in profile.modes)
     ):
         raise ValueError("The execution profile does not belong to this pipeline/task.")
+    if loader["operation"]["decomposition"] == "integrated":
+        from modiff.integrated_operation_contracts import integrated_operation_values
+
+        for key, value in integrated_operation_values(loader["operation"], profile=profile).items():
+            if key not in loader["params"]:
+                raise ValueError("Integrated model selection targets an undeclared field.")
+            loader["params"][key]["value"] = deepcopy(value)
+            loader["values"][key] = deepcopy(value)
+        # Integrated actions have no synthetic pipeline_class/revision fields.
+        # The exact profile and artifact are checked above; execution rehashes
+        # the selected file through the action's existing artifact resolver.
+        return
     params = loader["params"]
     repo_field = "repo_id" if loader["action"] == "ModelsLoader" else "model_id"
     if repo_field not in params or "revision" not in params:
@@ -68,7 +80,7 @@ def resolve_operation_starter(modules, contracts, selection):
     pipeline, task = (_identifier(selection[key]) for key in ("pipelineClass", "task"))
     binding = {"pipelineClass": pipeline, "task": task}
     selected = [c for c in contracts if c["pipelineClass"] == pipeline and c["task"] == task]
-    if not selected or sum(c["decomposition"] == "loader" for c in selected) != 1:
+    if not selected or sum(operation_owns_model(c) for c in selected) != 1:
         raise ValueError("No complete operation binding for this pipeline/task.")
     nodes = {
         c["operationId"]: resolve_operation(modules, contracts, {**binding, "operationId": c["operationId"]})
@@ -102,7 +114,7 @@ def resolve_operation_starter(modules, contracts, selection):
         edges.append(edge)
         targets.add((target, target_handle))
 
-    loader = next(c for c in selected if c["decomposition"] == "loader")["operationId"]
+    loader = next(c for c in selected if operation_owns_model(c))["operationId"]
     if "executionProfileId" in selection:
         _bind_execution_profile(nodes[loader], task, selection["executionProfileId"])
         from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
@@ -112,7 +124,10 @@ def resolve_operation_starter(modules, contracts, selection):
             seed_image_operation_defaults(node, profile)
     workflow_id, upstream, required = None, [], set()
     ordered = [loader]
-    if any(c["decomposition"] == "pipeline" for c in selected):
+    if nodes[loader]["operation"]["decomposition"] == "integrated":
+        if len(selected) != 1:
+            raise ValueError("An integrated starter must be one complete model operation.")
+    elif any(c["decomposition"] == "pipeline" for c in selected):
         for c in selected:
             if c["decomposition"] == "pipeline":
                 connect(loader, "pipeline", c["operationId"], "pipeline")
