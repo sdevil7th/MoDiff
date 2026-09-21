@@ -124,7 +124,7 @@ visible and does not count as a pass or a completed release requirement.
 | W5  | Generic model/task changes and workflow modification         | Complete: W5 acceptance                  | W3, W4                          |
 | W6  | HF/local custom-node workflow                                | Complete                                 | W4, W5                          |
 | W7  | Concurrent authoring, reuse and recovery                     | Complete                                 | W5, W6                          |
-| W8  | All-local-image execution and modification campaign          | Planned                                  | Stable W2–W7 build              |
+| W8  | All-local-image execution and modification campaign          | In progress: native model campaign       | Stable W2–W7 build              |
 | W9  | Other modalities and real service-export campaign            | Planned                                  | Stable W2–W7 build; W8 fixtures |
 | W10 | Release acceptance, documentation and publication            | Planned                                  | W8, W9                          |
 | H1  | Windows Qwen 16 GB VRAM / 32 GB RAM qualification            | Deferred until main UI/UX implementation | W2–W7; Windows host             |
@@ -706,7 +706,8 @@ Keep native tests for stale responses, cleanup cancellation and queue attributio
 
 ### W8 — Every complete local image model
 
-- [ ] Freeze a validated paired build and finalize the W1 artifact/task ledger.
+- [x] Freeze a validated paired build and verify served client bytes and runtime identity.
+- [ ] Finalize the W1 artifact/task ledger, including exact referenced dependencies.
 - [ ] Execute the mandatory per-model cases below through the revised native UI.
 - [ ] Execute every declared applicable task for each complete local image model;
       test task-specific inputs and output interpretation rather than one T2I proxy.
@@ -721,6 +722,65 @@ Keep native tests for stale responses, cleanup cancellation and queue attributio
 Acceptance: all required ledger rows pass at their declared proof level. A model
 that cannot run due to a missing integration, dependency or memory recipe remains
 a blocker with a concrete follow-up, not an omitted denominator or passing skip.
+
+W8 remains in progress. The refreshed inventory has 112 local snapshots and
+208 preliminary artifact/task/path rows; components, adapters and custom source
+snapshots are included in that inventory and are not all runnable image models.
+Exact dependencies and applicable-task dispositions remain under review.
+
+Completed execution checks within the SDXL Modular text-to-image path:
+
+- [x] Native Developer creation, unchanged repeat, prompt/seed/step/size edits,
+      save/reopen and subsequent execution.
+- [x] Creator/Developer switching preserves graph contracts and values; explicit
+      denoiser recomputation retains compatible upstream cached outputs.
+- [x] Add and connect Resize through normal discovery, then execute at the
+      requested output size.
+- [x] Save the six-node graph as a Block, insert it into another workflow, edit
+      its seed and execute; the saved definition remains unchanged.
+
+These are native UI and decoded-output checks on the recorded Linux ROCm recipe,
+not Windows qualification. The unchanged run reused all five nodes and identical
+image bytes. Prompt edits reused the loader; seed, step and size edits reused
+conditioning. Complex-prompt visual assessment remains partial: the requested
+vase placement was not fully achieved. Retain that failed visual requirement
+separately from successful parameter consumption and execution. SDXL's other
+applicable tasks and the remaining local-model matrix are still open.
+
+Completed execution checks within the Sana Sprint whole-pipeline text-to-image path:
+
+- [x] Native Developer creation and four-step baseline; unchanged repeat;
+      prompt, seed, guidance and size changes; save/reopen/edit/run.
+- [x] Creator/Developer switching, explicit generation recomputation, connected
+      Resize, and Saved Block reinsertion with an independent seed edit.
+- [x] Preserve the original failed four-step attempt, fix the backend schedule
+      adapter, and rerun the same workload without lowering its settings.
+
+The baseline used bfloat16, model CPU offload, 1024 square and four steps;
+subsequent edits used guidance 4.5 and 1152 × 896. The unchanged run reused all
+three nodes and identical bytes. Input edits reused the loader; whole-pipeline
+execution does not separately cache prompt encoding. Recomputed generation
+returned identical bytes; Resize produced 576 × 448, and the saved Block
+baseline stayed unchanged after its new instance ran with a different seed.
+Original media was decoded and visually inspected. Complex prompt adherence is
+partial, so successful execution is not full visual approval. Live image-to-image
+and the other local-model/task rows remain open.
+
+Two diagnosed defects are fixed: normal discovery now includes deterministic
+image utilities, and the Sana Sprint backend adapters preserve the requested
+step count while selecting the compatible upstream schedule. Focused regression
+tests reproduced each defect before correction. Validation passed:
+
+- `npm run check` and two focused mocked browser regressions for shared discovery.
+- Backend Ruff, package consistency and preflight checks; the full base suite:
+  3,293 tests and 10,029 subtests passed, with 512 skips.
+- Verified optional-runtime schedule/registry suite: 130 tests and 545 subtests
+  passed, including real pinned text-to-image and image-to-image input/scheduler
+  validation for one through four steps. This does not qualify live img2img.
+- All 87 generated client files match the backend bundle; the five dependent
+  ledgers contain only 18 fingerprint changes, with no qualification promotion.
+- All 112 inventoried snapshots retain their 1,696 files, targets, sizes, mtimes
+  and recorded metadata hashes; custom-source approvals are byte-identical.
 
 ### W9 — Other modalities and real service export
 

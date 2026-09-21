@@ -148,6 +148,7 @@ class ImagePipelineAdapter:
     prompt_embedding_encoder_dtype: str | None = None
     prompt_embedding_mask_modes: frozenset[str] = frozenset()
     max_inference_steps: int = 100
+    two_step_intermediate_timestep: bool = False
     min_output_side: int = 16
     max_output_side: int = 2048
     output_side_step: int = 16
@@ -197,6 +198,8 @@ class ImagePipelineAdapter:
             raise ValueError("An upstream image pipeline class cannot be blank.")
         if not 1 <= self.max_inference_steps <= 100:
             raise ValueError("Image adapters must bound inference steps between 1 and 100.")
+        if type(self.two_step_intermediate_timestep) is not bool:
+            raise ValueError("Intermediate-timestep policy must be an exact boolean.")
         if not 16 <= self.min_output_side <= self.max_output_side <= 2048:
             raise ValueError("Image adapters must bound output sides between 16 and 2048.")
         if self.output_side_step not in {16, 32, 64}:
@@ -369,6 +372,11 @@ class ImagePipelineAdapter:
         return tuple(mode for mode in _IMAGE_MODE_ORDER if mode in self.modes)
 
     def apply_generation_parameters(self, pipeline: Any, values: dict[str, Any], target: dict[str, Any]) -> None:
+        if self.two_step_intermediate_timestep and values["num_inference_steps"] != 2:
+            # SCM's upstream default is a specialized two-step schedule. Other
+            # declared step counts use its native evenly spaced schedule; never
+            # silently replace the user's requested number of inference steps.
+            target["intermediate_timesteps"] = None
         aliases = {
             "negative_prompt": "negative_prompt",
             "width": "width",
@@ -839,6 +847,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         SANA_SPRINT_REPO,
         safe_serialization_required=True,
         max_inference_steps=4,
+        two_step_intermediate_timestep=True,
         max_sequence_length=300,
     ),
     "SanaSprintImg2ImgPipeline": ImagePipelineAdapter(
@@ -848,6 +857,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("SanaSprintPipeline",),
         safe_serialization_required=True,
         max_inference_steps=4,
+        two_step_intermediate_timestep=True,
         max_sequence_length=300,
     ),
     "PixArtSigmaPipeline": ImagePipelineAdapter(

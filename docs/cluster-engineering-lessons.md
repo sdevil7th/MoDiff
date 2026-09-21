@@ -640,3 +640,14 @@ runtimes or rewrite graph inputs.
 - Keep successful/running node status distinct from validation warnings. A new
   attempt must clear stale node error details while retaining the failed task's
   history. Inspect the actual recovery UI as well as terminal backend receipts.
+- Keep ordinary image processing in normal discovery alongside text/value
+  utilities. Reducing implementation clutter must not hide Resize, masks, grids
+  or saving. Test discovery before selecting a pipeline and native insertion in
+  both workspaces, then verify the processor is connected and actually consumed.
+
+Validate upstream defaults that depend on another argument, not only accepted
+parameter names. Sana Sprint's intermediate timestep is specialized for two
+steps; other supported counts need the upstream evenly spaced schedule. Preserve
+the user's requested count, adapt the backend call, and test genuine pinned input
+validation and scheduler construction for every declared count and related task.
+A fake pipeline that accepts arbitrary keyword arguments cannot expose this bug.
