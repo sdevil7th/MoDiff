@@ -5,6 +5,7 @@ import json
 import tempfile
 import threading
 import unittest
+from contextlib import contextmanager
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -30,6 +31,45 @@ class StudioHistoryResponsivenessTests(unittest.IsolatedAsyncioTestCase):
             {"id": "two", "createdAt": 2, "prompt": "newer"},
             {"id": "one", "createdAt": 1, "prompt": "older"},
         ])
+
+    async def test_history_write_batches_nested_records_and_preserves_retained_previews(self):
+        # Real workflow snapshots contain thousands of nested fields. Streaming
+        # json.dump writes each punctuation token while holding the history lock.
+        snapshot = {"nodes": [{"id": str(i), "params": {"prompt": "café 雨", "seed": i}}
+                              for i in range(1000)]}
+        outputs = [{"id": str(i), "workflowSnapshot": snapshot if i == 0 else {}}
+                   for i in range(202)]
+        slots = {"retained": {"currentOutputId": "201"}}
+        writes = []
+
+        @contextmanager
+        def counted_open(*args, **kwargs):
+            with open(*args, **kwargs) as stream:
+                def write(value):
+                    writes.append(len(value))
+                    return stream.write(value)
+                yield SimpleNamespace(write=write)
+
+        with patch("modiff.server.open", side_effect=counted_open):
+            kept = self.server._write_studio_output_state(outputs, slots, revision=17)
+        payload = json.loads(self.server._studio_history_file().read_text())
+        self.assertEqual(payload["outputs"], outputs[:200] + [outputs[201]])
+        self.assertEqual(payload["outputs"], kept)
+        self.assertEqual(payload["previewSlots"], slots)
+        self.assertEqual(payload["revision"], 17)
+        self.assertEqual(payload["version"], 2)
+        self.assertLess(len(writes), 3 * len(kept) + 20,
+                        "Nested fields must not produce individual locked file writes.")
+
+    async def test_failed_history_encoding_preserves_previous_atomic_document(self):
+        before = self.server._studio_history_file().read_bytes()
+        with self.assertRaises(TypeError):
+            self.server._write_studio_output_state(
+                [{"id": "new", "invalid": object()}], {}, revision=23
+            )
+        self.assertEqual(self.server._studio_history_file().read_bytes(), before)
+        self.server._write_studio_output_state([{"id": "recovered"}], {}, revision=24)
+        self.assertEqual(self.server._read_studio_output_state()["revision"], 24)
 
     async def test_slow_browser_does_not_hold_up_other_browser_completion(self):
         stalled = asyncio.Event()

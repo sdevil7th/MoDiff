@@ -4509,7 +4509,25 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         }
         temp_file = history_file.with_suffix(".tmp")
         with open(temp_file, "w", encoding="utf-8") as f:
-            json.dump(payload, f, ensure_ascii=False)
+            # Encode each output with the accelerated encoder. json.dump walks
+            # nested workflow snapshots token by token in Python while holding
+            # the history lock. Encoding the entire history at once would instead
+            # allocate a second history-sized string and hold the GIL throughout.
+            f.write("{")
+            for index, (key, value) in enumerate(payload.items()):
+                if index:
+                    f.write(", ")
+                f.write(json.dumps(key) + ": ")
+                if key == "outputs":
+                    f.write("[")
+                    for output_index, output in enumerate(value):
+                        if output_index:
+                            f.write(", ")
+                        f.write(json.dumps(output, ensure_ascii=False))
+                    f.write("]")
+                else:
+                    f.write(json.dumps(value, ensure_ascii=False))
+            f.write("}")
         temp_file.replace(history_file)
         return bounded_outputs
 

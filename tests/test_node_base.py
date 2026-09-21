@@ -749,6 +749,45 @@ class NodeBaseDeepEqualTests(unittest.TestCase):
         )
         self.assertEqual(component_call.kwargs["phase"], "component_loading")
 
+    def test_fast_weight_loading_bounds_updates_but_keeps_initial_and_terminal_counts(self):
+        from modiff.NodeBase import _StructuredLoadingProgress
+
+        for iterable in (True, False):
+            with self.subTest(iterable=iterable):
+                reports = []
+                bar = range(1000) if iterable else SimpleNamespace(n=0, update=lambda _amount: None)
+                progress = _StructuredLoadingProgress(
+                    bar,
+                    lambda value, message, current, total: reports.append((value, current, total)),
+                    description="Loading weights",
+                    total=1000,
+                )
+                with patch("modiff.NodeBase.time.monotonic", return_value=10.0):
+                    if iterable:
+                        self.assertEqual(list(progress), list(range(1000)))
+                    else:
+                        for _ in range(1000):
+                            progress.update(1)
+                self.assertEqual(reports[0][1], 0 if iterable else 1)
+                self.assertEqual(reports[-1], (99, 1000, 1000))
+                self.assertLessEqual(len(reports), 3, "Rapid weight updates must not flood the browser.")
+
+    def test_loading_progress_reports_latest_count_after_interval_and_always_finishes(self):
+        from modiff.NodeBase import _StructuredLoadingProgress
+
+        reports = []
+        progress = _StructuredLoadingProgress(
+            SimpleNamespace(n=0, update=lambda _amount: None),
+            lambda value, message, current, total: reports.append(current),
+            description="Loading weights", total=5,
+        )
+        with patch("modiff.NodeBase.time.monotonic", side_effect=[10.0, 10.1, 10.3, 10.31]):
+            progress.update(1)
+            progress.update(1)
+            progress.update(1)
+            progress.update(2)
+        self.assertEqual(reports, [1, 3, 5])
+
     def test_structured_loader_progress_publishes_count_finalized_on_close(self):
         from modiff.NodeBase import _StructuredLoadingProgress
 

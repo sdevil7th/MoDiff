@@ -247,6 +247,11 @@ running source. Distinguish a slow worker from a dead worker using supervisor
 status. Do not delete history, weaken timeout assertions, or reduce generation
 settings to conceal the problem.
 
+Weight-loading counters publish intermediate updates at most four times per
+second per progress bar. Initial/final counts and named component transitions
+remain immediate. This bounds render bursts from fast tensor loading without
+changing model loading or suppressing completion and failure events.
+
 ### Inference and recovery
 
 First distinguish slow progress from a stalled worker. A step counter that

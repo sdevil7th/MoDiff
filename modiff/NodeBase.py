@@ -92,7 +92,8 @@ class _StructuredLoadingProgress:
         progress = min(99, max(0, int(round(ratio * 100))))
         step = max(0, min(int(current), int(total)))
         item_label = _loading_item_label(item)
-        if starting and item_label and "component" in self._description.lower():
+        component_start = starting and item_label and "component" in self._description.lower()
+        if component_start:
             component_scope = "pipeline" if "pipeline component" in self._description.lower() else "model"
             message = f"Loading {component_scope} component {int(current) + 1}/{int(total)}: {item_label}"
             step = min(int(total), int(current) + 1)
@@ -100,10 +101,14 @@ class _StructuredLoadingProgress:
             label = self._description or "Loading"
             message = f"{label} {step}/{int(total)}"
         now = time.monotonic()
+        # Weight iterators emit a start and completion for every tensor. Keep
+        # component transitions and boundary counts immediate, but rate-limit
+        # intermediate counts even when their percentage changes. Otherwise a
+        # cold load can queue hundreds of renders ahead of the user's next edit.
         if (
-            not starting
+            self._last_report_progress is not None
+            and not component_start
             and step not in (0, int(total))
-            and progress == self._last_report_progress
             and now - self._last_report_at < 0.25
         ):
             return

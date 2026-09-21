@@ -641,6 +641,17 @@ concurrent-authoring and service-export campaigns (W7/W9).
       inventory. A 1,000-entry browser regression covers paging, cross-page search,
       empty results, reset and narrow-panel containment. Catalog/starter fixture
       subprocesses now leave operator custom-node approvals untouched.
+- [x] Batch Gallery history serialization by output record while preserving
+      atomic replacement, retained previews, Unicode and the existing JSON format.
+      A nested-workflow regression reproduced token-by-token writes; failed
+      encoding leaves the previous document intact. A retained 105 MB history
+      copy serialized in 0.36 seconds versus 2.41 seconds with identical bytes.
+      This measures serialization, not end-to-end receipt or browser latency.
+- [x] Bound intermediate weight-loading progress to four updates per second per
+      bar, retaining initial/final counts and named component transitions. Cover
+      both iterator and manual-update loaders, interval expiry and final counts
+      with the approved optional runtime. Live cold-load interaction acceptance
+      is recorded separately below.
 - [ ] Complete resident-owner accounting; the preceding sampling and feedback
       corrections do not qualify every reuse/memory case.
 - [ ] Profile saved-workflow reopening and result delivery with the Workflows panel
@@ -650,14 +661,25 @@ concurrent-authoring and service-export campaigns (W7/W9).
       cause before attributing it to the panel or treating the sequence as passed.
       The bounded-library fix now has a fresh Flux run with native response and
       exact-task preview delivery; the earlier failed capture remains retained.
-- [ ] Profile the 7.38-second prompt edit observed during the new Flux run;
-      successful draft preservation does not satisfy the interaction latency budget.
-      Most of that trace interval precedes textarea resolution; profile the browser
-      during early denoising before attributing it to text handling.
-- [ ] Reproduce/profile model/task preview and loader-contract timeouts during
-      actual inference; trace event-loop work, locking and metadata dependencies.
+- [x] Profile and correct the cold-loading progress burst behind slow prompt
+      editing. The original 7.38-second failure is retained. A fresh-worker
+      reproduction took 5.89 seconds with 451 weight-loading messages; the same
+      prompt/settings after rate limiting took 76 ms with nine such messages.
+      The completed image bytes matched the baseline exactly. This closes that
+      reproduced burst, not every possible authoring-latency case.
+- [x] Reproduce/profile model/task preview and loader-contract timeouts during
+      actual inference. Native Qwen text-to-image, Flux Kontext editing and Flux
+      text-to-image previews took 0.28–0.94 seconds in sampled runs. Creating the
+      graph then started seven field actions waiting behind the graph execution
+      lease; the Nodes library asset request waited 119 seconds before dispatch.
+      Autosave was pending too. This is a diagnosed failure, not passing authoring
+      acceptance; the following metadata-isolation item remains open.
 - [ ] Keep read-only metadata resolution independent of live model allocation and
       execution locks. Cache immutable metadata with correct identity/invalidation.
+- [x] Apply workflow ownership checks before queue-recovery progress resolves a
+      node by ID or label. Background work remains in Session activity; opening
+      its owning workflow restores progress. Regression tests cover identical IDs,
+      name fallback, and native startup/recovery navigation between saved tabs.
 - [ ] Treat submitted runs as immutable snapshots; edits target the next draft.
       Progress/history cannot replace newer values or steal the active editing tab.
 - [ ] Preserve per-node/component reuse, exact consumed-input identities, immutable
@@ -682,13 +704,32 @@ switching during denoising took 60–90 ms; 124 queue samples had p95 11.6 ms.
 The submitted/consumed prompt remained immutable, while a newer prompt draft
 survived completion and backend persistence. The exact-task image hash matched
 the delivered preview and the retained original was visually inspected. Prompt
-editing took 7.38 seconds and remains a failure to profile. This does not qualify
-new-tab authoring, model/task preview, every owner/reuse case, or Stop/recovery.
-Checkpoint validation: 77 coordinator tests, four focused native mocked-browser
+editing took 7.38 seconds in that original failed interaction. The follow-up
+below isolates and corrects its cold-loading burst; neither capture qualifies
+every owner/reuse case or Stop/recovery.
+Previous checkpoint validation: 77 coordinator tests, four focused native mocked-browser
 tests and the full client quality gate pass. The final published backend gate has
 3,236 passing tests and 9,866 subtests, with 510 skips. All 87 generated client files
 match the served bundle; dependent catalog updates change hashes only. Original
 model inventories and operator custom-node approvals remain intact.
+
+Follow-up cold-run evidence on the published pair: the same Flux 1024 × 1024,
+30-step prompt/seed/precision/offload settings completed in 133.1 seconds with
+byte-identical output. Prompt editing took 76 ms; library search and workspace
+switches took 64–73 ms. Creating a separate connected draft took 719 ms, and its
+nodes remained idle across three supervisor queue polls while the original run
+continued in Session activity. Returning to the run preserved the next prompt,
+which survived completion and backend persistence. Queue p95 was 10.8 ms across
+118 samples. The exact delivered original and both canvas screenshots were
+visually reviewed. These are scoped samples, not an all-model latency guarantee.
+
+This follow-up passes 3,240 backend tests and 9,868 subtests (510 skips), 66 focused
+tests with the approved optional runtime, 79 coordinator tests, the focused
+browser recovery case and the full client quality gate. The final bundle matches
+87 generated files; its 18 dependent catalog changes are hashes only. Original
+model inventories and custom-source approvals remain preserved. The diagnosed
+Nodes-library/autosave connection starvation, read-only metadata isolation,
+resident-owner accounting and broader recovery acceptance remain open.
 
 Acceptance: while a real model denoises, create another workflow, search/add nodes,
 preview model/task changes, inspect custom sources, edit/save and switch workspace.

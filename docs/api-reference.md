@@ -1927,6 +1927,10 @@ transaction lock until completion even if the requesting client disconnects.
 Executor output preservation uses the same file lock; preview updates at queue
 admission and completion also wait off-loop. These changes preserve the response
 shape and output identity checks and do not delete retained media or history.
+History writes encode one output record at a time before atomically replacing
+the existing file. This avoids token-by-token Python writes for nested workflow
+snapshots without allocating a second serialized copy of the entire history.
+An encoding failure leaves the previous history document intact.
 
 Successful `POST /graph` admission marks only generated preview fields present in that submitted graph as pending and returns `preview_slots` with `preview_state_revision`. The matching `task_queued` WebSocket event carries the same state for other connected clients. A generated `update_value` atomically persists its output and promotes it through `preview_slot`; a newer pending task cannot be displaced by a late output from the task ahead of it. Terminal events carry any failed, cancelled, or completed-without-output slot changes.
 
