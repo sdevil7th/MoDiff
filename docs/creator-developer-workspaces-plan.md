@@ -1044,18 +1044,42 @@ Additional guidance-default correction checkpoint:
       Retain the original Krea failure and remove Schnell's earlier guidance
       default acceptance pending recovery. DreamLite Mobile's absent guidance
       is explicitly reviewed as an unused control, not reported as consumed zero.
-- [ ] Complete fresh native Krea and Schnell recovery campaigns and independently
+- [x] Complete fresh native Krea and Schnell recovery campaigns and independently
       audit their explicit guidance receipts, edits and reusable Blocks.
 
 These corrections do not close the remaining model/task, auxiliary, structural
 or visual portions of W8. The downloaded Z-Image realism LoRA now has a prepared
 exact-revision containing-workflow campaign; preparation is not execution proof.
 
+### W8 — Paused checkpoint and remaining work
+
+W8 is paused at the operator's request so W9 can proceed. The audited core
+checkpoint contains 176 runs across 16 model paths, including completed Krea and
+Schnell recovery. Chroma additionally has retained baseline, unchanged, prompt,
+seed and sampler results; its campaign remains partial. The last task completed
+before all campaign controllers stopped and the queue was verified empty.
+
+- [ ] Finish Chroma dimensions, persistence, workspace switching, recomputation,
+      processor wiring and Saved Block reuse.
+- [ ] Complete remaining image models, variants, unconditional workflows and
+      standard/Modular task changes from the retained matrix.
+- [ ] Complete depth/custom processor compositions, LoRA effects, IP-Adapters,
+      Union controls, Layered workflows and alternate-source Redux cases.
+- [ ] Qualify Florence native custom-node authoring and persistence.
+- [ ] Resolve and test the reviewed runtime/component binding for cached 4-bit
+      Klein; runtime availability alone does not establish model compatibility.
+- [ ] Reconcile exact-task/dependency/media audits and remaining visual review;
+      retain incomplete artifact blockers and original failures separately.
+
+Resume from retained evidence with a fresh source/impact review. Prepared
+campaigns are not passing tests. Do not overwrite prior evidence or repeat all
+completed models after unrelated changes. Windows memory qualification remains H1.
+
 ### W9 — Other modalities and real service export
 
 - [ ] Run baseline, unchanged, parameter-change and save/reopen cases for each
       complete supported cached video/audio/other pipeline; track incomplete and
-      unsupported artifacts separately. Prioritize image qualification first.
+      unsupported artifacts separately. W9 now takes priority while W8 is paused.
 - [ ] Exercise representative distinct non-image runtime paths with modified/nested
       graphs, custom processors and workspace switching. Expand coverage for every
       newly exposed contract difference or regression.
