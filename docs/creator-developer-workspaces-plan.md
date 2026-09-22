@@ -943,11 +943,16 @@ Native image regression follow-up:
       subtests, including the installed classes and their call signatures.
 - [x] Repeat all 11 Hunyuan native core cases on the fix, including exact
       1152 × 896 output, unchanged default-baseline bytes, Resize and Saved Blocks.
-- [ ] Complete Ovis native recovery: loading, baseline, unchanged repeat and
-      prompt edits passed. Seed generation completed, but fetching its run
-      record timed out. Preserve this failure and repeat the affected campaign.
-- [ ] Verify LongCat's indeterminate progress visibly during a full-resolution
-      generation and audit the completed output and unchanged cached repeat.
+- [x] Complete all 11 Ovis native recovery cases, including prompt/seed/guidance
+      edits, 1152 × 896 output, save/reopen, Creator editing, exact recomputation,
+      connected Resize and independently edited Saved Blocks. Saved definitions
+      remain unchanged and restored output bytes match. The original receipt
+      timeout is retained; the successful repeat preserves its baseline image.
+- [x] Verify LongCat's visible indeterminate progress during a 50-step,
+      1024-square generation. The baseline completes in 223.5 seconds and the
+      unchanged cached repeat in 4.9 seconds, with identical output bytes.
+      Step counts and ETA remain unknown when upstream provides no callback;
+      the corrected run preserves the original pre-correction baseline image.
 
 These corrections keep generic nodes and put upstream differences behind backend
 contracts. Prepared recovery campaigns and unit checks are not live acceptance.
@@ -977,10 +982,22 @@ Additional concurrency and dimension regressions:
 - [x] Repeat eight concurrent run lookups against the real retained history.
       Maximum response time falls from 15.80 seconds to 2.73 seconds cold and
       0.041 seconds warm; all eight original output hashes are preserved.
-- [ ] Complete affected native generation and concurrent-authoring recoveries.
-      Completed generation alone does not establish end-to-end acceptance.
+- [x] Repeat native custom-node wiring, edits, undo/redo, save and reopen during
+      the Ovis seed generation that previously exposed a receipt timeout. Both
+      the authoring session and generation receipt complete successfully; the
+      authoring browser submits no competing graph. Audit all 11 Ovis recovery
+      cases and both LongCat progress/reuse cases against exact task outputs.
+- [ ] Complete live non-square generation for Kandinsky 3, ERNIE and GLM.
+      Their native authoring checks remain separate from generation acceptance.
 - [ ] Execute the prepared custom compositions across standard and Modular
       model paths, including execution after undo/redo and node removal.
+
+The core batch now has 165 independently audited native execution checks across
+15 model paths. These counts exclude separately recorded SDXL/Sana Sprint,
+processor and task campaigns; they do not mean all local models are qualified.
+The latest checkpoint preserves all 112 original snapshots, 1,696 files and
+operator approvals. Remaining model/task, auxiliary, custom-composition and
+visual-assessment requirements keep W8 open.
 
 ### W9 — Other modalities and real service export
 
