@@ -94,6 +94,26 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         invalid = await server.resolve_operation_starter(SimpleNamespace(json=AsyncMock(return_value={**selection, "execute": True})))
         self.assertEqual(invalid.status, 400)
 
+    async def test_task_starter_without_installed_weights_is_an_unbound_ordinary_graph(self):
+        server = WebServer(module_registry.MODULE_MAP)
+        with (
+            patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("Constructed node")),
+            patch("modiff.server.get_local_models", return_value=[]),
+            patch.object(server, "_auto_planning_runtime_fingerprint", return_value={}),
+            patch("modiff.auto_resource.artifact_revision_cache_status", return_value={"complete": False}),
+            patch("modiff.workflow_auto_resource.build_workflow_auto_plan", side_effect=AssertionError("No installed model")),
+        ):
+            response = await server.resolve_task_starter(SimpleNamespace(json=AsyncMock(return_value={"task": "text_to_image"})))
+        self.assertEqual(response.status, 200, response.text)
+        payload = json.loads(response.text)
+        self.assertTrue(payload["unbound"])
+        self.assertIsNone(payload["profileId"])
+        self.assertEqual(payload["starter"]["task"], "text_to_image")
+        loader = payload["starter"]["nodes"][0]["node"]
+        self.assertEqual(loader["params"]["repo_id"]["value"], {"source": "hub", "value": ""})
+        self.assertTrue(loader["params"]["repo_id"]["required"])
+        self.assertNotIn("values", loader)
+
     async def test_capabilities_publish_only_app_delivered_quantization_as_available(self):
         catalog = {
             "capabilities": [

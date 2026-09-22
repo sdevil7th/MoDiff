@@ -292,3 +292,23 @@ def test_video_and_three_d_operations_initialize_from_reviewed_defaults(contract
     resolve_operation_starter(MODULE_MAP, contracts, {"pipelineClass": pipeline, "task": task})
     assert generate["params"]["num_inference_steps"]["value"] == 17
     assert MODULE_MAP == before
+
+
+@pytest.mark.parametrize("repository,task", [
+    ("black-forest-labs/FLUX.2-klein-4B", "text_to_image"),
+    ("Qwen/Qwen-Image", "text_to_image"),
+    ("stabilityai/stable-audio-open-1.0", "text_to_audio"),
+    ("cvssp/audioldm2", "text_to_audio"),
+])
+def test_additional_creator_examples_are_attributed_and_do_not_overwrite_authored_prompts(repository, task):
+    from modiff.authoring_examples import seed_operation_example
+
+    node = {"operation": {"task": task}, "params": {"prompt": {"type": "string", "value": ""}}}
+    seed_operation_example(node, repository)
+    field = node["params"]["prompt"]
+    assert field["value"]
+    assert field["fieldOptions"]["exampleSource"] == f"https://huggingface.co/{repository}"
+    assert field["fieldOptions"]["exampleAttribution"] == "Adapted from creator guidance"
+    authored = {"operation": {"task": task}, "params": {"prompt": {"type": "string", "value": "My own prompt"}}}
+    seed_operation_example(authored, repository)
+    assert authored["params"]["prompt"]["value"] == "My own prompt"

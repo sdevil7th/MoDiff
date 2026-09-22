@@ -15,7 +15,7 @@ from modiff.studio_persistence_lock import STUDIO_PERSISTENCE_LOCK
 
 _LOCK = STUDIO_PERSISTENCE_LOCK
 _ID = re.compile(r"^[A-Za-z0-9_-]{1,96}$")
-_SUMMARY_FIELDS = ("id", "title", "source", "sourceLabel", "createdAt", "updatedAt", "revision", "clientId")
+_SUMMARY_FIELDS = ("id", "title", "source", "sourceLabel", "intent", "createdAt", "updatedAt", "revision", "clientId")
 # Metadata only, never graph snapshots. File identity detects writes made by
 # migration/rollback or another local process without a separate invalidation API.
 _SUMMARY_CACHE_LIMIT = 8192
@@ -41,6 +41,10 @@ def _read(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict) or not isinstance(value.get("snapshot"), dict):
         raise ValueError(f"Saved workflow {path.name} is invalid.")
+    # Read-time compatibility, not a destructive migration. Unknown legacy
+    # documents remain saved even when their title resembles an autosave.
+    if value.get("intent") not in ("draft", "saved"):
+        value["intent"] = "saved"
     return value
 
 
@@ -98,13 +102,21 @@ def get_workflow(data_dir: str | Path, workflow_id: Any) -> dict[str, Any] | Non
 def save_workflow(data_dir: str | Path, workflow_id: Any, payload: Any) -> dict[str, Any]:
     if not isinstance(payload, dict) or not isinstance(payload.get("snapshot"), dict):
         raise ValueError("Saved workflow payload requires a snapshot object.")
+    intent = payload.get("intent", "saved")
+    if not isinstance(intent, str) or intent not in {"draft", "saved"}:
+        raise ValueError("Workflow intent must be draft or saved.")
     path = _path(data_dir, workflow_id)
     now = int(time.time() * 1000)
     with _LOCK:
         existing = _read(path) if path.is_file() else None
+        # Explicit Save is monotonic. An older queued autosave must never move
+        # a saved document back into recovery, including from another client.
+        if existing and existing["intent"] == "saved":
+            intent = "saved"
         record = {
             "id": _workflow_id(workflow_id),
             "title": str(payload.get("title") or "Workflow").strip()[:160] or "Workflow",
+            "intent": intent,
             "snapshot": payload["snapshot"],
             "source": payload.get("source") if isinstance(payload.get("source"), str) else "manual",
             "sourceLabel": payload.get("sourceLabel") if isinstance(payload.get("sourceLabel"), str) else None,

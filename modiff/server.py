@@ -1441,6 +1441,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 web.post("/fields/action", self.field_action),
                 web.post("/operations/resolve", self.resolve_operation),
                 web.post("/operations/starter", self.resolve_operation_starter),
+                web.post("/operations/task-starter", self.resolve_task_starter),
                 web.get("/cache/{node}/{field}", self.cache),
                 web.get("/cache/{node}/{field}/{index}", self.cache),
                 web.delete("/cache", self.delete_cache),
@@ -14042,6 +14043,53 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         except ValueError as exc:
             return web.json_response({"error": str(exc)}, status=400)
         return web.json_response(payload)
+
+    async def resolve_task_starter(self, request):
+        """Task-first authoring; only inspect existing artifacts and memory recipes."""
+        from modiff.task_authoring import resolve_task_starter
+        from modiff.auto_resource import artifact_revision_cache_status
+        from modiff.model_artifact_catalog import require_catalog_revision
+        from modiff.workflow_auto_resource import build_workflow_auto_plan
+
+        try:
+            selection = await request.json()
+            catalog_bytes = await self._model_capabilities_response("")
+
+            def describe():
+                local_models = get_local_models()
+                fingerprint = self._auto_planning_runtime_fingerprint()
+                artifacts = {}
+
+                def installed(profile):
+                    repo = profile["default_repo"]
+                    try:
+                        revision = require_catalog_revision(repo, model_type=profile["model_type"])
+                    except ValueError:
+                        return False
+                    key = (repo, revision)
+                    if key not in artifacts:
+                        artifacts[key] = artifact_revision_cache_status(repo, revision, local_models)
+                    return artifacts[key].get("complete") is True
+
+                def inspect(graph):
+                    return build_workflow_auto_plan(
+                        graph, runtime_fingerprint=fingerprint, local_models=local_models, data_dir=self.data_dir,
+                    )
+
+                result = resolve_task_starter(
+                    self.modules, json.loads(catalog_bytes), selection,
+                    installed=installed, inspect_resources=inspect,
+                )
+                result["starter"]["nodes"] = [
+                    {"operation": node["operation"],
+                     "node": self._describe_registered_node(node["module"], node["action"], node)}
+                    for node in result["starter"]["nodes"]
+                ]
+                return result
+
+            return web.json_response(await asyncio.to_thread(describe))
+        except ValueError as exc:
+            return web.json_response({"error": str(exc)}, status=400)
 
     def _auto_resource_runtime_block(self):
         cached = (

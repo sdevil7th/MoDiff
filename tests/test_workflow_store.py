@@ -54,6 +54,33 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, "Workflow id"):
             save_workflow(self.directory.name, "../escape", {"snapshot": {}})
 
+    def test_explicit_save_promotes_draft_and_delayed_autosave_cannot_demote_it(self):
+        payload = {"snapshot": {"nodes": []}, "intent": "draft"}
+        draft = save_workflow(self.directory.name, "draft", payload)
+        self.assertEqual(draft["intent"], "draft")
+        saved = save_workflow(self.directory.name, "draft", {**payload, "intent": "saved"})
+        self.assertEqual(saved["intent"], "saved")
+        late = save_workflow(self.directory.name, "draft", payload)
+        self.assertEqual(late["intent"], "saved")
+        self.assertEqual(list_workflow_summaries(self.directory.name)[0]["intent"], "saved")
+
+    def test_legacy_intent_is_saved_without_rewriting_the_document(self):
+        path = Path(self.directory.name) / "user-workflows/legacy.json"
+        path.parent.mkdir()
+        original = json.dumps({"id": "legacy", "title": "Workflow 1", "snapshot": {}, "revision": 1})
+        path.write_text(original)
+        for _ in range(2):
+            self.assertEqual(get_workflow(self.directory.name, "legacy")["intent"], "saved")
+            self.assertEqual(list_workflow_summaries(self.directory.name)[0]["intent"], "saved")
+        self.assertEqual(path.read_text(), original)
+        result = save_workflow(self.directory.name, "legacy", {"snapshot": {}, "intent": "draft"})
+        self.assertEqual(result["intent"], "saved")
+
+    def test_unknown_document_intent_is_rejected_before_writing(self):
+        with self.assertRaisesRegex(ValueError, "intent"):
+            save_workflow(self.directory.name, "bad", {"snapshot": {}, "intent": "discard"})
+        self.assertIsNone(get_workflow(self.directory.name, "bad"))
+
     def test_summary_listing_reuses_only_unchanged_metadata_and_detects_external_replacement(self):
         from modiff import workflow_store
 

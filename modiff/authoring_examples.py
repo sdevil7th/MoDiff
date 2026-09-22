@@ -18,6 +18,27 @@ _TASK_EXAMPLES = {
     "audio_repaint": "Blend the regenerated section naturally with the surrounding audio.",
 }
 
+# Reviewed creator model-card examples, paraphrased rather than fetched during
+# discovery. Each entry is scoped to its actual repository and supported task.
+_CREATOR_EXAMPLES = {
+    ("black-forest-labs/FLUX.2-klein-4B", "text_to_image"): (
+        'A curious cat holding a small sign reading "Welcome home", soft daylight and detailed fur.',
+        "https://huggingface.co/black-forest-labs/FLUX.2-klein-4B",
+    ),
+    ("Qwen/Qwen-Image", "text_to_image"): (
+        'A cozy cafe entrance with a chalkboard reading "Morning Coffee — $2" beside a glowing neon sign, cinematic composition.',
+        "https://huggingface.co/Qwen/Qwen-Image",
+    ),
+    ("stabilityai/stable-audio-open-1.0", "text_to_audio"): (
+        "Clear, repeated hammer taps against a wooden workbench, close recording with natural room ambience.",
+        "https://huggingface.co/stabilityai/stable-audio-open-1.0",
+    ),
+    ("cvssp/audioldm2", "text_to_audio"): (
+        "A hammer tapping a wooden board, distinct impacts and a quiet workshop background.",
+        "https://huggingface.co/cvssp/audioldm2",
+    ),
+}
+
 
 def seed_operation_example(node, repository=None):
     """Called only while creating a resolved node schema, before authoring begins."""
@@ -33,7 +54,9 @@ def seed_operation_example(node, repository=None):
     if repository is None and field.get("fieldOptions", {}).get("exampleAttribution"):
         return
     source = None
-    if operation.get("pipelineClass") == "QwenImage21Pipeline" and task in {"text_to_image", "edit_image"}:
+    if (repository, task) in _CREATOR_EXAMPLES:
+        example, source = _CREATOR_EXAMPLES[(repository, task)]
+    elif operation.get("pipelineClass") == "QwenImage21Pipeline" and task in {"text_to_image", "edit_image"}:
         source = "https://github.com/QwenLM/Qwen-Image-2.1"
         if task == "text_to_image":
             example = 'A glowing shop sign reading "HELLO", seen on a rainy evening with reflections across the street.'
