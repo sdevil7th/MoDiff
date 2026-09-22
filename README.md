@@ -4,6 +4,9 @@
 
 MoDiff is a local client/server application for building and running node-based machine-learning workflows with a focus on [Hugging Face Diffusers](https://github.com/huggingface/diffusers). The backend discovers Python node modules, executes graphs, manages models and generated media, and serves a bundled web client from `web/`.
 
+The [Qwen-Image 2.1 integration guide](docs/qwen-image-21.md) describes its generic
+image nodes, attention-context reuse, runtime requirements and qualification status.
+
 > [!CAUTION]
 > MoDiff is early-stage software. It is not a production service, a multi-user platform, or a security sandbox. The server has no authentication and can execute model workflows, import custom Python modules, and access files inside its configured working directory. Keep it bound to `127.0.0.1`, install only code you trust, and read [SECURITY.md](SECURITY.md) before changing its network exposure.
 

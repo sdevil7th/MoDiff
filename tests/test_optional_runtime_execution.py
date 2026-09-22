@@ -233,6 +233,14 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                         self.assertEqual(targeted, requirement)
                     continue
                 self.assertEqual(profile.optional_runtime_delivery, OPTIONAL_RUNTIME_DELIVERY_OVERLAY)
+                if profile.id == "qwen-image-21:direct":
+                    self.assertEqual(profile.optional_runtime_platform_deliveries, ())
+                    for platform_name in ("linux", "windows", "macos"):
+                        targeted = declarative_requirement((profile,), platform_name=platform_name, machine="x86_64")
+                        self.assertEqual(targeted["delivery"], "optional_overlay")
+                        self.assertEqual(targeted["profileIds"], ["huggingface-transformers-peft-5.17.0-0.20.0"])
+                        self.assertEqual(targeted["state"], "unavailable")
+                    continue
                 self.assertEqual(len(profile.optional_runtime_platform_deliveries), 6)
                 requirement = profile.to_public_dict()["optionalRuntimeRequirement"]
                 self.assertEqual(set(requirement), expected_keys)

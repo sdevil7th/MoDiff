@@ -30,6 +30,7 @@ FIELD_NAMES = {
     "pooled_prompt_embeds_scale": "reduxPooledPromptEmbedsScale",
     "processing_resolution": "processingResolution",
     "match_input_resolution": "matchInputResolution", "depth_convention": "depthConvention",
+    "use_kv_cache": "attentionContextReuse",
 }
 NODE_FIELD_NAMES = {
     ('DiffusersImage', 'ControlComponent'): {

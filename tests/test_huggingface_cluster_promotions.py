@@ -123,7 +123,7 @@ class HuggingFaceClusterPromotionTests(unittest.TestCase):
                 ),
             },
             "post_promotion_manifest_content_hash": (
-                "sha256:98dddb4c03eea94a0a8e9b1d318ecf5aab9fe62113b829263d8d605772ed6033"
+                "sha256:04426a29429af2b7cfbe65adce9d1d67f342fbbbf5e7397a3ce7dc0ec94378ef"
             ),
         }
 
@@ -333,12 +333,12 @@ class HuggingFaceClusterPromotionTests(unittest.TestCase):
         self.assertFalse(current_admission["publication"]["liveProof"])
         self.assertEqual(
             current_definition["contentHash"],
-            "sha256:9cbb38204acb409888b94e880a6e343e9bd67ea5703455560bc5c6d713437f68",
+            "sha256:49cb50671b41cf2c03b22387cfe2cf1b37f16b2996961791505aef830817c393",
         )
         self.assertTrue(candidate_admission["publication"]["liveProof"])
         self.assertEqual(
             candidate_definition["contentHash"],
-            "sha256:98dddb4c03eea94a0a8e9b1d318ecf5aab9fe62113b829263d8d605772ed6033",
+            "sha256:04426a29429af2b7cfbe65adce9d1d67f342fbbbf5e7397a3ce7dc0ec94378ef",
         )
         self.assertEqual(reviewed_cluster_promotion_receipts()["receipts"], [])
 

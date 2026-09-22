@@ -82,6 +82,9 @@ _EQUIVALENT_PIPELINE_TARGETS = {
 }
 
 _INTENTIONALLY_EXCLUDED_PIPELINES = {
+    "LTX2DFRPipeline": "Video diffusion-frame refinement is deferred from the current image/audio release scope.",
+    "LTX2DFRTemporalRefinePipeline": "Video temporal refinement is deferred from the current image/audio release scope.",
+    "Wan22VaceModularPipeline": "This newly exported video composition is deferred from the current image/audio release scope.",
     "DiffusionPipeline": "Generic factory/base class; it is not an exact task adapter.",
     "ModularPipeline": "Generic composition base class; reviewed subclasses are inventoried separately.",
     "OnnxStableDiffusionImg2ImgPipeline": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",

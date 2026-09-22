@@ -1,5 +1,57 @@
 # Creator / Developer workspaces implementation plan
 
+## Immediate delivery: image demo
+
+The current priority is a two-hour image-demo checkpoint. Qualify a representative
+image workflow on the upgraded runtime, exercise native prompt/seed edits,
+reopening and service export, and test Qwen 2.1 attention reuse with real weights.
+Keep a previously proven image pipeline available as a fallback. Publish only
+verified behavior with its exact limits. The exhaustive image/audio matrix below
+is deferred beyond this demo checkpoint; W8/W9/W10 are not thereby complete.
+
+- [ ] Qualify and retain a working image demo workflow on the upgraded runtime.
+- [ ] Run full-weight Qwen 2.1 and inspect cache on/off behavior and real output.
+- [ ] Verify demo browser flows and served production bundle; preserve user/model data.
+- [ ] Push the tested paired revisions and document the shortest demo sequence.
+
+## Current completion scope: image and audio
+
+W8, W9 and W10 now target image and audio models, nodes and tasks. Resume the
+remaining image campaign and audio coverage. Defer video generation, video edits,
+video upscaling and video-specific release qualification; preserve their existing
+results and downloaded artifacts. Deferred video rows must not become passing
+skips or disappear from the ledger. Windows Qwen memory qualification remains H1.
+
+- [ ] Review and pin the current Diffusers/Modular Diffusers snapshot
+      `fbf49e7f35857f76bc57b177e26f12b03687c668`, including required dependency changes,
+      component lifecycle compatibility and affected image/audio contracts.
+- [x] Add Qwen-Image 2.1 through existing generic image operations: generation,
+      single/multiple reference editing and alpha-preserving output. Bind the
+      reviewed model revision `790c92633540aa0cb11d9abf19eb46d861714758`. Adapter
+      and tiny native denoiser/VAE tests pass; full-weight acceptance is tracked below.
+- [ ] Expose and capture upstream context KV caching, verify per-run cache lifetime,
+      changed prompt/reference invalidation, cache on/off output validity and
+      measured speed/memory. Do not require cross-setting pixel identity or claim
+      the illustrated A100 benchmark on another accelerator.
+- [x] Keep Qwen 2.1's ordinary pipeline route distinct from native Modular support:
+      the reviewed upstream snapshot has `QwenImage21Pipeline` but no native
+      Qwen 2.1 Modular pipeline. Do not invent a Modular compatibility claim.
+- [ ] Finish applicable W8 image and W9 audio model/task/modification ledgers on
+      the reviewed runtime, with a dependency-impact record for earlier results.
+- [ ] Finish W10 scoped quality/browser/acceptance gates, production bundle and
+      derived catalogs, README/support documentation, preservation and paired pushes.
+
+Implementation checkpoint: the managed Linux AMD base upgrade and isolated
+Transformers 5.17 profile qualification passed. The verified optional-runtime
+suite passed 4,085 tests and 10,820 subtests (21 skips). All 122 registered Block
+routes recompile with unchanged public inputs, outputs and controls. Original
+model-file metadata and operator approval preservation checks pass. These checks
+do not close the pending live model/task matrix or release gates.
+
+Qwen 2.1 weights carry the Qwen Research License; runtime integration and model
+weight licensing are separate. Do not publish model weights or generated Gallery
+assets as part of registering its generic node support.
+
 ## Status and relationship to previous work
 
 The Creator / Developer direction is accepted. This document is the implementation
@@ -124,9 +176,9 @@ visible and does not count as a pass or a completed release requirement.
 | W5  | Generic model/task changes and workflow modification         | Complete: W5 acceptance                  | W3, W4                          |
 | W6  | HF/local custom-node workflow                                | Complete                                 | W4, W5                          |
 | W7  | Concurrent authoring, reuse and recovery                     | Complete                                 | W5, W6                          |
-| W8  | All-local-image execution and modification campaign          | Paused: checkpoint retained               | Stable W2–W7 build              |
+| W8  | All-local-image execution and modification campaign          | In progress: image scope resumed         | Stable W2–W7 build              |
 | W9  | Other modalities and real service-export campaign            | In progress                              | Stable W2–W7 build; W8 fixtures |
-| W10 | Release acceptance, documentation and publication            | Planned                                  | W8, W9                          |
+| W10 | Release acceptance, documentation and publication            | In progress: upgrade gates               | W8, W9                          |
 | H1  | Windows Qwen 16 GB VRAM / 32 GB RAM qualification            | Deferred until main UI/UX implementation | W2–W7; Windows host             |
 
 ### W1 — Baseline and test ledger
@@ -1053,7 +1105,7 @@ exact-revision containing-workflow campaign; preparation is not execution proof.
 
 ### W8 — Paused checkpoint and remaining work
 
-W8 is paused at the operator's request so W9 can proceed. The audited core
+This earlier W8 pause checkpoint is retained; the current image/audio completion scope above resumes its image work. The audited core
 checkpoint contains 176 runs across 16 model paths, including completed Krea and
 Schnell recovery. Chroma additionally has retained baseline, unchanged, prompt,
 seed and sampler results; its campaign remains partial. The last task completed

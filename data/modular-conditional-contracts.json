@@ -2944,9 +2944,9 @@
           "name": "use_native_flow_schedule"
         }
       ],
-      "contentHash": "sha256:fc99a68cdb0e31902ef9f01573c3eff46771a725b15169b2a5627620ce751d92",
+      "contentHash": "sha256:0967677bf4a6c6eebd1eb7df68e26a01031167812d1a3273e9899c11a308715a",
       "description": "Selects the Cosmos3 core denoising workflow. - transfer runs the autoregressive control-video (ControlNet-style) chunk loop when control_videos are provided. - vision_sound_action runs when action and enable_sound are provided. - vision_action runs when action is provided. - vision_sound runs when enable_sound is true. - vision runs otherwise.",
-      "id": "diffusers.modular-block:Cosmos3AutoCoreDenoiseStep:sha256:fc99a68cdb0e31902ef9f01573c3eff46771a725b15169b2a5627620ce751d92",
+      "id": "diffusers.modular-block:Cosmos3AutoCoreDenoiseStep:sha256:0967677bf4a6c6eebd1eb7df68e26a01031167812d1a3273e9899c11a308715a",
       "inputs": [
         {
           "default": null,
@@ -3075,6 +3075,38 @@
           "name": "num_inference_steps",
           "required": true,
           "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
         },
         {
           "default": 6.0,
@@ -4188,9 +4220,9 @@
           "name": "distilled_sigmas"
         }
       ],
-      "contentHash": "sha256:fccb35a6312fc84454744d027166d9b06d1f137630ad78f90b7bb5dc11befd6e",
+      "contentHash": "sha256:d1f005c6bddd5c3057580aad29b6b46659f35e4a1a2d2d2e7bd199ee923f8936",
       "description": "Modular pipeline blocks for distilled (few-step) Cosmos3 generation modes.",
-      "id": "diffusers.modular-block:Cosmos3DistilledBlocks:sha256:fccb35a6312fc84454744d027166d9b06d1f137630ad78f90b7bb5dc11befd6e",
+      "id": "diffusers.modular-block:Cosmos3DistilledBlocks:sha256:d1f005c6bddd5c3057580aad29b6b46659f35e4a1a2d2d2e7bd199ee923f8936",
       "inputs": [
         {
           "default": null,
@@ -4233,12 +4265,12 @@
           "type": "builtins.float"
         },
         {
-          "default": true,
+          "default": null,
           "description": "Whether to prepend the Cosmos3 system prompt.",
           "kwargsType": null,
           "name": "use_system_prompt",
           "required": false,
-          "type": "builtins.bool"
+          "type": "UnionType[builtins.NoneType,builtins.bool]"
         },
         {
           "default": true,
@@ -4338,6 +4370,38 @@
           "name": "guidance_scale",
           "required": false,
           "type": "builtins.float"
+        },
+        {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
         },
         {
           "default": "pil",
@@ -4496,9 +4560,9 @@
           "name": "enable_safety_checker"
         }
       ],
-      "contentHash": "sha256:3db355c6b5f45d159832d4a7435d909f63943381ce04d80101e4d564ddac7c43",
+      "contentHash": "sha256:7b912c41ea0391189a60e087600666a446f3031c5afab113a3c7c0568f5f9aab",
       "description": "Prepares distilled prompt token IDs. Classifier-free guidance is baked into the weights, so `negative_prompt` is not exposed and the unconditional branch is derived from an empty prompt.",
-      "id": "diffusers.modular-block:Cosmos3DistilledTextEncoderStep:sha256:3db355c6b5f45d159832d4a7435d909f63943381ce04d80101e4d564ddac7c43",
+      "id": "diffusers.modular-block:Cosmos3DistilledTextEncoderStep:sha256:7b912c41ea0391189a60e087600666a446f3031c5afab113a3c7c0568f5f9aab",
       "inputs": [
         {
           "default": null,
@@ -4541,12 +4605,12 @@
           "type": "builtins.float"
         },
         {
-          "default": true,
+          "default": null,
           "description": "Whether to prepend the Cosmos3 system prompt.",
           "kwargsType": null,
           "name": "use_system_prompt",
           "required": false,
-          "type": "builtins.bool"
+          "type": "UnionType[builtins.NoneType,builtins.bool]"
         },
         {
           "default": true,
@@ -4644,9 +4708,9 @@
           "name": "distilled_sigmas"
         }
       ],
-      "contentHash": "sha256:64b6bbf31747e1466d0030ffeb2a2b4f56850970a7b03293d4cb185d8b2cac2b",
+      "contentHash": "sha256:871f15e52c6647c97b0099f93d318989365176b124d316fab0d9fc37a385f3b7",
       "description": "Runs the text-and-vision distilled Cosmos3 denoising workflow.",
-      "id": "diffusers.modular-block:Cosmos3DistilledVisionCoreDenoiseStep:sha256:64b6bbf31747e1466d0030ffeb2a2b4f56850970a7b03293d4cb185d8b2cac2b",
+      "id": "diffusers.modular-block:Cosmos3DistilledVisionCoreDenoiseStep:sha256:871f15e52c6647c97b0099f93d318989365176b124d316fab0d9fc37a385f3b7",
       "inputs": [
         {
           "default": null,
@@ -4743,6 +4807,38 @@
           "name": "guidance_scale",
           "required": false,
           "type": "builtins.float"
+        },
+        {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
         }
       ],
       "kind": "sequential",
@@ -4801,13 +4897,13 @@
           "defaultConfig": null,
           "description": "",
           "name": "scheduler",
-          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+          "type": "diffusers.schedulers.scheduling_unipc_multistep.UniPCMultistepScheduler"
         }
       ],
       "configs": [],
-      "contentHash": "sha256:23405c2fef02104c54344b6d7378b4ec621b378f17ccf339f24da6b7a58ff660",
+      "contentHash": "sha256:00b1e5253e49822003d7573180339214e6e6928e39ad788d2347583ca85f49bb",
       "description": "Runs the vision-only distilled Cosmos3 denoising loop.",
-      "id": "diffusers.modular-block:Cosmos3DistilledVisionDenoiseStep:sha256:23405c2fef02104c54344b6d7378b4ec621b378f17ccf339f24da6b7a58ff660",
+      "id": "diffusers.modular-block:Cosmos3DistilledVisionDenoiseStep:sha256:00b1e5253e49822003d7573180339214e6e6928e39ad788d2347583ca85f49bb",
       "inputs": [
         {
           "default": null,
@@ -4832,6 +4928,38 @@
           "name": "num_warmup_steps",
           "required": true,
           "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
         },
         {
           "default": null,
@@ -5098,12 +5226,19 @@
           "description": "",
           "name": "transformer",
           "type": "diffusers.models.transformers.transformer_cosmos3.Cosmos3OmniTransformer"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_unipc_multistep.UniPCMultistepScheduler"
         }
       ],
       "configs": [],
-      "contentHash": "sha256:5cf19d60fcee34a0495ce241483eb05a186d5c7bdb3322459bf7fc4eb09d864a",
+      "contentHash": "sha256:e1343dc2e03d8b4676a262da05547990ee3ba38593e88a1af5139d05d5b5be51",
       "description": "Predicts available Cosmos3 modality velocities for one denoising iteration.",
-      "id": "diffusers.modular-block:Cosmos3LoopDenoiser:sha256:5cf19d60fcee34a0495ce241483eb05a186d5c7bdb3322459bf7fc4eb09d864a",
+      "id": "diffusers.modular-block:Cosmos3LoopDenoiser:sha256:e1343dc2e03d8b4676a262da05547990ee3ba38593e88a1af5139d05d5b5be51",
       "inputs": [
         {
           "default": 6.0,
@@ -5219,9 +5354,9 @@
           "name": "use_native_flow_schedule"
         }
       ],
-      "contentHash": "sha256:78105cbc44829f30bb20d62798ec76f93c060d07e7cc27804ccfe5b054a2fddb",
+      "contentHash": "sha256:369ff8a3907febd9973ba49af73dc0ca7ed73b5cbebca5781cb4e4c74dd53fd6",
       "description": "Modular pipeline blocks for Cosmos3 generation modes.",
-      "id": "diffusers.modular-block:Cosmos3OmniBlocks:sha256:78105cbc44829f30bb20d62798ec76f93c060d07e7cc27804ccfe5b054a2fddb",
+      "id": "diffusers.modular-block:Cosmos3OmniBlocks:sha256:369ff8a3907febd9973ba49af73dc0ca7ed73b5cbebca5781cb4e4c74dd53fd6",
       "inputs": [
         {
           "default": null,
@@ -5401,6 +5536,38 @@
           "name": "num_inference_steps",
           "required": true,
           "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
         },
         {
           "default": 6.0,
@@ -6322,9 +6489,9 @@
         }
       ],
       "configs": [],
-      "contentHash": "sha256:3501131b68144400ac4b3dbee497e76f6ff09bd8b8156630be60b3f96961f912",
+      "contentHash": "sha256:78ac114d84c5c92fc845abe0ab6e5d9287d0292c3e8e0ee202a30964cde36307",
       "description": "Autoregressive transfer chunk loop. Overrides __call__ to iterate chunks (the inner timestep loop is a non-leaf LoopSequentialPipelineBlocks, so this outer loop cannot itself be a LoopSequentialPipelineBlocks). Per-chunk cross-carry (previous_output, output_chunks) lives on PipelineState.",
-      "id": "diffusers.modular-block:Cosmos3TransferChunkDenoiseStep:sha256:3501131b68144400ac4b3dbee497e76f6ff09bd8b8156630be60b3f96961f912",
+      "id": "diffusers.modular-block:Cosmos3TransferChunkDenoiseStep:sha256:78ac114d84c5c92fc845abe0ab6e5d9287d0292c3e8e0ee202a30964cde36307",
       "inputs": [
         {
           "default": 0,
@@ -6453,6 +6620,38 @@
           "name": "num_inference_steps",
           "required": true,
           "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
         },
         {
           "default": 6.0,
@@ -6884,9 +7083,9 @@
         }
       ],
       "configs": [],
-      "contentHash": "sha256:d55fa64771e15541a9fb16d62911f338f21d9449bc8c64870fcddc6ab9e52564",
+      "contentHash": "sha256:a930f4dbaa91a9bd4dae5f269ece432169da71a03e6a990b11d09beb0f96c056",
       "description": "Transfer denoise stage: prepare shared text segments once, then run the autoregressive chunk loop.",
-      "id": "diffusers.modular-block:Cosmos3TransferCoreDenoiseStep:sha256:d55fa64771e15541a9fb16d62911f338f21d9449bc8c64870fcddc6ab9e52564",
+      "id": "diffusers.modular-block:Cosmos3TransferCoreDenoiseStep:sha256:a930f4dbaa91a9bd4dae5f269ece432169da71a03e6a990b11d09beb0f96c056",
       "inputs": [
         {
           "default": null,
@@ -7015,6 +7214,38 @@
           "name": "num_inference_steps",
           "required": true,
           "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
         },
         {
           "default": 6.0,
@@ -7370,9 +7601,9 @@
         }
       ],
       "configs": [],
-      "contentHash": "sha256:d12de7fe34f32671edbcdf86e4ad4c6ab820b94c3720a46aa9cf059d4c9aea43",
+      "contentHash": "sha256:0b2dcd8ff550b4907e527b43a5c5c9d2013976de4eac3fe957a0226cccb4ac70",
       "description": "Runs the per-chunk transfer denoising loop over scheduler timesteps.",
-      "id": "diffusers.modular-block:Cosmos3TransferDenoiseStep:sha256:d12de7fe34f32671edbcdf86e4ad4c6ab820b94c3720a46aa9cf059d4c9aea43",
+      "id": "diffusers.modular-block:Cosmos3TransferDenoiseStep:sha256:0b2dcd8ff550b4907e527b43a5c5c9d2013976de4eac3fe957a0226cccb4ac70",
       "inputs": [
         {
           "default": null,
@@ -7397,6 +7628,38 @@
           "name": "num_warmup_steps",
           "required": true,
           "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
         },
         {
           "default": null,
@@ -7524,12 +7787,19 @@
           "description": "",
           "name": "transformer",
           "type": "diffusers.models.transformers.transformer_cosmos3.Cosmos3OmniTransformer"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_unipc_multistep.UniPCMultistepScheduler"
         }
       ],
       "configs": [],
-      "contentHash": "sha256:01bbd8101a3b437f9059bb0afe0895a4cf59c097acfd711530d8a77162f5d1b8",
+      "contentHash": "sha256:d7c064705cb2ae2a74c48a5c94c59dad948f288780d0b26bed25634d413a5126",
       "description": "Predicts the transfer velocity with nested control/text CFG over [control..., target]. Each branch is gated by its guidance interval, and the result is masked so conditioned frames get zero velocity.",
-      "id": "diffusers.modular-block:Cosmos3TransferLoopDenoiser:sha256:01bbd8101a3b437f9059bb0afe0895a4cf59c097acfd711530d8a77162f5d1b8",
+      "id": "diffusers.modular-block:Cosmos3TransferLoopDenoiser:sha256:d7c064705cb2ae2a74c48a5c94c59dad948f288780d0b26bed25634d413a5126",
       "inputs": [
         {
           "default": null,
@@ -8659,9 +8929,9 @@
           "name": "use_native_flow_schedule"
         }
       ],
-      "contentHash": "sha256:4383e1d99f37bcdd022ec7e33cc8057a2633a5c937f691b7059bd28be6646268",
+      "contentHash": "sha256:936cb25971084367e4a8c91518cd74cf31805c0d50a5ce338e69fcd072919eeb",
       "description": "Runs the text, vision, and action Cosmos3 denoising workflow.",
-      "id": "diffusers.modular-block:Cosmos3VisionActionCoreDenoiseStep:sha256:4383e1d99f37bcdd022ec7e33cc8057a2633a5c937f691b7059bd28be6646268",
+      "id": "diffusers.modular-block:Cosmos3VisionActionCoreDenoiseStep:sha256:936cb25971084367e4a8c91518cd74cf31805c0d50a5ce338e69fcd072919eeb",
       "inputs": [
         {
           "default": null,
@@ -8776,6 +9046,38 @@
           "type": "torch.Tensor"
         },
         {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
           "default": 6.0,
           "description": "Scale for classifier-free guidance.",
           "kwargsType": null,
@@ -8862,9 +9164,9 @@
         }
       ],
       "configs": [],
-      "contentHash": "sha256:027c6265eb97489584fa28eda5b0cfe73a3caa006921fb0295b6013cda7926de",
+      "contentHash": "sha256:d80e9a8b7b05eb5a33e735736931902bfbf0623ad327a81bf5236cfde6440fcc",
       "description": "Runs the vision-and-action Cosmos3 denoising loop.",
-      "id": "diffusers.modular-block:Cosmos3VisionActionDenoiseStep:sha256:027c6265eb97489584fa28eda5b0cfe73a3caa006921fb0295b6013cda7926de",
+      "id": "diffusers.modular-block:Cosmos3VisionActionDenoiseStep:sha256:d80e9a8b7b05eb5a33e735736931902bfbf0623ad327a81bf5236cfde6440fcc",
       "inputs": [
         {
           "default": null,
@@ -8889,6 +9191,38 @@
           "name": "num_warmup_steps",
           "required": true,
           "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
         },
         {
           "default": null,
@@ -9031,9 +9365,9 @@
           "name": "use_native_flow_schedule"
         }
       ],
-      "contentHash": "sha256:24ac92e641d21454b0de4a54f2379bae99cfa8f40aa6511a74eda95936f54cec",
+      "contentHash": "sha256:434061ea2aaf636e50d15f23b7176d77dc9bdb6dccf3d386373707a1ffbe222c",
       "description": "Runs the text-and-vision Cosmos3 denoising workflow.",
-      "id": "diffusers.modular-block:Cosmos3VisionCoreDenoiseStep:sha256:24ac92e641d21454b0de4a54f2379bae99cfa8f40aa6511a74eda95936f54cec",
+      "id": "diffusers.modular-block:Cosmos3VisionCoreDenoiseStep:sha256:434061ea2aaf636e50d15f23b7176d77dc9bdb6dccf3d386373707a1ffbe222c",
       "inputs": [
         {
           "default": null,
@@ -9122,6 +9456,38 @@
           "name": "num_inference_steps",
           "required": true,
           "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
         },
         {
           "default": 6.0,
@@ -9276,9 +9642,9 @@
         }
       ],
       "configs": [],
-      "contentHash": "sha256:e4ab8353177b71b6586fcd270a6280db5794b0979cbd36e8c7eb2ee1ac972f8f",
+      "contentHash": "sha256:b87bf4cea690fc423db8ae37ea97996b820a4dcb517910dc78881efaacd509da",
       "description": "Runs the vision-only Cosmos3 denoising loop.",
-      "id": "diffusers.modular-block:Cosmos3VisionDenoiseStep:sha256:e4ab8353177b71b6586fcd270a6280db5794b0979cbd36e8c7eb2ee1ac972f8f",
+      "id": "diffusers.modular-block:Cosmos3VisionDenoiseStep:sha256:b87bf4cea690fc423db8ae37ea97996b820a4dcb517910dc78881efaacd509da",
       "inputs": [
         {
           "default": null,
@@ -9303,6 +9669,38 @@
           "name": "num_warmup_steps",
           "required": true,
           "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
         },
         {
           "default": null,
@@ -9720,9 +10118,9 @@
           "name": "use_native_flow_schedule"
         }
       ],
-      "contentHash": "sha256:79aa26cb976843a2599ebcfeb7883bb21f3c1b610d50b33f5b38478ab7f69d4d",
+      "contentHash": "sha256:e41714f334ad11e7157c930dd4eeaf9194e69ae7afaa52f5aaf225c3feb471fa",
       "description": "Runs the text, vision, sound, and action Cosmos3 denoising workflow.",
-      "id": "diffusers.modular-block:Cosmos3VisionSoundActionCoreDenoiseStep:sha256:79aa26cb976843a2599ebcfeb7883bb21f3c1b610d50b33f5b38478ab7f69d4d",
+      "id": "diffusers.modular-block:Cosmos3VisionSoundActionCoreDenoiseStep:sha256:e41714f334ad11e7157c930dd4eeaf9194e69ae7afaa52f5aaf225c3feb471fa",
       "inputs": [
         {
           "default": null,
@@ -9845,6 +10243,38 @@
           "type": "torch.Tensor"
         },
         {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
           "default": 6.0,
           "description": "Scale for classifier-free guidance.",
           "kwargsType": null,
@@ -9945,9 +10375,9 @@
         }
       ],
       "configs": [],
-      "contentHash": "sha256:0ae18dd115e0fe496c430793ac4b99d575e4399f085d7a7ca75f55b64c3792df",
+      "contentHash": "sha256:44c2bbcd557d3144053a0b0f60c44da42f0c5b828ae2c9d127467ec165a9d65f",
       "description": "Runs the vision, sound, and action Cosmos3 denoising loop.",
-      "id": "diffusers.modular-block:Cosmos3VisionSoundActionDenoiseStep:sha256:0ae18dd115e0fe496c430793ac4b99d575e4399f085d7a7ca75f55b64c3792df",
+      "id": "diffusers.modular-block:Cosmos3VisionSoundActionDenoiseStep:sha256:44c2bbcd557d3144053a0b0f60c44da42f0c5b828ae2c9d127467ec165a9d65f",
       "inputs": [
         {
           "default": null,
@@ -9972,6 +10402,38 @@
           "name": "num_warmup_steps",
           "required": true,
           "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
         },
         {
           "default": null,
@@ -10150,9 +10612,9 @@
           "name": "use_native_flow_schedule"
         }
       ],
-      "contentHash": "sha256:b60a4942c2ff28e85194fc3e42bea6e7a63cb303b0ed7827046e91a37a83e39f",
+      "contentHash": "sha256:6ab06dde2398549cd5156a29c7a04e164e81c6e971739bff11cb31cec6f61151",
       "description": "Runs the text, vision, and sound Cosmos3 denoising workflow.",
-      "id": "diffusers.modular-block:Cosmos3VisionSoundCoreDenoiseStep:sha256:b60a4942c2ff28e85194fc3e42bea6e7a63cb303b0ed7827046e91a37a83e39f",
+      "id": "diffusers.modular-block:Cosmos3VisionSoundCoreDenoiseStep:sha256:6ab06dde2398549cd5156a29c7a04e164e81c6e971739bff11cb31cec6f61151",
       "inputs": [
         {
           "default": null,
@@ -10251,6 +10713,38 @@
           "type": "torch.Tensor"
         },
         {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
           "default": 6.0,
           "description": "Scale for classifier-free guidance.",
           "kwargsType": null,
@@ -10336,9 +10830,9 @@
         }
       ],
       "configs": [],
-      "contentHash": "sha256:bcf90b551ba752f30f4766e1c11b5d812361b33f8b347a948e97c66e67bfc6e8",
+      "contentHash": "sha256:2ab8f6b29642b0a804d7662f8d8c5f5fe5da4a23e757f8cd05a7338ded8637b1",
       "description": "Runs the vision-and-sound Cosmos3 denoising loop.",
-      "id": "diffusers.modular-block:Cosmos3VisionSoundDenoiseStep:sha256:bcf90b551ba752f30f4766e1c11b5d812361b33f8b347a948e97c66e67bfc6e8",
+      "id": "diffusers.modular-block:Cosmos3VisionSoundDenoiseStep:sha256:2ab8f6b29642b0a804d7662f8d8c5f5fe5da4a23e757f8cd05a7338ded8637b1",
       "inputs": [
         {
           "default": null,
@@ -10363,6 +10857,38 @@
           "name": "num_warmup_steps",
           "required": true,
           "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+          "kwargsType": null,
+          "name": "mixed_precision_format",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "Optional leading W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_first_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional trailing W8A16 step count.",
+          "kwargsType": null,
+          "name": "mixed_precision_last_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+          "kwargsType": null,
+          "name": "mixed_precision_reasoner_policy",
+          "required": false,
+          "type": "builtins.str"
         },
         {
           "default": null,
@@ -32408,7 +32934,7 @@
           },
           "description": "",
           "name": "guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_config",
@@ -32420,7 +32946,7 @@
           },
           "description": "",
           "name": "audio_guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_pretrained",
@@ -32438,9 +32964,9 @@
         }
       ],
       "configs": [],
-      "contentHash": "sha256:477021db418762ed44f5598bdc9bb25e8ed21e0d309ac117a899b46e63587694",
+      "contentHash": "sha256:3f4ba9f7e0d988e2aa06c008b9b3db162ab9ac3803f2341d4d97e52018395538",
       "description": "Auto blocks for LTX-2.5 supporting text-to-video, image-to-video, condition-to-video and in-context (IC-LoRA) generation (joint video + audio). Identical to `LTX2AutoBlocks` except that the video decoder is `LTX2DiffusionVaeDecoderStep`, since the diffusion decoder is the native default from LTX-2.5 on. To decode with the convolutional VAE instead, swap the decode block: `blocks.sub_blocks[\"decode\"] = LTX2AutoDecoderStep()`.",
-      "id": "diffusers.modular-block:LTX25AutoBlocks:sha256:477021db418762ed44f5598bdc9bb25e8ed21e0d309ac117a899b46e63587694",
+      "id": "diffusers.modular-block:LTX25AutoBlocks:sha256:3f4ba9f7e0d988e2aa06c008b9b3db162ab9ac3803f2341d4d97e52018395538",
       "inputs": [
         {
           "default": null,
@@ -33421,7 +33947,7 @@
           },
           "description": "",
           "name": "guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_config",
@@ -33433,7 +33959,7 @@
           },
           "description": "",
           "name": "audio_guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_pretrained",
@@ -33444,9 +33970,9 @@
         }
       ],
       "configs": [],
-      "contentHash": "sha256:e5d47b6161c3e8d90740b45b07c56a749c86acc320a1508ea1d31bfa874b5943",
+      "contentHash": "sha256:a9e4ca4d35ddb1fab0bfa097d09b045e781fbc3c6f077a953450239f523a2151",
       "description": "Auto blocks for LTX-2 supporting text-to-video, image-to-video, condition-to-video and in-context (IC-LoRA) generation (joint video + audio).",
-      "id": "diffusers.modular-block:LTX2AutoBlocks:sha256:e5d47b6161c3e8d90740b45b07c56a749c86acc320a1508ea1d31bfa874b5943",
+      "id": "diffusers.modular-block:LTX2AutoBlocks:sha256:a9e4ca4d35ddb1fab0bfa097d09b045e781fbc3c6f077a953450239f523a2151",
       "inputs": [
         {
           "default": null,
@@ -34055,7 +34581,7 @@
           },
           "description": "",
           "name": "guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_config",
@@ -34067,13 +34593,13 @@
           },
           "description": "",
           "name": "audio_guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         }
       ],
       "configs": [],
-      "contentHash": "sha256:0bc669ba1343885122beb0fee8c7d83492b972085c80b591d6f55e04232cbf2f",
+      "contentHash": "sha256:387852bf402c69f82aad3f2e4e75da41e65c1f791e68b1fea84f88a357ccb904",
       "description": "Auto denoise block that selects the workflow based on inputs. - `LTX2InContextCoreDenoiseStep` when `reference_conditions` are provided (in-context / IC-LoRA). - `LTX2ConditionCoreDenoiseStep` when `condition_latents` are provided (condition-to-video). - `LTX2Image2VideoCoreDenoiseStep` when `image_latents` is provided. - `LTX2CoreDenoiseStep` otherwise (text-to-video).",
-      "id": "diffusers.modular-block:LTX2AutoCoreDenoiseStep:sha256:0bc669ba1343885122beb0fee8c7d83492b972085c80b591d6f55e04232cbf2f",
+      "id": "diffusers.modular-block:LTX2AutoCoreDenoiseStep:sha256:387852bf402c69f82aad3f2e4e75da41e65c1f791e68b1fea84f88a357ccb904",
       "inputs": [
         {
           "default": 1,
@@ -35089,7 +35615,7 @@
           },
           "description": "",
           "name": "guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_config",
@@ -35101,13 +35627,13 @@
           },
           "description": "",
           "name": "audio_guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         }
       ],
       "configs": [],
-      "contentHash": "sha256:3a2942d554bffefe97d23b7a56c375f3b0be7f9107d61d53ecba9d0fd93b809e",
+      "contentHash": "sha256:6fb81dc68db19bf22dbcc5645106c0af68bf38c4a453f98c39dd756003c98383",
       "description": "Denoise block (condition-to-video) that expands the text conditioning by `num_videos_per_prompt`, applies the frame conditions to the video latents and runs the joint denoising loop.",
-      "id": "diffusers.modular-block:LTX2ConditionCoreDenoiseStep:sha256:3a2942d554bffefe97d23b7a56c375f3b0be7f9107d61d53ecba9d0fd93b809e",
+      "id": "diffusers.modular-block:LTX2ConditionCoreDenoiseStep:sha256:6fb81dc68db19bf22dbcc5645106c0af68bf38c4a453f98c39dd756003c98383",
       "inputs": [
         {
           "default": 1,
@@ -35574,7 +36100,7 @@
           },
           "description": "",
           "name": "guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_config",
@@ -35586,13 +36112,13 @@
           },
           "description": "",
           "name": "audio_guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         }
       ],
       "configs": [],
-      "contentHash": "sha256:950b2ad05ecd656132f0e50b6431d229440f0693512233806e6937aa3f36ecc7",
+      "contentHash": "sha256:4e2636c352626a765e846ca924e6a311a4f157b253e65f00198812c21de62552",
       "description": "Condition denoise step. Iterates `LTX2DenoiseLoopWrapper.__call__`, running per step: - `LTX2ConditionLoopBeforeDenoiser` - `LTX2LoopDenoiser` - `LTX2ConditionLoopAfterDenoiser`",
-      "id": "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:950b2ad05ecd656132f0e50b6431d229440f0693512233806e6937aa3f36ecc7",
+      "id": "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:4e2636c352626a765e846ca924e6a311a4f157b253e65f00198812c21de62552",
       "inputs": [
         {
           "default": null,
@@ -36635,7 +37161,7 @@
           },
           "description": "",
           "name": "guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_config",
@@ -36647,13 +37173,13 @@
           },
           "description": "",
           "name": "audio_guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         }
       ],
       "configs": [],
-      "contentHash": "sha256:ac71e8bacb814171b3eb9ad9d05f1b5d88dccaf502b1f453b7558c8877b5bf18",
+      "contentHash": "sha256:d7f6a6cedb694be5f5eca1532d80e69b531162a33c1faec7884e18637e76b556",
       "description": "Denoise block (text-to-video) that expands the text conditioning by `num_videos_per_prompt`, prepares video/audio latents and runs the joint denoising loop.",
-      "id": "diffusers.modular-block:LTX2CoreDenoiseStep:sha256:ac71e8bacb814171b3eb9ad9d05f1b5d88dccaf502b1f453b7558c8877b5bf18",
+      "id": "diffusers.modular-block:LTX2CoreDenoiseStep:sha256:d7f6a6cedb694be5f5eca1532d80e69b531162a33c1faec7884e18637e76b556",
       "inputs": [
         {
           "default": 1,
@@ -37072,7 +37598,7 @@
           },
           "description": "",
           "name": "guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_config",
@@ -37084,13 +37610,13 @@
           },
           "description": "",
           "name": "audio_guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         }
       ],
       "configs": [],
-      "contentHash": "sha256:7ddd8a9879dc1bdbe94e68252941f857f9ae8d0594d3bd2c0247e059cd6be9d4",
+      "contentHash": "sha256:4558ab1720e601a8ff548e32c21e61ec509bb13abae661b7c5cd54715a80639a",
       "description": "Text-to-video denoise step. Iterates `LTX2DenoiseLoopWrapper.__call__`, running per step: - `LTX2LoopBeforeDenoiser` - `LTX2LoopDenoiser` - `LTX2LoopAfterDenoiser`",
-      "id": "diffusers.modular-block:LTX2DenoiseStep:sha256:7ddd8a9879dc1bdbe94e68252941f857f9ae8d0594d3bd2c0247e059cd6be9d4",
+      "id": "diffusers.modular-block:LTX2DenoiseStep:sha256:4558ab1720e601a8ff548e32c21e61ec509bb13abae661b7c5cd54715a80639a",
       "inputs": [
         {
           "default": null,
@@ -37485,7 +38011,7 @@
           },
           "description": "",
           "name": "guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_config",
@@ -37497,13 +38023,13 @@
           },
           "description": "",
           "name": "audio_guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         }
       ],
       "configs": [],
-      "contentHash": "sha256:38af484d045a15c099d7b9a98b934e0bf8dddeb60fb5be4f978b16790f359921",
+      "contentHash": "sha256:a632c7f4c984dc9ff07eb060258d6d7492ed509c4529396b02cce88c68b4c8cc",
       "description": "Denoise block (image-to-video) that expands the text conditioning by `num_videos_per_prompt`, adds image conditioning and runs the joint denoising loop.",
-      "id": "diffusers.modular-block:LTX2Image2VideoCoreDenoiseStep:sha256:38af484d045a15c099d7b9a98b934e0bf8dddeb60fb5be4f978b16790f359921",
+      "id": "diffusers.modular-block:LTX2Image2VideoCoreDenoiseStep:sha256:a632c7f4c984dc9ff07eb060258d6d7492ed509c4529396b02cce88c68b4c8cc",
       "inputs": [
         {
           "default": 1,
@@ -37768,7 +38294,7 @@
           },
           "description": "",
           "name": "guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_config",
@@ -37780,13 +38306,13 @@
           },
           "description": "",
           "name": "audio_guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         }
       ],
       "configs": [],
-      "contentHash": "sha256:5fad62ac7b55e595c34625db68f0a81a5e1418db27070e4e410b28324d0b51ee",
+      "contentHash": "sha256:8751d693fa581d9b3c2ef2ba83c2a091083e46a685d5a437318534b2c97d60e1",
       "description": "Image-to-video denoise step. Iterates `LTX2DenoiseLoopWrapper.__call__`, running per step: - `LTX2Image2VideoLoopBeforeDenoiser` - `LTX2LoopDenoiser` - `LTX2Image2VideoLoopAfterDenoiser`",
-      "id": "diffusers.modular-block:LTX2Image2VideoDenoiseStep:sha256:5fad62ac7b55e595c34625db68f0a81a5e1418db27070e4e410b28324d0b51ee",
+      "id": "diffusers.modular-block:LTX2Image2VideoDenoiseStep:sha256:8751d693fa581d9b3c2ef2ba83c2a091083e46a685d5a437318534b2c97d60e1",
       "inputs": [
         {
           "default": null,
@@ -38346,7 +38872,7 @@
           },
           "description": "",
           "name": "guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_config",
@@ -38358,13 +38884,13 @@
           },
           "description": "",
           "name": "audio_guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         }
       ],
       "configs": [],
-      "contentHash": "sha256:f24158809c78328798dcb1b0b030a52069b7c80ecf88ae17e07e228c92281d3f",
+      "contentHash": "sha256:df883f87e496b42bdaae837541893640bb53260bce3584f3bfe42794c6d81203",
       "description": "Denoise block (in-context) that expands the text conditioning by `num_videos_per_prompt`, folds the frame conditions and the IC-LoRA reference tokens into one latent sequence and runs the joint denoising loop. Reuses the condition denoise step unchanged: reference tokens are pinned by the same x0 blend as frame conditions, matching the reference implementation's uniform treatment of both.",
-      "id": "diffusers.modular-block:LTX2InContextCoreDenoiseStep:sha256:f24158809c78328798dcb1b0b030a52069b7c80ecf88ae17e07e228c92281d3f",
+      "id": "diffusers.modular-block:LTX2InContextCoreDenoiseStep:sha256:df883f87e496b42bdaae837541893640bb53260bce3584f3bfe42794c6d81203",
       "inputs": [
         {
           "default": 1,
@@ -39029,7 +39555,7 @@
           },
           "description": "",
           "name": "guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_config",
@@ -39041,13 +39567,13 @@
           },
           "description": "",
           "name": "audio_guider",
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         }
       ],
       "configs": [],
-      "contentHash": "sha256:c1961b0df224676d8158184ebfa98a4347d5c01d87f2c90b576a11b23d98294b",
+      "contentHash": "sha256:d931b1f5ea38660a04d89e86e4e51ffe956c1a00023045fa427e055fd6d42883",
       "description": "Joint video+audio denoiser. Runs the transformer once per guidance pass (each a single batch), with each pass's conditioning assembled by the guiders via `prepare_inputs_from_block_state` (driven by `guider_input_fields`) and unioned across the video `guider` and audio `audio_guider`; the per-pass model flags (STG blocks, modality isolation) are set by identifier afterwards. Converts each pass's velocity to x0 and delegates the per-modality CFG + STG + modality-isolation combine to the two guiders.",
-      "id": "diffusers.modular-block:LTX2LoopDenoiser:sha256:c1961b0df224676d8158184ebfa98a4347d5c01d87f2c90b576a11b23d98294b",
+      "id": "diffusers.modular-block:LTX2LoopDenoiser:sha256:d931b1f5ea38660a04d89e86e4e51ffe956c1a00023045fa427e055fd6d42883",
       "inputs": [
         {
           "default": null,
@@ -66517,9 +67043,9 @@
           "name": "boundary_ratio"
         }
       ],
-      "contentHash": "sha256:4b04d4db1a93b220bae125579bb5bc93ad47b82c60c30ca6b525f8da24f9c8be",
+      "contentHash": "sha256:0a2c1738dac8ca9e40db3d2d09a8e234ff787dcc6ae157a70b8143c48acdb025",
       "description": "Modular pipeline for text-to-video using Wan2.2.",
-      "id": "diffusers.modular-block:Wan22Blocks:sha256:4b04d4db1a93b220bae125579bb5bc93ad47b82c60c30ca6b525f8da24f9c8be",
+      "id": "diffusers.modular-block:Wan22Blocks:sha256:0a2c1738dac8ca9e40db3d2d09a8e234ff787dcc6ae157a70b8143c48acdb025",
       "inputs": [
         {
           "default": null,
@@ -66655,7 +67181,15 @@
         "timesteps"
       ],
       "schemaVersion": 1,
-      "variadicInputs": []
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
     },
     {
       "className": "Wan22CoreDenoiseStep",
@@ -66707,9 +67241,9 @@
           "name": "boundary_ratio"
         }
       ],
-      "contentHash": "sha256:470671f61d68338083a5a051eede55600400b681b46c7a8c1de6e185cf24d5cd",
+      "contentHash": "sha256:3bacfdc47bb5b52b1ff1f9444bfd0e8a0ab4b1b06a9f18e465d96dc577af4b7d",
       "description": "denoise block that takes encoded conditions and runs the denoising process.",
-      "id": "diffusers.modular-block:Wan22CoreDenoiseStep:sha256:470671f61d68338083a5a051eede55600400b681b46c7a8c1de6e185cf24d5cd",
+      "id": "diffusers.modular-block:Wan22CoreDenoiseStep:sha256:3bacfdc47bb5b52b1ff1f9444bfd0e8a0ab4b1b06a9f18e465d96dc577af4b7d",
       "inputs": [
         {
           "default": 1,
@@ -66829,7 +67363,15 @@
         "timesteps"
       ],
       "schemaVersion": 1,
-      "variadicInputs": []
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
     },
     {
       "className": "Wan22DenoiseStep",
@@ -66881,9 +67423,9 @@
           "name": "boundary_ratio"
         }
       ],
-      "contentHash": "sha256:74bb7f99087db12b178bb99d192ed7209986b8d27817263d0169cb0efb058b9d",
+      "contentHash": "sha256:217a54b74465756c8b2237e6903c0d035e80f340b4635ecfcbb7686aa65089cb",
       "description": "Denoise step that iteratively denoise the latents. Its loop logic is defined in `WanDenoiseLoopWrapper.__call__` method At each iteration, it runs blocks defined in `sub_blocks` sequentially: - `WanLoopBeforeDenoiser` - `Wan22LoopDenoiser` - `WanLoopAfterDenoiser` This block supports text-to-video tasks for Wan2.2.",
-      "id": "diffusers.modular-block:Wan22DenoiseStep:sha256:74bb7f99087db12b178bb99d192ed7209986b8d27817263d0169cb0efb058b9d",
+      "id": "diffusers.modular-block:Wan22DenoiseStep:sha256:217a54b74465756c8b2237e6903c0d035e80f340b4635ecfcbb7686aa65089cb",
       "inputs": [
         {
           "default": null,
@@ -66953,7 +67495,15 @@
         "timesteps"
       ],
       "schemaVersion": 1,
-      "variadicInputs": []
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
     },
     {
       "className": "Wan22Image2VideoBlocks",
@@ -67035,9 +67585,9 @@
           "name": "boundary_ratio"
         }
       ],
-      "contentHash": "sha256:5d82219c6b1b2062d207b874b81d456152260ff765b22c048a3115f864a180b5",
+      "contentHash": "sha256:3f74e974c46328f5d2cd26e8a2aea9a337efe0042ca7a14a5fc584b50579326e",
       "description": "Modular pipeline for image-to-video using Wan2.2.",
-      "id": "diffusers.modular-block:Wan22Image2VideoBlocks:sha256:5d82219c6b1b2062d207b874b81d456152260ff765b22c048a3115f864a180b5",
+      "id": "diffusers.modular-block:Wan22Image2VideoBlocks:sha256:3f74e974c46328f5d2cd26e8a2aea9a337efe0042ca7a14a5fc584b50579326e",
       "inputs": [
         {
           "default": null,
@@ -67185,7 +67735,15 @@
         "timesteps"
       ],
       "schemaVersion": 1,
-      "variadicInputs": []
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
     },
     {
       "className": "Wan22Image2VideoCoreDenoiseStep",
@@ -67237,9 +67795,9 @@
           "name": "boundary_ratio"
         }
       ],
-      "contentHash": "sha256:e9676ec2aef44a0c5cf4ec4e7dfc9a92e828b4eb9d545690a1f1d26566acc44c",
+      "contentHash": "sha256:08a8f09cd4578f1551be5e392c52132927ed79d46013563a518ec6e5ebaefa9e",
       "description": "denoise block that takes encoded text and image latent conditions and runs the denoising process.",
-      "id": "diffusers.modular-block:Wan22Image2VideoCoreDenoiseStep:sha256:e9676ec2aef44a0c5cf4ec4e7dfc9a92e828b4eb9d545690a1f1d26566acc44c",
+      "id": "diffusers.modular-block:Wan22Image2VideoCoreDenoiseStep:sha256:08a8f09cd4578f1551be5e392c52132927ed79d46013563a518ec6e5ebaefa9e",
       "inputs": [
         {
           "default": 1,
@@ -67368,7 +67926,15 @@
         "timesteps"
       ],
       "schemaVersion": 1,
-      "variadicInputs": []
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
     },
     {
       "className": "Wan22Image2VideoDenoiseStep",
@@ -67420,9 +67986,9 @@
           "name": "boundary_ratio"
         }
       ],
-      "contentHash": "sha256:9daec42f0095aefde5606e02f4873451109fede560e75212310e9885dc1b15db",
+      "contentHash": "sha256:c51d77edbdec4084a4542e734a31d1eedace36aeee6c048de29bfcd5351c942a",
       "description": "Denoise step that iteratively denoise the latents. Its loop logic is defined in `WanDenoiseLoopWrapper.__call__` method At each iteration, it runs blocks defined in `sub_blocks` sequentially: - `WanImage2VideoLoopBeforeDenoiser` - `WanLoopDenoiser` - `WanLoopAfterDenoiser` This block supports image-to-video tasks for Wan2.2.",
-      "id": "diffusers.modular-block:Wan22Image2VideoDenoiseStep:sha256:9daec42f0095aefde5606e02f4873451109fede560e75212310e9885dc1b15db",
+      "id": "diffusers.modular-block:Wan22Image2VideoDenoiseStep:sha256:c51d77edbdec4084a4542e734a31d1eedace36aeee6c048de29bfcd5351c942a",
       "inputs": [
         {
           "default": null,
@@ -67501,7 +68067,15 @@
         "timesteps"
       ],
       "schemaVersion": 1,
-      "variadicInputs": []
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
     },
     {
       "className": "Wan22LoopDenoiser",
@@ -67546,9 +68120,9 @@
           "name": "boundary_ratio"
         }
       ],
-      "contentHash": "sha256:a902a0d881cb4959492bfac103336d334a533be123a5d83fbc8fae4267d44ba5",
+      "contentHash": "sha256:194524add4567c94a2654a8d4ac2a0e4d67ccede3063e67e296a6a3ef54c90b3",
       "description": "Step within the denoising loop that denoise the latents with guidance. This block should be used to compose the `sub_blocks` attribute of a `LoopSequentialPipelineBlocks` object (e.g. `WanDenoiseLoopWrapper`)",
-      "id": "diffusers.modular-block:Wan22LoopDenoiser:sha256:a902a0d881cb4959492bfac103336d334a533be123a5d83fbc8fae4267d44ba5",
+      "id": "diffusers.modular-block:Wan22LoopDenoiser:sha256:194524add4567c94a2654a8d4ac2a0e4d67ccede3063e67e296a6a3ef54c90b3",
       "inputs": [
         {
           "default": null,
@@ -67591,7 +68165,15 @@
         "prompt_embeds"
       ],
       "schemaVersion": 1,
-      "variadicInputs": []
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
     },
     {
       "className": "WanAdditionalInputsStep",
@@ -74907,7 +75489,7 @@
       "variadicInputs": []
     }
   ],
-  "diffusersRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
+  "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
   "pipelines": [
     {
       "conditionals": [
@@ -75561,11 +76143,11 @@
           ]
         }
       ],
-      "contentHash": "sha256:37b979196f68587bb578076bf2bc1d3678fd030c51fc3ab86fa715856e2f463e",
+      "contentHash": "sha256:32e35b05f93646f709c49e323d7ecbdcc4b29a2cedc9c1b1d13718971d2186e3",
       "pipelineClass": "Cosmos3DistilledModularPipeline",
       "placements": [
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3DistilledTextEncoderStep:sha256:3db355c6b5f45d159832d4a7435d909f63943381ce04d80101e4d564ddac7c43",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3DistilledTextEncoderStep:sha256:7b912c41ea0391189a60e087600666a446f3031c5afab113a3c7c0568f5f9aab",
           "intermediateOutputs": [
             "num_frames",
             "height",
@@ -75618,7 +76200,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3DistilledVisionCoreDenoiseStep:sha256:64b6bbf31747e1466d0030ffeb2a2b4f56850970a7b03293d4cb185d8b2cac2b",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3DistilledVisionCoreDenoiseStep:sha256:871f15e52c6647c97b0099f93d318989365176b124d316fab0d9fc37a385f3b7",
           "intermediateOutputs": [
             "cond_text_segment",
             "uncond_text_segment",
@@ -75722,7 +76304,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3DistilledVisionDenoiseStep:sha256:23405c2fef02104c54344b6d7378b4ec621b378f17ccf339f24da6b7a58ff660",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3DistilledVisionDenoiseStep:sha256:00b1e5253e49822003d7573180339214e6e6928e39ad788d2347583ca85f49bb",
           "intermediateOutputs": [
             "vision_tokens",
             "vision_timesteps",
@@ -75753,7 +76335,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3LoopDenoiser:sha256:5cf19d60fcee34a0495ce241483eb05a186d5c7bdb3322459bf7fc4eb09d864a",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3LoopDenoiser:sha256:e1343dc2e03d8b4676a262da05547990ee3ba38593e88a1af5139d05d5b5be51",
           "intermediateOutputs": [
             "velocity_vision",
             "velocity_sound",
@@ -75792,20 +76374,20 @@
           ]
         }
       ],
-      "rootBlockDefinitionId": "diffusers.modular-block:Cosmos3DistilledBlocks:sha256:fccb35a6312fc84454744d027166d9b06d1f137630ad78f90b7bb5dc11befd6e",
+      "rootBlockDefinitionId": "diffusers.modular-block:Cosmos3DistilledBlocks:sha256:d1f005c6bddd5c3057580aad29b6b46659f35e4a1a2d2d2e7bd199ee923f8936",
       "schemaVersion": 1,
       "workflows": [
         {
           "cases": [
             {
               "activeLeafDefinitionIds": [
-                "diffusers.modular-block:Cosmos3DistilledTextEncoderStep:sha256:3db355c6b5f45d159832d4a7435d909f63943381ce04d80101e4d564ddac7c43",
+                "diffusers.modular-block:Cosmos3DistilledTextEncoderStep:sha256:7b912c41ea0391189a60e087600666a446f3031c5afab113a3c7c0568f5f9aab",
                 "diffusers.modular-block:Cosmos3PrepareTextSegmentsStep:sha256:7c286f278534f6f15df85e22708d4ff5d4070d36aeda49e95a03b4b94c2ae0ea",
                 "diffusers.modular-block:Cosmos3VisionPrepareLatentsStep:sha256:eb3e23123f654c6dd15aca923b1df5fb22d626b8eb77b31c6f0c99c3e6f9036a",
                 "diffusers.modular-block:Cosmos3VisionPackSequenceStep:sha256:e6f15fe12a4e1f9a1205cdb3ce3c1b418977fef1525cdb48f5ca31a43f6fda9c",
                 "diffusers.modular-block:Cosmos3VisionDenoiseInputStep:sha256:76277495e7bc79326a8b56720e089d27410dba20fda2ba772fd410ee1504a946",
                 "diffusers.modular-block:Cosmos3DistilledSetTimestepsStep:sha256:ef99ab52dc5fe92f6a4998bfb9a735c407a1a37e3701f7d1cbbfebcf4010016b",
-                "diffusers.modular-block:Cosmos3DistilledVisionDenoiseStep:sha256:23405c2fef02104c54344b6d7378b4ec621b378f17ccf339f24da6b7a58ff660",
+                "diffusers.modular-block:Cosmos3DistilledVisionDenoiseStep:sha256:00b1e5253e49822003d7573180339214e6e6928e39ad788d2347583ca85f49bb",
                 "diffusers.modular-block:Cosmos3VideoDecodeStep:sha256:d3c8644adf9487abfa2fc82a88682e94cabecda8593c4313b064a5213b39a192"
               ],
               "activeLeafPaths": [
@@ -75861,13 +76443,13 @@
           "cases": [
             {
               "activeLeafDefinitionIds": [
-                "diffusers.modular-block:Cosmos3DistilledTextEncoderStep:sha256:3db355c6b5f45d159832d4a7435d909f63943381ce04d80101e4d564ddac7c43",
+                "diffusers.modular-block:Cosmos3DistilledTextEncoderStep:sha256:7b912c41ea0391189a60e087600666a446f3031c5afab113a3c7c0568f5f9aab",
                 "diffusers.modular-block:Cosmos3PrepareTextSegmentsStep:sha256:7c286f278534f6f15df85e22708d4ff5d4070d36aeda49e95a03b4b94c2ae0ea",
                 "diffusers.modular-block:Cosmos3VisionPrepareLatentsStep:sha256:eb3e23123f654c6dd15aca923b1df5fb22d626b8eb77b31c6f0c99c3e6f9036a",
                 "diffusers.modular-block:Cosmos3VisionPackSequenceStep:sha256:e6f15fe12a4e1f9a1205cdb3ce3c1b418977fef1525cdb48f5ca31a43f6fda9c",
                 "diffusers.modular-block:Cosmos3VisionDenoiseInputStep:sha256:76277495e7bc79326a8b56720e089d27410dba20fda2ba772fd410ee1504a946",
                 "diffusers.modular-block:Cosmos3DistilledSetTimestepsStep:sha256:ef99ab52dc5fe92f6a4998bfb9a735c407a1a37e3701f7d1cbbfebcf4010016b",
-                "diffusers.modular-block:Cosmos3DistilledVisionDenoiseStep:sha256:23405c2fef02104c54344b6d7378b4ec621b378f17ccf339f24da6b7a58ff660",
+                "diffusers.modular-block:Cosmos3DistilledVisionDenoiseStep:sha256:00b1e5253e49822003d7573180339214e6e6928e39ad788d2347583ca85f49bb",
                 "diffusers.modular-block:Cosmos3VideoDecodeStep:sha256:d3c8644adf9487abfa2fc82a88682e94cabecda8593c4313b064a5213b39a192"
               ],
               "activeLeafPaths": [
@@ -75922,14 +76504,14 @@
           "cases": [
             {
               "activeLeafDefinitionIds": [
-                "diffusers.modular-block:Cosmos3DistilledTextEncoderStep:sha256:3db355c6b5f45d159832d4a7435d909f63943381ce04d80101e4d564ddac7c43",
+                "diffusers.modular-block:Cosmos3DistilledTextEncoderStep:sha256:7b912c41ea0391189a60e087600666a446f3031c5afab113a3c7c0568f5f9aab",
                 "diffusers.modular-block:Cosmos3ImageVaeEncoderStep:sha256:5df05e87c8aa9fb2a852d0f46d59319dffc93380b2b0e4c35c3ada1337ecb68d",
                 "diffusers.modular-block:Cosmos3PrepareTextSegmentsStep:sha256:7c286f278534f6f15df85e22708d4ff5d4070d36aeda49e95a03b4b94c2ae0ea",
                 "diffusers.modular-block:Cosmos3VisionPrepareLatentsStep:sha256:eb3e23123f654c6dd15aca923b1df5fb22d626b8eb77b31c6f0c99c3e6f9036a",
                 "diffusers.modular-block:Cosmos3VisionPackSequenceStep:sha256:e6f15fe12a4e1f9a1205cdb3ce3c1b418977fef1525cdb48f5ca31a43f6fda9c",
                 "diffusers.modular-block:Cosmos3VisionDenoiseInputStep:sha256:76277495e7bc79326a8b56720e089d27410dba20fda2ba772fd410ee1504a946",
                 "diffusers.modular-block:Cosmos3DistilledSetTimestepsStep:sha256:ef99ab52dc5fe92f6a4998bfb9a735c407a1a37e3701f7d1cbbfebcf4010016b",
-                "diffusers.modular-block:Cosmos3DistilledVisionDenoiseStep:sha256:23405c2fef02104c54344b6d7378b4ec621b378f17ccf339f24da6b7a58ff660",
+                "diffusers.modular-block:Cosmos3DistilledVisionDenoiseStep:sha256:00b1e5253e49822003d7573180339214e6e6928e39ad788d2347583ca85f49bb",
                 "diffusers.modular-block:Cosmos3VideoDecodeStep:sha256:d3c8644adf9487abfa2fc82a88682e94cabecda8593c4313b064a5213b39a192"
               ],
               "activeLeafPaths": [
@@ -75989,14 +76571,14 @@
           "cases": [
             {
               "activeLeafDefinitionIds": [
-                "diffusers.modular-block:Cosmos3DistilledTextEncoderStep:sha256:3db355c6b5f45d159832d4a7435d909f63943381ce04d80101e4d564ddac7c43",
+                "diffusers.modular-block:Cosmos3DistilledTextEncoderStep:sha256:7b912c41ea0391189a60e087600666a446f3031c5afab113a3c7c0568f5f9aab",
                 "diffusers.modular-block:Cosmos3VideoVaeEncoderStep:sha256:0d992736a1e58c90922a180f3037d275af5567d81dfc0dcf06e96e565b1a8162",
                 "diffusers.modular-block:Cosmos3PrepareTextSegmentsStep:sha256:7c286f278534f6f15df85e22708d4ff5d4070d36aeda49e95a03b4b94c2ae0ea",
                 "diffusers.modular-block:Cosmos3VisionPrepareLatentsStep:sha256:eb3e23123f654c6dd15aca923b1df5fb22d626b8eb77b31c6f0c99c3e6f9036a",
                 "diffusers.modular-block:Cosmos3VisionPackSequenceStep:sha256:e6f15fe12a4e1f9a1205cdb3ce3c1b418977fef1525cdb48f5ca31a43f6fda9c",
                 "diffusers.modular-block:Cosmos3VisionDenoiseInputStep:sha256:76277495e7bc79326a8b56720e089d27410dba20fda2ba772fd410ee1504a946",
                 "diffusers.modular-block:Cosmos3DistilledSetTimestepsStep:sha256:ef99ab52dc5fe92f6a4998bfb9a735c407a1a37e3701f7d1cbbfebcf4010016b",
-                "diffusers.modular-block:Cosmos3DistilledVisionDenoiseStep:sha256:23405c2fef02104c54344b6d7378b4ec621b378f17ccf339f24da6b7a58ff660",
+                "diffusers.modular-block:Cosmos3DistilledVisionDenoiseStep:sha256:00b1e5253e49822003d7573180339214e6e6928e39ad788d2347583ca85f49bb",
                 "diffusers.modular-block:Cosmos3VideoDecodeStep:sha256:d3c8644adf9487abfa2fc82a88682e94cabecda8593c4313b064a5213b39a192"
               ],
               "activeLeafPaths": [
@@ -76254,7 +76836,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3AutoCoreDenoiseStep:sha256:fc99a68cdb0e31902ef9f01573c3eff46771a725b15169b2a5627620ce751d92",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3AutoCoreDenoiseStep:sha256:0967677bf4a6c6eebd1eb7df68e26a01031167812d1a3273e9899c11a308715a",
           "branchNames": [
             "transfer",
             "vision_sound_action",
@@ -76397,7 +76979,7 @@
           ]
         }
       ],
-      "contentHash": "sha256:7049dccf36c0ce3ed08a76a814b82718d280d394dadda214768f8c677fd6638b",
+      "contentHash": "sha256:76585d19a35550bfb1c14f90641c61fe52bb95687476f499a0626cc7325f9fd5",
       "pipelineClass": "Cosmos3OmniModularPipeline",
       "placements": [
         {
@@ -76561,7 +77143,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3AutoCoreDenoiseStep:sha256:fc99a68cdb0e31902ef9f01573c3eff46771a725b15169b2a5627620ce751d92",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3AutoCoreDenoiseStep:sha256:0967677bf4a6c6eebd1eb7df68e26a01031167812d1a3273e9899c11a308715a",
           "intermediateOutputs": [
             "cond_text_segment",
             "uncond_text_segment",
@@ -76623,7 +77205,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3TransferCoreDenoiseStep:sha256:d55fa64771e15541a9fb16d62911f338f21d9449bc8c64870fcddc6ab9e52564",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3TransferCoreDenoiseStep:sha256:a930f4dbaa91a9bd4dae5f269ece432169da71a03e6a990b11d09beb0f96c056",
           "intermediateOutputs": [
             "cond_text_segment",
             "uncond_text_segment",
@@ -76669,7 +77251,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3TransferChunkDenoiseStep:sha256:3501131b68144400ac4b3dbee497e76f6ff09bd8b8156630be60b3f96961f912",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3TransferChunkDenoiseStep:sha256:78ac114d84c5c92fc845abe0ab6e5d9287d0292c3e8e0ee202a30964cde36307",
           "intermediateOutputs": [
             "control_latents",
             "x0_tokens_vision",
@@ -76765,7 +77347,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3TransferDenoiseStep:sha256:d12de7fe34f32671edbcdf86e4ad4c6ab820b94c3720a46aa9cf059d4c9aea43",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3TransferDenoiseStep:sha256:0b2dcd8ff550b4907e527b43a5c5c9d2013976de4eac3fe957a0226cccb4ac70",
           "intermediateOutputs": [
             "vision_tokens_full",
             "vision_tokens_target",
@@ -76800,7 +77382,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3TransferLoopDenoiser:sha256:01bbd8101a3b437f9059bb0afe0895a4cf59c097acfd711530d8a77162f5d1b8",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3TransferLoopDenoiser:sha256:d7c064705cb2ae2a74c48a5c94c59dad948f288780d0b26bed25634d413a5126",
           "intermediateOutputs": [
             "velocity"
           ],
@@ -76845,7 +77427,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionSoundActionCoreDenoiseStep:sha256:79aa26cb976843a2599ebcfeb7883bb21f3c1b610d50b33f5b38478ab7f69d4d",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionSoundActionCoreDenoiseStep:sha256:e41714f334ad11e7157c930dd4eeaf9194e69ae7afaa52f5aaf225c3feb471fa",
           "intermediateOutputs": [
             "cond_text_segment",
             "uncond_text_segment",
@@ -77061,7 +77643,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionSoundActionDenoiseStep:sha256:0ae18dd115e0fe496c430793ac4b99d575e4399f085d7a7ca75f55b64c3792df",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionSoundActionDenoiseStep:sha256:44c2bbcd557d3144053a0b0f60c44da42f0c5b828ae2c9d127467ec165a9d65f",
           "intermediateOutputs": [
             "vision_tokens",
             "vision_timesteps",
@@ -77130,7 +77712,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3LoopDenoiser:sha256:5cf19d60fcee34a0495ce241483eb05a186d5c7bdb3322459bf7fc4eb09d864a",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3LoopDenoiser:sha256:e1343dc2e03d8b4676a262da05547990ee3ba38593e88a1af5139d05d5b5be51",
           "intermediateOutputs": [
             "velocity_vision",
             "velocity_sound",
@@ -77188,7 +77770,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionActionCoreDenoiseStep:sha256:4383e1d99f37bcdd022ec7e33cc8057a2633a5c937f691b7059bd28be6646268",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionActionCoreDenoiseStep:sha256:936cb25971084367e4a8c91518cd74cf31805c0d50a5ce338e69fcd072919eeb",
           "intermediateOutputs": [
             "cond_text_segment",
             "uncond_text_segment",
@@ -77350,7 +77932,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionActionDenoiseStep:sha256:027c6265eb97489584fa28eda5b0cfe73a3caa006921fb0295b6013cda7926de",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionActionDenoiseStep:sha256:d80e9a8b7b05eb5a33e735736931902bfbf0623ad327a81bf5236cfde6440fcc",
           "intermediateOutputs": [
             "vision_tokens",
             "vision_timesteps",
@@ -77401,7 +77983,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3LoopDenoiser:sha256:5cf19d60fcee34a0495ce241483eb05a186d5c7bdb3322459bf7fc4eb09d864a",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3LoopDenoiser:sha256:e1343dc2e03d8b4676a262da05547990ee3ba38593e88a1af5139d05d5b5be51",
           "intermediateOutputs": [
             "velocity_vision",
             "velocity_sound",
@@ -77445,7 +78027,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionSoundCoreDenoiseStep:sha256:b60a4942c2ff28e85194fc3e42bea6e7a63cb303b0ed7827046e91a37a83e39f",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionSoundCoreDenoiseStep:sha256:6ab06dde2398549cd5156a29c7a04e164e81c6e971739bff11cb31cec6f61151",
           "intermediateOutputs": [
             "cond_text_segment",
             "uncond_text_segment",
@@ -77605,7 +78187,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionSoundDenoiseStep:sha256:bcf90b551ba752f30f4766e1c11b5d812361b33f8b347a948e97c66e67bfc6e8",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionSoundDenoiseStep:sha256:2ab8f6b29642b0a804d7662f8d8c5f5fe5da4a23e757f8cd05a7338ded8637b1",
           "intermediateOutputs": [
             "vision_tokens",
             "vision_timesteps",
@@ -77656,7 +78238,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3LoopDenoiser:sha256:5cf19d60fcee34a0495ce241483eb05a186d5c7bdb3322459bf7fc4eb09d864a",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3LoopDenoiser:sha256:e1343dc2e03d8b4676a262da05547990ee3ba38593e88a1af5139d05d5b5be51",
           "intermediateOutputs": [
             "velocity_vision",
             "velocity_sound",
@@ -77700,7 +78282,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionCoreDenoiseStep:sha256:24ac92e641d21454b0de4a54f2379bae99cfa8f40aa6511a74eda95936f54cec",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionCoreDenoiseStep:sha256:434061ea2aaf636e50d15f23b7176d77dc9bdb6dccf3d386373707a1ffbe222c",
           "intermediateOutputs": [
             "cond_text_segment",
             "uncond_text_segment",
@@ -77806,7 +78388,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionDenoiseStep:sha256:e4ab8353177b71b6586fcd270a6280db5794b0979cbd36e8c7eb2ee1ac972f8f",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3VisionDenoiseStep:sha256:b87bf4cea690fc423db8ae37ea97996b820a4dcb517910dc78881efaacd509da",
           "intermediateOutputs": [
             "vision_tokens",
             "vision_timesteps",
@@ -77839,7 +78421,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Cosmos3LoopDenoiser:sha256:5cf19d60fcee34a0495ce241483eb05a186d5c7bdb3322459bf7fc4eb09d864a",
+          "blockDefinitionId": "diffusers.modular-block:Cosmos3LoopDenoiser:sha256:e1343dc2e03d8b4676a262da05547990ee3ba38593e88a1af5139d05d5b5be51",
           "intermediateOutputs": [
             "velocity_vision",
             "velocity_sound",
@@ -77963,7 +78545,7 @@
           ]
         }
       ],
-      "rootBlockDefinitionId": "diffusers.modular-block:Cosmos3OmniBlocks:sha256:78105cbc44829f30bb20d62798ec76f93c060d07e7cc27804ccfe5b054a2fddb",
+      "rootBlockDefinitionId": "diffusers.modular-block:Cosmos3OmniBlocks:sha256:369ff8a3907febd9973ba49af73dc0ca7ed73b5cbebca5781cb4e4c74dd53fd6",
       "schemaVersion": 1,
       "workflows": [
         {
@@ -77976,7 +78558,7 @@
                 "diffusers.modular-block:Cosmos3VisionPackSequenceStep:sha256:e6f15fe12a4e1f9a1205cdb3ce3c1b418977fef1525cdb48f5ca31a43f6fda9c",
                 "diffusers.modular-block:Cosmos3VisionDenoiseInputStep:sha256:76277495e7bc79326a8b56720e089d27410dba20fda2ba772fd410ee1504a946",
                 "diffusers.modular-block:Cosmos3SetTimestepsStep:sha256:b5264dfba554ec2a31192ebf04a557bc537d2a2a47be087a20513549bb5daf6a",
-                "diffusers.modular-block:Cosmos3VisionDenoiseStep:sha256:e4ab8353177b71b6586fcd270a6280db5794b0979cbd36e8c7eb2ee1ac972f8f",
+                "diffusers.modular-block:Cosmos3VisionDenoiseStep:sha256:b87bf4cea690fc423db8ae37ea97996b820a4dcb517910dc78881efaacd509da",
                 "diffusers.modular-block:Cosmos3VideoDecodeStep:sha256:d3c8644adf9487abfa2fc82a88682e94cabecda8593c4313b064a5213b39a192",
                 "diffusers.modular-block:Cosmos3ActionOutputStep:sha256:bc5da461ed267554b994d2d2e8e3b7a2e866e7d53cbf970460ac705658bce01b"
               ],
@@ -78081,7 +78663,7 @@
                 "diffusers.modular-block:Cosmos3VisionPackSequenceStep:sha256:e6f15fe12a4e1f9a1205cdb3ce3c1b418977fef1525cdb48f5ca31a43f6fda9c",
                 "diffusers.modular-block:Cosmos3VisionDenoiseInputStep:sha256:76277495e7bc79326a8b56720e089d27410dba20fda2ba772fd410ee1504a946",
                 "diffusers.modular-block:Cosmos3SetTimestepsStep:sha256:b5264dfba554ec2a31192ebf04a557bc537d2a2a47be087a20513549bb5daf6a",
-                "diffusers.modular-block:Cosmos3VisionDenoiseStep:sha256:e4ab8353177b71b6586fcd270a6280db5794b0979cbd36e8c7eb2ee1ac972f8f",
+                "diffusers.modular-block:Cosmos3VisionDenoiseStep:sha256:b87bf4cea690fc423db8ae37ea97996b820a4dcb517910dc78881efaacd509da",
                 "diffusers.modular-block:Cosmos3VideoDecodeStep:sha256:d3c8644adf9487abfa2fc82a88682e94cabecda8593c4313b064a5213b39a192",
                 "diffusers.modular-block:Cosmos3ActionOutputStep:sha256:bc5da461ed267554b994d2d2e8e3b7a2e866e7d53cbf970460ac705658bce01b"
               ],
@@ -78186,7 +78768,7 @@
                 "diffusers.modular-block:Cosmos3VisionPackSequenceStep:sha256:e6f15fe12a4e1f9a1205cdb3ce3c1b418977fef1525cdb48f5ca31a43f6fda9c",
                 "diffusers.modular-block:Cosmos3VisionDenoiseInputStep:sha256:76277495e7bc79326a8b56720e089d27410dba20fda2ba772fd410ee1504a946",
                 "diffusers.modular-block:Cosmos3SetTimestepsStep:sha256:b5264dfba554ec2a31192ebf04a557bc537d2a2a47be087a20513549bb5daf6a",
-                "diffusers.modular-block:Cosmos3VisionDenoiseStep:sha256:e4ab8353177b71b6586fcd270a6280db5794b0979cbd36e8c7eb2ee1ac972f8f",
+                "diffusers.modular-block:Cosmos3VisionDenoiseStep:sha256:b87bf4cea690fc423db8ae37ea97996b820a4dcb517910dc78881efaacd509da",
                 "diffusers.modular-block:Cosmos3VideoDecodeStep:sha256:d3c8644adf9487abfa2fc82a88682e94cabecda8593c4313b064a5213b39a192",
                 "diffusers.modular-block:Cosmos3ActionOutputStep:sha256:bc5da461ed267554b994d2d2e8e3b7a2e866e7d53cbf970460ac705658bce01b"
               ],
@@ -78296,7 +78878,7 @@
                 "diffusers.modular-block:Cosmos3VisionPackSequenceStep:sha256:e6f15fe12a4e1f9a1205cdb3ce3c1b418977fef1525cdb48f5ca31a43f6fda9c",
                 "diffusers.modular-block:Cosmos3VisionDenoiseInputStep:sha256:76277495e7bc79326a8b56720e089d27410dba20fda2ba772fd410ee1504a946",
                 "diffusers.modular-block:Cosmos3SetTimestepsStep:sha256:b5264dfba554ec2a31192ebf04a557bc537d2a2a47be087a20513549bb5daf6a",
-                "diffusers.modular-block:Cosmos3VisionDenoiseStep:sha256:e4ab8353177b71b6586fcd270a6280db5794b0979cbd36e8c7eb2ee1ac972f8f",
+                "diffusers.modular-block:Cosmos3VisionDenoiseStep:sha256:b87bf4cea690fc423db8ae37ea97996b820a4dcb517910dc78881efaacd509da",
                 "diffusers.modular-block:Cosmos3VideoDecodeStep:sha256:d3c8644adf9487abfa2fc82a88682e94cabecda8593c4313b064a5213b39a192",
                 "diffusers.modular-block:Cosmos3ActionOutputStep:sha256:bc5da461ed267554b994d2d2e8e3b7a2e866e7d53cbf970460ac705658bce01b"
               ],
@@ -78408,7 +78990,7 @@
                 "diffusers.modular-block:Cosmos3SoundPrepareLatentsStep:sha256:40b635564c6c443152b0616db8cb13be7d5e3f2ccef5b5c345ff2ff736526962",
                 "diffusers.modular-block:Cosmos3SoundPackSequenceStep:sha256:c53688e7e48a8b5404ed23c3e6dd3575147180df7c075fe6325ad83f4d5ddaec",
                 "diffusers.modular-block:Cosmos3SoundDenoiseInputStep:sha256:a31545af3df6390555e7e757eea180e82ba8dbc444c03424ec335a33e4170439",
-                "diffusers.modular-block:Cosmos3VisionSoundDenoiseStep:sha256:bcf90b551ba752f30f4766e1c11b5d812361b33f8b347a948e97c66e67bfc6e8",
+                "diffusers.modular-block:Cosmos3VisionSoundDenoiseStep:sha256:2ab8f6b29642b0a804d7662f8d8c5f5fe5da4a23e757f8cd05a7338ded8637b1",
                 "diffusers.modular-block:Cosmos3VideoDecodeStep:sha256:d3c8644adf9487abfa2fc82a88682e94cabecda8593c4313b064a5213b39a192",
                 "diffusers.modular-block:Cosmos3SoundDecodeStep:sha256:ff040ab75e63e11be1a622540a6c096cc12f5c52e90a500e9173ed6797a7150a",
                 "diffusers.modular-block:Cosmos3ActionOutputStep:sha256:bc5da461ed267554b994d2d2e8e3b7a2e866e7d53cbf970460ac705658bce01b"
@@ -78539,7 +79121,7 @@
                 "diffusers.modular-block:Cosmos3SoundPrepareLatentsStep:sha256:40b635564c6c443152b0616db8cb13be7d5e3f2ccef5b5c345ff2ff736526962",
                 "diffusers.modular-block:Cosmos3SoundPackSequenceStep:sha256:c53688e7e48a8b5404ed23c3e6dd3575147180df7c075fe6325ad83f4d5ddaec",
                 "diffusers.modular-block:Cosmos3SoundDenoiseInputStep:sha256:a31545af3df6390555e7e757eea180e82ba8dbc444c03424ec335a33e4170439",
-                "diffusers.modular-block:Cosmos3VisionSoundDenoiseStep:sha256:bcf90b551ba752f30f4766e1c11b5d812361b33f8b347a948e97c66e67bfc6e8",
+                "diffusers.modular-block:Cosmos3VisionSoundDenoiseStep:sha256:2ab8f6b29642b0a804d7662f8d8c5f5fe5da4a23e757f8cd05a7338ded8637b1",
                 "diffusers.modular-block:Cosmos3VideoDecodeStep:sha256:d3c8644adf9487abfa2fc82a88682e94cabecda8593c4313b064a5213b39a192",
                 "diffusers.modular-block:Cosmos3SoundDecodeStep:sha256:ff040ab75e63e11be1a622540a6c096cc12f5c52e90a500e9173ed6797a7150a",
                 "diffusers.modular-block:Cosmos3ActionOutputStep:sha256:bc5da461ed267554b994d2d2e8e3b7a2e866e7d53cbf970460ac705658bce01b"
@@ -78675,7 +79257,7 @@
                 "diffusers.modular-block:Cosmos3SoundPrepareLatentsStep:sha256:40b635564c6c443152b0616db8cb13be7d5e3f2ccef5b5c345ff2ff736526962",
                 "diffusers.modular-block:Cosmos3SoundPackSequenceStep:sha256:c53688e7e48a8b5404ed23c3e6dd3575147180df7c075fe6325ad83f4d5ddaec",
                 "diffusers.modular-block:Cosmos3SoundDenoiseInputStep:sha256:a31545af3df6390555e7e757eea180e82ba8dbc444c03424ec335a33e4170439",
-                "diffusers.modular-block:Cosmos3VisionSoundDenoiseStep:sha256:bcf90b551ba752f30f4766e1c11b5d812361b33f8b347a948e97c66e67bfc6e8",
+                "diffusers.modular-block:Cosmos3VisionSoundDenoiseStep:sha256:2ab8f6b29642b0a804d7662f8d8c5f5fe5da4a23e757f8cd05a7338ded8637b1",
                 "diffusers.modular-block:Cosmos3VideoDecodeStep:sha256:d3c8644adf9487abfa2fc82a88682e94cabecda8593c4313b064a5213b39a192",
                 "diffusers.modular-block:Cosmos3SoundDecodeStep:sha256:ff040ab75e63e11be1a622540a6c096cc12f5c52e90a500e9173ed6797a7150a",
                 "diffusers.modular-block:Cosmos3ActionOutputStep:sha256:bc5da461ed267554b994d2d2e8e3b7a2e866e7d53cbf970460ac705658bce01b"
@@ -78811,7 +79393,7 @@
                 "diffusers.modular-block:Cosmos3ActionPrepareLatentsStep:sha256:7cf3d9fdc1c45e1a748f4b846f7b428a80d68ead99721bf94d03354542b596f8",
                 "diffusers.modular-block:Cosmos3ActionPackSequenceStep:sha256:796f643838f36f7a1cc8f8952c0575f3fd223c65d89a73727b6a84faf5e26771",
                 "diffusers.modular-block:Cosmos3ActionDenoiseInputStep:sha256:c35e82e733ad11566d82c629f8ddd83aa9695dbe49251aaf24b63d97d8eb21a4",
-                "diffusers.modular-block:Cosmos3VisionActionDenoiseStep:sha256:027c6265eb97489584fa28eda5b0cfe73a3caa006921fb0295b6013cda7926de",
+                "diffusers.modular-block:Cosmos3VisionActionDenoiseStep:sha256:d80e9a8b7b05eb5a33e735736931902bfbf0623ad327a81bf5236cfde6440fcc",
                 "diffusers.modular-block:Cosmos3VideoDecodeStep:sha256:d3c8644adf9487abfa2fc82a88682e94cabecda8593c4313b064a5213b39a192",
                 "diffusers.modular-block:Cosmos3ActionOutputStep:sha256:bc5da461ed267554b994d2d2e8e3b7a2e866e7d53cbf970460ac705658bce01b"
               ],
@@ -78939,7 +79521,7 @@
                 "diffusers.modular-block:Cosmos3ActionPrepareLatentsStep:sha256:7cf3d9fdc1c45e1a748f4b846f7b428a80d68ead99721bf94d03354542b596f8",
                 "diffusers.modular-block:Cosmos3ActionPackSequenceStep:sha256:796f643838f36f7a1cc8f8952c0575f3fd223c65d89a73727b6a84faf5e26771",
                 "diffusers.modular-block:Cosmos3ActionDenoiseInputStep:sha256:c35e82e733ad11566d82c629f8ddd83aa9695dbe49251aaf24b63d97d8eb21a4",
-                "diffusers.modular-block:Cosmos3VisionActionDenoiseStep:sha256:027c6265eb97489584fa28eda5b0cfe73a3caa006921fb0295b6013cda7926de",
+                "diffusers.modular-block:Cosmos3VisionActionDenoiseStep:sha256:d80e9a8b7b05eb5a33e735736931902bfbf0623ad327a81bf5236cfde6440fcc",
                 "diffusers.modular-block:Cosmos3VideoDecodeStep:sha256:d3c8644adf9487abfa2fc82a88682e94cabecda8593c4313b064a5213b39a192",
                 "diffusers.modular-block:Cosmos3ActionOutputStep:sha256:bc5da461ed267554b994d2d2e8e3b7a2e866e7d53cbf970460ac705658bce01b"
               ],
@@ -79067,7 +79649,7 @@
                 "diffusers.modular-block:Cosmos3ActionPrepareLatentsStep:sha256:7cf3d9fdc1c45e1a748f4b846f7b428a80d68ead99721bf94d03354542b596f8",
                 "diffusers.modular-block:Cosmos3ActionPackSequenceStep:sha256:796f643838f36f7a1cc8f8952c0575f3fd223c65d89a73727b6a84faf5e26771",
                 "diffusers.modular-block:Cosmos3ActionDenoiseInputStep:sha256:c35e82e733ad11566d82c629f8ddd83aa9695dbe49251aaf24b63d97d8eb21a4",
-                "diffusers.modular-block:Cosmos3VisionActionDenoiseStep:sha256:027c6265eb97489584fa28eda5b0cfe73a3caa006921fb0295b6013cda7926de",
+                "diffusers.modular-block:Cosmos3VisionActionDenoiseStep:sha256:d80e9a8b7b05eb5a33e735736931902bfbf0623ad327a81bf5236cfde6440fcc",
                 "diffusers.modular-block:Cosmos3VideoDecodeStep:sha256:d3c8644adf9487abfa2fc82a88682e94cabecda8593c4313b064a5213b39a192",
                 "diffusers.modular-block:Cosmos3ActionOutputStep:sha256:bc5da461ed267554b994d2d2e8e3b7a2e866e7d53cbf970460ac705658bce01b"
               ],
@@ -86742,7 +87324,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2AutoCoreDenoiseStep:sha256:0bc669ba1343885122beb0fee8c7d83492b972085c80b591d6f55e04232cbf2f",
+          "blockDefinitionId": "diffusers.modular-block:LTX2AutoCoreDenoiseStep:sha256:387852bf402c69f82aad3f2e4e75da41e65c1f791e68b1fea84f88a357ccb904",
           "branchNames": [
             "in_context",
             "condition",
@@ -86934,7 +87516,7 @@
           ]
         }
       ],
-      "contentHash": "sha256:ba4baf7de1b1f2442dc917d37796e8a5db392ed98173f9d47f7f2f523844cdf2",
+      "contentHash": "sha256:eb52b345488b03e1b95110c7ffab290d2a07f4d61aa9c463e0dbfc0db21a28d5",
       "pipelineClass": "LTX25ModularPipeline",
       "placements": [
         {
@@ -87145,7 +87727,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2AutoCoreDenoiseStep:sha256:0bc669ba1343885122beb0fee8c7d83492b972085c80b591d6f55e04232cbf2f",
+          "blockDefinitionId": "diffusers.modular-block:LTX2AutoCoreDenoiseStep:sha256:387852bf402c69f82aad3f2e4e75da41e65c1f791e68b1fea84f88a357ccb904",
           "intermediateOutputs": [
             "connector_prompt_embeds",
             "connector_audio_prompt_embeds",
@@ -87176,7 +87758,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2InContextCoreDenoiseStep:sha256:f24158809c78328798dcb1b0b030a52069b7c80ecf88ae17e07e228c92281d3f",
+          "blockDefinitionId": "diffusers.modular-block:LTX2InContextCoreDenoiseStep:sha256:df883f87e496b42bdaae837541893640bb53260bce3584f3bfe42794c6d81203",
           "intermediateOutputs": [
             "connector_prompt_embeds",
             "connector_audio_prompt_embeds",
@@ -87315,7 +87897,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:950b2ad05ecd656132f0e50b6431d229440f0693512233806e6937aa3f36ecc7",
+          "blockDefinitionId": "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:4e2636c352626a765e846ca924e6a311a4f157b253e65f00198812c21de62552",
           "intermediateOutputs": [],
           "legacyPath": "denoise.in_context.denoise",
           "order": 6,
@@ -87338,7 +87920,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:c1961b0df224676d8158184ebfa98a4347d5c01d87f2c90b576a11b23d98294b",
+          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:d931b1f5ea38660a04d89e86e4e51ffe956c1a00023045fa427e055fd6d42883",
           "intermediateOutputs": [],
           "legacyPath": "denoise.in_context.denoise.denoiser",
           "order": 1,
@@ -87362,7 +87944,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2ConditionCoreDenoiseStep:sha256:3a2942d554bffefe97d23b7a56c375f3b0be7f9107d61d53ecba9d0fd93b809e",
+          "blockDefinitionId": "diffusers.modular-block:LTX2ConditionCoreDenoiseStep:sha256:6fb81dc68db19bf22dbcc5645106c0af68bf38c4a453f98c39dd756003c98383",
           "intermediateOutputs": [
             "connector_prompt_embeds",
             "connector_audio_prompt_embeds",
@@ -87471,7 +88053,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:950b2ad05ecd656132f0e50b6431d229440f0693512233806e6937aa3f36ecc7",
+          "blockDefinitionId": "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:4e2636c352626a765e846ca924e6a311a4f157b253e65f00198812c21de62552",
           "intermediateOutputs": [],
           "legacyPath": "denoise.condition.denoise",
           "order": 5,
@@ -87494,7 +88076,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:c1961b0df224676d8158184ebfa98a4347d5c01d87f2c90b576a11b23d98294b",
+          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:d931b1f5ea38660a04d89e86e4e51ffe956c1a00023045fa427e055fd6d42883",
           "intermediateOutputs": [],
           "legacyPath": "denoise.condition.denoise.denoiser",
           "order": 1,
@@ -87518,7 +88100,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2Image2VideoCoreDenoiseStep:sha256:38af484d045a15c099d7b9a98b934e0bf8dddeb60fb5be4f978b16790f359921",
+          "blockDefinitionId": "diffusers.modular-block:LTX2Image2VideoCoreDenoiseStep:sha256:a632c7f4c984dc9ff07eb060258d6d7492ed509c4529396b02cce88c68b4c8cc",
           "intermediateOutputs": [
             "connector_prompt_embeds",
             "connector_audio_prompt_embeds",
@@ -87634,7 +88216,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2Image2VideoDenoiseStep:sha256:5fad62ac7b55e595c34625db68f0a81a5e1418db27070e4e410b28324d0b51ee",
+          "blockDefinitionId": "diffusers.modular-block:LTX2Image2VideoDenoiseStep:sha256:8751d693fa581d9b3c2ef2ba83c2a091083e46a685d5a437318534b2c97d60e1",
           "intermediateOutputs": [],
           "legacyPath": "denoise.image2video.denoise",
           "order": 6,
@@ -87657,7 +88239,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:c1961b0df224676d8158184ebfa98a4347d5c01d87f2c90b576a11b23d98294b",
+          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:d931b1f5ea38660a04d89e86e4e51ffe956c1a00023045fa427e055fd6d42883",
           "intermediateOutputs": [],
           "legacyPath": "denoise.image2video.denoise.denoiser",
           "order": 1,
@@ -87681,7 +88263,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2CoreDenoiseStep:sha256:ac71e8bacb814171b3eb9ad9d05f1b5d88dccaf502b1f453b7558c8877b5bf18",
+          "blockDefinitionId": "diffusers.modular-block:LTX2CoreDenoiseStep:sha256:d7f6a6cedb694be5f5eca1532d80e69b531162a33c1faec7884e18637e76b556",
           "intermediateOutputs": [
             "connector_prompt_embeds",
             "connector_audio_prompt_embeds",
@@ -87782,7 +88364,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2DenoiseStep:sha256:7ddd8a9879dc1bdbe94e68252941f857f9ae8d0594d3bd2c0247e059cd6be9d4",
+          "blockDefinitionId": "diffusers.modular-block:LTX2DenoiseStep:sha256:4558ab1720e601a8ff548e32c21e61ec509bb13abae661b7c5cd54715a80639a",
           "intermediateOutputs": [],
           "legacyPath": "denoise.text2video.denoise",
           "order": 5,
@@ -87805,7 +88387,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:c1961b0df224676d8158184ebfa98a4347d5c01d87f2c90b576a11b23d98294b",
+          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:d931b1f5ea38660a04d89e86e4e51ffe956c1a00023045fa427e055fd6d42883",
           "intermediateOutputs": [],
           "legacyPath": "denoise.text2video.denoise.denoiser",
           "order": 1,
@@ -87934,7 +88516,7 @@
           ]
         }
       ],
-      "rootBlockDefinitionId": "diffusers.modular-block:LTX25AutoBlocks:sha256:477021db418762ed44f5598bdc9bb25e8ed21e0d309ac117a899b46e63587694",
+      "rootBlockDefinitionId": "diffusers.modular-block:LTX25AutoBlocks:sha256:3f4ba9f7e0d988e2aa06c008b9b3db162ab9ac3803f2341d4d97e52018395538",
       "schemaVersion": 1,
       "workflows": [
         {
@@ -87949,7 +88531,7 @@
                 "diffusers.modular-block:LTX2PrepareLatentsStep:sha256:38851ce4f8fe3ec2b3510c981ee5cf928e746fa983c7fa0f8871f560dfad1f8a",
                 "diffusers.modular-block:LTX2PrepareAudioLatentsStep:sha256:ec54dda599080d54fc884fe1c7ac83a17db6e5151e1aec39ca415cfc374a993f",
                 "diffusers.modular-block:LTX2PrepareCoordsStep:sha256:f0f44a4549e12d132c8ab8e444d28288c2b72332d107211658aea16a5a2b4356",
-                "diffusers.modular-block:LTX2DenoiseStep:sha256:7ddd8a9879dc1bdbe94e68252941f857f9ae8d0594d3bd2c0247e059cd6be9d4",
+                "diffusers.modular-block:LTX2DenoiseStep:sha256:4558ab1720e601a8ff548e32c21e61ec509bb13abae661b7c5cd54715a80639a",
                 "diffusers.modular-block:LTX2DiffusionVaeDecoderStep:sha256:e9c28196f0f21411af00b38199621c450203cf2a27909bcd417f36784fe92053",
                 "diffusers.modular-block:LTX2AudioDecoderStep:sha256:74ff7c271d200c312dddfd7b7425b65a34e14e1ec6f8d3259cbb4ed406b7de17"
               ],
@@ -88079,7 +88661,7 @@
                 "diffusers.modular-block:LTX2Image2VideoPrepareLatentsStep:sha256:1d19067d0eda2b4cf3f819859e7f96cccb278150157f700e8d566d793ada767c",
                 "diffusers.modular-block:LTX2PrepareAudioLatentsStep:sha256:ec54dda599080d54fc884fe1c7ac83a17db6e5151e1aec39ca415cfc374a993f",
                 "diffusers.modular-block:LTX2PrepareCoordsStep:sha256:f0f44a4549e12d132c8ab8e444d28288c2b72332d107211658aea16a5a2b4356",
-                "diffusers.modular-block:LTX2Image2VideoDenoiseStep:sha256:5fad62ac7b55e595c34625db68f0a81a5e1418db27070e4e410b28324d0b51ee",
+                "diffusers.modular-block:LTX2Image2VideoDenoiseStep:sha256:8751d693fa581d9b3c2ef2ba83c2a091083e46a685d5a437318534b2c97d60e1",
                 "diffusers.modular-block:LTX2DiffusionVaeDecoderStep:sha256:e9c28196f0f21411af00b38199621c450203cf2a27909bcd417f36784fe92053",
                 "diffusers.modular-block:LTX2AudioDecoderStep:sha256:74ff7c271d200c312dddfd7b7425b65a34e14e1ec6f8d3259cbb4ed406b7de17"
               ],
@@ -88218,7 +88800,7 @@
                 "diffusers.modular-block:LTX2ConditionSetTimestepsStep:sha256:442af509b9639474fcfe9169c6f9e488ffc25cf4b0b67da73537bb2aadbf17e9",
                 "diffusers.modular-block:LTX2ConditionPrepareAudioLatentsStep:sha256:a1cd137fba34089227604d4e7915f5b35664a8c5981e2ecaffab96b60ad06ede",
                 "diffusers.modular-block:LTX2ConditionPrepareCoordsStep:sha256:b47a57267f0c3ff501ea2d4b5c787b97e98916063dd58687050317ad8ede9f6e",
-                "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:950b2ad05ecd656132f0e50b6431d229440f0693512233806e6937aa3f36ecc7",
+                "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:4e2636c352626a765e846ca924e6a311a4f157b253e65f00198812c21de62552",
                 "diffusers.modular-block:LTX2TrimConditionTokensStep:sha256:bbbcf6aa79fe6592b2dda8e26f9212527c04292970fcef4271e7926ad5c2f20c",
                 "diffusers.modular-block:LTX2DiffusionVaeDecoderStep:sha256:e9c28196f0f21411af00b38199621c450203cf2a27909bcd417f36784fe92053",
                 "diffusers.modular-block:LTX2AudioDecoderStep:sha256:74ff7c271d200c312dddfd7b7425b65a34e14e1ec6f8d3259cbb4ed406b7de17"
@@ -88358,7 +88940,7 @@
                 "diffusers.modular-block:LTX2ConditionSetTimestepsStep:sha256:442af509b9639474fcfe9169c6f9e488ffc25cf4b0b67da73537bb2aadbf17e9",
                 "diffusers.modular-block:LTX2ConditionPrepareAudioLatentsStep:sha256:a1cd137fba34089227604d4e7915f5b35664a8c5981e2ecaffab96b60ad06ede",
                 "diffusers.modular-block:LTX2ConditionPrepareCoordsStep:sha256:b47a57267f0c3ff501ea2d4b5c787b97e98916063dd58687050317ad8ede9f6e",
-                "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:950b2ad05ecd656132f0e50b6431d229440f0693512233806e6937aa3f36ecc7",
+                "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:4e2636c352626a765e846ca924e6a311a4f157b253e65f00198812c21de62552",
                 "diffusers.modular-block:LTX2TrimConditionTokensStep:sha256:bbbcf6aa79fe6592b2dda8e26f9212527c04292970fcef4271e7926ad5c2f20c",
                 "diffusers.modular-block:LTX2DiffusionVaeDecoderStep:sha256:e9c28196f0f21411af00b38199621c450203cf2a27909bcd417f36784fe92053",
                 "diffusers.modular-block:LTX2AudioDecoderStep:sha256:74ff7c271d200c312dddfd7b7425b65a34e14e1ec6f8d3259cbb4ed406b7de17"
@@ -88712,7 +89294,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2AutoCoreDenoiseStep:sha256:0bc669ba1343885122beb0fee8c7d83492b972085c80b591d6f55e04232cbf2f",
+          "blockDefinitionId": "diffusers.modular-block:LTX2AutoCoreDenoiseStep:sha256:387852bf402c69f82aad3f2e4e75da41e65c1f791e68b1fea84f88a357ccb904",
           "branchNames": [
             "in_context",
             "condition",
@@ -88904,7 +89486,7 @@
           ]
         }
       ],
-      "contentHash": "sha256:843635840f67f4082bbb88816e1c9586fbeb92a383827c1483834ec9d78b139a",
+      "contentHash": "sha256:e4accf85ea1c05861d9ef9bb161dcffeb86c926993fa69170575b8fe5d475bfa",
       "pipelineClass": "LTX2ModularPipeline",
       "placements": [
         {
@@ -89115,7 +89697,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2AutoCoreDenoiseStep:sha256:0bc669ba1343885122beb0fee8c7d83492b972085c80b591d6f55e04232cbf2f",
+          "blockDefinitionId": "diffusers.modular-block:LTX2AutoCoreDenoiseStep:sha256:387852bf402c69f82aad3f2e4e75da41e65c1f791e68b1fea84f88a357ccb904",
           "intermediateOutputs": [
             "connector_prompt_embeds",
             "connector_audio_prompt_embeds",
@@ -89146,7 +89728,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2InContextCoreDenoiseStep:sha256:f24158809c78328798dcb1b0b030a52069b7c80ecf88ae17e07e228c92281d3f",
+          "blockDefinitionId": "diffusers.modular-block:LTX2InContextCoreDenoiseStep:sha256:df883f87e496b42bdaae837541893640bb53260bce3584f3bfe42794c6d81203",
           "intermediateOutputs": [
             "connector_prompt_embeds",
             "connector_audio_prompt_embeds",
@@ -89285,7 +89867,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:950b2ad05ecd656132f0e50b6431d229440f0693512233806e6937aa3f36ecc7",
+          "blockDefinitionId": "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:4e2636c352626a765e846ca924e6a311a4f157b253e65f00198812c21de62552",
           "intermediateOutputs": [],
           "legacyPath": "denoise.in_context.denoise",
           "order": 6,
@@ -89308,7 +89890,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:c1961b0df224676d8158184ebfa98a4347d5c01d87f2c90b576a11b23d98294b",
+          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:d931b1f5ea38660a04d89e86e4e51ffe956c1a00023045fa427e055fd6d42883",
           "intermediateOutputs": [],
           "legacyPath": "denoise.in_context.denoise.denoiser",
           "order": 1,
@@ -89332,7 +89914,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2ConditionCoreDenoiseStep:sha256:3a2942d554bffefe97d23b7a56c375f3b0be7f9107d61d53ecba9d0fd93b809e",
+          "blockDefinitionId": "diffusers.modular-block:LTX2ConditionCoreDenoiseStep:sha256:6fb81dc68db19bf22dbcc5645106c0af68bf38c4a453f98c39dd756003c98383",
           "intermediateOutputs": [
             "connector_prompt_embeds",
             "connector_audio_prompt_embeds",
@@ -89441,7 +90023,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:950b2ad05ecd656132f0e50b6431d229440f0693512233806e6937aa3f36ecc7",
+          "blockDefinitionId": "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:4e2636c352626a765e846ca924e6a311a4f157b253e65f00198812c21de62552",
           "intermediateOutputs": [],
           "legacyPath": "denoise.condition.denoise",
           "order": 5,
@@ -89464,7 +90046,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:c1961b0df224676d8158184ebfa98a4347d5c01d87f2c90b576a11b23d98294b",
+          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:d931b1f5ea38660a04d89e86e4e51ffe956c1a00023045fa427e055fd6d42883",
           "intermediateOutputs": [],
           "legacyPath": "denoise.condition.denoise.denoiser",
           "order": 1,
@@ -89488,7 +90070,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2Image2VideoCoreDenoiseStep:sha256:38af484d045a15c099d7b9a98b934e0bf8dddeb60fb5be4f978b16790f359921",
+          "blockDefinitionId": "diffusers.modular-block:LTX2Image2VideoCoreDenoiseStep:sha256:a632c7f4c984dc9ff07eb060258d6d7492ed509c4529396b02cce88c68b4c8cc",
           "intermediateOutputs": [
             "connector_prompt_embeds",
             "connector_audio_prompt_embeds",
@@ -89604,7 +90186,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2Image2VideoDenoiseStep:sha256:5fad62ac7b55e595c34625db68f0a81a5e1418db27070e4e410b28324d0b51ee",
+          "blockDefinitionId": "diffusers.modular-block:LTX2Image2VideoDenoiseStep:sha256:8751d693fa581d9b3c2ef2ba83c2a091083e46a685d5a437318534b2c97d60e1",
           "intermediateOutputs": [],
           "legacyPath": "denoise.image2video.denoise",
           "order": 6,
@@ -89627,7 +90209,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:c1961b0df224676d8158184ebfa98a4347d5c01d87f2c90b576a11b23d98294b",
+          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:d931b1f5ea38660a04d89e86e4e51ffe956c1a00023045fa427e055fd6d42883",
           "intermediateOutputs": [],
           "legacyPath": "denoise.image2video.denoise.denoiser",
           "order": 1,
@@ -89651,7 +90233,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2CoreDenoiseStep:sha256:ac71e8bacb814171b3eb9ad9d05f1b5d88dccaf502b1f453b7558c8877b5bf18",
+          "blockDefinitionId": "diffusers.modular-block:LTX2CoreDenoiseStep:sha256:d7f6a6cedb694be5f5eca1532d80e69b531162a33c1faec7884e18637e76b556",
           "intermediateOutputs": [
             "connector_prompt_embeds",
             "connector_audio_prompt_embeds",
@@ -89752,7 +90334,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2DenoiseStep:sha256:7ddd8a9879dc1bdbe94e68252941f857f9ae8d0594d3bd2c0247e059cd6be9d4",
+          "blockDefinitionId": "diffusers.modular-block:LTX2DenoiseStep:sha256:4558ab1720e601a8ff548e32c21e61ec509bb13abae661b7c5cd54715a80639a",
           "intermediateOutputs": [],
           "legacyPath": "denoise.text2video.denoise",
           "order": 5,
@@ -89775,7 +90357,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:c1961b0df224676d8158184ebfa98a4347d5c01d87f2c90b576a11b23d98294b",
+          "blockDefinitionId": "diffusers.modular-block:LTX2LoopDenoiser:sha256:d931b1f5ea38660a04d89e86e4e51ffe956c1a00023045fa427e055fd6d42883",
           "intermediateOutputs": [],
           "legacyPath": "denoise.text2video.denoise.denoiser",
           "order": 1,
@@ -89904,7 +90486,7 @@
           ]
         }
       ],
-      "rootBlockDefinitionId": "diffusers.modular-block:LTX2AutoBlocks:sha256:e5d47b6161c3e8d90740b45b07c56a749c86acc320a1508ea1d31bfa874b5943",
+      "rootBlockDefinitionId": "diffusers.modular-block:LTX2AutoBlocks:sha256:a9e4ca4d35ddb1fab0bfa097d09b045e781fbc3c6f077a953450239f523a2151",
       "schemaVersion": 1,
       "workflows": [
         {
@@ -89919,7 +90501,7 @@
                 "diffusers.modular-block:LTX2PrepareLatentsStep:sha256:38851ce4f8fe3ec2b3510c981ee5cf928e746fa983c7fa0f8871f560dfad1f8a",
                 "diffusers.modular-block:LTX2PrepareAudioLatentsStep:sha256:ec54dda599080d54fc884fe1c7ac83a17db6e5151e1aec39ca415cfc374a993f",
                 "diffusers.modular-block:LTX2PrepareCoordsStep:sha256:f0f44a4549e12d132c8ab8e444d28288c2b72332d107211658aea16a5a2b4356",
-                "diffusers.modular-block:LTX2DenoiseStep:sha256:7ddd8a9879dc1bdbe94e68252941f857f9ae8d0594d3bd2c0247e059cd6be9d4",
+                "diffusers.modular-block:LTX2DenoiseStep:sha256:4558ab1720e601a8ff548e32c21e61ec509bb13abae661b7c5cd54715a80639a",
                 "diffusers.modular-block:LTX2VaeDecoderStep:sha256:6a09b4e125a2879d6f1b9ad83d669dc7a8f8362943dbf22ea14923ce2141dbef",
                 "diffusers.modular-block:LTX2AudioDecoderStep:sha256:74ff7c271d200c312dddfd7b7425b65a34e14e1ec6f8d3259cbb4ed406b7de17"
               ],
@@ -90049,7 +90631,7 @@
                 "diffusers.modular-block:LTX2Image2VideoPrepareLatentsStep:sha256:1d19067d0eda2b4cf3f819859e7f96cccb278150157f700e8d566d793ada767c",
                 "diffusers.modular-block:LTX2PrepareAudioLatentsStep:sha256:ec54dda599080d54fc884fe1c7ac83a17db6e5151e1aec39ca415cfc374a993f",
                 "diffusers.modular-block:LTX2PrepareCoordsStep:sha256:f0f44a4549e12d132c8ab8e444d28288c2b72332d107211658aea16a5a2b4356",
-                "diffusers.modular-block:LTX2Image2VideoDenoiseStep:sha256:5fad62ac7b55e595c34625db68f0a81a5e1418db27070e4e410b28324d0b51ee",
+                "diffusers.modular-block:LTX2Image2VideoDenoiseStep:sha256:8751d693fa581d9b3c2ef2ba83c2a091083e46a685d5a437318534b2c97d60e1",
                 "diffusers.modular-block:LTX2VaeDecoderStep:sha256:6a09b4e125a2879d6f1b9ad83d669dc7a8f8362943dbf22ea14923ce2141dbef",
                 "diffusers.modular-block:LTX2AudioDecoderStep:sha256:74ff7c271d200c312dddfd7b7425b65a34e14e1ec6f8d3259cbb4ed406b7de17"
               ],
@@ -90188,7 +90770,7 @@
                 "diffusers.modular-block:LTX2ConditionSetTimestepsStep:sha256:442af509b9639474fcfe9169c6f9e488ffc25cf4b0b67da73537bb2aadbf17e9",
                 "diffusers.modular-block:LTX2ConditionPrepareAudioLatentsStep:sha256:a1cd137fba34089227604d4e7915f5b35664a8c5981e2ecaffab96b60ad06ede",
                 "diffusers.modular-block:LTX2ConditionPrepareCoordsStep:sha256:b47a57267f0c3ff501ea2d4b5c787b97e98916063dd58687050317ad8ede9f6e",
-                "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:950b2ad05ecd656132f0e50b6431d229440f0693512233806e6937aa3f36ecc7",
+                "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:4e2636c352626a765e846ca924e6a311a4f157b253e65f00198812c21de62552",
                 "diffusers.modular-block:LTX2TrimConditionTokensStep:sha256:bbbcf6aa79fe6592b2dda8e26f9212527c04292970fcef4271e7926ad5c2f20c",
                 "diffusers.modular-block:LTX2VaeDecoderStep:sha256:6a09b4e125a2879d6f1b9ad83d669dc7a8f8362943dbf22ea14923ce2141dbef",
                 "diffusers.modular-block:LTX2AudioDecoderStep:sha256:74ff7c271d200c312dddfd7b7425b65a34e14e1ec6f8d3259cbb4ed406b7de17"
@@ -90328,7 +90910,7 @@
                 "diffusers.modular-block:LTX2ConditionSetTimestepsStep:sha256:442af509b9639474fcfe9169c6f9e488ffc25cf4b0b67da73537bb2aadbf17e9",
                 "diffusers.modular-block:LTX2ConditionPrepareAudioLatentsStep:sha256:a1cd137fba34089227604d4e7915f5b35664a8c5981e2ecaffab96b60ad06ede",
                 "diffusers.modular-block:LTX2ConditionPrepareCoordsStep:sha256:b47a57267f0c3ff501ea2d4b5c787b97e98916063dd58687050317ad8ede9f6e",
-                "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:950b2ad05ecd656132f0e50b6431d229440f0693512233806e6937aa3f36ecc7",
+                "diffusers.modular-block:LTX2ConditionDenoiseStep:sha256:4e2636c352626a765e846ca924e6a311a4f157b253e65f00198812c21de62552",
                 "diffusers.modular-block:LTX2TrimConditionTokensStep:sha256:bbbcf6aa79fe6592b2dda8e26f9212527c04292970fcef4271e7926ad5c2f20c",
                 "diffusers.modular-block:LTX2VaeDecoderStep:sha256:6a09b4e125a2879d6f1b9ad83d669dc7a8f8362943dbf22ea14923ce2141dbef",
                 "diffusers.modular-block:LTX2AudioDecoderStep:sha256:74ff7c271d200c312dddfd7b7425b65a34e14e1ec6f8d3259cbb4ed406b7de17"
@@ -100952,7 +101534,7 @@
     },
     {
       "conditionals": [],
-      "contentHash": "sha256:8b9e742bf4e0688ef7f4f2b0aeaa4ac9f03cdd43e62a83275507add2cd9c7b59",
+      "contentHash": "sha256:7d8f02560be1cf5670e66cd89c60babe23b1b3bf68ce94c21371359c882b29bb",
       "pipelineClass": "Wan22Image2VideoModularPipeline",
       "placements": [
         {
@@ -101017,7 +101599,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Wan22Image2VideoCoreDenoiseStep:sha256:e9676ec2aef44a0c5cf4ec4e7dfc9a92e828b4eb9d545690a1f1d26566acc44c",
+          "blockDefinitionId": "diffusers.modular-block:Wan22Image2VideoCoreDenoiseStep:sha256:08a8f09cd4578f1551be5e392c52132927ed79d46013563a518ec6e5ebaefa9e",
           "intermediateOutputs": [
             "batch_size",
             "dtype",
@@ -101075,7 +101657,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Wan22Image2VideoDenoiseStep:sha256:9daec42f0095aefde5606e02f4873451109fede560e75212310e9885dc1b15db",
+          "blockDefinitionId": "diffusers.modular-block:Wan22Image2VideoDenoiseStep:sha256:c51d77edbdec4084a4542e734a31d1eedace36aeee6c048de29bfcd5351c942a",
           "intermediateOutputs": [],
           "legacyPath": "denoise.denoise",
           "order": 4,
@@ -101096,7 +101678,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Wan22LoopDenoiser:sha256:a902a0d881cb4959492bfac103336d334a533be123a5d83fbc8fae4267d44ba5",
+          "blockDefinitionId": "diffusers.modular-block:Wan22LoopDenoiser:sha256:194524add4567c94a2654a8d4ac2a0e4d67ccede3063e67e296a6a3ef54c90b3",
           "intermediateOutputs": [],
           "legacyPath": "denoise.denoise.denoiser",
           "order": 1,
@@ -101129,7 +101711,7 @@
           ]
         }
       ],
-      "rootBlockDefinitionId": "diffusers.modular-block:Wan22Image2VideoBlocks:sha256:5d82219c6b1b2062d207b874b81d456152260ff765b22c048a3115f864a180b5",
+      "rootBlockDefinitionId": "diffusers.modular-block:Wan22Image2VideoBlocks:sha256:3f74e974c46328f5d2cd26e8a2aea9a337efe0042ca7a14a5fc584b50579326e",
       "schemaVersion": 1,
       "workflows": [
         {
@@ -101144,7 +101726,7 @@
                 "diffusers.modular-block:WanAdditionalInputsStep:sha256:0e8466078ba357fdb890ebefd7a7af82afbb1a9858558689d324763082ae38ff",
                 "diffusers.modular-block:WanSetTimestepsStep:sha256:1fdb6df6d9234985e800870f50949a9d6887c722403724d91742d2466bccc7bb",
                 "diffusers.modular-block:WanPrepareLatentsStep:sha256:a1ab70a6b56beaf8fbc8ad13f108513c0c1762e6809cdd8d70e8de32335c228c",
-                "diffusers.modular-block:Wan22Image2VideoDenoiseStep:sha256:9daec42f0095aefde5606e02f4873451109fede560e75212310e9885dc1b15db",
+                "diffusers.modular-block:Wan22Image2VideoDenoiseStep:sha256:c51d77edbdec4084a4542e734a31d1eedace36aeee6c048de29bfcd5351c942a",
                 "diffusers.modular-block:WanVaeDecoderStep:sha256:25745045203f25f197764c50e17110e177636541705de31ad069576eabdde511"
               ],
               "activeLeafPaths": [
@@ -101197,7 +101779,7 @@
     },
     {
       "conditionals": [],
-      "contentHash": "sha256:22802a1b526a03dfb99a1edb98a7ba05629977fc2eb179277285d9419fbcfbc1",
+      "contentHash": "sha256:20a50179c714006897d2aeaf03d7e9d2eee46c960b1b3bb1331f900dc0a6e615",
       "pipelineClass": "Wan22ModularPipeline",
       "placements": [
         {
@@ -101213,7 +101795,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Wan22CoreDenoiseStep:sha256:470671f61d68338083a5a051eede55600400b681b46c7a8c1de6e185cf24d5cd",
+          "blockDefinitionId": "diffusers.modular-block:Wan22CoreDenoiseStep:sha256:3bacfdc47bb5b52b1ff1f9444bfd0e8a0ab4b1b06a9f18e465d96dc577af4b7d",
           "intermediateOutputs": [
             "batch_size",
             "dtype",
@@ -101261,7 +101843,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Wan22DenoiseStep:sha256:74bb7f99087db12b178bb99d192ed7209986b8d27817263d0169cb0efb058b9d",
+          "blockDefinitionId": "diffusers.modular-block:Wan22DenoiseStep:sha256:217a54b74465756c8b2237e6903c0d035e80f340b4635ecfcbb7686aa65089cb",
           "intermediateOutputs": [],
           "legacyPath": "denoise.denoise",
           "order": 3,
@@ -101282,7 +101864,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:Wan22LoopDenoiser:sha256:a902a0d881cb4959492bfac103336d334a533be123a5d83fbc8fae4267d44ba5",
+          "blockDefinitionId": "diffusers.modular-block:Wan22LoopDenoiser:sha256:194524add4567c94a2654a8d4ac2a0e4d67ccede3063e67e296a6a3ef54c90b3",
           "intermediateOutputs": [],
           "legacyPath": "denoise.denoise.denoiser",
           "order": 1,
@@ -101315,7 +101897,7 @@
           ]
         }
       ],
-      "rootBlockDefinitionId": "diffusers.modular-block:Wan22Blocks:sha256:4b04d4db1a93b220bae125579bb5bc93ad47b82c60c30ca6b525f8da24f9c8be",
+      "rootBlockDefinitionId": "diffusers.modular-block:Wan22Blocks:sha256:0a2c1738dac8ca9e40db3d2d09a8e234ff787dcc6ae157a70b8143c48acdb025",
       "schemaVersion": 1,
       "workflows": [
         {
@@ -101326,7 +101908,7 @@
                 "diffusers.modular-block:WanTextInputStep:sha256:d49e890e0f66be55b833da64cbf0cb312089c55f6f01cbcf250fbc52be519bca",
                 "diffusers.modular-block:WanSetTimestepsStep:sha256:1fdb6df6d9234985e800870f50949a9d6887c722403724d91742d2466bccc7bb",
                 "diffusers.modular-block:WanPrepareLatentsStep:sha256:a1ab70a6b56beaf8fbc8ad13f108513c0c1762e6809cdd8d70e8de32335c228c",
-                "diffusers.modular-block:Wan22DenoiseStep:sha256:74bb7f99087db12b178bb99d192ed7209986b8d27817263d0169cb0efb058b9d",
+                "diffusers.modular-block:Wan22DenoiseStep:sha256:217a54b74465756c8b2237e6903c0d035e80f340b4635ecfcbb7686aa65089cb",
                 "diffusers.modular-block:WanVaeDecoderStep:sha256:25745045203f25f197764c50e17110e177636541705de31ad069576eabdde511"
               ],
               "activeLeafPaths": [

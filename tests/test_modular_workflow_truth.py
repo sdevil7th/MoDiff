@@ -121,7 +121,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                     reviewed_whole_workflow_graph_adapter(model_type, candidate["workflowId"]),
                     f"{model_type}:{candidate['workflowId']} lacks its exact reviewed whole-workflow adapter",
                 )
-        self.assertEqual(PINNED_DIFFUSERS_REVISION, "2f7e0154a9db246e95c9ede43edba7db5b130805")
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "fbf49e7f35857f76bc57b177e26f12b03687c668")
         dependency_contract = Path("pyproject.toml").read_text(encoding="utf-8")
         self.assertIn(
             f"diffusers.git@{PINNED_DIFFUSERS_REVISION}",

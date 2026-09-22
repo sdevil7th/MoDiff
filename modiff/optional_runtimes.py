@@ -29,6 +29,7 @@ TRANSFORMERS_MAIN_PEFT_GGUF_RUNTIME_PROFILE_ID = "huggingface-transformers-main-
 TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID = (
     "huggingface-transformers-main-96fe6dce-peft-0.20.0-bitsandbytes-0.50.0"
 )
+TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-peft-5.17.0-0.20.0"
 TRANSFORMERS_MAIN_COMMIT = "96fe6dce36cc929a5ffd3e34296554c4cb6b669e"
 TRANSFORMERS_MAIN_REVIEW_BASE_COMMIT = "a597f974857b3d92939971296bc0deb93d33d780"
 TRANSFORMERS_MAIN_REVIEWED_DELTA_PATHS = (
@@ -1337,8 +1338,186 @@ _GALLERY_MEDIA_PROFILE = replace(
     ),
 )
 
+# Published Hugging Face wheels, locked separately from historical qualified
+# profiles. Availability remains closed until this exact target passes the
+# portable qualifier; installing new versions must not rewrite an old identity.
+_TRANSFORMERS_517_WHEELS = (
+    {
+        "distribution": "transformers",
+        "version": "5.17.0",
+        "filename": "transformers-5.17.0-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/e8/d0/c502b60d684adbd98a8dc7d5bb866842772b816ac4354e4608be240041ae/transformers-5.17.0-py3-none-any.whl",
+        "sha256": "78ec1ce21579b38dfb83950a0658cd119f87212a2fcfdff478096ce9d6c03801",
+        "byteSize": 12295140,
+        "platform": "linux",
+        "pythonTag": "cp312",
+        "machine": "x86_64"
+    },
+    {
+        "distribution": "tokenizers",
+        "version": "0.23.1",
+        "filename": "tokenizers-0.23.1-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "url": "https://files.pythonhosted.org/packages/0d/d5/1353e5f677ec27c2494fb6a6725e82d56c985f53e90ec511369e7e4f02c6/tokenizers-0.23.1-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "sha256": "5075b405006415ea148a992d093699c66eb01952bf59f4d5727089a98bda45a4",
+        "byteSize": 3346235,
+        "platform": "linux",
+        "pythonTag": "cp312",
+        "machine": "x86_64"
+    },
+    {
+        "distribution": "transformers",
+        "version": "5.17.0",
+        "filename": "transformers-5.17.0-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/e8/d0/c502b60d684adbd98a8dc7d5bb866842772b816ac4354e4608be240041ae/transformers-5.17.0-py3-none-any.whl",
+        "sha256": "78ec1ce21579b38dfb83950a0658cd119f87212a2fcfdff478096ce9d6c03801",
+        "byteSize": 12295140,
+        "platform": "linux",
+        "pythonTag": "cp312",
+        "machine": "arm64"
+    },
+    {
+        "distribution": "tokenizers",
+        "version": "0.23.1",
+        "filename": "tokenizers-0.23.1-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "url": "https://files.pythonhosted.org/packages/6c/36/e006edf031154cba92b8416057d92c3abe3635e4c4b0aa0b5b9bb39dde70/tokenizers-0.23.1-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+        "sha256": "1bf13402aff9bc533c89cb849ec3b412dc3fbeacc9744840e423d7bf3f7dc0e3",
+        "byteSize": 3374081,
+        "platform": "linux",
+        "pythonTag": "cp312",
+        "machine": "arm64"
+    },
+    {
+        "distribution": "transformers",
+        "version": "5.17.0",
+        "filename": "transformers-5.17.0-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/e8/d0/c502b60d684adbd98a8dc7d5bb866842772b816ac4354e4608be240041ae/transformers-5.17.0-py3-none-any.whl",
+        "sha256": "78ec1ce21579b38dfb83950a0658cd119f87212a2fcfdff478096ce9d6c03801",
+        "byteSize": 12295140,
+        "platform": "macos",
+        "pythonTag": "cp312",
+        "machine": "x86_64"
+    },
+    {
+        "distribution": "tokenizers",
+        "version": "0.23.1",
+        "filename": "tokenizers-0.23.1-cp310-abi3-macosx_10_12_x86_64.whl",
+        "url": "https://files.pythonhosted.org/packages/87/39/b87a87d5bb9470610b80a2d31df42fcffeaf35118b8b97952b2aff598cc7/tokenizers-0.23.1-cp310-abi3-macosx_10_12_x86_64.whl",
+        "sha256": "e03d6ffcbe0d56ee9c1ccd070e70a13fa750727c0277e138152acbc0252c2224",
+        "byteSize": 3146732,
+        "platform": "macos",
+        "pythonTag": "cp312",
+        "machine": "x86_64"
+    },
+    {
+        "distribution": "transformers",
+        "version": "5.17.0",
+        "filename": "transformers-5.17.0-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/e8/d0/c502b60d684adbd98a8dc7d5bb866842772b816ac4354e4608be240041ae/transformers-5.17.0-py3-none-any.whl",
+        "sha256": "78ec1ce21579b38dfb83950a0658cd119f87212a2fcfdff478096ce9d6c03801",
+        "byteSize": 12295140,
+        "platform": "macos",
+        "pythonTag": "cp312",
+        "machine": "arm64"
+    },
+    {
+        "distribution": "tokenizers",
+        "version": "0.23.1",
+        "filename": "tokenizers-0.23.1-cp310-abi3-macosx_11_0_arm64.whl",
+        "url": "https://files.pythonhosted.org/packages/e2/6a/068ed9f6e444c9d7e9d55ce134181325700f3d7f30410721bdc8f848d727/tokenizers-0.23.1-cp310-abi3-macosx_11_0_arm64.whl",
+        "sha256": "e0948bbb1ac1d7cdfc9fb6d62c596e3b7550036ad60ecd654a66ad273326324e",
+        "byteSize": 3054954,
+        "platform": "macos",
+        "pythonTag": "cp312",
+        "machine": "arm64"
+    },
+    {
+        "distribution": "transformers",
+        "version": "5.17.0",
+        "filename": "transformers-5.17.0-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/e8/d0/c502b60d684adbd98a8dc7d5bb866842772b816ac4354e4608be240041ae/transformers-5.17.0-py3-none-any.whl",
+        "sha256": "78ec1ce21579b38dfb83950a0658cd119f87212a2fcfdff478096ce9d6c03801",
+        "byteSize": 12295140,
+        "platform": "windows",
+        "pythonTag": "cp312",
+        "machine": "x86_64"
+    },
+    {
+        "distribution": "tokenizers",
+        "version": "0.23.1",
+        "filename": "tokenizers-0.23.1-cp310-abi3-win_amd64.whl",
+        "url": "https://files.pythonhosted.org/packages/97/c9/2553f72aaf65a2797d4229e37fa7fbe38ffbf3e32912d31bdd78b3323e59/tokenizers-0.23.1-cp310-abi3-win_amd64.whl",
+        "sha256": "e7bfaf995c1bdbbd21d13539decb6650967013759318627d85daeb7881af16b7",
+        "byteSize": 2798223,
+        "platform": "windows",
+        "pythonTag": "cp312",
+        "machine": "x86_64"
+    },
+    {
+        "distribution": "transformers",
+        "version": "5.17.0",
+        "filename": "transformers-5.17.0-py3-none-any.whl",
+        "url": "https://files.pythonhosted.org/packages/e8/d0/c502b60d684adbd98a8dc7d5bb866842772b816ac4354e4608be240041ae/transformers-5.17.0-py3-none-any.whl",
+        "sha256": "78ec1ce21579b38dfb83950a0658cd119f87212a2fcfdff478096ce9d6c03801",
+        "byteSize": 12295140,
+        "platform": "windows",
+        "pythonTag": "cp312",
+        "machine": "arm64"
+    },
+    {
+        "distribution": "tokenizers",
+        "version": "0.23.1",
+        "filename": "tokenizers-0.23.1-cp310-abi3-win_arm64.whl",
+        "url": "https://files.pythonhosted.org/packages/cd/2b/2be299bab55fc595e3d38567edb1a87f86e594842968fa9515a07bdcf422/tokenizers-0.23.1-cp310-abi3-win_arm64.whl",
+        "sha256": "a26197957d8e4425dfba746315f3c425ea00cfa8367c5fbc4ec73447893dcea9",
+        "byteSize": 2664127,
+        "platform": "windows",
+        "pythonTag": "cp312",
+        "machine": "arm64"
+    },
+)
+
+_TRANSFORMERS_517_PEFT_PROFILE = replace(
+    _TRANSFORMERS_PEFT_PROFILE,
+    id=TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,
+    label="Hugging Face Transformers 5.17 + PEFT (Linux x86-64 qualified)",
+    packages=tuple(
+        replace(package, version={"transformers": "5.17.0", "tokenizers": "0.23.1"}[package.distribution])
+        if package.distribution in {"transformers", "tokenizers"} else package
+        for package in _TRANSFORMERS_PEFT_PROFILE.packages
+    ),
+    artifact_locks=tuple(
+        dict(artifact) for artifact in _TRANSFORMERS_PEFT_PROFILE.artifact_locks
+        if artifact["distribution"] not in {"transformers", "tokenizers"}
+    ) + _TRANSFORMERS_517_WHEELS,
+    required_diffusers_symbols=(*_TRANSFORMERS_PEFT_PROFILE.required_diffusers_symbols,
+        "QwenImage21Pipeline", "QwenImage21Transformer2DModel", "AutoencoderKLQwenImage21"),
+    contract_state="qualified_platform_scoped",
+    cutover_ready=False,
+    install_action_available=False,
+    activation_available=False,
+    target_contracts=tuple(
+        OptionalRuntimeTargetContract(
+            platform=platform_name, machine=machine,
+            contract_state="qualified" if (platform_name, machine) == ("linux", "x86_64") else "candidate_unqualified",
+            cutover_ready=(platform_name, machine) == ("linux", "x86_64"),
+            install_action_available=(platform_name, machine) == ("linux", "x86_64"),
+            activation_available=(platform_name, machine) == ("linux", "x86_64"),
+        )
+        for platform_name, _python_tag, machine in _OPTIONAL_RUNTIME_TARGETS
+    ),
+    # The verified optional-runtime regression suite exercises the existing
+    # image/audio adapters on this build. Bind compatibility to exact reviewed
+    # specs; no quantization or media-package extras are implied by this alias.
+    satisfies_profiles=(
+        (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID, _TRANSFORMERS_PEFT_PROFILE.spec_digest),
+        (TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID, _TRANSFORMERS_MAIN_PEFT_PROFILE.spec_digest),
+    ),
+)
+
+
 OPTIONAL_RUNTIME_PROFILES: Mapping[str, OptionalRuntimeProfile] = MappingProxyType(
     {
+        _TRANSFORMERS_517_PEFT_PROFILE.id: _TRANSFORMERS_517_PEFT_PROFILE,
         _TRANSFORMERS_PEFT_PROFILE.id: _TRANSFORMERS_PEFT_PROFILE,
         _TRANSFORMERS_MAIN_PEFT_PROFILE.id: _TRANSFORMERS_MAIN_PEFT_PROFILE,
         _TRANSFORMERS_MAIN_PEFT_QUANTO_PROFILE.id: _TRANSFORMERS_MAIN_PEFT_QUANTO_PROFILE,

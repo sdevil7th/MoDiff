@@ -40,8 +40,8 @@ from modules.DiffusersVideo.main import (
 )
 
 
-CHROMA_IMG2IMG_SOURCE_SHA256 = "4dfa9751d317efb5cbae8faadc4a77b53312a98a9920675afb44bab01aae0a09"
-CHROMA_INPAINT_SOURCE_SHA256 = "b149fa04c9ae0b4165d761aa380b484e7a8d57f62589c7139fd41040f41e78ae"
+CHROMA_IMG2IMG_SOURCE_SHA256 = "bbc16648f48afd78a96ad182ecbeece21ac2e140fa114394921abfb9d88c514e"
+CHROMA_INPAINT_SOURCE_SHA256 = "3c94ca463088fa648711adc5110f3babf31194ea94ae9c24d61bf13c0d667112"
 LTX2_SOURCE_SHA256 = "39aa535e809492eaa49a5e8161c05d82674c54b8ab14e77a8899c848a37562e8"
 CHROMA_REVISION = "0e0c60ece1e82b17cb7f77342d765ba5024c40c0"
 LTX2_REPO = "Lightricks/LTX-2"
@@ -237,7 +237,7 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
     def test_exact_pinned_sources_and_call_surfaces_are_preserved(self):
         import diffusers
 
-        self.assertEqual(PINNED_DIFFUSERS_REVISION, "2f7e0154a9db246e95c9ede43edba7db5b130805")
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "fbf49e7f35857f76bc57b177e26f12b03687c668")
         root = Path(diffusers.__file__).resolve().parent / "pipelines"
         cases = (
             (
@@ -341,7 +341,7 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
         )
 
     def test_exact_hidden_candidate_specs_reuse_artifacts_and_generic_contracts(self):
-        self.assertEqual(len(validate_studio_execution_specs(module_registry.MODULE_MAP)), 275)
+        self.assertEqual(len(validate_studio_execution_specs(module_registry.MODULE_MAP)), 278)
         capabilities = studio_capability_definitions()
         cases = {
             ("ChromaImg2ImgPipeline", "edit_image"): (

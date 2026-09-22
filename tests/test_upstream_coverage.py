@@ -64,12 +64,12 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "canonicalWorkflowCount": 200,
                 "canonicalWorkflowsWithPublicTemplates": 52,
                 "canonicalWorkflowsWithoutPublicTemplates": 148,
-                "diffusersPipelineSymbolCount": 330,
+                "diffusersPipelineSymbolCount": 334,
                 "pipelineStatusCounts": {
                     "contract-only": 5,
                     "equivalent": 11,
-                    "executable": 142,
-                    "intentionally-excluded": 56,
+                    "executable": 143,
+                    "intentionally-excluded": 59,
                     "research-blocked": 116,
                     "unreviewed": 0,
                 },
@@ -109,7 +109,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         names = [item["name"] for item in items]
         self.assertEqual(names, sorted(names))
         self.assertEqual(len(names), len(set(names)))
-        self.assertEqual(len(names), 330)
+        self.assertEqual(len(names), 334)
         self.assertTrue({item["status"] for item in items}.issubset(UPSTREAM_COVERAGE_STATUSES))
 
         by_name = {item["name"]: item for item in items}
@@ -236,7 +236,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         scope = self.ledger["scope"]["diffusers"]
         self.assertEqual(scope["revision"], PINNED_DIFFUSERS_REVISION)
         self.assertEqual(scope["verifiedSourceRevision"], PINNED_DIFFUSERS_REVISION)
-        self.assertEqual(scope["version"], "0.40.0.dev0")
+        self.assertEqual(scope["version"], "0.41.0.dev0")
         self.assertRegex(scope["exportModuleSha256"], r"^[0-9a-f]{64}$")
 
     def test_transformers_main_and_production_are_not_conflated(self):

@@ -14,7 +14,7 @@ from PIL import Image, ImageColor, ImageDraw, ImageFilter
 
 from modiff.NodeBase import NodeBase
 from modules.DiffusersImage.call_inputs import (
-    CALL_INPUT_ADDITIONS, CALL_INPUT_PARAMS, PIPELINE_CALL_INPUTS, apply_call_inputs, normalize_call_inputs,
+    CALL_INPUT_ADDITIONS, CALL_INPUT_DEFAULTS, CALL_INPUT_PARAMS, PIPELINE_CALL_INPUTS, apply_call_inputs, normalize_call_inputs,
     record_image_call_inputs,
 )
 from modules.DiffusersImage.image_prompt_adapter import (
@@ -201,15 +201,15 @@ class ImagePipelineAdapter:
             raise ValueError("Image adapters must bound inference steps between 1 and 100.")
         if type(self.two_step_intermediate_timestep) is not bool:
             raise ValueError("Intermediate-timestep policy must be an exact boolean.")
-        if not 16 <= self.min_output_side <= self.max_output_side <= 2048:
-            raise ValueError("Image adapters must bound output sides between 16 and 2048.")
+        if not 16 <= self.min_output_side <= self.max_output_side <= 4096:
+            raise ValueError("Image adapters must bound output sides between 16 and 4096.")
         if self.output_side_step not in {16, 32, 64}:
             raise ValueError("Image adapter output-side increments must be 16, 32, or 64 pixels.")
         if self.min_output_side % self.output_side_step or (
             self.max_output_side - self.min_output_side
         ) % self.output_side_step:
             raise ValueError("Image adapter output-side bounds must align to their declared increment.")
-        if not self.min_output_side**2 <= self.max_output_pixels <= _MAX_IMAGE_OUTPUT_PIXELS:
+        if not self.min_output_side**2 <= self.max_output_pixels <= 5 * 1024 * 1024:
             raise ValueError("Image adapters must declare a bounded output-pixel ceiling covering the minimum size.")
         if not 0.0 <= self.maximum_guidance_scale <= 50.0:
             raise ValueError("The maximum text guidance scale must be between 0 and 50.")
@@ -589,6 +589,21 @@ IMAGE_PIPELINE_ADAPTERS = {
         CONSISTENCY_IMAGENET64_REPO,
         unconditional_optional_fields=("class_label",),
         safe_serialization_required=True,
+    ),
+    "QwenImage21Pipeline": ImagePipelineAdapter(
+        "QwenImage21Pipeline",
+        frozenset({"text_to_image", "edit_image", "multi_image_reference_edit"}),
+        "Qwen/Qwen-Image-2.1",
+        guidance_parameter="true_cfg_scale",
+        image_guidance_parameter=None,
+        safe_serialization_required=True,
+        max_reference_images=10,
+        min_output_side=32,
+        output_side_step=32,
+        # The publisher's 2K aspect presets include 2752x1536. Keep the
+        # cumulative allocation bounded; existing adapters retain their limits.
+        max_output_side=4096,
+        max_output_pixels=5 * 1024 * 1024,
     ),
     "QwenImagePipeline": ImagePipelineAdapter(
         "QwenImagePipeline",
@@ -1690,6 +1705,10 @@ _SIZE_GUIDANCE_STRENGTH_CROP_SEQUENCE = (
 )
 
 IMAGE_MODE_FIELD_CONTRACTS = {
+    "QwenImage21Pipeline": {
+        mode: _image_field_contract("negative_prompt", "width", "height", "guidance_scale")
+        for mode in ("text_to_image", "edit_image", "multi_image_reference_edit")
+    },
     "DDPMPipeline": {
         "unconditional_image": _image_field_contract(),
     },
@@ -2417,7 +2436,15 @@ def image_loader_field_params(adapter: ImagePipelineAdapter) -> dict[str, dict[s
     }
 
 
-_LATENT_OUTPUT_PIPELINES = frozenset(PIPELINE_CALL_INPUTS) - {'FluxReduxPipeline'}
+# An optional call input does not establish a latent layout or a decoder.
+# Admit exact producers only after their matching decode path is reviewed.
+_LATENT_OUTPUT_PIPELINES = frozenset({
+    'FluxPipeline', 'FluxImg2ImgPipeline', 'FluxInpaintPipeline', 'FluxKontextPipeline',
+    'FluxKontextInpaintPipeline', 'FluxFillPipeline', 'FluxControlPipeline',
+    'FluxControlImg2ImgPipeline', 'FluxControlInpaintPipeline', 'FluxControlNetPipeline',
+    'FluxControlNetImg2ImgPipeline', 'FluxControlNetInpaintPipeline', 'Flux2Pipeline',
+    'Flux2KleinPipeline', 'Flux2KleinInpaintPipeline', 'Flux2KleinKVPipeline', 'QwenImage21Pipeline',
+})
 
 
 def _image_output_options(adapter: ImagePipelineAdapter, action: str) -> list[str]:
@@ -2448,6 +2475,9 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
     field_params = field_contract.field_param_overlay()
     for key in PIPELINE_CALL_INPUTS.get(adapter.load_pipeline_class, ()):
         field_params[key] = {"hidden": False}
+        defaults = CALL_INPUT_DEFAULTS.get(adapter.load_pipeline_class, {})
+        if key in defaults:
+            field_params[key]["default"] = defaults[key]
     if adapter.secondary_guidance_parameter is not None:
         field_params["guidance_scale"] = {**field_params["guidance_scale"], "label": adapter.guidance_label}
         field_params["use_guidance_scale_2"] = {
@@ -5368,18 +5398,26 @@ class DecodeLatents(NodeBase):
         import torch
         adapter = _image_pipeline_adapter(pipeline)
         if adapter.load_pipeline_class not in _LATENT_OUTPUT_PIPELINES:
-            raise ValueError('Decode Image Latents requires a reviewed FLUX pipeline with explicit latent output.')
+            raise ValueError('Decode Image Latents requires a reviewed pipeline with a matching explicit latent output.')
+        width = _bounded_image_int(width, field='width', default=1024, minimum=adapter.min_output_side,
+                                   maximum=adapter.max_output_side, step=adapter.output_side_step)
+        height = _bounded_image_int(height, field='height', default=1024, minimum=adapter.min_output_side,
+                                    maximum=adapter.max_output_side, step=adapter.output_side_step)
+        if output_type not in ('pil', 'np', 'pt'):
+            raise ValueError('Decode Image Latents output_type must be pil, np, or pt.')
         if not isinstance(latents, torch.Tensor) or not latents.is_floating_point() or latents.device.type == 'meta':
             raise ValueError('Latents must be a materialized floating-point Tensor from the matching pipeline.')
         vae = pipeline.vae
-        channels = vae.config.latent_channels
+        qwen21 = adapter.load_pipeline_class == 'QwenImage21Pipeline'
+        channels = vae.config.z_dim if qwen21 else vae.config.latent_channels
         # FLUX.1 returns packed normalized tokens. FLUX.2 returns already
         # unpatchified, denormalized VAE latents. Neither conversion is implicit
         # at an arbitrary tensor connection; this explicit consumer owns decode.
         flux2 = adapter.load_pipeline_class.startswith('Flux2')
-        scale = 2 ** (len(vae.config.block_out_channels) - 1)
+        scale = pipeline.vae_scale_factor if qwen21 else 2 ** (len(vae.config.block_out_channels) - 1)
         latent_h, latent_w = height // scale, width // scale
-        expected = (channels, latent_h, latent_w) if flux2 else ((latent_h // 2) * (latent_w // 2), channels * 4)
+        expected = ((latent_h * latent_w, channels) if qwen21 else
+                    (channels, latent_h, latent_w) if flux2 else ((latent_h // 2) * (latent_w // 2), channels * 4))
         if (tuple(latents.shape[1:]) != expected or not 1 <= latents.shape[0] <= 8
                 or width % (scale * 2) or height % (scale * 2)
                 or latents.shape[0] * width * height > 16 * 1024 * 1024):
@@ -5387,10 +5425,17 @@ class DecodeLatents(NodeBase):
                 'Use its matching latent output and set Width/Height to the original generation dimensions.')
         with torch.inference_mode():
             value = latents.to(device=pipeline._execution_device, dtype=vae.dtype)
-            if not flux2:
+            if qwen21:
+                value = pipeline._unpack_latents(value, height, width, pipeline.vae_scale_factor)
+                mean = torch.as_tensor(vae.config.latents_mean, device=value.device, dtype=value.dtype).view(1, channels, 1, 1, 1)
+                std = torch.as_tensor(vae.config.latents_std, device=value.device, dtype=value.dtype).view(1, channels, 1, 1, 1)
+                value = value * std + mean
+            elif not flux2:
                 value = pipeline._unpack_latents(value, height, width, pipeline.vae_scale_factor)
                 value = value / vae.config.scaling_factor + (getattr(vae.config, 'shift_factor', 0) or 0)
             decoded = vae.decode(value, return_dict=False)[0]
+            if qwen21:
+                decoded = decoded[:, :, 0]
             images = pipeline.image_processor.postprocess(decoded, output_type=output_type)
         pipeline.maybe_free_model_hooks()
         actual_width, actual_height = output_image_dimensions(images, output_type)

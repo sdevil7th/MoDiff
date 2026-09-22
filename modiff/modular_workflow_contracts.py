@@ -15,7 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
-PINNED_DIFFUSERS_REVISION = "2f7e0154a9db246e95c9ede43edba7db5b130805"
+PINNED_DIFFUSERS_REVISION = "fbf49e7f35857f76bc57b177e26f12b03687c668"
 WAN_T2V_REPOSITORY = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
 WAN_T2V_14B_REPOSITORY = "Wan-AI/Wan2.1-T2V-14B-Diffusers"
 WAN_I2V_REPOSITORY = "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"

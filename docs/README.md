@@ -14,6 +14,7 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Review optional attention, quantization, and compilation capabilities    | [Optional runtime optimizations](optional-runtime-optimizations.md)                         |
 | Build Modular Diffusers graphs and understand experimental compatibility | [Modular Diffusers guide](../modules/ModularDiffusers/README.md)                            |
 | Use ordinary image actions and their optional typed inputs | [Ordinary Diffusers image nodes](../modules/DiffusersImage/README.md) |
+| Generate/edit with Qwen 2.1 and understand attention-context reuse | [Qwen-Image 2.1](qwen-image-21.md) |
 | Estimate depth with generic Transformers nodes | [Transformers depth workflows](../modules/HuggingFaceTransformers/README.md) |
 | Build reusable attention-mask and LoRA-scale inputs | [Attention Arguments](../modules/DiffusersImage/README.md#attention-arguments) |
 | Choose, edit and reuse FLUX Blocks | [Using FLUX Blocks](../modules/DiffusersImage/README.md#using-flux-blocks) |

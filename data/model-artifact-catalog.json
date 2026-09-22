@@ -60,6 +60,7 @@
     {"repo": "fuliucansheng/FLUX.1-Canny-dev-diffusers", "revision": "24df2ba1c46a8c735589cc8f81302678797c9821", "license": "other", "purpose": "verified-diffusers-repair-source", "verifiedAt": "2026-08-03T14:34:36+05:30"}
   ],
   "models": [
+    {"modelType": "QwenImage21Pipeline", "baseRepo": "Qwen/Qwen-Image-2.1", "baseRevision": "790c92633540aa0cb11d9abf19eb46d861714758", "baseLicense": "qwen-research", "artifacts": []},
     {
       "modelType": "AnimaModularPipeline",
       "baseRepo": "circlestone-labs/Anima-Base-v1.0-Diffusers",

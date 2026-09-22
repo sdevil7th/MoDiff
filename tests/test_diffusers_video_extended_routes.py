@@ -103,7 +103,7 @@ class DiffusersVideoExtendedRouteTests(unittest.TestCase):
 
         self.assertEqual(
             PINNED_DIFFUSERS_REVISION,
-            "2f7e0154a9db246e95c9ede43edba7db5b130805",
+            "fbf49e7f35857f76bc57b177e26f12b03687c668",
         )
         diffusers_root = Path(diffusers.__file__).resolve().parent
         for relative_path, class_name, expected_digest, required_parameters in (

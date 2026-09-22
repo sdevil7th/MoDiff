@@ -10,7 +10,7 @@ class OperationInventoryTests(unittest.TestCase):
 
         generated = build_operation_inventory(Path(__file__).resolve().parents[1])
         self.assertEqual(generated, load_operation_inventory())
-        self.assertEqual(len(generated["pipelines"]), 330)
+        self.assertEqual(len(generated["pipelines"]), 334)
         flux = next(p for p in generated["pipelines"] if p["pipelineClass"] == "FluxPipeline")
         self.assertIn({"task": "text_to_image", "source": "auto", "workflowId": None}, flux["upstreamTasks"])
         qwen = next(p for p in generated["pipelines"] if p["pipelineClass"] == "QwenImageModularPipeline")

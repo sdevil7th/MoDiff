@@ -82,7 +82,7 @@ class HuggingFaceClusterPromotionStagingTests(unittest.TestCase):
                 {
                     "definitionId": self.qwen_definition["id"],
                     "definitionContentHash": (
-                        "sha256:98dddb4c03eea94a0a8e9b1d318ecf5aab9fe62113b829263d8d605772ed6033"
+                        "sha256:04426a29429af2b7cfbe65adce9d1d67f342fbbbf5e7397a3ce7dc0ec94378ef"
                     ),
                     "admissionId": QWEN,
                     "previousCompiledDefinitionContentHash": current_pin[0],

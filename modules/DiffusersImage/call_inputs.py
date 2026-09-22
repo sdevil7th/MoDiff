@@ -16,6 +16,7 @@ _FLUX1 = (*_COMMON, 'prompt_2', 'pooled_prompt_embeds', 'joint_attention_kwargs'
 _NEGATIVE = ('negative_prompt_2', 'negative_prompt_embeds', 'negative_pooled_prompt_embeds')
 _FLUX2 = (*_COMMON, 'text_encoder_out_layers', 'attention_kwargs')
 PIPELINE_CALL_INPUTS = {
+    'QwenImage21Pipeline': ('num_images_per_prompt', 'sigmas', 'generator', 'latents', 'use_kv_cache'),
     'FluxPipeline': (*_FLUX1, *_NEGATIVE, *IP_ADAPTER_INPUTS),
     'FluxImg2ImgPipeline': (*_FLUX1, *_NEGATIVE, *IP_ADAPTER_INPUTS),
     'FluxInpaintPipeline': (*_FLUX1, *_NEGATIVE, 'masked_image_latents', *IP_ADAPTER_INPUTS),
@@ -36,6 +37,10 @@ PIPELINE_CALL_INPUTS = {
                           'prompt_2', 'prompt_embeds', 'pooled_prompt_embeds'),
 }
 
+# Materialize reviewed native defaults at dispatch so receipts describe the
+# actual choice even when an older workflow has no corresponding input field.
+CALL_INPUT_DEFAULTS = {'QwenImage21Pipeline': {'use_kv_cache': True}}
+
 # Append-only presentation revisions allow old saved contracts without admitting
 # arbitrary partial field maps or changing any historical execution values.
 CALL_INPUT_ADDITIONS = (
@@ -44,6 +49,7 @@ CALL_INPUT_ADDITIONS = (
     frozenset({'output_type', 'latents_out'}),
     frozenset(IP_ADAPTER_INPUTS),
     frozenset({'control_mode'}),
+    frozenset({'use_kv_cache'}),
 )
 
 _TENSORS = {
@@ -61,6 +67,7 @@ _TYPES = {
     'ip_adapter_image': 'image', 'negative_ip_adapter_image': 'image',
     'ip_adapter_image_embeds': 'tensor', 'negative_ip_adapter_image_embeds': 'tensor',
     'control_mode': 'int',
+    'use_kv_cache': 'bool',
 }
 CALL_INPUT_PARAMS = {
     name: {
@@ -69,6 +76,12 @@ CALL_INPUT_PARAMS = {
         'description': 'Optional upstream input. Leave disconnected to preserve the current call defaults.',
     }
     for name, kind in _TYPES.items()
+}
+CALL_INPUT_PARAMS['use_kv_cache'] = {
+    'label': 'Reuse attention context', 'type': 'bool', 'hidden': True,
+    'description': 'Prefill fixed prompt and reference context once, then reuse it during denoising. '
+                   'Uses extra memory. Changing this setting can change reduced-precision outputs. '
+                   'The cache belongs to one generation and is never shared with another request.',
 }
 
 
@@ -86,7 +99,10 @@ def _number(value: Any, field: str, lower: float, upper: float, *, integer: bool
 
 def normalize_call_inputs(pipeline_class: str, values: dict[str, Any]) -> dict[str, Any]:
     allowed = PIPELINE_CALL_INPUTS.get(pipeline_class, ())
-    selected = {key: values[key] for key in CALL_INPUT_PARAMS if values.get(key) is not None}
+    selected = {
+        **CALL_INPUT_DEFAULTS.get(pipeline_class, {}),
+        **{key: values[key] for key in CALL_INPUT_PARAMS if values.get(key) is not None},
+    }
     unsupported = selected.keys() - set(allowed)
     if unsupported:
         raise ValueError(f'{pipeline_class} does not support optional input(s): {", ".join(sorted(unsupported))}. Disconnect these inputs or choose a compatible pipeline.')
@@ -139,9 +155,9 @@ def normalize_call_inputs(pipeline_class: str, values: dict[str, Any]) -> dict[s
             result[key] = _number(value, key, 4096, 16 * 1024 * 1024, integer=True)
         elif key == 'caption_upsample_temperature':
             result[key] = _number(value, key, 0, 10)
-        elif key == '_auto_resize':
+        elif key in ('_auto_resize', 'use_kv_cache'):
             if type(value) is not bool:
-                raise ValueError('_auto_resize must be a boolean.')
+                raise ValueError(f'{key} must be a boolean.')
             result[key] = value
         elif key in _TENSORS or key == 'generator':
             import torch

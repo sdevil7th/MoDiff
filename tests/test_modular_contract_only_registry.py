@@ -22,6 +22,7 @@ from modiff.modular_contract_only_registry import (
 )
 from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
 from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
+from modiff.upstream_coverage import _INTENTIONALLY_EXCLUDED_PIPELINES
 from modules.ModularDiffusers.loaders import ModelsLoader
 from modules.ModularDiffusers.modular_utils import (
     _get_registry_instance,
@@ -100,7 +101,8 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
             set(PINNED_MODULAR_WORKFLOW_TRUTH)
             | set(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME)
             | set(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS)
-            | set(CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY),
+            | set(CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY)
+            | (exported_modular_classes & set(_INTENTIONALLY_EXCLUDED_PIPELINES)),
             exported_modular_classes,
         )
 

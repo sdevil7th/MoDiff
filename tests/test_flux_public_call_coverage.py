@@ -31,16 +31,17 @@ def test_all_pinned_flux_call_arguments_have_an_explicit_owner():
     app_owned = {'return_dict', 'callback_on_step_end', 'callback_on_step_end_tensor_inputs'}
     primary = {'prompt', 'image', 'mask_image', 'control_image', 'num_inference_steps'}
     signatures = upstream_signatures()
-    assert len(PIPELINE_CALL_INPUTS) == 17
+    flux_inputs = {name: fields for name, fields in PIPELINE_CALL_INPUTS.items() if name.startswith('Flux')}
+    assert len(flux_inputs) == 17
     reviewed_exports = {
         'FluxPriorReduxPipeline' if name == 'FluxReduxPipeline' else name
-        for name in PIPELINE_CALL_INPUTS
+        for name in flux_inputs
     }
     assert set(signatures) == reviewed_exports, (
         f'Pinned FLUX exports changed: missing={sorted(set(signatures) - reviewed_exports)}, '
         f'stale={sorted(reviewed_exports - set(signatures))}'
     )
-    for name in PIPELINE_CALL_INPUTS:
+    for name in flux_inputs:
         upstream = 'FluxPriorReduxPipeline' if name == 'FluxReduxPipeline' else name
         adapter = IMAGE_PIPELINE_ADAPTERS[name]
         fields = set().union(*(

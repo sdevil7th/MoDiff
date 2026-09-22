@@ -13,6 +13,7 @@ from modiff.diffusers_offload_modes import (
     OFFLOAD_MODE_SEQUENTIAL_CPU,
 )
 from modiff.model_artifact_catalog import require_catalog_revision
+from modiff.optional_runtimes import TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID
 
 
 STUDIO_EXECUTION_SPEC_SCHEMA_VERSION = 1
@@ -16013,6 +16014,87 @@ def _direct_image_promotion_capability(
         "galleryEligible": False,
         "liveProof": False,
         "notes": notes,
+    }
+
+
+QWEN_IMAGE_21_REPO = "Qwen/Qwen-Image-2.1"
+QWEN_IMAGE_21_DIFFUSERS_FILES = [
+    ".gitattributes",
+    "LICENSE",
+    "README.md",
+    "model_index.json",
+    "processor/added_tokens.json",
+    "processor/chat_template.jinja",
+    "processor/merges.txt",
+    "processor/preprocessor_config.json",
+    "processor/special_tokens_map.json",
+    "processor/tokenizer.json",
+    "processor/tokenizer_config.json",
+    "processor/video_preprocessor_config.json",
+    "processor/vocab.json",
+    "scheduler/scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/generation_config.json",
+    "text_encoder/model-00001-of-00004.safetensors",
+    "text_encoder/model-00002-of-00004.safetensors",
+    "text_encoder/model-00003-of-00004.safetensors",
+    "text_encoder/model-00004-of-00004.safetensors",
+    "text_encoder/model.safetensors.index.json",
+    "transformer/config.json",
+    "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.safetensors"
+]
+_QWEN_IMAGE_21_MODES = ("text_to_image", "edit_image", "multi_image_reference_edit")
+_QWEN_IMAGE_21_PROFILE = {
+    **_direct_image_promotion_profile(
+        profile_id="qwen-image-21:direct", model_type="QwenImage21Pipeline",
+        modes=_QWEN_IMAGE_21_MODES, pipeline_class="QwenImage21Pipeline", repository=QWEN_IMAGE_21_REPO,
+        quantizable_components=("transformer", "text_encoder"), default_quantized_components=(),
+        supported_offload_modes=_DIRECT_OFFLOAD_MODES,
+        retry_offload_modes=(OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU, OFFLOAD_MODE_GROUP_DISK),
+        max_low_memory_side=1024, max_low_memory_steps=40,
+    ),
+    "optional_runtime_profiles": (TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,),
+    # No target may silently fall back to an older base Transformers build.
+    "optional_runtime_platform_deliveries": (),
+}
+_QWEN_IMAGE_21_CAPABILITY = {
+    **_direct_image_promotion_capability(
+        model_type="QwenImage21Pipeline", label="Qwen Image 2.1", display_name="Qwen-Image-2.1",
+        family="Qwen Image", repository=QWEN_IMAGE_21_REPO, download_files=QWEN_IMAGE_21_DIFFUSERS_FILES,
+        modes=_QWEN_IMAGE_21_MODES,
+        mode_requirements={
+            "text_to_image": {"note": "Unified RGB/RGBA generation from text."},
+            "edit_image": {"requiredImages": ["referenceImages"], "note": "One source image and an edit instruction."},
+            "multi_image_reference_edit": {"requiredImages": ["referenceImages"], "note": "One to ten reference images and an instruction."},
+        },
+        supports_negative_prompt=True, supports_mask=False, supports_multi_image=True,
+        recommended_steps=40, recommended_guidance=1.0, low_vram_side=1024, low_vram_steps=40,
+        supported_offload_modes=_DIRECT_OFFLOAD_MODES, low_vram_offload_mode=OFFLOAD_MODE_MODEL_CPU,
+        notes=[
+            "Qwen Research License: non-commercial research/evaluation; commercial use requires separate permission.",
+            "Native attention-context reuse is per generation, not a cache shared between requests.",
+            "Standard Diffusers integration; upstream does not provide Qwen 2.1 Modular blocks at the reviewed revision.",
+            "Execution and hardware qualification remain pending; no Gallery assets are published.",
+        ],
+    ),
+    "defaultSize": {"width": 2048, "height": 2048, "aspectRatio": "1:1"},
+    "artifactLabel": "Official Qwen Research License safetensors repository",
+    "license": "qwen-research",
+}
+for _qwen21_mode in _QWEN_IMAGE_21_MODES:
+    _qwen21_edit = _qwen21_mode != "text_to_image"
+    _qwen21_bindings = _SDXL_EDIT_GRAPH_BINDINGS if _qwen21_edit else _SDXL_GRAPH_BINDINGS
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[f"qwen-image-21:{_qwen21_mode.replace('_', '-')}:v1"] = {
+        "modelType": "QwenImage21Pipeline", "mode": _qwen21_mode,
+        "profile": _QWEN_IMAGE_21_PROFILE, "capability": _QWEN_IMAGE_21_CAPABILITY,
+        "roles": _EDIT_GRAPH_ROLES if _qwen21_edit else _GRAPH_ROLES,
+        "edges": _EDIT_GRAPH_EDGES if _qwen21_edit else _GRAPH_EDGES,
+        "bindings": tuple(binding for binding in _qwen21_bindings
+                          if binding[1] not in {"strength", "reference_strength", "max_sequence_length"}),
     }
 
 
