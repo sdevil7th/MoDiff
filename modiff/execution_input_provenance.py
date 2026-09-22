@@ -18,6 +18,7 @@ FIELD_NAMES = {
     "guidance_scale": "guidanceScale", "true_cfg_scale": "trueCfgScale",
     "max_sequence_length": "maxSequenceLength", "num_images_per_prompt": "imagesPerPrompt",
     "num_frames": "numFrames", "fps": "fps", "frame_rate": "fps",
+    "audio_duration": "audioDuration", "sample_rate": "sampleRate",
     "strength": "strength", "repo_id": "repo", "model_id": "repo",
     "revision": "revision", "dtype": "dtype", "device": "device",
     "model_type": "modelType", "pipeline_class": "modelType",

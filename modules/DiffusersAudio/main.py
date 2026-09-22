@@ -2117,6 +2117,7 @@ class Generate(NodeBase):
             current_step=0,
             total_steps=call_kwargs["num_inference_steps"],
         )
+        self._record_audio_call_inputs(call_kwargs, invocation)
         result = pipeline(**call_kwargs)
         audio = output_to_audio_object(result, sample_rate=sample_rate)
         if task_type == "continuation" and kwargs.get("return_continuation_tail", True):
@@ -2134,6 +2135,21 @@ class Generate(NodeBase):
             "sample_rate_out": int(audio.get("sample_rate") or requested_sample_rate),
             "duration_seconds": float(audio.get("duration_seconds") or 0.0),
         }
+
+    def _record_audio_call_inputs(self, call_kwargs, invocation: AudioInvocation):
+        # Record normalized controls at dispatch. Inactive ACE controls remain
+        # in the reusable node schema but do not describe standard audio calls.
+        self.record_generation_inputs({
+            **call_kwargs,
+            "seed": int(invocation.controls["seed"]),
+            "audio_duration": invocation.duration_seconds,
+            "sample_rate": int(invocation.controls["sample_rate"]),
+        })
+        if invocation.adapter.generation_kind != "ace_step":
+            self._execution_input_source_fields = {
+                "num_inference_steps": "stable_audio_steps",
+                "guidance_scale": "stable_audio_guidance",
+            }
 
     def _execute_standard_diffusers_audio(self, pipeline, kwargs, invocation: AudioInvocation):
         import torch
@@ -2158,6 +2174,7 @@ class Generate(NodeBase):
             "output_type": "pt",
             "return_dict": True,
         }
+        self._record_audio_call_inputs(common_kwargs, invocation)
         if invocation.adapter.generation_kind == "stable_audio":
             result = pipeline(
                 **common_kwargs,

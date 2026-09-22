@@ -2067,6 +2067,12 @@ state, and a custom sigma schedule does not establish the saved step count;
 those receipt values are `null`, without changing the requested form snapshot.
 Optional absent image/latent outputs do not invalidate a successful node cache.
 
+Ordinary audio actions capture normalized steps and guidance from the active
+adapter immediately before dispatch, retaining the original connected control's
+provenance. Inactive controls for other audio adapters do not enter the receipt.
+`audioDuration` records requested generation duration, and `sampleRate` records
+the requested delivery rate after resampling, not the decoder's native rate.
+
 `PATCH /studio_outputs/{output_id}` accepts exactly `{ "favorite": true }` or
 `{ "favorite": false }`. Unknown fields, non-boolean values, and malformed bodies
 return `400` without changing history. Execution receipts, task/node/attempt
