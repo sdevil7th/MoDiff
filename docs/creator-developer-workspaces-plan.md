@@ -1027,6 +1027,30 @@ full-resolution tile-seam quality are not established by that inspection.
 Both original failures remain recorded. This closes the selector/routing
 recovery, not W8's remaining model/task, auxiliary and structural campaigns.
 
+Additional guidance-default correction checkpoint:
+
+- [x] Trace the native Krea baseline mismatch to new-workflow defaults: the
+      recommended distilled-guidance value was seeded into a legacy True CFG
+      field, while distilled guidance remained implicit.
+- [x] Route new ordinary FLUX workflow recommendations into the existing
+      distilled-guidance override and initialize True CFG to its pinned upstream
+      default. Preserve saved values, dynamic updates and legacy invocation.
+- [x] Cover nine model/task selections, single-node insertion, exact consumed
+      parameter names, old calls and pinned upstream defaults. Pass the full
+      backend gate (3,470 tests / 10,057 subtests; 524 optional skips), 217 approved
+      optional-runtime tests / 2,214 subtests, the client gate and five browser
+      workflow creation/reload checks.
+- [x] Reject absent numeric receipt values instead of converting null to zero.
+      Retain the original Krea failure and remove Schnell's earlier guidance
+      default acceptance pending recovery. DreamLite Mobile's absent guidance
+      is explicitly reviewed as an unused control, not reported as consumed zero.
+- [ ] Complete fresh native Krea and Schnell recovery campaigns and independently
+      audit their explicit guidance receipts, edits and reusable Blocks.
+
+These corrections do not close the remaining model/task, auxiliary, structural
+or visual portions of W8. The downloaded Z-Image realism LoRA now has a prepared
+exact-revision containing-workflow campaign; preparation is not execution proof.
+
 ### W9 — Other modalities and real service export
 
 - [ ] Run baseline, unchanged, parameter-change and save/reopen cases for each

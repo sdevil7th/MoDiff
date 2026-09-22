@@ -35,6 +35,20 @@ def seed_image_operation_defaults(node, profile):
             "height": size.get("height"),
         }
     )
+    if node["action"] != "LoadPipeline":
+        from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
+
+        adapter = IMAGE_PIPELINE_ADAPTERS[profile.pipeline_class]
+        if adapter.secondary_guidance_parameter == "guidance_scale":
+            # Historical fields route primary guidance to true CFG. The
+            # reviewed model recommendation is distilled guidance; opt new
+            # drafts into its separate control without reinterpreting saved
+            # values or changing the adapter's legacy invocation contract.
+            defaults.update(
+                guidance_scale=1.0,
+                guidance_scale_2=capability.get("recommendedGuidance", adapter.secondary_guidance_default),
+                use_guidance_scale_2=True,
+            )
     for key, value in defaults.items():
         field = node["params"].get(key)
         if value is None or field is None or field.get("hidden") or field.get("display") == "output":

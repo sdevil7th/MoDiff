@@ -39,6 +39,10 @@ qualify every hardware/model combination.
   mapping. A separate explicit override controls distilled guidance. Disabling or
   omitting the override preserves old calls. ControlNet T2I instead exposes distilled
   guidance primarily and true CFG secondarily. Do not infer equivalence from labels.
+  Newly resolved ordinary operations and connected workflows explicitly enable
+  the distilled-guidance override with the selected model's recommendation and
+  initialize True CFG to 1 (disabled). This authoring default does not rewrite
+  saved nodes or run during dynamic field updates.
 
 All model/adapter files use the existing Hugging Face Hub resolver and immutable
 catalog revisions. Optional-runtime, resource, trust and local-file boundaries

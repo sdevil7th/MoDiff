@@ -16,8 +16,8 @@ def contracts():
 
 @pytest.mark.parametrize("profile,pipeline,steps,guidance,size,dtype", [
     ("lcm-dreamshaper-v7:direct", "LatentConsistencyModelPipeline", 4, 8.5, 512, "float32"),
-    ("flux-schnell:direct", "FluxPipeline", 4, 0.0, 1024, "bfloat16"),
-    ("flux-krea:direct", "FluxPipeline", 28, 3.5, 1024, "bfloat16"),
+    ("flux-schnell:direct", "FluxPipeline", 4, 1.0, 1024, "bfloat16"),
+    ("flux-krea:direct", "FluxPipeline", 28, 1.0, 1024, "bfloat16"),
     ("pixart-sigma-1024:direct", "PixArtSigmaPipeline", 20, 4.5, 1024, "float32"),
 ])
 def test_profile_starter_uses_reviewed_values_without_constructing_models(
@@ -107,3 +107,93 @@ def test_selected_defaults_do_not_copy_unrelated_model_capabilities(contracts):
     assert node["values"]["num_inference_steps"] == 4
     node["values"]["width"] = 640
     assert target["defaultSize"]["width"] == 512
+
+
+@pytest.mark.parametrize("profile,pipeline,task,guidance", [
+    ("flux-krea:direct", "FluxPipeline", "text_to_image", 3.5),
+    ("flux-schnell:direct", "FluxPipeline", "text_to_image", 0.0),
+    ("flux-dev:direct", "FluxPipeline", "text_to_image", 3.5),
+    ("flux-dev:img2img-direct", "FluxImg2ImgPipeline", "edit_image", 3.5),
+    ("flux-dev:inpaint-direct", "FluxInpaintPipeline", "inpaint", 3.5),
+    ("flux-kontext:direct", "FluxKontextPipeline", "edit_image", 2.5),
+    ("flux-kontext:direct", "FluxKontextPipeline", "multi_image_reference_edit", 2.5),
+    ("flux-kontext-inpaint:direct", "FluxKontextInpaintPipeline", "inpaint", 3.5),
+    ("flux-kontext-inpaint:direct", "FluxKontextInpaintPipeline", "outpaint", 3.5),
+])
+def test_new_flux_starter_routes_recommendation_to_distilled_guidance(
+    contracts, profile, pipeline, task, guidance,
+):
+    from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
+
+    starter = resolve_operation_starter(MODULE_MAP, contracts, {
+        "pipelineClass": pipeline, "task": task, "executionProfileId": profile,
+    })
+    node = next(n for n in starter["nodes"] if n["module"] == "modules.DiffusersImage" and n["action"] != "LoadPipeline")
+    values = node["values"]
+    assert values["guidance_scale"] == 1.0
+    assert values["use_guidance_scale_2"] is True
+    assert values["guidance_scale_2"] == guidance
+    for key in ("guidance_scale", "guidance_scale_2", "use_guidance_scale_2"):
+        assert node["params"][key]["value"] == values[key]
+
+    class Pipeline:
+        def __call__(self, true_cfg_scale=1.0, guidance_scale=3.5):
+            pass
+
+    consumed = {}
+    IMAGE_PIPELINE_ADAPTERS[pipeline].apply_generation_parameters(Pipeline(), values, consumed)
+    assert consumed["guidance_scale"] == guidance
+    assert consumed["true_cfg_scale"] == 1.0
+
+
+def test_legacy_guidance_invocation_and_omitted_override_are_unchanged():
+    from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
+
+    class Pipeline:
+        def __call__(self, true_cfg_scale=1.0, guidance_scale=3.5):
+            pass
+
+    adapter = IMAGE_PIPELINE_ADAPTERS["FluxPipeline"]
+    for values in ({"guidance_scale": 4.25}, {
+        "guidance_scale": 4.25, "guidance_scale_2": 9.0, "use_guidance_scale_2": False,
+    }):
+        original = deepcopy(values)
+        consumed = {}
+        adapter.apply_generation_parameters(Pipeline(), values, consumed)
+        assert consumed == {"true_cfg_scale": 4.25}
+        assert values == original
+
+
+def test_new_single_operation_enables_distilled_guidance(contracts):
+    node = resolve_operation(MODULE_MAP, contracts, {
+        "pipelineClass": "FluxPipeline", "task": "text_to_image",
+        "operationId": "diffusion.generate_image",
+    })
+    assert node["values"]["guidance_scale"] == 1.0
+    assert node["values"]["guidance_scale_2"] == 0.0
+    assert node["values"]["use_guidance_scale_2"] is True
+
+
+def test_distilled_authoring_default_preserves_pinned_true_cfg_default():
+    import ast
+    import importlib.util
+    from pathlib import Path
+    from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
+
+    root = Path(importlib.util.find_spec("diffusers").origin).parent / "pipelines"
+    reviewed = {
+        name for name, adapter in IMAGE_PIPELINE_ADAPTERS.items()
+        if adapter.secondary_guidance_parameter == "guidance_scale"
+    }
+    checked = set()
+    for path in root.glob("flux/pipeline_flux*.py"):
+        for node in ast.parse(path.read_text()).body:
+            if not isinstance(node, ast.ClassDef) or node.name not in reviewed:
+                continue
+            call = next(m for m in node.body if isinstance(m, ast.FunctionDef) and m.name == "__call__")
+            args = call.args.args[-len(call.args.defaults):]
+            defaults = {a.arg: d for a, d in zip(args, call.args.defaults)}
+            assert ast.literal_eval(defaults["true_cfg_scale"]) == 1.0, node.name
+            assert "guidance_scale" in defaults, node.name
+            checked.add(node.name)
+    assert checked == reviewed
