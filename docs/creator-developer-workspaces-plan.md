@@ -1113,12 +1113,22 @@ Checkpoint coverage (W9 remains in progress):
       implementation; distinguish unsupported optional hooks from real failures.
       Native/service execution, repeats, prompt/seed edits, reopen and workspace
       invariance pass. Requested duration remains subject to upstream VAE rounding.
-- [ ] Complete the native Modular service recovery: generation passed, but export
-      omitted dynamic prompt/seed controls. Reviewed-schema lookup is under
-      regression validation before another native export/invocation.
-- [ ] Complete native Modular image, image-edit, custom, nested and audio service
-      paths beyond the completed AudioLDM2 service, plus the cached non-image
-      generation/modification matrix above.
+- [x] Recover native Modular service export using reviewed dynamic controls:
+      Z-Image passes native/API/CLI execution, repeats, prompt/seed changes and
+      exact UI/service output comparisons.
+- [x] Execute an approved custom prompt processor through native service export;
+      a legacy composed Block also passes image plus metadata delivery, changed
+      inputs and reopen. Legacy composition flattens children and does not prove
+      nested Block V2 execution.
+- [x] ACE-Step XL text-to-audio: baseline, repeats, prompt/seed changes, reopen,
+      workspace switch and native/service output comparisons; eight retained
+      stereo WAVs decode at 48 kHz / 30 seconds. Semantic listening is pending.
+- [x] Correct new video/3D workflow defaults using reviewed capability metadata
+      after CogVideoX rejected the shared precision. Saved edits remain unchanged;
+      the original failure is retained. Live CogVideoX recovery is pending.
+- [ ] Complete image-edit and genuine nested Block V2 service paths, the remaining
+      cached non-image generation/modification matrix, specialized speech/upscale
+      authoring paths, and final media inspection. W9 is not complete.
 
 Acceptance: actual downloadable package, actual invocation and decoded retained
 outputs are all proven. The existing model-free smoke and parser tests remain

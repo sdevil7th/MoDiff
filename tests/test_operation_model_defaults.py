@@ -259,3 +259,36 @@ def test_distilled_authoring_default_preserves_pinned_true_cfg_default():
             assert "guidance_scale" in defaults, node.name
             checked.add(node.name)
     assert checked == reviewed
+
+
+@pytest.mark.parametrize("pipeline,profile,dtype,values", [
+    ("CogVideoXPipeline", "cogvideox-2b:direct", "float16",
+     {"width": 720, "height": 480, "num_frames": 25, "num_inference_steps": 25, "guidance_scale": 6}),
+    ("SanaVideoPipeline", "sana-video-480p:direct", "bfloat16",
+     {"width": 832, "height": 480, "num_frames": 81, "num_inference_steps": 50, "guidance_scale": 6}),
+    ("WanTI2VPipeline", "wan-22-ti2v-5b:direct", "bfloat16",
+     {"width": 1280, "height": 704, "num_frames": 121, "num_inference_steps": 50, "guidance_scale": 5}),
+    ("ShapEPipeline", "shap-e:direct", "float16",
+     {"frame_size": 256, "num_inference_steps": 64, "guidance_scale": 15}),
+])
+def test_video_and_three_d_operations_initialize_from_reviewed_defaults(contracts, pipeline, profile, dtype, values):
+    task = "text_to_3d" if pipeline == "ShapEPipeline" else "text_to_video"
+    before = deepcopy(MODULE_MAP)
+    with patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("constructed model node")):
+        starter = resolve_operation_starter(MODULE_MAP, contracts, {
+            "pipelineClass": pipeline, "task": task, "executionProfileId": profile,
+        })
+    loader = next(n for n in starter["nodes"] if n["action"] == "LoadPipeline")
+    generate = next(n for n in starter["nodes"] if n["action"] != "LoadPipeline")
+    assert loader["params"]["dtype"]["value"] == dtype
+    for key, value in values.items():
+        assert generate["params"][key]["value"] == value
+    individual = resolve_operation(MODULE_MAP, contracts, {
+        "pipelineClass": pipeline, "task": task, "operationId": generate["operation"]["operationId"],
+    })
+    for key, value in values.items():
+        assert individual["params"][key]["value"] == value
+    generate["params"]["num_inference_steps"]["value"] = 17
+    resolve_operation_starter(MODULE_MAP, contracts, {"pipelineClass": pipeline, "task": task})
+    assert generate["params"]["num_inference_steps"]["value"] == 17
+    assert MODULE_MAP == before

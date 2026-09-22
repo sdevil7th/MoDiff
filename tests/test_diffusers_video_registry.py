@@ -2310,7 +2310,13 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             local_model = Path(temporary) / "models" / "local-video"
             local_model.mkdir(parents=True)
-            with chdir(temporary), patch("modiff.NodeBase.modelstore.is_local_cached", return_value=True):
+            # Cache notifications must not initialize the HTTP server while the
+            # test is deliberately resolving model paths from another cwd.
+            with (
+                chdir(temporary),
+                patch("modiff.NodeBase.modelstore.is_local_cached", return_value=True),
+                patch("modiff.NodeBase._server"),
+            ):
                 first = node(
                     pipeline_class="LTXConditionPipeline",
                     model_id={"source": "local", "value": "models/local-video"},

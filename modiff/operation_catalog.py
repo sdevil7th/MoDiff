@@ -11,15 +11,19 @@ import json
 from modiff.operation_contracts import _identifier, operation_owns_model, with_operation_semantics
 from modiff.operation_inventory import load_operation_inventory
 
+_STANDARD_DEFAULT_MODULES = {
+    "modules.DiffusersImage", "modules.DiffusersAudio", "modules.DiffusersVideo", "modules.DiffusersThreeD",
+}
+
 
 def seed_standard_operation_defaults(node, profile):
-    """Initialize a new ordinary image/audio operation from its reviewed model profile.
+    """Initialize a new ordinary operation from its reviewed model profile.
 
     This is authoring only: never call it on saved nodes or dynamic field updates.
     Shared pipeline classes (for example Flux dev/schnell/Krea) must use the
     selected profile, not whichever repository is the adapter's default.
     """
-    if node["module"] not in {"modules.DiffusersImage", "modules.DiffusersAudio"} or profile.loader_module != node["module"]:
+    if node["module"] not in _STANDARD_DEFAULT_MODULES or profile.loader_module != node["module"]:
         return
     from modiff.studio_execution_specs import studio_capability_definition
 
@@ -46,6 +50,15 @@ def seed_standard_operation_defaults(node, profile):
             "width": size.get("width"),
             "height": size.get("height"),
         }
+        if node["module"] == "modules.DiffusersVideo":
+            defaults.update(
+                num_frames=capability.get("recommendedFrames"),
+                frame_rate=capability.get("recommendedFps"),
+                max_sequence_length=capability.get("recommendedMaxSequenceLength"),
+            )
+        elif node["module"] == "modules.DiffusersThreeD":
+            defaults["frame_size"] = size.get("width")
+    if node["module"] == "modules.DiffusersImage" and node["action"] != "LoadPipeline":
         from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
 
         adapter = IMAGE_PIPELINE_ADAPTERS[profile.pipeline_class]
@@ -418,12 +431,19 @@ def resolve_operation(modules, contracts, selection):
             raise ValueError("Operation binding targets an undeclared field.")
         definition["params"][key]["value"] = deepcopy(value)
     result = {**definition, "module": module, "action": action, "values": values, "operation": deepcopy(contract)}
-    if module in {"modules.DiffusersImage", "modules.DiffusersAudio"}:
+    if module in _STANDARD_DEFAULT_MODULES:
         from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
         from modules.DiffusersAudio.main import AUDIO_PIPELINE_ADAPTERS
+        from modules.DiffusersVideo.main import VIDEO_PIPELINE_ADAPTERS
+        from modules.DiffusersThreeD.main import THREE_D_PIPELINE_ADAPTERS
         from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
 
-        adapters = IMAGE_PIPELINE_ADAPTERS if module == "modules.DiffusersImage" else AUDIO_PIPELINE_ADAPTERS
+        adapters = {
+            "modules.DiffusersImage": IMAGE_PIPELINE_ADAPTERS,
+            "modules.DiffusersAudio": AUDIO_PIPELINE_ADAPTERS,
+            "modules.DiffusersVideo": VIDEO_PIPELINE_ADAPTERS,
+            "modules.DiffusersThreeD": THREE_D_PIPELINE_ADAPTERS,
+        }[module]
         adapter = adapters[contract["binding"]["pipelineClass"]]
         profiles = [
             p for p in DIFFUSERS_EXECUTION_PROFILES.values()

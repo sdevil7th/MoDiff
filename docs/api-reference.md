@@ -1347,12 +1347,15 @@ and `target`, and real field names as `sourceHandle`/`targetHandle`. The client
 assigns ordinary canvas node/edge IDs at insertion; these authoring references
 are never an alternate executable graph format or an execution receipt.
 
-New ordinary image and audio operations initialize visible controls from the
-selected profile's reviewed capability defaults. Audio defaults include duration,
+New ordinary image, audio, video and rendered-3D operations initialize visible
+controls from the selected profile's reviewed capability defaults. Video defaults
+include frame count and dimensions; rendered-3D defaults include frame size.
+Audio defaults include duration,
 sample rate, steps, guidance and loader precision where declared; inactive
 adapter controls keep their existing defaults. This initialization applies only
 when creating nodes. Loading saved graphs or refreshing dynamic field metadata
 does not replace edited values, and runtime validation still checks their limits.
+Playback FPS remains an independent control on the video export node.
 
 A v3 operation can declare `decomposition: "integrated"` and
 `nodeType: "integrated"` when its existing action both owns and executes its
