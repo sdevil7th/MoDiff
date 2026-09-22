@@ -971,9 +971,14 @@ Additional concurrency and dimension regressions:
 - [x] Regenerate the one affected ERNIE compiled Block definition after reviewing
       its eight dimension-bound changes. The other 121 definitions are unchanged;
       all 89 served files match and dependent ledgers have only 18 hash changes.
-- [ ] Complete native dimension recovery and concurrent run-receipt recovery
-      on the new implementation. Completed generation alone does not establish
-      successful end-to-end execution.
+- [x] Verify native 1152 × 896 authoring through Kandinsky 3, ERNIE, GLM and
+      ERNIE's equivalent-standard workflow. All four retain the requested values;
+      this is authoring evidence, not generation qualification.
+- [x] Repeat eight concurrent run lookups against the real retained history.
+      Maximum response time falls from 15.80 seconds to 2.73 seconds cold and
+      0.041 seconds warm; all eight original output hashes are preserved.
+- [ ] Complete affected native generation and concurrent-authoring recoveries.
+      Completed generation alone does not establish end-to-end acceptance.
 - [ ] Execute the prepared custom compositions across standard and Modular
       model paths, including execution after undo/redo and node removal.
 
