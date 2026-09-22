@@ -1025,9 +1025,34 @@ def assert_runtime_quantization_full_residency(
     return {"source_weight_bytes": source_bytes, "required_bytes": required, "free_bytes": free_bytes}
 
 
+def configure_rocm_vision_attention(pipeline: Any, *, torch_module: Any = None) -> list[str]:
+    """Keep ROCm vision SDPA failures out of multimodal prompt embeddings.
+
+    Use Transformers' public subconfig setter, leaving text and Diffusers
+    denoiser attention alone. Only the default SDPA vision implementation is
+    replaced; explicit alternate implementations and non-ROCm hosts are retained.
+    """
+    if torch_module is None:
+        import torch as torch_module
+    if not getattr(getattr(torch_module, "version", None), "hip", None):
+        return []
+    applied = []
+    for name, component in getattr(pipeline, "components", {}).items():
+        vision = getattr(getattr(component, "config", None), "vision_config", None)
+        setter = getattr(component, "set_attn_implementation", None)
+        if getattr(vision, "_attn_implementation", None) != "sdpa" or not callable(setter):
+            continue
+        setter({"vision_config": "eager"})
+        if vision._attn_implementation != "eager":
+            raise RuntimeError(f"Could not apply stable ROCm vision attention to {name}.")
+        applied.append(name)
+    return applied
+
+
 def apply_execution_recipe_to_pipeline(pipeline: Any, recipe: dict[str, Any]) -> dict[str, Any]:
+    vision_attention = configure_rocm_vision_attention(pipeline)
     if not recipe:
-        return {"attention": None, "vae": None}
+        return {"attention": None, "vae": None, **({"rocmVisionAttention": vision_attention} if vision_attention else {})}
     vae = configure_vae_memory(
         pipeline,
         slicing=bool(recipe.get("vae_slicing", True)),
@@ -1067,6 +1092,7 @@ def apply_execution_recipe_to_pipeline(pipeline: Any, recipe: dict[str, Any]) ->
     )
     return {
         "attention": attention,
+        **({"rocmVisionAttention": vision_attention} if vision_attention else {}),
         "vae": vae,
         "layerwiseCasting": layerwise,
         "channelsLast": channels_last,

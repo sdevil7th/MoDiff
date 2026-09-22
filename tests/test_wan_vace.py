@@ -23,6 +23,7 @@ class WanVaceLoaderTests(unittest.TestCase):
         node.mm_add = Mock()
         vae = Mock()
         pipeline = Mock()
+        pipeline.components = {"vae": vae}
 
         with (
             patch.dict(CONFIG.hf, {"cache_dir": "E:/MoDiff/huggingface/hub", "online_status": "Auto"}),
