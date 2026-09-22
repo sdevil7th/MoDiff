@@ -999,6 +999,34 @@ The latest checkpoint preserves all 112 original snapshots, 1,696 files and
 operator approvals. Remaining model/task, auxiliary, custom-composition and
 visual-assessment requirements keep W8 open.
 
+Completed cached-weight selection and Saved Block field-action recovery:
+
+- [x] Reproduce the uncatalogued cached x4 upscaler selection failure. Resolve
+      its exact installed revision, hash and size when the user selects it;
+      persist that identity without weakening execution validation or loading
+      weights during metadata inspection.
+- [x] Reproduce suppressed callbacks in collapsed Saved Blocks and incorrectly
+      routed inspector callbacks. Resolve declared exposed fields to their
+      existing internal runtime owner and map metadata replies back to the
+      workflow instance. Preserve saved definitions, peers and stale-reply guards.
+- [x] Pass 200 related client regressions, the full client gate and five final
+      focused browser checks. The paired backend gate passes 3,458 tests and
+      10,057 subtests with 524 skips; the already-reviewed selector runtime
+      contract separately passed 94 optional-runtime tests and 281 subtests.
+- [x] Complete and independently audit ten native x4 executions: baseline,
+      identical repeat, tile/overlap edits, post-scaling, replacement input,
+      save/reopen, Creator editing, Saved Block reuse, canvas x4-to-x2 switching
+      and inspector return to x4. The returned output is byte-identical to the
+      prior x4 Block output. Exact metadata requests, persisted artifact pins,
+      dimensions, cache reuse, saved-definition preservation and restored output
+      bytes are checked.
+
+The x4 baseline is 4096 square; the Block return produces 2656 square after
+post-scaling. Visual inspection retains the source composition; fine-detail and
+full-resolution tile-seam quality are not established by that inspection.
+Both original failures remain recorded. This closes the selector/routing
+recovery, not W8's remaining model/task, auxiliary and structural campaigns.
+
 ### W9 — Other modalities and real service export
 
 - [ ] Run baseline, unchanged, parameter-change and save/reopen cases for each
