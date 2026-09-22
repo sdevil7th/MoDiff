@@ -122,6 +122,60 @@ def test_text_alias_does_not_expose_connected_fields_or_model_identity():
     assert service.inspect_graph(graph, registry)["inputs"] == service.inspect_graph(GRAPH, REGISTRY)["inputs"]
 
 
+@pytest.mark.parametrize("display", sorted(service.PREVIEWS))
+def test_export_after_execution_omits_preview_observations_without_mutating_graph(display):
+    registry = deepcopy(REGISTRY)
+    graph = deepcopy(GRAPH)
+    registry["modules.Primitive"]["DataViewer"]["params"]["preview"] = {
+        "type": "string", "display": display, "dataSource": "output"
+    }
+    preview = graph["nodes"]["preview"]["params"]["preview"]
+    preview.update(display=display, value=["/cache/preview/output/0", "/home/private/result.mp4"])
+    original = deepcopy(graph)
+    candidates = service.inspect_graph(graph, registry)
+    assert not any(c["field"] == "preview" for c in candidates["inputs"])
+    package = service.build_package(graph, INTERFACE, registry=registry, contract=CONTRACT)
+    assert graph == original
+    assert package["graph"]["nodes"]["preview"]["params"]["preview"] == {
+        "display": display, "sourceKey": "output"
+    }
+    assert "/home/private" not in json.dumps(package)
+    result = service.prepare_package(
+        package, {"prompt": "new input"}, registry=registry, contract=CONTRACT, sid="service_preview"
+    )
+    assert "value" not in result["nodes"]["preview"]["params"]["preview"]
+
+
+@pytest.mark.parametrize("change", ["display", "sourceKey", "registry", "connected"])
+def test_untrusted_preview_claim_cannot_hide_private_execution_values(change):
+    registry = deepcopy(REGISTRY)
+    graph = deepcopy(GRAPH)
+    param = graph["nodes"]["preview"]["params"]["preview"]
+    param["value"] = "/home/private/input.txt"
+    if change == "display":
+        param["display"] = "ui_image"
+    elif change == "sourceKey":
+        param["sourceKey"] = "different"
+    elif change == "registry":
+        registry["modules.Primitive"]["DataViewer"]["params"]["preview"]["display"] = "text"
+    else:
+        param["sourceId"] = "prompt"
+    # Use a second genuine preview so the portable-value guard is exercised
+    # even when the forged field is not an eligible named output.
+    graph["nodes"]["other"] = deepcopy(GRAPH["nodes"]["preview"])
+    graph["paths"].append(["prompt", "other"])
+    interface = deepcopy(INTERFACE)
+    interface["outputs"]["text"][0]["nodeId"] = "other"
+    if change == "registry":
+        registry["modules.Primitive"]["DataViewer"]["params"]["real_preview"] = {
+            "display": "ui_text", "dataSource": "output"
+        }
+        graph["nodes"]["other"]["params"]["real_preview"] = {"display": "ui_text", "sourceKey": "output"}
+        interface["outputs"]["text"][0]["field"] = "real_preview"
+    with pytest.raises(ValueError, match="credential/local path"):
+        service.build_package(graph, interface, registry=registry, contract=CONTRACT)
+
+
 @pytest.mark.parametrize(
     "value",
     [

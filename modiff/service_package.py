@@ -95,6 +95,19 @@ def node_fields(registry, node):
     return definition["params"]
 
 
+def _is_preview_observation(spec, param):
+    display = spec.get("display")
+    return (
+        isinstance(display, str)
+        and display in PREVIEWS
+        and bool(spec.get("dataSource"))
+        and isinstance(param, dict)
+        and param.get("display") == display
+        and param.get("sourceKey") == spec["dataSource"]
+        and not param.get("sourceId")
+    )
+
+
 def inspect_graph(graph, registry):
     graph_material(graph)
     inputs, outputs = [], []
@@ -112,13 +125,8 @@ def inspect_graph(graph, registry):
                 types = "string"
             param = node["params"].get(field)
             if (
-                isinstance(display, str)
-                and display in PREVIEWS
-                and spec.get("dataSource")
+                _is_preview_observation(spec, param)
                 and not spec.get("hidden")
-                and isinstance(param, dict)
-                and param.get("display") == display
-                and param.get("sourceKey") == spec["dataSource"]
                 and not (node["module"] == "modules.Audio" and node["action"] == "Load")
             ):
                 outputs.append({"nodeId": node_id, "field": field, "type": display})
@@ -128,7 +136,7 @@ def inspect_graph(graph, registry):
                 and isinstance(param, dict)
                 and not param.get("sourceId")
                 and "value" in param
-                and display not in ("output", "button")
+                and display not in (*PREVIEWS, "output", "button")
                 and not AUTHORITY.search(field)
             ):
                 inputs.append({"nodeId": node_id, "field": field, "type": types})
@@ -245,6 +253,13 @@ def build_package(graph, interface, *, registry, contract):
     interface = bindings(interface, candidates)
     material = deepcopy(graph_material(graph))
     # Node parameter execution data is retained, including display/spawn flags.
+    # Completed previews are observations, not inputs to the next execution.
+    # Verify their registry binding rather than trusting a client display flag.
+    for node in material["nodes"].values():
+        for field, spec in node_fields(registry, node).items():
+            param = node["params"].get(field)
+            if isinstance(spec, dict) and _is_preview_observation(spec, param):
+                param.pop("value", None)
     hints = graph.get("runtimeHints") or {}
     if not isinstance(hints, dict):
         raise ValueError("runtimeHints must be an object.")
