@@ -108,11 +108,58 @@ def _is_preview_observation(spec, param):
     )
 
 
+def _modular_service_fields(graph):
+    """Resolve dynamic stage fields from one concrete reviewed model owner.
+
+    Imported field types and authoring labels are not schema authority. Reuse
+    the resource-owner traversal and the same metadata used by dynamic nodes;
+    ambiguous, unbound and contract-only custom paths remain undiscoverable.
+    """
+    nodes = graph["nodes"]
+    loaders = {
+        key for key, node in nodes.items()
+        if (node["module"], node["action"]) == ("modules.ModularDiffusers", "ModelsLoader")
+    }
+    if not loaders:
+        return {}
+    from modiff.operation_contracts import MODULAR_STAGE_OPERATIONS
+    from modiff.workflow_task_identity import resource_consumers
+    from modules.ModularDiffusers.modular_utils import get_model_type_metadata
+
+    owners = {}
+    for loader in loaders:
+        for consumer in resource_consumers(nodes, loader, loaders):
+            owners.setdefault(consumer, []).append(loader)
+    actions = {operation.action: kind for kind, operation in MODULAR_STAGE_OPERATIONS.items()}
+    metadata = {}
+    result = {}
+    for node_id, node in nodes.items():
+        if (node["module"] != "modules.ModularDiffusers" or node["action"] not in actions
+                or len(owners.get(node_id, [])) != 1):
+            continue
+        owner = owners[node_id][0]
+        if owner not in metadata:
+            selector = nodes[owner]["params"].get("model_type", {})
+            value = selector.get("value")
+            metadata[owner] = (
+                get_model_type_metadata(value)
+                if isinstance(value, str) and not selector.get("sourceId") else None
+            )
+        definition = metadata[owner]
+        if not definition or definition.get("execution_status") == "contract_only":
+            continue
+        stage = definition["node_params"].get(actions[node["action"]])
+        if stage:
+            result[node_id] = stage["params"]
+    return result
+
+
 def inspect_graph(graph, registry):
     graph_material(graph)
     inputs, outputs = [], []
+    modular_fields = _modular_service_fields(graph)
     for node_id, node in graph["nodes"].items():
-        fields = node_fields(registry, node)
+        fields = {**node_fields(registry, node), **modular_fields.get(node_id, {})}
         for field, spec in fields.items():
             if not isinstance(spec, dict):
                 continue

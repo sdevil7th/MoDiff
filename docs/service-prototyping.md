@@ -46,6 +46,10 @@ per name. Inputs cannot replace connected fields or model/code identity controls
 Text prompts are exposed as strings for both ordinary Diffusers and Modular
 nodes, including textarea fields declared with the registry's `text` alias.
 This scalar interface does not accept a list of prompts.
+Built-in Modular stages use the dynamic schema of their single connected,
+reviewed Models Loader. This exposes controls such as prompt and seed without
+trusting imported field types. Unbound or ambiguously owned stages and
+contract-only custom model identities do not gain dynamic service inputs.
 Previously generated preview values are omitted: exporting after a run does not
 package its local output URLs or expose those results as callable inputs.
 Execution values, including input file selections, still undergo portability checks.

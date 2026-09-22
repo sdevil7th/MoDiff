@@ -1109,8 +1109,13 @@ Checkpoint coverage (W9 remains in progress):
       generation, save/reopen, exported service, repeat and prompt/seed edits pass.
 - [x] Capture consumed audio steps/guidance and requested duration/delivery rate;
       preserve connected origins and validate the matching client receipt.
-- [ ] Recover LongCat loading after its inherited VAE tiling hook reported no
+- [x] Recover LongCat loading after its inherited VAE tiling hook reported no
       implementation; distinguish unsupported optional hooks from real failures.
+      Native/service execution, repeats, prompt/seed edits, reopen and workspace
+      invariance pass. Requested duration remains subject to upstream VAE rounding.
+- [ ] Complete the native Modular service recovery: generation passed, but export
+      omitted dynamic prompt/seed controls. Reviewed-schema lookup is under
+      regression validation before another native export/invocation.
 - [ ] Complete native Modular image, image-edit, custom, nested and audio service
       paths beyond the completed AudioLDM2 service, plus the cached non-image
       generation/modification matrix above.
