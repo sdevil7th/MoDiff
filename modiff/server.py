@@ -2103,6 +2103,29 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             }
         )
 
+    @staticmethod
+    def _studio_output_identity_values(output, key, provenance_key):
+        values = set()
+
+        def add(value):
+            if value is None:
+                return
+            normalized = str(value).strip()
+            if normalized:
+                values.add(normalized)
+
+        add(output.get(key))
+        for container_key in ("provenance", "backendProvenance"):
+            container = output.get(container_key)
+            if isinstance(container, dict):
+                add(container.get(provenance_key))
+        media_items = output.get("mediaItems")
+        if isinstance(media_items, list):
+            for item in media_items:
+                if isinstance(item, dict):
+                    add(item.get(key))
+        return values
+
     def _studio_outputs_for_run(self, task_id, client_run_id=None):
         """Return persisted outputs whose recorded run identity matches exactly."""
         normalized_task_id = str(task_id or "").strip()
@@ -2110,39 +2133,17 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         if not normalized_task_id:
             return []
 
-        def identity_values(output, key, provenance_key):
-            values = set()
-
-            def add(value):
-                if value is None:
-                    return
-                normalized = str(value).strip()
-                if normalized:
-                    values.add(normalized)
-
-            add(output.get(key))
-            for container_key in ("provenance", "backendProvenance"):
-                container = output.get(container_key)
-                if isinstance(container, dict):
-                    add(container.get(provenance_key))
-            media_items = output.get("mediaItems")
-            if isinstance(media_items, list):
-                for item in media_items:
-                    if isinstance(item, dict):
-                        add(item.get(key))
-            return values
-
         matches = []
         with self.studio_history_file_lock:
-            outputs = self._read_studio_outputs()
+            outputs = self._read_studio_outputs(task_id=normalized_task_id)
         for output in outputs:
             if not isinstance(output, dict):
                 continue
-            task_ids = identity_values(output, "taskId", "backendExecutionId")
+            task_ids = self._studio_output_identity_values(output, "taskId", "backendExecutionId")
             if task_ids != {normalized_task_id}:
                 continue
             if normalized_client_run_id:
-                client_run_ids = identity_values(output, "clientRunId", "clientRunId")
+                client_run_ids = self._studio_output_identity_values(output, "clientRunId", "clientRunId")
                 # Exact task identity is sufficient for legacy records that
                 # predate client-run IDs. When present, however, every recorded
                 # client identity must agree with the originating run.
@@ -4463,7 +4464,12 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         # Keep compact immutable records, not a second retained Python object
         # graph. Decode each record separately so large histories never monopolize
         # the GIL in one native JSON decoder call. Readers own their copies.
+        task_indices = {}
+        for index, output in enumerate(state["outputs"]):
+            for task_id in self._studio_output_identity_values(output, "taskId", "backendExecutionId"):
+                task_indices.setdefault(task_id, []).append(index)
         self._studio_history_read_cache = {
+            "taskIndices": {task_id: tuple(indices) for task_id, indices in task_indices.items()},
             "signature": signature,
             "revision": state["revision"],
             "previewSlots": deepcopy(state["previewSlots"]),
@@ -4529,8 +4535,25 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             slots = self._legacy_studio_preview_slots(outputs)
         return {"revision": revision, "previewSlots": slots, "outputs": outputs}
 
-    def _read_studio_outputs(self):
-        return self._read_studio_output_state()["outputs"]
+    def _read_studio_outputs(self, *, task_id=None):
+        if task_id is None:
+            return self._read_studio_output_state()["outputs"]
+        with self.studio_history_file_lock:
+            cached = self._studio_history_read_cache
+            try:
+                signature = self._studio_history_signature(self._studio_history_file())
+            except OSError:
+                signature = None
+            if cached is not None and cached["signature"] == signature:
+                # The index selects candidates, not trusted identities. The run
+                # reader still rejects conflicting task/client provenance.
+                return [json.loads(cached["outputs"][index])
+                        for index in cached["taskIndices"].get(task_id, ())]
+            # Cold reads and external replacements use the same normalization,
+            # invalidation and error handling as every other history reader.
+            outputs = self._read_studio_output_state()["outputs"]
+            return [output for output in outputs
+                    if task_id in self._studio_output_identity_values(output, "taskId", "backendExecutionId")]
 
     def _write_studio_output_state(self, outputs, preview_slots, *, revision=None):
         with self.studio_history_file_lock:

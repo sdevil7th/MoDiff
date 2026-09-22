@@ -1065,7 +1065,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         for field in ("width", "height"):
             self.assertEqual(
                 {key: ernie["fieldParams"][field][key] for key in ("min", "max", "step")},
-                {"min": 1024, "max": 1024, "step": 32},
+                {"min": 512, "max": 2048, "step": 32},
             )
         self.assertEqual(ernie["maxOutputPixels"], 1024 * 1024)
         self.assertTrue(ernie["fieldParams"]["negative_prompt"]["hidden"])
@@ -1075,7 +1075,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         for field in ("width", "height"):
             self.assertEqual(
                 {key: glm_image["fieldParams"][field][key] for key in ("min", "max", "step")},
-                {"min": 1024, "max": 1024, "step": 32},
+                {"min": 512, "max": 2048, "step": 32},
             )
         self.assertEqual(glm_image["maxOutputPixels"], 1024 * 1024)
         self.assertEqual(
@@ -3316,11 +3316,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             self.assertEqual(kwargs["variant"], "fp16")
             self.assertNotIn("trust_remote_code", kwargs)
 
-        with self.assertRaisesRegex(ValueError, "between 1024 and 1024"):
+        with self.assertRaisesRegex(ValueError, "increments of 64"):
             Generate("kandinsky3-size-contract").execute(
                 pipeline=loaded_pipelines["text_to_image"],
                 prompt="reviewed fixture",
-                width=960,
+                width=992,
                 height=1024,
                 num_inference_steps=25,
                 guidance_scale=3.0,
@@ -3737,8 +3737,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertNotIn("max_sequence_length", called)
 
         for field, value, message in (
-            ("width", 1008, "between 1024 and 1024"),
-            ("height", 1056, "between 1024 and 1024"),
+            ("width", 1008, "increments of 32"),
+            ("height", 1056, "cannot exceed 1048576 pixels"),
             ("num_inference_steps", 9, "between 1 and 8"),
             ("guidance_scale", 1.1, "requires guidance_scale=1"),
         ):
@@ -3886,8 +3886,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(encoded["max_sequence_length"], 2048)
 
         for field, value, message in (
-            ("width", 992, "between 1024 and 1024"),
-            ("height", 1056, "between 1024 and 1024"),
+            ("width", 1008, "increments of 32"),
+            ("height", 1056, "cannot exceed 1048576 pixels"),
             ("num_inference_steps", 51, "between 1 and 50"),
             ("max_sequence_length", 2049, "between 1 and 2048"),
         ):

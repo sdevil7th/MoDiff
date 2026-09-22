@@ -57,6 +57,42 @@ class StudioHistoryResponsivenessTests(unittest.IsolatedAsyncioTestCase):
             second = self.server._read_studio_output_state()
         self.assertEqual(second, original)
 
+    async def test_run_detail_decodes_only_its_matching_cached_records(self):
+        outputs = [{"id": str(i), "taskId": f"task-{i}", "graphSnapshot": {"large": "x" * 1000}}
+                   for i in range(100)]
+        outputs.append({"id": "legacy", "provenance": {"backendExecutionId": "task-42"}})
+        self.server._write_studio_outputs(outputs)
+        decode = json.loads
+        decoded = []
+
+        def record_decode(value, *args, **kwargs):
+            result = decode(value, *args, **kwargs)
+            decoded.append(result["id"])
+            return result
+
+        with patch("modiff.server.json.loads", side_effect=record_decode):
+            matched = self.server._studio_outputs_for_run("task-42")
+        self.assertEqual(decoded, ["42", "legacy"], "A run lookup must not deserialize other workflows.")
+        self.assertEqual([output["id"] for output in matched], decoded)
+        matched[0]["graphSnapshot"]["large"] = "reader edit"
+        self.assertEqual(self.server._studio_outputs_for_run("task-42")[0]["graphSnapshot"]["large"], "x" * 1000)
+
+    async def test_indexed_run_detail_invalidates_replaced_deleted_and_corrupt_history(self):
+        self.server._write_studio_outputs([{"id": "old", "taskId": "task"}])
+        self.assertEqual(self.server._studio_outputs_for_run("task")[0]["id"], "old")
+        target = self.server._studio_history_file()
+        replacement = target.with_suffix(".external")
+        replacement.write_text(json.dumps([{"id": "new", "taskId": "new-task"}]))
+        replacement.replace(target)
+        self.assertEqual(self.server._studio_outputs_for_run("task"), [])
+        self.assertEqual(self.server._studio_outputs_for_run("new-task")[0]["id"], "new")
+        target.write_text("invalid JSON")
+        self.assertEqual(self.server._studio_outputs_for_run("new-task"), [])
+        target.write_text(json.dumps([{"id": "repaired", "taskId": "task"}]))
+        self.assertEqual(self.server._studio_outputs_for_run("task")[0]["id"], "repaired")
+        target.unlink()
+        self.assertEqual(self.server._studio_outputs_for_run("task"), [])
+
     async def test_history_cache_observes_atomic_replacement_removal_and_failed_write(self):
         original = self.server._read_studio_output_state()
         with self.assertRaises(TypeError):

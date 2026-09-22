@@ -14486,7 +14486,7 @@ _ERNIE_IMAGE_TURBO_CAPABILITY = {
     "galleryEligible": False,
     "notes": [
         "The immutable public Apache-2.0 snapshot uses only package-owned Diffusers and Transformers classes and five bfloat16 safetensors weight files.",
-        "The reviewed Turbo route is fixed to 1024x1024, 8 steps, guidance 1, the repository's optional prompt enhancer, and the tokenizer's 2048-token ceiling.",
+        "The reviewed Turbo default uses 1024x1024, 8 steps, guidance 1, the repository's optional prompt enhancer, and the tokenizer's 2048-token ceiling. Explicit dimensions keep the declared alignment and pixel ceiling.",
         "The approximately 31.60 GB weight surface is remote-only; the missing safety checker keeps Auto and Gallery disabled pending live output review.",
     ],
 }
@@ -14568,7 +14568,7 @@ _GLM_IMAGE_CAPABILITY = {
     "galleryEligible": False,
     "notes": [
         "The immutable public MIT snapshot uses only package-owned Diffusers and Transformers classes and nine safetensors weight files; incorporated X-Omni tokenizer weights retain Apache-2.0 terms.",
-        "The reviewed text-to-image route is fixed to 1024x1024, 50 steps, guidance 1.5, and at most 2048 prompt tokens; image-to-image remains outside this first admission.",
+        "The reviewed text-to-image default uses 1024x1024, 50 steps, guidance 1.5, and at most 2048 prompt tokens. Explicit dimensions keep the declared alignment and pixel ceiling; image-to-image remains outside this first admission.",
         "The approximately 35.77 GB weight surface is remote-only; the missing safety checker keeps Auto and Gallery disabled pending live output review.",
     ],
 }

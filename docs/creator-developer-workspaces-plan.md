@@ -941,13 +941,41 @@ Native image regression follow-up:
 - [x] Final backend gate: 3,435 tests and 10,057 subtests passed, with 521 skips.
       Verified optional-runtime checks separately passed 145 tests and 545
       subtests, including the installed classes and their call signatures.
-- [ ] Repeat the complete Hunyuan and Ovis native core campaigns on the fix.
+- [x] Repeat all 11 Hunyuan native core cases on the fix, including exact
+      1152 × 896 output, unchanged default-baseline bytes, Resize and Saved Blocks.
+- [ ] Complete Ovis native recovery: loading, baseline, unchanged repeat and
+      prompt edits passed. Seed generation completed, but fetching its run
+      record timed out. Preserve this failure and repeat the affected campaign.
 - [ ] Verify LongCat's indeterminate progress visibly during a full-resolution
       generation and audit the completed output and unchanged cached repeat.
 
 These corrections keep generic nodes and put upstream differences behind backend
 contracts. Prepared recovery campaigns and unit checks are not live acceptance.
 The remaining model/task, auxiliary and structural matrix remains open.
+
+Additional concurrency and dimension regressions:
+
+- [x] Native authoring reproduces fixed-size clamping for Kandinsky 3, ERNIE
+      and GLM. Their upstream contracts support explicit non-square sizes.
+- [x] Preserve Ovis and LongCat receipt timeouts after completed generation.
+      Eight concurrent retained-run lookups reproduce a 15.8-second response.
+- [x] Add a regression proving that one run lookup unnecessarily decodes all
+      history records. Index candidates in the existing immutable record cache;
+      retain strict identity validation and external-file invalidation.
+- [x] Author a connected Text Value → custom Modular prompt → custom Python
+      prefix → Generate graph during generation; edit, undo/redo, save and reopen
+      through native controls. No graph was submitted by this authoring check.
+- [x] Final backend gate passed 3,444 tests and 10,057 subtests (524 skips);
+      verified optional checks passed 151 tests and 545 subtests. The complete
+      client gate and five workflow creation/reload browser checks passed.
+- [x] Regenerate the one affected ERNIE compiled Block definition after reviewing
+      its eight dimension-bound changes. The other 121 definitions are unchanged;
+      all 89 served files match and dependent ledgers have only 18 hash changes.
+- [ ] Complete native dimension recovery and concurrent run-receipt recovery
+      on the new implementation. Completed generation alone does not establish
+      successful end-to-end execution.
+- [ ] Execute the prepared custom compositions across standard and Modular
+      model paths, including execution after undo/redo and node removal.
 
 ### W9 — Other modalities and real service export
 

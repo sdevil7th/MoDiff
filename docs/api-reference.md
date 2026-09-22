@@ -1945,6 +1945,12 @@ of compact recent terminal receipts. Current and queued graph runs retain the
 complete workflow snapshot needed for immediate restoration. Completed
 workflow snapshots and run outputs are loaded on demand through
 `GET /runs/{task_id}` instead of being repeated in every queue poll.
+
+Run detail lookup reuses the history cache's task index to decode only matching
+output records. The index only narrows candidates: task and client identities
+must still agree across output, provenance and media records. Existing history
+normalization, atomic writes and detection of external file changes apply; no
+outputs or workflow snapshots are pruned to improve lookup speed.
 Completion, cancellation, and failure are distinct terminal states.
 
 Use the WebSocket for live progress and `GET /queue` to restore state after reconnect. Do not infer success only from an HTTP `200` returned by `POST /graph`.
@@ -2184,3 +2190,10 @@ size or resource policy.
 Pipelines without a step callback emit indeterminate generation progress
 (`progress: -1`, without current/total step counts or an ETA). Callback-capable
 pipelines retain measured per-step progress and the existing interruption checks.
+
+Kandinsky 3, ERNIE Image and GLM Image also separate their 1024-square defaults
+from valid explicit dimensions. Their adapters retain the same 1,048,576-pixel
+ceiling and allow sides from 512 to 2048. Kandinsky retains 64-pixel alignment;
+ERNIE and GLM retain 32-pixel alignment. Precision, guidance, token and step
+contracts are unchanged. Image-to-image actions that derive dimensions from the
+source image continue to do so; this does not add unused width/height controls.
