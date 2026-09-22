@@ -1629,6 +1629,7 @@ class UpscaleVideo(NodeBase):
             "display": "modelselect",
             "type": "string",
             "default": VIDEO_UPSCALE_MODEL_SELECTION,
+            "onChange": "update_model_selection",
             "fieldOptions": {
                 "noValidation": True,
                 "sources": ["hub", "local"],
@@ -1664,6 +1665,14 @@ class UpscaleVideo(NodeBase):
         "height": {"display": "output", "type": "int"},
         "frames": {"display": "output", "type": "int"},
     }
+
+    def update_model_selection(self, values, ref):
+        from modiff.controlled_artifacts import pin_upscaler_model_selection
+
+        selection = values.get("model_id")
+        if not selection or isinstance(selection, dict) and not selection.get("value"):
+            return
+        self.set_field_value({"model_id": pin_upscaler_model_selection(selection)})
 
     def execute(self, **kwargs):
         import imageio

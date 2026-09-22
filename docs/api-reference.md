@@ -1645,6 +1645,16 @@ live proof. Qualification proof remains advisory for an otherwise valid
 executable graph. Independently safe or passed candidates do not depend on that
 local history check.
 
+Editing an image or video upscaler's Model selector resolves an installed Hub
+file to its exact cached commit and records its SHA-256 and byte size in the
+selection. Local selections receive the same content identity without a Hub
+revision. This metadata-only field action does not download or deserialize a
+model, and it cannot authorize custom code. A complete existing pin can still
+be authored before its weights are installed. Missing unpinned files require
+installation through Model Manager; the action never chooses the newest cached
+snapshot as a fallback. Execution independently revalidates the resulting pin,
+so changing a cache ref after authoring does not silently change the workflow.
+
 Plan application considers only executable loader IDs referenced by graph
 `paths`. Direct loaders must already expose the profile's exact
 `pipeline_class`; modular `ModelsLoader` nodes must already expose the exact

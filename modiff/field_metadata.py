@@ -21,6 +21,8 @@ MODULAR_METADATA_ACTIONS = {
 }
 
 METADATA_ACTIONS = {
+    "modules.Spandrel": {"Upscaler": frozenset({"update_model_selection"})},
+    "modules.Video": {"UpscaleVideo": frozenset({"update_model_selection"})},
     "modules.ModularDiffusers": MODULAR_METADATA_ACTIONS,
     "modules.DiffusersImage": {
         "LoadPipeline": frozenset({"update_pipeline_contract"}),

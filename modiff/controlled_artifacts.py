@@ -192,6 +192,58 @@ def _selection(value: Any) -> tuple[str, str, Mapping[str, Any]]:
     return source, selected, value
 
 
+def pin_upscaler_model_selection(selection: Any) -> dict[str, Any]:
+    """Persist an installed artifact's identity when the operator edits its selector.
+
+    This authoring action may resolve the cache's current ref once, but execution
+    still requires the resulting immutable revision and rechecks its bytes. A
+    complete existing pin remains editable on a machine awaiting installation.
+    No repository enumeration, download or model deserialization is performed.
+    """
+    source, selected, metadata = _selection(selection)
+    pinned = {"source": source, "value": selected}
+    digest = _exact_sha256(metadata.get("sha256"), required=False)
+    size = metadata.get("byteSize")
+    if size is not None and (isinstance(size, bool) or not isinstance(size, int) or size <= 0):
+        raise ValueError("Controlled artifact byteSize must be a positive integer.")
+    revision = metadata.get("revision")
+    resolved_cached_ref = False
+    if source == "hub":
+        parts = selected.split("/")
+        if len(parts) < 3:
+            raise ValueError("A controlled Hub upscaler must include repository and filename.")
+        repository = _exact_repository("/".join(parts[:2]))
+        weight_name = _exact_weight_name("/".join(parts[2:]))
+        revision = revision or resolve_model_revision(repository, source="hub")
+        if revision is None:
+            from utils.huggingface import cached_file_path
+
+            cached = cached_file_path(repository, weight_name)
+            if not isinstance(cached, str):
+                raise FileNotFoundError("The selected upscaler file is not installed. Install it through Model Manager.")
+            snapshot = Path(cached)
+            for _part in PurePosixPath(weight_name).parts:
+                snapshot = snapshot.parent
+            # resolve_upscaler_artifact below also verifies the exact cache alias,
+            # repository containment and content before publishing this pin.
+            revision = snapshot.name
+            resolved_cached_ref = True
+        pinned["revision"] = _exact_revision(revision)
+    elif revision not in (None, ""):
+        raise ValueError("A local controlled artifact cannot carry a Hub revision.")
+    if digest is not None:
+        pinned["sha256"] = digest
+    if size is not None:
+        pinned["byteSize"] = size
+    if isinstance(metadata.get("license"), str):
+        pinned["license"] = metadata["license"]
+    if digest is not None and size is not None and not resolved_cached_ref:
+        return pinned
+    resolved = resolve_upscaler_artifact(pinned)
+    return {**pinned, "sha256": resolved.receipt["artifact"]["sha256"],
+            "byteSize": resolved.path.stat().st_size}
+
+
 def resolve_upscaler_artifact(
     selection: Any,
     *,
