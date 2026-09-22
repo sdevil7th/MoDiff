@@ -12,7 +12,7 @@ is deferred beyond this demo checkpoint; W8/W9/W10 are not thereby complete.
 - [x] Qualify and retain a working image demo workflow on the upgraded runtime.
 - [x] Run full-weight Qwen 2.1 and inspect cache on/off behavior and real output.
 - [x] Verify demo browser flows and served production bundle; preserve user/model data.
-- [ ] Push the tested paired revisions and document the shortest demo sequence.
+- [x] Push the tested paired revisions and document the shortest demo sequence.
 
 Demo validation on 22 September 2026: FLUX Schnell, Qwen 2.1 text and two-reference
 editing, native Modular Z-Image, service export and Saved Block reuse passed their
