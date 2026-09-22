@@ -2,7 +2,7 @@
 
 In the Developer workspace, choose **Export → Service package**. MoDiff lowers the same graph
 used by API graph export, including expanded Blocks and Modular composition.
-Name the scalar controls callers should supply and the preview outputs they
+Name the controls and file inputs callers should supply and the preview outputs they
 should receive. Leave a field blank to keep it internal. Named inputs have no
 exported default: supply every value on every invocation. At least one preview
 output is required. The Creator workspace keeps its compact Export menu.
@@ -46,6 +46,13 @@ per name. Inputs cannot replace connected fields or model/code identity controls
 Text prompts are exposed as strings for both ordinary Diffusers and Modular
 nodes, including textarea fields declared with the registry's `text` alias.
 This scalar interface does not accept a list of prompts.
+File browsers whose trusted registry declares `multiple: true` expose a `files`
+input. Supply one non-empty path string or a list of 1–128 non-empty path strings;
+for example, `{"references": ["@data/images/front.webp", "@data/images/side.webp"]}`.
+The normal loader's file-access and media limits still apply, including any lower
+model-specific reference limit. Imported workflow metadata cannot enable list
+inputs on scalar controls. Expose local file selections as required inputs when
+exporting; the package does not include the files themselves.
 Built-in Modular stages use the dynamic schema of their single connected,
 reviewed Models Loader. This exposes controls such as prompt and seed without
 trusting imported field types. Unbound or ambiguously owned stages and

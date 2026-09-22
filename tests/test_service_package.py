@@ -453,3 +453,36 @@ def test_runtime_manifest_observes_active_overlay_first_and_omits_extension_path
     assert manifest["optionalProfiles"] == ["example-overlay"]
     assert manifest["customNodes"][0]["codeHash"] == "reviewed"
     assert "private" not in json.dumps(manifest)
+
+
+def file_input_contract(*, multiple=True):
+    registry = deepcopy(REGISTRY)
+    registry['modules.Primitive']['TextValue']['params']['text'] = {
+        'type': 'str', 'display': 'filebrowser', 'fieldOptions': {'multiple': multiple}
+    }
+    package = service.build_package(GRAPH, INTERFACE, registry=registry, contract=CONTRACT)
+    return registry, package
+
+
+@pytest.mark.parametrize('value', ['@data/images/a.webp', ['@data/images/a.webp', '@data/images/b.webp']])
+def test_multiple_file_service_input_preserves_native_single_and_list_values(value):
+    registry, package = file_input_contract()
+    assert service.inspect_graph(GRAPH, registry)['inputs'][0]['type'] == 'files'
+    result = service.prepare_package(package, {'prompt': value}, registry=registry, contract=CONTRACT, sid='files_test')
+    assert result['nodes']['prompt']['params']['text']['value'] == value
+    assert package['graph']['nodes']['prompt']['params']['text']['value'] is None
+
+
+@pytest.mark.parametrize('value', [[], ['a', 2], [['a']], {'file': 'a'}, [''], ['a'] * 129, ''])
+def test_multiple_file_service_input_rejects_invalid_or_unbounded_lists(value):
+    registry, package = file_input_contract()
+    with pytest.raises(ValueError, match='requires files'):
+        service.prepare_package(package, {'prompt': value}, registry=registry, contract=CONTRACT, sid='files_test')
+
+
+def test_file_list_contract_requires_trusted_registry_multiple_flag():
+    registry, package = file_input_contract(multiple=False)
+    package['graph']['nodes']['prompt']['params']['text']['fieldOptions'] = {'multiple': True}
+    package['contentHash'] = service.digest({key: value for key, value in package.items() if key != 'contentHash'})
+    with pytest.raises(ValueError, match='requires str'):
+        service.prepare_package(package, {'prompt': ['a', 'b']}, registry=registry, contract=CONTRACT, sid='files_test')

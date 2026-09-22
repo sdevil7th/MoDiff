@@ -40,6 +40,7 @@ PRIVATE_TEXT = re.compile(
     re.I,
 )
 SCALARS = {"str", "string", "int", "integer", "float", "number", "bool", "boolean"}
+MAX_SERVICE_FILES = 128
 PREVIEWS = {"ui_text", "ui_image", "ui_video", "ui_audio"}
 # These are observations/correlation only. Preserve execution hints, including
 # Studio specification receipts. Auto's graph-bound receipt is issued afresh.
@@ -170,6 +171,16 @@ def inspect_graph(graph, registry):
             # contract for both; this does not admit list/opaque inputs.
             if types == "text":
                 types = "string"
+            # File widgets may carry a scalar or a list despite a legacy
+            # registry type of str. Only the trusted widget declaration can
+            # grant this contract; imported parameter metadata cannot.
+            if (
+                isinstance(types, str) and types in {"str", "string"}
+                and display == "filebrowser"
+                and isinstance(spec.get("fieldOptions"), dict)
+                and spec["fieldOptions"].get("multiple") is True
+            ):
+                types = "files"
             param = node["params"].get(field)
             if (
                 _is_preview_observation(spec, param)
@@ -179,7 +190,7 @@ def inspect_graph(graph, registry):
                 outputs.append({"nodeId": node_id, "field": field, "type": display})
             if (
                 isinstance(types, str)
-                and types in SCALARS
+                and types in SCALARS | {"files"}
                 and isinstance(param, dict)
                 and not param.get("sourceId")
                 and "value" in param
@@ -355,15 +366,21 @@ def prepare_package(package, values, *, registry, contract, sid):
         value = values[name]
         for target in targets:
             kind = candidates[(target["nodeId"], target["field"])]["type"]
-            valid = (
-                isinstance(value, str)
-                if kind in {"str", "string"}
-                else type(value) is bool
-                if kind in {"bool", "boolean"}
-                else type(value) is int
-                if kind in {"int", "integer"}
-                else type(value) in {int, float}
-            )
+            if kind == "files":
+                valid = (isinstance(value, str) and bool(value)) or (
+                    isinstance(value, list) and 0 < len(value) <= MAX_SERVICE_FILES
+                    and all(isinstance(item, str) and bool(item) for item in value)
+                )
+            else:
+                valid = (
+                    isinstance(value, str)
+                    if kind in {"str", "string"}
+                    else type(value) is bool
+                    if kind in {"bool", "boolean"}
+                    else type(value) is int
+                    if kind in {"int", "integer"}
+                    else type(value) in {int, float}
+                )
             if not valid:
                 raise ValueError(f"Input {name} requires {kind}.")
             graph["nodes"][target["nodeId"]]["params"][target["field"]]["value"] = deepcopy(value)
