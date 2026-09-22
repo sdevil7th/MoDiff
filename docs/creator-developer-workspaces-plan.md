@@ -124,7 +124,7 @@ visible and does not count as a pass or a completed release requirement.
 | W5  | Generic model/task changes and workflow modification         | Complete: W5 acceptance                  | W3, W4                          |
 | W6  | HF/local custom-node workflow                                | Complete                                 | W4, W5                          |
 | W7  | Concurrent authoring, reuse and recovery                     | Complete                                 | W5, W6                          |
-| W8  | All-local-image execution and modification campaign          | In progress: native model campaign       | Stable W2–W7 build              |
+| W8  | All-local-image execution and modification campaign          | Paused: checkpoint retained               | Stable W2–W7 build              |
 | W9  | Other modalities and real service-export campaign            | In progress                              | Stable W2–W7 build; W8 fixtures |
 | W10 | Release acceptance, documentation and publication            | Planned                                  | W8, W9                          |
 | H1  | Windows Qwen 16 GB VRAM / 32 GB RAM qualification            | Deferred until main UI/UX implementation | W2–W7; Windows host             |
@@ -723,7 +723,7 @@ Acceptance: all required ledger rows pass at their declared proof level. A model
 that cannot run due to a missing integration, dependency or memory recipe remains
 a blocker with a concrete follow-up, not an omitted denominator or passing skip.
 
-W8 remains in progress. The refreshed inventory has 112 local snapshots and
+W8 is paused at the retained checkpoint below. The inventory has 112 local snapshots and
 208 preliminary artifact/task/path rows; components, adapters and custom source
 snapshots are included in that inventory and are not all runnable image models.
 Exact dependencies and applicable-task dispositions remain under review.
@@ -1080,15 +1080,18 @@ completed models after unrelated changes. Windows memory qualification remains H
 - [ ] Run baseline, unchanged, parameter-change and save/reopen cases for each
       complete supported cached video/audio/other pipeline; track incomplete and
       unsupported artifacts separately. W9 now takes priority while W8 is paused.
-- [ ] Exercise representative distinct non-image runtime paths with modified/nested
-      graphs, custom processors and workspace switching. Expand coverage for every
-      newly exposed contract difference or regression.
+- [x] Exercise representative non-image paths: an approved custom prompt processor
+      across nested internal containers in an audio Block V2; workspace switching
+      on audio, video and rendered-3D workflows. Expand testing if new contract
+      differences or regressions appear. Nested composite instances remain unsupported.
 - [x] Recover the already-generated heavy Wan output and diagnose browser decoding
       before deciding whether inference needs repeating; retain failed evidence.
 - [x] Export real image workflows natively as service packages and execute with
       named inputs; compare consumed values and exact-task outputs with UI runs.
-- [ ] Cover at least native Modular, standard whole-pipeline, image editing, custom
-      node and nested-Block service paths, then representative video/audio outputs.
+- [x] Cover native Modular, standard whole-pipeline, image editing, custom-node and
+      supported Block V2 internal hierarchy service paths, plus representative
+      generated video/audio/rendered-3D outputs. This is bounded path coverage,
+      not qualification of every cached model/task below.
 - [x] Exercise changed inputs, repeated calls, sequential queued invocations,
       cancellation/recovery, restart, code/package drift and missing model identity.
 
@@ -1125,10 +1128,36 @@ Checkpoint coverage (W9 remains in progress):
       stereo WAVs decode at 48 kHz / 30 seconds. Semantic listening is pending.
 - [x] Correct new video/3D workflow defaults using reviewed capability metadata
       after CogVideoX rejected the shared precision. Saved edits remain unchanged;
-      the original failure is retained. Live CogVideoX recovery is pending.
-- [ ] Complete image-edit and genuine nested Block V2 service paths, the remaining
-      cached non-image generation/modification matrix, specialized speech/upscale
-      authoring paths, and final media inspection. W9 is not complete.
+      the original failure is retained. CogVideoX recovery passes baseline,
+      unchanged/reopen, service and prompt/seed/Creator edits. Its 25-frame,
+      720×480 clip fully decodes at 8 FPS; sampled visual inspection is recorded.
+- [x] Native JSON import, edits, persistence and service export of an audio Block V2
+      with two nested internal containers and the approved custom prompt processor:
+      seven cases pass with exact output comparisons and decoded audio. This does
+      not represent independently nested composite Block instances.
+- [x] SDXL image-edit service: uploaded image exposed as a required named input,
+      eight native/service/reopen/edit/workspace cases and exact output comparisons.
+      Visual inspection shows a meaningful edit with partial instruction adherence.
+- [x] Shap-E rendered-3D workflow: eight native/service/reopen/edit/workspace cases;
+      the 20-frame, 256×256 orbit fully decodes and shows a coherent red chair.
+      This does not qualify native mesh export or perfect geometry adherence.
+- [ ] Finish the remaining cached non-image model/task matrix: other ACE-Step
+      artifacts and conditioned audio tasks; MiniMax Music3; Sana; Wan first/last
+      frame, VACE, Animate full/distilled, I2V and TI2V; CogVideoX video-to-video;
+      AnimateDiff/PAG/LCM variants and conditioned tasks.
+- [ ] Resolve and test specialized Whisper transcription/translation, wav2vec CTC
+      and Real-ESRGAN video-upscale authoring paths; finish media/identity audits.
+      Incomplete Mochi/Cosmos/Stable Audio/Stable Video artifacts remain separate.
+      W9 is not complete; W8 remains paused.
+
+This checkpoint tested production code at backend `68a41d8` / client `4cc26bd`.
+The video/3D defaults fix passed the full backend suite (3507 tests, 10057 subtests,
+524 optional skips), 163 approved optional tests / 253 subtests, Ruff, dependency
+and preflight checks, and the relevant Workflows browser check. Earlier service
+fixes and matching client code have their separate full gates recorded above.
+Preservation recheck: 112 snapshots / 1696 original files retain their targets,
+sizes, modification times and recorded metadata hashes; operator approvals remain
+byte-identical. Original failed evidence is retained separately from recoveries.
 
 Acceptance: actual downloadable package, actual invocation and decoded retained
 outputs are all proven. The existing model-free smoke and parser tests remain
