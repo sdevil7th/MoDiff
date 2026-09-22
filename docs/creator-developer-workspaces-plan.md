@@ -9,10 +9,20 @@ Keep a previously proven image pipeline available as a fallback. Publish only
 verified behavior with its exact limits. The exhaustive image/audio matrix below
 is deferred beyond this demo checkpoint; W8/W9/W10 are not thereby complete.
 
-- [ ] Qualify and retain a working image demo workflow on the upgraded runtime.
-- [ ] Run full-weight Qwen 2.1 and inspect cache on/off behavior and real output.
-- [ ] Verify demo browser flows and served production bundle; preserve user/model data.
+- [x] Qualify and retain a working image demo workflow on the upgraded runtime.
+- [x] Run full-weight Qwen 2.1 and inspect cache on/off behavior and real output.
+- [x] Verify demo browser flows and served production bundle; preserve user/model data.
 - [ ] Push the tested paired revisions and document the shortest demo sequence.
+
+Demo validation on 22 September 2026: FLUX Schnell, Qwen 2.1 text and two-reference
+editing, native Modular Z-Image, service export and Saved Block reuse passed their
+scoped live checks. The final base/optional gates passed 3,538/4,101 tests; client
+`npm run check` passed. The full mocked browser run passed 239 cases with three
+failures, followed by passing reruns of those three after a watcher-limit fix.
+The full suite was not repeated. The [image demo guide](https://github.com/sdevil7th/MoDiff/blob/feat/generic-diffusers-workbench/docs/image-demo.md)
+records exact scope, timings, setup and retained failure/recovery evidence.
+Qwen reference replacement, the exhaustive image/audio matrix, Gallery/release
+acceptance and Windows H1 remain unchecked below. No downloaded models were deleted.
 
 ## Current completion scope: image and audio
 
@@ -22,7 +32,7 @@ video upscaling and video-specific release qualification; preserve their existin
 results and downloaded artifacts. Deferred video rows must not become passing
 skips or disappear from the ledger. Windows Qwen memory qualification remains H1.
 
-- [ ] Review and pin the current Diffusers/Modular Diffusers snapshot
+- [x] Review and pin the current Diffusers/Modular Diffusers snapshot
       `fbf49e7f35857f76bc57b177e26f12b03687c668`, including required dependency changes,
       component lifecycle compatibility and affected image/audio contracts.
 - [x] Add Qwen-Image 2.1 through existing generic image operations: generation,

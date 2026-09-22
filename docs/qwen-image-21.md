@@ -26,9 +26,14 @@ remain pending for this profile. Its exact compatibility aliases cover the revie
 base and main Transformers profiles used by existing image/audio workflows;
 GGUF, bitsandbytes and other optional extras still require their own profiles.
 
-Generic adapter contracts and a tiny real CPU denoiser/VAE test pass. Full-weight
-GPU execution, cache performance, service export and release acceptance remain
-pending; these tests do not establish Windows 16 GB VRAM / 32 GB RAM viability.
+Generic adapter contracts, a tiny real CPU denoiser/VAE test, and full-weight
+1024×1024/40-step text generation and two-reference editing pass on the reviewed
+Linux AMD runtime. Tests include native KV on/off, prompt/seed edits, reopening
+and UI/service agreement. The ROCm vision encoder uses eager attention to avoid
+non-finite SDPA embeddings; text and denoiser attention remain unchanged.
+See the [image demo checkpoint](image-demo.md) for measured timings, exact test
+scope and source revisions. Full release acceptance and reference-replacement
+coverage remain open; this does not establish Windows 16 GB VRAM / 32 GB RAM viability.
 
 The reviewed upstream source has **no native Qwen 2.1 Modular pipeline**. This
 integration runs its standard Diffusers pipeline. Exposing a latent output and

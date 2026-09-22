@@ -13,11 +13,12 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Check quantized model, dependency, download, and qualification support   | [Quantization support matrix](quantization-support.md)                                      |
 | Review optional attention, quantization, and compilation capabilities    | [Optional runtime optimizations](optional-runtime-optimizations.md)                         |
 | Build Modular Diffusers graphs and understand experimental compatibility | [Modular Diffusers guide](../modules/ModularDiffusers/README.md)                            |
-| Use ordinary image actions and their optional typed inputs | [Ordinary Diffusers image nodes](../modules/DiffusersImage/README.md) |
-| Generate/edit with Qwen 2.1 and understand attention-context reuse | [Qwen-Image 2.1](qwen-image-21.md) |
-| Estimate depth with generic Transformers nodes | [Transformers depth workflows](../modules/HuggingFaceTransformers/README.md) |
-| Build reusable attention-mask and LoRA-scale inputs | [Attention Arguments](../modules/DiffusersImage/README.md#attention-arguments) |
-| Choose, edit and reuse FLUX Blocks | [Using FLUX Blocks](../modules/DiffusersImage/README.md#using-flux-blocks) |
+| Use ordinary image actions and their optional typed inputs               | [Ordinary Diffusers image nodes](../modules/DiffusersImage/README.md)                       |
+| Run the qualified image demo                                             | [Image demo checkpoint](image-demo.md)                                                      |
+| Generate/edit with Qwen 2.1 and understand attention-context reuse       | [Qwen-Image 2.1](qwen-image-21.md)                                                          |
+| Estimate depth with generic Transformers nodes                           | [Transformers depth workflows](../modules/HuggingFaceTransformers/README.md)                |
+| Build reusable attention-mask and LoRA-scale inputs                      | [Attention Arguments](../modules/DiffusersImage/README.md#attention-arguments)              |
+| Choose, edit and reuse FLUX Blocks                                       | [Using FLUX Blocks](../modules/DiffusersImage/README.md#using-flux-blocks)                  |
 | Implement the shared Cluster/User Node composite contract and V2 schemas | [Unified composite-node contract](unified-composite-node-implementation-plan-2026-09-01.md) |
 | Track the first-party visual Diffusers/Transformers node system          | [Hugging Face visual node system plan](hugging-face-visual-node-system-plan.md)             |
 | Track Diffusers, Modular Diffusers, speech, testing, and asset work      | [Hugging Face integration roadmap](hugging-face-integration-roadmap.md)                     |
