@@ -52,7 +52,7 @@ from modiff.modular_workflow_contracts import (
 )
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
 
-from . import MESSAGE_DURATION, components
+from . import MESSAGE_DURATION, MODULAR_MODEL_TYPE_OPTIONS, components
 from .custom_pipeline import (
     CUSTOM_PIPELINE_IDENTITY_FIELD,
     CUSTOM_PIPELINE_MODEL_TYPE,
@@ -1958,9 +1958,7 @@ class ModelsLoader(NodeBase):
         "model_type": {
             "label": "Model Type",
             "type": "string",
-            "options": {
-                "": "",
-            },
+            "options": MODULAR_MODEL_TYPE_OPTIONS,
             "onChange": "set_filters",
         },
         "repo_id": {

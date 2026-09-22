@@ -39,6 +39,11 @@ requires_transformers = unittest.skipUnless(
 
 
 class ContractOnlyModularRegistryTests(unittest.TestCase):
+    def test_standalone_loader_exposes_model_types_before_any_field_callback(self):
+        options = ModelsLoader.params["model_type"]["options"]
+        self.assertEqual(options, get_all_model_types(include_contract_only=True))
+        self.assertGreater(len(options), 1)
+
     def test_data_only_registry_does_not_import_diffusers(self):
         result = subprocess.run(
             [

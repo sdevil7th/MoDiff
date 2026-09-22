@@ -59,3 +59,5 @@ When behavior changes, update the root README and the narrow guide in the same c
 
 - [Developer setup with uv and npm](developer-setup.md)
 - [Service prototyping with API graphs](service-prototyping.md)
+
+- [Workflow authoring and model selection](workflow-authoring-ux.md)

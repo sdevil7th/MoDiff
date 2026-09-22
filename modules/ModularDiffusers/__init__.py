@@ -17,6 +17,7 @@ from .modular_utils import (
     get_modular_guider_options,
     get_modular_layer_block_options,
     get_modular_scheduler_options,
+    get_all_model_types,
 )
 
 
@@ -48,6 +49,7 @@ FLUX_BLOCKS = list(FLUX_LAYER_BLOCK_OPTIONS)
 MODULAR_LAYER_BLOCK_OPTIONS = get_modular_layer_block_options()
 MODULAR_GUIDER_OPTIONS = get_modular_guider_options()
 MODULAR_SCHEDULER_OPTIONS = get_modular_scheduler_options()
+MODULAR_MODEL_TYPE_OPTIONS = get_all_model_types(include_contract_only=True)
 
 # The static node-registry parser resolves schema constants against this
 # package object. Export reviewed dynamic options so the public /nodes

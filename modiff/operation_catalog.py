@@ -23,6 +23,9 @@ def seed_standard_operation_defaults(node, profile):
     Shared pipeline classes (for example Flux dev/schnell/Krea) must use the
     selected profile, not whichever repository is the adapter's default.
     """
+    from modiff.authoring_examples import seed_operation_example
+
+    seed_operation_example(node, profile.default_repo)
     if node["module"] not in _STANDARD_DEFAULT_MODULES or profile.loader_module != node["module"]:
         return
     from modiff.studio_execution_specs import studio_capability_definition
@@ -452,6 +455,9 @@ def resolve_operation(modules, contracts, selection):
         ]
         if len(profiles) == 1:
             seed_standard_operation_defaults(result, profiles[0])
+    from modiff.authoring_examples import seed_operation_example
+
+    seed_operation_example(result)
     return result
 
 

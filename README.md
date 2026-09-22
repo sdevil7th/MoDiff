@@ -236,7 +236,7 @@ See [developer setup](docs/developer-setup.md) for environment details and
 interface from the Developer workspace. Services reuse the existing API graph and local runtime.
 
 The frontend offers **Creator** (Templates as the starting point) and **Developer**
-(a task-first Workflows chooser). Both use one editable canvas and Nodes library,
+(a searchable, categorized Workflows chooser that creates connected nodes with one task click). Both use one editable canvas and Nodes library,
 including enabled custom nodes and Saved Blocks. Double-click the canvas to search;
 drag from a socket to find compatible nodes and Blocks. **Show implementation
 nodes** reveals underlying adapters and upstream Python block implementations.
@@ -349,9 +349,12 @@ See [docs/api-reference.md](docs/api-reference.md) for route groups and trust im
 
 The Modular Diffusers integration is documented in [modules/ModularDiffusers/README.md](modules/ModularDiffusers/README.md). MoDiff owns the pipeline configuration schema used by its dynamic node contracts while relying on upstream Diffusers for model and pipeline execution.
 
+For the current task browser, picker behavior and qualification limits, see
+[Workflow authoring and model selection](docs/workflow-authoring-ux.md).
+
 ## Custom nodes
 
-In Developer, choose **Add from Hugging Face** or **Add local source** in **Workflows**, or open **Nodes → Custom nodes**. Resolve a Hub URL or repository ID to an exact commit, stage it, review its source and dependencies, then explicitly enable that code. Local Python folders and pinned Git sources use the same review flow. See [Developing custom nodes](docs/custom-nodes.md) for runnable examples, typed fields, reload and independent Automatic/Custom memory policies.
+Open **Nodes → Custom nodes** in either workspace to add a Hugging Face or local source. Resolve a Hub URL or repository ID to an exact commit, stage it, review its source and dependencies, then explicitly enable that code. Local Python folders and pinned Git sources use the same review flow. See [Developing custom nodes](docs/custom-nodes.md) for runnable examples, typed fields, reload and independent Automatic/Custom memory policies.
 
 Approved Modular blocks without model ports receive a **Models** input when their
 Python contract requires components. Connect **Load Models → Pipeline Components**
