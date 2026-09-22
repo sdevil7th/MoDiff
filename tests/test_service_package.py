@@ -88,6 +88,40 @@ def test_roundtrip_preserves_graph_and_omits_session_snapshots_and_input_default
     assert result["servicePackage"]["package"] == package
 
 
+def test_textarea_text_alias_is_a_required_string_service_input():
+    # Ordinary Diffusers image/audio prompts use "text", while Modular prompts
+    # use "string". Both must be callable through the same scalar interface.
+    registry = deepcopy(REGISTRY)
+    registry["modules.Primitive"]["TextValue"]["params"]["text"] = {
+        "type": "text", "display": "textarea"
+    }
+    assert service.inspect_graph(GRAPH, registry)["inputs"] == [
+        {"nodeId": "prompt", "field": "text", "type": "string"}
+    ]
+    package = service.build_package(GRAPH, INTERFACE, registry=registry, contract=CONTRACT)
+    assert package["graph"]["nodes"]["prompt"]["params"]["text"]["value"] is None
+    result = service.prepare_package(
+        package, {"prompt": "A blue teapot"}, registry=registry, contract=CONTRACT, sid="service_text"
+    )
+    assert result["nodes"]["prompt"]["params"]["text"]["value"] == "A blue teapot"
+    for value in (None, 1, True, ["a", "b"], {"text": "a"}):
+        with pytest.raises(ValueError, match="requires string"):
+            service.prepare_package(
+                package, {"prompt": value}, registry=registry, contract=CONTRACT, sid="service_text"
+            )
+
+
+def test_text_alias_does_not_expose_connected_fields_or_model_identity():
+    graph = deepcopy(GRAPH)
+    registry = deepcopy(REGISTRY)
+    fields = registry["modules.Primitive"]["TextValue"]["params"]
+    for field in ("model_id", "revision", "code"):
+        fields[field] = {"type": "text", "display": "textarea"}
+        graph["nodes"]["prompt"]["params"][field] = {"value": "private"}
+    registry["modules.Primitive"]["DataViewer"]["params"]["value"]["type"] = "text"
+    assert service.inspect_graph(graph, registry)["inputs"] == service.inspect_graph(GRAPH, REGISTRY)["inputs"]
+
+
 @pytest.mark.parametrize(
     "value",
     [

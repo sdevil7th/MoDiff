@@ -105,6 +105,11 @@ def inspect_graph(graph, registry):
                 continue
             display = spec.get("display")
             types = spec.get("type")
+            # Textarea prompts use the registry's "text" alias in ordinary
+            # pipelines and "string" in Modular pipelines. Export a string
+            # contract for both; this does not admit list/opaque inputs.
+            if types == "text":
+                types = "string"
             param = node["params"].get(field)
             if (
                 isinstance(display, str)

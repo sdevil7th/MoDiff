@@ -35,14 +35,17 @@ The interface file maps names to exact lowered node/field identities:
 
 ```json
 {
-  "inputs": {"prompt": [{"nodeId": "prompt", "field": "text"}]},
-  "outputs": {"text": [{"nodeId": "preview", "field": "preview"}]}
+  "inputs": { "prompt": [{ "nodeId": "prompt", "field": "text" }] },
+  "outputs": { "text": [{ "nodeId": "preview", "field": "preview" }] }
 }
 ```
 
 A CLI-authored binding can target multiple fields of the same declared type,
 useful when a graph shares prompt or seed values. The dialog assigns one target
 per name. Inputs cannot replace connected fields or model/code identity controls.
+Text prompts are exposed as strings for both ordinary Diffusers and Modular
+nodes, including textarea fields declared with the registry's `text` alias.
+This scalar interface does not accept a list of prompts.
 Outputs select persisted `ui_text`, `ui_image`, `ui_audio` or `ui_video` fields;
 add a preview node for tensors or other values. Output values are arrays of
 records so repeated loop outputs retain their existing representation.
