@@ -417,7 +417,12 @@ def configure_vae_memory(pipeline: Any, *, slicing: bool, tiling: bool) -> dict[
         if method is None:
             unsupported.append(label)
             return
-        method()
+        try:
+            method()
+        except NotImplementedError:
+            # An inherited optional hook is not a concrete implementation.
+            unsupported.append(label)
+            return
         applied.append({"feature": label, "enabled": enabled})
 
     configure(slicing, ("enable_slicing", "enable_vae_slicing"), ("disable_slicing", "disable_vae_slicing"), "slicing")

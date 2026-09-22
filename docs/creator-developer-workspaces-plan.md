@@ -1104,10 +1104,16 @@ Checkpoint coverage (W9 remains in progress):
       delivery of historical output, not a new Wan generation.
 - [x] Fix service export of text inputs and completed preview observations;
       preserve private-file input validation and original failed evidence.
-- [ ] Finish and qualify new audio workflow defaults after AudioLDM2 rejected the
-      shared duration; preserve edited values in saved workflows.
+- [x] Correct new audio workflow defaults after AudioLDM2 rejected the shared
+      duration; preserve edited values in saved workflows. AudioLDM2 native
+      generation, save/reopen, exported service, repeat and prompt/seed edits pass.
+- [x] Capture consumed audio steps/guidance and requested duration/delivery rate;
+      preserve connected origins and validate the matching client receipt.
+- [ ] Recover LongCat loading after its inherited VAE tiling hook reported no
+      implementation; distinguish unsupported optional hooks from real failures.
 - [ ] Complete native Modular image, image-edit, custom, nested and audio service
-      paths, plus the cached non-image generation/modification matrix above.
+      paths beyond the completed AudioLDM2 service, plus the cached non-image
+      generation/modification matrix above.
 
 Acceptance: actual downloadable package, actual invocation and decoded retained
 outputs are all proven. The existing model-free smoke and parser tests remain

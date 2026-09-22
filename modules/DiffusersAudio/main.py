@@ -1168,7 +1168,12 @@ class LoadPipeline(NodeBase):
             for method_name in ("enable_tiling", "enable_vae_tiling"):
                 method = getattr(vae or pipeline, method_name, None)
                 if callable(method):
-                    method()
+                    try:
+                        method()
+                    except NotImplementedError:
+                        # Diffusers' AutoencoderMixin exposes this hook even
+                        # when the concrete VAE has no tiling implementation.
+                        logger.info("VAE tiling is unsupported for %s; using ordinary decoding", pipeline_class_name)
                     break
 
         self.progress(99, phase="component_placement", message=f"Applying {offload_mode} offload")
