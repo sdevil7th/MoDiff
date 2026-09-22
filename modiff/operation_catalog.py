@@ -12,30 +12,40 @@ from modiff.operation_contracts import _identifier, operation_owns_model, with_o
 from modiff.operation_inventory import load_operation_inventory
 
 
-def seed_image_operation_defaults(node, profile):
-    """Initialize a new ordinary image operation from its reviewed model profile.
+def seed_standard_operation_defaults(node, profile):
+    """Initialize a new ordinary image/audio operation from its reviewed model profile.
 
     This is authoring only: never call it on saved nodes or dynamic field updates.
     Shared pipeline classes (for example Flux dev/schnell/Krea) must use the
     selected profile, not whichever repository is the adapter's default.
     """
-    if node["module"] != "modules.DiffusersImage" or profile.loader_module != node["module"]:
+    if node["module"] not in {"modules.DiffusersImage", "modules.DiffusersAudio"} or profile.loader_module != node["module"]:
         return
     from modiff.studio_execution_specs import studio_capability_definition
 
     capability = studio_capability_definition(profile.model_type)
-    size = capability.get("defaultSize", {})
-    defaults = (
-        {"dtype": capability.get("defaultDtype")}
-        if node["action"] == "LoadPipeline"
-        else {
+    if node["action"] == "LoadPipeline":
+        defaults = {"dtype": capability.get("defaultDtype")}
+    elif node["module"] == "modules.DiffusersAudio":
+        # The owner overlay identifies the controls used by this task. Seed only
+        # visible fields below; the ordinary generator also holds inactive
+        # controls for other adapters, which must keep their historical defaults.
+        defaults = {
+            "audio_duration": capability.get("recommendedDuration"),
+            "sample_rate": capability.get("recommendedSampleRate"),
+            "num_inference_steps": capability.get("recommendedSteps"),
+            "stable_audio_steps": capability.get("recommendedSteps"),
+            "guidance_scale": capability.get("recommendedGuidance"),
+            "stable_audio_guidance": capability.get("recommendedGuidance"),
+        }
+    else:
+        size = capability.get("defaultSize", {})
+        defaults = {
             "num_inference_steps": capability.get("recommendedSteps"),
             "guidance_scale": capability.get("recommendedGuidance"),
             "width": size.get("width"),
             "height": size.get("height"),
         }
-    )
-    if node["action"] != "LoadPipeline":
         from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
 
         adapter = IMAGE_PIPELINE_ADAPTERS[profile.pipeline_class]
@@ -408,18 +418,20 @@ def resolve_operation(modules, contracts, selection):
             raise ValueError("Operation binding targets an undeclared field.")
         definition["params"][key]["value"] = deepcopy(value)
     result = {**definition, "module": module, "action": action, "values": values, "operation": deepcopy(contract)}
-    if module == "modules.DiffusersImage":
+    if module in {"modules.DiffusersImage", "modules.DiffusersAudio"}:
         from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS
+        from modules.DiffusersAudio.main import AUDIO_PIPELINE_ADAPTERS
         from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
 
-        adapter = IMAGE_PIPELINE_ADAPTERS[contract["binding"]["pipelineClass"]]
+        adapters = IMAGE_PIPELINE_ADAPTERS if module == "modules.DiffusersImage" else AUDIO_PIPELINE_ADAPTERS
+        adapter = adapters[contract["binding"]["pipelineClass"]]
         profiles = [
             p for p in DIFFUSERS_EXECUTION_PROFILES.values()
             if p.public and p.loader_module == module and p.pipeline_class == adapter.pipeline_class
             and p.default_repo == adapter.default_repo and contract["task"] in p.modes
         ]
         if len(profiles) == 1:
-            seed_image_operation_defaults(result, profiles[0])
+            seed_standard_operation_defaults(result, profiles[0])
     return result
 
 

@@ -4,7 +4,7 @@ This is an authoring projection, not an execution recipe or qualification receip
 Unbound conditioning/components remain explicit. No models are constructed here.
 """
 
-from modiff.operation_catalog import resolve_operation, seed_image_operation_defaults
+from modiff.operation_catalog import resolve_operation, seed_standard_operation_defaults
 from modiff.operation_contracts import _identifier, operation_owns_model
 
 
@@ -121,7 +121,7 @@ def resolve_operation_starter(modules, contracts, selection):
 
         profile = DIFFUSERS_EXECUTION_PROFILES[selection["executionProfileId"]]
         for node in nodes.values():
-            seed_image_operation_defaults(node, profile)
+            seed_standard_operation_defaults(node, profile)
     workflow_id, upstream, required = None, [], set()
     ordered = [loader]
     if nodes[loader]["operation"]["decomposition"] == "integrated":

@@ -125,7 +125,7 @@ visible and does not count as a pass or a completed release requirement.
 | W6  | HF/local custom-node workflow                                | Complete                                 | W4, W5                          |
 | W7  | Concurrent authoring, reuse and recovery                     | Complete                                 | W5, W6                          |
 | W8  | All-local-image execution and modification campaign          | In progress: native model campaign       | Stable W2–W7 build              |
-| W9  | Other modalities and real service-export campaign            | Planned                                  | Stable W2–W7 build; W8 fixtures |
+| W9  | Other modalities and real service-export campaign            | In progress                              | Stable W2–W7 build; W8 fixtures |
 | W10 | Release acceptance, documentation and publication            | Planned                                  | W8, W9                          |
 | H1  | Windows Qwen 16 GB VRAM / 32 GB RAM qualification            | Deferred until main UI/UX implementation | W2–W7; Windows host             |
 
@@ -1083,14 +1083,31 @@ completed models after unrelated changes. Windows memory qualification remains H
 - [ ] Exercise representative distinct non-image runtime paths with modified/nested
       graphs, custom processors and workspace switching. Expand coverage for every
       newly exposed contract difference or regression.
-- [ ] Recover the already-generated heavy Wan output and diagnose browser decoding
+- [x] Recover the already-generated heavy Wan output and diagnose browser decoding
       before deciding whether inference needs repeating; retain failed evidence.
-- [ ] Export real image workflows natively as service packages and execute with
+- [x] Export real image workflows natively as service packages and execute with
       named inputs; compare consumed values and exact-task outputs with UI runs.
 - [ ] Cover at least native Modular, standard whole-pipeline, image editing, custom
       node and nested-Block service paths, then representative video/audio outputs.
-- [ ] Exercise changed inputs, repeated calls, sequential queued invocations,
+- [x] Exercise changed inputs, repeated calls, sequential queued invocations,
       cancellation/recovery, restart, code/package drift and missing model identity.
+
+Checkpoint coverage (W9 remains in progress):
+
+- [x] Standard image service: native download, API and CLI execution, unchanged
+      calls, prompt/seed edits and exact UI/service output comparisons.
+- [x] Representative service lifecycle: observed sequential queue, cancellation,
+      worker replacement, replay after restart, code/package drift and missing
+      immutable model identity rejection. This does not qualify every runtime.
+- [x] Recovered Wan media: full decode, native upload/preview, unchanged/reopened
+      workflow and service output playback with changed frame rate. This proves
+      delivery of historical output, not a new Wan generation.
+- [x] Fix service export of text inputs and completed preview observations;
+      preserve private-file input validation and original failed evidence.
+- [ ] Finish and qualify new audio workflow defaults after AudioLDM2 rejected the
+      shared duration; preserve edited values in saved workflows.
+- [ ] Complete native Modular image, image-edit, custom, nested and audio service
+      paths, plus the cached non-image generation/modification matrix above.
 
 Acceptance: actual downloadable package, actual invocation and decoded retained
 outputs are all proven. The existing model-free smoke and parser tests remain

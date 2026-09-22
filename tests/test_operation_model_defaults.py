@@ -48,6 +48,68 @@ def test_individually_resolved_lcm_node_uses_same_reviewed_defaults(contracts):
     assert result["params"]["width"]["value"] == 512
 
 
+@pytest.mark.parametrize("pipeline,profile,duration,steps,guidance,dtype", [
+    ("AudioLDM2Pipeline", "audioldm2-base:direct", 10, 200, 3.5, "float16"),
+    ("LongCatAudioDiTPipeline", "longcat-audio-dit-1b:direct", 5, 16, 4, "bfloat16"),
+    ("StableAudioPipeline", "stable-audio:direct", 30, 100, 7, "bfloat16"),
+    ("AceStepPipeline", "ace-step-audio:direct", 30, 8, 1, "bfloat16"),
+])
+def test_new_audio_operations_use_reviewed_defaults_and_pass_runtime_preflight(
+    contracts, pipeline, profile, duration, steps, guidance, dtype,
+):
+    from types import SimpleNamespace
+    from modules.DiffusersAudio.main import _preflight_audio_invocation
+
+    registry_before = deepcopy(MODULE_MAP["modules.DiffusersAudio"])
+    with patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("constructed model node")):
+        starter = resolve_operation_starter(MODULE_MAP, contracts, {
+            "pipelineClass": pipeline, "task": "text_to_audio", "executionProfileId": profile,
+        })
+    loader = next(n for n in starter["nodes"] if n["action"] == "LoadPipeline")
+    generate = next(n for n in starter["nodes"] if n["action"] == "Generate")
+    def effective(node, key):
+        field = node["params"][key]
+        return field.get("value", field.get("default"))
+
+    assert effective(loader, "dtype") == dtype
+    assert effective(generate, "audio_duration") == duration
+    values = {key: field.get("value", field.get("default")) for key, field in generate["params"].items()}
+    runtime = SimpleNamespace(_modiff_audio_pipeline_class=pipeline, _modiff_audio_mode="text_to_audio")
+    invocation = _preflight_audio_invocation(runtime, values)
+    assert invocation.duration_seconds == duration
+    step_key = "num_inference_steps" if pipeline == "AceStepPipeline" else "stable_audio_steps"
+    guidance_key = "guidance_scale" if pipeline == "AceStepPipeline" else "stable_audio_guidance"
+    assert effective(generate, step_key) == steps
+    assert effective(generate, guidance_key) == guidance
+    assert MODULE_MAP["modules.DiffusersAudio"] == registry_before
+    individual = resolve_operation(MODULE_MAP, contracts, {
+        "pipelineClass": pipeline, "task": "text_to_audio",
+        "operationId": generate["operation"]["operationId"],
+    })
+    for key in ("audio_duration", step_key, guidance_key):
+        assert effective(individual, key) == effective(generate, key)
+
+
+def test_new_audio_defaults_do_not_rewrite_edited_drafts_or_dynamic_callbacks(contracts):
+    from modules.DiffusersAudio.main import Generate
+
+    selected = {"pipelineClass": "AudioLDM2Pipeline", "task": "text_to_audio"}
+    draft = resolve_operation_starter(MODULE_MAP, contracts, selected)
+    generate = next(n for n in draft["nodes"] if n["action"] == "Generate")
+    generate["params"]["audio_duration"]["value"] = 8.5
+    generate["params"]["stable_audio_steps"]["value"] = 150
+    before = deepcopy(draft)
+    resolve_operation_starter(MODULE_MAP, contracts, selected)
+    assert draft == before
+    updates = []
+    node = object.__new__(Generate)
+    node.set_field_params = lambda field, params: updates.append((field, params))
+    node.set_field_value = lambda *args: pytest.fail("Dynamic callback overwrote saved values")
+    Generate.update_audio_contract(node, generate["values"], None)
+    assert updates
+    assert all("value" not in params for field, params in updates if field != "task_type")
+
+
 def test_creating_another_model_does_not_rewrite_prior_draft(contracts):
     selected = {"pipelineClass": "FluxPipeline", "task": "text_to_image", "executionProfileId": "flux-schnell:direct"}
     draft = resolve_operation_starter(MODULE_MAP, contracts, selected)
