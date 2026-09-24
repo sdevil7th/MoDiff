@@ -160,7 +160,7 @@ class StudioHistoryResponsivenessTests(unittest.IsolatedAsyncioTestCase):
 
         with patch("modiff.server.open", side_effect=counted_open):
             kept = self.server._write_studio_output_state(outputs, slots, revision=17)
-        payload = json.loads(self.server._studio_history_file().read_text())
+        payload = json.loads(self.server._studio_history_file().read_text(encoding="utf-8"))
         self.assertEqual(payload["outputs"], outputs[:200] + [outputs[201]])
         self.assertEqual(payload["outputs"], kept)
         self.assertEqual(payload["previewSlots"], slots)
