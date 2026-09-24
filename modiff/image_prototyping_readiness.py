@@ -5,6 +5,10 @@ artifact pins, the pinned Diffusers operation inventory, and the reviewed
 Modular workflow snapshot.  It performs no registry import, custom-extension
 load, network request, package installation, or model construction.
 
+The checked-in snapshot uses a Linux/x86_64 reference target so its content is
+identical on every generator host. It is not the current machine's runtime
+readiness; live public profiles retain platform-specific runtime selection.
+
 The ledger deliberately reports implementation gaps.  A native upstream
 workflow does not become an allowed whole-pipeline exception merely because
 MoDiff currently routes the same repository through a standard adapter.
@@ -301,7 +305,9 @@ def build_image_prototyping_readiness(root: Path) -> dict[str, Any]:
     modular_snapshot_path = root / "data" / "modular-workflow-contracts.json"
     modular_snapshot = load_reviewed_modular_workflow_snapshot(modular_snapshot_path)
     capabilities = studio_capability_definitions()
-    profiles = public_execution_profiles(observe_optional_runtime=False)
+    profiles = public_execution_profiles(
+        observe_optional_runtime=False, platform_name="linux", machine="x86_64",
+    )
 
     workflows: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for pipeline in modular_snapshot["contracts"]:

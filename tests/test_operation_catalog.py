@@ -45,7 +45,9 @@ class OperationCatalogTests(unittest.TestCase):
         from modiff.operation_catalog import build_operation_catalog
         from modiff.diffusers_profiles import public_execution_profiles
 
-        profiles = public_execution_profiles()
+        # Exercise missing-overlay support even on hosts whose reviewed profile
+        # delivers these dependencies in the base environment.
+        profiles = public_execution_profiles(platform_name="linux", machine="x86_64")
         for profile in profiles:
             requirement = profile["optionalRuntimeRequirement"]
             if requirement["requiredNow"]:
@@ -84,6 +86,26 @@ class OperationCatalogTests(unittest.TestCase):
         )
         self.assertEqual(fallback["binding"]["pipelineClass"], "LTXConditionPipeline")
         self.assertTrue(fallback["nodeKey"].startswith("modules.DiffusersVideo."))
+
+    def test_support_respects_each_targets_runtime_delivery(self):
+        from modiff.diffusers_profiles import public_execution_profiles
+        from modiff.operation_catalog import build_operation_catalog
+
+        for platform_name, machine, expected in (
+            ("linux", "x86_64", "blocked"),
+            ("windows", "x86_64", "blocked"),
+            ("macos", "arm64", "ready"),
+        ):
+            with self.subTest(platform=platform_name, machine=machine):
+                profiles = public_execution_profiles(platform_name=platform_name, machine=machine)
+                for profile in profiles:
+                    requirement = profile["optionalRuntimeRequirement"]
+                    if requirement["requiredNow"]:
+                        requirement.update(state="missing", reason="optional_runtime_missing")
+                _, support = build_operation_catalog(MODULE_MAP, profiles, catalog_resolver=lambda: {})
+                pipeline = next(p for p in support if p["pipelineClass"] == "QwenImageModularPipeline")
+                task = next(t for t in pipeline["tasks"] if t["task"] == "text_to_image")
+                self.assertEqual(task["dependencies"], expected)
 
     def test_semantic_connections_do_not_equate_different_state_stages_or_model_domains(self):
         from modiff.operation_catalog import operation_port_compatibility

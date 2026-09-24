@@ -396,11 +396,21 @@ class DiffusersExecutionProfile:
         *,
         observe_optional_runtime: bool = False,
         optional_runtime_catalog_resolver=None,
+        platform_name: str | None = None,
+        machine: str | None = None,
     ) -> dict:
+        # Static inventories may select a reference target. Installed-runtime
+        # observations describe this process only, never another platform.
+        if observe_optional_runtime and (platform_name is not None or machine is not None):
+            raise ValueError("Runtime observations cannot use an explicit target")
         data = asdict(self)
         public = {key: list(value) if isinstance(value, tuple) else value for key, value in data.items()}
-        public["optional_runtime_delivery"] = self.optional_runtime_delivery_for_target()
-        public["optional_runtime_profiles"] = list(self.optional_runtime_profile_ids_for_target())
+        public["optional_runtime_delivery"] = self.optional_runtime_delivery_for_target(
+            platform_name=platform_name, machine=machine,
+        )
+        public["optional_runtime_profiles"] = list(self.optional_runtime_profile_ids_for_target(
+            platform_name=platform_name, machine=machine,
+        ))
         public["optional_runtime_platform_deliveries"] = [
             {"platform": platform_name, "machine": machine, "delivery": delivery}
             for platform_name, machine, delivery in self.optional_runtime_platform_deliveries
@@ -436,7 +446,9 @@ class DiffusersExecutionProfile:
                 catalog_resolver=optional_runtime_catalog_resolver,
             )
         else:
-            requirement = optional_runtime_requirement_for_profiles((self,))
+            requirement = optional_runtime_requirement_for_profiles(
+                (self,), platform_name=platform_name, machine=machine,
+            )
         public["optionalRuntimeRequirement"] = requirement
         return public
 
@@ -1233,11 +1245,15 @@ def public_execution_profiles(
     *,
     observe_optional_runtime: bool = False,
     optional_runtime_catalog_resolver=None,
+    platform_name: str | None = None,
+    machine: str | None = None,
 ) -> list[dict]:
     return [
         profile.to_public_dict(
             observe_optional_runtime=observe_optional_runtime,
             optional_runtime_catalog_resolver=optional_runtime_catalog_resolver,
+            platform_name=platform_name,
+            machine=machine,
         )
         for profile in DIFFUSERS_EXECUTION_PROFILES.values()
         if profile.public

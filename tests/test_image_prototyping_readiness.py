@@ -22,6 +22,41 @@ def test_image_readiness_ledger_reproduces_without_registry_or_network(monkeypat
     assert generated["coverageBoundary"]["clientTemplatesAndTaskChoosers"] == "requires_paired_client_gate"
 
 
+@pytest.mark.parametrize("host", [("linux", "x86_64"), ("windows", "x86_64"), ("macos", "arm64")])
+def test_image_readiness_ledger_is_independent_of_host_runtime_target(monkeypatch, host):
+    from modiff import diffusers_profiles
+    from modiff.image_prototyping_readiness import (
+        build_image_prototyping_readiness,
+        load_image_prototyping_readiness,
+    )
+
+    resolve_target = diffusers_profiles.optional_runtime_target
+    monkeypatch.setattr(
+        diffusers_profiles,
+        "optional_runtime_target",
+        lambda *, platform_name=None, machine=None: resolve_target(
+            platform_name=platform_name or host[0], machine=machine or host[1],
+        ),
+    )
+    # Live publication must still follow the host, unlike the static inventory.
+    profile = diffusers_profiles.DIFFUSERS_EXECUTION_PROFILES["z-image:modular"]
+    assert profile.to_public_dict()["optional_runtime_profiles"] == list(
+        profile.optional_runtime_profile_ids_for_target(platform_name=host[0], machine=host[1])
+    )
+    generated = build_image_prototyping_readiness(ROOT)
+    expected = load_image_prototyping_readiness()
+    assert generated["sources"] == expected["sources"]
+    assert generated == expected
+
+
+@pytest.mark.parametrize("target", [{"platform_name": "windows"}, {"machine": "arm64"}])
+def test_explicit_inventory_target_cannot_observe_installed_runtime(target):
+    from modiff.diffusers_profiles import public_execution_profiles
+
+    with pytest.raises(ValueError, match="Runtime observations cannot use an explicit target"):
+        public_execution_profiles(observe_optional_runtime=True, **target)
+
+
 def test_image_readiness_distinguishes_native_stages_exceptions_and_non_diffusion_tasks():
     from modiff.image_prototyping_readiness import load_image_prototyping_readiness
 

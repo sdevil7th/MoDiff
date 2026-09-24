@@ -111,6 +111,12 @@ collection so registry imports cannot execute or change the operator's installed
 custom sources. Extension tests use explicit temporary roots. Subprocess tests
 must also isolate extension discovery; they do not inherit Python monkeypatches.
 
+The checked-in image readiness inventory uses a fixed Linux/x86_64 reference
+target; `scripts/generate_image_prototyping_readiness.py --check` must reproduce
+it on every host. This static inventory is not local runtime readiness. Live
+execution profiles continue to resolve the current OS/architecture and installed
+runtime through the normal readiness boundary.
+
 On a host with Git Bash or a POSIX shell:
 
 ```bash
