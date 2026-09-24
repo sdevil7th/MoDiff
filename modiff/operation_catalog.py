@@ -26,12 +26,12 @@ def seed_standard_operation_defaults(node, profile):
     from modiff.authoring_examples import seed_operation_example
 
     seed_operation_example(node, profile.default_repo)
-    if node["module"] not in _STANDARD_DEFAULT_MODULES or profile.loader_module != node["module"]:
+    if node["module"] not in _STANDARD_DEFAULT_MODULES | {"modules.ModularDiffusers", "modules.HuggingFaceTransformers"} or profile.loader_module != node["module"]:
         return
     from modiff.studio_execution_specs import studio_capability_definition
 
     capability = studio_capability_definition(profile.model_type)
-    if node["action"] == "LoadPipeline":
+    if node["action"] == profile.loader_action:
         defaults = {"dtype": capability.get("defaultDtype")}
     elif node["module"] == "modules.DiffusersAudio":
         # The owner overlay identifies the controls used by this task. Seed only
@@ -88,7 +88,7 @@ def _standard_sources():
     from modules.DiffusersVideo.main import get_video_operation_contracts
     from modules.DiffusersAudio.main import get_audio_operation_contracts
     from modules.DiffusersThreeD.main import get_three_d_operation_contracts
-    from modules.HuggingFaceTransformers.main import get_depth_operation_contracts
+    from modules.HuggingFaceTransformers.main import get_depth_operation_contracts, get_image_text_operation_contracts
     from modiff.integrated_operation_contracts import get_integrated_operation_contracts
 
     return (
@@ -97,6 +97,7 @@ def _standard_sources():
         get_audio_operation_contracts,
         get_three_d_operation_contracts,
         get_depth_operation_contracts,
+        get_image_text_operation_contracts,
         get_integrated_operation_contracts,
     )
 
@@ -106,11 +107,12 @@ def _standard_schema(contract, modules):
     module, action = contract["nodeKey"].rsplit(".", 1)
     pipeline = contract.get("binding", {}).get("pipelineClass", contract["pipelineClass"])
     task = contract["task"]
-    fields, values, signal = {}, {}, None
+    fields, values, signal = {}, deepcopy(contract.get("binding", {}).get("values", {})), None
     if contract["decomposition"] == "integrated":
-        from modiff.integrated_operation_contracts import integrated_operation_values
+        from modiff.integrated_operation_contracts import integrated_operation_values, integrated_operation_fields
 
         values = integrated_operation_values(contract)
+        fields = integrated_operation_fields(contract, modules)
     elif module == "modules.DiffusersImage":
         from modules.DiffusersImage.main import (
             IMAGE_PIPELINE_ADAPTERS,
@@ -165,7 +167,12 @@ def _standard_schema(contract, modules):
             fields = adapter.signal_value()["fieldParams"]
             values = {"three_d_contract": adapter.signal_value()}
     elif module == "modules.HuggingFaceTransformers":
-        values = {"pipeline_class": pipeline} if action == "LoadDepthEstimationModel" else {}
+        if action in {"LoadDepthEstimationModel", "PredictDepth"}:
+            values = {"pipeline_class": pipeline} if action == "LoadDepthEstimationModel" else {}
+        else:
+            from modules.HuggingFaceTransformers.main import image_text_operation_schema
+
+            fields, values = image_text_operation_schema(pipeline, task, action)
     params = deepcopy(modules[module][action]["params"])
     if action == "LoadPipeline":
         from modiff.model_artifact_catalog import catalog_revision
@@ -314,7 +321,9 @@ def build_operation_catalog(modules, profiles, *, catalog_resolver=None):
                     and c["nodeKey"] == p["loader_module"] + "." + p["loader_action"]
                     # Modular workflow owners establish stage task support. Studio's
                     # curated profile modes are not the ordinary graph allowlist.
-                    and (p["execution_path"] == "modular-diffusers" or task in p["modes"])
+                    and (task in p["modes"] or (
+                        p["execution_path"] == "modular-diffusers" and p["model_type"] == p["pipeline_class"]
+                    ))
                     for c in loaders
                 )
             ]
@@ -420,6 +429,15 @@ def resolve_operation(modules, contracts, selection):
             for port in contract["ports"]:
                 if "component" in port["roles"]:
                     definition["params"][port["name"]]["hidden"] = port["hidden"]
+        elif action in {"Guider", "Layers"}:
+            from modules.ModularDiffusers.modular_utils import get_model_type_metadata
+
+            metadata = get_model_type_metadata(contract["binding"]["pipelineClass"])
+            if action == "Guider":
+                definition["params"]["guider"]["options"] = list(metadata["guider_options"])
+            else:
+                definition["params"]["blocks_select"]["options"] = list(metadata["layer_block_options"])
+                values["blocks_select"] = []
         elif not action.startswith("Workflow"):
             from modules.ModularDiffusers.modular_utils import get_model_type_metadata
 
@@ -427,6 +445,12 @@ def resolve_operation(modules, contracts, selection):
             config = metadata["node_params"][contract["nodeType"]]
             for name, overlay in config["params"].items():
                 definition["params"].setdefault(name, {}).update(deepcopy(overlay))
+            if action == "Controlnet":
+                # A standalone ControlNet has no ModelsLoader payload from
+                # which to recover this identity after instance recreation.
+                # Persist the same explicit choice normally set by its reverse
+                # canvas signal. Component ownership is still checked at run.
+                values["model_type"] = contract["binding"]["pipelineClass"]
     else:
         definition["params"], values = _standard_schema(contract, modules)
     for key, value in values.items():

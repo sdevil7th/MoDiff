@@ -12,7 +12,7 @@ from diffusers.modular_pipelines import BlockState, LoopSequentialPipelineBlocks
 
 from modiff.NodeBase import NodeBase
 
-from . import MESSAGE_DURATION, components
+from . import MESSAGE_DURATION, MODULAR_DENOISE_OPTIONS, components
 from .modular_utils import (
     get_model_type_metadata,
     normalize_modular_runtime_params,
@@ -198,6 +198,11 @@ class Denoise(NodeBase):
                 {"action": "signal", "target": "guider"},
                 {"action": "signal", "target": "controlnet_bundle"},
             ],
+            "signalCompatibility": {
+                "required": True,
+                "role": "denoiser",
+                "values": MODULAR_DENOISE_OPTIONS,
+            },
         },
     }
 
@@ -925,6 +930,9 @@ class Denoise(NodeBase):
                     f"{type(self._pipeline).__name__} does not expose a 'guider' component, "
                     "so the connected Diffusers guider cannot be installed."
                 )
+            metadata = get_model_type_metadata(self._model_type)
+            if metadata is not None and type(explicit_guider).__name__ not in metadata["guider_options"]:
+                raise ValueError("Connected guider is not allowed by the actual denoiser pipeline contract.")
 
         if model_ids:
             managed_components = components.get_components_by_ids(ids=model_ids, return_dict_with_names=True)

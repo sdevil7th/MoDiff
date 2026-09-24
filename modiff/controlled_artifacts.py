@@ -192,6 +192,30 @@ def _selection(value: Any) -> tuple[str, str, Mapping[str, Any]]:
     return source, selected, value
 
 
+def portable_upscaler_selection(selection: Any) -> dict[str, Any]:
+    """Describe a complete pin without resolving cache refs, bytes or networks.
+
+    Service portability is not execution approval: the normal artifact resolver
+    still checks repository containment, exact bytes and digest when invoked.
+    """
+    source, selected, metadata = _selection(selection)
+    if source != "hub":
+        raise ValueError("A portable upscaler requires an exact Hub file selection.")
+    parts = selected.split("/")
+    if len(parts) < 3:
+        raise ValueError("A portable upscaler requires a repository and filename.")
+    size = metadata.get("byteSize")
+    if type(size) is not int or size <= 0:
+        raise ValueError("A portable upscaler requires a positive exact byteSize.")
+    return {
+        "repository": _exact_repository("/".join(parts[:2])),
+        "weightName": _exact_weight_name("/".join(parts[2:])),
+        "revision": _exact_revision(metadata.get("revision")),
+        "sha256": _exact_sha256(metadata.get("sha256"), required=True),
+        "byteSize": size,
+    }
+
+
 def pin_upscaler_model_selection(selection: Any) -> dict[str, Any]:
     """Persist an installed artifact's identity when the operator edits its selector.
 

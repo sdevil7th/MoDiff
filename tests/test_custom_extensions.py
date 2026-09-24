@@ -260,6 +260,71 @@ def test_api_reload_invalidates_only_affected_nodes_and_rejects_busy_or_unapprov
     asyncio.run(scenario())
 
 
+def test_documented_prompt_tools_example_stages_and_executes_through_the_graph(backend, store, monkeypatch):
+    """Keep the public walkthrough tied to the checked-in executable example."""
+    from modiff.config import CONFIG
+    from modules import MODULE_MAP
+
+    source = Path(__file__).resolve().parents[1] / "examples/custom_nodes/PromptTools"
+    item = store.stage(kind="local", source=str(source), name="PromptTools")
+    assert not item["enabled"]
+    definition = item["preview"]["nodes"]["PromptPrefix"]
+    assert definition["params"]["text"]["display"] == "textarea"
+    assert definition["params"]["prefix"]["display"] == "textarea"
+    assert definition["params"]["prompt_input"]["display"] == "input"
+    assert definition["params"]["prompt_input"]["required"] is False
+    assert definition["params"]["result"]["display"] == "output"
+
+    registry = store.enable("PromptTools", code_hash=item["codeHash"], consent=True)
+    assert registry["PromptPrefix"]["resizable"] is True
+    monkeypatch.setitem(MODULE_MAP, "custom.PromptTools", registry)
+    backend.modules["custom.PromptTools"] = registry
+    try:
+        backend.execute_node(
+            "documented-text-value",
+            {
+                "module": "modules.Primitive",
+                "action": "TextValue",
+                "params": {"text": {"value": "a lighthouse at night"}},
+            },
+            "test",
+            quiet=True,
+        )
+        prefix_node = {
+            "module": "custom.PromptTools",
+            "action": "PromptPrefix",
+            "params": {
+                "text": {"value": "this inline value is replaced by the connected prompt"},
+                "prompt_input": {"sourceId": "documented-text-value", "sourceKey": "output"},
+                "prefix": {"value": "Watercolor:"},
+            },
+        }
+        backend.execute_node("documented-prompt-prefix", prefix_node, "test", quiet=True)
+        assert backend.node_cache["documented-prompt-prefix"].output == {
+            "result": "Watercolor: a lighthouse at night"
+        }
+        destination = Path(CONFIG.paths["data"]) / "exports" / "PromptPrefix_test.txt"
+        backend.execute_node(
+            "documented-export",
+            {
+                "module": "modules.Primitive",
+                "action": "ExportData",
+                "params": {
+                    "value": {"sourceId": "documented-prompt-prefix", "sourceKey": "result"},
+                    "filename": {"value": str(destination)},
+                    "format": {"value": "text"},
+                },
+            },
+            "test",
+            quiet=True,
+        )
+        assert destination.read_text(encoding="utf-8") == "Watercolor: a lighthouse at night\n"
+        assert backend.node_cache["documented-export"].output["output"] == "Watercolor: a lighthouse at night"
+    finally:
+        backend.modules.pop("custom.PromptTools", None)
+        store.unload("PromptTools")
+
+
 def test_reload_client_cancellation_keeps_the_existing_execution_lease(backend, store, tmp_path, monkeypatch):
     import asyncio
     import threading
@@ -850,6 +915,9 @@ def test_custom_modular_loader_requires_pins_and_reuses_native_components(backen
     assert 'LoadModels' not in item['preview']['nodes']  # No Python imports during inspection.
     registry = store.enable('Example', code_hash=item['codeHash'], consent=True)
     assert registry['LoadModels']['params']['pipeline_components']['type'] == 'diffusers_modular_pipeline_components'
+    assert registry['LoadModels']['params']['source__vae__repo']['fieldOptions']['filter'] == {
+        'hub': {'className': ['AutoencoderKL']},
+    }
     monkeypatch.setitem(MODULE_MAP, 'custom.Example', registry)
     backend.modules['custom.Example'] = registry
     manager = ComponentsManager()

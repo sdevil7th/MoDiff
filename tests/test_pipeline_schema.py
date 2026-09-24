@@ -165,10 +165,17 @@ class ModularOperationDiscoveryTests(unittest.TestCase):
             with self.subTest(pipeline=contract["pipelineClass"], stage=contract["nodeType"]):
                 params = by_class[contract["pipelineClass"]].node_params[contract["nodeType"]]
                 self.assertEqual(contract["blockName"], params["block_name"])
+                wrapper_ports = set()
+                if contract["nodeKey"] == "modules.ModularDiffusers.EncodePrompt":
+                    connected = next((p for p in contract["ports"] if p["name"] == "prompt_input"), None)
+                    if connected:
+                        self.assertEqual(connected["semanticName"], "prompt")
+                        self.assertIn("prompt", params["input_names"])
+                        wrapper_ports.add(("input", "prompt_input"))
                 self.assertEqual(
                     {(p["direction"], p["name"]) for p in contract["ports"]},
                     {("input", name) for name in params["input_names"] + params["model_input_names"]}
-                    | {("output", name) for name in params["output_names"]},
+                    | {("output", name) for name in params["output_names"]} | wrapper_ports,
                 )
                 self.assertEqual(contract["support"], "declared")
         # Different families expose one operation identity, through one saved action.

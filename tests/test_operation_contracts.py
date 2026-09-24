@@ -41,6 +41,24 @@ MODULES = {"modules.ModularDiffusers": {"Denoise": {}}}
 
 
 class OperationContractTests(unittest.TestCase):
+    def test_connected_prompt_has_explicit_execution_semantics(self):
+        source = config()
+        source.node_specs = {"text_encoder": {
+            "inputs": [Param("prompt", "string")], "model_inputs": [], "outputs": [],
+            "required_inputs": [], "required_model_inputs": [], "block_name": "text_encoder",
+        }}
+        source.node_params = {"text_encoder": {
+            "input_names": ["prompt"], "model_input_names": [], "output_names": [],
+        }}
+        modules = {"modules.ModularDiffusers": {"EncodePrompt": {"params": {
+            "prompt_input": {"type": "string", "display": "input"},
+        }}}}
+        ports = build_modular_operation_contracts({"Pipeline": source}, modules)[0]["ports"]
+        connected = next(port for port in ports if port["name"] == "prompt_input")
+        self.assertEqual(connected["semanticName"], "prompt")
+        self.assertEqual(connected["direction"], "input")
+        self.assertFalse(connected["required"])
+
     def test_same_operation_preserves_pipeline_scoped_port_meaning_and_saved_action(self):
         configs = {"FutureModularPipeline": config(), "AnotherModularPipeline": config()}
         contracts = build_modular_operation_contracts(configs, MODULES)

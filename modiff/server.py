@@ -535,6 +535,7 @@ from modiff.studio_execution_specs import (
     WAN_T2V_1_3B_DIFFUSERS_FILES,
     WAN_VACE_1_3B_DIFFUSERS_FILES,
     Z_IMAGE_DIFFUSERS_FILES,
+    reviewed_repository_download_files,
     assert_studio_execution_graph,
     studio_capability_definitions,
     studio_execution_spec_for_pair,
@@ -1252,7 +1253,7 @@ def studio_download_files_for_repo(repo_id):
     normalized = {tuple(sorted(set(selection))) for selection in matches}
     if len(normalized) > 1:
         raise RuntimeError(f"Conflicting reviewed Studio download selections for {repo_id}.")
-    return list(next(iter(normalized), ()))
+    return list(next(iter(normalized), ())) or reviewed_repository_download_files(repo_id)
 
 
 class WebServer(CustomExtensionAPI, ServiceAPI):
@@ -6687,6 +6688,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         resource_identity = {
             **returned_payload,
             "torch": resource_torch_identity,
+            # Earlier graph receipts could retain only the final node's peak.
+            # Keep those historical proofs, but never reuse their resource key.
+            "peakMeasurementVersion": 2,
         }
         fingerprint = hashlib.sha256(
             json.dumps(execution_identity, sort_keys=True, default=str).encode("utf-8")
@@ -8995,6 +8999,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
 
     def _reset_runtime_measurement(self):
         """Reset accelerator peak counters immediately before one graph attempt."""
+        self._runtime_memory_peaks = {}
+        self._runtime_memory_peak_error = None
         try:
             torch = import_module("torch")
             if bool(torch.cuda.is_available()):
@@ -9011,10 +9017,40 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     if callable(reset):
                         reset(index)
         except Exception as exc:
+            self._runtime_memory_peak_error = str(exc)
             logger.debug(f"Could not reset runtime memory counters: {exc}")
 
+    def _reset_node_runtime_measurement(self):
+        """Keep graph high-water marks before resetting the next node's counters.
+
+        Called only on the serial model worker, never by active-run telemetry.
+        Per-node UI measurements and graph-attempt resource proof share Torch's
+        counters; a small final Preview must not erase an earlier denoiser peak.
+        """
+        peaks = getattr(self, "_runtime_memory_peaks", None)
+        if isinstance(peaks, dict):
+            try:
+                torch = import_module("torch")
+                for kind in ("cuda", "xpu"):
+                    runtime = getattr(torch, kind, None)
+                    if not runtime or not bool(getattr(runtime, "is_available", lambda: False)()):
+                        continue
+                    for index in range(int(runtime.device_count())):
+                        device = peaks.setdefault(f"{kind}:{index}", {})
+                        for key, method in (
+                            ("peakAllocatedBytes", "max_memory_allocated"),
+                            ("peakReservedBytes", "max_memory_reserved"),
+                        ):
+                            read_peak = getattr(runtime, method, None)
+                            if callable(read_peak):
+                                device[key] = max(device.get(key, 0), int(read_peak(index)))
+            except Exception as exc:
+                self._runtime_memory_peak_error = str(exc)
+                logger.debug(f"Could not preserve graph memory counters: {exc}")
+        reset_memory_stats()
+
     def _runtime_measurement(self, *, elapsed_seconds):
-        measurement = {"elapsedSeconds": max(0.0, float(elapsed_seconds))}
+        measurement = {"elapsedSeconds": max(0.0, float(elapsed_seconds)), "peakMeasurementVersion": 2}
         try:
             torch = import_module("torch")
             if bool(torch.cuda.is_available()):
@@ -9056,6 +9092,18 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 measurement.update({"backend": "cpu", "device": "cpu:0"})
         except Exception as exc:
             measurement["acceleratorMeasurementError"] = str(exc)
+        peaks = getattr(self, "_runtime_memory_peaks", {})
+        device_peaks = peaks.get(measurement.get("device"), {}) if isinstance(peaks, dict) else {}
+        for key in ("peakAllocatedBytes", "peakReservedBytes"):
+            if key in device_peaks:
+                measurement[key] = max(measurement.get(key, 0), device_peaks[key])
+        peak_error = getattr(self, "_runtime_memory_peak_error", None) or measurement.get("acceleratorMeasurementError")
+        if peak_error:
+            # Missing a boundary makes the graph high-water mark unknown, not
+            # safely equal to the lower final-node observation.
+            measurement.pop("peakAllocatedBytes", None)
+            measurement.pop("peakReservedBytes", None)
+            measurement["acceleratorMeasurementError"] = peak_error
         try:
             import psutil
 
@@ -10872,7 +10920,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         )
 
         if not quiet:
-            reset_memory_stats()
+            self._reset_node_runtime_measurement()
             start_time = time.time()
             phase = node_execution_phase(module, action)
 

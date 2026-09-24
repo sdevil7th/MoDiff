@@ -120,6 +120,17 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                             port["hidden"] = not bool(members[port["name"]])
                     result.append(loader)
                 helper_types = set()
+                if pipeline_class == "FluxKontextModularPipeline" and task == "multi_image_reference_edit":
+                    helper = build_pipeline_operation_contract(
+                        modules, pipeline_class=pipeline_class, task=task,
+                        operation_id="diffusion.compose_references", node_key="modules.ImageOperations.StitchImages",
+                        field_overrides={"image": {"required": True}},
+                    )
+                    if helper is None:
+                        raise ValueError("Native Kontext multi-reference requires its image composition operation.")
+                    helper.update(nodeType="reference_assembly", decomposition="bundle")
+                    result.append(with_operation_semantics(helper, workflow_id=workflow_id,
+                                                         values={"layout": "horizontal_reference"}))
                 actions = adapter["actionSequence"]
                 whole = reviewed_whole_workflow_graph_adapter(pipeline_class, workflow_id)
                 for index, action_key in enumerate(actions):
@@ -210,6 +221,28 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     if helper:
                         helper.update(nodeType="reference_assembly", decomposition="bundle")
                         result.append(with_operation_semantics(helper, workflow_id=workflow_id))
+                if pipeline_class == "StableDiffusionXLModularPipeline" and "custom_guider" in helper_types:
+                    helper = build_pipeline_operation_contract(
+                        modules, pipeline_class=pipeline_class, task=task,
+                        operation_id="diffusion.guidance", node_key="modules.ModularDiffusers.Guider",
+                    )
+                    if helper:
+                        helper.update(nodeType="guidance", decomposition="bundle")
+                        for port in helper["ports"]:
+                            if port["name"] == "guider_out":
+                                port["roles"] = ["component"]
+                        result.append(with_operation_semantics(
+                            helper, workflow_id=workflow_id, values={"model_type": pipeline_class},
+                        ))
+                    layers = build_pipeline_operation_contract(
+                        modules, pipeline_class=pipeline_class, task=task,
+                        operation_id="diffusion.guidance_layers", node_key="modules.ModularDiffusers.Layers",
+                    )
+                    if layers:
+                        layers.update(nodeType="guidance_layers", decomposition="bundle")
+                        result.append(with_operation_semantics(
+                            layers, workflow_id=workflow_id, values={"model_type": pipeline_class},
+                        ))
     identities = [(c["pipelineClass"], c["task"], c["operationId"]) for c in result]
     if len(identities) != len(set(identities)):
         raise ValueError("Ambiguous Modular operation bindings.")

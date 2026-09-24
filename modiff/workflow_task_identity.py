@@ -71,6 +71,7 @@ def modular_graph_tasks(nodes, loader_id, consumer_ids, pipeline_class):
     if not workflows:
         return set()
     helpers = {binding[1] for binding in MODULAR_AUXILIARY_OPERATION_BINDINGS.values()}
+    helpers.update({"modules.ModularDiffusers.Guider", "modules.ModularDiffusers.Layers"})
     stages = {
         key: nodes[key]
         for key in consumer_ids

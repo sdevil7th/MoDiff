@@ -1936,7 +1936,8 @@ class AutoResourcePlanTests(unittest.TestCase):
                     profiles = [
                         profile
                         for profile in DIFFUSERS_EXECUTION_PROFILES.values()
-                        if profile.model_type == model_type and mode in profile.modes
+                        if not profile.operation_recipe
+                        and profile.model_type == model_type and mode in profile.modes
                     ]
                     self.assertEqual(len(profiles), 1)
                     profile = profiles[0]

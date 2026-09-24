@@ -141,12 +141,17 @@ class AudioModeContract:
         return overlay
 
     def signal_value(self, pipeline_class: str, repository: str) -> dict[str, Any]:
+        actions = {"Generate": [self.mode]}
+        if pipeline_class == "AceStepPipeline":
+            for action in ("LoadAdapter", "SetAdapters", "FuseAdapters"):
+                actions[action] = [self.mode]
         return {
             "schemaVersion": 1,
             "library": "diffusers",
             "mediaKind": "audio",
             "pipelineClass": pipeline_class,
             "mode": self.mode,
+            "actions": actions,
             "repository": repository,
             "taskType": self.task_type,
             "upstreamTaskType": self.upstream_task_type,
@@ -1196,7 +1201,14 @@ class LoadAdapter(NodeBase):
     category = "Diffusers Audio"
     resizable = True
     params = {
-        "pipeline": {"label": "Pipeline", "display": "input", "type": "audio_diffusion_pipeline", "required": True},
+        "pipeline": {
+            "label": "Pipeline",
+            "display": "input",
+            "type": "audio_diffusion_pipeline",
+            "required": True,
+            "onSignal": {"action": "signal", "target": "output"},
+            "signalCompatibility": {"required": True, "action": "$node"},
+        },
         "adapter_path": {
             "label": "LoRA",
             "display": "modelselect",
@@ -1233,7 +1245,12 @@ class LoadAdapter(NodeBase):
             "max": 2,
             "step": 0.05,
         },
-        "output": {"label": "Pipeline", "display": "output", "type": "audio_diffusion_pipeline"},
+        "output": {
+            "label": "Pipeline",
+            "display": "output",
+            "type": "audio_diffusion_pipeline",
+            "signal": {"direction": "output", "origin": "pipeline", "value": ""},
+        },
     }
 
     @staticmethod
@@ -1410,10 +1427,17 @@ class SetAdapters(NodeBase):
             "display": "input",
             "type": "audio_diffusion_pipeline",
             "required": True,
+            "onSignal": {"action": "signal", "target": "output"},
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "adapter_names": {"label": "Adapter names", "type": "string", "default": "audio_style"},
         "adapter_weights": {"label": "Weights", "type": "string", "default": "0.7"},
-        "output": {"label": "Pipeline", "display": "output", "type": "audio_diffusion_pipeline"},
+        "output": {
+            "label": "Pipeline",
+            "display": "output",
+            "type": "audio_diffusion_pipeline",
+            "signal": {"direction": "output", "origin": "pipeline", "value": ""},
+        },
     }
 
     def execute(self, **kwargs):
@@ -1455,10 +1479,17 @@ class FuseAdapters(NodeBase):
             "display": "input",
             "type": "audio_diffusion_pipeline",
             "required": True,
+            "onSignal": {"action": "signal", "target": "output"},
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "enabled": {"label": "Fuse", "type": "bool", "default": True},
         "safe_fusing": {"label": "Safe fusing", "type": "bool", "default": True},
-        "output": {"label": "Pipeline", "display": "output", "type": "audio_diffusion_pipeline"},
+        "output": {
+            "label": "Pipeline",
+            "display": "output",
+            "type": "audio_diffusion_pipeline",
+            "signal": {"direction": "output", "origin": "pipeline", "value": ""},
+        },
     }
 
     def execute(self, **kwargs):
@@ -1784,6 +1815,7 @@ class Generate(NodeBase):
                 {"action": "value", "target": "audio_contract"},
                 {"action": "exec", "data": "update_audio_contract"},
             ],
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "audio_contract": {
             "label": "Audio Contract",

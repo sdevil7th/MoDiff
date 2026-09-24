@@ -341,6 +341,13 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
     def test_exact_pair_registry_has_atomic_optional_delivery(self):
         pairs = {}
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
+            if profile.operation_recipe:
+                # Recipes carry their own atomic dependency declaration, but
+                # are not additional legacy Auto model/task owners.
+                requirement = declarative_requirement((profile,))
+                self.assertNotEqual(requirement["reason"], "execution_profile_contract_invalid")
+                self.assertEqual(requirement["executionProfileIds"], [profile.id])
+                continue
             for mode in profile.modes:
                 pairs.setdefault((profile.model_type, mode), []).append(profile)
         for pair, profiles in pairs.items():
@@ -508,11 +515,8 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
             "LoadPipeline",
             values,
         )
-        self.assertEqual(reason, "loader_profile_ambiguous")
-        self.assertEqual(
-            {profile.id for profile in profiles},
-            {"ernie-image-turbo:direct", "ernie-image:equivalent-standard"},
-        )
+        self.assertIsNone(reason)
+        self.assertEqual([profile.id for profile in profiles], ["ernie-image-turbo:direct"])
 
         profiles, reason = resolve_execution_profiles_for_loader(
             "modules.DiffusersImage",

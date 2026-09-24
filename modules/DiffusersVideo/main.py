@@ -1057,12 +1057,22 @@ def get_video_operation_contracts(modules) -> list[dict]:
 
 
 def _adapter_signal(adapter: VideoPipelineAdapter) -> dict[str, Any]:
+    actions = {
+        "Generate": list(adapter.modes),
+        "GenerateShotJob": list(adapter.modes),
+    }
+    if "audio" in adapter.output_media:
+        actions["GenerateVideoAudio"] = list(adapter.modes)
+        actions["GenerateLTX2"] = list(adapter.modes)
+    if "text_to_video" in adapter.modes:
+        actions["GenerateSequence"] = ["text_to_video"]
     return {
         "schemaVersion": 1,
         "library": "diffusers",
         "mediaKind": "video",
         "pipelineClass": adapter.pipeline_class,
         "modes": list(adapter.modes),
+        "actions": actions,
     }
 
 
@@ -2586,6 +2596,7 @@ class Generate(WanVACEGenerate):
                 {"action": "value", "target": "video_contract"},
                 {"action": "exec", "data": "update_adapter_modes"},
             ],
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "video_contract": {
             "label": "Video Contract",
@@ -4782,6 +4793,7 @@ class GenerateShotJob(NodeBase):
             "display": "input",
             "type": "video_diffusion_pipeline",
             "required": True,
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "job": {"label": "Shot Job", "display": "input", "type": "any", "required": True},
         "previous_video": {

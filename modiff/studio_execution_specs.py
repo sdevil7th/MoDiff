@@ -211,6 +211,22 @@ FLUX2_KLEIN_BASE_REPO = "black-forest-labs/FLUX.2-klein-base-4B"
 # Diffusers layout. Keep a separate selection so revisions and capabilities
 # never alias merely because their current path sets overlap.
 FLUX2_KLEIN_BASE_DIFFUSERS_FILES = list(FLUX2_KLEIN_DIFFUSERS_FILES)
+# The 9B KV artifact has a different license filename and sharded 8B text
+# encoder/9B transformer. These are the exact paths at its reviewed commit;
+# neither the 4B selection nor the duplicate root checkpoint is appropriate.
+FLUX2_KLEIN_KV_DIFFUSERS_FILES = [
+    name for name in FLUX2_KLEIN_DIFFUSERS_FILES
+    if name not in {
+        "LICENSE.md", "text_encoder/model-00001-of-00002.safetensors",
+        "text_encoder/model-00002-of-00002.safetensors",
+        "transformer/diffusion_pytorch_model.safetensors",
+    }
+] + [
+    "LICENSE",
+    *(f"text_encoder/model-{index:05d}-of-00004.safetensors" for index in range(1, 5)),
+    *(f"transformer/diffusion_pytorch_model-{index:05d}-of-00002.safetensors" for index in range(1, 3)),
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+]
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 SDXL_TURBO_REPO = "stabilityai/sdxl-turbo"
 SDXL_INSTRUCT_PIX2PIX_REPO = "diffusers/sdxl-instructpix2pix-768"
@@ -1790,6 +1806,19 @@ QWEN_IMAGE_2512_DIFFUSERS_FILES = [
     "vae/diffusion_pytorch_model.safetensors",
 ]
 QWEN_IMAGE_EDIT_REPO = "Qwen/Qwen-Image-Edit"
+# Independently reviewed alternative layouts; do not inherit the 2512 chat
+# template or nine transformer shards for the original/BNB artifacts.
+QWEN_IMAGE_ORIGINAL_DIFFUSERS_FILES = [
+    name for name in QWEN_IMAGE_2512_DIFFUSERS_FILES if name != "tokenizer/chat_template.jinja"
+] + ["LICENSE"]
+QWEN_IMAGE_BNB_DIFFUSERS_FILES = [
+    name for name in QWEN_IMAGE_2512_DIFFUSERS_FILES
+    if name != "tokenizer/chat_template.jinja"
+    and not (name.startswith("text_encoder/model-") or name.startswith("transformer/diffusion_pytorch_model-"))
+] + [
+    *(f"text_encoder/model-{index:05d}-of-00002.safetensors" for index in range(1, 3)),
+    *(f"transformer/diffusion_pytorch_model-{index:05d}-of-00003.safetensors" for index in range(1, 4)),
+]
 QWEN_IMAGE_EDIT_DIFFUSERS_FILES = [
     ".gitattributes",
     "README.md",
@@ -3143,6 +3172,7 @@ def _modular_sdxl_conditioned_graph(*, route: str, control: str | None, ip_adapt
             ("loadIPAdapterImage", "file", "ipAdapterImage"),
             ("loadIPAdapterImage", "alpha_channel", "alphaMode"),
             ("guider", "guider", "classifierFreeGuidance"),
+            ("guider", "model_type", "pipelineClass"),
             ("guider", "guidance_scale", "guidanceScale"),
             ("ipAdapter", "adapter_model", "ipAdapterRepo"),
             ("ipAdapter", "adapter_revision", "ipAdapterRevision"),
@@ -4577,6 +4607,55 @@ _MODULAR_WHOLE_IMAGE_COMMON_GRAPH_BINDINGS = (
     ("decode", "block_path", "workflowDecodeBlock"),
 )
 _MODULAR_WHOLE_IMAGE_TEXT_GRAPH_BINDINGS = _MODULAR_WHOLE_IMAGE_COMMON_GRAPH_BINDINGS
+_ERNIE_MODULAR_IMAGE_GRAPH_ROLES = (
+    ("models", "modules.ModularDiffusers.ModelsLoader", -1100, -80),
+    ("promptEnhance", "modules.ModularDiffusers.WorkflowErniePromptEnhance", -700, -80),
+    ("prompt", "modules.ModularDiffusers.WorkflowErnieTextEncode", -300, -80),
+    ("denoise", "modules.ModularDiffusers.WorkflowErnieImageDenoise", 100, -80),
+    ("decode", "modules.ModularDiffusers.WorkflowErnieDecodeImage", 500, -80),
+    ("preview", "modules.Image.Preview", 900, -80),
+)
+_ERNIE_MODULAR_IMAGE_GRAPH_EDGES = (
+    ("models", "pipeline_components", "promptEnhance", "pipeline_components"),
+    ("models", "pipeline_components", "prompt", "pipeline_components"),
+    ("models", "pipeline_components", "denoise", "pipeline_components"),
+    ("models", "pipeline_components", "decode", "pipeline_components"),
+    ("promptEnhance", "state_out", "prompt", "state_in"),
+    ("prompt", "state_out", "denoise", "state_in"),
+    ("denoise", "state_out", "decode", "state_in"),
+    ("decode", "images", "preview", "image"),
+)
+_ERNIE_MODULAR_IMAGE_GRAPH_BINDINGS = (
+    ("models", "model_type", "pipelineClass"),
+    ("models", "repo_id", "artifact"),
+    ("models", "revision", "defaultRevision"),
+    ("models", "dtype", "dtype"),
+    ("models", "device", "device"),
+    ("models", "auto_offload", "autoOffload"),
+    ("models", "offload_mode", "offloadMode"),
+    ("models", "trust_remote_code", "false"),
+    ("models", "workflow_id", "workflowId"),
+    ("promptEnhance", "pipeline_class", "pipelineClass"),
+    ("promptEnhance", "workflow_id", "workflowId"),
+    ("promptEnhance", "block_path", "workflowPromptEnhancerBlock"),
+    ("promptEnhance", "prompt", "prompt"),
+    ("promptEnhance", "width", "width"),
+    ("promptEnhance", "height", "height"),
+    ("prompt", "pipeline_class", "pipelineClass"),
+    ("prompt", "workflow_id", "workflowId"),
+    ("prompt", "block_path", "workflowTextEncoderBlock"),
+    ("prompt", "negative_prompt", "negativePrompt"),
+    ("denoise", "pipeline_class", "pipelineClass"),
+    ("denoise", "workflow_id", "workflowId"),
+    ("denoise", "block_path", "workflowDenoiseBlock"),
+    ("denoise", "width", "width"),
+    ("denoise", "height", "height"),
+    ("denoise", "seed", "seed"),
+    ("denoise", "num_inference_steps", "steps"),
+    ("decode", "pipeline_class", "pipelineClass"),
+    ("decode", "workflow_id", "workflowId"),
+    ("decode", "block_path", "workflowDecodeBlock"),
+)
 _MODULAR_WHOLE_IMAGE_EDIT_GRAPH_BINDINGS = _MODULAR_WHOLE_IMAGE_COMMON_GRAPH_BINDINGS + (
     ("loadImage", "file", "referenceImages"),
     ("loadImage", "alpha_channel", "alphaMode"),
@@ -5538,6 +5617,7 @@ _BINDING_SOURCES = frozenset({"executionProfileId"}) | frozenset(
         *_WAN_FLF_GRAPH_BINDINGS,
         *_MODULAR_WHOLE_AUDIO_GRAPH_BINDINGS,
         *_MODULAR_WHOLE_IMAGE_TEXT_GRAPH_BINDINGS,
+        *_ERNIE_MODULAR_IMAGE_GRAPH_BINDINGS,
         *_MODULAR_WHOLE_IMAGE_EDIT_GRAPH_BINDINGS,
         *_MODULAR_WHOLE_VIDEO_TEXT_GRAPH_BINDINGS,
         *_MODULAR_WHOLE_VIDEO_IMAGE_GRAPH_BINDINGS,
@@ -14501,6 +14581,58 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["ernie-image-turbo:text-to-image:v1"] = {
     "bindings": _SDXL_GRAPH_BINDINGS,
 }
 
+_ERNIE_IMAGE_TURBO_MODULAR_PROFILE = {
+    **deepcopy(_ERNIE_IMAGE_TURBO_PROFILE),
+    "id": "ernie-image-turbo:official-modular-workflow",
+    "model_type": "ErnieImageModularPipeline",
+    "loader_module": "modules.ModularDiffusers",
+    "loader_action": "ModelsLoader",
+    "execution_path": "modular-diffusers",
+    "pipeline_class": "ErnieImageModularPipeline",
+    "supported_offload_modes": (
+        OFFLOAD_MODE_NONE,
+        OFFLOAD_MODE_MODEL_CPU,
+        OFFLOAD_MODE_GROUP_CPU,
+        OFFLOAD_MODE_GROUP_DISK,
+    ),
+    "retry_offload_modes": (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+}
+_ERNIE_IMAGE_TURBO_MODULAR_CAPABILITY = deepcopy(_ERNIE_IMAGE_TURBO_CAPABILITY)
+_ERNIE_IMAGE_TURBO_MODULAR_CAPABILITY.update(
+    {
+        "modelType": "ErnieImageModularPipeline",
+        "label": "ERNIE Image Turbo (Modular Diffusers)",
+        "displayName": "ERNIE Image Turbo — Editable Stages",
+        "offloadSupport": {
+            "default": OFFLOAD_MODE_MODEL_CPU,
+            "lowVram": OFFLOAD_MODE_GROUP_CPU,
+            "emergency": OFFLOAD_MODE_GROUP_DISK,
+            "modes": [
+                OFFLOAD_MODE_NONE,
+                OFFLOAD_MODE_MODEL_CPU,
+                OFFLOAD_MODE_GROUP_CPU,
+                OFFLOAD_MODE_GROUP_DISK,
+            ],
+        },
+        "templateEligible": False,
+        "notes": [
+            "Runs the pinned upstream prompt-enhancer, text-encoder, denoise, and VAE-decoder blocks as distinct stages.",
+            "Turbo is fixed to one image, at most eight steps, guidance 1, 32-pixel alignment, and at most 1,048,576 output pixels.",
+            "The standard ERNIE Image pipeline remains available for existing explicitly saved whole-pipeline graphs.",
+            "Auto and Gallery remain disabled until real execution and manual output review are complete.",
+        ],
+    }
+)
+STUDIO_EXECUTION_SPEC_DEFINITIONS["ernie-image-turbo:modular-text-to-image:v1"] = {
+    "modelType": "ErnieImageModularPipeline",
+    "mode": "text_to_image",
+    "profile": _ERNIE_IMAGE_TURBO_MODULAR_PROFILE,
+    "capability": _ERNIE_IMAGE_TURBO_MODULAR_CAPABILITY,
+    "roles": _ERNIE_MODULAR_IMAGE_GRAPH_ROLES,
+    "edges": _ERNIE_MODULAR_IMAGE_GRAPH_EDGES,
+    "bindings": _ERNIE_MODULAR_IMAGE_GRAPH_BINDINGS,
+}
+
 
 _GLM_IMAGE_PROFILE = {
     "id": "glm-image:direct",
@@ -17715,14 +17847,6 @@ _LTX2_EQUIVALENT_CAPABILITY.setdefault("notes", []).append(
 )
 
 _EQUIVALENT_STANDARD_STUDIO_SPECS = {
-    "ernie-image:equivalent-standard-text-to-image:v1": {
-        "source": "ernie-image-turbo:text-to-image:v1",
-        "modelType": "ErnieImageModularPipeline",
-        "mode": "text_to_image",
-        "profileId": "ernie-image:equivalent-standard",
-        "modes": ("text_to_image",),
-        "label": "ERNIE Image Modular — Equivalent Standard Execution",
-    },
     "ltx:equivalent-standard-text-to-video:v1": {
         "source": "ltx-video-0.9.8-13b-distilled:text-to-video:v1",
         "modelType": "LTXModularPipeline",
@@ -17936,6 +18060,7 @@ for _kv_mode in ("text_to_image", "edit_image", "multi_image_reference_edit"):
         "templateEligible": True, "galleryEligible": False, "liveProof": False,
         "qualifiedModes": [], "qualificationStatus": "graph-qualified-execution-pending",
         "revisionCandidates": [require_catalog_revision(_FLUX_KLEIN_KV_REPO)],
+        "downloadFiles": FLUX2_KLEIN_KV_DIFFUSERS_FILES,
         "notes": ["Ordinary upstream KV pipeline; no artificial Modular hierarchy.",
                   "Step-distilled four-step model; upstream has no guidance control.",
                   "Reference KV state is per generation, not reused between calls.",
@@ -18002,6 +18127,28 @@ def studio_execution_profile_definitions() -> dict[str, dict[str, Any]]:
         definition["profile"]["id"]: deepcopy(definition["profile"])
         for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
     }
+    # A recipe identity is not a new upstream pipeline class. Keep ordinary
+    # SDXL loaders and persisted standard PAG profiles unchanged; this explicit
+    # selection adds the official native guider to a new operation starter.
+    profiles["sdxl-pag:modular"] = {
+        **deepcopy(_MODULAR_SDXL_PROFILE),
+        "id": "sdxl-pag:modular",
+        "model_type": "StableDiffusionXLPAGPipeline",
+        "modes": ("text_to_image", "image_to_image", "inpaint", "control_image", "control_edit_image"),
+    }
+    for identity, model_type, repository, base in (
+        ("flux-schnell:modular", "FluxSchnellPipeline", FLUX_SCHNELL_REPO, _MODULAR_FLUX_PROFILE),
+        ("flux-krea:modular", "FluxKreaPipeline", FLUX_KREA_REPO, _MODULAR_FLUX_PROFILE),
+        ("sdxl-turbo:modular", "StableDiffusionXLTurboPipeline", SDXL_TURBO_REPO, _MODULAR_SDXL_PROFILE),
+        ("flux2-klein-kv:t2i-modular", "Flux2KleinKVPipeline", _FLUX_KLEIN_KV_REPO, _MODULAR_FLUX2_KLEIN_PROFILE),
+    ):
+        profiles[identity] = {
+            **deepcopy(base), "id": identity, "model_type": model_type,
+            "modes": ("text_to_image",), "default_repo": repository, "compatible_repos": (),
+        }
+        if identity == "flux2-klein-kv:t2i-modular":
+            # Do not inherit 4B quantization qualification for the exact 9B artifact.
+            profiles[identity]["expert_quantization_modes"] = ()
     # Persisted pre-native FLUX.2 graphs explicitly select this loader profile.
     # Retire the catalog admission, not their executable loader identity. Keep
     # the original standard pipeline and resource policy; never auto-convert a
@@ -18014,6 +18161,14 @@ def studio_execution_profile_definitions() -> dict[str, dict[str, Any]]:
     )
     legacy_flux2["public"] = False
     profiles[legacy_flux2["id"]] = legacy_flux2
+    legacy_ernie = _equivalent_standard_profile(
+        "ernie-image-turbo:text-to-image:v1",
+        profile_id="ernie-image:equivalent-standard",
+        model_type="ErnieImageModularPipeline",
+        modes=("text_to_image",),
+    )
+    legacy_ernie["public"] = False
+    profiles[legacy_ernie["id"]] = legacy_ernie
     return profiles
 
 
@@ -18046,6 +18201,29 @@ def studio_expert_resource_requirements(
     ]
     matches = [requirement for requirement in matches if isinstance(requirement, dict)]
     return deepcopy(matches[0]) if len(matches) == 1 else None
+
+
+_REVIEWED_REPOSITORY_DOWNLOAD_FILES = {
+    "Qwen/Qwen-Image": QWEN_IMAGE_ORIGINAL_DIFFUSERS_FILES,
+    "Qwen/Qwen-Image-2512": QWEN_IMAGE_2512_DIFFUSERS_FILES,
+    "Qwen/Qwen-Image-Edit": QWEN_IMAGE_EDIT_DIFFUSERS_FILES,
+    "Qwen/Qwen-Image-Edit-2511": QWEN_IMAGE_EDIT_2511_DIFFUSERS_FILES,
+    "Qwen/Qwen-Image-Layered": QWEN_IMAGE_LAYERED_DIFFUSERS_FILES,
+    "unsloth/Qwen-Image-2512-unsloth-bnb-4bit": QWEN_IMAGE_BNB_DIFFUSERS_FILES,
+    FLUX_CANNY_VERIFIED_REPAIR_REPO: FLUX_CONTROL_DIFFUSERS_FILES,
+    FLUX_FILL_REPO: FLUX_FILL_DIFFUSERS_FILES,
+    FLUX_KONTEXT_REPO: FLUX_KONTEXT_DIFFUSERS_FILES,
+    Z_IMAGE_REPO: Z_IMAGE_DIFFUSERS_FILES,
+}
+
+
+def reviewed_repository_download_files(repo: str) -> list[str]:
+    """Data-only selections for legacy capabilities and exact alternatives.
+
+    This supplies paths, not task/runtime permission. Single root FP8/NVFP4
+    checkpoints are deliberately not guessed into full pipeline layouts.
+    """
+    return list(_REVIEWED_REPOSITORY_DOWNLOAD_FILES.get(repo, ()))
 
 
 def studio_capability_definition(model_type: str) -> dict[str, Any]:

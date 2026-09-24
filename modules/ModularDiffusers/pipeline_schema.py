@@ -847,25 +847,44 @@ MODIFF_PARAM_TEMPLATES = {
     # Video
     "videos": {"label": "Videos", "type": "video", "display": "output", "required_block_params": ["videos"]},
     # Models
-    "vae": {"label": "VAE", "type": "diffusers_auto_model", "display": "input", "required_block_params": ["vae"]},
+    "vae": {
+        "label": "VAE",
+        "type": "diffusers_auto_model",
+        "display": "input",
+        "signalCompatibility": {"role": "vae"},
+        "required_block_params": ["vae"],
+    },
     "image_encoder": {
         "label": "Image Encoder",
         "type": "diffusers_auto_model",
         "display": "input",
+        "signalCompatibility": {"role": "image_encoder"},
         "required_block_params": ["image_encoder"],
     },
-    "unet": {"label": "Denoise Model", "type": "diffusers_auto_model", "display": "input"},
-    "scheduler": {"label": "Scheduler", "type": "diffusers_auto_model", "display": "input"},
+    "unet": {
+        "label": "Denoise Model",
+        "type": "diffusers_auto_model",
+        "display": "input",
+        "signalCompatibility": {"role": "denoiser"},
+    },
+    "scheduler": {
+        "label": "Scheduler",
+        "type": "diffusers_auto_model",
+        "display": "input",
+        "signalCompatibility": {"role": "scheduler"},
+    },
     "controlnet": {
         "label": "ControlNet Model",
         "type": "diffusers_auto_model",
         "display": "input",
+        "signalCompatibility": {"role": "controlnet_component"},
         "required_block_params": ["controlnet"],
     },
     "text_encoders": {
         "label": "Text Encoders",
         "type": "diffusers_auto_models",
         "display": "input",
+        "signalCompatibility": {"role": "text_encoders"},
         "required_block_params": ["text_encoder"],
     },
     # Bundles/Custom
@@ -953,6 +972,8 @@ class MoDiffParam(metaclass=MoDiffParamMeta):
     fieldOptions: dict[str, Any] | None = None
     onChange: Any = None
     onSignal: Any = None
+    connectionRole: str | None = None
+    signalCompatibility: dict[str, Any] | None = None
     required_block_params: str | list[str] | None = None
 
     def to_dict(self) -> dict[str, Any]:

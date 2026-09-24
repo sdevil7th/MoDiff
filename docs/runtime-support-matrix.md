@@ -13,6 +13,15 @@
 
 “Supported” describes installation/runtime qualification, not model performance. `/model_capabilities` remains the source of graph capability. Exact model, dtype, placement, optimization, driver, and hardware qualification is receipt-specific; an unqualified recipe may be runnable with a warning but must not be described as optimized.
 
+Graph resource measurements use peak-accounting version 2. The serial worker
+preserves accelerator high-water marks across per-node counter resets, including
+offloaded generation followed by a small Preview. Resource fingerprints include
+this version: earlier proof records remain on disk but cannot qualify the new
+resource identity. An incomplete allocator observation omits the graph peak
+rather than reporting the lower final-node value. Endpoint RSS samples are not
+continuous process-memory peaks; dedicated VRAM and accessible shared memory
+remain distinct. No cross-platform qualification follows from this accounting fix.
+
 ## Model families and support boundaries
 
 The backend catalog and exact execution specifications determine available

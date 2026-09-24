@@ -31,11 +31,15 @@ import logging
 import asyncio
 import signal
 import subprocess
+import threading
+import time
 from pathlib import Path
 
 logger = logging.getLogger('modiff')
 
 SUPERVISED_RESTART_EXIT_CODE = 75
+MAX_RAPID_WORKER_FAILURES = 5
+STABLE_WORKER_SECONDS = 60.0
 
 
 def handle_loop_exception(loop, context):
@@ -122,6 +126,8 @@ def run_supervisor():
 
     worker = None
     shutting_down = False
+    shutdown_event = threading.Event()
+    rapid_failures = 0
     control_port = int(os.environ.get("MODIFF_SUPERVISOR_CONTROL_PORT", str(int(CONFIG.server["port"]) + 1)))
     requested_control_host = str(os.environ.get("MODIFF_SUPERVISOR_CONTROL_HOST", "127.0.0.1"))
     if requested_control_host not in {"127.0.0.1", "localhost"}:
@@ -151,6 +157,7 @@ def run_supervisor():
     def forward_signal(signum, _frame):
         nonlocal shutting_down
         shutting_down = True
+        shutdown_event.set()
         controller.set_shutting_down()
         if worker is not None and worker.poll() is None:
             worker.send_signal(signum)
@@ -163,6 +170,7 @@ def run_supervisor():
             worker_env = os.environ.copy()
             worker_env["MODIFF_WORKER_SUPERVISED"] = "1"
             worker_env["MODIFF_SUPERVISOR_QUEUE_STATE"] = str(queue_state_path)
+            worker_started_at = time.monotonic()
             worker = subprocess.Popen(worker_process_command(worker_env), env=worker_env)
             controller.set_worker(worker)
             return_code = worker.wait()
@@ -179,11 +187,24 @@ def run_supervisor():
                     worker_pid=worker_pid,
                     return_code=return_code,
                 )
+                if time.monotonic() - worker_started_at >= STABLE_WORKER_SECONDS:
+                    rapid_failures = 0
+                rapid_failures += 1
+                if rapid_failures >= MAX_RAPID_WORKER_FAILURES:
+                    logger.error(
+                        "Backend worker failed %s times without a stable run; automatic replacement stopped. "
+                        "Review the worker error and available memory before restarting MoDiff.", rapid_failures,
+                    )
+                    return return_code
+                delay = min(2 ** (rapid_failures - 1), 16)
                 logger.error(
-                    "Backend worker %s exited unexpectedly with code %s; starting a clean replacement.",
+                    "Backend worker %s exited unexpectedly with code %s; replacement in %ss (failure %s/%s).",
                     worker_pid,
                     return_code,
+                    delay, rapid_failures, MAX_RAPID_WORKER_FAILURES,
                 )
+                if shutdown_event.wait(delay):
+                    return return_code
                 continue
             return return_code
     finally:

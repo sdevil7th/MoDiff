@@ -67,8 +67,8 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "diffusersPipelineSymbolCount": 334,
                 "pipelineStatusCounts": {
                     "contract-only": 5,
-                    "equivalent": 11,
-                    "executable": 143,
+                    "equivalent": 10,
+                    "executable": 144,
                     "intentionally-excluded": 59,
                     "research-blocked": 116,
                     "unreviewed": 0,

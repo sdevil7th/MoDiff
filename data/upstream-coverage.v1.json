@@ -2339,7 +2339,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:587a272594406346c31b038b6ff3de574612ecb3085174516aba07bd0ddbbe69",
+  "contentHash": "sha256:f0099c4227440b78d121375975949fa2fd4f30b80d485027b917a0ba44e1392c",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -3230,17 +3230,21 @@
     },
     {
       "artifactReviews": [],
-      "equivalentTo": [
-        "ErnieImagePipeline"
+      "equivalentTo": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "ernie-image-turbo:modular-text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "ErnieImageModularPipeline"
+        }
       ],
-      "exactExecutionSpecs": [],
       "modularWorkflowIds": [
         "text_to_image"
       ],
       "name": "ErnieImageModularPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "equivalent"
+      "status": "executable"
     },
     {
       "artifactReviews": [
@@ -3252,11 +3256,6 @@
           "id": "ernie-image-turbo:text-to-image:v1",
           "mode": "text_to_image",
           "modelType": "ErnieImagePipeline"
-        },
-        {
-          "id": "ernie-image:equivalent-standard-text-to-image:v1",
-          "mode": "text_to_image",
-          "modelType": "ErnieImageModularPipeline"
         }
       ],
       "modularWorkflowIds": [],
@@ -8668,7 +8667,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "bf6712c3b2656e2c57bce14902a4cb1b4be47509dc6d7f0ff6ba653dcf53b9ff",
+    "templateBundleSha256": "6d5e3680d8b4ee14b32313088b9a8c5a3ab0e9a2cd83687c7e5a8d61d02927cf",
     "transformers": {
       "productionRuntime": {
         "byteSize": 11625234,
@@ -8693,8 +8692,8 @@
     "diffusersPipelineSymbolCount": 334,
     "pipelineStatusCounts": {
       "contract-only": 5,
-      "equivalent": 11,
-      "executable": 143,
+      "equivalent": 10,
+      "executable": 144,
       "intentionally-excluded": 59,
       "research-blocked": 116,
       "unreviewed": 0
@@ -8807,7 +8806,7 @@
             "PredictDepth"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "0dbed0a6f42dcbecef53aec75f40ae2e965bc5f1eea8c33c4f37941fd7841940"
+          "sha256": "81544771429fac13e5e407699eb0602a91485c0be2de4709a8954218eca09e0c"
         }
       ],
       "nodeKeys": [
@@ -8869,7 +8868,7 @@
             "LoadTextGenerationModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "0dbed0a6f42dcbecef53aec75f40ae2e965bc5f1eea8c33c4f37941fd7841940"
+          "sha256": "81544771429fac13e5e407699eb0602a91485c0be2de4709a8954218eca09e0c"
         }
       ],
       "nodeKeys": [
@@ -8930,7 +8929,7 @@
             "LoadImageTextToTextModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "0dbed0a6f42dcbecef53aec75f40ae2e965bc5f1eea8c33c4f37941fd7841940"
+          "sha256": "81544771429fac13e5e407699eb0602a91485c0be2de4709a8954218eca09e0c"
         }
       ],
       "nodeKeys": [
@@ -9005,7 +9004,7 @@
             "LoadAnyToAnyModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "0dbed0a6f42dcbecef53aec75f40ae2e965bc5f1eea8c33c4f37941fd7841940"
+          "sha256": "81544771429fac13e5e407699eb0602a91485c0be2de4709a8954218eca09e0c"
         }
       ],
       "nodeKeys": [

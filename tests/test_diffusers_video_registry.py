@@ -52,6 +52,7 @@ from modules.DiffusersVideo.main import (
     VIDEO_PIPELINE_LOAD_HANDLERS,
     VIDEO_MODE_FIELD_CONTRACTS,
     WAN_VACE_MODE_MEDIA_CONTRACTS,
+    _adapter_signal,
     _pipeline_adapter,
     _resolve_adapter_model_selection,
     _resolve_loader_revision,
@@ -665,29 +666,14 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             }
         )
         signal = loader.set_field_params.call_args.args[1]["signal"]
-        self.assertEqual(
-            signal["value"],
-            {
-                "schemaVersion": 1,
-                "library": "diffusers",
-                "mediaKind": "video",
-                "pipelineClass": "HunyuanVideoFramepackPipeline",
-                "modes": ["image_to_video"],
-            },
-        )
+        self.assertEqual(signal["value"], _adapter_signal(VIDEO_PIPELINE_ADAPTERS["HunyuanVideoFramepackPipeline"]))
 
         generator = Generate("generator")
         generator.set_field_params = MagicMock()
         generator.update_adapter_modes(
             {
                 "mode": "text_to_video",
-                "video_contract": {
-                    "schemaVersion": 1,
-                    "library": "diffusers",
-                    "mediaKind": "video",
-                    "pipelineClass": "HunyuanVideoFramepackPipeline",
-                    "modes": ["image_to_video"],
-                },
+                "video_contract": _adapter_signal(VIDEO_PIPELINE_ADAPTERS["HunyuanVideoFramepackPipeline"]),
             },
             None,
         )
@@ -720,13 +706,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         )
         self.assertEqual(
             LoadPipeline.params["pipeline"]["signal"]["value"],
-            {
-                "schemaVersion": 1,
-                "library": "diffusers",
-                "mediaKind": "video",
-                "pipelineClass": "WanVACEPipeline",
-                "modes": list(VIDEO_PIPELINE_ADAPTERS["WanVACEPipeline"].modes),
-            },
+            _adapter_signal(VIDEO_PIPELINE_ADAPTERS["WanVACEPipeline"]),
         )
 
     def test_video_model_action_couples_repository_and_revision_before_real_execution(self):
@@ -924,13 +904,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                 node.update_adapter_modes(
                     {
                         "mode": mode,
-                        "video_contract": {
-                            "schemaVersion": 1,
-                            "library": "diffusers",
-                            "mediaKind": "video",
-                            "pipelineClass": pipeline_class,
-                            "modes": list(adapter.modes),
-                        },
+                        "video_contract": _adapter_signal(adapter),
                     },
                     {"key": "mode"},
                 )

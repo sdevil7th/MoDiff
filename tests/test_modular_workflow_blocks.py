@@ -1,4 +1,5 @@
 import copy
+import importlib.util
 import json
 import pickle
 import sys
@@ -25,6 +26,10 @@ from modules.ModularDiffusers.workflow_blocks import (
     WorkflowDecodeImage,
     WorkflowDecodeVideo,
     WorkflowDenoise,
+    WorkflowErnieDecodeImage,
+    WorkflowErnieImageDenoise,
+    WorkflowErniePromptEnhance,
+    WorkflowErnieTextEncode,
     WorkflowHunyuanVideo15Decode,
     WorkflowHunyuanVideo15Denoise,
     WorkflowHunyuanVideo15ImageEncode,
@@ -69,6 +74,7 @@ from modules.ModularDiffusers.workflow_blocks import (
     WorkflowWanAnimateVaeEncode,
     WorkflowWanAnimateVideoEncode,
     _issue_workflow_state,
+    _official_stage_block,
     _require_workflow_state,
     _validated_minimax_h3_references,
 )
@@ -76,6 +82,21 @@ from modules.ModularDiffusers.workflow_blocks import (
 
 PIPELINE_CLASS = "MiniMaxMusic3ModularPipeline"
 WORKFLOW_ID = "default"
+
+
+@unittest.skipUnless(importlib.util.find_spec("transformers"), "requires the staged optional Transformers runtime")
+def test_official_stage_resolves_flattened_selected_denoise_without_other_branches():
+    from diffusers.modular_pipelines import SequentialPipelineBlocks
+    from diffusers.modular_pipelines.ernie_image.modular_blocks_ernie_image import ErnieImageAutoBlocks
+
+    selected = ErnieImageAutoBlocks().get_execution_blocks(use_pe=True)
+    assert "denoise" not in selected.sub_blocks
+    denoise = _official_stage_block(selected, "denoise")
+    assert isinstance(denoise, SequentialPipelineBlocks)
+    assert list(denoise.sub_blocks) == ["input", "set_timesteps", "prepare_latents", "denoise"]
+    assert denoise.model_name == "ernie-image"
+    assert _official_stage_block(selected, "prompt_enhancer") is selected.sub_blocks["prompt_enhancer"]
+    assert _official_stage_block(selected, "absent") is None
 
 
 class FakeState:
@@ -158,6 +179,170 @@ class FakeGuider:
 
 
 class ModularWorkflowBlockTests(unittest.TestCase):
+    def test_ernie_scalar_normalization_uses_schema_not_live_nodebase_values(self):
+        token = object()
+        pipeline = RecordingPipeline(FakeState(prompt=["enhanced prompt"]))
+        enhance = WorkflowErniePromptEnhance("enhance-runtime-boundary")
+        values = {
+            "pipeline_components": {}, "pipeline_class": "ErnieImageModularPipeline",
+            "workflow_id": "text2image", "block_path": "prompt_enhancer",
+            "prompt": "a small red panda", "width": "1024", "height": "1024",
+            "pe_temperature": "0.6", "pe_top_p": "0.95",
+        }
+        with mock.patch.object(enhance, "_prepare_pipeline", return_value=(token, pipeline)):
+            output = enhance(**values)
+        self.assertIn("state_out", output)
+        self.assertEqual(pipeline.calls[0]["width"], 1024)
+        self.assertEqual(pipeline.calls[0]["pe_temperature"], 0.6)
+        self.assertEqual(enhance.params["prompt"], values["prompt"])
+
+        state = _issue_workflow_state(
+            token=token, pipeline_class="ErnieImageModularPipeline", workflow_id="text2image",
+            completed_stage="text_encoder", state=FakeState(prompt_embeds=["encoded"]),
+        )
+        denoise_pipeline = RecordingPipeline(FakeState(latents="latents"))
+        denoise_pipeline.guider = FakeGuider()
+        denoise = WorkflowErnieImageDenoise("denoise-runtime-boundary")
+        with mock.patch.object(denoise, "_prepare_pipeline", return_value=(token, denoise_pipeline)):
+            denoise(
+                pipeline_components={}, pipeline_class="ErnieImageModularPipeline", workflow_id="text2image",
+                block_path="denoise", state_in=state, width="1024", height="1024", num_inference_steps="1", seed="23",
+            )
+        self.assertEqual(denoise_pipeline.calls[0]["num_inference_steps"], 1)
+        self.assertEqual(denoise_pipeline.calls[0]["generator"].initial_seed(), 23)
+
+    def test_ernie_turbo_runs_exact_official_stage_sequence(self):
+        token = object()
+        enhanced_state = FakeState(prompt=["enhanced prompt"])
+        enhance_pipeline = RecordingPipeline(enhanced_state)
+        enhance = WorkflowErniePromptEnhance("enhance")
+        with mock.patch.object(enhance, "_prepare_pipeline", return_value=(token, enhance_pipeline)):
+            enhanced = enhance.execute(
+                pipeline_components={},
+                pipeline_class="ErnieImageModularPipeline",
+                workflow_id="text2image",
+                block_path="prompt_enhancer",
+                prompt="a small red panda",
+                width=1024,
+                height=1024,
+                pe_system_prompt="",
+                pe_temperature=0.6,
+                pe_top_p=0.95,
+            )
+        self.assertEqual(
+            enhance_pipeline.calls,
+            [
+                {
+                    "prompt": "a small red panda",
+                    "width": 1024,
+                    "height": 1024,
+                    "use_pe": True,
+                    "pe_system_prompt": None,
+                    "pe_temperature": 0.6,
+                    "pe_top_p": 0.95,
+                }
+            ],
+        )
+
+        encoded_state = FakeState(prompt_embeds=["encoded"])
+        text_pipeline = RecordingPipeline(encoded_state)
+        text = WorkflowErnieTextEncode("text")
+        with mock.patch.object(text, "_prepare_pipeline", return_value=(token, text_pipeline)):
+            encoded = text.execute(
+                pipeline_components={},
+                pipeline_class="ErnieImageModularPipeline",
+                workflow_id="text2image",
+                block_path="text_encoder",
+                state_in=enhanced["state_out"],
+                negative_prompt="",
+            )
+        self.assertEqual(text_pipeline.calls, [{"state": enhanced_state, "negative_prompt": ""}])
+
+        denoised_state = FakeState(latents="latents")
+        denoise_pipeline = RecordingPipeline(denoised_state)
+        denoise_pipeline.guider = FakeGuider(4.0)
+        denoise = WorkflowErnieImageDenoise("denoise")
+        with (
+            mock.patch.object(denoise, "_prepare_pipeline", return_value=(token, denoise_pipeline)),
+            mock.patch(
+                "modules.ModularDiffusers.workflow_blocks.modular_generator_from_seed",
+                return_value="generator",
+            ),
+        ):
+            denoised = denoise.execute(
+                pipeline_components={},
+                pipeline_class="ErnieImageModularPipeline",
+                workflow_id="text2image",
+                block_path="denoise",
+                state_in=encoded["state_out"],
+                width=1024,
+                height=1024,
+                num_inference_steps=8,
+                seed=23,
+            )
+        self.assertEqual(denoise_pipeline.guider.guidance_scale, 1.0)
+        self.assertEqual(
+            denoise_pipeline.calls,
+            [
+                {
+                    "state": encoded_state,
+                    "width": 1024,
+                    "height": 1024,
+                    "num_images_per_prompt": 1,
+                    "num_inference_steps": 8,
+                    "generator": "generator",
+                }
+            ],
+        )
+
+        image = Image.new("RGB", (32, 32), "red")
+        decode_pipeline = RecordingPipeline(FakeState(images=[image]))
+        decode = WorkflowErnieDecodeImage("decode")
+        with mock.patch.object(decode, "_prepare_pipeline", return_value=(token, decode_pipeline)):
+            output = decode.execute(
+                pipeline_components={},
+                pipeline_class="ErnieImageModularPipeline",
+                workflow_id="text2image",
+                block_path="decode",
+                state_in=denoised["state_out"],
+            )
+        self.assertEqual(decode_pipeline.calls, [{"state": denoised_state, "output_type": "pil"}])
+        self.assertEqual(output["images"], [image])
+
+    def test_ernie_turbo_rejects_unreviewed_dimensions_and_step_counts(self):
+        token = object()
+        state = _issue_workflow_state(
+            token=token,
+            pipeline_class="ErnieImageModularPipeline",
+            workflow_id="text2image",
+            completed_stage="text_encoder",
+            state=FakeState(prompt_embeds=["encoded"]),
+        )
+        pipeline = RecordingPipeline(FakeState(latents="latents"))
+        pipeline.guider = FakeGuider()
+        denoise = WorkflowErnieImageDenoise("denoise")
+        for overrides, message in (
+            ({"width": 1056, "height": 1024}, "1,048,576"),
+            ({"width": 1024, "height": 1024, "num_inference_steps": 9}, "less than or equal to 8"),
+        ):
+            with self.subTest(overrides=overrides), mock.patch.object(
+                denoise, "_prepare_pipeline", return_value=(token, pipeline)
+            ), self.assertRaisesRegex(ValueError, message):
+                denoise.execute(
+                    **{
+                        "pipeline_components": {},
+                        "pipeline_class": "ErnieImageModularPipeline",
+                        "workflow_id": "text2image",
+                        "block_path": "denoise",
+                        "state_in": state,
+                        "width": 1024,
+                        "height": 1024,
+                        "num_inference_steps": 8,
+                        "seed": 0,
+                        **overrides,
+                    }
+                )
+
     def test_anima_text_to_image_runs_exact_official_stage_sequence(self):
         token = object()
         encoded_state = FakeState(prompt_embeds="encoded")

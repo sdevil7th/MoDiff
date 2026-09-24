@@ -10,6 +10,10 @@ image nodes, attention-context reuse, runtime requirements and qualification sta
 The [image demo guide](docs/image-demo.md) lists the tested workflows, settings,
 measured reuse behavior and remaining qualification work.
 
+The [modularity walkthrough](docs/modularity-demo.md) covers editable generation
+stages, a custom image-and-mask node, connected refinement, model switching and
+saved-workflow restoration.
+
 > [!CAUTION]
 > MoDiff is early-stage software. It is not a production service, a multi-user platform, or a security sandbox. The server has no authentication and can execute model workflows, import custom Python modules, and access files inside its configured working directory. Keep it bound to `127.0.0.1`, install only code you trust, and read [SECURITY.md](SECURITY.md) before changing its network exposure.
 
@@ -69,6 +73,30 @@ cd MoDiff
 The system-check step reports the proposed accelerator profile and blockers
 without installing packages. Review it, then continue with the normal installer
 shown on the next line.
+
+### Install with uv directly
+
+Users who prefer `uv` can call the same managed installer without the shell or
+PowerShell wrappers. Install `uv` 0.11.26, keep the backend and client in the
+sibling layout above, then run these commands from the backend checkout on Linux,
+macOS, or Windows PowerShell:
+
+```text
+uv run --no-project --no-sync --python 3.12 -m modiff.dev plan --accelerator auto --json
+uv run --no-project --no-sync --python 3.12 -m modiff.dev setup --accelerator auto --non-interactive
+uv run --no-project --no-sync --python 3.12 -m modiff.dev check --json --check-port 8088 --fail-on-error
+uv run --no-project --no-sync --python 3.12 -m modiff.dev run
+```
+
+`plan` is the non-mutating system check. `setup` installs the accelerator-aware
+backend environment, installs the locked client dependencies, and builds the
+frontend bundle; `run` starts the complete application. Replace `auto` with an
+explicit supported profile such as `cpu`, `nvidia`, `amd`, `intel`, or `mps` when
+needed. This repository intentionally uses `[tool.uv] managed = false`, so plain
+`uv sync` and project-resolving `uv run` are not installation paths: accelerator
+profiles own the Torch source and the managed environment. See
+[Developer setup](docs/developer-setup.md) for backend-only and editable-client
+variants.
 
 Open <http://127.0.0.1:8088>. The first installation downloads Python, Node.js,
 packages, and the verified Template Gallery assets, so it can take time and use
@@ -257,14 +285,14 @@ reviewed metadata boundary and callbacks that remain serialized.
 
 MoDiff's installer owns the executable Python/Torch environment. The project is intentionally marked `uv`-unmanaged, so ordinary `uv sync` and `uv run` are not supported setup or launch commands. The explicit `uv run --no-project --no-sync ... -m modiff.dev` bootstrap described above delegates to this same installer without project resolution. The installer stages a fresh environment, checks its package policy and a real device tensor, then atomically promotes it to `.venv/` while retaining the previous environment for rollback. When the sibling client is installed, setup also downloads and SHA-256 verifies the pinned rights-approved Template Gallery snapshot and bundles it under `web/template-gallery` so normal use does not wait on Hub media requests. Four permission-dependent preview files are currently unavailable; their templates remain usable and do not request those files.
 
-| Installer choice | Managed profile | Current scope |
-| --- | --- | --- |
-| `auto` | Host-dependent | Selects a qualified profile or a safe CPU fallback. |
-| `nvidia` | `nvidia-cuda` | Linux/Windows NVIDIA with the reviewed CUDA 12.8 PyTorch profile. |
-| `amd` | OS-dependent AMD profile | Qualified Linux AMD/ROCm hosts. Windows is a conditional official platform, but MoDiff blocks installation until the complete SDK wheel set and physical proof are pinned. |
-| `intel` | `intel-xpu` | Preview PyTorch XPU profile for supported Intel Arc and integrated graphics on x86-64 Linux/Windows. |
-| `mps` | `apple-mps` | Apple Silicon using the reviewed MPS-capable PyTorch profile. |
-| `cpu` | `cpu` | Portable CPU environment for development and fallback. |
+| Installer choice | Managed profile          | Current scope                                                                                                                                                              |
+| ---------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auto`           | Host-dependent           | Selects a qualified profile or a safe CPU fallback.                                                                                                                        |
+| `nvidia`         | `nvidia-cuda`            | Linux/Windows NVIDIA with the reviewed CUDA 12.8 PyTorch profile.                                                                                                          |
+| `amd`            | OS-dependent AMD profile | Qualified Linux AMD/ROCm hosts. Windows is a conditional official platform, but MoDiff blocks installation until the complete SDK wheel set and physical proof are pinned. |
+| `intel`          | `intel-xpu`              | Preview PyTorch XPU profile for supported Intel Arc and integrated graphics on x86-64 Linux/Windows.                                                                       |
+| `mps`            | `apple-mps`              | Apple Silicon using the reviewed MPS-capable PyTorch profile.                                                                                                              |
+| `cpu`            | `cpu`                    | Portable CPU environment for development and fallback.                                                                                                                     |
 
 If an installation was interrupted, resume its external journal instead of
 starting unrelated setup work:
@@ -354,7 +382,7 @@ For the current task browser, picker behavior and qualification limits, see
 
 ## Custom nodes
 
-Open **Nodes → Custom nodes** in either workspace to add a Hugging Face or local source. Resolve a Hub URL or repository ID to an exact commit, stage it, review its source and dependencies, then explicitly enable that code. Local Python folders and pinned Git sources use the same review flow. See [Developing custom nodes](docs/custom-nodes.md) for runnable examples, typed fields, reload and independent Automatic/Custom memory policies.
+Open **Nodes → Custom nodes** in either workspace to add a Hugging Face or local source. Resolve a Hub URL or repository ID to an exact commit, stage it, review its source and dependencies, then explicitly enable that code. Local Python folders and pinned Git sources use the same review flow. See [Developing custom nodes](docs/custom-nodes.md) for the repository-relative, step-by-step Prompt Prefix walkthrough, runnable examples, typed fields, reload and independent Automatic/Custom memory policies.
 
 Approved Modular blocks without model ports receive a **Models** input when their
 Python contract requires components. Connect **Load Models → Pipeline Components**

@@ -9,7 +9,7 @@ from diffusers.modular_pipelines import PipelineState
 
 from modiff.NodeBase import NodeBase
 
-from . import MESSAGE_DURATION, components
+from . import MESSAGE_DURATION, MODULAR_DECODER_OPTIONS, MODULAR_VAE_ENCODER_OPTIONS, components
 from .modular_utils import (
     modular_generator_from_seed,
     normalize_modular_runtime_params,
@@ -121,6 +121,9 @@ def prepare_image_for_vae_pipeline(image, pipeline_class):
     """
 
     pipeline_name = getattr(pipeline_class, "__name__", "")
+    if pipeline_name in {"Flux2ModularPipeline", "Flux2KleinModularPipeline"}:
+        if isinstance(image, (list, tuple)) and not 1 <= len(image) <= 8:
+            raise ValueError("FLUX.2 reference editing requires between one and eight ordered images.")
     if pipeline_name not in {"QwenImageLayeredModularPipeline", "QwenImageLayeredPipeline"}:
         return image
     if isinstance(image, Image.Image):
@@ -176,6 +179,11 @@ class DecodeLatents(NodeBase):
             "display": "input",
             "type": "diffusers_auto_model",
             "onSignal": "update_node",
+            "signalCompatibility": {
+                "required": True,
+                "role": "vae",
+                "values": MODULAR_DECODER_OPTIONS,
+            },
         },
     }
 
@@ -596,7 +604,17 @@ class ImageEncode(NodeBase):
     skipParamsCheck = True
     node_type = "vae_encoder"
     params = {
-        "vae": {"label": "VAE *", "display": "input", "type": "diffusers_auto_model", "onSignal": "update_node"},
+        "vae": {
+            "label": "VAE *",
+            "display": "input",
+            "type": "diffusers_auto_model",
+            "onSignal": "update_node",
+            "signalCompatibility": {
+                "required": True,
+                "role": "vae",
+                "values": MODULAR_VAE_ENCODER_OPTIONS,
+            },
+        },
         "encode_summary_data": {
             "label": "Encode summary",
             "display": "output",

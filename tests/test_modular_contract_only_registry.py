@@ -83,7 +83,7 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
             )
         )
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 5)
-        self.assertEqual(len(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS), 5)
+        self.assertEqual(len(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS), 4)
         self.assertEqual(len(CURRENT_PIN_EQUIVALENT_MODULAR_WORKFLOW_TARGETS), 4)
         self.assertEqual(set(CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY), {
             "Cosmos3DistilledModularPipeline", "MiniMaxH3ModularPipeline",

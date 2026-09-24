@@ -6,7 +6,7 @@ from diffusers import BaseGuidance, ComponentSpec
 from modiff.NodeBase import NodeBase
 from modiff.auxiliary_ip_adapter import resolve_reviewed_sdxl_ip_adapter
 
-from . import components
+from . import MODULAR_IP_ADAPTER_OPTIONS, components
 from .modular_utils import (
     normalize_modular_runtime_params,
     pipeline_class_from_model_type,
@@ -41,6 +41,11 @@ class IPAdapter(NodeBase):
             "type": "diffusers_auto_model",
             "required": True,
             "onSignal": "update_node",
+            "signalCompatibility": {
+                "required": True,
+                "role": "denoiser",
+                "values": MODULAR_IP_ADAPTER_OPTIONS,
+            },
         },
     }
 

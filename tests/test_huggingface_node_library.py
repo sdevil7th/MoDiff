@@ -55,7 +55,7 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
     def test_current_snapshot_builds_immutable_first_party_definitions(self):
         self.assertEqual(self.library["schemaVersion"], 6)
         self.assertEqual(len(self.library["definitions"]), 135)
-        self.assertEqual(len(self.library["blockDefinitions"]), 559)
+        self.assertEqual(len(self.library["blockDefinitions"]), 560)
         self.assertEqual(self.library["providers"], ["diffusers", "transformers"])
         diffusers_definitions = [item for item in self.library["definitions"] if item["provider"] == "diffusers"]
         transformers_definitions = [item for item in self.library["definitions"] if item["provider"] == "transformers"]
@@ -504,7 +504,7 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
         adapters = self.library["blockRoleAdapters"]
         adapters_by_block = {adapter["blockDefinitionId"]: adapter for adapter in adapters}
 
-        self.assertEqual(len(adapters), 321)
+        self.assertEqual(len(adapters), 322)
         self.assertEqual(
             {adapter["role"] for adapter in adapters},
             {
@@ -548,7 +548,7 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
             for definition in self.library["definitions"]
             if definition["provider"] == "diffusers" and definition["integrationStatus"] == "equivalent_standard_route"
         ]
-        self.assertEqual(len(equivalent_definitions), 9)
+        self.assertEqual(len(equivalent_definitions), 8)
         for definition in equivalent_definitions:
             referenced = {
                 definition["rootBlockDefinitionId"],

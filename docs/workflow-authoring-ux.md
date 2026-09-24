@@ -42,7 +42,9 @@ planner. Schema or connection differences requiring review are shown before appl
 Undo/Redo and saved workflow reload use the same graph history and persistence.
 
 A raw implementation/component loader has a picker restricted to compatible
-installed artifacts. Select its Model Type first when required. Clicking a row
+installed artifacts. In a connected workflow, model selection derives the Pipeline
+Type and applies both atomically. A raw implementation loader exposes Pipeline Type
+only when no workflow/model-choice contract can infer it. Clicking a row
 applies its repository to that field. **Manage model files** opens management;
 copying a repository ID is not required for selection. Canonical switching does
 not broaden a legacy loader's accepted runtime contract.

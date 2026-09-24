@@ -71,7 +71,7 @@ def _advertised_modular_modes():
         if runnable_modes:
             advertised.setdefault(capability["modelType"], set()).update(runnable_modes)
     for profile in public_execution_profiles():
-        if profile["backend_path"] != MODULAR_BACKEND_PATH:
+        if profile["backend_path"] != MODULAR_BACKEND_PATH or profile.get("operation_recipe"):
             continue
         advertised.setdefault(profile["pipeline_class"], set()).update(profile["modes"])
     return advertised
@@ -86,11 +86,11 @@ class ModularWorkflowTruthTests(unittest.TestCase):
             ),
             "fp16",
         )
-        self.assertIsNone(
+        self.assertEqual(
             reviewed_modular_weight_variant(
                 "StableDiffusionXLModularPipeline",
                 "stabilityai/sdxl-turbo",
-            )
+            ), "fp16",
         )
         self.assertIsNone(
             reviewed_modular_weight_variant(
@@ -101,7 +101,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
 
     def test_registered_pipelines_have_exact_truth_or_whole_workflow_adapters(self):
         registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
-        self.assertEqual(len(PINNED_MODULAR_WORKFLOW_TRUTH), 22)
+        self.assertEqual(len(PINNED_MODULAR_WORKFLOW_TRUTH), 23)
         whole_workflow_only = registered - set(PINNED_MODULAR_WORKFLOW_TRUTH)
         self.assertEqual(
             whole_workflow_only,
@@ -165,6 +165,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
 
     def test_flux_qwen_and_wan_advertised_modular_modes_are_exact(self):
         expected = {
+            "ErnieImageModularPipeline": {"text_to_image"},
             "AnimaModularPipeline": {"text_to_image", "image_to_image"},
             "HeliosModularPipeline": {"text_to_video", "image_to_video", "video_to_video"},
             "HeliosPyramidModularPipeline": {"text_to_video", "image_to_video", "video_to_video"},

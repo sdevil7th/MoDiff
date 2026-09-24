@@ -42,12 +42,22 @@ MINIMAX_H3_REPOSITORY = "MiniMaxAI/MiniMax-H3"
 HELIOS_BASE_REPOSITORY = "BestWishYsh/Helios-Base"
 HELIOS_MID_REPOSITORY = "BestWishYsh/Helios-Mid"
 HELIOS_DISTILLED_REPOSITORY = "BestWishYsh/Helios-Distilled"
+ERNIE_IMAGE_TURBO_REPOSITORY = "baidu/ERNIE-Image-Turbo"
 
 # One installed Modular pipeline class can have multiple reviewed weight/config
 # contracts. Keep the allowed repositories beside the pinned workflow truth;
 # the loader still requires an immutable catalog revision for the selected
 # repository, and the downstream action validates the workflow/repository pair.
 PINNED_MODULAR_REPOSITORY_VARIANTS = {
+    "FluxModularPipeline": (
+        FLUX_DEV_REPOSITORY, "black-forest-labs/FLUX.1-schnell", "black-forest-labs/FLUX.1-Krea-dev",
+    ),
+    "StableDiffusionXLModularPipeline": (
+        "stabilityai/stable-diffusion-xl-base-1.0", "stabilityai/sdxl-turbo",
+    ),
+    "Flux2KleinModularPipeline": (
+        FLUX2_KLEIN_REPOSITORY, "black-forest-labs/FLUX.2-klein-9b-kv",
+    ),
     # The official checkpoints and the catalog-pinned community BNB conversion
     # serialize the same QwenImagePipeline component classes. The latter uses
     # its saved quantization config through the official component loaders.
@@ -74,6 +84,7 @@ PINNED_MODULAR_REPOSITORY_VARIANTS = {
         WAN_I2V_720P_REPOSITORY,
         WAN_FLF_REPOSITORY,
     ),
+    "ErnieImageModularPipeline": (ERNIE_IMAGE_TURBO_REPOSITORY,),
 }
 
 # Repository membership above is useful for immutable artifact review, but it
@@ -83,6 +94,7 @@ PINNED_MODULAR_REPOSITORY_VARIANTS = {
 # the BlockDefinitionV2 graph. A missing entry means the registered artifact
 # remains the sole choice for that workflow.
 PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS = {
+    ("ErnieImageModularPipeline", "text2image"): (ERNIE_IMAGE_TURBO_REPOSITORY,),
     ("QwenImageModularPipeline", "text2image"): (
         QWEN_IMAGE_REPOSITORY,
         QWEN_IMAGE_2512_REPOSITORY,
@@ -97,6 +109,7 @@ PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS = {
 PINNED_MODULAR_REPOSITORY_WEIGHT_VARIANTS = {
     "StableDiffusionXLModularPipeline": {
         "stabilityai/stable-diffusion-xl-base-1.0": "fp16",
+        "stabilityai/sdxl-turbo": "fp16",
     },
 }
 
@@ -112,6 +125,20 @@ def reviewed_modular_weight_variant(model_type: str, repository: str) -> str | N
 # while the installed Modular blocks declare their reviewed base/factory types.
 # These are exact repository-scoped aliases, not general subclass admission.
 PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES = {
+    # Turbo's pinned standard index explicitly omits the optional IP-Adapter
+    # image encoder and uses the ancestral scheduler for its distilled recipe.
+    "stabilityai/sdxl-turbo": {
+        "image_encoder": (None, None),
+        "feature_extractor": (None, None),
+        "scheduler": ("diffusers", "EulerAncestralDiscreteScheduler"),
+    },
+    # ERNIE Turbo's immutable standard index serializes the Transformers 5
+    # tokenizer implementation for both encoders; the official native blocks
+    # request AutoTokenizer. Do not admit this alias for other repositories.
+    ERNIE_IMAGE_TURBO_REPOSITORY: {
+        "pe_tokenizer": ("transformers", "TokenizersBackend"),
+        "tokenizer": ("transformers", "TokenizersBackend"),
+    },
     # The reviewed FLUX.2-dev index and processor configs serialize Pixtral;
     # native Modular encoders request the AutoProcessor factory. The loader
     # separately checks the immutable repository revision before this alias.
@@ -147,6 +174,12 @@ PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES = {
     # the same installed class. Keep each compatibility exact and repository-
     # scoped instead of weakening component validation globally.
     FLUX_DEV_REPOSITORY: {
+        "tokenizer_2": ("transformers", "T5TokenizerFast"),
+    },
+    "black-forest-labs/FLUX.1-schnell": {
+        "tokenizer_2": ("transformers", "T5TokenizerFast"),
+    },
+    "black-forest-labs/FLUX.1-Krea-dev": {
         "tokenizer_2": ("transformers", "T5TokenizerFast"),
     },
     FLUX_KONTEXT_REPOSITORY: {
@@ -885,6 +918,54 @@ def _cosmos3_omni_workflow_truth() -> PinnedModularPipelineTruth:
 
 
 PINNED_MODULAR_WORKFLOW_TRUTH: dict[str, PinnedModularPipelineTruth] = {
+    "ErnieImageModularPipeline": PinnedModularPipelineTruth(
+        blocks_class="ErnieImageAutoBlocks",
+        workflows=(_workflow("text2image", "prompt"),),
+        modes=(
+            (
+                "text_to_image",
+                ModularModeTruth(
+                    "text2image",
+                    frozenset({"prompt"}),
+                    (
+                        "workflow_ernie_prompt_enhancer",
+                        "workflow_ernie_text_encoder",
+                        "workflow_ernie_image_denoise",
+                        "workflow_ernie_image_decoder",
+                    ),
+                    (
+                        StateEdgeTruth(
+                            "workflow_ernie_prompt_enhancer",
+                            "state_out",
+                            "workflow_ernie_text_encoder",
+                            "state_in",
+                        ),
+                        StateEdgeTruth(
+                            "workflow_ernie_text_encoder",
+                            "state_out",
+                            "workflow_ernie_image_denoise",
+                            "state_in",
+                        ),
+                        StateEdgeTruth(
+                            "workflow_ernie_image_denoise",
+                            "state_out",
+                            "workflow_ernie_image_decoder",
+                            "state_in",
+                        ),
+                    ),
+                    (
+                        "prompt_enhancer.prompt_enhancer",
+                        "text_encoder",
+                        "denoise.input",
+                        "denoise.set_timesteps",
+                        "denoise.prepare_latents",
+                        "denoise.denoise",
+                        "decode",
+                    ),
+                ),
+            ),
+        ),
+    ),
     "AnimaModularPipeline": PinnedModularPipelineTruth(
         blocks_class="AnimaAutoBlocks",
         workflows=(
@@ -1132,7 +1213,7 @@ PINNED_MODULAR_WORKFLOW_TRUTH: dict[str, PinnedModularPipelineTruth] = {
                 ModularStateFlowTruth(
                     "controlnet_union_text2image",
                     frozenset({"control_image", "control_mode", "prompt"}),
-                    _SDXL_CONTROLNET_BLOCK_SEQUENCE,
+                    tuple(block for block in _SDXL_CONTROLNET_BLOCK_SEQUENCE if block != "vae_encoder"),
                     ("text_encoder", "controlnet", "denoise", "decoder"),
                     _SDXL_ROUTE_CONTROL_TO_OUTPUT_EDGES,
                 ),

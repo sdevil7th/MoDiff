@@ -266,6 +266,11 @@ def model_pins(graph, registry):
             ):
                 raise ValueError(f"{node_id}.{field}: service export requires a literal pinned model selection.")
             if not param.get("sourceId"):
+                if node["module"] == "modules.Spandrel" and node["action"] == "Upscaler" and field == "model_id":
+                    from modiff.controlled_artifacts import portable_upscaler_selection
+
+                    pins.append({"location": f"{node_id}.{field}", **portable_upscaler_selection(param.get("value"))})
+                    continue
                 display = fields.get(field, {}).get("display")
                 key = "repo_id" if display in ("model", "hf_model", "model_select", "modelselect") else field
                 walk(param.get("value"), key, f"{node_id}.{field}", revision if MODEL_KEY.fullmatch(key) else None)

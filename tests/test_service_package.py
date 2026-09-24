@@ -271,6 +271,45 @@ def test_unknown_model_requires_immutable_revision_and_never_downloads(monkeypat
     ]
 
 
+def test_spandrel_service_preserves_exact_single_file_pin_without_loading_or_resolving(monkeypatch):
+    from modiff import controlled_artifacts
+    from modiff.upscaler_contracts import real_esrgan_x2_model_selection
+
+    monkeypatch.setattr(controlled_artifacts, "resolve_upscaler_artifact", lambda *_: pytest.fail("resolved bytes"))
+    monkeypatch.setattr(controlled_artifacts, "resolve_model_revision", lambda *_a, **_k: pytest.fail("resolved ref"))
+    registry = deepcopy(REGISTRY)
+    registry["modules.Spandrel"] = {"Upscaler": {"params": {
+        "model_id": {"type": "string", "display": "modelselect"},
+        "output": {"type": "image", "display": "output"},
+    }}}
+    graph = deepcopy(GRAPH)
+    graph["nodes"]["prompt"] = {"module": "modules.Spandrel", "action": "Upscaler", "params": {
+        "model_id": {"value": real_esrgan_x2_model_selection()},
+    }}
+    interface = {"inputs": {}, "outputs": INTERFACE["outputs"]}
+    package = service.build_package(graph, interface, registry=registry, contract=CONTRACT)
+    pin = package["requirements"]["models"][0]
+    assert pin["repository"] == "nateraw/real-esrgan"
+    assert pin["weightName"] == "RealESRGAN_x2plus.pth"
+    assert pin["sha256"] == real_esrgan_x2_model_selection()["sha256"]
+    prepared = service.prepare_package(package, {}, registry=registry, contract=CONTRACT, sid="upscale_service")
+    assert prepared["nodes"]["prompt"]["params"]["model_id"]["value"] == real_esrgan_x2_model_selection()
+    for changes in ({"revision": "main"}, {"sha256": ""}, {"byteSize": True}, {"byteSize": 0},
+                    {"source": "local"}, {"value": "nateraw/real-esrgan/../escape.pth"}):
+        graph["nodes"]["prompt"]["params"]["model_id"]["value"] = {**real_esrgan_x2_model_selection(), **changes}
+        with pytest.raises(ValueError):
+            service.build_package(graph, interface, registry=registry, contract=CONTRACT)
+
+
+def test_single_file_selector_is_not_admitted_as_a_generic_pipeline_repository():
+    from modiff.upscaler_contracts import real_esrgan_x2_model_selection
+
+    graph = deepcopy(GRAPH)
+    graph["nodes"]["prompt"]["params"]["repo_id"] = {"value": real_esrgan_x2_model_selection()}
+    with pytest.raises(ValueError, match="explicit Hub repository"):
+        build(graph)
+
+
 def test_execution_guard_rechecks_contract_and_rejects_modified_prepared_graph():
     from modiff.service_api import ServiceAPI
 

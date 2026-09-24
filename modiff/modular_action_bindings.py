@@ -24,6 +24,22 @@ MODULAR_ACTION_BINDINGS = {
     "workflow_video_encoder": ("videoEncode", "modules.ModularDiffusers.WorkflowVideoEncode"),
     "workflow_image_denoise": ("denoise", "modules.ModularDiffusers.WorkflowImageDenoise"),
     "workflow_image_decoder": ("decode", "modules.ModularDiffusers.WorkflowDecodeImage"),
+    "workflow_ernie_prompt_enhancer": (
+        "promptEnhance",
+        "modules.ModularDiffusers.WorkflowErniePromptEnhance",
+    ),
+    "workflow_ernie_text_encoder": (
+        "prompt",
+        "modules.ModularDiffusers.WorkflowErnieTextEncode",
+    ),
+    "workflow_ernie_image_denoise": (
+        "denoise",
+        "modules.ModularDiffusers.WorkflowErnieImageDenoise",
+    ),
+    "workflow_ernie_image_decoder": (
+        "decode",
+        "modules.ModularDiffusers.WorkflowErnieDecodeImage",
+    ),
     "workflow_video_denoise": ("denoise", "modules.ModularDiffusers.WorkflowVideoDenoise"),
     "workflow_video_decoder": ("decode", "modules.ModularDiffusers.WorkflowDecodeVideo"),
     "workflow_hunyuan_video15_text_encoder": (

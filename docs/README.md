@@ -15,6 +15,9 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Build Modular Diffusers graphs and understand experimental compatibility | [Modular Diffusers guide](../modules/ModularDiffusers/README.md)                            |
 | Use ordinary image actions and their optional typed inputs               | [Ordinary Diffusers image nodes](../modules/DiffusersImage/README.md)                       |
 | Run the qualified image demo                                             | [Image demo checkpoint](image-demo.md)                                                      |
+| Rehearse editable image stages and portable custom art direction          | [Image modularity demo](modularity-demo.md)                                                 |
+| Build a visually meaningful fashion-editing demonstration                 | [SoHo fashion editorial demo](fashion-editorial-demo.md)                                    |
+| Transfer the fashion demo to a Windows NVIDIA machine                     | [Windows fashion demo setup](windows-fashion-demo.md)                                       |
 | Generate/edit with Qwen 2.1 and understand attention-context reuse       | [Qwen-Image 2.1](qwen-image-21.md)                                                          |
 | Estimate depth with generic Transformers nodes                           | [Transformers depth workflows](../modules/HuggingFaceTransformers/README.md)                |
 | Build reusable attention-mask and LoRA-scale inputs                      | [Attention Arguments](../modules/DiffusersImage/README.md#attention-arguments)              |
@@ -32,8 +35,13 @@ Custom Python and Hub block authors: [Developing custom nodes](custom-nodes.md).
 
 ## Required Engineering Procedure
 
+The [image prototyping readiness plan](image-prototyping-readiness-plan.md)
+controls the next image handoff: audited model coverage, editable native stages,
+model-change preservation, custom nodes, UX fixes and integrated qualification.
+It records agreed scope and planned work, not completed implementation.
+
 The [Creator / Developer workspaces plan](creator-developer-workspaces-plan.md)
-is the accepted next implementation plan: audience-specific starting points,
+records the earlier implementation plan: audience-specific starting points,
 one editable graph, the Developer Workflows modal, and model/modification tests.
 Its unchecked milestones are planned work, not current support claims.
 

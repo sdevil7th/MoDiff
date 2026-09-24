@@ -1,6 +1,7 @@
 import copy
 import asyncio
 import io
+import hashlib
 import json
 import mimetypes
 import os
@@ -2900,6 +2901,16 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotEqual(second["fingerprint"], third["fingerprint"])
         self.assertEqual(first["resourceFingerprint"], second["resourceFingerprint"])
         self.assertEqual(second["resourceFingerprint"], third["resourceFingerprint"])
+        legacy_identity = {key: first[key] for key in ("packages", "work_dir", "data_dir")}
+        legacy_identity["torch"] = {
+            key: value for key, value in first["torch"].items()
+            if key not in {"cuda_memory_free_bytes", "cudnn_deterministic", "cudnn_benchmark", "deterministic_algorithms"}
+        }
+        legacy_hash = hashlib.sha256(json.dumps(legacy_identity, sort_keys=True, default=str).encode()).hexdigest()
+        self.assertNotEqual(first["resourceFingerprint"], f"sha256:{legacy_hash}")
+        legacy_identity["peakMeasurementVersion"] = 2
+        current_hash = hashlib.sha256(json.dumps(legacy_identity, sort_keys=True, default=str).encode()).hexdigest()
+        self.assertEqual(first["resourceFingerprint"], f"sha256:{current_hash}")
 
 
 class PreflightHardwareTests(unittest.TestCase):

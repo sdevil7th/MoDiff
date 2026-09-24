@@ -517,6 +517,16 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertTrue(ControlGenerate.params["control_image"]["required"])
         self.assertTrue(LoadAdapter.params["pipeline"]["required"])
 
+    def test_latent_decode_is_a_connection_capability_not_a_generation_operation(self):
+        contract = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["FluxPipeline"], "text_to_image")
+        self.assertEqual(contract["actions"], {"Generate": ["text_to_image"]})
+        self.assertEqual(
+            contract["connectionActions"],
+            {"Generate": ["text_to_image"], "DecodeLatents": ["text_to_image"]},
+        )
+        ordinary = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLPipeline"], "text_to_image")
+        self.assertNotIn("connectionActions", ordinary)
+
     def test_registered_classes_can_be_constructed(self):
         for node_class in (Edit, LayerDecompose, ControlEdit, Inpaint, ControlInpaint, ControlGenerate):
             with self.subTest(node=node_class.__name__):

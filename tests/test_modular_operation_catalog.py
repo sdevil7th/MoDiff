@@ -44,7 +44,19 @@ class ModularOperationCatalogTests(unittest.TestCase):
         bundle = next(p for p in loader["ports"] if p["name"] == "pipeline_components")
         self.assertEqual(bundle["roles"], ["component"])
         self.assertTrue(bundle["semantics"]["members"])
-        self.assertFalse(any(c["pipelineClass"] == "ErnieImageModularPipeline" for c in contracts))
+        ernie = [c for c in contracts if c["pipelineClass"] == "ErnieImageModularPipeline"]
+        self.assertEqual(
+            [contract["operationId"] for contract in ernie],
+            [
+                "diffusion.load_models",
+                "diffusion.rewrite_prompt",
+                "diffusion.encode_prompt",
+                "diffusion.denoise",
+                "diffusion.decode_latents",
+            ],
+        )
+        self.assertEqual(ernie[1]["nodeKey"], "modules.ModularDiffusers.WorkflowErniePromptEnhance")
+        self.assertEqual(ernie[-1]["binding"]["values"]["block_path"], "decode")
         self.assertEqual(get_modular_task_operation_contracts({}), [])
 
     def test_loader_hides_absent_components_and_missing_actions_do_not_advertise_partial_routes(self):

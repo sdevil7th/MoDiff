@@ -43,7 +43,17 @@ def build_models_loader(blocks, module_key, label):
         params[prefix + "repo"] = {
             "label": f"{spec.name} model", "display": "modelselect", "type": "string",
             "value": {"source": "hub", "value": repo if isinstance(repo, str) else ""},
-            "fieldOptions": {"sources": ["hub"], "noValidation": True},
+            # The cache inventory indexes class names from component configs in
+            # every downloaded subfolder.  Keep this generated supplier scoped
+            # to the exact component class declared by the approved block;
+            # otherwise every cached pipeline (including unrelated audio
+            # repositories) is presented as a plausible source for a VAE,
+            # tokenizer, scheduler, etc.
+            "fieldOptions": {
+                "sources": ["hub"],
+                "noValidation": True,
+                "filter": {"hub": {"className": [spec.type_hint.__name__]}},
+            },
         }
         params[prefix + "revision"] = {
             "label": f"{spec.name} revision", "type": "string", "value": spec.revision or "",

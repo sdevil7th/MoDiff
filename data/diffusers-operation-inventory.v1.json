@@ -1,5 +1,5 @@
 {
-  "contentHash": "sha256:01fbdd69778fc6a2d6120fff18923a57ae6780ad705252ba5cac355698064aee",
+  "contentHash": "sha256:7c657a6caa8dfa6ca1468dfa5a06c76b704811db2910c2bc9104f0b27a69e293",
   "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
   "diffusersVersion": "0.41.0.dev0",
   "pipelines": [
@@ -854,12 +854,10 @@
       ]
     },
     {
-      "coverage": "equivalent",
-      "equivalentTo": [
-        "ErnieImagePipeline"
-      ],
+      "coverage": "executable",
+      "equivalentTo": [],
       "pipelineClass": "ErnieImageModularPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "upstreamTasks": [
         {
           "source": "modular",
@@ -4705,6 +4703,6 @@
   "sources": {
     "autoTasks": "sha256:fc1c531e9dbf7e2fc62791180430eb6b909bb827a0eaa029991da7d8beb2d205",
     "exports": "sha256:f9536d3cd5f2f5df8992fa4b4b0fb53a407eea15744fcc288760624ce9111251",
-    "modularTasks": "sha256:552528276b92f8ada09628d72d73cb1249d36ce7a3d3d9c38742874e3eb2f3c3"
+    "modularTasks": "sha256:8dad3f4ef31b456ef9c6e46718be9a17c023ae4306fdba129c72eeeed6573dc3"
   }
 }

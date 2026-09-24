@@ -61,6 +61,7 @@ class ThreeDPipelineAdapter:
             "mediaKind": "three_d",
             "pipelineClass": self.pipeline_class,
             "mode": self.mode,
+            "actions": {"GenerateRenderedArtifact": [self.mode]},
             "repository": self.default_repo,
             "outputContract": "rendered_orbit",
             "inputContract": (
@@ -492,6 +493,7 @@ class GenerateRenderedArtifact(NodeBase):
                 {"action": "value", "target": "three_d_contract"},
                 {"action": "exec", "data": "update_three_d_contract"},
             ],
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "three_d_contract": {
             "label": "3D Contract",

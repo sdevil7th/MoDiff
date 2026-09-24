@@ -450,6 +450,14 @@ class OptionalRuntimeContractTests(unittest.TestCase):
                             platform_name=platform_name, machine="x86_64"), (TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,))
                     continue
                 self.assertEqual(profile.optional_runtime_profiles, expected)
+                if profile.operation_recipe:
+                    # Exact operation selection resolves dependencies from the
+                    # selected profile, not the legacy model/task resolver.
+                    self.assertEqual(profile.optional_runtime_profile_ids_for_target(
+                        platform_name="linux", machine="x86_64"), (TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,))
+                    self.assertEqual(profile.optional_runtime_profile_ids_for_target(
+                        platform_name="windows", machine="AMD64"), expected)
+                    continue
                 for mode in profile.modes:
                     self.assertIn(
                         TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,

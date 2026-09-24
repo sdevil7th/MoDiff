@@ -79797,7 +79797,7 @@
           ]
         }
       ],
-      "contentHash": "sha256:8a96a7c95ccf09f42aafcffeab8473ad0fd9a203c6d8264feb59fdd4a7a73797",
+      "contentHash": "sha256:112db8b1cab49af90fe2564dd75cd1711160c6e059d0b20d133b15e1ec5cc70d",
       "pipelineClass": "ErnieImageModularPipeline",
       "placements": [
         {
@@ -79966,6 +79966,7 @@
           "cases": [
             {
               "activeLeafDefinitionIds": [
+                "diffusers.modular-block:ErnieImagePromptEnhancerStep:sha256:2531b7dd8052234fb8c4962ec02e751915e41d3148fb2388ec7feec4609b3b06",
                 "diffusers.modular-block:ErnieImageTextEncoderStep:sha256:8078b53f5972c8b52d36a7cca8a4c41620d9506c459a8387d720771004f50bd8",
                 "diffusers.modular-block:ErnieImageTextInputStep:sha256:65b6fe2d66bbd1646ec2f624ac4d7ee87d9ce35adfb2b858557f90f2618959b3",
                 "diffusers.modular-block:ErnieImageSetTimestepsStep:sha256:633ae9bf079ef52fc99fec07c390f7412ac0d8c7d20d360545aa654df26b335b",
@@ -79974,6 +79975,10 @@
                 "diffusers.modular-block:ErnieImageVaeDecoderStep:sha256:595c24f9238cd4d125eed61a386cac9005d445043a4eade77dded81217ce37e4"
               ],
               "activeLeafPaths": [
+                [
+                  "prompt_enhancer",
+                  "prompt_enhancer"
+                ],
                 [
                   "text_encoder"
                 ],
@@ -79998,7 +80003,8 @@
                 ]
               ],
               "presentInputs": [
-                "prompt"
+                "prompt",
+                "use_pe"
               ],
               "selections": [
                 {
@@ -80006,7 +80012,7 @@
                   "path": [
                     "prompt_enhancer"
                   ],
-                  "selectedBlockName": null
+                  "selectedBlockName": "prompt_enhancer"
                 }
               ]
             }

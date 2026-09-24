@@ -4683,6 +4683,111 @@
       "variadicInputs": []
     },
     {
+      "className": "ErnieImagePromptEnhancerStep",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "pe",
+          "type": "transformers.models.ministral3.modeling_ministral3.Ministral3ForCausalLM"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "pe_tokenizer",
+          "type": "transformers.models.auto.tokenization_auto.AutoTokenizer"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:2531b7dd8052234fb8c4962ec02e751915e41d3148fb2388ec7feec4609b3b06",
+      "description": "Prompt enhancer step that rewrites the input prompt using a causal language model (PE).",
+      "id": "diffusers.modular-block:ErnieImagePromptEnhancerStep:sha256:2531b7dd8052234fb8c4962ec02e751915e41d3148fb2388ec7feec4609b3b06",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The prompt or prompts to guide image generation.",
+          "kwargsType": null,
+          "name": "prompt",
+          "required": true,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "The height in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The width in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional system prompt passed to the prompt enhancer.",
+          "kwargsType": null,
+          "name": "pe_system_prompt",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": 0.6,
+          "description": "Sampling temperature used when generating with the prompt enhancer.",
+          "kwargsType": null,
+          "name": "pe_temperature",
+          "required": false,
+          "type": "builtins.float"
+        },
+        {
+          "default": 0.95,
+          "description": "Nucleus sampling `top_p` used when generating with the prompt enhancer.",
+          "kwargsType": null,
+          "name": "pe_top_p",
+          "required": false,
+          "type": "builtins.float"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "The prompt list after prompt-enhancer rewriting.",
+          "kwargsType": null,
+          "name": "prompt",
+          "required": false,
+          "type": "builtins.list"
+        },
+        {
+          "default": null,
+          "description": "The resolved image height in pixels.",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The resolved image width in pixels.",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        }
+      ],
+      "requiredInputs": [
+        "prompt"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
       "className": "ErnieImageSetTimestepsStep",
       "components": [
         {
@@ -35562,6 +35667,315 @@
           "creationMethod": "from_pretrained",
           "defaultConfig": null,
           "description": "",
+          "name": "pe",
+          "type": "transformers.models.ministral3.modeling_ministral3.Ministral3ForCausalLM"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "pe_tokenizer",
+          "type": "transformers.models.auto.tokenization_auto.AutoTokenizer"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "text_encoder",
+          "type": "transformers.models.mistral3.modeling_mistral3.Mistral3Model"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "tokenizer",
+          "type": "transformers.models.auto.tokenization_auto.AutoTokenizer"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "guidance_scale": 4.0
+          },
+          "description": "",
+          "name": "guider",
+          "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "transformer",
+          "type": "diffusers.models.transformers.transformer_ernie_image.ErnieImageTransformer2DModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "vae",
+          "type": "diffusers.models.autoencoders.autoencoder_kl_flux2.AutoencoderKLFlux2"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "patch_size": 2
+          },
+          "description": "",
+          "name": "pachifier",
+          "type": "diffusers.modular_pipelines.ernie_image.modular_pipeline.ErnieImagePachifier"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "vae_scale_factor": 16
+          },
+          "description": "",
+          "name": "image_processor",
+          "type": "diffusers.image_processor.VaeImageProcessor"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:5908f92e30713a3df9726f2d615565d5381c2ff60c3ec9fdacb44377cf3e7f4a",
+      "description": "",
+      "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:5908f92e30713a3df9726f2d615565d5381c2ff60c3ec9fdacb44377cf3e7f4a",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The prompt or prompts to guide image generation.",
+          "kwargsType": null,
+          "name": "prompt",
+          "required": true,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "The height in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The width in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Optional system prompt passed to the prompt enhancer.",
+          "kwargsType": null,
+          "name": "pe_system_prompt",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": 0.6,
+          "description": "Sampling temperature used when generating with the prompt enhancer.",
+          "kwargsType": null,
+          "name": "pe_temperature",
+          "required": false,
+          "type": "builtins.float"
+        },
+        {
+          "default": 0.95,
+          "description": "Nucleus sampling `top_p` used when generating with the prompt enhancer.",
+          "kwargsType": null,
+          "name": "pe_top_p",
+          "required": false,
+          "type": "builtins.float"
+        },
+        {
+          "default": null,
+          "description": "The prompt or prompts to avoid during image generation.",
+          "kwargsType": null,
+          "name": "negative_prompt",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": 1,
+          "description": "Number of images to generate per prompt.",
+          "kwargsType": null,
+          "name": "num_images_per_prompt",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": 50,
+          "description": "Number of denoising steps.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": true,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Pre-generated noisy latents. If provided, skips noise sampling.",
+          "kwargsType": null,
+          "name": "latents",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Torch generator for deterministic noise sampling.",
+          "kwargsType": null,
+          "name": "generator",
+          "required": false,
+          "type": "torch._C.Generator"
+        },
+        {
+          "default": "pil",
+          "description": "Output format: 'pil', 'np', or 'pt'.",
+          "kwargsType": null,
+          "name": "output_type",
+          "required": false,
+          "type": "builtins.str"
+        }
+      ],
+      "kind": "sequential",
+      "outputs": [
+        {
+          "default": null,
+          "description": "The prompt list after prompt-enhancer rewriting.",
+          "kwargsType": null,
+          "name": "prompt",
+          "required": false,
+          "type": "builtins.list"
+        },
+        {
+          "default": null,
+          "description": "The resolved image height in pixels.",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The resolved image width in pixels.",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "List of per-prompt text embeddings of shape (T, H).",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds",
+          "required": false,
+          "type": "builtins.list"
+        },
+        {
+          "default": null,
+          "description": "List of per-prompt negative text embeddings for classifier-free guidance.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_prompt_embeds",
+          "required": false,
+          "type": "builtins.list"
+        },
+        {
+          "default": null,
+          "description": "The number of prompts in the batch.",
+          "kwargsType": null,
+          "name": "batch_size",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Padded text hidden states of shape (B, T_max, H) fed into the transformer.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "text_bth",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Actual per-prompt text lengths used to build the transformer attention mask.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "text_lens",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Padded negative text hidden states, when classifier-free guidance is enabled.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_text_bth",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Actual per-prompt negative text lengths, when classifier-free guidance is enabled.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_text_lens",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The timesteps to use for inference.",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The number of denoising steps.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The initial noise latents to denoise.",
+          "kwargsType": null,
+          "name": "latents",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The generated images.",
+          "kwargsType": null,
+          "name": "images",
+          "required": false,
+          "type": "builtins.list"
+        }
+      ],
+      "requiredInputs": [
+        "latents",
+        "num_inference_steps",
+        "prompt",
+        "prompt_embeds",
+        "text_bth",
+        "text_lens",
+        "timesteps"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "SequentialPipelineBlocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
           "name": "text_encoder",
           "type": "transformers.models.clip.modeling_clip.CLIPTextModel"
         },
@@ -37754,268 +38168,6 @@
         "prompt_embeds",
         "timesteps",
         "txt_ids"
-      ],
-      "schemaVersion": 1,
-      "variadicInputs": []
-    },
-    {
-      "className": "SequentialPipelineBlocks",
-      "components": [
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "text_encoder",
-          "type": "transformers.models.mistral3.modeling_mistral3.Mistral3Model"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "tokenizer",
-          "type": "transformers.models.auto.tokenization_auto.AutoTokenizer"
-        },
-        {
-          "creationMethod": "from_config",
-          "defaultConfig": {
-            "guidance_scale": 4.0
-          },
-          "description": "",
-          "name": "guider",
-          "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "transformer",
-          "type": "diffusers.models.transformers.transformer_ernie_image.ErnieImageTransformer2DModel"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "scheduler",
-          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "vae",
-          "type": "diffusers.models.autoencoders.autoencoder_kl_flux2.AutoencoderKLFlux2"
-        },
-        {
-          "creationMethod": "from_config",
-          "defaultConfig": {
-            "patch_size": 2
-          },
-          "description": "",
-          "name": "pachifier",
-          "type": "diffusers.modular_pipelines.ernie_image.modular_pipeline.ErnieImagePachifier"
-        },
-        {
-          "creationMethod": "from_config",
-          "defaultConfig": {
-            "vae_scale_factor": 16
-          },
-          "description": "",
-          "name": "image_processor",
-          "type": "diffusers.image_processor.VaeImageProcessor"
-        }
-      ],
-      "configs": [],
-      "contentHash": "sha256:766a6741623809e21f6ebb58800138a17581426fea178d8dff721e415079da29",
-      "description": "",
-      "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:766a6741623809e21f6ebb58800138a17581426fea178d8dff721e415079da29",
-      "inputs": [
-        {
-          "default": null,
-          "description": "The prompt or prompts to guide image generation.",
-          "kwargsType": null,
-          "name": "prompt",
-          "required": false,
-          "type": "builtins.str"
-        },
-        {
-          "default": null,
-          "description": "The prompt or prompts to avoid during image generation.",
-          "kwargsType": null,
-          "name": "negative_prompt",
-          "required": false,
-          "type": "builtins.str"
-        },
-        {
-          "default": 1,
-          "description": "Number of images to generate per prompt.",
-          "kwargsType": null,
-          "name": "num_images_per_prompt",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": 50,
-          "description": "Number of denoising steps.",
-          "kwargsType": null,
-          "name": "num_inference_steps",
-          "required": true,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "The height in pixels of the generated image.",
-          "kwargsType": null,
-          "name": "height",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "The width in pixels of the generated image.",
-          "kwargsType": null,
-          "name": "width",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Pre-generated noisy latents. If provided, skips noise sampling.",
-          "kwargsType": null,
-          "name": "latents",
-          "required": true,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Torch generator for deterministic noise sampling.",
-          "kwargsType": null,
-          "name": "generator",
-          "required": false,
-          "type": "torch._C.Generator"
-        },
-        {
-          "default": "pil",
-          "description": "Output format: 'pil', 'np', or 'pt'.",
-          "kwargsType": null,
-          "name": "output_type",
-          "required": false,
-          "type": "builtins.str"
-        }
-      ],
-      "kind": "sequential",
-      "outputs": [
-        {
-          "default": null,
-          "description": "List of per-prompt text embeddings of shape (T, H).",
-          "kwargsType": "denoiser_input_fields",
-          "name": "prompt_embeds",
-          "required": false,
-          "type": "builtins.list"
-        },
-        {
-          "default": null,
-          "description": "List of per-prompt negative text embeddings for classifier-free guidance.",
-          "kwargsType": "denoiser_input_fields",
-          "name": "negative_prompt_embeds",
-          "required": false,
-          "type": "builtins.list"
-        },
-        {
-          "default": null,
-          "description": "The number of prompts in the batch.",
-          "kwargsType": null,
-          "name": "batch_size",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Padded text hidden states of shape (B, T_max, H) fed into the transformer.",
-          "kwargsType": "denoiser_input_fields",
-          "name": "text_bth",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Actual per-prompt text lengths used to build the transformer attention mask.",
-          "kwargsType": "denoiser_input_fields",
-          "name": "text_lens",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Padded negative text hidden states, when classifier-free guidance is enabled.",
-          "kwargsType": "denoiser_input_fields",
-          "name": "negative_text_bth",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Actual per-prompt negative text lengths, when classifier-free guidance is enabled.",
-          "kwargsType": "denoiser_input_fields",
-          "name": "negative_text_lens",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "The timesteps to use for inference.",
-          "kwargsType": null,
-          "name": "timesteps",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "The number of denoising steps.",
-          "kwargsType": null,
-          "name": "num_inference_steps",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "The initial noise latents to denoise.",
-          "kwargsType": null,
-          "name": "latents",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "The resolved image height in pixels.",
-          "kwargsType": null,
-          "name": "height",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "The resolved image width in pixels.",
-          "kwargsType": null,
-          "name": "width",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "The generated images.",
-          "kwargsType": null,
-          "name": "images",
-          "required": false,
-          "type": "builtins.list"
-        }
-      ],
-      "requiredInputs": [
-        "latents",
-        "num_inference_steps",
-        "prompt_embeds",
-        "text_bth",
-        "text_lens",
-        "timesteps"
       ],
       "schemaVersion": 1,
       "variadicInputs": []
@@ -75618,13 +75770,21 @@
       "workflowKind": "sequential"
     },
     {
-      "contentHash": "sha256:445a8eb28b8e9d4b103a7e29e67257998ab3d4dce36518459fb85196cdf85e20",
+      "contentHash": "sha256:b923df4c1b1cdd39992d5d832a4c77609e26aef986495fdf65a5bd261c2fae5e",
       "pipelineClass": "ErnieImageModularPipeline",
       "placements": [
         {
+          "blockDefinitionId": "diffusers.modular-block:ErnieImagePromptEnhancerStep:sha256:2531b7dd8052234fb8c4962ec02e751915e41d3148fb2388ec7feec4609b3b06",
+          "legacyPath": "prompt_enhancer",
+          "order": 0,
+          "path": [
+            "prompt_enhancer"
+          ]
+        },
+        {
           "blockDefinitionId": "diffusers.modular-block:ErnieImageTextEncoderStep:sha256:8078b53f5972c8b52d36a7cca8a4c41620d9506c459a8387d720771004f50bd8",
           "legacyPath": "text_encoder",
-          "order": 0,
+          "order": 1,
           "path": [
             "text_encoder"
           ]
@@ -75632,7 +75792,7 @@
         {
           "blockDefinitionId": "diffusers.modular-block:ErnieImageTextInputStep:sha256:65b6fe2d66bbd1646ec2f624ac4d7ee87d9ce35adfb2b858557f90f2618959b3",
           "legacyPath": "denoise.input",
-          "order": 1,
+          "order": 2,
           "path": [
             "denoise.input"
           ]
@@ -75640,7 +75800,7 @@
         {
           "blockDefinitionId": "diffusers.modular-block:ErnieImageSetTimestepsStep:sha256:633ae9bf079ef52fc99fec07c390f7412ac0d8c7d20d360545aa654df26b335b",
           "legacyPath": "denoise.set_timesteps",
-          "order": 2,
+          "order": 3,
           "path": [
             "denoise.set_timesteps"
           ]
@@ -75648,7 +75808,7 @@
         {
           "blockDefinitionId": "diffusers.modular-block:ErnieImagePrepareLatentsStep:sha256:189abc38ee3c9db175b8629202787f8ffcc22de7ef2e6db5dcce2ac937f4af1e",
           "legacyPath": "denoise.prepare_latents",
-          "order": 3,
+          "order": 4,
           "path": [
             "denoise.prepare_latents"
           ]
@@ -75656,7 +75816,7 @@
         {
           "blockDefinitionId": "diffusers.modular-block:ErnieImageDenoiseStep:sha256:de46284ad330487cebb5a3ecc64924745b9fbf328711281f2a886271c4a4369c",
           "legacyPath": "denoise.denoise",
-          "order": 4,
+          "order": 5,
           "path": [
             "denoise.denoise"
           ]
@@ -75691,13 +75851,13 @@
         {
           "blockDefinitionId": "diffusers.modular-block:ErnieImageVaeDecoderStep:sha256:595c24f9238cd4d125eed61a386cac9005d445043a4eade77dded81217ce37e4",
           "legacyPath": "decode",
-          "order": 5,
+          "order": 6,
           "path": [
             "decode"
           ]
         }
       ],
-      "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:766a6741623809e21f6ebb58800138a17581426fea178d8dff721e415079da29",
+      "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:5908f92e30713a3df9726f2d615565d5381c2ff60c3ec9fdacb44377cf3e7f4a",
       "schemaVersion": 1,
       "workflowId": "text2image",
       "workflowKind": "sequential"

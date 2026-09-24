@@ -27,6 +27,7 @@ PROMOTED_PIPELINES = {
     "LTX2InContextPipeline",
     "LTX2Pipeline",
     "Cosmos3OmniModularPipeline",
+    "ErnieImageModularPipeline",
     "StableDiffusionControlNetImg2ImgPipeline",
     "StableDiffusionControlNetInpaintPipeline",
     "StableDiffusionControlNetPAGInpaintPipeline",
@@ -37,7 +38,6 @@ PROMOTED_PIPELINES = {
     "StableDiffusionXLControlNetPAGPipeline",
 }
 NEW_EQUIVALENT_PIPELINES = {
-    "ErnieImageModularPipeline",
     "LTX2ModularPipeline",
     "LTXModularPipeline",
     "LuminaText2ImgPipeline",
@@ -59,8 +59,8 @@ class UpstreamCoverageExactClosureTests(unittest.TestCase):
         self.assertEqual(
             Counter(item["status"] for item in items),
             {
-                "executable": 143,
-                "equivalent": 11,
+                "executable": 144,
+                "equivalent": 10,
                 "intentionally-excluded": 59,
                 "research-blocked": 116,
                 "contract-only": 5,

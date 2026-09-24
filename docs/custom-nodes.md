@@ -31,18 +31,137 @@ their source. Names use a letter followed by letters, numbers or underscores.
 
 ## A small ordinary node
 
-Stage `examples/custom_nodes/PromptTools` from this checkout using the module name
-`PromptTools`. Its `main.py` declares a `NodeBase` subclass with `label`, `category`,
-typed `params`, and an `execute` method. `__init__.py` exports that class. Inspect
-and enable it, search for **Prompt Prefix**, and connect its string output to a
-prompt input. The same node appears in the Nodes library in Creator and Developer.
-No frontend code or separate executor is required.
+The repository includes a runnable example at `examples/custom_nodes/PromptTools`.
 
-Use `isInput: True` or `display: "input"` to expose an input socket. This
-replaces its inline control; connect a value node such as **Text Value**. Outputs
-use `display: "output"`. A type alone does not turn every configuration control
-into a connectable input. Modular
-sidecars' `input_names` and `model_input_names` declare those sockets directly.
+For a model-independent image-processing example with multiple outputs, see
+[`LightPaletteDirector`](../examples/custom_nodes/LightPaletteDirector/README.md).
+It produces an RGB art-directed image, a grayscale region mask and diagnostics
+for a downstream image/inpainting workflow. The [modularity demo](modularity-demo.md)
+shows how to connect it to native stages and a whole-pipeline generator.
+To author the same node yourself, create a folder below the checkout (all paths
+in this guide are repository-relative) containing these three files.
+
+`main.py`:
+
+```python
+from modiff.NodeBase import NodeBase
+
+
+class PromptPrefix(NodeBase):
+    """Add a reusable prefix to a prompt without loading any models."""
+
+    label = "Prompt Prefix"
+    category = "Text"
+    resizable = True
+    params = {
+        "text": {
+            "label": "Prompt",
+            "type": "string",
+            "display": "textarea",
+            "default": "a quiet observatory",
+        },
+        "prompt_input": {
+            "label": "Prompt Input",
+            "type": "string",
+            "display": "input",
+            "required": False,
+            "description": "Optional connected prompt. When connected, this replaces the inline Prompt value.",
+        },
+        "prefix": {
+            "label": "Prefix",
+            "type": "string",
+            "display": "textarea",
+            "default": "Watercolor:",
+        },
+        "result": {"label": "Prompt", "type": "string", "display": "output"},
+    }
+
+    def execute(self, text, prefix, prompt_input=None):
+        prompt = prompt_input if prompt_input is not None else text
+        return {"result": f"{prefix} {prompt}".strip()}
+```
+
+`__init__.py`:
+
+```python
+from .main import PromptPrefix  # noqa: F401
+```
+
+`modiff_extension.json`:
+
+```json
+{ "runtimeRole": "data" }
+```
+
+To stage and test it without a model:
+
+1. In **Developer**, open **Nodes → Custom nodes** and choose **Add local source**.
+2. Enter `examples/custom_nodes/PromptTools` as the source and `PromptTools` as
+   the module name, then select **Stage source**. Staging copies the source but
+   does not import it.
+3. Inspect the copied files, hashes, dependencies, ports and `data` runtime role.
+   Select the code-execution consent checkbox and choose **Enable code**.
+4. Add **Text Value**, **Prompt Prefix**, and **Export Data** to an empty workflow.
+5. Connect **Text Value.Output → Prompt Prefix.Prompt Input**, then connect
+   **Prompt Prefix.Prompt → Export Data.Data**. Set
+   Export Data to `text` and its file to
+   `{PATH:data}/exports/PromptPrefix_{HASH:6}.txt`. Enter
+   `a lighthouse at night`, keep the prefix `Watercolor:`, and Run. Its preview
+   reads `Watercolor: a lighthouse at night`.
+6. Drag from either Prompt Prefix socket to check typed suggestions. Built-in and
+   Custom section headers remain visible, and search covers both sections.
+7. To reload an edit, modify the installed source path shown by the review panel,
+   select **Review reload**, inspect the new hash, consent again, and choose
+   **Enable and reload code**. Insert a fresh node if field names or types changed.
+
+The same enabled node appears in the Nodes library in Creator and Developer. No
+frontend code or separate executor is required.
+
+Set `resizable = True` on the class when the node should show a resize handle.
+Use `display: "textarea"` for a multi-line inline editor. A field can render only
+one display at a time, so a node that needs both an inline prompt and a connectable
+prompt socket must declare two keys, as `text` and `prompt_input` do above. The
+execution method decides which wins. Use `display: "input"` (or legacy
+`isInput: True`) for an input socket and `display: "output"` for an output socket.
+A `type` by itself does not make a configuration field connectable. Modular
+sidecars' `input_names` and `model_input_names` declare their sockets directly.
+
+### Port types and compatibility
+
+Port types are nominal payload contracts, not Python annotations. Give the two
+ends the same narrow type used by the built-in producer or consumer you intend to
+connect. The common public types are:
+
+| Payload                      | Use this `type`                                                    |
+| ---------------------------- | ------------------------------------------------------------------ |
+| Prompt or other text         | `string`                                                           |
+| Integer, decimal, or switch  | `int`, `float`, `bool`                                             |
+| One or more images           | `image`                                                            |
+| Video or audio               | `video`, `audio`                                                   |
+| Diffusion latent payloads    | `latent` or `latents`—copy the exact peer spelling                 |
+| Prompt/image embeddings      | `embeddings` or the exact specialized peer type                    |
+| Generic tensor               | `tensor`                                                           |
+| Modular model component      | `diffusers_auto_model`                                             |
+| Modular component collection | `diffusers_auto_models` or `diffusers_modular_pipeline_components` |
+| Deliberately generic value   | `any`                                                              |
+
+`str` and `text` normalize to `string`; `boolean` normalizes to `bool`; `integer`
+normalizes to `int`; and `double`/`number` normalize to `float`. Other names are
+exact after lower-casing and namespace removal: for example, `latent` and
+`latents` are intentionally different. A list of names such as
+`["image", "video"]` is a union. `any` and missing types accept a concrete peer,
+but custom nodes should avoid them unless their runtime code truly validates all
+accepted values.
+
+The compatibility implementation is maintained in the client at
+`src/theme/connectionTypeCompatibility.ts`; connector colors and the reviewed
+common vocabulary are in `src/theme/connectionTypes.ts`. The registry is open to
+new nominal types, so this table is guidance rather than a closed enum. Inspect
+the intended built-in peer in the Nodes library and copy its exact type. Client
+tests cover aliases, unions, exact mismatches, direct connect, reconnect, and
+connection-search filtering. The checked-in PromptTools integration test keeps
+this guide's direction, textarea, resize, and execution example synchronized with
+the backend.
 
 Literal class metadata and module-level literal constants can be previewed
 without imports. Dynamic metadata, `MODULE_MAP`, and `MODULE_PARSE` are resolved
@@ -130,7 +249,10 @@ executor as ordinary loaders; it does not add a model-family implementation.
 It appears only after approval, alongside the block in Custom nodes.
 
 Use it when the block needs additional weights, such as an annotator's model and
-processor. Select a Hub repository, exact lowercase 40-character revision,
+processor. Each component picker lists only installed Hub repositories whose
+indexed component configuration declares the approved block's expected class;
+an unrelated cached pipeline is not a compatible component merely because it is
+downloaded. Select a Hub repository, exact lowercase 40-character revision,
 subfolder and optional weight variant for each component. Download those revisions
 in Models before Run: this loader is cache-only and never installs packages or
 executes model-repository Python. Select precision, device and offload policy, set
@@ -138,6 +260,30 @@ the workflow's Memory policy to **Custom**, and connect its **Pipeline Component
 output to the block's **Models** input. Existing connected model sockets continue
 to work. Compatible loaded components are shared; source configuration changes
 invalidate reuse without replacing another workflow's component.
+
+Custom node port labels and field keys are local presentation names, not global
+type identities. Connection discovery uses the declared `type`, direction and any
+reviewed built-in capability metadata available at the endpoints. A custom node
+that declares an overly broad or inaccurate type may still connect and then fail
+its own runtime validation; extension authors should use the narrowest stable type
+shared by the intended producer and consumer.
+
+Signal-aware custom ports can also publish `signalCompatibility`. Use
+`{"required": true, "values": {"PipelineClass": ["capability"]}}` on a
+consumer when its broad transport type is valid only for named signal identities.
+When several component roles share that transport type, declare
+`connectionRole: "role_name"` on the producer and add `"role": "role_name"`
+to the consumer's `signalCompatibility`; the editor then rejects, for example,
+a scheduler object wired to a denoiser input even when both came from the same
+pipeline class.
+For structured pipeline signals whose value contains an `actions` mapping, use
+`{"required": true, "action": "$node"}` to require a non-empty entry for the
+current node action (and, when the signal has a current `mode`, membership in that
+action's mode list). A producer that supplies this contract declares a `signal`
+on its connector; a pass-through node relays it with
+`onSignal: {"action": "signal", "target": "output_field"}`. These declarations
+are used for search, direct connect, reconnect and later signal changes. They do
+not replace runtime validation of opaque values, tensor layouts or custom code.
 
 Source approval is not resource qualification. Additional custom model suppliers
 require Custom memory even when the processing block declares connected-component
@@ -167,11 +313,11 @@ effects, or model qualification.
 
 An optional `modiff_extension.json` declares one resource role:
 
-| `runtimeRole` | Behavior |
-| --- | --- |
-| `data` | Author declares no model loading; the enabled node can run with Automatic memory. |
+| `runtimeRole`          | Behavior                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| `data`                 | Author declares no model loading; the enabled node can run with Automatic memory.                      |
 | `connected_components` | Author declares reuse of connected models; Automatic memory requires a connected reviewed model owner. |
-| `manual` (default) | Resource use is unmanaged; select Custom memory in either workspace. |
+| `manual` (default)     | Resource use is unmanaged; select Custom memory in either workspace.                                   |
 
 Review this declaration with the code. It is an operator-approved extension
 contract, not a measured memory guarantee. Automatic memory does not execute custom code

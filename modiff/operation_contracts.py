@@ -39,6 +39,7 @@ WORKFLOW_STAGE_OPERATIONS = {
     "video_encoder": "diffusion.encode_video",
     "semantic_generator": "diffusion.generate_semantics",
     "prompt_upsample": "diffusion.rewrite_prompt",
+    "prompt_enhancer": "diffusion.rewrite_prompt",
     "before_encode": "diffusion.prepare_media",
     "after_decode": "diffusion.postprocess_media",
     "duration": "diffusion.prepare_duration",
@@ -217,6 +218,18 @@ def build_modular_operation_contracts(configs: Mapping, modules: Mapping) -> lis
                     }
                     ports_by_key[key] = port
                     ports.append(port)
+            # EncodePrompt's wrapper accepts a connected string in preference
+            # to its inline prompt. This is an explicit execution alias, not a
+            # display-label heuristic, and must participate in migration and
+            # wiring contracts even though it is not an upstream block input.
+            if operation.action == "EncodePrompt":
+                connected = actions[operation.action]["params"].get("prompt_input")
+                if connected and any(p["semanticName"] == "prompt" for p in ports):
+                    ports.append({
+                        "name": "prompt_input", "semanticName": "prompt", "direction": "input",
+                        "roles": ["value"], "types": _port_types(connected["type"]),
+                        "required": False, "hidden": connected.get("hidden") is True,
+                    })
             if len(ports) > 128:
                 raise ValueError("Too many operation-contract ports.")
             block_name = spec.get("block_name") or None

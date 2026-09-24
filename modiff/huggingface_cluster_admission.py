@@ -172,6 +172,7 @@ _SEALED_BINDING_SOURCES = {
     "mode",
     "defaultWorkflow",
     "workflowId",
+    "workflowPromptEnhancerBlock",
     "workflowTextEncoderBlock",
     "workflowBeforeEncodeBlock",
     "workflowImageEncoderBlock",
@@ -229,6 +230,12 @@ _REQUIRED_COMPONENT_EDGES = {
     "workflow_video_encoder": {("models", "pipeline_components", "videoEncode", "pipeline_components")},
     "workflow_image_denoise": {("models", "pipeline_components", "denoise", "pipeline_components")},
     "workflow_image_decoder": {("models", "pipeline_components", "decode", "pipeline_components")},
+    "workflow_ernie_prompt_enhancer": {
+        ("models", "pipeline_components", "promptEnhance", "pipeline_components")
+    },
+    "workflow_ernie_text_encoder": {("models", "pipeline_components", "prompt", "pipeline_components")},
+    "workflow_ernie_image_denoise": {("models", "pipeline_components", "denoise", "pipeline_components")},
+    "workflow_ernie_image_decoder": {("models", "pipeline_components", "decode", "pipeline_components")},
     "workflow_video_denoise": {("models", "pipeline_components", "denoise", "pipeline_components")},
     "workflow_video_decoder": {("models", "pipeline_components", "decode", "pipeline_components")},
     "workflow_hunyuan_video15_text_encoder": {("models", "pipeline_components", "prompt", "pipeline_components")},
@@ -565,6 +572,15 @@ REVIEWED_CLUSTER_EXECUTION_CANDIDATES = (
         "executionRoute": "official_modular_workflow",
     },
     {
+        "pipelineClass": "ErnieImageModularPipeline",
+        "workflowId": "text2image",
+        "adapterSource": "workflow",
+        "adapterId": "official_top_level_blocks",
+        "studioMode": "text_to_image",
+        "studioSpecId": "ernie-image-turbo:modular-text-to-image:v1",
+        "executionRoute": "official_modular_workflow",
+    },
+    {
         "pipelineClass": "AnimaModularPipeline",
         "workflowId": "img2img",
         "adapterSource": "workflow",
@@ -810,15 +826,6 @@ REVIEWED_CLUSTER_EXECUTION_CANDIDATES += tuple(
 )
 
 REVIEWED_CLUSTER_EXECUTION_CANDIDATES += (
-    {
-        "pipelineClass": "ErnieImageModularPipeline",
-        "workflowId": "text2image",
-        "adapterSource": "mode",
-        "adapterId": "equivalent_standard_route",
-        "studioMode": "text_to_image",
-        "studioSpecId": "ernie-image:equivalent-standard-text-to-image:v1",
-        "executionRoute": "equivalent_standard",
-    },
     {
         "pipelineClass": "LTXModularPipeline",
         "workflowId": "text2video",
@@ -1331,6 +1338,7 @@ def _audit_candidate(
             "classifierFreeGuidance": "ClassifierFreeGuidance",
             "defaultWorkflow": "default",
             "workflowId": workflow_id,
+            "workflowPromptEnhancerBlock": "prompt_enhancer",
             "workflowTextEncoderBlock": "text_encoder",
             "workflowBeforeEncodeBlock": "before_encode",
             "workflowImageEncoderBlock": "vae_encoder",

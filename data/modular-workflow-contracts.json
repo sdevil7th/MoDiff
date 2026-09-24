@@ -8268,6 +8268,41 @@
             },
             {
               "default": null,
+              "description": "The height in pixels of the generated image.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The width in pixels of the generated image.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional system prompt passed to the prompt enhancer.",
+              "name": "pe_system_prompt",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 0.6,
+              "description": "Sampling temperature used when generating with the prompt enhancer.",
+              "name": "pe_temperature",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 0.95,
+              "description": "Nucleus sampling `top_p` used when generating with the prompt enhancer.",
+              "name": "pe_top_p",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
               "description": "The prompt or prompts to avoid during image generation.",
               "name": "negative_prompt",
               "required": false,
@@ -8284,20 +8319,6 @@
               "default": 50,
               "description": "Number of denoising steps.",
               "name": "num_inference_steps",
-              "required": false,
-              "type": "builtins.int"
-            },
-            {
-              "default": null,
-              "description": "The height in pixels of the generated image.",
-              "name": "height",
-              "required": false,
-              "type": "builtins.int"
-            },
-            {
-              "default": null,
-              "description": "The width in pixels of the generated image.",
-              "name": "width",
               "required": false,
               "type": "builtins.int"
             },
@@ -8326,6 +8347,27 @@
           "kind": "sequential",
           "label": "Text To Image",
           "outputs": [
+            {
+              "default": null,
+              "description": "The prompt list after prompt-enhancer rewriting.",
+              "name": "prompt",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "The resolved image height in pixels.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The resolved image width in pixels.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
             {
               "default": null,
               "description": "List of per-prompt text embeddings of shape (T, H).",
@@ -8398,20 +8440,6 @@
             },
             {
               "default": null,
-              "description": "The resolved image height in pixels.",
-              "name": "height",
-              "required": false,
-              "type": "builtins.int"
-            },
-            {
-              "default": null,
-              "description": "The resolved image width in pixels.",
-              "name": "width",
-              "required": false,
-              "type": "builtins.int"
-            },
-            {
-              "default": null,
               "description": "The generated images.",
               "name": "images",
               "required": false,
@@ -8423,16 +8451,25 @@
           ],
           "stateKeys": [
             "prompt",
+            "height",
+            "width",
+            "pe_system_prompt",
+            "pe_temperature",
+            "pe_top_p",
             "negative_prompt",
             "num_images_per_prompt",
             "num_inference_steps",
-            "height",
-            "width",
             "latents",
             "generator",
             "output_type"
           ],
           "steps": [
+            {
+              "className": "ErnieImagePromptEnhancerStep",
+              "description": "Prompt enhancer step that rewrites the input prompt using a causal language model (PE).",
+              "kind": "block",
+              "path": "prompt_enhancer"
+            },
             {
               "className": "ErnieImageTextEncoderStep",
               "description": "Text encoder step that encodes prompts into variable-length hidden states for the ErnieImage transformer.",

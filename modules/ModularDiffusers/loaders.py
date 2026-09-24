@@ -81,6 +81,15 @@ from .route_state import (
 logger = logging.getLogger("modiff")
 logger.setLevel(logging.DEBUG)
 
+
+def _loader_text_encoder_component_names(loader):
+    """Resolve only the selected text stage, including flattened workflow leaves."""
+    from .workflow_blocks import _official_stage_block
+
+    block = _official_stage_block(loader.blocks, "text_encoder")
+    return list(block.init_pipeline().pretrained_component_names) if block is not None else []
+
+
 QWEN_LOW_VRAM_COMPONENT = "qwen_low_vram"
 GROUP_OFFLOAD_COMPONENTS = set(DEFAULT_GROUP_COMPONENTS)
 REQUIRED_REGIONAL_COMPILE_MODEL_TYPES = frozenset(
@@ -155,6 +164,7 @@ _REVIEWED_STANDARD_PIPELINE_MODEL_NAMES = {
     "FluxKontextPipeline": "flux-kontext",
     "Flux2Pipeline": "flux2",
     "Flux2KleinPipeline": "flux2-klein",
+    "ErnieImagePipeline": "ernie-image",
     "ZImagePipeline": "z-image",
     "HunyuanVideo15Pipeline": "hunyuan-video-1.5",
     "HunyuanVideo15ImageToVideoPipeline": "hunyuan-video-1.5",
@@ -828,6 +838,16 @@ def _validate_reviewed_pipeline_index(model_type, repository, revision):
                     f"The cached reviewed pipeline index has a malformed {component_name!r} component contract."
                 )
             observed_type_hint = raw_component
+        reviewed_concrete_type = PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES.get(repository, {}).get(component_name)
+        if (
+            filename != ModularPipeline.config_name
+            and observed_type_hint == [None, None]
+            and reviewed_concrete_type == (None, None)
+        ):
+            # Only a reviewed absent optional component in an exact standard
+            # checkpoint may use this sentinel. Required/null or malformed
+            # declarations elsewhere still fail validation below.
+            continue
         if (
             not isinstance(observed_type_hint, list)
             or len(observed_type_hint) != 2
@@ -837,7 +857,6 @@ def _validate_reviewed_pipeline_index(model_type, repository, revision):
                 f"The cached reviewed pipeline index has an invalid {component_name!r} component type hint."
             )
         expected_type_hint = list(_fetch_class_library_tuple(component_spec.type_hint))
-        reviewed_concrete_type = PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES.get(repository, {}).get(component_name)
         if observed_type_hint != expected_type_hint and tuple(observed_type_hint) != reviewed_concrete_type:
             raise ValueError(
                 f"The cached reviewed pipeline index maps component {component_name!r} to "
@@ -1956,10 +1975,14 @@ class ModelsLoader(NodeBase):
     skipParamsCheck = True
     params = {
         "model_type": {
-            "label": "Model Type",
+            "label": "Pipeline Type",
             "type": "string",
             "options": MODULAR_MODEL_TYPE_OPTIONS,
             "onChange": "set_filters",
+            "description": (
+                "Selects the Modular Diffusers pipeline class. This filters compatible checkpoints and publishes "
+                "the component contract used by connected nodes; it is not the model checkpoint itself."
+            ),
         },
         "repo_id": {
             "label": "Repository ID",
@@ -2037,11 +2060,41 @@ class ModelsLoader(NodeBase):
         "vae": {"label": "VAE", "display": "input", "type": "diffusers_auto_model"},
         "controlnet": {"label": "ControlNet", "display": "input", "type": "diffusers_auto_model"},
         "lora_list": {"label": "Lora", "display": "input", "type": "custom_lora"},
-        "text_encoders": {"label": "Text Encoders", "display": "output", "type": "diffusers_auto_models"},
-        "unet_out": {"label": "Denoise Model", "display": "output", "type": "diffusers_auto_model"},
-        "vae_out": {"label": "VAE", "display": "output", "type": "diffusers_auto_model"},
-        "scheduler": {"label": "Scheduler", "display": "output", "type": "diffusers_auto_model"},
-        "image_encoder": {"label": "Image Encoder", "display": "output", "type": "diffusers_auto_model"},
+        "text_encoders": {
+            "label": "Text Encoders",
+            "display": "output",
+            "type": "diffusers_auto_models",
+            "signal": {"direction": "output", "origin": "model_type", "value": ""},
+            "connectionRole": "text_encoders",
+        },
+        "unet_out": {
+            "label": "Denoise Model",
+            "display": "output",
+            "type": "diffusers_auto_model",
+            "signal": {"direction": "output", "origin": "model_type", "value": ""},
+            "connectionRole": "denoiser",
+        },
+        "vae_out": {
+            "label": "VAE",
+            "display": "output",
+            "type": "diffusers_auto_model",
+            "signal": {"direction": "output", "origin": "model_type", "value": ""},
+            "connectionRole": "vae",
+        },
+        "scheduler": {
+            "label": "Scheduler",
+            "display": "output",
+            "type": "diffusers_auto_model",
+            "signal": {"direction": "output", "origin": "model_type", "value": ""},
+            "connectionRole": "scheduler",
+        },
+        "image_encoder": {
+            "label": "Image Encoder",
+            "display": "output",
+            "type": "diffusers_auto_model",
+            "signal": {"direction": "output", "origin": "model_type", "value": ""},
+            "connectionRole": "image_encoder",
+        },
         "pipeline_components": {
             "label": "Pipeline Components",
             "display": "output",
@@ -2162,6 +2215,7 @@ class ModelsLoader(NodeBase):
         *,
         persisted_identity,
         signal_value,
+        signal_origin,
         show_refresh,
         dtype=None,
         update_persisted_identity=True,
@@ -2188,7 +2242,7 @@ class ModelsLoader(NodeBase):
                     {
                         "signal": {
                             "direction": "output",
-                            "origin": CUSTOM_PIPELINE_IDENTITY_FIELD,
+                            "origin": signal_origin,
                             "value": deepcopy(signal_value),
                         }
                     },
@@ -2323,6 +2377,7 @@ class ModelsLoader(NodeBase):
                 generation,
                 persisted_identity=None,
                 signal_value="",
+                signal_origin="model_type",
                 show_refresh=False,
             )
             return None
@@ -2345,6 +2400,7 @@ class ModelsLoader(NodeBase):
                     generation,
                     persisted_identity=None,
                     signal_value="",
+                    signal_origin="model_type",
                     show_refresh=False,
                     clear_revision=clear_revision,
                 )
@@ -2353,6 +2409,7 @@ class ModelsLoader(NodeBase):
                 generation,
                 persisted_identity=None,
                 signal_value="" if trust_remote_code or contract_only else model_type,
+                signal_origin="model_type",
                 show_refresh=False,
                 clear_revision=clear_revision,
             )
@@ -2381,6 +2438,7 @@ class ModelsLoader(NodeBase):
                     generation,
                     persisted_identity=None,
                     signal_value="",
+                    signal_origin=CUSTOM_PIPELINE_IDENTITY_FIELD,
                     show_refresh=True,
                     clear_revision=clear_revision,
                 )
@@ -2413,6 +2471,7 @@ class ModelsLoader(NodeBase):
                 generation,
                 persisted_identity=identity_value,
                 signal_value=identity_value,
+                signal_origin=CUSTOM_PIPELINE_IDENTITY_FIELD,
                 show_refresh=True,
                 dtype=config.default_dtype,
                 clear_revision=clear_revision,
@@ -2425,6 +2484,7 @@ class ModelsLoader(NodeBase):
                 generation,
                 persisted_identity=None,
                 signal_value="",
+                signal_origin=CUSTOM_PIPELINE_IDENTITY_FIELD,
                 show_refresh=True,
                 update_persisted_identity=type(values.get("trust_remote_code", False)) is not bool
                 or values.get("trust_remote_code") is True,
@@ -2739,12 +2799,7 @@ class ModelsLoader(NodeBase):
             or model_type in REVIEWED_EXPANDED_WORKFLOW_MODEL_TYPES
             or reviewed_workflow_id is not None
         )
-        text_encoder_block = self.loader.blocks.sub_blocks.get("text_encoder")
-        text_encoder_names = (
-            text_encoder_block.init_pipeline().pretrained_component_names
-            if text_encoder_block is not None
-            else []
-        )
+        text_encoder_names = _loader_text_encoder_component_names(self.loader)
 
         components_to_load = [c for c in ALL_COMPONENTS if c not in components_to_update]
         components_to_reload = []

@@ -5,7 +5,7 @@ from diffusers import ComponentSpec
 
 from modiff.NodeBase import NodeBase
 
-from . import MESSAGE_DURATION, components
+from . import MESSAGE_DURATION, MODULAR_IMAGE_ENCODER_OPTIONS, MODULAR_TEXT_ENCODER_OPTIONS, components
 from .modular_utils import (
     normalize_modular_runtime_params,
     pipeline_class_from_model_type,
@@ -89,6 +89,17 @@ class EncodePrompt(NodeBase):
             "type": "diffusers_auto_models",
             "display": "input",
             "onSignal": "update_node",
+            "signalCompatibility": {
+                "required": True,
+                "role": "text_encoders",
+                "values": MODULAR_TEXT_ENCODER_OPTIONS,
+            },
+        },
+        "prompt_input": {
+            "label": "Prompt Input",
+            "type": "string",
+            "display": "input",
+            "description": "Optional connected prompt. When connected, this replaces the inline Prompt value.",
         },
     }
 
@@ -142,6 +153,9 @@ class EncodePrompt(NodeBase):
 
     def execute(self, **kwargs):
         kwargs = dict(kwargs)
+        prompt_input = kwargs.pop("prompt_input", None)
+        if prompt_input is not None:
+            kwargs["prompt"] = prompt_input
         self._pipeline_class = pipeline_class_from_runtime_inputs(self._pipeline_class, kwargs)
         # 1. Get node config
         blocks, node_config = require_modiff_node_contract(self._pipeline_class, self.node_type)
@@ -162,6 +176,11 @@ class EncodePrompt(NodeBase):
 
         # Enforce the backend-issued action schema before initializing blocks.
         kwargs = normalize_modular_runtime_params(kwargs, node_config)
+        if repo_id == "black-forest-labs/FLUX.1-schnell":
+            length = kwargs.get("max_sequence_length", 256)
+            if type(length) is not int or not 1 <= length <= 256:
+                raise ValueError("FLUX.1 schnell requires a maximum sequence length between 1 and 256.")
+            kwargs["max_sequence_length"] = length
 
         # Components came from the reviewed ModelsLoader contract. Re-reading
         # repository config here would let a later cache mutation choose fresh
@@ -212,6 +231,13 @@ class EncodePrompt(NodeBase):
                     f"Blocks: {blocks}"
                 )
 
+        # Snapshot what the encoder actually consumes, not the unused inline
+        # prompt captured before the connected-input override. Preserve the
+        # original socket identity for the graph ancestry receipt on cache hits.
+        self.record_generation_inputs(node_kwargs)
+        if prompt_input is not None:
+            self._execution_input_source_fields = {"prompt": "prompt_input"}
+
         # 5. run the pipeline,
         try:
             node_output_state = self._pipeline(**node_kwargs)
@@ -253,6 +279,11 @@ class ImageEmbeddings(NodeBase):
             "display": "input",
             "type": "diffusers_auto_model",
             "onSignal": "update_node",
+            "signalCompatibility": {
+                "required": True,
+                "role": "image_encoder",
+                "values": MODULAR_IMAGE_ENCODER_OPTIONS,
+            },
         },
     }
 

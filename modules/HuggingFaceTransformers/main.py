@@ -1619,3 +1619,52 @@ def get_depth_operation_contracts(modules):
         if contract is not None:
             contracts.append(contract)
     return contracts
+
+
+def image_text_operation_schema(pipeline, task, action):
+    """Authoring-only projection of the existing finite image/text actions."""
+    routes = {
+        ("AutoModelForImageTextToText", "image_to_text"): ("LoadImageTextToTextModel", "GenerateImageVideoText"),
+        ("JanusForConditionalGeneration", "image_to_text"): ("LoadAnyToAnyModel", "GenerateAnyToAny"),
+        ("JanusForConditionalGeneration", "text_to_image"): ("LoadAnyToAnyModel", "GenerateAnyToAny"),
+    }
+    loader, generator = routes.get((pipeline, task), (None, None))
+    if action == loader:
+        return {}, {"pipeline_class": pipeline}
+    if action != generator:
+        raise ValueError("No reviewed image/text operation binding.")
+    fields = {"images": {"required": task == "image_to_text", "hidden": task != "image_to_text"}}
+    values = {}
+    if generator == "GenerateImageVideoText":
+        fields["video"] = {"hidden": True, "required": False}
+    else:
+        mode = "image" if task == "text_to_image" else "text"
+        values["generation_mode"] = mode
+        fields["generation_mode"] = {"options": [mode]}
+        fields["text"] = {"hidden": mode == "image"}
+        fields["image"] = {"hidden": mode != "image"}
+        if mode == "image":
+            values["do_sample"] = True
+    return fields, values
+
+
+def get_image_text_operation_contracts(modules):
+    from modiff.operation_contracts import build_pipeline_operation_contract
+
+    contracts = []
+    for pipeline, task, loader, generator in (
+        ("AutoModelForImageTextToText", "image_to_text", "LoadImageTextToTextModel", "GenerateImageVideoText"),
+        ("JanusForConditionalGeneration", "image_to_text", "LoadAnyToAnyModel", "GenerateAnyToAny"),
+        ("JanusForConditionalGeneration", "text_to_image", "LoadAnyToAnyModel", "GenerateAnyToAny"),
+    ):
+        for action in (loader, generator):
+            fields, _ = image_text_operation_schema(pipeline, task, action)
+            contract = build_pipeline_operation_contract(
+                modules, pipeline_class=pipeline, task=task,
+                operation_id="model.load" if action == loader else "image.caption" if task == "image_to_text" else "image.generate",
+                node_key=f"modules.HuggingFaceTransformers.{action}",
+                field_overrides=fields, loader=action == loader,
+            )
+            if contract is not None:
+                contracts.append(contract)
+    return contracts

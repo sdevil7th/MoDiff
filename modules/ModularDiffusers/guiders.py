@@ -180,6 +180,7 @@ class Guider(NodeBase):
     resizable = True
     skipParamsCheck = True
     params = {
+        "model_type": {"type": "string", "default": "", "hidden": True},
         "guider": {
             "label": "Guider",
             "fieldOptions": {"loading": True},
@@ -247,6 +248,7 @@ class Guider(NodeBase):
             "display": "output",
             "type": "custom_guider",
             "onSignal": [
+                {"action": "value", "target": "model_type"},
                 {
                     "action": "value",
                     "target": "guider",
@@ -255,12 +257,16 @@ class Guider(NodeBase):
                 },
                 {"action": "signal", "target": "layers_config"},
             ],
+            "signalCompatibility": {
+                "values": MODULAR_GUIDER_OPTIONS,
+            },
         },
         "layers_config": {"label": "Layers", "type": "layers_config", "display": "input"},
     }
 
-    def _selected_guider(self, guider):
-        model_type = self.get_signal_value("guider_out")
+    def _selected_guider(self, guider, model_type=None):
+        if model_type in (None, ""):
+            model_type = self.get_signal_value("guider_out")
         allowed = MODULAR_GUIDER_OPTIONS.get(model_type) if isinstance(model_type, str) else None
         if (
             not isinstance(guider, str)
@@ -273,12 +279,12 @@ class Guider(NodeBase):
         return guider
 
     def updateNode(self, values, ref):
-        value = self._selected_guider(values.get("guider"))
+        value = self._selected_guider(values.get("guider"), values.get("model_type"))
 
         params = GUIDER_CONFIGS.get(value, {})
         self.send_node_definition(params)
 
-    def execute(self, guider, layers_config=None, **kwargs):
+    def execute(self, guider, layers_config=None, model_type=None, **kwargs):
         logger.debug(f" Guider ({self.node_id}) received parameters:")
         logger.debug(f" - guider: {guider}")
         logger.debug(f" - kwargs: {kwargs}")
@@ -300,7 +306,7 @@ class Guider(NodeBase):
 
         logger.debug(f" - guider options: {guider_options}")
 
-        guider = self._selected_guider(guider)
+        guider = self._selected_guider(guider, model_type)
 
         guider_cls = getattr(diffusers_guiders, guider)
 
@@ -424,6 +430,7 @@ class Layers(NodeBase):
     resizable = True
     skipParamsCheck = True
     params = {
+        "model_type": {"type": "string", "default": "", "hidden": True},
         "blocks_select": {
             "label": "Blocks",
             "type": "string",
@@ -436,11 +443,14 @@ class Layers(NodeBase):
             "label": "Layers",
             "display": "output",
             "type": "layers_config",
-            "onSignal": {
+            "onSignal": [{"action": "value", "target": "model_type"}, {
                 "action": "value",
                 "target": "blocks_select",
                 "prop": "options",
                 "data": MODULAR_LAYER_BLOCK_OPTIONS,
+            }],
+            "signalCompatibility": {
+                "values": MODULAR_LAYER_BLOCK_OPTIONS,
             },
         },
     }
@@ -459,7 +469,9 @@ class Layers(NodeBase):
         if not blocks_select:
             return ()
 
-        model_type = self.get_signal_value("layers_config")
+        model_type = values.get("model_type")
+        if model_type in (None, ""):
+            model_type = self.get_signal_value("layers_config")
         allowed_blocks = MODULAR_LAYER_BLOCK_OPTIONS.get(model_type) if isinstance(model_type, str) else None
         if not isinstance(allowed_blocks, list) or any(block not in allowed_blocks for block in blocks_select):
             raise ValueError("Layers requires block names allowed by the connected reviewed Modular pipeline.")
@@ -481,7 +493,7 @@ class Layers(NodeBase):
     def execute(self, **kwargs):
         layer_configs = []
         blocks_select = self._selected_blocks(kwargs)
-        supplied_blocks = {block for block in kwargs if block != "blocks_select"}
+        supplied_blocks = {block for block in kwargs if block not in {"blocks_select", "model_type"}}
         if supplied_blocks != set(blocks_select):
             raise ValueError("Layers inputs must exactly match the reviewed selected block names.")
 

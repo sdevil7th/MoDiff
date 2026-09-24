@@ -16,6 +16,7 @@ from modules.ModularDiffusers.modular_utils import (
     get_all_model_types,
     get_modular_guider_options,
     get_modular_layer_block_options,
+    get_modular_node_action_options,
     get_modular_scheduler_options,
     get_model_type_metadata,
     require_modiff_node_contract,
@@ -24,6 +25,7 @@ from modules.ModularDiffusers import (
     FLUX_BLOCKS,
     MODULAR_GUIDER_OPTIONS,
     MODULAR_LAYER_BLOCK_OPTIONS,
+    MODULAR_NODE_ACTION_OPTIONS,
     MODULAR_SCHEDULER_OPTIONS,
     QWEN_IMAGE_BLOCKS,
     SDXL_BLOCKS,
@@ -66,6 +68,87 @@ _NO_EXPLICIT_GUIDER = object()
 
 class ModularDiffusersUpstreamContractTests(unittest.TestCase):
     """Hardware-free checks for the experimental upstream API MoDiff consumes."""
+
+    def test_connected_prompt_receipt_matches_encoder_call_and_keeps_wire_origin(self):
+        from types import SimpleNamespace
+        from modiff.execution_input_provenance import bind_generation_input_origins
+
+        pipeline = MagicMock(return_value={})
+        blocks = SimpleNamespace(
+            input_names=["prompt"], component_names=[], init_pipeline=lambda **_kwargs: pipeline,
+        )
+        schema = {
+            "params": {"prompt": {"type": "string"}}, "input_names": ["prompt"],
+            "model_input_names": ["text_encoders"], "output_names": [],
+        }
+        node = EncodePrompt()
+        with (
+            patch("modules.ModularDiffusers.embeddings.pipeline_class_from_runtime_inputs", return_value=object),
+            patch("modules.ModularDiffusers.embeddings.require_modiff_node_contract", return_value=(blocks, schema)),
+            patch("modules.ModularDiffusers.embeddings.collect_model_ids", return_value=[]),
+        ):
+            node(prompt="unused inline", prompt_input="Watercolor: lighthouse", text_encoders={"repo_id": "owner/model"})
+        pipeline.assert_called_once_with(prompt="Watercolor: lighthouse")
+        self.assertEqual(node._execution_input_record["fields"]["prompt"]["value"], "Watercolor: lighthouse")
+        bound = bind_generation_input_origins("encode", {
+            "module": "modules.ModularDiffusers", "action": "EncodePrompt", "params": {
+                "prompt": {"value": "unused inline"},
+                "prompt_input": {"sourceId": "custom-prompt", "sourceKey": "result"},
+            },
+        }, node._execution_input_record, source_fields=node._execution_input_source_fields)
+        self.assertEqual(bound["fields"]["prompt"]["source"], "connected")
+        self.assertEqual(bound["fields"]["prompt"]["sourceNodeId"], "custom-prompt")
+        self.assertEqual(bound["fields"]["prompt"]["sourcePortId"], "result")
+
+    @requires_transformers
+    def test_z_image_dimension_increment_obeys_upstream_packed_latent_contract(self):
+        from types import SimpleNamespace
+        from diffusers.modular_pipelines.z_image.before_denoise import ZImagePrepareLatentsStep
+
+        upstream = ZImagePrepareLatentsStep()
+        components = SimpleNamespace(vae_scale_factor_spatial=16)
+        for role in ("denoise", "vae_encoder"):
+            _, schema = require_modiff_node_contract(
+                diffusers.ZImageModularPipeline, role, resolve_blocks=False,
+            )
+            with self.subTest(role=role):
+                dimensions = schema["params"]
+                for field in ("width", "height"):
+                    self.assertEqual(dimensions[field]["step"], 16)
+                upstream.check_inputs(components, SimpleNamespace(height=1024, width=1008))
+                with self.assertRaisesRegex(ValueError, "divisible by 16"):
+                    upstream.check_inputs(components, SimpleNamespace(height=1024, width=1016))
+
+    @requires_transformers
+    def test_related_packed_latent_dimension_widgets_match_each_native_geometry(self):
+        from types import SimpleNamespace
+        from diffusers.modular_pipelines.flux2.before_denoise import Flux2PrepareLatentsStep
+        from diffusers.modular_pipelines.qwenimage.before_denoise import QwenImagePrepareLatentsStep
+
+        for name, multiple, roles in (
+            ("QwenImageModularPipeline", 16, ("denoise", "vae_encoder", "controlnet")),
+            ("QwenImageEditModularPipeline", 16, ("denoise",)),
+            ("FluxModularPipeline", 16, ("denoise", "vae_encoder")),
+            ("FluxKontextModularPipeline", 16, ("denoise",)),
+            ("Flux2KleinModularPipeline", 32, ("denoise",)),
+            ("Flux2KleinBaseModularPipeline", 32, ("denoise",)),
+            ("StableDiffusionXLModularPipeline", 8, ("denoise",)),
+        ):
+            for role in roles:
+                with self.subTest(pipeline=name, role=role):
+                    _, schema = require_modiff_node_contract(getattr(diffusers, name), role, resolve_blocks=False)
+                    for field in ("width", "height"):
+                        self.assertEqual(schema["params"][field]["step"], multiple)
+        QwenImagePrepareLatentsStep.check_inputs(1024, 1008, 8)
+        with self.assertRaisesRegex(ValueError, "divisible by 16"):
+            QwenImagePrepareLatentsStep.check_inputs(1024, 1016, 8)
+        klein = Flux2PrepareLatentsStep()
+        klein.check_inputs(SimpleNamespace(vae_scale_factor=16), SimpleNamespace(height=1024, width=992))
+        # Flux2 warns and floors invalid geometry instead of rejecting it. The
+        # widget must still avoid advertising a size that cannot be produced.
+        with self.assertLogs("diffusers.modular_pipelines.flux2.before_denoise", level="WARNING") as logged:
+            klein.check_inputs(SimpleNamespace(vae_scale_factor=16), SimpleNamespace(height=1024, width=1008))
+        self.assertIn("divisible by 32", logged.output[0])
 
     def test_ip_adapter_is_exported_through_the_runtime_node_module(self):
         from modules.ModularDiffusers import main
@@ -576,6 +659,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             registered_whole_workflow_models,
             {
                 "AnimaModularPipeline",
+                "ErnieImageModularPipeline",
                 "HeliosModularPipeline",
                 "HeliosPyramidDistilledModularPipeline",
                 "HeliosPyramidModularPipeline",
@@ -821,6 +905,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             for profile in public_execution_profiles()
             if "control_image" in profile["modes"]
             and profile["backend_path"] == "modules.ModularDiffusers.ModelsLoader"
+            and not profile.get("operation_recipe")
         )
         self.assertTrue(advertised_control_models)
 
@@ -1273,9 +1358,9 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         }
         self.assertEqual(get_modular_layer_block_options(), expected)
         self.assertEqual(MODULAR_LAYER_BLOCK_OPTIONS, expected)
-        self.assertEqual(Layers.params["layers_config"]["onSignal"]["data"], expected)
+        self.assertEqual(next(action["data"] for action in Layers.params["layers_config"]["onSignal"] if "data" in action), expected)
         self.assertEqual(
-            MODULE_MAP["modules.ModularDiffusers"]["Layers"]["params"]["layers_config"]["onSignal"]["data"],
+            next(action["data"] for action in MODULE_MAP["modules.ModularDiffusers"]["Layers"]["params"]["layers_config"]["onSignal"] if "data" in action),
             expected,
         )
         for model_type in set(get_all_model_types()) - {"", "DummyCustomPipeline"}:
@@ -1286,6 +1371,38 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         layer_source = inspect.getsource(Layers)
         self.assertNotIn("QwenImageModularPipeline", layer_source)
         self.assertNotIn("FluxModularPipeline", layer_source)
+
+    def test_every_split_node_publishes_its_registry_derived_signal_compatibility(self):
+        expected = {}
+        for model_type in set(get_all_model_types()) - {"", "DummyCustomPipeline"}:
+            metadata = get_model_type_metadata(model_type)
+            for action, action_config in metadata["node_params"].items():
+                if isinstance(action_config, dict):
+                    expected.setdefault(action, {})[model_type] = [action]
+
+        self.assertEqual(get_modular_node_action_options(), expected)
+        self.assertEqual(MODULAR_NODE_ACTION_OPTIONS, expected)
+
+        cases = (
+            (EncodePrompt, "text_encoders", "text_encoder"),
+            (ImageEmbeddings, "image_encoder", "image_encoder"),
+            (Denoise, "unet", "denoise"),
+            (IPAdapter, "unet", "ip_adapter"),
+            (DecodeLatents, "vae", "decoder"),
+            (ImageEncode, "vae", "vae_encoder"),
+            (Controlnet, "controlnet_bundle", "controlnet"),
+        )
+        public_nodes = MODULE_MAP["modules.ModularDiffusers"]
+        for node_class, field, action in cases:
+            with self.subTest(node=node_class.__name__, field=field):
+                declaration = node_class.params[field]["signalCompatibility"]
+                self.assertEqual(declaration["values"], expected[action])
+                self.assertEqual(
+                    public_nodes[node_class.__name__]["params"][field]["signalCompatibility"],
+                    declaration,
+                )
+                if field != "controlnet_bundle":
+                    self.assertTrue(declaration["required"])
 
     @requires_transformers
     def test_guider_options_follow_reviewed_pipeline_components_and_layer_contracts(self):
@@ -1312,9 +1429,9 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
 
         self.assertEqual(get_modular_guider_options(), expected)
         self.assertEqual(MODULAR_GUIDER_OPTIONS, expected)
-        self.assertEqual(Guider.params["guider_out"]["onSignal"][0]["data"], expected)
+        self.assertEqual(next(action["data"] for action in Guider.params["guider_out"]["onSignal"] if "data" in action), expected)
         self.assertEqual(
-            MODULE_MAP["modules.ModularDiffusers"]["Guider"]["params"]["guider_out"]["onSignal"][0]["data"],
+            next(action["data"] for action in MODULE_MAP["modules.ModularDiffusers"]["Guider"]["params"]["guider_out"]["onSignal"] if "data" in action),
             expected,
         )
 
@@ -1347,9 +1464,9 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
         }
         self.assertEqual(get_modular_scheduler_options(), expected)
         self.assertEqual(MODULAR_SCHEDULER_OPTIONS, expected)
-        self.assertEqual(Scheduler.params["scheduler_in"]["onSignal"]["data"], expected)
+        self.assertEqual(Scheduler.params["scheduler_in"]["onSignal"][0]["data"], expected)
         self.assertEqual(
-            MODULE_MAP["modules.ModularDiffusers"]["Scheduler"]["params"]["scheduler_in"]["onSignal"]["data"],
+            MODULE_MAP["modules.ModularDiffusers"]["Scheduler"]["params"]["scheduler_in"]["onSignal"][0]["data"],
             expected,
         )
         for scheduler_name in SCHEDULER_CONFIGS:

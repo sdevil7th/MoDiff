@@ -2527,8 +2527,13 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
         action: [candidate for candidate in adapter.mode_options if candidate in accepted_modes]
         for action, accepted_modes in IMAGE_ACTION_MODES.items()
     }
+    connection_actions = None
     if adapter.load_pipeline_class in _LATENT_OUTPUT_PIPELINES:
         action = next(action for action, modes in actions.items() if mode in modes)
+        connection_actions = {
+            **{candidate: modes for candidate, modes in actions.items() if modes},
+            "DecodeLatents": [mode],
+        }
         field_params['output_type'] = {'options': _image_output_options(adapter, action)}
         field_params['latents_out'] = {'hidden': False}
     contract = {
@@ -2541,6 +2546,8 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
         "actions": {action: modes for action, modes in actions.items() if modes},
         "fieldParams": field_params,
     }
+    if connection_actions is not None:
+        contract["connectionActions"] = connection_actions
     if adapter.max_output_pixels != _MAX_IMAGE_OUTPUT_PIXELS:
         contract["maxOutputPixels"] = adapter.max_output_pixels
     if mode == "unconditional_image":
@@ -3856,27 +3863,9 @@ def prepare_reference_images(image: Any, adapter: ImagePipelineAdapter) -> Any:
         return image[0] if isinstance(image, (list, tuple)) and image else image
     if adapter.multi_image_strategy != "stitch_horizontal":
         return image if isinstance(image, list) else list(image)
+    from modules.ImageOperations.main import stitch_reference_images
 
-    from PIL import Image
-
-    if not all(isinstance(item, Image.Image) for item in image):
-        raise ValueError("Horizontal multi-reference stitching currently requires PIL image inputs.")
-    converted = [item.convert("RGB") for item in image]
-    target_height = max(item.height for item in converted)
-    resized = [
-        item
-        if item.height == target_height
-        else item.resize(
-            (max(1, round(item.width * target_height / item.height)), target_height), Image.Resampling.LANCZOS
-        )
-        for item in converted
-    ]
-    canvas = Image.new("RGB", (sum(item.width for item in resized), target_height))
-    left = 0
-    for item in resized:
-        canvas.paste(item, (left, 0))
-        left += item.width
-    return canvas
+    return stitch_reference_images(image)
 
 
 def prepare_reference_prompt(prompt: Any, image: Any, adapter: ImagePipelineAdapter) -> Any:
@@ -4634,6 +4623,7 @@ class UnconditionalGenerate(NodeBase):
                 {"action": "value", "target": "image_contract"},
                 {"action": "exec", "data": "update_image_contract"},
             ],
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "image_contract": {
             "label": "Image Contract",
@@ -4758,6 +4748,7 @@ class PredictMap(NodeBase):
                 {"action": "value", "target": "image_contract"},
                 {"action": "exec", "data": "update_image_contract"},
             ],
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "image_contract": {
             "label": "Image Contract",
@@ -4885,6 +4876,7 @@ class Generate(NodeBase):
                 {"action": "value", "target": "image_contract"},
                 {"action": "exec", "data": "update_image_contract"},
             ],
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "image_contract": {
             "label": "Image Contract",
@@ -5384,7 +5376,13 @@ class DecodeLatents(NodeBase):
     label = 'Decode Image Latents'
     category = 'Diffusers Image'
     params = {
-        'pipeline': {'label': 'Pipeline', 'type': 'image_diffusion_pipeline', 'display': 'input', 'required': True},
+        'pipeline': {
+            'label': 'Pipeline',
+            'type': 'image_diffusion_pipeline',
+            'display': 'input',
+            'required': True,
+            'signalCompatibility': {'required': True, 'action': '$node'},
+        },
         'latents': {'label': 'Latents', 'type': 'tensor', 'display': 'input', 'required': True},
         'width': {'label': 'Width', 'type': 'int', 'default': 1024, 'min': 64, 'max': 4096},
         'height': {'label': 'Height', 'type': 'int', 'default': 1024, 'min': 64, 'max': 4096},
@@ -5449,7 +5447,13 @@ class LoadAdapter(NodeBase):
     category = "Diffusers Image"
     resizable = True
     params = {
-        "pipeline": {"label": "Pipeline", "display": "input", "type": "image_diffusion_pipeline", "required": True},
+        "pipeline": {
+            "label": "Pipeline",
+            "display": "input",
+            "type": "image_diffusion_pipeline",
+            "required": True,
+            "onSignal": {"action": "signal", "target": "output"},
+        },
         "adapter_path": {
             "label": "Adapter",
             "display": "modelselect",
@@ -5485,7 +5489,12 @@ class LoadAdapter(NodeBase):
             "max": 2,
             "step": 0.01,
         },
-        "output": {"label": "Pipeline", "display": "output", "type": "image_diffusion_pipeline"},
+        "output": {
+            "label": "Pipeline",
+            "display": "output",
+            "type": "image_diffusion_pipeline",
+            "signal": {"direction": "output", "origin": "pipeline", "value": ""},
+        },
     }
 
     @staticmethod

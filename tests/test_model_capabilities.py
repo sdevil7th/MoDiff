@@ -652,6 +652,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             [
                 "StableDiffusionXLControlNetPAGImg2ImgPipeline",
                 "StableDiffusionXLControlNetPAGPipeline",
+                "StableDiffusionXLModularPipeline",
                 "StableDiffusionXLPAGImg2ImgPipeline",
                 "StableDiffusionXLPAGInpaintPipeline",
                 "StableDiffusionXLPAGPipeline",

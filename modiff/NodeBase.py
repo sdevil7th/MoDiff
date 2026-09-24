@@ -498,6 +498,9 @@ class NodeBase:
         # diagnostics reflect the current graph invocation.
         self._cache_reason = (
             "invalidated" if self._cache_invalidated
+            else "models_evicted" if self._cache_valid and any(
+                memory_manager.get_model(model_id) is None for model_id in self._mm_models
+            )
             else "implementation_changed" if self._cache_valid and self._cache_implementation != implementation
             else "inputs_changed" if self._cache_valid and self._cache_input_snapshot != snapshot
             else "inputs_changed" if not params_equal
@@ -505,7 +508,7 @@ class NodeBase:
             else "usage_changed" if ignored_params_changed
             else "unchanged_inputs"
         )
-        if self._cache_reason in {"invalidated", "inputs_changed", "implementation_changed", "empty"}:
+        if self._cache_reason in {"invalidated", "models_evicted", "inputs_changed", "implementation_changed", "empty"}:
             self._cache_invalidated = False
             self._cache_valid = False
             self._has_changed = True

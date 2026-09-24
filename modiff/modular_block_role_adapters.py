@@ -41,6 +41,7 @@ PINNED_STATICALLY_CLOSED_BLOCK_ROLE_WORKFLOWS = frozenset(
     {
         ("AnimaModularPipeline", "img2img"),
         ("AnimaModularPipeline", "text2image"),
+        ("ErnieImageModularPipeline", "text2image"),
         ("Cosmos3DistilledModularPipeline", "image2video"),
         ("Cosmos3DistilledModularPipeline", "text2image"),
         ("Cosmos3DistilledModularPipeline", "text2video"),
@@ -102,6 +103,7 @@ _TOP_LEVEL_BLOCK_ROLES = {
     "video_encoder": "video_encoder",
     "semantic_generator": "semantic_generator",
     "prompt_upsample": "prompt_transform",
+    "prompt_enhancer": "prompt_transform",
     "duration": "duration",
     "condition_encoder": "condition_encoder",
     "reference_encoder": "reference_encoder",

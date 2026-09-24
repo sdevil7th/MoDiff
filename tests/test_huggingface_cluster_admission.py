@@ -512,14 +512,39 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
                     self.assertEqual(result["sealedBindingValues"][frame_source], frame_value)
                     self.assertNotIn(frame_source, result["executionParameterSources"])
 
+    def test_ernie_uses_the_exact_native_prompt_text_denoise_decode_route(self):
+        result = self.workflow_result(
+            "ErnieImageModularPipeline",
+            "text2image",
+            "official_top_level_blocks",
+        )
+        self.assertEqual(result["status"], "admitted")
+        self.assertEqual(result["reasons"], [])
+        self.assertEqual(result["studioMode"], "text_to_image")
+        self.assertEqual(result["artifact"]["repo"], "baidu/ERNIE-Image-Turbo")
+        self.assertEqual(
+            result["studioExecutionSpec"]["executionProfileId"],
+            "ernie-image-turbo:official-modular-workflow",
+        )
+        specification = STUDIO_EXECUTION_SPEC_DEFINITIONS[result["studioExecutionSpec"]["id"]]
+        self.assertEqual(
+            [(role, node_key) for role, node_key, _x, _y in specification["roles"]],
+            [
+                ("models", "modules.ModularDiffusers.ModelsLoader"),
+                ("promptEnhance", "modules.ModularDiffusers.WorkflowErniePromptEnhance"),
+                ("prompt", "modules.ModularDiffusers.WorkflowErnieTextEncode"),
+                ("denoise", "modules.ModularDiffusers.WorkflowErnieImageDenoise"),
+                ("decode", "modules.ModularDiffusers.WorkflowErnieDecodeImage"),
+                ("preview", "modules.Image.Preview"),
+            ],
+        )
+        self.assertIn(("promptEnhance", "state_out", "prompt", "state_in"), specification["edges"])
+        self.assertIn(("prompt", "state_out", "denoise", "state_in"), specification["edges"])
+        self.assertIn(("denoise", "state_out", "decode", "state_in"), specification["edges"])
+        self.assertIs(result["executable"], False)
+
     def test_equivalent_standard_routes_keep_modular_structure_but_seal_full_pipeline_execution(self):
         expected = {
-            ("ErnieImageModularPipeline", "text2image"): (
-                "text_to_image",
-                "ErnieImagePipeline",
-                "modules.DiffusersImage.LoadPipeline",
-                "baidu/ERNIE-Image-Turbo",
-            ),
             ("LTXModularPipeline", "text2video"): (
                 "text_to_video",
                 "LTXConditionPipeline",

@@ -1380,6 +1380,7 @@ def _normalized_measurement(measurement: dict[str, Any] | None) -> dict[str, Any
         "reservedBytes",
         "driverAllocatedBytes",
         "processRssBytes",
+        "peakMeasurementVersion",
     ):
         value = measurement.get(key)
         if value is None:

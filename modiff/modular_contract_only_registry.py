@@ -78,7 +78,6 @@ CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY = {
 # contract-only registry: equivalence is a reviewed routing decision, not a
 # runnable Modular profile or loader claim.
 CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS = {
-    "ErnieImageModularPipeline": ("ErnieImagePipeline",),
     "LTXModularPipeline": ("LTXConditionPipeline",),
     "LTX2ModularPipeline": ("LTX2ConditionPipeline", "LTX2InContextPipeline"),
     "Wan22ModularPipeline": ("WanPipeline",),

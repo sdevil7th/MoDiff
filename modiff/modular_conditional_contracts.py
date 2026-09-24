@@ -231,6 +231,15 @@ def build_modular_conditional_contract(pipeline: Any) -> dict[str, Any]:
         workflow_id = _name(workflow_id_value, "Workflow id")
         cases = []
         for requirement_case in _workflow_requirement_cases(predicates[workflow_id], workflow_id):
+            # The reviewed ERNIE-Image-Turbo route deliberately enables the
+            # upstream optional prompt-enhancer branch.  Keep the unpruned
+            # conditional trace aligned with the exact resolved workflow
+            # snapshot instead of silently documenting upstream's default-off
+            # branch as the route that MoDiff executes.
+            if pipeline_class == "ErnieImageModularPipeline" and workflow_id == "text2image":
+                requirement_case = {
+                    "presentInputs": [*requirement_case["presentInputs"], "use_pe"],
+                }
             trace = _trace_execution(blocks, requirement_case["presentInputs"])
             cases.append({**requirement_case, **trace})
         workflows.append({"id": workflow_id, "cases": cases})

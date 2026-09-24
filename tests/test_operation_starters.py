@@ -48,6 +48,25 @@ class OperationStarterTests(unittest.TestCase):
                 self.assertEqual([p.id for p in profiles], [identity])
                 self.assertNotIn("executionProfileId", result, "Keep the existing response envelope compatible")
 
+    def test_connected_guider_hides_unused_denoise_guidance(self):
+        from modiff.operation_starters import resolve_operation_starter
+
+        for profile in ("sdxl-base:modular", "sdxl-pag:modular", "sdxl-turbo:modular"):
+            with self.subTest(profile=profile):
+                result = resolve_operation_starter(MODULE_MAP, self.contracts, {
+                    "pipelineClass": "StableDiffusionXLModularPipeline",
+                    "task": "text_to_image", "executionProfileId": profile,
+                })
+                nodes = {node["operation"]["operationId"]: node for node in result["nodes"]}
+                edges = [edge for edge in result["edges"] if edge["targetHandle"] == "guider"]
+                self.assertTrue(edges)
+                for edge in edges:
+                    self.assertTrue(nodes[edge["target"]]["params"]["guidance_scale"]["hidden"])
+                if profile == "sdxl-turbo:modular":
+                    guidance = nodes[edges[0]["source"]]["params"]["guidance_scale"]
+                    self.assertEqual(guidance["value"], 0)
+                    self.assertEqual(guidance["min"], 0)
+
     def test_profile_selection_rejects_unrelated_unknown_and_invalid_identities(self):
         from modiff.operation_starters import resolve_operation_starter
 
@@ -62,6 +81,46 @@ class OperationStarterTests(unittest.TestCase):
                         "executionProfileId": identity,
                     },
                 )
+
+    def test_exact_artifact_variant_binds_without_model_construction(self):
+        from modiff.operation_starters import resolve_operation_starter
+        selection = {
+            "pipelineClass": "FluxModularPipeline", "task": "text_to_image",
+            "executionProfileId": "flux-dev:modular", "repository": "black-forest-labs/FLUX.1-dev-FP8",
+        }
+        with patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("constructed")):
+            result = resolve_operation_starter(MODULE_MAP, self.contracts, selection)
+        loader = result["nodes"][0]
+        self.assertEqual(loader["values"]["repo_id"]["value"], selection["repository"])
+        self.assertRegex(loader["values"]["revision"], r"^[0-9a-f]{40}$")
+        for repository in ("unreviewed/arbitrary", None, [], " black-forest-labs/FLUX.1-dev-FP8"):
+            with self.subTest(repository=repository), self.assertRaises(ValueError):
+                resolve_operation_starter(MODULE_MAP, self.contracts, {**selection, "repository": repository})
+
+    def test_native_starter_uses_reviewed_artifact_precision_and_step_defaults(self):
+        from modiff.operation_starters import resolve_operation_starter
+        result = resolve_operation_starter(MODULE_MAP, self.contracts, {
+            "pipelineClass": "ErnieImageModularPipeline", "task": "text_to_image",
+            "executionProfileId": "ernie-image-turbo:official-modular-workflow",
+        })
+        self.assertEqual(result["nodes"][0]["params"]["dtype"]["value"], "bfloat16")
+        denoise = next(node for node in result["nodes"] if node["operation"]["operationId"] == "diffusion.denoise")
+        self.assertEqual(denoise["params"]["num_inference_steps"]["value"], 8)
+        self.assertNotIn("guidance_scale", denoise["params"], "Turbo fixes guidance internally, not as an editable field")
+
+    def test_workflow_scoped_qwen_artifact_variant_is_a_real_starter_choice(self):
+        from modiff.operation_starters import resolve_operation_starter
+        repository = "unsloth/Qwen-Image-2512-unsloth-bnb-4bit"
+        selection = {
+            "pipelineClass": "QwenImageModularPipeline", "task": "text_to_image",
+            "executionProfileId": "qwen-image:modular", "repository": repository,
+        }
+        result = resolve_operation_starter(MODULE_MAP, self.contracts, selection)
+        loader = result["nodes"][0]
+        self.assertEqual(loader["values"]["reviewed_variant"], repository)
+        self.assertEqual(loader["values"]["revision"], "f50b8c24fe21e9265509b15113b7cca82d0a4443")
+        with self.assertRaisesRegex(ValueError, "exact reviewed artifact"):
+            resolve_operation_starter(MODULE_MAP, self.contracts, {**selection, "task": "image_to_image"})
 
     def test_every_advertised_profile_task_binds_without_constructing_models(self):
         from modiff.operation_starters import resolve_operation_starter
@@ -95,7 +154,8 @@ class OperationStarterTests(unittest.TestCase):
                                 self.assertEqual(loader["values"], integrated_operation_values(
                                     loader["operation"], profile=DIFFUSERS_EXECUTION_PROFILES[identity]
                                 ))
-                                self.assertRegex(loader["values"][field]["revision"], r"^[0-9a-f]{40}$")
+                                if DIFFUSERS_EXECUTION_PROFILES[identity].execution_path != "builtin-image-operation":
+                                    self.assertRegex(loader["values"][field]["revision"], r"^[0-9a-f]{40}$")
                             else:
                                 self.assertEqual(
                                     loader["values"][field]["value"], DIFFUSERS_EXECUTION_PROFILES[identity].default_repo
@@ -164,7 +224,7 @@ class OperationStarterTests(unittest.TestCase):
                 self.assertEqual([m['name'] for m in vae['semantics']['members']], ['vae'])
         image = self.resolve("StableDiffusionXLModularPipeline", "image_to_image")
         self.assertEqual(
-            image["sharedInputs"],
+            [group for group in image["sharedInputs"] if group["name"] == "seed"],
             [
                 {
                     "name": "seed",
@@ -176,6 +236,16 @@ class OperationStarterTests(unittest.TestCase):
             ],
         )
         self.assertEqual(result["sharedInputs"], [])
+        for task in ('image_to_image', 'inpaint'):
+            selected = self.resolve('StableDiffusionXLModularPipeline', task)
+            encoder = next(n for n in selected['nodes'] if n['operation']['operationId'] == 'diffusion.encode_image')
+            for dimension in ('width', 'height'):
+                self.assertEqual(encoder['params'][dimension]['default'], 1024)
+                group = next(g for g in selected['sharedInputs'] if g['name'] == dimension)
+                self.assertEqual(group['members'], [
+                    {'operationId': 'diffusion.encode_image', 'field': dimension},
+                    {'operationId': 'diffusion.denoise', 'field': dimension},
+                ])
         # These adapters do not declare that denoiser component dependency.
         for pipeline in ("FluxModularPipeline", "QwenImageModularPipeline"):
             self.assertNotIn(edge, self.resolve(pipeline, "text_to_image")["edges"])
