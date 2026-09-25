@@ -561,7 +561,8 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         with (
             patch("modules.DiffusersAudio.main.pipeline_class_from_name", return_value=FakePipelineClass),
             patch("modules.DiffusersAudio.main.local_files_only", return_value=True),
-            patch("modules.DiffusersAudio.main.apply_pipeline_offload"),
+            patch("modules.DiffusersAudio.main.exact_cached_snapshot_path", return_value=Path("installed-snapshot")) as snapshot,
+            patch("modules.DiffusersAudio.main.apply_pipeline_offload") as offload,
         ):
             result = executing.execute(
                 pipeline_class="AceStepPipeline",
@@ -570,7 +571,9 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                 revision=replacement_revision,
             )
 
-        self.assertEqual(upstream_calls, [(replacement["value"], replacement_revision)])
+        snapshot.assert_called_once_with(replacement["value"], replacement_revision)
+        self.assertEqual(offload.call_args.kwargs["resident_components"], ("condition_encoder", "vae"))
+        self.assertEqual(upstream_calls, [(Path("installed-snapshot"), replacement_revision)])
         self.assertEqual(result["pipeline"]._modiff_audio_repo, replacement["value"])
         self.assertEqual(result["pipeline"]._modiff_audio_revision, replacement_revision)
 
@@ -2121,6 +2124,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
         node.mm_add = lambda *args, **kwargs: None
         with (
             patch("modules.DiffusersAudio.main.pipeline_class_from_name", return_value=FakePipeline),
+            patch("modules.DiffusersAudio.main.exact_cached_snapshot_path", return_value=Path("installed-snapshot")),
             patch("modules.DiffusersAudio.main.apply_pipeline_offload"),
         ):
             node.execute(
@@ -2133,7 +2137,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                 offload_mode="none",
             )
 
-        self.assertEqual(loaded["repo"], "org/ace-step")
+        self.assertEqual(loaded["repo"], Path("installed-snapshot"))
         self.assertEqual(loaded["kwargs"]["device_map"], "cuda")
         self.assertEqual(loaded["kwargs"]["revision"], "0123456789abcdef0123456789abcdef01234567")
         self.assertTrue(loaded["kwargs"]["use_safetensors"])
@@ -2154,6 +2158,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
             with self.subTest(source=source):
                 with (
                     patch("modules.DiffusersAudio.main.pipeline_class_from_name", return_value=FakePipeline),
+                    patch("modules.DiffusersAudio.main.exact_cached_snapshot_path", return_value=Path("installed-snapshot")),
                     patch("modules.DiffusersAudio.main.apply_pipeline_offload"),
                 ):
                     node.execute(
@@ -2181,6 +2186,7 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
             with self.subTest(pipeline_class=pipeline_class):
                 with (
                     patch("modules.DiffusersAudio.main.pipeline_class_from_name", return_value=FakePipeline),
+                    patch("modules.DiffusersAudio.main.exact_cached_snapshot_path", return_value=Path("installed-snapshot")),
                     patch("modules.DiffusersAudio.main.apply_pipeline_offload"),
                     patch("modules.DiffusersAudio.main._ensure_language_model_generation_api"),
                 ):

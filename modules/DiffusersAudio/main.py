@@ -22,7 +22,7 @@ from modiff.diffusers_offload import (
 from modiff.config import CONFIG
 from modiff.model_artifact_catalog import IMMUTABLE_HUB_REVISION, catalog_revision
 from modiff.path_identifiers import resolve_managed_path_identifier, resolve_runtime_input_path
-from utils.huggingface import local_files_only, validate_hf_repo_id
+from utils.huggingface import exact_cached_snapshot_path, local_files_only, validate_hf_repo_id
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
 
 logger = logging.getLogger("modiff")
@@ -1162,8 +1162,9 @@ class LoadPipeline(NodeBase):
             load_kwargs["use_safetensors"] = True
 
         self.progress(-1, phase="loading", message=f"Loading {pipeline_class_name}")
+        load_target = exact_cached_snapshot_path(model_id, revision) if revision else model_id
         with self.diffusers_loading_progress():
-            pipeline = pipeline_class.from_pretrained(model_id, **load_kwargs)
+            pipeline = pipeline_class.from_pretrained(load_target, **load_kwargs)
         _ensure_language_model_generation_api(pipeline, adapter.pipeline_class)
         self._tag_pipeline(pipeline, adapter, mode, model_id, revision)
         if recipe:
@@ -1182,13 +1183,27 @@ class LoadPipeline(NodeBase):
                     break
 
         self.progress(99, phase="component_placement", message=f"Applying {offload_mode} offload")
+        offload_options = {}
+        if pipeline_class_name == "AceStepPipeline":
+            # Upstream calls text_encoder.get_input_embeddings() after forward,
+            # and reads condition_encoder.silence_latent/null_condition_emb
+            # outside forward. Keep that smaller component resident, and hook
+            # the text encoder's actual embedding entry point at leaf level.
+            # Oobleck's legacy weight_norm pre-hooks run before leaf transfer
+            # hooks; keep its small VAE resident too, preserving native weights.
+            offload_options = {
+                "component_names": tuple(getattr(pipeline, "components", {})),
+                "leaf_level_components": ("text_encoder",),
+                "resident_components": ("condition_encoder", "vae"),
+            }
         apply_pipeline_offload(
             pipeline,
             mode=offload_mode,
             device=device,
             node_id=self.node_id,
             scope="diffusers-audio",
-            prefer_pipeline_group=True,
+            prefer_pipeline_group=not offload_options,
+            **offload_options,
         )
         self.mm_add(pipeline, priority=2)
         return {"pipeline": pipeline, "resolved_artifact": model_id}

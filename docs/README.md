@@ -22,9 +22,8 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Estimate depth with generic Transformers nodes                           | [Transformers depth workflows](../modules/HuggingFaceTransformers/README.md)                |
 | Build reusable attention-mask and LoRA-scale inputs                      | [Attention Arguments](../modules/DiffusersImage/README.md#attention-arguments)              |
 | Choose, edit and reuse FLUX Blocks                                       | [Using FLUX Blocks](../modules/DiffusersImage/README.md#using-flux-blocks)                  |
-| Implement the shared Cluster/User Node composite contract and V2 schemas | [Unified composite-node contract](unified-composite-node-implementation-plan-2026-09-01.md) |
-| Track the first-party visual Diffusers/Transformers node system          | [Hugging Face visual node system plan](hugging-face-visual-node-system-plan.md)             |
-| Track Diffusers, Modular Diffusers, speech, testing, and asset work      | [Hugging Face integration roadmap](hugging-face-integration-roadmap.md)                     |
+| Implement the shared composite contract and V2 schemas                   | [Composite node contract](composite-node-contract.md)                                     |
+| Review workbench acceptance and unresolved qualification boundaries      | [Workbench acceptance](workbench-acceptance.md)                                           |
 | Review the Hugging Face-derived engineering and runtime requirements     | [Hugging Face engineering alignment](hugging-face-standards.md)                             |
 | Review inherited source baselines and per-file modification notices      | [Source provenance map](source-provenance.md)                                               |
 | Contribute code, nodes, dependencies, or client-facing changes           | [Contributing](../CONTRIBUTING.md)                                                          |
@@ -36,18 +35,11 @@ including single-file drag/drop, automatic discovery and intentional Add/Load/Re
 
 ## Required Engineering Procedure
 
-The [image prototyping readiness plan](image-prototyping-readiness-plan.md)
-controls the next image handoff: audited model coverage, editable native stages,
-model-change preservation, custom nodes, UX fixes and integrated qualification.
-It records agreed scope and planned work, not completed implementation.
-
-The [Creator / Developer workspaces plan](creator-developer-workspaces-plan.md)
-is historical. The current editor has no audience-mode switch; custom sources
-use one intentional Add/Load/Reload action. Older execution evidence is retained.
-
-The [generic Diffusers workbench plan](generic-diffusers-workbench-plan.md)
-defines the staged Auto/Expert authoring redesign, compatibility requirements,
-and acceptance criteria. Planned behavior is not a current support claim.
+The [workbench acceptance guide](workbench-acceptance.md) consolidates model
+coverage, native-stage exceptions, preservation, custom-node and integrated
+qualification requirements. Retired implementation plans and campaign trackers
+remain in Git history; their removal does not close outstanding acceptance gates.
+Use [workflow authoring](workflow-authoring-ux.md) for current behavior.
 
 Read [Cluster engineering lessons](cluster-engineering-lessons.md) before
 node/Block, hierarchy, execution, qualification or cross-machine integration work.

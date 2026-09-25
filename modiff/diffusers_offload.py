@@ -190,6 +190,7 @@ def apply_component_group_offload(
     mode,
     node_id,
     scope="pipeline",
+    leaf_level_components: Iterable[str] = LEAF_LEVEL_GROUP_COMPONENTS,
 ):
     requested_mode = normalize_offload_mode(mode, auto_offload=mode != OFFLOAD_MODE_NONE)
     normalized_device = normalize_execution_device(device)
@@ -214,7 +215,7 @@ def apply_component_group_offload(
 
     applied = []
     for component_name in component_names:
-        offload_type = "leaf_level" if component_name in LEAF_LEVEL_GROUP_COMPONENTS else "block_level"
+        offload_type = "leaf_level" if component_name in leaf_level_components else "block_level"
         applied_name = _apply_group_to_module(
             getattr(pipeline, component_name, None),
             component_name=component_name,
@@ -406,6 +407,8 @@ def apply_pipeline_offload(
     scope="pipeline",
     component_names: Iterable[str] = DEFAULT_GROUP_COMPONENTS,
     prefer_pipeline_group=True,
+    leaf_level_components: Iterable[str] = LEAF_LEVEL_GROUP_COMPONENTS,
+    resident_components: Iterable[str] = (),
 ):
     requested_mode = normalize_offload_mode(mode, auto_offload=mode != OFFLOAD_MODE_NONE)
     normalized_device = normalize_execution_device(device)
@@ -426,6 +429,16 @@ def apply_pipeline_offload(
         )
 
     reset_pipeline_device_map_for_runtime(pipeline)
+
+    # Some reviewed pipelines read a component's tensors directly, outside its
+    # forward hook. Preserve those components explicitly rather than exposing
+    # meta tensors or disk placeholders to the pipeline. This is per-instance;
+    # never mutate Diffusers' class-level exclusion list.
+    resident_components = tuple(resident_components)
+    if resident_components:
+        pipeline._exclude_from_cpu_offload = list(dict.fromkeys((
+            *getattr(pipeline, "_exclude_from_cpu_offload", ()), *resident_components,
+        )))
 
     if mode == OFFLOAD_MODE_NONE:
         pipeline.to(normalized_device)
@@ -470,9 +483,14 @@ def apply_pipeline_offload(
                     name for name, module in owned_components.items()
                     if isinstance(module, torch.nn.Module)
                 ))))
+        component_names = tuple(name for name in component_names if name not in resident_components)
+        for name in resident_components:
+            module = getattr(pipeline, name, None)
+            if isinstance(module, torch.nn.Module):
+                module.to(normalized_device)
         if mode != OFFLOAD_MODE_GROUP_DISK and prefer_pipeline_group and hasattr(pipeline, "enable_group_offload"):
             try:
-                leaf_components = sorted(name for name in LEAF_LEVEL_GROUP_COMPONENTS
+                leaf_components = sorted(name for name in leaf_level_components
                                          if isinstance(getattr(pipeline, name, None), torch.nn.Module))
                 pipeline.enable_group_offload(
                     onload_device=normalized_device,
@@ -484,7 +502,7 @@ def apply_pipeline_offload(
                     non_blocking=use_stream,
                     use_stream=use_stream,
                     record_stream=False,
-                    exclude_modules=leaf_components,
+                    exclude_modules=list(dict.fromkeys((*leaf_components, *resident_components))),
                 )
                 # The pipeline-wide block-level helper hooks `forward`, but
                 # pipelines call VAE encode/decode directly. Exclude those
@@ -496,6 +514,7 @@ def apply_pipeline_offload(
                     apply_component_group_offload(
                         pipeline, component_names=leaf_components,
                         device=normalized_device, mode=mode, node_id=node_id, scope=scope,
+                        leaf_level_components=leaf_level_components,
                     )
                 detail = "Pinned asynchronous prefetch enabled." if use_stream else "Synchronous group transfers."
                 return OffloadResult(
@@ -516,6 +535,7 @@ def apply_pipeline_offload(
             mode=mode,
             node_id=node_id,
             scope=scope,
+            leaf_level_components=leaf_level_components,
         )
         if not result.applied:
             raise RuntimeError("No compatible torch.nn.Module components were available for group offload.")

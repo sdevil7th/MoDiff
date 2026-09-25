@@ -661,7 +661,7 @@ This check does not claim file-existence, conditional-state or tensor-shape
 validation; those retain their existing backend and readiness contracts.
 
 See the
-[unified composite-node contract](unified-composite-node-implementation-plan-2026-09-01.md)
+[composite-node contract](composite-node-contract.md)
 for the normative `BlockDefinitionV2`/`BlockInstanceV2`, hashing, copy-on-write,
 migration, and schema-maintenance rules.
 

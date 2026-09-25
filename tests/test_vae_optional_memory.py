@@ -36,6 +36,7 @@ def test_audio_loader_skips_only_unimplemented_tiling(error):
     with (
         patch("modules.DiffusersAudio.main.pipeline_class_from_name", return_value=cls),
         patch("modules.DiffusersAudio.main.local_files_only", return_value=True),
+        patch("modules.DiffusersAudio.main.exact_cached_snapshot_path", return_value="installed-snapshot"),
         patch("modules.DiffusersAudio.main.apply_pipeline_offload"),
     ):
         kwargs = {"pipeline_class": "LongCatAudioDiTPipeline", "mode": "text_to_audio", "enable_vae_tiling": True}

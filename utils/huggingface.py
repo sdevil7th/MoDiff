@@ -231,6 +231,10 @@ def _hf_cache_locations():
     candidates.extend(_explicit_hf_cache_candidates())
     if default:
         candidates.append(('Default Hugging Face cache', default))
+    # main.py directs new Hub writes to the configured cache before importing
+    # huggingface_hub. Its constant may therefore no longer name the user's
+    # original cache, which inventory and exact execution must still discover.
+    candidates.append(('User default Hugging Face cache', str(Path.home() / '.cache' / 'huggingface' / 'hub')))
 
     for label, path in _common_appdata_hf_cache_candidates():
         if Path(path).exists():
@@ -1748,9 +1752,6 @@ def get_local_model_ids(id: Optional[str] = None, class_name: Optional[str] | bo
     return local_models
 
 def cached_file_path(repo_id: str, file: str | None = None, *, revision: str | None = None):
-    cache_dir = CONFIG.hf['cache_dir']
-    file_path = None
-
     if file is None:
         path = repo_id.split('/')
         if len(path) < 3:
@@ -1758,21 +1759,28 @@ def cached_file_path(repo_id: str, file: str | None = None, *, revision: str | N
         file = '/'.join(path[2:])
         repo_id = '/'.join(path[:2])
 
-    try:
-        file_path = try_to_load_from_cache(
-            repo_id=repo_id,
-            filename=file,
-            cache_dir=cache_dir,
-            revision=revision,
-        )
-    except Exception as e:
-        logger.error(f'Error checking cache for {repo_id}/{file}: {e}')
-        return None
-
-    if isinstance(file_path, str):
-        return file_path
+    for _label, cache_dir in _hf_cache_locations():
+        try:
+            file_path = try_to_load_from_cache(
+                repo_id=repo_id, filename=file, cache_dir=cache_dir, revision=revision,
+            )
+        except Exception as e:
+            logger.error(f'Error checking cache for {repo_id}/{file}: {e}')
+            continue
+        if isinstance(file_path, str):
+            return file_path
 
     return False
+
+
+def _containing_hf_cache_root(path: Path) -> Path:
+    """Use the inventory's roots, retaining the alias's own containment boundary."""
+    alias = path.expanduser().absolute()
+    for _label, location in _hf_cache_locations():
+        root = Path(location).expanduser().absolute()
+        if alias.is_relative_to(root):
+            return root.resolve(strict=False)
+    raise ValueError('Installed Hugging Face cache entry is outside the managed cache roots.')
 
 
 def resolve_managed_hf_cache_file(path: str | os.PathLike[str]) -> Path:
@@ -1788,7 +1796,7 @@ def resolve_managed_hf_cache_file(path: str | os.PathLike[str]) -> Path:
         resolved = Path(path).expanduser().resolve(strict=True)
     except (OSError, RuntimeError) as error:
         raise FileNotFoundError(f'Installed Hugging Face cache entry does not exist: {path}') from error
-    cache_root = Path(CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser().resolve(strict=False)
+    cache_root = _containing_hf_cache_root(Path(path))
     try:
         resolved.relative_to(cache_root)
     except (OSError, RuntimeError, ValueError) as error:
@@ -1846,7 +1854,7 @@ def exact_cached_snapshot_path(repo_id: str, revision: str, marker_file: str = '
     resolved_marker = resolve_managed_hf_cache_file(alias)
     try:
         snapshot.resolve(strict=True).relative_to(
-            Path(CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser().resolve(strict=False)
+            _containing_hf_cache_root(snapshot)
         )
         resolved_marker.relative_to(repository_cache.resolve(strict=True))
     except (OSError, RuntimeError, ValueError) as error:

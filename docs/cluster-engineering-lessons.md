@@ -713,3 +713,44 @@ source node. Media widgets can prefer an artifact URL over the displayed value;
 keep source metadata only when its URL and task match the instance preview.
 Test the rendered media after reload, including source fields carrying an older
 successful run, and retain immutable definitions and unrelated preview owners.
+
+## Windows qualification: cache, hooks, readiness and test scope
+
+- Inventory and execution must resolve the same managed Hugging Face cache
+  roots. Startup may redirect Hub writes, so retain discovery of the original
+  user cache. Prefer the configured root, preserve exact immutable revisions,
+  reject cross-root/symlink escapes and never convert inference into a download.
+- A pipeline's root forward hook does not cover every native entry point.
+  Exercise direct embedding/encode/decode calls and direct parameter/buffer
+  reads with the real pinned hooks, including repeated calls. Legacy
+  weight-normalization pre-hooks can rebuild weights before a transfer hook.
+  Keep reviewed exceptions small and adapter-owned; do not change all pipelines'
+  placement policy or mutate a class-level exclusion list.
+- An incoming loader wire does not prove that a required source file exists.
+  Inspect the selected executable closure and current required-field contracts
+  without rewriting saved schemas. Preserve optional empty branches. Required
+  input errors must remain blocking in both Automatic and Custom memory modes.
+- An isolated launcher must configure storage before importing the normal
+  server singleton: node events may publish through that singleton. A second
+  server can answer HTTP while losing dynamic fields and previews. Handle
+  unsupported Windows event-loop signal APIs without altering application
+  shutdown semantics.
+- Browser uploads can intentionally cancel when the graph changes. Wait for a
+  decoded input preview before subsequent edits; then verify the generated
+  preview against its task receipt and media hash, not an input or thumbnail.
+  Exercise production bundles separately from development-only test hooks.
+- Opt-in generation tests need explicit backend isolation, installed-artifact
+  checks, an idle queue, bounded execution and task-scoped cleanup. A file-path
+  environment variable or an empty queue alone does not establish isolation.
+- Keep reviewed upstream source checkouts outside ordinary application test
+  discovery. Distinguish collection/harness failures from product failures;
+  reproduce suspect pre-existing assertions on the original commit.
+- Review authored source separately from generated bundle/hash churn. Rebuild
+  through the established tooling and verify emitted bytes; do not hand-edit
+  minified files or mistake regenerated inventory hashes for new qualification.
+  Stop expanding the campaign when the requested scope has sufficient evidence.
+
+Keep acceptance criteria in [workbench acceptance](workbench-acceptance.md),
+implementation contracts in technical references, and dated plans/run ledgers in
+Git history or local evidence. Retiring a tracker must preserve unresolved
+qualification boundaries, not silently mark them complete.

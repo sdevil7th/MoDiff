@@ -181,6 +181,19 @@ For supported Intel graphics on x86-64 Linux or Windows, install or repair the p
 - Set `[huggingface] cache_dir`, `HF_HOME`, or `HF_HUB_CACHE` to a writable volume with sufficient free space. A configured `cache_dir` is exported as `HF_HUB_CACHE` by the backend.
 - Avoid pointing multiple applications at partially compatible cache layouts unless you understand how snapshots and revisions are resolved.
 
+Exact snapshot lookup checks the same cache roots as Model Manager, preferring
+the configured cache before secondary locations. Audio pipeline loading uses the
+resolved immutable local snapshot. Selecting a cache for new downloads does not
+hide an existing reviewed snapshot in another discovered cache, and inference
+does not download missing files or substitute another revision.
+
+ACE-Step reads lyric embeddings and condition tensors outside ordinary model
+forward calls. Its group offload uses leaf hooks for the text encoder; its
+condition encoder and Oobleck VAE stay resident for all offload policies. Oobleck's
+weight-normalization pre-hooks otherwise rebuild CPU weights before leaf transfer
+hooks run. Budget these components' VRAM as well as the active offload group. A selectable policy is not hardware
+qualification; inspect the actual run result and available memory.
+
 Opening or refreshing Model Manager can require a full index and artifact
 validation pass over a very large cache. Those scans run in background worker
 threads and simultaneous refresh requests share the same work, so health,
