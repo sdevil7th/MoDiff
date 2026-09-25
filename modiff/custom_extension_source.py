@@ -6,6 +6,44 @@ from urllib.parse import unquote, urlsplit
 from modiff.custom_extensions import ExtensionError, immutable_revision
 
 
+def resolve_git_extension(source, revision=None):
+    """Resolve remote refs without checkout, hooks, terminal prompts or code imports."""
+    import os
+    import subprocess
+
+    if not isinstance(source, str) or len(source) > 2048:
+        raise ExtensionError("Enter an HTTPS Git repository URL.")
+    url = urlsplit(source)
+    if url.scheme != "https" or not url.hostname or url.username or url.password or url.query or url.fragment:
+        raise ExtensionError("Use an HTTPS Git URL without credentials, query or fragment.")
+    requested = revision or "HEAD"
+    if not isinstance(requested, str) or len(requested) > 256 or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", requested) or ".." in requested:
+        raise ExtensionError("The revision must be a branch, tag or exact commit.")
+    if re.fullmatch(r"[a-f0-9]{40}", requested):
+        resolved = requested
+    else:
+        refs = [requested] if requested == "HEAD" else [f"refs/heads/{requested}", f"refs/tags/{requested}", f"refs/tags/{requested}^{{}}"]
+        try:
+            result = subprocess.run(
+                ["git", "-c", "credential.interactive=false", "ls-remote", "--exit-code", source, *refs],
+                capture_output=True, timeout=30,
+                env={**os.environ, "GIT_TERMINAL_PROMPT": "0", "GCM_INTERACTIVE": "Never"},
+            )
+            matches = [line.split() for line in result.stdout.decode("utf-8").splitlines()]
+            if result.returncode or not matches:
+                raise ValueError("Missing ref")
+            # Prefer an annotated tag's peeled commit; reject ambiguous branch/tag names.
+            peeled = {row[0] for row in matches if len(row) == 2 and row[1].endswith("^{}")}
+            commits = {row[0] for row in matches if len(row) == 2 and not row[1].startswith("refs/tags/")}
+            commits |= peeled or {row[0] for row in matches if len(row) == 2 and row[1].startswith("refs/tags/")}
+            if len(commits) != 1:
+                raise ValueError("Ambiguous ref")
+            resolved = immutable_revision(commits.pop())
+        except (OSError, ValueError, subprocess.TimeoutExpired) as error:
+            raise ExtensionError("Could not resolve Git revision. Check URL, access and revision; use an exact commit for ambiguous names.") from error
+    return {"kind": "git", "source": source, "requestedRevision": requested, "revision": resolved}
+
+
 def resolve_hub_extension(source, revision=None):
     from huggingface_hub import HfApi
     from huggingface_hub.utils import validate_repo_id

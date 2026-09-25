@@ -1,10 +1,12 @@
 """HTTP administration for operator-enabled Python, using the existing cache lease."""
 
 import asyncio
+import tempfile
+from pathlib import Path
 import nanoid
 from aiohttp import web
 
-from modiff.custom_extensions import ExtensionStore, module_name
+from modiff.custom_extensions import ExtensionStore, module_name, python_node_files
 
 
 class CustomExtensionAPI:
@@ -25,6 +27,7 @@ class CustomExtensionAPI:
             "instance": self.instance,
             "message": message,
             "removedCacheNodes": list(removed),
+            "root": str(self._extension_store().root),
         }
 
     async def custom_modules_list(self, request):
@@ -104,6 +107,60 @@ class CustomExtensionAPI:
             }
 
         return await self._extension_mutation(stage)
+
+    async def custom_modules_add(self, request):
+        """The explicit Add action authorizes this exact import, never discovery."""
+        try:
+            body = await self._strict_runtime_control_json(
+                request, allowed={"kind", "source", "name", "revision", "content", "consent"},
+                required={"kind", "name", "consent"},
+                # A 2 MiB Python file can expand sixfold in JSON \u escapes.
+                max_bytes=12 * 1024 * 1024 + 4096,
+            )
+            if body["consent"] is not True:
+                raise ValueError("Adding a node requires permission to run its Python code.")
+            name = module_name(body["name"])
+            kind = body["kind"]
+            if kind not in {"local", "hub", "git", "file"}:
+                raise ValueError("Select Local, Hugging Face or Git.")
+            if kind == "file":
+                content = body.get("content")
+                if not isinstance(content, str):
+                    raise ValueError("Provide the Python node file contents.")
+                files = python_node_files(content.encode("utf-8"))
+            else:
+                if "content" in body:
+                    raise ValueError("File contents are only accepted for a Python file import.")
+                source = body.get("source")
+                if not isinstance(source, str):
+                    raise ValueError("Provide a source path or repository.")
+                if kind in {"git", "hub"}:
+                    from modiff.custom_extension_source import resolve_git_extension, resolve_hub_extension
+
+                    resolver = resolve_git_extension if kind == "git" else resolve_hub_extension
+                    resolved = await asyncio.to_thread(resolver, source, body.get("revision"))
+                    source, body["revision"] = resolved["source"], resolved["revision"]
+        except (ValueError, OSError, SyntaxError) as error:
+            return web.json_response({"error": True, "message": str(error)}, status=400)
+
+        def add():
+            from modules import MODULE_MAP
+
+            store = self._extension_store()
+            if kind == "file":
+                with tempfile.TemporaryDirectory(prefix="modiff-node-upload-") as temporary:
+                    for filename, data in files.items():
+                        (Path(temporary) / filename).write_bytes(data)
+                    item = store.stage(kind="local", source=temporary, name=name)
+            else:
+                item = store.stage(kind=kind, source=source, name=name, revision=body.get("revision"))
+            registry = store.enable(name, code_hash=item["codeHash"], consent=True)
+            self.modules[item["moduleKey"]] = registry
+            MODULE_MAP[item["moduleKey"]] = registry
+            self.instance = nanoid.generate(size=10)
+            return {**self._extension_payload(message="Custom nodes added and enabled."), "module": store.inspect(name)}
+
+        return await self._extension_mutation(add)
 
     async def custom_modules_enable(self, request):
         try:

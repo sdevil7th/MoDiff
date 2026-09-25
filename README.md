@@ -261,25 +261,21 @@ Open the URL printed by Vite. These uv commands invoke MoDiff's shared managed
 installer through Python; they are not `uv sync` or a new dependency resolver.
 See [developer setup](docs/developer-setup.md) for environment details and
 [service prototyping](docs/service-prototyping.md) to export a named service
-interface from the Developer workspace. Services reuse the existing API graph and local runtime.
+interface from the editor. Services reuse the existing API graph and local runtime.
 
-The frontend offers **Creator** (Templates as the starting point) and **Developer**
-(a searchable, categorized Workflows chooser that creates connected nodes with one task click). Both use one editable canvas and Nodes library,
-including enabled custom nodes and Saved Blocks. Double-click the canvas to search;
-drag from a socket to find compatible nodes and Blocks. **Show implementation
-nodes** reveals underlying adapters and upstream Python block implementations.
-A graph Block can be expanded and edited; its source identity is available in
-**Inspect Block → Implementation**. **Memory: Automatic / Custom** is independent
-of workspace selection. Select a generic loader and use **Inspect node → Parameters
-→ Change model / task** to review changes to its connected graph; compatible
-inputs survive and Undo restores the change. Nested Blocks retain their composition
-inspector while Block-level switching is being implemented. See the [workspace implementation plan](docs/creator-developer-workspaces-plan.md)
-for completed acceptance and the remaining model-execution campaign.
+The frontend has one developer-first editor. Start with **Workflows** for connected
+task stages or choose **Templates**. Inspect implementation/docs and export graph
+JSON or services without changing modes. **Memory: Automatic / Custom** remains
+independent per workflow.
+
+Use **Add image / audio input** on a loader, or drag a media output onto an
+operation. A dropdown lists supported roles; required stages are added inside
+the existing graph, preserving prompts and branches as one Undo operation.
+Video simplification is deferred.
 
 Generic Modular loader and node-field updates can run while another workflow is
-generating, without borrowing its model cache. See the [field-action ownership
-contract](docs/api-reference.md#graph-execution-and-queue-state) for the
-reviewed metadata boundary and callbacks that remain serialized.
+generating without borrowing its model cache. See the [field-action ownership
+contract](docs/api-reference.md#graph-execution-and-queue-state).
 
 ## Managed installation profiles
 
@@ -382,7 +378,13 @@ For the current task browser, picker behavior and qualification limits, see
 
 ## Custom nodes
 
-Open **Nodes → Custom nodes** in either workspace to add a Hugging Face or local source. Resolve a Hub URL or repository ID to an exact commit, stage it, review its source and dependencies, then explicitly enable that code. Local Python folders and pinned Git sources use the same review flow. See [Developing custom nodes](docs/custom-nodes.md) for the repository-relative, step-by-step Prompt Prefix walkthrough, runnable examples, typed fields, reload and independent Automatic/Custom memory policies.
+Open **Nodes → Add custom node** for Local, Hugging Face or Git. Intentional Add/Load
+validates and enables code in one action; remote revisions are pinned internally.
+Drop a structured Python node file onto the canvas to import and insert it.
+Files/packages in `custom/` appear automatically without executing; management
+provides Load/Reload/Disable. Python runs with backend permissions, so only load
+trusted code. Dependencies are checked, not installed automatically.
+See [Developing custom nodes](docs/custom-nodes.md) for contracts and examples.
 
 Approved Modular blocks without model ports receive a **Models** input when their
 Python contract requires components. Connect **Load Models → Pipeline Components**

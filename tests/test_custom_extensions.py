@@ -98,6 +98,90 @@ def test_git_requires_an_immutable_revision_before_clone(store):
         store.stage(kind="git", source="https://example.com/example.git", name="Example", revision="main")
 
 
+def test_standalone_discovery_never_imports_and_reload_reads_original_file(store, tmp_path, monkeypatch):
+    source = source_node(tmp_path / "source")
+    store.root.mkdir()
+    code = (source / "main.py").read_text(encoding="utf-8")
+    path = store.root / "Example.py"
+    path.write_text('MODIFF_RUNTIME_ROLE = "data"\n' + code, encoding="utf-8")
+    item = store.list()[0]
+    assert item["path"] == str(path) and item["runtimeRole"] == "data"
+    assert not item["enabled"] and "custom.Example.main" not in sys.modules
+    registry = store.enable("Example", code_hash=item["codeHash"], consent=True)
+    from modules import MODULE_MAP
+    monkeypatch.setitem(MODULE_MAP, "custom.Example", registry)
+    assert sys.modules["custom.Example.main"].Echo("single").execute("Hello") == {"out": "HELLO"}
+    path.write_text(code.replace("text.upper()", "text.lower()"), encoding="utf-8")
+    assert store.inspect("Example")["status"] == "changed"
+    changed = store.inspect("Example")
+    store.enable("Example", code_hash=changed["codeHash"], consent=True)
+    assert sys.modules["custom.Example.main"].Echo("single").execute("Hello") == {"out": "hello"}
+
+
+@pytest.mark.parametrize("content,reason", [
+    (b"print('not a node')", "No NodeBase"),
+    (b"class broken:", "Invalid Python"),
+    (b"MODIFF_RUNTIME_ROLE = compute()", "literal"),
+    (b"MODIFF_REQUIREMENTS = ['package\\n--index-url=x']", "requirement strings"),
+])
+def test_invalid_standalone_node_is_rejected_without_import(content, reason):
+    from modiff.custom_extensions import python_node_files
+    with pytest.raises(ExtensionError, match=reason):
+        python_node_files(content)
+
+
+def test_one_action_add_file_executes_through_graph_dispatch(backend, store, tmp_path):
+    import asyncio
+    code = (source_node(tmp_path / "source") / "main.py").read_text(encoding="utf-8")
+    async def scenario():
+        denied = await backend.custom_modules_add(request({"kind": "file", "name": "Example", "content": code, "consent": False}))
+        assert denied.status == 400 and not store.path("Example").exists()
+        added = await backend.custom_modules_add(request({"kind": "file", "name": "Example", "content": code, "consent": True}))
+        assert added.status == 200, added.text
+        item = json.loads(added.text)["module"]
+        assert item["enabled"] and item["nodes"] == ["Echo"]
+        backend.execute_node("file-node", {"module": "custom.Example", "action": "Echo", "params": {"text": {"value": "works"}}}, "test", quiet=True)
+        assert backend.node_cache["file-node"].output == {"out": "WORKS"}
+        duplicate = await backend.custom_modules_add(request({"kind": "file", "name": "Example", "content": code, "consent": True}))
+        assert duplicate.status == 400
+        assert store.inspect("Example")["enabled"]
+    asyncio.run(scenario())
+
+
+def test_add_source_failure_keeps_canvas_registry_and_queue_isolation(backend, store, tmp_path):
+    import asyncio
+    code = (source_node(tmp_path / "source") / "main.py").read_text(encoding="utf-8")
+    async def scenario():
+        body = {"kind": "file", "name": "Example", "content": code, "consent": True}
+        backend.current_task = {"task_id": "unrelated"}
+        busy = await backend.custom_modules_add(request(body))
+        assert busy.status == 409 and not store.path("Example").exists()
+        backend.current_task = None
+        body["content"] += '\nraise RuntimeError("import failed")\n'
+        failed = await backend.custom_modules_add(request(body))
+        assert failed.status == 400
+        assert not store.inspect("Example")["enabled"]
+        assert "custom.Example" not in backend.modules
+    asyncio.run(scenario())
+
+
+def test_file_add_allows_real_node_size_without_relaxing_other_control_limits(backend, store, tmp_path):
+    import asyncio
+    from types import SimpleNamespace
+    code = (source_node(tmp_path / "source") / "main.py").read_text() + "\n#" + "x" * 8192
+    raw = json.dumps({"kind": "file", "name": "Example", "content": code, "consent": True}).encode()
+    async def read():
+        return raw
+    incoming = SimpleNamespace(content_length=len(raw), read=read)
+    async def scenario():
+        with pytest.raises(ValueError, match="4096"):
+            await backend._strict_runtime_control_json(incoming, allowed={"kind", "name", "content", "consent"})
+        response = await backend.custom_modules_add(incoming)
+        assert response.status == 200, response.text
+        assert store.inspect("Example")["enabled"]
+    asyncio.run(scenario())
+
+
 def test_unapproved_directory_is_not_loaded_at_startup(store, tmp_path):
     source_node(store.root / "Example")
     registry = {}

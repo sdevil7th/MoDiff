@@ -31,7 +31,8 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Understand the local-only trust boundary or report a vulnerability       | [Security policy](../SECURITY.md)                                                           |
 | Understand expected conduct in project spaces                            | [Code of conduct](../CODE_OF_CONDUCT.md)                                                    |
 
-Custom Python and Hub block authors: [Developing custom nodes](custom-nodes.md).
+Custom Python and Hub block authors: [Developing custom nodes](custom-nodes.md),
+including single-file drag/drop, automatic discovery and intentional Add/Load/Reload.
 
 ## Required Engineering Procedure
 
@@ -41,9 +42,8 @@ model-change preservation, custom nodes, UX fixes and integrated qualification.
 It records agreed scope and planned work, not completed implementation.
 
 The [Creator / Developer workspaces plan](creator-developer-workspaces-plan.md)
-records the earlier implementation plan: audience-specific starting points,
-one editable graph, the Developer Workflows modal, and model/modification tests.
-Its unchecked milestones are planned work, not current support claims.
+is historical. The current editor has no audience-mode switch; custom sources
+use one intentional Add/Load/Reload action. Older execution evidence is retained.
 
 The [generic Diffusers workbench plan](generic-diffusers-workbench-plan.md)
 defines the staged Auto/Expert authoring redesign, compatibility requirements,

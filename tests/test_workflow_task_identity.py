@@ -118,6 +118,27 @@ def test_missing_or_wrong_state_wire_and_duplicate_consumers_do_not_guess():
     assert modular_graph_tasks(graph, "loader", list(graph)[1:], "UnknownPipeline") == set()
 
 
+def test_guidance_helpers_belong_to_the_connected_owner_without_crossing_media():
+    from modiff.workflow_task_identity import resource_consumers
+
+    nodes = modular_graph("StableDiffusionXLModularPipeline", "image_to_image")["nodes"]
+    nodes["layers"] = {"module": "modules.ModularDiffusers", "action": "Layers", "params": {}}
+    nodes["guide"] = {"module": "modules.ModularDiffusers", "action": "Guider", "params": {
+        "layers_config": {"sourceId": "layers", "sourceKey": "layers_config"},
+    }}
+    nodes["denoise"]["params"]["guider"] = {"sourceId": "guide", "sourceKey": "guider_out"}
+    nodes["other"] = {"module": "modules.ModularDiffusers", "action": "ModelsLoader", "params": {}}
+    nodes["image"] = {"module": "modules.ModularDiffusers", "action": "DecodeLatents", "params": {
+        "vae": {"sourceId": "other", "sourceKey": "vae_out"},
+    }}
+    nodes["denoise"]["params"]["image"] = {"sourceId": "image", "sourceKey": "image"}
+    found = resource_consumers(nodes, "loader", {"loader", "other"})
+    assert {"guide", "layers"}.issubset(found)
+    assert not {"image", "other"}.intersection(found)
+    nodes["guide"]["module"] = "custom.Arbitrary"
+    assert "guide" not in resource_consumers(nodes, "loader", {"loader", "other"})
+
+
 def test_actual_operation_starter_edges_resolve_the_selected_image_task():
     from modules import MODULE_MAP
     from modiff.operation_catalog import build_operation_catalog

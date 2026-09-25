@@ -1,5 +1,9 @@
 # Image prototyping readiness and Álvaro handoff plan
 
+The later developer-first node UX supersedes this plan's audience-mode switch
+and multi-step custom-import flow. Model qualification/history below is retained;
+it is not new proof for the unified editor.
+
 Status: **Planned; not an implementation-complete or qualification claim.**
 Decision date: 24 September 2026.
 Baseline: backend `59bc342`, client `6e93329`, plus the existing uncommitted changes in both worktrees.

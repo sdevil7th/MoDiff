@@ -69,3 +69,35 @@ def test_resolution_errors_do_not_expose_remote_details(monkeypatch):
     with pytest.raises(ValueError, match="Check the repository") as error:
         resolve_hub_extension("owner/repo")
     assert "secret" not in str(error.value)
+
+
+@pytest.mark.parametrize("ref,rows,expected", [
+    (None, [("a", "HEAD")], "a"),
+    ("main", [("b", "refs/heads/main")], "b"),
+    ("release", [("c", "refs/tags/release"), ("d", "refs/tags/release^{}")], "d"),
+    ("release", [("a", "refs/heads/release"), ("c", "refs/tags/release"), ("d", "refs/tags/release^{}")], None),
+])
+def test_git_resolution_is_pinned_bounded_and_rejects_ambiguity(monkeypatch, ref, rows, expected):
+    from modiff.custom_extension_source import resolve_git_extension
+    def run(args, **kwargs):
+        assert args[:4] == ["git", "-c", "credential.interactive=false", "ls-remote"]
+        assert kwargs["timeout"] == 30
+        assert kwargs["env"]["GIT_TERMINAL_PROMPT"] == "0"
+        return SimpleNamespace(returncode=0, stdout="".join(f"{sha * 40}\t{name}\n" for sha, name in rows).encode())
+    monkeypatch.setattr("subprocess.run", run)
+    if expected:
+        assert resolve_git_extension("https://example.com/nodes.git", ref)["revision"] == expected * 40
+    else:
+        with pytest.raises(ValueError, match="ambiguous"):
+            resolve_git_extension("https://example.com/nodes.git", ref)
+
+
+@pytest.mark.parametrize("source,revision", [
+    ("file:///tmp/nodes", None), ("https://user:pass@example.com/nodes", None),
+    ("https://example.com/nodes?token=secret", None), ("https://example.com/nodes", "--upload-pack=evil"),
+])
+def test_git_invalid_source_does_not_launch_git(monkeypatch, source, revision):
+    from modiff.custom_extension_source import resolve_git_extension
+    monkeypatch.setattr("subprocess.run", lambda *a, **k: pytest.fail("No Git invocation"))
+    with pytest.raises(ValueError):
+        resolve_git_extension(source, revision)

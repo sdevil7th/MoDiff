@@ -1542,6 +1542,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 web.get("/custom_modules", self.custom_modules_list),
                 web.post("/custom_modules/refresh", self.custom_modules_refresh),
                 web.post("/custom_modules/install", self.custom_modules_install),
+                web.post("/custom_modules/add", self.custom_modules_add),
                 web.post("/custom_modules/resolve", self.custom_modules_resolve),
                 web.post("/custom_modules/{name}/update", self.custom_modules_update),
                 web.post("/custom_modules/{name}/inspect", self.custom_modules_inspect),
@@ -11843,15 +11844,15 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         if isinstance(gate, dict) and gate.get("token") == token:
             self._runtime_mutation_gate = None
 
-    async def _strict_runtime_control_json(self, request, *, allowed, required=(), allow_empty=False):
+    async def _strict_runtime_control_json(self, request, *, allowed, required=(), allow_empty=False, max_bytes=4096):
         content_length = getattr(request, "content_length", None)
         if content_length is not None and (
             not isinstance(content_length, int)
             or isinstance(content_length, bool)
             or content_length < 0
-            or content_length > 4096
+            or content_length > max_bytes
         ):
-            raise ValueError("Runtime control request exceeds 4096 bytes.")
+            raise ValueError(f"Runtime control request exceeds {max_bytes} bytes.")
 
         def reject_duplicates(pairs):
             value = {}
@@ -11866,18 +11867,18 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             chunks = []
             total = 0
             while not content.at_eof():
-                chunk = await content.read(min(4097 - total, 4097))
+                chunk = await content.read(min(max_bytes + 1 - total, 65536))
                 if not chunk:
                     break
                 chunks.append(chunk)
                 total += len(chunk)
-                if total > 4096:
-                    raise ValueError("Runtime control request exceeds 4096 bytes.")
+                if total > max_bytes:
+                    raise ValueError(f"Runtime control request exceeds {max_bytes} bytes.")
             raw = b"".join(chunks)
         elif hasattr(request, "read"):
             raw = await request.read()
-            if len(raw) > 4096:
-                raise ValueError("Runtime control request exceeds 4096 bytes.")
+            if len(raw) > max_bytes:
+                raise ValueError(f"Runtime control request exceeds {max_bytes} bytes.")
         else:
             raw = None
         if raw is not None:

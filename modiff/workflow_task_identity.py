@@ -173,8 +173,16 @@ def resource_consumers(nodes: dict, loader_id: str, loader_ids: set[str]) -> lis
             # a completed model owner. Crossing a media edge would merge owners
             # and prevent the existing sequential resource-release schedule.
             and nodes[p["sourceId"]].get("module") == "modules.ModularDiffusers"
-            and re.search(r"pipeline|component|state|model|encoder|unet|vae|loop_member|controlnet|adapter",
+            and (
+                re.search(r"pipeline|component|state|model|encoder|unet|vae|loop_member|controlnet|adapter",
                           str(p.get("sourceKey", "")) + " " + key, re.I)
+                # Native guidance helpers supply configuration upstream of the
+                # denoiser. They own no weights but belong to this model scope.
+                or (nodes[p["sourceId"]].get("action"), p.get("sourceKey"), key) in {
+                    ("Guider", "guider_out", "guider"),
+                    ("Layers", "layers_config", "layers_config"),
+                }
+            )
         )
         if not additions:
             return sorted(found - {loader_id})

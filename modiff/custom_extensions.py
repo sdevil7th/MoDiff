@@ -66,6 +66,11 @@ def json_object(content, label):
 
 def source_files(root, *, hub=False):
     """Read a bounded code package; never copy weights, environments or credentials."""
+    if not _linked(root) and root.is_file() and root.suffix == ".py":
+        if root.stat().st_size > MAX_FILE_BYTES:
+            raise ExtensionError("Python node file exceeds 2 MiB.")
+        with root.open("rb") as reader:
+            return python_node_files(reader.read(MAX_FILE_BYTES + 1))
     if _linked(root) or not root.is_dir():
         raise ExtensionError("Extension source must be a regular directory, not a link.")
     files, total, count = {}, 0, 0
@@ -98,6 +103,39 @@ def source_files(root, *, hub=False):
                 if len(content) > MAX_FILE_BYTES or total > MAX_TOTAL_BYTES or len(files) >= MAX_FILES:
                     raise ExtensionError("Extension source exceeds its file/byte limit.")
                 files[path.relative_to(root).as_posix()] = content
+    return files
+
+
+def python_node_files(content):
+    """Wrap a single declared node without executing it or guessing dependencies."""
+    if not isinstance(content, bytes) or len(content) > MAX_FILE_BYTES:
+        raise ExtensionError("Python node file exceeds 2 MiB.")
+    try:
+        text = content.decode("utf-8-sig")
+        tree = ast.parse(text, filename="main.py")
+    except (UnicodeError, SyntaxError) as error:
+        raise ExtensionError(f"Invalid Python node: {error}") from error
+    declarations = {}
+    for statement in tree.body:
+        if isinstance(statement, ast.Assign):
+            for target in statement.targets:
+                if isinstance(target, ast.Name) and target.id in {"MODIFF_RUNTIME_ROLE", "MODIFF_REQUIREMENTS"}:
+                    try:
+                        declarations[target.id] = ast.literal_eval(statement.value)
+                    except (ValueError, TypeError) as error:
+                        raise ExtensionError(f"{target.id} must be a literal declaration.") from error
+    requirements = declarations.get("MODIFF_REQUIREMENTS", [])
+    if not isinstance(requirements, list) or any(not isinstance(item, str) or "\n" in item for item in requirements):
+        raise ExtensionError("MODIFF_REQUIREMENTS must be a list of package requirement strings.")
+    files = {
+        "main.py": text.encode("utf-8"),
+        "__init__.py": b"from .main import *\n",
+        "modiff_extension.json": json.dumps({"runtimeRole": declarations.get("MODIFF_RUNTIME_ROLE", "manual")}).encode(),
+        "requirements.txt": "\n".join(requirements).encode(),
+    }
+    runtime_role(files)
+    if not _preview(files)["nodes"]:
+        raise ExtensionError("No NodeBase node definition found. Declare a NodeBase subclass with params and execute().")
     return files
 
 
@@ -315,6 +353,11 @@ class ExtensionStore:
                 if _linked(path) or _linked(path.parent):
                     raise ExtensionError("Installed module directories must not be links.")
                 return path
+        standalone = self.root / f"{name}.py"
+        if standalone.exists() or standalone.is_symlink():
+            if _linked(standalone):
+                raise ExtensionError("Custom node files must not be links.")
+            return standalone
         return self.root / name
 
     def _state(self):
@@ -385,6 +428,8 @@ class ExtensionStore:
         for directory in (self.root, self.root / ".disabled"):
             if directory.is_dir() and not _linked(directory):
                 names.update(p.name for p in directory.iterdir() if p.is_dir() and MODULE_NAME.fullmatch(p.name))
+        if self.root.is_dir():
+            names.update(p.stem for p in self.root.glob("*.py") if MODULE_NAME.fullmatch(p.stem) and p.stem != "__init__")
         result = []
         for name in sorted(names):
             try:
@@ -611,6 +656,8 @@ class ExtensionStore:
             klass = getattr(main, action, None)
             if not isinstance(klass, type) or not issubclass(klass, NodeBase):
                 raise ExtensionError(f"{action} must be a NodeBase subclass exported from main.py.")
+            if not callable(getattr(klass, "execute", None)):
+                raise ExtensionError(f"{action} must implement execute() returning its declared outputs.")
         json.dumps(registry, allow_nan=False)
         return registry
 

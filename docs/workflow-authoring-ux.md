@@ -29,6 +29,20 @@ Qwen-Image 2.1 uses its supported whole-pipeline route at the reviewed Diffusers
 
 ## Change the model
 
+### Guidance control visibility
+
+Removing a Guidance row through Configure interface hides the row, not the
+underlying operation or its effect. The current value is retained on its original
+stage. Explicit removals are recorded by `{nodeId, fieldId}` in the optional
+instance `presentation.removedControlBindings` list and survive reload and dynamic
+field refresh. Re-exposing a control clears its removal record. Reusable-node
+definitions can carry the same optional `removedControlBindings` list as initial
+presentation; it is excluded from execution identity. Both client and backend
+validate bounded, unique bindings. Historical omissions without a removal record
+are not guessed to be deliberate removals, and opening a workflow does not rewrite it.
+
+### Model selection
+
 The model field of a canonical loader opens **Choose model for Load Models**.
 Search by model or repository and optionally filter to Downloaded. Names precede
 repository IDs; download status is a trailing badge. Selecting a row resolves the

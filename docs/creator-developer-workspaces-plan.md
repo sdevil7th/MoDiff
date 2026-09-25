@@ -1,5 +1,9 @@
 # Creator / Developer workspaces implementation plan
 
+Historical plan: the workspace switch and staged approval UX are superseded by
+the unified developer-first editor and intentional Add/Load/Reload. Preserve this
+document as implementation history, not current UX instructions.
+
 ## Immediate delivery: image demo
 
 The current priority is a two-hour image-demo checkpoint. Qualify a representative

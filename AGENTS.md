@@ -39,7 +39,7 @@ These rules apply to AI-assisted work in this repository. `CONTRIBUTING.md` is t
 ## Custom extensions
 
 - Read [Custom node development](docs/custom-nodes.md) before changing extension discovery, staging, enable, reload, or execution. Keep approvals outside source packages and bind them to inspected source and declared dependency versions.
-- Preserve the historical contract-only Dynamic Block path. Executable custom Python uses the explicit Custom nodes enable boundary and the existing executor; Expert mode, preview, and graph import are not consent.
+- Executable custom Python uses explicit Add/Load/Reload and the existing executor. Bind source/dependency hashes internally; discovery, preview and graph import are not consent. Contract-only Blocks remain non-executable.
 - A custom resource declaration is operator-reviewed code metadata, not catalog or hardware qualification. Do not execute custom suppliers during Auto inspection or assume their Python references are safe for early model eviction.
 
 ## Quality And Evidence

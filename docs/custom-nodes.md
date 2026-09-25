@@ -1,33 +1,31 @@
 # Developing custom nodes
 
-In Developer, choose **Add from Hugging Face** or **Add local source** in the
-**Workflows** dialog, or open **Nodes → Custom nodes** (also available in the Models
-environment panel). Adding a source does not create or replace a workflow.
-Choose a local Python folder, an HTTPS Git source, or a Hub Modular block.
+Choose **Nodes → Add custom node**. The full-width yellow button opens three
+sources: **Local**, **Hugging Face**, and **Git**. Adding code does not replace
+your workflow. Intentional Add/Load imports and enables it in one action.
 
-For Hugging Face, enter the repository ID or its `https://huggingface.co/owner/repo`
-URL, optionally with `/tree/<revision>`. Select **Resolve revision** to resolve a
-branch, tag or commit (default `main`) to an exact lowercase 40-character commit.
-Check the resolved source and commit, enter a module name, then stage it. Changing
-the source or revision clears that result; cancellation discards late responses.
-Resolution only reads Hub metadata. A bare repository ID with an exact commit can
-also be staged directly. Git sources require an exact commit before staging.
+- Local: drop a structured `.py` node onto the canvas (or Choose Python file).
+  One registered node is inserted at the drop position; multiple definitions
+  offer a node dropdown. Alternatively place a file/package in backend `custom/`;
+  it appears in the permanent Custom nodes category without executing. Choose
+  **Manage nodes → Load** to load it. Advanced accepts another backend source path.
+- Hugging Face: enter a compatible repository ID or repository URL and click
+  **Add node**. A model repository alone is not a custom node.
+- Git: enter an HTTPS repository URL and click **Add node**. Git must be installed
+  and private-repository credentials configured on the backend.
 
-**Stage source**
-copies code and metadata into the backend's `custom/<Name>` directory with
-execution disabled. It does not install Python dependencies or copy model weights.
+Remote branches/tags resolve to exact commits internally. Revision and package
+name overrides live under Advanced. Imports copy bounded source/metadata, not
+model weights. Dependencies are checked but never installed automatically.
+Errors show **Node import failed** and a reason; failed imports are not enabled.
 
-Inspect the installed path, file hashes, code identity, declared dependencies,
-inputs and outputs. Review the actual source files and license before selecting
-the code-execution checkbox and **Enable code**. This imports trusted Python with
-the backend's permissions. Custom web fields, if present, run in the browser
-origin. This is not a Python sandbox or a source-code security audit.
-
-Refresh, inspect, and cancelling a review do not import the submitted Python.
-Developer workspace selection is not consent. An old directory manually placed in `custom/` also
-requires review; its node identifiers remain the same after enabling. Existing
-`custom/.disabled/<Name>` packages can be reviewed without deleting or relocating
-their source. Names use a letter followed by letters, numbers or underscores.
+Only add code you trust: Python runs with backend permissions, not in a sandbox.
+Add/Load/Reload is the explicit authorization—there is no separate approval
+checkbox. Opening a workflow, listing sources, and refreshing do not authorize code.
+Management offers **Reload**, **Disable**, source location and dependencies.
+Code changes invalidate the previous hash until Reload; running or queued work
+must finish before code changes. Disable preserves files and may require a restart
+to undo arbitrary Python side effects.
 
 ## A small ordinary node
 
@@ -93,29 +91,34 @@ from .main import PromptPrefix  # noqa: F401
 { "runtimeRole": "data" }
 ```
 
-To stage and test it without a model:
+To add and test it without a model:
 
-1. In **Developer**, open **Nodes → Custom nodes** and choose **Add local source**.
-2. Enter `examples/custom_nodes/PromptTools` as the source and `PromptTools` as
-   the module name, then select **Stage source**. Staging copies the source but
-   does not import it.
-3. Inspect the copied files, hashes, dependencies, ports and `data` runtime role.
-   Select the code-execution consent checkbox and choose **Enable code**.
-4. Add **Text Value**, **Prompt Prefix**, and **Export Data** to an empty workflow.
-5. Connect **Text Value.Output → Prompt Prefix.Prompt Input**, then connect
-   **Prompt Prefix.Prompt → Export Data.Data**. Set
-   Export Data to `text` and its file to
-   `{PATH:data}/exports/PromptPrefix_{HASH:6}.txt`. Enter
-   `a lighthouse at night`, keep the prefix `Watercolor:`, and Run. Its preview
-   reads `Watercolor: a lighthouse at night`.
-6. Drag from either Prompt Prefix socket to check typed suggestions. Built-in and
-   Custom section headers remain visible, and search covers both sections.
-7. To reload an edit, modify the installed source path shown by the review panel,
-   select **Review reload**, inspect the new hash, consent again, and choose
-   **Enable and reload code**. Insert a fresh node if field names or types changed.
+1. Open **Nodes → Add custom node → Local → Advanced options**.
+2. Enter `examples/custom_nodes/PromptTools` as the backend source; select **Add node**.
+3. Expand **Custom nodes**, then add **Prompt Prefix** to the canvas.
+4. Add **Text Value** and **Export Data**. Connect Text Value.Output →
+   Prompt Prefix.Prompt Input → Export Data.Data (using Prompt Prefix.Prompt).
+5. Set Export Data to `text`, file `{PATH:data}/exports/PromptPrefix_{HASH:6}.txt`;
+   enter `a lighthouse at night`, keep `Watercolor:`, then Run.
+   The result is `Watercolor: a lighthouse at night`.
+6. Edit the installed source path shown in Manage nodes, then select **Reload**.
+   Insert a fresh node if port names/types changed.
 
-The same enabled node appears in the Nodes library in Creator and Developer. No
-frontend code or separate executor is required.
+For a single-file node, use the same class in a `.py` file and add
+`MODIFF_RUNTIME_ROLE = "data"` at module scope. Optional
+`MODIFF_REQUIREMENTS = ["package>=version"]` declares dependencies.
+No `__init__.py` is needed for this form. Files must be UTF-8, at most 2 MiB,
+and declare NodeBase classes with typed fields and an `execute` method returning
+the named output dictionary. Arbitrary Python scripts are rejected.
+Packages still use `main.py` and `__init__.py`; extra files belong in a package.
+
+For typed media examples, use `examples/custom_nodes/LightPaletteDirector/`
+(decoded image plus a reusable region mask) and
+`examples/custom_nodes/AudioEnvelope.py` (trim, gain and equal-power fades).
+The audio example accepts a bounded waveform, keeps its sample rate and channel
+layout, and copies samples before processing. Connect Load Audio → Audio Envelope
+→ Preview Audio; start with a three-second clip and −6 dB gain. These processors
+work after any compatible model's decoded media output, not its latents.
 
 Set `resizable = True` on the class when the node should show a resize handle.
 Use `display: "textarea"` for a multi-line inline editor. A field can render only
@@ -168,9 +171,9 @@ without imports. Dynamic metadata, `MODULE_MAP`, and `MODULE_PARSE` are resolved
 only after approval. The executable classes must be available from `main.py`.
 Import errors, including missing dependencies, remain visible in Custom nodes.
 
-Edit the **installed source path** shown in the review panel. Staging copies a
+Edit the **installed source path** shown in Manage nodes. Staging copies a
 folder; it does not create a link back to the original example or checkout.
-Use **Review reload**, inspect the new hash, and **Enable and reload code**. Reload
+Use **Reload**; the backend binds authorization to the current code hash. Reload
 invalidates this module's cached nodes and their transitive cached consumers,
 preserving unrelated owners. A same-size quick edit and edits to relative helper
 modules load fresh code. Changed code cannot run using its previous approval.
@@ -190,7 +193,7 @@ or reloading cannot undo arbitrary code.
 
 ## Modular Diffusers blocks
 
-Stage `examples/custom_nodes/ModularPrompt` to try a model-free upstream
+Add `examples/custom_nodes/ModularPrompt` to try a model-free upstream
 `ModularPipelineBlocks` class. The same layout can be published on the Hub and
 staged with its exact commit. Required files are:
 
@@ -292,10 +295,8 @@ remote model code are not handled by this supplier; an approved block can still
 accept compatible components from existing loaders. Model/type compatibility and
 the upstream block's tensor/task semantics remain distinct.
 
-The older Hub **User Node import** remains a declarative contract/library preview
-and retains its fail-closed Dynamic Block checks. **Manage executable custom
-nodes** opens this explicit extension flow. Importing a saved workflow or setting
-its `trust_remote_code` field does not grant an extension approval.
+The executable Hub entry point is **Add custom node → Hugging Face**.
+Existing contract-only saved Blocks remain separate from executable custom code.
 
 ## Dependencies and memory policy
 
@@ -334,7 +335,16 @@ boundary. Local staging accepts a path on the backend machine. Source preview an
 approval state are local administrative data; do not publish machine paths or
 approval files in workflow packages.
 
-For a Hub source, first `POST /custom_modules/resolve` with
+The UI uses `POST /custom_modules/add` with
+`{"kind":"local","source":"examples/custom_nodes/PromptTools","name":"PromptTools","consent":true}`.
+For `hub`/`git`, revision is optional and resolved internally. For a dropped file,
+use `{"kind":"file","name":"MyNode","content":"<UTF-8 Python>","consent":true}`.
+The response includes the enabled module and refreshed catalog. This is a trusted
+code mutation, not validation-only. Import failure does not roll back arbitrary
+Python side effects. Dependencies are never automatically installed.
+
+The lower-level inspection/lifecycle endpoints remain available for tooling.
+For a Hub source, optionally `POST /custom_modules/resolve` with
 `{"source":"https://huggingface.co/owner/repo","revision":"main"}`. The response's
 `source` contains the normalized repository ID, `requestedRevision` and immutable
 `revision`. Pass that exact identity to installation. This optional read-only
