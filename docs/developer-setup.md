@@ -69,6 +69,26 @@ The backend's development command does not rebuild the client on every launch.
 See [CONTRIBUTING](../CONTRIBUTING.md) for installing backend test requirements
 and mirroring a validated production client bundle.
 
+## Bundled app without a separate frontend server
+
+For normal app use without Vite, clone the backend and client into sibling
+`MoDiff/` and `MoDiff-client/` directories as shown in the
+[README](../README.md#developer-setup-with-uv-and-npm).
+From the backend checkout, omit `--backend-only` so setup also installs the
+locked client dependencies and builds the frontend bundle:
+
+```text
+uv run --no-project --no-sync --python 3.12 -m modiff.dev plan --accelerator auto --json
+uv run --no-project --no-sync --python 3.12 -m modiff.dev setup --accelerator auto --non-interactive
+uv run --no-project --no-sync --python 3.12 -m modiff.dev check --json --check-port 8088 --fail-on-error
+uv run --no-project --no-sync --python 3.12 -m modiff.dev run
+```
+
+`plan` is read-only. Review its selected accelerator and any blockers before
+running `setup`. Replace `auto` with an explicit supported profile when needed.
+Open <http://127.0.0.1:8088>; no separate frontend process is required.
+The same existing-environment preservation and repair rules above apply.
+
 ## Verification scope
 
 The CPU matrix runs these setup/check commands and

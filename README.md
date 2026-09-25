@@ -17,6 +17,44 @@ saved-workflow restoration.
 > [!CAUTION]
 > MoDiff is early-stage software. It is not a production service, a multi-user platform, or a security sandbox. The server has no authentication and can execute model workflows, import custom Python modules, and access files inside its configured working directory. Keep it bound to `127.0.0.1`, install only code you trust, and read [SECURITY.md](SECURITY.md) before changing its network exposure.
 
+## Developer setup with uv and npm
+
+Install Git, [uv `0.11.26`](https://docs.astral.sh/uv/getting-started/installation/),
+Node.js `24.12.0`, and npm `11.6.2`. uv can provision Python 3.12.
+Use two terminals for the backend and the editable frontend.
+
+**Terminal 1 — backend:** clone both repositories into the same parent directory,
+then start the backend. These commands work in Linux shells and Windows PowerShell.
+
+```text
+git clone https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+cd MoDiff
+uv run --no-project --no-sync --python 3.12 -m modiff.dev plan --accelerator cpu --backend-only --json
+uv run --no-project --no-sync --python 3.12 -m modiff.dev setup --accelerator cpu --backend-only --non-interactive
+uv run --no-project --no-sync --python 3.12 -m modiff.dev check --json --check-port 8088 --fail-on-error
+uv run --no-project --no-sync --python 3.12 -m modiff.dev run
+```
+
+The CPU profile is for API/UI development. For NVIDIA inference, replace `cpu`
+with `nvidia` in both `plan` and `setup`; other accelerators are covered in the
+[full setup guide](docs/developer-setup.md). Setup preserves an existing `.venv` and
+does not download model weights. Use the guide for deliberate environment repair;
+ordinary `uv sync` is not supported.
+
+**Terminal 2 — frontend:** from the same parent directory, run:
+
+```text
+cd MoDiff-client
+npm ci
+npm run dev
+```
+
+Keep the backend running at <http://127.0.0.1:8088> and open the URL printed by
+Vite for the editable frontend. Press `Ctrl+C` in each terminal to stop it.
+See the [full developer setup guide](docs/developer-setup.md) for accelerator prerequisites,
+optional runtimes, repair, and bundled-app setup.
+
 ## Before you install
 
 MoDiff is distributed as paired backend and client source checkouts. For normal
@@ -73,30 +111,6 @@ cd MoDiff
 The system-check step reports the proposed accelerator profile and blockers
 without installing packages. Review it, then continue with the normal installer
 shown on the next line.
-
-### Install with uv directly
-
-Users who prefer `uv` can call the same managed installer without the shell or
-PowerShell wrappers. Install `uv` 0.11.26, keep the backend and client in the
-sibling layout above, then run these commands from the backend checkout on Linux,
-macOS, or Windows PowerShell:
-
-```text
-uv run --no-project --no-sync --python 3.12 -m modiff.dev plan --accelerator auto --json
-uv run --no-project --no-sync --python 3.12 -m modiff.dev setup --accelerator auto --non-interactive
-uv run --no-project --no-sync --python 3.12 -m modiff.dev check --json --check-port 8088 --fail-on-error
-uv run --no-project --no-sync --python 3.12 -m modiff.dev run
-```
-
-`plan` is the non-mutating system check. `setup` installs the accelerator-aware
-backend environment, installs the locked client dependencies, and builds the
-frontend bundle; `run` starts the complete application. Replace `auto` with an
-explicit supported profile such as `cpu`, `nvidia`, `amd`, `intel`, or `mps` when
-needed. This repository intentionally uses `[tool.uv] managed = false`, so plain
-`uv sync` and project-resolving `uv run` are not installation paths: accelerator
-profiles own the Torch source and the managed environment. See
-[Developer setup](docs/developer-setup.md) for backend-only and editable-client
-variants.
 
 Open <http://127.0.0.1:8088>. The first installation downloads Python, Node.js,
 packages, and the verified Template Gallery assets, so it can take time and use
@@ -228,39 +242,11 @@ cp config.example.ini config.ini
 
 `config.ini` is intentionally ignored because it may contain a Hugging Face token and machine-local paths.
 
-## Developer setup and service prototyping
+## Developer tools and service prototyping
 
-For setup without shell or PowerShell launchers, install Git and uv `0.11.26`,
-then run the following from this backend checkout in Linux or Windows PowerShell:
-
-```text
-uv run --no-project --no-sync --python 3.12 -m modiff.dev plan --accelerator cpu --backend-only --json
-uv run --no-project --no-sync --python 3.12 -m modiff.dev setup --accelerator cpu --backend-only --non-interactive
-uv run --no-project --no-sync --python 3.12 -m modiff.dev check --json --check-port 8088 --fail-on-error
-uv run --no-project --no-sync --python 3.12 -m modiff.dev run
-```
-
-The backend serves its checked frontend bundle at <http://127.0.0.1:8088>.
-The CPU profile is a starting point for API/UI development, not large-model
-inference. For GPU setup, replace `cpu` in both `plan` and `setup` with the
-appropriate [accelerator selector](docs/accelerator-installation.md), such as
-`nvidia` or `amd`. Setup preserves an existing `.venv`; inspect it with `check`
-and follow the [developer setup guide](docs/developer-setup.md) for deliberate
-profile repair. Setup installs packages but does not download inference weights.
-
-For editable frontend development, keep that backend terminal running. In a
-second terminal, from the sibling `MoDiff-client` checkout, use Node `24.12.0`
-and npm `11.6.2`:
-
-```text
-npm ci
-npm run dev
-```
-
-Open the URL printed by Vite. These uv commands invoke MoDiff's shared managed
-installer through Python; they are not `uv sync` or a new dependency resolver.
-See [developer setup](docs/developer-setup.md) for environment details and
-[service prototyping](docs/service-prototyping.md) to export a named service
+For installation, use the [uv/npm quick start](#developer-setup-with-uv-and-npm)
+above and the [full setup guide](docs/developer-setup.md).
+See [service prototyping](docs/service-prototyping.md) to export a named service
 interface from the editor. Services reuse the existing API graph and local runtime.
 
 The frontend has one developer-first editor. Start with **Workflows** for connected
