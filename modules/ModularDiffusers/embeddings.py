@@ -86,6 +86,7 @@ class EncodePrompt(NodeBase):
     params = {
         "text_encoders": {
             "label": "Text Encoders *",
+            "required": True,
             "type": "diffusers_auto_models",
             "display": "input",
             "onSignal": "update_node",
