@@ -878,10 +878,13 @@ def test_models_loader_publishes_managed_bundle_for_unscoped_pipeline(model_type
     monkeypatch.setattr(loaders.ModelsLoader, "_preflight_reviewed_builtin_selection",
                         lambda *a, **k: ("hub", "fixture/tiny", "a" * 40, "model_index.json", {}))
     monkeypatch.setattr(loaders, "_instantiate_reviewed_builtin_pipeline", lambda *a, **k: pipeline)
+    cache_dirs = {denoiser: "fixture-cache"}
+    monkeypatch.setattr(loaders, "_primary_component_cache_dirs", lambda *_args: cache_dirs)
     loaded = []
 
     def load(pipeline, names, **kwargs):
         assert set(kwargs["required_names"]) == {denoiser, "vae", "scheduler"}
+        assert kwargs["component_load_kwargs"]["cache_dir"] == cache_dirs
         for name in names:
             if name == "controlnet":
                 continue  # An inactive optional component must stay unloaded.

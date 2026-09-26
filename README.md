@@ -429,7 +429,9 @@ Do not edit `web/assets/index.js` or `web/assets/index.css` by hand. They are ge
 
 The normal installer materializes `web/template-gallery/` for that
 installation. Treat it as downloaded runtime data: do not add it to Git or a
-normal remote-asset release package.
+normal remote-asset release package. Gallery status and repair use the same
+immutable Dataset manifest in both the remote release and installer-built
+local bundle.
 
 For adjacent checkouts, an exact mirror can be performed with a platform tool after confirming both paths:
 

@@ -51,6 +51,7 @@ from modiff.modular_workflow_contracts import (
     reviewed_modular_weight_variant,
 )
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
+from utils.huggingface import exact_cached_snapshot_path
 
 from . import MESSAGE_DURATION, MODULAR_MODEL_TYPE_OPTIONS, components
 from .custom_pipeline import (
@@ -704,13 +705,8 @@ def _load_reviewed_pipeline_index(repository, revision):
     failures = []
     for filename in _REVIEWED_PIPELINE_INDEX_FILENAMES:
         try:
-            index_path = hf_hub_download(
-                repository,
-                filename=filename,
-                revision=revision,
-                local_files_only=True,
-            )
-        except (EntryNotFoundError, LocalEntryNotFoundError, HfHubHTTPError, ValueError) as error:
+            index_path = exact_cached_snapshot_path(repository, revision, filename) / filename
+        except (FileNotFoundError, ValueError) as error:
             failures.append(error)
             continue
         return filename, _read_reviewed_pipeline_index(
@@ -722,6 +718,18 @@ def _load_reviewed_pipeline_index(repository, revision):
         f"No cached modular_model_index.json or model_index.json was found for {repository}@{revision}. "
         "Install that exact reviewed revision through Model Manager before running the pipeline."
     ) from (failures[-1] if failures else None)
+
+
+def _primary_component_cache_dirs(pipeline, repository, revision, index_filename):
+    """Keep primary component loads in the same managed cache as the reviewed index."""
+
+    snapshot = exact_cached_snapshot_path(repository, revision, index_filename)
+    cache_root = str(snapshot.parent.parent.parent)
+    return {
+        name: cache_root
+        for name, spec in pipeline._component_specs.items()
+        if str(getattr(spec, "pretrained_model_name_or_path", "")).lower() == repository.lower()
+    }
 
 
 def _validate_reviewed_pipeline_index(model_type, repository, revision):
@@ -2859,6 +2867,9 @@ class ModelsLoader(NodeBase):
                 diagnostics=self._loader_diagnostics,
                 component_load_kwargs={
                     "torch_dtype": dtype,
+                    **({"cache_dir": _primary_component_cache_dirs(
+                        self.loader, real_repo_id, revision, reviewed_index_filename,
+                    )} if custom_binding is None else {}),
                     **({"variant": weight_variant} if weight_variant is not None else {}),
                     "trust_remote_code": trust_remote_code,
                     "quantization_config": quant_config,

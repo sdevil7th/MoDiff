@@ -1,6 +1,10 @@
 import inspect
 import importlib.util
+import json
+import tempfile
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import diffusers
@@ -43,6 +47,8 @@ from modules.ModularDiffusers.loaders import (
     QuantizationConfigNode,
     _REVIEWED_STANDARD_PIPELINE_MODEL_NAMES,
     _reviewed_loader_component_outputs,
+    _load_reviewed_pipeline_index,
+    _primary_component_cache_dirs,
 )
 from modules.ModularDiffusers.pipeline_schema import (
     MoDiffParam,
@@ -64,6 +70,46 @@ requires_transformers = unittest.skipUnless(
     "requires the staged optional Transformers runtime",
 )
 _NO_EXPLICIT_GUIDER = object()
+
+
+class ReviewedIndexCacheRootsTest(unittest.TestCase):
+    def test_reviewed_index_uses_original_cache_when_configured_cache_is_empty(self):
+        revision = "f332072aa78be7aecdf3ee76d5c247082da564a6"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            original_cache = root / "original"
+            snapshot = original_cache / "models--Tongyi-MAI--Z-Image-Turbo" / "snapshots" / revision
+            snapshot.mkdir(parents=True)
+            (snapshot / "model_index.json").write_text(json.dumps({"_class_name": "ZImagePipeline"}))
+            with (
+                patch(
+                    "utils.huggingface._hf_cache_locations",
+                    return_value=[
+                        ("configured", str(root / "configured")),
+                        ("original", str(original_cache)),
+                    ],
+                ),
+                patch("modules.ModularDiffusers.loaders.hf_hub_download", side_effect=AssertionError("wrong cache")),
+            ):
+                filename, document = _load_reviewed_pipeline_index("Tongyi-MAI/Z-Image-Turbo", revision)
+        self.assertEqual(filename, "model_index.json")
+        self.assertEqual(document["_class_name"], "ZImagePipeline")
+
+    def test_primary_components_follow_index_cache_without_redirecting_auxiliaries(self):
+        revision = "f332072aa78be7aecdf3ee76d5c247082da564a6"
+        repository = "Tongyi-MAI/Z-Image-Turbo"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            snapshot = root / "models--Tongyi-MAI--Z-Image-Turbo" / "snapshots" / revision
+            pipeline = SimpleNamespace(
+                _component_specs={
+                    "transformer": SimpleNamespace(pretrained_model_name_or_path=repository),
+                    "auxiliary": SimpleNamespace(pretrained_model_name_or_path="owner/other"),
+                }
+            )
+            with patch("modules.ModularDiffusers.loaders.exact_cached_snapshot_path", return_value=snapshot):
+                cache_dirs = _primary_component_cache_dirs(pipeline, repository, revision, "model_index.json")
+        self.assertEqual(cache_dirs, {"transformer": str(root)})
 
 
 class ModularDiffusersUpstreamContractTests(unittest.TestCase):
