@@ -310,7 +310,15 @@ def _build_workflow_auto_plan(
                     "Use a covered batch size or select Expert."
                     if form.get("batchSize", 1) > 1 else None
                 )
-                raise ValueError(plan.get("blockingReason") or batch_reason or "No accepted recipe preserves this graph's model, precision and requested workload.")
+                reason = plan.get("blockingReason") or batch_reason or (
+                    "No accepted recipe preserves this graph's model, precision and requested workload. "
+                    f"Requested {repo}, {form['dtype']}, {form['quantizationMode']} quantization, "
+                    f"{form.get('width', 'default')}x{form.get('height', 'default')}, "
+                    f"{form.get('steps', 'default')} steps. "
+                    "Installed model files do not establish Auto resource qualification. "
+                    "Review the model's resource recipes or select Custom memory to keep your settings."
+                )
+                raise ValueError(reason)
             candidate = candidates[0]
             envelope = candidate.get("requirements", {})
             requirements = envelope

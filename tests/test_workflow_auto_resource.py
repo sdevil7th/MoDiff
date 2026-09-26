@@ -629,3 +629,18 @@ def test_owner_retention_normalizes_numeric_hardware_values(setup):
     result = plan(graph(two=True))
     assert result['canAutoRun']
     assert result['schedule'] is None
+
+
+def test_unqualified_recipe_explains_installed_files_are_not_auto_proof(setup):
+    plan, candidate, _, _ = setup
+    candidate['canAutoRun'] = False
+    g = graph()
+    before = deepcopy(g)
+    result = plan(g)
+    assert not result['canAutoRun']
+    message = ' '.join(result['issues'])
+    assert 'Installed model files do not establish Auto resource qualification' in message
+    assert 'test/model' in message
+    assert 'bfloat16' in message
+    assert 'Custom memory' in message
+    assert g == before
