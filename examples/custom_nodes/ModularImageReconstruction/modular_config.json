@@ -1,0 +1,4 @@
+{
+  "auto_map": { "ModularPipelineBlocks": "block.ImageReconstruction" },
+  "requirements": {}
+}

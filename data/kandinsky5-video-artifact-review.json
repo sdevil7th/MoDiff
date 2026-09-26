@@ -1,0 +1,411 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "liveQualified": false,
+    "reason": "The ten immutable 23.85-96.53 GB video checkpoints require remote heavy-hardware execution, and the pinned Pro I2V documentation example invokes the T2V class without passing its loaded image.",
+    "runtimeCatalogExposed": false,
+    "status": "contract_only",
+    "unresolvedGates": [
+      "corrected_pro_image_to_video_documentation",
+      "remote_flex_attention_and_compile_qualification",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "commonWeightFiles": [
+    {
+      "byteSize": 3900233256,
+      "path": "text_encoder/model-00001-of-00005.safetensors",
+      "sha256": "e97b877e47fde53a6c6e77aafb36e58e91ee9d95c4a3eeac6f1b5c0e6a1c986e"
+    },
+    {
+      "byteSize": 3864726320,
+      "path": "text_encoder/model-00002-of-00005.safetensors",
+      "sha256": "a9a300a43b4724eee2abe7c18ceb26768d0ab011eb0cad19d9bfd2476a24d024"
+    },
+    {
+      "byteSize": 3864726424,
+      "path": "text_encoder/model-00003-of-00005.safetensors",
+      "sha256": "111223d173e00bbee81cba1216fad28668df3476706b7fd26f4d5b50f8b3a507"
+    },
+    {
+      "byteSize": 3864733680,
+      "path": "text_encoder/model-00004-of-00005.safetensors",
+      "sha256": "ef47f634fa57d46ee134edcc09f34085a47da1e16c12a2abe0d67118be6d72ed"
+    },
+    {
+      "byteSize": 1089994880,
+      "path": "text_encoder/model-00005-of-00005.safetensors",
+      "sha256": "0c859795ad3a627a9b95bcb762e059d5b768a4a36fdd4affeff269d93fdecc67"
+    },
+    {
+      "byteSize": 1710540580,
+      "path": "text_encoder_2/model.safetensors",
+      "sha256": "a2bf730a0c7debf160f7a6b50b3aaf3703e7e88ac73de7a314903141db026dcb"
+    },
+    {
+      "byteSize": 985943868,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "7c68a6295f9034a88225fbafb1f3258291a08d57a1fdb938233fa57b1b8f4883"
+    }
+  ],
+  "family": "Kandinsky 5.0 Video",
+  "format": "safetensors",
+  "license": {
+    "embeddedLicenseFilePresent": false,
+    "evidence": "Pinned model-card metadata on all ten repositories",
+    "id": "mit",
+    "metadataOnly": true
+  },
+  "pipelineContracts": [
+    {
+      "defaultGuidanceScale": 5.0,
+      "defaultHeight": 512,
+      "defaultNumFrames": 121,
+      "defaultNumInferenceSteps": 50,
+      "defaultWidth": 768,
+      "pipelineClass": "Kandinsky5T2VPipeline",
+      "requiredInputs": [
+        "prompt"
+      ],
+      "taskId": "text_to_video"
+    },
+    {
+      "defaultGuidanceScale": 5.0,
+      "defaultHeight": 512,
+      "defaultNumFrames": 121,
+      "defaultNumInferenceSteps": 50,
+      "defaultWidth": 768,
+      "pipelineClass": "Kandinsky5I2VPipeline",
+      "requiredInputs": [
+        "image"
+      ],
+      "taskId": "image_to_video"
+    }
+  ],
+  "remoteResourceEnvelopes": {
+    "lite": {
+      "minimumAcceleratorMemoryBytesEstimate": 25769803776,
+      "minimumSelectiveDiskBytes": 51539607552,
+      "minimumSystemRamBytes": 68719476736,
+      "status": "estimate_only_qualification_pending"
+    },
+    "proImageToVideo": {
+      "minimumAcceleratorMemoryBytesWithOffloadEstimate": 51539607552,
+      "minimumSelectiveDiskBytes": 137438953472,
+      "minimumSystemRamBytes": 171798691840,
+      "status": "estimate_only_qualification_pending"
+    },
+    "proTextToVideo": {
+      "minimumAcceleratorMemoryBytesWithOffloadEstimate": 34359738368,
+      "minimumSelectiveDiskBytes": 103079215104,
+      "minimumSystemRamBytes": 137438953472,
+      "status": "estimate_only_qualification_pending"
+    }
+  },
+  "repositories": [
+    {
+      "durationSeconds": 5,
+      "gated": false,
+      "modelIndexSha256": "12107603816f4a01f76c5731f3eaf080561a993e7623eea8f90702a5022499d2",
+      "pipelineClass": "Kandinsky5T2VPipeline",
+      "private": false,
+      "repository": "kandinskylab/Kandinsky-5.0-T2V-Pro-sft-5s-Diffusers",
+      "revision": "e6ba8ead850da18b9cfcd698e9749c12d24794aa",
+      "role": "proSft5s",
+      "trainingVariant": "sft",
+      "transformer": {
+        "attentionType": "nabla",
+        "byteSize": 43385935392,
+        "configSha256": "8d5795d7f554fbadfb692d1c49f4c0c5bbad78ffff1284850627547fc0c61c2c",
+        "modelDimension": 4096,
+        "sha256": "3135593162b648331e5c38cbc16310414cb8f29cbbb206c5b8b07e6cc301bb70",
+        "visualBlocks": 60
+      },
+      "weightBytes": 62666834400,
+      "weightFileCount": 8,
+      "weightInventorySha256": "6435317bf55b4baa3a7cbca7f228e42a0880057d3d1e34f571d021f92142d004"
+    },
+    {
+      "durationSeconds": 5,
+      "gated": false,
+      "modelIndexSha256": "12107603816f4a01f76c5731f3eaf080561a993e7623eea8f90702a5022499d2",
+      "pipelineClass": "Kandinsky5T2VPipeline",
+      "private": false,
+      "repository": "kandinskylab/Kandinsky-5.0-T2V-Lite-sft-5s-Diffusers",
+      "revision": "5c74c11b3ecfb96249b588d17aebd59f3fd9a080",
+      "role": "liteSft5s",
+      "trainingVariant": "sft",
+      "transformer": {
+        "attentionType": "regular",
+        "byteSize": 4573130528,
+        "configSha256": "a115648250c81c04f1ea6b78c59a433990e02409995b39c7857328c302342667",
+        "modelDimension": 1792,
+        "sha256": "9bd1cb1e67d07de19458b9ad288b906815411c68dad7910d042ceb66f61f9f44",
+        "visualBlocks": 32
+      },
+      "weightBytes": 23854029536,
+      "weightFileCount": 8,
+      "weightInventorySha256": "eed7bccd028aadb46318c4f2e414df01c576953dc963364e074c90b84219b707"
+    },
+    {
+      "durationSeconds": 5,
+      "gated": false,
+      "modelIndexSha256": "12107603816f4a01f76c5731f3eaf080561a993e7623eea8f90702a5022499d2",
+      "pipelineClass": "Kandinsky5T2VPipeline",
+      "private": false,
+      "repository": "kandinskylab/Kandinsky-5.0-T2V-Lite-nocfg-5s-Diffusers",
+      "revision": "b6b4f88e63b996e0c363c073f5f85aa33169c6f5",
+      "role": "liteNoCfg5s",
+      "trainingVariant": "no_cfg",
+      "transformer": {
+        "attentionType": "regular",
+        "byteSize": 4573130528,
+        "configSha256": "7c0d6a5f59ababcb54ab1b8213d25f639917bee2af65f353c5b4d19127c9d609",
+        "modelDimension": 1792,
+        "sha256": "cddd41bc86c1ef1b086065aeb6ccc2de7ceb8053874fda054813af8965404f40",
+        "visualBlocks": 32
+      },
+      "weightBytes": 23854029536,
+      "weightFileCount": 8,
+      "weightInventorySha256": "b6e297f092ac33d605da6d644dcaaf19321bd982b3d909c763ef178849b1dc5b"
+    },
+    {
+      "durationSeconds": 5,
+      "gated": false,
+      "modelIndexSha256": "12107603816f4a01f76c5731f3eaf080561a993e7623eea8f90702a5022499d2",
+      "pipelineClass": "Kandinsky5T2VPipeline",
+      "private": false,
+      "repository": "kandinskylab/Kandinsky-5.0-T2V-Lite-distilled16steps-5s-Diffusers",
+      "revision": "06d0f76a70be2f8d88b7db89c19c358d2f3abab6",
+      "role": "liteDistilled5s",
+      "trainingVariant": "distilled_16_steps",
+      "transformer": {
+        "attentionType": "regular",
+        "byteSize": 4573130528,
+        "configSha256": "a115648250c81c04f1ea6b78c59a433990e02409995b39c7857328c302342667",
+        "modelDimension": 1792,
+        "sha256": "7e67a1b8521a8ef7b4b946fff726b8919eb677774d024a03694d0009fac1ee57",
+        "visualBlocks": 32
+      },
+      "weightBytes": 23854029536,
+      "weightFileCount": 8,
+      "weightInventorySha256": "69eb0431b95bf6b2c6b9de541d4909ab749e1a33f91d61c2914f50ac4b2dbd19"
+    },
+    {
+      "durationSeconds": 5,
+      "gated": false,
+      "modelIndexSha256": "12107603816f4a01f76c5731f3eaf080561a993e7623eea8f90702a5022499d2",
+      "pipelineClass": "Kandinsky5T2VPipeline",
+      "private": false,
+      "repository": "kandinskylab/Kandinsky-5.0-T2V-Lite-pretrain-5s-Diffusers",
+      "revision": "c4f6376f0b38a57710d011bbdbab82b478577803",
+      "role": "litePretrain5s",
+      "trainingVariant": "pretrain",
+      "transformer": {
+        "attentionType": "regular",
+        "byteSize": 4573130528,
+        "configSha256": "a115648250c81c04f1ea6b78c59a433990e02409995b39c7857328c302342667",
+        "modelDimension": 1792,
+        "sha256": "577ffd006f0c9fae9f3fe1c27828e590cacbb9ad39e833598bf07d3f702c1ef0",
+        "visualBlocks": 32
+      },
+      "weightBytes": 23854029536,
+      "weightFileCount": 8,
+      "weightInventorySha256": "6b22820877c4f57d0f1da4c0d56788a76c85db44baa5518845a61a551c80409e"
+    },
+    {
+      "durationSeconds": 10,
+      "gated": false,
+      "modelIndexSha256": "12107603816f4a01f76c5731f3eaf080561a993e7623eea8f90702a5022499d2",
+      "pipelineClass": "Kandinsky5T2VPipeline",
+      "private": false,
+      "repository": "kandinskylab/Kandinsky-5.0-T2V-Lite-sft-10s-Diffusers",
+      "revision": "141af8190a6b5195faf339b37dc08186532dfea4",
+      "role": "liteSft10s",
+      "trainingVariant": "sft",
+      "transformer": {
+        "attentionType": "nabla",
+        "byteSize": 4573130528,
+        "configSha256": "6a1e1a9d9a126856ad754e300ea90f15becae645792e3986bb69620b87f92c6f",
+        "modelDimension": 1792,
+        "sha256": "55088dce3cdf839bccf7273b7e960d3fc42dba4d0a72060aa226b6960b851f58",
+        "visualBlocks": 32
+      },
+      "weightBytes": 23854029536,
+      "weightFileCount": 8,
+      "weightInventorySha256": "aa8efb811251a0ee9240c22c8808d2d73009dd907384dfe12ca825f46446c11e"
+    },
+    {
+      "durationSeconds": 10,
+      "gated": false,
+      "modelIndexSha256": "12107603816f4a01f76c5731f3eaf080561a993e7623eea8f90702a5022499d2",
+      "pipelineClass": "Kandinsky5T2VPipeline",
+      "private": false,
+      "repository": "kandinskylab/Kandinsky-5.0-T2V-Lite-nocfg-10s-Diffusers",
+      "revision": "c8ee79389d34c7e0fda3b6e589a7ef748b368a23",
+      "role": "liteNoCfg10s",
+      "trainingVariant": "no_cfg",
+      "transformer": {
+        "attentionType": "nabla",
+        "byteSize": 4573130528,
+        "configSha256": "6a1e1a9d9a126856ad754e300ea90f15becae645792e3986bb69620b87f92c6f",
+        "modelDimension": 1792,
+        "sha256": "da64436073b6e4ccb23ed41aa8f83c86f261f4bcff714bd20fb6c49b3110f4a8",
+        "visualBlocks": 32
+      },
+      "weightBytes": 23854029536,
+      "weightFileCount": 8,
+      "weightInventorySha256": "7319ea0d4c328c693512f8512aa502e0aa5a0686e2c4ff0bf966c437b6db6364"
+    },
+    {
+      "durationSeconds": 10,
+      "gated": false,
+      "modelIndexSha256": "12107603816f4a01f76c5731f3eaf080561a993e7623eea8f90702a5022499d2",
+      "pipelineClass": "Kandinsky5T2VPipeline",
+      "private": false,
+      "repository": "kandinskylab/Kandinsky-5.0-T2V-Lite-distilled16steps-10s-Diffusers",
+      "revision": "eabff395f1b142316511ed39c564b720876313d9",
+      "role": "liteDistilled10s",
+      "trainingVariant": "distilled_16_steps",
+      "transformer": {
+        "attentionType": "nabla",
+        "byteSize": 4573130528,
+        "configSha256": "6a1e1a9d9a126856ad754e300ea90f15becae645792e3986bb69620b87f92c6f",
+        "modelDimension": 1792,
+        "sha256": "bd0bc2b1705f9c87ece28a3d94ba78420c5f3c9f1f46e6ca7f09c21f50b31335",
+        "visualBlocks": 32
+      },
+      "weightBytes": 23854029536,
+      "weightFileCount": 8,
+      "weightInventorySha256": "48b33dfad9d822b67c10922a11dd3e7ebfb4af99351f1ccdebd33ca7baefc0bc"
+    },
+    {
+      "durationSeconds": 10,
+      "gated": false,
+      "modelIndexSha256": "12107603816f4a01f76c5731f3eaf080561a993e7623eea8f90702a5022499d2",
+      "pipelineClass": "Kandinsky5T2VPipeline",
+      "private": false,
+      "repository": "kandinskylab/Kandinsky-5.0-T2V-Lite-pretrain-10s-Diffusers",
+      "revision": "82d79dd0bfc1db670af6797914e517a5b6acb222",
+      "role": "litePretrain10s",
+      "trainingVariant": "pretrain",
+      "transformer": {
+        "attentionType": "nabla",
+        "byteSize": 4573130528,
+        "configSha256": "6a1e1a9d9a126856ad754e300ea90f15becae645792e3986bb69620b87f92c6f",
+        "modelDimension": 1792,
+        "sha256": "2182575811824a8c19730a0c4affe0fb8171a21525077646969d8f7c89b560fe",
+        "visualBlocks": 32
+      },
+      "weightBytes": 23854029536,
+      "weightFileCount": 8,
+      "weightInventorySha256": "1c657b51ab6c77a90440ef5bcfaf1f6b8254ce45db16d654108dbb83cc86e78d"
+    },
+    {
+      "durationSeconds": 5,
+      "gated": false,
+      "modelIndexSha256": "4fe48006b9720e884aed38d457cada870933328aad2ab9e11c78084bfa6e03bc",
+      "pipelineClass": "Kandinsky5I2VPipeline",
+      "private": false,
+      "repository": "kandinskylab/Kandinsky-5.0-I2V-Pro-sft-5s-Diffusers",
+      "revision": "a2bfb839b757f60f46c1beeeff24f4ee72d3d453",
+      "role": "proI2vSft5s",
+      "trainingVariant": "sft",
+      "transformer": {
+        "attentionType": "nabla",
+        "byteSize": 77245505744,
+        "configSha256": "8d5795d7f554fbadfb692d1c49f4c0c5bbad78ffff1284850627547fc0c61c2c",
+        "modelDimension": 4096,
+        "sha256": "0e167e9dfd4e14a2fb76a4ef3d2571df04a0d219f2f6e9121804b0dbcf5ad17c",
+        "visualBlocks": 60
+      },
+      "weightBytes": 96526404752,
+      "weightFileCount": 8,
+      "weightInventorySha256": "663e6a683c5b1d7f54f4ae3ad8fad78ab7961a30efca872f747ed4208f361cfd"
+    }
+  ],
+  "reviewedAt": "2026-08-13T00:00:00+05:30",
+  "reviewedRecipes": {
+    "liteFiveSecond": {
+      "fps": 24,
+      "guidanceScale": 5.0,
+      "height": 512,
+      "numFrames": 121,
+      "numInferenceSteps": 50,
+      "width": 768
+    },
+    "liteNoCfgAndDistilled": {
+      "distilledNumInferenceSteps": 16,
+      "guidanceScale": 1.0
+    },
+    "liteTenSecond": {
+      "attentionBackend": "flex",
+      "compileDynamic": true,
+      "compileMode": "max-autotune-no-cudagraphs",
+      "fps": 24,
+      "height": 512,
+      "numFrames": 241,
+      "numInferenceSteps": 50,
+      "width": 768
+    },
+    "proTextToVideo": {
+      "attentionBackend": "flex",
+      "cpuModelOffload": true,
+      "fps": 24,
+      "guidanceScale": 5.0,
+      "height": 768,
+      "numFrames": 121,
+      "numInferenceSteps": 50,
+      "width": 1024
+    },
+    "rejectedDocumentationImageToVideoExample": {
+      "callsPipelineClass": "Kandinsky5T2VPipeline",
+      "correctPipelineClass": "Kandinsky5I2VPipeline",
+      "loadedImagePassedToPipeline": false,
+      "reason": "The pinned video documentation imports and instantiates the T2V class, then never passes its loaded image. The separate pipeline source example uses Kandinsky5I2VPipeline and passes image explicitly.",
+      "validRecipeProof": false
+    },
+    "sourceImageToVideo": {
+      "fps": 24,
+      "guidanceScale": 5.0,
+      "height": 512,
+      "imageRequired": true,
+      "numFrames": 121,
+      "numInferenceSteps": 50,
+      "pipelineClass": "Kandinsky5I2VPipeline",
+      "width": 768
+    }
+  },
+  "schemaVersion": 1,
+  "sourceContract": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "documentation": {
+      "byteSize": 12696,
+      "sha256": "aa0b403b089299d12ea289e8c6b373fa8cc70a8c9bfda1589e5fee09907700fc"
+    },
+    "sources": {
+      "Kandinsky5I2VPipeline": {
+        "byteSize": 44405,
+        "sha256": "e6ee3094b6735980d545b43372a79c459386a2886faec438aeffdaa0fbbf6fe1"
+      },
+      "Kandinsky5T2VPipeline": {
+        "byteSize": 41521,
+        "sha256": "b23a835fe158fad960d0f71133b52f8198f29bcfab5852915718aad6585044c2"
+      }
+    },
+    "remoteCodeRequired": false
+  }
+}

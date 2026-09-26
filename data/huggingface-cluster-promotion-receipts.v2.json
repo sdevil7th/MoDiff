@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 2,
+  "kind": "huggingface_cluster_route_promotions",
+  "boundary": {
+    "assetsRemainLocalAndUnpublished": true,
+    "approvalIsRouteSpecific": true,
+    "autoEligibilityRemainsResourceGated": true,
+    "executableRemainsRuntimeGated": true,
+    "exactBlockDefinitionBindingRequired": true,
+    "legacyApprovalsAreHistoricalOnly": true
+  },
+  "receipts": [],
+  "historicalReceipts": [
+    {
+      "legacySchemaVersion": 1,
+      "nonAuthorizingReason": "legacy_schema_v1_missing_exact_block_definition_identity",
+      "receipt": {
+        "id": "cluster-promotion:minimax-music3:default:2026-08-28",
+        "definitionId": "diffusers.modular:MiniMaxMusic3ModularPipeline:default",
+        "admissionId": "diffusers.cluster-admission:MiniMaxMusic3ModularPipeline:default:workflow:official_top_level_blocks",
+        "artifact": {
+          "repository": "MiniMaxAI/MiniMax-Music3",
+          "revision": "fbdf52fbaaca799592917417eb05f1899f1255ec"
+        },
+        "studioExecutionSpec": {
+          "id": "minimax-music3:modular-text-to-audio:v1",
+          "contentHash": "studio-spec-v1-8a75ab6f",
+          "executionProfileId": "minimax-music3:official-modular-workflow"
+        },
+        "evidence": {
+          "taskId": "3DoJ-w8jP3cZ",
+          "runtimeFingerprint": "sha256:ed1858f50bd6170a473c3e314852f9fda7964e90b88e6a0093584c48fc7b55bb",
+          "mediaKind": "audio",
+          "mediaSha256": "043e50743c69bb3cac82ab2b7e105d9a623fc31f02c13e5cd1033ee0e806d663",
+          "mediaByteSize": 5296172,
+          "lifecycle": {
+            "insertedThroughFrontend": true,
+            "expandedOfficialBlocks": true,
+            "editedParameters": true,
+            "savedAndRefreshed": true,
+            "valuesRestoredExactly": true,
+            "collapsedExpandedGraphEquivalent": true,
+            "generatedThroughFrontend": true
+          }
+        },
+        "review": {
+          "decision": "approved",
+          "reviewedAt": "2026-08-28T18:03:00+05:30",
+          "reviewerRole": "workspace_owner",
+          "comment": "Looks good."
+        },
+        "publication": {
+          "liveProof": true,
+          "executable": false,
+          "autoEligible": false,
+          "galleryEligible": false
+        }
+      }
+    },
+    {
+      "legacySchemaVersion": 1,
+      "nonAuthorizingReason": "legacy_schema_v1_missing_exact_block_definition_identity",
+      "receipt": {
+        "id": "cluster-promotion:qwen-image-2512:text2image:2026-08-28",
+        "definitionId": "diffusers.modular:QwenImageModularPipeline:text2image",
+        "admissionId": "diffusers.cluster-admission:QwenImageModularPipeline:text2image:mode:text_to_image",
+        "artifact": {
+          "repository": "Qwen/Qwen-Image-2512",
+          "revision": "25468b98e3276ca6700de15c6628e51b7de54a26"
+        },
+        "studioExecutionSpec": {
+          "id": "qwen-image-2512:modular-text-to-image:v1",
+          "contentHash": "studio-spec-v1-6df91280",
+          "executionProfileId": "qwen-image:modular"
+        },
+        "evidence": {
+          "taskId": "IcFmWpqEPzmE",
+          "runtimeFingerprint": "sha256:976ddbe524763adb6edc8c3a2de61ab74d174d4e9ecf02543c2d66cf1a09a6e4",
+          "mediaKind": "image",
+          "mediaSha256": "bc61fc065bd475eea91f91b1ccce8d19bcf03fe37f7b52d96c277b8056a171c3",
+          "mediaByteSize": 633178,
+          "lifecycle": {
+            "insertedThroughFrontend": true,
+            "expandedOfficialBlocks": true,
+            "editedParameters": true,
+            "savedAndRefreshed": true,
+            "valuesRestoredExactly": true,
+            "collapsedExpandedGraphEquivalent": true,
+            "generatedThroughFrontend": true
+          }
+        },
+        "review": {
+          "decision": "approved",
+          "reviewedAt": "2026-08-28T18:03:00+05:30",
+          "reviewerRole": "workspace_owner",
+          "comment": "Looks good."
+        },
+        "publication": {
+          "liveProof": true,
+          "executable": false,
+          "autoEligible": false,
+          "galleryEligible": false
+        }
+      }
+    }
+  ],
+  "contentHash": "sha256:c26322fcc435bea40cc96f3fceeb198c2fc10a926f71c6a66bb87c9f6610729c"
+}

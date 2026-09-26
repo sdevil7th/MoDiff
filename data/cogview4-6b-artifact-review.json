@@ -1,0 +1,183 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "downloadCatalogExposed": true,
+    "executableModes": [
+      "CogView4Pipeline:text_to_image"
+    ],
+    "galleryEligible": false,
+    "liveQualified": false,
+    "remoteOnly": true,
+    "runtimeCatalogExposed": true,
+    "status": "source_complete_execution_pending",
+    "unresolvedGates": [
+      "remote_real_weight_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "CogView4",
+  "format": "safetensors",
+  "license": {
+    "acceptanceRequired": false,
+    "declaredLink": "LICENSE",
+    "declaredLinkAvailableAtRevision": true,
+    "evidence": "Apache-2.0 identifier in immutable model-card metadata and complete Apache License 2.0 text in the immutable repository tree",
+    "id": "apache-2.0",
+    "licenseFilePresent": true,
+    "licenseFileSha256": "db36221eadc34b2f56646c3af3403c4880d59ff4630afd98989669f8d94dc8ae"
+  },
+  "metadataSha256": {
+    "license": "db36221eadc34b2f56646c3af3403c4880d59ff4630afd98989669f8d94dc8ae",
+    "modelCard": "8132a1f88dccfa80311fcc317601e624fee60f04dad5f963a00086feb5db1d90",
+    "modelIndex": "00a088b221b0d9452cf25a16b41877134ebb29dbc66c246308776baa9e540413",
+    "schedulerConfig": "f28c348ae2ad5ca9b74fa7d1872dd795c9134f34db3d225d20efcd2c1df3fa67",
+    "textEncoderConfig": "82239559819730177e5bf2632e6610b5f6425ba2024a39438ce32716e80bc5a0",
+    "textEncoderIndex": "59b6cfe948812281d1b9b7034bb086611f1cabee346c59728746097b8ccd9fbd",
+    "tokenizerConfig": "8456de22f67c9627ae01b397052e2b5f5ec2c0183f563e3ad316f328f463aeaa",
+    "transformerConfig": "dcbbca0b4e574b52f2722e40eada5b331c0798f8ce1f471a6cbfd882e7f2b431",
+    "transformerIndex": "b72b3fa25ff74aa78d3b39e1f8b7f69e30545cd8aa87a9620efa596da04a7856",
+    "vaeConfig": "c1833854a568b8e76bc4a6500ac7355d3b40102cd45a6072fa8e7c4522117181"
+  },
+  "pinnedDiffusers": {
+    "callbackOnStepEndAvailable": true,
+    "modelCpuOffloadSequence": "text_encoder->transformer->vae",
+    "pipelineClass": "CogView4Pipeline",
+    "pipelineOutputClass": "CogView4PipelineOutput",
+    "pipelineOutputSha256": "d23953ab18dc0779768e955ed29390d9ab62f5598b06a58572b349625a64784b",
+    "pipelineSha256": "cc9bdb1b4291edeadcdb8c243f57c935abc167bd418494173d70a4b870984cf1",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "transformerClass": "CogView4Transformer2DModel",
+    "transformerSha256": "93d260a6684a3bb272906f5cc354c563d064b3b1db44916d2ba6dcb8a84d798e",
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContract": {
+    "defaultGuidanceScale": 3.5,
+    "defaultHeight": 1024,
+    "defaultNumInferenceSteps": 50,
+    "defaultWidth": 1024,
+    "maxSequenceLength": 1024,
+    "maximumMoDiffInferenceSteps": 50,
+    "maximumMoDiffOutputPixels": 2097152,
+    "maximumMoDiffOutputSide": 2048,
+    "minimumMoDiffOutputSide": 512,
+    "modes": [
+      "text_to_image"
+    ],
+    "outputSideIncrement": 32,
+    "outputType": "CogView4PipelineOutput",
+    "packageOutputDivisibilityCheck": 16,
+    "supportsNegativePrompt": true,
+    "upstreamModelCardGuidanceScale": 3.5,
+    "upstreamPipelineDefaultGuidanceScale": 5.0,
+    "upstreamPipelineSignatureMaxSequenceLength": 1024,
+    "upstreamPipelineDocstringMaxSequenceLength": 224,
+    "vaeSlicing": true,
+    "vaeTiling": true
+  },
+  "remoteResourceEnvelope": {
+    "minimumAcceleratorMemoryBytesEstimateWithModelCpuOffload": 25769803776,
+    "minimumSelectiveDiskBytes": 51539607552,
+    "minimumSystemRamBytes": 103079215104,
+    "notes": [
+      "The model card reports A100 bfloat16 batch-four measurements, not a MoDiff qualification run.",
+      "It reports 20 GB with model CPU offload for 512x512, 1280x720, 1024x1024, and 1920x1280; the last measurement exceeds the same card's declared 2^21-pixel limit and is not admitted by MoDiff.",
+      "The optional 4-bit text-encoder column is excluded because this admission selects only the repository's native bfloat16 partition.",
+      "The MoDiff envelope remains an estimate until remote execution records exact hardware telemetry."
+    ],
+    "status": "upstream_measured_moDiff_qualification_pending",
+    "upstreamA100Bfloat16BatchFourGiB": {
+      "1024x1024": {
+        "modelCpuOffloadOff": 35,
+        "modelCpuOffloadOn": 20,
+        "modelCpuOffloadOnTextEncoder4Bit": 13
+      },
+      "1280x720": {
+        "modelCpuOffloadOff": 35,
+        "modelCpuOffloadOn": 20,
+        "modelCpuOffloadOnTextEncoder4Bit": 13
+      },
+      "1920x1280": {
+        "admittedByMoDiffPixelCeiling": false,
+        "modelCpuOffloadOff": 39,
+        "modelCpuOffloadOn": 20,
+        "modelCpuOffloadOnTextEncoder4Bit": 14
+      },
+      "512x512": {
+        "modelCpuOffloadOff": 33,
+        "modelCpuOffloadOn": 20,
+        "modelCpuOffloadOnTextEncoder4Bit": 13
+      }
+    }
+  },
+  "repository": {
+    "gated": false,
+    "modelIndexClass": "CogView4Pipeline",
+    "private": false,
+    "pythonFilesPresent": false,
+    "repository": "zai-org/CogView4-6B",
+    "repositoryBytes": 31129025003,
+    "revision": "63a52b7f6dace7033380cd6da14d0915eab3e6b5",
+    "safetensorsDtypeParameterCounts": {
+      "BF16": 6369118272
+    },
+    "trustRemoteCodeRequired": false,
+    "weightBytes": 31108954670,
+    "weightFileCount": 8,
+    "weightInventorySha256": "3535c71fc87e2c6eace579d7092ebf37e89a37553ffb10205dacea889add0b58"
+  },
+  "schemaVersion": 1,
+  "weightFiles": [
+    {
+      "byteSize": 4984132960,
+      "path": "text_encoder/model-00001-of-00004.safetensors",
+      "sha256": "d33a01dba14c62a0d5c471aba9f57902a1d6155080b2cf07e1360b9600fa60a8"
+    },
+    {
+      "byteSize": 4895074376,
+      "path": "text_encoder/model-00002-of-00004.safetensors",
+      "sha256": "f2913605db189102456ad417a4c38903fb038b9e9fb2a96c95e2de56da224667"
+    },
+    {
+      "byteSize": 4895074392,
+      "path": "text_encoder/model-00003-of-00004.safetensors",
+      "sha256": "f81bd5307c4f6175c7b080abad40eb869fafa263ff13c8550d6928330ae749a6"
+    },
+    {
+      "byteSize": 2784155192,
+      "path": "text_encoder/model-00004-of-00004.safetensors",
+      "sha256": "224b322bd87949a50d36adea784bb4d7203b219023b1efec1ee4fd5a7ad05056"
+    },
+    {
+      "byteSize": 4891433328,
+      "path": "transformer/diffusion_pytorch_model-00001-of-00003.safetensors",
+      "sha256": "fe197664340943dd4b1ec30af012a4e136bdfd80c53e6520378928e084de8b0d"
+    },
+    {
+      "byteSize": 4984743304,
+      "path": "transformer/diffusion_pytorch_model-00002-of-00003.safetensors",
+      "sha256": "63bc1152f337fb89ae9cfca5cb0d11451c5b456a345db9b008a14f129916beeb"
+    },
+    {
+      "byteSize": 2862106776,
+      "path": "transformer/diffusion_pytorch_model-00003-of-00003.safetensors",
+      "sha256": "5f196554fd09958d69e1491ed9a7d63a5a29384dbb73848d819285dd5124b478"
+    },
+    {
+      "byteSize": 812234342,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "40aabe789e1591a3a3d8a2f598eda99f60a42275c410e7292a714b5270b97747"
+    }
+  ]
+}

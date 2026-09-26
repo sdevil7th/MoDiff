@@ -1,0 +1,280 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "liveQualified": false,
+    "remoteOnly": true,
+    "runtimeCatalogExposed": false,
+    "status": "remote_only_reviewed_not_admitted",
+    "unresolvedGates": [
+      "backend_owned_bounded_diffusion_text_contract",
+      "remote_heavy_hardware_execution",
+      "multimodal_input_and_output_safety_review",
+      "physical_macos_execution"
+    ],
+    "userVisible": false
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "DiffusionGemma",
+  "format": "safetensors",
+  "genericContractReview": {
+    "candidateInputContracts": [
+      "text_to_text",
+      "image_to_text"
+    ],
+    "candidateOutputKind": "text",
+    "currentMoDiffNodePresent": false,
+    "notes": [
+      "A future node must remain task-generic and expose diffusion-text controls instead of naming DiffusionGemma.",
+      "The pinned Diffusers path accepts prompt or rich messages plus optional images; bounded video-frame adaptation requires a separate review.",
+      "Tool calling and thinking-channel handling are not admitted by this artifact review."
+    ]
+  },
+  "license": {
+    "commercialUseAllowed": true,
+    "evidence": "Pinned model-card metadata and the linked Google Gemma 4 Apache 2.0 license page",
+    "id": "apache-2.0",
+    "noticeRequired": true
+  },
+  "pipelineContract": {
+    "callbackOnStepEndSupported": true,
+    "callbackTensorInputs": [
+      "canvas",
+      "logits"
+    ],
+    "class": "DiffusionGemmaPipeline",
+    "defaults": {
+      "addGenerationPrompt": true,
+      "confidenceThreshold": 0.005,
+      "eosEarlyStop": true,
+      "generationLength": 256,
+      "numInferenceStepsPerCanvas": 48,
+      "outputType": "text",
+      "stabilityThreshold": 1,
+      "temperature": 0.0
+    },
+    "generationLengthRounding": "ceil to the model canvas length",
+    "modelClass": "DiffusionGemmaForBlockDiffusion",
+    "optionalInputs": [
+      "image",
+      "add_generation_prompt",
+      "temperature",
+      "cache_implementation",
+      "eos_early_stop",
+      "eos_token_id",
+      "stability_threshold",
+      "confidence_threshold",
+      "generator",
+      "output_type",
+      "return_dict",
+      "callback_on_step_end",
+      "callback_on_step_end_tensor_inputs"
+    ],
+    "output": {
+      "class": "DiffusionGemmaPipelineOutput",
+      "fields": [
+        "sequences",
+        "texts"
+      ]
+    },
+    "processorClass": "Gemma4Processor",
+    "requiredOneOf": [
+      "prompt",
+      "messages"
+    ],
+    "schedulerClasses": [
+      "BlockRefinementScheduler",
+      "DiscreteDDIMScheduler",
+      "EntropyBoundScheduler"
+    ]
+  },
+  "pinnedRuntime": {
+    "diffusers": {
+      "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+      "sourceSha256": {
+        "pipelineInit": "ebdee2be1242c01778c1747a07bb8ed0f715379355b1a4b73e4d9039c4f90381",
+        "pipelineOutput": "8e82937c566694922127ecd7185a94819faa18dbef671b06f41cc583dbaff0da",
+        "pipeline": "e162205b19add6766a19d659e1f4b586f5d33c2b0f13421dc89b170face35912",
+        "scheduler": "0195f2597dab0621753396aef67ab6391ef2489b5df82178a70d294dd22392c4"
+      },
+      "version": "0.40.0.dev0"
+    },
+    "noWeightApiProbe": {
+      "classesImported": [
+        "DiffusionGemmaPipeline",
+        "DiffusionGemmaForBlockDiffusion",
+        "AutoProcessor",
+        "BlockRefinementScheduler"
+      ],
+      "status": "passed"
+    },
+    "transformers": {
+      "profileId": "huggingface-transformers-peft-5.14.1-0.20.0",
+      "sourceSha256": {
+        "configuration": "69131b618dcdf8e95b4b17fadf40c658c53cd3a4a7f4ae410b26673b7d552ec0",
+        "generation": "0a4bf0c9fbcaef2cf86d3bb2177eb985bb83568af815a6812a4c8f7a1eeb71de",
+        "modeling": "3a114c48ccd270577c6caf4f04009442f706aea4d5cb0a48f08beaa0c2b602ae",
+        "modularSource": "dbb7add40aafefc2411f4493fc05556864204d9c690ae611237e49951ba07632"
+      },
+      "version": "5.14.1",
+      "wheelSha256": "9db974c4079ede2d1a3ea7ca5a240df33f2cc26fc2b36ba64c5f2a4f43b6e725"
+    }
+  },
+  "repository": {
+    "config": {
+      "activeExperts": 8,
+      "architecture": "DiffusionGemmaForBlockDiffusion",
+      "canvasLength": 256,
+      "dtype": "bfloat16",
+      "maxPositionEmbeddings": 262144,
+      "numExperts": 128,
+      "numHiddenLayers": 30,
+      "vocabSize": 262144
+    },
+    "fileCount": 22,
+    "gated": false,
+    "metadataSha256": {
+      "chatTemplate": "9aeb7eac68ad87bba7567e9d4597ff203e5609f1b427d9e823437d0142cc61bf",
+      "config": "13b11d2fe87302cc2332c64eb9eb4ac305d9b8a123ffe9c5cb5b1920fc70c506",
+      "generationConfig": "99334f763c3dbe8b161aeaca1c150a05344299fda2d2e4a0e1d342c744461200",
+      "modelCard": "3acbbf7e4c01297291113b1297732b6bcecf0d7769a2571fefeca4f0f5909747",
+      "modelIndex": "989c453462f9b84b90f02fe82b89f23c743b513a767a1789292da76f056f5117",
+      "processorConfig": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c",
+      "schedulerConfig": "5e5536ea036c284bcc09c7b08045868d741a41a3090069f6c035697bba31c6c7",
+      "tokenizerConfig": "a284d1243b62be31faa9c13e1c28cece940c4abaa7bd9ad87b94f61b40687200",
+      "weightIndex": "6e33e8465d55fe6c7bc0a5453c7a4b341e6467d032c6ded82aaf439f61dac69a"
+    },
+    "modelIndex": {
+      "modelClass": "DiffusionGemmaForBlockDiffusion",
+      "pipelineClass": "DiffusionGemmaPipeline",
+      "processorClass": "Gemma4Processor",
+      "schedulerClass": "BlockRefinementScheduler"
+    },
+    "private": false,
+    "pythonFilesPresent": false,
+    "repository": "google/diffusiongemma-26B-A4B-it",
+    "revision": "f7f5b7f5fa82ffc52addd066915886d497f5517b",
+    "revisionSource": "Hugging Face model API resolved main to immutable commit on 2026-08-13",
+    "totalFileBytes": 51680024015,
+    "trustRemoteCodeRequired": false,
+    "weightBytes": 51647701024,
+    "weightFileCount": 11,
+    "weightIndex": {
+      "shardCount": 11,
+      "tensorCount": 1047,
+      "totalParameters": 25823778864,
+      "totalTensorBytes": 51647562456
+    },
+    "weightInventorySha256": "d7e6ad49eedd2e6c71cccd4cbf65f2cc1e743d777c735b56380ef549700f79e2"
+  },
+  "resourceEnvelope": {
+    "minimumAcceleratorMemoryBytesEstimate": 85899345920,
+    "minimumSelectiveDiskBytes": 85899345920,
+    "minimumSystemRamBytes": 137438953472,
+    "notes": [
+      "The exact bfloat16 weight surface is about 51.65 GB before allocator, cache, activations, processor, and compilation overhead.",
+      "The publisher's H100 FP8 throughput statement is not memory qualification evidence and no quantized artifact is admitted.",
+      "Device-map distribution or offload requires independent remote measurements with the exact unquantized snapshot."
+    ],
+    "status": "estimate_only_qualification_pending"
+  },
+  "reviewedRecipe": {
+    "cacheImplementation": "static",
+    "compileDecoder": true,
+    "confidenceThreshold": 0.005,
+    "entropyBound": 0.1,
+    "generationLength": 256,
+    "numInferenceStepsPerCanvas": 48,
+    "sampler": "EntropyBoundScheduler",
+    "stabilityThreshold": 1,
+    "temperatureMaximum": 0.8,
+    "temperatureMinimum": 0.4
+  },
+  "schemaVersion": 1,
+  "upstreamBoundsReview": {
+    "currentValidation": [
+      "prompt xor messages is required",
+      "generation length must be positive",
+      "inference steps must be positive",
+      "output type must be text or seq",
+      "callback tensor inputs must be canvas or logits"
+    ],
+    "requiredFutureControls": [
+      "maximum_input_tokens",
+      "maximum_generation_tokens",
+      "maximum_inference_steps_per_canvas",
+      "maximum_image_count_and_pixels",
+      "bounded_video_frame_adapter_before_video_input",
+      "cooperative_cancellation_via_step_callback",
+      "output_and_thinking_channel_safety_policy"
+    ],
+    "upperBoundsPresent": false
+  },
+  "weightFiles": [
+    {
+      "byteSize": 4732780476,
+      "path": "model-00001-of-00011.safetensors",
+      "sha256": "3efe137998af7d2bde4e3ab04ab3524823699a4ac3130adace5003ef40cceeb6"
+    },
+    {
+      "byteSize": 4884578006,
+      "path": "model-00002-of-00011.safetensors",
+      "sha256": "4a39d68c756fb26bbd2a54f2b8d550047ea98f3152f87ec75db825c8e17934a7"
+    },
+    {
+      "byteSize": 4913414742,
+      "path": "model-00003-of-00011.safetensors",
+      "sha256": "ac6083e3489215ca032501714b78832e5cc4c945a8dbbb905b5292a4e95bc75e"
+    },
+    {
+      "byteSize": 4884578030,
+      "path": "model-00004-of-00011.safetensors",
+      "sha256": "865b66393de5a9c752e67beae1bd2c860c12786b72ad86ca9345c00b7b586e60"
+    },
+    {
+      "byteSize": 4913414814,
+      "path": "model-00005-of-00011.safetensors",
+      "sha256": "a87e01bed77ad9d2234851267d99af583ff79c7a86d7494fe08ae0f9de9cd318"
+    },
+    {
+      "byteSize": 4884578070,
+      "path": "model-00006-of-00011.safetensors",
+      "sha256": "077e841b3b138fbc38df2c36665abdaafa96b8c96f968e2263a7452afaa912ab"
+    },
+    {
+      "byteSize": 4913414814,
+      "path": "model-00007-of-00011.safetensors",
+      "sha256": "13a18b3c04a7f19a16385dd8a0d7fd0b9cc89ef131e4294a063c31c7d90c58ef"
+    },
+    {
+      "byteSize": 4884578070,
+      "path": "model-00008-of-00011.safetensors",
+      "sha256": "aca5d3bdfc84700bd55b475781cb46e5608104c4832d2abe111a119ddcb23ff7"
+    },
+    {
+      "byteSize": 4913414814,
+      "path": "model-00009-of-00011.safetensors",
+      "sha256": "8e2418867354e5cb356c0af8ccfdcc60bc363500674d6cf395991e7d6219eb29"
+    },
+    {
+      "byteSize": 4884578070,
+      "path": "model-00010-of-00011.safetensors",
+      "sha256": "93d564b7dd686464a5c068ff9665cd5d3bca399c2ce320aecd41bd011e3787d5"
+    },
+    {
+      "byteSize": 2838371118,
+      "path": "model-00011-of-00011.safetensors",
+      "sha256": "afec047176bb2a05f078566576aec6bdb71ad4d041275d0d0c89473fda6d6d87"
+    }
+  ]
+}

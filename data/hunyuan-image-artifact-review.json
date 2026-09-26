@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 1,
+  "family": "HunyuanImage-2.1",
+  "reviewedAt": "2026-08-13T00:00:00+05:30",
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "repositories": {
+    "officialUpstream": {
+      "repository": "tencent/HunyuanImage-2.1",
+      "revision": "e435da11d9e8795a25e224c5ba27b099ed45c55b",
+      "private": false,
+      "gated": false,
+      "repositoryFileCount": 41,
+      "repositoryBytesFromApi": 173153421178,
+      "pythonFilesPresent": true,
+      "pythonFiles": [
+        "reprompt/tokenization_hy.py"
+      ],
+      "usedForRuntime": false,
+      "licenseFilePresent": true,
+      "noticeFilePresent": true,
+      "licenseByteSize": 16465,
+      "licenseSha256": "ceaf628f8054a14fa74594f8b6351ec130bd6447355f0784f0d4b0d03fb1bcc3",
+      "noticeByteSize": 27305,
+      "noticeSha256": "d7cac7d3e757ff4c5e3c5527e1b23bea348a39fe9508f0cf124e90bb1d641291",
+      "modelCardByteSize": 17793,
+      "modelCardSha256": "52782c6cb5e4274ec2518e541086b7dfdf3103b1c001c6ed1473708ead7ef57"
+    },
+    "diffusersCandidate": {
+      "repository": "hunyuanvideo-community/HunyuanImage-2.1-Diffusers",
+      "revision": "7e7b7a177de58591aeaffca0929f4765003d7ced",
+      "private": false,
+      "gated": false,
+      "repositoryFileCount": 32,
+      "repositoryBytesFromApi": 53129911413,
+      "weightFileCount": 10,
+      "weightBytes": 53124614990,
+      "weightInventorySha256": "8f3fa76416f863daa3dcf9e93d28936b66f8ab9ad860e5154febf1aaabcf153b",
+      "hubSafetensorsDtypeParameterMetadata": {
+        "BF16": 17425795520
+      },
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "licenseFilePresent": false,
+      "noticeFilePresent": false,
+      "declaredLicense": "other",
+      "declaredLicenseName": "tencent-hunyuan-community",
+      "modelIndexClass": "HunyuanImagePipeline",
+      "modelIndexSha256": "9688b07bf495e74d9890b65b7047beb53be7cf47e0384966326d0dd4770b61cd",
+      "modelCardSha256": "3dd1e2a773a52af9d1c3479d4f1eb512f5251e7f08a185649584bb53514907a3",
+      "guiderConfigSha256": "780a12312ccdd2de16401182d8463d7beffcd4add889358692ea736b390fa396",
+      "ocrGuiderConfigSha256": "3d12f9fb84d149fa0871601b5092ab0074a9481293dcc475d34755e65e74c3a8",
+      "schedulerConfigSha256": "d116e24fb2de6b9a3e3e78fe16d19cb89e5b0bdca6a70e4cd56cc142bdb14970",
+      "textEncoderConfigSha256": "2155c03c889163c78545800d255e822c753440529af3df8b2522af49d0e2cf38",
+      "textEncoderIndexSha256": "4be35310ddc165e46e88de4c3fec8c1210014b0b8717f4544d82cc740814ae0c",
+      "textEncoder2ConfigSha256": "fdce7adb168aec2ccd3a2f4917eda2e2aff723fcd05460bb129b93693e975f84",
+      "tokenizerConfigSha256": "0a04a9d7d4a62b28482bdfe726c122756de85714fb64166ace92ae75b8f57614",
+      "tokenizer2ConfigSha256": "dc6e535c06f3fa20ca6dc0d73ca9f369b471b0f988111f8a940cb68e434cf7a0",
+      "transformerConfigSha256": "f7ba6ee1c42a14ab32facd4a42def52fb398723f4ae3466e11c132e4457dcc04",
+      "transformerIndexSha256": "c4468b7f876efbece0255a918bc33d48711042c95594c2f77f7adb6b41b6478a",
+      "vaeConfigSha256": "33e41754d6bc8115331c95e24817d3f60fa5ec6ad34dc9644672b1cef85fd598"
+    }
+  },
+  "weightFiles": [
+    {
+      "path": "text_encoder/model-00001-of-00004.safetensors",
+      "sha256": "d725335e4ea2399be706469e4b8807716a8fa64bd03468252e9f7acf2415fee4",
+      "byteSize": 4968243304
+    },
+    {
+      "path": "text_encoder/model-00002-of-00004.safetensors",
+      "sha256": "b1830db6908dcc76df3a71492acbcf2b8cac130114cf1f3c2d9edae8de8c6de3",
+      "byteSize": 4991495816
+    },
+    {
+      "path": "text_encoder/model-00003-of-00004.safetensors",
+      "sha256": "09c1807c6d00d7cab94f7db39d4c02ebb8537225ccde383861ac48db97945aa6",
+      "byteSize": 4932751040
+    },
+    {
+      "path": "text_encoder/model-00004-of-00004.safetensors",
+      "sha256": "5dd068336d14d45ffb43cef374d286cc6ba9d8741b028f90a7d040d847961f4a",
+      "byteSize": 1691924384
+    },
+    {
+      "path": "text_encoder_2/model.safetensors",
+      "sha256": "3f3b22f7926015b76022ca4842a3130d83c477d4ecee8a5275252650d96bf97a",
+      "byteSize": 877273128
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00001-of-00004.safetensors",
+      "sha256": "86fd3cabbe7c608efc904ca3bb02aa9dc9be2905459cbef775a4e5bdfb646ccc",
+      "byteSize": 9926383088
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00002-of-00004.safetensors",
+      "sha256": "f01b357cf1b3a0086fc16fc2051395c4778aa53a6fcbf99419272877c69eedf3",
+      "byteSize": 9995813984
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00003-of-00004.safetensors",
+      "sha256": "ac20056a298eeda808e573a8b2a1c908ec51f430293ba6d4f3f1bc20111c7592",
+      "byteSize": 9944158768
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00004-of-00004.safetensors",
+      "sha256": "79493dbe12a5f188addcae06f9078a1e430a142b43831786f9f1bf63e849b623",
+      "byteSize": 4985385952
+    },
+    {
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "94b2fef8f6b400de832e5861545e14300b193ec2c167ddf6c3fa069131d31ffa",
+      "byteSize": 811185526
+    }
+  ],
+  "license": {
+    "id": "tencent-hunyuan-community-license-agreement",
+    "governingReceiptRepository": "tencent/HunyuanImage-2.1",
+    "governingReceiptRevision": "e435da11d9e8795a25e224c5ba27b099ed45c55b",
+    "candidateSnapshotContainsLicenseOrNotice": false,
+    "candidateCardLinksMutableMainLicense": true,
+    "acceptanceTriggeredByUse": true,
+    "hostedServiceAddressed": true,
+    "preambleExcludedTerritories": [
+      "European Union",
+      "South Korea",
+      "United Kingdom"
+    ],
+    "definedTerritoryExcludes": [
+      "European Union",
+      "South Korea",
+      "United Kingdom"
+    ],
+    "territoryTextRequiresLegalReview": true,
+    "outputUseOutsideTerritoryProhibited": true,
+    "commercialLicenseThresholdMonthlyActiveUsers": 100000000,
+    "agreementAndUseRestrictionNoticeRequiredForDistribution": true,
+    "distributionNoticeRequired": true,
+    "serviceProviderDisclosureRequired": true,
+    "machineGeneratedContentDisclosureRequiredForPublicUse": true,
+    "otherModelImprovementProhibited": true,
+    "militaryUseProhibited": true
+  },
+  "pinnedRuntime": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "diffusersVersion": "0.40.0.dev0",
+    "pipelineClass": "HunyuanImagePipeline",
+    "pipelineSha256": "e257b32e81ea2b54c5f8e449eff0dcd76f4dee273f581ffd6bfdd7af28e7584a",
+    "refinerPipelineClass": "HunyuanImageRefinerPipeline",
+    "refinerPipelineSha256": "ccff4af3f55e15d7c944dcfe180a7ab445c238e9d9268faf8510fa0f202994d4",
+    "transformerClass": "HunyuanImageTransformer2DModel",
+    "transformerSha256": "302e70866542223059e5e8a87d6f61f09df25b987e801a4972fe62a148c4fb18",
+    "autoencoderClass": "AutoencoderKLHunyuanImage",
+    "autoencoderSha256": "878e66d68d482ea8b8550ea0ce7d2dc331b0239063fa10ca027e0485499ca8b0",
+    "guiderClass": "AdaptiveProjectedMixGuidance",
+    "guiderSha256": "a4912a95a467ef4bf1dcf6210e2a157d5ac523c8afc042cd6024d209c4648778",
+    "requiredTransformersClasses": [
+      "ByT5Tokenizer",
+      "Qwen2_5_VLForConditionalGeneration",
+      "Qwen2Tokenizer",
+      "T5EncoderModel"
+    ],
+    "modelCpuOffloadSequence": "text_encoder->text_encoder_2->transformer->vae",
+    "callbackOnStepEndAvailable": true,
+    "callbackTensorInputs": [
+      "latents",
+      "prompt_embeds"
+    ],
+    "interruptFlagAvailable": true,
+    "safetyCheckerAvailable": false
+  },
+  "pipelineContract": {
+    "modes": [
+      "text_to_image"
+    ],
+    "officialResolutionClass": "2K_only",
+    "reviewedWidth": 2048,
+    "reviewedHeight": 2048,
+    "numInferenceSteps": 50,
+    "guidanceMethod": "AdaptiveProjectedMixGuidance",
+    "guidanceScale": 3.5,
+    "apgScale": 10.0,
+    "apgRescale": 10.0,
+    "apgStartStep": 5,
+    "apgMomentum": -0.5,
+    "negativePromptAvailable": true,
+    "qwenMaximumSequenceLength": 1000,
+    "byt5MaximumSequenceLength": 128,
+    "runtimeDtype": "bfloat16",
+    "modelCpuOffload": true,
+    "refinerIncludedInCandidate": false,
+    "refinerAdmitted": false,
+    "promptEnhancerAdmitted": false
+  },
+  "remoteResourceEnvelope": {
+    "status": "modiff_estimate_only_qualification_pending",
+    "selectedWeightBytes": 53124614990,
+    "minimumSelectiveDiskBytesEstimate": 103079215104,
+    "minimumSystemRamBytesEstimate": 137438953472,
+    "publisherFp8OffloadAcceleratorMemoryBytes": 25769803776,
+    "publisherFp8FigureAppliesToSelectedBfloat16Candidate": false,
+    "basis": "Immutable BF16 weight bytes plus conservative download/loading headroom; the publisher's 24 GiB observation uses FP8 and model CPU offload and is not treated as proof for this selected BF16 candidate."
+  },
+  "admission": {
+    "status": "contract_only_territory_restricted",
+    "runtimeCatalogExposed": false,
+    "downloadCatalogExposed": false,
+    "capabilityExposed": false,
+    "canonicalWorkflowsAdded": 0,
+    "clientSurfaceAdded": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "liveQualified": false,
+    "fullWeightFilesDownloaded": false,
+    "remoteWeightBytesFetched": 0,
+    "blockingReasons": [
+      "The governing license expressly excludes the European Union, United Kingdom, and South Korea and prohibits use and outputs outside its defined Territory.",
+      "MoDiff has no legal/product-approved territory enforcement contract for model download, local execution, hosted execution, generated outputs, and downstream distribution.",
+      "The safe Diffusers conversion does not bundle the governing LICENSE or NOTICE files and links mutable terms instead of an immutable receipt.",
+      "The selected 53.12 GB BF16 candidate has not completed remote heavy-hardware memory, safety, output-quality, or cancellation qualification.",
+      "Physical macOS execution remains pending."
+    ],
+    "unresolvedGates": [
+      "legal_territory_and_distribution_review",
+      "product_territory_enforcement",
+      "immutable_composite_license_receipt",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ]
+  }
+}

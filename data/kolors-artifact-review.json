@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "family": "Kolors",
+  "repository": {
+    "repository": "Kwai-Kolors/Kolors-diffusers",
+    "revision": "7e091c75199e910a26cd1b51ed52c28de5db3711",
+    "private": false,
+    "gated": false,
+    "pythonFilesPresent": false,
+    "trustRemoteCodeRequired": false,
+    "modelIndexClass": "KolorsPipeline",
+    "modelIndexComponentLibrary": "kolors",
+    "reportedUsedStorageBytes": 17820182946,
+    "weightFileCount": 5,
+    "weightBytes": 17813668046,
+    "weightInventorySha256": "2267a455a4f180e273b9977554cce4cffa4d1c7e284a41e888078c2505a66d8a"
+  },
+  "weightFiles": [
+    {
+      "path": "text_encoder/model.fp16-00001-of-00003.safetensors",
+      "byteSize": 4907626824,
+      "sha256": "0054d03310248928fdabdeef3fdc753170218dc49a1e9eb5f98323e27683f654"
+    },
+    {
+      "path": "text_encoder/model.fp16-00002-of-00003.safetensors",
+      "byteSize": 4895070280,
+      "sha256": "035167ad39a1b50cdba1758ce202e638448fd12997ea3aca576d494511a18fe0"
+    },
+    {
+      "path": "text_encoder/model.fp16-00003-of-00003.safetensors",
+      "byteSize": 2684495360,
+      "sha256": "54f55eccf6b8a49799c3da81ef42452fc6f7677c4fc949f92aa8928ca0c30424"
+    },
+    {
+      "path": "unet/diffusion_pytorch_model.fp16.safetensors",
+      "byteSize": 5159140240,
+      "sha256": "425ff1dcbe3a70ac13d3afdd69bd4e3176b0c3260722527c80b210f11d2d966c"
+    },
+    {
+      "path": "vae/diffusion_pytorch_model.fp16.safetensors",
+      "byteSize": 167335342,
+      "sha256": "bcb60880a46b63dea58e9bc591abe15f8350bde47b405f9c38f4be70c6161e68"
+    }
+  ],
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "metadataSha256": {
+    "modelCard": "a710817e350a7b478b0a702cffa0604d805c2f81ef8418e872d708b8330f587e",
+    "modelLicense": "efe77d6e1be7257a5893620dd7abeeec6f1fd7901e47d9680d993a69761744e9",
+    "modelIndex": "0d57776c3a952e3a3b35898095bc4ebbaaf2794d7f6a3c1f32e48125e7349b7d",
+    "schedulerConfig": "78406f53776f64dbc77a243c931390d312672c74743ed2d57b438fdba4a28847",
+    "textEncoderConfig": "4ba94b3ea4e39c477e4812fc3c023c21a1ab7c3913805a7ac2a79493e6e99a4a",
+    "textEncoderFp16Index": "99a746f389d0b1d7f56b96ea888962971e701c33ce9a96377bb02e7aea21309d",
+    "tokenizerConfig": "2847370c8514db7f455db94f52439a701334dd68710820364e60da0482c85c36",
+    "unetConfig": "d93cbcbbba0bb2709185685aff3e4a53c76a4405eb4380ce863f2af1625d0b22",
+    "vaeConfig": "f49927c6d63bdd1216a1931fef78556c61c7b42e2f7d16069d1b4a597a90dbd6"
+  },
+  "pinnedDiffusers": {
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "version": "0.40.0.dev0",
+    "pipelineClass": "KolorsPipeline",
+    "imageToImagePipelineClass": "KolorsImg2ImgPipeline",
+    "packageOwnedTextEncoderClass": "ChatGLMModel",
+    "packageOwnedTokenizerClass": "ChatGLMTokenizer",
+    "sourceSha256": {
+      "pipeline": "78f0ea5b73186d1ec79fe2add26418e02170b81fa3d6bf46c0fe3731937659c7",
+      "imageToImagePipeline": "7db6383c56bfaf9e1bb8a0b450b47cc7c729f167237458ede26f58e72ac3701d",
+      "output": "e2d0d91370fc49af4c92ba5af1ef505ba56f58e06a8702b8edf745d19276c324",
+      "textEncoder": "65a8f6de750d697e4f9967e29bc0dcc47e906cc2ebe9d4be2d38c7adad82ad3f",
+      "tokenizer": "a884bed84ecaf3d04c23424ccb76fbcb974f9d66b6374ab03dae1112b3f35ad9"
+    },
+    "callbackOnStepEndAvailable": true,
+    "interruptFlagAvailable": true,
+    "safetyCheckerAvailable": false,
+    "modelCpuOffloadSequence": "text_encoder->image_encoder->unet->vae"
+  },
+  "pipelineContract": {
+    "modes": [
+      "text_to_image",
+      "edit_image"
+    ],
+    "defaultHeight": 1024,
+    "defaultWidth": 1024,
+    "documentedMinimumUsefulSide": 512,
+    "dimensionMultiple": 8,
+    "defaultNumInferenceSteps": 50,
+    "defaultGuidanceScale": 5.0,
+    "defaultMaxSequenceLength": 256,
+    "defaultImageToImageStrength": 0.3,
+    "negativePromptAvailable": true,
+    "safeFp16VariantAvailable": true,
+    "packageUpperBounds": {
+      "maxSequenceLength": 256,
+      "strength": 1.0,
+      "numInferenceSteps": null,
+      "height": null,
+      "width": null,
+      "inputPixels": null,
+      "outputPixels": null
+    }
+  },
+  "licenseReview": {
+    "modelCardSpdxTag": "apache-2.0",
+    "readmeDescribesCodeAsApache2": true,
+    "governingModelLicenseFilePresent": true,
+    "governingModelLicenseSha256": "efe77d6e1be7257a5893620dd7abeeec6f1fd7901e47d9680d993a69761744e9",
+    "modelLicenseIsApache2": false,
+    "acceptanceTriggeredByUseOrAccess": true,
+    "taskScopedProductAcceptanceObtained": false,
+    "commercialRegistrationStatementPresent": true,
+    "cloudVendorOrOver100MMonthlyUsersRequiresSeparateAuthorization": true,
+    "distributionCarriesSourceLicenseAndUseRestrictionDuties": true,
+    "otherModelImprovementUsingModelOrOutputsProhibited": true,
+    "terminationRequiresDeletionAndCessation": true,
+    "legalAndProductApprovalComplete": false
+  },
+  "remoteResourceEnvelope": {
+    "status": "estimate_only_not_admitted",
+    "selectedWeightBytes": 17813668046,
+    "minimumSelectiveDiskBytes": 25769803776,
+    "minimumSystemRamBytes": 51539607552,
+    "minimumAcceleratorMemoryBytesEstimate": 25769803776,
+    "notes": [
+      "The estimate covers only the selected fp16 partition and package-owned pipeline with CPU offload.",
+      "No model weights were downloaded and no local or remote real-weight measurement qualified this envelope."
+    ]
+  },
+  "admission": {
+    "status": "review_complete_blocked_custom_model_license",
+    "runtimeCatalogExposed": false,
+    "downloadCatalogExposed": false,
+    "capabilityExposed": false,
+    "canonicalWorkflowsAdded": 0,
+    "clientSurfaceAdded": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "liveQualified": false,
+    "modelWeightsDownloaded": false,
+    "remoteWeightBytesFetched": 0,
+    "blockingReasons": [
+      "The immutable snapshot's custom MODEL_LICENSE governs model use despite the Apache-2.0 card tag and code statement.",
+      "Using or accessing Model Works purports to trigger acceptance, which this source review cannot perform for the product or user.",
+      "Commercial registration language and separate cloud-vendor or over-100-million-user authorization require legal and product review.",
+      "Distribution must propagate the source, license, and enforceable use restrictions.",
+      "The package has no safety checker and does not bound steps, input pixels, or output pixels.",
+      "The approximately 17.81 GB runtime has no real-weight memory, cancellation, safety, or output-quality qualification."
+    ],
+    "unresolvedGates": [
+      "task_scoped_model_license_acceptance",
+      "commercial_registration_and_legal_product_approval",
+      "downstream_terms_and_notice_implementation",
+      "backend_owned_resource_and_output_bounds",
+      "remote_real_weight_execution_and_output_review",
+      "physical_macos_execution"
+    ]
+  }
+}

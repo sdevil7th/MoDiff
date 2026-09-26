@@ -1,0 +1,502 @@
+{
+  "edges": [
+    {
+      "className": "category-audio",
+      "data": {
+        "connectionType": "audio"
+      },
+      "edgeType": "default",
+      "id": "edge-01",
+      "markerEnd": {
+        "color": "#F472B6",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-01",
+      "sourceHandle": "audio",
+      "style": {
+        "stroke": "#F472B6"
+      },
+      "target": "node-03",
+      "targetHandle": "audio",
+      "type": "default"
+    },
+    {
+      "className": "category-speech_recognition_model",
+      "data": {
+        "connectionType": "speech_recognition_model"
+      },
+      "edgeType": "default",
+      "id": "edge-02",
+      "markerEnd": {
+        "color": "hsl(21 79% 67%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "model",
+      "style": {
+        "stroke": "hsl(21 79% 67%)"
+      },
+      "target": "node-03",
+      "targetHandle": "model",
+      "type": "default"
+    },
+    {
+      "className": "category-default",
+      "data": {
+        "connectionType": "default"
+      },
+      "edgeType": "default",
+      "id": "edge-03",
+      "markerEnd": {
+        "color": "#94A3B8",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-03",
+      "sourceHandle": "transcript",
+      "style": {
+        "stroke": "#94A3B8"
+      },
+      "target": "node-04",
+      "targetHandle": "value",
+      "type": "default"
+    }
+  ],
+  "layout": {
+    "algorithm": "modiff-layered-v1",
+    "horizontalGap": 140,
+    "positionHash": "862638b4743d927ebeeb1a196902d635129460f83c88ebbbc1a1b256ea263009",
+    "verticalGap": 72
+  },
+  "nodes": [
+    {
+      "data": {
+        "action": "Load",
+        "cache": false,
+        "category": "Audio",
+        "description": "Load an audio file as a reusable audio object.",
+        "label": "Load Audio",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Audio",
+        "params": {
+          "audio": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Audio",
+            "type": "audio"
+          },
+          "channels": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Channels",
+            "type": "int"
+          },
+          "duration_seconds": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Duration",
+            "type": "float"
+          },
+          "file": {
+            "display": "filebrowser",
+            "fieldOptions": {
+              "fileTypes": [
+                "audio"
+              ],
+              "multiple": false
+            },
+            "label": false,
+            "type": "str",
+            "value": ""
+          },
+          "filename": {
+            "display": "output",
+            "isConnected": false,
+            "label": "File",
+            "type": "str"
+          },
+          "preview": {
+            "dataSource": "filename",
+            "display": "ui_audio",
+            "type": "url"
+          },
+          "sample_rate": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Sample Rate",
+            "type": "int"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "loadAudio",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-01",
+      "position": {
+        "x": 0,
+        "y": 318
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "LoadSpeechRecognitionModel",
+        "cache": false,
+        "category": "Hugging Face Speech",
+        "description": "Load one reviewed local automatic-speech-recognition model.",
+        "label": "Load Speech Recognition Model",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.HuggingFaceSpeech",
+        "params": {
+          "device": {
+            "default": "cpu:0",
+            "label": "Device",
+            "options": {
+              "cpu": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              },
+              "cpu:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
+              }
+            },
+            "type": "string",
+            "value": "cuda:0"
+          },
+          "dtype": {
+            "default": "float32",
+            "label": "DType",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "float32",
+                "schemaVersion": 1,
+                "value": "float32"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "float16 is not supported by the active runtime.",
+                "installationState": "unavailable",
+                "label": "float16",
+                "schemaVersion": 1,
+                "value": "float16"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "bfloat16",
+                "schemaVersion": 1,
+                "value": "bfloat16"
+              }
+            ],
+            "type": "string",
+            "value": "float32"
+          },
+          "model": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Model",
+            "type": "speech_recognition_model"
+          },
+          "model_id": {
+            "display": "modelselect",
+            "fieldOptions": {
+              "filter": {
+                "hub": {
+                  "className": [
+                    "WhisperForConditionalGeneration"
+                  ]
+                },
+                "local": {
+                  "className": [
+                    "WhisperForConditionalGeneration"
+                  ]
+                }
+              },
+              "noValidation": true,
+              "sources": [
+                "hub",
+                "local"
+              ]
+            },
+            "label": "Model",
+            "type": "string",
+            "value": {
+              "source": "hub",
+              "value": "openai/whisper-tiny"
+            }
+          },
+          "resolved_artifact": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Resolved Artifact",
+            "type": "string"
+          },
+          "revision": {
+            "default": "",
+            "label": "Revision",
+            "type": "string",
+            "value": "169d4a4341b33bc18d8881c4b69c2e104e1cc0af"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "speechModel",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-02",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "TranscribeAudio",
+        "cache": false,
+        "category": "Hugging Face Speech",
+        "description": "Transcribe or translate bounded local audio into a normalized transcript.",
+        "label": "Transcribe Audio",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.HuggingFaceSpeech",
+        "params": {
+          "audio": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Audio",
+            "required": true,
+            "type": "audio"
+          },
+          "chunk_length_seconds": {
+            "default": 30,
+            "label": "Chunk length",
+            "max": 30,
+            "min": 0,
+            "type": "float",
+            "value": 30
+          },
+          "duration_seconds": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Duration",
+            "type": "float"
+          },
+          "language": {
+            "default": "",
+            "label": "Language hint",
+            "type": "string",
+            "value": ""
+          },
+          "model": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Model",
+            "required": true,
+            "type": "speech_recognition_model"
+          },
+          "segments": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Segments",
+            "type": "collection"
+          },
+          "stride_length_seconds": {
+            "default": 5,
+            "label": "Chunk stride",
+            "max": 10,
+            "min": 0,
+            "type": "float",
+            "value": 5
+          },
+          "task": {
+            "default": "transcribe",
+            "label": "Task",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "transcribe",
+                "schemaVersion": 1,
+                "value": "transcribe"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "translate",
+                "schemaVersion": 1,
+                "value": "translate"
+              }
+            ],
+            "type": "string",
+            "value": "translate"
+          },
+          "text": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Text",
+            "type": "string"
+          },
+          "timestamps": {
+            "default": "segment",
+            "label": "Timestamps",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "none",
+                "schemaVersion": 1,
+                "value": "none"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "segment",
+                "schemaVersion": 1,
+                "value": "segment"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "word",
+                "schemaVersion": 1,
+                "value": "word"
+              }
+            ],
+            "type": "string",
+            "value": "segment"
+          },
+          "transcript": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Transcript",
+            "type": "any"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "transcribeAudio",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-03",
+      "position": {
+        "x": 440,
+        "y": 103
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "DataViewer",
+        "cache": false,
+        "category": "primitive",
+        "description": "",
+        "label": "Data Viewer",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Primitive",
+        "params": {
+          "output": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Output",
+            "type": "string"
+          },
+          "preview": {
+            "dataSource": "output",
+            "display": "ui_text",
+            "label": "Preview"
+          },
+          "value": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Data",
+            "type": "any"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "transcriptPreview",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-04",
+      "position": {
+        "x": 880,
+        "y": 215
+      },
+      "type": "custom"
+    }
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

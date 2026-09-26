@@ -1,0 +1,251 @@
+{
+  "schemaVersion": 1,
+  "family": "Stable Diffusion 3 ControlNet",
+  "reviewedAt": "2026-08-13T00:00:00+05:30",
+  "repositories": {
+    "base": {
+      "repository": "stabilityai/stable-diffusion-3-medium-diffusers",
+      "revision": "ea42f8cef0f178587cf766dc8129abd379c90671",
+      "private": false,
+      "gated": "auto",
+      "repositoryFileCount": 38,
+      "repositoryBytes": 31012147557,
+      "weightFileCount": 12,
+      "weightBytes": 30998004972,
+      "selectedWeightFileCount": 6,
+      "selectedWeightBytes": 15499002486,
+      "duplicateAliasPairs": 6,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "licenseFileAccessibleWithoutAuthentication": true,
+      "modelIndexAccessibleWithoutAuthentication": false,
+      "componentConfigsAccessibleWithoutAuthentication": false,
+      "gatedConfigHttpStatus": 401
+    },
+    "canny": {
+      "repository": "InstantX/SD3-Controlnet-Canny",
+      "revision": "e42ecba9741dee3de8c54039eba8a879c0070ced",
+      "private": false,
+      "gated": false,
+      "repositoryFileCount": 10,
+      "repositoryBytes": 1191842000,
+      "weightFileCount": 1,
+      "weightBytes": 1190879768,
+      "weightSha256": "6e2ec71ac97cf9034aebb8a4f1a9143392f459bfd2777b1363aefe0d3eedde47",
+      "safetensorsDtypeParameterCounts": {"F16": 595428864},
+      "remoteSafetensorsHeaderBytesFetched": 22040,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "declaredLicense": null,
+      "licenseFilePresent": false
+    },
+    "tile": {
+      "repository": "InstantX/SD3-Controlnet-Tile",
+      "revision": "48005f2448d5ea7aad3d383c2bb8b017723244d6",
+      "private": false,
+      "gated": false,
+      "repositoryFileCount": 10,
+      "repositoryBytes": 1191996076,
+      "weightFileCount": 1,
+      "weightBytes": 1190879768,
+      "weightSha256": "dbbdfcc3b15e27f69c5fa3eaa0451c4d114ca6a88e5748c20c2639647f18705a",
+      "safetensorsDtypeParameterCounts": {"F16": 595428864},
+      "remoteSafetensorsHeaderBytesFetched": 22040,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "declaredLicense": null,
+      "licenseFilePresent": false
+    },
+    "inpainting": {
+      "repository": "alimama-creative/SD3-Controlnet-Inpainting",
+      "revision": "c6763363fb1e9e9d7ce3e608b3999016e07805da",
+      "private": false,
+      "gated": false,
+      "repositoryFileCount": 24,
+      "repositoryBytes": 4205963681,
+      "weightFileCount": 1,
+      "weightBytes": 4160564288,
+      "weightSha256": "f7e2bcf98ed0989558dd05d857cc49c0aff14dfa3197050d65e51a9d37008dde",
+      "safetensorsDtypeParameterCounts": {"F16": 2080241664},
+      "remoteSafetensorsHeaderBytesFetched": 80960,
+      "pythonFilesPresent": false,
+      "trustRemoteCodeRequired": false,
+      "declaredLicense": "other",
+      "licenseFilePresent": false,
+      "noticeFilePresent": true
+    }
+  },
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "selectedBaseWeightFiles": [
+    {
+      "path": "base/text_encoder/model.fp16.safetensors",
+      "sha256": "71e183d11db0c6b6282a4d9e0abb74125edc8692393e89ed8ee5571005f35cb1",
+      "byteSize": 247323896
+    },
+    {
+      "path": "base/text_encoder_2/model.fp16.safetensors",
+      "sha256": "ec310df2af79c318e24d20511b601a591ca8cd4f1fce1d8dff822a356bcdb1f4",
+      "byteSize": 1389382176
+    },
+    {
+      "path": "base/text_encoder_3/model.fp16-00001-of-00002.safetensors",
+      "sha256": "4f2751ceeb2a96edd693e539dc5d6bba0b8d3814f49a9b3798403a0cec4b2e3d",
+      "byteSize": 4994582104
+    },
+    {
+      "path": "base/text_encoder_3/model.fp16-00002-of-00002.safetensors",
+      "sha256": "f63154532130422309532ff56f11945fbea8266c958e3133e8e5aef85c6293c7",
+      "byteSize": 4530066248
+    },
+    {
+      "path": "base/transformer/diffusion_pytorch_model.fp16.safetensors",
+      "sha256": "8b0e357dd04755fbfb067c63f4a883ac1de2942dd4a3240069874a17022e5418",
+      "byteSize": 4169981408
+    },
+    {
+      "path": "base/vae/diffusion_pytorch_model.fp16.safetensors",
+      "sha256": "f9b67a279283625caee39d61eacb5324243848477b4eb535355eaaa8423d4e09",
+      "byteSize": 167666654
+    }
+  ],
+  "reviewedAssemblies": {
+    "canny": {
+      "weightFileCount": 7,
+      "weightBytes": 16689882254,
+      "weightInventorySha256": "40b461965308366e1dc14f8b0e0cd28427b1e482208c340b20913487d53a07d1",
+      "recommendedResolution": [1024, 1024],
+      "numInferenceSteps": 28,
+      "guidanceScale": 7.0,
+      "controlNetConditioningScale": 0.5
+    },
+    "tile": {
+      "weightFileCount": 7,
+      "weightBytes": 16689882254,
+      "weightInventorySha256": "fc4c384dd54974ad92cb8721212baf99c4b4ed0e33768d75a00baa3636f4d397",
+      "recommendedResolution": [1024, 1024],
+      "numInferenceSteps": 28,
+      "guidanceScale": 7.0,
+      "controlNetConditioningScale": 0.5
+    },
+    "inpainting": {
+      "weightFileCount": 7,
+      "weightBytes": 19659566774,
+      "weightInventorySha256": "9b4f05a84ca0c86505e4144b0a6467f21c401eccff25e4353cd40c071ceed12d",
+      "recommendedResolution": [1024, 1024],
+      "numInferenceSteps": 28,
+      "guidanceScale": 7.0,
+      "controlNetConditioningScale": 0.95,
+      "extraConditioningChannels": 1,
+      "requiresControlMask": true
+    }
+  },
+  "metadataSha256": {
+    "baseLicense": "01889551358d3e37d16dfcd1852e85be0bd8470f00930d39ed361e754ab1cc14",
+    "cannyCard": "bf71114ceec1ad5853dcc2b4dce50d562e82ea53a72b59535bca1d37b57755b7",
+    "cannyConfig": "36c4a9f4cc1458fa740a6852dd2f9af42e0c14e714e9eaab65b5f1327fb9ca6f",
+    "tileCard": "b44f68a023994850b88867617b58acb6631caaed1dfbf4eba52fd72cdbe8cec2",
+    "tileConfig": "ccfe36d4d85eef0c689df245b7aefac7d135675d9bb5b7b133c54eb6251d7e57",
+    "inpaintingNotice": "16a37b2b122042bc1bcdab3599c9891052130acd28db43bb25ae38262da62666",
+    "inpaintingCard": "0902efa49a7877c1f047a70ac02a55e1d372ad57db8e0783eb48b9ec55b24795",
+    "inpaintingConfig": "89670ba78a62cf48f6afaae90d6d426b4d954ecbe7da762f0086fa9383d53837"
+  },
+  "pinnedDiffusers": {
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "version": "0.40.0.dev0",
+    "controlPipelineClass": "StableDiffusion3ControlNetPipeline",
+    "controlPipelineSha256": "404967d7efccc6072b919e181a7234a493e3d05a47cbb924bded97cfc917aa5e",
+    "inpaintingPipelineClass": "StableDiffusion3ControlNetInpaintingPipeline",
+    "inpaintingPipelineSha256": "3e3d638ed33d9677828019b9f292a0cc36e1fd74418d42556053c5b0fe7e5b71",
+    "controlNetClass": "SD3ControlNetModel",
+    "controlNetSha256": "5d4449ae5ecce09e159789a00f335fa517ccc3379109fa864b2a5d2b3fbed4ce",
+    "transformerClass": "SD3Transformer2DModel",
+    "transformerSha256": "0c9bcbf6c19c4eeb9c438332157d233f8191253125438e660054700e466c42d8",
+    "autoencoderClass": "AutoencoderKL",
+    "autoencoderSha256": "091d72ea9ae2f45f465e70f05142e04850d1153052dca520291ceb707bda8c98",
+    "schedulerClass": "FlowMatchEulerDiscreteScheduler",
+    "schedulerSha256": "1af27be5b2f92b7d139d3c50239be5ce3eafc4a7eddf59c2d30689f8ec31e93d",
+    "outputClass": "StableDiffusion3PipelineOutput",
+    "outputSha256": "c864145fa25c0ebb2900123861726a26dd73c1e237e33d0c061e532430e74fe8",
+    "modelCpuOffloadSequence": "text_encoder->text_encoder_2->text_encoder_3->image_encoder->transformer->vae",
+    "transformersOptionalRuntimeRequired": true,
+    "callbackOnStepEndAvailable": true,
+    "maxSequenceLengthDefault": 256,
+    "maxSequenceLengthPackageUpperBound": 512,
+    "outputType": "StableDiffusion3PipelineOutput"
+  },
+  "licenseReview": {
+    "base": {
+      "id": "stabilityai-nc-research-community",
+      "licenseByteSize": 7420,
+      "licenseSha256": "01889551358d3e37d16dfcd1852e85be0bd8470f00930d39ed361e754ab1cc14",
+      "acceptanceTriggeredByUse": true,
+      "nonCommercialOnly": true,
+      "productionUseProhibitedWithoutSeparateLicense": true,
+      "hostedServiceOrApiUseProhibitedWithoutSeparateLicense": true,
+      "distributionLicenseAndNoticeRequired": true,
+      "gatedPromptConfirmsNonCommercialOnly": true
+    },
+    "cannyAndTile": {
+      "modelCardMetadataPresent": false,
+      "declaredLicense": null,
+      "licenseFilePresent": false,
+      "rightsStatus": "undetermined"
+    },
+    "inpainting": {
+      "declaredLicense": "other",
+      "rootLicenseFilePresent": false,
+      "noticeCopiesStabilityAiCommunityLicense": true,
+      "noticeLicenseAnnualRevenueThresholdUsd": 1000000,
+      "noticeHostedCommercialUseAddressed": true,
+      "derivativeWeightGrantUnambiguous": false,
+      "compatibleWithExactBaseLicenseUnambiguous": false
+    }
+  },
+  "resourceEnvelopes": {
+    "cannyOrTile": {
+      "status": "estimate_only_modiff_qualification_pending",
+      "minimumAcceleratorMemoryBytes": 25769803776,
+      "minimumSelectiveDiskBytes": 25769803776,
+      "minimumSystemRamBytes": 51539607552
+    },
+    "inpainting": {
+      "status": "estimate_only_modiff_qualification_pending",
+      "minimumAcceleratorMemoryBytes": 34359738368,
+      "minimumSelectiveDiskBytes": 34359738368,
+      "minimumSystemRamBytes": 68719476736
+    }
+  },
+  "admission": {
+    "status": "review_complete_blocked",
+    "runtimeCatalogExposed": false,
+    "downloadCatalogExposed": false,
+    "capabilityExposed": false,
+    "canonicalWorkflowsAdded": 0,
+    "clientSurfaceAdded": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "fullWeightFilesDownloaded": false,
+    "remoteSafetensorsHeaderBytesFetched": 125040,
+    "blockingReasons": [
+      "accepted authenticated access is required to inspect the exact base model index, component configs, and safetensors headers",
+      "the exact base snapshot is non-commercial-only and prohibits production or hosted/API use without a separate license",
+      "the Canny and Tile repositories declare no license for their weights",
+      "the inpainting NOTICE does not unambiguously reconcile its derivative grant with the exact base snapshot license",
+      "the package pipelines have no safety checker or equivalent output guardrail"
+    ],
+    "unresolvedGates": [
+      "authenticated_base_artifact_review",
+      "auxiliary_weight_rights_resolution",
+      "legal_product_approval",
+      "backend_owned_bounds_and_optional_runtime_contract",
+      "remote_heavy_hardware_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  }
+}

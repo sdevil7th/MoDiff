@@ -1,0 +1,342 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "liveQualified": false,
+    "remoteOnly": true,
+    "runtimeCatalogExposed": false,
+    "status": "reviewed_not_admitted_gated_noncommercial_remote_code_prompt_path",
+    "unresolvedGates": [
+      "bria_fibo_gate_acceptance",
+      "noncommercial_weight_license_or_separate_commercial_agreement",
+      "authenticated_model_index_component_config_and_license_payload_review",
+      "backend_owned_structured_json_prompt_contract",
+      "task_scoped_remote_code_authorization_for_optional_promptifiers",
+      "immutable_nested_vlm_revision_injection",
+      "platform_neutral_promptifier_device_placement",
+      "backend_owned_resource_and_generation_bounds",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ],
+    "userVisible": false
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "Bria FIBO",
+  "format": "safetensors",
+  "genericContractReview": {
+    "candidateInputContracts": [
+      "structured_json_to_image",
+      "structured_json_image_edit",
+      "structured_json_image_inpaint"
+    ],
+    "candidateOutputKind": "image",
+    "currentMoDiffAdapterPresent": false,
+    "requiredExecutionBoundary": "keep optional text/image-to-JSON promptification separate from the package-owned image pipelines, bind every model and code repository at an immutable revision, and validate the JSON schema before generation or editing"
+  },
+  "licenseReview": {
+    "acceptanceRequired": true,
+    "commercialUseAllowedWithoutSeparateAgreement": false,
+    "evidence": "Both gated model cards label the weights non-commercial, link CC BY-NC 4.0, and direct commercial users to a separate agreement. Both public custom-code promptifier repositories declare CC BY-NC 4.0.",
+    "exactGatedRepositoryLicensePayloadsReviewed": false,
+    "generationDeclaredLicenseId": "bria-fibo",
+    "linkedLicenseDeed": "cc-by-nc-4.0",
+    "promptifierDeclaredLicenseId": "cc-by-nc-4.0",
+    "separateCommercialAgreementAdvertised": true
+  },
+  "metadataAccess": {
+    "artifactInventorySource": "immutable Hugging Face model API metadata with exact blob sizes and LFS SHA-256 values",
+    "gatedConfigHttpStatus": 401,
+    "gatedConfigPayloadsReviewed": false,
+    "immutableRepositoryHeadsResolved": true,
+    "publicModelCardsReviewed": true,
+    "publicPromptifierCodeReviewed": true
+  },
+  "pinnedDiffusers": {
+    "callbackOnStepEndAvailable": true,
+    "packageOwnedClasses": [
+      "BriaFiboPipeline",
+      "BriaFiboEditPipeline",
+      "BriaFiboTransformer2DModel"
+    ],
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "sourceSha256": {
+      "editPipeline": "1ad0d2f0958ae94c35e85fe4ce45c3be2dd3161647d2538607aea4ebfbd9637d",
+      "generationPipeline": "19499658701bd2c5ff9506a49ed9f955d1ec3bb39869dc3d405092333bc093b9",
+      "pipelineOutput": "d42d8deb179cec29dd05c6bc3584b29e18a547b0b6ea1e20caf540d48d35426f",
+      "transformer": "fa7dee42aac57c80113d9c7938e7fa2621e1ecc7d9c686c61f7382dbca5e23f9"
+    },
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContracts": {
+    "edit": {
+      "autoResizeDefault": true,
+      "class": "BriaFiboEditPipeline",
+      "defaultGuidanceScale": 5.0,
+      "defaultMaxSequenceLength": 3000,
+      "defaultNumInferenceSteps": 30,
+      "documentedRecommendedNumInferenceSteps": 50,
+      "inputImageOptionalOnlyWhenHeightAndWidthAreExplicit": true,
+      "maskOptional": true,
+      "maximumPackageSequenceLength": 3000,
+      "modelCpuOffloadSequence": "text_encoder->image_encoder->transformer->vae",
+      "outputType": "BriaFiboPipelineOutput",
+      "promptMustBeJsonWithEditInstruction": true,
+      "unboundedByPackage": [
+        "prompt_character_length",
+        "batch_size",
+        "num_images_per_prompt",
+        "num_inference_steps",
+        "height",
+        "width"
+      ]
+    },
+    "generation": {
+      "class": "BriaFiboPipeline",
+      "defaultGuidanceScale": 5.0,
+      "defaultHeight": 1024,
+      "defaultMaxSequenceLength": 3000,
+      "defaultNumInferenceSteps": 30,
+      "defaultWidth": 1024,
+      "documentedRecommendedNumInferenceSteps": 50,
+      "maximumPackageSequenceLength": 3000,
+      "modelCpuOffloadSequence": "text_encoder->text_encoder_2->image_encoder->transformer->vae",
+      "outputType": "BriaFiboPipelineOutput",
+      "structuredJsonRequiredForReviewedQuality": true,
+      "structuredJsonValidatedByPackage": false,
+      "unboundedByPackage": [
+        "prompt_character_length",
+        "batch_size",
+        "num_images_per_prompt",
+        "num_inference_steps",
+        "height",
+        "width"
+      ]
+    }
+  },
+  "promptifierReviews": [
+    {
+      "codeSha256": "4080760959716ed705fc2e56bfa203f7e96c7c689f8fd802b32e76d5101880c3",
+      "defaultNestedModel": "briaai/FIBO-vlm",
+      "defaultSamplingMaxTokens": 4096,
+      "hardCodedDevice": "cuda",
+      "license": "cc-by-nc-4.0",
+      "modularConfigSha256": "3b25248a42348cefa1ea68ff07c05c62edb4191a476cff9d4cf4fbab0d681c0e",
+      "nestedModelRevisionPassedToFromPretrained": false,
+      "repository": "briaai/FIBO-VLM-prompt-to-JSON",
+      "repositoryBytes": 16619,
+      "revision": "986ca8c4a99d1ce2ca1de0c0701f36d448bc592f",
+      "role": "generation_refine_inspire_promptifier",
+      "samplingBoundsOwnedByCode": false,
+      "trustRemoteCodeRequired": true
+    },
+    {
+      "codeSha256": "1d830371dffaeab3a642732719b4c30a327064cf2a1efe4d1c0530203506bc72",
+      "defaultNestedModel": "briaai/FIBO-edit-vlm",
+      "defaultSamplingMaxTokens": 4096,
+      "hardCodedDevice": "cuda",
+      "license": "cc-by-nc-4.0",
+      "modularConfigSha256": "3b25248a42348cefa1ea68ff07c05c62edb4191a476cff9d4cf4fbab0d681c0e",
+      "nestedModelRevisionPassedToFromPretrained": false,
+      "repository": "briaai/FIBO-edit-prompt-to-JSON",
+      "repositoryBytes": 14017,
+      "revision": "6d815165f1eff44ccae74642f21f8b1d91ea93bd",
+      "role": "image_edit_promptifier",
+      "samplingBoundsOwnedByCode": false,
+      "trustRemoteCodeRequired": true
+    }
+  ],
+  "repositories": [
+    {
+      "fullRepositoryBytes": 25614147549,
+      "gated": true,
+      "gatingMode": "auto",
+      "metadataBlobSha1": {
+        "modelCard": "42da37bf1432f0871febf4a182013c3e0dfc389a",
+        "modelIndex": "6aca7909d9797c37025a5ba7e912ae6b5ba3506c",
+        "schedulerConfig": "a374abbd90c794e72101c2cfebbec5fe309a6c6c",
+        "textEncoderConfig": "8957af6c0e15d1dc2d0c5e9d03c3e92680a0b88e",
+        "transformerConfig": "bdac16f0c6abbfb5b5a97f8ac743ea4a47630249",
+        "vaeConfig": "29f65bc63e9daadb95e4c1a8344d162be4b7d533"
+      },
+      "private": false,
+      "pythonFilesPresent": true,
+      "pythonFilesSelectedForExecution": false,
+      "repository": "briaai/FIBO",
+      "revision": "185d92d046a8bc2f93843083894a9ea983b90b32",
+      "role": "structured_json_text_to_image",
+      "selectedWeightBytes": 25540786720,
+      "selectedWeightFileCount": 5,
+      "selectedWeightInventorySha256": "fb67946b39330a179f30f1b4542fe3b56fd13d0ab87ccb82b7d561252e3120d7",
+      "trustRemoteCodeRequirementUnresolved": true
+    },
+    {
+      "archivedTransformerWeightBytes": 16571773904,
+      "archivedTransformerWeightFileCount": 2,
+      "archivedTransformerWeightInventorySha256": "55a47dce6ef65c57a5ce4020c7f1e3872176136c9a0f81522e0bf7da3a523bfc",
+      "fullRepositoryBytes": 40720673054,
+      "fullWeightBytes": 40703183416,
+      "fullWeightFileCount": 7,
+      "fullWeightInventorySha256": "2973f69cf63c607c7a5391a0cd8599c1f62a48e0eb6366ae690747df51790fd5",
+      "gated": true,
+      "gatingMode": "auto",
+      "metadataBlobSha1": {
+        "modelCard": "d201c4f76565eb6784ed5dd656605ab61e0367e3",
+        "modelIndex": "84cdb15d95eb9956c11baf3bc65f611883672b3d",
+        "schedulerConfig": "17c0b5419f9c1923dddf7b28e2664313fffce40a",
+        "textEncoderConfig": "804db6f3fc42364bc4d9fcaf68449a1800998110",
+        "transformerConfig": "b0ce0a7634eba1f10e6d2e08254cab6d06bf5fc0",
+        "vaeConfig": "1f830892bc75c75e29046c6e3cfd3ce55988dc02"
+      },
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "briaai/Fibo-Edit",
+      "revision": "1bee4ae9b119d2634ec9f378370f2a1ae49d89cc",
+      "role": "structured_json_image_edit_and_inpaint",
+      "selectedWeightBytes": 24131409512,
+      "selectedWeightFileCount": 5,
+      "selectedWeightInventorySha256": "81a82cb16cb67f2ed3ab8d46802bf4bb76bc6ffad3ab4156bcb07f875cc17f44",
+      "trustRemoteCodeRequirementUnresolved": true
+    }
+  ],
+  "resourceEnvelope": {
+    "editSelectedModelAndPromptVlmBytes": 33007128840,
+    "generationSelectedModelAndPromptVlmBytes": 34416506048,
+    "minimumAcceleratorMemoryBytesEstimate": null,
+    "minimumSelectiveDiskBytesEstimate": null,
+    "minimumSystemRamBytesEstimate": null,
+    "notes": [
+      "The byte totals combine the current package-pipeline partition with the corresponding nested promptifier VLM weights, but exclude Python-package caches and tokenizer/config payloads.",
+      "No local or remote measurement has qualified a placement recipe."
+    ],
+    "status": "not_estimated_until_authenticated_recipe_review"
+  },
+  "schemaVersion": 1,
+  "archivedWeightFiles": {
+    "editTransformer": [
+      {
+        "byteSize": 9995348000,
+        "path": "transformer_old/diffusion_pytorch_model-00001-of-00002.safetensors",
+        "sha256": "070dc56f6b660c3714796426d9313423072a61b5e8af00f359bce1eb0b57ac37"
+      },
+      {
+        "byteSize": 6576425904,
+        "path": "transformer_old/diffusion_pytorch_model-00002-of-00002.safetensors",
+        "sha256": "24d521064f590abd0aa0c6b1a2525cacf1d7ac29bcb6fdf5f1b9a6cca2a9a335"
+      }
+    ]
+  },
+  "selectedWeightFiles": {
+    "edit": [
+      {
+        "byteSize": 4966315264,
+        "path": "text_encoder/model-00001-of-00002.safetensors",
+        "sha256": "e5eed4113a925264c33e3cdf76cd9f547c06a207ef2270914a7274a2bf685ffd"
+      },
+      {
+        "byteSize": 1183919744,
+        "path": "text_encoder/model-00002-of-00002.safetensors",
+        "sha256": "6c3ad90646457295723e4da5ee8afac47006e20407b122df5174693dd8d68a43"
+      },
+      {
+        "byteSize": 9995348000,
+        "path": "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+        "sha256": "37315544ec59ab1c0d2ad7e2b49d353e88f641c76b7ff875bed2434b42ade7ad"
+      },
+      {
+        "byteSize": 6576425904,
+        "path": "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+        "sha256": "b2b367fe3df46d23fface17f5269e61bd0fe929e5d7cb7a408a72e85aac8c8a3"
+      },
+      {
+        "byteSize": 1409400600,
+        "path": "vae/diffusion_pytorch_model.safetensors",
+        "sha256": "230496cb59ff85bc9c040487737c4062480cb61c71e697b197b4c30142f2a0da"
+      }
+    ],
+    "editPromptVlm": [
+      {
+        "byteSize": 4990497880,
+        "path": "model-00001-of-00002.safetensors",
+        "sha256": "36d4efda082cc018cf42e91c41bc9b92e2e758cfc0ef634280ff74ff9014dda7"
+      },
+      {
+        "byteSize": 3885221448,
+        "path": "model-00002-of-00002.safetensors",
+        "sha256": "19c0bf8a3c51472ed847eac2732683a2af7aed79c26f43d2180fac8f800751fb"
+      }
+    ],
+    "generation": [
+      {
+        "byteSize": 4966315264,
+        "path": "text_encoder/model-00001-of-00002.safetensors",
+        "sha256": "e5eed4113a925264c33e3cdf76cd9f547c06a207ef2270914a7274a2bf685ffd"
+      },
+      {
+        "byteSize": 1183919744,
+        "path": "text_encoder/model-00002-of-00002.safetensors",
+        "sha256": "6c3ad90646457295723e4da5ee8afac47006e20407b122df5174693dd8d68a43"
+      },
+      {
+        "byteSize": 9995348000,
+        "path": "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+        "sha256": "5e0dd378a8facc2aad0992ad555ba29eb3b4081b3e17f92cd8cea7ca50ca2f7a"
+      },
+      {
+        "byteSize": 6576425904,
+        "path": "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+        "sha256": "acc943ea79b2f7ed0f7227504afcc26118a4fc7065b41349a78c67cb8ecfdf24"
+      },
+      {
+        "byteSize": 2818777808,
+        "path": "vae/diffusion_pytorch_model.safetensors",
+        "sha256": "62cd18f19438e35b32ac63020e2852f566e9b02f46b6cdbd87972a356e3c6f4b"
+      }
+    ],
+    "generationPromptVlm": [
+      {
+        "byteSize": 4990497880,
+        "path": "model-00001-of-00002.safetensors",
+        "sha256": "56ca08c83456effbd7e6b7c6cc9aaf022c0fb8843e7cb769253aa4a28bcf4eec"
+      },
+      {
+        "byteSize": 3885221448,
+        "path": "model-00002-of-00002.safetensors",
+        "sha256": "46e9a9a0b52c8ad1cbe40c19eb7d02439864f8b313e02bd029dfb8f9826d6e6f"
+      }
+    ]
+  },
+  "nestedPromptVlmRepositories": [
+    {
+      "gated": false,
+      "private": false,
+      "repository": "briaai/FIBO-vlm",
+      "repositoryBytes": 8891672453,
+      "revision": "bd13da5e0b73c808014d6260963e311c8cdf0d8b",
+      "role": "generation_refine_inspire_vlm",
+      "weightBytes": 8875719328,
+      "weightFileCount": 2,
+      "weightInventorySha256": "52faea5c04f3e99a2cc4dda1246a1bafad26f69b02ca09bd3918dfb748141d74"
+    },
+    {
+      "gated": false,
+      "private": false,
+      "repository": "briaai/FIBO-edit-vlm",
+      "repositoryBytes": 8891672453,
+      "revision": "61d852ebd380ac79e04ec171552f5d7cca1a04cc",
+      "role": "image_edit_vlm",
+      "weightBytes": 8875719328,
+      "weightFileCount": 2,
+      "weightInventorySha256": "bc01caad3b54be3a5adcfebc576f8a3b0d1d278db2d4d5e6834c3e50aaa1ad94"
+    }
+  ]
+}

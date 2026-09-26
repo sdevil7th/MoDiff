@@ -4,14 +4,22 @@ from __future__ import annotations
 
 import json
 import re
-import threading
 import time
+from collections import OrderedDict
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+from modiff.studio_persistence_lock import STUDIO_PERSISTENCE_LOCK
 
-_LOCK = threading.RLock()
+
+_LOCK = STUDIO_PERSISTENCE_LOCK
 _ID = re.compile(r"^[A-Za-z0-9_-]{1,96}$")
+_SUMMARY_FIELDS = ("id", "title", "source", "sourceLabel", "intent", "createdAt", "updatedAt", "revision", "clientId")
+# Metadata only, never graph snapshots. File identity detects writes made by
+# migration/rollback or another local process without a separate invalidation API.
+_SUMMARY_CACHE_LIMIT = 8192
+_SUMMARY_CACHE: OrderedDict[Path, tuple[tuple[int, ...], dict[str, Any]]] = OrderedDict()
 
 
 def _root(data_dir: str | Path) -> Path:
@@ -33,6 +41,10 @@ def _read(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict) or not isinstance(value.get("snapshot"), dict):
         raise ValueError(f"Saved workflow {path.name} is invalid.")
+    # Read-time compatibility, not a destructive migration. Unknown legacy
+    # documents remain saved even when their title resembles an autosave.
+    if value.get("intent") not in ("draft", "saved"):
+        value["intent"] = "saved"
     return value
 
 
@@ -50,24 +62,61 @@ def list_workflows(data_dir: str | Path) -> list[dict[str, Any]]:
     return sorted(records, key=lambda item: float(item.get("updatedAt") or 0), reverse=True)
 
 
+def list_workflow_summaries(data_dir: str | Path) -> list[dict[str, Any]]:
+    """List workflow metadata without returning multi-megabyte graph snapshots."""
+
+    root = _root(data_dir).resolve()
+    if not root.exists():
+        return []
+    with _LOCK:
+        summaries = []
+        for path in root.glob("*.json"):
+            try:
+                stat = path.stat()
+                identity = (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+                cached = _SUMMARY_CACHE.get(path)
+                if cached is None or cached[0] != identity:
+                    record = _read(path)
+                    summary = {key: record.get(key) for key in _SUMMARY_FIELDS}
+                    _SUMMARY_CACHE[path] = (identity, summary)
+                    while len(_SUMMARY_CACHE) > _SUMMARY_CACHE_LIMIT:
+                        _SUMMARY_CACHE.popitem(last=False)
+                else:
+                    summary = cached[1]
+                _SUMMARY_CACHE.move_to_end(path)
+                summaries.append(deepcopy(summary))
+            except (OSError, ValueError, json.JSONDecodeError):
+                _SUMMARY_CACHE.pop(path, None)
+                continue
+    return sorted(summaries, key=lambda item: float(item.get("updatedAt") or 0), reverse=True)
+
+
 def get_workflow(data_dir: str | Path, workflow_id: Any) -> dict[str, Any] | None:
     path = _path(data_dir, workflow_id)
-    if not path.is_file():
-        return None
     with _LOCK:
+        if not path.is_file():
+            return None
         return _read(path)
 
 
 def save_workflow(data_dir: str | Path, workflow_id: Any, payload: Any) -> dict[str, Any]:
     if not isinstance(payload, dict) or not isinstance(payload.get("snapshot"), dict):
         raise ValueError("Saved workflow payload requires a snapshot object.")
+    intent = payload.get("intent", "saved")
+    if not isinstance(intent, str) or intent not in {"draft", "saved"}:
+        raise ValueError("Workflow intent must be draft or saved.")
     path = _path(data_dir, workflow_id)
     now = int(time.time() * 1000)
     with _LOCK:
         existing = _read(path) if path.is_file() else None
+        # Explicit Save is monotonic. An older queued autosave must never move
+        # a saved document back into recovery, including from another client.
+        if existing and existing["intent"] == "saved":
+            intent = "saved"
         record = {
             "id": _workflow_id(workflow_id),
             "title": str(payload.get("title") or "Workflow").strip()[:160] or "Workflow",
+            "intent": intent,
             "snapshot": payload["snapshot"],
             "source": payload.get("source") if isinstance(payload.get("source"), str) else "manual",
             "sourceLabel": payload.get("sourceLabel") if isinstance(payload.get("sourceLabel"), str) else None,

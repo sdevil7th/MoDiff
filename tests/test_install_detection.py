@@ -1,11 +1,30 @@
 import unittest
 from unittest.mock import patch
 
-from modiff.install import _amd_qualification, resolve_profile
+from modiff.install import _amd_qualification, _rocminfo_architectures, resolve_profile
 from modiff.runtime_profile import load_manifest
 
 
 class InstallDetectionTests(unittest.TestCase):
+    def test_rocminfo_reads_gpu_agents_not_generic_isa_aliases(self):
+        observed = """
+Agent 1
+  Name:                    INTEL(R) XEON(R) PLATINUM 8568Y+
+Agent 2
+  Name:                    gfx942
+  Marketing Name:          AMD Instinct MI300X VF
+    Name:                  amdgcn-amd-amdhsa--gfx942:sramecc+:xnack-
+    Name:                  amdgcn-amd-amdhsa--gfx9-4-generic:sramecc+:xnack-
+"""
+        self.assertEqual(_rocminfo_architectures(observed), ["gfx942"])
+        self.assertEqual(_rocminfo_architectures(observed + "\n  Name: gfx1151\n"), ["gfx1151", "gfx942"])
+
+    def test_rocminfo_does_not_admit_names_mentioned_only_in_errors_or_aliases(self):
+        for output in ("Error initializing gfx942", "Name: amdgcn-amd-amdhsa--gfx942", "Name: gfx9-4-generic"):
+            with self.subTest(output=output):
+                self.assertEqual(_rocminfo_architectures(output), [])
+        self.assertEqual(_rocminfo_architectures("  Name: gfx90a\n  Name: gfx90a\n"), ["gfx90a"])
+
     def host(self, **changes):
         return {"os": "linux", "architecture": "x86_64", "wsl": False, "nvidia_usable": False, "amd_usable": False, "mps_candidate": False, **changes}
 

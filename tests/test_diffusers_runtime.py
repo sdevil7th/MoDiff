@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from modules import MODULE_MAP
 from modules.DiffusersRuntime.main import (
+    ATTENTION_BACKENDS,
     ApplyPipelineRuntimeConfig,
     LoadPrequantizedDiffusersComponent,
     PipelineQuantizationConfigV2,
@@ -31,12 +32,16 @@ from modules.DiffusersRuntime.main import (
 class FakeAttentionComponent:
     def __init__(self):
         self.backends = []
+        self.backend_resets = 0
         self.is_cache_enabled = False
         self.cache_configs = []
         self.compile_calls = []
 
     def set_attention_backend(self, backend):
         self.backends.append(backend)
+
+    def reset_attention_backend(self):
+        self.backend_resets += 1
 
     def enable_cache(self, config):
         self.cache_configs.append(config)
@@ -94,7 +99,7 @@ class DiffusersRuntimeTests(unittest.TestCase):
             @classmethod
             def from_single_file(cls, path, **kwargs):
                 calls["component"] = (path, kwargs)
-                return object()
+                return cls()
 
         with tempfile.NamedTemporaryFile(suffix=".gguf") as artifact_file:
             node = LoadPrequantizedDiffusersComponent("gguf-revision-probe")
@@ -103,6 +108,7 @@ class DiffusersRuntimeTests(unittest.TestCase):
                 patch("diffusers.FluxTransformer2DModel", FakeComponent),
                 patch("diffusers.GGUFQuantizationConfig", return_value=object()),
                 patch("huggingface_hub.hf_hub_download", return_value=artifact_file.name) as download,
+                patch("modules.DiffusersRuntime.main.verify_cataloged_artifact_file"),
             ):
                 result = node.execute(
                     artifact={"source": "hub", "value": "city96/FLUX.1-schnell-gguf"},
@@ -120,6 +126,10 @@ class DiffusersRuntimeTests(unittest.TestCase):
             "741f7c3ce8b383c54771c7003378a50191e9efe9",
         )
         self.assertIn("@f495746ed9c5efcf4661f53ef05401dceadc17d2:", result["resolved_artifact"])
+        self.assertEqual(
+            result["component"]._modiff_prequantized_component_contract["sha256"],
+            "90a393d3a44bec691c707003f434fdde06064b870bb3c206eb7a4f109b25ff4e",
+        )
 
     def test_runtime_nodes_are_registered(self):
         runtime = MODULE_MAP["modules.DiffusersRuntime"]
@@ -230,17 +240,67 @@ class DiffusersRuntimeTests(unittest.TestCase):
 
     def test_attention_backend_applies_only_to_compatible_components(self):
         pipeline = FakePipeline()
-        result = apply_attention_backend(pipeline, "aiter")
+        result = apply_attention_backend(pipeline, "sage")
 
-        self.assertEqual(pipeline.transformer.backends, ["aiter"])
+        self.assertEqual(pipeline.transformer.backends, ["sage"])
         self.assertEqual(result["applied"], ["transformer"])
 
-    def test_attention_auto_preserves_diffusers_default(self):
+    def test_obsolete_and_mutable_hub_aiter_backends_fail_closed(self):
+        self.assertNotIn("aiter", ATTENTION_BACKENDS)
+        self.assertNotIn("aiter_fa2_hub", ATTENTION_BACKENDS)
+        for backend in ("aiter", "aiter_fa2_hub"):
+            with self.subTest(backend=backend):
+                pipeline = FakePipeline()
+                with self.assertRaisesRegex(ValueError, "Unsupported attention backend"):
+                    apply_attention_backend(pipeline, backend)
+                with self.assertRaisesRegex(ValueError, "Unsupported attention backend"):
+                    build_execution_recipe(attention_backend=backend)
+                self.assertEqual(pipeline.transformer.backends, [])
+
+    def test_attention_auto_restores_model_and_process_defaults(self):
+        from diffusers.models.attention_dispatch import AttentionBackendName, _AttentionBackendRegistry
+        from diffusers.utils.constants import DIFFUSERS_ATTN_BACKEND
+
         pipeline = FakePipeline()
-        result = apply_attention_backend(pipeline, "auto")
+        original_backend, _original_fn = _AttentionBackendRegistry.get_active_backend()
+        try:
+            _AttentionBackendRegistry.set_active_backend(AttentionBackendName("_native_flash"))
+            result = apply_attention_backend(pipeline, "auto")
+            active_backend, _active_fn = _AttentionBackendRegistry.get_active_backend()
+        finally:
+            _AttentionBackendRegistry.set_active_backend(original_backend)
 
         self.assertEqual(pipeline.transformer.backends, [])
+        self.assertEqual(pipeline.transformer.backend_resets, 1)
+        self.assertEqual(result["reset"], ["transformer"])
+        self.assertEqual(active_backend.value, result["registry_default"])
+        self.assertEqual(result["registry_default"], str(DIFFUSERS_ATTN_BACKEND))
         self.assertTrue(result["default_selection"])
+
+    def test_explicit_attention_backend_does_not_leak_into_later_auto_models(self):
+        from diffusers.models.attention_dispatch import AttentionBackendName, _AttentionBackendRegistry
+        from diffusers.utils.constants import DIFFUSERS_ATTN_BACKEND
+
+        pipeline = FakePipeline()
+
+        def set_backend_and_mutate_registry(backend):
+            pipeline.transformer.backends.append(backend)
+            _AttentionBackendRegistry.set_active_backend(AttentionBackendName(backend))
+
+        # Match pinned Diffusers ModelMixin semantics: configuring this model
+        # also mutates the process-global dispatcher as a side effect.
+        pipeline.transformer.set_attention_backend = set_backend_and_mutate_registry
+        original_backend, _original_fn = _AttentionBackendRegistry.get_active_backend()
+        try:
+            result = apply_attention_backend(pipeline, "_native_flash")
+            active_backend, _active_fn = _AttentionBackendRegistry.get_active_backend()
+        finally:
+            _AttentionBackendRegistry.set_active_backend(original_backend)
+
+        self.assertEqual(pipeline.transformer.backends, ["_native_flash"])
+        self.assertEqual(result["applied"], ["transformer"])
+        self.assertEqual(active_backend, AttentionBackendName(str(DIFFUSERS_ATTN_BACKEND)))
+        self.assertEqual(result["registry_default"], str(DIFFUSERS_ATTN_BACKEND))
 
     def test_attention_backend_configures_both_dual_expert_transformers(self):
         pipeline = FakePipeline()
@@ -424,11 +484,12 @@ class DiffusersRuntimeTests(unittest.TestCase):
         )
 
         self.assertEqual(result["vendor"], "amd")
-        self.assertTrue(result["attention_backends"]["aiter"]["available"])
+        self.assertNotIn("aiter", result["attention_backends"])
+        self.assertNotIn("aiter_fa2_hub", result["attention_backends"])
         self.assertFalse(result["attention_backends"]["flash"]["available"])
         self.assertFalse(result["quantization_backends"]["torchao_float8"]["available"])
 
-    def test_capability_probe_explains_missing_rocm_attention_packages(self):
+    def test_capability_probe_excludes_obsolete_rocm_attention_backend(self):
         class FakeCuda:
             @staticmethod
             def get_device_capability(_index):
@@ -450,8 +511,8 @@ class DiffusersRuntimeTests(unittest.TestCase):
             package_available=lambda _name: False,
         )
 
-        self.assertFalse(result["attention_backends"]["aiter"]["available"])
-        self.assertEqual(result["attention_backends"]["aiter"]["reason"], "AITER package is not installed")
+        self.assertNotIn("aiter", result["attention_backends"])
+        self.assertNotIn("aiter_fa2_hub", result["attention_backends"])
         self.assertEqual(
             result["attention_backends"]["sage"]["reason"],
             "SageAttention package is not installed",

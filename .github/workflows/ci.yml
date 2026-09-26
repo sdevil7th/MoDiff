@@ -21,6 +21,7 @@ jobs:
 
   backend:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -29,7 +30,7 @@ jobs:
           - os: windows-latest
             python: '3.12'
             managed-python: ./.venv/Scripts/python.exe
-          - os: macos-14
+          - os: macos-15
             python: '3.12'
             managed-python: ./.venv/bin/python
     runs-on: ${{ matrix.os }}
@@ -40,8 +41,10 @@ jobs:
         with: { python-version: '${{ matrix.python }}' }
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
         with: { version: '0.11.26' }
-      - run: python -m modiff.install --accelerator cpu --backend-only --non-interactive --json
+      - run: uv run --no-project --no-sync --python 3.12 -m modiff.dev plan --accelerator cpu --backend-only --json
+      - run: uv run --no-project --no-sync --python 3.12 -m modiff.dev setup --accelerator cpu --backend-only --non-interactive --json
       - run: uv pip install --python ${{ matrix.managed-python }} -r requirements/test.txt
       - run: uv pip check --python ${{ matrix.managed-python }}
-      - run: ${{ matrix.managed-python }} -m modiff.preflight --json --check-port 8088 --fail-on-error
+      - run: uv run --no-project --no-sync --python 3.12 -m modiff.dev check --json --check-port 8088 --fail-on-error
+      - run: ${{ matrix.managed-python }} scripts/smoke_service_package.py
       - run: ${{ matrix.managed-python }} -m pytest -q

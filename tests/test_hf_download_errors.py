@@ -56,6 +56,20 @@ class HuggingFaceDownloadInputTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status, 400)
         self.assertIn(b"invalid_huggingface_repo_id", response.body)
 
+    async def test_download_endpoint_rejects_mutable_or_malformed_revisions(self):
+        server = object.__new__(WebServer)
+        for revision in ("main", "A" * 40, "a" * 39, " a" * 20):
+            with self.subTest(revision=revision):
+                request = SimpleNamespace(
+                    can_read_body=False,
+                    query={"repo_id": "unit/exact-model", "revision": revision},
+                )
+
+                response = await WebServer.hf_download(server, request)
+
+                self.assertEqual(response.status, 400)
+                self.assertIn(b"invalid_huggingface_revision", response.body)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,0 +1,392 @@
+{
+  "edges": [
+    {
+      "className": "category-object",
+      "data": {
+        "connectionType": "object"
+      },
+      "edgeType": "default",
+      "id": "edge-01",
+      "markerEnd": {
+        "color": "hsl(130 71% 70%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-01",
+      "sourceHandle": "result",
+      "style": {
+        "stroke": "hsl(130 71% 70%)"
+      },
+      "target": "node-03",
+      "targetHandle": "value",
+      "type": "default"
+    },
+    {
+      "className": "category-transformers_any_to_any",
+      "data": {
+        "connectionType": "transformers_any_to_any"
+      },
+      "edgeType": "default",
+      "id": "edge-02",
+      "markerEnd": {
+        "color": "hsl(205 74% 62%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "model",
+      "style": {
+        "stroke": "hsl(205 74% 62%)"
+      },
+      "target": "node-01",
+      "targetHandle": "model",
+      "type": "default"
+    }
+  ],
+  "layout": {
+    "algorithm": "modiff-layered-v1",
+    "horizontalGap": 140,
+    "positionHash": "dbed74a4593f089118f042d95bb1acd6f3ca7a542a8657e6ac7d3d3e5d6b0cd2",
+    "verticalGap": 72
+  },
+  "nodes": [
+    {
+      "data": {
+        "action": "GenerateAnyToAny",
+        "cache": false,
+        "category": "Hugging Face Transformers",
+        "description": "Generate one bounded output through the handle's reviewed family adapter.",
+        "label": "Generate Any-to-Any",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.HuggingFaceTransformers",
+        "params": {
+          "do_sample": {
+            "default": false,
+            "label": "Sample",
+            "type": "boolean"
+          },
+          "generation_mode": {
+            "default": "text",
+            "label": "Output Modality",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "text",
+                "schemaVersion": 1,
+                "value": "text"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "image",
+                "schemaVersion": 1,
+                "value": "image"
+              }
+            ],
+            "type": "string",
+            "value": "text"
+          },
+          "image": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Generated Image",
+            "type": "image"
+          },
+          "images": {
+            "display": "input",
+            "isConnected": false,
+            "label": "Images",
+            "required": false,
+            "type": "image"
+          },
+          "max_new_tokens": {
+            "default": 256,
+            "label": "Max New Tokens",
+            "max": 2048,
+            "min": 1,
+            "type": "int"
+          },
+          "min_new_tokens": {
+            "default": 0,
+            "label": "Min New Tokens",
+            "max": 2048,
+            "min": 0,
+            "type": "int"
+          },
+          "model": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Model",
+            "type": "transformers_any_to_any"
+          },
+          "num_beams": {
+            "default": 1,
+            "label": "Beams",
+            "max": 8,
+            "min": 1,
+            "type": "int"
+          },
+          "prompt": {
+            "default": "",
+            "label": "Prompt",
+            "type": "text",
+            "value": ""
+          },
+          "repetition_penalty": {
+            "default": 1,
+            "label": "Repetition Penalty",
+            "max": 10,
+            "min": 0.1,
+            "type": "float"
+          },
+          "result": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Generation Result",
+            "type": "object"
+          },
+          "temperature": {
+            "default": 1,
+            "label": "Temperature",
+            "max": 5,
+            "min": 0.01,
+            "type": "float"
+          },
+          "text": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Generated Text",
+            "type": "string"
+          },
+          "top_k": {
+            "default": 50,
+            "label": "Top K",
+            "max": 1000,
+            "min": 0,
+            "type": "int"
+          },
+          "top_p": {
+            "default": 1,
+            "label": "Top P",
+            "max": 1,
+            "min": 0.01,
+            "type": "float"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "transformersAnyToAnyGenerate",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-01",
+      "position": {
+        "x": 440,
+        "y": 0
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "LoadAnyToAnyModel",
+        "cache": false,
+        "category": "Hugging Face Transformers",
+        "description": "Load one immutable model through a finite reviewed Any-to-Any adapter.",
+        "label": "Load Any-to-Any Model",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.HuggingFaceTransformers",
+        "params": {
+          "device": {
+            "default": "cpu:0",
+            "label": "Device",
+            "options": {
+              "cpu": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              },
+              "cpu:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
+              }
+            },
+            "type": "string",
+            "value": "cuda:0"
+          },
+          "dtype": {
+            "default": "float32",
+            "label": "DType",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "float32",
+                "schemaVersion": 1,
+                "value": "float32"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "float16 is not supported by the active runtime.",
+                "installationState": "unavailable",
+                "label": "float16",
+                "schemaVersion": 1,
+                "value": "float16"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "bfloat16",
+                "schemaVersion": 1,
+                "value": "bfloat16"
+              }
+            ],
+            "type": "string",
+            "value": "bfloat16"
+          },
+          "model": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Model",
+            "type": "transformers_any_to_any"
+          },
+          "model_id": {
+            "display": "modelselect",
+            "fieldOptions": {
+              "noValidation": true,
+              "sources": [
+                "hub",
+                "local"
+              ]
+            },
+            "label": "Model",
+            "type": "string",
+            "value": {
+              "source": "hub",
+              "value": "deepseek-community/Janus-Pro-1B"
+            }
+          },
+          "pipeline_class": {
+            "default": "JanusForConditionalGeneration",
+            "hidden": true,
+            "label": "Execution Class",
+            "type": "string"
+          },
+          "receipt": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Model Receipt",
+            "type": "object"
+          },
+          "revision": {
+            "default": "",
+            "label": "Exact Hub Commit",
+            "type": "string",
+            "value": "1655280bb75959cc1cb85529a2a8b26e7016072e"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "transformersAnyToAnyModel",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-02",
+      "position": {
+        "x": 0,
+        "y": 112
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "DataViewer",
+        "cache": false,
+        "category": "primitive",
+        "description": "",
+        "label": "Data Viewer",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Primitive",
+        "params": {
+          "output": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Output",
+            "type": "string"
+          },
+          "preview": {
+            "dataSource": "output",
+            "display": "ui_text",
+            "label": "Preview"
+          },
+          "value": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Data",
+            "type": "any"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "transformersTextPreview",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-03",
+      "position": {
+        "x": 880,
+        "y": 168
+      },
+      "type": "custom"
+    }
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

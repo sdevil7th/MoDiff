@@ -1,8 +1,13 @@
+from contextlib import ExitStack
 import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
+from diffusers.modular_pipelines.modular_pipeline_utils import InputParam, OutputParam
+
+from modules.ModularDiffusers.modular_utils import require_modiff_node_contract
 from modules.ModularDiffusers.pipeline_schema import MoDiffParam, MoDiffPipelineConfig, input_param_to_modiff_param
 
 
@@ -49,6 +54,23 @@ class PipelineSchemaTests(unittest.TestCase):
         self.assertEqual(converted.to_dict()["display"], "textarea")
         self.assertEqual(converted.to_dict()["default"], "hello")
 
+    def test_custom_block_preserves_upstream_required_inputs(self):
+        block = SimpleNamespace(
+            inputs=[
+                InputParam(name="prompt", type_hint=str, required=True, metadata={"modiff": "textbox"}),
+                InputParam(name="strength", type_hint=float, default=0.5, required=False),
+            ],
+            outputs=[OutputParam(name="latents")],
+            component_names=[],
+        )
+
+        config = MoDiffPipelineConfig.from_custom_block(block, node_label="Required fixture")
+        custom = config.node_params["custom"]
+
+        self.assertEqual(custom["input_names"], ["prompt", "strength"])
+        self.assertEqual(custom["params"]["prompt"]["label"], "Prompt *")
+        self.assertEqual(custom["params"]["strength"]["label"], "Strength")
+
     def test_config_round_trip_uses_modiff_owned_filename(self):
         config = MoDiffPipelineConfig(
             node_specs={"custom": None},
@@ -63,6 +85,112 @@ class PipelineSchemaTests(unittest.TestCase):
 
             self.assertTrue(config_path.is_file())
             self.assertEqual(MoDiffPipelineConfig.load(directory).to_dict(), config.to_dict())
+
+    def test_default_vae_encoder_projects_only_an_upstream_generator_to_a_seed_field(self):
+        for upstream_inputs, expected_inputs in (
+            (["image", "generator"], ["image", "seed"]),
+            (["image"], ["image"]),
+        ):
+            with self.subTest(upstream_inputs=upstream_inputs):
+                block = SimpleNamespace(
+                    input_names=upstream_inputs,
+                    intermediate_output_names=["image_latents"],
+                    component_names=["vae"],
+                )
+                blocks = SimpleNamespace(sub_blocks={"vae_encoder": block})
+
+                node_config = MoDiffPipelineConfig.from_blocks(blocks).node_params["vae_encoder"]
+
+                self.assertEqual(node_config["input_names"], expected_inputs)
+                self.assertNotIn("generator", node_config["params"])
+                if "generator" in upstream_inputs:
+                    self.assertEqual(node_config["params"]["seed"]["min"], 0)
+                    self.assertEqual(node_config["params"]["seed"]["max"], 4294967295)
+
+    def test_resolved_node_contract_does_not_mutate_deserialized_custom_config(self):
+        config = MoDiffPipelineConfig.from_dict(
+            {
+                "label": "Custom fixture",
+                "node_params": {
+                    "denoise": {
+                        "block_name": "denoise",
+                        "params": {
+                            "unet": {"label": "Denoiser", "type": "diffusers_auto_model"},
+                            "steps": {"label": "Steps", "type": "int", "default": 4},
+                        },
+                        "input_names": ["steps"],
+                        "model_input_names": ["unet"],
+                        "output_names": ["latents"],
+                    }
+                },
+            }
+        )
+        block = object()
+
+        class CustomPipeline:
+            def __init__(self):
+                self.blocks = SimpleNamespace(sub_blocks={"denoise": block})
+
+        registry = SimpleNamespace(get=lambda _pipeline_class: config)
+        with patch("modules.ModularDiffusers.modular_utils._get_registry_instance", return_value=registry):
+            resolved_blocks, first = require_modiff_node_contract(CustomPipeline, "denoise")
+            first["params"].pop("unet")
+            first["params"]["steps"]["default"] = 99
+            _, second = require_modiff_node_contract(CustomPipeline, "denoise")
+
+        self.assertIs(resolved_blocks, block)
+        self.assertIn("unet", config.node_params["denoise"]["params"])
+        self.assertEqual(config.node_params["denoise"]["params"]["steps"]["default"], 4)
+        self.assertIn("unet", second["params"])
+        self.assertEqual(second["params"]["steps"]["default"], 4)
+
+
+class ModularOperationDiscoveryTests(unittest.TestCase):
+    def test_registered_stage_contracts_are_offline_and_do_not_construct_pipelines(self):
+        from modules import MODULE_MAP
+        from modules.ModularDiffusers import MODULAR_REGISTRY
+        from modules.ModularDiffusers.modular_utils import get_modular_operation_contracts
+
+        configs = MODULAR_REGISTRY.get_all()
+        with ExitStack() as stack:
+            stack.enter_context(patch("socket.socket.connect", side_effect=AssertionError("Discovery used network")))
+            for pipeline in configs:
+                stack.enter_context(
+                    patch.object(pipeline, "__init__", side_effect=AssertionError("Constructed pipeline"))
+                )
+            contracts = get_modular_operation_contracts(MODULE_MAP)
+        self.assertGreater(len(contracts), 0)
+        by_class = {pipeline.__name__: config for pipeline, config in configs.items()}
+        for contract in contracts:
+            with self.subTest(pipeline=contract["pipelineClass"], stage=contract["nodeType"]):
+                params = by_class[contract["pipelineClass"]].node_params[contract["nodeType"]]
+                self.assertEqual(contract["blockName"], params["block_name"])
+                wrapper_ports = set()
+                if contract["nodeKey"] == "modules.ModularDiffusers.EncodePrompt":
+                    connected = next((p for p in contract["ports"] if p["name"] == "prompt_input"), None)
+                    if connected:
+                        self.assertEqual(connected["semanticName"], "prompt")
+                        self.assertIn("prompt", params["input_names"])
+                        wrapper_ports.add(("input", "prompt_input"))
+                self.assertEqual(
+                    {(p["direction"], p["name"]) for p in contract["ports"]},
+                    {("input", name) for name in params["input_names"] + params["model_input_names"]}
+                    | {("output", name) for name in params["output_names"]} | wrapper_ports,
+                )
+                self.assertEqual(contract["support"], "declared")
+        # Different families expose one operation identity, through one saved action.
+        denoisers = [
+            c
+            for c in contracts
+            if c["pipelineClass"]
+            in {"QwenImageModularPipeline", "FluxModularPipeline", "StableDiffusionXLModularPipeline"}
+            and c["operationId"] == "diffusion.denoise"
+        ]
+        self.assertEqual(len(denoisers), 3)
+        self.assertEqual({c["nodeKey"] for c in denoisers}, {"modules.ModularDiffusers.Denoise"})
+        qwen = next(c for c in denoisers if c["pipelineClass"] == "QwenImageModularPipeline")
+        bundle = next(p for p in qwen["ports"] if p["name"] == "controlnet_bundle")
+        self.assertEqual(bundle["roles"], ["value", "component"])
 
 
 if __name__ == "__main__":

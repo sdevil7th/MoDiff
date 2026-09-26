@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "family": "Hunyuan FramePack",
+  "repositories": {
+    "transformer": {
+      "repository": "lllyasviel/FramePackI2V_HY",
+      "revision": "86cef4396041b6002c957852daac4c91aaa47c79",
+      "private": false,
+      "gated": false,
+      "modelCardLicenseTag": null,
+      "selectedDownloadFileCount": 7,
+      "selectedDownloadBytes": 25748917665,
+      "selection": "complete immutable repository snapshot"
+    },
+    "base": {
+      "repository": "hunyuanvideo-community/HunyuanVideo",
+      "revision": "e8c2aaa66fe3742a32c11a6766aecbf07c56e773",
+      "private": false,
+      "gated": false,
+      "modelCardLicenseTag": null,
+      "snapshotFileCount": 30,
+      "snapshotDownloadBytes": 41903678881,
+      "selectedDownloadFileCount": 21,
+      "selectedDownloadBytes": 16261369704,
+      "excludedFiles": [
+        "config.json",
+        "transformer/config.json",
+        "transformer/diffusion_pytorch_model-00001-of-00006.safetensors",
+        "transformer/diffusion_pytorch_model-00002-of-00006.safetensors",
+        "transformer/diffusion_pytorch_model-00003-of-00006.safetensors",
+        "transformer/diffusion_pytorch_model-00004-of-00006.safetensors",
+        "transformer/diffusion_pytorch_model-00005-of-00006.safetensors",
+        "transformer/diffusion_pytorch_model-00006-of-00006.safetensors",
+        "transformer/diffusion_pytorch_model.safetensors.index.json"
+      ]
+    },
+    "vision": {
+      "repository": "lllyasviel/flux_redux_bfl",
+      "revision": "45b801affc54ff2af4e5daf1b282e0921901db87",
+      "private": false,
+      "gated": false,
+      "modelCardLicenseTag": null,
+      "snapshotFileCount": 8,
+      "snapshotDownloadBytes": 985517539,
+      "selectedDownloadFileCount": 5,
+      "selectedDownloadBytes": 856508718,
+      "excludedFiles": [
+        "image_embedder/config.json",
+        "image_embedder/diffusion_pytorch_model.safetensors",
+        "model_index.json"
+      ]
+    }
+  },
+  "selectedWeightFiles": {
+    "transformer": [
+      {"path": "diffusion_pytorch_model-00001-of-00003.safetensors", "byteSize": 9972080992, "sha256": "500e9aee172a1065b1807f3850c040fec88d6ab8aefeb15e601e23d8b936a441"},
+      {"path": "diffusion_pytorch_model-00002-of-00003.safetensors", "byteSize": 9987115584, "sha256": "c142e6953620890e7e855854b5fb0fda144608a24478cf7d41507b869ce3d723"},
+      {"path": "diffusion_pytorch_model-00003-of-00003.safetensors", "byteSize": 5789584816, "sha256": "ece170207d3d1a6f05af5f12eaf1662c87d4384920f3f618ec462194046d1e19"}
+    ],
+    "base": [
+      {"path": "text_encoder/model-00001-of-00004.safetensors", "byteSize": 4977222384, "sha256": "f5ad57d3eda300a3195bc9c0bb36ab76ebe88831f128e9851e63440aff4a6741"},
+      {"path": "text_encoder/model-00002-of-00004.safetensors", "byteSize": 4999801992, "sha256": "54accb98811931fca7598da4f7239b03b912eaa2bd5fe639f2da00923374f4a0"},
+      {"path": "text_encoder/model-00003-of-00004.safetensors", "byteSize": 4915915480, "sha256": "d67c77f57cab4c9bf7f4420c256aed684c8ac7b49c6ab72cff9924e9513db9f1"},
+      {"path": "text_encoder/model-00004-of-00004.safetensors", "byteSize": 117465520, "sha256": "c93f133c65ab1aeaa9ed1e998901a306636375b2f57fa53cd279241147a9a0e9"},
+      {"path": "text_encoder_2/model.safetensors", "byteSize": 246144152, "sha256": "660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd"},
+      {"path": "vae/diffusion_pytorch_model.safetensors", "byteSize": 985943868, "sha256": "7c68a6295f9034a88225fbafb1f3258291a08d57a1fdb938233fa57b1b8f4883"}
+    ],
+    "vision": [
+      {"path": "image_encoder/model.safetensors", "byteSize": 856506120, "sha256": "d769e3a32a6a9bac72d4d93b989e44491f71b50f02bfa14cd9187758d4a68ff1"}
+    ]
+  },
+  "loaderComposition": {
+    "pipelineClass": "HunyuanVideoFramepackPipeline",
+    "transformerClass": "HunyuanVideoFramepackTransformer3DModel",
+    "featureExtractorClass": "SiglipImageProcessor",
+    "imageEncoderClass": "SiglipVisionModel",
+    "baseTransformerOmitted": true,
+    "unusedVisionImageEmbedderOmitted": true,
+    "safetensorsRequiredForEveryWeightBearingLoad": true
+  },
+  "appDownloadQueue": {
+    "submissionChannel": "app_only",
+    "submitted": false,
+    "directWeightDownloadPerformed": false,
+    "olderModelsDeleted": false,
+    "preflightFreeBytes": 310245425152,
+    "preflightExistingQueuedReservationBytes": 249542793597,
+    "reserveBytes": 68719476736,
+    "aggregateSelectedBytes": 42866796087,
+    "transformerDeficitBytes": 33765762846,
+    "baseDeficitBytes": 24278214885,
+    "visionDeficitBytes": 8873353899,
+    "statusAtReview": "not_submitted_insufficient_queue_aware_space"
+  },
+  "admission": {
+    "status": "source_complete_execution_pending",
+    "runtimeCatalogExposed": true,
+    "downloadCatalogExposed": true,
+    "capabilityExposed": true,
+    "clientAuxiliarySetupExposed": true,
+    "remoteOnly": true,
+    "liveQualified": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "unresolvedGates": [
+      "remote_real_weight_execution_and_memory_measurement",
+      "live_output_safety_and_quality_review",
+      "model_snapshot_license_clarification",
+      "physical_macos_execution"
+    ]
+  }
+}

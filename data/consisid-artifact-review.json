@@ -1,0 +1,244 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "galleryEligible": false,
+    "liveQualified": false,
+    "runtimeCatalogExposed": false,
+    "status": "review_complete_not_admitted_unsafe_face_stack",
+    "unresolvedGates": [
+      "safe_serialized_face_identity_stack",
+      "package_owned_cross_platform_face_preprocessing",
+      "biometric_privacy_consent_and_misuse_controls",
+      "generic_identity_preserving_image_to_video_contract",
+      "backend_owned_resolution_frame_step_batch_and_prompt_bounds",
+      "license_file_clarification",
+      "remote_heavy_hardware_execution",
+      "live_output_identity_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "ConsisID",
+  "faceIdentityStack": {
+    "hardcodedOnnxProviders": [
+      "CUDAExecutionProvider"
+    ],
+    "packageImports": [
+      "consisid_eva_clip",
+      "facexlib",
+      "insightface",
+      "opencv-python",
+      "onnxruntime",
+      "torchvision"
+    ],
+    "packageUtility": "diffusers.pipelines.consisid.consisid_utils.prepare_face_models",
+    "requiredArtifactBytes": 1446798634,
+    "requiredArtifactCount": 8,
+    "requiredArtifacts": [
+      {
+        "byteSize": 856461210,
+        "format": "unsafe-pytorch-pt",
+        "path": "face_encoder/EVA02_CLIP_L_336_psz14_s6B.pt",
+        "sha256": "84c3a17a228c567a155259b2245b0b59072bf7da510260a0a02ec54de6d50b05"
+      },
+      {
+        "byteSize": 109497761,
+        "format": "unsafe-pytorch-pth",
+        "path": "face_encoder/detection_Resnet50_Final.pth",
+        "sha256": "6d1de9c2944f2ccddca5f5e010ea5ae64a39845a86311af6fdf30841b0a5a16d"
+      },
+      {
+        "byteSize": 143607619,
+        "format": "onnx",
+        "path": "face_encoder/models/antelopev2/1k3d68.onnx",
+        "sha256": "df5c06b8a0c12e422b2ed8947b8869faa4105387f199c477af038aa01f9a45cc"
+      },
+      {
+        "byteSize": 5030888,
+        "format": "onnx",
+        "path": "face_encoder/models/antelopev2/2d106det.onnx",
+        "sha256": "f001b856447c413801ef5c42091ed0cd516fcd21f2d6b79635b1e733a7109dbf"
+      },
+      {
+        "byteSize": 1322532,
+        "format": "onnx",
+        "path": "face_encoder/models/antelopev2/genderage.onnx",
+        "sha256": "4fde69b1c810857b88c64a335084f1c3fe8f01246c9a191b48c7bb756d6652fb"
+      },
+      {
+        "byteSize": 260665334,
+        "format": "onnx",
+        "path": "face_encoder/models/antelopev2/glintr100.onnx",
+        "sha256": "4ab1d6435d639628a6f3e5008dd4f929edf4c4124b1a7169e1048f9fef534cdf"
+      },
+      {
+        "byteSize": 16923827,
+        "format": "onnx",
+        "path": "face_encoder/models/antelopev2/scrfd_10g_bnkps.onnx",
+        "sha256": "5838f7fe053675b1c7a08b633df49e7af5495cee0493c7dcf6697200b85b5b91"
+      },
+      {
+        "byteSize": 53289463,
+        "format": "unsafe-pytorch-pth",
+        "path": "face_encoder/parsing_bisenet.pth",
+        "sha256": "468e13ca13a9b43cc0881a9f99083a430e9c0a38abd935431d1c28ee94b26567"
+      }
+    ],
+    "requiredIdentityOutputs": [
+      "aligned_face_image",
+      "face_keypoints",
+      "id_cond",
+      "id_vit_hidden"
+    ],
+    "unsafeRequiredArtifactCount": 3
+  },
+  "format": "mixed-safetensors-onnx-unsafe-pytorch",
+  "license": {
+    "acceptanceRequired": false,
+    "evidence": "Apache-2.0 identifier in immutable model-card metadata; the immutable model repository contains no license file",
+    "id": "apache-2.0",
+    "licenseFilePresent": false
+  },
+  "metadataSha256": {
+    "modelCard": "ed3be4c9797c9dfca10185b2fc20ecdf611de3768a91b2da0dad05f393460371",
+    "modelIndex": "12bc2a24b65f063f13bae74220e47039c6f36c798e262d0103b75b3b25cb5de1",
+    "schedulerConfig": "3cffb474cf90f6d33d09d4c7258537dcdd4e0c8407a728129ba80ba0bd9214c2",
+    "textEncoderConfig": "fd42789863fc8c15b592f0ff1aec684cf5d7aaabcdce50f43a447aeaac2491e3",
+    "textEncoderSafetensorsIndex": "3bacec0f0cf392399d4a385908f67dd73df99c9e9cfee669f148858ba9fbdb0a",
+    "tokenizerConfig": "9c4f8a92630f7c6cc082831b291d6f46f18455d69d1a2a52c9b5f5303ab01469",
+    "transformerConfig": "5c4ecdc88f012353a5368afb5012708f18cb4b92f749e42f3c6f72b32d10565c",
+    "transformerSafetensorsIndex": "50ed70f7ae25df6929edfe7256e401d93195f45d8311afecf48e4fe0b6a92643",
+    "vaeConfig": "fe8805ed9e30af09fecf04f870a2f11391cea21ddf1446fe22ba220fa4538238"
+  },
+  "otherUnsafeRepositoryArtifacts": [
+    {
+      "byteSize": 6247065,
+      "path": "data_process/step1_yolov8_face.pt",
+      "sha256": "37396ac6a9601ab9f5177e4231b09d81cf6f65a7f22db99ec3b36ab63f674e71"
+    },
+    {
+      "byteSize": 136728947,
+      "path": "data_process/step1_yolov8_head.pt",
+      "sha256": "ed729429a2d68f14adf1d93ec14fe6ba759ecba099fb0781750fa535b67f1640"
+    },
+    {
+      "byteSize": 261202954,
+      "path": "face_encoder/glint360k_curricular_face_r101_backbone.bin",
+      "sha256": "aa54ae6dc9f7ac6e262809f1a81d6108e221952bf836aee4cb677ef19246c6ec"
+    },
+    {
+      "byteSize": 85331193,
+      "path": "face_encoder/parsing_parsenet.pth",
+      "sha256": "3d558d8d0e42c20224f13cf5a29c79eba2d59913419f945545d8cf7b72920de2"
+    }
+  ],
+  "pinnedDiffusers": {
+    "callbackOnStepEndAvailable": true,
+    "faceUtilitySha256": "7ae159fa6608d339f66df1427d6af638beb1b430db9ce6528fe57223d80baed6",
+    "modelCpuOffloadSequence": "text_encoder->transformer->vae",
+    "outputClass": "ConsisIDPipelineOutput",
+    "outputSha256": "11c90f679844e2731f83c75843d7199c1ea1f5c39f91a1c6316d835434d42391",
+    "pipelineClass": "ConsisIDPipeline",
+    "pipelineSha256": "61b3c74311096b0818b84e388823aaa24ef68bf33571ea6b9f44ad2b2a59ca69",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "transformerClass": "ConsisIDTransformer3DModel",
+    "transformerSha256": "f8a0435f65b013f4adf46562b180553a1895a7e763230fb3da9fa996569c8178",
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContract": {
+    "defaultGuidanceScale": 6.0,
+    "defaultHeight": 480,
+    "defaultNumFrames": 49,
+    "defaultNumInferenceSteps": 50,
+    "defaultNumVideosPerPrompt": 1,
+    "defaultUseDynamicCfg": false,
+    "defaultWidth": 720,
+    "documentedFramesPerSecond": 8,
+    "heightWidthDivisibility": 8,
+    "maxSequenceLength": 226,
+    "outputType": "pil",
+    "packageValidationGaps": [
+      "identity tensors are documented as crucial but not required by input validation",
+      "no maximum batch, resolution, frame, or denoising-step bound",
+      "num_videos_per_prompt is silently forced to one",
+      "frame-count documentation and implementation congruence are ambiguous"
+    ],
+    "requiredUserInputs": [
+      "one clear face image",
+      "one long descriptive prompt"
+    ]
+  },
+  "remoteResourceEnvelope": {
+    "minimumAcceleratorMemoryBytes": 8589934592,
+    "minimumSelectiveDiskBytes": 32212254720,
+    "minimumSystemRamBytes": 68719476736,
+    "status": "upstream_measured_generator_only_face_stack_pending",
+    "upstreamReportedGpuMemoryGB": {
+      "baselineAllocated": 37,
+      "baselineReserved": 44,
+      "sequentialOffloadSlicingAndTilingAllocated": 5,
+      "sequentialOffloadSlicingAndTilingReserved": 7
+    }
+  },
+  "repositories": [
+    {
+      "availability": "public",
+      "gated": false,
+      "hubSafetensorsDtypeParameterMetadata": {
+        "BF16": 6217102912
+      },
+      "licenseFilePresent": false,
+      "modelIndexClass": "ConsisIDPipeline",
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "BestWishYsh/ConsisID-preview",
+      "repositoryBytes": 25099961157,
+      "revision": "950bc3f0902db44799e223a12ad972f9c52b341d",
+      "trustRemoteCodeRequired": false,
+      "weightBytes": 22821396692,
+      "weightFileCount": 5,
+      "weightInventorySha256": "1e89d48dbd65b9f00c6a314097be481b782a605703b36eb91eebe74a0dbdbd89"
+    },
+    {
+      "availability": "not_found_unauthenticated_2026-08-13",
+      "documentationClaim": "Official Diffusers documentation names this as the second official checkpoint.",
+      "repository": "BestWishYsh/ConsisID-1.5",
+      "runtimeEligible": false
+    }
+  ],
+  "schemaVersion": 1,
+  "weightFiles": [
+    {
+      "byteSize": 4994582224,
+      "path": "text_encoder/model-00001-of-00002.safetensors",
+      "sha256": "9162b8ae9152e7a8e3bbebc535c8692783f50aec8cd3bb8ef6a751c432dd6392"
+    },
+    {
+      "byteSize": 4530066360,
+      "path": "text_encoder/model-00002-of-00002.safetensors",
+      "sha256": "d3edef29693d52402b1cc7c362f031e052f2e9482ed0c765c6351950434349b0"
+    },
+    {
+      "byteSize": 9997146608,
+      "path": "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+      "sha256": "ba1db5280a6318aa95e7e7cae7bbd737736203eb8c9884d70b1350723a65e5a6"
+    },
+    {
+      "byteSize": 2437212904,
+      "path": "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+      "sha256": "b1d6c3d95a4bcd9b5ace0672b259d17b4dd3772852f22e8c4d3f91018afdac6d"
+    },
+    {
+      "byteSize": 862388596,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "a410e48d988c8224cef392b68db0654485cfd41f345f4a3a81d3e6b765bb995e"
+    }
+  ]
+}

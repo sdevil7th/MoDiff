@@ -1,0 +1,578 @@
+{
+  "edges": [
+    {
+      "className": "category-audio",
+      "data": {
+        "connectionType": "audio"
+      },
+      "edgeType": "default",
+      "id": "edge-01",
+      "markerEnd": {
+        "color": "#F472B6",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "output",
+      "style": {
+        "stroke": "#F472B6"
+      },
+      "target": "node-01",
+      "targetHandle": "audio",
+      "type": "default"
+    },
+    {
+      "className": "category-audio",
+      "data": {
+        "connectionType": "audio"
+      },
+      "edgeType": "default",
+      "id": "edge-02",
+      "markerEnd": {
+        "color": "#F472B6",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-03",
+      "sourceHandle": "audio",
+      "style": {
+        "stroke": "#F472B6"
+      },
+      "target": "node-02",
+      "targetHandle": "source",
+      "type": "default"
+    },
+    {
+      "className": "category-audio",
+      "data": {
+        "connectionType": "audio"
+      },
+      "edgeType": "default",
+      "id": "edge-03",
+      "markerEnd": {
+        "color": "#F472B6",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-04",
+      "sourceHandle": "audio",
+      "style": {
+        "stroke": "#F472B6"
+      },
+      "target": "node-02",
+      "targetHandle": "reference",
+      "type": "default"
+    }
+  ],
+  "layout": {
+    "algorithm": "modiff-layered-v1",
+    "horizontalGap": 140,
+    "positionHash": "d8a4cb3696fa7eb4dae5aa9db58c7fa39469a216385e278995ca0770576aabc6",
+    "verticalGap": 72
+  },
+  "nodes": [
+    {
+      "data": {
+        "action": "Export",
+        "cache": false,
+        "category": "Audio",
+        "description": "Save audio to a WAV file and expose a preview.",
+        "label": "Export Audio",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Audio",
+        "params": {
+          "audio": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Audio",
+            "type": [
+              "audio",
+              "str"
+            ]
+          },
+          "duration_seconds": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Duration",
+            "type": "float"
+          },
+          "file": {
+            "display": "output",
+            "isConnected": false,
+            "label": "File",
+            "type": "audio"
+          },
+          "filename": {
+            "default": "{PATH:audio}/MoDiff_{HASH:6}.wav",
+            "label": "File",
+            "type": "str"
+          },
+          "preview": {
+            "dataSource": "file",
+            "display": "ui_audio",
+            "type": "url"
+          },
+          "sample_rate": {
+            "default": 48000,
+            "label": "Export Sample Rate",
+            "options": {
+              "16000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "16 kHz",
+                "schemaVersion": 1,
+                "value": "16000"
+              },
+              "24000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "24 kHz",
+                "schemaVersion": 1,
+                "value": "24000"
+              },
+              "44100": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "44.1 kHz",
+                "schemaVersion": 1,
+                "value": "44100"
+              },
+              "48000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "48 kHz",
+                "schemaVersion": 1,
+                "value": "48000"
+              },
+              "88200": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "88.2 kHz",
+                "schemaVersion": 1,
+                "value": "88200"
+              },
+              "96000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "96 kHz",
+                "schemaVersion": 1,
+                "value": "96000"
+              }
+            },
+            "type": "int",
+            "value": 48000
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "audioExport",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-01",
+      "position": {
+        "x": 880,
+        "y": 187
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "ProcessAudio",
+        "cache": false,
+        "category": "Audio",
+        "description": "Dispatch reviewed install-free audio edits through bounded base nodes.",
+        "label": "Audio.Process",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Audio",
+        "params": {
+          "boundary_fade_seconds": {
+            "default": 0.01,
+            "label": "Join Boundary Fade",
+            "max": 1,
+            "min": 0,
+            "step": 0.001,
+            "type": "float"
+          },
+          "duration": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Duration",
+            "type": "float"
+          },
+          "duration_seconds": {
+            "default": 0,
+            "label": "Duration (0 = remainder)",
+            "min": 0,
+            "type": "float"
+          },
+          "max_adjustment_db": {
+            "default": 12,
+            "label": "Maximum Loudness Adjustment",
+            "max": 30,
+            "min": 0,
+            "type": "float"
+          },
+          "normalize_peak": {
+            "default": false,
+            "label": "Normalize Peak",
+            "type": "bool"
+          },
+          "operation": {
+            "default": "audio_trim",
+            "label": "Operation",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "audio_trim",
+                "schemaVersion": 1,
+                "value": "audio_trim"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "audio_join",
+                "schemaVersion": 1,
+                "value": "audio_join"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "audio_loudness_match",
+                "schemaVersion": 1,
+                "value": "audio_loudness_match"
+              }
+            ],
+            "type": "string",
+            "value": "audio_join"
+          },
+          "output": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Processed Audio",
+            "type": "audio"
+          },
+          "pipeline_class": {
+            "default": "BuiltinAudioOperationV1",
+            "hidden": true,
+            "label": "Built-in Contract",
+            "type": "string",
+            "value": "BuiltinAudioOperationV1"
+          },
+          "reference": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Reference Audio",
+            "type": [
+              "audio",
+              "str"
+            ]
+          },
+          "reference_window_seconds": {
+            "default": 15,
+            "label": "Reference Tail",
+            "max": 60,
+            "min": 0,
+            "type": "float"
+          },
+          "sample_rate": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Sample Rate",
+            "type": "int"
+          },
+          "source": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Source Audio",
+            "type": [
+              "audio",
+              "str"
+            ]
+          },
+          "start_seconds": {
+            "default": 0,
+            "label": "Start",
+            "min": 0,
+            "step": 0.01,
+            "type": "float"
+          },
+          "target_peak_dbfs": {
+            "default": -1,
+            "label": "Peak Ceiling",
+            "max": 0,
+            "min": -9,
+            "type": "float"
+          },
+          "target_sample_rate": {
+            "default": 48000,
+            "label": "Target Sample Rate",
+            "options": {
+              "16000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "16 kHz",
+                "schemaVersion": 1,
+                "value": "16000"
+              },
+              "24000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "24 kHz",
+                "schemaVersion": 1,
+                "value": "24000"
+              },
+              "44100": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "44.1 kHz",
+                "schemaVersion": 1,
+                "value": "44100"
+              },
+              "48000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "48 kHz",
+                "schemaVersion": 1,
+                "value": "48000"
+              },
+              "88200": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "88.2 kHz",
+                "schemaVersion": 1,
+                "value": "88200"
+              },
+              "96000": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "96 kHz",
+                "schemaVersion": 1,
+                "value": "96000"
+              }
+            },
+            "type": "int"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "audioOperation",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom",
+        "uiState": {}
+      },
+      "id": "node-02",
+      "position": {
+        "x": 440,
+        "y": 61
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "Load",
+        "cache": false,
+        "category": "Audio",
+        "description": "Load an audio file as a reusable audio object.",
+        "label": "Load Audio",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Audio",
+        "params": {
+          "audio": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Audio",
+            "type": "audio"
+          },
+          "channels": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Channels",
+            "type": "int"
+          },
+          "duration_seconds": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Duration",
+            "type": "float"
+          },
+          "file": {
+            "display": "filebrowser",
+            "fieldOptions": {
+              "fileTypes": [
+                "audio"
+              ],
+              "multiple": false
+            },
+            "label": false,
+            "type": "str",
+            "value": ""
+          },
+          "filename": {
+            "display": "output",
+            "isConnected": false,
+            "label": "File",
+            "type": "str"
+          },
+          "preview": {
+            "dataSource": "filename",
+            "display": "ui_audio",
+            "type": "url"
+          },
+          "sample_rate": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Sample Rate",
+            "type": "int"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "loadAudio",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-03",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "Load",
+        "cache": false,
+        "category": "Audio",
+        "description": "Load an audio file as a reusable audio object.",
+        "label": "Load Audio",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Audio",
+        "params": {
+          "audio": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Audio",
+            "type": "audio"
+          },
+          "channels": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Channels",
+            "type": "int"
+          },
+          "duration_seconds": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Duration",
+            "type": "float"
+          },
+          "file": {
+            "display": "filebrowser",
+            "fieldOptions": {
+              "fileTypes": [
+                "audio"
+              ],
+              "multiple": false
+            },
+            "label": false,
+            "type": "str",
+            "value": ""
+          },
+          "filename": {
+            "display": "output",
+            "isConnected": false,
+            "label": "File",
+            "type": "str"
+          },
+          "preview": {
+            "dataSource": "filename",
+            "display": "ui_audio",
+            "type": "url"
+          },
+          "sample_rate": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Sample Rate",
+            "type": "int"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "loadReferenceAudio",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-04",
+      "position": {
+        "x": 0,
+        "y": 346
+      },
+      "type": "custom"
+    }
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

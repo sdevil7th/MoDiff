@@ -209,6 +209,11 @@ def parse_module_map(base_path: str) -> None:
                 logger.warning(f"Module '{module_name}' could not be parsed or has no NodeBase classes.")
 
 parse_module_map("modules")
-parse_module_map("custom")
+from modiff.custom_extensions import ExtensionStore  # noqa: E402
+try:
+    ExtensionStore().load_enabled(MODULE_MAP)
+except (ValueError, OSError) as error:
+    logger.error('Custom extension discovery is unavailable: %s', error)
 
+total_nodes = sum(len(nodes) for nodes in MODULE_MAP.values())
 logger.info(f"Loaded {total_nodes} nodes from {len(MODULE_MAP)} modules.")

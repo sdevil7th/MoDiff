@@ -6,6 +6,9 @@ class Canny(NodeBase):
     def execute(self, **kwargs):
         from kornia.filters import canny
 
+        output_mode = kwargs.get("output_mode", "L")
+        if output_mode not in ("L", "RGB"):
+            raise ValueError("Canny Output Mode must be L or RGB.")
         image = kwargs.get("image")
         low_threshold = kwargs.get("low_threshold", 0.1)
         high_threshold = kwargs.get("high_threshold", 0.2)
@@ -26,6 +29,10 @@ class Canny(NodeBase):
         del image
 
         output = TensorToImage(output)
+        # Keep old graphs single-channel. RGB is an explicit format choice for
+        # consumers (including some ControlNet VAEs) requiring three channels.
+        if output_mode == "RGB":
+            output = [image.convert("RGB") for image in output]
 
         return { "output": output }
 

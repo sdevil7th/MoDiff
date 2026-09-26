@@ -111,6 +111,67 @@ def catalog_repository_pin(repo: str, *, model_type: str | None = None) -> dict[
     return None
 
 
+def catalog_artifact_file(repo: str, filename: str) -> dict[str, Any] | None:
+    """Return one exact reviewed file contract from a cataloged artifact."""
+
+    pin = catalog_repository_pin(repo)
+    if pin is None or pin.get("kind") != "artifact":
+        return None
+    selected = str(filename or "").strip()
+    matches = [
+        item
+        for item in pin.get("files") or []
+        if isinstance(item, dict) and item.get("filename") == selected
+    ]
+    if len(matches) > 1:
+        raise ValueError(f"Cataloged artifact {repo!r} has duplicate file contracts for {selected!r}.")
+    if not matches:
+        return None
+    contract = matches[0]
+    digest = str(contract.get("sha256") or "").lower()
+    byte_size = contract.get("byteSize")
+    if (
+        not selected.lower().endswith(".gguf")
+        or "/" in selected
+        or "\\" in selected
+        or not re.fullmatch(r"[0-9a-f]{64}", digest)
+        or isinstance(byte_size, bool)
+        or not isinstance(byte_size, int)
+        or byte_size <= 0
+    ):
+        raise ValueError(f"Cataloged artifact {repo!r} has an invalid immutable file contract.")
+    return {**contract, "sha256": digest}
+
+
+def catalog_download_inventory(repo: str, revision: str | None, files: list[str]) -> dict[str, Any] | None:
+    """Return exact selected-file metadata, never a download/runtime approval.
+
+    Keep this separate from single-file GGUF execution contracts. Any changed
+    revision or app file selection invalidates the inventory instead of
+    inheriting a base-family byte count.
+    """
+    if not revision or not files:
+        return None
+    matches = [item for item in read_model_artifact_catalog().get("downloadInventories", [])
+               if str(item.get("repo", "")).lower() == repo.lower() and item.get("revision") == revision]
+    if not matches:
+        return None
+    if len(matches) != 1:
+        raise ValueError(f"Duplicate download inventories for {repo!r} at {revision!r}.")
+    inventory = matches[0]
+    entries = inventory.get("files")
+    if not isinstance(entries, list) or not entries:
+        raise ValueError(f"Invalid download inventory for {repo!r}.")
+    names = [entry.get("path") for entry in entries]
+    if (any(not isinstance(name, str) or not name for name in names)
+            or len(set(names)) != len(names)
+            or any(type(entry.get("byteSize")) is not int or entry["byteSize"] < 0 for entry in entries)):
+        raise ValueError(f"Invalid download file metadata for {repo!r}.")
+    if set(names) != set(files):
+        return None
+    return {**inventory, "exactBytes": sum(entry["byteSize"] for entry in entries)}
+
+
 def catalog_revision(repo: str, *, model_type: str | None = None) -> str | None:
     """Return and validate the immutable revision recorded for ``repo``."""
 

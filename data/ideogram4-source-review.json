@@ -1,0 +1,272 @@
+{
+  "admission": {
+    "downloadCatalogExposed": false,
+    "executableModes": [],
+    "gateAcceptancePerformed": false,
+    "liveQualified": false,
+    "remoteOnly": true,
+    "runtimeCatalogExposed": false,
+    "status": "reviewed_not_admitted_gated_noncommercial_unresolved_artifacts",
+    "unresolvedGates": [
+      "task_scoped_ideogram4_gate_and_terms_acceptance",
+      "product_legal_approval_or_separate_commercial_agreement",
+      "authenticated_model_index_component_config_and_exact_lfs_identity_review",
+      "backend_owned_nf4_bitsandbytes_cuda_loading_contract",
+      "backend_owned_generation_guidance_and_resource_bounds",
+      "product_owned_safety_filter_human_oversight_and_disclosure_contract",
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ],
+    "userVisible": false,
+    "weightBytesDownloaded": 0
+  },
+  "family": "Ideogram 4",
+  "format": "safetensors",
+  "genericContractReview": {
+    "candidateInputContracts": [
+      "text_to_image"
+    ],
+    "candidateOutputKind": "image",
+    "currentMoDiffAdapterPresent": false,
+    "requiredExecutionBoundary": "load only a separately accepted immutable artifact through the package-owned pipeline, keep hosted prompt upsampling disabled, and enforce backend-owned resolution, step, guidance, safety, and resource bounds"
+  },
+  "licenseReview": {
+    "acceptanceRequired": true,
+    "acceptancePerformed": false,
+    "acceptableUsePolicyIncorporated": true,
+    "commercialAgreementRequiredForCommercialUse": true,
+    "commercialUseAllowedWithoutSeparateAgreement": false,
+    "distributionIncludesHostedServicesAndApis": true,
+    "downstreamTermsAndNoticeRequiredForDistribution": true,
+    "licenseFileBytes": 13647,
+    "licenseFileSha256": "29125fd78316409de65039259cd2f811237a3690f0aebfd959ac1f75d783fe12",
+    "licenseName": "Ideogram Non-Commercial Model Agreement",
+    "licensePayloadReviewedWithoutAcceptance": true,
+    "licenseUpdated": "2026-06-03",
+    "outputUseToDevelopCompetingModelsOrServicesProhibited": true,
+    "productSafetyObligationsInclude": [
+      "suitable_safety_filters",
+      "human_oversight",
+      "required_disclosures"
+    ],
+    "terminationRequiresDeletion": true
+  },
+  "metadataAccess": {
+    "artifactIdentityFieldsMaskedBeforeAcceptance": true,
+    "componentConfigHttpStatus": 401,
+    "componentConfigPayloadsReviewed": false,
+    "exactArtifactIdentitiesAvailable": false,
+    "immutableRepositoryHeadsResolved": true,
+    "modelIndexHttpStatus": 401,
+    "modelIndexPayloadReviewed": false,
+    "publicFileTreesReviewed": true,
+    "publicModelCardsReviewed": true
+  },
+  "optionalPromptEnhancer": {
+    "admitted": false,
+    "hostedIdeogramApiAllowed": false,
+    "localHeadCandidate": {
+      "declaredLicense": "apache-2.0",
+      "fullRepositoryBytes": 2489321725,
+      "gated": false,
+      "repository": "diffusers/qwen3-vl-8b-instruct-lm-head",
+      "revision": "9728767e1d4037dd9e921980b1aaa96423419b1c"
+    },
+    "pipelineDefaultEnabled": false,
+    "reason": "Prompt enhancement is optional and is not part of the blocked base artifact admission; MoDiff must never silently route prompts to an external API."
+  },
+  "pinnedDiffusers": {
+    "callbackOnStepEndAvailable": true,
+    "callbackTensorInputs": [
+      "latents"
+    ],
+    "interruptAvailable": true,
+    "loraLoaderMixinPresent": true,
+    "modelCpuOffloadSequence": "prompt_enhancer_head->text_encoder->transformer->unconditional_transformer->vae",
+    "packageOwnedClasses": [
+      "Ideogram4Pipeline",
+      "Ideogram4Transformer2DModel",
+      "Ideogram4PromptEnhancerHead"
+    ],
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "safetyCheckerPresent": false,
+    "sourceSha256": {
+      "autoencoderKlFlux2": "7d9a976c1e4f42615e8c422f1643d86b49c4339221bd04b67f518b718ebd6c2d",
+      "flowMatchEulerDiscreteScheduler": "1af27be5b2f92b7d139d3c50239be5ce3eafc4a7eddf59c2d30689f8ec31e93d",
+      "modularBlocks": "bd168e3d7631cde3941eb270c72fafcab60c8fedea4166521c50722500177a54",
+      "modularPipeline": "a35fb1769aa9dcfd88c0b10890560293cae399ad30b992272aea566cdee940b1",
+      "pipeline": "b9593071ffd78f6e6662913960e4537cbc41d7471c7f9ccdb74d06037c1807eb",
+      "pipelineOutput": "a7edf02f10b943cfab1cc8afce94aa057728afd4ba06218ab52b22028ee2a008",
+      "promptEnhancer": "39220b7847db6ed7e3da2dcc80eeea954ba834ee995642b8861da3ada6d27869",
+      "transformer": "c338e36a3c3bfabbe3d783332d0da115af294db823dff429c9d24b06f5560224"
+    },
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContract": {
+    "class": "Ideogram4Pipeline",
+    "defaultGuidanceScale": null,
+    "defaultGuidanceSchedule": {
+      "finalThreeSteps": 3.0,
+      "precedingSteps": 7.0
+    },
+    "defaultHeight": 2048,
+    "defaultMaxSequenceLength": 2048,
+    "defaultNumImagesPerPrompt": 1,
+    "defaultNumInferenceSteps": 48,
+    "defaultOutputType": "pil",
+    "defaultPromptUpsampling": false,
+    "defaultTemperature": 1.0,
+    "defaultWidth": 2048,
+    "documentedResolutionContract": {
+      "maximum": 2048,
+      "minimum": 256,
+      "multiple": 16
+    },
+    "guidanceScaleAndScheduleMutuallyExclusive": true,
+    "guidanceScheduleLengthMustMatchInferenceSteps": true,
+    "negativePromptSupported": false,
+    "promptUpsamplingExternalApiForbiddenByMoDiff": true,
+    "unconditionalBranchUsesZeroTextConditioning": true,
+    "unboundedByPackage": [
+      "prompt_character_length",
+      "batch_size",
+      "num_images_per_prompt",
+      "num_inference_steps",
+      "height",
+      "width"
+    ]
+  },
+  "repositories": [
+    {
+      "cardBytes": 20228,
+      "cardSha256": "ad6b9b0bd6990a2137f4d63a4d5313023bbac701465c59004f403b76b5c9491d",
+      "declaredLicense": "ideogram-4-non-commercial",
+      "fullRepositoryBytes": 16117875670,
+      "gated": true,
+      "gatingMode": "auto",
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "ideogram-ai/ideogram-4-nf4-diffusers",
+      "revision": "1874bc70267ba2c823a7239e1d70dd308c8d64dc",
+      "role": "preferred_package_owned_nf4_candidate",
+      "safetensorsParameterDtypes": {
+        "BF16": 1356928,
+        "F32": 144972144,
+        "U8": 4638988737
+      },
+      "safetensorsParameterTotal": 4785317809,
+      "trustRemoteCodeRequiredByReviewedRoute": false,
+      "visibleWeightBytes": 16095406068,
+      "visibleWeightFileCount": 4
+    },
+    {
+      "cardBytes": 20229,
+      "cardSha256": "fa3d2e1caebbebd05f3f8e9dc46379ba8b418e63108edab66d7dd43a52983206",
+      "declaredLicense": "ideogram-4-non-commercial",
+      "fullRepositoryBytes": 16117791323,
+      "gated": true,
+      "gatingMode": "auto",
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "ideogram-ai/ideogram-4-nf4",
+      "revision": "f664347839e0a87bc495f5c9483cc0014b8e344e",
+      "role": "official_nf4_snapshot",
+      "safetensorsParameterDtypes": {
+        "BF16": 1356928,
+        "F32": 144971056,
+        "U8": 4638983195
+      },
+      "safetensorsParameterTotal": 4785311179,
+      "visibleWeightBytes": 16095321720,
+      "visibleWeightFileCount": 4
+    },
+    {
+      "cardBytes": 17382,
+      "cardSha256": "83f41d98fff5ab014949b99912fdf8bf7d10c0d7b014f011e0f4d79dac866e14",
+      "declaredLicense": "ideogram-4-non-commercial",
+      "fullRepositoryBytes": 27549627282,
+      "gated": true,
+      "gatingMode": "auto",
+      "private": false,
+      "pythonFilesPresent": false,
+      "repository": "ideogram-ai/ideogram-4-fp8",
+      "revision": "ee79a7237b519f1402ceacf952f30c8a31ec5073",
+      "role": "official_fp8_snapshot_not_supported_by_reviewed_diffusers_recipe",
+      "safetensorsParameterDtypes": {
+        "BF16": 1356928,
+        "F32": 2269312,
+        "F8_E4M3": 9277931520
+      },
+      "safetensorsParameterTotal": 9281557760,
+      "visibleWeightBytes": 27526985054,
+      "visibleWeightFileCount": 4
+    }
+  ],
+  "resourceEnvelope": {
+    "minimumAcceleratorMemoryBytesEstimate": null,
+    "minimumSelectiveDiskBytesEstimate": null,
+    "minimumSystemRamBytesEstimate": null,
+    "notes": [
+      "Visible gated-tree file sizes are recorded, but their LFS identities are masked until terms acceptance and therefore do not constitute an exact artifact inventory.",
+      "No authenticated load or local/remote hardware measurement has qualified the NF4 BitsAndBytes placement recipe."
+    ],
+    "status": "not_estimated_until_authenticated_artifact_and_nf4_runtime_review"
+  },
+  "schemaVersion": 1,
+  "visibleWeightFiles": {
+    "officialFp8": [
+      {
+        "byteSize": 8779278400,
+        "path": "text_encoder/model.safetensors"
+      },
+      {
+        "byteSize": 9289792888,
+        "path": "transformer/diffusion_pytorch_model.safetensors"
+      },
+      {
+        "byteSize": 9289792888,
+        "path": "unconditional_transformer/diffusion_pytorch_model.safetensors"
+      },
+      {
+        "byteSize": 168120878,
+        "path": "vae/diffusion_pytorch_model.safetensors"
+      }
+    ],
+    "officialNf4": [
+      {
+        "byteSize": 5483794772,
+        "path": "text_encoder/model.safetensors"
+      },
+      {
+        "byteSize": 5221703035,
+        "path": "transformer/diffusion_pytorch_model.safetensors"
+      },
+      {
+        "byteSize": 5221703035,
+        "path": "unconditional_transformer/diffusion_pytorch_model.safetensors"
+      },
+      {
+        "byteSize": 168120878,
+        "path": "vae/diffusion_pytorch_model.safetensors"
+      }
+    ],
+    "packageNf4": [
+      {
+        "byteSize": 5483794772,
+        "path": "text_encoder/model.safetensors"
+      },
+      {
+        "byteSize": 5221745209,
+        "path": "transformer/diffusion_pytorch_model.safetensors"
+      },
+      {
+        "byteSize": 5221745209,
+        "path": "unconditional_transformer/diffusion_pytorch_model.safetensors"
+      },
+      {
+        "byteSize": 168120878,
+        "path": "vae/diffusion_pytorch_model.safetensors"
+      }
+    ]
+  }
+}

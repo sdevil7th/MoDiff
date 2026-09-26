@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "family": "LEDITS++",
+  "reviewType": "package_transform_over_existing_base_artifacts",
+  "baseRepositories": [
+    {
+      "modelType": "StableDiffusionPipeline",
+      "repository": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+      "revision": "451f4fe16113bff5a5d2269ed5ad43b0592e9a14",
+      "license": "creativeml-openrail-m",
+      "pipelineClass": "LEditsPPPipelineStableDiffusion",
+      "alreadyManagedByMoDiff": true,
+      "newModelDownloadRequired": false
+    },
+    {
+      "modelType": "StableDiffusionXLPipeline",
+      "repository": "stabilityai/stable-diffusion-xl-base-1.0",
+      "revision": "462165984030d82259a11f4367a4eed129e94a7b",
+      "license": "openrail++",
+      "pipelineClass": "LEditsPPPipelineStableDiffusionXL",
+      "alreadyManagedByMoDiff": true,
+      "newModelDownloadRequired": false
+    }
+  ],
+  "pinnedDiffusers": {
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "version": "0.40.0.dev0",
+    "stableDiffusionPipelineSha256": "4f5cb8e0c40cf362550d542c556b51a4c5200b65d8e1a5cbe3603c5e88f1c535",
+    "stableDiffusionXLPipelineSha256": "964aa3121e96c0ac7da0627406e710b57837798665bef61fcf4e51b9955c0aa3",
+    "pipelineOutputSha256": "ac8b30bd991184ece56e48a2d3bafb66740ef8309a164c9b194219f1aeefc3c3"
+  },
+  "pipelineContract": {
+    "mode": "stateful_two_phase_image_edit",
+    "phases": [
+      "invert_input_image",
+      "apply_one_or_more_text_edits"
+    ],
+    "dimensionMultiple": 32,
+    "stableDiffusionDefaults": {
+      "numInversionSteps": 30,
+      "skip": 0.15,
+      "sourceGuidanceScale": 3.5,
+      "editGuidanceScale": 5.0,
+      "editThreshold": 0.9
+    },
+    "stableDiffusionXLDefaults": {
+      "numInversionSteps": 50,
+      "skip": 0.15,
+      "sourceGuidanceScale": 3.5,
+      "numZeroNoiseSteps": 3,
+      "editGuidanceScale": 5.0,
+      "editThreshold": 0.9
+    },
+    "packageUpperBounds": {
+      "numInversionSteps": null,
+      "inputImages": null,
+      "editingPrompts": null,
+      "height": null,
+      "width": null,
+      "inputPixels": null
+    }
+  },
+  "cancellationReview": {
+    "editPhaseCallbackOnStepEndAvailable": true,
+    "inversionPhaseCallbackAvailable": false,
+    "interruptFlagAvailable": false,
+    "fullJobCooperativelyCancellable": false,
+    "reason": "Both pipelines perform the complete inversion denoising loop without a callback or interrupt check before the separately cancellable edit phase."
+  },
+  "stateAndSafetyReview": {
+    "inversionStateStoredOnPipelineInstance": true,
+    "storedFields": [
+      "inversion_steps",
+      "init_latents",
+      "zs"
+    ],
+    "requestIsolationContractRequired": true,
+    "stableDiffusionSafetyCheckerAvailable": true,
+    "stableDiffusionXLSafetyCheckerAvailable": false,
+    "perfectInversionCurrentlyGuaranteedByPackage": false,
+    "perfectInversionCompatibilityWarningDocumented": true
+  },
+  "downloadReview": {
+    "newRepositoryRequired": false,
+    "newWeightBytesRequired": 0,
+    "appDownloadSubmittedForThisFamily": false,
+    "directDownloadPerformed": false,
+    "reason": "LEDITS++ is a package-owned transform over MoDiff's existing exact SD 1.5 and SDXL base snapshots, not a distinct model artifact."
+  },
+  "admission": {
+    "status": "review_complete_blocked_full_job_cancellation_and_facade_contract",
+    "runtimeCatalogExposed": false,
+    "downloadCatalogExposed": false,
+    "capabilityExposed": false,
+    "canonicalWorkflowsAdded": 0,
+    "clientSurfaceAdded": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "liveQualified": false,
+    "modelWeightsDownloadedForReview": false,
+    "blockingReasons": [
+      "The mandatory inversion phase cannot be cooperatively cancelled.",
+      "The two-phase API stores per-request inversion latents and noise tensors on the shared pipeline instance, requiring an explicit isolation/lifecycle contract.",
+      "The package does not bound inversion steps, image count, edit prompt count, dimensions, or input pixels.",
+      "The SDXL route has no output safety checker.",
+      "The package documentation warns that the current scheduler integration no longer guarantees perfect inversion."
+    ],
+    "unresolvedGates": [
+      "cooperative_full_job_cancellation",
+      "request_scoped_pipeline_state_isolation",
+      "backend_owned_resource_and_input_bounds",
+      "generic_multi_prompt_edit_contract",
+      "sdxl_output_guardrails",
+      "remote_real_weight_execution_and_output_review",
+      "physical_macos_execution"
+    ]
+  }
+}

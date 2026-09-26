@@ -4,8 +4,56 @@
 
 MoDiff is a local client/server application for building and running node-based machine-learning workflows with a focus on [Hugging Face Diffusers](https://github.com/huggingface/diffusers). The backend discovers Python node modules, executes graphs, manages models and generated media, and serves a bundled web client from `web/`.
 
+The [Qwen-Image 2.1 integration guide](docs/qwen-image-21.md) describes its generic
+image nodes, attention-context reuse, runtime requirements and qualification status.
+
+The [image demo guide](docs/image-demo.md) lists the tested workflows, settings,
+measured reuse behavior and remaining qualification work.
+
+The [modularity walkthrough](docs/modularity-demo.md) covers editable generation
+stages, a custom image-and-mask node, connected refinement, model switching and
+saved-workflow restoration.
+
 > [!CAUTION]
 > MoDiff is early-stage software. It is not a production service, a multi-user platform, or a security sandbox. The server has no authentication and can execute model workflows, import custom Python modules, and access files inside its configured working directory. Keep it bound to `127.0.0.1`, install only code you trust, and read [SECURITY.md](SECURITY.md) before changing its network exposure.
+
+## Developer setup with uv and npm
+
+Install Git, [uv `0.11.26`](https://docs.astral.sh/uv/getting-started/installation/),
+Node.js `24.12.0`, and npm `11.6.2`. uv can provision Python 3.12.
+Use two terminals for the backend and the editable frontend.
+
+**Terminal 1 — backend:** clone both repositories into the same parent directory,
+then start the backend. These commands work in Linux shells and Windows PowerShell.
+
+```text
+git clone https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+cd MoDiff
+uv run --no-project --no-sync --python 3.12 -m modiff.dev plan --accelerator cpu --backend-only --json
+uv run --no-project --no-sync --python 3.12 -m modiff.dev setup --accelerator cpu --backend-only --non-interactive
+uv run --no-project --no-sync --python 3.12 -m modiff.dev check --json --check-port 8088 --fail-on-error
+uv run --no-project --no-sync --python 3.12 -m modiff.dev run
+```
+
+The CPU profile is for API/UI development. For NVIDIA inference, replace `cpu`
+with `nvidia` in both `plan` and `setup`; other accelerators are covered in the
+[full setup guide](docs/developer-setup.md). Setup preserves an existing `.venv` and
+does not download model weights. Use the guide for deliberate environment repair;
+ordinary `uv sync` is not supported.
+
+**Terminal 2 — frontend:** from the same parent directory, run:
+
+```text
+cd MoDiff-client
+npm ci
+npm run dev
+```
+
+Keep the backend running at <http://127.0.0.1:8088> and open the URL printed by
+Vite for the editable frontend. Press `Ctrl+C` in each terminal to stop it.
+See the [full developer setup guide](docs/developer-setup.md) for accelerator prerequisites,
+optional runtimes, repair, and bundled-app setup.
 
 ## Before you install
 
@@ -194,18 +242,39 @@ cp config.example.ini config.ini
 
 `config.ini` is intentionally ignored because it may contain a Hugging Face token and machine-local paths.
 
+## Developer tools and service prototyping
+
+For installation, use the [uv/npm quick start](#developer-setup-with-uv-and-npm)
+above and the [full setup guide](docs/developer-setup.md).
+See [service prototyping](docs/service-prototyping.md) to export a named service
+interface from the editor. Services reuse the existing API graph and local runtime.
+
+The frontend has one developer-first editor. Start with **Workflows** for connected
+task stages or choose **Templates**. Inspect implementation/docs and export graph
+JSON or services without changing modes. **Memory: Automatic / Custom** remains
+independent per workflow.
+
+Use **Add image / audio input** on a loader, or drag a media output onto an
+operation. A dropdown lists supported roles; required stages are added inside
+the existing graph, preserving prompts and branches as one Undo operation.
+Video simplification is deferred.
+
+Generic Modular loader and node-field updates can run while another workflow is
+generating without borrowing its model cache. See the [field-action ownership
+contract](docs/api-reference.md#graph-execution-and-queue-state).
+
 ## Managed installation profiles
 
-MoDiff's installer owns the executable Python/Torch environment. The project is intentionally marked `uv`-unmanaged, so `uv sync` and `uv run` are not supported setup or launch commands. The installer stages a fresh environment, checks its package policy and a real device tensor, then atomically promotes it to `.venv/` while retaining the previous environment for rollback. When the sibling client is installed, setup also downloads and SHA-256 verifies the pinned rights-approved Template Gallery snapshot and bundles it under `web/template-gallery` so normal use does not wait on Hub media requests. Four permission-dependent preview files are currently unavailable; their templates remain usable and do not request those files.
+MoDiff's installer owns the executable Python/Torch environment. The project is intentionally marked `uv`-unmanaged, so ordinary `uv sync` and `uv run` are not supported setup or launch commands. The explicit `uv run --no-project --no-sync ... -m modiff.dev` bootstrap described above delegates to this same installer without project resolution. The installer stages a fresh environment, checks its package policy and a real device tensor, then atomically promotes it to `.venv/` while retaining the previous environment for rollback. When the sibling client is installed, setup also downloads and SHA-256 verifies the pinned rights-approved Template Gallery snapshot and bundles it under `web/template-gallery` so normal use does not wait on Hub media requests. Four permission-dependent preview files are currently unavailable; their templates remain usable and do not request those files.
 
-| Installer choice | Managed profile | Current scope |
-| --- | --- | --- |
-| `auto` | Host-dependent | Selects a qualified profile or a safe CPU fallback. |
-| `nvidia` | `nvidia-cuda` | Linux/Windows NVIDIA with the reviewed CUDA 12.8 PyTorch profile. |
-| `amd` | OS-dependent AMD profile | Qualified Linux AMD/ROCm hosts. Windows is a conditional official platform, but MoDiff blocks installation until the complete SDK wheel set and physical proof are pinned. |
-| `intel` | `intel-xpu` | Preview PyTorch XPU profile for supported Intel Arc and integrated graphics on x86-64 Linux/Windows. |
-| `mps` | `apple-mps` | Apple Silicon using the reviewed MPS-capable PyTorch profile. |
-| `cpu` | `cpu` | Portable CPU environment for development and fallback. |
+| Installer choice | Managed profile          | Current scope                                                                                                                                                              |
+| ---------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auto`           | Host-dependent           | Selects a qualified profile or a safe CPU fallback.                                                                                                                        |
+| `nvidia`         | `nvidia-cuda`            | Linux/Windows NVIDIA with the reviewed CUDA 12.8 PyTorch profile.                                                                                                          |
+| `amd`            | OS-dependent AMD profile | Qualified Linux AMD/ROCm hosts. Windows is a conditional official platform, but MoDiff blocks installation until the complete SDK wheel set and physical proof are pinned. |
+| `intel`          | `intel-xpu`              | Preview PyTorch XPU profile for supported Intel Arc and integrated graphics on x86-64 Linux/Windows.                                                                       |
+| `mps`            | `apple-mps`              | Apple Silicon using the reviewed MPS-capable PyTorch profile.                                                                                                              |
+| `cpu`            | `cpu`                    | Portable CPU environment for development and fallback.                                                                                                                     |
 
 If an installation was interrupted, resume its external journal instead of
 starting unrelated setup work:
@@ -269,7 +338,7 @@ Generated outputs, prompts, workflow packages, and shares are also local plainte
 Run preflight before investigating model-specific failures:
 
 ```bash
-./.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error
+./scripts/with-runtime-env.sh ./.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error
 ```
 
 On Windows, use `.\.venv\Scripts\python.exe` in place of `./.venv/bin/python`.
@@ -289,6 +358,27 @@ See [docs/api-reference.md](docs/api-reference.md) for route groups and trust im
 ## Modular Diffusers
 
 The Modular Diffusers integration is documented in [modules/ModularDiffusers/README.md](modules/ModularDiffusers/README.md). MoDiff owns the pipeline configuration schema used by its dynamic node contracts while relying on upstream Diffusers for model and pipeline execution.
+
+For the current task browser, picker behavior and qualification limits, see
+[Workflow authoring and model selection](docs/workflow-authoring-ux.md).
+
+## Custom nodes
+
+Open **Nodes → Add custom node** for Local, Hugging Face or Git. Intentional Add/Load
+validates and enables code in one action; remote revisions are pinned internally.
+Drop a structured Python node file onto the canvas to import and insert it.
+Files/packages in `custom/` appear automatically without executing; management
+provides Load/Reload/Disable. Python runs with backend permissions, so only load
+trusted code. Dependencies are checked, not installed automatically.
+See [Developing custom nodes](docs/custom-nodes.md) for contracts and examples.
+
+Approved Modular blocks without model ports receive a **Models** input when their
+Python contract requires components. Connect **Load Models → Pipeline Components**
+to reuse compatible loaded weights. The [VAE reconstruction example](examples/custom_nodes/ModularImageReconstruction)
+demonstrates this without separate family-specific nodes or implicit model downloads.
+For additional weights, approved blocks with official component types also expose
+**Load Models — [block name]**. Select pinned, downloaded component sources and use
+**Custom** memory policy; connect the resulting components to the block's Models input.
 
 ## Updating and recovery
 
@@ -339,7 +429,9 @@ Do not edit `web/assets/index.js` or `web/assets/index.css` by hand. They are ge
 
 The normal installer materializes `web/template-gallery/` for that
 installation. Treat it as downloaded runtime data: do not add it to Git or a
-normal remote-asset release package.
+normal remote-asset release package. Gallery status and repair use the same
+immutable Dataset manifest in both the remote release and installer-built
+local bundle.
 
 For adjacent checkouts, an exact mirror can be performed with a platform tool after confirming both paths:
 

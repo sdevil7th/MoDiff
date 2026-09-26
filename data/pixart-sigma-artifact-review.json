@@ -1,0 +1,116 @@
+{
+  "admission": {
+    "autoEligible": false,
+    "downloadCatalogExposed": true,
+    "executableModes": [
+      "PixArtSigmaPipeline:text_to_image"
+    ],
+    "galleryEligible": false,
+    "liveQualified": false,
+    "remoteOnly": true,
+    "runtimeCatalogExposed": true,
+    "status": "source_complete_execution_pending",
+    "unresolvedGates": [
+      "remote_real_weight_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactInventoryCanonicalization": {
+    "digest": "sha256",
+    "encoding": "utf-8",
+    "entries": [
+      "path",
+      "byteSize",
+      "sha256"
+    ],
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))"
+  },
+  "family": "PixArt Sigma",
+  "format": "safetensors",
+  "license": {
+    "acceptanceRequired": false,
+    "evidence": "Pinned model-card metadata and README text",
+    "id": "openrail++"
+  },
+  "metadataSha256": {
+    "modelCard": "0f44a27ede142b5ef109c5112c4604c3cb60e869356684cbc1c66f0cb9f98a23",
+    "modelIndex": "48717b6754c57ffc40baafd747dafaa3ddfbc4b4c6b7932ab7f472c88665cd06",
+    "schedulerConfig": "ec1638ad7fce60b92870623ae6d9472ca4f005cdb2694b74cf86ae78e1d1e0d5",
+    "textEncoderConfig": "a0d07392b904954847f901e6ccf25538efc4142fb4c7b59065a06bbdb7eabff8",
+    "transformerConfig": "0177a2e8a9480c52ba339d1bcdc89c2ec63f2f846c49f8aae24dd1ae1654f939",
+    "vaeConfig": "f18b16fa4381c90ab44a3d7abd2e90afd05a2c31b8ca69998bc93c6453aeb7b7"
+  },
+  "pinnedDiffusers": {
+    "legacyPerStepCallbackAvailable": true,
+    "pipelineClass": "PixArtSigmaPipeline",
+    "pipelineSha256": "b132414371c22ab0b2d61921f36ceb0ecd40f053328f28fd6bc3f7c2823e95e1",
+    "revision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "transformerClass": "PixArtTransformer2DModel",
+    "transformerSha256": "2e0707235385e78d442061ada87158f2424b52ec919e221e12fd447f0207fce3",
+    "version": "0.40.0.dev0"
+  },
+  "pipelineContract": {
+    "defaultGuidanceScale": 4.5,
+    "defaultHeight": 1024,
+    "defaultNumInferenceSteps": 20,
+    "defaultUseResolutionBinning": true,
+    "defaultWidth": 1024,
+    "maxSequenceLength": 300,
+    "maximumMoDiffInferenceSteps": 50,
+    "maximumMoDiffOutputSide": 2048,
+    "modes": [
+      "text_to_image"
+    ],
+    "outputType": "ImagePipelineOutput",
+    "supportsNegativePrompt": true
+  },
+  "remoteResourceEnvelope": {
+    "minimumAcceleratorMemoryBytesEstimate": 25769803776,
+    "minimumSelectiveDiskBytes": 34359738368,
+    "minimumSystemRamBytes": 68719476736,
+    "notes": [
+      "The estimate applies to the admitted unquantized float16 loading route with model or sequential CPU offload.",
+      "The upstream under-8-GB recipe depends on bitsandbytes 8-bit text-encoder loading and is not part of this admission.",
+      "No local or remote measurement has qualified this envelope."
+    ],
+    "status": "estimate_only_qualification_pending"
+  },
+  "repository": {
+    "gated": false,
+    "modelIndexClass": "PixArtSigmaPipeline",
+    "private": false,
+    "pythonFilesPresent": false,
+    "repository": "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+    "repositoryBytes": 21832490389,
+    "revision": "e102b3591cc82e97071b8b4cb90d834d0c487207",
+    "trustRemoteCodeRequired": false,
+    "weightBytes": 21827405446,
+    "weightFileCount": 4,
+    "weightInventorySha256": "483482e30914fb282a057cc2bb736738058526cd972c573223b39ea8290044d0"
+  },
+  "schemaVersion": 1,
+  "weightFiles": [
+    {
+      "byteSize": 9989150328,
+      "path": "text_encoder/model-00001-of-00002.safetensors",
+      "sha256": "eb529f693f4b17773a24e787fcba29486d5e1700dadcc20bb91e4c8b00212d08"
+    },
+    {
+      "byteSize": 9060119392,
+      "path": "text_encoder/model-00002-of-00002.safetensors",
+      "sha256": "58f33f4acba7a5502b6b3e4cb7863f8fd503d5012016428099bb460c98e2fe77"
+    },
+    {
+      "byteSize": 2443492488,
+      "path": "transformer/diffusion_pytorch_model.safetensors",
+      "sha256": "2fa4dee9229c02b03163f57bdb8e80c7a5ee364b7161796abe9c05e8dd13f239"
+    },
+    {
+      "byteSize": 334643238,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "1b909373b28f2137098b0fd9dbc6f97f8410854f31f84ddc9fa04b077b0ace2c"
+    }
+  ]
+}

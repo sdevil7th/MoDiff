@@ -4,6 +4,8 @@ logger = logging.getLogger('modiff')
 from contextlib import contextmanager
 from contextvars import ContextVar
 from modiff.modelstore import modelstore
+from modiff.execution_input_provenance import capture_generation_inputs
+from modiff.node_cache_identity import implementation_identity, input_snapshot
 from utils.memory_menager import memory_manager
 import numpy as np
 import torch
@@ -90,7 +92,8 @@ class _StructuredLoadingProgress:
         progress = min(99, max(0, int(round(ratio * 100))))
         step = max(0, min(int(current), int(total)))
         item_label = _loading_item_label(item)
-        if starting and item_label and "component" in self._description.lower():
+        component_start = starting and item_label and "component" in self._description.lower()
+        if component_start:
             component_scope = "pipeline" if "pipeline component" in self._description.lower() else "model"
             message = f"Loading {component_scope} component {int(current) + 1}/{int(total)}: {item_label}"
             step = min(int(total), int(current) + 1)
@@ -98,10 +101,14 @@ class _StructuredLoadingProgress:
             label = self._description or "Loading"
             message = f"{label} {step}/{int(total)}"
         now = time.monotonic()
+        # Weight iterators emit a start and completion for every tensor. Keep
+        # component transitions and boundary counts immediate, but rate-limit
+        # intermediate counts even when their percentage changes. Otherwise a
+        # cold load can queue hundreds of renders ahead of the user's next edit.
         if (
-            not starting
+            self._last_report_progress is not None
+            and not component_start
             and step not in (0, int(total))
-            and progress == self._last_report_progress
             and now - self._last_report_at < 0.25
         ):
             return
@@ -272,6 +279,11 @@ def recursive_type_cast(value, ttype, key):
         return tuple(recursive_type_cast(list(value), ttype, key))
         #return tuple(recursive_type_cast(v, type, f"{key}.{i}") for i, v in enumerate(value))
     if isinstance(value, np.ndarray):
+        # Semantic media/object sockets define no scalar conversion. Preserve
+        # array storage, views and dtype instead of expanding entire videos
+        # into Python scalar lists and rebuilding identical pixel buffers.
+        if not isinstance(ttype, str) or not ttype.startswith(('int', 'float', 'str', 'text', 'bool')):
+            return value
         return np.array(recursive_type_cast(value.tolist(), ttype, key), dtype=value.dtype)
 
     try:
@@ -306,7 +318,8 @@ class NodeBase:
     CALLBACK = 'execute'
     # Subclasses may list validated inputs that affect how a resident object is
     # used but not how it is constructed. Changes to these values should update
-    # the node's current parameters without discarding expensive cached output.
+    # the node's current parameters without discarding expensive cached output,
+    # while still invalidating results produced by connected descendants.
     cache_ignored_params = frozenset()
 
     def __init__(self, node_id=None):
@@ -316,12 +329,18 @@ class NodeBase:
         self.class_name = self.__class__.__name__
 
         self.params = {}
+        self._execution_input_record = None
+        self._execution_input_source_fields = {}
         self.default_params = get_default_params(self.module_name, self.class_name)
         self.output = get_module_output(self.module_name, self.class_name)
 
         self._sid = None
         self._has_changed = False
         self._cache_invalidated = False
+        self._cache_valid = False
+        self._cache_reason = "empty"
+        self._cache_input_snapshot = None
+        self._cache_implementation = None
         self._execution_time = { 'last': None, 'min': None, 'max': None }
         self._memory_usage = { 'last': None, 'min': None, 'max': None }
         self._mm_models = []
@@ -341,6 +360,28 @@ class NodeBase:
         """
         self._cache_invalidated = True
 
+    def _cache_params_equal(self, previous, current):
+        """Compare cached inputs, allowing security-sensitive nodes to tighten equality."""
+
+        return deep_equal(previous, current)
+
+    def record_generation_inputs(self, params):
+        """Capture bounded values at the actual call/adapter boundary, once.
+
+        This is evidence only: never recast inputs or replay postProcess hooks.
+        Exact adapters that normalize further replace this record with only
+        the fields they consume. No runtime object is traversed/stringified;
+        torch's known dtype value is represented by its stable dtype name.
+        """
+        values = {
+            key: str(value).removeprefix("torch.") if isinstance(value, torch.dtype) else value
+            for key, value in params.items()
+        }
+        self._execution_input_source_fields = {}
+        self._execution_input_record = capture_generation_inputs(
+            self.node_id, {"module": self.module_name, "action": self.class_name}, values,
+        )
+
     def __call__(self, **kwargs):
         self._interrupt = False
         self._progress_started_at = None
@@ -354,6 +395,7 @@ class NodeBase:
 
         # if node_id is None, the class was called directly, so we execute it without further processing
         if self.node_id is None:
+            self.record_generation_inputs(params)
             return getattr(self, self.CALLBACK)(**params)
 
         # params normalization and validation
@@ -367,7 +409,14 @@ class NodeBase:
                     type = self.default_params[key]['type']
                     if isinstance(type, list):
                         type = type[0]
-                    params[key] = recursive_type_cast(value, type, key)
+                    if self.default_params[key].get('display') == 'modelselect' and isinstance(value, dict):
+                        # Structured model selections carry typed immutable
+                        # receipt fields. The UI control itself is string-like,
+                        # but recursively casting its metadata would turn
+                        # byteSize into a string before exact verification.
+                        params[key] = value
+                    else:
+                        params[key] = recursive_type_cast(value, type, key)
 
                 if 'options' in self.default_params[key] and not self.default_params[key].get('fieldOptions', {}).get('noValidation', False):
                     options = self.default_params[key]['options']
@@ -383,16 +432,19 @@ class NodeBase:
                             return False
                         return deep_equal(candidate, recursive_type_cast(option, option_type, key))
 
-                    if isinstance(options, list):
-                        if any(not any(matches_option(v, option) for option in options) for v in value_list):
-                            params[key] = []
-                            #raise ValueError(f"Module {self.module_name}.{self.class_name}: Invalid value for {key}: {value} (options: {options})")
-                    elif isinstance(options, dict):
-                        if any(not any(matches_option(v, option) for option in options) for v in value_list):
-                            params[key] = {}
-                            #raise ValueError(f"Module {self.module_name}.{self.class_name}: Invalid value for {key}: {value} (options: {options})")
-                    else:
+                    if not isinstance(options, (list, dict)):
                         raise ValueError(f"Module {self.module_name}.{self.class_name}: Invalid options format for {key}: {options}")
+                    if any(not any(matches_option(v, option) for option in options) for v in value_list):
+                        # Invalid drafts must fail at the affected field. Replacing
+                        # an invalid scalar with []/{} both loses its meaning and
+                        # defers failure into unrelated tensor/model code.
+                        choices = ', '.join(str(option)[:80] for option in list(options)[:8])
+                        if len(options) > 8:
+                            choices += ', …'
+                        raise ValueError(
+                            f"Invalid option for {key} in {self.module_name}.{self.class_name}; "
+                            f"select one of the declared choices: {choices or '(none currently available)'}."
+                        )
 
         # if we added a model not in the huggingface cache, we set a flag that
         # later will be used to tell the client to update its local cache
@@ -427,16 +479,38 @@ class NodeBase:
         current_cache_params = {
             key: value for key, value in params.items() if key not in ignored_cache_params
         }
+        previous_ignored_params = {
+            key: value for key, value in self.params.items() if key in ignored_cache_params
+        }
+        current_ignored_params = {
+            key: value for key, value in params.items() if key in ignored_cache_params
+        }
+        ignored_params_changed = not deep_equal(previous_ignored_params, current_ignored_params)
+        snapshot = input_snapshot(current_cache_params)
+        implementation = implementation_identity(self)
+        # Authority checks in Modular adapters must run even when the frozen
+        # snapshot detects an in-place edit. Never turn tampering into a miss
+        # that bypasses their pre-dispatch validation.
+        params_equal = self._cache_invalidated or self._cache_params_equal(previous_cache_params, current_cache_params)
 
-        # If any load-relevant value changed, or output is empty, execute the
+        # If any load-relevant value changed, or no successful result exists, execute the
         # node. Validated passthrough inputs are still recorded below so
         # diagnostics reflect the current graph invocation.
-        if (
-            self._cache_invalidated
-            or (not deep_equal(previous_cache_params, current_cache_params))
-            or any(v is None for v in self.output.values())
-        ):
+        self._cache_reason = (
+            "invalidated" if self._cache_invalidated
+            else "models_evicted" if self._cache_valid and any(
+                memory_manager.get_model(model_id) is None for model_id in self._mm_models
+            )
+            else "implementation_changed" if self._cache_valid and self._cache_implementation != implementation
+            else "inputs_changed" if self._cache_valid and self._cache_input_snapshot != snapshot
+            else "inputs_changed" if not params_equal
+            else "empty" if not self._cache_valid
+            else "usage_changed" if ignored_params_changed
+            else "unchanged_inputs"
+        )
+        if self._cache_reason in {"invalidated", "models_evicted", "inputs_changed", "implementation_changed", "empty"}:
             self._cache_invalidated = False
+            self._cache_valid = False
             self._has_changed = True
             self.params = params
             self.output = {k: None for k in self.output}
@@ -447,13 +521,14 @@ class NodeBase:
                 self._mm_models = []
 
             try:
+                self.record_generation_inputs(self.params)
                 output = getattr(self, self.CALLBACK)(**self.params)
             except Exception as e:
                 self.params = {}
                 #self.output = {k: None for k in self.output}
                 raise RuntimeError(f"Error executing {self.module_name}.{self.class_name}: {e}") from e
 
-            if output and isinstance(output, dict):
+            if isinstance(output, dict):
                 # output and self.output keys must be the same
                 if set(output.keys()) != set(self.output.keys()) and not self._skip_params_check:
                     raise ValueError(f"Module {self.module_name}.{self.class_name}: Output keys do not match: {output.keys()} != {self.output.keys()}")
@@ -478,7 +553,18 @@ class NodeBase:
                     "type": "local_cache_update",
                     "node": self.node_id,
                 }, self._sid)
+            # Optional outputs may legitimately be None. Only a validated
+            # returned mapping (or fully populated trigger outputs) is reusable;
+            # an exception or a missing result must leave this node invalid.
+            self._cache_valid = isinstance(output, dict) or all(v is not None for v in self.output.values())
+            self._cache_input_snapshot = snapshot
+            self._cache_implementation = implementation
         else:
+            # A cache-ignored value can reconfigure the same resident output
+            # without repeating its expensive construction.  Preserve that
+            # cache hit, but publish the semantic change so connected nodes do
+            # not reuse results computed under the previous contract.
+            self._has_changed = ignored_params_changed
             self.params = params
 
         return self.output
@@ -800,7 +886,11 @@ class NodeBase:
             "params": params,
         })
 
-    def get_signal_value(self, field: str, timeout: int = 5):
+    def get_signal_value(self, field: str, timeout: int = 60):
+        # Large managed graphs can keep the browser busy reconciling several
+        # node-definition publications before it answers this synchronous
+        # schema lookup. Keep the wait bounded, but allow enough time for the
+        # connected client to reply under that legitimate UI load.
         if not self._sid or not self.node_id:
             return None
 

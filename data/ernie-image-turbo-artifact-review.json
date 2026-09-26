@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 1,
+  "family": "ERNIE Image",
+  "reviewedAt": "2026-08-13T00:00:00+05:30",
+  "admittedWorkflows": [
+    "ErnieImagePipeline:text_to_image"
+  ],
+  "repository": {
+    "repository": "baidu/ERNIE-Image-Turbo",
+    "revision": "bc68c81e2a1730a394d5fc9fae70713dee940140",
+    "private": false,
+    "gated": false,
+    "declaredLicense": "apache-2.0",
+    "licenseFilePresent": true,
+    "repositoryFileCount": 24,
+    "repositoryBytes": 31648078746,
+    "weightFileCount": 5,
+    "weightBytes": 31596733630,
+    "format": "safetensors",
+    "pythonFilesPresent": false,
+    "trustRemoteCodeRequired": false,
+    "modelIndexClass": "ErnieImagePipeline",
+    "safetensorsDtypeParameterCounts": {
+      "BF16": 15798285987,
+      "I64": 1
+    },
+    "weightInventorySha256": "4370faa5a8604c007da23720b748b52f3c63a8e7667939337b6d427fd6d0f6e9"
+  },
+  "reviewedSibling": {
+    "repository": "baidu/ERNIE-Image",
+    "revision": "5346b31d68c9c23758ba56ef8be5e9dc174c7f99",
+    "private": false,
+    "gated": false,
+    "declaredLicense": "apache-2.0",
+    "repositoryBytes": 31648078640,
+    "weightFileCount": 5,
+    "weightBytes": 31596733662,
+    "format": "safetensors",
+    "runtimeCatalogExposed": false,
+    "reasonNotSurfaced": "the distinct 50-step guidance-4 SFT recipe remains an optional future workflow rather than an alias of the admitted Turbo contract"
+  },
+  "artifactInventoryCanonicalization": {
+    "ordering": "ascending path",
+    "serialization": "json.dumps(entries, sort_keys=True, separators=(',', ':'))",
+    "encoding": "utf-8",
+    "digest": "sha256"
+  },
+  "weightFiles": [
+    {
+      "path": "pe/model.safetensors",
+      "sha256": "abd26e2f4b5a0cc3922d3523649706f1d398050a766dc284161724d9ee47f808",
+      "byteSize": 7663346520,
+      "remoteHeaderBytesFetched": 27480,
+      "tensorCount": 237,
+      "dtypeParameterCounts": {
+        "BF16": 3831659520
+      }
+    },
+    {
+      "path": "text_encoder/model.safetensors",
+      "sha256": "c2188c5b3d759ac35e3770056153fdcb348276bd1d10f0443a60a2bdcbb6ff7b",
+      "byteSize": 7698241104,
+      "remoteHeaderBytesFetched": 61008,
+      "tensorCount": 458,
+      "dtypeParameterCounts": {
+        "BF16": 3849090048
+      }
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+      "sha256": "7704ba8363a3f10e3ee11cb66044f0e87a2a342c1c116aea7cdbf664cd509a8b",
+      "byteSize": 9992362400,
+      "remoteHeaderBytesFetched": 28064,
+      "tensorCount": 255,
+      "dtypeParameterCounts": {
+        "BF16": 4996167168
+      }
+    },
+    {
+      "path": "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+      "sha256": "438e3e4784af84e10d961e516bbceddaabe1ecc4a6b607519e9020eadcc86c07",
+      "byteSize": 6074662728,
+      "remoteHeaderBytesFetched": 16968,
+      "tensorCount": 154,
+      "dtypeParameterCounts": {
+        "BF16": 3037322880
+      }
+    },
+    {
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "ca70d2202afe6415bdbcb8793ba8cd99fd159cfe6192381504d6c4d3036e0f04",
+      "byteSize": 168120878,
+      "remoteHeaderBytesFetched": 28128,
+      "tensorCount": 251,
+      "dtypeParameterCounts": {
+        "BF16": 84046371,
+        "I64": 1
+      }
+    }
+  ],
+  "metadataSha256": {
+    "license": "5d7deeaff0d6f92ef5c74658a46e4750ccbcd0602efcdfd24cd7ec6ae7c822f9",
+    "modelCard": "4121da08192fa00e89ffce1ff2542b38e1331a110ed2698d1ec6b956ddd26e01",
+    "modelIndex": "2a483750fcc40efff027e9bd77f4ea8fc56b18beb65e486f8f0c6d214bedd409",
+    "promptEnhancerChatTemplate": "0c859484eecf01db103acd02c332610163ee425cd46866d6cb126ee1bee974ea",
+    "promptEnhancerConfig": "b6be6b7104d8d5bd8180401b8ce8585f5a03f8bdb346dc89fdfc784beba83287",
+    "promptEnhancerGenerationConfig": "2a7e566bdc7d1d618242e565d1aedee7befc106b3067ac6ed924487fce1696aa",
+    "promptEnhancerTokenizerConfig": "95a353ec6c5c22537125c6a8b8afae0775c89411d84321329d5234c90d8d47ee",
+    "schedulerConfig": "96031c39fcd4651aeaa07fa6b64262b9332967199e0b89c3a4694db127756f34",
+    "textEncoderConfig": "2c975219345634ee6b5d47172267b530f32f55ca02fef0787eb45285418e3614",
+    "tokenizerConfig": "dfd5e67b652177f3e697dd67b0792bef7779c66522f47f502af2ce1715c5ec59",
+    "transformerConfig": "fe20c18f4ab08b728bf117ff83f5d5b440f2a8baca9f7999b94017819478ba10",
+    "transformerIndex": "cdd72f1fd19be0eb582c73dc94498765ed2b3925822495ce13c5cf526204aa9c",
+    "vaeConfig": "4d5ba5e01de06d589dd46e2955ab97e2b0968703dce31b9ebe1d2a38c141836d"
+  },
+  "pinnedRuntime": {
+    "diffusersRevision": "bb56997d4b7e87f0743f26a612f49ec4e7ce7213",
+    "diffusersVersion": "0.40.0.dev0",
+    "transformersVersion": "5.14.1",
+    "optionalRuntimeProfile": "huggingface-transformers-peft-5.14.1-0.20.0",
+    "pipelineClass": "ErnieImagePipeline",
+    "pipelineSha256": "26fbecb8c9d13a46b15aea7d599224bb03ad93e683ce3935d7a932d71316a9fd",
+    "pipelineOutputClass": "ErnieImagePipelineOutput",
+    "pipelineOutputSha256": "87eb76888c8ccd1c8c68f14aaa00a92c2041661a5efc322a6e50fd073a6ba673",
+    "transformerClass": "ErnieImageTransformer2DModel",
+    "transformerSha256": "0f1814f63008298707afea5d7bd22d0a16073f0a8e858037c198faa28027e926",
+    "autoencoderClass": "AutoencoderKLFlux2",
+    "autoencoderSha256": "7d9a976c1e4f42615e8c422f1643d86b49c4339221bd04b67f518b718ebd6c2d",
+    "schedulerClass": "FlowMatchEulerDiscreteScheduler",
+    "schedulerSha256": "1af27be5b2f92b7d139d3c50239be5ce3eafc4a7eddf59c2d30689f8ec31e93d",
+    "textEncoderClass": "Mistral3Model",
+    "textEncoderSourceSha256": "1b52e1754883263378c2bd5fdb4bcd1020e6a743717086c145179755fa0f8ee9",
+    "promptEnhancerClass": "Ministral3ForCausalLM",
+    "promptEnhancerSourceSha256": "27955184635ed80a3bae6e614432b1f7e725f1864e9d2a8d909688b0a4441c93",
+    "modelCpuOffloadSequence": "pe->text_encoder->transformer->vae",
+    "callbackOnStepEndAvailable": true,
+    "callbackTensorInputs": [
+      "latents"
+    ],
+    "safetyCheckerAvailable": false,
+    "outputType": "ErnieImagePipelineOutput"
+  },
+  "pipelineContract": {
+    "modes": [
+      "text_to_image"
+    ],
+    "upstreamDefaultWidth": 1024,
+    "upstreamDefaultHeight": 1024,
+    "upstreamDefaultInferenceSteps": 50,
+    "upstreamDefaultGuidanceScale": 4.0,
+    "turboRecommendedInferenceSteps": 8,
+    "turboRequiredGuidanceScale": 1.0,
+    "moDiffWidth": 1024,
+    "moDiffHeight": 1024,
+    "moDiffMaximumInferenceSteps": 8,
+    "tokenizerModelMaxLength": 2048,
+    "promptEnhancerEnabled": true,
+    "promptEnhancerMaximumNewTokens": 2048,
+    "negativePromptEffectiveAtGuidanceOne": false,
+    "numImagesPerPrompt": 1,
+    "vaeSlicing": true,
+    "vaeTiling": true,
+    "outputType": "pil"
+  },
+  "license": {
+    "id": "apache-2.0",
+    "acceptanceRequired": false,
+    "licenseFilePresent": true,
+    "licenseFileByteSize": 11366,
+    "licenseFileSha256": "5d7deeaff0d6f92ef5c74658a46e4750ccbcd0602efcdfd24cd7ec6ae7c822f9",
+    "commercialUsePermitted": true,
+    "noticeAndLicenseRedistributionRequired": true
+  },
+  "remoteResourceEnvelope": {
+    "status": "upstream_claimed_modiff_qualification_pending",
+    "minimumAcceleratorMemoryBytesEstimateWithModelCpuOffload": 25769803776,
+    "minimumSelectiveDiskBytes": 68719476736,
+    "minimumSystemRamBytes": 103079215104,
+    "upstreamConsumerGpuVramClaimGiB": 24,
+    "notes": [
+      "The model card's 24 GiB statement is an upstream claim, not a MoDiff qualification run or a complete component-placement trace.",
+      "The selected snapshot contains approximately 31.60 GB of bfloat16 weights including the optional prompt enhancer, so MoDiff defaults to model CPU offload and keeps sequential and disk-backed retries finite.",
+      "No local or remote real-weight execution occurred during source admission."
+    ]
+  },
+  "admission": {
+    "status": "source_complete_execution_pending",
+    "runtimeCatalogExposed": true,
+    "downloadCatalogExposed": true,
+    "capabilityExposed": true,
+    "canonicalWorkflowsAdded": 1,
+    "clientSurfaceAdded": true,
+    "remoteOnly": true,
+    "liveQualified": false,
+    "autoEligible": false,
+    "galleryEligible": false,
+    "fullWeightFilesDownloaded": false,
+    "remoteSafetensorsHeaderBytesFetched": 161648,
+    "unresolvedGates": [
+      "remote_real_weight_memory_execution",
+      "live_output_safety_and_quality_review",
+      "physical_macos_execution"
+    ]
+  }
+}

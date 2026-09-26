@@ -1,7 +1,17 @@
 import numpy as np
+import pytest
 from PIL import Image
 
-from modules.Video.main import Compose, ExportWithAudio, LyricOverlay
+from modiff import media_assets
+from modules.Video.main import (
+    Compose,
+    ConcatenateAssets,
+    Export,
+    ExportAsset,
+    ExportWithAudio,
+    LyricOverlay,
+    MuxAudioAsset,
+)
 from modules import MODULE_MAP
 
 
@@ -26,6 +36,10 @@ def test_compose_inputs_are_visible_to_static_node_registry():
     params = MODULE_MAP["modules.Video"]["Compose"]["params"]
     assert params["clip_1"]["display"] == "input"
     assert "video_collection" in params["clip_1"]["type"]
+
+
+def test_plain_video_export_uses_delivery_quality_by_default():
+    assert Export.params["quality"]["default"] == 8
 
 
 def test_lyric_overlay_requires_and_renders_lrc_timeline():
@@ -57,3 +71,56 @@ def test_export_with_audio_muxes_mp4(tmp_path):
     assert output.stat().st_size > 0
     assert result["frames"] == 16
     assert result["duration_seconds"] == 1
+
+
+@pytest.mark.parametrize(("clip_count", "fps"), [(2, 8), (3, 8), (3, 16)])
+def test_retained_segments_stitch_and_mux_audio_without_materializing_the_join(tmp_path, monkeypatch, clip_count, fps):
+    monkeypatch.setattr(media_assets, "asset_root", lambda root=None: tmp_path)
+    first = ExportAsset("retain-red").execute(video=solid("red", count=fps, size=(32, 24)), fps=fps, pin=True)
+    second = ExportAsset("retain-blue").execute(video=solid("blue", count=fps, size=(32, 24)), fps=fps, pin=True)
+
+    joined = ConcatenateAssets("join-segments").execute(
+        clips=[first["asset"], second["asset"], first["asset"]][:clip_count],
+        transition_seconds=0.25,
+        pin=True,
+    )
+    expected_duration = clip_count - 0.25 * (clip_count - 1)
+    samples = np.zeros((int(expected_duration * 48000), 1), dtype=np.float32)
+    muxed = MuxAudioAsset("mux-segments").execute(
+        video=joined["asset"],
+        audio={"samples": samples, "sample_rate": 48000},
+        fit="match_video",
+        pin=True,
+    )
+
+    assert joined["frames"] == int(expected_duration * fps)
+    assert joined["duration_seconds"] == expected_duration
+    assert muxed["frames"] == joined["frames"]
+    assert muxed["duration_seconds"] == joined["duration_seconds"]
+    assert media_assets.coerce_video_asset(muxed["asset"])["path"] == muxed["file"]
+
+
+@pytest.mark.parametrize("transition,expected", [(0, 24), (0.25, 20), (0.5, 16)])
+def test_three_retained_segments_keep_exact_timeline_and_endpoint_frames(tmp_path, monkeypatch, transition, expected):
+    import imageio.v2 as imageio
+
+    monkeypatch.setattr(media_assets, "asset_root", lambda root=None: tmp_path)
+    clips = [
+        ExportAsset(f"retain-{color}").execute(
+            video=solid(color, count=8, size=(32, 32)), fps=8, pin=True,
+        )["asset"]
+        for color in ("red", "green", "blue")
+    ]
+    joined = ConcatenateAssets("join-three").execute(
+        clips=clips, transition_seconds=transition, pin=True,
+    )
+    # Decode the actual file, independently of its retained-asset metadata.
+    reader = imageio.get_reader(joined["file"], "ffmpeg")
+    try:
+        frames = list(reader.iter_data())
+    finally:
+        reader.close()
+    assert len(frames) == joined["frames"] == expected
+    assert joined["duration_seconds"] == expected / 8
+    assert frames[0][:, :, 0].mean() > 240
+    assert frames[-1][:, :, 2].mean() > 240

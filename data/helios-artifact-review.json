@@ -1,0 +1,494 @@
+{
+  "admission": {
+    "downloadCatalogExposed": true,
+    "executableModes": [
+      "image_to_video",
+      "text_to_video",
+      "video_to_video"
+    ],
+    "liveQualified": false,
+    "reason": "The three official top-level block graphs are statically executable from exact 24-file repository closures. Live proof still requires remote heavy-hardware qualification.",
+    "runtimeCatalogExposed": true,
+    "status": "graph_qualified_execution_pending",
+    "unresolvedGates": [
+      "remote_heavy_hardware_execution",
+      "physical_macos_execution"
+    ]
+  },
+  "artifactIndex": {
+    "componentDescriptorRevision": null,
+    "componentDescriptorRevisionAppliesTo": [
+      "scheduler",
+      "text_encoder",
+      "tokenizer",
+      "transformer",
+      "vae"
+    ],
+    "componentRevisionResolution": "ModelsLoader propagates the exact reviewed top-level repository commit to every same-repository component descriptor before load_components resolves weights.",
+    "standardIndexSelectedWeightPrefixes": [
+      "text_encoder/",
+      "transformer/",
+      "vae/"
+    ],
+    "unselectedWeightPrefixes": {
+      "base": "transformer_init/",
+      "distilled": "transformer_ode/",
+      "mid": "transformer_init/"
+    }
+  },
+  "commonWeightFiles": [
+    {
+      "byteSize": 4972389712,
+      "path": "text_encoder/model-00001-of-00005.safetensors",
+      "sha256": "c0ef3a140898e228a3520c9adec60743d2e8e5b3d229651bb37f1a3921919f99"
+    },
+    {
+      "byteSize": 4899225672,
+      "path": "text_encoder/model-00002-of-00005.safetensors",
+      "sha256": "481c7b2b39771c44df6dd8d13ee12ed072d731b4a650bd092885d4d52db229ad"
+    },
+    {
+      "byteSize": 4966309504,
+      "path": "text_encoder/model-00003-of-00005.safetensors",
+      "sha256": "f93148bcc04052a169e1e49bfcf6125df6cf9bf243cb9c627da75266cf8e35c3"
+    },
+    {
+      "byteSize": 4999880704,
+      "path": "text_encoder/model-00004-of-00005.safetensors",
+      "sha256": "a451792c739c05bca4606190cc2dd16731411bac03b4cf6aacc5767321f857c9"
+    },
+    {
+      "byteSize": 2885866152,
+      "path": "text_encoder/model-00005-of-00005.safetensors",
+      "sha256": "7e76e18d224531b8197a46231cb53daf7f2f6ca707130252becf933026ac4eea"
+    },
+    {
+      "byteSize": 507591892,
+      "path": "vae/diffusion_pytorch_model.safetensors",
+      "sha256": "d6e524b3fffede1787a74e81b30976dce5400c4439ba64222168e607ed19e793"
+    }
+  ],
+  "family": "Helios",
+  "format": "safetensors",
+  "license": {
+    "embeddedLicenseFilePresent": false,
+    "evidence": "Pinned model-card metadata on all three repositories",
+    "id": "apache-2.0",
+    "metadataOnly": true,
+    "upstreamBaseModel": "Wan-AI/Wan2.1-T2V-14B"
+  },
+  "modularContracts": [
+    {
+      "blocksClass": "HeliosAutoBlocks",
+      "defaultNumFrames": 132,
+      "defaultNumInferenceSteps": 50,
+      "pipelineClass": "HeliosModularPipeline",
+      "workflows": {
+        "image2video": {
+          "requiredInputs": [
+            "image",
+            "prompt"
+          ],
+          "taskId": "image_to_video"
+        },
+        "text2video": {
+          "requiredInputs": [
+            "prompt"
+          ],
+          "taskId": "text_to_video"
+        },
+        "video2video": {
+          "requiredInputs": [
+            "prompt",
+            "video"
+          ],
+          "taskId": "video_to_video"
+        }
+      }
+    },
+    {
+      "blocksClass": "HeliosPyramidAutoBlocks",
+      "defaultNumFrames": 132,
+      "defaultPyramidNumInferenceSteps": [
+        10,
+        10,
+        10
+      ],
+      "pipelineClass": "HeliosPyramidModularPipeline",
+      "workflows": {
+        "image2video": {
+          "requiredInputs": [
+            "image",
+            "prompt"
+          ],
+          "taskId": "image_to_video"
+        },
+        "text2video": {
+          "requiredInputs": [
+            "prompt"
+          ],
+          "taskId": "text_to_video"
+        },
+        "video2video": {
+          "requiredInputs": [
+            "prompt",
+            "video"
+          ],
+          "taskId": "video_to_video"
+        }
+      }
+    },
+    {
+      "blocksClass": "HeliosPyramidDistilledAutoBlocks",
+      "defaultAmplifyFirstChunk": true,
+      "defaultNumFrames": 132,
+      "defaultPyramidNumInferenceSteps": [
+        10,
+        10,
+        10
+      ],
+      "pipelineClass": "HeliosPyramidDistilledModularPipeline",
+      "workflows": {
+        "image2video": {
+          "requiredInputs": [
+            "image",
+            "prompt"
+          ],
+          "taskId": "image_to_video"
+        },
+        "text2video": {
+          "requiredInputs": [
+            "prompt"
+          ],
+          "taskId": "text_to_video"
+        },
+        "video2video": {
+          "requiredInputs": [
+            "prompt",
+            "video"
+          ],
+          "taskId": "video_to_video"
+        }
+      }
+    }
+  ],
+  "publisherClaims": {
+    "acceptedAsLiveEvidence": false,
+    "chunkFrames": 33,
+    "groupOffloadApproximateAcceleratorMemoryBytes": 6442450944,
+    "h100FramesPerSecond": 19.5,
+    "nonMultipleFrameCountsRoundUp": true
+  },
+  "remoteResourceEnvelope": {
+    "basis": "The exact selected BF16 partition plus conservative loading and output headroom; the publisher's group-offload and H100 throughput claims are not local or remote qualification evidence.",
+    "minimumAcceleratorMemoryBytesWithGroupOffloadEstimate": 8589934592,
+    "minimumSelectiveDiskBytes": 103079215104,
+    "minimumSystemRamBytes": 137438953472,
+    "status": "estimate_only_qualification_pending"
+  },
+  "repositories": [
+    {
+      "excludedTransformerFiles": [
+        {
+          "byteSize": 9992481688,
+          "path": "transformer_init/diffusion_pytorch_model-00001-of-00006.safetensors",
+          "sha256": "94cb7bba855c3d2e1819198e012b4a84e0600a00c0bdeff4475aabdab98eea36"
+        },
+        {
+          "byteSize": 9943937952,
+          "path": "transformer_init/diffusion_pytorch_model-00002-of-00006.safetensors",
+          "sha256": "80f9f3f29df8210e2768755c6c167dd9d78e9b33b76347541b4a824569dff4a8"
+        },
+        {
+          "byteSize": 9944020376,
+          "path": "transformer_init/diffusion_pytorch_model-00003-of-00006.safetensors",
+          "sha256": "4201403a448847f948dc67dcd1d6bbec4fb1ecf404a03ba8af121f83926fb893"
+        },
+        {
+          "byteSize": 9839059792,
+          "path": "transformer_init/diffusion_pytorch_model-00004-of-00006.safetensors",
+          "sha256": "35f13335105c7ea28a0abf6264d7c272a54ff65d598e8a48c193ddcfe357694c"
+        },
+        {
+          "byteSize": 9839059792,
+          "path": "transformer_init/diffusion_pytorch_model-00005-of-00006.safetensors",
+          "sha256": "187ef9a36c309442e950674328204addf5805a47c5d5de063d4ca0a879ce743a"
+        },
+        {
+          "byteSize": 7691262792,
+          "path": "transformer_init/diffusion_pytorch_model-00006-of-00006.safetensors",
+          "sha256": "c6dc3cd9a9e61afde3072ee42e1edc2dbb37f6e93a909b6dbefe9cf7a4c2954c"
+        }
+      ],
+      "fullWeightBytes": 137730908420,
+      "fullWeightFileCount": 18,
+      "gated": false,
+      "indexFiles": {
+        "model_index.json": {
+          "byteSize": 398,
+          "sha256": "caaefd2f3f20fc6ab881241a08270b6fe21127da0813cff742cd8cb3ea1e743e"
+        },
+        "modular_model_index.json": {
+          "byteSize": 1692,
+          "sha256": "ed6698ae6fb391387c886cb0f69765e45dcf8714a85e9cc428c40983a2a40830"
+        }
+      },
+      "private": false,
+      "repository": "BestWishYsh/Helios-Base",
+      "revision": "5c50b6bc90eae9bd815d2a50b0c9877e3fd2cf88",
+      "role": "base",
+      "selectedTransformerFiles": [
+        {
+          "byteSize": 9992481688,
+          "path": "transformer/diffusion_pytorch_model-00001-of-00006.safetensors",
+          "sha256": "58cd169ade3d3192aa170876be99b4cef3aa7b9860e942d2f212c0fff8dcc994"
+        },
+        {
+          "byteSize": 9943937952,
+          "path": "transformer/diffusion_pytorch_model-00002-of-00006.safetensors",
+          "sha256": "c33b0264bc4aeb4d2fd108f3008fe94f050e1041689120628250422c0f968658"
+        },
+        {
+          "byteSize": 9944020376,
+          "path": "transformer/diffusion_pytorch_model-00003-of-00006.safetensors",
+          "sha256": "ae1b31432afe1349fa0ba21d79bbe13b2122c8d104936e4d2ba24c334e9665b7"
+        },
+        {
+          "byteSize": 9839059792,
+          "path": "transformer/diffusion_pytorch_model-00004-of-00006.safetensors",
+          "sha256": "e6607df30a9a1072af28d59857acbe927cc8a75233efe37b1ab6a0e8e6a9598a"
+        },
+        {
+          "byteSize": 9839059792,
+          "path": "transformer/diffusion_pytorch_model-00005-of-00006.safetensors",
+          "sha256": "98dc1ee24e779c8ccc6c04b935a9bbb5c20685628463bbecf3d83ebfdf6e87b7"
+        },
+        {
+          "byteSize": 7691262792,
+          "path": "transformer/diffusion_pytorch_model-00006-of-00006.safetensors",
+          "sha256": "91e1d8eddf65220db734d9117ce426e2c1bd9d059db545c6bbc2158ba80a2073"
+        }
+      ],
+      "selectedWeightBytes": 80481086028,
+      "selectedWeightFileCount": 12,
+      "selectedClosureBytes": 80502665588,
+      "selectedClosureFileCount": 24
+    },
+    {
+      "excludedTransformerFiles": [
+        {
+          "byteSize": 9992481688,
+          "path": "transformer_init/diffusion_pytorch_model-00001-of-00006.safetensors",
+          "sha256": "0fc257888fd9413ec0809f786c69d788026ee2de79f4635485c545037975acb0"
+        },
+        {
+          "byteSize": 9943937952,
+          "path": "transformer_init/diffusion_pytorch_model-00002-of-00006.safetensors",
+          "sha256": "54cb8d5d6d87237e5896725e0cae7e4dbe9ce4b4498134b6497aa77dc6d36152"
+        },
+        {
+          "byteSize": 9944020376,
+          "path": "transformer_init/diffusion_pytorch_model-00003-of-00006.safetensors",
+          "sha256": "3096c4c7fe8422c0edc43319b057e49f15ce7104d177c65ba692efb2b7993aea"
+        },
+        {
+          "byteSize": 9839059792,
+          "path": "transformer_init/diffusion_pytorch_model-00004-of-00006.safetensors",
+          "sha256": "2bb210503a3edad912b62d79f489fa1b7c20aa15be7f4f9dc1b1fa4f66a2f606"
+        },
+        {
+          "byteSize": 9839059792,
+          "path": "transformer_init/diffusion_pytorch_model-00005-of-00006.safetensors",
+          "sha256": "ecf2d9288b4d918b08e31dc0a760f77d8ee70df4bf8d9a86e8db88dc69013308"
+        },
+        {
+          "byteSize": 7691262792,
+          "path": "transformer_init/diffusion_pytorch_model-00006-of-00006.safetensors",
+          "sha256": "4b613c3a67f61f176b5e4db7d2391b43fe0cba16875b8bf93cce01a97838f310"
+        }
+      ],
+      "fullWeightBytes": 137730908420,
+      "fullWeightFileCount": 18,
+      "gated": false,
+      "indexFiles": {
+        "model_index.json": {
+          "byteSize": 458,
+          "sha256": "56b7dd2f23b31316225729bb5552f6c319896c5d8bea6ae2b80a26f4290a0266"
+        },
+        "modular_model_index.json": {
+          "byteSize": 1709,
+          "sha256": "ed3d822036cae2cf2445b2a96dc3c0411b345580c5c707279bd6207923a6d443"
+        }
+      },
+      "private": false,
+      "repository": "BestWishYsh/Helios-Mid",
+      "revision": "477c55427ec0ea774bdebd0fbe736313cfc5a312",
+      "role": "mid",
+      "selectedTransformerFiles": [
+        {
+          "byteSize": 9992481688,
+          "path": "transformer/diffusion_pytorch_model-00001-of-00006.safetensors",
+          "sha256": "a7f86a58a1ecb662546d4f1c4b5359e3a0692e5ebd59e4c9f937df7476446584"
+        },
+        {
+          "byteSize": 9943937952,
+          "path": "transformer/diffusion_pytorch_model-00002-of-00006.safetensors",
+          "sha256": "bbd8df4d0584a8e8d9cc928c52ea5dbac751e962dd6dabf775a6d4740caa3036"
+        },
+        {
+          "byteSize": 9944020376,
+          "path": "transformer/diffusion_pytorch_model-00003-of-00006.safetensors",
+          "sha256": "02c124477f87b66090b9fbd662b6e36d49cb4cb287b6a9823522eb0c68c0a4fa"
+        },
+        {
+          "byteSize": 9839059792,
+          "path": "transformer/diffusion_pytorch_model-00004-of-00006.safetensors",
+          "sha256": "5fb1555a44f79ce1b85312a7dd6fd880b5764ff76ce8f792bbc420247bf28b12"
+        },
+        {
+          "byteSize": 9839059792,
+          "path": "transformer/diffusion_pytorch_model-00005-of-00006.safetensors",
+          "sha256": "70ef26e3bec6f310f88368e4197cf099a9710b1cbac191b266ff37540b1f1466"
+        },
+        {
+          "byteSize": 7691262792,
+          "path": "transformer/diffusion_pytorch_model-00006-of-00006.safetensors",
+          "sha256": "056f04acccaf9683f74e358752e69325cc0e01cdd8dfc5e2db75c19c7062e39a"
+        }
+      ],
+      "selectedWeightBytes": 80481086028,
+      "selectedWeightFileCount": 12,
+      "selectedClosureBytes": 80502665685,
+      "selectedClosureFileCount": 24
+    },
+    {
+      "excludedTransformerFiles": [
+        {
+          "byteSize": 9992481688,
+          "path": "transformer_ode/diffusion_pytorch_model-00001-of-00006.safetensors",
+          "sha256": "9dabe550f87f82d62ae5026c2486bafab4fd78a7989257cca2765b9e334cf937"
+        },
+        {
+          "byteSize": 9943937952,
+          "path": "transformer_ode/diffusion_pytorch_model-00002-of-00006.safetensors",
+          "sha256": "9c600d7b4a77f994e8df4e11a02f22c199bac92bfd35c341659190e18fea0d53"
+        },
+        {
+          "byteSize": 9944020376,
+          "path": "transformer_ode/diffusion_pytorch_model-00003-of-00006.safetensors",
+          "sha256": "f8b2752a93a4d42b86f294141eaaef31c602067e69bee650111ba520bada5576"
+        },
+        {
+          "byteSize": 9839059792,
+          "path": "transformer_ode/diffusion_pytorch_model-00004-of-00006.safetensors",
+          "sha256": "7bef3ca0ab675280c58d739fed4e3a4ebe475a7731fb7eb59eef5065de4efeee"
+        },
+        {
+          "byteSize": 9839059792,
+          "path": "transformer_ode/diffusion_pytorch_model-00005-of-00006.safetensors",
+          "sha256": "d4a601f95d60ab70ae2be7b00a15f5be8de6a9e34fdb1f7cb17c0fa557a0b2f4"
+        },
+        {
+          "byteSize": 7691262792,
+          "path": "transformer_ode/diffusion_pytorch_model-00006-of-00006.safetensors",
+          "sha256": "4bc2c64ca28e592b99635c973e64788e6255da77a1883d02254119a8ce18e653"
+        }
+      ],
+      "fullWeightBytes": 137730908420,
+      "fullWeightFileCount": 18,
+      "gated": false,
+      "indexFiles": {
+        "model_index.json": {
+          "byteSize": 461,
+          "sha256": "20fcdc83a27325c4fdc542b4198ecd3f1924d6d3eefbb176b793d721bf55f777"
+        },
+        "modular_model_index.json": {
+          "byteSize": 1755,
+          "sha256": "76d386e956582f5b8d86f0ecef10b4a9d226b46a70e4e3bc8437d678b717ce27"
+        }
+      },
+      "private": false,
+      "repository": "BestWishYsh/Helios-Distilled",
+      "revision": "b991c0379a018f4de3227d95468237f56066f5bb",
+      "role": "distilled",
+      "selectedTransformerFiles": [
+        {
+          "byteSize": 9992481688,
+          "path": "transformer/diffusion_pytorch_model-00001-of-00006.safetensors",
+          "sha256": "7be354f061682a7b2ddc96858ae488ea1944fa315109f1b3835b14286cd17df4"
+        },
+        {
+          "byteSize": 9943937952,
+          "path": "transformer/diffusion_pytorch_model-00002-of-00006.safetensors",
+          "sha256": "1d64852ef16272dd64de21341a2e13821d81a514f03bd300963bdad7e553a84f"
+        },
+        {
+          "byteSize": 9944020376,
+          "path": "transformer/diffusion_pytorch_model-00003-of-00006.safetensors",
+          "sha256": "3c0b54709d92bb50796633fb539099af626470957c47620306b2b50d56c31360"
+        },
+        {
+          "byteSize": 9839059792,
+          "path": "transformer/diffusion_pytorch_model-00004-of-00006.safetensors",
+          "sha256": "fe8d7490f474dd5ca7d5a02c2d942aa1bdc894c9f88270e54565dae77b3e48a5"
+        },
+        {
+          "byteSize": 9839059792,
+          "path": "transformer/diffusion_pytorch_model-00005-of-00006.safetensors",
+          "sha256": "e6816fa9b378d3203b9c29dd47c89565ca40cf4f6ebbc8d3e3eabea0e2e504b6"
+        },
+        {
+          "byteSize": 7691262792,
+          "path": "transformer/diffusion_pytorch_model-00006-of-00006.safetensors",
+          "sha256": "be7d8c1cb8a0e467a30e68e9defc5631e051fce9d01abaa930b54d5174175028"
+        }
+      ],
+      "selectedWeightBytes": 80481086028,
+      "selectedWeightFileCount": 12,
+      "selectedClosureBytes": 80502665527,
+      "selectedClosureFileCount": 24
+    }
+  ],
+  "reviewedRecipes": {
+    "baseTextToVideo": {
+      "guidanceScale": 5.0,
+      "numFrames": 99,
+      "numInferenceSteps": 50,
+      "pipelineClass": "HeliosPipeline",
+      "repositoryRole": "base"
+    },
+    "distilledPyramid": {
+      "fps": 24,
+      "guidanceScale": 1.0,
+      "height": 384,
+      "isAmplifyFirstChunk": true,
+      "numFramesRequested": 240,
+      "numFramesRounded": 264,
+      "pipelineClass": "HeliosPyramidPipeline",
+      "pyramidNumInferenceSteps": [
+        2,
+        2,
+        2
+      ],
+      "repositoryRole": "distilled",
+      "supportedTasks": [
+        "text_to_video",
+        "image_to_video",
+        "video_to_video"
+      ],
+      "width": 640
+    },
+    "mid": {
+      "guidanceClass": "ClassifierFreeZeroStarGuidance",
+      "publisherQualityWarning": "Intermediate distillation checkpoint may not meet expected quality.",
+      "schedulerClass": "HeliosScheduler",
+      "stageRange": [
+        0.0,
+        0.3333333333333333,
+        0.6666666666666666,
+        1.0
+      ]
+    }
+  },
+  "schemaVersion": 1
+}

@@ -1,0 +1,17 @@
+{
+  "valid": [
+    [],
+    [{ "nodeId": "guider", "fieldId": "skip_layer_guidance_scale" }],
+    [{ "nodeId": "temporarily-absent", "fieldId": "blocks.0.scale" }]
+  ],
+  "invalid": [
+    null,
+    {},
+    [null],
+    [{ "nodeId": "guider" }],
+    [{ "nodeId": "guider", "fieldId": "" }],
+    [{ "nodeId": "bad node", "fieldId": "scale" }],
+    [{ "nodeId": "guider", "fieldId": "scale", "enabled": false }],
+    [{ "nodeId": "guider", "fieldId": "scale" }, { "nodeId": "guider", "fieldId": "scale" }]
+  ]
+}

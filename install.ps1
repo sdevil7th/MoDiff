@@ -22,7 +22,13 @@ if (!$pythonCommand) {
   Expand-Archive $archive $uvRoot
   $uv = Get-ChildItem $uvRoot -Filter uv.exe -Recurse | Select-Object -First 1
   $env:UV_PYTHON_INSTALL_DIR = Join-Path $PSScriptRoot ".modiff\tools\python"
+  # Windows PowerShell turns redirected native stderr into error records.
+  # Progress is not failure: preserve diagnostics and check the native exit code.
+  $ErrorActionPreference = "Continue"
   & $uv.FullName python install 3.12
+  $bootstrapExitCode = $LASTEXITCODE
+  $ErrorActionPreference = "Stop"
+  if ($bootstrapExitCode -ne 0) { exit $bootstrapExitCode }
   $pythonCommand = Get-ChildItem $env:UV_PYTHON_INSTALL_DIR -Filter python.exe -Recurse | Select-Object -First 1
 }
 $pythonExecutable = if ($pythonCommand.Source) { $pythonCommand.Source } else { $pythonCommand.FullName }
@@ -35,5 +41,6 @@ if ($Resume) { $argsList += "--resume" }
 if ($Json) { $argsList += "--json" }
 if ($AllowExperimental) { $argsList += "--allow-experimental" }
 if ($BackendOnly) { $argsList += "--backend-only" }
+$ErrorActionPreference = "Continue"
 & $pythonExecutable @argsList
 exit $LASTEXITCODE

@@ -1,0 +1,402 @@
+{
+  "edges": [
+    {
+      "className": "category-default",
+      "data": {
+        "connectionType": "default"
+      },
+      "edgeType": "default",
+      "id": "edge-01",
+      "markerEnd": {
+        "color": "#94A3B8",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-02",
+      "sourceHandle": "output",
+      "style": {
+        "stroke": "#94A3B8"
+      },
+      "target": "node-03",
+      "targetHandle": "value",
+      "type": "default"
+    },
+    {
+      "className": "category-string",
+      "data": {
+        "connectionType": "string"
+      },
+      "edgeType": "default",
+      "id": "edge-02",
+      "markerEnd": {
+        "color": "#38BDF8",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-03",
+      "sourceHandle": "output",
+      "style": {
+        "stroke": "#38BDF8"
+      },
+      "target": "node-01",
+      "targetHandle": "value",
+      "type": "default"
+    }
+  ],
+  "layout": {
+    "algorithm": "modiff-layered-v1",
+    "horizontalGap": 140,
+    "positionHash": "5ce30e8d5f9d7de7399a5bb3a7503a958d2e3a088c668e52ab14c32cf81b3b9d",
+    "verticalGap": 72
+  },
+  "nodes": [
+    {
+      "data": {
+        "action": "ExportData",
+        "cache": false,
+        "category": "primitive",
+        "description": "Persist one bounded JSON or text value under the app-owned data root.",
+        "label": "Export Data",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Primitive",
+        "params": {
+          "file": {
+            "display": "output",
+            "isConnected": false,
+            "label": "File",
+            "type": "str"
+          },
+          "filename": {
+            "default": "{PATH:data}/exports/MoDiff_{HASH:6}.json",
+            "label": "File",
+            "type": "str"
+          },
+          "format": {
+            "default": "json",
+            "label": "Format",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "json",
+                "schemaVersion": 1,
+                "value": "json"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "text",
+                "schemaVersion": 1,
+                "value": "text"
+              }
+            ],
+            "type": "string"
+          },
+          "output": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Serialized Data",
+            "type": "string"
+          },
+          "preview": {
+            "dataSource": "output",
+            "display": "ui_text",
+            "label": "Preview"
+          },
+          "value": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Data",
+            "type": "any"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "dataExport",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-01",
+      "position": {
+        "x": 880,
+        "y": 98
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "ProcessText",
+        "cache": false,
+        "category": "text",
+        "description": "",
+        "label": "Data.Process",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Text",
+        "params": {
+          "alternate_source": {
+            "default": "No alternate branch was selected.",
+            "display": "textarea",
+            "label": "Alternate Source",
+            "type": "string"
+          },
+          "condition": {
+            "default": true,
+            "label": "Select Source",
+            "type": "bool"
+          },
+          "ignore_empty_lines": {
+            "default": false,
+            "label": "Ignore Empty Lines",
+            "type": "bool"
+          },
+          "index": {
+            "default": 0,
+            "label": "Line Index",
+            "max": 100000,
+            "min": -100000,
+            "type": "int"
+          },
+          "item_count": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Item Count",
+            "type": "int"
+          },
+          "operation": {
+            "default": "text_select",
+            "label": "Operation",
+            "options": {
+              "data_conversion": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Convert Data",
+                "schemaVersion": 1,
+                "value": "data_conversion"
+              },
+              "graph_utility": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Select Text Branch",
+                "schemaVersion": 1,
+                "value": "graph_utility"
+              },
+              "text_select": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Select Line",
+                "schemaVersion": 1,
+                "value": "text_select"
+              }
+            },
+            "type": "string",
+            "value": "text_select"
+          },
+          "output": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Output",
+            "type": "any"
+          },
+          "pipeline_class": {
+            "default": "BuiltinDataOperationV1",
+            "hidden": true,
+            "label": "Contract",
+            "type": "string",
+            "value": "BuiltinDataOperationV1"
+          },
+          "selected_index": {
+            "display": "output",
+            "isConnected": false,
+            "label": "Selected Index",
+            "type": "int"
+          },
+          "selection_mode": {
+            "default": "error",
+            "label": "Index Behavior",
+            "options": {
+              "clamp": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Clamp",
+                "schemaVersion": 1,
+                "value": "clamp"
+              },
+              "error": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Error",
+                "schemaVersion": 1,
+                "value": "error"
+              },
+              "wrap": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Wrap",
+                "schemaVersion": 1,
+                "value": "wrap"
+              }
+            },
+            "type": "string"
+          },
+          "source": {
+            "default": "",
+            "display": "textarea",
+            "label": "Source",
+            "type": "string",
+            "value": ""
+          },
+          "strip_line": {
+            "default": true,
+            "label": "Trim Selected Line",
+            "type": "bool"
+          },
+          "target_type": {
+            "default": "json",
+            "label": "Target Type",
+            "options": {
+              "boolean": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Boolean",
+                "schemaVersion": 1,
+                "value": "boolean"
+              },
+              "float": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Float",
+                "schemaVersion": 1,
+                "value": "float"
+              },
+              "integer": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Integer",
+                "schemaVersion": 1,
+                "value": "integer"
+              },
+              "json": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "JSON",
+                "schemaVersion": 1,
+                "value": "json"
+              },
+              "text": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Text",
+                "schemaVersion": 1,
+                "value": "text"
+              }
+            },
+            "type": "string"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "dataOperation",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom",
+        "uiState": {}
+      },
+      "id": "node-02",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "DataViewer",
+        "cache": false,
+        "category": "primitive",
+        "description": "",
+        "label": "Data Viewer",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Primitive",
+        "params": {
+          "output": {
+            "display": "output",
+            "isConnected": true,
+            "label": "Output",
+            "type": "string"
+          },
+          "preview": {
+            "dataSource": "output",
+            "display": "ui_text",
+            "label": "Preview"
+          },
+          "value": {
+            "display": "input",
+            "isConnected": true,
+            "label": "Data",
+            "type": "any"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "studioOwned": true,
+        "studioRole": "dataPreview",
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-03",
+      "position": {
+        "x": 440,
+        "y": 140
+      },
+      "type": "custom"
+    }
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

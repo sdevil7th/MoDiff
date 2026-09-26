@@ -1,0 +1,4950 @@
+{
+  "boundary": {
+    "checkedInHistoricalDefinitionEvidence": true,
+    "containsTranscriptContents": false,
+    "containsWorkflowPathsOrInstanceIds": false,
+    "containsWorkflowPromptOrParameterValues": false,
+    "doesNotAuthorizeConversion": true,
+    "doesNotAuthorizeExecution": true,
+    "doesNotAuthorizeWorkflowMutation": true,
+    "doesNotInferFromLabelsOrModels": true,
+    "requiresExactCompilerMapping": true
+  },
+  "contentHash": "sha256:dd57906b8ae746ff1d74cda1b8e1c145c1b589cbbf0d218ab3011e705db47a90",
+  "kind": "legacy_cluster_archived_definitions",
+  "records": [
+    {
+      "definition": {
+        "blockContractHash": "sha256:abeafcb806bb52173428a2f737d542f06ca08030a4ca1e772986bee2f672064d",
+        "blockPlacements": [
+          {
+            "blockDefinitionId": "diffusers.composite-block:PipelineQuantizationConfigV2:sha256:6d7628d139e2fbc843ffbd24fe354383b9b1a08b85a78c6378e985f748e6ac7b",
+            "legacyPath": "diffusersQuantization",
+            "order": 0,
+            "path": [
+              "diffusersQuantization"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.composite-block:DiffusersExecutionRecipe:sha256:9ad6b09999f72a22965bc8637843f21b8eb1bc1a97ad98fee74da529f536d9a5",
+            "legacyPath": "diffusersRecipe",
+            "order": 1,
+            "path": [
+              "diffusersRecipe"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.composite-block:LoadPipeline:sha256:b2f841209dd3763638126b7223f11cde30a28a238444eede2f8bdc3959e836f6",
+            "legacyPath": "wanPipeline",
+            "order": 2,
+            "path": [
+              "wanPipeline"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.composite-block:Generate:sha256:a3c293cf340a4f139bb7cc08c4cbd2101bf079e21f0372d7a3eb5bfaa12317a0",
+            "legacyPath": "wanGenerate",
+            "order": 3,
+            "path": [
+              "wanGenerate"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.composite-block:Export:sha256:226193d1b04b8a54bb2a4e54a2294f88bffea5c51462f6787bc9bb96f91fa55c",
+            "legacyPath": "videoExport",
+            "order": 4,
+            "path": [
+              "videoExport"
+            ]
+          }
+        ],
+        "blocksClass": "WanTI2VPipeline",
+        "components": [
+          {
+            "creationMethod": "from_pretrained",
+            "name": "pipeline",
+            "reuseKey": [
+              "model",
+              "revision",
+              "dtype",
+              "device"
+            ],
+            "type": "WanTI2VPipeline"
+          }
+        ],
+        "contentHash": "sha256:69d22ed2d15598c7c888eb29a9f70423d91ee3e7bbf17d40fcc06c0b042bd915",
+        "definitionKind": "studio_execution_composite",
+        "description": "Cluster Node containing the exact standard Diffusers Wan loader, execution recipe, text-to-video generation, export, and preview graph.",
+        "executionAdmissions": [
+          {
+            "adapterContractId": "diffusers.composite-adapter:WanTI2VPipeline:text_to_video",
+            "artifact": {
+              "repo": "Wan-AI/Wan2.2-TI2V-5B-Diffusers",
+              "revision": "b8fff7315c768468a5333511427288870b2e9635"
+            },
+            "bindingSources": [
+              "artifact",
+              "attentionKwargsJson",
+              "autoOffload",
+              "channelsLast",
+              "conditioningScale",
+              "defaultRevision",
+              "denoiserCache",
+              "device",
+              "deviceMapNone",
+              "dtype",
+              "executionProfileId",
+              "fps",
+              "guidanceScale",
+              "guidanceScale2",
+              "height",
+              "layerwiseCasting",
+              "maxSequenceLength",
+              "mode",
+              "nativeFlashAttention",
+              "negativePrompt",
+              "numFrames",
+              "offloadMode",
+              "outputType",
+              "pipelineClass",
+              "prompt",
+              "quantizationMode",
+              "quantizedComponents",
+              "regionalCompile",
+              "seed",
+              "shift",
+              "steps",
+              "strength",
+              "transformer",
+              "true",
+              "useGuidanceScale2",
+              "videoVaeTiling",
+              "width"
+            ],
+            "claim": "static_graph_contract_compatible",
+            "definitionId": "diffusers.composite:WanTI2VPipeline:text_to_video",
+            "dynamicFieldActions": [],
+            "executable": false,
+            "executionParameterSources": [
+              "attentionKwargsJson",
+              "autoOffload",
+              "channelsLast",
+              "conditioningScale",
+              "denoiserCache",
+              "device",
+              "deviceMapNone",
+              "dtype",
+              "fps",
+              "guidanceScale",
+              "guidanceScale2",
+              "layerwiseCasting",
+              "nativeFlashAttention",
+              "offloadMode",
+              "quantizationMode",
+              "quantizedComponents",
+              "regionalCompile",
+              "seed",
+              "shift",
+              "strength",
+              "transformer",
+              "useGuidanceScale2",
+              "videoVaeTiling"
+            ],
+            "id": "diffusers.cluster-admission:WanTI2VPipeline:text_to_video:mode:text_to_video",
+            "instanceInputBindings": [
+              {
+                "bindingSource": "prompt",
+                "input": "prompt"
+              },
+              {
+                "bindingSource": "negativePrompt",
+                "input": "negative_prompt"
+              },
+              {
+                "bindingSource": "width",
+                "input": "width"
+              },
+              {
+                "bindingSource": "height",
+                "input": "height"
+              },
+              {
+                "bindingSource": "numFrames",
+                "input": "num_frames"
+              },
+              {
+                "bindingSource": "steps",
+                "input": "num_inference_steps"
+              },
+              {
+                "bindingSource": "maxSequenceLength",
+                "input": "max_sequence_length"
+              },
+              {
+                "bindingSource": "outputType",
+                "input": "output_type"
+              }
+            ],
+            "modelDependencies": [],
+            "publication": {
+              "autoEligible": false,
+              "executable": false,
+              "insertable": true,
+              "liveProof": false,
+              "readiness": "graph_qualified",
+              "reasons": [
+                {
+                  "code": "runtime_resource_admission_required",
+                  "message": "The materialized Cluster graph must pass exact artifact and resource checks before Run is enabled."
+                },
+                {
+                  "code": "live_output_review_pending",
+                  "message": "The exact Cluster execution route has not received approved visible-frontend live-output evidence."
+                }
+              ],
+              "schemaVersion": 1
+            },
+            "reasons": [],
+            "schemaVersion": 4,
+            "sealedBindingValues": {
+              "artifact": "Wan-AI/Wan2.2-TI2V-5B-Diffusers",
+              "defaultRevision": "b8fff7315c768468a5333511427288870b2e9635",
+              "executionProfileId": "wan-22-ti2v-5b:direct",
+              "mode": "text_to_video",
+              "pipelineClass": "WanTI2VPipeline",
+              "true": true
+            },
+            "status": "admitted",
+            "studioExecutionSpec": {
+              "contentHash": "studio-spec-v1-a83efd57",
+              "executionProfileId": "wan-22-ti2v-5b:direct",
+              "id": "wan-22-ti2v-5b:text-to-video:v1"
+            },
+            "studioMode": "text_to_video"
+          }
+        ],
+        "executionClaim": "discovery_only",
+        "graphAdapterContracts": [
+          {
+            "actionSequence": [
+              "diffusersQuantization",
+              "diffusersRecipe",
+              "wanPipeline",
+              "wanGenerate",
+              "videoExport"
+            ],
+            "adapterId": "text_to_video",
+            "id": "diffusers.composite-adapter:WanTI2VPipeline:text_to_video",
+            "requiredInputs": [
+              "prompt"
+            ],
+            "schemaVersion": 1,
+            "source": "mode",
+            "stateEdges": [],
+            "upstreamBlockSequence": [
+              "modules.DiffusersRuntime.PipelineQuantizationConfigV2",
+              "modules.DiffusersRuntime.DiffusersExecutionRecipe",
+              "modules.DiffusersVideo.LoadPipeline",
+              "modules.DiffusersVideo.Generate",
+              "modules.Video.Export"
+            ],
+            "upstreamWorkflowId": "text_to_video"
+          }
+        ],
+        "id": "diffusers.composite:WanTI2VPipeline:text_to_video",
+        "inputs": [
+          {
+            "default": "",
+            "description": "Text prompt for the generated video.",
+            "name": "prompt",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "default": "",
+            "description": "Content and artifacts to avoid in the generated video.",
+            "name": "negative_prompt",
+            "required": false,
+            "type": "str"
+          },
+          {
+            "default": 1280,
+            "description": "Output width in pixels.",
+            "name": "width",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "default": 704,
+            "description": "Output height in pixels.",
+            "name": "height",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "default": 121,
+            "description": "Number of generated video frames.",
+            "name": "num_frames",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "default": 50,
+            "description": "Denoising step count.",
+            "name": "num_inference_steps",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "default": 512,
+            "description": "Maximum prompt sequence length.",
+            "name": "max_sequence_length",
+            "required": false,
+            "type": "int"
+          },
+          {
+            "default": "pil",
+            "description": "Decoded Diffusers output type.",
+            "name": "output_type",
+            "required": false,
+            "type": "str"
+          }
+        ],
+        "integrationStatus": "reviewed_diffusers_composite",
+        "label": "Wan 2.2 TI2V 5B — Text to Video",
+        "libraryRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
+        "mutable": false,
+        "outputs": [
+          {
+            "default": null,
+            "description": "Exported video from the reviewed standard Diffusers graph.",
+            "name": "video",
+            "required": true,
+            "type": "video"
+          }
+        ],
+        "ownership": "library",
+        "pipelineClass": "WanTI2VPipeline",
+        "pipelineKind": "sequential",
+        "provider": "diffusers",
+        "publisher": "huggingface",
+        "requiredInputAlternatives": [],
+        "requiredInputs": [
+          "prompt"
+        ],
+        "rootBlockDefinitionId": "diffusers.composite-block:WanTI2VPipelineTextToVideoComposite:sha256:abeafcb806bb52173428a2f737d542f06ca08030a4ca1e772986bee2f672064d",
+        "schemaVersion": 5,
+        "stateKeys": [],
+        "steps": [
+          {
+            "className": "PipelineQuantizationConfigV2",
+            "description": "Existing MoDiff node modules.DiffusersRuntime.PipelineQuantizationConfigV2 used by this reviewed standard Diffusers composite.",
+            "kind": "block",
+            "path": "diffusersQuantization"
+          },
+          {
+            "className": "DiffusersExecutionRecipe",
+            "description": "Existing MoDiff node modules.DiffusersRuntime.DiffusersExecutionRecipe used by this reviewed standard Diffusers composite.",
+            "kind": "block",
+            "path": "diffusersRecipe"
+          },
+          {
+            "className": "LoadPipeline",
+            "description": "Existing MoDiff node modules.DiffusersVideo.LoadPipeline used by this reviewed standard Diffusers composite.",
+            "kind": "block",
+            "path": "wanPipeline"
+          },
+          {
+            "className": "Generate",
+            "description": "Existing MoDiff node modules.DiffusersVideo.Generate used by this reviewed standard Diffusers composite.",
+            "kind": "block",
+            "path": "wanGenerate"
+          },
+          {
+            "className": "Export",
+            "description": "Existing MoDiff node modules.Video.Export used by this reviewed standard Diffusers composite.",
+            "kind": "block",
+            "path": "videoExport"
+          }
+        ],
+        "surface": "diffusers_cluster_nodes",
+        "taskContractId": "diffusers.task.text_to_video.v1",
+        "taskId": "text_to_video",
+        "workflowId": "text_to_video",
+        "workflowKind": "sequential"
+      },
+      "recordHash": "sha256:e7f0eebb829f3eede6b0cdc3354123b0fbb5e4bb63b96ad6df3abf78e77aeb1a",
+      "registration": {
+        "reason": "exact_definition_and_execution_admission_recovered",
+        "status": "recovery_audit_registered"
+      },
+      "source": {
+        "capturedAt": "2026-08-29T01:17:22.846Z",
+        "definitionResponseLine": 83754,
+        "definitionResponseRecordBytes": 12263,
+        "definitionResponseRecordSha256": "sha256:5aaeed22e5bc7f612d42ed3a0e71075614ba55b3f567117fca9dc71ba31694ab",
+        "fetchRequestLine": 83753,
+        "fetchRequestRecordBytes": 1039,
+        "fetchRequestRecordSha256": "sha256:c22ca263fbb12ec39e7e609fe5e4d88e1ba0ca6d6fe263357cfb6fe386597192",
+        "transcriptPath": ".codex/sessions/2026/08/23/rollout-2026-08-23T22-27-23-01a02f8e-33fb-7b20-a291-488ddb8207ee.jsonl"
+      }
+    },
+    {
+      "definition": {
+        "blockContractHash": "sha256:b20be2129ad5c0121faf42d8cf0533ff5409cb67292c4cbe080e58fd49439e01",
+        "blockPlacements": [
+          {
+            "blockDefinitionId": "diffusers.modular-block:HunyuanVideo15TextEncoderStep:sha256:f094b3ee74840ed96e11070caf558cd83583eba623b0282e96dea9cee0f054f6",
+            "legacyPath": "text_encoder",
+            "order": 0,
+            "path": [
+              "text_encoder"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:HunyuanVideo15TextInputStep:sha256:b0af0e53c35e566d682f35e30fac263d3c07882049c87a1eaf0622d36ecda367",
+            "legacyPath": "denoise.input",
+            "order": 1,
+            "path": [
+              "denoise.input"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:HunyuanVideo15SetTimestepsStep:sha256:532c6a1502ea81ca6b722c936dee0a13d69afa91775331df46824965bdc6218a",
+            "legacyPath": "denoise.set_timesteps",
+            "order": 2,
+            "path": [
+              "denoise.set_timesteps"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:HunyuanVideo15PrepareLatentsStep:sha256:4c217815c930908bd564751a7a45145462cef316af3e65d50c614451241b7101",
+            "legacyPath": "denoise.prepare_latents",
+            "order": 3,
+            "path": [
+              "denoise.prepare_latents"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:HunyuanVideo15DenoiseStep:sha256:6ce312081a8b71f7380c8c819ce54a7b03f142c6c3e27f75c7390612ce4abf57",
+            "legacyPath": "denoise.denoise",
+            "order": 4,
+            "path": [
+              "denoise.denoise"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:HunyuanVideo15LoopBeforeDenoiser:sha256:8ac2a8051babf672acfbd44140ec04b614c314854dd40687632794a1ed9b9196",
+            "legacyPath": "denoise.denoise.before_denoiser",
+            "order": 0,
+            "path": [
+              "denoise.denoise",
+              "before_denoiser"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:HunyuanVideo15LoopDenoiser:sha256:126547e75d99c8d6eeaf921ca9137d68bd8b9022097c01cfb517a1f68481189a",
+            "legacyPath": "denoise.denoise.denoiser",
+            "order": 1,
+            "path": [
+              "denoise.denoise",
+              "denoiser"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:HunyuanVideo15LoopAfterDenoiser:sha256:8de27db3ef5719bd34d41a68a68e48573723032d2a7e852beb9f4945b9ed7af7",
+            "legacyPath": "denoise.denoise.after_denoiser",
+            "order": 2,
+            "path": [
+              "denoise.denoise",
+              "after_denoiser"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:HunyuanVideo15VaeDecoderStep:sha256:6612bb2ee80d9fc396d64760c8ac4796a06ccf60e063426ac859d4a9ddac3ce3",
+            "legacyPath": "decode",
+            "order": 5,
+            "path": [
+              "decode"
+            ]
+          }
+        ],
+        "blocksClass": "HunyuanVideo15AutoBlocks",
+        "components": [
+          {
+            "creationMethod": "from_pretrained",
+            "name": "text_encoder",
+            "reuseKey": [
+              "text_encoder",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.qwen2_5_vl.modeling_qwen2_5_vl.Qwen2_5_VLTextModel"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "tokenizer",
+            "reuseKey": [
+              "tokenizer",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "text_encoder_2",
+            "reuseKey": [
+              "text_encoder_2",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.t5.modeling_t5.T5EncoderModel"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "tokenizer_2",
+            "reuseKey": [
+              "tokenizer_2",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.byt5.tokenization_byt5.ByT5Tokenizer"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "guider",
+            "reuseKey": [
+              "guider",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "vae",
+            "reuseKey": [
+              "vae",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.autoencoders.autoencoder_kl_hunyuanvideo15.AutoencoderKLHunyuanVideo15"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "video_processor",
+            "reuseKey": [
+              "video_processor",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.pipelines.hunyuan_video1_5.image_processor.HunyuanVideo15ImageProcessor"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "image_encoder",
+            "reuseKey": [
+              "image_encoder",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.siglip.modeling_siglip.SiglipVisionModel"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "feature_extractor",
+            "reuseKey": [
+              "feature_extractor",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.siglip.image_processing_siglip.SiglipImageProcessor"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "scheduler",
+            "reuseKey": [
+              "scheduler",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "transformer",
+            "reuseKey": [
+              "transformer",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.transformers.transformer_hunyuan_video15.HunyuanVideo15Transformer3DModel"
+          }
+        ],
+        "contentHash": "sha256:d9990497f5cea8f3a2d30e3c4fc37f76524b59bfb29ccefc965129054e642d43",
+        "definitionKind": "modular_pipeline_workflow",
+        "description": "Auto blocks for HunyuanVideo 1.5 that support both text-to-video and image-to-video workflows.",
+        "executionAdmissions": [],
+        "executionClaim": "discovery_only",
+        "graphAdapterContracts": [
+          {
+            "actionSequence": [
+              "workflow_hunyuan_video15_text_encoder",
+              "workflow_hunyuan_video15_denoise",
+              "workflow_hunyuan_video15_decoder"
+            ],
+            "adapterId": "official_top_level_blocks",
+            "id": "diffusers.modular-adapter:HunyuanVideo15ModularPipeline:text2video:workflow:official_top_level_blocks",
+            "requiredInputs": [
+              "prompt"
+            ],
+            "schemaVersion": 1,
+            "source": "workflow",
+            "stateEdges": [
+              {
+                "consumerAction": "workflow_hunyuan_video15_denoise",
+                "consumerInput": "state_in",
+                "producerAction": "workflow_hunyuan_video15_text_encoder",
+                "producerOutput": "state_out"
+              },
+              {
+                "consumerAction": "workflow_hunyuan_video15_decoder",
+                "consumerInput": "state_in",
+                "producerAction": "workflow_hunyuan_video15_denoise",
+                "producerOutput": "state_out"
+              }
+            ],
+            "upstreamBlockSequence": [
+              "text_encoder",
+              "denoise",
+              "decode"
+            ],
+            "upstreamWorkflowId": "text2video"
+          }
+        ],
+        "id": "diffusers.modular:HunyuanVideo15ModularPipeline:text2video",
+        "inputs": [
+          {
+            "default": null,
+            "description": "The prompt or prompts to guide image generation.",
+            "name": "prompt",
+            "required": true,
+            "type": "builtins.str"
+          },
+          {
+            "default": null,
+            "description": "The prompt or prompts not to guide the image generation.",
+            "name": "negative_prompt",
+            "required": false,
+            "type": "builtins.str"
+          },
+          {
+            "default": 1,
+            "description": "The number of images to generate per prompt.",
+            "name": "num_videos_per_prompt",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "Number of prompts, the final batch size of model inputs should be batch_size * num_images_per_prompt. Can be generated in input step.",
+            "name": "batch_size",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": 50,
+            "description": "The number of denoising steps.",
+            "name": "num_inference_steps",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "Custom sigmas for the denoising process.",
+            "name": "sigmas",
+            "required": false,
+            "type": "list[builtins.float]"
+          },
+          {
+            "default": null,
+            "description": "The height in pixels of the generated image.",
+            "name": "height",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "The width in pixels of the generated image.",
+            "name": "width",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": 121,
+            "description": "Number of video frames to generate.",
+            "name": "num_frames",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "Pre-generated noisy latents for image generation.",
+            "name": "latents",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "Torch generator for deterministic generation.",
+            "name": "generator",
+            "required": false,
+            "type": "torch._C.Generator"
+          },
+          {
+            "default": null,
+            "description": "Additional kwargs for attention processors.",
+            "name": "attention_kwargs",
+            "required": false,
+            "type": "dict[builtins.str,typing.Any]"
+          },
+          {
+            "default": "np",
+            "description": "Output format: 'pil', 'np', 'pt'.",
+            "name": "output_type",
+            "required": false,
+            "type": "builtins.str"
+          }
+        ],
+        "integrationStatus": "reviewed_modular_workflow_route",
+        "label": "Hunyuan Video15 — Text To Video",
+        "libraryRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
+        "mutable": false,
+        "outputs": [
+          {
+            "default": null,
+            "description": "The prompt embeddings.",
+            "name": "prompt_embeds",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The encoder attention mask.",
+            "name": "prompt_embeds_mask",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The negative prompt embeddings.",
+            "name": "negative_prompt_embeds",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The negative prompt embeddings mask.",
+            "name": "negative_prompt_embeds_mask",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "ByT5 glyph-text embeddings used as a second conditioning stream for the transformer.",
+            "name": "prompt_embeds_2",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "Attention mask for the ByT5 glyph-text embeddings.",
+            "name": "prompt_embeds_mask_2",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "ByT5 glyph-text negative embeddings for classifier-free guidance.",
+            "name": "negative_prompt_embeds_2",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "Attention mask for the ByT5 glyph-text negative embeddings.",
+            "name": "negative_prompt_embeds_mask_2",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "batch_size",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "timesteps",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "num_inference_steps",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "Pure noise latents",
+            "name": "latents",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "cond_latents_concat",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "mask_concat",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "image_embeds",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The generated videos.",
+            "name": "videos",
+            "required": false,
+            "type": "list[PIL.Image.Image]"
+          }
+        ],
+        "ownership": "library",
+        "pipelineClass": "HunyuanVideo15ModularPipeline",
+        "pipelineKind": "auto",
+        "provider": "diffusers",
+        "publisher": "huggingface",
+        "requiredInputAlternatives": [],
+        "requiredInputs": [
+          "prompt"
+        ],
+        "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:9cd1c4aab0caf384724f949c5527d1ece264dbcf5cabef4d2027dcdfc8ab37cc",
+        "schemaVersion": 5,
+        "stateKeys": [
+          "prompt",
+          "negative_prompt",
+          "num_videos_per_prompt",
+          "batch_size",
+          "num_inference_steps",
+          "sigmas",
+          "height",
+          "width",
+          "num_frames",
+          "latents",
+          "generator",
+          "attention_kwargs",
+          "output_type"
+        ],
+        "steps": [
+          {
+            "className": "HunyuanVideo15TextEncoderStep",
+            "description": "Dual text encoder step using Qwen2.5-VL (MLLM) and ByT5 (glyph text)",
+            "kind": "block",
+            "path": "text_encoder"
+          },
+          {
+            "className": "HunyuanVideo15TextInputStep",
+            "description": "Input processing step that determines batch_size",
+            "kind": "block",
+            "path": "denoise.input"
+          },
+          {
+            "className": "HunyuanVideo15SetTimestepsStep",
+            "description": "Step that sets the scheduler's timesteps for inference",
+            "kind": "block",
+            "path": "denoise.set_timesteps"
+          },
+          {
+            "className": "HunyuanVideo15PrepareLatentsStep",
+            "description": "Prepare latents, conditioning latents, mask, and image_embeds for T2V",
+            "kind": "block",
+            "path": "denoise.prepare_latents"
+          },
+          {
+            "className": "HunyuanVideo15DenoiseStep",
+            "description": "Denoise step that iteratively denoises the latents. At each iteration: - `HunyuanVideo15LoopBeforeDenoiser` - `HunyuanVideo15LoopDenoiser` - `HunyuanVideo15LoopAfterDenoiser` This block supports text-to-video tasks.",
+            "kind": "loop",
+            "path": "denoise.denoise"
+          },
+          {
+            "className": "HunyuanVideo15LoopBeforeDenoiser",
+            "description": "Step within the denoising loop that prepares the latent input",
+            "kind": "block",
+            "path": "denoise.denoise.before_denoiser"
+          },
+          {
+            "className": "HunyuanVideo15LoopDenoiser",
+            "description": "Step within the denoising loop that denoises the latents with guidance",
+            "kind": "block",
+            "path": "denoise.denoise.denoiser"
+          },
+          {
+            "className": "HunyuanVideo15LoopAfterDenoiser",
+            "description": "Step within the denoising loop that updates the latents",
+            "kind": "block",
+            "path": "denoise.denoise.after_denoiser"
+          },
+          {
+            "className": "HunyuanVideo15VaeDecoderStep",
+            "description": "Step that decodes the denoised latents into videos",
+            "kind": "block",
+            "path": "decode"
+          }
+        ],
+        "surface": "diffusers_cluster_nodes",
+        "taskContractId": "diffusers.task.text_to_video.v1",
+        "taskId": "text_to_video",
+        "workflowId": "text2video",
+        "workflowKind": "sequential"
+      },
+      "recordHash": "sha256:9aa947e3c89f309074713b83b68e1d8961085a02404c09fe175cf355f140c2e4",
+      "registration": {
+        "reason": "historical_execution_admission_absent",
+        "status": "archived_body_only"
+      },
+      "source": {
+        "capturedAt": "2026-08-28T08:17:54.186Z",
+        "definitionResponseLine": 75039,
+        "definitionResponseRecordBytes": 19290,
+        "definitionResponseRecordSha256": "sha256:d166ef1b3cd52cf79da5b541ec704201ce9a3e73280f19b75e50e6f7e3638f1c",
+        "fetchRequestLine": 75034,
+        "fetchRequestRecordBytes": 1027,
+        "fetchRequestRecordSha256": "sha256:a6f350cf332672b592f94f2a1a0c35abe4af22e0550bc001459b9408bf5cd381",
+        "transcriptPath": ".codex/sessions/2026/08/23/rollout-2026-08-23T22-27-23-01a02f8e-33fb-7b20-a291-488ddb8207ee.jsonl"
+      }
+    },
+    {
+      "definition": {
+        "blockContractHash": "sha256:e7e6926f56ffd8529bcb79d7a150f386c7dfaf6af4481a0337a99768fe5e4665",
+        "blockPlacements": [
+          {
+            "blockDefinitionId": "diffusers.modular-block:MiniMaxMusic3TokenizeStep:sha256:94b3b04648adbe2d7214ddbea2bea37ae47abf540607839705317cc24823e51e",
+            "legacyPath": "semantic_generator.tokenize",
+            "order": 0,
+            "path": [
+              "semantic_generator.tokenize"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:MiniMaxMusic3AutoregressiveStep:sha256:c060af76e5b1c4812a1d03bac3597a98a7a9198ee27b7dfe4f85836bfcd3aa77",
+            "legacyPath": "semantic_generator.generate",
+            "order": 1,
+            "path": [
+              "semantic_generator.generate"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:MiniMaxMusic3PrepareChunksStep:sha256:1d1a1edcc4b7ba0520d679d9dbf6387e05a5e4a660a7f97671ef17e6b62c6529",
+            "legacyPath": "denoise.prepare_chunks",
+            "order": 2,
+            "path": [
+              "denoise.prepare_chunks"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:MiniMaxMusic3ChunkDenoiseStep:sha256:da26ae5c7c352cc6b849e517c36f64f94803da9ea993275b70b32c8cbcd70c5d",
+            "legacyPath": "denoise.denoise",
+            "order": 3,
+            "path": [
+              "denoise.denoise"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:MiniMaxMusic3ChunkConditionStep:sha256:bbf6ae489216fe7a137be9f8cf0c4019f5f89f92ee6400ef65a68f950a78ba40",
+            "legacyPath": "denoise.denoise.condition",
+            "order": 0,
+            "path": [
+              "denoise.denoise",
+              "condition"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:MiniMaxMusic3ChunkPrepareLatentsStep:sha256:6ffd030251066de99aaed196234540da47b9c583f8e7b8a2975d03203a466154",
+            "legacyPath": "denoise.denoise.prepare_latents",
+            "order": 1,
+            "path": [
+              "denoise.denoise",
+              "prepare_latents"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:MiniMaxMusic3ChunkSetTimestepsStep:sha256:62912402857160dcb52a1f6c841d95d7a27d4d3efc5033bf54460dbf083bc4e1",
+            "legacyPath": "denoise.denoise.set_timesteps",
+            "order": 2,
+            "path": [
+              "denoise.denoise",
+              "set_timesteps"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:MiniMaxMusic3ChunkDenoiseInner:sha256:c410f5e5edfea724d3c9c7c867c66afa5b39516c4c9d832fb1e0c4256e34a5e1",
+            "legacyPath": "denoise.denoise.denoise_inner",
+            "order": 3,
+            "path": [
+              "denoise.denoise",
+              "denoise_inner"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:MiniMaxMusic3ChunkUpdateStep:sha256:2296f5ff626b6893a9f4eaed84aca6e587f44250c054ab63f5946709461b7060",
+            "legacyPath": "denoise.denoise.update_chunk",
+            "order": 4,
+            "path": [
+              "denoise.denoise",
+              "update_chunk"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:MiniMaxMusic3VocoderDecodeStep:sha256:ffee9a5f2e905d22c3c19cdc173ee63112d3dffa746cd5f792e480c0c5ab42a0",
+            "legacyPath": "decode",
+            "order": 4,
+            "path": [
+              "decode"
+            ]
+          }
+        ],
+        "blocksClass": "MiniMaxMusic3Blocks",
+        "components": [
+          {
+            "creationMethod": "from_pretrained",
+            "name": "tokenizer",
+            "reuseKey": [
+              "tokenizer",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "language_model",
+            "reuseKey": [
+              "language_model",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.qwen3.modeling_qwen3.Qwen3ForCausalLM"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "rvq_depth_decoder",
+            "reuseKey": [
+              "rvq_depth_decoder",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.transformers.minimax_music3_rvq_depth_decoder.MiniMaxMusic3RVQDepthDecoder"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "condition_encoder",
+            "reuseKey": [
+              "condition_encoder",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.condition_embedders.condition_embedder_minimax_music3.MiniMaxMusic3ConditionEncoder"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "transformer",
+            "reuseKey": [
+              "transformer",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.transformers.transformer_minimax_music3.MiniMaxMusic3Transformer1DModel"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "scheduler",
+            "reuseKey": [
+              "scheduler",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "guider",
+            "reuseKey": [
+              "guider",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "vocoder",
+            "reuseKey": [
+              "vocoder",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.autoencoders.minimax_music3_vocoder.MiniMaxMusic3Vocoder"
+          }
+        ],
+        "contentHash": "sha256:915030cdaed8e5261bc64570c4a2eab17e5c45fcc281cd2143a1d48a8c705cad",
+        "definitionKind": "modular_pipeline_workflow",
+        "description": "Modular pipeline for lyrics- and caption-conditioned music generation using MiniMax Music 3. An autoregressive Qwen3 language model generates per-frame semantic codes and hidden states from the lyrics and the music description; a flow-matching transformer turns the hidden states into Flow-VAE latents chunk by chunk; and a DAC-style vocoder decodes them into a stereo waveform at 44.1 kHz.",
+        "executionAdmissions": [
+          {
+            "adapterContractId": "diffusers.modular-adapter:MiniMaxMusic3ModularPipeline:default:workflow:official_top_level_blocks",
+            "artifact": {
+              "repo": "MiniMaxAI/MiniMax-Music3",
+              "revision": "fbdf52fbaaca799592917417eb05f1899f1255ec"
+            },
+            "bindingSources": [
+              "artifact",
+              "audioDuration",
+              "autoOffload",
+              "defaultRevision",
+              "defaultWorkflow",
+              "device",
+              "dtype",
+              "false",
+              "lyrics",
+              "offloadMode",
+              "pipelineClass",
+              "prompt",
+              "sampleRate44100",
+              "seed",
+              "semanticGeneratorBlock",
+              "steps",
+              "workflowDecodeBlock",
+              "workflowDenoiseBlock"
+            ],
+            "claim": "static_graph_contract_compatible",
+            "definitionId": "diffusers.modular:MiniMaxMusic3ModularPipeline:default",
+            "dynamicFieldActions": [
+              {
+                "event": "onChange",
+                "field": "model_type",
+                "role": "models",
+                "valueSource": "pipelineClass"
+              }
+            ],
+            "executable": false,
+            "executionParameterSources": [
+              "autoOffload",
+              "device",
+              "dtype",
+              "offloadMode",
+              "seed"
+            ],
+            "id": "diffusers.cluster-admission:MiniMaxMusic3ModularPipeline:default:workflow:official_top_level_blocks",
+            "instanceInputBindings": [
+              {
+                "bindingSource": "audioDuration",
+                "input": "audio_duration"
+              },
+              {
+                "bindingSource": "lyrics",
+                "input": "lyrics"
+              },
+              {
+                "bindingSource": "prompt",
+                "input": "prompt"
+              },
+              {
+                "bindingSource": "steps",
+                "input": "num_inference_steps"
+              }
+            ],
+            "modelDependencies": [],
+            "publication": {
+              "autoEligible": false,
+              "executable": false,
+              "insertable": true,
+              "liveProof": false,
+              "readiness": "graph_qualified",
+              "reasons": [
+                {
+                  "code": "runtime_resource_admission_required",
+                  "message": "The materialized Cluster graph must pass the exact optional-runtime and resource checks before Run is enabled."
+                },
+                {
+                  "code": "live_output_review_pending",
+                  "message": "The exact Cluster execution route has not received approved visible-frontend live-output evidence."
+                }
+              ],
+              "schemaVersion": 1
+            },
+            "reasons": [],
+            "schemaVersion": 4,
+            "sealedBindingValues": {
+              "artifact": "MiniMaxAI/MiniMax-Music3",
+              "defaultRevision": "fbdf52fbaaca799592917417eb05f1899f1255ec",
+              "defaultWorkflow": "default",
+              "false": false,
+              "pipelineClass": "MiniMaxMusic3ModularPipeline",
+              "sampleRate44100": 44100,
+              "semanticGeneratorBlock": "semantic_generator",
+              "workflowDecodeBlock": "decode",
+              "workflowDenoiseBlock": "denoise"
+            },
+            "status": "admitted",
+            "studioExecutionSpec": {
+              "contentHash": "studio-spec-v1-8a75ab6f",
+              "executionProfileId": "minimax-music3:official-modular-workflow",
+              "id": "minimax-music3:modular-text-to-audio:v1"
+            },
+            "studioMode": "text_to_audio"
+          }
+        ],
+        "executionClaim": "discovery_only",
+        "graphAdapterContracts": [
+          {
+            "actionSequence": [
+              "semantic_generator",
+              "workflow_denoise",
+              "workflow_audio_decoder"
+            ],
+            "adapterId": "official_top_level_blocks",
+            "id": "diffusers.modular-adapter:MiniMaxMusic3ModularPipeline:default:workflow:official_top_level_blocks",
+            "requiredInputs": [
+              "lyrics",
+              "prompt"
+            ],
+            "schemaVersion": 1,
+            "source": "workflow",
+            "stateEdges": [
+              {
+                "consumerAction": "workflow_denoise",
+                "consumerInput": "state_in",
+                "producerAction": "semantic_generator",
+                "producerOutput": "state_out"
+              },
+              {
+                "consumerAction": "workflow_audio_decoder",
+                "consumerInput": "state_in",
+                "producerAction": "workflow_denoise",
+                "producerOutput": "state_out"
+              }
+            ],
+            "upstreamBlockSequence": [
+              "semantic_generator",
+              "denoise",
+              "decode"
+            ],
+            "upstreamWorkflowId": "default"
+          }
+        ],
+        "id": "diffusers.modular:MiniMaxMusic3ModularPipeline:default",
+        "inputs": [
+          {
+            "default": null,
+            "description": "The music description (genre, mood, vocals, instrumentation, arrangement).",
+            "name": "prompt",
+            "required": true,
+            "type": "builtins.str"
+          },
+          {
+            "default": null,
+            "description": "The lyrics to sing. Structure tags such as `[verse]` or `[chorus]` must each be on their own line; text on the same line as a leading tag is dropped by the checkpoint's input contract.",
+            "name": "lyrics",
+            "required": true,
+            "type": "builtins.str"
+          },
+          {
+            "default": 60.0,
+            "description": "Upper bound on the generated audio length in seconds. The language model may stop earlier. Capped at 9000 frames (six minutes).",
+            "name": "audio_duration",
+            "required": false,
+            "type": "builtins.float"
+          },
+          {
+            "default": null,
+            "description": "Torch generator for deterministic generation.",
+            "name": "generator",
+            "required": false,
+            "type": "torch._C.Generator"
+          },
+          {
+            "default": 30,
+            "description": "Number of flow-matching Euler steps per chunk.",
+            "name": "num_inference_steps",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": "np",
+            "description": "Output format: 'np' or 'pt'.",
+            "name": "output_type",
+            "required": false,
+            "type": "builtins.str"
+          }
+        ],
+        "integrationStatus": "reviewed_modular_workflow_route",
+        "label": "Mini Max Music3 — Text To Audio",
+        "libraryRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
+        "mutable": false,
+        "outputs": [
+          {
+            "default": null,
+            "description": "Token ids of shape `[2, sequence_length]` holding the conditional prompt and its classifier-free counterpart (every token except the first and the two trailing structure tokens replaced by the audio-CFG token).",
+            "name": "text_ids",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "Concatenated per-frame hidden states of shape `[1, frames, num_codebooks * hidden_size]` that condition the flow-matching stage.",
+            "name": "frame_hiddens",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "Frame index at which each 200-frame denoising window starts.",
+            "name": "chunk_starts",
+            "required": false,
+            "type": "builtins.list"
+          },
+          {
+            "default": null,
+            "description": "List of per-window denoised latent tensors (uncropped).",
+            "name": "latent_chunks",
+            "required": false,
+            "type": "builtins.list"
+          },
+          {
+            "default": null,
+            "description": "The generated stereo waveform of shape `(batch, channels, samples)` in `[-1, 1]`.",
+            "name": "audios",
+            "required": false,
+            "type": "UnionType[numpy.ndarray,torch.Tensor]"
+          }
+        ],
+        "ownership": "library",
+        "pipelineClass": "MiniMaxMusic3ModularPipeline",
+        "pipelineKind": "sequential",
+        "provider": "diffusers",
+        "publisher": "huggingface",
+        "requiredInputAlternatives": [],
+        "requiredInputs": [
+          "lyrics",
+          "prompt"
+        ],
+        "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:55e8d2ae4992e28fbdd67d0e6404ce0e7af3aa04fecb9fe4f4a75cb213742f5c",
+        "schemaVersion": 5,
+        "stateKeys": [
+          "prompt",
+          "lyrics",
+          "audio_duration",
+          "generator",
+          "num_inference_steps",
+          "output_type"
+        ],
+        "steps": [
+          {
+            "className": "MiniMaxMusic3TokenizeStep",
+            "description": "Tokenize step that assembles the checkpoint's special-token prompt from the music description and the lyrics and tokenizes it into the conditional/unconditional token id pair.",
+            "kind": "block",
+            "path": "semantic_generator.tokenize"
+          },
+          {
+            "className": "MiniMaxMusic3AutoregressiveStep",
+            "description": "Autoregressive generation step: frame by frame, the global language model samples a semantic code with classifier-free guidance and the depth decoder samples the residual codes; the concatenated per-frame hidden states condition the flow-matching stage.",
+            "kind": "block",
+            "path": "semantic_generator.generate"
+          },
+          {
+            "className": "MiniMaxMusic3PrepareChunksStep",
+            "description": "Chunk bookkeeping step that splits the autoregressive frames into 200-frame windows with a 100-frame hop; each window is flow-matched with the previous window's trailing latents as an overlap prompt.",
+            "kind": "block",
+            "path": "denoise.prepare_chunks"
+          },
+          {
+            "className": "MiniMaxMusic3ChunkDenoiseStep",
+            "description": "Chunk denoise step that iterates over the 200-frame denoising windows. At each window: condition -> prepare_latents -> set_timesteps -> denoise_inner -> update_chunk.",
+            "kind": "loop",
+            "path": "denoise.denoise"
+          },
+          {
+            "className": "MiniMaxMusic3ChunkConditionStep",
+            "description": "Chunk conditioning step that projects the window's per-frame hidden states onto the Flow-VAE latent timeline and splices in the previous window's conditioning over the overlapping latent frames.",
+            "kind": "block",
+            "path": "denoise.denoise.condition"
+          },
+          {
+            "className": "MiniMaxMusic3ChunkPrepareLatentsStep",
+            "description": "Chunk latent preparation step that draws the window's initial noise and snapshots the noise over the overlapping latent frames as the blending prompt.",
+            "kind": "block",
+            "path": "denoise.denoise.prepare_latents"
+          },
+          {
+            "className": "MiniMaxMusic3ChunkSetTimestepsStep",
+            "description": "Chunk scheduler step that resets the flow-matching sigma schedule for the current window.",
+            "kind": "block",
+            "path": "denoise.denoise.set_timesteps"
+          },
+          {
+            "className": "MiniMaxMusic3ChunkDenoiseInner",
+            "description": "Inner denoising loop that flow-matches one window's latents over the scheduler timesteps. The guider manages the conditional/unconditional transformer passes (the unconditional conditioning is all zeros), and the overlapping latent frames are blended toward the previous window's trailing latents at every step so neighboring windows share their boundary.",
+            "kind": "block",
+            "path": "denoise.denoise.denoise_inner"
+          },
+          {
+            "className": "MiniMaxMusic3ChunkUpdateStep",
+            "description": "Post-denoising update step that restores the previous window's latents over the overlap, appends the window's latents to the chunk list, and carries the trailing latents and conditioning to the next window.",
+            "kind": "block",
+            "path": "denoise.denoise.update_chunk"
+          },
+          {
+            "className": "MiniMaxMusic3VocoderDecodeStep",
+            "description": "Decode step that vocodes each window's Flow-VAE latents into a waveform, crops the overlapping spans, and stitches the windows into the final stereo waveform at 44.1 kHz.",
+            "kind": "block",
+            "path": "decode"
+          }
+        ],
+        "surface": "diffusers_cluster_nodes",
+        "taskContractId": "diffusers.task.text_to_audio.v1",
+        "taskId": "text_to_audio",
+        "workflowId": "default",
+        "workflowKind": "sequential"
+      },
+      "recordHash": "sha256:f3483a183958258c557d15eb329f8ca72f759a7b098e9044f8bd7e87605109f4",
+      "registration": {
+        "reason": "exact_definition_and_execution_admission_recovered",
+        "status": "recovery_audit_registered"
+      },
+      "source": {
+        "capturedAt": "2026-08-26T10:17:31.560Z",
+        "definitionResponseLine": 35223,
+        "definitionResponseRecordBytes": 20025,
+        "definitionResponseRecordSha256": "sha256:89693ba83cc71419d43516c7aa1fbbaff891e3714141e446f91eb2252ad1b379",
+        "fetchRequestLine": 35222,
+        "fetchRequestRecordBytes": 697,
+        "fetchRequestRecordSha256": "sha256:f0fb844d423f1969a1791935d9fe2fd9d9d919c4f21907a646dc25a9d5b64dce",
+        "transcriptPath": ".codex/sessions/2026/08/23/rollout-2026-08-23T22-27-23-01a02f8e-33fb-7b20-a291-488ddb8207ee.jsonl"
+      }
+    },
+    {
+      "definition": {
+        "blockContractHash": "sha256:e840eb80e390daa6e52716e57572892e6f1f940caafb463fb8e590a919907d4d",
+        "blockPlacements": [
+          {
+            "blockDefinitionId": "diffusers.modular-block:QwenImageTextEncoderStep:sha256:d14fa1d50375dff04df4c46562c8ea784d022f0f8ed166103eb0d4aad6ca6470",
+            "legacyPath": "text_encoder",
+            "order": 0,
+            "path": [
+              "text_encoder"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:QwenImageTextInputsStep:sha256:5b9bf68ed4febcca8ef6450c20b86dbeb82156626a83e597f22c7a39a56b2b0c",
+            "legacyPath": "denoise.input",
+            "order": 1,
+            "path": [
+              "denoise.input"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:QwenImagePrepareLatentsStep:sha256:4a42ad04408c069e0cab5c92570f014ae4dd2631e3dd1fa3789598753abb8f03",
+            "legacyPath": "denoise.prepare_latents",
+            "order": 2,
+            "path": [
+              "denoise.prepare_latents"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:QwenImageSetTimestepsStep:sha256:d7948a83926fb4bd6f8dda9059f358c126f21d57cd048f9674b1c56dbf1f19e6",
+            "legacyPath": "denoise.set_timesteps",
+            "order": 3,
+            "path": [
+              "denoise.set_timesteps"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:QwenImageRoPEInputsStep:sha256:51c6367f1f0b98790626e9c8dc6cdb54f983378b91819d41ff8da165ec67f23f",
+            "legacyPath": "denoise.prepare_rope_inputs",
+            "order": 4,
+            "path": [
+              "denoise.prepare_rope_inputs"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:QwenImageDenoiseStep:sha256:0b9a8b1828cf9aae02563c542d0ecb8f5e51b8cd35a815ebd6e1f5184830d75c",
+            "legacyPath": "denoise.denoise",
+            "order": 5,
+            "path": [
+              "denoise.denoise"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:QwenImageLoopBeforeDenoiser:sha256:dcbc12ea2bbeec4fe395acf4ce336f6b33d316a4784bdcd521919dec1d621bc3",
+            "legacyPath": "denoise.denoise.before_denoiser",
+            "order": 0,
+            "path": [
+              "denoise.denoise",
+              "before_denoiser"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:QwenImageLoopDenoiser:sha256:086525917237ae1074ffb31256389b96ba0e00a46259c3c374384e48031fb38f",
+            "legacyPath": "denoise.denoise.denoiser",
+            "order": 1,
+            "path": [
+              "denoise.denoise",
+              "denoiser"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:QwenImageLoopAfterDenoiser:sha256:c7fa2227a4d22a78e78270704a9acff57a11441bef7108d70ab79d7d9f428cb8",
+            "legacyPath": "denoise.denoise.after_denoiser",
+            "order": 2,
+            "path": [
+              "denoise.denoise",
+              "after_denoiser"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:QwenImageAfterDenoiseStep:sha256:ce15a8cb34cef7b323cac6acee0e54111eaf5adda7a61703776a8e74b631ce10",
+            "legacyPath": "denoise.after_denoise",
+            "order": 6,
+            "path": [
+              "denoise.after_denoise"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:QwenImageDecoderStep:sha256:6a9f7c577b7f90d2b77677af4f51623fff918cb65997b05fd068f363584eaab1",
+            "legacyPath": "decode.decode",
+            "order": 7,
+            "path": [
+              "decode.decode"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:QwenImageProcessImagesOutputStep:sha256:2a8e416bb28e3ba15539c751be181650be51f2d26b60e3aa3b07155e05d30477",
+            "legacyPath": "decode.postprocess",
+            "order": 8,
+            "path": [
+              "decode.postprocess"
+            ]
+          }
+        ],
+        "blocksClass": "QwenImageAutoBlocks",
+        "components": [
+          {
+            "creationMethod": "from_pretrained",
+            "name": "text_encoder",
+            "reuseKey": [
+              "text_encoder",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.qwen2_5_vl.modeling_qwen2_5_vl.Qwen2_5_VLForConditionalGeneration"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "tokenizer",
+            "reuseKey": [
+              "tokenizer",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "guider",
+            "reuseKey": [
+              "guider",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "image_mask_processor",
+            "reuseKey": [
+              "image_mask_processor",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.image_processor.InpaintProcessor"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "vae",
+            "reuseKey": [
+              "vae",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "image_processor",
+            "reuseKey": [
+              "image_processor",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.image_processor.VaeImageProcessor"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "controlnet",
+            "reuseKey": [
+              "controlnet",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.controlnets.controlnet_qwenimage.QwenImageControlNetModel"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "control_image_processor",
+            "reuseKey": [
+              "control_image_processor",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.image_processor.VaeImageProcessor"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "pachifier",
+            "reuseKey": [
+              "pachifier",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.modular_pipelines.qwenimage.modular_pipeline.QwenImagePachifier"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "scheduler",
+            "reuseKey": [
+              "scheduler",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "transformer",
+            "reuseKey": [
+              "transformer",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.transformers.transformer_qwenimage.QwenImageTransformer2DModel"
+          }
+        ],
+        "contentHash": "sha256:83a144c1f8681d16598ab9089d1f7140c3cdc28ab1196acabc86fa7d497b2944",
+        "definitionKind": "modular_pipeline_workflow",
+        "description": "Auto Modular pipeline for text-to-image, image-to-image, inpainting, and controlnet tasks using QwenImage.",
+        "executionAdmissions": [
+          {
+            "adapterContractId": "diffusers.modular-adapter:QwenImageModularPipeline:text2image:mode:text_to_image",
+            "artifact": {
+              "repo": "Qwen/Qwen-Image-2512",
+              "revision": "25468b98e3276ca6700de15c6628e51b7de54a26"
+            },
+            "bindingSources": [
+              "artifact",
+              "autoOffload",
+              "device",
+              "dtype",
+              "false",
+              "guidanceScale",
+              "height",
+              "negativePrompt",
+              "offloadMode",
+              "pipelineClass",
+              "prompt",
+              "seed",
+              "steps",
+              "width"
+            ],
+            "claim": "static_graph_contract_compatible",
+            "definitionId": "diffusers.modular:QwenImageModularPipeline:text2image",
+            "dynamicFieldActions": [
+              {
+                "event": "onChange",
+                "field": "model_type",
+                "role": "models",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onSignal",
+                "field": "text_encoders",
+                "role": "prompt",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onSignal",
+                "field": "unet",
+                "role": "denoise",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onSignal",
+                "field": "vae",
+                "role": "decode",
+                "valueSource": "pipelineClass"
+              }
+            ],
+            "executable": false,
+            "executionParameterSources": [
+              "autoOffload",
+              "device",
+              "dtype",
+              "guidanceScale",
+              "offloadMode",
+              "seed"
+            ],
+            "id": "diffusers.cluster-admission:QwenImageModularPipeline:text2image:mode:text_to_image",
+            "instanceInputBindings": [
+              {
+                "bindingSource": "height",
+                "input": "height"
+              },
+              {
+                "bindingSource": "negativePrompt",
+                "input": "negative_prompt"
+              },
+              {
+                "bindingSource": "prompt",
+                "input": "prompt"
+              },
+              {
+                "bindingSource": "steps",
+                "input": "num_inference_steps"
+              },
+              {
+                "bindingSource": "width",
+                "input": "width"
+              }
+            ],
+            "modelDependencies": [],
+            "publication": {
+              "autoEligible": false,
+              "executable": false,
+              "insertable": true,
+              "liveProof": false,
+              "readiness": "graph_qualified",
+              "reasons": [
+                {
+                  "code": "runtime_resource_admission_required",
+                  "message": "The materialized Cluster graph must pass the exact optional-runtime and resource checks before Run is enabled."
+                },
+                {
+                  "code": "live_output_review_pending",
+                  "message": "The exact Cluster execution route has not received approved visible-frontend live-output evidence."
+                }
+              ],
+              "schemaVersion": 1
+            },
+            "reasons": [],
+            "schemaVersion": 4,
+            "sealedBindingValues": {
+              "artifact": "Qwen/Qwen-Image-2512",
+              "false": false,
+              "pipelineClass": "QwenImageModularPipeline"
+            },
+            "status": "admitted",
+            "studioExecutionSpec": {
+              "contentHash": "studio-spec-v1-a2f2ceff",
+              "executionProfileId": "qwen-image:modular",
+              "id": "qwen-image-2512:modular-text-to-image:v1"
+            },
+            "studioMode": "modular_text_to_image"
+          }
+        ],
+        "executionClaim": "discovery_only",
+        "graphAdapterContracts": [
+          {
+            "actionSequence": [
+              "text_encoder",
+              "denoise",
+              "decoder"
+            ],
+            "adapterId": "text_to_image",
+            "id": "diffusers.modular-adapter:QwenImageModularPipeline:text2image:mode:text_to_image",
+            "requiredInputs": [
+              "prompt"
+            ],
+            "schemaVersion": 1,
+            "source": "mode",
+            "stateEdges": [
+              {
+                "consumerAction": "denoise",
+                "consumerInput": "embeddings",
+                "producerAction": "text_encoder",
+                "producerOutput": "embeddings"
+              },
+              {
+                "consumerAction": "decoder",
+                "consumerInput": "latents",
+                "producerAction": "denoise",
+                "producerOutput": "latents"
+              },
+              {
+                "consumerAction": "decoder",
+                "consumerInput": "route_state_in",
+                "producerAction": "denoise",
+                "producerOutput": "route_state_out"
+              }
+            ],
+            "upstreamBlockSequence": [
+              "text_encoder",
+              "denoise.input",
+              "denoise.prepare_latents",
+              "denoise.set_timesteps",
+              "denoise.prepare_rope_inputs",
+              "denoise.denoise",
+              "denoise.denoise.before_denoiser",
+              "denoise.denoise.denoiser",
+              "denoise.denoise.after_denoiser",
+              "denoise.after_denoise",
+              "decode.decode",
+              "decode.postprocess"
+            ],
+            "upstreamWorkflowId": "text2image"
+          }
+        ],
+        "id": "diffusers.modular:QwenImageModularPipeline:text2image",
+        "inputs": [
+          {
+            "default": null,
+            "description": "The prompt or prompts to guide image generation.",
+            "name": "prompt",
+            "required": true,
+            "type": "builtins.str"
+          },
+          {
+            "default": null,
+            "description": "The prompt or prompts not to guide the image generation.",
+            "name": "negative_prompt",
+            "required": false,
+            "type": "builtins.str"
+          },
+          {
+            "default": 1024,
+            "description": "Maximum sequence length for prompt encoding.",
+            "name": "max_sequence_length",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": 1,
+            "description": "The number of images to generate per prompt.",
+            "name": "num_images_per_prompt",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "Pre-generated noisy latents for image generation.",
+            "name": "latents",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The height in pixels of the generated image.",
+            "name": "height",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "The width in pixels of the generated image.",
+            "name": "width",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "Torch generator for deterministic generation.",
+            "name": "generator",
+            "required": false,
+            "type": "torch._C.Generator"
+          },
+          {
+            "default": 50,
+            "description": "The number of denoising steps.",
+            "name": "num_inference_steps",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "Custom sigmas for the denoising process.",
+            "name": "sigmas",
+            "required": false,
+            "type": "list[builtins.float]"
+          },
+          {
+            "default": null,
+            "description": "Additional kwargs for attention processors.",
+            "name": "attention_kwargs",
+            "required": false,
+            "type": "dict[builtins.str,typing.Any]"
+          },
+          {
+            "default": "pil",
+            "description": "Output format: 'pil', 'np', 'pt'.",
+            "name": "output_type",
+            "required": false,
+            "type": "builtins.str"
+          }
+        ],
+        "integrationStatus": "reviewed_modiff_contract",
+        "label": "Qwen Image — Text To Image",
+        "libraryRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
+        "mutable": false,
+        "outputs": [
+          {
+            "default": null,
+            "description": "The prompt embeddings.",
+            "name": "prompt_embeds",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The encoder attention mask.",
+            "name": "prompt_embeds_mask",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The negative prompt embeddings.",
+            "name": "negative_prompt_embeds",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The negative prompt embeddings mask.",
+            "name": "negative_prompt_embeds_mask",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The batch size of the prompt embeddings",
+            "name": "batch_size",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "The data type of the prompt embeddings",
+            "name": "dtype",
+            "required": false,
+            "type": "torch.dtype"
+          },
+          {
+            "default": null,
+            "description": "if not set, updated to default value",
+            "name": "height",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "if not set, updated to default value",
+            "name": "width",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "The initial latents to use for the denoising process",
+            "name": "latents",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The timesteps to use for the denoising process",
+            "name": "timesteps",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The shapes of the images latents, used for RoPE calculation",
+            "name": "img_shapes",
+            "required": false,
+            "type": "list[list[tuple[builtins.int]]]"
+          },
+          {
+            "default": null,
+            "description": "Generated images. (tensor output of the vae decoder.)",
+            "name": "images",
+            "required": false,
+            "type": "list[PIL.Image.Image]"
+          }
+        ],
+        "ownership": "library",
+        "pipelineClass": "QwenImageModularPipeline",
+        "pipelineKind": "auto",
+        "provider": "diffusers",
+        "publisher": "huggingface",
+        "requiredInputAlternatives": [],
+        "requiredInputs": [
+          "prompt"
+        ],
+        "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:52a16cf5378ec63bbcfb09334264c602829a3a9d00d33532fd424b60d8d65a77",
+        "schemaVersion": 5,
+        "stateKeys": [
+          "prompt",
+          "negative_prompt",
+          "max_sequence_length",
+          "num_images_per_prompt",
+          "latents",
+          "height",
+          "width",
+          "generator",
+          "num_inference_steps",
+          "sigmas",
+          "attention_kwargs",
+          "denoiser_input_fields",
+          "output_type"
+        ],
+        "steps": [
+          {
+            "className": "QwenImageTextEncoderStep",
+            "description": "Text Encoder step that generates text embeddings to guide the image generation.",
+            "kind": "block",
+            "path": "text_encoder"
+          },
+          {
+            "className": "QwenImageTextInputsStep",
+            "description": "Text input processing step that standardizes text embeddings for the pipeline. This step: 1. Determines `batch_size` and `dtype` based on `prompt_embeds` 2. Ensures all text embeddings have consistent batch sizes (batch_size * num_images_per_prompt) This block should be placed after all encoder steps to process the text embeddings before they are used in subsequent pipeline steps.",
+            "kind": "block",
+            "path": "denoise.input"
+          },
+          {
+            "className": "QwenImagePrepareLatentsStep",
+            "description": "Prepare initial random noise for the generation process",
+            "kind": "block",
+            "path": "denoise.prepare_latents"
+          },
+          {
+            "className": "QwenImageSetTimestepsStep",
+            "description": "Step that sets the scheduler's timesteps for text-to-image generation. Should be run after prepare latents step.",
+            "kind": "block",
+            "path": "denoise.set_timesteps"
+          },
+          {
+            "className": "QwenImageRoPEInputsStep",
+            "description": "Step that prepares the RoPE inputs for the denoising process. Should be place after prepare_latents step",
+            "kind": "block",
+            "path": "denoise.prepare_rope_inputs"
+          },
+          {
+            "className": "QwenImageDenoiseStep",
+            "description": "Denoise step that iteratively denoise the latents. Its loop logic is defined in `QwenImageDenoiseLoopWrapper.__call__` method At each iteration, it runs blocks defined in `sub_blocks` sequencially: - `QwenImageLoopBeforeDenoiser` - `QwenImageLoopDenoiser` - `QwenImageLoopAfterDenoiser` This block supports text2image and image2image tasks for QwenImage.",
+            "kind": "loop",
+            "path": "denoise.denoise"
+          },
+          {
+            "className": "QwenImageLoopBeforeDenoiser",
+            "description": "step within the denoising loop that prepares the latent input for the denoiser. This block should be used to compose the `sub_blocks` attribute of a `LoopSequentialPipelineBlocks` object (e.g. `QwenImageDenoiseLoopWrapper`)",
+            "kind": "block",
+            "path": "denoise.denoise.before_denoiser"
+          },
+          {
+            "className": "QwenImageLoopDenoiser",
+            "description": "step within the denoising loop that denoise the latent input for the denoiser. This block should be used to compose the `sub_blocks` attribute of a `LoopSequentialPipelineBlocks` object (e.g. `QwenImageDenoiseLoopWrapper`)",
+            "kind": "block",
+            "path": "denoise.denoise.denoiser"
+          },
+          {
+            "className": "QwenImageLoopAfterDenoiser",
+            "description": "step within the denoising loop that updates the latents. This block should be used to compose the `sub_blocks` attribute of a `LoopSequentialPipelineBlocks` object (e.g. `QwenImageDenoiseLoopWrapper`)",
+            "kind": "block",
+            "path": "denoise.denoise.after_denoiser"
+          },
+          {
+            "className": "QwenImageAfterDenoiseStep",
+            "description": "Step that unpack the latents from 3D tensor (batch_size, sequence_length, channels) into 5D tensor (batch_size, channels, 1, height, width)",
+            "kind": "block",
+            "path": "denoise.after_denoise"
+          },
+          {
+            "className": "QwenImageDecoderStep",
+            "description": "Step that decodes the latents to images",
+            "kind": "block",
+            "path": "decode.decode"
+          },
+          {
+            "className": "QwenImageProcessImagesOutputStep",
+            "description": "postprocess the generated image",
+            "kind": "block",
+            "path": "decode.postprocess"
+          }
+        ],
+        "surface": "diffusers_cluster_nodes",
+        "taskContractId": "diffusers.task.text_to_image.v1",
+        "taskId": "text_to_image",
+        "workflowId": "text2image",
+        "workflowKind": "sequential"
+      },
+      "recordHash": "sha256:4d0136b54bb78f58c59385d367d1e289b4cb62a7f767061bb98bd9000bceda97",
+      "registration": {
+        "reason": "exact_definition_and_execution_admission_recovered",
+        "status": "recovery_audit_registered"
+      },
+      "source": {
+        "capturedAt": "2026-08-26T13:26:21.723Z",
+        "definitionResponseLine": 37766,
+        "definitionResponseRecordBytes": 42592,
+        "definitionResponseRecordSha256": "sha256:2eb09fa21c2b1c9c406a85cc32d11425b27c499cdd2722e3bae31042f90ae274",
+        "fetchRequestLine": 37765,
+        "fetchRequestRecordBytes": 1252,
+        "fetchRequestRecordSha256": "sha256:542194b8f58c1f931699811e8d6f5b4be8faf224dd344e3c30de78c26844caee",
+        "transcriptPath": ".codex/sessions/2026/08/23/rollout-2026-08-23T22-27-23-01a02f8e-33fb-7b20-a291-488ddb8207ee.jsonl"
+      }
+    },
+    {
+      "definition": {
+        "blockContractHash": "sha256:fa94f040986a97dc42bbe6b763f6b32ee386e26e8c01163da07bcc3d0eb42d7e",
+        "blockPlacements": [
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLTextEncoderStep:sha256:dc9b67e7a233cdfa400eef234812dc1dbda7c256bbff768218760e7218ba8369",
+            "legacyPath": "text_encoder",
+            "order": 0,
+            "path": [
+              "text_encoder"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLVaeEncoderStep:sha256:affde5820c566e9810a6e95c397eca83ae506a42448ab5f61d2292e974f08ecb",
+            "legacyPath": "vae_encoder",
+            "order": 1,
+            "path": [
+              "vae_encoder"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLInputStep:sha256:29b8119d1e60584afec6b04248469486cae50951c65cac9797c8c242138883e0",
+            "legacyPath": "denoise.input",
+            "order": 2,
+            "path": [
+              "denoise.input"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLImg2ImgSetTimestepsStep:sha256:df2d0bc364d092e188763f277472b88ccf54cd96ea9d244d47b752a1ca258874",
+            "legacyPath": "denoise.before_denoise.set_timesteps",
+            "order": 3,
+            "path": [
+              "denoise.before_denoise.set_timesteps"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLImg2ImgPrepareLatentsStep:sha256:90c0fdfe4dcef16a99e04191cb39e34fb52d1c5b89875f87aa63fb0b674ea440",
+            "legacyPath": "denoise.before_denoise.prepare_latents",
+            "order": 4,
+            "path": [
+              "denoise.before_denoise.prepare_latents"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLImg2ImgPrepareAdditionalConditioningStep:sha256:dd1ce5f694c6aff50c7120c2d76da0bdce70a8bb3d1b6402c5439cce260b0e17",
+            "legacyPath": "denoise.before_denoise.prepare_add_cond",
+            "order": 5,
+            "path": [
+              "denoise.before_denoise.prepare_add_cond"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLControlNetUnionInputStep:sha256:26dcb8c963f21670a2409b0fa729f05dcd025172cd6b4e2ae5aa3d8ee3d4de8c",
+            "legacyPath": "denoise.controlnet_input",
+            "order": 6,
+            "path": [
+              "denoise.controlnet_input"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLControlNetDenoiseStep:sha256:c9aca005ccad4f7b3cc1d74099dc833d1c2da50c1869e0d787f1ca793451acd5",
+            "legacyPath": "denoise.denoise",
+            "order": 7,
+            "path": [
+              "denoise.denoise"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLLoopBeforeDenoiser:sha256:4762260933ca14559c5a7b057a2f68e768166bb3838152696f162c4ef1002418",
+            "legacyPath": "denoise.denoise.before_denoiser",
+            "order": 0,
+            "path": [
+              "denoise.denoise",
+              "before_denoiser"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLControlNetLoopDenoiser:sha256:70a36d7a82d6ee40d0188af244a482d50734cdd247c57499c9b65317c81a0418",
+            "legacyPath": "denoise.denoise.denoiser",
+            "order": 1,
+            "path": [
+              "denoise.denoise",
+              "denoiser"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLLoopAfterDenoiser:sha256:91c5c0c700512d7487959b79e2103a1f97fd1a897af6321f03ae420e6e661ae6",
+            "legacyPath": "denoise.denoise.after_denoiser",
+            "order": 2,
+            "path": [
+              "denoise.denoise",
+              "after_denoiser"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLDecodeStep:sha256:34981d0f03a25968c569efc772b83c9500b9f16d3ac94a971c046906afe9daeb",
+            "legacyPath": "decode",
+            "order": 8,
+            "path": [
+              "decode"
+            ]
+          }
+        ],
+        "blocksClass": "StableDiffusionXLAutoBlocks",
+        "components": [
+          {
+            "creationMethod": "from_pretrained",
+            "name": "text_encoder",
+            "reuseKey": [
+              "text_encoder",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.clip.modeling_clip.CLIPTextModel"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "text_encoder_2",
+            "reuseKey": [
+              "text_encoder_2",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.clip.modeling_clip.CLIPTextModelWithProjection"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "tokenizer",
+            "reuseKey": [
+              "tokenizer",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.clip.tokenization_clip.CLIPTokenizer"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "tokenizer_2",
+            "reuseKey": [
+              "tokenizer_2",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.clip.tokenization_clip.CLIPTokenizer"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "guider",
+            "reuseKey": [
+              "guider",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "image_encoder",
+            "reuseKey": [
+              "image_encoder",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.clip.modeling_clip.CLIPVisionModelWithProjection"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "feature_extractor",
+            "reuseKey": [
+              "feature_extractor",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.clip.image_processing_clip.CLIPImageProcessor"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "unet",
+            "reuseKey": [
+              "unet",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.unets.unet_2d_condition.UNet2DConditionModel"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "vae",
+            "reuseKey": [
+              "vae",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.autoencoders.autoencoder_kl.AutoencoderKL"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "image_processor",
+            "reuseKey": [
+              "image_processor",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.image_processor.VaeImageProcessor"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "mask_processor",
+            "reuseKey": [
+              "mask_processor",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.image_processor.VaeImageProcessor"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "scheduler",
+            "reuseKey": [
+              "scheduler",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.schedulers.scheduling_euler_discrete.EulerDiscreteScheduler"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "controlnet",
+            "reuseKey": [
+              "controlnet",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.controlnets.controlnet_union.ControlNetUnionModel"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "control_image_processor",
+            "reuseKey": [
+              "control_image_processor",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.image_processor.VaeImageProcessor"
+          }
+        ],
+        "contentHash": "sha256:4315adb71728a6d21578d8f217deac7ba4bba85bef12faa3e4da290566a2470c",
+        "definitionKind": "modular_pipeline_workflow",
+        "description": "Auto Modular pipeline for text-to-image, image-to-image, inpainting, and controlnet tasks using Stable Diffusion XL.",
+        "executionAdmissions": [
+          {
+            "adapterContractId": "diffusers.modular-adapter:StableDiffusionXLModularPipeline:controlnet_union_image2image:state_flow:controlnet_union_image2image",
+            "artifact": {
+              "repo": "stabilityai/stable-diffusion-xl-base-1.0",
+              "revision": "462165984030d82259a11f4367a4eed129e94a7b"
+            },
+            "bindingSources": [
+              "alphaMode",
+              "artifact",
+              "autoOffload",
+              "conditioningScale",
+              "controlImage",
+              "controlMode",
+              "controlnetKind",
+              "controlnetLoadClass",
+              "controlnetRepo",
+              "controlnetRevision",
+              "controlnetRouteVariant",
+              "controlnetWeightVariant",
+              "defaultRevision",
+              "device",
+              "dtype",
+              "empty",
+              "false",
+              "guidanceScale",
+              "height",
+              "negativePrompt",
+              "offloadMode",
+              "pipelineClass",
+              "prompt",
+              "referenceImages",
+              "seed",
+              "steps",
+              "strength",
+              "width"
+            ],
+            "claim": "static_graph_contract_compatible",
+            "definitionId": "diffusers.modular:StableDiffusionXLModularPipeline:controlnet_union_image2image",
+            "dynamicFieldActions": [
+              {
+                "event": "onChange",
+                "field": "model_type",
+                "role": "models",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onSignal",
+                "field": "text_encoders",
+                "role": "prompt",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onSignal",
+                "field": "vae",
+                "role": "imageEncode",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onSignal",
+                "field": "unet",
+                "role": "denoise",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onSignal",
+                "field": "vae",
+                "role": "decode",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onSignal",
+                "field": "controlnet_bundle",
+                "role": "controlnet",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onChange",
+                "field": "model_type",
+                "role": "controlnetModel",
+                "valueSource": "controlnetKind"
+              }
+            ],
+            "executable": false,
+            "executionParameterSources": [
+              "alphaMode",
+              "autoOffload",
+              "device",
+              "guidanceScale",
+              "offloadMode",
+              "seed"
+            ],
+            "id": "diffusers.cluster-admission:StableDiffusionXLModularPipeline:controlnet_union_image2image:state_flow:controlnet_union_image2image",
+            "instanceInputBindings": [
+              {
+                "bindingSource": "conditioningScale",
+                "input": "controlnet_conditioning_scale"
+              },
+              {
+                "bindingSource": "controlImage",
+                "input": "control_image"
+              },
+              {
+                "bindingSource": "controlMode",
+                "input": "control_mode"
+              },
+              {
+                "bindingSource": "dtype",
+                "input": "dtype"
+              },
+              {
+                "bindingSource": "height",
+                "input": "height"
+              },
+              {
+                "bindingSource": "negativePrompt",
+                "input": "negative_prompt"
+              },
+              {
+                "bindingSource": "prompt",
+                "input": "prompt"
+              },
+              {
+                "bindingSource": "referenceImages",
+                "input": "image"
+              },
+              {
+                "bindingSource": "steps",
+                "input": "num_inference_steps"
+              },
+              {
+                "bindingSource": "strength",
+                "input": "strength"
+              },
+              {
+                "bindingSource": "width",
+                "input": "width"
+              }
+            ],
+            "modelDependencies": [
+              {
+                "id": "sdxl-controlnet-union",
+                "kind": "controlnet",
+                "repo": "xinsir/controlnet-union-sdxl-1.0",
+                "revision": "801a4a3fa3d4c936f4feea95b98607bc6726f80c"
+              }
+            ],
+            "publication": {
+              "autoEligible": false,
+              "executable": false,
+              "insertable": true,
+              "liveProof": false,
+              "readiness": "graph_qualified",
+              "reasons": [
+                {
+                  "code": "runtime_resource_admission_required",
+                  "message": "The materialized Cluster graph must pass the exact optional-runtime and resource checks before Run is enabled."
+                },
+                {
+                  "code": "live_output_review_pending",
+                  "message": "The exact Cluster execution route has not received approved visible-frontend live-output evidence."
+                }
+              ],
+              "schemaVersion": 1
+            },
+            "reasons": [],
+            "schemaVersion": 4,
+            "sealedBindingValues": {
+              "artifact": "stabilityai/stable-diffusion-xl-base-1.0",
+              "controlnetKind": "controlnet",
+              "controlnetLoadClass": "ControlNetUnionModel",
+              "controlnetRepo": "xinsir/controlnet-union-sdxl-1.0",
+              "controlnetRevision": "801a4a3fa3d4c936f4feea95b98607bc6726f80c",
+              "controlnetRouteVariant": "union",
+              "controlnetWeightVariant": "",
+              "defaultRevision": "462165984030d82259a11f4367a4eed129e94a7b",
+              "empty": "",
+              "false": false,
+              "pipelineClass": "StableDiffusionXLModularPipeline"
+            },
+            "status": "admitted",
+            "studioExecutionSpec": {
+              "contentHash": "studio-spec-v1-6951db80",
+              "executionProfileId": "sdxl-base:modular",
+              "id": "sdxl-base:modular-controlnet-union-image-to-image:v1"
+            },
+            "studioMode": "control_union_edit_image"
+          }
+        ],
+        "executionClaim": "discovery_only",
+        "graphAdapterContracts": [
+          {
+            "actionSequence": [
+              "text_encoder",
+              "vae_encoder",
+              "controlnet",
+              "denoise",
+              "decoder"
+            ],
+            "adapterId": "controlnet_union_image2image",
+            "id": "diffusers.modular-adapter:StableDiffusionXLModularPipeline:controlnet_union_image2image:state_flow:controlnet_union_image2image",
+            "requiredInputs": [
+              "control_image",
+              "control_mode",
+              "image",
+              "prompt"
+            ],
+            "schemaVersion": 1,
+            "source": "state_flow",
+            "stateEdges": [
+              {
+                "consumerAction": "denoise",
+                "consumerInput": "embeddings",
+                "producerAction": "text_encoder",
+                "producerOutput": "embeddings"
+              },
+              {
+                "consumerAction": "denoise",
+                "consumerInput": "image_latents",
+                "producerAction": "vae_encoder",
+                "producerOutput": "image_latents"
+              },
+              {
+                "consumerAction": "denoise",
+                "consumerInput": "route_state_in",
+                "producerAction": "vae_encoder",
+                "producerOutput": "route_state_out"
+              },
+              {
+                "consumerAction": "denoise",
+                "consumerInput": "controlnet_bundle",
+                "producerAction": "controlnet",
+                "producerOutput": "controlnet_bundle"
+              },
+              {
+                "consumerAction": "decoder",
+                "consumerInput": "latents",
+                "producerAction": "denoise",
+                "producerOutput": "latents"
+              },
+              {
+                "consumerAction": "decoder",
+                "consumerInput": "route_state_in",
+                "producerAction": "denoise",
+                "producerOutput": "route_state_out"
+              }
+            ],
+            "upstreamBlockSequence": [
+              "text_encoder",
+              "vae_encoder",
+              "denoise.input",
+              "denoise.before_denoise.set_timesteps",
+              "denoise.before_denoise.prepare_latents",
+              "denoise.before_denoise.prepare_add_cond",
+              "denoise.controlnet_input",
+              "denoise.denoise",
+              "decode"
+            ],
+            "upstreamWorkflowId": "controlnet_union_image2image"
+          }
+        ],
+        "id": "diffusers.modular:StableDiffusionXLModularPipeline:controlnet_union_image2image",
+        "inputs": [
+          {
+            "default": null,
+            "description": "",
+            "name": "prompt",
+            "required": true,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "prompt_2",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "negative_prompt",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "negative_prompt_2",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "cross_attention_kwargs",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "clip_skip",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "image",
+            "required": true,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "height",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "width",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "generator",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "Data type of model tensor inputs",
+            "name": "dtype",
+            "required": false,
+            "type": "torch.dtype"
+          },
+          {
+            "default": null,
+            "description": "A kwargs dictionary that if specified is passed along to the `ImageProcessor` as defined under `self.image_processor` in [diffusers.image_processor.VaeImageProcessor]",
+            "name": "preprocess_kwargs",
+            "required": false,
+            "type": "UnionType[builtins.NoneType,builtins.dict]"
+          },
+          {
+            "default": 1,
+            "description": "",
+            "name": "num_images_per_prompt",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "Pre-generated image embeddings for IP-Adapter. Can be generated from ip_adapter step.",
+            "name": "ip_adapter_embeds",
+            "required": false,
+            "type": "list[torch.Tensor]"
+          },
+          {
+            "default": null,
+            "description": "Pre-generated negative image embeddings for IP-Adapter. Can be generated from ip_adapter step.",
+            "name": "negative_ip_adapter_embeds",
+            "required": false,
+            "type": "list[torch.Tensor]"
+          },
+          {
+            "default": 50,
+            "description": "",
+            "name": "num_inference_steps",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "timesteps",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "sigmas",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "denoising_end",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": 0.3,
+            "description": "",
+            "name": "strength",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "denoising_start",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "latents",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "original_size",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "target_size",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "negative_original_size",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "negative_target_size",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": [
+              0,
+              0
+            ],
+            "description": "",
+            "name": "crops_coords_top_left",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": [
+              0,
+              0
+            ],
+            "description": "",
+            "name": "negative_crops_coords_top_left",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": 6.0,
+            "description": "",
+            "name": "aesthetic_score",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": 2.0,
+            "description": "",
+            "name": "negative_aesthetic_score",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "control_image",
+            "required": true,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "control_mode",
+            "required": true,
+            "type": "opaque"
+          },
+          {
+            "default": 0.0,
+            "description": "",
+            "name": "control_guidance_start",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": 1.0,
+            "description": "",
+            "name": "control_guidance_end",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": 1.0,
+            "description": "",
+            "name": "controlnet_conditioning_scale",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": false,
+            "description": "",
+            "name": "guess_mode",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "The crop coordinates to use for preprocess/postprocess the image and mask, for inpainting task only. Can be generated in vae_encode step.",
+            "name": "crops_coords",
+            "required": false,
+            "type": "UnionType[builtins.NoneType,tuple[builtins.int]]"
+          },
+          {
+            "default": 0.0,
+            "description": "",
+            "name": "eta",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": "pil",
+            "description": "",
+            "name": "output_type",
+            "required": false,
+            "type": "opaque"
+          }
+        ],
+        "integrationStatus": "reviewed_modiff_contract",
+        "label": "Stable Diffusion XL — Controlnet Union Image2Image",
+        "libraryRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
+        "mutable": false,
+        "outputs": [
+          {
+            "default": null,
+            "description": "text embeddings used to guide the image generation",
+            "name": "prompt_embeds",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "negative text embeddings used to guide the image generation",
+            "name": "negative_prompt_embeds",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "pooled text embeddings used to guide the image generation",
+            "name": "pooled_prompt_embeds",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "negative pooled text embeddings used to guide the image generation",
+            "name": "negative_pooled_prompt_embeds",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The latents representing the reference image for image-to-image/inpainting generation",
+            "name": "image_latents",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "Number of prompts, the final batch size of model inputs should be batch_size * num_images_per_prompt",
+            "name": "batch_size",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "Data type of model tensor inputs (determined by `prompt_embeds`)",
+            "name": "dtype",
+            "required": false,
+            "type": "torch.dtype"
+          },
+          {
+            "default": null,
+            "description": "image embeddings for IP-Adapter",
+            "name": "ip_adapter_embeds",
+            "required": false,
+            "type": "list[torch.Tensor]"
+          },
+          {
+            "default": null,
+            "description": "negative image embeddings for IP-Adapter",
+            "name": "negative_ip_adapter_embeds",
+            "required": false,
+            "type": "list[torch.Tensor]"
+          },
+          {
+            "default": null,
+            "description": "The timesteps to use for inference",
+            "name": "timesteps",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The number of denoising steps to perform at inference time",
+            "name": "num_inference_steps",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "The timestep that represents the initial noise level for image-to-image generation",
+            "name": "latent_timestep",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The initial latents to use for the denoising process",
+            "name": "latents",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The time ids to condition the denoising process",
+            "name": "add_time_ids",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The negative time ids to condition the denoising process",
+            "name": "negative_add_time_ids",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The timestep cond to use for LCM",
+            "name": "timestep_cond",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The processed control images",
+            "name": "controlnet_cond",
+            "required": false,
+            "type": "list[torch.Tensor]"
+          },
+          {
+            "default": null,
+            "description": "The control mode indices",
+            "name": "control_type_idx",
+            "required": false,
+            "type": "list[builtins.int]"
+          },
+          {
+            "default": null,
+            "description": "The control type tensor that specifies which control type is active",
+            "name": "control_type",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The controlnet guidance start value",
+            "name": "control_guidance_start",
+            "required": false,
+            "type": "builtins.float"
+          },
+          {
+            "default": null,
+            "description": "The controlnet guidance end value",
+            "name": "control_guidance_end",
+            "required": false,
+            "type": "builtins.float"
+          },
+          {
+            "default": null,
+            "description": "The controlnet conditioning scale values",
+            "name": "conditioning_scale",
+            "required": false,
+            "type": "list[builtins.float]"
+          },
+          {
+            "default": null,
+            "description": "Whether guess mode is used",
+            "name": "guess_mode",
+            "required": false,
+            "type": "builtins.bool"
+          },
+          {
+            "default": null,
+            "description": "The controlnet keep values",
+            "name": "controlnet_keep",
+            "required": false,
+            "type": "list[builtins.float]"
+          },
+          {
+            "default": null,
+            "description": "The generated images, can be a PIL.Image.Image, torch.Tensor or a numpy array",
+            "name": "images",
+            "required": false,
+            "type": "UnionType[list[PIL.Image.Image],list[numpy.array],list[torch.Tensor]]"
+          }
+        ],
+        "ownership": "library",
+        "pipelineClass": "StableDiffusionXLModularPipeline",
+        "pipelineKind": "auto",
+        "provider": "diffusers",
+        "publisher": "huggingface",
+        "requiredInputAlternatives": [],
+        "requiredInputs": [
+          "control_image",
+          "control_mode",
+          "image",
+          "prompt"
+        ],
+        "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:bc5f288a162b642585251b209efa4f8122fbb82cc10766548f4357eba0934cb3",
+        "schemaVersion": 5,
+        "stateKeys": [
+          "prompt",
+          "prompt_2",
+          "negative_prompt",
+          "negative_prompt_2",
+          "cross_attention_kwargs",
+          "clip_skip",
+          "image",
+          "height",
+          "width",
+          "generator",
+          "dtype",
+          "preprocess_kwargs",
+          "num_images_per_prompt",
+          "ip_adapter_embeds",
+          "negative_ip_adapter_embeds",
+          "num_inference_steps",
+          "timesteps",
+          "sigmas",
+          "denoising_end",
+          "strength",
+          "denoising_start",
+          "latents",
+          "original_size",
+          "target_size",
+          "negative_original_size",
+          "negative_target_size",
+          "crops_coords_top_left",
+          "negative_crops_coords_top_left",
+          "aesthetic_score",
+          "negative_aesthetic_score",
+          "control_image",
+          "control_mode",
+          "control_guidance_start",
+          "control_guidance_end",
+          "controlnet_conditioning_scale",
+          "guess_mode",
+          "crops_coords",
+          "denoiser_input_fields",
+          "eta",
+          "output_type"
+        ],
+        "steps": [
+          {
+            "className": "StableDiffusionXLTextEncoderStep",
+            "description": "Text Encoder step that generate text_embeddings to guide the image generation",
+            "kind": "block",
+            "path": "text_encoder"
+          },
+          {
+            "className": "StableDiffusionXLVaeEncoderStep",
+            "description": "Vae Encoder step that encode the input image into a latent representation",
+            "kind": "block",
+            "path": "vae_encoder"
+          },
+          {
+            "className": "StableDiffusionXLInputStep",
+            "description": "Input processing step that: 1. Determines `batch_size` and `dtype` based on `prompt_embeds` 2. Adjusts input tensor shapes based on `batch_size` (number of prompts) and `num_images_per_prompt` All input tensors are expected to have either batch_size=1 or match the batch_size of prompt_embeds. The tensors will be duplicated across the batch dimension to have a final batch_size of batch_size * num_images_per_prompt.",
+            "kind": "block",
+            "path": "denoise.input"
+          },
+          {
+            "className": "StableDiffusionXLImg2ImgSetTimestepsStep",
+            "description": "Step that sets the timesteps for the scheduler and determines the initial noise level (latent_timestep) for image-to-image/inpainting generation. The latent_timestep is calculated from the `strength` parameter - higher strength means starting from a noisier version of the input image.",
+            "kind": "block",
+            "path": "denoise.before_denoise.set_timesteps"
+          },
+          {
+            "className": "StableDiffusionXLImg2ImgPrepareLatentsStep",
+            "description": "Step that prepares the latents for the image-to-image generation process",
+            "kind": "block",
+            "path": "denoise.before_denoise.prepare_latents"
+          },
+          {
+            "className": "StableDiffusionXLImg2ImgPrepareAdditionalConditioningStep",
+            "description": "Step that prepares the additional conditioning for the image-to-image/inpainting generation process",
+            "kind": "block",
+            "path": "denoise.before_denoise.prepare_add_cond"
+          },
+          {
+            "className": "StableDiffusionXLControlNetUnionInputStep",
+            "description": "step that prepares inputs for the ControlNetUnion model",
+            "kind": "block",
+            "path": "denoise.controlnet_input"
+          },
+          {
+            "className": "StableDiffusionXLControlNetDenoiseStep",
+            "description": "Denoise step that iteratively denoise the latents with controlnet. Its loop logic is defined in `StableDiffusionXLDenoiseLoopWrapper.__call__` method At each iteration, it runs blocks defined in `sub_blocks` sequentially: - `StableDiffusionXLLoopBeforeDenoiser` - `StableDiffusionXLControlNetLoopDenoiser` - `StableDiffusionXLLoopAfterDenoiser` This block supports using controlnet for both text2img and img2img tasks.",
+            "kind": "loop",
+            "path": "denoise.denoise"
+          },
+          {
+            "className": "StableDiffusionXLLoopBeforeDenoiser",
+            "description": "step within the denoising loop that prepare the latent input for the denoiser. This block should be used to compose the `sub_blocks` attribute of a `LoopSequentialPipelineBlocks` object (e.g. `StableDiffusionXLDenoiseLoopWrapper`)",
+            "kind": "block",
+            "path": "denoise.denoise.before_denoiser"
+          },
+          {
+            "className": "StableDiffusionXLControlNetLoopDenoiser",
+            "description": "step within the denoising loop that denoise the latents with guidance (with controlnet). This block should be used to compose the `sub_blocks` attribute of a `LoopSequentialPipelineBlocks` object (e.g. `StableDiffusionXLDenoiseLoopWrapper`)",
+            "kind": "block",
+            "path": "denoise.denoise.denoiser"
+          },
+          {
+            "className": "StableDiffusionXLLoopAfterDenoiser",
+            "description": "step within the denoising loop that update the latents. This block should be used to compose the `sub_blocks` attribute of a `LoopSequentialPipelineBlocks` object (e.g. `StableDiffusionXLDenoiseLoopWrapper`)",
+            "kind": "block",
+            "path": "denoise.denoise.after_denoiser"
+          },
+          {
+            "className": "StableDiffusionXLDecodeStep",
+            "description": "Step that decodes the denoised latents into images",
+            "kind": "block",
+            "path": "decode"
+          }
+        ],
+        "surface": "diffusers_cluster_nodes",
+        "taskContractId": "diffusers.task.controlnet_union_image2image.v1",
+        "taskId": "controlnet_union_image2image",
+        "workflowId": "controlnet_union_image2image",
+        "workflowKind": "sequential"
+      },
+      "recordHash": "sha256:d9693ebf3bad98284ef6862b9fef182223e573279a05ef35de05895a17c78a37",
+      "registration": {
+        "reason": "exact_definition_and_execution_admission_recovered",
+        "status": "recovery_audit_registered"
+      },
+      "source": {
+        "capturedAt": "2026-08-27T10:57:08.561Z",
+        "definitionResponseLine": 58239,
+        "definitionResponseRecordBytes": 37707,
+        "definitionResponseRecordSha256": "sha256:04e14f77ef662e70445503c3d029e0b7ac72e9e4135a9a95162381ed08f71eab",
+        "fetchRequestLine": 58238,
+        "fetchRequestRecordBytes": 720,
+        "fetchRequestRecordSha256": "sha256:78264bd8ab30465c9bf4d490613db8321d66c036b9f5171d80f9b58786ef367a",
+        "transcriptPath": ".codex/sessions/2026/08/23/rollout-2026-08-23T22-27-23-01a02f8e-33fb-7b20-a291-488ddb8207ee.jsonl"
+      }
+    },
+    {
+      "definition": {
+        "blockContractHash": "sha256:4bd3321c9a25b8e272ef98f00ed2d607d01179cb56e4a871784ec47a13721cb4",
+        "blockPlacements": [
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLTextEncoderStep:sha256:dc9b67e7a233cdfa400eef234812dc1dbda7c256bbff768218760e7218ba8369",
+            "legacyPath": "text_encoder",
+            "order": 0,
+            "path": [
+              "text_encoder"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLIPAdapterStep:sha256:6266953aceaa514534b0ea47b45ca776de2d19a4941f1a9574faa88dcc7dacae",
+            "legacyPath": "ip_adapter",
+            "order": 1,
+            "path": [
+              "ip_adapter"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLInpaintVaeEncoderStep:sha256:661b2d170773d780ca0678078175ad94751635746721c9da0dc5f4b698fe61d0",
+            "legacyPath": "vae_encoder",
+            "order": 2,
+            "path": [
+              "vae_encoder"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLInputStep:sha256:29b8119d1e60584afec6b04248469486cae50951c65cac9797c8c242138883e0",
+            "legacyPath": "denoise.input",
+            "order": 3,
+            "path": [
+              "denoise.input"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLImg2ImgSetTimestepsStep:sha256:df2d0bc364d092e188763f277472b88ccf54cd96ea9d244d47b752a1ca258874",
+            "legacyPath": "denoise.before_denoise.set_timesteps",
+            "order": 4,
+            "path": [
+              "denoise.before_denoise.set_timesteps"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLInpaintPrepareLatentsStep:sha256:1438bc420e5951367f66a6b714d7d060848844e0f788e08f9fbbdb482ceece66",
+            "legacyPath": "denoise.before_denoise.prepare_latents",
+            "order": 5,
+            "path": [
+              "denoise.before_denoise.prepare_latents"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLImg2ImgPrepareAdditionalConditioningStep:sha256:dd1ce5f694c6aff50c7120c2d76da0bdce70a8bb3d1b6402c5439cce260b0e17",
+            "legacyPath": "denoise.before_denoise.prepare_add_cond",
+            "order": 6,
+            "path": [
+              "denoise.before_denoise.prepare_add_cond"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLControlNetUnionInputStep:sha256:26dcb8c963f21670a2409b0fa729f05dcd025172cd6b4e2ae5aa3d8ee3d4de8c",
+            "legacyPath": "denoise.controlnet_input",
+            "order": 7,
+            "path": [
+              "denoise.controlnet_input"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLInpaintControlNetDenoiseStep:sha256:7873b6fd1ad4b0f300dab7c725a7d5d1e06688dcb32860ec33012032faf8d70b",
+            "legacyPath": "denoise.denoise",
+            "order": 8,
+            "path": [
+              "denoise.denoise"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLInpaintLoopBeforeDenoiser:sha256:8fb6838f5b6e70eddc8e39f5820c3f0e63568cc63354814b380373d3c7f131b8",
+            "legacyPath": "denoise.denoise.before_denoiser",
+            "order": 0,
+            "path": [
+              "denoise.denoise",
+              "before_denoiser"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLControlNetLoopDenoiser:sha256:70a36d7a82d6ee40d0188af244a482d50734cdd247c57499c9b65317c81a0418",
+            "legacyPath": "denoise.denoise.denoiser",
+            "order": 1,
+            "path": [
+              "denoise.denoise",
+              "denoiser"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLInpaintLoopAfterDenoiser:sha256:7c54aeefe68cac6cb60d2cc764155954beee44ed7e007860c9c2e26ed72f884b",
+            "legacyPath": "denoise.denoise.after_denoiser",
+            "order": 2,
+            "path": [
+              "denoise.denoise",
+              "after_denoiser"
+            ]
+          },
+          {
+            "blockDefinitionId": "diffusers.modular-block:StableDiffusionXLDecodeStep:sha256:34981d0f03a25968c569efc772b83c9500b9f16d3ac94a971c046906afe9daeb",
+            "legacyPath": "decode",
+            "order": 9,
+            "path": [
+              "decode"
+            ]
+          }
+        ],
+        "blocksClass": "StableDiffusionXLAutoBlocks",
+        "components": [
+          {
+            "creationMethod": "from_pretrained",
+            "name": "text_encoder",
+            "reuseKey": [
+              "text_encoder",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.clip.modeling_clip.CLIPTextModel"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "text_encoder_2",
+            "reuseKey": [
+              "text_encoder_2",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.clip.modeling_clip.CLIPTextModelWithProjection"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "tokenizer",
+            "reuseKey": [
+              "tokenizer",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.clip.tokenization_clip.CLIPTokenizer"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "tokenizer_2",
+            "reuseKey": [
+              "tokenizer_2",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.clip.tokenization_clip.CLIPTokenizer"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "guider",
+            "reuseKey": [
+              "guider",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "image_encoder",
+            "reuseKey": [
+              "image_encoder",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.clip.modeling_clip.CLIPVisionModelWithProjection"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "feature_extractor",
+            "reuseKey": [
+              "feature_extractor",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "transformers.models.clip.image_processing_clip.CLIPImageProcessor"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "unet",
+            "reuseKey": [
+              "unet",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.unets.unet_2d_condition.UNet2DConditionModel"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "vae",
+            "reuseKey": [
+              "vae",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.autoencoders.autoencoder_kl.AutoencoderKL"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "image_processor",
+            "reuseKey": [
+              "image_processor",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.image_processor.VaeImageProcessor"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "mask_processor",
+            "reuseKey": [
+              "mask_processor",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.image_processor.VaeImageProcessor"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "scheduler",
+            "reuseKey": [
+              "scheduler",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.schedulers.scheduling_euler_discrete.EulerDiscreteScheduler"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "controlnet",
+            "reuseKey": [
+              "controlnet",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.models.controlnets.controlnet_union.ControlNetUnionModel"
+          },
+          {
+            "creationMethod": "from_config",
+            "name": "control_image_processor",
+            "reuseKey": [
+              "control_image_processor",
+              "loadId",
+              "dtype",
+              "quantization",
+              "device",
+              "offloadMode"
+            ],
+            "type": "diffusers.image_processor.VaeImageProcessor"
+          }
+        ],
+        "contentHash": "sha256:32bc1deb00b369c02e7c3f2ad8b3d5f5ef44e5c2befa1d8be9fe2fa97e753009",
+        "definitionKind": "modular_pipeline_workflow",
+        "description": "Auto Modular pipeline for text-to-image, image-to-image, inpainting, and controlnet tasks using Stable Diffusion XL.",
+        "executionAdmissions": [
+          {
+            "adapterContractId": "diffusers.modular-adapter:StableDiffusionXLModularPipeline:ip_adapter_controlnet_union_inpainting:state_flow:ip_adapter_controlnet_union_inpainting",
+            "artifact": {
+              "repo": "stabilityai/stable-diffusion-xl-base-1.0",
+              "revision": "462165984030d82259a11f4367a4eed129e94a7b"
+            },
+            "bindingSources": [
+              "alphaMode",
+              "artifact",
+              "autoOffload",
+              "classifierFreeGuidance",
+              "conditioningScale",
+              "controlImage",
+              "controlMode",
+              "controlnetKind",
+              "controlnetLoadClass",
+              "controlnetRepo",
+              "controlnetRevision",
+              "controlnetRouteVariant",
+              "controlnetWeightVariant",
+              "device",
+              "dtype",
+              "empty",
+              "false",
+              "guidanceScale",
+              "height",
+              "ipAdapterImage",
+              "ipAdapterRepo",
+              "ipAdapterRevision",
+              "ipAdapterScale",
+              "ipAdapterWeightName",
+              "maskImage",
+              "negativePrompt",
+              "offloadMode",
+              "pipelineClass",
+              "prompt",
+              "referenceImages",
+              "removeAlpha",
+              "seed",
+              "steps",
+              "strength",
+              "width"
+            ],
+            "claim": "static_graph_contract_compatible",
+            "definitionId": "diffusers.modular:StableDiffusionXLModularPipeline:ip_adapter_controlnet_union_inpainting",
+            "dynamicFieldActions": [
+              {
+                "event": "onChange",
+                "field": "model_type",
+                "role": "models",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onSignal",
+                "field": "text_encoders",
+                "role": "prompt",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onSignal",
+                "field": "vae",
+                "role": "imageEncode",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onSignal",
+                "field": "unet",
+                "role": "denoise",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onSignal",
+                "field": "vae",
+                "role": "decode",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onSignal",
+                "field": "controlnet_bundle",
+                "role": "controlnet",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onChange",
+                "field": "model_type",
+                "role": "controlnetModel",
+                "valueSource": "controlnetKind"
+              },
+              {
+                "event": "onSignal",
+                "field": "unet",
+                "role": "ipAdapter",
+                "valueSource": "pipelineClass"
+              },
+              {
+                "event": "onSignal",
+                "field": "guider_out",
+                "role": "guider",
+                "valueSource": "pipelineClass"
+              }
+            ],
+            "executable": false,
+            "executionParameterSources": [
+              "alphaMode",
+              "autoOffload",
+              "device",
+              "guidanceScale",
+              "ipAdapterScale",
+              "offloadMode",
+              "seed"
+            ],
+            "id": "diffusers.cluster-admission:StableDiffusionXLModularPipeline:ip_adapter_controlnet_union_inpainting:state_flow:ip_adapter_controlnet_union_inpainting",
+            "instanceInputBindings": [
+              {
+                "bindingSource": "conditioningScale",
+                "input": "controlnet_conditioning_scale"
+              },
+              {
+                "bindingSource": "controlImage",
+                "input": "control_image"
+              },
+              {
+                "bindingSource": "controlMode",
+                "input": "control_mode"
+              },
+              {
+                "bindingSource": "dtype",
+                "input": "dtype"
+              },
+              {
+                "bindingSource": "height",
+                "input": "height"
+              },
+              {
+                "bindingSource": "ipAdapterImage",
+                "input": "ip_adapter_image"
+              },
+              {
+                "bindingSource": "maskImage",
+                "input": "mask_image"
+              },
+              {
+                "bindingSource": "negativePrompt",
+                "input": "negative_prompt"
+              },
+              {
+                "bindingSource": "prompt",
+                "input": "prompt"
+              },
+              {
+                "bindingSource": "referenceImages",
+                "input": "image"
+              },
+              {
+                "bindingSource": "steps",
+                "input": "num_inference_steps"
+              },
+              {
+                "bindingSource": "strength",
+                "input": "strength"
+              },
+              {
+                "bindingSource": "width",
+                "input": "width"
+              }
+            ],
+            "modelDependencies": [
+              {
+                "id": "sdxl-controlnet-union",
+                "kind": "controlnet",
+                "repo": "xinsir/controlnet-union-sdxl-1.0",
+                "revision": "801a4a3fa3d4c936f4feea95b98607bc6726f80c"
+              },
+              {
+                "id": "sdxl-ip-adapter",
+                "kind": "adapter",
+                "repo": "h94/IP-Adapter",
+                "revision": "018e402774aeeddd60609b4ecdb7e298259dc729"
+              }
+            ],
+            "publication": {
+              "autoEligible": false,
+              "executable": false,
+              "insertable": true,
+              "liveProof": false,
+              "readiness": "graph_qualified",
+              "reasons": [
+                {
+                  "code": "runtime_resource_admission_required",
+                  "message": "The materialized Cluster graph must pass the exact optional-runtime and resource checks before Run is enabled."
+                },
+                {
+                  "code": "live_output_review_pending",
+                  "message": "The exact Cluster execution route has not received approved visible-frontend live-output evidence."
+                }
+              ],
+              "schemaVersion": 1
+            },
+            "reasons": [],
+            "schemaVersion": 4,
+            "sealedBindingValues": {
+              "artifact": "stabilityai/stable-diffusion-xl-base-1.0",
+              "classifierFreeGuidance": "ClassifierFreeGuidance",
+              "controlnetKind": "controlnet",
+              "controlnetLoadClass": "ControlNetUnionModel",
+              "controlnetRepo": "xinsir/controlnet-union-sdxl-1.0",
+              "controlnetRevision": "801a4a3fa3d4c936f4feea95b98607bc6726f80c",
+              "controlnetRouteVariant": "union",
+              "controlnetWeightVariant": "",
+              "empty": "",
+              "false": false,
+              "ipAdapterRepo": "h94/IP-Adapter",
+              "ipAdapterRevision": "018e402774aeeddd60609b4ecdb7e298259dc729",
+              "ipAdapterWeightName": "sdxl_models/ip-adapter_sdxl.safetensors",
+              "pipelineClass": "StableDiffusionXLModularPipeline",
+              "removeAlpha": "remove alpha"
+            },
+            "status": "admitted",
+            "studioExecutionSpec": {
+              "contentHash": "studio-spec-v1-22a0dd07",
+              "executionProfileId": "sdxl-base:modular",
+              "id": "sdxl-base:modular-ip-adapter-controlnet-union-inpainting:v1"
+            },
+            "studioMode": "ip_adapter_control_union_inpaint"
+          }
+        ],
+        "executionClaim": "discovery_only",
+        "graphAdapterContracts": [
+          {
+            "actionSequence": [
+              "text_encoder",
+              "ip_adapter",
+              "vae_encoder",
+              "controlnet",
+              "denoise",
+              "decoder"
+            ],
+            "adapterId": "ip_adapter_controlnet_union_inpainting",
+            "id": "diffusers.modular-adapter:StableDiffusionXLModularPipeline:ip_adapter_controlnet_union_inpainting:state_flow:ip_adapter_controlnet_union_inpainting",
+            "requiredInputs": [
+              "control_image",
+              "control_mode",
+              "image",
+              "ip_adapter_image",
+              "mask_image",
+              "prompt"
+            ],
+            "schemaVersion": 1,
+            "source": "state_flow",
+            "stateEdges": [
+              {
+                "consumerAction": "denoise",
+                "consumerInput": "embeddings",
+                "producerAction": "text_encoder",
+                "producerOutput": "embeddings"
+              },
+              {
+                "consumerAction": "denoise",
+                "consumerInput": "image_latents",
+                "producerAction": "vae_encoder",
+                "producerOutput": "image_latents"
+              },
+              {
+                "consumerAction": "denoise",
+                "consumerInput": "mask",
+                "producerAction": "vae_encoder",
+                "producerOutput": "mask"
+              },
+              {
+                "consumerAction": "denoise",
+                "consumerInput": "masked_image_latents",
+                "producerAction": "vae_encoder",
+                "producerOutput": "masked_image_latents"
+              },
+              {
+                "consumerAction": "denoise",
+                "consumerInput": "route_state_in",
+                "producerAction": "vae_encoder",
+                "producerOutput": "route_state_out"
+              },
+              {
+                "consumerAction": "denoise",
+                "consumerInput": "controlnet_bundle",
+                "producerAction": "controlnet",
+                "producerOutput": "controlnet_bundle"
+              },
+              {
+                "consumerAction": "decoder",
+                "consumerInput": "latents",
+                "producerAction": "denoise",
+                "producerOutput": "latents"
+              },
+              {
+                "consumerAction": "decoder",
+                "consumerInput": "route_state_in",
+                "producerAction": "denoise",
+                "producerOutput": "route_state_out"
+              },
+              {
+                "consumerAction": "denoise",
+                "consumerInput": "ip_adapter",
+                "producerAction": "ip_adapter",
+                "producerOutput": "ip_adapter"
+              }
+            ],
+            "upstreamBlockSequence": [
+              "text_encoder",
+              "ip_adapter",
+              "vae_encoder",
+              "denoise.input",
+              "denoise.before_denoise.set_timesteps",
+              "denoise.before_denoise.prepare_latents",
+              "denoise.before_denoise.prepare_add_cond",
+              "denoise.controlnet_input",
+              "denoise.denoise",
+              "decode"
+            ],
+            "upstreamWorkflowId": "ip_adapter_controlnet_union_inpainting"
+          }
+        ],
+        "id": "diffusers.modular:StableDiffusionXLModularPipeline:ip_adapter_controlnet_union_inpainting",
+        "inputs": [
+          {
+            "default": null,
+            "description": "",
+            "name": "prompt",
+            "required": true,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "prompt_2",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "negative_prompt",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "negative_prompt_2",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "cross_attention_kwargs",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "clip_skip",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "The image(s) to be used as ip adapter",
+            "name": "ip_adapter_image",
+            "required": true,
+            "type": "UnionType[PIL.Image.Image,list[PIL.Image.Image],list[numpy.ndarray],list[torch.Tensor],numpy.ndarray,torch.Tensor]"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "height",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "width",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "image",
+            "required": true,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "mask_image",
+            "required": true,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "padding_mask_crop",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "The dtype of the model inputs",
+            "name": "dtype",
+            "required": false,
+            "type": "torch.dtype"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "generator",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": 1,
+            "description": "",
+            "name": "num_images_per_prompt",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": 50,
+            "description": "",
+            "name": "num_inference_steps",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "timesteps",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "sigmas",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "denoising_end",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": 0.3,
+            "description": "",
+            "name": "strength",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "denoising_start",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "latents",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "original_size",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "target_size",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "negative_original_size",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "negative_target_size",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": [
+              0,
+              0
+            ],
+            "description": "",
+            "name": "crops_coords_top_left",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": [
+              0,
+              0
+            ],
+            "description": "",
+            "name": "negative_crops_coords_top_left",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": 6.0,
+            "description": "",
+            "name": "aesthetic_score",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": 2.0,
+            "description": "",
+            "name": "negative_aesthetic_score",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "control_image",
+            "required": true,
+            "type": "opaque"
+          },
+          {
+            "default": null,
+            "description": "",
+            "name": "control_mode",
+            "required": true,
+            "type": "opaque"
+          },
+          {
+            "default": 0.0,
+            "description": "",
+            "name": "control_guidance_start",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": 1.0,
+            "description": "",
+            "name": "control_guidance_end",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": 1.0,
+            "description": "",
+            "name": "controlnet_conditioning_scale",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": false,
+            "description": "",
+            "name": "guess_mode",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": 0.0,
+            "description": "",
+            "name": "eta",
+            "required": false,
+            "type": "opaque"
+          },
+          {
+            "default": "pil",
+            "description": "",
+            "name": "output_type",
+            "required": false,
+            "type": "opaque"
+          }
+        ],
+        "integrationStatus": "reviewed_modiff_contract",
+        "label": "Stable Diffusion XL — Ip Adapter Controlnet Union Inpainting",
+        "libraryRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
+        "mutable": false,
+        "outputs": [
+          {
+            "default": null,
+            "description": "text embeddings used to guide the image generation",
+            "name": "prompt_embeds",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "negative text embeddings used to guide the image generation",
+            "name": "negative_prompt_embeds",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "pooled text embeddings used to guide the image generation",
+            "name": "pooled_prompt_embeds",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "negative pooled text embeddings used to guide the image generation",
+            "name": "negative_pooled_prompt_embeds",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "image embeddings for IP-Adapter",
+            "name": "ip_adapter_embeds",
+            "required": false,
+            "type": "list[torch.Tensor]"
+          },
+          {
+            "default": null,
+            "description": "negative image embeddings for IP-Adapter",
+            "name": "negative_ip_adapter_embeds",
+            "required": false,
+            "type": "list[torch.Tensor]"
+          },
+          {
+            "default": null,
+            "description": "The latents representation of the input image",
+            "name": "image_latents",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The mask to use for the inpainting process",
+            "name": "mask",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The masked image latents to use for the inpainting process (only for inpainting-specifid unet)",
+            "name": "masked_image_latents",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The crop coordinates to use for the preprocess/postprocess of the image and mask",
+            "name": "crops_coords",
+            "required": false,
+            "type": "UnionType[builtins.NoneType,tuple[builtins.int]]"
+          },
+          {
+            "default": null,
+            "description": "Number of prompts, the final batch size of model inputs should be batch_size * num_images_per_prompt",
+            "name": "batch_size",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "Data type of model tensor inputs (determined by `prompt_embeds`)",
+            "name": "dtype",
+            "required": false,
+            "type": "torch.dtype"
+          },
+          {
+            "default": null,
+            "description": "The timesteps to use for inference",
+            "name": "timesteps",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The number of denoising steps to perform at inference time",
+            "name": "num_inference_steps",
+            "required": false,
+            "type": "builtins.int"
+          },
+          {
+            "default": null,
+            "description": "The timestep that represents the initial noise level for image-to-image generation",
+            "name": "latent_timestep",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The initial latents to use for the denoising process",
+            "name": "latents",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The noise added to the image latents, used for inpainting generation",
+            "name": "noise",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The time ids to condition the denoising process",
+            "name": "add_time_ids",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The negative time ids to condition the denoising process",
+            "name": "negative_add_time_ids",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The timestep cond to use for LCM",
+            "name": "timestep_cond",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The processed control images",
+            "name": "controlnet_cond",
+            "required": false,
+            "type": "list[torch.Tensor]"
+          },
+          {
+            "default": null,
+            "description": "The control mode indices",
+            "name": "control_type_idx",
+            "required": false,
+            "type": "list[builtins.int]"
+          },
+          {
+            "default": null,
+            "description": "The control type tensor that specifies which control type is active",
+            "name": "control_type",
+            "required": false,
+            "type": "torch.Tensor"
+          },
+          {
+            "default": null,
+            "description": "The controlnet guidance start value",
+            "name": "control_guidance_start",
+            "required": false,
+            "type": "builtins.float"
+          },
+          {
+            "default": null,
+            "description": "The controlnet guidance end value",
+            "name": "control_guidance_end",
+            "required": false,
+            "type": "builtins.float"
+          },
+          {
+            "default": null,
+            "description": "The controlnet conditioning scale values",
+            "name": "conditioning_scale",
+            "required": false,
+            "type": "list[builtins.float]"
+          },
+          {
+            "default": null,
+            "description": "Whether guess mode is used",
+            "name": "guess_mode",
+            "required": false,
+            "type": "builtins.bool"
+          },
+          {
+            "default": null,
+            "description": "The controlnet keep values",
+            "name": "controlnet_keep",
+            "required": false,
+            "type": "list[builtins.float]"
+          },
+          {
+            "default": null,
+            "description": "The generated images, can be a PIL.Image.Image, torch.Tensor or a numpy array",
+            "name": "images",
+            "required": false,
+            "type": "UnionType[list[PIL.Image.Image],list[numpy.array],list[torch.Tensor]]"
+          }
+        ],
+        "ownership": "library",
+        "pipelineClass": "StableDiffusionXLModularPipeline",
+        "pipelineKind": "auto",
+        "provider": "diffusers",
+        "publisher": "huggingface",
+        "requiredInputAlternatives": [],
+        "requiredInputs": [
+          "control_image",
+          "control_mode",
+          "image",
+          "ip_adapter_image",
+          "mask_image",
+          "prompt"
+        ],
+        "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:329ff124d60c5d09ea0ca6c5f2461f08087fd019a995ea0691e17daea463f29f",
+        "schemaVersion": 4,
+        "stateKeys": [
+          "prompt",
+          "prompt_2",
+          "negative_prompt",
+          "negative_prompt_2",
+          "cross_attention_kwargs",
+          "clip_skip",
+          "ip_adapter_image",
+          "height",
+          "width",
+          "image",
+          "mask_image",
+          "padding_mask_crop",
+          "dtype",
+          "generator",
+          "num_images_per_prompt",
+          "num_inference_steps",
+          "timesteps",
+          "sigmas",
+          "denoising_end",
+          "strength",
+          "denoising_start",
+          "latents",
+          "original_size",
+          "target_size",
+          "negative_original_size",
+          "negative_target_size",
+          "crops_coords_top_left",
+          "negative_crops_coords_top_left",
+          "aesthetic_score",
+          "negative_aesthetic_score",
+          "control_image",
+          "control_mode",
+          "control_guidance_start",
+          "control_guidance_end",
+          "controlnet_conditioning_scale",
+          "guess_mode",
+          "denoiser_input_fields",
+          "eta",
+          "output_type"
+        ],
+        "steps": [
+          {
+            "className": "StableDiffusionXLTextEncoderStep",
+            "description": "Text Encoder step that generate text_embeddings to guide the image generation",
+            "kind": "block",
+            "path": "text_encoder"
+          },
+          {
+            "className": "StableDiffusionXLIPAdapterStep",
+            "description": "IP Adapter step that prepares ip adapter image embeddings. Note that this step only prepares the embeddings - in order for it to work correctly, you need to load ip adapter weights into unet via ModularPipeline.load_ip_adapter() and pipeline.set_ip_adapter_scale(). See [ModularIPAdapterMixin](https://huggingface.co/docs/diffusers/api/loaders/ip_adapter#diffusers.loaders.ModularIPAdapterMixin) for more details",
+            "kind": "block",
+            "path": "ip_adapter"
+          },
+          {
+            "className": "StableDiffusionXLInpaintVaeEncoderStep",
+            "description": "Vae encoder step that prepares the image and mask for the inpainting process",
+            "kind": "block",
+            "path": "vae_encoder"
+          },
+          {
+            "className": "StableDiffusionXLInputStep",
+            "description": "Input processing step that: 1. Determines `batch_size` and `dtype` based on `prompt_embeds` 2. Adjusts input tensor shapes based on `batch_size` (number of prompts) and `num_images_per_prompt` All input tensors are expected to have either batch_size=1 or match the batch_size of prompt_embeds. The tensors will be duplicated across the batch dimension to have a final batch_size of batch_size * num_images_per_prompt.",
+            "kind": "block",
+            "path": "denoise.input"
+          },
+          {
+            "className": "StableDiffusionXLImg2ImgSetTimestepsStep",
+            "description": "Step that sets the timesteps for the scheduler and determines the initial noise level (latent_timestep) for image-to-image/inpainting generation. The latent_timestep is calculated from the `strength` parameter - higher strength means starting from a noisier version of the input image.",
+            "kind": "block",
+            "path": "denoise.before_denoise.set_timesteps"
+          },
+          {
+            "className": "StableDiffusionXLInpaintPrepareLatentsStep",
+            "description": "Step that prepares the latents for the inpainting process",
+            "kind": "block",
+            "path": "denoise.before_denoise.prepare_latents"
+          },
+          {
+            "className": "StableDiffusionXLImg2ImgPrepareAdditionalConditioningStep",
+            "description": "Step that prepares the additional conditioning for the image-to-image/inpainting generation process",
+            "kind": "block",
+            "path": "denoise.before_denoise.prepare_add_cond"
+          },
+          {
+            "className": "StableDiffusionXLControlNetUnionInputStep",
+            "description": "step that prepares inputs for the ControlNetUnion model",
+            "kind": "block",
+            "path": "denoise.controlnet_input"
+          },
+          {
+            "className": "StableDiffusionXLInpaintControlNetDenoiseStep",
+            "description": "Denoise step that iteratively denoise the latents(for inpainting task only) with controlnet. Its loop logic is defined in `StableDiffusionXLDenoiseLoopWrapper.__call__` method At each iteration, it runs blocks defined in `sub_blocks` sequentially: - `StableDiffusionXLInpaintLoopBeforeDenoiser` - `StableDiffusionXLControlNetLoopDenoiser` - `StableDiffusionXLInpaintLoopAfterDenoiser` This block only supports using controlnet for inpainting tasks.",
+            "kind": "loop",
+            "path": "denoise.denoise"
+          },
+          {
+            "className": "StableDiffusionXLInpaintLoopBeforeDenoiser",
+            "description": "step within the denoising loop that prepare the latent input for the denoiser (for inpainting workflow only). This block should be used to compose the `sub_blocks` attribute of a `LoopSequentialPipelineBlocks` object",
+            "kind": "block",
+            "path": "denoise.denoise.before_denoiser"
+          },
+          {
+            "className": "StableDiffusionXLControlNetLoopDenoiser",
+            "description": "step within the denoising loop that denoise the latents with guidance (with controlnet). This block should be used to compose the `sub_blocks` attribute of a `LoopSequentialPipelineBlocks` object (e.g. `StableDiffusionXLDenoiseLoopWrapper`)",
+            "kind": "block",
+            "path": "denoise.denoise.denoiser"
+          },
+          {
+            "className": "StableDiffusionXLInpaintLoopAfterDenoiser",
+            "description": "step within the denoising loop that update the latents (for inpainting workflow only). This block should be used to compose the `sub_blocks` attribute of a `LoopSequentialPipelineBlocks` object (e.g. `StableDiffusionXLDenoiseLoopWrapper`)",
+            "kind": "block",
+            "path": "denoise.denoise.after_denoiser"
+          },
+          {
+            "className": "StableDiffusionXLDecodeStep",
+            "description": "Step that decodes the denoised latents into images",
+            "kind": "block",
+            "path": "decode"
+          }
+        ],
+        "surface": "diffusers_cluster_nodes",
+        "taskContractId": "diffusers.task.ip_adapter_controlnet_union_inpainting.v1",
+        "taskId": "ip_adapter_controlnet_union_inpainting",
+        "workflowId": "ip_adapter_controlnet_union_inpainting",
+        "workflowKind": "sequential"
+      },
+      "recordHash": "sha256:b945ab1dfd4835a02fec7f7fb433b5badefb14b405884ace160668bd065ee5c5",
+      "registration": {
+        "reason": "exact_definition_and_execution_admission_recovered",
+        "status": "recovery_audit_registered"
+      },
+      "source": {
+        "capturedAt": "2026-08-25T17:27:58.369Z",
+        "definitionResponseLine": 21322,
+        "definitionResponseRecordBytes": 41135,
+        "definitionResponseRecordSha256": "sha256:1712b1ae883d70a4410c1ad1b6b47a8eae7ee0414157374f84e2772807f5d1f0",
+        "fetchRequestLine": 21321,
+        "fetchRequestRecordBytes": 733,
+        "fetchRequestRecordSha256": "sha256:7895a9926cf77402be21d49d693227024ab4ffd2f9619ee621a180c2f25351c6",
+        "transcriptPath": ".codex/sessions/2026/08/23/rollout-2026-08-23T22-27-23-01a02f8e-33fb-7b20-a291-488ddb8207ee.jsonl"
+      }
+    },
+    {
+      "definition": {
+        "blockContractHash": "sha256:795270a92acbb34cd3e7361c9a9e95fc214245040235af6632f6597b34574850",
+        "blockPlacements": [
+          {
+            "blockDefinitionId": "transformers.composite-block:LoadCTCSpeechRecognitionModel:sha256:1bd3283e8aba82dd23dc86d62b3893eda2b36c0f7908cde557ff1b121fd068a2",
+            "legacyPath": "speechModel",
+            "order": 0,
+            "path": [
+              "speechModel"
+            ]
+          },
+          {
+            "blockDefinitionId": "transformers.composite-block:Load:sha256:300ea7e970ebec08786628eb728c46bd6723ac9b162541842fa08688311f0018",
+            "legacyPath": "loadAudio",
+            "order": 1,
+            "path": [
+              "loadAudio"
+            ]
+          },
+          {
+            "blockDefinitionId": "transformers.composite-block:TranscribeCTCAudio:sha256:998d2a8ed0551651630a4188249b9184ef745f67239146d21758066f1cbd7f44",
+            "legacyPath": "transcribeAudio",
+            "order": 2,
+            "path": [
+              "transcribeAudio"
+            ]
+          },
+          {
+            "blockDefinitionId": "transformers.composite-block:DataViewer:sha256:d5cea36cedfc670d40d83078a9bad133fcad3635f1e40d902396a3015ac64ff9",
+            "legacyPath": "transcriptPreview",
+            "order": 3,
+            "path": [
+              "transcriptPreview"
+            ]
+          }
+        ],
+        "blocksClass": "AutoModelForCTC",
+        "components": [
+          {
+            "creationMethod": "explicit_app_setup",
+            "name": "optional_runtime",
+            "reuseKey": [
+              "optional_runtime"
+            ],
+            "type": "huggingface-transformers-main-96fe6dce-peft-0.20.0@sha256:c327427215498680e981ba4d29f4e0a962a351e84bbc45f6cd924b4618c7d67f"
+          },
+          {
+            "creationMethod": "from_pretrained",
+            "name": "model",
+            "reuseKey": [
+              "model",
+              "revision",
+              "dtype",
+              "device"
+            ],
+            "type": "AutoModelForCTC"
+          }
+        ],
+        "contentHash": "sha256:638b3821bc7dc004fe5e29c7e034a30a76d13007d9fc084f66e831fdce9b07a2",
+        "definitionKind": "studio_execution_composite",
+        "description": "Cluster Node containing an exact reviewed ASR loader, local audio input, bounded transcription action, and preview.",
+        "executionAdmissions": [
+          {
+            "adapterContractId": "transformers.composite-adapter:HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
+            "artifact": {
+              "repo": "facebook/wav2vec2-base-960h",
+              "revision": "22aad52d435eb6dbaf354bdad9b0da84ce7d6156"
+            },
+            "bindingSources": [
+              "artifact",
+              "defaultRevision",
+              "device",
+              "dtype",
+              "executionProfileId",
+              "pipelineClass",
+              "sourceAudio",
+              "speechChunkSeconds",
+              "speechStrideSeconds",
+              "speechTimestamps"
+            ],
+            "claim": "static_graph_contract_compatible",
+            "definitionId": "transformers.composite:HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
+            "dynamicFieldActions": [],
+            "executable": false,
+            "executionParameterSources": [
+              "device"
+            ],
+            "id": "transformers.cluster-admission:HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
+            "instanceInputBindings": [
+              {
+                "bindingSource": "dtype",
+                "input": "dtype"
+              },
+              {
+                "bindingSource": "sourceAudio",
+                "input": "audio"
+              },
+              {
+                "bindingSource": "speechChunkSeconds",
+                "input": "chunk_length_seconds"
+              },
+              {
+                "bindingSource": "speechStrideSeconds",
+                "input": "stride_length_seconds"
+              },
+              {
+                "bindingSource": "speechTimestamps",
+                "input": "timestamps"
+              }
+            ],
+            "modelDependencies": [],
+            "publication": {
+              "autoEligible": false,
+              "executable": false,
+              "insertable": true,
+              "liveProof": false,
+              "readiness": "graph_qualified",
+              "reasons": [
+                {
+                  "code": "runtime_resource_admission_required",
+                  "message": "The materialized Cluster graph must pass exact optional-runtime, artifact, and resource checks before Run is enabled."
+                },
+                {
+                  "code": "live_output_review_pending",
+                  "message": "The exact Cluster execution route has not received approved visible-frontend live-output evidence."
+                }
+              ],
+              "schemaVersion": 1
+            },
+            "reasons": [],
+            "schemaVersion": 4,
+            "sealedBindingValues": {
+              "artifact": "facebook/wav2vec2-base-960h",
+              "defaultRevision": "22aad52d435eb6dbaf354bdad9b0da84ce7d6156",
+              "executionProfileId": "wav2vec2-base-960h:ctc-direct",
+              "pipelineClass": "AutoModelForCTC"
+            },
+            "status": "admitted",
+            "studioExecutionSpec": {
+              "contentHash": "studio-spec-v1-32eb7d06",
+              "executionProfileId": "wav2vec2-base-960h:ctc-direct",
+              "id": "wav2vec2-base-960h:speech-to-text:v1"
+            },
+            "studioMode": "speech_to_text"
+          }
+        ],
+        "executionClaim": "discovery_only",
+        "graphAdapterContracts": [
+          {
+            "actionSequence": [
+              "speechModel",
+              "loadAudio",
+              "transcribeAudio",
+              "transcriptPreview"
+            ],
+            "adapterId": "speech_to_text",
+            "id": "transformers.composite-adapter:HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
+            "requiredInputs": [
+              "dtype",
+              "audio"
+            ],
+            "schemaVersion": 1,
+            "source": "mode",
+            "stateEdges": [],
+            "upstreamBlockSequence": [
+              "modules.HuggingFaceSpeech.LoadCTCSpeechRecognitionModel",
+              "modules.Audio.Load",
+              "modules.HuggingFaceSpeech.TranscribeCTCAudio",
+              "modules.Primitive.DataViewer"
+            ],
+            "upstreamWorkflowId": "speech_to_text"
+          }
+        ],
+        "id": "transformers.composite:HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
+        "inputs": [
+          {
+            "default": "float32",
+            "description": "Model weight and compute dtype.",
+            "name": "dtype",
+            "required": true,
+            "type": "str"
+          },
+          {
+            "default": null,
+            "description": "Local audio input for speech recognition.",
+            "name": "audio",
+            "required": true,
+            "type": "audio"
+          },
+          {
+            "default": 30.0,
+            "description": "Bounded audio chunk length.",
+            "name": "chunk_length_seconds",
+            "required": false,
+            "type": "float"
+          },
+          {
+            "default": 5.0,
+            "description": "Bounded overlap between chunks.",
+            "name": "stride_length_seconds",
+            "required": false,
+            "type": "float"
+          },
+          {
+            "default": "word",
+            "description": "CTC timestamp detail: none or word.",
+            "name": "timestamps",
+            "required": false,
+            "type": "str"
+          }
+        ],
+        "integrationStatus": "reviewed_transformers_contract",
+        "label": "Wav2Vec2 Base 960h — Speech to Text",
+        "libraryRevision": "22aad52d435eb6dbaf354bdad9b0da84ce7d6156",
+        "mutable": false,
+        "outputs": [
+          {
+            "default": null,
+            "description": "Normalized output from the reviewed Transformers task action.",
+            "name": "result",
+            "required": true,
+            "type": "object"
+          }
+        ],
+        "ownership": "library",
+        "pipelineClass": "HuggingFaceCTCSpeechRecognitionModel",
+        "pipelineKind": "sequential",
+        "provider": "transformers",
+        "publisher": "huggingface",
+        "requiredInputAlternatives": [],
+        "requiredInputs": [
+          "dtype",
+          "audio"
+        ],
+        "rootBlockDefinitionId": "transformers.composite-block:HuggingFaceCTCSpeechRecognitionModelSpeechToTextComposite:sha256:795270a92acbb34cd3e7361c9a9e95fc214245040235af6632f6597b34574850",
+        "schemaVersion": 5,
+        "stateKeys": [],
+        "steps": [
+          {
+            "className": "LoadCTCSpeechRecognitionModel",
+            "description": "Existing MoDiff node modules.HuggingFaceSpeech.LoadCTCSpeechRecognitionModel used by this reviewed Transformers composite.",
+            "kind": "block",
+            "path": "speechModel"
+          },
+          {
+            "className": "Load",
+            "description": "Existing MoDiff node modules.Audio.Load used by this reviewed Transformers composite.",
+            "kind": "block",
+            "path": "loadAudio"
+          },
+          {
+            "className": "TranscribeCTCAudio",
+            "description": "Existing MoDiff node modules.HuggingFaceSpeech.TranscribeCTCAudio used by this reviewed Transformers composite.",
+            "kind": "block",
+            "path": "transcribeAudio"
+          },
+          {
+            "className": "DataViewer",
+            "description": "Existing MoDiff node modules.Primitive.DataViewer used by this reviewed Transformers composite.",
+            "kind": "block",
+            "path": "transcriptPreview"
+          }
+        ],
+        "surface": "transformers_cluster_nodes",
+        "taskContractId": "transformers.task.speech_to_text.v1",
+        "taskId": "speech_to_text",
+        "workflowId": "speech_to_text",
+        "workflowKind": "sequential"
+      },
+      "recordHash": "sha256:22f0e974cdc03ce4236be90006520f414950d65c7940fa3e94a6d4023ce38a58",
+      "registration": {
+        "reason": "exact_definition_and_execution_admission_recovered",
+        "status": "recovery_audit_registered"
+      },
+      "source": {
+        "capturedAt": "2026-08-26T00:30:39.050Z",
+        "definitionResponseLine": 29333,
+        "definitionResponseRecordBytes": 9897,
+        "definitionResponseRecordSha256": "sha256:fd137ab0a2d30b88b7664235dfd9239403a39f9dc96e420e677702c6731104bc",
+        "fetchRequestLine": 29332,
+        "fetchRequestRecordBytes": 802,
+        "fetchRequestRecordSha256": "sha256:b73e8070d73675bc63a9de3b4cfa0b457a5159581092e9c5f3194ce8c98532ba",
+        "transcriptPath": ".codex/sessions/2026/08/23/rollout-2026-08-23T22-27-23-01a02f8e-33fb-7b20-a291-488ddb8207ee.jsonl"
+      }
+    }
+  ],
+  "schemaVersion": 1
+}
