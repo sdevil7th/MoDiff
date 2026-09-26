@@ -1,0 +1,4 @@
+{
+  "inputs": {"prompt": [{"nodeId": "prompt", "field": "text"}]},
+  "outputs": {"text": [{"nodeId": "preview", "field": "preview"}]}
+}

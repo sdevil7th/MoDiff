@@ -237,8 +237,12 @@ def build_modular_block_contracts(pipeline: Any) -> dict[str, Any]:
     workflows = []
     for workflow_id_value in workflow_ids:
         workflow_id = _name(workflow_id_value, "Workflow id")
-        selected = blocks.get_workflow(workflow_id) if workflow_map is not None else blocks
-        workflow = selected.get_execution_blocks()
+        if pipeline_class == "ErnieImageModularPipeline" and workflow_id == "text2image":
+            selected = blocks
+            workflow = selected.get_execution_blocks(use_pe=True)
+        else:
+            selected = blocks.get_workflow(workflow_id) if workflow_map is not None else blocks
+            workflow = selected.get_execution_blocks()
         root_definition = _block_definition(workflow)
         previous_root_definition = definitions.get(root_definition["id"])
         if previous_root_definition is not None and previous_root_definition != root_definition:

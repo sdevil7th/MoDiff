@@ -11,6 +11,7 @@ from typing import Any, Dict, Optional
 import torch
 from diffusers import Flux2KleinModularPipeline
 from modiff.model_artifact_catalog import resolve_model_revision
+from modiff.operation_contracts import MODULAR_STAGE_OPERATIONS, build_modular_operation_contracts
 from modiff.modular_contract_only_registry import (
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME,
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES,
@@ -373,6 +374,8 @@ SDXL_NODE_SPECS = {
             PipelineParam.mask_image(),
             PipelineParam.padding_mask_crop(),
             PipelineParam.seed(),
+            PipelineParam.width(),
+            PipelineParam.height(),
         ],
         "model_inputs": [
             PipelineParam.vae(),
@@ -469,8 +472,8 @@ QWEN_IMAGE_NODE_SPECS = {
             PipelineParam.controlnet_conditioning_scale(),
             PipelineParam.control_guidance_start(),
             PipelineParam.control_guidance_end(),
-            PipelineParam.height(),
-            PipelineParam.width(),
+            PipelineParam.height(step=16),
+            PipelineParam.width(step=16),
             PipelineParam.seed(),
             PipelineParam.route_state_in(),
         ],
@@ -490,8 +493,8 @@ QWEN_IMAGE_NODE_SPECS = {
     "denoise": {
         "inputs": [
             PipelineParam.embeddings(display="input"),
-            PipelineParam.width(),
-            PipelineParam.height(),
+            PipelineParam.width(step=16),
+            PipelineParam.height(step=16),
             PipelineParam.seed(),
             PipelineParam.num_inference_steps(50),
             PipelineParam.guidance_scale(4.5),
@@ -520,8 +523,8 @@ QWEN_IMAGE_NODE_SPECS = {
             PipelineParam.image(),
             PipelineParam.mask_image(),
             PipelineParam.padding_mask_crop(),
-            PipelineParam.height(),
-            PipelineParam.width(),
+            PipelineParam.height(step=16),
+            PipelineParam.width(step=16),
             PipelineParam.seed(),
         ],
         "model_inputs": [
@@ -590,8 +593,8 @@ QWEN_IMAGE_EDIT_NODE_SPECS = {
     "denoise": {
         "inputs": [
             PipelineParam.embeddings(display="input"),
-            PipelineParam.width(),
-            PipelineParam.height(),
+            PipelineParam.width(step=16),
+            PipelineParam.height(step=16),
             PipelineParam.seed(),
             PipelineParam.num_inference_steps(40),
             PipelineParam.guidance_scale(4.0),
@@ -904,8 +907,8 @@ FLUX_NODE_SPECS = {
     "denoise": {
         "inputs": [
             PipelineParam.embeddings(display="input"),
-            PipelineParam.width(),
-            PipelineParam.height(),
+            PipelineParam.width(step=16),
+            PipelineParam.height(step=16),
             PipelineParam.seed(),
             PipelineParam.num_inference_steps(28),
             PipelineParam.guidance_scale(3.5),
@@ -936,8 +939,8 @@ FLUX_NODE_SPECS = {
             # while preprocessing the source image. Omitting these fields in
             # a split graph makes it fall back to the pipeline's 1024px
             # defaults even when the saved workflow requests another size.
-            PipelineParam.height(),
-            PipelineParam.width(),
+            PipelineParam.height(step=16),
+            PipelineParam.width(step=16),
             PipelineParam.seed(),
         ],
         "model_inputs": [
@@ -955,6 +958,11 @@ FLUX_NODE_SPECS = {
         "inputs": [
             PipelineParam.prompt(),
             # No negative_prompt - pipeline does not support this
+            PipelineParam(
+                name="max_sequence_length", label="Maximum Sequence Length", type="int",
+                default=512, min=1, max=512, step=1,
+                fieldOptions={"controlTier": "advanced"},
+            ),
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
@@ -1007,8 +1015,8 @@ FLUX_KONTEXT_NODE_SPECS = {
     "denoise": {
         "inputs": [
             PipelineParam.embeddings(display="input"),
-            PipelineParam.width(),
-            PipelineParam.height(),
+            PipelineParam.width(step=16),
+            PipelineParam.height(step=16),
             PipelineParam.seed(),
             PipelineParam.num_inference_steps(28),
             PipelineParam.guidance_scale(2.5),
@@ -1106,8 +1114,8 @@ FLUX_2_KLEIN_DISTILLED_NODE_SPECS = {
     "denoise": {
         "inputs": [
             PipelineParam.embeddings(display="input"),
-            PipelineParam.width(),
-            PipelineParam.height(),
+            PipelineParam.width(step=32),
+            PipelineParam.height(step=32),
             PipelineParam.seed(),
             PipelineParam.num_inference_steps(4),
             PipelineParam.guidance_scale(1.0),
@@ -1187,8 +1195,8 @@ FLUX_2_KLEIN_BASE_NODE_SPECS = {
         **FLUX_2_KLEIN_DISTILLED_NODE_SPECS["denoise"],
         "inputs": [
             PipelineParam.embeddings(display="input"),
-            PipelineParam.width(),
-            PipelineParam.height(),
+            PipelineParam.width(step=32),
+            PipelineParam.height(step=32),
             PipelineParam.seed(),
             PipelineParam.num_inference_steps(50),
             PipelineParam.guidance_scale(4.0),
@@ -1240,8 +1248,10 @@ Z_IMAGE_NODE_SPECS = {
     "denoise": {
         "inputs": [
             PipelineParam.embeddings(display="input"),
-            PipelineParam.width(),
-            PipelineParam.height(),
+            # The pinned packed latent preparation requires a spatial multiple
+            # of 16, not the generic VAE widget's 8-pixel increment.
+            PipelineParam.width(step=16),
+            PipelineParam.height(step=16),
             PipelineParam.seed(),
             PipelineParam.num_inference_steps(9),
             PipelineParam.guidance_scale(1.0),
@@ -1264,8 +1274,8 @@ Z_IMAGE_NODE_SPECS = {
     "vae_encoder": {
         "inputs": [
             PipelineParam.image(),
-            PipelineParam.height(),
-            PipelineParam.width(),
+            PipelineParam.height(step=16),
+            PipelineParam.width(step=16),
             PipelineParam.seed(),
         ],
         "model_inputs": [
@@ -1350,6 +1360,15 @@ ANIMA_PIPELINE_CONFIG = PipelineConfig(
     node_specs={},
     label="Anima",
     default_repo="circlestone-labs/Anima-Base-v1.0-Diffusers",
+    default_dtype="bfloat16",
+)
+
+ERNIE_IMAGE_PIPELINE_CONFIG = PipelineConfig(
+    # ERNIE Image uses its reviewed package-owned prompt-enhancer, text,
+    # denoise, and decode blocks. Generic block compatibility is not inferred.
+    node_specs={},
+    label="ERNIE Image Turbo",
+    default_repo="baidu/ERNIE-Image-Turbo",
     default_dtype="bfloat16",
 )
 
@@ -1919,6 +1938,13 @@ def _initialize_registry(registry: ModiffPipelineRegistry):
         logger.warning(f"Failed to register AnimaModularPipeline: {e}")
 
     try:
+        from diffusers import ErnieImageModularPipeline
+
+        registry.register(ErnieImageModularPipeline, ERNIE_IMAGE_PIPELINE_CONFIG)
+    except Exception as e:
+        logger.warning(f"Failed to register ErnieImageModularPipeline: {e}")
+
+    try:
         from diffusers import HeliosModularPipeline
 
         registry.register(HeliosModularPipeline, HELIOS_PIPELINE_CONFIG)
@@ -2090,6 +2116,25 @@ def get_modular_scheduler_options() -> Dict[str, list[str]]:
     }
 
 
+def get_modular_node_action_options() -> Dict[str, Dict[str, list[str]]]:
+    """Return the reviewed pipeline classes that implement each split-node action.
+
+    Modular component sockets intentionally share transport types such as
+    ``diffusers_auto_model``.  This mapping is the executable semantic contract
+    behind those sockets: a class is included only when its registered pipeline
+    config declares the corresponding node action.  The list-shaped values keep
+    this compatible with the existing signal-driven option-map contract.
+    """
+
+    result: Dict[str, Dict[str, list[str]]] = {}
+    for pipeline_cls, config in _get_registry_instance().get_all().items():
+        for action, action_config in config.node_params.items():
+            if not isinstance(action, str) or not isinstance(action_config, dict):
+                continue
+            result.setdefault(action, {})[pipeline_cls.__name__] = [action]
+    return result
+
+
 def pipeline_class_to_modiff_node_config(pipeline_class, node_type=None, *, resolve_blocks=True):
     """Get the block and MoDiff node parameters for a pipeline class and node type."""
     if isinstance(pipeline_class, CustomPipelineBinding):
@@ -2115,15 +2160,13 @@ def pipeline_class_to_modiff_node_config(pipeline_class, node_type=None, *, reso
     return node_type_blocks, node_params
 
 
-_MODIFF_NODE_ACTION_LABELS = {
-    "text_encoder": "Encode Prompt",
-    "image_encoder": "Image Embeddings",
-    "vae_encoder": "Encode Image",
-    "denoise": "Denoise",
-    "decoder": "Decode Latents",
-    "controlnet": "ControlNet",
-    "ip_adapter": "IP-Adapter Embeddings",
-}
+_MODIFF_NODE_ACTION_LABELS = {stage: operation.label for stage, operation in MODULAR_STAGE_OPERATIONS.items()}
+
+
+def get_modular_operation_contracts(modules):
+    """Describe registered generic stages without resolving executable blocks."""
+    configs = {pipeline.__name__: config for pipeline, config in _get_registry_instance().get_all().items()}
+    return build_modular_operation_contracts(configs, modules)
 
 
 def require_modiff_node_contract(pipeline_class, node_type, *, require_blocks=True, resolve_blocks=True):

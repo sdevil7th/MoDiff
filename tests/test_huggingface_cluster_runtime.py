@@ -724,7 +724,7 @@ class HuggingFaceClusterRuntimeTests(unittest.TestCase):
                 },
             )
 
-    def test_equivalent_standard_diffusers_receipt_keeps_modular_identity_and_direct_executor(self):
+    def test_ernie_native_receipt_keeps_modular_stage_executor(self):
         snapshot = self.cache_dir / "models--baidu--ERNIE-Image-Turbo" / "snapshots" / ERNIE_REVISION
         snapshot.mkdir(parents=True)
         (snapshot / "model.safetensors").write_bytes(b"reviewed-ernie-weight-fixture")
@@ -734,7 +734,7 @@ class HuggingFaceClusterRuntimeTests(unittest.TestCase):
                 "definitionId": "diffusers.modular:ErnieImageModularPipeline:text2image",
                 "admissionId": (
                     "diffusers.cluster-admission:ErnieImageModularPipeline:text2image:"
-                    "mode:equivalent_standard_route"
+                    "workflow:official_top_level_blocks"
                 ),
                 "resourceMode": "expert",
                 "recipe": {
@@ -766,10 +766,10 @@ class HuggingFaceClusterRuntimeTests(unittest.TestCase):
         )
 
         self.assertEqual(receipt["modelType"], "ErnieImageModularPipeline")
-        self.assertEqual(receipt["pipelineClass"], "ErnieImagePipeline")
-        self.assertEqual(receipt["loaderModule"], "modules.DiffusersImage")
-        self.assertEqual(receipt["loaderAction"], "LoadPipeline")
-        self.assertEqual(receipt["executionPath"], "direct-diffusers-image")
+        self.assertEqual(receipt["pipelineClass"], "ErnieImageModularPipeline")
+        self.assertEqual(receipt["loaderModule"], "modules.ModularDiffusers")
+        self.assertEqual(receipt["loaderAction"], "ModelsLoader")
+        self.assertEqual(receipt["executionPath"], "modular-diffusers")
         self.assertEqual(receipt["artifactStatus"]["revision"], ERNIE_REVISION)
         self.assertTrue(receipt["artifactStatus"]["exactRevisionComplete"])
         self.assertFalse(receipt["publicationExecutable"])

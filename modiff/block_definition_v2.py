@@ -217,6 +217,7 @@ class BlockDefinitionV2(TypedDict):
     boundary: BlockBoundaryV2
     controls: list[BlockControlV2]
     suggestedInputs: NotRequired[list[SuggestedInputSetV2]]
+    removedControlBindings: NotRequired[list[dict[str, str]]]
     previews: list[BlockPreviewBindingV2]
     ownership: BlockOwnershipV2
 
@@ -1473,6 +1474,22 @@ def _validate_previews(value: Any, *, node_ids: set[str]) -> None:
         raise ValueError("BlockDefinitionV2.previews may contain at most one primary binding.")
 
 
+def _validate_removed_control_bindings(value: Any) -> None:
+    label = "removedControlBindings"
+    if not isinstance(value, list) or len(value) > 4096:
+        raise ValueError(f"{label} must be a bounded array.")
+    seen = set()
+    for entry in value:
+        binding = _object(entry, label)
+        _exact_keys(binding, label, required={"nodeId", "fieldId"})
+        _string(binding["nodeId"], f"{label}.nodeId", maximum=384, pattern=_ID_RE)
+        _string(binding["fieldId"], f"{label}.fieldId", maximum=384)
+        key = (binding["nodeId"], binding["fieldId"])
+        if key in seen:
+            raise ValueError(f"{label} must contain unique bindings.")
+        seen.add(key)
+
+
 def validate_block_definition_v2(payload: Any) -> BlockDefinitionV2:
     """Validate and clone one canonical ``BlockDefinitionV2``.
 
@@ -1497,7 +1514,7 @@ def validate_block_definition_v2(payload: Any) -> BlockDefinitionV2:
             "previews",
             "ownership",
         },
-        optional={"description", "suggestedInputs"},
+        optional={"description", "suggestedInputs", "removedControlBindings"},
     )
     if definition["schemaVersion"] != 2 or isinstance(definition["schemaVersion"], bool):
         raise ValueError("BlockDefinitionV2.schemaVersion must be 2.")
@@ -1537,6 +1554,8 @@ def validate_block_definition_v2(payload: Any) -> BlockDefinitionV2:
             )
     if "suggestedInputs" in definition:
         _validate_suggested_inputs(definition["suggestedInputs"], control_ids=control_ids)
+    if "removedControlBindings" in definition:
+        _validate_removed_control_bindings(definition["removedControlBindings"])
     _validate_previews(definition["previews"], node_ids=node_ids)
     block_instance_preview_bindings_v2(definition, graph)
 
@@ -1796,8 +1815,9 @@ def _validate_route_selection_v1(value: Any) -> BlockRouteSelectionV1:
             raise ValueError(f"{path}.routeKey must match its inactiveDrafts key.")
         definition = validate_block_definition_v2(draft["definitionSnapshot"])
         if (
-            definition["ownership"] != {"kind": "registered", "definitionMutable": False}
-            or definition["source"]["kind"] not in _CATALOG_SOURCE_KINDS
+            not (route_set_id == "diffusers.definition-switch:v1" and definition["source"]["kind"] == "user")
+            and (definition["ownership"] != {"kind": "registered", "definitionMutable": False}
+                 or definition["source"]["kind"] not in _CATALOG_SOURCE_KINDS)
         ):
             raise ValueError(f"{path} must contain one immutable registered definition.")
         validated = validate_block_instance_v2(
@@ -1991,9 +2011,11 @@ def validate_block_instance_v2(payload: Any) -> BlockInstanceV2:
         presentation,
         "BlockInstanceV2.presentation",
         required={"expanded", "position", "size", "internalLayout"},
-        optional={"internalLayoutMode", "collapsedContainerNodeIds"},
+        optional={"internalLayoutMode", "collapsedContainerNodeIds", "removedControlBindings"},
     )
     _bool(presentation["expanded"], "BlockInstanceV2.presentation.expanded")
+    if "removedControlBindings" in presentation:
+        _validate_removed_control_bindings(presentation["removedControlBindings"])
     position = _object(presentation["position"], "BlockInstanceV2.presentation.position")
     _exact_keys(position, "BlockInstanceV2.presentation.position", required={"x", "y"})
     _finite_number(position["x"], "BlockInstanceV2.presentation.position.x")

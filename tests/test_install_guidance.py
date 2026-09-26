@@ -179,7 +179,7 @@ class GuidedInstallerTests(unittest.TestCase):
         diffusers = next(item for item in project["project"]["dependencies"] if item.startswith("diffusers"))
         self.assertEqual(
             diffusers,
-            "diffusers @ git+https://github.com/huggingface/diffusers.git@2f7e0154a9db246e95c9ede43edba7db5b130805",
+            "diffusers @ git+https://github.com/huggingface/diffusers.git@fbf49e7f35857f76bc57b177e26f12b03687c668",
         )
         self.assertNotIn("diffusers", project["tool"]["uv"].get("sources", {}))
 
@@ -187,7 +187,7 @@ class GuidedInstallerTests(unittest.TestCase):
         project = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text(encoding="utf-8"))
         dependencies = project["project"]["dependencies"]
 
-        self.assertIn("huggingface-hub>=1.23.0,<2.0", dependencies)
+        self.assertIn("huggingface-hub>=1.31.0,<2.0", dependencies)
 
     def test_opencv_is_optional_at_runtime_but_available_to_media_tests(self):
         root = Path(__file__).parents[1]

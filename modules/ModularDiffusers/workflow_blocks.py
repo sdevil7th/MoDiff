@@ -25,7 +25,7 @@ from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_grap
 from modiff.NodeBase import NodeBase
 
 from . import components
-from .modular_utils import modular_generator_from_seed, pipeline_class_from_model_type
+from .modular_utils import modular_generator_from_seed, normalize_modular_runtime_params, pipeline_class_from_model_type
 from .route_state import require_component_binding
 from .utils import collect_model_ids
 from .workflow_runtime import continuation_generator_from_seed
@@ -38,6 +38,7 @@ _ISSUED_WORKFLOW_STATES = weakref.WeakSet()
 _MINIMAX_PIPELINE = "MiniMaxMusic3ModularPipeline"
 _MINIMAX_WORKFLOW = "default"
 _ANIMA_PIPELINE = "AnimaModularPipeline"
+_ERNIE_IMAGE_PIPELINE = "ErnieImageModularPipeline"
 _HELIOS_BASE_PIPELINE = "HeliosModularPipeline"
 _HELIOS_PYRAMID_PIPELINE = "HeliosPyramidModularPipeline"
 _HELIOS_DISTILLED_PIPELINE = "HeliosPyramidDistilledModularPipeline"
@@ -198,6 +199,58 @@ def _reviewed_preceding_stage(pipeline_class, workflow_id, action_key):
     return contract["upstreamBlockSequence"][action_index - 1]
 
 
+def _official_stage_block(blocks, block_path):
+    """Recover one selected stage from upstream's flattened workflow view.
+
+    get_workflow/get_execution_blocks return dotted *leaf* keys. Recompose
+    only this stage's selected leaves, retaining their order and loop wrappers;
+    selecting the unpruned original stage would reintroduce inactive branches.
+    """
+    block = blocks.sub_blocks.get(block_path)
+    if block is not None:
+        return block
+    prefix = block_path + "."
+    selected = {
+        name[len(prefix):]: child for name, child in blocks.sub_blocks.items()
+        if name.startswith(prefix)
+    }
+    if not selected:
+        return None
+    from diffusers.modular_pipelines import SequentialPipelineBlocks
+    return SequentialPipelineBlocks.from_blocks_dict(selected)
+
+
+def _official_stage_component_dependencies(block, *, pipeline_class, block_path, definition):
+    """Retain reviewed cross-stage component geometry without copying model math.
+
+    The pinned Anima stage specs omit components used by pipeline properties:
+    denoise reads vae_scale_factor; VAE encode reads num_channels_latents.
+    Use the full official definition's specs and the same bound loader objects.
+    """
+    required = {
+        (_ANIMA_PIPELINE, "denoise"): ("vae",),
+        (_ANIMA_PIPELINE, "vae_encoder"): ("transformer",),
+    }.get((pipeline_class, block_path), ())
+    if not required:
+        return block
+    from diffusers.modular_pipelines import SequentialPipelineBlocks
+
+    specs = {spec.name: spec for spec in definition.blocks.expected_components}
+    if any(name not in specs for name in required):
+        raise ValueError("The official Anima definition is missing a reviewed geometry component.")
+
+    class StageWithGeometryComponents(SequentialPipelineBlocks):
+        @property
+        def expected_components(self):
+            original = super().expected_components
+            names = {spec.name for spec in original}
+            return original + [spec for spec in self.geometry_component_specs if spec.name not in names]
+
+    wrapped = StageWithGeometryComponents.from_blocks_dict({block_path: block})
+    wrapped.geometry_component_specs = [specs[name] for name in required]
+    return wrapped
+
+
 class _OfficialWorkflowBlockMixin:
     stage = ""
     action_key = ""
@@ -221,13 +274,18 @@ class _OfficialWorkflowBlockMixin:
         pipeline_type = pipeline_class_from_model_type(pipeline_class)
         definition = pipeline_type()
         blocks = definition.blocks
-        if workflow_id != "default":
+        if pipeline_class == _ERNIE_IMAGE_PIPELINE and workflow_id == "text2image":
+            blocks = blocks.get_execution_blocks(use_pe=True)
+        elif workflow_id != "default":
             blocks = blocks.get_workflow(workflow_id)
-        block = blocks.sub_blocks.get(block_path)
+        block = _official_stage_block(blocks, block_path)
         if block is None:
             raise ValueError(
                 f"The reviewed Modular workflow {pipeline_class}/{workflow_id} has no block {block_path!r}."
             )
+        block = _official_stage_component_dependencies(
+            block, pipeline_class=pipeline_class, block_path=block_path, definition=definition,
+        )
         pipeline = block.init_pipeline(components_manager=components)
         expected_components = tuple(pipeline.pretrained_component_names)
         model_ids = collect_model_ids(
@@ -245,6 +303,339 @@ class _OfficialWorkflowBlockMixin:
         if installed:
             pipeline.update_components(**installed)
         return token, pipeline
+
+
+def _anima_image_dimensions(width, height):
+    # Pinned Anima's VAE factor 8 and patch size 2 require a 16-pixel grid.
+    for label, value in (("width", width), ("height", height)):
+        if isinstance(value, bool) or not isinstance(value, int) or not 512 <= value <= 1536 or value % 16:
+            raise ValueError(f"Anima {label} must be a multiple of 16 from 512 through 1536.")
+
+
+def _ernie_image_dimensions(width, height):
+    for label, value in (("width", width), ("height", height)):
+        if isinstance(value, bool) or not isinstance(value, int) or not 512 <= value <= 2048 or value % 32:
+            raise ValueError(f"ERNIE Image Turbo {label} must be a multiple of 32 from 512 through 2048.")
+    if width * height > 1024 * 1024:
+        raise ValueError("ERNIE Image Turbo width times height must not exceed 1,048,576 pixels.")
+
+
+class WorkflowErniePromptEnhance(_OfficialWorkflowBlockMixin, NodeBase):
+    """Run ERNIE Image Turbo's official conditional prompt-enhancer block."""
+
+    label = "ERNIE Image Prompt Enhance"
+    category = "Modular Diffusers"
+    resizable = True
+    skipParamsCheck = True
+    stage = "prompt_enhancer"
+    action_key = "workflow_ernie_prompt_enhancer"
+    params = {
+        "pipeline_components": {
+            "label": "Pipeline Components",
+            "display": "input",
+            "type": "diffusers_modular_pipeline_components",
+            "required": True,
+        },
+        "pipeline_class": {"type": "string", "default": "ErnieImageModularPipeline", "hidden": True},
+        "workflow_id": {"type": "string", "default": "text2image", "hidden": True},
+        "block_path": {"type": "string", "default": "prompt_enhancer", "hidden": True},
+        "prompt": {"label": "Prompt", "display": "textarea", "type": "text", "default": ""},
+        "width": {"label": "Width", "type": "int", "default": 1024, "min": 512, "max": 2048, "step": 32},
+        "height": {
+            "label": "Height",
+            "type": "int",
+            "default": 1024,
+            "min": 512,
+            "max": 2048,
+            "step": 32,
+        },
+        "pe_system_prompt": {
+            "label": "Enhancer System Prompt",
+            "display": "textarea",
+            "type": "text",
+            "default": "",
+            "optional": True,
+        },
+        "pe_temperature": {
+            "label": "Enhancer Temperature",
+            "type": "float",
+            "default": 0.6,
+            "min": 0.01,
+            "max": 2.0,
+            "step": 0.01,
+        },
+        "pe_top_p": {
+            "label": "Enhancer Top P",
+            "type": "float",
+            "default": 0.95,
+            "min": 0.01,
+            "max": 1.0,
+            "step": 0.01,
+        },
+        "state_out": {"label": "Workflow State", "display": "output", "type": "modular_workflow_state"},
+    }
+
+    def execute(self, **kwargs):
+        kwargs = normalize_modular_runtime_params(kwargs, {"params": type(self).params})
+        pipeline_class = _require_exact_string(
+            kwargs.get("pipeline_class"), label="Pipeline class", expected=_ERNIE_IMAGE_PIPELINE
+        )
+        workflow_id = _require_exact_string(kwargs.get("workflow_id"), label="Workflow", expected="text2image")
+        token, pipeline = self._prepare_pipeline(
+            pipeline_components=kwargs.get("pipeline_components"),
+            pipeline_class=pipeline_class,
+            workflow_id=workflow_id,
+            block_path=kwargs.get("block_path"),
+        )
+        prompt = kwargs.get("prompt")
+        if type(prompt) is not str or not prompt.strip():
+            raise ValueError("ERNIE Image Turbo requires a nonblank prompt.")
+        width = kwargs.get("width", 1024)
+        height = kwargs.get("height", 1024)
+        _ernie_image_dimensions(width, height)
+        system_prompt = kwargs.get("pe_system_prompt") or None
+        if system_prompt is not None and type(system_prompt) is not str:
+            raise ValueError("ERNIE Image Turbo enhancer system prompt must be text.")
+        temperature = float(kwargs.get("pe_temperature", 0.6))
+        top_p = float(kwargs.get("pe_top_p", 0.95))
+        if not math.isfinite(temperature) or not 0.0 < temperature <= 2.0:
+            raise ValueError("ERNIE Image Turbo enhancer temperature must be greater than 0 and at most 2.")
+        if not math.isfinite(top_p) or not 0.0 < top_p <= 1.0:
+            raise ValueError("ERNIE Image Turbo enhancer top-p must be greater than 0 and at most 1.")
+        state = pipeline(
+            prompt=prompt,
+            width=width,
+            height=height,
+            use_pe=True,
+            pe_system_prompt=system_prompt,
+            pe_temperature=temperature,
+            pe_top_p=top_p,
+        )
+        return {
+            "state_out": _issue_workflow_state(
+                token=token,
+                pipeline_class=pipeline_class,
+                workflow_id=workflow_id,
+                completed_stage=self.stage,
+                state=state,
+            )
+        }
+
+
+class WorkflowErnieTextEncode(_OfficialWorkflowBlockMixin, NodeBase):
+    """Run ERNIE Image's official variable-length text-encoder block."""
+
+    label = "ERNIE Image Text Encode"
+    category = "Modular Diffusers"
+    resizable = True
+    skipParamsCheck = True
+    stage = "text_encoder"
+    action_key = "workflow_ernie_text_encoder"
+    params = {
+        "pipeline_components": {
+            "label": "Pipeline Components",
+            "display": "input",
+            "type": "diffusers_modular_pipeline_components",
+            "required": True,
+        },
+        "state_in": {
+            "label": "Workflow State",
+            "display": "input",
+            "type": "modular_workflow_state",
+            "required": True,
+        },
+        "pipeline_class": {"type": "string", "default": "ErnieImageModularPipeline", "hidden": True},
+        "workflow_id": {"type": "string", "default": "text2image", "hidden": True},
+        "block_path": {"type": "string", "default": "text_encoder", "hidden": True},
+        "negative_prompt": {
+            "label": "Negative Prompt",
+            "display": "textarea",
+            "type": "text",
+            "default": "",
+            "hidden": True,
+        },
+        "state_out": {"label": "Workflow State", "display": "output", "type": "modular_workflow_state"},
+    }
+
+    def execute(self, **kwargs):
+        pipeline_class = kwargs.get("pipeline_class")
+        workflow_id = kwargs.get("workflow_id")
+        token, pipeline = self._prepare_pipeline(
+            pipeline_components=kwargs.get("pipeline_components"),
+            pipeline_class=pipeline_class,
+            workflow_id=workflow_id,
+            block_path=kwargs.get("block_path"),
+        )
+        state = _require_workflow_state(
+            kwargs.get("state_in"),
+            token=token,
+            pipeline_class=pipeline_class,
+            workflow_id=workflow_id,
+            completed_stage=_reviewed_preceding_stage(pipeline_class, workflow_id, self.action_key),
+        )
+        negative_prompt = kwargs.get("negative_prompt", "")
+        if type(negative_prompt) is not str:
+            raise ValueError("ERNIE Image Turbo negative prompt must be text.")
+        state = pipeline(state=state, negative_prompt=negative_prompt)
+        return {
+            "state_out": _issue_workflow_state(
+                token=token,
+                pipeline_class=pipeline_class,
+                workflow_id=workflow_id,
+                completed_stage=self.stage,
+                state=state,
+            )
+        }
+
+
+class WorkflowErnieImageDenoise(_OfficialWorkflowBlockMixin, NodeBase):
+    """Run ERNIE Image Turbo's official denoise block with its exact bounds."""
+
+    label = "ERNIE Image Denoise"
+    category = "Modular Diffusers"
+    resizable = True
+    skipParamsCheck = True
+    stage = "denoise"
+    action_key = "workflow_ernie_image_denoise"
+    params = {
+        "pipeline_components": {
+            "label": "Pipeline Components",
+            "display": "input",
+            "type": "diffusers_modular_pipeline_components",
+            "required": True,
+        },
+        "state_in": {
+            "label": "Workflow State",
+            "display": "input",
+            "type": "modular_workflow_state",
+            "required": True,
+        },
+        "pipeline_class": {"type": "string", "default": "ErnieImageModularPipeline", "hidden": True},
+        "workflow_id": {"type": "string", "default": "text2image", "hidden": True},
+        "block_path": {"type": "string", "default": "denoise", "hidden": True},
+        "width": {"label": "Width", "type": "int", "default": 1024, "min": 512, "max": 2048, "step": 32},
+        "height": {
+            "label": "Height",
+            "type": "int",
+            "default": 1024,
+            "min": 512,
+            "max": 2048,
+            "step": 32,
+        },
+        "num_inference_steps": {
+            "label": "Steps",
+            "display": "slider",
+            "type": "int",
+            "default": 8,
+            "min": 1,
+            "max": 8,
+        },
+        "seed": {
+            "label": "Seed",
+            "display": "random",
+            "type": "int",
+            "default": 0,
+            "min": 0,
+            "max": 4294967295,
+        },
+        "state_out": {"label": "Workflow State", "display": "output", "type": "modular_workflow_state"},
+    }
+
+    def execute(self, **kwargs):
+        kwargs = normalize_modular_runtime_params(kwargs, {"params": type(self).params})
+        pipeline_class = kwargs.get("pipeline_class")
+        workflow_id = kwargs.get("workflow_id")
+        token, pipeline = self._prepare_pipeline(
+            pipeline_components=kwargs.get("pipeline_components"),
+            pipeline_class=pipeline_class,
+            workflow_id=workflow_id,
+            block_path=kwargs.get("block_path"),
+        )
+        state = _require_workflow_state(
+            kwargs.get("state_in"),
+            token=token,
+            pipeline_class=pipeline_class,
+            workflow_id=workflow_id,
+            completed_stage=_reviewed_preceding_stage(pipeline_class, workflow_id, self.action_key),
+        )
+        width = kwargs.get("width", 1024)
+        height = kwargs.get("height", 1024)
+        _ernie_image_dimensions(width, height)
+        steps = kwargs.get("num_inference_steps", 8)
+        if isinstance(steps, bool) or not isinstance(steps, int) or not 1 <= steps <= 8:
+            raise ValueError("ERNIE Image Turbo denoise steps must be an integer from 1 through 8.")
+        if getattr(pipeline, "guider", None) is None or not callable(getattr(pipeline.guider, "new", None)):
+            raise ValueError("The official ERNIE Image denoise block is missing its guidance component.")
+        pipeline.update_components(guider=pipeline.guider.new(guidance_scale=1.0))
+        generator = modular_generator_from_seed(kwargs.get("seed", 0), pipeline)
+        state = pipeline(
+            state=state,
+            width=width,
+            height=height,
+            num_images_per_prompt=1,
+            num_inference_steps=steps,
+            generator=generator,
+        )
+        return {
+            "state_out": _issue_workflow_state(
+                token=token,
+                pipeline_class=pipeline_class,
+                workflow_id=workflow_id,
+                completed_stage=self.stage,
+                state=state,
+            )
+        }
+
+
+class WorkflowErnieDecodeImage(_OfficialWorkflowBlockMixin, NodeBase):
+    """Run ERNIE Image's official VAE decoder block."""
+
+    label = "ERNIE Image Decode"
+    category = "Modular Diffusers"
+    resizable = True
+    skipParamsCheck = True
+    stage = "decode"
+    action_key = "workflow_ernie_image_decoder"
+    params = {
+        "pipeline_components": {
+            "label": "Pipeline Components",
+            "display": "input",
+            "type": "diffusers_modular_pipeline_components",
+            "required": True,
+        },
+        "state_in": {
+            "label": "Workflow State",
+            "display": "input",
+            "type": "modular_workflow_state",
+            "required": True,
+        },
+        "pipeline_class": {"type": "string", "default": "ErnieImageModularPipeline", "hidden": True},
+        "workflow_id": {"type": "string", "default": "text2image", "hidden": True},
+        "block_path": {"type": "string", "default": "decode", "hidden": True},
+        "images": {"label": "Images", "display": "output", "type": "image"},
+    }
+
+    def execute(self, **kwargs):
+        pipeline_class = kwargs.get("pipeline_class")
+        workflow_id = kwargs.get("workflow_id")
+        token, pipeline = self._prepare_pipeline(
+            pipeline_components=kwargs.get("pipeline_components"),
+            pipeline_class=pipeline_class,
+            workflow_id=workflow_id,
+            block_path=kwargs.get("block_path"),
+        )
+        state = _require_workflow_state(
+            kwargs.get("state_in"),
+            token=token,
+            pipeline_class=pipeline_class,
+            workflow_id=workflow_id,
+            completed_stage=_reviewed_preceding_stage(pipeline_class, workflow_id, self.action_key),
+        )
+        state = pipeline(state=state, output_type="pil")
+        images = state.get("images")
+        if not isinstance(images, list) or len(images) != 1 or not isinstance(images[0], PILImage.Image):
+            raise ValueError("The official ERNIE Image decoder did not return exactly one PIL image.")
+        return {"images": images}
 
 
 class WorkflowSemanticGeneration(_OfficialWorkflowBlockMixin, NodeBase):
@@ -549,14 +940,14 @@ class WorkflowImageEncode(_OfficialWorkflowBlockMixin, NodeBase):
         "workflow_id": {"type": "string", "default": "img2img", "hidden": True},
         "block_path": {"type": "string", "default": "vae_encoder", "hidden": True},
         "image": {"label": "Image", "display": "input", "type": "image", "required": True},
-        "width": {"label": "Width", "type": "int", "default": 1024, "min": 512, "max": 1536, "step": 8},
+        "width": {"label": "Width", "type": "int", "default": 1024, "min": 512, "max": 1536, "step": 16},
         "height": {
             "label": "Height",
             "type": "int",
             "default": 1024,
             "min": 512,
             "max": 1536,
-            "step": 8,
+            "step": 16,
         },
         "seed": {
             "label": "Seed",
@@ -583,9 +974,7 @@ class WorkflowImageEncode(_OfficialWorkflowBlockMixin, NodeBase):
             raise ValueError("Anima image-to-image requires one exact PIL image.")
         width = kwargs.get("width", 1024)
         height = kwargs.get("height", 1024)
-        for label, value in (("width", width), ("height", height)):
-            if isinstance(value, bool) or not isinstance(value, int) or not 512 <= value <= 1536 or value % 8:
-                raise ValueError(f"Anima {label} must be a multiple of 8 from 512 through 1536.")
+        _anima_image_dimensions(width, height)
         previous_stage = _reviewed_preceding_stage(pipeline_class, workflow_id, self.action_key)
         state = _require_workflow_state(
             kwargs.get("state_in"),
@@ -638,14 +1027,14 @@ class WorkflowImageDenoise(_OfficialWorkflowBlockMixin, NodeBase):
         "pipeline_class": {"type": "string", "default": "AnimaModularPipeline", "hidden": True},
         "workflow_id": {"type": "string", "default": "text2image", "hidden": True},
         "block_path": {"type": "string", "default": "denoise", "hidden": True},
-        "width": {"label": "Width", "type": "int", "default": 1024, "min": 512, "max": 1536, "step": 8},
+        "width": {"label": "Width", "type": "int", "default": 1024, "min": 512, "max": 1536, "step": 16},
         "height": {
             "label": "Height",
             "type": "int",
             "default": 1024,
             "min": 512,
             "max": 1536,
-            "step": 8,
+            "step": 16,
         },
         "num_images_per_prompt": {
             "label": "Images per Prompt",
@@ -710,9 +1099,7 @@ class WorkflowImageDenoise(_OfficialWorkflowBlockMixin, NodeBase):
         )
         width = kwargs.get("width", 1024)
         height = kwargs.get("height", 1024)
-        for label, value in (("width", width), ("height", height)):
-            if isinstance(value, bool) or not isinstance(value, int) or not 512 <= value <= 1536 or value % 8:
-                raise ValueError(f"Anima {label} must be a multiple of 8 from 512 through 1536.")
+        _anima_image_dimensions(width, height)
         steps = kwargs.get("num_inference_steps", 50)
         images_per_prompt = kwargs.get("num_images_per_prompt", 1)
         if isinstance(steps, bool) or not isinstance(steps, int) or not 1 <= steps <= 100:

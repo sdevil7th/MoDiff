@@ -10,7 +10,6 @@ import unittest
 import diffusers
 
 from modiff.model_artifact_catalog import catalog_repository_pin
-from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION
 from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
 from modules.ModularDiffusers.loaders import ModelsLoader
 from modules.ModularDiffusers.modular_utils import pin_modular_component_revisions
@@ -27,7 +26,9 @@ class WanAnimate2ArtifactReviewTests(unittest.TestCase):
         self.repositories = {item["role"]: item for item in self.review["repositories"]}
 
     def test_family_is_graph_qualified_and_cataloged_without_claiming_live_proof(self):
-        self.assertEqual(self.review["diffusersRevision"], PINNED_DIFFUSERS_REVISION)
+        # An archived artifact review records the source it actually inspected;
+        # upgrading the shared runtime must not relabel it as a new live proof.
+        self.assertEqual(self.review["diffusersRevision"], "2f7e0154a9db246e95c9ede43edba7db5b130805")
         self.assertEqual(self.review["format"], "safetensors")
         admission = self.review["admission"]
         self.assertEqual(admission["status"], "graph_qualified")

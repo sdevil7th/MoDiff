@@ -143,6 +143,35 @@ def catalog_artifact_file(repo: str, filename: str) -> dict[str, Any] | None:
     return {**contract, "sha256": digest}
 
 
+def catalog_download_inventory(repo: str, revision: str | None, files: list[str]) -> dict[str, Any] | None:
+    """Return exact selected-file metadata, never a download/runtime approval.
+
+    Keep this separate from single-file GGUF execution contracts. Any changed
+    revision or app file selection invalidates the inventory instead of
+    inheriting a base-family byte count.
+    """
+    if not revision or not files:
+        return None
+    matches = [item for item in read_model_artifact_catalog().get("downloadInventories", [])
+               if str(item.get("repo", "")).lower() == repo.lower() and item.get("revision") == revision]
+    if not matches:
+        return None
+    if len(matches) != 1:
+        raise ValueError(f"Duplicate download inventories for {repo!r} at {revision!r}.")
+    inventory = matches[0]
+    entries = inventory.get("files")
+    if not isinstance(entries, list) or not entries:
+        raise ValueError(f"Invalid download inventory for {repo!r}.")
+    names = [entry.get("path") for entry in entries]
+    if (any(not isinstance(name, str) or not name for name in names)
+            or len(set(names)) != len(names)
+            or any(type(entry.get("byteSize")) is not int or entry["byteSize"] < 0 for entry in entries)):
+        raise ValueError(f"Invalid download file metadata for {repo!r}.")
+    if set(names) != set(files):
+        return None
+    return {**inventory, "exactBytes": sum(entry["byteSize"] for entry in entries)}
+
+
 def catalog_revision(repo: str, *, model_type: str | None = None) -> str | None:
     """Return and validate the immutable revision recorded for ``repo``."""
 

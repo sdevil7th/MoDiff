@@ -11,7 +11,7 @@ from modiff.upstream_coverage import _REVIEWED_PIPELINE_DECISIONS, _pipeline_cov
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PINNED_EXPORT_SHA256 = "a31b3d860c85b22f08976b00c81a00f36cd3986c702715954bb230882803493f"
+PINNED_EXPORT_SHA256 = "f9536d3cd5f2f5df8992fa4b4b0fb53a407eea15744fcc288760624ce9111251"
 PROMOTED_PIPELINES = {
     "AnimateDiffControlNetPipeline",
     "AnimateDiffPAGPipeline",
@@ -27,6 +27,7 @@ PROMOTED_PIPELINES = {
     "LTX2InContextPipeline",
     "LTX2Pipeline",
     "Cosmos3OmniModularPipeline",
+    "ErnieImageModularPipeline",
     "StableDiffusionControlNetImg2ImgPipeline",
     "StableDiffusionControlNetInpaintPipeline",
     "StableDiffusionControlNetPAGInpaintPipeline",
@@ -37,7 +38,6 @@ PROMOTED_PIPELINES = {
     "StableDiffusionXLControlNetPAGPipeline",
 }
 NEW_EQUIVALENT_PIPELINES = {
-    "ErnieImageModularPipeline",
     "LTX2ModularPipeline",
     "LTXModularPipeline",
     "LuminaText2ImgPipeline",
@@ -49,19 +49,19 @@ NEW_EQUIVALENT_PIPELINES = {
 class UpstreamCoverageExactClosureTests(unittest.TestCase):
     def test_exact_pin_closes_with_the_reviewed_finite_partition(self):
         source = Path(diffusers.__file__).resolve().parent
-        self.assertEqual(PINNED_DIFFUSERS_REVISION, "2f7e0154a9db246e95c9ede43edba7db5b130805")
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "fbf49e7f35857f76bc57b177e26f12b03687c668")
         self.assertEqual(source_sha256(source / "__init__.py"), PINNED_EXPORT_SHA256)
         self.assertTrue(PROMOTED_PIPELINES.isdisjoint(_REVIEWED_PIPELINE_DECISIONS))
 
         version, items = _pipeline_coverage(ROOT, source)
-        self.assertEqual(version, "0.40.0.dev0")
-        self.assertEqual(len(items), 330)
+        self.assertEqual(version, "0.41.0.dev0")
+        self.assertEqual(len(items), 334)
         self.assertEqual(
             Counter(item["status"] for item in items),
             {
-                "executable": 142,
-                "equivalent": 11,
-                "intentionally-excluded": 56,
+                "executable": 144,
+                "equivalent": 10,
+                "intentionally-excluded": 59,
                 "research-blocked": 116,
                 "contract-only": 5,
             },

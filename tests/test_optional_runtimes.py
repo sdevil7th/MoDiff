@@ -25,6 +25,7 @@ from modiff.optional_runtimes import (
     TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
     TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,
     optional_runtime_requirements,
     public_optional_runtime_profiles,
 )
@@ -96,6 +97,43 @@ def _cpu_hardware():
 
 
 class OptionalRuntimeContractTests(unittest.TestCase):
+    def test_qwen21_runtime_is_artifact_locked_and_platform_scoped(self):
+        profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID]
+        versions = {package.distribution: package.version for package in profile.packages}
+        self.assertEqual(versions["transformers"], "5.17.0")
+        self.assertEqual(versions["tokenizers"], "0.23.1")
+        self.assertEqual(versions["peft"], "0.20.0")
+        self.assertFalse(profile.source_builds)
+        self.assertIn("QwenImage21Pipeline", profile.required_diffusers_symbols)
+        self.assertIn("AutoencoderKLQwenImage21", profile.required_diffusers_symbols)
+        for target in profile.target_contracts:
+            expected = (target.platform, target.machine) == ("linux", "x86_64")
+            self.assertEqual(target.install_action_available, expected)
+            self.assertEqual(target.activation_available, expected)
+        locks = [item for item in profile.artifact_locks if item["distribution"] == "transformers"]
+        self.assertEqual(len(locks), 6)
+        self.assertEqual({item["sha256"] for item in locks}, {
+            "78ec1ce21579b38dfb83950a0658cd119f87212a2fcfdff478096ce9d6c03801",
+        })
+        self.assertEqual(profile.satisfies_profiles, tuple(
+            (profile_id, OPTIONAL_RUNTIME_PROFILES[profile_id].spec_digest)
+            for profile_id in (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID, TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID)
+        ))
+        from modiff.optimization_packages import _environment_spec_satisfies_optional_profile
+
+        spec = {"kind": "optional_runtime", "id": profile.id, "specDigest": profile.spec_digest}
+        for profile_id, digest in profile.satisfies_profiles:
+            self.assertTrue(_environment_spec_satisfies_optional_profile(
+                spec, {"id": profile_id, "specDigest": digest},
+            ))
+            self.assertFalse(_environment_spec_satisfies_optional_profile(
+                spec, {"id": profile_id, "specDigest": "sha256:" + "0" * 64},
+            ))
+        self.assertFalse(_environment_spec_satisfies_optional_profile(
+            spec, {"id": TRANSFORMERS_MAIN_PEFT_GGUF_RUNTIME_PROFILE_ID,
+                   "specDigest": OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_GGUF_RUNTIME_PROFILE_ID].spec_digest},
+        ))
+
     def test_transformers_runtime_declares_both_reviewed_speech_model_boundaries(self):
         profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID]
         transformers = next(package for package in profile.packages if package.distribution == "transformers")
@@ -405,7 +443,21 @@ class OptionalRuntimeContractTests(unittest.TestCase):
                             (),
                         )
                     continue
+                if profile.id == "qwen-image-21:direct":
+                    self.assertEqual(profile.optional_runtime_profiles, (TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,))
+                    for platform_name in ("linux", "windows", "macos"):
+                        self.assertEqual(profile.optional_runtime_profile_ids_for_target(
+                            platform_name=platform_name, machine="x86_64"), (TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,))
+                    continue
                 self.assertEqual(profile.optional_runtime_profiles, expected)
+                if profile.operation_recipe:
+                    # Exact operation selection resolves dependencies from the
+                    # selected profile, not the legacy model/task resolver.
+                    self.assertEqual(profile.optional_runtime_profile_ids_for_target(
+                        platform_name="linux", machine="x86_64"), (TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,))
+                    self.assertEqual(profile.optional_runtime_profile_ids_for_target(
+                        platform_name="windows", machine="AMD64"), expected)
+                    continue
                 for mode in profile.modes:
                     self.assertIn(
                         TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
@@ -486,6 +538,12 @@ class OptionalRuntimeContractTests(unittest.TestCase):
 import builtins
 import importlib.util
 import sys
+from modiff.custom_extensions import ExtensionStore
+
+# This subprocess represents a clean base installation. Operator-enabled
+# extensions in the developer's checkout may intentionally import dependencies;
+# their separate approval/import contract is exercised by test_custom_extensions.
+ExtensionStore.load_enabled = lambda self, registry: None
 
 original_import = builtins.__import__
 original_find_spec = importlib.util.find_spec
@@ -678,6 +736,7 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
                 {profile["id"] for profile in capabilities["optionalRuntimeProfiles"]},
                 {
                     GALLERY_MEDIA_RUNTIME_PROFILE_ID,
+                    TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_MAIN_PEFT_GGUF_RUNTIME_PROFILE_ID,

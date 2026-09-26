@@ -221,6 +221,8 @@ class HuggingFaceTransformersRegistryTests(unittest.TestCase):
                 "GenerateImageVideoText",
                 "LoadAnyToAnyModel",
                 "GenerateAnyToAny",
+                "LoadDepthEstimationModel",
+                "PredictDepth",
             },
         )
         source = inspect.getsource(__import__("modules.HuggingFaceTransformers.main", fromlist=["*"]))

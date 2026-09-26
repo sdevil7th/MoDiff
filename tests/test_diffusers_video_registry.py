@@ -52,6 +52,7 @@ from modules.DiffusersVideo.main import (
     VIDEO_PIPELINE_LOAD_HANDLERS,
     VIDEO_MODE_FIELD_CONTRACTS,
     WAN_VACE_MODE_MEDIA_CONTRACTS,
+    _adapter_signal,
     _pipeline_adapter,
     _resolve_adapter_model_selection,
     _resolve_loader_revision,
@@ -665,29 +666,14 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             }
         )
         signal = loader.set_field_params.call_args.args[1]["signal"]
-        self.assertEqual(
-            signal["value"],
-            {
-                "schemaVersion": 1,
-                "library": "diffusers",
-                "mediaKind": "video",
-                "pipelineClass": "HunyuanVideoFramepackPipeline",
-                "modes": ["image_to_video"],
-            },
-        )
+        self.assertEqual(signal["value"], _adapter_signal(VIDEO_PIPELINE_ADAPTERS["HunyuanVideoFramepackPipeline"]))
 
         generator = Generate("generator")
         generator.set_field_params = MagicMock()
         generator.update_adapter_modes(
             {
                 "mode": "text_to_video",
-                "video_contract": {
-                    "schemaVersion": 1,
-                    "library": "diffusers",
-                    "mediaKind": "video",
-                    "pipelineClass": "HunyuanVideoFramepackPipeline",
-                    "modes": ["image_to_video"],
-                },
+                "video_contract": _adapter_signal(VIDEO_PIPELINE_ADAPTERS["HunyuanVideoFramepackPipeline"]),
             },
             None,
         )
@@ -720,13 +706,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         )
         self.assertEqual(
             LoadPipeline.params["pipeline"]["signal"]["value"],
-            {
-                "schemaVersion": 1,
-                "library": "diffusers",
-                "mediaKind": "video",
-                "pipelineClass": "WanVACEPipeline",
-                "modes": list(VIDEO_PIPELINE_ADAPTERS["WanVACEPipeline"].modes),
-            },
+            _adapter_signal(VIDEO_PIPELINE_ADAPTERS["WanVACEPipeline"]),
         )
 
     def test_video_model_action_couples_repository_and_revision_before_real_execution(self):
@@ -924,13 +904,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
                 node.update_adapter_modes(
                     {
                         "mode": mode,
-                        "video_contract": {
-                            "schemaVersion": 1,
-                            "library": "diffusers",
-                            "mediaKind": "video",
-                            "pipelineClass": pipeline_class,
-                            "modes": list(adapter.modes),
-                        },
+                        "video_contract": _adapter_signal(adapter),
                     },
                     {"key": "mode"},
                 )
@@ -2060,6 +2034,14 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
 
     def test_legacy_ltx2_action_uses_generic_video_audio_contract_but_is_hidden(self):
         self.assertTrue(issubclass(GenerateLTX2, GenerateVideoAudio))
+        self.assertIs(GenerateLTX2.execute, GenerateVideoAudio.execute)
+        self.assertIs(GenerateLTX2.params, GenerateVideoAudio.params)
+        self.assertIs(GenerateLTX2.update_adapter_modes, GenerateVideoAudio.update_adapter_modes)
+        # Retiring discovery must preserve the saved action's exact callable
+        # and field contract, including future fixes on the canonical action.
+        canonical = module_registry.MODULE_MAP["modules.DiffusersVideo"]["GenerateVideoAudio"]
+        legacy = module_registry.MODULE_MAP["modules.DiffusersVideo"]["GenerateLTX2"]
+        self.assertEqual(legacy["params"], canonical["params"])
         self.assertTrue(module_registry.MODULE_MAP["modules.DiffusersVideo"]["GenerateLTX2"]["hidden"])
         self.assertIn("GenerateVideoAudio", module_registry.MODULE_MAP["modules.DiffusersVideo"])
 
@@ -2302,7 +2284,13 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             local_model = Path(temporary) / "models" / "local-video"
             local_model.mkdir(parents=True)
-            with chdir(temporary), patch("modiff.NodeBase.modelstore.is_local_cached", return_value=True):
+            # Cache notifications must not initialize the HTTP server while the
+            # test is deliberately resolving model paths from another cwd.
+            with (
+                chdir(temporary),
+                patch("modiff.NodeBase.modelstore.is_local_cached", return_value=True),
+                patch("modiff.NodeBase._server"),
+            ):
                 first = node(
                     pipeline_class="LTXConditionPipeline",
                     model_id={"source": "local", "value": "models/local-video"},
@@ -2965,6 +2953,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         )
         node = LoadPipeline("animatelcm-loader")
         with (
+            patch.dict("modules.DiffusersVideo.main.CONFIG.hf", {"cache_dir": "reviewed-test-cache"}),
             patch("diffusers.MotionAdapter.from_pretrained", return_value=object()) as load_motion,
             patch("diffusers.AnimateDiffPipeline.from_pretrained", return_value=pipeline),
             patch("diffusers.LCMScheduler.from_config", return_value=replacement_scheduler) as lcm_scheduler,
@@ -2993,6 +2982,7 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
             revision=ANIMATELCM_MOTION_REVISION,
             local_files_only=True,
             use_safetensors=True,
+            cache_dir="reviewed-test-cache",
         )
         pipeline.set_adapters.assert_called_once_with(
             [ANIMATELCM_LORA_ADAPTER_NAME],

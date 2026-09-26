@@ -178,9 +178,9 @@ _LEGACY_REGISTERED_BLOCK_V2_DEFINITION_PINS: Mapping[str, tuple[str, str]] = {
         "block-definition-v2-8c3a003b",
         "sha256:c8de506963cfb8c7aaf8e102d7aec7689033a32c10e5105e155f7b52c9ddc731",
     ),
-    "diffusers.cluster-admission:ErnieImageModularPipeline:text2image:mode:equivalent_standard_route": (
-        "block-definition-v2-30138b23",
-        "sha256:3792671213c6136ad61d90642fca28a851d88e2203c017ca9a15f3145c9ec22c",
+    "diffusers.cluster-admission:ErnieImageModularPipeline:text2image:workflow:official_top_level_blocks": (
+        "block-definition-v2-8e2880d6",
+        "sha256:d777a3bb8098c6e1a4a37b9442d64df03326ba21697192f9b9c2db4fff094d15",
     ),
     "diffusers.cluster-admission:Flux2KleinKVPipeline:edit_image:mode:edit_image": (
         "block-definition-v2-be5bd288",
@@ -722,9 +722,14 @@ def qualify_huggingface_cluster_expert_runtime(
     model_type = str(definition.get("pipelineClass") or "")
     mode = str(admission.get("studioMode") or "")
     provider = str(definition.get("provider") or "")
-    profiles = list(execution_profiles_for_execution(model_type, mode))
-    profile = _single(profiles, "the exact backend execution profile is unavailable.")
     spec = admission.get("studioExecutionSpec")
+    sealed_profile_id = str(spec.get("executionProfileId") or "") if isinstance(spec, Mapping) else ""
+    profiles = [
+        profile
+        for profile in execution_profiles_for_execution(model_type, mode)
+        if profile.id == sealed_profile_id
+    ]
+    profile = _single(profiles, "the exact backend execution profile is unavailable.")
     public_spec = studio_execution_spec_for_pair(model_type, mode)
     if (
         not isinstance(spec, Mapping)

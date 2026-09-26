@@ -481,6 +481,27 @@ class TileImage(NodeBase):
         return {"tiles": tiles, "count": len(tiles), "layout": layout}
 
 
+def stitch_reference_images(images):
+    """Bounded, ordered equal-height RGB canvas used by reference-edit recipes."""
+    images, _ = _images(images, name="reference images")
+    if len(images) > 8:
+        raise ValueError("Horizontal reference composition supports at most eight images.")
+    height = max(image.height for image in images)
+    widths = [max(1, round(image.width * height / image.height)) for image in images]
+    width = sum(widths)
+    if width > 8192 or height > 8192 or width * height > MAX_TOTAL_PIXELS:
+        raise ValueError("Reference composition exceeds the 8192-side or total-pixel execution limit.")
+    canvas = Image.new("RGB", (width, height))
+    left = 0
+    for image, target_width in zip(images, widths, strict=True):
+        image = image.convert("RGB")
+        if image.size != (target_width, height):
+            image = image.resize((target_width, height), Image.Resampling.LANCZOS)
+        canvas.paste(image, (left, 0))
+        left += target_width
+    return canvas
+
+
 class StitchImages(NodeBase):
     """Join a bounded image collection into a deterministic row-major grid."""
 
@@ -488,6 +509,8 @@ class StitchImages(NodeBase):
     category = "Image Operations"
     params = {
         "image": {"label": "Images", "display": "input", "type": "image"},
+        "layout": {"label": "Layout", "type": "string", "default": "grid",
+                   "options": ["grid", "horizontal_reference"]},
         "columns": {"label": "Columns", "type": "int", "default": 2, "min": 1, "max": 8},
         "spacing": {"label": "Spacing", "type": "int", "default": 0, "min": 0, "max": 1024},
         "background": {
@@ -504,6 +527,11 @@ class StitchImages(NodeBase):
 
     def execute(self, **kwargs):
         images, singular = _images(kwargs.get("image"), name="images")
+        layout = kwargs.get("layout", "grid")
+        if layout == "horizontal_reference":
+            return {"output": stitch_reference_images(images), "rows": 1, "count": len(images)}
+        if layout != "grid":
+            raise ValueError("Unsupported stitch layout.")
         if singular or len(images) < 2:
             raise ValueError("Stitch Images requires between 2 and 64 source images.")
         try:

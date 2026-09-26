@@ -16,6 +16,7 @@ import torch
 from diffusers import ComponentSpec, ModularPipeline
 from diffusers.utils import logging as diffusers_logging
 from huggingface_hub import get_hf_file_metadata, hf_hub_download, hf_hub_url
+from huggingface_hub import constants as hub_constants
 from huggingface_hub.utils import EntryNotFoundError, HfHubHTTPError, LocalEntryNotFoundError
 
 from modiff.NodeBase import NodeBase
@@ -50,8 +51,9 @@ from modiff.modular_workflow_contracts import (
     reviewed_modular_weight_variant,
 )
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
+from utils.huggingface import exact_cached_snapshot_path
 
-from . import MESSAGE_DURATION, components
+from . import MESSAGE_DURATION, MODULAR_MODEL_TYPE_OPTIONS, components
 from .custom_pipeline import (
     CUSTOM_PIPELINE_IDENTITY_FIELD,
     CUSTOM_PIPELINE_MODEL_TYPE,
@@ -79,6 +81,15 @@ from .route_state import (
 
 logger = logging.getLogger("modiff")
 logger.setLevel(logging.DEBUG)
+
+
+def _loader_text_encoder_component_names(loader):
+    """Resolve only the selected text stage, including flattened workflow leaves."""
+    from .workflow_blocks import _official_stage_block
+
+    block = _official_stage_block(loader.blocks, "text_encoder")
+    return list(block.init_pipeline().pretrained_component_names) if block is not None else []
+
 
 QWEN_LOW_VRAM_COMPONENT = "qwen_low_vram"
 GROUP_OFFLOAD_COMPONENTS = set(DEFAULT_GROUP_COMPONENTS)
@@ -154,6 +165,7 @@ _REVIEWED_STANDARD_PIPELINE_MODEL_NAMES = {
     "FluxKontextPipeline": "flux-kontext",
     "Flux2Pipeline": "flux2",
     "Flux2KleinPipeline": "flux2-klein",
+    "ErnieImagePipeline": "ernie-image",
     "ZImagePipeline": "z-image",
     "HunyuanVideo15Pipeline": "hunyuan-video-1.5",
     "HunyuanVideo15ImageToVideoPipeline": "hunyuan-video-1.5",
@@ -693,13 +705,8 @@ def _load_reviewed_pipeline_index(repository, revision):
     failures = []
     for filename in _REVIEWED_PIPELINE_INDEX_FILENAMES:
         try:
-            index_path = hf_hub_download(
-                repository,
-                filename=filename,
-                revision=revision,
-                local_files_only=True,
-            )
-        except (EntryNotFoundError, LocalEntryNotFoundError, HfHubHTTPError, ValueError) as error:
+            index_path = exact_cached_snapshot_path(repository, revision, filename) / filename
+        except (FileNotFoundError, ValueError) as error:
             failures.append(error)
             continue
         return filename, _read_reviewed_pipeline_index(
@@ -711,6 +718,18 @@ def _load_reviewed_pipeline_index(repository, revision):
         f"No cached modular_model_index.json or model_index.json was found for {repository}@{revision}. "
         "Install that exact reviewed revision through Model Manager before running the pipeline."
     ) from (failures[-1] if failures else None)
+
+
+def _primary_component_cache_dirs(pipeline, repository, revision, index_filename):
+    """Keep primary component loads in the same managed cache as the reviewed index."""
+
+    snapshot = exact_cached_snapshot_path(repository, revision, index_filename)
+    cache_root = str(snapshot.parent.parent.parent)
+    return {
+        name: cache_root
+        for name, spec in pipeline._component_specs.items()
+        if str(getattr(spec, "pretrained_model_name_or_path", "")).lower() == repository.lower()
+    }
 
 
 def _validate_reviewed_pipeline_index(model_type, repository, revision):
@@ -827,6 +846,16 @@ def _validate_reviewed_pipeline_index(model_type, repository, revision):
                     f"The cached reviewed pipeline index has a malformed {component_name!r} component contract."
                 )
             observed_type_hint = raw_component
+        reviewed_concrete_type = PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES.get(repository, {}).get(component_name)
+        if (
+            filename != ModularPipeline.config_name
+            and observed_type_hint == [None, None]
+            and reviewed_concrete_type == (None, None)
+        ):
+            # Only a reviewed absent optional component in an exact standard
+            # checkpoint may use this sentinel. Required/null or malformed
+            # declarations elsewhere still fail validation below.
+            continue
         if (
             not isinstance(observed_type_hint, list)
             or len(observed_type_hint) != 2
@@ -836,7 +865,6 @@ def _validate_reviewed_pipeline_index(model_type, repository, revision):
                 f"The cached reviewed pipeline index has an invalid {component_name!r} component type hint."
             )
         expected_type_hint = list(_fetch_class_library_tuple(component_spec.type_hint))
-        reviewed_concrete_type = PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES.get(repository, {}).get(component_name)
         if observed_type_hint != expected_type_hint and tuple(observed_type_hint) != reviewed_concrete_type:
             raise ValueError(
                 f"The cached reviewed pipeline index maps component {component_name!r} to "
@@ -999,6 +1027,10 @@ def component_load_kwargs_for(name, kwargs):
             component_load_kwargs[key] = value[name]
         elif "default" in value:
             component_load_kwargs[key] = value["default"]
+    # Diffusers' sharded loader queries model_info unless this flag is explicit,
+    # even when every pinned shard is cached and Hub offline mode is enabled.
+    if hub_constants.HF_HUB_OFFLINE:
+        component_load_kwargs["local_files_only"] = True
     return component_load_kwargs
 
 
@@ -1900,7 +1932,7 @@ class AutoModelLoader(NodeBase):
                 message=f"Loading {model_type} weights from {real_model_id}",
             )
             with self.diffusers_loading_progress():
-                model = spec.load(torch_dtype=dtype)
+                model = spec.load(**component_load_kwargs_for(model_type, {"torch_dtype": dtype}))
             self.progress(
                 99,
                 phase="component_placement",
@@ -1951,12 +1983,14 @@ class ModelsLoader(NodeBase):
     skipParamsCheck = True
     params = {
         "model_type": {
-            "label": "Model Type",
+            "label": "Pipeline Type",
             "type": "string",
-            "options": {
-                "": "",
-            },
+            "options": MODULAR_MODEL_TYPE_OPTIONS,
             "onChange": "set_filters",
+            "description": (
+                "Selects the Modular Diffusers pipeline class. This filters compatible checkpoints and publishes "
+                "the component contract used by connected nodes; it is not the model checkpoint itself."
+            ),
         },
         "repo_id": {
             "label": "Repository ID",
@@ -2034,11 +2068,41 @@ class ModelsLoader(NodeBase):
         "vae": {"label": "VAE", "display": "input", "type": "diffusers_auto_model"},
         "controlnet": {"label": "ControlNet", "display": "input", "type": "diffusers_auto_model"},
         "lora_list": {"label": "Lora", "display": "input", "type": "custom_lora"},
-        "text_encoders": {"label": "Text Encoders", "display": "output", "type": "diffusers_auto_models"},
-        "unet_out": {"label": "Denoise Model", "display": "output", "type": "diffusers_auto_model"},
-        "vae_out": {"label": "VAE", "display": "output", "type": "diffusers_auto_model"},
-        "scheduler": {"label": "Scheduler", "display": "output", "type": "diffusers_auto_model"},
-        "image_encoder": {"label": "Image Encoder", "display": "output", "type": "diffusers_auto_model"},
+        "text_encoders": {
+            "label": "Text Encoders",
+            "display": "output",
+            "type": "diffusers_auto_models",
+            "signal": {"direction": "output", "origin": "model_type", "value": ""},
+            "connectionRole": "text_encoders",
+        },
+        "unet_out": {
+            "label": "Denoise Model",
+            "display": "output",
+            "type": "diffusers_auto_model",
+            "signal": {"direction": "output", "origin": "model_type", "value": ""},
+            "connectionRole": "denoiser",
+        },
+        "vae_out": {
+            "label": "VAE",
+            "display": "output",
+            "type": "diffusers_auto_model",
+            "signal": {"direction": "output", "origin": "model_type", "value": ""},
+            "connectionRole": "vae",
+        },
+        "scheduler": {
+            "label": "Scheduler",
+            "display": "output",
+            "type": "diffusers_auto_model",
+            "signal": {"direction": "output", "origin": "model_type", "value": ""},
+            "connectionRole": "scheduler",
+        },
+        "image_encoder": {
+            "label": "Image Encoder",
+            "display": "output",
+            "type": "diffusers_auto_model",
+            "signal": {"direction": "output", "origin": "model_type", "value": ""},
+            "connectionRole": "image_encoder",
+        },
         "pipeline_components": {
             "label": "Pipeline Components",
             "display": "output",
@@ -2121,6 +2185,26 @@ class ModelsLoader(NodeBase):
         with self._pipeline_identity_lock:
             self._pipeline_identity_generation += 1
 
+    def rebind_cache_owner(self, node_id):
+        """Transfer live ownership without removing hooks, weights or load files."""
+        if node_id == self.node_id:
+            return
+        if components.collections.get(node_id):
+            raise ValueError("Cannot adopt a loader into an occupied component collection.")
+        owned = components.collections.get(self.node_id, ())
+        disk_ids = {key for key in owned
+                    if getattr(components.components[key], "_modiff_offload_node_id", None) == str(self.node_id)}
+        if any(disk_ids.intersection(ids) for owner, ids in components.collections.items() if owner != self.node_id):
+            raise ValueError("Cannot transfer a disk-offload owner with shared component ownership.")
+        for key in disk_ids:
+            components.components[key]._modiff_offload_node_id = str(node_id)
+        owned = components.collections.pop(self.node_id, None)
+        if owned is not None:
+            components.collections[node_id] = owned
+        if self.loader is not None:
+            self.loader._collection = node_id
+        self.node_id = node_id
+
     def __del__(self):
         node_comp_ids = components._lookup_ids(collection=self.node_id)
         for comp_id in node_comp_ids:
@@ -2139,6 +2223,7 @@ class ModelsLoader(NodeBase):
         *,
         persisted_identity,
         signal_value,
+        signal_origin,
         show_refresh,
         dtype=None,
         update_persisted_identity=True,
@@ -2165,7 +2250,7 @@ class ModelsLoader(NodeBase):
                     {
                         "signal": {
                             "direction": "output",
-                            "origin": CUSTOM_PIPELINE_IDENTITY_FIELD,
+                            "origin": signal_origin,
                             "value": deepcopy(signal_value),
                         }
                     },
@@ -2300,6 +2385,7 @@ class ModelsLoader(NodeBase):
                 generation,
                 persisted_identity=None,
                 signal_value="",
+                signal_origin="model_type",
                 show_refresh=False,
             )
             return None
@@ -2322,6 +2408,7 @@ class ModelsLoader(NodeBase):
                     generation,
                     persisted_identity=None,
                     signal_value="",
+                    signal_origin="model_type",
                     show_refresh=False,
                     clear_revision=clear_revision,
                 )
@@ -2330,6 +2417,7 @@ class ModelsLoader(NodeBase):
                 generation,
                 persisted_identity=None,
                 signal_value="" if trust_remote_code or contract_only else model_type,
+                signal_origin="model_type",
                 show_refresh=False,
                 clear_revision=clear_revision,
             )
@@ -2358,6 +2446,7 @@ class ModelsLoader(NodeBase):
                     generation,
                     persisted_identity=None,
                     signal_value="",
+                    signal_origin=CUSTOM_PIPELINE_IDENTITY_FIELD,
                     show_refresh=True,
                     clear_revision=clear_revision,
                 )
@@ -2390,6 +2479,7 @@ class ModelsLoader(NodeBase):
                 generation,
                 persisted_identity=identity_value,
                 signal_value=identity_value,
+                signal_origin=CUSTOM_PIPELINE_IDENTITY_FIELD,
                 show_refresh=True,
                 dtype=config.default_dtype,
                 clear_revision=clear_revision,
@@ -2402,6 +2492,7 @@ class ModelsLoader(NodeBase):
                 generation,
                 persisted_identity=None,
                 signal_value="",
+                signal_origin=CUSTOM_PIPELINE_IDENTITY_FIELD,
                 show_refresh=True,
                 update_persisted_identity=type(values.get("trust_remote_code", False)) is not bool
                 or values.get("trust_remote_code") is True,
@@ -2716,12 +2807,7 @@ class ModelsLoader(NodeBase):
             or model_type in REVIEWED_EXPANDED_WORKFLOW_MODEL_TYPES
             or reviewed_workflow_id is not None
         )
-        text_encoder_block = self.loader.blocks.sub_blocks.get("text_encoder")
-        text_encoder_names = (
-            text_encoder_block.init_pipeline().pretrained_component_names
-            if text_encoder_block is not None
-            else []
-        )
+        text_encoder_names = _loader_text_encoder_component_names(self.loader)
 
         components_to_load = [c for c in ALL_COMPONENTS if c not in components_to_update]
         components_to_reload = []
@@ -2781,6 +2867,9 @@ class ModelsLoader(NodeBase):
                 diagnostics=self._loader_diagnostics,
                 component_load_kwargs={
                     "torch_dtype": dtype,
+                    **({"cache_dir": _primary_component_cache_dirs(
+                        self.loader, real_repo_id, revision, reviewed_index_filename,
+                    )} if custom_binding is None else {}),
                     **({"variant": weight_variant} if weight_variant is not None else {}),
                     "trust_remote_code": trust_remote_code,
                     "quantization_config": quant_config,
@@ -2904,11 +2993,14 @@ class ModelsLoader(NodeBase):
                     manager=components,
                     name="scheduler",
                 )
-            if whole_workflow_components:
-                loaded_components["pipeline_components"] = {
-                    name: node_get_component_info(node_id=self.node_id, manager=components, name=name)
-                    for name in ALL_COMPONENTS
-                }
+            # Every selected pipeline can supply an approved custom block.
+            # Publish the models already loaded by the existing policy; this
+            # must neither require inactive optional components nor load them.
+            loaded_components["pipeline_components"] = {
+                name: node_get_component_info(node_id=self.node_id, manager=components, name=name)
+                for name in ALL_COMPONENTS
+                if getattr(self.loader, name, None) is not None
+            }
 
             loaded_components.update(
                 {

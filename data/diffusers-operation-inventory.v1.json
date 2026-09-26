@@ -1,0 +1,4708 @@
+{
+  "contentHash": "sha256:7c657a6caa8dfa6ca1468dfa5a06c76b704811db2910c2bc9104f0b27a69e293",
+  "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+  "diffusersVersion": "0.41.0.dev0",
+  "pipelines": [
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "AceStepPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "AllegroPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "AltDiffusionImg2ImgPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "AltDiffusionPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "AmusedImg2ImgPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "AmusedInpaintPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "AmusedPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "AnimaModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_image",
+          "workflowId": "img2img"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "AnimateDiffControlNetPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "AnimateDiffPAGPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "AnimateDiffPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "AnimateDiffSDXLPipeline",
+      "reason": "The class requires an SDXL dual-text-encoder and compatible motion-adapter assembly, not the admitted SD1.5 AnimateDiff artifact contract.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "AnimateDiffSparseControlNetPipeline",
+      "reason": "The class requires a SparseControlNetModel, sparse frame indices, and an immutable sparse-control artifact selection that MoDiff has not admitted.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "AnimateDiffVideoToVideoControlNetPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "AnimateDiffVideoToVideoPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "AnyFlowFARPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_video",
+          "workflowId": null
+        },
+        {
+          "source": "auto",
+          "task": "video_to_video",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "AnyFlowPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_video",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "AudioDiffusionPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "AudioLDM2Pipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_audio",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "AudioLDMPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "AuraFlowPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "BlipDiffusionControlNetPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "BlipDiffusionPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "BriaFiboEditPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "BriaFiboPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "BriaPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "ChromaImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "ChromaInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "ChromaPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "ChronoEditPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "CogVideoXFunControlPipeline",
+      "reason": "The class requires a CogVideoX-Fun control-video artifact and control contract; the admitted CogVideoX-2B selection and action are text-to-video only.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "CogVideoXImageToVideoPipeline",
+      "reason": "The admitted CogVideoX-2B artifact is text-to-video only and does not establish an image-conditioned transformer selection or image-to-video action contract.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "CogVideoXPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "CogVideoXVideoToVideoPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "CogView3PlusPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "CogView4ControlPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "CogView4Pipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "ConsisIDPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "ConsistencyModelPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "Cosmos2TextToImagePipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "Cosmos2VideoToWorldPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "Cosmos2_5_PredictBasePipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "Cosmos2_5_TransferPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "Cosmos3DistilledModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        },
+        {
+          "source": "modular",
+          "task": "text_to_video",
+          "workflowId": "text2video"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_video",
+          "workflowId": "image2video"
+        },
+        {
+          "source": "modular",
+          "task": "video_to_video",
+          "workflowId": "video2video"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "Cosmos3OmniModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        },
+        {
+          "source": "modular",
+          "task": "text_to_video",
+          "workflowId": "text2video"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_video",
+          "workflowId": "image2video"
+        },
+        {
+          "source": "modular",
+          "task": "video_to_video",
+          "workflowId": "video2video"
+        },
+        {
+          "source": "modular",
+          "task": "text_to_video_with_audio",
+          "workflowId": "text2video_with_sound"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_video_with_audio",
+          "workflowId": "image2video_with_sound"
+        },
+        {
+          "source": "modular",
+          "task": "video_to_video_with_audio",
+          "workflowId": "video2video_with_sound"
+        },
+        {
+          "source": "modular",
+          "task": "action_policy",
+          "workflowId": "action_policy"
+        },
+        {
+          "source": "modular",
+          "task": "action_forward_dynamics",
+          "workflowId": "action_forward_dynamics"
+        },
+        {
+          "source": "modular",
+          "task": "action_inverse_dynamics",
+          "workflowId": "action_inverse_dynamics"
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "Cosmos3OmniPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "condition_to_video",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "CosmosTextToWorldPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "CosmosVideoToWorldPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "CycleDiffusionPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "DDIMPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "DDPMPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "DanceDiffusionPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "DiTPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "DiffusionGemmaPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "DiffusionPipeline",
+      "reason": "Generic factory/base class; it is not an exact task adapter.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "DreamLiteMobilePipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "DreamLitePipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "EasyAnimateControlPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "EasyAnimateInpaintPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "EasyAnimatePipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "ErnieImageModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "ErnieImagePipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "Flux2KleinBaseModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        },
+        {
+          "source": "modular",
+          "task": "edit_image",
+          "workflowId": "image_conditioned"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "Flux2KleinInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "Flux2KleinKVPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [
+        "Flux2KleinPipeline"
+      ],
+      "pipelineClass": "Flux2KleinModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        },
+        {
+          "source": "modular",
+          "task": "edit_image",
+          "workflowId": "image_conditioned"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "Flux2KleinPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        },
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "Flux2ModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        },
+        {
+          "source": "modular",
+          "task": "edit_image",
+          "workflowId": "image_conditioned"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "Flux2Pipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        },
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "FluxControlImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "FluxControlInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "FluxControlNetImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "FluxControlNetInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "FluxControlNetPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "FluxControlPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "FluxFillPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "FluxImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "FluxInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "FluxKontextInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [
+        "FluxKontextPipeline"
+      ],
+      "pipelineClass": "FluxKontextModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "edit_image",
+          "workflowId": "image_conditioned"
+        },
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "FluxKontextPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        },
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [
+        "FluxPipeline",
+        "FluxImg2ImgPipeline"
+      ],
+      "pipelineClass": "FluxModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_image",
+          "workflowId": "image2image"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "FluxPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "equivalent",
+      "equivalentTo": [
+        "FluxReduxPipeline"
+      ],
+      "pipelineClass": "FluxPriorReduxPipeline",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "GlmImagePipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "HeliosModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_video",
+          "workflowId": "text2video"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_video",
+          "workflowId": "image2video"
+        },
+        {
+          "source": "modular",
+          "task": "video_to_video",
+          "workflowId": "video2video"
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "HeliosPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "HeliosPyramidDistilledModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_video",
+          "workflowId": "text2video"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_video",
+          "workflowId": "image2video"
+        },
+        {
+          "source": "modular",
+          "task": "video_to_video",
+          "workflowId": "video2video"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "HeliosPyramidModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_video",
+          "workflowId": "text2video"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_video",
+          "workflowId": "image2video"
+        },
+        {
+          "source": "modular",
+          "task": "video_to_video",
+          "workflowId": "video2video"
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "HeliosPyramidPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "HiDreamImagePipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "HunyuanDiTControlNetPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "HunyuanDiTPAGPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "HunyuanDiTPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "HunyuanImagePipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "HunyuanImageRefinerPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "HunyuanSkyreelsImageToVideoPipeline",
+      "reason": "This SkyReels-specific Hunyuan image-to-video path has no exact immutable artifact, component recipe, or MoDiff action/workflow admission.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "HunyuanVideo15ImageToVideoPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "HunyuanVideo15ModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_video",
+          "workflowId": "text2video"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_video",
+          "workflowId": "image2video"
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "HunyuanVideo15Pipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "HunyuanVideoFramepackPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "HunyuanVideoImageToVideoPipeline",
+      "reason": "The classic HunyuanVideo image-to-video class is distinct from the admitted FramePack assembly and the separately reviewed HunyuanVideo-1.5 family; no exact artifact/action contract exists.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "HunyuanVideoPipeline",
+      "reason": "The classic HunyuanVideo text-to-video class is distinct from the admitted FramePack assembly and the separately reviewed HunyuanVideo-1.5 family; no exact artifact/action contract exists.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "I2VGenXLPipeline",
+      "reason": "The exact reviewed pin marks this video implementation with DeprecatedPipelineMixin, whose contract receives no further fixes or feature updates; MoDiff does not add new workflows for it.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "IFImg2ImgPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "IFImg2ImgSuperResolutionPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "IFInpaintingPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "IFInpaintingSuperResolutionPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "IFPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "IFSuperResolutionPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "contract-only",
+      "equivalentTo": [],
+      "pipelineClass": "Ideogram4ModularPipeline",
+      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "Ideogram4Pipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "JoyImageEditPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "JoyImageEditPlusPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "Kandinsky3Img2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "Kandinsky3Pipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "Kandinsky5I2IPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "Kandinsky5I2VPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "Kandinsky5T2IPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "Kandinsky5T2VPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyCombinedPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyImg2ImgCombinedPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyImg2ImgPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyInpaintCombinedPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyInpaintPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyPriorPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyV22CombinedPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyV22ControlnetImg2ImgPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyV22ControlnetPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyV22Img2ImgCombinedPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyV22Img2ImgPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyV22InpaintCombinedPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyV22InpaintPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyV22Pipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyV22PriorEmb2EmbPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KandinskyV22PriorPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "KarrasVePipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KolorsImg2ImgPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KolorsPAGPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "KolorsPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "contract-only",
+      "equivalentTo": [],
+      "pipelineClass": "Krea2ModularPipeline",
+      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "Krea2Pipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "contract-only",
+      "equivalentTo": [],
+      "pipelineClass": "Krea2TurboModularPipeline",
+      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "LDMPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "LDMSuperResolutionPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "LDMTextToImagePipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "LLaDA2Pipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "contract-only",
+      "equivalentTo": [],
+      "pipelineClass": "LTX25ModularPipeline",
+      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_video_with_audio",
+          "workflowId": "text2video"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_video_with_audio",
+          "workflowId": "image2video"
+        },
+        {
+          "source": "modular",
+          "task": "condition_to_video_with_audio",
+          "workflowId": "condition"
+        },
+        {
+          "source": "modular",
+          "task": "in_context_to_video_with_audio",
+          "workflowId": "in_context"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "LTX2ConditionPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "LTX2DFRPipeline",
+      "reason": "Video diffusion-frame refinement is deferred from the current image/audio release scope.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "LTX2DFRTemporalRefinePipeline",
+      "reason": "Video temporal refinement is deferred from the current image/audio release scope.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "LTX2HDRPipeline",
+      "reason": "The class consumes an SDR reference video and an HDR IC-LoRA, then emits linear HDR video; MoDiff lacks that immutable adapter selection, HDR output contract, and exact action/workflow.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "equivalent",
+      "equivalentTo": [
+        "LTX2ConditionPipeline"
+      ],
+      "pipelineClass": "LTX2ImageToVideoPipeline",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "LTX2InContextPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "LTX2LatentUpsamplePipeline",
+      "reason": "The latent upsampler is a separate second-stage component; MoDiff has no immutable upsampler selection or bounded latent-input action/workflow for this class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "equivalent",
+      "equivalentTo": [
+        "LTX2ConditionPipeline",
+        "LTX2InContextPipeline"
+      ],
+      "pipelineClass": "LTX2ModularPipeline",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_video_with_audio",
+          "workflowId": "text2video"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_video_with_audio",
+          "workflowId": "image2video"
+        },
+        {
+          "source": "modular",
+          "task": "condition_to_video_with_audio",
+          "workflowId": "condition"
+        },
+        {
+          "source": "modular",
+          "task": "in_context_to_video_with_audio",
+          "workflowId": "in_context"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "LTX2Pipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "LTX2VideoDiffusionDecodePipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "LTXConditionPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "LTXI2VLongMultiPromptPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "equivalent",
+      "equivalentTo": [
+        "LTXConditionPipeline"
+      ],
+      "pipelineClass": "LTXImageToVideoPipeline",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_video",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "LTXLatentUpsamplePipeline",
+      "reason": "The latent upsampler is a separate second-stage component; MoDiff has no immutable upsampler selection or bounded latent-input action/workflow for this class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "equivalent",
+      "equivalentTo": [
+        "LTXConditionPipeline"
+      ],
+      "pipelineClass": "LTXModularPipeline",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_video",
+          "workflowId": "text2video"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_video",
+          "workflowId": "image2video"
+        }
+      ]
+    },
+    {
+      "coverage": "equivalent",
+      "equivalentTo": [
+        "LTXConditionPipeline"
+      ],
+      "pipelineClass": "LTXPipeline",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_video",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "LatentConsistencyModelImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "LatentConsistencyModelPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "LattePipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "LongCatAudioDiTPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_audio",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "LongCatImageEditPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "LongCatImagePipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "LucyEditPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "Lumina2Pipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "equivalent",
+      "equivalentTo": [
+        "Lumina2Pipeline"
+      ],
+      "pipelineClass": "Lumina2Text2ImgPipeline",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "LuminaPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "equivalent",
+      "equivalentTo": [
+        "LuminaPipeline"
+      ],
+      "pipelineClass": "LuminaText2ImgPipeline",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "MarigoldDepthPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "MarigoldIntrinsicsPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "MarigoldNormalsPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "MiniMaxH3ModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_video_with_audio",
+          "workflowId": "t2va"
+        },
+        {
+          "source": "modular",
+          "task": "first_last_frame_to_video_with_audio",
+          "workflowId": "fl2va"
+        },
+        {
+          "source": "modular",
+          "task": "reference_to_video_with_audio",
+          "workflowId": "ref2va"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "MiniMaxMusic3ModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_audio",
+          "workflowId": "default"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "MochiPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "ModularPipeline",
+      "reason": "Generic composition base class; reviewed subclasses are inventoried separately.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "MotifVideoImage2VideoPipeline",
+      "reason": "The Motif-Video image-to-video family, guider, and model artifacts have no immutable MoDiff admission, resource envelope, or exact action/workflow.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "MotifVideoPipeline",
+      "reason": "The Motif-Video text-to-video family, guider, and model artifacts have no immutable MoDiff admission, resource envelope, or exact action/workflow.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "MusicLDMPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "NucleusMoEImagePipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "OmniGenPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "OnnxStableDiffusionImg2ImgPipeline",
+      "reason": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "OnnxStableDiffusionInpaintPipeline",
+      "reason": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "OnnxStableDiffusionPipeline",
+      "reason": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "OnnxStableDiffusionUpscalePipeline",
+      "reason": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "OvisImagePipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "PIAPipeline",
+      "reason": "The exact reviewed pin marks this video implementation with DeprecatedPipelineMixin, whose contract receives no further fixes or feature updates; MoDiff does not add new workflows for it.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "PNDMPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "PRXPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "PRXPixelPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "PaintByExamplePipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "PixArtAlphaPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "PixArtSigmaPAGPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "PixArtSigmaPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImage21Pipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImageControlNetInpaintPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImageControlNetPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImageEditInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImageEditModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "edit_image",
+          "workflowId": "image_conditioned"
+        },
+        {
+          "source": "modular",
+          "task": "inpaint",
+          "workflowId": "image_conditioned_inpainting"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImageEditPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImageEditPlusModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "default",
+          "workflowId": "default"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImageEditPlusPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImageImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImageInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImageLayeredModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "layer_decomposition",
+          "workflowId": "default"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImageLayeredPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImageModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_image",
+          "workflowId": "image2image"
+        },
+        {
+          "source": "modular",
+          "task": "inpaint",
+          "workflowId": "inpainting"
+        },
+        {
+          "source": "modular",
+          "task": "control_image",
+          "workflowId": "controlnet_text2image"
+        },
+        {
+          "source": "modular",
+          "task": "controlnet_image2image",
+          "workflowId": "controlnet_image2image"
+        },
+        {
+          "source": "modular",
+          "task": "controlnet_inpainting",
+          "workflowId": "controlnet_inpainting"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImagePipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "RePaintPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "SanaControlNetPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "SanaImageToVideoPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "SanaPAGPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "SanaPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "SanaSprintImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "SanaSprintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "SanaVideoPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "ScoreSdeVePipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "SemanticStableDiffusionPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "ShapEImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "ShapEPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "SkyReelsV2DiffusionForcingImageToVideoPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "SkyReelsV2DiffusionForcingPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "SkyReelsV2DiffusionForcingVideoToVideoPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "SkyReelsV2ImageToVideoPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "SkyReelsV2Pipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "SpectrogramDiffusionPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableAudio3AudioToAudioPipeline",
+      "reason": "The exact reviewed Diffusers source defines this bounded audio task, but Stability AI's gated checkpoints are not published in Diffusers format. Upstream requires a local conversion, so MoDiff has no immutable app-downloadable pipeline artifact or live qualification. CPU and MPS must remain float32 unless later exact evidence qualifies another dtype.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableAudio3InpaintPipeline",
+      "reason": "The exact reviewed Diffusers source defines this bounded audio task, but Stability AI's gated checkpoints are not published in Diffusers format. Upstream requires a local conversion, so MoDiff has no immutable app-downloadable pipeline artifact or live qualification. CPU and MPS must remain float32 unless later exact evidence qualifies another dtype.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableAudio3Pipeline",
+      "reason": "The exact reviewed Diffusers source defines this bounded audio task, but Stability AI's gated checkpoints are not published in Diffusers format. Upstream requires a local conversion, so MoDiff has no immutable app-downloadable pipeline artifact or live qualification. CPU and MPS must remain float32 unless later exact evidence qualifies another dtype.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_audio",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableAudioPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_audio",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableCascadeCombinedPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableCascadeDecoderPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableCascadePriorPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusion3ControlNetInpaintingPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusion3ControlNetPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusion3Img2ImgPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusion3InpaintPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "contract-only",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusion3ModularPipeline",
+      "reason": "Reviewed no-weight action/workflow truth exists, but no exact runnable mode is admitted.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_image",
+          "workflowId": "image2image"
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusion3PAGImg2ImgPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusion3PAGPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusion3Pipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionAdapterPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionAttendAndExcitePipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionControlNetImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionControlNetInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionControlNetPAGInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionControlNetPAGPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionControlNetPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionControlNetXSPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionDepth2ImgPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionDiffEditPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionGLIGENPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionGLIGENTextImagePipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionImageVariationPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionInstructPix2PixPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionLDM3DPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionLatentUpscalePipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionModelEditingPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionOnnxPipeline",
+      "reason": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionPAGImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionPAGInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionPAGPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionPanoramaPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionParadigmsPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionPix2PixZeroPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionSAGPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionUpscalePipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLAdapterPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLControlNetImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLControlNetInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLControlNetPAGImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLControlNetPAGPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLControlNetPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLControlNetUnionImg2ImgPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLControlNetUnionInpaintPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLControlNetUnionPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLControlNetXSPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLInstructPix2PixPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_image",
+          "workflowId": "image2image"
+        },
+        {
+          "source": "modular",
+          "task": "inpaint",
+          "workflowId": "inpainting"
+        },
+        {
+          "source": "modular",
+          "task": "control_image",
+          "workflowId": "controlnet_text2image"
+        },
+        {
+          "source": "modular",
+          "task": "control_edit_image",
+          "workflowId": "controlnet_image2image"
+        },
+        {
+          "source": "modular",
+          "task": "control_inpaint",
+          "workflowId": "controlnet_inpainting"
+        },
+        {
+          "source": "modular",
+          "task": "controlnet_union_text2image",
+          "workflowId": "controlnet_union_text2image"
+        },
+        {
+          "source": "modular",
+          "task": "controlnet_union_image2image",
+          "workflowId": "controlnet_union_image2image"
+        },
+        {
+          "source": "modular",
+          "task": "controlnet_union_inpainting",
+          "workflowId": "controlnet_union_inpainting"
+        },
+        {
+          "source": "modular",
+          "task": "ip_adapter_text2image",
+          "workflowId": "ip_adapter_text2image"
+        },
+        {
+          "source": "modular",
+          "task": "ip_adapter_image2image",
+          "workflowId": "ip_adapter_image2image"
+        },
+        {
+          "source": "modular",
+          "task": "ip_adapter_inpainting",
+          "workflowId": "ip_adapter_inpainting"
+        },
+        {
+          "source": "modular",
+          "task": "ip_adapter_controlnet_text2image",
+          "workflowId": "ip_adapter_controlnet_text2image"
+        },
+        {
+          "source": "modular",
+          "task": "ip_adapter_controlnet_image2image",
+          "workflowId": "ip_adapter_controlnet_image2image"
+        },
+        {
+          "source": "modular",
+          "task": "ip_adapter_controlnet_inpainting",
+          "workflowId": "ip_adapter_controlnet_inpainting"
+        },
+        {
+          "source": "modular",
+          "task": "ip_adapter_controlnet_union_text2image",
+          "workflowId": "ip_adapter_controlnet_union_text2image"
+        },
+        {
+          "source": "modular",
+          "task": "ip_adapter_controlnet_union_image2image",
+          "workflowId": "ip_adapter_controlnet_union_image2image"
+        },
+        {
+          "source": "modular",
+          "task": "ip_adapter_controlnet_union_inpainting",
+          "workflowId": "ip_adapter_controlnet_union_inpainting"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLPAGImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLPAGInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLPAGPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableDiffusionXLPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableUnCLIPImg2ImgPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "StableUnCLIPPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "StableVideoDiffusionPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "TextToVideoSDPipeline",
+      "reason": "The exact reviewed pin marks this video implementation with DeprecatedPipelineMixin, whose contract receives no further fixes or feature updates; MoDiff does not add new workflows for it.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "TextToVideoZeroPipeline",
+      "reason": "The exact reviewed pin marks this video implementation with DeprecatedPipelineMixin, whose contract receives no further fixes or feature updates; MoDiff does not add new workflows for it.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "TextToVideoZeroSDXLPipeline",
+      "reason": "The exact reviewed pin marks this video implementation with DeprecatedPipelineMixin, whose contract receives no further fixes or feature updates; MoDiff does not add new workflows for it.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "UnCLIPImageVariationPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "UnCLIPPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "UniDiffuserPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "VQDiffusionPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "VersatileDiffusionDualGuidedPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "VersatileDiffusionImageVariationPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "VersatileDiffusionPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "VersatileDiffusionTextToImagePipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "VideoToVideoSDPipeline",
+      "reason": "The exact reviewed pin marks this video implementation with DeprecatedPipelineMixin, whose contract receives no further fixes or feature updates; MoDiff does not add new workflows for it.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "VisualClozeGenerationPipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "VisualClozePipeline",
+      "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "equivalent",
+      "equivalentTo": [
+        "WanImageToVideoPipeline"
+      ],
+      "pipelineClass": "Wan22Image2VideoModularPipeline",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "image_to_video",
+          "workflowId": "default"
+        }
+      ]
+    },
+    {
+      "coverage": "equivalent",
+      "equivalentTo": [
+        "WanPipeline"
+      ],
+      "pipelineClass": "Wan22ModularPipeline",
+      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_video",
+          "workflowId": "default"
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "Wan22VaceModularPipeline",
+      "reason": "This newly exported video composition is deferred from the current image/audio release scope.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "WanAnimate2DistilledModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "character_animate",
+          "workflowId": "default"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "WanAnimate2ModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "character_animate",
+          "workflowId": "default"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "WanAnimatePipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "WanImage2VideoModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "image_to_video",
+          "workflowId": "image2video"
+        },
+        {
+          "source": "modular",
+          "task": "flf2v",
+          "workflowId": "flf2v"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "WanImageToVideoPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_video",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [
+        "WanPipeline"
+      ],
+      "pipelineClass": "WanModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_video",
+          "workflowId": "default"
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "WanPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_video",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "WanVACEPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "WanVideoToVideoPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "video_to_video",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "WuerstchenCombinedPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "WuerstchenDecoderPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "intentionally-excluded",
+      "equivalentTo": [],
+      "pipelineClass": "WuerstchenPriorPipeline",
+      "reason": "The exact reviewed pin exports this implementation from Diffusers' deprecated namespace; MoDiff does not admit new workflows against upstream-deprecated pipeline surfaces.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "ZImageControlNetInpaintPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "ZImageControlNetPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "ZImageImg2ImgPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "image_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "ZImageInpaintPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "inpaint",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [
+        "ZImagePipeline",
+        "ZImageImg2ImgPipeline"
+      ],
+      "pipelineClass": "ZImageModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        },
+        {
+          "source": "modular",
+          "task": "image_to_image",
+          "workflowId": "image2image"
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "ZImageOmniPipeline",
+      "reason": "The exact reviewed source was triaged, but this class/mode has no exact MoDiff execution specification backed by a reviewed immutable artifact selection; support for a related family is not equivalence.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "executable",
+      "equivalentTo": [],
+      "pipelineClass": "ZImagePipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "sources": {
+    "autoTasks": "sha256:fc1c531e9dbf7e2fc62791180430eb6b909bb827a0eaa029991da7d8beb2d205",
+    "exports": "sha256:f9536d3cd5f2f5df8992fa4b4b0fb53a407eea15744fcc288760624ce9111251",
+    "modularTasks": "sha256:8dad3f4ef31b456ef9c6e46718be9a17c023ae4306fdba129c72eeeed6573dc3"
+  }
+}

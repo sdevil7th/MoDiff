@@ -282,7 +282,7 @@ _EQUIVALENT_STANDARD_REQUIRED_INPUTS = {
 }
 
 
-def _graph_adapter_contracts(
+def graph_adapter_contracts(
     pipeline_class: str,
     workflow_id: str,
     workflow: Mapping[str, Any],
@@ -396,7 +396,7 @@ def _definition(
         # never an execution claim.
         "executionClaim": "discovery_only",
         "executionAdmissions": [],
-        "graphAdapterContracts": _graph_adapter_contracts(pipeline_class, workflow_id, workflow),
+        "graphAdapterContracts": graph_adapter_contracts(pipeline_class, workflow_id, workflow),
         "inputs": _json_clone(workflow["inputs"]),
         "outputs": _json_clone(workflow["outputs"]),
         "requiredInputs": _json_clone(workflow["requiredInputs"]),
@@ -834,7 +834,7 @@ def validate_huggingface_node_library(value: Any) -> dict[str, Any]:
             )
         ):
             raise HuggingFaceNodeLibraryError("Hugging Face node definition collections are malformed.")
-        if definition["graphAdapterContracts"] != _graph_adapter_contracts(
+        if definition["graphAdapterContracts"] != graph_adapter_contracts(
             definition["pipelineClass"], definition["workflowId"], definition
         ):
             raise HuggingFaceNodeLibraryError("Hugging Face node definition graph adapter contracts are invalid.")

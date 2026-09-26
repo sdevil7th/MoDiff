@@ -22,6 +22,7 @@ from modiff.modular_contract_only_registry import (
 )
 from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
 from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
+from modiff.upstream_coverage import _INTENTIONALLY_EXCLUDED_PIPELINES
 from modules.ModularDiffusers.loaders import ModelsLoader
 from modules.ModularDiffusers.modular_utils import (
     _get_registry_instance,
@@ -38,6 +39,11 @@ requires_transformers = unittest.skipUnless(
 
 
 class ContractOnlyModularRegistryTests(unittest.TestCase):
+    def test_standalone_loader_exposes_model_types_before_any_field_callback(self):
+        options = ModelsLoader.params["model_type"]["options"]
+        self.assertEqual(options, get_all_model_types(include_contract_only=True))
+        self.assertGreater(len(options), 1)
+
     def test_data_only_registry_does_not_import_diffusers(self):
         result = subprocess.run(
             [
@@ -77,7 +83,7 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
             )
         )
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 5)
-        self.assertEqual(len(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS), 5)
+        self.assertEqual(len(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS), 4)
         self.assertEqual(len(CURRENT_PIN_EQUIVALENT_MODULAR_WORKFLOW_TARGETS), 4)
         self.assertEqual(set(CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY), {
             "Cosmos3DistilledModularPipeline", "MiniMaxH3ModularPipeline",
@@ -100,7 +106,8 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
             set(PINNED_MODULAR_WORKFLOW_TRUTH)
             | set(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME)
             | set(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS)
-            | set(CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY),
+            | set(CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY)
+            | (exported_modular_classes & set(_INTENTIONALLY_EXCLUDED_PIPELINES)),
             exported_modular_classes,
         )
 

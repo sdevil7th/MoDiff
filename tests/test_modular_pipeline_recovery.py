@@ -189,6 +189,39 @@ class ModularPipelineRecoveryTests(unittest.TestCase):
         self.assertEqual(outputs, {"embeddings": {"prompt_embeds": "encoded"}})
         pipeline.update_components.assert_called_once_with(text_encoder=managed_component)
 
+    def test_connected_prompt_input_overrides_the_inline_prompt(self):
+        self.assertEqual(EncodePrompt.params["prompt_input"]["display"], "input")
+
+        node = EncodePrompt("connected-prompt")
+        node._pipeline_class = FluxModularPipeline
+        pipeline = Mock()
+        state = Mock()
+        state.get_by_kwargs.return_value = {"prompt_embeds": "encoded"}
+        pipeline.return_value = state
+        blocks = Mock()
+        blocks.component_names = []
+        blocks.input_names = ["prompt"]
+        blocks.init_pipeline.return_value = pipeline
+        node_config = {
+            "params": {"prompt": {"type": "string"}},
+            "model_input_names": ["text_encoders"],
+            "input_names": ["prompt"],
+            "output_names": ["embeddings"],
+        }
+
+        with patch(
+            "modules.ModularDiffusers.embeddings.require_modiff_node_contract",
+            return_value=(blocks, node_config),
+        ):
+            outputs = node.execute(
+                text_encoders={"repo_id": "fixture/model"},
+                prompt="inline prompt",
+                prompt_input="custom-node prompt",
+            )
+
+        pipeline.assert_called_once_with(prompt="custom-node prompt")
+        self.assertEqual(outputs, {"embeddings": {"prompt_embeds": "encoded"}})
+
     def test_recovers_pipeline_class_from_nested_loader_output(self):
         runtime_inputs = {
             "text_encoders": {

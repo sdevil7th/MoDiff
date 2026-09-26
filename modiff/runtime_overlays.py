@@ -40,8 +40,8 @@ import zipfile
 
 PYPI_SIMPLE_INDEX = "https://pypi.org/simple"
 PINNED_DIFFUSERS_SOURCE_URL = "https://github.com/huggingface/diffusers.git"
-PINNED_DIFFUSERS_COMMIT = "2f7e0154a9db246e95c9ede43edba7db5b130805"
-PINNED_DIFFUSERS_VERSION = "0.40.0.dev0"
+PINNED_DIFFUSERS_COMMIT = "fbf49e7f35857f76bc57b177e26f12b03687c668"
+PINNED_DIFFUSERS_VERSION = "0.41.0.dev0"
 _DIGEST_PREFIX = "sha256:"
 MANAGED_ROOT = Path(
     os.environ.get("MODIFF_MANAGED_ROOT") or Path(__file__).resolve().parents[1] / ".modiff"

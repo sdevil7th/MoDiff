@@ -82,6 +82,9 @@ _EQUIVALENT_PIPELINE_TARGETS = {
 }
 
 _INTENTIONALLY_EXCLUDED_PIPELINES = {
+    "LTX2DFRPipeline": "Video diffusion-frame refinement is deferred from the current image/audio release scope.",
+    "LTX2DFRTemporalRefinePipeline": "Video temporal refinement is deferred from the current image/audio release scope.",
+    "Wan22VaceModularPipeline": "This newly exported video composition is deferred from the current image/audio release scope.",
     "DiffusionPipeline": "Generic factory/base class; it is not an exact task adapter.",
     "ModularPipeline": "Generic composition base class; reviewed subclasses are inventoried separately.",
     "OnnxStableDiffusionImg2ImgPipeline": "ONNX is outside MoDiff's reviewed local execution dependency boundary.",
@@ -359,6 +362,27 @@ _TRANSFORMERS_SEMANTIC_DEFINITIONS = (
         "productionEvidence": {
             "models/auto/modeling_auto.py": ["AutoModelForSpeechSeq2Seq"],
             "pipelines/automatic_speech_recognition.py": ["AutomaticSpeechRecognitionPipeline"],
+        },
+    },
+    {
+        "id": "bounded-depth-estimation",
+        "label": "Bounded image depth estimation",
+        "status": "executable",
+        "reason": "Generic AutoModel nodes use bounded DPT preprocessing and separate native depth from normalized previews.",
+        "qualification": "source-implemented-mocked-contract-qualified",
+        "modes": ["depth_estimation"],
+        "nodeKeys": [
+            "modules.HuggingFaceTransformers.LoadDepthEstimationModel",
+            "modules.HuggingFaceTransformers.PredictDepth",
+        ],
+        "canonicalWorkflowIds": [],
+        "mainEvidence": {
+            "models/auto/modeling_auto.py": ["AutoModelForDepthEstimation"],
+            "models/dpt/image_processing_dpt.py": ["DPTImageProcessor", "post_process_depth_estimation"],
+        },
+        "productionEvidence": {
+            "models/auto/modeling_auto.py": ["AutoModelForDepthEstimation"],
+            "models/dpt/image_processing_dpt.py": ["DPTImageProcessor", "post_process_depth_estimation"],
         },
     },
     {

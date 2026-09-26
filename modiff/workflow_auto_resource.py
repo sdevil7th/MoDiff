@@ -17,8 +17,8 @@ from typing import Any, Callable
 from modiff.auto_resource import READY_PROOF_STATUSES, build_auto_resource_plan, _hardware_snapshot
 from modiff.diffusers_profiles import resolve_execution_profiles_for_loader
 from modiff.huggingface_cluster_admission import REVIEWED_CLUSTER_EXECUTION_CANDIDATES
+from modiff.workflow_task_identity import resource_consumers as _consumers
 
-_RESOURCE_LINK = re.compile(r"pipeline|component|state|model|encoder|unet|vae|loop_member", re.I)
 _WORKLOAD = {
     "width": "width", "height": "height", "num_inference_steps": "steps", "steps": "steps",
     "guidance_scale": "guidanceScale", "num_frames": "numFrames", "batch_size": "batchSize",
@@ -100,20 +100,6 @@ def _repository(value: Any) -> str:
     return value if isinstance(value, str) else ""
 
 
-def _consumers(nodes: dict, loader_id: str, loader_ids: set[str]) -> list[str]:
-    found = {loader_id}
-    while True:
-        additions = {node_id for node_id, node in nodes.items() if node_id not in found | loader_ids and any(
-            p.get("sourceId") in found and _RESOURCE_LINK.search(str(p.get("sourceKey", "")) + " " + key)
-            for key, p in node["params"].items()
-        )}
-        additions.update(p["sourceId"] for node_id in found for key, p in nodes[node_id]["params"].items()
-                         if p.get("sourceId") and "loop_member" in str(p.get("sourceKey", "")) and p["sourceId"] not in found)
-        if not additions:
-            return sorted(found - {loader_id})
-        found.update(additions)
-
-
 def _number(value: Any) -> float | None:
     if isinstance(value, bool) or value is None:
         return None
@@ -190,9 +176,24 @@ def _build_workflow_auto_plan(
     issues: list[str] = []
     loaders: dict[str, Any] = {}
     data_nodes: set[str] = set()
+    custom_nodes: set[str] = set()
     preparation_nodes: set[str] = set()
     deferred_fields: list[dict] = []
     for node_id, node in nodes.items():
+        if node['module'].startswith('custom.'):
+            from modiff.custom_extensions import ExtensionStore
+            try:
+                extension = ExtensionStore().require_enabled(node['module'].removeprefix('custom.'))
+                if extension['preview']['kind'] == 'modular' and node['action'] == 'LoadModels':
+                    raise ValueError('loading additional custom block models requires Custom memory policy; this supplier is not Auto-qualified.')
+                if extension['runtimeRole'] == 'manual':
+                    raise ValueError('this custom source declares manual resource management; use Expert or review its data/connected-components contract.')
+                custom_nodes.add(node_id)
+                if extension['runtimeRole'] == 'data':
+                    data_nodes.add(node_id)
+            except (ValueError, OSError, SyntaxError) as error:
+                issues.append(f'{node_id}: {error}')
+            continue
         if (node["module"], node["action"]) in _DATA_ACTIONS:
             data_nodes.add(node_id)
             continue
@@ -248,7 +249,25 @@ def _build_workflow_auto_plan(
                 modes = {item["studioMode"] for item in REVIEWED_CLUSTER_EXECUTION_CANDIDATES if item["pipelineClass"] == profile.model_type and item["workflowId"] == workflow and item["studioMode"] in profile.modes}
                 if modes == {"edit_image", "multi_image_reference_edit"}:
                     modes = {"multi_image_reference_edit"}
-            mode = next(iter(modes)) if len(modes) == 1 else profile.modes[0] if len(profile.modes) == 1 else None
+            if not modes and profile.execution_path == "modular-diffusers":
+                from modiff.workflow_task_identity import modular_graph_tasks
+
+                modes = modular_graph_tasks(nodes, loader_id, consumers, profile.model_type)
+                if len(modes) == 1 and not modes.issubset(profile.modes):
+                    from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
+
+                    # Operation tasks and historical resource modes can name the
+                    # same reviewed upstream workflow differently. Use its existing
+                    # mapping rather than a frontend/model-specific alias table.
+                    truth = PINNED_MODULAR_WORKFLOW_TRUTH.get(profile.model_type)
+                    route = truth.mode(next(iter(modes))) if truth else None
+                    if route:
+                        aliases = {item["studioMode"] for item in REVIEWED_CLUSTER_EXECUTION_CANDIDATES
+                                   if item["pipelineClass"] == profile.model_type
+                                   and item["workflowId"] == (route.upstream_workflow or "default")
+                                   and item["studioMode"] in profile.modes}
+                        modes = aliases or modes
+            mode = next(iter(modes)) if len(modes) == 1 else profile.modes[0] if not modes and len(profile.modes) == 1 else None
             if mode not in profile.modes:
                 raise ValueError("The model's task is ambiguous; select an explicit mode on its loader or consumer.")
             repo = _repository(values.get("repo_id") or values.get("model_id"))
@@ -351,10 +370,17 @@ def _build_workflow_auto_plan(
     retained_total = dict(total)
     from modiff.workflow_auto_lifecycle import plan_owner_lifetimes
     schedule = plan_owner_lifetimes(material, planned, adapters)
-    # Independent owners use their lower live envelope even when the retained
-    # estimate happens to fit. Dispatch-time recipe/history selection must not
-    # silently discard a release plan and keep two large pipelines resident.
-    use_schedule = len(planned) > 1 and bool(schedule["releases"]) and any(
+    # Retain independent owners when their combined envelope fits. A release
+    # schedule is needed only under pressure; dispatch rechecks this same
+    # envelope against current capacity before allocating any model.
+    retained_demand = {**total, "systemRamBytes": total["systemRamBytes"] + (total["vramBytes"] if shared else 0)}
+    retention_fits = all(
+        not required or required <= (_number(available[key]) or 0)
+        for key, required in retained_demand.items()
+    )
+    # Custom Python can retain references outside the graph. Its approval grants
+    # execution, not a proof that early model eviction is safe.
+    use_schedule = not custom_nodes and not retention_fits and len(planned) > 1 and bool(schedule["releases"]) and any(
         schedule["peak"][key] < total[key] for key in ("systemRamBytes", "vramBytes")
     )
     if use_schedule:

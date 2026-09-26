@@ -1,8 +1,12 @@
 import json
 import unittest
-from unittest.mock import patch
+from pathlib import Path
+import tempfile
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 
 import modules as module_registry
+from modiff.config import CONFIG
 from modiff.auto_resource import AUTO_MODEL_REQUIREMENTS
 from modiff.diffusers_profiles import (
     CONTRACT_ONLY_DIFFUSERS_PIPELINES,
@@ -21,6 +25,47 @@ class FakeRequest:
 
 
 class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        directory = self.enterContext(tempfile.TemporaryDirectory(prefix="modiff-capabilities-"))
+        paths = {key: str(Path(directory) / key) for key in CONFIG.paths if key != "app_root"}
+        for path in paths.values():
+            Path(path).mkdir(parents=True, exist_ok=True)
+        self.enterContext(patch.dict(CONFIG.paths, paths))
+
+    async def test_operation_query_includes_linked_pipeline_classes_and_direct_class_matches(self):
+        server = WebServer(module_registry.MODULE_MAP)
+        response = await server.model_capabilities(SimpleNamespace(query={"q": "schnell"}))
+        payload = json.loads(response.text)
+        self.assertIn("FluxSchnellPipeline", {c["modelType"] for c in payload["capabilities"]})
+        self.assertIn("FluxPipeline", {c["pipelineClass"] for c in payload["operationContracts"]})
+        # New adapter metadata remains discoverable before a Studio catalog row exists.
+        from dataclasses import replace
+        adapter = replace(next(iter(AUDIO_PIPELINE_ADAPTERS.values())), pipeline_class="FutureAudioPipeline")
+        with patch.dict(AUDIO_PIPELINE_ADAPTERS, {"FutureAudioPipeline": adapter}):
+            response = await server.model_capabilities(SimpleNamespace(query={"q": "futureaudio"}))
+        payload = json.loads(response.text)
+        self.assertEqual(payload["capabilities"], [])
+        self.assertEqual({c["pipelineClass"] for c in payload["operationContracts"]}, {"FutureAudioPipeline"})
+        response = await server.model_capabilities(SimpleNamespace(query={"q": "no-such-pipeline"}))
+        self.assertEqual(json.loads(response.text)["operationContracts"], [])
+
+    async def test_operation_resolution_returns_an_ordinary_schema_without_execution(self):
+        server = WebServer(module_registry.MODULE_MAP)
+        selection = {"pipelineClass": "AnimaModularPipeline", "task": "text_to_image", "operationId": "diffusion.denoise"}
+        with patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("Constructed node")):
+            response = await server.resolve_operation(SimpleNamespace(json=AsyncMock(return_value=selection)))
+        payload = json.loads(response.text)
+        self.assertEqual(response.status, 200)
+        self.assertEqual(payload["schemaVersion"], 1)
+        self.assertEqual(payload["node"]["action"], "WorkflowImageDenoise")
+        self.assertEqual(payload["node"]["params"]["pipeline_class"]["value"], "AnimaModularPipeline")
+        self.assertEqual(payload["operation"]["operationId"], selection["operationId"])
+        self.assertNotIn("executionSpecId", payload)
+        invalid = await server.resolve_operation(SimpleNamespace(json=AsyncMock(return_value={**selection, "templateId": "arbitrary"})))
+        self.assertEqual(invalid.status, 400)
+        malformed = await server.resolve_operation(SimpleNamespace(json=AsyncMock(side_effect=ValueError("invalid JSON"))))
+        self.assertEqual(malformed.status, 400)
+
     async def test_public_runtime_aggregate_excludes_hidden_legacy_execution_profiles(self):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         capabilities = json.loads(response.text)["capabilities"]
@@ -32,6 +77,42 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         # Public discovery must not retire explicitly selected historical loaders.
         self.assertIn("flux2-modular:equivalent-standard", DIFFUSERS_EXECUTION_PROFILES)
         self.assertFalse(DIFFUSERS_EXECUTION_PROFILES["flux2-modular:equivalent-standard"].public)
+
+    async def test_starter_endpoint_describes_nodes_without_construction_or_receipts(self):
+        server = WebServer(module_registry.MODULE_MAP)
+        selection = {"pipelineClass": "AnimaModularPipeline", "task": "text_to_image"}
+        with patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("Constructed node")):
+            response = await server.resolve_operation_starter(SimpleNamespace(json=AsyncMock(return_value=selection)))
+        payload = json.loads(response.text)
+        self.assertEqual(response.status, 200)
+        self.assertEqual(len(payload["nodes"]), 4)
+        self.assertEqual(len(payload["edges"]), 5)
+        for entry in payload["nodes"]:
+            self.assertEqual(entry["node"]["type"], "custom")
+            self.assertNotIn("values", entry["node"])
+            self.assertNotIn("operation", entry["node"])
+        invalid = await server.resolve_operation_starter(SimpleNamespace(json=AsyncMock(return_value={**selection, "execute": True})))
+        self.assertEqual(invalid.status, 400)
+
+    async def test_task_starter_without_installed_weights_is_an_unbound_ordinary_graph(self):
+        server = WebServer(module_registry.MODULE_MAP)
+        with (
+            patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("Constructed node")),
+            patch("modiff.server.get_local_models", return_value=[]),
+            patch.object(server, "_auto_planning_runtime_fingerprint", return_value={}),
+            patch("modiff.auto_resource.artifact_revision_cache_status", return_value={"complete": False}),
+            patch("modiff.workflow_auto_resource.build_workflow_auto_plan", side_effect=AssertionError("No installed model")),
+        ):
+            response = await server.resolve_task_starter(SimpleNamespace(json=AsyncMock(return_value={"task": "text_to_image"})))
+        self.assertEqual(response.status, 200, response.text)
+        payload = json.loads(response.text)
+        self.assertTrue(payload["unbound"])
+        self.assertIsNone(payload["profileId"])
+        self.assertEqual(payload["starter"]["task"], "text_to_image")
+        loader = payload["starter"]["nodes"][0]["node"]
+        self.assertEqual(loader["params"]["repo_id"]["value"], {"source": "hub", "value": ""})
+        self.assertTrue(loader["params"]["repo_id"]["required"])
+        self.assertNotIn("values", loader)
 
     async def test_capabilities_publish_only_app_delivered_quantization_as_available(self):
         catalog = {
@@ -64,6 +145,12 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         response = await WebServer(module_registry.MODULE_MAP).model_capabilities(FakeRequest())
         payload = json.loads(response.text)
         self.assertEqual(payload["schemaVersion"], 2)
+        self.assertEqual(payload["operationContractSchemaVersion"], 3)
+        contracts = payload["operationContracts"]
+        self.assertGreater(len(contracts), 0)
+        self.assertTrue(all(contract["support"] == "declared" for contract in contracts))
+        self.assertTrue(all("executionSpecId" not in contract for contract in contracts))
+        self.assertEqual(len({(c["pipelineClass"], c["operationId"], c["task"]) for c in contracts}), len(contracts))
         self.assertEqual(len(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME), 5)
         self.assertEqual(
             len(payload["experimentalCapabilities"]),
@@ -343,7 +430,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 273)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 278)
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",
@@ -565,6 +652,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             [
                 "StableDiffusionXLControlNetPAGImg2ImgPipeline",
                 "StableDiffusionXLControlNetPAGPipeline",
+                "StableDiffusionXLModularPipeline",
                 "StableDiffusionXLPAGImg2ImgPipeline",
                 "StableDiffusionXLPAGInpaintPipeline",
                 "StableDiffusionXLPAGPipeline",

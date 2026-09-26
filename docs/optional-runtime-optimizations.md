@@ -502,6 +502,13 @@ disabled until explicitly selected or applied by an exact Auto receipt:
   components.
 - Existing model-specific quantization and offload recipes.
 
+VAE memory configuration reports slicing or tiling as unsupported when the
+method is absent or the upstream implementation raises `NotImplementedError`.
+An inherited method alone does not prove support. Ordinary audio loading also
+skips unimplemented tiling and logs that ordinary decoding will be used; other
+configuration errors still fail the load. No memory-saving effect is claimed
+for an unsupported feature.
+
 The following upstream features are deliberately visible but not enableable:
 
 - generic quantization combined with offload;

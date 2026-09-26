@@ -261,6 +261,10 @@ class DiffusersExecutionProfile:
                 "modules.HuggingFaceSpeech",
                 "LoadCTCSpeechRecognitionModel",
             ),
+            "direct-huggingface-transformers-depth": (
+                "modules.HuggingFaceTransformers",
+                "LoadDepthEstimationModel",
+            ),
             "direct-huggingface-transformers-text": (
                 "modules.HuggingFaceTransformers",
                 "LoadTextGenerationModel",
@@ -331,6 +335,11 @@ class DiffusersExecutionProfile:
             raise ValueError(f"Diffusers execution profile {self.id!r} has invalid optional-runtime delivery targets.")
 
     @property
+    def operation_recipe(self) -> bool:
+        """Exact operation selection, not a second legacy model/Auto owner."""
+        return self.execution_path == "modular-diffusers" and self.model_type != self.pipeline_class
+
+    @property
     def backend_path(self) -> str:
         """Return the legacy combined loader key from the explicit target."""
 
@@ -387,11 +396,21 @@ class DiffusersExecutionProfile:
         *,
         observe_optional_runtime: bool = False,
         optional_runtime_catalog_resolver=None,
+        platform_name: str | None = None,
+        machine: str | None = None,
     ) -> dict:
+        # Static inventories may select a reference target. Installed-runtime
+        # observations describe this process only, never another platform.
+        if observe_optional_runtime and (platform_name is not None or machine is not None):
+            raise ValueError("Runtime observations cannot use an explicit target")
         data = asdict(self)
         public = {key: list(value) if isinstance(value, tuple) else value for key, value in data.items()}
-        public["optional_runtime_delivery"] = self.optional_runtime_delivery_for_target()
-        public["optional_runtime_profiles"] = list(self.optional_runtime_profile_ids_for_target())
+        public["optional_runtime_delivery"] = self.optional_runtime_delivery_for_target(
+            platform_name=platform_name, machine=machine,
+        )
+        public["optional_runtime_profiles"] = list(self.optional_runtime_profile_ids_for_target(
+            platform_name=platform_name, machine=machine,
+        ))
         public["optional_runtime_platform_deliveries"] = [
             {"platform": platform_name, "machine": machine, "delivery": delivery}
             for platform_name, machine, delivery in self.optional_runtime_platform_deliveries
@@ -413,6 +432,8 @@ class DiffusersExecutionProfile:
         if not self.expert_mps_policy:
             public.pop("expert_mps_policy")
         public["backend_path"] = self.backend_path
+        if self.operation_recipe:
+            public["operation_recipe"] = True
         if observe_optional_runtime:
             # Lazy to keep the declarative profile module independent of
             # overlay storage during registry import.
@@ -425,7 +446,9 @@ class DiffusersExecutionProfile:
                 catalog_resolver=optional_runtime_catalog_resolver,
             )
         else:
-            requirement = optional_runtime_requirement_for_profiles((self,))
+            requirement = optional_runtime_requirement_for_profiles(
+                (self,), platform_name=platform_name, machine=machine,
+            )
         public["optionalRuntimeRequirement"] = requirement
         return public
 
@@ -932,7 +955,8 @@ def execution_profiles_for_execution(
     return tuple(
         profile
         for profile in DIFFUSERS_EXECUTION_PROFILES.values()
-        if profile.model_type == normalized_model_type and (not normalized_mode or normalized_mode in profile.modes)
+        if not profile.operation_recipe
+        and profile.model_type == normalized_model_type and (not normalized_mode or normalized_mode in profile.modes)
     )
 
 
@@ -1000,7 +1024,7 @@ def resolve_execution_profiles_for_loader(
         identity_key = "model_type" if action == "ModelsLoader" else "pipeline_class"
         raw_identity = "DummyCustomPipeline" if action == "DynamicBlockNode" else values.get(identity_key)
         identity = raw_identity.strip() if isinstance(raw_identity, str) else ""
-        expected_identity = exact_profile.model_type if action == "ModelsLoader" else exact_profile.pipeline_class
+        expected_identity = exact_profile.pipeline_class
         if not identity:
             return selected_optional_runtime((exact_profile,)), "loader_identity_missing"
         if identity != expected_identity:
@@ -1028,10 +1052,18 @@ def resolve_execution_profiles_for_loader(
         else:
             repository = ""
             repository_source = ""
+        workflow_repositories = ()
+        if exact_profile.execution_path == "modular-diffusers":
+            from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS
+
+            workflow_repositories = PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS.get(
+                (exact_profile.pipeline_class, values.get("workflow_id")), (),
+            )
         if repository and repository_source == "hub" and repository not in {
             exact_profile.default_repo,
             exact_profile.fallback_repo,
             *exact_profile.compatible_repos,
+            *workflow_repositories,
         }:
             return selected_optional_runtime((exact_profile,)), "loader_execution_profile_mismatch"
         return selected_optional_runtime((exact_profile,)), None
@@ -1045,7 +1077,10 @@ def resolve_execution_profiles_for_loader(
     matching = tuple(
         profile
         for profile in backend_profiles
-        if (profile.model_type == identity if action == "ModelsLoader" else profile.pipeline_class == identity)
+        if profile.pipeline_class == identity
+        # PAG is a guidance recipe over the same SDXL model owner, selected by
+        # its ordinary Guider/Layers nodes, not a second copy of the weights.
+        and not (action == "ModelsLoader" and profile.id == "sdxl-pag:modular")
     )
     if not matching:
         return selected_optional_runtime(backend_profiles), "loader_selection_unregistered"
@@ -1210,11 +1245,15 @@ def public_execution_profiles(
     *,
     observe_optional_runtime: bool = False,
     optional_runtime_catalog_resolver=None,
+    platform_name: str | None = None,
+    machine: str | None = None,
 ) -> list[dict]:
     return [
         profile.to_public_dict(
             observe_optional_runtime=observe_optional_runtime,
             optional_runtime_catalog_resolver=optional_runtime_catalog_resolver,
+            platform_name=platform_name,
+            machine=machine,
         )
         for profile in DIFFUSERS_EXECUTION_PROFILES.values()
         if profile.public

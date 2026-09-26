@@ -71,6 +71,8 @@ def _safe_gallery_path(value: Any) -> str:
 
 
 def load_template_gallery_source(path: Path = TEMPLATE_GALLERY_SOURCE_PATH) -> dict[str, Any]:
+    """Validate the pinned Dataset identity in remote and installer-built local bundles."""
+
     source = _read_bounded_json(path, maximum_bytes=TEMPLATE_GALLERY_SOURCE_MAX_BYTES, label="Template Gallery source")
     unavailable = source.get("unavailableAssets")
     try:
@@ -79,7 +81,7 @@ def load_template_gallery_source(path: Path = TEMPLATE_GALLERY_SOURCE_PATH) -> d
         raise TemplateGalleryError("template_gallery_source_invalid", "Template Gallery source repository is invalid.") from error
     if (
         source.get("schemaVersion") != 1
-        or source.get("mode") != "huggingface"
+        or source.get("mode") not in {"huggingface", "local"}
         or source.get("repoType") != "dataset"
         or source.get("localBasePath") != "/template-gallery"
         or source.get("pathPrefix") != "template-gallery"

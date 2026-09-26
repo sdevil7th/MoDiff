@@ -19,6 +19,53 @@ from modiff.NodeBase import NodeBase, deep_equal, node_message_context  # noqa: 
 
 
 class NodeBaseDeepEqualTests(unittest.TestCase):
+    def test_snapshot_bounds_branching_cycles_and_detects_nested_edits(self):
+        from modiff.node_cache_identity import input_snapshot
+        value = {'items': [1]}
+        value['left'] = value
+        value['right'] = value
+        before = input_snapshot(value)
+        self.assertEqual(input_snapshot(value), before)
+        value['items'].append(2)
+        self.assertNotEqual(input_snapshot(value), before)
+
+    def test_cache_detects_in_place_inputs_and_replaced_implementation(self):
+        import torch
+        from PIL import Image
+
+        class Consumer(NodeBase):
+            def execute(self, **kwargs):
+                self.calls += 1
+                return {"result": self.calls}
+
+        module = '.'.join(Consumer.__module__.split('.')[:-1])
+        definition = {module: {'Consumer': {'skipParamsCheck': True, 'params': {}}}}
+        with patch('modiff.NodeBase._module_map', return_value=definition):
+            node = Consumer('consumer')
+        node.calls = 0
+        tensor = torch.zeros(2)
+        array = np.zeros(2)
+        image = Image.new('RGB', (2, 2))
+        value = {'nested': [1], 'tensor': tensor, 'array': array, 'image': image}
+        node(value=value)
+        node(value=value)
+        self.assertEqual(node.calls, 1)
+        for mutate in (
+            lambda: value['nested'].append(2), lambda: tensor.add_(1),
+            lambda: array.fill(1), lambda: image.putpixel((0, 0), (1, 2, 3)),
+        ):
+            before = node.calls
+            mutate()
+            node(value=value)
+            self.assertEqual(node.calls, before + 1)
+            node(value=value)
+            self.assertEqual(node.calls, before + 1)
+        def replacement(self, **kwargs):
+            self.calls += 1
+            return {'result': 'new implementation'}
+        with patch.object(Consumer, 'execute', replacement):
+            self.assertEqual(node(value=value)['result'], 'new implementation')
+
     def test_optional_outputs_cache_success_but_not_failed_or_invalid_results(self):
         class OptionalNode(NodeBase):
             def execute(self, mode):
@@ -287,9 +334,14 @@ class NodeBaseDeepEqualTests(unittest.TestCase):
             self.assertEqual(node(value=4), {"result": 8})
             self.assertFalse(node._has_changed)
             self.assertEqual(node.execution_count, 1)
+            self.assertEqual(node._cache_reason, "unchanged_inputs")
             self.assertEqual(node(value=5), {"result": 10})
+            self.assertEqual(node._cache_reason, "inputs_changed")
+            node.invalidate_cache()
+            self.assertEqual(node(value=5), {"result": 10})
+            self.assertEqual(node._cache_reason, "invalidated")
             self.assertTrue(node._has_changed)
-            self.assertEqual(node.execution_count, 2)
+            self.assertEqual(node.execution_count, 3)
 
     def test_changed_upstream_node_invalidates_consumer_of_same_mutable_object(self):
         from modiff.server import WebServer
@@ -697,6 +749,45 @@ class NodeBaseDeepEqualTests(unittest.TestCase):
         )
         self.assertEqual(component_call.kwargs["phase"], "component_loading")
 
+    def test_fast_weight_loading_bounds_updates_but_keeps_initial_and_terminal_counts(self):
+        from modiff.NodeBase import _StructuredLoadingProgress
+
+        for iterable in (True, False):
+            with self.subTest(iterable=iterable):
+                reports = []
+                bar = range(1000) if iterable else SimpleNamespace(n=0, update=lambda _amount: None)
+                progress = _StructuredLoadingProgress(
+                    bar,
+                    lambda value, message, current, total: reports.append((value, current, total)),
+                    description="Loading weights",
+                    total=1000,
+                )
+                with patch("modiff.NodeBase.time.monotonic", return_value=10.0):
+                    if iterable:
+                        self.assertEqual(list(progress), list(range(1000)))
+                    else:
+                        for _ in range(1000):
+                            progress.update(1)
+                self.assertEqual(reports[0][1], 0 if iterable else 1)
+                self.assertEqual(reports[-1], (99, 1000, 1000))
+                self.assertLessEqual(len(reports), 3, "Rapid weight updates must not flood the browser.")
+
+    def test_loading_progress_reports_latest_count_after_interval_and_always_finishes(self):
+        from modiff.NodeBase import _StructuredLoadingProgress
+
+        reports = []
+        progress = _StructuredLoadingProgress(
+            SimpleNamespace(n=0, update=lambda _amount: None),
+            lambda value, message, current, total: reports.append(current),
+            description="Loading weights", total=5,
+        )
+        with patch("modiff.NodeBase.time.monotonic", side_effect=[10.0, 10.1, 10.3, 10.31]):
+            progress.update(1)
+            progress.update(1)
+            progress.update(1)
+            progress.update(2)
+        self.assertEqual(reports, [1, 3, 5])
+
     def test_structured_loader_progress_publishes_count_finalized_on_close(self):
         from modiff.NodeBase import _StructuredLoadingProgress
 
@@ -747,14 +838,27 @@ class NodeBaseDeepEqualTests(unittest.TestCase):
     def test_direct_node_base_imports_preserve_complete_module_registry(self):
         script = """
 import json
+import tempfile
+from modiff.custom_extensions import ExtensionStore
+
+# This is a cold built-in registry test. It must not execute or disable the
+# operator's approved extensions when the child has only the base runtime.
+directory = tempfile.TemporaryDirectory(prefix='modiff-registry-test-')
+original_init = ExtensionStore.__init__
+def isolated_init(self, root=None):
+    original_init(self, root if root is not None else directory.name)
+ExtensionStore.__init__ = isolated_init
+
 from modiff.NodeBase import NodeBase
 import modules
+assert not any(name.startswith('custom.') for name in modules.MODULE_MAP)
 print(json.dumps({
     "module_count": len(modules.MODULE_MAP),
     "node_count": modules.total_nodes,
     "recomputed_node_count": sum(len(nodes) for nodes in modules.MODULE_MAP.values()),
     "module_names": sorted(modules.MODULE_MAP),
 }))
+directory.cleanup()
 """
         result = subprocess.run(
             [sys.executable, "-c", script],
@@ -771,6 +875,27 @@ print(json.dumps({
         self.assertTrue(
             {"modules.DiffusersImage", "modules.ModularDiffusers"}.issubset(payload["module_names"])
         )
+
+    def test_startup_registry_count_includes_enabled_extensions(self):
+        script = """
+from modiff.custom_extensions import ExtensionStore
+def load_fixture(self, registry):
+    registry['custom.RegistryCountFixture'] = {'First': {}, 'Second': {}}
+ExtensionStore.load_enabled = load_fixture
+from modiff.NodeBase import NodeBase
+import modules
+assert len(modules.MODULE_MAP['custom.RegistryCountFixture']) == 2
+assert modules.total_nodes == sum(len(nodes) for nodes in modules.MODULE_MAP.values())
+"""
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=Path(__file__).resolve().parents[1],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
 if __name__ == "__main__":

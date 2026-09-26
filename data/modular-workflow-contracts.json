@@ -892,11 +892,11 @@
               "type": "builtins.float"
             },
             {
-              "default": true,
+              "default": null,
               "description": "Whether to prepend the Cosmos3 system prompt.",
               "name": "use_system_prompt",
               "required": false,
-              "type": "builtins.bool"
+              "type": "UnionType[builtins.NoneType,builtins.bool]"
             },
             {
               "default": true,
@@ -953,6 +953,34 @@
               "name": "guidance_scale",
               "required": false,
               "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+              "name": "mixed_precision_format",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "Optional leading W8A16 step count.",
+              "name": "mixed_precision_first_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional trailing W8A16 step count.",
+              "name": "mixed_precision_last_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+              "name": "mixed_precision_reasoner_policy",
+              "required": false,
+              "type": "builtins.str"
             },
             {
               "default": "pil",
@@ -1180,6 +1208,10 @@
             "generator",
             "num_inference_steps",
             "guidance_scale",
+            "mixed_precision_format",
+            "mixed_precision_first_steps",
+            "mixed_precision_last_steps",
+            "mixed_precision_reasoner_policy",
             "denoiser_input_fields",
             "output_type"
           ],
@@ -1293,11 +1325,11 @@
               "type": "builtins.float"
             },
             {
-              "default": true,
+              "default": null,
               "description": "Whether to prepend the Cosmos3 system prompt.",
               "name": "use_system_prompt",
               "required": false,
-              "type": "builtins.bool"
+              "type": "UnionType[builtins.NoneType,builtins.bool]"
             },
             {
               "default": true,
@@ -1354,6 +1386,34 @@
               "name": "guidance_scale",
               "required": false,
               "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+              "name": "mixed_precision_format",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "Optional leading W8A16 step count.",
+              "name": "mixed_precision_first_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional trailing W8A16 step count.",
+              "name": "mixed_precision_last_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+              "name": "mixed_precision_reasoner_policy",
+              "required": false,
+              "type": "builtins.str"
             },
             {
               "default": "pil",
@@ -1581,6 +1641,10 @@
             "generator",
             "num_inference_steps",
             "guidance_scale",
+            "mixed_precision_format",
+            "mixed_precision_first_steps",
+            "mixed_precision_last_steps",
+            "mixed_precision_reasoner_policy",
             "denoiser_input_fields",
             "output_type"
           ],
@@ -1694,11 +1758,11 @@
               "type": "builtins.float"
             },
             {
-              "default": true,
+              "default": null,
               "description": "Whether to prepend the Cosmos3 system prompt.",
               "name": "use_system_prompt",
               "required": false,
-              "type": "builtins.bool"
+              "type": "UnionType[builtins.NoneType,builtins.bool]"
             },
             {
               "default": true,
@@ -1748,6 +1812,34 @@
               "name": "guidance_scale",
               "required": false,
               "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+              "name": "mixed_precision_format",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "Optional leading W8A16 step count.",
+              "name": "mixed_precision_first_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional trailing W8A16 step count.",
+              "name": "mixed_precision_last_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+              "name": "mixed_precision_reasoner_policy",
+              "required": false,
+              "type": "builtins.str"
             },
             {
               "default": "pil",
@@ -1989,6 +2081,10 @@
             "generator",
             "num_inference_steps",
             "guidance_scale",
+            "mixed_precision_format",
+            "mixed_precision_first_steps",
+            "mixed_precision_last_steps",
+            "mixed_precision_reasoner_policy",
             "denoiser_input_fields",
             "output_type"
           ],
@@ -2108,11 +2204,11 @@
               "type": "builtins.float"
             },
             {
-              "default": true,
+              "default": null,
               "description": "Whether to prepend the Cosmos3 system prompt.",
               "name": "use_system_prompt",
               "required": false,
-              "type": "builtins.bool"
+              "type": "UnionType[builtins.NoneType,builtins.bool]"
             },
             {
               "default": true,
@@ -2179,6 +2275,34 @@
               "name": "guidance_scale",
               "required": false,
               "type": "builtins.float"
+            },
+            {
+              "default": null,
+              "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+              "name": "mixed_precision_format",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "Optional leading W8A16 step count.",
+              "name": "mixed_precision_first_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional trailing W8A16 step count.",
+              "name": "mixed_precision_last_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+              "name": "mixed_precision_reasoner_policy",
+              "required": false,
+              "type": "builtins.str"
             },
             {
               "default": "pil",
@@ -2422,6 +2546,10 @@
             "generator",
             "num_inference_steps",
             "guidance_scale",
+            "mixed_precision_format",
+            "mixed_precision_first_steps",
+            "mixed_precision_last_steps",
+            "mixed_precision_reasoner_policy",
             "denoiser_input_fields",
             "output_type"
           ],
@@ -2694,6 +2822,34 @@
               "type": "builtins.int"
             },
             {
+              "default": null,
+              "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+              "name": "mixed_precision_format",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "Optional leading W8A16 step count.",
+              "name": "mixed_precision_first_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional trailing W8A16 step count.",
+              "name": "mixed_precision_last_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+              "name": "mixed_precision_reasoner_policy",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
               "default": 6.0,
               "description": "Scale for classifier-free guidance.",
               "name": "guidance_scale",
@@ -2941,6 +3097,10 @@
             "latents",
             "generator",
             "num_inference_steps",
+            "mixed_precision_format",
+            "mixed_precision_first_steps",
+            "mixed_precision_last_steps",
+            "mixed_precision_reasoner_policy",
             "denoiser_input_fields",
             "guidance_scale",
             "output_type",
@@ -3125,6 +3285,34 @@
               "name": "num_inference_steps",
               "required": true,
               "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+              "name": "mixed_precision_format",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "Optional leading W8A16 step count.",
+              "name": "mixed_precision_first_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional trailing W8A16 step count.",
+              "name": "mixed_precision_last_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+              "name": "mixed_precision_reasoner_policy",
+              "required": false,
+              "type": "builtins.str"
             },
             {
               "default": 6.0,
@@ -3374,6 +3562,10 @@
             "latents",
             "generator",
             "num_inference_steps",
+            "mixed_precision_format",
+            "mixed_precision_first_steps",
+            "mixed_precision_last_steps",
+            "mixed_precision_reasoner_policy",
             "denoiser_input_fields",
             "guidance_scale",
             "output_type",
@@ -3551,6 +3743,34 @@
               "name": "num_inference_steps",
               "required": true,
               "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+              "name": "mixed_precision_format",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "Optional leading W8A16 step count.",
+              "name": "mixed_precision_first_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional trailing W8A16 step count.",
+              "name": "mixed_precision_last_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+              "name": "mixed_precision_reasoner_policy",
+              "required": false,
+              "type": "builtins.str"
             },
             {
               "default": 6.0,
@@ -3814,6 +4034,10 @@
             "latents",
             "generator",
             "num_inference_steps",
+            "mixed_precision_format",
+            "mixed_precision_first_steps",
+            "mixed_precision_last_steps",
+            "mixed_precision_reasoner_policy",
             "denoiser_input_fields",
             "guidance_scale",
             "output_type",
@@ -4014,6 +4238,34 @@
               "name": "num_inference_steps",
               "required": true,
               "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+              "name": "mixed_precision_format",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "Optional leading W8A16 step count.",
+              "name": "mixed_precision_first_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional trailing W8A16 step count.",
+              "name": "mixed_precision_last_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+              "name": "mixed_precision_reasoner_policy",
+              "required": false,
+              "type": "builtins.str"
             },
             {
               "default": 6.0,
@@ -4279,6 +4531,10 @@
             "latents",
             "generator",
             "num_inference_steps",
+            "mixed_precision_format",
+            "mixed_precision_first_steps",
+            "mixed_precision_last_steps",
+            "mixed_precision_reasoner_policy",
             "denoiser_input_fields",
             "guidance_scale",
             "output_type",
@@ -4476,6 +4732,34 @@
               "name": "sound_latents",
               "required": false,
               "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+              "name": "mixed_precision_format",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "Optional leading W8A16 step count.",
+              "name": "mixed_precision_first_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional trailing W8A16 step count.",
+              "name": "mixed_precision_last_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+              "name": "mixed_precision_reasoner_policy",
+              "required": false,
+              "type": "builtins.str"
             },
             {
               "default": 6.0,
@@ -4796,6 +5080,10 @@
             "generator",
             "num_inference_steps",
             "sound_latents",
+            "mixed_precision_format",
+            "mixed_precision_first_steps",
+            "mixed_precision_last_steps",
+            "mixed_precision_reasoner_policy",
             "denoiser_input_fields",
             "guidance_scale",
             "output_type",
@@ -5016,6 +5304,34 @@
               "name": "sound_latents",
               "required": false,
               "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+              "name": "mixed_precision_format",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "Optional leading W8A16 step count.",
+              "name": "mixed_precision_first_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional trailing W8A16 step count.",
+              "name": "mixed_precision_last_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+              "name": "mixed_precision_reasoner_policy",
+              "required": false,
+              "type": "builtins.str"
             },
             {
               "default": 6.0,
@@ -5350,6 +5666,10 @@
             "generator",
             "num_inference_steps",
             "sound_latents",
+            "mixed_precision_format",
+            "mixed_precision_first_steps",
+            "mixed_precision_last_steps",
+            "mixed_precision_reasoner_policy",
             "denoiser_input_fields",
             "guidance_scale",
             "output_type",
@@ -5593,6 +5913,34 @@
               "name": "sound_latents",
               "required": false,
               "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+              "name": "mixed_precision_format",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "Optional leading W8A16 step count.",
+              "name": "mixed_precision_first_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional trailing W8A16 step count.",
+              "name": "mixed_precision_last_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+              "name": "mixed_precision_reasoner_policy",
+              "required": false,
+              "type": "builtins.str"
             },
             {
               "default": 6.0,
@@ -5929,6 +6277,10 @@
             "generator",
             "num_inference_steps",
             "sound_latents",
+            "mixed_precision_format",
+            "mixed_precision_first_steps",
+            "mixed_precision_last_steps",
+            "mixed_precision_reasoner_policy",
             "denoiser_input_fields",
             "guidance_scale",
             "output_type",
@@ -6155,6 +6507,34 @@
               "name": "action_latents",
               "required": false,
               "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+              "name": "mixed_precision_format",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "Optional leading W8A16 step count.",
+              "name": "mixed_precision_first_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional trailing W8A16 step count.",
+              "name": "mixed_precision_last_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+              "name": "mixed_precision_reasoner_policy",
+              "required": false,
+              "type": "builtins.str"
             },
             {
               "default": 6.0,
@@ -6475,6 +6855,10 @@
             "generator",
             "num_inference_steps",
             "action_latents",
+            "mixed_precision_format",
+            "mixed_precision_first_steps",
+            "mixed_precision_last_steps",
+            "mixed_precision_reasoner_policy",
             "denoiser_input_fields",
             "guidance_scale",
             "output_type"
@@ -6692,6 +7076,34 @@
               "name": "action_latents",
               "required": false,
               "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+              "name": "mixed_precision_format",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "Optional leading W8A16 step count.",
+              "name": "mixed_precision_first_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional trailing W8A16 step count.",
+              "name": "mixed_precision_last_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+              "name": "mixed_precision_reasoner_policy",
+              "required": false,
+              "type": "builtins.str"
             },
             {
               "default": 6.0,
@@ -7012,6 +7424,10 @@
             "generator",
             "num_inference_steps",
             "action_latents",
+            "mixed_precision_format",
+            "mixed_precision_first_steps",
+            "mixed_precision_last_steps",
+            "mixed_precision_reasoner_policy",
             "denoiser_input_fields",
             "guidance_scale",
             "output_type"
@@ -7229,6 +7645,34 @@
               "name": "action_latents",
               "required": false,
               "type": "torch.Tensor"
+            },
+            {
+              "default": null,
+              "description": "None follows the ModelOpt FP8 checkpoint schedule; 'none' keeps the native quantized forward; 'fp8' is ModelOpt FP8 only.",
+              "name": "mixed_precision_format",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": null,
+              "description": "Optional leading W8A16 step count.",
+              "name": "mixed_precision_first_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional trailing W8A16 step count.",
+              "name": "mixed_precision_last_steps",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional reasoner path: 'high_precision' (W8A16) or 'base_precision' (native W8A8).",
+              "name": "mixed_precision_reasoner_policy",
+              "required": false,
+              "type": "builtins.str"
             },
             {
               "default": 6.0,
@@ -7549,6 +7993,10 @@
             "generator",
             "num_inference_steps",
             "action_latents",
+            "mixed_precision_format",
+            "mixed_precision_first_steps",
+            "mixed_precision_last_steps",
+            "mixed_precision_reasoner_policy",
             "denoiser_input_fields",
             "guidance_scale",
             "output_type"
@@ -7820,6 +8268,41 @@
             },
             {
               "default": null,
+              "description": "The height in pixels of the generated image.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The width in pixels of the generated image.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "Optional system prompt passed to the prompt enhancer.",
+              "name": "pe_system_prompt",
+              "required": false,
+              "type": "builtins.str"
+            },
+            {
+              "default": 0.6,
+              "description": "Sampling temperature used when generating with the prompt enhancer.",
+              "name": "pe_temperature",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": 0.95,
+              "description": "Nucleus sampling `top_p` used when generating with the prompt enhancer.",
+              "name": "pe_top_p",
+              "required": false,
+              "type": "builtins.float"
+            },
+            {
+              "default": null,
               "description": "The prompt or prompts to avoid during image generation.",
               "name": "negative_prompt",
               "required": false,
@@ -7836,20 +8319,6 @@
               "default": 50,
               "description": "Number of denoising steps.",
               "name": "num_inference_steps",
-              "required": false,
-              "type": "builtins.int"
-            },
-            {
-              "default": null,
-              "description": "The height in pixels of the generated image.",
-              "name": "height",
-              "required": false,
-              "type": "builtins.int"
-            },
-            {
-              "default": null,
-              "description": "The width in pixels of the generated image.",
-              "name": "width",
               "required": false,
               "type": "builtins.int"
             },
@@ -7878,6 +8347,27 @@
           "kind": "sequential",
           "label": "Text To Image",
           "outputs": [
+            {
+              "default": null,
+              "description": "The prompt list after prompt-enhancer rewriting.",
+              "name": "prompt",
+              "required": false,
+              "type": "builtins.list"
+            },
+            {
+              "default": null,
+              "description": "The resolved image height in pixels.",
+              "name": "height",
+              "required": false,
+              "type": "builtins.int"
+            },
+            {
+              "default": null,
+              "description": "The resolved image width in pixels.",
+              "name": "width",
+              "required": false,
+              "type": "builtins.int"
+            },
             {
               "default": null,
               "description": "List of per-prompt text embeddings of shape (T, H).",
@@ -7950,20 +8440,6 @@
             },
             {
               "default": null,
-              "description": "The resolved image height in pixels.",
-              "name": "height",
-              "required": false,
-              "type": "builtins.int"
-            },
-            {
-              "default": null,
-              "description": "The resolved image width in pixels.",
-              "name": "width",
-              "required": false,
-              "type": "builtins.int"
-            },
-            {
-              "default": null,
               "description": "The generated images.",
               "name": "images",
               "required": false,
@@ -7975,16 +8451,25 @@
           ],
           "stateKeys": [
             "prompt",
+            "height",
+            "width",
+            "pe_system_prompt",
+            "pe_temperature",
+            "pe_top_p",
             "negative_prompt",
             "num_images_per_prompt",
             "num_inference_steps",
-            "height",
-            "width",
             "latents",
             "generator",
             "output_type"
           ],
           "steps": [
+            {
+              "className": "ErnieImagePromptEnhancerStep",
+              "description": "Prompt enhancer step that rewrites the input prompt using a causal language model (PE).",
+              "kind": "block",
+              "path": "prompt_enhancer"
+            },
             {
               "className": "ErnieImageTextEncoderStep",
               "description": "Text encoder step that encodes prompts into variable-length hidden states for the ErnieImage transformer.",
@@ -17291,7 +17776,7 @@
             "device",
             "offloadMode"
           ],
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_config",
@@ -17304,7 +17789,7 @@
             "device",
             "offloadMode"
           ],
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_pretrained",
@@ -19440,7 +19925,7 @@
             "device",
             "offloadMode"
           ],
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_config",
@@ -19453,7 +19938,7 @@
             "device",
             "offloadMode"
           ],
-          "type": "diffusers.modular_pipelines.ltx2.guider.LTX2Guidance"
+          "type": "diffusers.guiders.ltx2_guidance.LTX2Guidance"
         },
         {
           "creationMethod": "from_pretrained",
@@ -38903,6 +39388,7 @@
             "sigmas",
             "latents",
             "attention_kwargs",
+            "denoiser_input_fields",
             "output_type"
           ],
           "steps": [
@@ -39280,6 +39766,7 @@
             "latents",
             "generator",
             "attention_kwargs",
+            "denoiser_input_fields",
             "output_type"
           ],
           "steps": [
@@ -42064,6 +42551,6 @@
       ]
     }
   ],
-  "diffusersRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
+  "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
   "schemaVersion": 1
 }

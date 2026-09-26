@@ -847,25 +847,44 @@ MODIFF_PARAM_TEMPLATES = {
     # Video
     "videos": {"label": "Videos", "type": "video", "display": "output", "required_block_params": ["videos"]},
     # Models
-    "vae": {"label": "VAE", "type": "diffusers_auto_model", "display": "input", "required_block_params": ["vae"]},
+    "vae": {
+        "label": "VAE",
+        "type": "diffusers_auto_model",
+        "display": "input",
+        "signalCompatibility": {"role": "vae"},
+        "required_block_params": ["vae"],
+    },
     "image_encoder": {
         "label": "Image Encoder",
         "type": "diffusers_auto_model",
         "display": "input",
+        "signalCompatibility": {"role": "image_encoder"},
         "required_block_params": ["image_encoder"],
     },
-    "unet": {"label": "Denoise Model", "type": "diffusers_auto_model", "display": "input"},
-    "scheduler": {"label": "Scheduler", "type": "diffusers_auto_model", "display": "input"},
+    "unet": {
+        "label": "Denoise Model",
+        "type": "diffusers_auto_model",
+        "display": "input",
+        "signalCompatibility": {"role": "denoiser"},
+    },
+    "scheduler": {
+        "label": "Scheduler",
+        "type": "diffusers_auto_model",
+        "display": "input",
+        "signalCompatibility": {"role": "scheduler"},
+    },
     "controlnet": {
         "label": "ControlNet Model",
         "type": "diffusers_auto_model",
         "display": "input",
+        "signalCompatibility": {"role": "controlnet_component"},
         "required_block_params": ["controlnet"],
     },
     "text_encoders": {
         "label": "Text Encoders",
         "type": "diffusers_auto_models",
         "display": "input",
+        "signalCompatibility": {"role": "text_encoders"},
         "required_block_params": ["text_encoder"],
     },
     # Bundles/Custom
@@ -953,6 +972,8 @@ class MoDiffParam(metaclass=MoDiffParamMeta):
     fieldOptions: dict[str, Any] | None = None
     onChange: Any = None
     onSignal: Any = None
+    connectionRole: str | None = None
+    signalCompatibility: dict[str, Any] | None = None
     required_block_params: str | list[str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -1585,7 +1606,13 @@ class MoDiffPipelineConfig:
             writer.write(self.to_json_string())
 
     @classmethod
-    def from_json_bytes(cls, raw_bytes: bytes, *, source_label: str = "<memory>") -> "MoDiffPipelineConfig":
+    def from_json_bytes(
+        cls,
+        raw_bytes: bytes,
+        *,
+        source_label: str = "<memory>",
+        allow_omitted_custom_model_inputs: bool = False,
+    ) -> "MoDiffPipelineConfig":
         """Load one bounded, duplicate-free JSON object from an exact byte sequence."""
 
         if len(raw_bytes) > MAX_MODIFF_PIPELINE_CONFIG_BYTES:
@@ -1594,6 +1621,14 @@ class MoDiffPipelineConfig:
                 f"{MAX_MODIFF_PIPELINE_CONFIG_BYTES}-byte limit."
             )
         data = _decode_pipeline_config_bytes(raw_bytes, source_label=source_label)
+        if allow_omitted_custom_model_inputs:
+            # Published Mellon custom sidecars can omit this optional list.
+            # Normalize only the parsed review contract, never source bytes or
+            # an explicitly invalid value. Ordinary pipeline loading stays strict.
+            actions = data.get("node_params")
+            custom = actions.get("custom") if isinstance(actions, dict) else None
+            if isinstance(custom, dict):
+                custom.setdefault("model_input_names", [])
         _validate_pipeline_config_document(data, source_label=source_label)
         return cls.from_dict(data)
 

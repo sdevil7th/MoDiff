@@ -14,14 +14,14 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:909079e62e5ec735dce4a803a5357db97e39c2553588d88138363702137ef7ca",
+  "contentHash": "sha256:f7b2e5cdf11ffe88f38d298357d48641275c69d240ff13cf6b3d39eee3cdc522",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:d68f28dbb0d2b1c8a48cf969763ed855812fa56ff5d21920713eabea4d235012",
+      "contentHash": "sha256:419ecd358329d4ee720c319bb634598870f8cd463fd3f832f0f23ff1b7818679",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:735b1fc8ecbe7c61caba9bd8f3154d6f91544ee1a71ec7f1a983b4bdb3da43c9"
+      "sha256": "sha256:61546d67c49ea8dfc089522fb222a6a024750fb11aea22df3274cbbf41da2e05"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",

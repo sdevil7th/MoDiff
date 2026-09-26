@@ -51,8 +51,9 @@ def test_multiple_blocks_count_separate_model_owners_and_preserve_graph(setup):
     assert len(result["loaders"]) == 2
     assert len(requests) == 1  # Same recipe inspected once; owners still counted twice.
     assert result["retainedRequirements"]["systemRamBytes"] == 600
-    assert result["requirements"]["systemRamBytes"] == 300
-    assert result["strategy"] == "dependency_order_release_owners"
+    assert result["requirements"]["systemRamBytes"] == 600
+    assert result["strategy"] == "dependency_order_retained_owners"
+    assert result["schedule"] is None
     assert result["loaders"][0]["consumers"] == ["generate"]
     assert g == before
 
@@ -319,6 +320,63 @@ def test_composed_image_output_is_retained_across_owner_release(setup):
     assert result['schedule']['releases'][0]['retainOutputs'] == {'generate': ['images']}
 
 
+def test_split_decoder_dimension_connections_are_planned_without_executing_denoise(setup):
+    plan, _, _, requests = setup
+    g = graph()
+    g['nodes']['generate']['action'] = 'Denoise'
+    g['nodes']['generate']['params']['width']['value'] = '1024'
+    g['nodes']['decode'] = node(
+        'DecodeLatents', vae={'sourceId': 'load', 'sourceKey': 'vae_out'},
+        latents={'sourceId': 'generate', 'sourceKey': 'latents'},
+        width={'sourceId': 'generate', 'sourceKey': 'out_width'},
+        height={'sourceId': 'generate', 'sourceKey': 'out_height'},
+    )
+    g['paths'] = [list(g['nodes'])]
+    before = deepcopy(g)
+    result = plan(g)
+    assert result['canAutoRun'], result['issues']
+    assert not result['requiresPreparation']
+    # The executor rechecks these integer outputs against its actual connected
+    # arguments before allocating decoder resources; no cached latent is read.
+    assert result['resolvedFields']['decode'] == {'width': 1024, 'height': 1024}
+    assert requests[-1]['form']['width'] == 1024
+    assert g == before
+
+
+@pytest.mark.parametrize('change', ['different_latents', 'unknown_output', 'non_integer'])
+def test_split_decoder_dimension_projection_does_not_authorize_unknown_geometry(setup, change):
+    plan, _, _, _ = setup
+    g = graph()
+    g['nodes']['generate']['action'] = 'Denoise'
+    g['nodes']['decode'] = node(
+        'DecodeLatents', vae={'sourceId': 'load', 'sourceKey': 'vae_out'},
+        latents={'sourceId': 'generate', 'sourceKey': 'latents'},
+        width={'sourceId': 'generate', 'sourceKey': 'out_width'},
+    )
+    if change == 'different_latents':
+        g['nodes']['decode']['params']['latents'] = {'sourceId': 'load', 'sourceKey': 'latents'}
+    elif change == 'unknown_output':
+        g['nodes']['decode']['params']['width']['sourceKey'] = 'estimated_width'
+    else:
+        g['nodes']['generate']['params']['width']['value'] = 1.5
+    g['paths'] = [list(g['nodes'])]
+    assert not plan(g)['canAutoRun']
+
+
+def test_split_decoder_stops_before_allocation_if_actual_geometry_differs():
+    from modiff.server import WebServer
+
+    app = object.__new__(WebServer)
+    app.modules = {'modules.ModularDiffusers': {'DecodeLatents': {}}}
+    app.node_cache = {'denoise': SimpleNamespace(output={'out_width': 2048})}
+    app._workflow_auto_resolved_fields = {'decode': {'width': 1024}}
+    with pytest.raises(RuntimeError, match='decode.width changed after resource planning'):
+        app.execute_node('decode', node('DecodeLatents', width={
+            'sourceId': 'denoise', 'sourceKey': 'out_width',
+        }), 'test')
+    assert 'decode' not in app.node_cache
+
+
 def test_nested_data_selection_and_conversion_resolve_without_executing_nodes(setup):
     plan, _, _, _ = setup
     g = graph()
@@ -547,3 +605,27 @@ def test_release_rejects_a_model_reference_that_survives_ownership_cleanup(monke
                           _best_effort_allocator_trim=lambda: (True, []))
     with pytest.raises(ValueError, match='model references remain alive'):
         release_owner_caches(app, {'nodeIds': ['expired'], 'ownerIds': ['expired'], 'retainOutputs': {}}, SimpleNamespace(cache={}))
+
+
+@pytest.mark.parametrize("shared, ram, vram, release", [
+    (False, 1000, 1000, False), (False, 450, 1000, True),
+    (False, 1000, 300, True), (True, 1000, 1000, False),
+    (True, 800, 1000, True),
+])
+def test_owner_retention_uses_the_combined_live_memory_envelope(setup, shared, ram, vram, release):
+    plan, _, hardware, _ = setup
+    hardware['systemMemory']['availableBytes'] = ram
+    hardware['accelerator'].update(freeBytes=vram, memoryKind='shared' if shared else 'dedicated')
+    result = plan(graph(two=True))
+    assert result['canAutoRun']
+    assert (result['schedule'] is not None) is release
+    assert result['retainedRequirements']['systemRamBytes'] == 600
+
+
+def test_owner_retention_normalizes_numeric_hardware_values(setup):
+    plan, _, hardware, _ = setup
+    hardware['systemMemory']['availableBytes'] = '1000'
+    hardware['accelerator']['freeBytes'] = '1000'
+    result = plan(graph(two=True))
+    assert result['canAutoRun']
+    assert result['schedule'] is None

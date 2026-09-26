@@ -77,13 +77,13 @@ def test_reviewed_optional_fields_exist_in_each_pinned_upstream_call():
     from modules.DiffusersImage.call_inputs import PIPELINE_CALL_INPUTS
     root = Path(importlib.util.find_spec('diffusers').origin).parent / 'pipelines'
     signatures = {}
-    for path in root.glob('flux*/pipeline_flux*.py'):
+    for path in (*root.glob('flux*/pipeline_flux*.py'), *root.glob('qwenimage21/pipeline_*.py')):
         for node in ast.parse(path.read_text()).body:
             if isinstance(node, ast.ClassDef):
                 for method in node.body:
                     if isinstance(method, ast.FunctionDef) and method.name == '__call__':
                         signatures[node.name] = {arg.arg for arg in method.args.args + method.args.kwonlyargs}
-    assert len(PIPELINE_CALL_INPUTS) == 17
+    assert len(PIPELINE_CALL_INPUTS) == 18
     for name, fields in PIPELINE_CALL_INPUTS.items():
         upstream = 'FluxPriorReduxPipeline' if name == 'FluxReduxPipeline' else name
         assert set(fields) <= signatures[upstream], name

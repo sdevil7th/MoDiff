@@ -11,6 +11,7 @@ from modiff.template_gallery import (
     TemplateGalleryError,
     _path_is_link_or_reparse,
     install_template_gallery,
+    load_template_gallery_source,
     plan_template_gallery_install,
     validate_template_gallery_manifest,
     verify_template_gallery_tree,
@@ -187,6 +188,27 @@ class TemplateGalleryInstallTests(unittest.TestCase):
         self.assertFalse(plan["fitsWithQueue"])
         self.assertFalse(plan["installed"])
         self.assertFalse(cache.exists(), "A read-only install plan must not create the cache directory.")
+
+    def test_local_bundle_uses_pinned_gallery_source_for_install_plan(self):
+        self.source["mode"] = "local"
+        source_path, remote_manifest = self._write_contract()
+        self.assertEqual(load_template_gallery_source(source_path), self.source)
+
+        _source, _manifest, plan = plan_template_gallery_install(
+            source_path,
+            self.root / "web/template-gallery",
+            cache_root=self.root / "cache",
+            reserve_bytes=0,
+            download_file=lambda **_kwargs: str(remote_manifest),
+        )
+        self.assertEqual(plan["repoId"], self.source["repoId"])
+        self.assertEqual(plan["revision"], self.source["revision"])
+        self.assertFalse(plan["installed"])
+
+        self.source["revision"] = "main"
+        source_path.write_text(json.dumps(self.source), encoding="utf-8")
+        with self.assertRaisesRegex(TemplateGalleryError, "source contract is invalid"):
+            load_template_gallery_source(source_path)
 
     def test_install_stages_and_verifies_before_atomic_promotion(self):
         from huggingface_hub import constants as hf_constants

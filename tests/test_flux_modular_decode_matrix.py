@@ -78,7 +78,11 @@ def test_replaced_flux_decoder_matches_direct_upstream_pixels(definition):
                 block_definition_id=contract["id"], block_class=contract["className"],
                 block_contract_hash=contract["contentHash"], execution_kind="step", state_in=issued)
             issued = result["state_out"]
-        images = state.get("images")
+        if adapter:
+            # Continued execution forks mutable state; the input belongs to the
+            # preceding node and must remain unchanged for repeat/branch reuse.
+            assert state.get("images") is None
+        images = (issued._state if adapter else state).get("images")
         assert len(images) == 1 and images[0].size == (32, 32)
         return np.asarray(images[0])
 

@@ -14,7 +14,7 @@ from PIL import Image, ImageColor, ImageDraw, ImageFilter
 
 from modiff.NodeBase import NodeBase
 from modules.DiffusersImage.call_inputs import (
-    CALL_INPUT_ADDITIONS, CALL_INPUT_PARAMS, PIPELINE_CALL_INPUTS, apply_call_inputs, normalize_call_inputs,
+    CALL_INPUT_ADDITIONS, CALL_INPUT_DEFAULTS, CALL_INPUT_PARAMS, PIPELINE_CALL_INPUTS, apply_call_inputs, normalize_call_inputs,
     record_image_call_inputs,
 )
 from modules.DiffusersImage.image_prompt_adapter import (
@@ -148,6 +148,7 @@ class ImagePipelineAdapter:
     prompt_embedding_encoder_dtype: str | None = None
     prompt_embedding_mask_modes: frozenset[str] = frozenset()
     max_inference_steps: int = 100
+    two_step_intermediate_timestep: bool = False
     min_output_side: int = 16
     max_output_side: int = 2048
     output_side_step: int = 16
@@ -176,6 +177,7 @@ class ImagePipelineAdapter:
     max_reference_aspect_ratio: float | None = None
     enable_prompt_rewrite: bool | None = None
     clean_caption: bool | None = None
+    use_resolution_binning: bool | None = None
     cfg_trunc_ratio: float | None = None
     cfg_normalization: bool | None = None
     unconditional_optional_fields: tuple[str, ...] = ()
@@ -197,15 +199,17 @@ class ImagePipelineAdapter:
             raise ValueError("An upstream image pipeline class cannot be blank.")
         if not 1 <= self.max_inference_steps <= 100:
             raise ValueError("Image adapters must bound inference steps between 1 and 100.")
-        if not 16 <= self.min_output_side <= self.max_output_side <= 2048:
-            raise ValueError("Image adapters must bound output sides between 16 and 2048.")
+        if type(self.two_step_intermediate_timestep) is not bool:
+            raise ValueError("Intermediate-timestep policy must be an exact boolean.")
+        if not 16 <= self.min_output_side <= self.max_output_side <= 4096:
+            raise ValueError("Image adapters must bound output sides between 16 and 4096.")
         if self.output_side_step not in {16, 32, 64}:
             raise ValueError("Image adapter output-side increments must be 16, 32, or 64 pixels.")
         if self.min_output_side % self.output_side_step or (
             self.max_output_side - self.min_output_side
         ) % self.output_side_step:
             raise ValueError("Image adapter output-side bounds must align to their declared increment.")
-        if not self.min_output_side**2 <= self.max_output_pixels <= _MAX_IMAGE_OUTPUT_PIXELS:
+        if not self.min_output_side**2 <= self.max_output_pixels <= 5 * 1024 * 1024:
             raise ValueError("Image adapters must declare a bounded output-pixel ceiling covering the minimum size.")
         if not 0.0 <= self.maximum_guidance_scale <= 50.0:
             raise ValueError("The maximum text guidance scale must be between 0 and 50.")
@@ -287,6 +291,8 @@ class ImagePipelineAdapter:
             raise ValueError("Image reference aspect-ratio bounds must be positive and ordered.")
         if self.enable_prompt_rewrite is not None and type(self.enable_prompt_rewrite) is not bool:
             raise ValueError("Image prompt rewriting must be an exact boolean when configured.")
+        if self.use_resolution_binning is not None and type(self.use_resolution_binning) is not bool:
+            raise ValueError("Image resolution binning must be an exact boolean when configured.")
         if self.clean_caption is not None and type(self.clean_caption) is not bool:
             raise ValueError("Image caption cleaning must be an exact boolean when configured.")
         if self.cfg_trunc_ratio is not None and not 0.0 <= self.cfg_trunc_ratio <= 1.0:
@@ -369,6 +375,11 @@ class ImagePipelineAdapter:
         return tuple(mode for mode in _IMAGE_MODE_ORDER if mode in self.modes)
 
     def apply_generation_parameters(self, pipeline: Any, values: dict[str, Any], target: dict[str, Any]) -> None:
+        if self.two_step_intermediate_timestep and values["num_inference_steps"] != 2:
+            # SCM's upstream default is a specialized two-step schedule. Other
+            # declared step counts use its native evenly spaced schedule; never
+            # silently replace the user's requested number of inference steps.
+            target["intermediate_timesteps"] = None
         aliases = {
             "negative_prompt": "negative_prompt",
             "width": "width",
@@ -419,6 +430,10 @@ class ImagePipelineAdapter:
             target[self.conditioning_scale_parameter] = values["conditioning_scale"]
         if self.enable_prompt_rewrite is not None and supports_arg(pipeline, "enable_prompt_rewrite"):
             target["enable_prompt_rewrite"] = self.enable_prompt_rewrite
+        if self.use_resolution_binning is not None:
+            if not supports_arg(pipeline, "use_resolution_binning"):
+                raise ValueError(f"{self.pipeline_class} does not expose its reviewed resolution-binning control.")
+            target["use_resolution_binning"] = self.use_resolution_binning
         if self.clean_caption is not None and supports_arg(pipeline, "clean_caption"):
             target["clean_caption"] = self.clean_caption
         if self.cfg_trunc_ratio is not None and supports_arg(pipeline, "cfg_trunc_ratio"):
@@ -575,6 +590,21 @@ IMAGE_PIPELINE_ADAPTERS = {
         unconditional_optional_fields=("class_label",),
         safe_serialization_required=True,
     ),
+    "QwenImage21Pipeline": ImagePipelineAdapter(
+        "QwenImage21Pipeline",
+        frozenset({"text_to_image", "edit_image", "multi_image_reference_edit"}),
+        "Qwen/Qwen-Image-2.1",
+        guidance_parameter="true_cfg_scale",
+        image_guidance_parameter=None,
+        safe_serialization_required=True,
+        max_reference_images=10,
+        min_output_side=32,
+        output_side_step=32,
+        # The publisher's 2K aspect presets include 2752x1536. Keep the
+        # cumulative allocation bounded; existing adapters retain their limits.
+        max_output_side=4096,
+        max_output_pixels=5 * 1024 * 1024,
+    ),
     "QwenImagePipeline": ImagePipelineAdapter(
         "QwenImagePipeline",
         frozenset({"text_to_image"}),
@@ -708,10 +738,12 @@ IMAGE_PIPELINE_ADAPTERS = {
         HUNYUAN_DIT_DISTILLED_REPO,
         safe_serialization_required=True,
         max_inference_steps=25,
-        min_output_side=1024,
-        max_output_side=1024,
+        min_output_side=512,
+        max_output_side=2048,
         output_side_step=32,
         max_output_pixels=1024 * 1024,
+        # Honor explicit graph dimensions instead of upstream's nearest preset.
+        use_resolution_binning=False,
         max_sequence_length=256,
     ),
     "HunyuanDiTPAGPipeline": ImagePipelineAdapter(
@@ -721,10 +753,12 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("HunyuanDiTPipeline",),
         safe_serialization_required=True,
         max_inference_steps=25,
-        min_output_side=1024,
-        max_output_side=1024,
+        min_output_side=512,
+        max_output_side=2048,
         output_side_step=32,
         max_output_pixels=1024 * 1024,
+        # Honor explicit graph dimensions instead of upstream's nearest preset.
+        use_resolution_binning=False,
         max_sequence_length=256,
         pag_applied_layers=("blocks.14",),
     ),
@@ -735,10 +769,12 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("HunyuanDiTPipeline",),
         safe_serialization_required=True,
         max_inference_steps=50,
-        min_output_side=1024,
-        max_output_side=1024,
+        min_output_side=512,
+        max_output_side=2048,
         output_side_step=32,
         max_output_pixels=1024 * 1024,
+        # Honor explicit graph dimensions instead of upstream's nearest preset.
+        use_resolution_binning=False,
         max_sequence_length=256,
         conditioning_kind="controlnet",
         default_conditioning_repo=HUNYUAN_DIT_CONTROLNET_CANNY_REPO,
@@ -839,6 +875,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         SANA_SPRINT_REPO,
         safe_serialization_required=True,
         max_inference_steps=4,
+        two_step_intermediate_timestep=True,
         max_sequence_length=300,
     ),
     "SanaSprintImg2ImgPipeline": ImagePipelineAdapter(
@@ -848,6 +885,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         artifact_pipeline_classes=("SanaSprintPipeline",),
         safe_serialization_required=True,
         max_inference_steps=4,
+        two_step_intermediate_timestep=True,
         max_sequence_length=300,
     ),
     "PixArtSigmaPipeline": ImagePipelineAdapter(
@@ -875,8 +913,8 @@ IMAGE_PIPELINE_ADAPTERS = {
         safe_serialization_required=True,
         weight_variant="fp16",
         max_inference_steps=50,
-        min_output_side=1024,
-        max_output_side=1024,
+        min_output_side=512,
+        max_output_side=2048,
         output_side_step=64,
         max_output_pixels=1024 * 1024,
         max_sequence_length=128,
@@ -889,8 +927,8 @@ IMAGE_PIPELINE_ADAPTERS = {
         safe_serialization_required=True,
         weight_variant="fp16",
         max_inference_steps=50,
-        min_output_side=1024,
-        max_output_side=1024,
+        min_output_side=512,
+        max_output_side=2048,
         output_side_step=64,
         max_output_pixels=1024 * 1024,
         max_sequence_length=128,
@@ -1080,8 +1118,8 @@ IMAGE_PIPELINE_ADAPTERS = {
         ERNIE_IMAGE_TURBO_REPO,
         safe_serialization_required=True,
         max_inference_steps=8,
-        min_output_side=1024,
-        max_output_side=1024,
+        min_output_side=512,
+        max_output_side=2048,
         output_side_step=32,
         max_output_pixels=1024 * 1024,
         fixed_guidance_scale=1.0,
@@ -1102,8 +1140,8 @@ IMAGE_PIPELINE_ADAPTERS = {
         prompt_embedding_dtype_component="transformer",
         native_prompt_encoding=True,
         max_inference_steps=50,
-        min_output_side=1024,
-        max_output_side=1024,
+        min_output_side=512,
+        max_output_side=2048,
         output_side_step=32,
         max_output_pixels=1024 * 1024,
         max_sequence_length=2048,
@@ -1667,6 +1705,10 @@ _SIZE_GUIDANCE_STRENGTH_CROP_SEQUENCE = (
 )
 
 IMAGE_MODE_FIELD_CONTRACTS = {
+    "QwenImage21Pipeline": {
+        mode: _image_field_contract("negative_prompt", "width", "height", "guidance_scale")
+        for mode in ("text_to_image", "edit_image", "multi_image_reference_edit")
+    },
     "DDPMPipeline": {
         "unconditional_image": _image_field_contract(),
     },
@@ -2360,6 +2402,18 @@ def image_model_field_options(adapter: ImagePipelineAdapter) -> dict[str, Any]:
     }
 
 
+def image_operation_loader_defaults(adapter: ImagePipelineAdapter) -> dict[str, Any]:
+    """Seed new canonical operations with the reviewed task's loading recipe.
+
+    Some unconditional samplers lack execution-device-aware offload or
+    convert tensors directly to NumPy. Their existing creator recipe is
+    resident float32. Do not rewrite saved loaders or their generic schema.
+    """
+    if adapter.modes == frozenset({"unconditional_image"}):
+        return {"dtype": "float32", "auto_offload": False, "offload_mode": OFFLOAD_MODE_NONE}
+    return {}
+
+
 def image_loader_field_params(adapter: ImagePipelineAdapter) -> dict[str, dict[str, Any]]:
     """Selected loader presentation shared by ordinary fields and compiled Blocks.
 
@@ -2382,7 +2436,15 @@ def image_loader_field_params(adapter: ImagePipelineAdapter) -> dict[str, dict[s
     }
 
 
-_LATENT_OUTPUT_PIPELINES = frozenset(PIPELINE_CALL_INPUTS) - {'FluxReduxPipeline'}
+# An optional call input does not establish a latent layout or a decoder.
+# Admit exact producers only after their matching decode path is reviewed.
+_LATENT_OUTPUT_PIPELINES = frozenset({
+    'FluxPipeline', 'FluxImg2ImgPipeline', 'FluxInpaintPipeline', 'FluxKontextPipeline',
+    'FluxKontextInpaintPipeline', 'FluxFillPipeline', 'FluxControlPipeline',
+    'FluxControlImg2ImgPipeline', 'FluxControlInpaintPipeline', 'FluxControlNetPipeline',
+    'FluxControlNetImg2ImgPipeline', 'FluxControlNetInpaintPipeline', 'Flux2Pipeline',
+    'Flux2KleinPipeline', 'Flux2KleinInpaintPipeline', 'Flux2KleinKVPipeline', 'QwenImage21Pipeline',
+})
 
 
 def _image_output_options(adapter: ImagePipelineAdapter, action: str) -> list[str]:
@@ -2413,6 +2475,9 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
     field_params = field_contract.field_param_overlay()
     for key in PIPELINE_CALL_INPUTS.get(adapter.load_pipeline_class, ()):
         field_params[key] = {"hidden": False}
+        defaults = CALL_INPUT_DEFAULTS.get(adapter.load_pipeline_class, {})
+        if key in defaults:
+            field_params[key]["default"] = defaults[key]
     if adapter.secondary_guidance_parameter is not None:
         field_params["guidance_scale"] = {**field_params["guidance_scale"], "label": adapter.guidance_label}
         field_params["use_guidance_scale_2"] = {
@@ -2462,8 +2527,13 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
         action: [candidate for candidate in adapter.mode_options if candidate in accepted_modes]
         for action, accepted_modes in IMAGE_ACTION_MODES.items()
     }
+    connection_actions = None
     if adapter.load_pipeline_class in _LATENT_OUTPUT_PIPELINES:
         action = next(action for action, modes in actions.items() if mode in modes)
+        connection_actions = {
+            **{candidate: modes for candidate, modes in actions.items() if modes},
+            "DecodeLatents": [mode],
+        }
         field_params['output_type'] = {'options': _image_output_options(adapter, action)}
         field_params['latents_out'] = {'hidden': False}
     contract = {
@@ -2476,6 +2546,8 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
         "actions": {action: modes for action, modes in actions.items() if modes},
         "fieldParams": field_params,
     }
+    if connection_actions is not None:
+        contract["connectionActions"] = connection_actions
     if adapter.max_output_pixels != _MAX_IMAGE_OUTPUT_PIXELS:
         contract["maxOutputPixels"] = adapter.max_output_pixels
     if mode == "unconditional_image":
@@ -2496,6 +2568,52 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
             "farValue": 1.0,
         }
     return contract
+
+
+def image_action_field_params(contract: dict[str, Any], action: str) -> dict:
+    """The same task overlay for dynamic nodes and read-only operation discovery."""
+    if action == "UnconditionalGenerate":
+        return contract.get("actionFieldParams", {})
+    if action == "PredictMap":
+        return {}
+    fields = {
+        field: {"hidden": True}
+        for field in ("use_guidance_scale_2", "guidance_scale_2", "latents_out", *CALL_INPUT_PARAMS)
+    }
+    adapter = get_image_pipeline_adapter(contract["pipelineClass"])
+    return {
+        **fields,
+        **contract["fieldParams"],
+        # Publish the same bound as preflight for each selected model. Keep it
+        # out of the persisted signal identity and do not change authored values.
+        "num_inference_steps": {"min": 1, "max": adapter.max_inference_steps},
+    }
+
+
+def get_image_operation_contracts(modules) -> list[dict]:
+    from modiff.operation_contracts import build_pipeline_operation_contract
+
+    result = []
+    for pipeline_class, adapter in sorted(IMAGE_PIPELINE_ADAPTERS.items()):
+        for mode in adapter.mode_options:
+            contract = image_pipeline_contract(adapter, mode)
+            actions = [("LoadPipeline", "diffusion.load_models", image_loader_field_params(adapter))]
+            for action, modes in contract["actions"].items():
+                if mode in modes:
+                    operation = {
+                        "PredictMap": "diffusion.predict_map",
+                        "LayerDecompose": "diffusion.decompose_layers",
+                    }.get(action, "diffusion.generate_image")
+                    actions.append((action, operation, image_action_field_params(contract, action)))
+            for action, operation, fields in actions:
+                record = build_pipeline_operation_contract(
+                    modules, pipeline_class=pipeline_class, task=mode, operation_id=operation,
+                    node_key=f"modules.DiffusersImage.{action}", field_overrides=fields,
+                    loader=action == "LoadPipeline",
+                )
+                if record is not None:
+                    result.append(record)
+    return result
 
 
 def _compatible_image_contract(signal: Any, expected: dict[str, Any]) -> bool:
@@ -3709,6 +3827,11 @@ def build_qwen_pipeline_quantization_config(
 
 
 def add_progress_callback(node: NodeBase, pipeline: Any, call_kwargs: dict[str, Any], steps: int):
+    if not supports_arg(pipeline, "callback_on_step_end"):
+        # Some upstream pipelines expose only a console progress bar. Use the
+        # existing indeterminate convention, never a fabricated step or ETA.
+        node.progress(-1, phase="denoising", message="Generating image")
+        return
     node.progress(
         0,
         phase="denoising",
@@ -3720,8 +3843,6 @@ def add_progress_callback(node: NodeBase, pipeline: Any, call_kwargs: dict[str, 
     # ErnieImage and similar pipelines invoke callback_on_step_end before they
     # assign this Diffusers progress field. NodeBase.pipe_callback reads it.
     pipeline._num_timesteps = steps
-    if not supports_arg(pipeline, "callback_on_step_end"):
-        return
 
     def callback(pipe, step_index, timestep, callback_kwargs):
         # NodeBase owns the common cancellation contract. Propagating it here
@@ -3742,27 +3863,9 @@ def prepare_reference_images(image: Any, adapter: ImagePipelineAdapter) -> Any:
         return image[0] if isinstance(image, (list, tuple)) and image else image
     if adapter.multi_image_strategy != "stitch_horizontal":
         return image if isinstance(image, list) else list(image)
+    from modules.ImageOperations.main import stitch_reference_images
 
-    from PIL import Image
-
-    if not all(isinstance(item, Image.Image) for item in image):
-        raise ValueError("Horizontal multi-reference stitching currently requires PIL image inputs.")
-    converted = [item.convert("RGB") for item in image]
-    target_height = max(item.height for item in converted)
-    resized = [
-        item
-        if item.height == target_height
-        else item.resize(
-            (max(1, round(item.width * target_height / item.height)), target_height), Image.Resampling.LANCZOS
-        )
-        for item in converted
-    ]
-    canvas = Image.new("RGB", (sum(item.width for item in resized), target_height))
-    left = 0
-    for item in resized:
-        canvas.paste(item, (left, 0))
-        left += item.width
-    return canvas
+    return stitch_reference_images(image)
 
 
 def prepare_reference_prompt(prompt: Any, image: Any, adapter: ImagePipelineAdapter) -> Any:
@@ -3950,8 +4053,19 @@ def load_cached_image_component(factory, model_id: str, **load_kwargs):
     """Keep missing-cache recovery actionable without enabling inference downloads."""
     from huggingface_hub.errors import LocalEntryNotFoundError
 
+    target = model_id
+    if (
+        load_kwargs.get("local_files_only") is True
+        and load_kwargs.get("revision")
+        and getattr(factory, "config_name", None) == "model_index.json"
+    ):
+        from utils.huggingface import exact_cached_snapshot_path
+
+        # Model Manager installs the pipeline's runtime files, not unrelated
+        # weight folders. Preserve its exact commit and managed-cache boundary.
+        target = exact_cached_snapshot_path(model_id, load_kwargs["revision"])
     try:
-        return factory.from_pretrained(model_id, **load_kwargs)
+        return factory.from_pretrained(target, **load_kwargs)
     except LocalEntryNotFoundError as error:
         revision = load_kwargs.get("revision")
         selected = f"{model_id}@{revision}" if revision else model_id
@@ -4083,7 +4197,8 @@ class LoadPipeline(NodeBase):
             "label": "Pre-quantized Transformer",
             "display": "input",
             "type": "any",
-            "description": "Reviewed single-file transformer component for exact base-pipeline assembly.",
+            "required": False,
+            "description": "Optional reviewed single-file transformer component for exact base-pipeline assembly.",
         },
         "image_prompt_adapter": {"label": "Image Prompt Adapter", "display": "input",
             "type": "diffusers_image_prompt_adapter",
@@ -4508,6 +4623,7 @@ class UnconditionalGenerate(NodeBase):
                 {"action": "value", "target": "image_contract"},
                 {"action": "exec", "data": "update_image_contract"},
             ],
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "image_contract": {
             "label": "Image Contract",
@@ -4565,7 +4681,7 @@ class UnconditionalGenerate(NodeBase):
             raise ValueError("The connected image pipeline published a stale or mismatched task contract.")
         if mode not in expected_signal["actions"].get(self.class_name, ()):
             raise ValueError("The connected image pipeline does not support unconditional image generation.")
-        for field, params in expected_signal.get("actionFieldParams", {}).items():
+        for field, params in image_action_field_params(expected_signal, self.class_name).items():
             if field in self.__class__.params:
                 self.set_field_params(field, params)
 
@@ -4632,6 +4748,7 @@ class PredictMap(NodeBase):
                 {"action": "value", "target": "image_contract"},
                 {"action": "exec", "data": "update_image_contract"},
             ],
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "image_contract": {
             "label": "Image Contract",
@@ -4759,6 +4876,7 @@ class Generate(NodeBase):
                 {"action": "value", "target": "image_contract"},
                 {"action": "exec", "data": "update_image_contract"},
             ],
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "image_contract": {
             "label": "Image Contract",
@@ -4942,12 +5060,9 @@ class Generate(NodeBase):
         if mode not in expected_signal["actions"].get(self.class_name, ()):
             raise ValueError("The connected image pipeline does not support this generic image action.")
 
-        for field in ("use_guidance_scale_2", "guidance_scale_2", 'latents_out', *CALL_INPUT_PARAMS):
-            if field not in expected_signal["fieldParams"]:
-                self.set_field_params(field, {"hidden": True})
         if 'output_type' not in expected_signal['fieldParams']:
             self.set_field_params('output_type', {'options': _image_output_options(adapter, self.class_name)})
-        for field, params in expected_signal["fieldParams"].items():
+        for field, params in image_action_field_params(expected_signal, self.class_name).items():
             if field in self.__class__.params:
                 self.set_field_params(field, params)
 
@@ -5261,7 +5376,13 @@ class DecodeLatents(NodeBase):
     label = 'Decode Image Latents'
     category = 'Diffusers Image'
     params = {
-        'pipeline': {'label': 'Pipeline', 'type': 'image_diffusion_pipeline', 'display': 'input', 'required': True},
+        'pipeline': {
+            'label': 'Pipeline',
+            'type': 'image_diffusion_pipeline',
+            'display': 'input',
+            'required': True,
+            'signalCompatibility': {'required': True, 'action': '$node'},
+        },
         'latents': {'label': 'Latents', 'type': 'tensor', 'display': 'input', 'required': True},
         'width': {'label': 'Width', 'type': 'int', 'default': 1024, 'min': 64, 'max': 4096},
         'height': {'label': 'Height', 'type': 'int', 'default': 1024, 'min': 64, 'max': 4096},
@@ -5275,18 +5396,26 @@ class DecodeLatents(NodeBase):
         import torch
         adapter = _image_pipeline_adapter(pipeline)
         if adapter.load_pipeline_class not in _LATENT_OUTPUT_PIPELINES:
-            raise ValueError('Decode Image Latents requires a reviewed FLUX pipeline with explicit latent output.')
+            raise ValueError('Decode Image Latents requires a reviewed pipeline with a matching explicit latent output.')
+        width = _bounded_image_int(width, field='width', default=1024, minimum=adapter.min_output_side,
+                                   maximum=adapter.max_output_side, step=adapter.output_side_step)
+        height = _bounded_image_int(height, field='height', default=1024, minimum=adapter.min_output_side,
+                                    maximum=adapter.max_output_side, step=adapter.output_side_step)
+        if output_type not in ('pil', 'np', 'pt'):
+            raise ValueError('Decode Image Latents output_type must be pil, np, or pt.')
         if not isinstance(latents, torch.Tensor) or not latents.is_floating_point() or latents.device.type == 'meta':
             raise ValueError('Latents must be a materialized floating-point Tensor from the matching pipeline.')
         vae = pipeline.vae
-        channels = vae.config.latent_channels
+        qwen21 = adapter.load_pipeline_class == 'QwenImage21Pipeline'
+        channels = vae.config.z_dim if qwen21 else vae.config.latent_channels
         # FLUX.1 returns packed normalized tokens. FLUX.2 returns already
         # unpatchified, denormalized VAE latents. Neither conversion is implicit
         # at an arbitrary tensor connection; this explicit consumer owns decode.
         flux2 = adapter.load_pipeline_class.startswith('Flux2')
-        scale = 2 ** (len(vae.config.block_out_channels) - 1)
+        scale = pipeline.vae_scale_factor if qwen21 else 2 ** (len(vae.config.block_out_channels) - 1)
         latent_h, latent_w = height // scale, width // scale
-        expected = (channels, latent_h, latent_w) if flux2 else ((latent_h // 2) * (latent_w // 2), channels * 4)
+        expected = ((latent_h * latent_w, channels) if qwen21 else
+                    (channels, latent_h, latent_w) if flux2 else ((latent_h // 2) * (latent_w // 2), channels * 4))
         if (tuple(latents.shape[1:]) != expected or not 1 <= latents.shape[0] <= 8
                 or width % (scale * 2) or height % (scale * 2)
                 or latents.shape[0] * width * height > 16 * 1024 * 1024):
@@ -5294,10 +5423,17 @@ class DecodeLatents(NodeBase):
                 'Use its matching latent output and set Width/Height to the original generation dimensions.')
         with torch.inference_mode():
             value = latents.to(device=pipeline._execution_device, dtype=vae.dtype)
-            if not flux2:
+            if qwen21:
+                value = pipeline._unpack_latents(value, height, width, pipeline.vae_scale_factor)
+                mean = torch.as_tensor(vae.config.latents_mean, device=value.device, dtype=value.dtype).view(1, channels, 1, 1, 1)
+                std = torch.as_tensor(vae.config.latents_std, device=value.device, dtype=value.dtype).view(1, channels, 1, 1, 1)
+                value = value * std + mean
+            elif not flux2:
                 value = pipeline._unpack_latents(value, height, width, pipeline.vae_scale_factor)
                 value = value / vae.config.scaling_factor + (getattr(vae.config, 'shift_factor', 0) or 0)
             decoded = vae.decode(value, return_dict=False)[0]
+            if qwen21:
+                decoded = decoded[:, :, 0]
             images = pipeline.image_processor.postprocess(decoded, output_type=output_type)
         pipeline.maybe_free_model_hooks()
         actual_width, actual_height = output_image_dimensions(images, output_type)
@@ -5311,7 +5447,13 @@ class LoadAdapter(NodeBase):
     category = "Diffusers Image"
     resizable = True
     params = {
-        "pipeline": {"label": "Pipeline", "display": "input", "type": "image_diffusion_pipeline", "required": True},
+        "pipeline": {
+            "label": "Pipeline",
+            "display": "input",
+            "type": "image_diffusion_pipeline",
+            "required": True,
+            "onSignal": {"action": "signal", "target": "output"},
+        },
         "adapter_path": {
             "label": "Adapter",
             "display": "modelselect",
@@ -5347,7 +5489,12 @@ class LoadAdapter(NodeBase):
             "max": 2,
             "step": 0.01,
         },
-        "output": {"label": "Pipeline", "display": "output", "type": "image_diffusion_pipeline"},
+        "output": {
+            "label": "Pipeline",
+            "display": "output",
+            "type": "image_diffusion_pipeline",
+            "signal": {"direction": "output", "origin": "pipeline", "value": ""},
+        },
     }
 
     @staticmethod

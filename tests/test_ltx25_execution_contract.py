@@ -138,13 +138,17 @@ class LTX25ExecutionContractTests(unittest.TestCase):
         pipeline = _Pipeline()
         generator = continuation_generator_from_seed(42, pipeline)
         first = torch.rand(4, generator=generator)
+        cached_position = generator.get_state().clone()
         continued = continuation_generator_from_seed(42, pipeline, _State(generator=generator))
         second = torch.rand(4, generator=continued)
 
         expected = torch.Generator(device="cpu").manual_seed(42)
         self.assertTrue(torch.equal(first, torch.rand(4, generator=expected)))
         self.assertTrue(torch.equal(second, torch.rand(4, generator=expected)))
-        self.assertIs(continued, generator)
+        self.assertIsNot(continued, generator)
+        self.assertTrue(torch.equal(generator.get_state(), cached_position))
+        retry = continuation_generator_from_seed(42, pipeline, _State(generator=generator))
+        self.assertTrue(torch.equal(second, torch.rand(4, generator=retry)))
 
     def test_split_workflow_rejects_a_midstream_seed_change(self):
         pipeline = _Pipeline()

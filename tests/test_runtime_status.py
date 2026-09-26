@@ -1,6 +1,7 @@
 import copy
 import asyncio
 import io
+import hashlib
 import json
 import mimetypes
 import os
@@ -867,6 +868,8 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         events = []
 
         async def run_callback(_callback, *, serialize_model_io=False, on_start=None):
+            if on_start is None:
+                return _callback()
             if on_start is not None:
                 on_start()
             if "first" not in events:
@@ -973,6 +976,21 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         release.assert_called_once_with()
         self.assertEqual(messages[0]["type"], "runtime_resource_cleanup")
         self.assertEqual(messages[0]["resourceMode"], "expert")
+
+    def test_identical_multiple_loaders_keep_the_survivors_cleanup_recipe(self):
+        loader = {'module': 'modules.ModularDiffusers', 'action': 'ModelsLoader', 'params': {
+            'model_type': {'value': 'StableDiffusionXLModularPipeline'},
+            'repo_id': {'value': {'source': 'hub', 'value': 'test/model'}},
+            'revision': {'value': 'a' * 40}, 'dtype': {'value': 'float16'},
+            'offload_mode': {'value': 'model_cpu'},
+        }}
+        single = self.server._runtime_cleanup_hints_for_graph({'a': loader}, {'resourceMode': 'expert'})
+        multiple = self.server._runtime_cleanup_hints_for_graph({'a': loader, 'b': loader}, {'resourceMode': 'expert'})
+        self.assertEqual(self.server._auto_candidate_cache_signature(single), self.server._auto_candidate_cache_signature(multiple))
+        loader['params']['revision']['value'] = 'b' * 40
+        changed = self.server._runtime_cleanup_hints_for_graph({'a': loader}, {'resourceMode': 'expert'})
+        self.assertNotEqual(self.server._auto_candidate_cache_signature(single), self.server._auto_candidate_cache_signature(changed))
+        self.assertNotIn('autoResourcePlan', multiple)
 
     def test_structurally_customized_graph_derives_cleanup_identity_without_route_authority(self):
         graph_nodes = {
@@ -2696,6 +2714,27 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(adjusted, fingerprint)
 
+    def test_idle_auto_planning_refreshes_cached_host_memory_without_mutating_identity(self):
+        fingerprint = {"fingerprint": "cached", "resourceFingerprint": "resource", "hardware": hardware_snapshot()}
+        fingerprint["hardware"]["system"].update(ram_total=128 * GIB, ram_free=16 * GIB, ram_available=72 * GIB)
+        self.server._last_runtime_fingerprint = copy.deepcopy(fingerprint)
+        for available in (84 * GIB, 4 * GIB):
+            with self.subTest(available=available), patch("modiff.hardware.system_memory_snapshot", return_value={
+                "total_bytes": 128 * GIB, "free_bytes": 2 * GIB, "available_bytes": available,
+            }), patch.object(self.server, "_runtime_fingerprint", side_effect=AssertionError("no full probe")):
+                adjusted = self.server._auto_planning_runtime_fingerprint()
+            self.assertEqual(adjusted["hardware"]["system"]["ram_available"], available)
+            self.assertEqual(adjusted["hardware"]["system"]["ram_free"], 2 * GIB)
+            self.assertEqual(adjusted["fingerprint"], "cached")
+            self.assertEqual(adjusted["resourceFingerprint"], "resource")
+            self.assertEqual(self.server._last_runtime_fingerprint, fingerprint)
+
+    def test_idle_auto_planning_does_not_reuse_stale_ram_when_sampling_fails(self):
+        self.server._last_runtime_fingerprint = {"hardware": hardware_snapshot()}
+        with patch("modiff.hardware.system_memory_snapshot", side_effect=OSError("probe failed")):
+            adjusted = self.server._auto_planning_runtime_fingerprint()
+        self.assertIsNone(adjusted["hardware"]["system"].get("ram_available"))
+
     async def test_auto_plan_uses_capacity_after_releasing_its_resident_cache(self):
         snapshot = hardware_snapshot()
         snapshot["devices"][0]["vram_free"] = 4 * GIB
@@ -2862,6 +2901,16 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotEqual(second["fingerprint"], third["fingerprint"])
         self.assertEqual(first["resourceFingerprint"], second["resourceFingerprint"])
         self.assertEqual(second["resourceFingerprint"], third["resourceFingerprint"])
+        legacy_identity = {key: first[key] for key in ("packages", "work_dir", "data_dir")}
+        legacy_identity["torch"] = {
+            key: value for key, value in first["torch"].items()
+            if key not in {"cuda_memory_free_bytes", "cudnn_deterministic", "cudnn_benchmark", "deterministic_algorithms"}
+        }
+        legacy_hash = hashlib.sha256(json.dumps(legacy_identity, sort_keys=True, default=str).encode()).hexdigest()
+        self.assertNotEqual(first["resourceFingerprint"], f"sha256:{legacy_hash}")
+        legacy_identity["peakMeasurementVersion"] = 2
+        current_hash = hashlib.sha256(json.dumps(legacy_identity, sort_keys=True, default=str).encode()).hexdigest()
+        self.assertEqual(first["resourceFingerprint"], f"sha256:{current_hash}")
 
 
 class PreflightHardwareTests(unittest.TestCase):

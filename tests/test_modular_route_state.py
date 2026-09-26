@@ -420,6 +420,41 @@ class OpaqueBindingTests(unittest.TestCase):
 
         self.assertIs(require_component_binding(outputs["unet_out"], label="resident model"), token)
 
+    def test_loader_adoption_transfers_component_collection_without_reloading(self):
+        from types import SimpleNamespace
+        from modules.ModularDiffusers import loaders
+        node = ModelsLoader("old-owner")
+        node.loader = SimpleNamespace(_collection='old-owner')
+        owned = {'component'}
+        manager = SimpleNamespace(collections={'old-owner': owned, 'shared-owner': {'component'}},
+                                  components={'component': object()})
+        with patch.object(loaders, 'components', manager):
+            node.rebind_cache_owner('new-owner')
+        self.assertIs(manager.collections['new-owner'], owned)
+        self.assertNotIn('old-owner', manager.collections)
+        self.assertEqual(manager.collections['shared-owner'], {'component'})
+        self.assertEqual(node.loader._collection, 'new-owner')
+        self.assertEqual(node.node_id, 'new-owner')
+
+    def test_loader_adoption_preserves_exclusive_disk_hook_storage(self):
+        from types import SimpleNamespace
+        from modules.ModularDiffusers import loaders
+        component = SimpleNamespace(_modiff_offload_node_id='old-owner', hook=object())
+        hook = component.hook
+        node = ModelsLoader('old-owner')
+        node.loader = SimpleNamespace(_collection='old-owner')
+        manager = SimpleNamespace(collections={'old-owner': {'disk'}, 'foreign': {'disk'}},
+                                  components={'disk': component})
+        with patch.object(loaders, 'components', manager):
+            with self.assertRaisesRegex(ValueError, 'shared component ownership'):
+                node.rebind_cache_owner('new-owner')
+            self.assertEqual(node.node_id, 'old-owner')
+            manager.collections.pop('foreign')
+            node.rebind_cache_owner('new-owner')
+        self.assertEqual(component._modiff_offload_node_id, 'new-owner')
+        self.assertIs(component.hook, hook)
+        self.assertEqual(manager.collections, {'new-owner': {'disk'}})
+
     def test_failed_loader_preflight_cannot_mint_or_publish_a_token(self):
         node = ModelsLoader()
         with patch("modules.ModularDiffusers.loaders.issue_pipeline_instance_token") as issuer:

@@ -61,6 +61,7 @@ class ThreeDPipelineAdapter:
             "mediaKind": "three_d",
             "pipelineClass": self.pipeline_class,
             "mode": self.mode,
+            "actions": {"GenerateRenderedArtifact": [self.mode]},
             "repository": self.default_repo,
             "outputContract": "rendered_orbit",
             "inputContract": (
@@ -124,6 +125,26 @@ THREE_D_PIPELINE_ADAPTERS = {
 THREE_D_PIPELINE_CLASS_OPTIONS = [SHAP_E_IMG2IMG_PIPELINE_CLASS, SHAP_E_PIPELINE_CLASS]
 THREE_D_MODE_OPTIONS = [SHAP_E_IMG2IMG_MODE, SHAP_E_MODE]
 DEFAULT_THREE_D_CONTRACT = SHAP_E_ADAPTER.signal_value()
+
+
+def get_three_d_operation_contracts(modules) -> list[dict]:
+    from modiff.operation_contracts import build_pipeline_operation_contract
+
+    result = []
+    for pipeline_class, adapter in sorted(THREE_D_PIPELINE_ADAPTERS.items()):
+        for action, operation in (
+            ("LoadPipeline", "diffusion.load_models"),
+            ("GenerateRenderedArtifact", "diffusion.render_3d"),
+        ):
+            record = build_pipeline_operation_contract(
+                modules, pipeline_class=pipeline_class, task=adapter.mode, operation_id=operation,
+                node_key=f"modules.DiffusersThreeD.{action}",
+                field_overrides=adapter.signal_value()["fieldParams"] if action != "LoadPipeline" else None,
+                loader=action == "LoadPipeline",
+            )
+            if record is not None:
+                result.append(record)
+    return result
 
 
 def _require_adapter(pipeline_class: Any, mode: Any) -> ThreeDPipelineAdapter:
@@ -472,6 +493,7 @@ class GenerateRenderedArtifact(NodeBase):
                 {"action": "value", "target": "three_d_contract"},
                 {"action": "exec", "data": "update_three_d_contract"},
             ],
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "three_d_contract": {
             "label": "3D Contract",

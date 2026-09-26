@@ -195,8 +195,15 @@ def build_modular_workflow_contract(
     workflows = []
     for workflow_id in available:
         workflow_id = _name(workflow_id, "Workflow id")
-        selected_workflow = blocks.get_workflow(workflow_id) if workflow_map is not None else blocks
-        workflow = selected_workflow.get_execution_blocks()
+        if pipeline_class == "ErnieImageModularPipeline" and workflow_id == "text2image":
+            # ERNIE's workflow map deliberately prunes the optional conditional
+            # prompt enhancer. The reviewed Turbo route enables that package-
+            # owned branch, so inventory the exact selected top-level graph.
+            selected_workflow = blocks
+            workflow = selected_workflow.get_execution_blocks(use_pe=True)
+        else:
+            selected_workflow = blocks.get_workflow(workflow_id) if workflow_map is not None else blocks
+            workflow = selected_workflow.get_execution_blocks()
         initialized = workflow.init_pipeline()
         execution_pipeline_class = _name(type(initialized).__name__, "Execution pipeline class")
         input_fields = [field for field in workflow.inputs if isinstance(getattr(field, "name", None), str)]

@@ -46,6 +46,19 @@ def route_selection_fixture():
 
 
 class BlockRouteSelectionV1Tests(unittest.TestCase):
+    def test_definition_switch_preserves_user_draft_only_in_explicit_switch_contract(self):
+        instance = route_selection_fixture()
+        draft = instance['routeSelection']['inactiveDrafts']['qwen-archived']
+        definition = draft['definitionSnapshot']
+        definition['source'] = {'kind': 'user'}
+        definition['ownership'] = {'kind': 'user', 'definitionMutable': True}
+        definition['contentHash'] = block_definition_content_hash_v2(definition)
+        draft['definitionRef']['contentHash'] = definition['contentHash']
+        with self.assertRaisesRegex(ValueError, 'immutable registered'):
+            validate_block_instance_v2(instance)
+        instance['routeSelection']['routeSetId'] = 'diffusers.definition-switch:v1'
+        self.assertEqual(validate_block_instance_v2(instance), instance)
+
     def test_instance_type_declares_optional_route_selection(self):
         self.assertEqual(
             get_type_hints(BlockInstanceV2, include_extras=True)["routeSelection"],

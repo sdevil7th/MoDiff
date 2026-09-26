@@ -14,7 +14,7 @@ from modules.DiffusersImage import main as nodes
 from modules.DiffusersImage.call_inputs import PIPELINE_CALL_INPUTS
 
 
-FLUX_CLASSES = tuple(name for name in PIPELINE_CALL_INPUTS if name != 'FluxReduxPipeline')
+FLUX_CLASSES = tuple(name for name in PIPELINE_CALL_INPUTS if name.startswith('Flux') and name != 'FluxReduxPipeline')
 
 
 def fixture_pipeline(name):

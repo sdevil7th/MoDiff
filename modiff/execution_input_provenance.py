@@ -18,6 +18,7 @@ FIELD_NAMES = {
     "guidance_scale": "guidanceScale", "true_cfg_scale": "trueCfgScale",
     "max_sequence_length": "maxSequenceLength", "num_images_per_prompt": "imagesPerPrompt",
     "num_frames": "numFrames", "fps": "fps", "frame_rate": "fps",
+    "audio_duration": "audioDuration", "sample_rate": "sampleRate",
     "strength": "strength", "repo_id": "repo", "model_id": "repo",
     "revision": "revision", "dtype": "dtype", "device": "device",
     "model_type": "modelType", "pipeline_class": "modelType",
@@ -27,6 +28,9 @@ FIELD_NAMES = {
     "control_guidance_start": "controlGuidanceStart", "control_guidance_end": "controlGuidanceEnd",
     "prompt_embeds_scale": "reduxPromptEmbedsScale",
     "pooled_prompt_embeds_scale": "reduxPooledPromptEmbedsScale",
+    "processing_resolution": "processingResolution",
+    "match_input_resolution": "matchInputResolution", "depth_convention": "depthConvention",
+    "use_kv_cache": "attentionContextReuse",
 }
 NODE_FIELD_NAMES = {
     ('DiffusersImage', 'ControlComponent'): {
@@ -199,7 +203,14 @@ def build_resolved_execution_inputs(graph, records, *, task_id, attempt_index, n
     if incomplete:
         unavailable.update(candidates)
         summary = {}
+    from modiff.workflow_task_identity import graph_task_receipts
+
+    graph_tasks = (
+        graph_task_receipts({key: nodes[key] for key in ancestors}, {r["nodeId"]: r for r in captured})
+        if not incomplete and not missing else []
+    )
     return {
+        **({"graphTasks": graph_tasks} if graph_tasks else {}),
         "schemaVersion": 1, "source": "backend-execution", "taskId": str(task_id),
         "attemptIndex": int(attempt_index or 0), "nodeId": str(node_id),
         "nodes": captured, "summary": summary, "ambiguousFields": ambiguous,
@@ -220,6 +231,9 @@ def apply_resolved_execution_inputs(output, receipt):
         return output
     output["resolvedExecutionInputs"] = deepcopy(receipt)
     summary = receipt["summary"]
+    tasks = {item['task'] for item in receipt.get('graphTasks', [])}
+    if len(tasks) == 1 and None not in tasks:
+        output['mode'] = next(iter(tasks))
     for key in OUTPUT_FIELDS:
         if receipt["truncated"] or key in receipt["ambiguousFields"] or key in receipt["unavailableFields"]:
             output.pop(key, None)

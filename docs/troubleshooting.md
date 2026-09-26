@@ -96,6 +96,18 @@ active model-download reservations, and the 64 GiB safety reserve fit. It does
 not delete cached models. After it completes, wait for active downloads to
 finish, restart MoDiff, and then verify `/template-gallery/manifest.json`.
 
+## Loading models without network access
+
+Set `HF_HUB_OFFLINE=1` before starting the backend to use Hugging Face's offline
+mode. Modular pipeline and standalone component loaders pass this choice to
+Diffusers explicitly, including sharded weights whose metadata otherwise triggers
+a Hub request. This preserves normal online loading when offline mode is unset.
+
+The exact selected revision, every required weight shard, and its configuration,
+tokenizer and processor files must already be cached. If a required file is absent,
+finish its installation through Models while online, then restart offline.
+The presence of some weight files alone does not establish a complete model.
+
 ## CUDA is not detected
 
 - Check `hardware.devices` and `hardware.torch` in preflight or `GET /system_stats`.
@@ -169,6 +181,19 @@ For supported Intel graphics on x86-64 Linux or Windows, install or repair the p
 - Set `[huggingface] cache_dir`, `HF_HOME`, or `HF_HUB_CACHE` to a writable volume with sufficient free space. A configured `cache_dir` is exported as `HF_HUB_CACHE` by the backend.
 - Avoid pointing multiple applications at partially compatible cache layouts unless you understand how snapshots and revisions are resolved.
 
+Exact snapshot lookup checks the same cache roots as Model Manager, preferring
+the configured cache before secondary locations. Audio pipeline loading uses the
+resolved immutable local snapshot. Selecting a cache for new downloads does not
+hide an existing reviewed snapshot in another discovered cache, and inference
+does not download missing files or substitute another revision.
+
+ACE-Step reads lyric embeddings and condition tensors outside ordinary model
+forward calls. Its group offload uses leaf hooks for the text encoder; its
+condition encoder and Oobleck VAE stay resident for all offload policies. Oobleck's
+weight-normalization pre-hooks otherwise rebuild CPU weights before leaf transfer
+hooks run. Budget these components' VRAM as well as the active offload group. A selectable policy is not hardware
+qualification; inspect the actual run result and available memory.
+
 Opening or refreshing Model Manager can require a full index and artifact
 validation pass over a very large cache. Those scans run in background worker
 threads and simultaneous refresh requests share the same work, so health,
@@ -207,6 +232,12 @@ solely to switch transports.
 
 Cleanup can release MoDiff's node cache, managed Diffusers components, memory-manager entries, and accelerator cache. It cannot free memory owned by another process, and it does not guarantee that the same workflow fits afterward.
 
+Automatic planning refreshes available host RAM between runs, including after
+cache release. Runtime identity remains cached separately from this capacity
+sample. During active inference, planning retains the existing non-blocking
+snapshot behavior; it does not enter accelerator probes from that control path.
+Available memory and a resident model alone do not qualify a resource recipe.
+
 ## A run is taking much longer than expected
 
 ### Resource monitoring during execution
@@ -228,6 +259,11 @@ time out, retain bounded health/queue/resource samples and profile the actual
 running source. Distinguish a slow worker from a dead worker using supervisor
 status. Do not delete history, weaken timeout assertions, or reduce generation
 settings to conceal the problem.
+
+Weight-loading counters publish intermediate updates at most four times per
+second per progress bar. Initial/final counts and named component transitions
+remain immediate. This bounds render bursts from fast tensor loading without
+changing model loading or suppressing completion and failure events.
 
 ### Inference and recovery
 

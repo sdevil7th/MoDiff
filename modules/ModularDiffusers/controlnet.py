@@ -3,7 +3,7 @@ import logging
 
 from modiff.NodeBase import NodeBase
 
-from . import components
+from . import MODULAR_CONTROLNET_OPTIONS, components
 from .modular_utils import (
     modular_generator_from_seed,
     normalize_modular_runtime_params,
@@ -197,6 +197,9 @@ class Controlnet(NodeBase):
                 {"action": "value", "target": "model_type"},
                 {"action": "exec", "data": "update_node"},
             ],
+            "signalCompatibility": {
+                "values": MODULAR_CONTROLNET_OPTIONS,
+            },
         },
     }
 
@@ -221,6 +224,9 @@ class Controlnet(NodeBase):
                     {"action": "value", "target": "model_type"},
                     {"action": "exec", "data": "update_node"},
                 ],
+                "signalCompatibility": {
+                    "values": MODULAR_CONTROLNET_OPTIONS,
+                },
             },
         }
 

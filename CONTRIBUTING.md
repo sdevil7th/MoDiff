@@ -10,6 +10,8 @@ integrating another machine's work, read and follow
 
 ## Development setup
 
+For script-free `uv`/`npm` setup, use [Developer setup](docs/developer-setup.md).
+
 Use Python 3.12 and create the same managed CPU profile used by baseline CI:
 
 ```bash
@@ -26,7 +28,7 @@ uv pip install --python .venv/Scripts/python.exe -r requirements/test.txt
 .\.venv\Scripts\python.exe -m modiff.preflight --json --check-port 8088 --fail-on-error
 ```
 
-Choose the qualified accelerator profile relevant to a hardware-specific change and report that validation separately. Do not use `uv sync` or `uv run`: the project is intentionally `uv`-unmanaged because the installer, not the generic resolver, owns the executable Torch profile.
+Choose the qualified accelerator profile relevant to a hardware-specific change and report that validation separately. Do not use `uv sync` or ordinary `uv run` (the documented `uv run --no-project --no-sync ... -m modiff.dev` bootstrap is the explicit exception): the project is intentionally `uv`-unmanaged because the installer, not the generic resolver, owns the executable Torch profile.
 
 Do not commit `config.ini`, `.env` files, model caches, generated outputs, local logs, virtual environments, or test caches.
 
@@ -37,6 +39,10 @@ Do not commit `config.ini`, `.env` files, model caches, generated outputs, local
 - Keep hardware probes non-fatal and retain CPU fallback when CUDA or MPS discovery fails.
 - Treat file access, custom-module installation, remote code, token handling, and mutating routes as security-sensitive changes.
 - Avoid importing the full model registry from lightweight diagnostics such as preflight.
+
+### Custom node development
+
+For local/Git Python nodes and pinned Hub Modular blocks, follow [Custom node development](docs/custom-nodes.md). Stage and inspect without imports, explicitly enable the exact code hash, then review/reload after edits. Do not add an unconditional startup import or install dependencies from discovery. Test stale code, relative helper isolation, approval rejection, import diagnostics, and cache ownership through ordinary graph dispatch.
 
 ### Adding a node module
 
@@ -99,6 +105,17 @@ boundary, performs no installation, and disables bytecode writes in this process
 and child generators. Generated `__pycache__` files inside a sealed overlay are
 integrity drift, not files to whitelist. Keep base-gate and optional-runtime
 results separate; skipped model-library tests are not execution coverage.
+
+Pytest redirects the default extension store to a temporary directory before
+collection so registry imports cannot execute or change the operator's installed
+custom sources. Extension tests use explicit temporary roots. Subprocess tests
+must also isolate extension discovery; they do not inherit Python monkeypatches.
+
+The checked-in image readiness inventory uses a fixed Linux/x86_64 reference
+target; `scripts/generate_image_prototyping_readiness.py --check` must reproduce
+it on every host. This static inventory is not local runtime readiness. Live
+execution profiles continue to resolve the current OS/architecture and installed
+runtime through the normal readiness boundary.
 
 On a host with Git Bash or a POSIX shell:
 

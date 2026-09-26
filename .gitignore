@@ -46,6 +46,7 @@ custom/*
 
 data/*
 !data/model-artifact-catalog.json
+!data/image-prototyping-readiness.v1.json
 !data/huggingface-cluster-promotion-receipts.v1.json
 !data/huggingface-cluster-promotion-receipts.v2.json
 !data/huggingface-cluster-catalog-gates.v1.json

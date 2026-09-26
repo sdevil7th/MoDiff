@@ -12,9 +12,9 @@ Do not expose MoDiff directly to an untrusted LAN, the public internet, a shared
 
 MoDiff is designed to execute Python and model code:
 
-- Custom-module installation can clone a Git repository or copy a local directory into `custom/`, then import it into the live registry.
+- Intentional Add/Load/Reload authorizes custom Python with backend permissions in one action, binding its exact source/dependency hash. Discovery, refresh and workflow imports do not grant permission. Failed imports remain disabled. Custom web fields share the code identity and browser-origin permissions.
 - Reviewed model-execution libraries maintained by Hugging Face run in the backend process with the same filesystem, network, CPU, and accelerator access as MoDiff. Official maintenance reduces neither package supply-chain risk nor the need to review the selected version and integration.
-- Repository-supplied Python would run with backend-process permissions. Current custom Modular Diffusers paths are `contract_only` and reject `trust_remote_code` before model construction; exact cached 40-character commits are still required for Hub contract preview. Do not weaken that fail-closed boundary or accept moving branches/tags if executable support is added later.
+- Repository-supplied Python would run with backend-process permissions. The historical custom Modular Diffusers paths are `contract_only` and reject `trust_remote_code` before model construction; exact cached 40-character commits are still required for Hub contract preview. That historical contract-only path remains fail closed. The separate [Custom nodes flow](docs/custom-nodes.md) can execute operator-approved, content-bound local copies of immutable Hub blocks; graph trust flags cannot authorize it. The Add flow resolves branches/tags to immutable commits before downloading or enabling code.
 - Model deserialization and optional native/CUDA packages have their own supply-chain and memory-safety risks.
 - Workflows can allocate substantial CPU, RAM, accelerator memory, disk, and network bandwidth.
 

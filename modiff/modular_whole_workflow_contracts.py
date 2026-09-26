@@ -13,6 +13,38 @@ from typing import Any, Mapping
 
 
 PINNED_WHOLE_WORKFLOW_GRAPH_ADAPTERS: dict[tuple[str, str], dict[str, Any]] = {
+    ("ErnieImageModularPipeline", "text2image"): {
+        "schemaVersion": 1,
+        "adapterId": "official_top_level_blocks",
+        "requiredInputs": ["prompt"],
+        "actionSequence": [
+            "workflow_ernie_prompt_enhancer",
+            "workflow_ernie_text_encoder",
+            "workflow_ernie_image_denoise",
+            "workflow_ernie_image_decoder",
+        ],
+        "stateEdges": [
+            {
+                "producerAction": "workflow_ernie_prompt_enhancer",
+                "producerOutput": "state_out",
+                "consumerAction": "workflow_ernie_text_encoder",
+                "consumerInput": "state_in",
+            },
+            {
+                "producerAction": "workflow_ernie_text_encoder",
+                "producerOutput": "state_out",
+                "consumerAction": "workflow_ernie_image_denoise",
+                "consumerInput": "state_in",
+            },
+            {
+                "producerAction": "workflow_ernie_image_denoise",
+                "producerOutput": "state_out",
+                "consumerAction": "workflow_ernie_image_decoder",
+                "consumerInput": "state_in",
+            },
+        ],
+        "upstreamBlockSequence": ["prompt_enhancer", "text_encoder", "denoise", "decode"],
+    },
     ("AnimaModularPipeline", "text2image"): {
         "schemaVersion": 1,
         "adapterId": "official_top_level_blocks",

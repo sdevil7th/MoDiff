@@ -445,10 +445,10 @@ def _reviewed_resolved_dimensions(pipeline_class, block_class, state, values):
     return {**values, "height": state.get("height"), "width": state.get("width")}
 
 
-def _reviewed_definition(pipeline_class, workflow_id):
+def _reviewed_definition(pipeline_class, workflow_id, library=None):
     matches = [
         definition
-        for definition in reviewed_huggingface_node_library()["definitions"]
+        for definition in (library if library is not None else reviewed_huggingface_node_library())["definitions"]
         if definition.get("provider") == "diffusers"
         and definition.get("pipelineClass") == pipeline_class
         and definition.get("workflowId") == workflow_id
@@ -460,7 +460,7 @@ def _reviewed_definition(pipeline_class, workflow_id):
 
 def _reviewed_placement(
     *, pipeline_class, workflow_id, execution_scope, placement_path, block_definition_id, block_class, block_hash,
-    composition=None,
+    composition=None, library=None, snapshot=None,
 ):
     if composition is not None:
         if (
@@ -473,7 +473,7 @@ def _reviewed_placement(
             (item for item in composition["composedPlacements"] if tuple(item["path"]) == placement_path), None,
         )
         block = next(
-            (item for item in reviewed_modular_conditional_snapshot()["blockDefinitions"]
+            (item for item in (snapshot if snapshot is not None else reviewed_modular_conditional_snapshot())["blockDefinitions"]
              if item.get("id") == block_definition_id), None,
         )
         if (
@@ -490,7 +490,7 @@ def _reviewed_placement(
     # snapshot, exactly as an explicitly unpruned library block does.
     fixed_default_tree = execution_scope == "selected_workflow" and workflow_id == "default"
     if execution_scope == "unpruned_pipeline" or fixed_default_tree:
-        snapshot = reviewed_modular_conditional_snapshot()
+        snapshot = snapshot if snapshot is not None else reviewed_modular_conditional_snapshot()
         pipeline = next(
             (item for item in snapshot["pipelines"] if item.get("pipelineClass") == pipeline_class),
             None,
@@ -518,8 +518,8 @@ def _reviewed_placement(
         return pipeline, block
     if execution_scope != "selected_workflow":
         raise ValueError("The reviewed Modular execution scope is unsupported.")
-    definition = _reviewed_definition(pipeline_class, workflow_id)
-    library = reviewed_huggingface_node_library()
+    library = library if library is not None else reviewed_huggingface_node_library()
+    definition = _reviewed_definition(pipeline_class, workflow_id, library)
     placement = next(
         (item for item in definition["blockPlacements"] if tuple(item["path"]) == placement_path),
         None,
@@ -619,7 +619,18 @@ def _continued_runtime(value, *, bundle, pipeline_class, workflow_id, execution_
         raise ValueError("The connected block state belongs to another Modular workflow.")
     if getattr(value._pipeline, "_modiff_composition_hash", None) != composition_hash:
         raise ValueError("The connected Pipeline State belongs to a different edited Modular composition. Re-run its upstream nodes.")
-    return token, value._pipeline, value._state
+    # A cached step owns a snapshot. Later branches/retries must not advance its
+    # scheduler, guider, generator or tensors. Share only resident neural weights
+    # and the manager; deepcopy also preserves aliases within this continuation.
+    pipeline = value._pipeline
+    manager = getattr(pipeline, "_components_manager", None)
+    memo = {id(manager): manager} if manager is not None else {}
+    for name in getattr(pipeline, "pretrained_component_names", ()):
+        component = getattr(pipeline, name, None)
+        if isinstance(component, torch.nn.Module):
+            memo[id(component)] = component
+    forked_pipeline, forked_state = deepcopy((pipeline, value._state), memo)
+    return token, forked_pipeline, forked_state
 
 
 def _loop_member_descriptor(kwargs, path, block):

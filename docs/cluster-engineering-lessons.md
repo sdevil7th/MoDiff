@@ -516,10 +516,17 @@ the visible leaf or nearest collapsed ancestor for rendering and to the same
 leaf for execution. Removing the last connection removes the derived socket.
 Reusable saving retains only contained nodes and deliberately declared ports.
 
-Run Block isolates the selected containment subtree before resolving external
-dependencies, including dependencies through existing declared inputs. Use stored
-fallbacks or report missing inputs. Whole-graph execution retains crossing edges.
-Test all enabled local terminal branches, not only the first preview.
+Run Block selects the contained terminal outputs and retains their transitive
+upstream dependencies, including ordinary nodes and other Blocks connected through
+public or derived crossing inputs. Nested selection also retains required sibling
+suppliers in its owner. Exclude downstream outputs and unrelated drafts before
+validation; never silently replace a connected input with its stored fallback.
+Missing or disabled suppliers still receive normal readiness checks. Reusable
+saving remains containment-only: running with an outside dependency does not adopt
+it into the saved Block. Test all enabled local terminal branches, mirrored
+inputs, connected LoRA/seed/media sources, collapsed/expanded persistence and an
+unrelated invalid draft. W5 live multi-reference editing exposed the earlier
+isolation behavior dropping valid image and seed connections before submission.
 
 Plain movement changes presentation and grows containing frames. Only the
 explicit modifier drag or toolbar move changes ownership. Moving a node must
@@ -610,3 +617,140 @@ runtimes or rewrite graph inputs.
   values, hierarchy, crossing wires and previews without changing the library.
 - Prove cache destruction and material-output retention in executor tests, then
   retain a real multi-owner model run separately from contract-test evidence.
+
+## Metadata during inference and recovery evidence
+
+- Review field callbacks against the public registry. Isolate only exact built-in
+  callbacks that inspect declarations and publish fields; arbitrary custom or
+  queued callbacks cannot opt themselves out of the execution lease. Explicit
+  model-layer inspection may construct empty models and must remain serialized.
+- A presentation callback must not instantiate an executable node. Constructors,
+  destructors and shared component collections can affect an active owner even
+  without calling `execute`. Copy declarations and borrow only reviewed helpers.
+- Fresh metadata contexts have no previously published schema. Use an unset
+  sentinel distinct from both an empty model selection and `None`; otherwise
+  disconnecting a model can leave stale dynamic fields visible. Test disconnects
+  as well as supported-model selections and invalid inputs.
+- Carry workflow, canvas and form identity on every schema message, including
+  legacy custom Block labels and styles. Cancellation must drain an executing
+  metadata thread before releasing its lease or activating another runtime.
+- Separate native Stop/queue/reconnection proof, actual model reuse messages and
+  controlled allocator-fault recovery. Record fault injection explicitly, retain
+  failed receipts, and require a successful unchanged-settings run afterward.
+- Keep successful/running node status distinct from validation warnings. A new
+  attempt must clear stale node error details while retaining the failed task's
+  history. Inspect the actual recovery UI as well as terminal backend receipts.
+- Keep ordinary image processing in normal discovery alongside text/value
+  utilities. Reducing implementation clutter must not hide Resize, masks, grids
+  or saving. Test discovery before selecting a pipeline and native insertion in
+  both workspaces, then verify the processor is connected and actually consumed.
+
+Validate upstream defaults that depend on another argument, not only accepted
+parameter names. Sana Sprint's intermediate timestep is specialized for two
+steps; other supported counts need the upstream evenly spaced schedule. Preserve
+the user's requested count, adapt the backend call, and test genuine pinned input
+validation and scheduler construction for every declared count and related task.
+A fake pipeline that accepts arbitrary keyword arguments cannot expose this bug.
+
+A successful generic run does not prove that new-workflow defaults belong to the
+selected model. Resolve the exact public execution profile before seeding dtype,
+size, steps and guidance. Shared upstream classes can have different reviewed
+model recipes. Reuse backend-owned capability values for new operations only;
+never rewrite saved values or treat authoring defaults as a runtime constraint.
+Test both individual node insertion and connected starters, profile aliases,
+field bounds and unchanged prior drafts. Inspect the resulting images too.
+
+Restored previews can use the recorded runtime cache URL or its durable media
+URL, with a refreshed cache-busting timestamp. Match the declared output preview
+against those exact task references, then verify dimensions and downloaded bytes
+against the retained media hash. Do not require one URL representation or accept
+an unrelated image merely because it decodes; exclude input images and history
+thumbnails from the preview assertion.
+
+A history worker can still stall HTTP requests if one native JSON operation holds
+Python's GIL across the entire retained collection. Profile a real cold browser
+while another workflow generates; distinguish schema work, Saved Block validation,
+history parsing and response encoding. Move validation off the HTTP loop and
+bound native JSON work by individual output records. Preserve older current
+previews, complete graph snapshots, Unicode and revision semantics. If caching
+parsed history, retain immutable record bytes, give readers independent objects,
+and invalidate on file identity/content metadata changes, deletion and corrupt
+replacement. Publish cache state only after a successful atomic write. Never
+trade away output recovery or silently extend a failed responsiveness budget.
+
+Generic controls must publish the same bounds enforced by their selected backend
+adapter. A correct model default can still leave a slider offering unsupported
+values. Use the shared field overlay for both connected starters and dynamic
+model changes, test narrow-to-wide and wide-to-narrow transitions, and retain
+authored values and historical signal identities. Verify separate unconditional
+and perception contracts instead of applying prompt-conditioned limits to them.
+
+Optional image processors can expose native structured configuration types rather
+than plain dictionaries. Check real pinned preprocessing and postprocessing APIs
+with no-download tests before model runs; mocked interfaces cannot establish that
+contract. Keep native numeric depth separate from a normalized visual preview,
+and carry new consumed controls through both backend receipts and the client's
+strict parser so persistence does not silently discard their execution evidence.
+
+Generic workflow discovery must not depend on the closed legacy Studio model
+union. Join bounded backend display metadata to exact published pipeline/profile
+identities, while retaining legacy form validation and backend execution preflight.
+Test an unknown model identity through parsing, search and native creation; a
+backend registry test alone cannot prove that the workflow chooser exposes it.
+
+Test the actual Create Block and Saved Block insertion path before claiming
+model switching inside Blocks. A test-built V2 fixture can miss a legacy snapshot
+still produced by native saving. Adapt only the selected workflow instance during
+an explicit reviewed edit, with conversion and replacement in one Undo transaction.
+Opening controls or cancelling a preview must leave the graph and saved library
+unchanged. Preserve advisory loader references when adapting historical node IDs.
+An exposed model control can override a correctly replaced internal loader;
+update editable controls only when all bound targets agree, and reject sealed or
+unrelated mirrored bindings instead of silently changing other owners.
+
+A current Block media reference must supersede stale artifacts retained in its
+source node. Media widgets can prefer an artifact URL over the displayed value;
+keep source metadata only when its URL and task match the instance preview.
+Test the rendered media after reload, including source fields carrying an older
+successful run, and retain immutable definitions and unrelated preview owners.
+
+## Windows qualification: cache, hooks, readiness and test scope
+
+- Inventory and execution must resolve the same managed Hugging Face cache
+  roots. Startup may redirect Hub writes, so retain discovery of the original
+  user cache. Prefer the configured root, preserve exact immutable revisions,
+  reject cross-root/symlink escapes and never convert inference into a download.
+- A pipeline's root forward hook does not cover every native entry point.
+  Exercise direct embedding/encode/decode calls and direct parameter/buffer
+  reads with the real pinned hooks, including repeated calls. Legacy
+  weight-normalization pre-hooks can rebuild weights before a transfer hook.
+  Keep reviewed exceptions small and adapter-owned; do not change all pipelines'
+  placement policy or mutate a class-level exclusion list.
+- An incoming loader wire does not prove that a required source file exists.
+  Inspect the selected executable closure and current required-field contracts
+  without rewriting saved schemas. Preserve optional empty branches. Required
+  input errors must remain blocking in both Automatic and Custom memory modes.
+- An isolated launcher must configure storage before importing the normal
+  server singleton: node events may publish through that singleton. A second
+  server can answer HTTP while losing dynamic fields and previews. Handle
+  unsupported Windows event-loop signal APIs without altering application
+  shutdown semantics.
+- Browser uploads can intentionally cancel when the graph changes. Wait for a
+  decoded input preview before subsequent edits; then verify the generated
+  preview against its task receipt and media hash, not an input or thumbnail.
+  Exercise production bundles separately from development-only test hooks.
+- Opt-in generation tests need explicit backend isolation, installed-artifact
+  checks, an idle queue, bounded execution and task-scoped cleanup. A file-path
+  environment variable or an empty queue alone does not establish isolation.
+- Keep reviewed upstream source checkouts outside ordinary application test
+  discovery. Distinguish collection/harness failures from product failures;
+  reproduce suspect pre-existing assertions on the original commit.
+- Review authored source separately from generated bundle/hash churn. Rebuild
+  through the established tooling and verify emitted bytes; do not hand-edit
+  minified files or mistake regenerated inventory hashes for new qualification.
+  Stop expanding the campaign when the requested scope has sufficient evidence.
+
+Keep acceptance criteria in [workbench acceptance](workbench-acceptance.md),
+implementation contracts in technical references, and dated plans/run ledgers in
+Git history or local evidence. Retiring a tracker must preserve unresolved
+qualification boundaries, not silently mark them complete.

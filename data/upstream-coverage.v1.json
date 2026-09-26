@@ -2339,7 +2339,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:2c558df6dcb1cebf1649da457b91a74b7cff05ff6f072dc3f1cf534a500b9b34",
+  "contentHash": "sha256:a7d36b205241f21d4067de7cc3b877c2c29538d3e2a2d965c03d670b9135f9ca",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -3230,17 +3230,21 @@
     },
     {
       "artifactReviews": [],
-      "equivalentTo": [
-        "ErnieImagePipeline"
+      "equivalentTo": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "ernie-image-turbo:modular-text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "ErnieImageModularPipeline"
+        }
       ],
-      "exactExecutionSpecs": [],
       "modularWorkflowIds": [
         "text_to_image"
       ],
       "name": "ErnieImageModularPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "equivalent"
+      "status": "executable"
     },
     {
       "artifactReviews": [
@@ -3252,11 +3256,6 @@
           "id": "ernie-image-turbo:text-to-image:v1",
           "mode": "text_to_image",
           "modelType": "ErnieImagePipeline"
-        },
-        {
-          "id": "ernie-image:equivalent-standard-text-to-image:v1",
-          "mode": "text_to_image",
-          "modelType": "ErnieImageModularPipeline"
         }
       ],
       "modularWorkflowIds": [],
@@ -4682,6 +4681,26 @@
       "equivalentTo": [],
       "exactExecutionSpecs": [],
       "modularWorkflowIds": [],
+      "name": "LTX2DFRPipeline",
+      "reason": "Video diffusion-frame refinement is deferred from the current image/audio release scope.",
+      "reviewDecision": null,
+      "status": "intentionally-excluded"
+    },
+    {
+      "artifactReviews": [],
+      "equivalentTo": [],
+      "exactExecutionSpecs": [],
+      "modularWorkflowIds": [],
+      "name": "LTX2DFRTemporalRefinePipeline",
+      "reason": "Video temporal refinement is deferred from the current image/audio release scope.",
+      "reviewDecision": null,
+      "status": "intentionally-excluded"
+    },
+    {
+      "artifactReviews": [],
+      "equivalentTo": [],
+      "exactExecutionSpecs": [],
+      "modularWorkflowIds": [],
       "name": "LTX2HDRPipeline",
       "reason": "The class consumes an SDR reference video and an HDR IC-LoRA, then emits linear HDR video; MoDiff lacks that immutable adapter selection, HDR output contract, and exact action/workflow.",
       "reviewDecision": "pinned-diffusers-video-source-triage",
@@ -5413,6 +5432,32 @@
       ],
       "modularWorkflowIds": [],
       "name": "PixArtSigmaPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
+    },
+    {
+      "artifactReviews": [],
+      "equivalentTo": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "qwen-image-21:edit-image:v1",
+          "mode": "edit_image",
+          "modelType": "QwenImage21Pipeline"
+        },
+        {
+          "id": "qwen-image-21:multi-image-reference-edit:v1",
+          "mode": "multi_image_reference_edit",
+          "modelType": "QwenImage21Pipeline"
+        },
+        {
+          "id": "qwen-image-21:text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "QwenImage21Pipeline"
+        }
+      ],
+      "modularWorkflowIds": [],
+      "name": "QwenImage21Pipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
       "status": "executable"
@@ -7088,6 +7133,16 @@
       "status": "equivalent"
     },
     {
+      "artifactReviews": [],
+      "equivalentTo": [],
+      "exactExecutionSpecs": [],
+      "modularWorkflowIds": [],
+      "name": "Wan22VaceModularPipeline",
+      "reason": "This newly exported video composition is deferred from the current image/audio release scope.",
+      "reviewDecision": null,
+      "status": "intentionally-excluded"
+    },
+    {
       "artifactReviews": [
         "data/wan-animate-2-artifact-review.json"
       ],
@@ -8604,15 +8659,15 @@
   "schemaVersion": 1,
   "scope": {
     "diffusers": {
-      "exportModuleSha256": "a31b3d860c85b22f08976b00c81a00f36cd3986c702715954bb230882803493f",
+      "exportModuleSha256": "f9536d3cd5f2f5df8992fa4b4b0fb53a407eea15744fcc288760624ce9111251",
       "inventoryRule": "Every static top-level Diffusers export ending in Pipeline is classified once.",
-      "revision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
-      "verifiedSourceRevision": "2f7e0154a9db246e95c9ede43edba7db5b130805",
-      "version": "0.40.0.dev0"
+      "revision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "verifiedSourceRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "version": "0.41.0.dev0"
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "2da5ceb891a230039fb8fa80380f765248ed357f97bd717be632babc1417aca8",
+    "templateBundleSha256": "e554ddc034cb069918936aae7641bf08345d86c5d3670494dee7e13739c570b8",
     "transformers": {
       "productionRuntime": {
         "byteSize": 11625234,
@@ -8634,12 +8689,12 @@
     "canonicalWorkflowCount": 200,
     "canonicalWorkflowsWithPublicTemplates": 52,
     "canonicalWorkflowsWithoutPublicTemplates": 148,
-    "diffusersPipelineSymbolCount": 330,
+    "diffusersPipelineSymbolCount": 334,
     "pipelineStatusCounts": {
       "contract-only": 5,
-      "equivalent": 11,
-      "executable": 142,
-      "intentionally-excluded": 56,
+      "equivalent": 10,
+      "executable": 144,
+      "intentionally-excluded": 59,
       "research-blocked": 116,
       "unreviewed": 0
     },
@@ -8653,12 +8708,12 @@
       "research-blocked": 0,
       "unreviewed": 0
     },
-    "transformersProductionSupportedSemanticCount": 5,
-    "transformersSemanticCount": 6,
+    "transformersProductionSupportedSemanticCount": 6,
+    "transformersSemanticCount": 7,
     "transformersSemanticStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 4,
+      "executable": 5,
       "intentionally-excluded": 0,
       "research-blocked": 2,
       "unreviewed": 0
@@ -8739,6 +8794,68 @@
     },
     {
       "canonicalWorkflowIds": [],
+      "id": "bounded-depth-estimation",
+      "label": "Bounded image depth estimation",
+      "modes": [
+        "depth_estimation"
+      ],
+      "nodeEvidence": [
+        {
+          "actions": [
+            "LoadDepthEstimationModel",
+            "PredictDepth"
+          ],
+          "path": "modules/HuggingFaceTransformers/main.py",
+          "sha256": "81544771429fac13e5e407699eb0602a91485c0be2de4709a8954218eca09e0c"
+        }
+      ],
+      "nodeKeys": [
+        "modules.HuggingFaceTransformers.LoadDepthEstimationModel",
+        "modules.HuggingFaceTransformers.PredictDepth"
+      ],
+      "productionWheelAbsentPaths": [],
+      "productionWheelEvidence": [
+        {
+          "path": "models/auto/modeling_auto.py",
+          "sha256": "bb9ae5973f29cdf8cf71e6a14dd0f0bec9efb4fb1d7ac0f58262fd8f28a4b8b6",
+          "symbols": [
+            "AutoModelForDepthEstimation"
+          ]
+        },
+        {
+          "path": "models/dpt/image_processing_dpt.py",
+          "sha256": "646937f80e26520fa9b0b2ba86aeb30d9a7f673b99ed6bcbdf3f082685d1cd1a",
+          "symbols": [
+            "DPTImageProcessor",
+            "post_process_depth_estimation"
+          ]
+        }
+      ],
+      "productionWheelSupport": true,
+      "publicTemplateEligible": false,
+      "qualification": "source-implemented-mocked-contract-qualified",
+      "reason": "Generic AutoModel nodes use bounded DPT preprocessing and separate native depth from normalized previews.",
+      "reviewedMainEvidence": [
+        {
+          "path": "models/auto/modeling_auto.py",
+          "sha256": "549e9ec1c382d8481028ddef6dd28347080f75a8aad3b1566b3002377b2ed7e0",
+          "symbols": [
+            "AutoModelForDepthEstimation"
+          ]
+        },
+        {
+          "path": "models/dpt/image_processing_dpt.py",
+          "sha256": "646937f80e26520fa9b0b2ba86aeb30d9a7f673b99ed6bcbdf3f082685d1cd1a",
+          "symbols": [
+            "DPTImageProcessor",
+            "post_process_depth_estimation"
+          ]
+        }
+      ],
+      "status": "executable"
+    },
+    {
+      "canonicalWorkflowIds": [],
       "id": "bounded-causal-text-generation",
       "label": "Bounded causal text generation",
       "modes": [
@@ -8751,7 +8868,7 @@
             "LoadTextGenerationModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "1a27da07dd32a3441adafab8d6b983450d545c55d9693a3341b1c37b8958d8a6"
+          "sha256": "81544771429fac13e5e407699eb0602a91485c0be2de4709a8954218eca09e0c"
         }
       ],
       "nodeKeys": [
@@ -8812,7 +8929,7 @@
             "LoadImageTextToTextModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "1a27da07dd32a3441adafab8d6b983450d545c55d9693a3341b1c37b8958d8a6"
+          "sha256": "81544771429fac13e5e407699eb0602a91485c0be2de4709a8954218eca09e0c"
         }
       ],
       "nodeKeys": [
@@ -8887,7 +9004,7 @@
             "LoadAnyToAnyModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "1a27da07dd32a3441adafab8d6b983450d545c55d9693a3341b1c37b8958d8a6"
+          "sha256": "81544771429fac13e5e407699eb0602a91485c0be2de4709a8954218eca09e0c"
         }
       ],
       "nodeKeys": [

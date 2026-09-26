@@ -80,7 +80,7 @@ def configure_ltx25_distilled_denoise_components(
     """
 
     if guider_factory is None:
-        from diffusers.modular_pipelines.ltx2.guider import LTX2Guidance
+        from diffusers.guiders.ltx2_guidance import LTX2Guidance
 
         guider_factory = LTX2Guidance
     update_components = getattr(pipeline, "update_components", None)

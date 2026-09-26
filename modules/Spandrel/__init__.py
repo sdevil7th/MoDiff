@@ -18,6 +18,7 @@ MODULE_MAP = {
                 "display": "modelselect",
                 "type": "string",
                 "default": real_esrgan_x2_model_selection(),
+                "onChange": "update_model_selection",
                 "fieldOptions": {
                     "noValidation": True,
                     "sources": ['hub', 'local'],

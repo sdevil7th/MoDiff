@@ -5,6 +5,7 @@ import json
 import tempfile
 import threading
 import unittest
+from contextlib import contextmanager
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -30,6 +31,153 @@ class StudioHistoryResponsivenessTests(unittest.IsolatedAsyncioTestCase):
             {"id": "two", "createdAt": 2, "prompt": "newer"},
             {"id": "one", "createdAt": 1, "prompt": "older"},
         ])
+
+    async def test_saved_block_validation_and_encoding_are_off_the_http_thread(self):
+        main_thread = threading.get_ident()
+        encoded = self.server._json_response_bytes
+
+        def blocks():
+            self.assertNotEqual(threading.get_ident(), main_thread)
+            return [{"id": "saved", "name": "Saved Block"}]
+
+        def encode(payload):
+            self.assertNotEqual(threading.get_ident(), main_thread)
+            return encoded(payload)
+
+        with (patch.object(self.server, "_list_studio_blocks", side_effect=blocks),
+              patch.object(self.server, "_json_response_bytes", side_effect=encode)):
+            response = await self.server.studio_blocks_get(Request())
+        self.assertEqual(json.loads(response.body)["blocks"], [{"id": "saved", "name": "Saved Block"}])
+
+    async def test_unchanged_history_avoids_monolithic_decode_and_readers_are_independent(self):
+        original = self.server._read_studio_output_state()
+        with patch("modiff.server.json.load", side_effect=AssertionError("decoded unchanged history")):
+            first = self.server._read_studio_output_state()
+            first["outputs"][0]["prompt"] = "only this reader"
+            second = self.server._read_studio_output_state()
+        self.assertEqual(second, original)
+
+    async def test_run_detail_decodes_only_its_matching_cached_records(self):
+        outputs = [{"id": str(i), "taskId": f"task-{i}", "graphSnapshot": {"large": "x" * 1000}}
+                   for i in range(100)]
+        outputs.append({"id": "legacy", "provenance": {"backendExecutionId": "task-42"}})
+        self.server._write_studio_outputs(outputs)
+        decode = json.loads
+        decoded = []
+
+        def record_decode(value, *args, **kwargs):
+            result = decode(value, *args, **kwargs)
+            decoded.append(result["id"])
+            return result
+
+        with patch("modiff.server.json.loads", side_effect=record_decode):
+            matched = self.server._studio_outputs_for_run("task-42")
+        self.assertEqual(decoded, ["42", "legacy"], "A run lookup must not deserialize other workflows.")
+        self.assertEqual([output["id"] for output in matched], decoded)
+        matched[0]["graphSnapshot"]["large"] = "reader edit"
+        self.assertEqual(self.server._studio_outputs_for_run("task-42")[0]["graphSnapshot"]["large"], "x" * 1000)
+
+    async def test_indexed_run_detail_invalidates_replaced_deleted_and_corrupt_history(self):
+        self.server._write_studio_outputs([{"id": "old", "taskId": "task"}])
+        self.assertEqual(self.server._studio_outputs_for_run("task")[0]["id"], "old")
+        target = self.server._studio_history_file()
+        replacement = target.with_suffix(".external")
+        replacement.write_text(json.dumps([{"id": "new", "taskId": "new-task"}]))
+        replacement.replace(target)
+        self.assertEqual(self.server._studio_outputs_for_run("task"), [])
+        self.assertEqual(self.server._studio_outputs_for_run("new-task")[0]["id"], "new")
+        target.write_text("invalid JSON")
+        self.assertEqual(self.server._studio_outputs_for_run("new-task"), [])
+        target.write_text(json.dumps([{"id": "repaired", "taskId": "task"}]))
+        self.assertEqual(self.server._studio_outputs_for_run("task")[0]["id"], "repaired")
+        target.unlink()
+        self.assertEqual(self.server._studio_outputs_for_run("task"), [])
+
+    async def test_history_cache_observes_atomic_replacement_removal_and_failed_write(self):
+        original = self.server._read_studio_output_state()
+        with self.assertRaises(TypeError):
+            self.server._write_studio_output_state([{"id": "invalid", "value": object()}], {}, revision=9)
+        self.assertEqual(self.server._read_studio_output_state(), original)
+        target = self.server._studio_history_file()
+        replacement = target.with_suffix(".external")
+        replacement.write_text(json.dumps({"version": 2, "revision": 41, "outputs": [{"id": "external"}], "previewSlots": {}}))
+        replacement.replace(target)
+        self.assertEqual(self.server._read_studio_output_state()["revision"], 41)
+        target.unlink()
+        self.assertEqual(self.server._read_studio_output_state()["outputs"], [])
+        target.write_text(json.dumps([{"id": "legacy", "prompt": "café 雨"}]))
+        self.assertEqual(self.server._read_studio_output_state()["outputs"][0]["id"], "legacy")
+
+    async def test_history_cache_invalidates_in_place_edits_and_corrupt_content(self):
+        self.server._read_studio_output_state()
+        target = self.server._studio_history_file()
+        target.write_text(json.dumps([{"id": "edited", "prompt": "external edit"}]))
+        self.assertEqual(self.server._read_studio_outputs()[0]["id"], "edited")
+        target.write_text("invalid JSON")
+        self.assertEqual(self.server._read_studio_outputs(), [])
+        target.write_text(json.dumps([{"id": "repaired"}]))
+        self.assertEqual(self.server._read_studio_outputs(), [{"id": "repaired"}])
+
+    async def test_history_response_does_not_encode_the_entire_retained_collection_at_once(self):
+        # The accelerated encoder holds the GIL. One call per retained record
+        # bounds that interval without discarding old current previews or graphs.
+        state = {"revision": 8, "outputs": [
+            {"id": "new", "graphSnapshot": {"nodes": [{"prompt": "café 雨"}]}},
+            {"id": "retained", "graphSnapshot": {"nodes": [{"prompt": "original"}]}},
+        ], "previewSlots": {"slot": {"currentOutputId": "retained"}}}
+        encoded = self.server._json_response_bytes
+
+        def encode(value):
+            self.assertFalse(isinstance(value, dict) and "outputs" in value and "previewSlots" in value,
+                             "The whole retained history must not enter one GIL-holding encoder call.")
+            return encoded(value)
+
+        with (patch.object(self.server, "_read_studio_output_state", return_value=state),
+              patch.object(self.server, "_json_response_bytes", side_effect=encode)):
+            response = await self.server.studio_outputs_get(Request())
+        payload = json.loads(response.body)
+        self.assertEqual(payload["outputs"], state["outputs"])
+        self.assertEqual(payload["revision"], 8)
+        self.assertEqual(payload["previewSlots"], list(state["previewSlots"].values()))
+
+    async def test_history_write_batches_nested_records_and_preserves_retained_previews(self):
+        # Real workflow snapshots contain thousands of nested fields. Streaming
+        # json.dump writes each punctuation token while holding the history lock.
+        snapshot = {"nodes": [{"id": str(i), "params": {"prompt": "café 雨", "seed": i}}
+                              for i in range(1000)]}
+        outputs = [{"id": str(i), "workflowSnapshot": snapshot if i == 0 else {}}
+                   for i in range(202)]
+        slots = {"retained": {"currentOutputId": "201"}}
+        writes = []
+
+        @contextmanager
+        def counted_open(*args, **kwargs):
+            with open(*args, **kwargs) as stream:
+                def write(value):
+                    writes.append(len(value))
+                    return stream.write(value)
+                yield SimpleNamespace(write=write)
+
+        with patch("modiff.server.open", side_effect=counted_open):
+            kept = self.server._write_studio_output_state(outputs, slots, revision=17)
+        payload = json.loads(self.server._studio_history_file().read_text(encoding="utf-8"))
+        self.assertEqual(payload["outputs"], outputs[:200] + [outputs[201]])
+        self.assertEqual(payload["outputs"], kept)
+        self.assertEqual(payload["previewSlots"], slots)
+        self.assertEqual(payload["revision"], 17)
+        self.assertEqual(payload["version"], 2)
+        self.assertLess(len(writes), 3 * len(kept) + 20,
+                        "Nested fields must not produce individual locked file writes.")
+
+    async def test_failed_history_encoding_preserves_previous_atomic_document(self):
+        before = self.server._studio_history_file().read_bytes()
+        with self.assertRaises(TypeError):
+            self.server._write_studio_output_state(
+                [{"id": "new", "invalid": object()}], {}, revision=23
+            )
+        self.assertEqual(self.server._studio_history_file().read_bytes(), before)
+        self.server._write_studio_output_state([{"id": "recovered"}], {}, revision=24)
+        self.assertEqual(self.server._read_studio_output_state()["revision"], 24)
 
     async def test_slow_browser_does_not_hold_up_other_browser_completion(self):
         stalled = asyncio.Event()

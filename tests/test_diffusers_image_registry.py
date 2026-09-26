@@ -123,6 +123,13 @@ def tag_test_image_pipeline(pipeline, pipeline_class, mode, *, repo=None, revisi
 
 
 class DiffusersImageRegistryTests(unittest.TestCase):
+    def test_prequantized_transformer_is_an_optional_loader_input(self):
+        # Ordinary pipelines load their own transformer. Graph repair must not
+        # invent a connection to an unrelated `any` output for this override.
+        param = LoadPipeline.params["prequantized_transformer"]
+        self.assertEqual(param["display"], "input")
+        self.assertIs(param.get("required"), False)
+
     def test_missing_pinned_snapshot_explains_model_manager_recovery_without_download(self):
         from huggingface_hub.errors import LocalEntryNotFoundError
         from modules.DiffusersImage.main import load_cached_image_component
@@ -509,6 +516,16 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertTrue(ControlInpaint.params["control_image"]["required"])
         self.assertTrue(ControlGenerate.params["control_image"]["required"])
         self.assertTrue(LoadAdapter.params["pipeline"]["required"])
+
+    def test_latent_decode_is_a_connection_capability_not_a_generation_operation(self):
+        contract = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["FluxPipeline"], "text_to_image")
+        self.assertEqual(contract["actions"], {"Generate": ["text_to_image"]})
+        self.assertEqual(
+            contract["connectionActions"],
+            {"Generate": ["text_to_image"], "DecodeLatents": ["text_to_image"]},
+        )
+        ordinary = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["StableDiffusionXLPipeline"], "text_to_image")
+        self.assertNotIn("connectionActions", ordinary)
 
     def test_registered_classes_can_be_constructed(self):
         for node_class in (Edit, LayerDecompose, ControlEdit, Inpaint, ControlInpaint, ControlGenerate):
@@ -1058,7 +1075,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         for field in ("width", "height"):
             self.assertEqual(
                 {key: ernie["fieldParams"][field][key] for key in ("min", "max", "step")},
-                {"min": 1024, "max": 1024, "step": 32},
+                {"min": 512, "max": 2048, "step": 32},
             )
         self.assertEqual(ernie["maxOutputPixels"], 1024 * 1024)
         self.assertTrue(ernie["fieldParams"]["negative_prompt"]["hidden"])
@@ -1068,7 +1085,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         for field in ("width", "height"):
             self.assertEqual(
                 {key: glm_image["fieldParams"][field][key] for key in ("min", "max", "step")},
-                {"min": 1024, "max": 1024, "step": 32},
+                {"min": 512, "max": 2048, "step": 32},
             )
         self.assertEqual(glm_image["maxOutputPixels"], 1024 * 1024)
         self.assertEqual(
@@ -1170,7 +1187,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 "revision": "ba991d1546d8c50936c4c16398ed0a87b9b99fb1",
                 "artifact_classes": ("HunyuanDiTPipeline",),
                 "max_steps": 25,
-                "output_bounds": (1024, 1024, 32, 1024 * 1024),
+                "output_bounds": (512, 2048, 32, 1024 * 1024),
                 "max_sequence_length": 256,
                 "variant": None,
                 "component_dtypes": (),
@@ -1270,6 +1287,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 return_dict,
                 pag_scale,
                 pag_adaptive_scale,
+                use_resolution_binning,
             ):
                 call_values = dict(locals())
                 call_values.pop("received", None)
@@ -1322,6 +1340,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 "return_dict",
                 "pag_scale",
                 "pag_adaptive_scale",
+                "use_resolution_binning",
             },
             "PixArtSigmaPAGPipeline": {
                 "self",
@@ -1396,7 +1415,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             )
 
         invalid = (
-            ("HunyuanDiTPAGPipeline", {"width": 992}, "between 1024 and 1024"),
+            ("HunyuanDiTPAGPipeline", {"width": 480}, "between 512 and 2048"),
             ("HunyuanDiTPAGPipeline", {"num_inference_steps": 26}, "between 1 and 25"),
             ("HunyuanDiTPAGPipeline", {"max_sequence_length": 257}, "between 1 and 256"),
             ("PixArtSigmaPAGPipeline", {"num_inference_steps": 51}, "between 1 and 50"),
@@ -1941,6 +1960,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     expected_keys.add(adapter.image_guidance_parameter)
                 if adapter.max_input_image_size is not None and "max_input_image_size" in upstream_parameters:
                     expected_keys.add("max_input_image_size")
+                if adapter.use_resolution_binning is not None:
+                    self.assertIn("use_resolution_binning", upstream_parameters)
+                    expected_keys.add("use_resolution_binning")
                 if adapter.conditioning_scale_parameter is not None:
                     expected_keys.add(adapter.conditioning_scale_parameter)
                     for parameter in ("control_guidance_start", "control_guidance_end"):
@@ -1960,6 +1982,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     action_class(f"signature-{pipeline_name}").execute(**values)
 
                 self.assertEqual(set(received), expected_keys)
+                if adapter.use_resolution_binning is not None:
+                    self.assertIs(received["use_resolution_binning"], adapter.use_resolution_binning)
                 if adapter.guidance_parameter is not None:
                     self.assertEqual(
                         received[adapter.guidance_parameter],
@@ -3302,11 +3326,11 @@ class DiffusersImageRegistryTests(unittest.TestCase):
             self.assertEqual(kwargs["variant"], "fp16")
             self.assertNotIn("trust_remote_code", kwargs)
 
-        with self.assertRaisesRegex(ValueError, "between 1024 and 1024"):
+        with self.assertRaisesRegex(ValueError, "increments of 64"):
             Generate("kandinsky3-size-contract").execute(
                 pipeline=loaded_pipelines["text_to_image"],
                 prompt="reviewed fixture",
-                width=960,
+                width=992,
                 height=1024,
                 num_inference_steps=25,
                 guidance_scale=3.0,
@@ -3723,8 +3747,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertNotIn("max_sequence_length", called)
 
         for field, value, message in (
-            ("width", 1008, "between 1024 and 1024"),
-            ("height", 1056, "between 1024 and 1024"),
+            ("width", 1008, "increments of 32"),
+            ("height", 1056, "cannot exceed 1048576 pixels"),
             ("num_inference_steps", 9, "between 1 and 8"),
             ("guidance_scale", 1.1, "requires guidance_scale=1"),
         ):
@@ -3872,8 +3896,8 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(encoded["max_sequence_length"], 2048)
 
         for field, value, message in (
-            ("width", 992, "between 1024 and 1024"),
-            ("height", 1056, "between 1024 and 1024"),
+            ("width", 1008, "increments of 32"),
+            ("height", 1056, "cannot exceed 1048576 pixels"),
             ("num_inference_steps", 51, "between 1 and 50"),
             ("max_sequence_length", 2049, "between 1 and 2048"),
         ):
@@ -4652,6 +4676,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                 controlnet_conditioning_scale=1.0,
                 width=None,
                 height=None,
+                use_resolution_binning=True,
                 **kwargs,
             ):
                 calls["generation"] = {
@@ -4660,6 +4685,7 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     "controlnet_conditioning_scale": controlnet_conditioning_scale,
                     "width": width,
                     "height": height,
+                    "use_resolution_binning": use_resolution_binning,
                     "kwargs": kwargs,
                 }
                 return SimpleNamespace(images=[Image.new("RGB", (width, height), "white")])
@@ -4725,12 +4751,13 @@ class DiffusersImageRegistryTests(unittest.TestCase):
         self.assertEqual(generated["height_out"], 1024)
         self.assertIs(calls["generation"]["control_image"], control_image)
         self.assertEqual(calls["generation"]["controlnet_conditioning_scale"], 1)
-        with self.assertRaisesRegex(ValueError, "between 1024 and 1024"):
+        self.assertFalse(calls["generation"]["use_resolution_binning"])
+        with self.assertRaisesRegex(ValueError, "cannot exceed 1048576 pixels"):
             action.execute(
                 pipeline=result["pipeline"],
-                prompt="reject an unreviewed size",
+                prompt="reject a size beyond the resource ceiling",
                 control_image=control_image,
-                width=768,
+                width=1152,
                 height=1024,
                 num_inference_steps=50,
                 guidance_scale=6,

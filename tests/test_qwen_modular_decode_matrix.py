@@ -57,7 +57,10 @@ def test_replaced_unpack_decoder_and_output_blocks_execute_with_real_vae(admissi
             block_definition_id=metadata["blockDefinitionId"], block_class=metadata["blockClass"], block_contract_hash=metadata["blockContractHash"],
             execution_kind="step", state_in=issued)
         issued = result["state_out"]
-    images = state.get("images")
+    # Each step returns its own state without mutating the preceding node's
+    # cached state. Inspect the final output, not the original issued input.
+    assert state.get("images") is None
+    images = issued._state.get("images")
     if layered:
         assert len(images) == 1 and len(images[0]) == 2
         images = images[0]
@@ -67,9 +70,8 @@ def test_replaced_unpack_decoder_and_output_blocks_execute_with_real_vae(admissi
     if not layered:
         decoder = next(node for node in stages if node["modularDiffusers"]["blockClass"] == "QwenImageDecoderStep")
         metadata = decoder["modularDiffusers"]
-        state.set("latents", torch.zeros((1, 2, 3)))
         with pytest.raises(ValueError, match=r"Modular block .*QwenImageDecoderStep.*4D or 5D.*Input shapes: latents=\(1, 2, 3\)"):
             reviewed_blocks.ReviewedModularWorkflowStep().execute(pipeline_class=definition["pipelineClass"], workflow_id=definition["workflowId"],
                 execution_scope="unpruned_pipeline", composition_recipe=recipe, placement_path=metadata["placementPath"],
                 block_definition_id=metadata["blockDefinitionId"], block_class=metadata["blockClass"], block_contract_hash=metadata["blockContractHash"],
-                execution_kind="step", state_in=issued)
+                execution_kind="step", state_in=issued, latents=torch.zeros((1, 2, 3)))

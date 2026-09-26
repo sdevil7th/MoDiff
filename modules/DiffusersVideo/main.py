@@ -1034,13 +1034,45 @@ def _pipeline_adapter(pipeline: Any) -> VideoPipelineAdapter:
     )
 
 
+def get_video_operation_contracts(modules) -> list[dict]:
+    from modiff.operation_contracts import build_pipeline_operation_contract
+
+    result = []
+    for pipeline_class, adapter in sorted(VIDEO_PIPELINE_ADAPTERS.items()):
+        for mode in adapter.modes:
+            fields = get_video_mode_field_contract(adapter, mode).field_param_overlay()
+            actions = [("LoadPipeline", "diffusion.load_models"), ("Generate", "diffusion.generate_video")]
+            if "audio" in adapter.output_media:
+                actions.append(("GenerateVideoAudio", "diffusion.generate_video_audio"))
+            for action, operation in actions:
+                record = build_pipeline_operation_contract(
+                    modules, pipeline_class=pipeline_class, task=mode, operation_id=operation,
+                    node_key=f"modules.DiffusersVideo.{action}",
+                    field_overrides=fields if action != "LoadPipeline" else None,
+                    loader=action == "LoadPipeline",
+                )
+                if record is not None:
+                    result.append(record)
+    return result
+
+
 def _adapter_signal(adapter: VideoPipelineAdapter) -> dict[str, Any]:
+    actions = {
+        "Generate": list(adapter.modes),
+        "GenerateShotJob": list(adapter.modes),
+    }
+    if "audio" in adapter.output_media:
+        actions["GenerateVideoAudio"] = list(adapter.modes)
+        actions["GenerateLTX2"] = list(adapter.modes)
+    if "text_to_video" in adapter.modes:
+        actions["GenerateSequence"] = ["text_to_video"]
     return {
         "schemaVersion": 1,
         "library": "diffusers",
         "mediaKind": "video",
         "pipelineClass": adapter.pipeline_class,
         "modes": list(adapter.modes),
+        "actions": actions,
     }
 
 
@@ -2564,6 +2596,7 @@ class Generate(WanVACEGenerate):
                 {"action": "value", "target": "video_contract"},
                 {"action": "exec", "data": "update_adapter_modes"},
             ],
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "video_contract": {
             "label": "Video Contract",
@@ -4572,6 +4605,11 @@ class GenerateVideoAudio(NodeBase):
         "duration_seconds": {"label": "Audio Duration", "display": "output", "type": "float"},
     }
 
+    def update_adapter_modes(self, values, ref):
+        # The shared pipeline socket and mode control declare this callback.
+        # Keep the same adapter-owned fields as video-only generation.
+        return Generate.update_adapter_modes(self, values, ref)
+
     def __call__(self, **kwargs):
         values = dict(kwargs)
         values["mode"] = _require_video_mode(values.get("mode"))
@@ -4755,6 +4793,7 @@ class GenerateShotJob(NodeBase):
             "display": "input",
             "type": "video_diffusion_pipeline",
             "required": True,
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "job": {"label": "Shot Job", "display": "input", "type": "any", "required": True},
         "previous_video": {
@@ -4841,6 +4880,9 @@ class GenerateSequence(NodeBase):
         "clip_count": {"label": "Clip count", "display": "output", "type": "int"},
         "total_frames": {"label": "Total frames", "display": "output", "type": "int"},
     }
+
+    def update_adapter_modes(self, values, ref):
+        return Generate.update_adapter_modes(self, values, ref)
 
     def execute(self, **kwargs):
         import json

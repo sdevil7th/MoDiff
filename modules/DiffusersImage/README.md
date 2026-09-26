@@ -5,6 +5,25 @@ pipelines. An ordinary catalog Block contains these real nodes and media loaders
 preview. It is not an upstream Modular Diffusers hierarchy. Native Modular routes
 remain in `modules.ModularDiffusers`.
 
+The Pre-quantized Transformer loader socket is an optional override. Leave it
+disconnected for ordinary pipeline loading; graph repair must not supply an
+unrelated value for it. Connected overrides still require the reviewed component
+contract and exact base-pipeline identity.
+
+## Unconditional image starters
+
+New canonical DDPM, DDIM and Consistency Model loaders use the existing reviewed
+float32, resident recipe with Auto offload disabled. New unconditioned operations
+also clear the generic loader's unused ControlNet selection, so readiness does
+not request an unrelated model. Existing saved loaders and generic node defaults
+are preserved; change their settings explicitly when needed.
+
+The pinned upstream DDPM pipeline cannot use model CPU offload on CUDA because
+its scheduler receives tensors on different devices. DDPM and DDIM also convert
+their final tensors directly to NumPy, which rejects bfloat16. Use the reviewed
+float32 recipe. These starter defaults do not grant Auto resource eligibility or
+qualify every hardware/model combination.
+
 ## FLUX adapter boundaries
 
 - `FluxControlNetPipeline`, `FluxControlNetImg2ImgPipeline` and
@@ -20,6 +39,10 @@ remain in `modules.ModularDiffusers`.
   mapping. A separate explicit override controls distilled guidance. Disabling or
   omitting the override preserves old calls. ControlNet T2I instead exposes distilled
   guidance primarily and true CFG secondarily. Do not infer equivalence from labels.
+  Newly resolved ordinary operations and connected workflows explicitly enable
+  the distilled-guidance override with the selected model's recommendation and
+  initialize True CFG to 1 (disabled). This authoring default does not rewrite
+  saved nodes or run during dynamic field updates.
 
 All model/adapter files use the existing Hugging Face Hub resolver and immutable
 catalog revisions. Optional-runtime, resource, trust and local-file boundaries

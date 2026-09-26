@@ -29,10 +29,10 @@ resolve to loopback.
 | Optimizations           | `GET /runtime/optimizations`, `/jobs/{job_id}`, `/receipts`; `POST /runtime/optimizations/install`, `/activate`, `/rollback`, `/enable`, `/probe`, `/qualify`, `/jobs/{job_id}/cancel`                                                                                                               | Inspect runtime features and legacy package contracts, manage recovery, and record bounded local qualification evidence. Hashless package install and activation are unavailable.         |
 | Optional model runtimes | `GET /runtime/optional-runtimes`, `/jobs/{job_id}`; `POST /runtime/optional-runtimes/install`, `/activate`, `/rollback`, `/jobs/{job_id}/cancel`                                                                                                                                                     | Publish the reviewed optional-library contract and its fail-closed staged lifecycle. The current candidate exposes no executable install or activation action.                            |
 | Auto resource           | `POST /auto_resource/plan`, `POST /auto_resource/plans`, `POST /auto_resource/workflow`, `GET /auto_resource/history`, `DELETE /auto_resource/history`                                                                                                                                                                               | Plan hardware-aware model recipes and manage local planner history.                                                                                                                       |
-| Models                  | `GET /huggingface/node-library`, `/huggingface/modular-conditionals`, `/huggingface/registered-block-v2`, `/model_capabilities`, `/model_artifact_catalog`, `/model_fingerprints`, `/local_models`, `/hf_cache`, `/model_cache/diagnostics`, `/hf_hub`, `/hf_download/plan`; `POST /hf_download`, `/hf_token`; `DELETE /hf_cache/{hash}` | Discover reviewed first-party node definitions, exact compiled Block definitions, and unpruned Modular branch contracts; diagnose, space-plan, download, authenticate, fingerprint, and delete model artifacts.              |
+| Models                  | `GET /huggingface/node-library`, `/huggingface/modular-conditionals`, `/huggingface/registered-block-v2`, `/huggingface/registered-block-interfaces`, `/model_capabilities`, `/model_artifact_catalog`, `/model_fingerprints`, `/local_models`, `/hf_cache`, `/model_cache/diagnostics`, `/hf_hub`, `/hf_download/plan`; `POST /hf_download`, `/hf_token`; `DELETE /hf_cache/{hash}` | Discover reviewed first-party node definitions, exact compiled Block definitions, and unpruned Modular branch contracts; diagnose, space-plan, download, authenticate, fingerprint, and delete model artifacts.              |
 | Template Gallery setup  | `GET /template_gallery/status`, `/template_gallery/plan`; `POST /template_gallery/install`                                                                                                                                                                                                           | Inspect, space-plan, and explicitly install or repair the byte-pinned Gallery payload through the local app.                                                                              |
 | Media lifecycle         | `GET /media_assets`, `DELETE /media_assets`                                                                                                                                                                                                                                                          | Inspect temporary media records or remove exact unpinned, task-scoped, or age-scoped files while no generation is active.                                                                 |
-| Custom modules          | `GET /custom_modules`; `POST /custom_modules/refresh`, `/install`, `/{name}/update`, `/{name}/disable`, `/{name}/enable`                                                                                                                                                                             | Clone/copy and import trusted custom Python modules or change their enabled state.                                                                                                        |
+| Custom modules          | `GET /custom_modules`; `POST /custom_modules/refresh`, `/add`, `/install`, `/{name}/inspect`, `/{name}/reload`, `/{name}/update`, `/{name}/disable`, `/{name}/enable`                                                                                                                                                                             | Discover sources; intentionally add/load/reload or disable content-bound custom code. See [custom nodes](custom-nodes.md).                                                                                                        |
 | Studio outputs          | `GET/POST /studio_outputs`, `PATCH/DELETE /studio_outputs/{output_id}`                                                                                                                                                                                                                               | Persist and manage local Studio output metadata and copied media.                                                                                                                         |
 | Studio blocks           | `GET/POST /studio/blocks`, `GET/DELETE /studio/blocks/{block_id}`                                                                                                                                                                                                                                    | Persist reusable local graph blocks.                                                                                                                                                      |
 | Composite migration     | `GET/POST /studio/composite-migrations/preview`, `GET /studio/composite-migrations`, `/recovery-audit`, `/{migration_id}`; `POST /studio/composite-migrations/apply`, `/{migration_id}/rollback`                                                                                                 | Inspect redacted partial recovery evidence or explicitly apply safe V1/exact compiler-supplemented Cluster conversions with exact local backups and fail-closed recovery.                  |
@@ -40,7 +40,7 @@ resolve to loopback.
 
 ## Core response contracts
 
-### Node cache deletion
+### Node cache recomputation and release
 
 `DELETE /cache` accepts `{ "nodes": ["node-id"] }`, a single node-id string,
 or `{ "nodes": "*" }`. Invalid id shapes return HTTP 400. The response retains
@@ -53,6 +53,61 @@ Modular cleanup drops only selected collection ownership and unshared components
 it does not offload discarded weights or rebuild unrelated models' hooks. A run
 waiting for cache ownership reports `waiting_for_node_cache`; cancelling that
 wait does not start model work afterward.
+
+Release also removes cached consumers that retain the selected node's pipelines,
+state or tensors, including transitive consumers. The response lists these cache
+entries as well. Other component owners keep their weights and hooks; published
+media and downloaded model files are unaffected. Moving an unchanged loader
+between workflow node ids transfers its component collection and exclusive disk
+offload ownership without rebuilding hooks or copying weights.
+
+Use `{ "nodes": ["node-id"], "scope": "outputs" }` to request recomputation on
+the next Run without destroying node instances, model owners or offload hooks.
+The response is `{ "error": false, "scope": "outputs", "nodes": [...],
+"retainedModelNodes": [...] }`: `nodes` lists invalidated result producers and
+`retainedModelNodes` lists component owners whose output identities remain valid.
+Root Block ids also cover their cached runtime descendants. Current previews
+remain available; the normal executor propagates invalidation when the producer
+reruns. This action waits for the same execution lease as release. It does not
+run a graph, change its parameters, install weights or remove downloaded files.
+Unknown scopes return HTTP 400. Omitted scope (or `"all"`) retains the existing
+node-destruction behavior. Use `POST /runtime/gpu_cleanup` for idle process-wide
+model release.
+
+Node `executed` WebSocket messages include a bounded reason in `message`,
+distinguishing unchanged inputs, invalidation, changed inputs/loaded implementation, and retained objects
+with changed usage settings. CPU offload keeps weights available for reuse; it is
+not a weight reload or a model release.
+
+Cache identity is process-local. Validated execution inputs include model and
+component revisions, adapters, dtype and resource settings; ordinary canvas
+position, selection, collapse and view-mode metadata never enter node arguments.
+Input snapshots detect edits to nested data, images, arrays and ordinary
+versioned tensors without copying model weights. The existing Modular authority
+checks still run before reuse. Replacing a loaded node class or callback invalidates
+its output; editing a custom source file requires explicit code review and module
+reload to load that code. Merely editing a file does not execute it.
+
+Opaque objects remain bound to their producer's identity. Custom nodes that mutate
+an opaque model must execute and publish the change through the normal graph;
+untracked writes through tensor `.data` or external native pointers are not a
+supported cache invalidation mechanism. Upstream recomputation invalidates its
+consumers even when it returns the same model object.
+
+Expanded Modular steps fork the preceding Pipeline State and mutable pipeline
+components, including schedulers and guiders, while retaining neural weights and
+their manager. Generator continuations start at the saved stream position without
+advancing the cached snapshot. Branches and retries therefore cannot mutate a
+preceding stage's reusable state. Failed/cancelled graph attempts discard runtime
+caches before another attempt can use them. Completed model-call traceback frames
+are released after capturing diagnostics, so exceptions retained by futures cannot
+keep the failed attempt's tensors alive. Suspended queue coroutines remain intact.
+
+Graph model work and teardown use a dedicated worker thread to bound accelerator
+workspaces retained per thread. HTTP/control requests remain independent, and
+downloads retain the configured model-I/O serialization policy. Auto retains
+owners when their combined envelope fits and uses the existing owner-release
+schedule otherwise; actual free memory is checked before the next owner loads.
 
 ### Managed file identifiers
 
@@ -214,6 +269,23 @@ qualified, or eligible for Auto. Reading it does not import Diffusers,
 Transformers, or Torch and does not load or download model weights. Built-in
 definitions have `surface: diffusers_cluster_nodes`, `ownership: library`, and
 `mutable: false`; custom blocks remain User Nodes under `/studio/blocks`.
+
+`GET /huggingface/registered-block-interfaces` returns a schema-1 read-only
+index of the public sockets of every validated compiled catalog entry. Each
+entry contains `catalogDefinitionId`, `catalogDefinitionContentHash`,
+`admissionId`, `compiledDefinitionContentHash`,
+`compiledDefinitionCanonicalSha256`, and `inputs`/`outputs` arrays of
+`{portId, valueType}`. `valueType` is a string or a union of strings. The
+response is `{schemaVersion: 1, error: false, entries: [...]}`. Invalid local
+catalog data returns HTTP 500 with `error: true` and a message.
+
+The picker uses this compact index for typed suggestions only when all source,
+admission and compiled pins agree with its registered route. It does not infer
+ports from an internal graph or execute field actions to discover them. This
+endpoint returns no graphs, parameter values, runtime qualification or code
+consent. Selecting a suggestion still fetches and validates the full definition
+below; final canvas connection validation remains authoritative. Browsing this
+index does not import model runtimes, contact the Hub or download weights.
 
 `GET /huggingface/registered-block-v2?definition_id=...&admission_id=...`
 returns one build-time generated `BlockDefinitionV2`, its initial instance
@@ -589,7 +661,7 @@ This check does not claim file-existence, conditional-state or tensor-shape
 validation; those retain their existing backend and readiness contracts.
 
 See the
-[unified composite-node contract](unified-composite-node-implementation-plan-2026-09-01.md)
+[composite-node contract](composite-node-contract.md)
 for the normative `BlockDefinitionV2`/`BlockInstanceV2`, hashing, copy-on-write,
 migration, and schema-maintenance rules.
 
@@ -1136,6 +1208,201 @@ still inspect the same generic node fields from `/nodes`. Templates, resource
 qualification, live media, and Gallery publication require later graph and
 remote qualification gates.
 
+### Generic operations and pipeline coverage
+
+`GET /model_capabilities` publishes `operationContractSchemaVersion: 3`,
+`operationContracts`, `pipelineSupportSchemaVersion: 1` and `pipelineSupport`.
+These project the existing generic Modular configs, reviewed workflow adapters,
+standard image/video/audio/rendered-3D adapters and optional-runtime profiles.
+They do not add runtime actions or an alternate graph executor.
+
+An operation has `pipelineClass`, `task`, `operationId`, `nodeType`, `nodeKey`,
+`blockName`, `decomposition`, `support: "declared"`, `workflowId`, `binding` and
+`ports`. Identity is `(pipelineClass, operationId, task)`. Task-scoped bindings
+are independently authorable; the retained `task: null` declarations describe
+individual generic stages without claiming a complete task path.
+
+| Decomposition | Meaning |
+| --- | --- |
+| `block` | Named upstream Modular stage; `blockName` is non-null |
+| `bundle` | Existing component or typed media helper; no invented upstream stage |
+| `loader` | Existing Modular or standard loader for this task |
+| `pipeline` | Whole-pipeline call without editable Modular stages |
+
+Canonical IDs include `diffusion.load_models`, `diffusion.encode_prompt`,
+`diffusion.denoise` and `diffusion.decode_latents`. Specialized operations retain
+separate identities for prompt rewriting, duration preparation, semantic
+conditioning, reference assembly/encoding, media preparation/postprocessing,
+video, synchronized video/audio, prediction maps, layer decomposition and
+rendered 3D. Rendered 3D produces an orbit video, not a mesh. Reference assembly
+uses the existing decoded-media helper, not a new file/URL loading path.
+
+`binding.pipelineClass` identifies the actual implementation. It may differ
+from the selected `pipelineClass` for an existing reviewed standard fallback.
+`binding.values` contains only the exact lightweight selectors needed by the
+existing action, such as `model_type`, `pipeline_class`, `workflow_id` or
+`block_path`. Full field defaults and output signals are resolved on demand.
+Fallbacks retain public execution-profile task limits and reviewed local aliases.
+A task with Modular stages retains one coherent Modular loader/stage path;
+fallback generators are not mixed with that loader. Saved actions, including
+historical aliases such as `GenerateLTX2`, remain executable without duplicate
+canonical discovery entries.
+
+Each port retains `name`, original `semanticName`, `direction`, `types`,
+`required`, `hidden` and `roles` (`value`, `component`, or `pipeline`). Some
+conditioning bundles carry both value and component roles. Output ports are not
+required. Hidden fields can carry internal signals or optional controls.
+Modular loader ports with no declared component are hidden, while the full
+component bundle remains explicit.
+
+The additional `semantics` object contains:
+
+- `kind`: value, media, component, conditioning, latents, state, pipeline or opaque.
+- `scope`: actual pipeline identity, or pipeline plus workflow for sealed stage
+  state; plain values and decoded media have no model scope.
+- `state`: the completed/required preceding stage for sealed workflow state.
+- `owner`: `same_loader` for model-owned objects, otherwise `none`.
+- `members`: declared component or stage input/output names and upstream types.
+  These are descriptions, not inferred tensor dimensions or universal adapters.
+
+Advisory matching rejects incompatible domains, component requirements and
+state stages. Model-owned or opaque values still require runtime validation.
+Equal socket types, names or shapes never prove cross-family conditioning or
+latent compatibility. An unknown representation stays opaque. Existing
+preflight and loader/state ownership checks remain authoritative.
+
+Each `pipelineSupport` record carries the reviewed upstream coverage decision,
+reason, equivalence targets, declared `upstreamTasks` and task-level bindings.
+A task has `execution` (`adapter`, `declared`, `unavailable`), `decomposition`
+(`stages`, `pipeline`, `none`), operation/profile IDs, `dependencies`
+(`ready`, `blocked`, `unknown`) and exact `runtimeRequirements`.
+
+`adapter` requires existing task operations and a matching loader execution
+profile; it does not establish live inference, available weights or adequate
+memory. Modular task support comes from reviewed workflow owners, independently
+of Studio's narrower curated profile-mode menu. Dependency observation uses the
+existing optional-runtime gate, including extra media requirements. A missing
+runtime does not erase an adapter. `declared` retains schemas without an
+executable profile; contract-only models do not become runnable. An upstream
+task name with no exact operation binding remains unavailable even if a related
+adapter task has a different name.
+
+The checked `data/diffusers-operation-inventory.v1.json` accounts for all 330
+pipeline exports at the pinned Diffusers revision, all declared AutoPipeline
+mapping entries (including conditional registrations), and all reviewed Modular
+workflow/task entries. Other exports retain `pipeline_call` as their call
+surface and the existing explicit review decision. This audits named upstream
+surfaces; it does not infer every possible mode from optional `__call__`
+arguments. Local adapter aliases remain additional support records.
+Regenerate/check without model downloads:
+
+```bash
+./scripts/with-runtime-env.sh .venv/bin/python scripts/generate_operation_inventory.py
+./scripts/with-runtime-env.sh .venv/bin/python scripts/generate_operation_inventory.py --check
+```
+
+Discovery reads checked metadata without constructing nodes or pipelines,
+resolving executable blocks, downloading models or installing packages. Query
+filtering includes linked model classes and direct pipeline-class matches.
+The bounded client parsers reject malformed/duplicate records, invalid support
+references and unknown versions. Operation versions 1 and 2 remain readable;
+version 1 normalizes `task: null` and `hidden: false`. Older backends may omit the
+new catalogs. The version 3 response requires the matching updated client.
+
+`POST /operations/resolve` is a read-only authoring request:
+
+```json
+{"pipelineClass":"AnimaModularPipeline","task":"text_to_image","operationId":"diffusion.denoise"}
+```
+
+The response is `{ "schemaVersion": 1, "operation": <v3 contract>, "node":
+<ordinary /nodes definition> }`. Invalid/unknown selections return HTTP 400.
+The exact existing action receives its dynamic fields, selectors, canonical
+label and selected loader output signals. This constructs no runtime node,
+loads no weights, creates no graph or receipt, and grants no execution permission.
+The user can insert the result through the normal graph node factory, connect
+it and save it using the existing graph representation.
+
+In Expert's Stages catalog, choose a pipeline and task, then click a canonical
+operation to add one ordinary node. Adapter and runtime status remain separate.
+Bound implementation entries are consolidated there; Advanced retains raw
+nodes and aliases for inspection. Auto's Essentials catalog and existing saved
+graphs retain their behavior. Changing picker selections does not change nodes
+already on the canvas. In-flight insertion is cancelled when its selection,
+active workflow or catalog view changes. Graph-wide changes use the explicit
+preview and transaction described below.
+
+`POST /operations/starter` accepts `pipelineClass`, a non-null `task`, and an
+optional `executionProfileId`. No other keys are accepted. The optional identity
+selects an exact public profile belonging to that loader and task, including its
+reviewed model repository and immutable revision. This distinguishes models that
+share a pipeline class (for example FLUX dev and schnell). The endpoint checks
+that the resulting ordinary loader values resolve back to that profile; unknown,
+unrelated or ambiguous selections fail before any node is constructed.
+Omitting the identity preserves the existing pipeline/task defaults.
+It returns schema version 1, the selected pipeline/task/workflow ID, `nodes` (each
+containing its v3 `operation` and ordinary `node` schema), `edges`, `requiredInputs`, `sharedInputs`
+and `upstreamBlocks`. Edges use canonical operation IDs temporarily as `source`
+and `target`, and real field names as `sourceHandle`/`targetHandle`. The client
+assigns ordinary canvas node/edge IDs at insertion; these authoring references
+are never an alternate executable graph format or an execution receipt.
+
+New ordinary image, audio, video and rendered-3D operations initialize visible
+controls from the selected profile's reviewed capability defaults. Video defaults
+include frame count and dimensions; rendered-3D defaults include frame size.
+Audio defaults include duration,
+sample rate, steps, guidance and loader precision where declared; inactive
+adapter controls keep their existing defaults. This initialization applies only
+when creating nodes. Loading saved graphs or refreshing dynamic field metadata
+does not replace edited values, and runtime validation still checks their limits.
+Playback FPS remains an independent control on the video export node.
+
+A v3 operation can declare `decomposition: "integrated"` and
+`nodeType: "integrated"` when its existing action both owns and executes its
+model. It is the starter's single model owner, with no synthetic loader or
+component edges. The image-upscale binding resolves the existing Spandrel action
+and its reviewed immutable file selector. Profile selection validates that exact
+binding; it does not add undeclared pipeline/revision fields to the executable
+node. Required source media stays explicit, and ordinary graph execution still
+rehashes the selected artifact through the existing resolver.
+
+Task-specific Modular operation ports include the reviewed workflow's required
+media inputs, even when the reusable node schema makes a socket optional for
+other tasks (for example an inpaint mask or a last video frame). The selected
+operation and starter therefore agree on required media. This metadata describes
+authoring requirements; backend runtime validation remains authoritative.
+
+Connections reuse the reviewed workflow's exact state and component bindings,
+including required component ports beyond the minimum admission edges. Shared
+seed groups describe stages continuing one generator through native or sealed
+state. The client keeps their ordinary values aligned and resolves random mode
+once per group/run. Existing runtime seed/state validation remains authoritative;
+these relationships are not receipts or hidden execution parameters.
+Required auxiliary models and conditioning remain visible as unbound inputs;
+standard pipelines remain a loader and whole call. Effective output dimensions
+feed the decoder where the generic adapter declares them. This endpoint does
+not construct nodes, install packages, download weights or mutate a workflow.
+The Developer **Workflows** chooser uses these drafts for task-first model
+selection and adds compatible ordinary output nodes from the live registry.
+A preview is not execution evidence; missing inputs and runtime/model setup
+remain visible. Creating a draft neither downloads nor runs a model.
+Unknown/ambiguous selections return HTTP 400. Runtime, artifact, resource and
+actual connected-object validation still happen through the existing executor.
+
+When distinct public model identities share a standard loader and pipeline
+class, a new operation binds the unique execution profile for the selected
+identity and task. This preserves the distinction between a direct pipeline
+and its reviewed Modular equivalent at optional-runtime dispatch. It does not
+rewrite saved loaders or resolve multiple profiles for the same identity by
+guessing; runtime profile and artifact validation still apply.
+
+The client previews model/task changes before applying one history transaction.
+Compatible user values and custom nodes survive; unsupported settings are retained
+in an advisory annotation outside execution. A changed Python action gets a fresh
+runtime ID, avoiding a stale cached field-action instance. Existing Blocks are not
+converted; inspection and structural editing remain separate commands. Users
+connect the final output to a Preview, Save or Export node to run their draft.
+
 ### Studio execution specifications
 
 For migrated exact pairs, `GET /model_capabilities` publishes a
@@ -1247,6 +1514,12 @@ and exact width, height, and frame-count bindings without adding the source or
 mask branches.
 
 ### Auto resource compatibility
+
+`form.resourceMode` and runtime-hint `resourceMode` remain execution-policy fields:
+`auto` requests automatic planning; `expert` uses explicit resource settings.
+The client's global Auto/Expert authoring preference is presentation only and is
+not an execution-policy input. Either view can use either saved resource policy.
+Older client bundles still couple those controls; the wire values remain compatible.
 
 Both planning endpoints gather runtime/model snapshots, evaluate candidates,
 and serialize their responses off the HTTP event loop. A Model Manager batch
@@ -1381,6 +1654,16 @@ evidence is downgraded before Auto admission instead of being represented as
 live proof. Qualification proof remains advisory for an otherwise valid
 executable graph. Independently safe or passed candidates do not depend on that
 local history check.
+
+Editing an image or video upscaler's Model selector resolves an installed Hub
+file to its exact cached commit and records its SHA-256 and byte size in the
+selection. Local selections receive the same content identity without a Hub
+revision. This metadata-only field action does not download or deserialize a
+model, and it cannot authorize custom code. A complete existing pin can still
+be authored before its weights are installed. Missing unpinned files require
+installation through Model Manager; the action never chooses the newest cached
+snapshot as a fallback. Execution independently revalidates the resulting pin,
+so changing a cache ref after authoring does not silently change the workflow.
 
 Plan application considers only executable loader IDs referenced by graph
 `paths`. Direct loaders must already expose the profile's exact
@@ -1625,6 +1908,38 @@ workflow, run identity, or canvas epoch no longer owns the visible document.
 The extra fields are additive so older single-document clients remain wire
 compatible.
 
+Nonqueued client field-action waits are cancelled when their workflow ownership
+expires or browser navigation begins. This releases HTTP connections; it does
+not interrupt Python callbacks or grant permission to drop their execution
+lease. Queued user actions retain their acknowledgements. When a WebSocket
+session disconnects, its pending signal lookups resolve with
+`{"__MODIFF_ERROR": "websocket_closed"}` rather than waiting for the lookup timeout.
+Other sessions' pending requests retain their ownership.
+
+Reviewed nonqueued built-in field callbacks use presentation-only contexts.
+These include Modular loader filters, component selectors, scheduler/guider/layer
+schemas, generic operation schemas and the legacy Dynamic Block contract preview;
+ordinary Diffusers image, audio, video and rendered-3D contract updates use the same
+boundary. The exact allowlist is `modiff/field_metadata.py`, audited against the
+public registry in `tests/test_field_metadata_catalog.py`.
+
+These callbacks do not construct, mutate or destroy cached executable nodes, so
+graph execution does not block their field updates. Each request gets fresh
+presentation state and copied ordinary node declarations. Existing immutable
+pipeline/component identities and verified custom-contract resolvers remain
+unchanged; preview cannot authorize or import repository Python. Dynamic Block
+label/schema messages carry the same request-scoped workflow and form identity
+as ordinary field messages.
+
+Metadata callbacks have a separate ordered lease that survives cancellation
+until their threads finish. Runtime activation and custom-source mutations remain
+unavailable while that lease is held; custom-source mutations also hold it until
+imports finish. Authoritative field authorization and optional-runtime checks
+still apply. Queued and custom-node callbacks retain the model ownership lease.
+The explicit Quantization **Load Model Layers** action also remains serialized:
+it constructs empty models under Accelerate and is not passive metadata.
+A registry declaration cannot opt an arbitrary callback into the metadata path.
+
 Client callers must also choose the correct local ownership scope. A normal
 visible form edit is form-scoped and must reject a response after the form
 epoch advances. A hidden registered-Block compiler action is canvas-scoped:
@@ -1650,6 +1965,12 @@ of compact recent terminal receipts. Current and queued graph runs retain the
 complete workflow snapshot needed for immediate restoration. Completed
 workflow snapshots and run outputs are loaded on demand through
 `GET /runs/{task_id}` instead of being repeated in every queue poll.
+
+Run detail lookup reuses the history cache's task index to decode only matching
+output records. The index only narrows candidates: task and client identities
+must still agree across output, provenance and media records. Existing history
+normalization, atomic writes and detection of external file changes apply; no
+outputs or workflow snapshots are pruned to improve lookup speed.
 Completion, cancellation, and failure are distinct terminal states.
 
 Use the WebSocket for live progress and `GET /queue` to restore state after reconnect. Do not infer success only from an HTTP `200` returned by `POST /graph`.
@@ -1665,6 +1986,10 @@ transaction lock until completion even if the requesting client disconnects.
 Executor output preservation uses the same file lock; preview updates at queue
 admission and completion also wait off-loop. These changes preserve the response
 shape and output identity checks and do not delete retained media or history.
+History writes encode one output record at a time before atomically replacing
+the existing file. This avoids token-by-token Python writes for nested workflow
+snapshots without allocating a second serialized copy of the entire history.
+An encoding failure leaves the previous history document intact.
 
 Successful `POST /graph` admission marks only generated preview fields present in that submitted graph as pending and returns `preview_slots` with `preview_state_revision`. The matching `task_queued` WebSocket event carries the same state for other connected clients. A generated `update_value` atomically persists its output and promotes it through `preview_slot`; a newer pending task cannot be displaced by a late output from the task ahead of it. Terminal events carry any failed, cancelled, or completed-without-output slot changes.
 
@@ -1706,6 +2031,19 @@ not an unbounded per-iteration trace. This is not
 an assertion about internal library defaults, random seeds generated inside a
 library, output quality, model licensing, or publication qualification.
 
+For concrete Modular graphs, the receipt can also include `graphTasks`, a bounded
+list of `{loaderId, pipelineClass, task}` records for captured model owners in the
+output's actual ancestry. This is recognition of the owner's reviewed operation
+and state-edge contract, separate from captured call arguments. `task: null`
+means that graph does not select one unique public model task; it is not guessed
+from a Block label or an authoring hint. Complete, unambiguous task evidence takes
+precedence over the historical form's task label, without modifying that form.
+Edited upstream compositions, identical task signatures and wrapper workflows
+may remain unresolved. Neither recognition nor the history label grants execution,
+model support or resource qualification. Workflow Auto uses the same recognition
+when existing explicit mode/workflow bindings do not select a task, and still
+requires its ordinary exact-profile, artifact and memory checks.
+
 The allowlist is maintained in `modiff/execution_input_provenance.py` and the
 paired client `resolvedExecutionInputs.ts`. Capture never serializes arbitrary
 model/tensor/media objects or credential fields. Per scalar string/list limits
@@ -1731,6 +2069,12 @@ remain captured; externally supplied embeddings make the unused text controls
 state, and a custom sigma schedule does not establish the saved step count;
 those receipt values are `null`, without changing the requested form snapshot.
 Optional absent image/latent outputs do not invalidate a successful node cache.
+
+Ordinary audio actions capture normalized steps and guidance from the active
+adapter immediately before dispatch, retaining the original connected control's
+provenance. Inactive controls for other audio adapters do not enter the receipt.
+`audioDuration` records requested generation duration, and `sampleRate` records
+the requested delivery rate after resampling, not the decoder's native rate.
 
 `PATCH /studio_outputs/{output_id}` accepts exactly `{ "favorite": true }` or
 `{ "favorite": false }`. Unknown fields, non-boolean values, and malformed bodies
@@ -1803,8 +2147,8 @@ Uploads are written under configured data subdirectories and share the configure
   backend after active downloads finish so a newly installed
   `/template-gallery/*` static tree is registered.
 - `DELETE /hf_cache/{hash}` deletes selected cached model revisions.
-- `POST /custom_modules/install` accepts a Git URL or local directory, places it under `custom/`, and refreshes the live registry. Imported custom code has the backend process's permissions.
-- Modular Diffusers nodes may expose `trust_remote_code` for stored-graph compatibility, but repository Python and standalone component loading with remote code are rejected before upstream construction. Custom Modular pipeline and Dynamic Block execution is limited to an exact cached 40-character Hub commit whose canonical `modular_model_index.json` resolves to MoDiff-reviewed installed Diffusers pipeline/block exports and pinned official Diffusers or Transformers components. MoDiff revalidates the repository identity immediately before copying the reviewed metadata into a private content-addressed snapshot. Local mutable repositories remain preview-only, and neither a preview nor a persisted checksum grants repository-code authorization.
+- `POST /custom_modules/add` is the normal intentional Local/Python-file/Hub/Git import: resolve an immutable remote revision, validate, import and enable in one action with `consent: true`. Discovery never enables code. The lower-level `/install` staging and `/{name}/enable` APIs remain available for tooling; `/{name}/reload` binds the current inspected `codeHash` and explicit consent internally. Source/dependency drift blocks execution, and reload releases only the module and dependent caches. See [custom node development](custom-nodes.md) for requests, bounded file sizes and resource declarations.
+- The historical contract-only Modular Diffusers nodes may expose `trust_remote_code` for stored-graph compatibility, but repository Python and standalone component loading with remote code are rejected before upstream construction. Custom Modular pipeline and Dynamic Block execution is limited to an exact cached 40-character Hub commit whose canonical `modular_model_index.json` resolves to MoDiff-reviewed installed Diffusers pipeline/block exports and pinned official Diffusers or Transformers components. MoDiff revalidates the repository identity immediately before copying the reviewed metadata into a private content-addressed snapshot. Local mutable repositories remain preview-only, and neither a preview nor a persisted checksum grants repository-code authorization.
 
 HTTP reads and mutations require a literal loopback destination and peer. Browser requests with an `Origin` header must also use a loopback `http` or `https` origin; CLI HTTP clients without an `Origin` header remain supported over loopback. WebSocket upgrades use the same destination and peer boundary, browser clients must send a loopback Origin, and native clients without one are accepted only over a loopback connection. The initial `welcome.recent` list uses the same compact receipts as `GET /queue`; full completed workflow snapshots remain available through `GET /runs/{task_id}`. The separate supervisor control server binds to `127.0.0.1` and likewise rejects non-loopback browser origins.
 
@@ -1820,7 +2164,18 @@ The response includes `canAutoRun`, `issues`, `loaders`, `adapters`, `requiremen
 
 Requests carry `runtimeHints.workflowAutoPlan` with `schemaVersion: 1`, `graphHash` and optional `resourceControlGroups` (arrays of `{nodeId, field}` bindings for shared offload controls). The backend verifies the graph hash, prepares supported data-only suppliers through the existing executor when needed, validates mirrored settings, and replans from fresh outputs. It emits existing `auto_resource_plan_applied` events with optional `resourceUpdates` containing `{nodeId, field, value, previousValue}`. The client applies those updates only to the owning workflow with unchanged fields. `runtimePreparation.workflowAuto` in task receipts records resolved fields, applied updates, preparation nodes, schedule and actual releases.
 
-Shared loaders count once. Independent loaders remain separate owners. Single/shared-owner caches remain reusable. Independent owners use a dependency-respecting lifetime plan when it lowers peak memory; the same executor releases completed model caches and checks actual free memory before each subsequent owner. Detached material outputs survive, shared ownership stays live, and opaque model/device outputs block unsafe release. Loops retain all participating owners until the loop finishes. Release notifications use `auto_resource_cleanup`.
+Shared loaders count once. Independent loaders remain separate owners. Single/shared-owner caches remain reusable. Independent owners are retained when their combined envelope fits current capacity. When it does not fit, they use a dependency-respecting lifetime plan if it lowers peak memory; the same executor releases completed model caches and checks actual free memory before each subsequent owner. Detached material outputs survive, shared ownership stays live, and opaque model/device outputs block unsafe release. Loops retain all participating owners until the loop finishes. Release notifications use `auto_resource_cleanup`.
+
+Idle planning refreshes OS host-memory availability and credits only the
+worker's measurable PyTorch accelerator reservations, capped by the accessible
+capacity. Process RSS is not treated as reclaimable model RAM. Shared/unified
+memory remains one physical pool: accelerator requirements also count against
+host memory. This conservative estimate can request an explicit cache release
+when a warm CPU/offload cache leaves insufficient free RAM; it does not promise
+that resident weights make every warm plan admissible. Plans are revalidated at
+execution, and incompatible owner/recipe identities or actual pressure trigger
+existing cache cleanup. Custom memory policy keeps explicit settings and does
+not acquire an Auto capacity guarantee.
 
 Unknown model recipes, unreviewed custom/model-dependent resource suppliers, missing artifact evidence, nondefault accelerators and insufficient peak capacity produce explicit blockers. Expert preserves existing validation and explicit settings. Workflow receipts do not grant catalog, publication or model qualification authority.
 
@@ -1838,3 +2193,33 @@ After preparation, the new hash includes precisely the applied patches. Built-in
 this does not admit arbitrary Tensor actions. Shared outer graph ancestors execute
 once per attempt, so consumers share a Generator's advancing state. A new attempt
 creates a fresh Generator. Explicit loop bodies retain their iteration semantics.
+
+### Cached image pipelines and explicit dimensions
+
+Ordinary image pipeline loaders resolve a pinned, local-only Hub selection to
+its exact managed snapshot directory before calling Diffusers. This uses the
+existing cache containment and immutable-revision validation. It avoids treating
+unrelated weight folders in a repository as missing pipeline components. Diffusers
+still validates the selected pipeline's required files; no download, alternate
+revision, remote code, or serialization fallback is enabled by this resolution.
+Individual component loaders and explicit local selections keep their existing
+paths.
+
+Hunyuan-DiT's generic image adapters accept explicit width and height from 512 to
+2048 in 32-pixel increments, with a combined ceiling of 1,048,576 pixels. The
+1024-square default and existing step limits remain unchanged. They disable the
+upstream resolution-binning option so a valid requested size is not silently
+replaced with the nearest preset. The same declared bounds reach node controls
+and backend validation; this is an execution contract, not qualification of every
+size or resource policy.
+
+Pipelines without a step callback emit indeterminate generation progress
+(`progress: -1`, without current/total step counts or an ETA). Callback-capable
+pipelines retain measured per-step progress and the existing interruption checks.
+
+Kandinsky 3, ERNIE Image and GLM Image also separate their 1024-square defaults
+from valid explicit dimensions. Their adapters retain the same 1,048,576-pixel
+ceiling and allow sides from 512 to 2048. Kandinsky retains 64-pixel alignment;
+ERNIE and GLM retain 32-pixel alignment. Precision, guidance, token and step
+contracts are unchanged. Image-to-image actions that derive dimensions from the
+source image continue to do so; this does not add unused width/height controls.

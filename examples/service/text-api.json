@@ -1,0 +1,35 @@
+{
+  "sid": "example",
+  "nodes": {
+    "prompt": {
+      "module": "modules.Primitive",
+      "action": "TextValue",
+      "params": {
+        "text": {
+          "value": "A small service prototype"
+        }
+      }
+    },
+    "preview": {
+      "module": "modules.Primitive",
+      "action": "DataViewer",
+      "params": {
+        "value": {
+          "sourceId": "prompt",
+          "sourceKey": "output"
+        },
+        "preview": {
+          "display": "ui_text",
+          "sourceKey": "output"
+        }
+      }
+    }
+  },
+  "paths": [
+    [
+      "prompt",
+      "preview"
+    ]
+  ],
+  "runtimeHints": {}
+}

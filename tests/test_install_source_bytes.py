@@ -31,7 +31,7 @@ def test_reviewed_vcs_install_ignores_previously_cached_translated_wheels(tmp_pa
     assert "--reinstall-package" in command
     assert command[-1] == (
         "diffusers @ git+https://github.com/huggingface/diffusers.git@"
-        "2f7e0154a9db246e95c9ede43edba7db5b130805"
+        "fbf49e7f35857f76bc57b177e26f12b03687c668"
     )
     environment = run.call_args.kwargs["env"]
     assert environment["GIT_CONFIG_VALUE_" + str(int(environment["GIT_CONFIG_COUNT"]) - 2)] == "false"

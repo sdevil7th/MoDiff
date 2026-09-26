@@ -879,6 +879,46 @@ class ServerSecurityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(broadcasts[0][1], "signal-session")
         self.assertEqual(self.server.pending_ws_requests, {})
 
+    async def test_disconnected_browser_releases_its_signal_lookup_without_waiting_for_timeout(self):
+        self.server.loop = asyncio.get_running_loop()
+        requested = asyncio.Event()
+
+        class DisconnectingWebSocket(EmptyWebSocket):
+            async def send_json(inner, message):
+                inner.messages.append(message)
+                if message["type"] == "get_signal_value":
+                    requested.set()
+
+            async def __anext__(inner):
+                await requested.wait()
+                inner.closed = True
+                raise StopAsyncIteration
+
+        websocket = DisconnectingWebSocket()
+        with patch("modiff.server.web.WebSocketResponse", return_value=websocket):
+            serving = asyncio.create_task(self.server.websocket(WebSocketRequest(sid="leaving-session")))
+            while "leaving-session" not in self.server.ws_sessions:
+                await asyncio.sleep(0)
+            lookup = asyncio.create_task(asyncio.to_thread(
+                self.server.get_signal_value, "node", "input", "leaving-session", 0.15,
+            ))
+            await serving
+            result = await lookup
+        self.assertEqual(result, {"__MODIFF_ERROR": "websocket_closed"})
+        self.assertEqual(self.server.pending_ws_requests, {})
+
+    async def test_signal_disconnect_preserves_other_browser_requests(self):
+        first = asyncio.get_running_loop().create_future()
+        other = asyncio.get_running_loop().create_future()
+        self.server.pending_ws_requests.update({"first": first, "other": other})
+        self.server.pending_ws_request_sessions.update({"first": "leaving", "other": "staying"})
+        self.server._cancel_session_signal_requests("leaving")
+        self.assertEqual(first.result(), {"__MODIFF_ERROR": "websocket_closed"})
+        self.assertFalse(other.done())
+        self.assertEqual(self.server.pending_ws_requests, {"other": other})
+        self.assertEqual(self.server.pending_ws_request_sessions, {"other": "staying"})
+        other.cancel()
+
     async def test_signal_lookup_timeout_cleans_loop_owned_pending_request(self):
         self.server.loop = asyncio.get_running_loop()
         self.server.ws_sessions["signal-session"] = EmptyWebSocket()

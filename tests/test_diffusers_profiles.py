@@ -38,6 +38,9 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
                 "modules.HuggingFaceSpeech",
                 "LoadCTCSpeechRecognitionModel",
             ),
+            "direct-huggingface-transformers-depth": (
+                "modules.HuggingFaceTransformers", "LoadDepthEstimationModel",
+            ),
             "direct-huggingface-transformers-text": (
                 "modules.HuggingFaceTransformers",
                 "LoadTextGenerationModel",
@@ -107,6 +110,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "QwenImageLayeredModularPipeline",
             "QwenImageControlNetPipeline",
             "QwenImageLayeredPipeline",
+            "QwenImage21Pipeline",
             "QwenImageEditPipeline",
             "QwenImageEditPlusPipeline",
             "ZImageInpaintPipeline",
@@ -212,6 +216,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "MarigoldDepthPipeline",
             "HuggingFaceSpeechRecognitionModel",
             "HuggingFaceCTCSpeechRecognitionModel",
+            "DepthAnythingV2Model",
+            "DepthAnythingV2MetricModel",
             "HuggingFaceTextGenerationModel",
             "HuggingFaceImageTextToTextModel",
             "HuggingFaceAnyToAnyModel",

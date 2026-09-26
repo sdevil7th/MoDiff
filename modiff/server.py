@@ -13,7 +13,7 @@ AIOHTTP_CONTENT_TYPES.add_type("image/webp", ".webp")
 
 logging.getLogger("asyncio").setLevel(logging.WARNING)
 from functools import partial
-from importlib import import_module, metadata, invalidate_caches
+from importlib import import_module, metadata
 import os
 import platform
 import base64
@@ -22,6 +22,7 @@ import hashlib
 import html
 import ipaddress
 import io
+import inspect
 import json
 import nanoid
 import random
@@ -30,6 +31,7 @@ import shutil
 import stat
 import subprocess
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from utils.paths import list_files
 from pathlib import Path
 import sys
@@ -46,6 +48,7 @@ from modiff.execution_input_provenance import (
     bind_generation_input_origins,
 )
 from modiff.studio_persistence_lock import STUDIO_PERSISTENCE_LOCK
+from modiff.field_metadata import is_metadata_field_action, metadata_field_callback
 from modiff.path_identifiers import (
     data_path_identifier,
     is_data_path_identifier,
@@ -455,7 +458,7 @@ from modiff.diffusers_profiles import (
 from modiff.hardware import format_hardware_summary, get_hardware_snapshot, legacy_torch_status
 from modiff.runtime_telemetry import active_accelerator_snapshot, accelerator_cuda_diagnostic
 from modiff.huggingface_node_library import reviewed_huggingface_node_library
-from modiff.registered_block_v2_catalog import registered_block_v2_catalog_entry
+from modiff.registered_block_v2_catalog import registered_block_v2_catalog_entry, registered_block_v2_interfaces
 from modiff.huggingface_cluster_runtime import (
     qualify_huggingface_cluster_auto_authority,
     qualify_huggingface_cluster_expert_runtime,
@@ -532,6 +535,7 @@ from modiff.studio_execution_specs import (
     WAN_T2V_1_3B_DIFFUSERS_FILES,
     WAN_VACE_1_3B_DIFFUSERS_FILES,
     Z_IMAGE_DIFFUSERS_FILES,
+    reviewed_repository_download_files,
     assert_studio_execution_graph,
     studio_capability_definitions,
     studio_execution_spec_for_pair,
@@ -555,7 +559,9 @@ from modiff.task_template_contracts import (
     build_task_template_contracts,
 )
 from modiff.modelstore import modelstore
-from modules import MODULE_MAP, parse_module_map
+from modules import MODULE_MAP
+from modiff.custom_extension_api import CustomExtensionAPI
+from modiff.service_api import ServiceAPI
 from utils.huggingface import (
     cleanup_interrupted_hub_download_files,
     delete_model,
@@ -1247,10 +1253,10 @@ def studio_download_files_for_repo(repo_id):
     normalized = {tuple(sorted(set(selection))) for selection in matches}
     if len(normalized) > 1:
         raise RuntimeError(f"Conflicting reviewed Studio download selections for {repo_id}.")
-    return list(next(iter(normalized), ()))
+    return list(next(iter(normalized), ())) or reviewed_repository_download_files(repo_id)
 
 
-class WebServer:
+class WebServer(CustomExtensionAPI, ServiceAPI):
     def __init__(
         self,
         modules: dict = {},
@@ -1271,6 +1277,7 @@ class WebServer:
         self.modules = modules
         self.ws_sessions = {}
         self.pending_ws_requests = {}
+        self.pending_ws_request_sessions = {}
 
         self.interrupt_flag = False
         self._forced_restart_timer = None
@@ -1283,6 +1290,7 @@ class WebServer:
         self._supervisor_queue_state_lock = threading.RLock() if supervisor_queue_state else None
         self._supervisor_queue_last_write = 0.0
         self.node_cache = {}
+        self._model_executor = None
         self._active_graph_node_ids = set()
         self._last_auto_model_family = None
         self._last_auto_resource_signature = None
@@ -1334,6 +1342,7 @@ class WebServer:
         # those two callers, so protect the shared history file with a small
         # process-local lock as well.
         self.studio_history_file_lock = threading.RLock()
+        self._studio_history_read_cache = None
         self.hf_download_semaphore = asyncio.Semaphore(2)
         self.download_reservation_lock = asyncio.Lock()
         self.hf_cache_mutation_lock = asyncio.Lock()
@@ -1380,6 +1389,9 @@ class WebServer:
         # Model destructors can take minutes. Serialize cache ownership without
         # holding the HTTP event loop or racing a same-id loader replacement.
         self._node_cache_lock = asyncio.Lock()
+        # Reviewed presentation callbacks never borrow cached model owners.
+        # Retain ordering and drain cancelled threads separately from inference.
+        self._field_metadata_lock = asyncio.Lock()
         self._node_cache_teardown_active = False
 
         self.main_worker_task = None
@@ -1428,6 +1440,9 @@ class WebServer:
                 web.get("/ws", self.websocket),
                 web.get(r"/nodes{id:/?([\w\d_-]+/[\w\d_-]+)?}", self.nodes),
                 web.post("/fields/action", self.field_action),
+                web.post("/operations/resolve", self.resolve_operation),
+                web.post("/operations/starter", self.resolve_operation_starter),
+                web.post("/operations/task-starter", self.resolve_task_starter),
                 web.get("/cache/{node}/{field}", self.cache),
                 web.get("/cache/{node}/{field}/{index}", self.cache),
                 web.delete("/cache", self.delete_cache),
@@ -1445,6 +1460,7 @@ class WebServer:
                 web.get("/media/preview", self.media_preview),
                 web.get("/preview", self.preview),
                 web.post("/graph", self.graph),
+                web.post("/service_package", self.service_package),
                 web.get("/queue", self.get_queue),
                 web.get("/runs/{task_id}", self.get_run),
                 web.delete("/queue/{task_id}", self.delete_task),
@@ -1490,6 +1506,7 @@ class WebServer:
                 web.get("/media_assets", self.media_assets_list),
                 web.delete("/media_assets", self.media_assets_cleanup),
                 web.get("/huggingface/node-library", self.huggingface_node_library),
+                web.get("/huggingface/registered-block-interfaces", self.huggingface_registered_block_interfaces),
                 web.get(
                     "/huggingface/registered-block-v2",
                     self.huggingface_registered_block_v2,
@@ -1525,7 +1542,11 @@ class WebServer:
                 web.get("/custom_modules", self.custom_modules_list),
                 web.post("/custom_modules/refresh", self.custom_modules_refresh),
                 web.post("/custom_modules/install", self.custom_modules_install),
+                web.post("/custom_modules/add", self.custom_modules_add),
+                web.post("/custom_modules/resolve", self.custom_modules_resolve),
                 web.post("/custom_modules/{name}/update", self.custom_modules_update),
+                web.post("/custom_modules/{name}/inspect", self.custom_modules_inspect),
+                web.post("/custom_modules/{name}/reload", self.custom_modules_reload),
                 web.post("/custom_modules/{name}/disable", self.custom_modules_disable),
                 web.post("/custom_modules/{name}/enable", self.custom_modules_enable),
                 web.get("/studio_outputs", self.studio_outputs_get),
@@ -1683,6 +1704,9 @@ class WebServer:
         # Cleanup the runner.
         if self.runner:
             await self.runner.cleanup()
+        if self._model_executor is not None:
+            self._model_executor.shutdown(wait=False, cancel_futures=True)
+            self._model_executor = None
 
     """
     ╭───────────────╮
@@ -2082,6 +2106,29 @@ class WebServer:
             }
         )
 
+    @staticmethod
+    def _studio_output_identity_values(output, key, provenance_key):
+        values = set()
+
+        def add(value):
+            if value is None:
+                return
+            normalized = str(value).strip()
+            if normalized:
+                values.add(normalized)
+
+        add(output.get(key))
+        for container_key in ("provenance", "backendProvenance"):
+            container = output.get(container_key)
+            if isinstance(container, dict):
+                add(container.get(provenance_key))
+        media_items = output.get("mediaItems")
+        if isinstance(media_items, list):
+            for item in media_items:
+                if isinstance(item, dict):
+                    add(item.get(key))
+        return values
+
     def _studio_outputs_for_run(self, task_id, client_run_id=None):
         """Return persisted outputs whose recorded run identity matches exactly."""
         normalized_task_id = str(task_id or "").strip()
@@ -2089,39 +2136,17 @@ class WebServer:
         if not normalized_task_id:
             return []
 
-        def identity_values(output, key, provenance_key):
-            values = set()
-
-            def add(value):
-                if value is None:
-                    return
-                normalized = str(value).strip()
-                if normalized:
-                    values.add(normalized)
-
-            add(output.get(key))
-            for container_key in ("provenance", "backendProvenance"):
-                container = output.get(container_key)
-                if isinstance(container, dict):
-                    add(container.get(provenance_key))
-            media_items = output.get("mediaItems")
-            if isinstance(media_items, list):
-                for item in media_items:
-                    if isinstance(item, dict):
-                        add(item.get(key))
-            return values
-
         matches = []
         with self.studio_history_file_lock:
-            outputs = self._read_studio_outputs()
+            outputs = self._read_studio_outputs(task_id=normalized_task_id)
         for output in outputs:
             if not isinstance(output, dict):
                 continue
-            task_ids = identity_values(output, "taskId", "backendExecutionId")
+            task_ids = self._studio_output_identity_values(output, "taskId", "backendExecutionId")
             if task_ids != {normalized_task_id}:
                 continue
             if normalized_client_run_id:
-                client_run_ids = identity_values(output, "clientRunId", "clientRunId")
+                client_run_ids = self._studio_output_identity_values(output, "clientRunId", "clientRunId")
                 # Exact task identity is sufficient for legacy records that
                 # predate client-run IDs. When present, however, every recorded
                 # client identity must agree with the originating run.
@@ -2284,6 +2309,7 @@ class WebServer:
                         await asyncio.sleep(0.05)
                     terminal_status = "completed"
                     failure_payload = None
+                    failure = None
                     try:
                         if isinstance(args, tuple):
                             callback = partial(task, *args)
@@ -2406,8 +2432,12 @@ class WebServer:
                             # inside third-party model loading, so teardown runs
                             # immediately after that call returns and before the
                             # worker advances the queue.
+                            def release_failed_attempt():
+                                self._release_exception_frames(failure)
+                                return self._release_runtime_caches_for_retry()
+
                             runtime_cleanup = await self._with_node_cache_lease(
-                                lambda: asyncio.to_thread(self._release_runtime_caches_for_retry)
+                                lambda: self._run_executor_callback(release_failed_attempt)
                             )
                             self._last_auto_model_family = None
                             self._last_auto_resource_signature = None
@@ -2471,7 +2501,10 @@ class WebServer:
             logger.debug("Main worker shutting down")
 
     async def _with_node_cache_lease(self, operation):
-        async with self._node_cache_lock:
+        return await self._with_action_lease(self._node_cache_lock, operation)
+
+    async def _with_action_lease(self, lock, operation):
+        async with lock:
             task = asyncio.ensure_future(operation())
             cancelled = False
             while True:
@@ -2488,8 +2521,15 @@ class WebServer:
                 raise asyncio.CancelledError
             return result
 
-    async def _run_executor_callback(self, callback, *, serialize_model_io=False, on_start=None):
+    async def _run_executor_callback(self, callback, *, serialize_model_io=False, on_start=None, model_work=True):
         loop = self.loop or asyncio.get_running_loop()
+        # Accelerator libraries retain workspaces per thread. The shared HTTP
+        # pool rotates workers between runs, accumulating one workspace per
+        # worker. Keep model calls/teardown on one thread, separate from control
+        # requests, while retaining the existing graph and ownership leases.
+        if model_work and self._model_executor is None:
+            self._model_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="modiff-model")
+        executor = self._model_executor if model_work else None
 
         def run_after_resource_probe():
             # A probe that began while idle must finish before model allocator
@@ -2503,10 +2543,10 @@ class WebServer:
             async with self.model_io_lock:
                 if on_start is not None:
                     on_start()
-                return await loop.run_in_executor(None, run_after_resource_probe)
+                return await loop.run_in_executor(executor, run_after_resource_probe)
         if on_start is not None:
             on_start()
-        return await loop.run_in_executor(None, run_after_resource_probe)
+        return await loop.run_in_executor(executor, run_after_resource_probe)
 
     async def _background_worker(self):
         try:
@@ -2563,13 +2603,12 @@ class WebServer:
     async def user_assets(self, request):
         module = request.match_info.get("module")
         file = request.match_info.get("file")
-        fileName = f"custom/{module}/web/{file}"
-
-        if not Path(fileName).exists():
-            return web.HTTPNotFound(text="File not found")
-
-        response = web.FileResponse(fileName)
-        # response.headers["Content-Type"] = "application/javascript"
+        try:
+            content = await asyncio.to_thread(self._extension_store().asset, module, file)
+        except (ValueError, OSError):
+            return web.HTTPNotFound(text="Approved custom asset not found")
+        import mimetypes
+        response = web.Response(body=content, content_type=mimetypes.guess_type(file)[0] or 'application/octet-stream')
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
@@ -2776,6 +2815,23 @@ class WebServer:
             }
         )
 
+    def _describe_registered_node(self, module, action, values):
+        return {
+            "module": module,
+            "action": action,
+            "type": values.get("type", "custom"),
+            "label": values.get("label", f"{module}: {action}"),
+            "category": values.get("category", "default"),
+            "description": values.get("description", ""),
+            "resizable": values.get("resizable", False),
+            "skipParamsCheck": values.get("skipParamsCheck", False),
+            "style": values.get("style", ""),
+            "params": self.describe_node_params(values.get("params", {})),
+            "time": [0, 0, 0],
+            "memory": [0, 0, 0],
+            "cache": False,
+        }
+
     async def nodes(self, request):
         id = request.match_info.get("id", "").strip("/")
         modules = self.modules
@@ -2801,23 +2857,7 @@ class WebServer:
             for action, values in actions.items():
                 if values.get("hidden", False) and not id:
                     continue
-                params = self.describe_node_params(values.get("params", {}))
-
-                output[f"{module}.{action}"] = {
-                    "module": module,
-                    "action": action,
-                    "type": values.get("type", "custom"),
-                    "label": values.get("label", f"{module}: {action}"),
-                    "category": values.get("category", "default"),
-                    "description": values.get("description", ""),
-                    "resizable": values.get("resizable", False),
-                    "skipParamsCheck": values.get("skipParamsCheck", False),
-                    "style": values.get("style", ""),
-                    "params": params,
-                    "time": [0, 0, 0],
-                    "memory": [0, 0, 0],
-                    "cache": False,
-                }
+                output[f"{module}.{action}"] = self._describe_registered_node(module, action, values)
 
         return web.json_response({"instance": self.instance, "nodes": output})
 
@@ -2842,6 +2882,7 @@ class WebServer:
         values,
         ref,
     ):
+        self._require_custom_module_enabled(module)
         assert_optional_runtime_ready(
             field_action_optional_runtime_requirement(
                 module,
@@ -2890,6 +2931,7 @@ class WebServer:
 
         if not all(isinstance(value, str) and value for value in (module, action, field_key, method_name)):
             raise ValueError("Field actions require non-empty module, action, fieldKey, and fn strings.")
+        self._require_custom_module_enabled(module)
         module_definition = self.modules.get(module)
         if not isinstance(module_definition, dict):
             raise ValueError(f"Unknown field-action module {module!r}.")
@@ -2907,10 +2949,14 @@ class WebServer:
             )
 
     async def field_action(self, request):
-        return await self._with_node_cache_lease(lambda: self._field_action(request))
-
-    async def _field_action(self, request):
         data = await request.json()
+        metadata_only = is_metadata_field_action(data)
+        lock = self._field_metadata_lock if metadata_only else self._node_cache_lock
+        return await self._with_action_lease(
+            lock, lambda: self._field_action(data, metadata_only=metadata_only)
+        )
+
+    async def _field_action(self, data, *, metadata_only=False):
         if not isinstance(data, dict):
             return web.json_response(
                 {"error": True, "message": "Field action payload must be a JSON object."},
@@ -2978,28 +3024,29 @@ class WebServer:
         if sid:
             message_identity["sid"] = sid
 
-        if node not in self.node_cache:
+        if metadata_only:
+            callback = metadata_field_callback(action, method_name, node_id=node, sid=sid, module=module)
+        elif node not in self.node_cache:
             work_module = import_module(f"{module}.main")
             work_action = getattr(work_module, action)
             work_action = work_action(node_id=node)
             self.node_cache[node] = work_action
 
-        cached_node = self.node_cache[node]
-        if (
-            getattr(cached_node, "module_name", None) != module
-            or getattr(cached_node, "class_name", None) != action
-        ):
-            return web.json_response(
-                {
-                    "error": True,
-                    "message": "The cached node does not match the requested field-action module and action.",
-                },
-                status=409,
-            )
-
-        cached_node._sid = sid  # always update the sid as it may change over time
-
-        callback = getattr(cached_node, method_name, None)
+        if not metadata_only:
+            cached_node = self.node_cache[node]
+            if (
+                getattr(cached_node, "module_name", None) != module
+                or getattr(cached_node, "class_name", None) != action
+            ):
+                return web.json_response(
+                    {
+                        "error": True,
+                        "message": "The cached node does not match the requested field-action module and action.",
+                    },
+                    status=409,
+                )
+            cached_node._sid = sid  # always update the sid as it may change over time
+            callback = getattr(cached_node, method_name, None)
         if not callable(callback):
             return web.json_response(
                 {"error": True, "message": "The authorized backend field action is not callable."},
@@ -3294,10 +3341,39 @@ class WebServer:
             filename=filename,
         )
 
+    def _release_cached_nodes(self, targets):
+        """Release selected owners and dependents while holding the model/cache lease."""
+        targets = self._dependent_cache_nodes(targets)
+        released_components = self._release_node_modular_components(targets)
+        # The standard manager also has shared owners. Destruction must
+        # neither offload discarded weights nor remove a surviving owner's
+        # model. Clear node destructor ownership only after pruning entries.
+        surviving_models = {model_id for key, node in self.node_cache.items() if key not in targets
+                            for model_id in getattr(node, "_mm_models", ())}
+        for key in targets:
+            cached = self.node_cache.get(key)
+            for model_id in getattr(cached, "_mm_models", ()):
+                if model_id not in surviving_models:
+                    memory_manager.cache.pop(model_id, None)
+            if cached is not None and hasattr(cached, "_mm_models"):
+                cached._mm_models = []
+        cached = None
+        for node in targets:
+            self.node_cache.pop(node, None)
+        if targets or released_components:
+            gc.collect()
+            self._best_effort_device_cache_clear()
+            self._best_effort_allocator_trim()
+        logger.debug(f"Removed {len(targets)} nodes from cache.")
+        return targets
+
     async def delete_cache(self, request):
         data = await request.json()
         if not isinstance(data, dict):
             return web.json_response({"error": True, "message": "Cache deletion requires an object."}, status=400)
+        scope = data.get("scope", "all")
+        if scope not in ("all", "outputs"):
+            return web.json_response({"error": True, "message": "Cache scope must be all or outputs."}, status=400)
         nodes = data.get("nodes", [])
         if isinstance(nodes, str):
             nodes = nodes if nodes == "*" else [nodes]
@@ -3311,15 +3387,25 @@ class WebServer:
             # Drop its exact length-prefixed runtime namespace as well.
             prefixes = tuple(f"block-v2-node:{len(node.encode('utf-16-le')) // 2}:{node}:" for node in targets)
             targets = list(dict.fromkeys([*targets, *(key for key in self.node_cache if key.startswith(prefixes))]))
-            released_components = self._release_node_modular_components(targets)
-            for node in targets:
-                self.node_cache.pop(node, None)
-            if released_components:
-                gc.collect()
-                self._best_effort_device_cache_clear()
-                self._best_effort_allocator_trim()
-            logger.debug(f"Removed {len(targets)} nodes from cache.")
-            return targets
+            if scope == "outputs":
+                # Preserve component lifetime, model identity tokens and offload
+                # hooks. Re-execution invalidates connected descendants through
+                # the ordinary executor on the next Run. Published media stays
+                # available until its producer successfully replaces it.
+                manager = getattr(sys.modules.get("modules.ModularDiffusers"), "components", None)
+                collections = getattr(manager, "collections", {})
+                invalidated, retained = [], []
+                for node_id in targets:
+                    cached = self.node_cache.get(node_id)
+                    if cached is None:
+                        continue
+                    if collections.get(node_id) or getattr(cached, "_mm_models", ()):
+                        retained.append(node_id)
+                    elif callable(getattr(cached, "invalidate_cache", None)):
+                        cached.invalidate_cache()
+                        invalidated.append(node_id)
+                return {"nodes": invalidated, "retainedModelNodes": retained}
+            return self._release_cached_nodes(targets)
 
         async def release_in_background():
             self._node_cache_teardown_active = True
@@ -3331,6 +3417,8 @@ class WebServer:
                 self._node_cache_teardown_active = False
 
         removed = await self._with_node_cache_lease(release_in_background)
+        if scope == "outputs":
+            return web.json_response({"error": False, "scope": scope, **removed})
         return web.json_response({"error": False, "nodes": removed})
 
     """
@@ -4370,18 +4458,58 @@ class WebServer:
             }
         return slots
 
+    @staticmethod
+    def _studio_history_signature(path, info=None):
+        info = path.stat() if info is None else info
+        return (str(path), info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+
+    def _cache_studio_output_state(self, signature, state, encoded_outputs=None):
+        # Keep compact immutable records, not a second retained Python object
+        # graph. Decode each record separately so large histories never monopolize
+        # the GIL in one native JSON decoder call. Readers own their copies.
+        task_indices = {}
+        for index, output in enumerate(state["outputs"]):
+            for task_id in self._studio_output_identity_values(output, "taskId", "backendExecutionId"):
+                task_indices.setdefault(task_id, []).append(index)
+        self._studio_history_read_cache = {
+            "taskIndices": {task_id: tuple(indices) for task_id, indices in task_indices.items()},
+            "signature": signature,
+            "revision": state["revision"],
+            "previewSlots": deepcopy(state["previewSlots"]),
+            "outputs": tuple(encoded_outputs) if encoded_outputs is not None else tuple(
+                json.dumps(output, ensure_ascii=False).encode("utf-8") for output in state["outputs"]
+            ),
+        }
+
     def _read_studio_output_state(self):
-        history_file = self._studio_history_file()
-        if not history_file.exists():
-            return {"revision": 0, "previewSlots": {}, "outputs": []}
+        with self.studio_history_file_lock:
+            history_file = self._studio_history_file()
+            if not history_file.exists():
+                self._studio_history_read_cache = None
+                return {"revision": 0, "previewSlots": {}, "outputs": []}
 
-        try:
-            with open(history_file, "r", encoding="utf-8") as f:
-                payload = json.load(f)
-        except (json.JSONDecodeError, UnicodeDecodeError, OSError) as e:
-            logger.error(f"Error reading Studio output history: {e}")
-            return {"revision": 0, "previewSlots": {}, "outputs": []}
+            try:
+                signature = self._studio_history_signature(history_file)
+                cached = self._studio_history_read_cache
+                if cached is not None and cached["signature"] == signature:
+                    return {
+                        "revision": cached["revision"],
+                        "previewSlots": deepcopy(cached["previewSlots"]),
+                        "outputs": [json.loads(record) for record in cached["outputs"]],
+                    }
+                self._studio_history_read_cache = None
+                with open(history_file, "r", encoding="utf-8") as f:
+                    signature = self._studio_history_signature(history_file, os.fstat(f.fileno()))
+                    payload = json.load(f)
+            except (json.JSONDecodeError, UnicodeDecodeError, OSError) as e:
+                logger.error(f"Error reading Studio output history: {e}")
+                return {"revision": 0, "previewSlots": {}, "outputs": []}
 
+            state = self._normalize_studio_output_state(payload)
+            self._cache_studio_output_state(signature, state)
+            return state
+
+    def _normalize_studio_output_state(self, payload):
         if isinstance(payload, list):
             outputs = payload
             version = 1
@@ -4410,10 +4538,31 @@ class WebServer:
             slots = self._legacy_studio_preview_slots(outputs)
         return {"revision": revision, "previewSlots": slots, "outputs": outputs}
 
-    def _read_studio_outputs(self):
-        return self._read_studio_output_state()["outputs"]
+    def _read_studio_outputs(self, *, task_id=None):
+        if task_id is None:
+            return self._read_studio_output_state()["outputs"]
+        with self.studio_history_file_lock:
+            cached = self._studio_history_read_cache
+            try:
+                signature = self._studio_history_signature(self._studio_history_file())
+            except OSError:
+                signature = None
+            if cached is not None and cached["signature"] == signature:
+                # The index selects candidates, not trusted identities. The run
+                # reader still rejects conflicting task/client provenance.
+                return [json.loads(cached["outputs"][index])
+                        for index in cached["taskIndices"].get(task_id, ())]
+            # Cold reads and external replacements use the same normalization,
+            # invalidation and error handling as every other history reader.
+            outputs = self._read_studio_output_state()["outputs"]
+            return [output for output in outputs
+                    if task_id in self._studio_output_identity_values(output, "taskId", "backendExecutionId")]
 
     def _write_studio_output_state(self, outputs, preview_slots, *, revision=None):
+        with self.studio_history_file_lock:
+            return self._write_studio_output_state_locked(outputs, preview_slots, revision=revision)
+
+    def _write_studio_output_state_locked(self, outputs, preview_slots, *, revision=None):
         history_file = self._studio_history_file()
         history_file.parent.mkdir(parents=True, exist_ok=True)
         current_ids = {
@@ -4436,10 +4585,41 @@ class WebServer:
             "previewSlots": preview_slots,
             "outputs": bounded_outputs,
         }
+        encoded_outputs = []
         temp_file = history_file.with_suffix(".tmp")
         with open(temp_file, "w", encoding="utf-8") as f:
-            json.dump(payload, f, ensure_ascii=False)
+            # Encode each output with the accelerated encoder. json.dump walks
+            # nested workflow snapshots token by token in Python while holding
+            # the history lock. Encoding the entire history at once would instead
+            # allocate a second history-sized string and hold the GIL throughout.
+            f.write("{")
+            for index, (key, value) in enumerate(payload.items()):
+                if index:
+                    f.write(", ")
+                f.write(json.dumps(key) + ": ")
+                if key == "outputs":
+                    f.write("[")
+                    for output_index, output in enumerate(value):
+                        if output_index:
+                            f.write(", ")
+                        encoded = json.dumps(output, ensure_ascii=False)
+                        f.write(encoded)
+                        encoded_outputs.append(encoded.encode("utf-8"))
+                    f.write("]")
+                else:
+                    f.write(json.dumps(value, ensure_ascii=False))
+            f.write("}")
+        written = temp_file.stat()
         temp_file.replace(history_file)
+        signature = self._studio_history_signature(history_file)
+        if signature[1:5] == (written.st_dev, written.st_ino, written.st_size, written.st_mtime_ns):
+            self._cache_studio_output_state(
+                signature, self._normalize_studio_output_state(payload), encoded_outputs,
+            )
+        else:
+            # An external atomic replacement won the race; never cache our
+            # old content under the replacement's filesystem identity.
+            self._studio_history_read_cache = None
         return bounded_outputs
 
     def _write_studio_outputs(self, outputs):
@@ -5092,16 +5272,33 @@ class WebServer:
             if output_id in current_ids and output_id not in response_ids:
                 response_outputs.append(output)
                 response_ids.add(output_id)
-        return self._json_response_bytes(
-            {
-                "error": False,
-                "count": len(outputs),
-                "outputs": response_outputs,
-                "previewSlots": list(state["previewSlots"].values()),
-                "revision": state["revision"],
-                "path": str(self._studio_history_file()),
-            }
-        )
+        payload = {
+            "error": False,
+            "count": len(outputs),
+            "outputs": response_outputs,
+            "previewSlots": list(state["previewSlots"].values()),
+            "revision": state["revision"],
+            "path": str(self._studio_history_file()),
+        }
+        # Current previews can extend past the history limit. Encode their
+        # records individually, just as persistence does, so one native encoder
+        # call cannot hold the GIL across the entire retained collection.
+        parts = [b"{"]
+        for index, (key, value) in enumerate(payload.items()):
+            if index:
+                parts.append(b",")
+            parts.extend((self._json_response_bytes(key), b":"))
+            if key == "outputs":
+                parts.append(b"[")
+                for output_index, output in enumerate(value):
+                    if output_index:
+                        parts.append(b",")
+                    parts.append(self._json_response_bytes(output))
+                parts.append(b"]")
+            else:
+                parts.append(self._json_response_bytes(value))
+        parts.append(b"}")
+        return b"".join(parts)
 
     async def _run_studio_history_mutation(self, builder, *args):
         """Serialize whole file transactions without blocking the HTTP loop.
@@ -5264,15 +5461,19 @@ class WebServer:
 
     async def studio_blocks_get(self, request):
         limit = min(max(int(request.query.get("limit", 200)), 1), 500)
-        blocks = self._list_studio_blocks()
-        return web.json_response(
-            {
-                "error": False,
-                "count": len(blocks),
-                "blocks": blocks[:limit],
-                "path": str(self._studio_blocks_dir()),
-            }
+        body = await self._coalesced_control_response(
+            ("studio_blocks", limit), lambda: self._studio_blocks_response_bytes(limit)
         )
+        return web.Response(body=body, content_type="application/json")
+
+    def _studio_blocks_response_bytes(self, limit):
+        blocks = self._list_studio_blocks()
+        return self._json_response_bytes({
+            "error": False,
+            "count": len(blocks),
+            "blocks": blocks[:limit],
+            "path": str(self._studio_blocks_dir()),
+        })
 
     async def composite_migration_preview(self, request):
         from modiff.composite_migration import scan_composite_migration_preview
@@ -6488,6 +6689,9 @@ class WebServer:
         resource_identity = {
             **returned_payload,
             "torch": resource_torch_identity,
+            # Earlier graph receipts could retain only the final node's peak.
+            # Keep those historical proofs, but never reuse their resource key.
+            "peakMeasurementVersion": 2,
         }
         fingerprint = hashlib.sha256(
             json.dumps(execution_identity, sort_keys=True, default=str).encode("utf-8")
@@ -8796,6 +9000,8 @@ class WebServer:
 
     def _reset_runtime_measurement(self):
         """Reset accelerator peak counters immediately before one graph attempt."""
+        self._runtime_memory_peaks = {}
+        self._runtime_memory_peak_error = None
         try:
             torch = import_module("torch")
             if bool(torch.cuda.is_available()):
@@ -8812,10 +9018,40 @@ class WebServer:
                     if callable(reset):
                         reset(index)
         except Exception as exc:
+            self._runtime_memory_peak_error = str(exc)
             logger.debug(f"Could not reset runtime memory counters: {exc}")
 
+    def _reset_node_runtime_measurement(self):
+        """Keep graph high-water marks before resetting the next node's counters.
+
+        Called only on the serial model worker, never by active-run telemetry.
+        Per-node UI measurements and graph-attempt resource proof share Torch's
+        counters; a small final Preview must not erase an earlier denoiser peak.
+        """
+        peaks = getattr(self, "_runtime_memory_peaks", None)
+        if isinstance(peaks, dict):
+            try:
+                torch = import_module("torch")
+                for kind in ("cuda", "xpu"):
+                    runtime = getattr(torch, kind, None)
+                    if not runtime or not bool(getattr(runtime, "is_available", lambda: False)()):
+                        continue
+                    for index in range(int(runtime.device_count())):
+                        device = peaks.setdefault(f"{kind}:{index}", {})
+                        for key, method in (
+                            ("peakAllocatedBytes", "max_memory_allocated"),
+                            ("peakReservedBytes", "max_memory_reserved"),
+                        ):
+                            read_peak = getattr(runtime, method, None)
+                            if callable(read_peak):
+                                device[key] = max(device.get(key, 0), int(read_peak(index)))
+            except Exception as exc:
+                self._runtime_memory_peak_error = str(exc)
+                logger.debug(f"Could not preserve graph memory counters: {exc}")
+        reset_memory_stats()
+
     def _runtime_measurement(self, *, elapsed_seconds):
-        measurement = {"elapsedSeconds": max(0.0, float(elapsed_seconds))}
+        measurement = {"elapsedSeconds": max(0.0, float(elapsed_seconds)), "peakMeasurementVersion": 2}
         try:
             torch = import_module("torch")
             if bool(torch.cuda.is_available()):
@@ -8857,6 +9093,18 @@ class WebServer:
                 measurement.update({"backend": "cpu", "device": "cpu:0"})
         except Exception as exc:
             measurement["acceleratorMeasurementError"] = str(exc)
+        peaks = getattr(self, "_runtime_memory_peaks", {})
+        device_peaks = peaks.get(measurement.get("device"), {}) if isinstance(peaks, dict) else {}
+        for key in ("peakAllocatedBytes", "peakReservedBytes"):
+            if key in device_peaks:
+                measurement[key] = max(measurement.get(key, 0), device_peaks[key])
+        peak_error = getattr(self, "_runtime_memory_peak_error", None) or measurement.get("acceleratorMeasurementError")
+        if peak_error:
+            # Missing a boundary makes the graph high-water mark unknown, not
+            # safely equal to the lower final-node observation.
+            measurement.pop("peakAllocatedBytes", None)
+            measurement.pop("peakReservedBytes", None)
+            measurement["acceleratorMeasurementError"] = peak_error
         try:
             import psutil
 
@@ -8864,6 +9112,38 @@ class WebServer:
         except Exception:
             pass
         return measurement
+
+    @staticmethod
+    def _release_exception_frames(error):
+        """Keep diagnostics/types but release tensors held by completed frames.
+
+        Futures and exception chains can outlive a failed attempt. Empty model
+        registries alone cannot release locals retained by their tracebacks.
+        Call on the model worker after formatting the diagnostic traceback.
+        """
+        pending, seen = [error], set()
+        while pending:
+            current = pending.pop()
+            if current is None or id(current) in seen:
+                continue
+            seen.add(id(current))
+            pending.extend((current.__cause__, current.__context__))
+            if isinstance(current, BaseExceptionGroup):
+                pending.extend(current.exceptions)
+            if current.__traceback__ is not None:
+                frame_trace = current.__traceback__
+                while frame_trace is not None:
+                    frame = frame_trace.tb_frame
+                    # The async queue worker is suspended awaiting this very
+                    # cleanup. Clearing a suspended coroutine closes it; only
+                    # finished ordinary model-call frames may be cleared here.
+                    if not frame.f_code.co_flags & (inspect.CO_COROUTINE | inspect.CO_ASYNC_GENERATOR | inspect.CO_GENERATOR):
+                        try:
+                            frame.clear()
+                        except RuntimeError:  # A synchronous retry's caller is still executing.
+                            pass
+                    frame_trace = frame_trace.tb_next
+                current.__traceback__ = None
 
     def _release_runtime_caches_for_retry(self):
         errors = []
@@ -8955,6 +9235,7 @@ class WebServer:
             # Those resident objects are not interchangeable.
             "loaderContract": runtime_hints.get("loaderContract"),
             "dtype": candidate.get("dtype") or runtime_hints.get("dtype"),
+            "modelRevision": candidate.get("revision") or runtime_hints.get("modelRevision"),
             "quantizationMode": (candidate.get("quantizationMode") or runtime_hints.get("quantizationMode")),
             "quantizedComponents": sorted(
                 str(item)
@@ -9020,7 +9301,16 @@ class WebServer:
             for node in nodes.values()
             if isinstance(node, dict) and node.get("action") in loader_actions
         ]
-        if len(loaders) != 1:
+        if not loaders:
+            return hints or None
+        if len(loaders) > 1:
+            # Identical independent owners do not change the resident recipe.
+            # Keep their common identity when one is later removed; otherwise
+            # a multi-owner run records an empty identity and forces a needless
+            # process-wide reload of the surviving owner on the next run.
+            derived = [self._runtime_cleanup_hints_for_graph({"loader": loader}, hints) for loader in loaders]
+            if len({self._auto_candidate_cache_signature(item) for item in derived}) == 1:
+                return derived[0]
             return hints or None
         loader = loaders[0]
         params = loader.get("params") if isinstance(loader.get("params"), dict) else {}
@@ -9039,6 +9329,7 @@ class WebServer:
             "pretrained_model_name_or_path",
         )
         dtype = self._graph_loader_param_value(params, "dtype", "torch_dtype")
+        revision = self._graph_loader_param_value(params, "revision")
         offload_mode = self._graph_loader_param_value(params, "offload_mode")
         device_map = self._graph_loader_param_value(params, "device_map")
         if not hints.get("resourceMode"):
@@ -9055,6 +9346,8 @@ class WebServer:
             hints["modelRepo"] = str(artifact)
         if dtype and not hints.get("dtype"):
             hints["dtype"] = str(dtype)
+        if revision and not hints.get("modelRevision"):
+            hints["modelRevision"] = str(revision)
         if offload_mode and not hints.get("offloadMode"):
             hints["offloadMode"] = str(offload_mode)
         if device_map and not hints.get("deviceMap"):
@@ -9753,6 +10046,8 @@ class WebServer:
             self._restore_execution_process_state(process_state, graph)
 
     def _execute_graph(self, graph):
+        if "servicePackage" in graph:
+            self._validate_service_graph(graph)
         sid = graph["sid"]
         nodes = graph["nodes"]
         # API paths share ancestor prefixes. Visit each outer graph node once
@@ -10165,6 +10460,7 @@ class WebServer:
                     }
                 )
                 self.queue_message(cleanup_progress)
+                self._release_exception_frames(e)
                 cleanup = self._release_runtime_caches_for_retry()
                 self.queue_message(
                     {
@@ -10525,6 +10821,13 @@ class WebServer:
             prepare_for_reuse = getattr(cached_node, "prepare_for_workflow_reuse", None)
             if callable(prepare_for_reuse):
                 prepare_for_reuse()
+            rebind_owner = getattr(cached_node, "rebind_cache_owner", None)
+            if callable(rebind_owner):
+                rebind_owner(node_id)
+            for dependent in self.node_cache.values():
+                sources = getattr(dependent, "_cache_input_sources", ())
+                if cached_id in sources:
+                    dependent._cache_input_sources = frozenset(node_id if source == cached_id else source for source in sources)
             self.node_cache.pop(cached_id, None)
             cached_node.node_id = node_id
             self.node_cache[node_id] = cached_node
@@ -10541,6 +10844,8 @@ class WebServer:
 
         if action not in self.modules[module]:
             raise ValueError(f"Invalid action: {action}")
+
+        self._require_custom_module_enabled(module)
 
         # get the arguments values
         args = {}
@@ -10616,7 +10921,7 @@ class WebServer:
         )
 
         if not quiet:
-            reset_memory_stats()
+            self._reset_node_runtime_measurement()
             start_time = time.time()
             phase = node_execution_phase(module, action)
 
@@ -10643,9 +10948,11 @@ class WebServer:
         # through a cached instance whose executable identity no longer
         # matches the current graph.
         cached_node = self.node_cache.get(id)
+        loaded_action = getattr(sys.modules.get(f"{module}.main"), action, None)
         if cached_node is not None and (
             getattr(cached_node, "module_name", None) != module
             or getattr(cached_node, "class_name", None) != action
+            or (isinstance(loaded_action, type) and type(cached_node) is not loaded_action)
         ):
             self.node_cache.pop(id, None)
 
@@ -10677,6 +10984,10 @@ class WebServer:
 
         # set the session id, it can be used to send messages from the node back to the client
         self.node_cache[id]._sid = sid
+        self.node_cache[id]._cache_input_sources = frozenset(
+            field["sourceId"] for key, field in params.items()
+            if field.get("sourceId") and key in args and key not in (param_overrides or {})
+        )
         if upstream_changed:
             invalidate_cache = getattr(self.node_cache[id], "invalidate_cache", None)
             if callable(invalidate_cache):
@@ -10848,6 +11159,14 @@ class WebServer:
                     "progress": 100,
                     "current_node": id,
                     "hasChanged": self.node_cache[id]._has_changed,
+                    "message": {
+                        "empty": "Computed: no reusable output was available.",
+                        "invalidated": "Recomputed: output was invalidated by an upstream change or recompute request.",
+                        "inputs_changed": "Recomputed: node inputs changed.",
+                        "implementation_changed": "Recomputed: loaded node implementation changed.",
+                        "usage_changed": "Resident object reused; changed usage settings invalidate dependent outputs.",
+                        "unchanged_inputs": "Cached result reused: node inputs are unchanged.",
+                    }.get(getattr(self.node_cache[id], "_cache_reason", None), "Node completed."),
                     "executionTime": self.node_cache[id]._execution_time,
                     "memoryUsage": self.node_cache[id]._memory_usage,
                 }
@@ -11505,6 +11824,7 @@ class WebServer:
             or self.current_task
             or self.queued_tasks
             or self._active_nonruntime_mutations
+            or self._field_metadata_lock.locked()
             or self.hf_download_tasks
             or (self.template_gallery_install_task is not None and not self.template_gallery_install_task.done())
         ):
@@ -11524,15 +11844,15 @@ class WebServer:
         if isinstance(gate, dict) and gate.get("token") == token:
             self._runtime_mutation_gate = None
 
-    async def _strict_runtime_control_json(self, request, *, allowed, required=(), allow_empty=False):
+    async def _strict_runtime_control_json(self, request, *, allowed, required=(), allow_empty=False, max_bytes=4096):
         content_length = getattr(request, "content_length", None)
         if content_length is not None and (
             not isinstance(content_length, int)
             or isinstance(content_length, bool)
             or content_length < 0
-            or content_length > 4096
+            or content_length > max_bytes
         ):
-            raise ValueError("Runtime control request exceeds 4096 bytes.")
+            raise ValueError(f"Runtime control request exceeds {max_bytes} bytes.")
 
         def reject_duplicates(pairs):
             value = {}
@@ -11547,18 +11867,18 @@ class WebServer:
             chunks = []
             total = 0
             while not content.at_eof():
-                chunk = await content.read(min(4097 - total, 4097))
+                chunk = await content.read(min(max_bytes + 1 - total, 65536))
                 if not chunk:
                     break
                 chunks.append(chunk)
                 total += len(chunk)
-                if total > 4096:
-                    raise ValueError("Runtime control request exceeds 4096 bytes.")
+                if total > max_bytes:
+                    raise ValueError(f"Runtime control request exceeds {max_bytes} bytes.")
             raw = b"".join(chunks)
         elif hasattr(request, "read"):
             raw = await request.read()
-            if len(raw) > 4096:
-                raise ValueError("Runtime control request exceeds 4096 bytes.")
+            if len(raw) > max_bytes:
+                raise ValueError(f"Runtime control request exceeds {max_bytes} bytes.")
         else:
             raw = None
         if raw is not None:
@@ -13175,6 +13495,16 @@ class WebServer:
             logger.debug("malloc_trim failed during accelerator cleanup", exc_info=True)
             return False, [f"malloc_trim: {e}"]
 
+    def _dependent_cache_nodes(self, node_ids):
+        """Include cached consumers retaining pipelines, tensors or adapter state."""
+        targets = set(node_ids)
+        while True:
+            added = {key for key, node in self.node_cache.items()
+                     if key not in targets and targets.intersection(getattr(node, "_cache_input_sources", ())) }
+            if not added:
+                return list(dict.fromkeys([*node_ids, *(key for key in self.node_cache if key in targets)]))
+            targets.update(added)
+
     def _release_node_modular_components(self, node_ids):
         """Destroy unshared ownership without offloading soon-to-be-dead models.
 
@@ -13303,7 +13633,7 @@ class WebServer:
                 status=409,
             )
 
-        return await self._with_node_cache_lease(lambda: asyncio.to_thread(self._runtime_gpu_cleanup_idle))
+        return await self._with_node_cache_lease(lambda: self._run_executor_callback(self._runtime_gpu_cleanup_idle))
 
     def _runtime_gpu_cleanup_idle(self):
         before = self._cuda_memory_snapshot()
@@ -13377,6 +13707,14 @@ class WebServer:
 
     async def huggingface_node_library(self, _request):
         return web.json_response(await asyncio.to_thread(reviewed_huggingface_node_library))
+
+    async def huggingface_registered_block_interfaces(self, _request):
+        try:
+            interfaces = await asyncio.to_thread(registered_block_v2_interfaces)
+        except ValueError as exc:
+            logger.exception("Could not validate the registered Block interfaces")
+            return web.json_response({"error": True, "message": str(exc)}, status=500)
+        return web.json_response(interfaces)
 
     async def huggingface_registered_block_v2(self, request):
         definition_id = request.query.get("definition_id", "")
@@ -13480,6 +13818,8 @@ class WebServer:
 
     def _build_model_capabilities_payload(self, query=""):
         from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+        from modiff.operation_contracts import OPERATION_CONTRACT_SCHEMA_VERSION
+        from modiff.operation_catalog import build_operation_catalog
         from modiff.optional_runtime_execution import optional_runtime_requirement_for_profiles
 
         optional_runtime_catalog_snapshot = None
@@ -13615,6 +13955,9 @@ class WebServer:
                     specification["mode"] for specification in capability["studioExecutionSpecs"]
                 )
             capabilities.append(capability)
+        operation_contracts, pipeline_support = build_operation_catalog(
+            self.modules, published_execution_profiles, catalog_resolver=request_optional_runtime_catalog,
+        )
         task_template_contracts = build_task_template_contracts(capabilities, execution_specs)
         task_contracts_by_model = {}
         for contract in task_template_contracts:
@@ -13635,6 +13978,17 @@ class WebServer:
                 or query in capability.get("defaultRepo", "").lower()
             ]
             returned_models = {capability["modelType"] for capability in capabilities}
+            returned_pipelines = returned_models | {
+                pipeline for capability in capabilities for pipeline in capability["pipelineClasses"]
+            }
+            operation_contracts = [
+                contract for contract in operation_contracts
+                if contract["pipelineClass"] in returned_pipelines or query in contract["pipelineClass"].lower()
+            ]
+            pipeline_support = [
+                item for item in pipeline_support
+                if item["pipelineClass"] in returned_pipelines or query in item["pipelineClass"].lower()
+            ]
             task_template_contracts = [
                 contract for contract in task_template_contracts if contract["modelType"] in returned_models
             ]
@@ -13646,6 +14000,10 @@ class WebServer:
             "capabilities": capabilities,
             "taskTemplateContractSchemaVersion": TASK_TEMPLATE_CONTRACT_SCHEMA_VERSION,
             "taskTemplateContracts": task_template_contracts,
+            "operationContractSchemaVersion": OPERATION_CONTRACT_SCHEMA_VERSION,
+            "operationContracts": operation_contracts,
+            "pipelineSupportSchemaVersion": 1,
+            "pipelineSupport": pipeline_support,
             "diffusersExecutionProfiles": published_execution_profiles,
             "studioExecutionSpecs": execution_specs,
             "optionalRuntimeProfiles": public_optional_runtime_profiles(),
@@ -13689,6 +14047,98 @@ class WebServer:
         query = str(request.query.get("q", "")).lower().strip()
         body = await self._model_capabilities_response(query)
         return web.Response(body=body, content_type="application/json")
+
+    async def resolve_operation(self, request):
+        """Read-only authoring schema over the same ordinary registered actions."""
+        from modiff.operation_catalog import resolve_operation
+
+        try:
+            selection = await request.json()
+            catalog_bytes = await self._model_capabilities_response("")
+
+            def describe():
+                contracts = json.loads(catalog_bytes)["operationContracts"]
+                resolved = resolve_operation(self.modules, contracts, selection)
+                return {
+                    "schemaVersion": 1,
+                    "operation": resolved["operation"],
+                    "node": self._describe_registered_node(resolved["module"], resolved["action"], resolved),
+                }
+
+            payload = await asyncio.to_thread(describe)
+        except ValueError as exc:
+            return web.json_response({"error": str(exc)}, status=400)
+        return web.json_response(payload)
+
+    async def resolve_operation_starter(self, request):
+        """Describe ordinary nodes and reviewed wires; never execute or install."""
+        from modiff.operation_starters import resolve_operation_starter
+
+        try:
+            selection = await request.json()
+            catalog_bytes = await self._model_capabilities_response("")
+
+            def describe():
+                contracts = json.loads(catalog_bytes)["operationContracts"]
+                payload = resolve_operation_starter(self.modules, contracts, selection)
+                payload["nodes"] = [
+                    {"operation": node["operation"],
+                     "node": self._describe_registered_node(node["module"], node["action"], node)}
+                    for node in payload["nodes"]
+                ]
+                return payload
+
+            payload = await asyncio.to_thread(describe)
+        except ValueError as exc:
+            return web.json_response({"error": str(exc)}, status=400)
+        return web.json_response(payload)
+
+    async def resolve_task_starter(self, request):
+        """Task-first authoring; only inspect existing artifacts and memory recipes."""
+        from modiff.task_authoring import resolve_task_starter
+        from modiff.auto_resource import artifact_revision_cache_status
+        from modiff.model_artifact_catalog import require_catalog_revision
+        from modiff.workflow_auto_resource import build_workflow_auto_plan
+
+        try:
+            selection = await request.json()
+            catalog_bytes = await self._model_capabilities_response("")
+
+            def describe():
+                local_models = get_local_models()
+                fingerprint = self._auto_planning_runtime_fingerprint()
+                artifacts = {}
+
+                def installed(profile):
+                    repo = profile["default_repo"]
+                    try:
+                        revision = require_catalog_revision(repo, model_type=profile["model_type"])
+                    except ValueError:
+                        return False
+                    key = (repo, revision)
+                    if key not in artifacts:
+                        artifacts[key] = artifact_revision_cache_status(repo, revision, local_models)
+                    return artifacts[key].get("complete") is True
+
+                def inspect(graph):
+                    return build_workflow_auto_plan(
+                        graph, runtime_fingerprint=fingerprint, local_models=local_models, data_dir=self.data_dir,
+                    )
+
+                result = resolve_task_starter(
+                    self.modules, json.loads(catalog_bytes), selection,
+                    installed=installed, inspect_resources=inspect,
+                )
+                result["starter"]["nodes"] = [
+                    {"operation": node["operation"],
+                     "node": self._describe_registered_node(node["module"], node["action"], node)}
+                    for node in result["starter"]["nodes"]
+                ]
+                return result
+
+            return web.json_response(await asyncio.to_thread(describe))
+        except ValueError as exc:
+            return web.json_response({"error": str(exc)}, status=400)
 
     def _auto_resource_runtime_block(self):
         cached = (
@@ -13761,6 +14211,7 @@ class WebServer:
         remains unavailable, so real external pressure still selects a safer
         plan.
         """
+        cached_identity = isinstance(self._last_runtime_fingerprint, dict)
         fingerprint = self._runtime_fingerprint_for_control_request()
         # During an active model call the cached fingerprint was captured
         # immediately before execution and already describes the capacity that
@@ -13769,6 +14220,27 @@ class WebServer:
         # weights, and a refresh-time planning request must remain responsive.
         if self.current_task:
             return fingerprint
+        if cached_identity and isinstance(fingerprint.get("hardware"), dict):
+            # Runtime identity is cached, but host capacity changes after model
+            # release and with external pressure. An old RAM sample can reject
+            # every subsequent Run even after enough memory becomes available.
+            # Refresh only the inexpensive OS sample; never probe accelerators
+            # here or rewrite the fingerprint used by execution receipts.
+            from modiff.hardware import system_memory_snapshot
+
+            try:
+                memory = system_memory_snapshot()
+            except Exception:
+                memory = {}
+            system = fingerprint["hardware"].setdefault("system", {})
+            if isinstance(system, dict):
+                for field, source in (
+                    ("ram_total", "total_bytes"),
+                    ("ram_free", "free_bytes"),
+                    ("ram_available", "available_bytes"),
+                ):
+                    value = memory.get(source)
+                    system[field] = value if type(value) is int and value >= 0 else None
         if not (self.node_cache or memory_manager.cache):
             return fingerprint
 
@@ -14218,319 +14690,6 @@ class WebServer:
         if not isinstance(diagnostics, dict):
             raise RuntimeError("Model cache diagnostics did not return a JSON object.")
         return web.json_response(diagnostics)
-
-    def _custom_modules_root(self):
-        root = Path("custom").resolve()
-        root.mkdir(parents=True, exist_ok=True)
-        return root
-
-    def _disabled_custom_modules_root(self):
-        root = (self._custom_modules_root() / ".disabled").resolve()
-        root.mkdir(parents=True, exist_ok=True)
-        return root
-
-    def _safe_custom_module_name(self, value):
-        name = str(value or "").strip()
-        if not name:
-            raise ValueError("Module name is required.")
-        if not re.match(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$", name):
-            raise ValueError(
-                "Module name may only contain letters, numbers, dot, underscore, and dash, and must not start with a dot."
-            )
-        return name
-
-    def _derive_custom_module_name(self, source):
-        source_text = str(source or "").strip().rstrip("/\\")
-        if not source_text:
-            raise ValueError("Module source is required.")
-        source_text = source_text[:-4] if source_text.endswith(".git") else source_text
-        name = re.split(r"[/\\:]", source_text)[-1]
-        name = re.sub(r"[^A-Za-z0-9_.-]+", "-", name).strip(".-")
-        return self._safe_custom_module_name(name)
-
-    def _custom_module_path(self, name, disabled=False):
-        safe_name = self._safe_custom_module_name(name)
-        root = self._disabled_custom_modules_root() if disabled else self._custom_modules_root()
-        target = (root / safe_name).resolve()
-        if target.parent != root:
-            raise ValueError("Resolved custom module path escaped the custom module directory.")
-        return target
-
-    def _is_git_source(self, source):
-        source = str(source or "").strip().lower()
-        return source.startswith(("https://", "http://", "ssh://", "git@")) or source.endswith(".git")
-
-    def _run_git(self, args, cwd=None, timeout=300):
-        git_bin = shutil.which("git")
-        if not git_bin:
-            raise RuntimeError("git is not available in the MoDiff backend environment.")
-
-        completed = subprocess.run(
-            [git_bin, *args],
-            cwd=str(cwd) if cwd else None,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            shell=False,
-        )
-        result = {
-            "returncode": completed.returncode,
-            "stdout": completed.stdout.strip(),
-            "stderr": completed.stderr.strip(),
-        }
-        if completed.returncode != 0:
-            message = result["stderr"] or result["stdout"] or f"git exited with {completed.returncode}"
-            raise RuntimeError(message)
-        return result
-
-    def _git_value(self, module_path, args):
-        try:
-            return self._run_git(args, cwd=module_path, timeout=10).get("stdout", "")
-        except Exception:
-            return ""
-
-    def _custom_module_git_info(self, module_path):
-        is_git = bool(self._git_value(module_path, ["rev-parse", "--is-inside-work-tree"]))
-        if not is_git:
-            return {
-                "hasGit": False,
-                "canUpdate": False,
-            }
-        return {
-            "hasGit": True,
-            "canUpdate": True,
-            "remote": self._git_value(module_path, ["config", "--get", "remote.origin.url"]),
-            "branch": self._git_value(module_path, ["rev-parse", "--abbrev-ref", "HEAD"]),
-            "commit": self._git_value(module_path, ["rev-parse", "--short", "HEAD"]),
-        }
-
-    def _custom_module_info(self, name, module_path, enabled=True):
-        module_key = f"custom.{name}"
-        node_actions = sorted((self.modules.get(module_key) or {}).keys()) if enabled else []
-        git_info = self._custom_module_git_info(module_path)
-        return {
-            "name": name,
-            "moduleKey": module_key,
-            "source": "custom",
-            "enabled": enabled,
-            "status": "enabled" if enabled else "disabled",
-            "path": str(module_path),
-            "hasInit": (module_path / "__init__.py").exists(),
-            "hasMain": (module_path / "main.py").exists(),
-            "nodeCount": len(node_actions),
-            "nodes": node_actions,
-            "canDisable": enabled,
-            "canEnable": not enabled,
-            **git_info,
-        }
-
-    def _list_custom_modules(self):
-        root = self._custom_modules_root()
-        disabled_root = self._disabled_custom_modules_root()
-        modules = []
-
-        for entry in sorted(root.iterdir(), key=lambda item: item.name.lower()):
-            if not entry.is_dir() or entry.name.startswith(".") or entry.name == "__pycache__":
-                continue
-            modules.append(self._custom_module_info(entry.name, entry, enabled=True))
-
-        for entry in sorted(disabled_root.iterdir(), key=lambda item: item.name.lower()):
-            if not entry.is_dir() or entry.name.startswith(".") or entry.name == "__pycache__":
-                continue
-            modules.append(self._custom_module_info(entry.name, entry, enabled=False))
-
-        return modules
-
-    def _refresh_custom_module_registry(self):
-        for key in list(MODULE_MAP.keys()):
-            if key.startswith("custom."):
-                MODULE_MAP.pop(key, None)
-
-        for key in list(sys.modules.keys()):
-            if key == "custom" or key.startswith("custom."):
-                sys.modules.pop(key, None)
-
-        invalidate_caches()
-        custom_root = self._custom_modules_root()
-        if custom_root.exists():
-            parse_module_map("custom")
-
-        self.modules = MODULE_MAP
-        self.instance = nanoid.generate(size=10)
-        return self._list_custom_modules()
-
-    def _prune_custom_node_cache(self, module_key=None):
-        removed = []
-        for node_id, cached_node in list(self.node_cache.items()):
-            cached_module = getattr(cached_node, "module_name", "")
-            if module_key is None:
-                should_remove = str(cached_module).startswith("custom.")
-            else:
-                should_remove = cached_module == module_key
-            if should_remove:
-                self.node_cache.pop(node_id, None)
-                removed.append(node_id)
-        return removed
-
-    def _custom_modules_payload(self):
-        modules = self._list_custom_modules()
-        return {
-            "error": False,
-            "root": str(self._custom_modules_root()),
-            "disabledRoot": str(self._disabled_custom_modules_root()),
-            "count": len(modules),
-            "modules": modules,
-        }
-
-    async def custom_modules_list(self, request):
-        return web.json_response(self._custom_modules_payload())
-
-    async def custom_modules_refresh(self, request):
-        self._prune_custom_node_cache()
-        modules = self._refresh_custom_module_registry()
-        return web.json_response(
-            {
-                "error": False,
-                "message": "Custom module registry refreshed.",
-                "instance": self.instance,
-                "count": len(modules),
-                "modules": modules,
-            }
-        )
-
-    async def custom_modules_install(self, request):
-        try:
-            data = await request.json()
-            source = str(data.get("source") or data.get("url") or "").strip()
-            name = self._safe_custom_module_name(data.get("name") or self._derive_custom_module_name(source))
-            target = self._custom_module_path(name)
-            disabled_target = self._custom_module_path(name, disabled=True)
-
-            if target.exists() or disabled_target.exists():
-                return web.json_response(
-                    {"error": True, "message": f"Custom module `{name}` already exists."}, status=409
-                )
-
-            if self._is_git_source(source):
-                self._run_git(["clone", source, str(target)], timeout=900)
-            else:
-                source_path = Path(source).expanduser().resolve()
-                if not source_path.is_dir():
-                    return web.json_response(
-                        {"error": True, "message": "Source must be a Git URL or an existing local directory."},
-                        status=400,
-                    )
-                shutil.copytree(
-                    source_path, target, ignore=shutil.ignore_patterns("__pycache__", ".pytest_cache", ".mypy_cache")
-                )
-
-            modules = self._refresh_custom_module_registry()
-            return web.json_response(
-                {
-                    "error": False,
-                    "message": f"Custom module `{name}` installed.",
-                    "module": next((item for item in modules if item["name"] == name), None),
-                    "modules": modules,
-                    "instance": self.instance,
-                }
-            )
-        except Exception as e:
-            logger.error(f"Error installing custom module: {e}", exc_info=True)
-            return web.json_response({"error": True, "message": str(e)}, status=500)
-
-    async def custom_modules_update(self, request):
-        try:
-            name = self._safe_custom_module_name(request.match_info.get("name"))
-            enabled_path = self._custom_module_path(name)
-            disabled_path = self._custom_module_path(name, disabled=True)
-            module_path = enabled_path if enabled_path.exists() else disabled_path
-            if not module_path.exists():
-                return web.json_response(
-                    {"error": True, "message": f"Custom module `{name}` was not found."}, status=404
-                )
-
-            if not (module_path / ".git").exists():
-                return web.json_response(
-                    {"error": True, "message": f"Custom module `{name}` is not a Git checkout."}, status=400
-                )
-
-            git_result = self._run_git(["pull", "--ff-only"], cwd=module_path, timeout=900)
-            removed_cache_nodes = self._prune_custom_node_cache(f"custom.{name}")
-            modules = self._refresh_custom_module_registry() if enabled_path.exists() else self._list_custom_modules()
-            return web.json_response(
-                {
-                    "error": False,
-                    "message": f"Custom module `{name}` updated.",
-                    "git": git_result,
-                    "removedCacheNodes": removed_cache_nodes,
-                    "module": next((item for item in modules if item["name"] == name), None),
-                    "modules": modules,
-                    "instance": self.instance,
-                }
-            )
-        except Exception as e:
-            logger.error(f"Error updating custom module: {e}", exc_info=True)
-            return web.json_response({"error": True, "message": str(e)}, status=500)
-
-    async def custom_modules_disable(self, request):
-        try:
-            name = self._safe_custom_module_name(request.match_info.get("name"))
-            source = self._custom_module_path(name)
-            target = self._custom_module_path(name, disabled=True)
-            if not source.exists():
-                return web.json_response(
-                    {"error": True, "message": f"Custom module `{name}` is not enabled."}, status=404
-                )
-            if target.exists():
-                return web.json_response(
-                    {"error": True, "message": f"Disabled custom module `{name}` already exists."}, status=409
-                )
-
-            shutil.move(str(source), str(target))
-            removed_cache_nodes = self._prune_custom_node_cache(f"custom.{name}")
-            modules = self._refresh_custom_module_registry()
-            return web.json_response(
-                {
-                    "error": False,
-                    "message": f"Custom module `{name}` disabled.",
-                    "removedCacheNodes": removed_cache_nodes,
-                    "module": next((item for item in modules if item["name"] == name), None),
-                    "modules": modules,
-                    "instance": self.instance,
-                }
-            )
-        except Exception as e:
-            logger.error(f"Error disabling custom module: {e}", exc_info=True)
-            return web.json_response({"error": True, "message": str(e)}, status=500)
-
-    async def custom_modules_enable(self, request):
-        try:
-            name = self._safe_custom_module_name(request.match_info.get("name"))
-            source = self._custom_module_path(name, disabled=True)
-            target = self._custom_module_path(name)
-            if not source.exists():
-                return web.json_response(
-                    {"error": True, "message": f"Custom module `{name}` is not disabled."}, status=404
-                )
-            if target.exists():
-                return web.json_response(
-                    {"error": True, "message": f"Enabled custom module `{name}` already exists."}, status=409
-                )
-
-            shutil.move(str(source), str(target))
-            modules = self._refresh_custom_module_registry()
-            return web.json_response(
-                {
-                    "error": False,
-                    "message": f"Custom module `{name}` enabled.",
-                    "module": next((item for item in modules if item["name"] == name), None),
-                    "modules": modules,
-                    "instance": self.instance,
-                }
-            )
-        except Exception as e:
-            logger.error(f"Error enabling custom module: {e}", exc_info=True)
-            return web.json_response({"error": True, "message": str(e)}, status=500)
 
     @staticmethod
     def _template_gallery_error_response(error, *, plan=None):
@@ -15298,6 +15457,7 @@ class WebServer:
                     entry.get("revision"),
                 ),
                 serialize_model_io=True,
+                model_work=False,
             )
             if result:
                 await self._refresh_model_indexes()
@@ -15602,11 +15762,22 @@ class WebServer:
         except Exception as e:
             logger.error(f"[Websocket] Error: {e}")
         finally:
-            if sid in self.ws_sessions:
-                del self.ws_sessions[sid]
+            if self.ws_sessions.get(sid) is ws:
+                self.ws_sessions.pop(sid, None)
+            self._cancel_session_signal_requests(sid)
             logger.debug(f"Websocket connection closed: {sid}")
 
         return ws
+
+    def _cancel_session_signal_requests(self, sid):
+        """Release schema callbacks when their browser leaves; never release another owner."""
+        for request_id, owner in list(self.pending_ws_request_sessions.items()):
+            if owner != sid:
+                continue
+            self.pending_ws_request_sessions.pop(request_id, None)
+            future = self.pending_ws_requests.pop(request_id, None)
+            if future is not None and not future.done():
+                future.set_result({"__MODIFF_ERROR": "websocket_closed"})
 
     async def broadcast(self, message: dict | bytes, sid: list[str] | str = None, exclude: list[str] | str = None):
         sessions = []
@@ -15627,6 +15798,7 @@ class WebServer:
             if websocket.closed:
                 if self.ws_sessions.get(session) is websocket:
                     self.ws_sessions.pop(session, None)
+                    self._cancel_session_signal_requests(session)
                 return
             try:
                 if isinstance(message, dict):
@@ -15642,6 +15814,7 @@ class WebServer:
                 # finally block gets scheduled.
                 if self.ws_sessions.get(session) is websocket:
                     self.ws_sessions.pop(session, None)
+                    self._cancel_session_signal_requests(session)
                 if websocket.closed or "closing transport" in str(e).lower():
                     logger.debug(f"[Websocket] Dropped closing session {session}: {e}")
                 else:
@@ -15693,6 +15866,7 @@ class WebServer:
                 request_id = nanoid.generate(size=12)
                 future = self.loop.create_future()
                 self.pending_ws_requests[request_id] = future
+                self.pending_ws_request_sessions[request_id] = sid
                 try:
                     await self.broadcast(
                         {
@@ -15704,9 +15878,15 @@ class WebServer:
                         },
                         sid,
                     )
+                    # Closing between registration and send must also resolve the
+                    # lookup rather than occupy the field-action lease until timeout.
+                    session = self.ws_sessions.get(sid)
+                    if session is None or session.closed:
+                        self._cancel_session_signal_requests(sid)
                     return await asyncio.wait_for(future, timeout=timeout)
                 finally:
                     self.pending_ws_requests.pop(request_id, None)
+                    self.pending_ws_request_sessions.pop(request_id, None)
 
             # The graph executor runs outside the HTTP event-loop thread. Run
             # the complete request there and synchronously await its bounded

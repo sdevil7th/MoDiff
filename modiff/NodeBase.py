@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from modiff.modelstore import modelstore
 from modiff.execution_input_provenance import capture_generation_inputs
+from modiff.node_cache_identity import implementation_identity, input_snapshot
 from utils.memory_menager import memory_manager
 import numpy as np
 import torch
@@ -91,7 +92,8 @@ class _StructuredLoadingProgress:
         progress = min(99, max(0, int(round(ratio * 100))))
         step = max(0, min(int(current), int(total)))
         item_label = _loading_item_label(item)
-        if starting and item_label and "component" in self._description.lower():
+        component_start = starting and item_label and "component" in self._description.lower()
+        if component_start:
             component_scope = "pipeline" if "pipeline component" in self._description.lower() else "model"
             message = f"Loading {component_scope} component {int(current) + 1}/{int(total)}: {item_label}"
             step = min(int(total), int(current) + 1)
@@ -99,10 +101,14 @@ class _StructuredLoadingProgress:
             label = self._description or "Loading"
             message = f"{label} {step}/{int(total)}"
         now = time.monotonic()
+        # Weight iterators emit a start and completion for every tensor. Keep
+        # component transitions and boundary counts immediate, but rate-limit
+        # intermediate counts even when their percentage changes. Otherwise a
+        # cold load can queue hundreds of renders ahead of the user's next edit.
         if (
-            not starting
+            self._last_report_progress is not None
+            and not component_start
             and step not in (0, int(total))
-            and progress == self._last_report_progress
             and now - self._last_report_at < 0.25
         ):
             return
@@ -332,6 +338,9 @@ class NodeBase:
         self._has_changed = False
         self._cache_invalidated = False
         self._cache_valid = False
+        self._cache_reason = "empty"
+        self._cache_input_snapshot = None
+        self._cache_implementation = None
         self._execution_time = { 'last': None, 'min': None, 'max': None }
         self._memory_usage = { 'last': None, 'min': None, 'max': None }
         self._mm_models = []
@@ -477,15 +486,29 @@ class NodeBase:
             key: value for key, value in params.items() if key in ignored_cache_params
         }
         ignored_params_changed = not deep_equal(previous_ignored_params, current_ignored_params)
+        snapshot = input_snapshot(current_cache_params)
+        implementation = implementation_identity(self)
+        # Authority checks in Modular adapters must run even when the frozen
+        # snapshot detects an in-place edit. Never turn tampering into a miss
+        # that bypasses their pre-dispatch validation.
+        params_equal = self._cache_invalidated or self._cache_params_equal(previous_cache_params, current_cache_params)
 
         # If any load-relevant value changed, or no successful result exists, execute the
         # node. Validated passthrough inputs are still recorded below so
         # diagnostics reflect the current graph invocation.
-        if (
-            self._cache_invalidated
-            or (not self._cache_params_equal(previous_cache_params, current_cache_params))
-            or not self._cache_valid
-        ):
+        self._cache_reason = (
+            "invalidated" if self._cache_invalidated
+            else "models_evicted" if self._cache_valid and any(
+                memory_manager.get_model(model_id) is None for model_id in self._mm_models
+            )
+            else "implementation_changed" if self._cache_valid and self._cache_implementation != implementation
+            else "inputs_changed" if self._cache_valid and self._cache_input_snapshot != snapshot
+            else "inputs_changed" if not params_equal
+            else "empty" if not self._cache_valid
+            else "usage_changed" if ignored_params_changed
+            else "unchanged_inputs"
+        )
+        if self._cache_reason in {"invalidated", "models_evicted", "inputs_changed", "implementation_changed", "empty"}:
             self._cache_invalidated = False
             self._cache_valid = False
             self._has_changed = True
@@ -534,6 +557,8 @@ class NodeBase:
             # returned mapping (or fully populated trigger outputs) is reusable;
             # an exception or a missing result must leave this node invalid.
             self._cache_valid = isinstance(output, dict) or all(v is not None for v in self.output.values())
+            self._cache_input_snapshot = snapshot
+            self._cache_implementation = implementation
         else:
             # A cache-ignored value can reconfigure the same resident output
             # without repeating its expensive construction.  Preserve that

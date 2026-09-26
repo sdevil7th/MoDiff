@@ -288,6 +288,74 @@ class MainSupervisorTests(unittest.TestCase):
         controller.reconcile_interrupted_worker.assert_any_call(worker_pid=4242, return_code=-9)
         server_class.return_value.close.assert_called_once_with()
 
+    def test_repeated_rapid_crashes_stop_after_a_bounded_backoff_budget(self):
+        module = load_main_module()
+        workers = [Mock(pid=5000 + i, wait=Mock(return_value=-9)) for i in range(5)]
+        with (
+            patch.object(module.subprocess, "Popen", side_effect=workers) as popen,
+            patch.object(module.signal, "signal"),
+            patch.object(module.time, "monotonic", return_value=10),
+            patch.object(module.threading, "Event") as event,
+            patch("modiff.supervisor_control.SupervisorController") as controller_class,
+            patch("modiff.supervisor_control.SupervisorControlServer") as server_class,
+        ):
+            event.return_value.wait.return_value = False
+            controller = controller_class.return_value
+            controller.consume_restart_request.return_value = False
+            self.assertEqual(module.run_supervisor(), -9)
+        self.assertEqual(popen.call_count, 5)
+        self.assertEqual([call.args[0] for call in event.return_value.wait.call_args_list], [1, 2, 4, 8])
+        self.assertEqual(controller.reconcile_interrupted_worker.call_count, 6)
+        server_class.return_value.close.assert_called_once_with()
+
+    @unittest.skipIf(os.name == "nt", "POSIX abrupt-exit signal; Windows has separate owned-worker tests")
+    def test_real_abrupt_worker_death_preserves_queue_and_clean_replacement_starts(self):
+        module = load_main_module()
+        marker = Path(self.test_data.name) / "crash-probe.json"
+        code = '''
+import json, os, signal, sys
+from pathlib import Path
+signal.alarm(5)
+marker = Path(sys.argv[1])
+queue = Path(os.environ["MODIFF_SUPERVISOR_QUEUE_STATE"])
+if not marker.exists():
+    marker.write_text("started")
+    queue.parent.mkdir(parents=True, exist_ok=True)
+    queue.write_text(json.dumps({"workerPid": os.getpid(),
+        "current": {"task_id": "crashed", "workflow_snapshot": {"user_value": "preserve"}},
+        "queued": {"next": {"task_id": "next"}}, "recent": []}))
+    os.kill(os.getpid(), signal.SIGKILL)
+state = json.loads(queue.read_text())
+records = {task["task_id"]: task for task in state["recent"]}
+assert state["current"] is None and state["queued"] == {}
+assert records["crashed"]["status"] == "failed"
+assert records["crashed"]["workflow_snapshot"]["user_value"] == "preserve"
+assert records["next"]["status"] == "cancelled"
+marker.write_text(json.dumps({"replacementStarted": True, "previousWorker": state["workerPid"]}))
+'''
+        with patch.object(module, "worker_process_command", return_value=[sys.executable, "-c", code, str(marker)]), \
+             patch.object(module.signal, "signal"), \
+             patch.dict(os.environ, {"MODIFF_SUPERVISOR_CONTROL_PORT": "0"}):
+            self.assertEqual(module.run_supervisor(), 0)
+        self.assertTrue(json.loads(marker.read_text())["replacementStarted"])
+
+    def test_stable_worker_resets_crash_budget_and_shutdown_interrupts_backoff(self):
+        module = load_main_module()
+        workers = [Mock(pid=6000 + i, wait=Mock(return_value=-9)) for i in range(3)]
+        with (
+            patch.object(module.subprocess, "Popen", side_effect=workers) as popen,
+            patch.object(module.signal, "signal"),
+            patch.object(module.time, "monotonic", side_effect=[0, 1, 2, 70, 71, 72]),
+            patch.object(module.threading, "Event") as event,
+            patch("modiff.supervisor_control.SupervisorController") as controller_class,
+            patch("modiff.supervisor_control.SupervisorControlServer"),
+        ):
+            event.return_value.wait.side_effect = [False, False, True]
+            controller_class.return_value.consume_restart_request.return_value = False
+            self.assertEqual(module.run_supervisor(), -9)
+        self.assertEqual(popen.call_count, 3)
+        self.assertEqual([call.args[0] for call in event.return_value.wait.call_args_list], [1, 1, 2])
+
     def test_shutdown_signal_is_forwarded_to_the_active_worker(self):
         module = load_main_module()
         worker = Mock()

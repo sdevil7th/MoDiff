@@ -300,11 +300,19 @@ class Scheduler(NodeBase):
             "label": "Scheduler",
             "display": "input",
             "type": "diffusers_auto_model",
-            "onSignal": {
-                "action": "value",
-                "target": "scheduler",
-                "prop": "options",
-                "data": MODULAR_SCHEDULER_OPTIONS,
+            "onSignal": [
+                {
+                    "action": "value",
+                    "target": "scheduler",
+                    "prop": "options",
+                    "data": MODULAR_SCHEDULER_OPTIONS,
+                },
+                {"action": "signal", "target": "scheduler_out"},
+            ],
+            "signalCompatibility": {
+                "required": True,
+                "role": "scheduler",
+                "values": MODULAR_SCHEDULER_OPTIONS,
             },
         },
         "scheduler": {
@@ -331,7 +339,13 @@ class Scheduler(NodeBase):
             "value": "EulerDiscreteScheduler",
             "onChange": "updateNode",
         },
-        "scheduler_out": {"label": "Scheduler", "display": "output", "type": "diffusers_auto_model"},
+        "scheduler_out": {
+            "label": "Scheduler",
+            "display": "output",
+            "type": "diffusers_auto_model",
+            "signal": {"direction": "output", "origin": "scheduler_in", "value": ""},
+            "connectionRole": "scheduler",
+        },
         "prediction_type": {
             "label": "Prediction Type",
             "type": "string",
@@ -343,8 +357,9 @@ class Scheduler(NodeBase):
         },
     }
 
-    def _selected_scheduler(self, scheduler):
-        model_type = self.get_signal_value("scheduler_in")
+    def _selected_scheduler(self, scheduler, model_type=None):
+        if model_type in (None, ""):
+            model_type = self.get_signal_value("scheduler_in")
         allowed = MODULAR_SCHEDULER_OPTIONS.get(model_type) if isinstance(model_type, str) else None
         if (
             not isinstance(scheduler, str)
@@ -368,7 +383,7 @@ class Scheduler(NodeBase):
         logger.debug(f" - scheduler: {scheduler}")
         logger.debug(f" - kwargs: {kwargs}")
 
-        scheduler = self._selected_scheduler(scheduler)
+        scheduler = self._selected_scheduler(scheduler, scheduler_in.get("model_type"))
         scheduler_component = components.get_one(scheduler_in["model_id"])
         scheduler_cls = getattr(__import__("diffusers", fromlist=[scheduler]), scheduler)
         current_scheduler_cls = type(scheduler_component)

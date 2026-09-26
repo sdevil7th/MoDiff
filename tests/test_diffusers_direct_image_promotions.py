@@ -142,7 +142,7 @@ PINNED_SOURCES = (
     (
         "pipelines/flux/pipeline_flux_kontext_inpaint.py",
         "FluxKontextInpaintPipeline",
-        "6f0d50ae6b3931dfe94ecec772aca77b77f0cc0aa7520256ad55a38ef7d731a2",
+        "993fbe87e9120d9cf6bf0540935b1c68d62473e7be9d57390fa50984f4b2158d",
         (
             "DiffusionPipeline",
             "FluxLoraLoaderMixin",
@@ -203,7 +203,7 @@ PINNED_SOURCES = (
     (
         "pipelines/flux2/pipeline_flux2_klein_inpaint.py",
         "Flux2KleinInpaintPipeline",
-        "58c5f93bcbe57276e37833beaaeeb43d80e48132d8842ad0271a39784b628f63",
+        "6172f3ad4159c355b9fd59455a59dc78aeb428d4bc47eb0a266d09e83476d14c",
         ("DiffusionPipeline", "Flux2LoraLoaderMixin"),
         ("self", "scheduler", "vae", "text_encoder", "tokenizer", "transformer", "is_distilled"),
         (
@@ -318,7 +318,7 @@ class DiffusersDirectImagePromotionTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(
             PINNED_DIFFUSERS_REVISION,
-            "2f7e0154a9db246e95c9ede43edba7db5b130805",
+            "fbf49e7f35857f76bc57b177e26f12b03687c668",
         )
         diffusers_root = Path(diffusers.__file__).resolve().parent
         for relative_path, class_name, digest, bases, init_parameters, call_parameters in PINNED_SOURCES:

@@ -1105,6 +1105,29 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
             "reviewed_official_components",
         )
 
+    def test_builtin_field_action_keeps_output_signals_bound_to_model_type(self):
+        node = ModelsLoader("builtin-field-action")
+        self._capture_node_messages(node)
+
+        node.refresh_pipeline_identity(
+            {
+                "model_type": "FluxModularPipeline",
+                "repo_id": {"source": "hub", "value": "black-forest-labs/FLUX.1-dev"},
+                "revision": "",
+                "trust_remote_code": False,
+            },
+            {"key": "model_type"},
+        )
+
+        signals = [
+            call.args[1]["signal"]
+            for call in node.set_field_params.call_args_list
+            if "signal" in call.args[1]
+        ]
+        self.assertEqual(len(signals), len(MODELS_LOADER_IDENTITY_OUTPUTS))
+        self.assertTrue(all(signal["origin"] == "model_type" for signal in signals))
+        self.assertTrue(all(signal["value"] == "FluxModularPipeline" for signal in signals))
+
     def test_field_action_persists_identity_and_publishes_structured_output_signals(self):
         node = ModelsLoader("identity-field-action")
         self._capture_node_messages(node)
@@ -1424,6 +1447,12 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
         self.assertEqual(diagnostics["components_loaded"], ["transformer"])
 
     def test_auto_model_trust_false_preserves_existing_download_behavior(self):
+        self._assert_auto_model_load_kwargs(offline=False)
+
+    def test_auto_model_load_honors_offline_mode(self):
+        self._assert_auto_model_load_kwargs(offline=True)
+
+    def _assert_auto_model_load_kwargs(self, *, offline):
         node = AutoModelLoader("auto-model-download-contract")
         node.diffusers_loading_progress = Mock(return_value=nullcontext())
         revision = "a" * 40
@@ -1436,6 +1465,7 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
             load=Mock(side_effect=RuntimeError("stop after load kwargs")),
         )
         with (
+            patch("huggingface_hub.constants.HF_HUB_OFFLINE", offline),
             patch("modules.ModularDiffusers.loaders.ComponentSpec", return_value=spec) as component_spec,
             patch(
                 "modules.ModularDiffusers.loaders._preflight_reviewed_diffusers_component",
@@ -1469,7 +1499,10 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
             variant=None,
             revision=revision,
         )
-        spec.load.assert_called_once_with(torch_dtype=torch.float32)
+        expected_kwargs = {"torch_dtype": torch.float32}
+        if offline:
+            expected_kwargs["local_files_only"] = True
+        spec.load.assert_called_once_with(**expected_kwargs)
 
     def test_auto_model_selector_spoofing_fails_before_node_cache(self):
         node = AutoModelLoader("auto-model-selector-cache-guard")
@@ -2254,6 +2287,18 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
                 "FluxPipeline",
             ),
             (
+                "FluxModularPipeline",
+                "black-forest-labs/FLUX.1-schnell",
+                "741f7c3ce8b383c54771c7003378a50191e9efe9",
+                "FluxPipeline",
+            ),
+            (
+                "FluxModularPipeline",
+                "black-forest-labs/FLUX.1-Krea-dev",
+                "8162a9c7b05a641be098422bf2fcf335615c2f28",
+                "FluxPipeline",
+            ),
+            (
                 "FluxKontextModularPipeline",
                 "black-forest-labs/FLUX.1-Kontext-dev",
                 "24e9dedc4ef646698dc8eb4e18ae2cec3c9fea0d",
@@ -2282,6 +2327,41 @@ class ModelsLoaderCustomIdentityTests(unittest.TestCase):
                 self.assertRaisesRegex(ValueError, "AutoTokenizer"),
             ):
                 _validate_reviewed_pipeline_index(model_type, repository, revision)
+
+    @requires_transformers
+    def test_sdxl_turbo_pinned_optional_absence_and_scheduler(self):
+        document = {
+            "_class_name": "StableDiffusionXLPipeline",
+            "feature_extractor": [None, None], "image_encoder": [None, None],
+            "scheduler": ["diffusers", "EulerAncestralDiscreteScheduler"],
+            "text_encoder": ["transformers", "CLIPTextModel"],
+            "text_encoder_2": ["transformers", "CLIPTextModelWithProjection"],
+            "tokenizer": ["transformers", "CLIPTokenizer"],
+            "tokenizer_2": ["transformers", "CLIPTokenizer"],
+            "unet": ["diffusers", "UNet2DConditionModel"],
+            "vae": ["diffusers", "AutoencoderKL"],
+        }
+        repository = "stabilityai/sdxl-turbo"
+        model_type = "StableDiffusionXLModularPipeline"
+        revision = "71153311d3dbb46851df1931d3ca6e939de83304"
+        with patch("modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                   return_value=("model_index.json", document)):
+            filename, validated = _validate_reviewed_pipeline_index(model_type, repository, revision)
+        pipeline = _instantiate_reviewed_builtin_pipeline(
+            model_type, repository, index_filename=filename, index_document=validated,
+            components_manager=None, collection="turbo-index-contract",
+        )
+        self.assertIsNone(pipeline.image_encoder)
+        for name, value in (("unet", [None, None]), ("image_encoder", [None, "Arbitrary"]),
+                            ("scheduler", ["diffusers", "DDIMScheduler"])):
+            with self.subTest(name=name), patch(
+                "modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                return_value=("model_index.json", {**document, name: value}),
+            ), self.assertRaises(ValueError):
+                _validate_reviewed_pipeline_index(model_type, repository, revision)
+        with patch("modules.ModularDiffusers.loaders._load_reviewed_pipeline_index",
+                   return_value=("model_index.json", document)), self.assertRaisesRegex(ValueError, "image_encoder"):
+            _validate_reviewed_pipeline_index(model_type, "stabilityai/stable-diffusion-xl-base-1.0", "unreviewed")
 
     @requires_transformers
     def test_wan_flf_loads_reviewed_image_only_processor_after_index_validation(self):

@@ -22,7 +22,7 @@ from modiff.diffusers_offload import (
 from modiff.config import CONFIG
 from modiff.model_artifact_catalog import IMMUTABLE_HUB_REVISION, catalog_revision
 from modiff.path_identifiers import resolve_managed_path_identifier, resolve_runtime_input_path
-from utils.huggingface import local_files_only, validate_hf_repo_id
+from utils.huggingface import exact_cached_snapshot_path, local_files_only, validate_hf_repo_id
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
 
 logger = logging.getLogger("modiff")
@@ -141,12 +141,17 @@ class AudioModeContract:
         return overlay
 
     def signal_value(self, pipeline_class: str, repository: str) -> dict[str, Any]:
+        actions = {"Generate": [self.mode]}
+        if pipeline_class == "AceStepPipeline":
+            for action in ("LoadAdapter", "SetAdapters", "FuseAdapters"):
+                actions[action] = [self.mode]
         return {
             "schemaVersion": 1,
             "library": "diffusers",
             "mediaKind": "audio",
             "pipelineClass": pipeline_class,
             "mode": self.mode,
+            "actions": actions,
             "repository": repository,
             "taskType": self.task_type,
             "upstreamTaskType": self.upstream_task_type,
@@ -466,6 +471,24 @@ def _require_lowercase_safetensors_filename(value: str, *, label: str) -> str:
     if not value.endswith(".safetensors"):
         raise ValueError(f"{label} must end with the literal lowercase .safetensors suffix.")
     return value
+
+
+def get_audio_operation_contracts(modules) -> list[dict]:
+    from modiff.operation_contracts import build_pipeline_operation_contract
+
+    result = []
+    for pipeline_class, adapter in sorted(AUDIO_PIPELINE_ADAPTERS.items()):
+        for contract in adapter.mode_contracts:
+            for action, operation in (("LoadPipeline", "diffusion.load_models"), ("Generate", "diffusion.generate_audio")):
+                record = build_pipeline_operation_contract(
+                    modules, pipeline_class=pipeline_class, task=contract.mode, operation_id=operation,
+                    node_key=f"modules.DiffusersAudio.{action}",
+                    field_overrides=contract.field_param_overlay() if action == "Generate" else None,
+                    loader=action == "LoadPipeline",
+                )
+                if record is not None:
+                    result.append(record)
+    return result
 
 
 def _audio_contract_signal(adapter: AudioPipelineAdapter, mode: str, model_selection: Any) -> dict[str, Any]:
@@ -1139,8 +1162,9 @@ class LoadPipeline(NodeBase):
             load_kwargs["use_safetensors"] = True
 
         self.progress(-1, phase="loading", message=f"Loading {pipeline_class_name}")
+        load_target = exact_cached_snapshot_path(model_id, revision) if revision else model_id
         with self.diffusers_loading_progress():
-            pipeline = pipeline_class.from_pretrained(model_id, **load_kwargs)
+            pipeline = pipeline_class.from_pretrained(load_target, **load_kwargs)
         _ensure_language_model_generation_api(pipeline, adapter.pipeline_class)
         self._tag_pipeline(pipeline, adapter, mode, model_id, revision)
         if recipe:
@@ -1150,17 +1174,36 @@ class LoadPipeline(NodeBase):
             for method_name in ("enable_tiling", "enable_vae_tiling"):
                 method = getattr(vae or pipeline, method_name, None)
                 if callable(method):
-                    method()
+                    try:
+                        method()
+                    except NotImplementedError:
+                        # Diffusers' AutoencoderMixin exposes this hook even
+                        # when the concrete VAE has no tiling implementation.
+                        logger.info("VAE tiling is unsupported for %s; using ordinary decoding", pipeline_class_name)
                     break
 
         self.progress(99, phase="component_placement", message=f"Applying {offload_mode} offload")
+        offload_options = {}
+        if pipeline_class_name == "AceStepPipeline":
+            # Upstream calls text_encoder.get_input_embeddings() after forward,
+            # and reads condition_encoder.silence_latent/null_condition_emb
+            # outside forward. Keep that smaller component resident, and hook
+            # the text encoder's actual embedding entry point at leaf level.
+            # Oobleck's legacy weight_norm pre-hooks run before leaf transfer
+            # hooks; keep its small VAE resident too, preserving native weights.
+            offload_options = {
+                "component_names": tuple(getattr(pipeline, "components", {})),
+                "leaf_level_components": ("text_encoder",),
+                "resident_components": ("condition_encoder", "vae"),
+            }
         apply_pipeline_offload(
             pipeline,
             mode=offload_mode,
             device=device,
             node_id=self.node_id,
             scope="diffusers-audio",
-            prefer_pipeline_group=True,
+            prefer_pipeline_group=not offload_options,
+            **offload_options,
         )
         self.mm_add(pipeline, priority=2)
         return {"pipeline": pipeline, "resolved_artifact": model_id}
@@ -1173,7 +1216,14 @@ class LoadAdapter(NodeBase):
     category = "Diffusers Audio"
     resizable = True
     params = {
-        "pipeline": {"label": "Pipeline", "display": "input", "type": "audio_diffusion_pipeline", "required": True},
+        "pipeline": {
+            "label": "Pipeline",
+            "display": "input",
+            "type": "audio_diffusion_pipeline",
+            "required": True,
+            "onSignal": {"action": "signal", "target": "output"},
+            "signalCompatibility": {"required": True, "action": "$node"},
+        },
         "adapter_path": {
             "label": "LoRA",
             "display": "modelselect",
@@ -1210,7 +1260,12 @@ class LoadAdapter(NodeBase):
             "max": 2,
             "step": 0.05,
         },
-        "output": {"label": "Pipeline", "display": "output", "type": "audio_diffusion_pipeline"},
+        "output": {
+            "label": "Pipeline",
+            "display": "output",
+            "type": "audio_diffusion_pipeline",
+            "signal": {"direction": "output", "origin": "pipeline", "value": ""},
+        },
     }
 
     @staticmethod
@@ -1387,10 +1442,17 @@ class SetAdapters(NodeBase):
             "display": "input",
             "type": "audio_diffusion_pipeline",
             "required": True,
+            "onSignal": {"action": "signal", "target": "output"},
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "adapter_names": {"label": "Adapter names", "type": "string", "default": "audio_style"},
         "adapter_weights": {"label": "Weights", "type": "string", "default": "0.7"},
-        "output": {"label": "Pipeline", "display": "output", "type": "audio_diffusion_pipeline"},
+        "output": {
+            "label": "Pipeline",
+            "display": "output",
+            "type": "audio_diffusion_pipeline",
+            "signal": {"direction": "output", "origin": "pipeline", "value": ""},
+        },
     }
 
     def execute(self, **kwargs):
@@ -1432,10 +1494,17 @@ class FuseAdapters(NodeBase):
             "display": "input",
             "type": "audio_diffusion_pipeline",
             "required": True,
+            "onSignal": {"action": "signal", "target": "output"},
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "enabled": {"label": "Fuse", "type": "bool", "default": True},
         "safe_fusing": {"label": "Safe fusing", "type": "bool", "default": True},
-        "output": {"label": "Pipeline", "display": "output", "type": "audio_diffusion_pipeline"},
+        "output": {
+            "label": "Pipeline",
+            "display": "output",
+            "type": "audio_diffusion_pipeline",
+            "signal": {"direction": "output", "origin": "pipeline", "value": ""},
+        },
     }
 
     def execute(self, **kwargs):
@@ -1761,6 +1830,7 @@ class Generate(NodeBase):
                 {"action": "value", "target": "audio_contract"},
                 {"action": "exec", "data": "update_audio_contract"},
             ],
+            "signalCompatibility": {"required": True, "action": "$node"},
         },
         "audio_contract": {
             "label": "Audio Contract",
@@ -2099,6 +2169,7 @@ class Generate(NodeBase):
             current_step=0,
             total_steps=call_kwargs["num_inference_steps"],
         )
+        self._record_audio_call_inputs(call_kwargs, invocation)
         result = pipeline(**call_kwargs)
         audio = output_to_audio_object(result, sample_rate=sample_rate)
         if task_type == "continuation" and kwargs.get("return_continuation_tail", True):
@@ -2116,6 +2187,21 @@ class Generate(NodeBase):
             "sample_rate_out": int(audio.get("sample_rate") or requested_sample_rate),
             "duration_seconds": float(audio.get("duration_seconds") or 0.0),
         }
+
+    def _record_audio_call_inputs(self, call_kwargs, invocation: AudioInvocation):
+        # Record normalized controls at dispatch. Inactive ACE controls remain
+        # in the reusable node schema but do not describe standard audio calls.
+        self.record_generation_inputs({
+            **call_kwargs,
+            "seed": int(invocation.controls["seed"]),
+            "audio_duration": invocation.duration_seconds,
+            "sample_rate": int(invocation.controls["sample_rate"]),
+        })
+        if invocation.adapter.generation_kind != "ace_step":
+            self._execution_input_source_fields = {
+                "num_inference_steps": "stable_audio_steps",
+                "guidance_scale": "stable_audio_guidance",
+            }
 
     def _execute_standard_diffusers_audio(self, pipeline, kwargs, invocation: AudioInvocation):
         import torch
@@ -2140,6 +2226,7 @@ class Generate(NodeBase):
             "output_type": "pt",
             "return_dict": True,
         }
+        self._record_audio_call_inputs(common_kwargs, invocation)
         if invocation.adapter.generation_kind == "stable_audio":
             result = pipeline(
                 **common_kwargs,

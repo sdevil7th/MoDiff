@@ -1,0 +1,15 @@
+{
+  "label": "Modular Prompt",
+  "node_params": {
+    "custom": {
+      "label": "Modular Prompt",
+      "params": {
+        "text": { "label": "Prompt", "type": "string", "default": "hello" },
+        "out_result": { "label": "Prompt", "type": "string", "display": "output" }
+      },
+      "input_names": ["text"],
+      "model_input_names": [],
+      "output_names": ["out_result"]
+    }
+  }
+}
