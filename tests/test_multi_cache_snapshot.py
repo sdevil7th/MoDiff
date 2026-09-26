@@ -32,6 +32,25 @@ def test_exact_installed_secondary_snapshot_is_loadable(caches):
     assert hf.exact_cached_snapshot_path("example/audio", REVISION) == snapshot
 
 
+@pytest.mark.parametrize("canonical_alias", [False, True])
+def test_cache_root_alias_accepts_lexical_and_canonical_files(tmp_path, monkeypatch, canonical_alias):
+    actual = tmp_path / "actual"
+    actual.mkdir()
+    configured = tmp_path / "configured"
+    configured.symlink_to(actual, target_is_directory=True)
+    weight = actual / "weight.safetensors"
+    weight.write_bytes(b"cached")
+    monkeypatch.setattr(hf, "_hf_cache_locations", lambda: [("configured", str(configured))])
+    alias = weight if canonical_alias else configured / weight.name
+    assert hf.resolve_managed_hf_cache_file(alias) == weight.resolve()
+
+    outside = tmp_path / "outside.safetensors"
+    outside.write_bytes(b"private")
+    (actual / "escape.safetensors").symlink_to(outside)
+    with pytest.raises(ValueError, match="outside"):
+        hf.resolve_managed_hf_cache_file(alias.parent / "escape.safetensors")
+
+
 def test_primary_cache_wins_and_wrong_revision_never_substitutes(caches):
     primary, _, _ = caches
     snapshot = primary / "models--example--audio" / "snapshots" / REVISION

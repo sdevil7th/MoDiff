@@ -1778,8 +1778,12 @@ def _containing_hf_cache_root(path: Path) -> Path:
     alias = path.expanduser().absolute()
     for _label, location in _hf_cache_locations():
         root = Path(location).expanduser().absolute()
-        if alias.is_relative_to(root):
-            return root.resolve(strict=False)
+        resolved_root = root.resolve(strict=False)
+        # Callers may already have canonicalized the cache root (Windows short
+        # names, or a linked root). Keep the file alias unresolved here so an
+        # escaping snapshot link cannot select a different authorized root.
+        if alias.is_relative_to(root) or alias.is_relative_to(resolved_root):
+            return resolved_root
     raise ValueError('Installed Hugging Face cache entry is outside the managed cache roots.')
 
 
