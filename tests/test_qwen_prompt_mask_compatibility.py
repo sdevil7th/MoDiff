@@ -324,7 +324,7 @@ def test_existing_native_sibling_input_masks_keep_their_exact_upstream_semantics
 
 
 @pytest.mark.parametrize("pipeline_class", [
-    QwenImageEditModularPipeline, QwenImageEditPlusModularPipeline, QwenImageLayeredModularPipeline,
+    QwenImageEditPlusModularPipeline, QwenImageLayeredModularPipeline,
 ])
 def test_edit_plus_and_layered_blueprints_are_not_traversed_or_mutated(pipeline_class):
     tree = pipeline_class().blocks
@@ -340,6 +340,30 @@ def test_edit_plus_and_layered_blueprints_are_not_traversed_or_mutated(pipeline_
     assert native_blocks.prepare_native_pipeline_blocks(pipeline_class, tree) is tree
     assert all(block_at(tree, path) is block for path, block in leaves)
     assert tree.input_names == original.input_names and tree.component_names == original.component_names
+
+
+def test_edit_adapter_changes_only_opt_in_inpaint_media_leaves_not_prompt_masks_or_denoising():
+    tree = QwenImageEditModularPipeline().blocks
+    adapted = native_blocks.prepare_native_pipeline_blocks(QwenImageEditModularPipeline, tree)
+    changed = set()
+
+    def compare(left, right, path=()):
+        assert left.sub_blocks.keys() == right.sub_blocks.keys()
+        if type(left) is not type(right):
+            changed.add(path)
+        for name in left.sub_blocks:
+            compare(left.sub_blocks[name], right.sub_blocks[name], path + (name,))
+
+    compare(tree, adapted)
+    assert changed == {
+        ("vae_encoder", "edit_inpaint", "preprocess"),
+        ("vae_encoder", "edit_inpaint", "encode"),
+        ("decode", "inpaint_decode", "postprocess"),
+        ("denoise", "edit_inpaint", "prepare_rope_inputs"),
+    }
+    # The T2I all-valid-mask normalization still never reaches Edit encoding,
+    # input preparation or the ordinary Edit denoising branch. The separately
+    # selected whole-inpaint convention changes only its own RoPE leaf.
 
 
 @pytest.mark.parametrize("changed", ["outer", "selector", "branch", "input", "rope"])

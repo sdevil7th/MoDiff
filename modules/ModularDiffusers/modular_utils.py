@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 
 import torch
 from diffusers import Flux2KleinModularPipeline
+from modiff.component_bundle_contracts import qwen_t2i_bundle_input_param
 from modiff.model_artifact_catalog import resolve_model_revision
 from modiff.operation_contracts import MODULAR_STAGE_OPERATIONS, build_modular_operation_contracts
 from modiff.modular_contract_only_registry import (
@@ -465,6 +466,15 @@ def _qwen_image_max_sequence_length_param():
     )
 
 
+def _qwen_t2i_bundle_wrapper_input(node_type):
+    """Declare the wrapper's optional transport in the authoritative Qwen spec."""
+    field = qwen_t2i_bundle_input_param(node_type, hidden=False)
+    return PipelineParam(
+        name="pipeline_components",
+        **{name: field[name] for name in ("label", "type", "display", "hidden", "onSignal", "signalCompatibility")},
+    )
+
+
 QWEN_IMAGE_NODE_SPECS = {
     "controlnet": {
         "inputs": [
@@ -512,6 +522,7 @@ QWEN_IMAGE_NODE_SPECS = {
             PipelineParam.scheduler(),
             PipelineParam.controlnet_bundle(display="input"),
         ],
+        "wrapper_inputs": [_qwen_t2i_bundle_wrapper_input("denoise")],
         "outputs": [
             PipelineParam.latents(display="output"),
             PipelineParam.route_state_out(),
@@ -552,6 +563,7 @@ QWEN_IMAGE_NODE_SPECS = {
             PipelineParam.text_encoders(),
             PipelineParam.guider(onChange=None, hidden=False),
         ],
+        "wrapper_inputs": [_qwen_t2i_bundle_wrapper_input("text_encoder")],
         "outputs": [
             PipelineParam.embeddings(display="output"),
             PipelineParam.doc(),
@@ -568,6 +580,7 @@ QWEN_IMAGE_NODE_SPECS = {
         "model_inputs": [
             PipelineParam.vae(),
         ],
+        "wrapper_inputs": [_qwen_t2i_bundle_wrapper_input("decoder")],
         "outputs": [
             PipelineParam.images(),
             PipelineParam.doc(),
@@ -626,6 +639,11 @@ QWEN_IMAGE_EDIT_NODE_SPECS = {
             PipelineParam.mask_image(),
             PipelineParam.padding_mask_crop(),
             PipelineParam.seed(),
+            PipelineParam(
+                name="inpaint_compatibility", label="Inpaint compatibility", type="string",
+                options=["native", "whole_v1"], default="native", hidden=True,
+                required_block_params=["inpaint_compatibility"],
+            ),
         ],
         "model_inputs": [
             PipelineParam.vae(),

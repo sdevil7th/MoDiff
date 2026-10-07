@@ -36,6 +36,23 @@ class WorkflowStoreTests(unittest.IsolatedAsyncioTestCase):
     def tearDown(self):
         self.directory.cleanup()
 
+    def test_generated_output_is_durable_when_ordinary_graph_omits_runtime_hints(self):
+        server = WebServer(modules={}, work_dir=self.directory.name, data_dir=self.directory.name)
+        for hints in (None, [], "unknown"):
+            with self.subTest(hints=hints):
+                server.current_task = {"task_id": "ordinary", "runtimeHints": hints}
+                server.task_graphs["ordinary"] = {"runtimeHints": hints}
+                output_id, persisted = server._persist_generated_output_update(
+                    {"task_id": "ordinary", "node": "preview", "key": "output", "value": "Completed text"},
+                    display="ui_text",
+                )
+                self.assertTrue(persisted)
+                state = server._read_studio_output_state()
+                saved = next(output for output in state["outputs"] if output["id"] == output_id)
+                self.assertEqual(saved["value"], "Completed text")
+                self.assertEqual(saved["taskId"], "ordinary")
+                self.assertEqual(saved["provenance"]["source"], "backend-record")
+
     def test_atomic_saved_workflow_revisions_and_delete(self):
         first = save_workflow(self.directory.name, "workflow-1", {"title": "One", "snapshot": {"nodes": []}})
         second = save_workflow(self.directory.name, "workflow-1", {"title": "Two", "snapshot": {"nodes": [1]}})

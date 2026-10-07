@@ -1057,7 +1057,7 @@ def place_pipeline_components(pipeline, device, progress_callback=None):
     return [name for name, _component in resident_components]
 
 
-def modular_runtime_policy(attention_backend='inherit', vae_slicing=None, vae_tiling=None):
+def modular_runtime_policy(attention_backend='inherit', vae_slicing=None, vae_tiling=None, inpaint_compatibility='native'):
     """Normalize explicit native policies; missing controls preserve old nodes."""
     if attention_backend is None or attention_backend == '':
         attention_backend = 'inherit'
@@ -1068,7 +1068,12 @@ def modular_runtime_policy(attention_backend='inherit', vae_slicing=None, vae_ti
     for name, value in (('vae_slicing', vae_slicing), ('vae_tiling', vae_tiling)):
         if value is not None and type(value) is not bool:
             raise TypeError(f'{name} must be an explicit boolean or unset.')
-    return {'attention_backend': attention_backend, 'vae_slicing': vae_slicing, 'vae_tiling': vae_tiling}
+    from .qwen_inpaint_compatibility import validate_compatibility
+
+    policy = {'attention_backend': attention_backend, 'vae_slicing': vae_slicing, 'vae_tiling': vae_tiling}
+    if validate_compatibility(inpaint_compatibility) == 'whole_v1':
+        policy['inpaint_compatibility'] = 'whole_v1'
+    return policy
 
 
 def _component_runtime_policy(name, policy):
@@ -1077,7 +1082,10 @@ def _component_runtime_policy(name, policy):
         backend = policy.get('attention_backend', 'inherit')
         return {'attention_backend': backend} if backend != 'inherit' else {}
     if name == 'vae':
-        return {field: policy[field] for field in ('vae_slicing', 'vae_tiling') if policy.get(field) is not None}
+        return {field: policy[field] for field in ('vae_slicing', 'vae_tiling', 'inpaint_compatibility')
+                if policy.get(field) is not None}
+    if name in {'text_encoder', 'text_encoder_2', 'text_encoder_3'} and policy.get('inpaint_compatibility') == 'whole_v1':
+        return {'inpaint_compatibility': 'whole_v1'}
     return {}
 
 
@@ -1090,10 +1098,14 @@ def assert_explicit_component_runtime_policy(name, component, policy):
 
 def apply_modular_runtime_policy(pipeline, policy):
     """Apply existing runtime helpers only to explicitly selected settings."""
-    from modules.DiffusersRuntime.main import apply_attention_backend, configure_vae_memory
+    from modules.DiffusersRuntime.main import apply_attention_backend, configure_vae_memory, configure_rocm_vision_attention
 
     result = {'requested': dict(policy), 'attention': None, 'vae': None}
     try:
+        if policy.get('inpaint_compatibility') == 'whole_v1':
+            # This is performed only by the selected owner, after reuse has
+            # excluded components with another compatibility policy.
+            result['rocmVisionAttention'] = configure_rocm_vision_attention(pipeline)
         if policy['attention_backend'] != 'inherit':
             result['attention'] = apply_attention_backend(pipeline, policy['attention_backend'])
         explicit = {field for field in ('vae_slicing', 'vae_tiling') if policy[field] is not None}
@@ -2126,6 +2138,11 @@ class ModelsLoader(NodeBase):
             "label": "VAE Tiling", "type": "boolean", "default": None, "hidden": True,
             "description": "An unset policy preserves the native VAE configuration; templates may bind an explicit boolean.",
         },
+        "inpaint_compatibility": {
+            "label": "Inpaint Compatibility", "type": "string", "default": "native", "hidden": True,
+            "options": ["native", "whole_v1"],
+            "description": "Technical compatibility selection for the reviewed Qwen Edit inpainting candidate; existing nodes retain native policy.",
+        },
         "trust_remote_code": {
             "label": "Trust Remote Code",
             "type": "boolean",
@@ -2207,6 +2224,8 @@ class ModelsLoader(NodeBase):
             "label": "Pipeline Components",
             "display": "output",
             "type": "diffusers_modular_pipeline_components",
+            "signal": {"direction": "output", "origin": "model_type", "value": ""},
+            "connectionRole": "pipeline_components",
         },
         "quant_config": {"label": "Quant Config", "display": "input", "type": "quant_config"},
     }
@@ -2222,6 +2241,10 @@ class ModelsLoader(NodeBase):
         """Enforce custom identity and remote-code policy before cache reuse."""
 
         model_type = kwargs.get("model_type")
+        from .qwen_inpaint_compatibility import validate_owner_compatibility
+
+        validate_owner_compatibility(kwargs.get('inpaint_compatibility', 'native'),
+                                     model_type=model_type, workflow_id=kwargs.get('workflow_id', ''))
         trust_remote_code = kwargs.get("trust_remote_code", False)
         if type(trust_remote_code) is not bool:
             raise TypeError("ModelsLoader trust_remote_code must be a JSON boolean.")
@@ -2674,8 +2697,12 @@ class ModelsLoader(NodeBase):
         attention_backend='inherit',
         vae_slicing=None,
         vae_tiling=None,
+        inpaint_compatibility='native',
     ):
-        runtime_policy = modular_runtime_policy(attention_backend, vae_slicing, vae_tiling)
+        from .qwen_inpaint_compatibility import validate_owner_compatibility
+
+        validate_owner_compatibility(inpaint_compatibility, model_type=model_type, workflow_id=workflow_id)
+        runtime_policy = modular_runtime_policy(attention_backend, vae_slicing, vae_tiling, inpaint_compatibility)
         if type(trust_remote_code) is not bool:
             raise TypeError("ModelsLoader trust_remote_code must be a JSON boolean.")
         if trust_remote_code:

@@ -18347,6 +18347,16 @@ def _execution_spec_role_params(
         for field in ("controlnet",):
             if field not in connected_optional_inputs:
                 params.pop(field, None)
+        bound_fields = {
+            field
+            for role, field, _source in public["bindings"]
+            if role in loader_roles
+        }
+        # The private Qwen inpaint selector is an opt-in owner policy, not a
+        # new default field of every existing immutable registered graph.
+        # Keep it only when this exact specification actually uses it.
+        if "inpaint_compatibility" not in connected_optional_inputs | bound_fields:
+            params.pop("inpaint_compatibility", None)
     node_type = _MODULAR_NODE_TYPES.get(node_key)
     if public["executionPath"] != "modular-diffusers" or node_type is None:
         return params

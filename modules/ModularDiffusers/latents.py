@@ -9,7 +9,8 @@ from diffusers.modular_pipelines import PipelineState
 
 from modiff.NodeBase import NodeBase
 
-from . import MESSAGE_DURATION, MODULAR_DECODER_OPTIONS, MODULAR_VAE_ENCODER_OPTIONS, components
+from . import MESSAGE_DURATION, MODULAR_DECODER_OPTIONS, MODULAR_VAE_ENCODER_OPTIONS, components, qwen_t2i_bundle_input_param
+from .component_bundle import normalize_component_bundle_inputs
 from .modular_utils import (
     modular_generator_from_seed,
     normalize_modular_runtime_params,
@@ -174,6 +175,7 @@ class DecodeLatents(NodeBase):
     skipParamsCheck = True
     node_type = "decoder"
     params = {
+        "pipeline_components": qwen_t2i_bundle_input_param("decoder"),
         "vae": {
             "label": "VAE *",
             "display": "input",
@@ -198,6 +200,7 @@ class DecodeLatents(NodeBase):
         equal = route_cache_params_equal(previous, current, fallback=super()._cache_params_equal)
         if not equal or not isinstance(current, dict):
             return equal
+        current = normalize_component_bundle_inputs(current, node_type=self.node_type, component_manager=components)
         route_state = current.get(ROUTE_STATE_INPUT)
         if self._pipeline_class is None:
             return route_state is None
@@ -268,7 +271,7 @@ class DecodeLatents(NodeBase):
 
     def update_node(self, values, ref):
         node_params = {}
-        model_type = self.get_signal_value("vae")
+        model_type = self.get_signal_value("vae") or self.get_signal_value("pipeline_components")
 
         if self._model_type == model_type:
             if not model_type or self._pipeline_class is None:
@@ -308,7 +311,7 @@ class DecodeLatents(NodeBase):
         self.send_node_definition(node_params)
 
     def execute(self, **kwargs):
-        kwargs = dict(kwargs)
+        kwargs = normalize_component_bundle_inputs(dict(kwargs), node_type=self.node_type, component_manager=components)
         require_route_state_shape_before_identity_resolution(kwargs)
         reject_route_reserved_inputs_before_identity_resolution(kwargs)
         identity_kwargs = {name: value for name, value in kwargs.items() if name != ROUTE_STATE_INPUT}
@@ -483,6 +486,10 @@ class DecodeLatents(NodeBase):
             if "mask_overlay_kwargs" not in blocks.input_names:
                 raise ValueError("The selected Modular decoder does not expose the routed mask overlay input.")
             node_kwargs["mask_overlay_kwargs"] = route_values["mask_overlay_kwargs"]
+        if route_values is not None and route_values.get("qwen_inpaint_compatibility_state") is not None:
+            if "qwen_inpaint_compatibility_state" not in blocks.input_names:
+                raise ValueError("The selected Modular decoder does not expose the reviewed Qwen compatibility input.")
+            node_kwargs["qwen_inpaint_compatibility_state"] = route_values["qwen_inpaint_compatibility_state"]
         if route_values is not None and route_values["decode_inputs"] is not None:
             for name, value in route_values["decode_inputs"].items():
                 if name not in blocks.input_names:
@@ -787,6 +794,15 @@ class ImageEncode(NodeBase):
         model_type = getattr(self._pipeline_class, "__name__", "")
         route_contract = route_contract_for_model_type(model_type)
         route_binding = None
+        compatibility = "native"
+        if "inpaint_compatibility" in kwargs:
+            from .qwen_inpaint_compatibility import validate_compatibility
+
+            compatibility = validate_compatibility(kwargs["inpaint_compatibility"])
+            if compatibility == "whole_v1" and (
+                model_type != "QwenImageEditModularPipeline" or kwargs.get("mask_image") is None
+            ):
+                raise ValueError("Qwen whole_v1 compatibility requires the Qwen Edit inpainting image/mask route.")
         if route_contract == "wan_i2v":
             route_binding = require_component_binding(
                 kwargs.get("vae"),
@@ -875,6 +891,11 @@ class ImageEncode(NodeBase):
                     height=kwargs.get("height"),
                     width=kwargs.get("width"),
                 )
+            elif route_contract == "qwen" and model_type == "QwenImageEditModularPipeline" and compatibility == "whole_v1":
+                from .qwen_inpaint_compatibility import require_compatible_vae_owner
+
+                preinit_vae = resolve_managed_component_by_id(components, vae, label="Encode VAE")
+                require_compatible_vae_owner(preinit_vae, compatibility)
         self._pipeline = blocks.init_pipeline(components_manager=components)
 
         # 4. Update components
@@ -916,6 +937,13 @@ class ImageEncode(NodeBase):
                 )
                 if live_vae is not installed_vae:
                     raise ValueError("The connected Encode VAE changed during component installation.")
+            if route_contract == "qwen" and model_type == "QwenImageEditModularPipeline":
+                if compatibility == "whole_v1" and live_vae is not preinit_vae:
+                    raise ValueError("The connected Qwen Encode VAE changed during pipeline initialization.")
+                if live_vae is not None:
+                    from .qwen_inpaint_compatibility import require_compatible_vae_owner
+
+                    require_compatible_vae_owner(live_vae, compatibility)
             if route_contract == "sdxl":
                 if live_vae is not preinit_vae:
                     raise ValueError("The connected Encode VAE changed during pipeline initialization.")
@@ -1085,6 +1113,7 @@ class ImageEncode(NodeBase):
                     "image_latents": node_output_state.get("image_latents"),
                     "processed_mask_image": node_output_state.get("processed_mask_image"),
                     "mask_overlay_kwargs": node_output_state.get("mask_overlay_kwargs"),
+                    "inpaint_compatibility_state": node_output_state.get("qwen_inpaint_compatibility_state"),
                 }
                 if route_contract == "sdxl":
                     route_kwargs.update(

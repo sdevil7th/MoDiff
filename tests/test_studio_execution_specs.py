@@ -50,6 +50,44 @@ def executable_graph_for_spec(spec):
 
 
 class StudioExecutionSpecTests(unittest.TestCase):
+    def test_unselected_inpaint_policy_preserves_every_registered_loader_schema(self):
+        node_key = "modules.ModularDiffusers.ModelsLoader"
+        definition = module_registry.MODULE_MAP["modules.ModularDiffusers"]["ModelsLoader"]
+        original = deepcopy(definition)
+        legacy_definition = deepcopy(definition)
+        legacy_definition["params"].pop("inpaint_compatibility")
+        checked = 0
+        for spec in validate_studio_execution_specs(module_registry.MODULE_MAP):
+            if not any(key == node_key for _role, key, _x, _y in spec["roles"]):
+                continue
+            with self.subTest(spec_id=spec["id"]):
+                actual = _execution_spec_role_params(spec, node_key, definition)
+                self.assertNotIn("inpaint_compatibility", actual)
+                self.assertEqual(actual, _execution_spec_role_params(spec, node_key, legacy_definition))
+                checked += 1
+        self.assertGreater(checked, 0)
+        self.assertEqual(definition, original)
+
+    def test_explicit_inpaint_owner_binding_or_connection_keeps_the_exact_field(self):
+        node_key = "modules.ModularDiffusers.ModelsLoader"
+        definition = module_registry.MODULE_MAP["modules.ModularDiffusers"]["ModelsLoader"]
+        # The whole inpaint route is intentionally not promoted to a native
+        # registered spec. Add only a hypothetical explicit schema use here.
+        spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "modular_inpainting")
+        self.assertIsNotNone(spec)
+        loader_roles = [role for role, key, _x, _y in spec["roles"] if key == node_key]
+        self.assertEqual(len(loader_roles), 1)
+        role = loader_roles[0]
+        for use in ("binding", "connection"):
+            with self.subTest(use=use):
+                selected = deepcopy(spec)
+                if use == "binding":
+                    selected["bindings"] = (*selected["bindings"], (role, "inpaint_compatibility", "inpaintCompatibility"))
+                else:
+                    selected["edges"] = (*selected["edges"], ("explicitPolicy", "policy", role, "inpaint_compatibility"))
+                params = _execution_spec_role_params(selected, node_key, definition)
+                self.assertEqual(params["inpaint_compatibility"], definition["params"]["inpaint_compatibility"])
+
     def test_z_image_native_modes_retain_negative_conditioning_bindings(self):
         self.assertTrue(STUDIO_MODEL_CAPABILITIES["ZImageModularPipeline"]["supportsNegativePrompt"])
         for mode in ("modular_text_to_image", "modular_image_to_image"):

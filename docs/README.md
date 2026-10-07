@@ -19,6 +19,9 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Run the qualified image demo                                             | [Image demo checkpoint](image-demo.md)                                                      |
 | Migrate image templates and compare fresh generated outputs               | [Image template validation](image-template-validation.md)                                   |
 | Compare Mellon and plan simpler image nodes without losing graph capabilities | [Simpler image workflows](simpler-image-workflows-mellon-comparison.md)                       |
+| Preserve guidance settings safely when changing models | [Guidance control transfer](guidance-control-transfer.md) |
+| Reduce reviewed text-to-image component wiring without another loader | [Component bundle authoring](component-bundle-authoring.md) |
+| Validate the application on local, AMD Linux and Windows hardware | [Three-machine application validation](three-machine-app-validation.md) |
 | Review larger image-model validation and prioritize a dedicated AMD GPU | [Large image models](large-image-model-validation.md) and [AMD cloud preparation](amd-cloud-qualification.md) |
 | Rehearse editable image stages and portable custom art direction          | [Image modularity demo](modularity-demo.md)                                                 |
 | Build a visually meaningful fashion-editing demonstration                 | [SoHo fashion editorial demo](fashion-editorial-demo.md)                                    |

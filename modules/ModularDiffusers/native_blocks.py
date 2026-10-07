@@ -20,7 +20,7 @@ import math
 import torch
 from diffusers import (
     ClassifierFreeGuidance, FluxKontextModularPipeline, FluxModularPipeline,
-    QwenImageModularPipeline, ZImageModularPipeline,
+    QwenImageEditModularPipeline, QwenImageModularPipeline, ZImageModularPipeline,
 )
 from diffusers.configuration_utils import FrozenDict
 from diffusers.modular_pipelines.modular_pipeline_utils import ComponentSpec, InputParam, OutputParam
@@ -525,6 +525,10 @@ def prepare_native_pipeline_blocks(pipeline_class, blocks):
         return _prepare_flux_kontext_blocks(blocks)
     if pipeline_class is QwenImageModularPipeline:
         return _prepare_qwen_t2i_blocks(blocks)
+    if pipeline_class is QwenImageEditModularPipeline:
+        from .qwen_inpaint_compatibility import prepare_qwen_edit_inpaint_blocks
+
+        return prepare_qwen_edit_inpaint_blocks(blocks)
     if pipeline_class is not ZImageModularPipeline:
         return blocks
     if type(blocks) is not ZImageAutoBlocks:

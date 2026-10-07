@@ -9,9 +9,11 @@ model compatibility or a simpler editing experience.
 
 The current paired implementation already moves all 54 image templates onto
 ordinary operation authoring. It groups relevant encoders as **Encode Inputs**
-and presents a real consumed guider as **Guidance**. Additional **Model Setup**,
-**Prepare Mask** and **Image Output** groups, and a component-bundle facade, are
-proposals in this guide. They have not been implemented by writing this document.
+and presents a real consumed guider as **Guidance**. Explicit **Model Setup**,
+**Prepare Mask** and **Image Output** actions now group eligible ordinary stages
+without changing template defaults. The component-bundle facade below is a
+separate, opt-in Qwen text-to-image improvement that retains the same ownership
+and cache rules. See [component bundle authoring](component-bundle-authoring.md).
 
 ## Inspection scope and evidence
 
@@ -93,11 +95,13 @@ prompts, seeds, sizes, settings, model revisions and media roles. Opening a save
 workflow preserves that graph. This behavior is documented in the client
 [image template workflow guide](https://github.com/sdevil7th/MoDiff-client/blob/fix-ui-ux-issues/docs/image-template-workflows.md).
 
-Of the 54 recipes, 44 have real native loading, input encoding, denoising and
-latent decoding. Ten keep their explicit whole-pipeline task boundary: four Qwen
-masked-edit/outpaint recipes, two FLUX Fill, two FLUX Canny/Depth and two FLUX
-Redux. Those ten do not receive decorative encoding or Guidance nodes. A native
-replacement requires parity with the exact selected task, artifact and recipe.
+Of the 54 recipes, 48 have real native loading, input encoding, denoising and
+latent decoding. The four Qwen masked-edit/outpaint recipes use the reviewed
+native compatibility path described in [image validation](image-template-validation.md).
+Six keep their explicit whole-pipeline task boundary: two FLUX Fill, two FLUX
+Canny/Depth and two FLUX Redux. Those six do not receive decorative encoding or
+Guidance nodes. A native replacement requires parity with the exact selected
+task, artifact and recipe.
 
 Encode Inputs groups the encoders required by the selected operation. Guidance
 groups an actual guider, including a singleton guider where appropriate. These
@@ -112,12 +116,12 @@ The measured current distribution is:
 | ---: | ---: |
 | 5 | 1 |
 | 6 | 21 |
-| 7 | 21 |
-| 8 | 9 |
+| 7 | 17 |
+| 8 | 13 |
 | 9 | 2 |
 | **Total** | **54** |
 
-Thus 42 of 54 templates have six or seven visible nodes; the median is seven.
+Thus 38 of 54 templates have six or seven visible nodes; the median is seven.
 Representative exported workflow packages contain:
 
 | Current MoDiff template | Visible nodes | Graph wires | Visible stages |
@@ -144,7 +148,7 @@ match five nodes could change the recipe.
 | Action | Inspected Mellon behavior | Current MoDiff behavior and useful next step |
 | --- | --- | --- |
 | Start | Search backend graph files and drag a saved graph onto the canvas; insert raw nodes from the registry. | Choose a task to create a connected backend-resolved starter, or choose a creator template with its exact recipe. Keep this one entry path. |
-| Set fields | Registry metadata chooses generic widgets; input conversion and hidden/UI-group fields reduce clutter. | Ordinary scalar inputs keep a literal editor and optional socket. A wire supplies execution and disables the literal editor; disconnect restores its saved fallback. Extend this same pattern inside proposed groups. |
+| Set fields | Registry metadata chooses generic widgets; input conversion and hidden/UI-group fields reduce clutter. | Ordinary scalar inputs keep a literal editor and optional socket. A wire supplies execution and disables the literal editor; disconnect restores its saved fallback. Optional stage groups expose the existing leaf controls and sockets through Block V2. |
 | Connect | Socket search and insertion match direction and nominal type; a target input has one supplier. | Validate nominal types plus declared semantic role, scope and model ownership. Reduce repetitive wires without weakening these checks. |
 | Change model | Model signals refresh dynamic fields; matching handle names can retain connections. | Resolve an exact backend starter; preserve compatible authored values and unrelated branches, preview incompatible changes, then commit atomically with Undo/Redo. Keep reviewed defaults separate from authored values. |
 | Group | The store contains parent-rectangle grouping helpers and API export excludes group objects; no caller exposing an equivalent expandable reusable group UI was found in the inspected frontend. | Block V2 exposes real ports/controls, nested content and reusable snapshots. Proposed compact stages must use this existing contract. |
@@ -202,13 +206,13 @@ available reviewed route and leave an empty required model field when none
 qualifies. Discovery must not load weights or install packages. Arbitrary Hub
 repositories and remote Python are not automatically admitted by a generic label.
 
-### The guidance gap to close first
+### Guidance meanings are declared
 
-Backend v3 operation contracts do not yet fully distinguish distilled model
-guidance, true classifier-free guidance and their formulations as transferable
-control semantics. The client explicitly blocks guidance/CFG value transfer
-between different pipeline classes rather than inferring equivalence from a
-label. See [transferableSetting](https://github.com/sdevil7th/MoDiff-client/blob/fix-ui-ux-issues/src/workflow/operationAuthoring.ts#L106-L119).
+Backend v3 operation contracts now declare reviewed distilled guidance, true CFG,
+normalized Qwen CFG and their policy dependencies as additive control semantics.
+The client transfers explicitly compatible values and retains unresolved or
+incompatible values for review. It still does not infer equivalence from a label.
+See [guidance control transfer](guidance-control-transfer.md).
 
 The runtime already has real distinctions. A shared MoDiff guider feeds both
 encoding and denoising so unconditional conditioning agrees with the denoising
@@ -220,28 +224,28 @@ from the embedded distilled scale; Schnell keeps true CFG disabled. Converted
 Z-Image templates preserve the old pipeline's enabled original formulation while
 ordinary developer starters keep their declared disabled policy. These are
 recipe differences, not a universal meaning for a field called Guidance.
-See [template guidance policy](https://github.com/sdevil7th/MoDiff-client/blob/fix-ui-ux-issues/src/studio/templateOperationWorkflow.ts#L120-L147),
+See [template guidance policy](https://github.com/sdevil7th/MoDiff-client/blob/fix-ui-ux-issues/src/studio/templateOperationWorkflow.ts),
 [encoding](../modules/ModularDiffusers/embeddings.py), and
 [image template validation](image-template-validation.md#preserve-the-recipe-before-changing-the-graph).
 
-A future backend contract should declare guidance technique, enabled state,
-formulation, scale meaning, negative-conditioning requirement and compatibility
-scope. Only explicitly compatible semantics should transfer authored values.
-Other switches need a preview explaining the retained values and target defaults.
-Old snapshots keep their existing execution unless the user applies a reviewed
-change. This improvement belongs before expanding automatic cross-family transfer.
+The declarations name guidance technique, enabled state, formulation, scale
+meaning, negative-conditioning requirement and compatibility scope. Unknown
+runtime model configuration still cannot authorize cross-model transfer. An
+unchanged model/executor preserves existing values and wires. Other switches
+show retained values and target defaults before commit. Old snapshots keep their
+existing execution unless the user applies a reviewed change.
 
-## Proposed ordinary groups and breakout behavior
+## Optional ordinary groups and breakout behavior
 
-The next groups should be assembled from ordinary nodes using the same Block V2
-machinery as Encode Inputs. They are proposed authoring defaults, not additional
-executors or mandatory replacements for old graphs:
+Workflow stage actions assemble eligible ordinary nodes using the same Block V2
+machinery as Encode Inputs. They are explicit authoring edits; opening a saved
+graph or a template does not rewrite it:
 
-| Proposed group | Compact controls and sockets | Expanded ordinary contents |
+| Group | Current eligibility and behavior | Expanded ordinary contents |
 | --- | --- | --- |
-| **Model Setup** (`ModelSetup`) | Model, exact profile; components output; optional LoRA/quantization inputs; advanced memory/precision settings. | Existing Load Models plus declared adapter/configuration nodes. Keep independent component loading/replacement available. |
-| **Prepare Mask** (`PrepareMask`) | Source image, mask source/channel, invert/feather and task-required geometry; prepared image and mask outputs. | Existing image loading/channel/mask operations and Prepare Outpaint Canvas where the selected task actually needs them. |
-| **Image Output** (`ImageOutput`) | Image input, or latents plus the declared VAE for a native route; generated preview and explicit save destination/action; optional comparison/upscale interfaces. | Native Decode Latents when required, then existing Preview Image; Save Image and other extras only when deliberately selected for that instance. Keep Decode Latents available separately. |
+| **Model Setup** (`ModelSetup`) | A real loader with connected built-in adapter/configuration nodes. Model and task controls continue through ordinary operation authoring. A bare loader stays ordinary. | Existing Load Models and connected configuration or LoRA nodes; individual outputs remain available by expansion/separation. |
+| **Prepare Mask** (`PrepareMask`) | A task-correct Outpaint Canvas supplying both the image and mask to the same declared consumer, with its image source. A standalone mask loader stays ordinary. | Existing image loading and Prepare Outpaint Canvas, preserving placement, overlap, feathering and fill. |
+| **Image Output** (`ImageOutput`) | A declared native decoder directly supplying Preview Image. A whole-operation preview stays ordinary. No Save operation is inserted. | Existing Decode Latents and Preview Image; custom output branches retain their connections. |
 
 There is already an [OutpaintCanvas implementation](../modules/DiffusersImage/main.py)
 and ordinary [image utilities](../modules/Image/main.py) and
@@ -275,31 +279,33 @@ flowchart LR
     P --> D
 ```
 
-This is a proposed shape, not a universal executable recipe. A whole-pipeline
+This is an illustrative shape, not a universal executable recipe. A whole-pipeline
 route still needs its actual Generate/Edit operation instead of invented native
 stages. Tasks without masks omit Prepare Mask; a recipe without a consumed guider
 omits Guidance. Explicit ControlNet/prior/reference operations remain available.
 
-### Fewer wires through a component bundle
+### Fewer wires through a reviewed component bundle
 
 MoDiff's ModelsLoader already publishes `pipeline_components` with type
 `diffusers_modular_pipeline_components`, alongside individual text-encoder,
-denoiser, VAE and scheduler outputs. See [loader output declarations](../modules/ModularDiffusers/loaders.py#L2171-L2210).
-This is an existing foundation for a compact facade; it does not mean all current
-stage inputs can be replaced by one wire today.
+denoiser, VAE and scheduler outputs. See [loader output declarations](../modules/ModularDiffusers/loaders.py).
+The reviewed opt-in Qwen text-to-image facade uses that existing output for
+Encode Prompt, Denoise and Decode Latents. It reduces four component edges to
+three. Other families and tasks keep their individual or existing whole-workflow
+contracts; one generic type does not authorize substitution everywhere.
 
-One implementation option is a backend-declared bundle input on compatible
-ordinary stages. An explicit breakout exposes the existing component handles.
-The bundle must carry exact owner/profile/generation identity and named component
-roles. Consumers still validate the selected executable closure and real required
-components. Shared conditioning bundles such as ControlNet are distinct from a
-complete model-component bundle.
+The backend-declared optional input carries exact owner/generation identity and
+named component roles. Its temporary projections retain the same loader token
+and managed IDs, while explicit breakout restores ordinary wires. Consumers
+validate demanded roles and residency before execution/cache reuse. A consumer
+with competing individual suppliers is left ordinary by authoring. Shared
+conditioning bundles such as ControlNet remain distinct from this component set.
 
-The cheaper first step is a visual group with declared ports that fan out to the
-existing leaf inputs. A later bundle adapter can reduce actual crossing wires
-where it has measurable value. In both cases use the current executor and
-component manager. Do not create a second hidden pipeline, silently select ambient
-components or duplicate the loader to satisfy the compact view.
+Visual groups separately change presentation while preserving real leaf inputs.
+Both paths use the current executor and component manager. Neither selects
+ambient components, duplicates a loader or creates a second hidden pipeline.
+The prototype's one-wire reduction is deliberately modest; widening it requires
+reviewed per-task contracts and evidence rather than a universal bundle claim.
 
 ## Where fields and cached state should live
 
@@ -337,15 +343,15 @@ workflow is read-only with respect to its semantics. Explicit adaptation must
 preserve compatible authored values and show conflicts before committing through
 the [existing transaction](https://github.com/sdevil7th/MoDiff-client/blob/fix-ui-ux-issues/src/workflow/operationGraphTransaction.ts).
 
-## Prioritized implementation and acceptance
+## Implemented scope and further acceptance
 
-| Priority | Concrete work | Required acceptance before calling it complete |
+| Priority | Current scope and next work | Validation to retain when extending scope |
 | --- | --- | --- |
 | 1 | Preserve the implemented ordinary-template foundation. Keep exact selections, Encode Inputs and consumed Guidance; retain explicit whole-pipeline exceptions. | All 54 creator contracts preserve prompts, inputs, seeds, defaults and exact identities; interactive creation and harness use the same builder; save/reload, Undo/Redo, stale asynchronous edits and required-media failures pass. Keep actual old/new output evidence separate. |
-| 2 | Extend backend control semantics for true CFG/distilled guidance and task-specific consumption. | Shared client/backend fixtures reject unsafe transfers; compatible values survive model switches; incompatible guidance uses a visible preview; disabled guidance and negative encoding agree; historical recipes remain unchanged. |
-| 3 | Add opt-in/new-graph Model Setup, Prepare Mask and Image Output ordinary groups. | Native click/drag creation, expand/collapse, internal edit, breakout, external connections, nested Save as User Node, reinsert and refresh preserve API export and execution scope. Required input errors name the actual stage. Ordinary utilities remain discoverable. |
-| 4 | Prototype a component facade for one reviewed native family, then generalize from backend declarations. | Compare grouped/ungrouped and facade/breakout effective inputs; reject wrong roles/owners/stale component generations; prove no duplicate load, stale ambient component or altered cache lifetime. Measure fewer visible wires and fewer manual actions. |
-| 5 | Expand native decomposition only where exact task parity is established. | For each of the ten whole-pipeline exceptions, inspect the pinned upstream route, preserve preprocessing/generator/guidance/precision, run actual matched outputs and retain failures. Keep the whole-pipeline route until that route's acceptance passes. |
+| 2 | Implemented reviewed true CFG/distilled guidance declarations and safe scalar transfer. Additional model-dependent predicates need their own evidence. | Shared client/backend fixtures reject unsafe transfers; compatible values survive model switches; incompatible guidance uses a visible preview; disabled guidance and negative encoding agree; historical recipes remain unchanged. |
+| 3 | Implemented explicit Model Setup, Prepare Mask and Image Output actions for the eligible stages described above. Broader task eligibility remains separate work. | Native click/drag creation, expand/collapse, internal edit, breakout, external connections, nested Save as User Node, reinsert and refresh preserve API export and execution scope. Required input errors name the actual stage. Ordinary utilities remain discoverable. |
+| 4 | Implemented the opt-in Qwen text-to-image component facade. Additional families require reviewed backend declarations and actual task evidence. | Compare grouped/ungrouped and facade/breakout effective inputs; reject wrong roles/owners/stale component generations; prove no duplicate load, stale ambient component or altered cache lifetime. Measure fewer visible wires and fewer manual actions. |
+| 5 | The four Qwen masked templates now use the native compatibility path after full original output and ordinary Auto comparisons. Expand other decomposition only where exact task parity is established. | For each of the six whole-pipeline exceptions, inspect the pinned upstream route, preserve preprocessing/generator/guidance/precision, run actual matched outputs and retain failures. Keep the whole-pipeline route until that route's acceptance passes. |
 
 Use the existing [template contract tests](https://github.com/sdevil7th/MoDiff-client/blob/fix-ui-ux-issues/scripts/template-operation-workflows.test.mjs),
 [operation authoring checks](https://github.com/sdevil7th/MoDiff-client/tree/fix-ui-ux-issues/scripts),

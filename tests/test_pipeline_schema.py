@@ -8,10 +8,19 @@ from unittest.mock import patch
 from diffusers.modular_pipelines.modular_pipeline_utils import InputParam, OutputParam
 
 from modules.ModularDiffusers.modular_utils import require_modiff_node_contract
-from modules.ModularDiffusers.pipeline_schema import MoDiffParam, MoDiffPipelineConfig, input_param_to_modiff_param
+from modules.ModularDiffusers.pipeline_schema import (
+    MoDiffParam, MoDiffPipelineConfig, input_param_to_modiff_param, node_spec_to_modiff_dict,
+)
 
 
 class PipelineSchemaTests(unittest.TestCase):
+    def test_wrapper_transport_cannot_replace_a_block_parameter(self):
+        with self.assertRaisesRegex(ValueError, "duplicates a block parameter"):
+            node_spec_to_modiff_dict({
+                "inputs": [MoDiffParam.prompt()],
+                "wrapper_inputs": [MoDiffParam.prompt()],
+            }, "text_encoder")
+
     def test_parameter_templates_serialize_without_internal_fields(self):
         prompt = MoDiffParam.prompt(default="a lighthouse")
 

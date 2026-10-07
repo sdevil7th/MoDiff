@@ -1,5 +1,9 @@
 # AMD cloud image validation
 
+Use the shared [three-machine application procedure](three-machine-app-validation.md)
+for graph editing, custom nodes, task lifecycle, persistence and other media
+families. This guide supplies the dedicated AMD image-preparation boundary.
+
 Prepare and review the backend and client commits before provisioning. Record
 both commit IDs and the built client asset hashes; use those exact reviewed
 commits on the cloud machine. Clone into a fresh checkout, without credentials,

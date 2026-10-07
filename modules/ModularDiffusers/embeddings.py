@@ -6,7 +6,8 @@ from diffusers.guiders.guider_utils import BaseGuidance
 
 from modiff.NodeBase import NodeBase
 
-from . import MESSAGE_DURATION, MODULAR_IMAGE_ENCODER_OPTIONS, MODULAR_TEXT_ENCODER_OPTIONS, components
+from . import MESSAGE_DURATION, MODULAR_IMAGE_ENCODER_OPTIONS, MODULAR_TEXT_ENCODER_OPTIONS, components, qwen_t2i_bundle_input_param
+from .component_bundle import normalize_component_bundle_inputs
 from .modular_utils import (
     get_model_type_metadata,
     normalize_modular_runtime_params,
@@ -86,6 +87,7 @@ class EncodePrompt(NodeBase):
     skipParamsCheck = True
     node_type = "text_encoder"
     params = {
+        "pipeline_components": qwen_t2i_bundle_input_param("text_encoder"),
         "text_encoders": {
             "label": "Text Encoders *",
             "required": True,
@@ -115,7 +117,7 @@ class EncodePrompt(NodeBase):
 
     def update_node(self, values, ref):
         node_params = {}
-        model_type = self.get_signal_value("text_encoders")
+        model_type = self.get_signal_value("text_encoders") or self.get_signal_value("pipeline_components")
 
         if self._model_type == model_type:
             if not model_type or self._pipeline_class is None:
@@ -162,7 +164,7 @@ class EncodePrompt(NodeBase):
         self._pipeline_class = None
 
     def execute(self, **kwargs):
-        kwargs = dict(kwargs)
+        kwargs = normalize_component_bundle_inputs(dict(kwargs), node_type=self.node_type, component_manager=components)
         prompt_input = kwargs.pop("prompt_input", None)
         if prompt_input is not None:
             kwargs["prompt"] = prompt_input
@@ -301,6 +303,12 @@ class EncodePrompt(NodeBase):
             else:
                 outputs[name] = node_output_state.get(name)
         return outputs
+
+    def _cache_params_equal(self, previous, current):
+        equal = super()._cache_params_equal(previous, current)
+        if equal and isinstance(current, dict):
+            normalize_component_bundle_inputs(current, node_type=self.node_type, component_manager=components)
+        return equal
 
 
 class ImageEmbeddings(NodeBase):

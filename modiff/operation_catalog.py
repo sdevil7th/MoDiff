@@ -471,6 +471,11 @@ def resolve_operation(modules, contracts, selection):
             config = metadata["node_params"][contract["nodeType"]]
             for name, overlay in config["params"].items():
                 definition["params"].setdefault(name, {}).update(deepcopy(overlay))
+            if action in {"EncodePrompt", "Denoise", "DecodeLatents"} and not any(
+                port["direction"] == "input" and port["name"] == "pipeline_components"
+                for port in contract["ports"]
+            ):
+                definition["params"].pop("pipeline_components", None)
             if action == "Controlnet":
                 # A standalone ControlNet has no ModelsLoader payload from
                 # which to recover this identity after instance recreation.

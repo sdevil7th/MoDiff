@@ -71,10 +71,12 @@ def _port_types(raw_types):
 def with_operation_semantics(contract, *, workflow_id=None, values=None):
     """Add scoped semantic and binding metadata without claiming type equivalence."""
     from copy import deepcopy
+    from modiff.guidance_operation_semantics import reviewed_guidance_controls
 
     result = deepcopy(contract)
     result["workflowId"] = workflow_id
     result["binding"] = {"values": dict(values or {})}
+    controls = reviewed_guidance_controls(result)
     for port in result["ports"]:
         types = set(port["types"])
         name = port["semanticName"]
@@ -108,6 +110,8 @@ def with_operation_semantics(contract, *, workflow_id=None, values=None):
             "owner": "same_loader" if kind in {"component", "conditioning", "latents", "state", "pipeline"} else "none",
             "members": [],
         }
+        if port.get("direction") == "input" and port["name"] in controls:
+            port["semantics"]["control"] = controls[port["name"]]
     return result
 
 

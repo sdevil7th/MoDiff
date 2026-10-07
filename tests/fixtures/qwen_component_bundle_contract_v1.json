@@ -1,0 +1,1383 @@
+{
+  "schemaVersion": 1,
+  "contracts": [
+    {
+      "pipelineClass": "QwenImageModularPipeline",
+      "task": "text_to_image",
+      "operationId": "diffusion.load_models",
+      "nodeKey": "modules.ModularDiffusers.ModelsLoader",
+      "nodeType": "loader",
+      "blockName": null,
+      "decomposition": "loader",
+      "support": "declared",
+      "ports": [
+        {
+          "name": "model_type",
+          "semanticName": "model_type",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "repo_id",
+          "semanticName": "repo_id",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "reviewed_variant",
+          "semanticName": "reviewed_variant",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": true,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "device",
+          "semanticName": "device",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "attention_backend",
+          "semanticName": "attention_backend",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "vae_slicing",
+          "semanticName": "vae_slicing",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "boolean"
+          ],
+          "required": false,
+          "hidden": true,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "vae_tiling",
+          "semanticName": "vae_tiling",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "boolean"
+          ],
+          "required": false,
+          "hidden": true,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "inpaint_compatibility",
+          "semanticName": "inpaint_compatibility",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": true,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "trust_remote_code",
+          "semanticName": "trust_remote_code",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "boolean"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "revision",
+          "semanticName": "revision",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "workflow_id",
+          "semanticName": "workflow_id",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": true,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "modiff_pipeline_identity",
+          "semanticName": "modiff_pipeline_identity",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "object"
+          ],
+          "required": false,
+          "hidden": true,
+          "semantics": {
+            "kind": "opaque",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "auto_offload",
+          "semanticName": "auto_offload",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "boolean"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "offload_mode",
+          "semanticName": "offload_mode",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "unet",
+          "semanticName": "unet",
+          "direction": "input",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_auto_model"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "transformer",
+                "type": "diffusers.models.transformers.transformer_qwenimage.QwenImageTransformer2DModel"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vae",
+          "semanticName": "vae",
+          "direction": "input",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_auto_model"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "vae",
+                "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+              }
+            ]
+          }
+        },
+        {
+          "name": "controlnet",
+          "semanticName": "controlnet",
+          "direction": "input",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_auto_model"
+          ],
+          "required": false,
+          "hidden": true,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": []
+          }
+        },
+        {
+          "name": "lora_list",
+          "semanticName": "lora_list",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "custom_lora"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "opaque",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "text_encoders",
+          "semanticName": "text_encoders",
+          "direction": "output",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_auto_models"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "text_encoder",
+                "type": "transformers.models.qwen2_5_vl.modeling_qwen2_5_vl.Qwen2_5_VLForConditionalGeneration"
+              },
+              {
+                "name": "tokenizer",
+                "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "unet_out",
+          "semanticName": "unet_out",
+          "direction": "output",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_auto_model"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "transformer",
+                "type": "diffusers.models.transformers.transformer_qwenimage.QwenImageTransformer2DModel"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vae_out",
+          "semanticName": "vae_out",
+          "direction": "output",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_auto_model"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "vae",
+                "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+              }
+            ]
+          }
+        },
+        {
+          "name": "scheduler",
+          "semanticName": "scheduler",
+          "direction": "output",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_auto_model"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "scheduler",
+                "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+              }
+            ]
+          }
+        },
+        {
+          "name": "image_encoder",
+          "semanticName": "image_encoder",
+          "direction": "output",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_auto_model"
+          ],
+          "required": false,
+          "hidden": true,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": []
+          }
+        },
+        {
+          "name": "pipeline_components",
+          "semanticName": "pipeline_components",
+          "direction": "output",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_modular_pipeline_components"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "guider",
+                "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+              },
+              {
+                "name": "image_processor",
+                "type": "diffusers.image_processor.VaeImageProcessor"
+              },
+              {
+                "name": "pachifier",
+                "type": "diffusers.modular_pipelines.qwenimage.modular_pipeline.QwenImagePachifier"
+              },
+              {
+                "name": "scheduler",
+                "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+              },
+              {
+                "name": "text_encoder",
+                "type": "transformers.models.qwen2_5_vl.modeling_qwen2_5_vl.Qwen2_5_VLForConditionalGeneration"
+              },
+              {
+                "name": "tokenizer",
+                "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+              },
+              {
+                "name": "transformer",
+                "type": "diffusers.models.transformers.transformer_qwenimage.QwenImageTransformer2DModel"
+              },
+              {
+                "name": "vae",
+                "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+              }
+            ]
+          }
+        },
+        {
+          "name": "quant_config",
+          "semanticName": "quant_config",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "quant_config"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "opaque",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        }
+      ],
+      "workflowId": "text2image",
+      "binding": {
+        "values": {
+          "model_type": "QwenImageModularPipeline",
+          "workflow_id": "text2image"
+        },
+        "pipelineClass": "QwenImageModularPipeline"
+      }
+    },
+    {
+      "pipelineClass": "QwenImageModularPipeline",
+      "task": "text_to_image",
+      "operationId": "diffusion.encode_prompt",
+      "nodeKey": "modules.ModularDiffusers.EncodePrompt",
+      "nodeType": "text_encoder",
+      "blockName": "text_encoder",
+      "decomposition": "block",
+      "support": "declared",
+      "ports": [
+        {
+          "name": "prompt",
+          "semanticName": "prompt",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": true,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "negative_prompt",
+          "semanticName": "negative_prompt",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "max_sequence_length",
+          "semanticName": "max_sequence_length",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "int"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "text_encoders",
+          "semanticName": "text_encoders",
+          "direction": "input",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_auto_models"
+          ],
+          "required": true,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "text_encoder",
+                "type": "transformers.models.qwen2_5_vl.modeling_qwen2_5_vl.Qwen2_5_VLForConditionalGeneration"
+              },
+              {
+                "name": "tokenizer",
+                "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+              }
+            ],
+            "suppliedBy": {
+              "input": "pipeline_components",
+              "members": [
+                "text_encoder",
+                "tokenizer"
+              ]
+            }
+          }
+        },
+        {
+          "name": "guider",
+          "semanticName": "guider",
+          "direction": "input",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "custom_guider"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "guider",
+                "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+              }
+            ]
+          }
+        },
+        {
+          "name": "embeddings",
+          "semanticName": "embeddings",
+          "direction": "output",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "embeddings"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "conditioning",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": []
+          }
+        },
+        {
+          "name": "doc",
+          "semanticName": "doc",
+          "direction": "output",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "prompt_input",
+          "semanticName": "prompt",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "pipeline_components",
+          "semanticName": "pipeline_components",
+          "direction": "input",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_modular_pipeline_components"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "text_encoder",
+                "type": "transformers.models.qwen2_5_vl.modeling_qwen2_5_vl.Qwen2_5_VLForConditionalGeneration"
+              },
+              {
+                "name": "tokenizer",
+                "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+              }
+            ]
+          }
+        }
+      ],
+      "workflowId": "text2image",
+      "binding": {
+        "values": {},
+        "pipelineClass": "QwenImageModularPipeline"
+      }
+    },
+    {
+      "pipelineClass": "QwenImageModularPipeline",
+      "task": "text_to_image",
+      "operationId": "diffusion.denoise",
+      "nodeKey": "modules.ModularDiffusers.Denoise",
+      "nodeType": "denoise",
+      "blockName": "denoise",
+      "decomposition": "block",
+      "support": "declared",
+      "ports": [
+        {
+          "name": "embeddings",
+          "semanticName": "embeddings",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "embeddings"
+          ],
+          "required": true,
+          "hidden": false,
+          "semantics": {
+            "kind": "conditioning",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": []
+          }
+        },
+        {
+          "name": "width",
+          "semanticName": "width",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "int"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "height",
+          "semanticName": "height",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "int"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "seed",
+          "semanticName": "seed",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "int"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "num_inference_steps",
+          "semanticName": "num_inference_steps",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "int"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "guidance_scale",
+          "semanticName": "guidance_scale",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "float"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "image_latents",
+          "semanticName": "image_latents",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "latents"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "latents",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": []
+          }
+        },
+        {
+          "name": "strength",
+          "semanticName": "strength",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "float"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "controlnet_bundle",
+          "semanticName": "controlnet_bundle",
+          "direction": "input",
+          "roles": [
+            "value",
+            "component"
+          ],
+          "types": [
+            "custom_controlnet"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "conditioning",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "guider",
+                "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+              },
+              {
+                "name": "pachifier",
+                "type": "diffusers.modular_pipelines.qwenimage.modular_pipeline.QwenImagePachifier"
+              },
+              {
+                "name": "scheduler",
+                "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+              },
+              {
+                "name": "transformer",
+                "type": "diffusers.models.transformers.transformer_qwenimage.QwenImageTransformer2DModel"
+              }
+            ]
+          }
+        },
+        {
+          "name": "route_state_in",
+          "semanticName": "route_state_in",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "modular_route_state"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "state",
+            "scope": "QwenImageModularPipeline:text2image",
+            "state": null,
+            "owner": "same_loader",
+            "members": []
+          }
+        },
+        {
+          "name": "unet",
+          "semanticName": "unet",
+          "direction": "input",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_auto_model"
+          ],
+          "required": true,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "transformer",
+                "type": "diffusers.models.transformers.transformer_qwenimage.QwenImageTransformer2DModel"
+              }
+            ],
+            "suppliedBy": {
+              "input": "pipeline_components",
+              "members": [
+                "transformer"
+              ]
+            }
+          }
+        },
+        {
+          "name": "guider",
+          "semanticName": "guider",
+          "direction": "input",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "custom_guider"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "guider",
+                "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+              }
+            ]
+          }
+        },
+        {
+          "name": "scheduler",
+          "semanticName": "scheduler",
+          "direction": "input",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_auto_model"
+          ],
+          "required": true,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "scheduler",
+                "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+              }
+            ],
+            "suppliedBy": {
+              "input": "pipeline_components",
+              "members": [
+                "scheduler"
+              ]
+            }
+          }
+        },
+        {
+          "name": "latents",
+          "semanticName": "latents",
+          "direction": "output",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "latents"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "latents",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": []
+          }
+        },
+        {
+          "name": "route_state_out",
+          "semanticName": "route_state_out",
+          "direction": "output",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "modular_route_state"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "state",
+            "scope": "QwenImageModularPipeline:text2image",
+            "state": null,
+            "owner": "same_loader",
+            "members": []
+          }
+        },
+        {
+          "name": "doc",
+          "semanticName": "doc",
+          "direction": "output",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "pipeline_components",
+          "semanticName": "pipeline_components",
+          "direction": "input",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_modular_pipeline_components"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "scheduler",
+                "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+              },
+              {
+                "name": "transformer",
+                "type": "diffusers.models.transformers.transformer_qwenimage.QwenImageTransformer2DModel"
+              }
+            ]
+          }
+        }
+      ],
+      "workflowId": "text2image",
+      "binding": {
+        "values": {},
+        "pipelineClass": "QwenImageModularPipeline"
+      }
+    },
+    {
+      "pipelineClass": "QwenImageModularPipeline",
+      "task": "text_to_image",
+      "operationId": "diffusion.decode_latents",
+      "nodeKey": "modules.ModularDiffusers.DecodeLatents",
+      "nodeType": "decoder",
+      "blockName": "decode",
+      "decomposition": "block",
+      "support": "declared",
+      "ports": [
+        {
+          "name": "latents",
+          "semanticName": "latents",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "latents"
+          ],
+          "required": true,
+          "hidden": false,
+          "semantics": {
+            "kind": "latents",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": []
+          }
+        },
+        {
+          "name": "route_state_in",
+          "semanticName": "route_state_in",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "modular_route_state"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "state",
+            "scope": "QwenImageModularPipeline:text2image",
+            "state": null,
+            "owner": "same_loader",
+            "members": []
+          }
+        },
+        {
+          "name": "vae",
+          "semanticName": "vae",
+          "direction": "input",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_auto_model"
+          ],
+          "required": true,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "vae",
+                "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+              }
+            ],
+            "suppliedBy": {
+              "input": "pipeline_components",
+              "members": [
+                "vae"
+              ]
+            }
+          }
+        },
+        {
+          "name": "images",
+          "semanticName": "images",
+          "direction": "output",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "image"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "media",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "doc",
+          "semanticName": "doc",
+          "direction": "output",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "pipeline_components",
+          "semanticName": "pipeline_components",
+          "direction": "input",
+          "roles": [
+            "component"
+          ],
+          "types": [
+            "diffusers_modular_pipeline_components"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "component",
+            "scope": "QwenImageModularPipeline",
+            "state": null,
+            "owner": "same_loader",
+            "members": [
+              {
+                "name": "vae",
+                "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+              }
+            ]
+          }
+        }
+      ],
+      "workflowId": "text2image",
+      "binding": {
+        "values": {},
+        "pipelineClass": "QwenImageModularPipeline"
+      }
+    }
+  ]
+}

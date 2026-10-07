@@ -80,6 +80,68 @@ forms are numerically interchangeable. This adapter is limited to the reviewed
 text-to-image input branch; edit, layered, inpaint and ControlNet branches retain
 their existing native behavior and require their own paired validation.
 
+### Qwen Edit masked native templates
+
+The pinned `QwenImageEditModularPipeline` has a genuine
+`image_conditioned_inpainting` workflow, published under the operation task
+`inpaint` and the Studio mode `modular_inpainting`. Its ordinary native encoder
+uses the VAE posterior mode. The existing whole EditInpaint recipe samples that
+posterior and uses a different normalization operation order; the app also
+composites the decoded result with the original soft mask. Selecting the native
+route alone therefore does not preserve the whole template's pixels.
+
+Matching hidden `ModelsLoader` and `ImageEncode.inpaint_compatibility = "whole_v1"`
+selectors enable conditional native adapters for that exact Qwen Edit inpaint
+branch. The default remains `"native"`. The selected owner applies the existing
+whole-route ROCm vision-attention policy at load time, and keys text-encoder/VAE
+component reuse by that compatibility policy. An encoder cannot select it on
+another owner's VAE. The compatibility path retains the pinned whole preprocessing and
+crop geometry, samples the actual source posterior with the owned generator,
+and removes all-valid text masks after real native input/RoPE preparation, as
+the pinned whole inpaint encoder does. Padded masks remain unchanged. It also
+carries an immutable source/mask snapshot through backend-issued route state
+for the existing final mask composite. A graph cannot author that snapshot or
+replace its downstream route state. Ordinary Edit, Edit Plus, Layered and the
+Qwen text-to-image mask convention remain separate.
+
+Fresh object replacement, mask draft, aspect outpaint and outpaint draft
+templates now select that exact native route through the ordinary graph builder
+and existing resource profile. They preserve the original dimensions, strength,
+seed and optional crop padding. Outpainting uses the existing `OutpaintCanvas`
+with the original margins, overlap, feather and fill; its actual canvas feeds
+both prompt and image encoding. The builder requires the reviewed
+`image_conditioned_inpainting` starter and owner binding before applying the
+paired compatibility selectors. Generic developer starters remain native, and
+opening a saved workflow preserves its explicit recipe.
+
+The complete original 8/16/12/20-step recipes have matched-output checks on local
+ROCm in both Custom and ordinary Auto execution. Seed and prompt changes followed
+by restoration also check genuine generation on the same cached owner; an
+identical-input cached result is recorded separately. These checks do not qualify
+other hardware or every resource mode. The original requested token limit of 512
+is absent from native Edit encoding: at the reviewed pin, whole `encode_prompt`
+declares that argument but does not read it. Its separate input validation rejects
+values above 1024. Keep that requested-interface difference and the raw whole
+`attention_kwargs={}` versus native `None` distinction in comparisons; numerical
+parity does not establish identical argument interfaces. Tiny real-VAE, processor
+and generator differentials remain evidence for their specific tested boundaries.
+
+Keep the whole pipeline's unused masked-image posterior computation distinct.
+It runs after initial noise and consumes additional randomness, while the native
+loop uses the source latents and mask. Equal source posterior, packed initial
+noise, scheduler/model boundaries and final pixels do not establish equal final
+opaque-call RNG state or identical executed work.
+
+At this Diffusers pin the six remaining Flux templates keep their published
+whole operations. Fill and its outpaint variant need the masked conditioning
+channel layout of `FluxFillPipeline`; Canny/Depth use the concatenated control
+latents of `FluxControlPipeline`, which are not ControlNet residuals. Redux edit
+and multi-reference use the actual prior followed by the base pipeline, including
+ordered reference weights and their distinct distilled guidance values. The
+reviewed `FluxModularPipeline` text/image workflows do not supply those specialty
+contracts. Visible stage labels or an unrelated control route cannot substitute
+for a reviewed, executable decomposition.
+
 FLUX true CFG and transformer distilled guidance are distinct settings. The
 old image wrapper's primary guidance field sets true CFG; its secondary control
 sets distilled guidance. Converted Dev/Krea and Kontext templates retain both:

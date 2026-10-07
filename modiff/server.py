@@ -5111,6 +5111,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             if isinstance(graph_runtime_hints, dict)
             else (self.current_task.get("runtimeHints") if self.current_task else {})
         )
+        runtime_hints = runtime_hints if isinstance(runtime_hints, dict) else {}
         workflow_snapshot = runtime_hints.get("workflowSnapshot") if isinstance(runtime_hints, dict) else None
         workflow_snapshot = workflow_snapshot if isinstance(workflow_snapshot, dict) else {}
         qualified_cluster_form = (

@@ -1,6 +1,7 @@
 """Operation bindings projected from the existing reviewed Modular owners."""
 
 from copy import deepcopy
+from modiff.component_bundle_contracts import with_qwen_t2i_bundle_contract
 
 from modiff.modular_action_bindings import MODULAR_ACTION_BINDINGS, MODULAR_AUXILIARY_OPERATION_BINDINGS
 from modiff.modular_block_contracts import load_reviewed_modular_block_snapshot
@@ -97,6 +98,11 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     loader=True,
                 )
                 members = _loader_members(root, blocks, definitions, pipeline_class)
+                if pipeline_class == "QwenImageModularPipeline" and task == "text_to_image":
+                    # ModelsLoader groups only pretrained text encoders and
+                    # tokenizers; Guider is a separate controlled input.
+                    members["text_encoders"] = [item for item in members["text_encoders"]
+                                                if item["name"] in {"text_encoder", "tokenizer"}]
                 if loader:
                     for port in loader["ports"]:
                         if port["direction"] == "output" or port["name"] in {"unet", "vae", "controlnet"}:
@@ -211,7 +217,7 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                         if (port["direction"] == "input" and port["semantics"]["kind"] == "media"
                                 and port["name"] in adapter["requiredInputs"]):
                             port["required"] = True
-                    result.append(record)
+                    result.append(with_qwen_t2i_bundle_contract(record))
                     helper_types.update(t for p in record["ports"] if p["direction"] == "input" for t in p["types"])
                 for type_name in sorted(helper_types & MODULAR_AUXILIARY_OPERATION_BINDINGS.keys()):
                     operation_id, node_key = MODULAR_AUXILIARY_OPERATION_BINDINGS[type_name]

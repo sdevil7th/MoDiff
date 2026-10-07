@@ -1283,6 +1283,7 @@ def node_spec_to_modiff_dict(node_spec: dict[str, Any], node_type: str) -> dict[
         - `inputs`: Pipeline inputs (e.g., seed, prompt, image)
         - `model_inputs`: Model components (e.g., unet, vae, scheduler)
         - `outputs`: Node outputs (e.g., latents, images)
+        - `wrapper_inputs`: Optional transport consumed by the MoDiff wrapper before block execution
 
     The node spec also includes:
         - `required_inputs` / `required_model_inputs`: Which params are required (marked with *)
@@ -1292,7 +1293,7 @@ def node_spec_to_modiff_dict(node_spec: dict[str, Any], node_type: str) -> dict[
     have to manually specify all the UI configuration.
 
     Args:
-        node_spec: Dict with `inputs`, `model_inputs`, `outputs` (lists of MoDiffParam),
+        node_spec: Dict with `inputs`, `model_inputs`, `outputs`, optional `wrapper_inputs` (lists of MoDiffParam),
                    plus `required_inputs`, `required_model_inputs`, `block_name`.
         node_type: The node type string (e.g., "denoise", "controlnet")
 
@@ -1366,6 +1367,14 @@ def node_spec_to_modiff_dict(node_spec: dict[str, Any], node_type: str) -> dict[
             output_name = p.name
         params[output_name] = p.to_dict()
         output_names.append(output_name)
+
+    # Wrapper transports are published fields, not upstream values/components.
+    # Keeping them outside the three block-name lists preserves exact upstream
+    # dependency checks and prevents forwarding the transport to a block.
+    for p in node_spec.get("wrapper_inputs", []):
+        if p.name in params:
+            raise ValueError(f"Wrapper input '{p.name}' duplicates a block parameter.")
+        params[p.name] = p.to_dict()
 
     return {
         "params": params,

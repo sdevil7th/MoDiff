@@ -255,8 +255,12 @@ references rather than proof of a migrated graph. See
 [image template validation](docs/image-template-validation.md) for fresh
 output comparison, repeated-run Auto checks and the Windows handoff.
 The [Mellon comparison](docs/simpler-image-workflows-mellon-comparison.md)
-explains the next simplifications while retaining editable stages and existing
-capabilities. See [larger image model validation](docs/large-image-model-validation.md)
+explains the current optional stage actions while retaining editable stages and
+existing capabilities. [Guidance transfer](docs/guidance-control-transfer.md)
+preserves compatible controls during model changes; the opt-in
+[component bundle](docs/component-bundle-authoring.md) reduces reviewed Qwen
+text-to-image wiring. Use [three-machine validation](docs/three-machine-app-validation.md)
+for the local, dedicated AMD and Windows checks. See [larger image model validation](docs/large-image-model-validation.md)
 and [AMD cloud preparation](docs/amd-cloud-qualification.md) for dedicated-device
 testing beyond the migrated templates.
 
