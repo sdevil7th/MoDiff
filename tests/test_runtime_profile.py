@@ -42,6 +42,12 @@ def hardware(
 
 class RuntimeProfileTests(unittest.TestCase):
     def setUp(self):
+        # Synthetic Torch/profile cases use a Linux/x86_64 host unless the
+        # individual test explicitly supplies another supported platform.
+        for target, value in (("normalized_os", "linux"), ("normalized_arch", "x86_64")):
+            host = patch(f"modiff.runtime_profile.{target}", return_value=value)
+            host.start()
+            self.addCleanup(host.stop)
         self.base_runtime = patch("modiff.runtime_profile.base_runtime_status", return_value={
             "status": "verified", "verified": True, "matches": True,
             "installationMode": "uv", "issues": [], "current_digest": "a" * 64,

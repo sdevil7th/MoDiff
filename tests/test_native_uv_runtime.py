@@ -120,13 +120,24 @@ def test_valid_legacy_receipt_cannot_hide_missing_required_base_packages(tmp_pat
     assert observed["repair_command"] == "uv sync --extra cpu"
 
 
-def test_native_accelerator_selection_supersedes_a_stale_cpu_receipt(tmp_path, monkeypatch):
+@pytest.mark.parametrize("os_name,architecture,execution_ready", [
+    ("linux", "x86_64", True), ("windows", "x86_64", True), ("macos", "arm64", False),
+])
+def test_native_accelerator_selection_supersedes_a_stale_cpu_receipt(
+    tmp_path, monkeypatch, os_name, architecture, execution_ready,
+):
     (tmp_path / "modiff-profile.json").write_text(json.dumps({"profile": "cpu"}))
-    monkeypatch.setattr(runtime_profile, "base_runtime_status", verified_base)
+    monkeypatch.setattr(runtime_profile, "normalized_os", lambda: os_name)
+    monkeypatch.setattr(runtime_profile, "normalized_arch", lambda: architecture)
+    monkeypatch.setattr(runtime_profile, "base_runtime_status", lambda: {
+        **verified_base(), "packages": {"torch": "2.11.0+cu128"},
+    })
     monkeypatch.setattr(runtime_profile, "_device_tensor_probe", lambda *args: {"ready": True})
     observed = runtime_profile.runtime_profile({"torch": {"available": True, "cuda_available": True,
         "version": "2.11.0+cu128", "cuda_version": "12.8"}}, venv=tmp_path)
-    assert observed["execution_ready"] and observed["installed"] == "nvidia-cuda"
+    assert observed["installed"] == "nvidia-cuda"
+    assert observed["execution_ready"] is execution_ready
+    assert ("unsupported-platform" in {issue["code"] for issue in observed["issues"]}) is (not execution_ready)
 
 
 def test_normal_text_to_image_has_no_optional_install_or_activation_gate(monkeypatch):
@@ -166,11 +177,20 @@ def test_obsolete_core_overlays_never_shadow_native_libraries(monkeypatch, profi
         saved.assert_not_called()
 
 
-def test_native_optional_binding_uses_observed_dependencies_instead_of_receipts(monkeypatch):
+@pytest.mark.parametrize("platform_name,profile_id", [
+    ("linux", "cpu"), ("win32", "cpu"), ("darwin", "apple-mps"),
+])
+def test_native_optional_binding_uses_observed_dependencies_instead_of_receipts(
+    tmp_path, monkeypatch, platform_name, profile_id,
+):
+    version = tmp_path / "version.py"
+    version.write_text("cuda = None\nhip = None\n")
+    monkeypatch.setattr(runtime_overlays.sys, "platform", platform_name)
+    monkeypatch.setattr(runtime_overlays.metadata, "distribution", lambda _: SimpleNamespace(locate_file=lambda _: version))
     monkeypatch.setattr(base_runtime, "base_runtime_status", verified_base)
     monkeypatch.setattr(runtime_profile, "read_state", lambda *args: None)
     identity = runtime_overlays._accelerator_identity()
-    assert identity["profileId"] == "cpu" and identity["lockDigest"] == "a" * 64
+    assert identity["profileId"] == profile_id and identity["lockDigest"] == "a" * 64
     assert {Path(item["path"]).name for item in identity["contractFiles"]} == {"pyproject.toml", "uv.lock", "accelerators.v1.json"}
 
 

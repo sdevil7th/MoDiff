@@ -37,8 +37,9 @@ def test_unavailable_full_memory_is_unknown_instead_of_zero(monkeypatch):
 
 def test_capture_observes_real_touched_cpu_storage_and_reports_lower_bounds():
     child_code = """
+import os
 import sys
-print('ready', flush=True)
+print(f'ready:{os.getpid()}', flush=True)
 sys.stdin.readline()
 payload = bytearray(64 * 1024 ** 2)
 payload[::4096] = b'x' * len(payload[::4096])
@@ -48,19 +49,24 @@ sys.stdin.readline()
     child = subprocess.Popen([sys.executable, "-I", "-c", child_code], stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     try:
-        assert child.stdout.readline().strip() == "ready"
-        process = psutil.Process(child.pid)
+        ready = child.stdout.readline().strip()
+        assert ready.startswith("ready:")
+        # A Windows virtualenv's python.exe can be a redirector whose child is
+        # the interpreter. Bind the actual allocator PID, not its idle launcher.
+        process = psutil.Process(int(ready.removeprefix("ready:")))
+        assert child.pid in {process.pid, *(parent.pid for parent in process.parents())}
         baseline = sample_process_memory(process, process.create_time())
         child.stdin.write("allocate\n")
         child.stdin.flush()
         assert child.stdout.readline().strip() == "allocated"
         output = io.StringIO()
-        summary = capture_process_memory(child.pid, output, duration_seconds=.06, interval_seconds=.01,
+        summary = capture_process_memory(process.pid, output, duration_seconds=.06, interval_seconds=.01,
                                          full_memory_interval_seconds=.02)
         records = [json.loads(line) for line in output.getvalue().splitlines()]
         samples = [record for record in records if record["type"] == "sample"]
         assert summary["samples"] == len(samples) >= 1
         assert summary["peakSampledProcessRssBytes"] >= baseline["processRssBytes"] + 60 * 1024 ** 2
+        assert summary["peakSampledProcessRssBytes"] == max(sample["processRssBytes"] for sample in samples)
         assert summary["minimumSampledSystemAvailableBytes"] == min(sample["systemAvailableBytes"] for sample in samples)
         assert records[0]["peakSemantics"] == summary["peakSemantics"] == "sampled_lower_bound"
         assert summary["stopReason"] == "duration_elapsed"

@@ -132,6 +132,14 @@ class TaskAuthoringTests(unittest.TestCase):
         from modiff.workflow_auto_resource import build_workflow_auto_plan
 
         gib = 1024 ** 3
+        # The controlled memory envelope below is CPU-only. Resolve from a
+        # copied registry with the same CPU default, independent of host MPS,
+        # CUDA or XPU availability; leave the application registry untouched.
+        image_module = dict(MODULE_MAP["modules.DiffusersImage"])
+        loader = deepcopy(image_module["LoadPipeline"])
+        loader["params"]["device"].update(value="cpu:0", default="cpu:0")
+        image_module["LoadPipeline"] = loader
+        modules = {**MODULE_MAP, "modules.DiffusersImage": image_module}
         fingerprint = {"hardware": {"system": {"ram_available": free_ram}}}
         snapshots, inspected = [], []
         cache = {"owners": {}, "reclaimable": {"systemRamBytes": reclaimable, "vramBytes": 0}}
@@ -174,7 +182,7 @@ class TaskAuthoringTests(unittest.TestCase):
                 from modiff.server import WebServer
 
                 server = SimpleNamespace(
-                    modules=MODULE_MAP, data_dir=directory, current_task={"task_id": "active"} if active else None,
+                    modules=modules, data_dir=directory, current_task={"task_id": "active"} if active else None,
                     _model_capabilities_response=AsyncMock(return_value=json.dumps(self.catalog).encode()),
                     _runtime_fingerprint=Mock(return_value=fingerprint),
                     _runtime_fingerprint_for_control_request=Mock(return_value=fingerprint),

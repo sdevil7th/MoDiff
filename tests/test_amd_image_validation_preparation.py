@@ -34,7 +34,7 @@ def workspace(tmp_path, monkeypatch):
     Image.new("RGB", (12, 8), "blue").save(image)
     snapshot = cache / "models--Example--Image" / "snapshots" / ("a" * 40)
     snapshot.mkdir(parents=True)
-    (snapshot / "config.json").write_text('{}\n', encoding="utf-8")
+    (snapshot / "config.json").write_bytes(b"{}\n")
     return SimpleNamespace(source=source, run=run, cache=cache, workflow=workflow,
                            image=image, snapshot=snapshot, selection="Example/Image@" + "a" * 40)
 
