@@ -15,28 +15,28 @@ resolve to loopback.
 
 ## Route groups
 
-| Area                    | Routes                                                                                                                                                                                                                                                                                               | Purpose                                                                                                                                                                                   |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Bundled client          | `GET /`, `/favicon.ico`, `/assets/*`, optional `/template-gallery/*`, `/user/*`, `/static/{module}/{file}`                                                                                                                                                                                           | Serve the generated frontend and module UI assets. The Gallery route exists only for an explicit offline/local asset build; normal releases use an immutable public Hugging Face Dataset. |
-| WebSocket               | `GET /ws`                                                                                                                                                                                                                                                                                            | Session handshake, queue restoration, progress/events, field signals, and node updates.                                                                                                   |
-| Registry                | `GET /nodes`                                                                                                                                                                                                                                                                                         | Return the live registered node contracts used by the bundled client.                                                                                                                     |
-| Execution               | `POST /graph`, `GET /queue`, `GET /runs/{task_id}`, `DELETE /queue/{task_id}`, `POST /stop`                                                                                                                                                                                                          | Queue, inspect, remove, or interrupt graph work. A normally supervised backend replaces its worker when a blocking model call misses the cancellation grace period.                       |
-| Node state              | `POST /fields/action`, `GET /cache/{node}/{field}[/{index}]`, `DELETE /cache`                                                                                                                                                                                                                        | Run declared dynamic field actions and access/clear statically declared media or text cache fields. Connector, process-local, and other opaque outputs are not cache-servable.            |
-| Files and graphs        | `GET /listdir`, `GET /listgraphs`, `GET /file`, `POST /file`, `GET /preview`, `GET /stream`                                                                                                                                                                                                          | Browse the configured working directory, load/save graph files, upload media, and stream previews.                                                                                        |
-| Saved workflows         | `GET /workflows`, `GET/PUT/DELETE /workflows/{workflow_id}`                                                                                                                                                                                                                                          | List, read, replace, or delete versioned workflow records below the configured data directory.                                                                                            |
-| Media I/O               | `GET /media/capabilities`, `/media/probe`, `/media/export`, `/media/preview`                                                                                                                                                                                                                         | Inspect a managed media identifier or return a cached, converted download/browser preview through the built-in deterministic media tools.                                                 |
-| Runtime                 | `GET /health`, `/runtime/status`, `/runtime/resources`, `/runtime/options`, `/system_stats`, `/runtime/gpu_processes`; `POST /runtime/gpu_cleanup`                                                                                                                                                   | Read readiness, resource, option, and hardware state or request best-effort runtime cleanup.                                                                                              |
-| Optimizations           | `GET /runtime/optimizations`, `/jobs/{job_id}`, `/receipts`; `POST /runtime/optimizations/install`, `/activate`, `/rollback`, `/enable`, `/probe`, `/qualify`, `/jobs/{job_id}/cancel`                                                                                                               | Inspect runtime features and legacy package contracts, manage recovery, and record bounded local qualification evidence. Hashless package install and activation are unavailable.         |
-| Optional model runtimes | `GET /runtime/optional-runtimes`, `/jobs/{job_id}`; `POST /runtime/optional-runtimes/install`, `/activate`, `/rollback`, `/jobs/{job_id}/cancel`                                                                                                                                                     | Publish the reviewed optional-library contract and its fail-closed staged lifecycle. The current candidate exposes no executable install or activation action.                            |
-| Auto resource           | `POST /auto_resource/plan`, `POST /auto_resource/plans`, `POST /auto_resource/workflow`, `GET /auto_resource/history`, `DELETE /auto_resource/history`                                                                                                                                                                               | Plan hardware-aware model recipes and manage local planner history.                                                                                                                       |
-| Models                  | `GET /huggingface/node-library`, `/huggingface/modular-conditionals`, `/huggingface/registered-block-v2`, `/huggingface/registered-block-interfaces`, `/model_capabilities`, `/model_artifact_catalog`, `/model_fingerprints`, `/local_models`, `/hf_cache`, `/model_cache/diagnostics`, `/hf_hub`, `/hf_download/plan`; `POST /hf_download`, `/hf_token`; `DELETE /hf_cache/{hash}` | Discover reviewed first-party node definitions, exact compiled Block definitions, and unpruned Modular branch contracts; diagnose, space-plan, download, authenticate, fingerprint, and delete model artifacts.              |
-| Template Gallery setup  | `GET /template_gallery/status`, `/template_gallery/plan`; `POST /template_gallery/install`                                                                                                                                                                                                           | Inspect, space-plan, and explicitly install or repair the byte-pinned Gallery payload through the local app.                                                                              |
-| Media lifecycle         | `GET /media_assets`, `DELETE /media_assets`                                                                                                                                                                                                                                                          | Inspect temporary media records or remove exact unpinned, task-scoped, or age-scoped files while no generation is active.                                                                 |
-| Custom modules          | `GET /custom_modules`; `POST /custom_modules/refresh`, `/add`, `/install`, `/{name}/inspect`, `/{name}/reload`, `/{name}/update`, `/{name}/disable`, `/{name}/enable`                                                                                                                                                                             | Discover sources; intentionally add/load/reload or disable content-bound custom code. See [custom nodes](custom-nodes.md).                                                                                                        |
-| Studio outputs          | `GET/POST /studio_outputs`, `PATCH/DELETE /studio_outputs/{output_id}`                                                                                                                                                                                                                               | Persist and manage local Studio output metadata and copied media.                                                                                                                         |
-| Studio blocks           | `GET/POST /studio/blocks`, `GET/DELETE /studio/blocks/{block_id}`                                                                                                                                                                                                                                    | Persist reusable local graph blocks.                                                                                                                                                      |
-| Composite migration     | `GET/POST /studio/composite-migrations/preview`, `GET /studio/composite-migrations`, `/recovery-audit`, `/{migration_id}`; `POST /studio/composite-migrations/apply`, `/{migration_id}/rollback`                                                                                                 | Inspect redacted partial recovery evidence or explicitly apply safe V1/exact compiler-supplemented Cluster conversions with exact local backups and fail-closed recovery.                  |
-| Workflow shares         | `GET /workflow_shares`, `POST /workflows/share`, `GET /workflows/share/{share_id}`, `GET /workflows/share/{share_id}/media/{filename}`                                                                                                                                                               | Create and render local workflow share packages and their copied preview media.                                                                                                           |
+| Area                    | Routes                                                                                                                                                                                                                                                                                                                                                                               | Purpose                                                                                                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bundled client          | `GET /`, `/favicon.ico`, `/assets/*`, optional `/template-gallery/*`, `/user/*`, `/static/{module}/{file}`                                                                                                                                                                                                                                                                           | Serve the generated frontend and module UI assets. The Gallery route exists only for an explicit offline/local asset build; normal releases use an immutable public Hugging Face Dataset.                       |
+| WebSocket               | `GET /ws`                                                                                                                                                                                                                                                                                                                                                                            | Session handshake, queue restoration, progress/events, field signals, and node updates.                                                                                                                         |
+| Registry                | `GET /nodes`                                                                                                                                                                                                                                                                                                                                                                         | Return the live registered node contracts used by the bundled client.                                                                                                                                           |
+| Execution               | `POST /graph`, `GET /queue`, `GET /runs/{task_id}`, `DELETE /queue/{task_id}`, `POST /stop`                                                                                                                                                                                                                                                                                          | Queue, inspect, remove, or interrupt graph work. A normally supervised backend replaces its worker when a blocking model call misses the cancellation grace period.                                             |
+| Node state              | `POST /fields/action`, `GET /cache/{node}/{field}[/{index}]`, `DELETE /cache`                                                                                                                                                                                                                                                                                                        | Run declared dynamic field actions and access/clear statically declared media or text cache fields. Connector, process-local, and other opaque outputs are not cache-servable.                                  |
+| Files and graphs        | `GET /listdir`, `GET /listgraphs`, `GET /file`, `POST /file`, `GET /preview`, `GET /stream`                                                                                                                                                                                                                                                                                          | Browse the configured working directory, load/save graph files, upload media, and stream previews.                                                                                                              |
+| Saved workflows         | `GET /workflows`, `GET/PUT/DELETE /workflows/{workflow_id}`                                                                                                                                                                                                                                                                                                                          | List, read, replace, or delete versioned workflow records below the configured data directory.                                                                                                                  |
+| Media I/O               | `GET /media/capabilities`, `/media/probe`, `/media/export`, `/media/preview`                                                                                                                                                                                                                                                                                                         | Inspect a managed media identifier or return a cached, converted download/browser preview through the built-in deterministic media tools.                                                                       |
+| Runtime                 | `GET /health`, `/runtime/status`, `/runtime/resources`, `/runtime/options`, `/system_stats`, `/runtime/gpu_processes`; `POST /runtime/gpu_cleanup`                                                                                                                                                                                                                                   | Read readiness, resource, option, and hardware state or request best-effort runtime cleanup.                                                                                                                    |
+| Optimizations           | `GET /runtime/optimizations`, `/jobs/{job_id}`, `/receipts`; `POST /runtime/optimizations/install`, `/activate`, `/rollback`, `/enable`, `/probe`, `/qualify`, `/jobs/{job_id}/cancel`                                                                                                                                                                                               | Inspect runtime features and legacy package contracts, manage recovery, and record bounded local qualification evidence. Hashless package install and activation are unavailable.                               |
+| Optional model runtimes | `GET /runtime/optional-runtimes`, `/jobs/{job_id}`; `POST /runtime/optional-runtimes/install`, `/activate`, `/rollback`, `/jobs/{job_id}/cancel`                                                                                                                                                                                                                                     | Publish additional optional-package contracts and durable install/activate jobs. Core Transformers/PEFT readiness is satisfied by a verified base installation.                                                 |
+| Auto resource           | `POST /auto_resource/plan`, `POST /auto_resource/plans`, `POST /auto_resource/workflow`, `GET /auto_resource/history`, `DELETE /auto_resource/history`                                                                                                                                                                                                                               | Plan hardware-aware model recipes and manage local planner history.                                                                                                                                             |
+| Models                  | `GET /huggingface/node-library`, `/huggingface/modular-conditionals`, `/huggingface/registered-block-v2`, `/huggingface/registered-block-interfaces`, `/model_capabilities`, `/model_artifact_catalog`, `/model_fingerprints`, `/local_models`, `/hf_cache`, `/model_cache/diagnostics`, `/hf_hub`, `/hf_download/plan`; `POST /hf_download`, `/hf_token`; `DELETE /hf_cache/{hash}` | Discover reviewed first-party node definitions, exact compiled Block definitions, and unpruned Modular branch contracts; diagnose, space-plan, download, authenticate, fingerprint, and delete model artifacts. |
+| Template Gallery setup  | `GET /template_gallery/status`, `/template_gallery/plan`; `POST /template_gallery/install`                                                                                                                                                                                                                                                                                           | Inspect, space-plan, and explicitly install or repair the byte-pinned Gallery payload through the local app.                                                                                                    |
+| Media lifecycle         | `GET /media_assets`, `DELETE /media_assets`                                                                                                                                                                                                                                                                                                                                          | Inspect temporary media records or remove exact unpinned, task-scoped, or age-scoped files while no generation is active.                                                                                       |
+| Custom modules          | `GET /custom_modules`; `POST /custom_modules/refresh`, `/add`, `/install`, `/{name}/inspect`, `/{name}/reload`, `/{name}/update`, `/{name}/disable`, `/{name}/enable`                                                                                                                                                                                                                | Discover sources; intentionally add/load/reload or disable content-bound custom code. See [custom nodes](custom-nodes.md).                                                                                      |
+| Studio outputs          | `GET/POST /studio_outputs`, `PATCH/DELETE /studio_outputs/{output_id}`                                                                                                                                                                                                                                                                                                               | Persist and manage local Studio output metadata and copied media.                                                                                                                                               |
+| Studio blocks           | `GET/POST /studio/blocks`, `GET/DELETE /studio/blocks/{block_id}`                                                                                                                                                                                                                                                                                                                    | Persist reusable local graph blocks.                                                                                                                                                                            |
+| Composite migration     | `GET/POST /studio/composite-migrations/preview`, `GET /studio/composite-migrations`, `/recovery-audit`, `/{migration_id}`; `POST /studio/composite-migrations/apply`, `/{migration_id}/rollback`                                                                                                                                                                                     | Inspect redacted partial recovery evidence or explicitly apply safe V1/exact compiler-supplemented Cluster conversions with exact local backups and fail-closed recovery.                                       |
+| Workflow shares         | `GET /workflow_shares`, `POST /workflows/share`, `GET /workflows/share/{share_id}`, `GET /workflows/share/{share_id}/media/{filename}`                                                                                                                                                                                                                                               | Create and render local workflow share packages and their copied preview media.                                                                                                                                 |
 
 ## Core response contracts
 
@@ -126,6 +126,12 @@ inside a configured root.
 `GET /health` and `GET /runtime/status` use the same readiness handler. The response includes:
 
 - `ready` and `error` summary flags.
+- `workerControl` advertises whether this worker has a supervisor and its
+  actual loopback control origin: `{available: true, address:
+"http://127.0.0.1:<port>"}`. Direct workers return `{available: false,
+address: null}`. The browser uses this address for emergency queue polling
+  and Stop; it does not infer a listener from the backend port. Older backends
+  without this field retain a bounded legacy probe with retry backoff.
 - Backend `instance` identity.
 - Immutable `backend_source` process-start identity. Its fingerprint is also
   carried as `runtimeFingerprint.backendSource` on execution-completion
@@ -135,7 +141,10 @@ inside a configured root.
 - Registered module counts.
 - Server and relevant configuration state.
 - Queue summary.
-- Normalized `hardware` data.
+- Normalized `hardware` data. Idle status refreshes current memory counters;
+  active inference uses its cached hardware snapshot to avoid accelerator
+  probes. `hardware_snapshot_state` distinguishes `current_idle` from
+  `cached_while_running`. The runtime identity remains the startup/run identity.
 
 Compact queue/history entries expose `runtimeFingerprint` as the execution
 fingerprint from the full completion receipt, not its `resourceFingerprint`.
@@ -1222,12 +1231,12 @@ An operation has `pipelineClass`, `task`, `operationId`, `nodeType`, `nodeKey`,
 are independently authorable; the retained `task: null` declarations describe
 individual generic stages without claiming a complete task path.
 
-| Decomposition | Meaning |
-| --- | --- |
-| `block` | Named upstream Modular stage; `blockName` is non-null |
-| `bundle` | Existing component or typed media helper; no invented upstream stage |
-| `loader` | Existing Modular or standard loader for this task |
-| `pipeline` | Whole-pipeline call without editable Modular stages |
+| Decomposition | Meaning                                                              |
+| ------------- | -------------------------------------------------------------------- |
+| `block`       | Named upstream Modular stage; `blockName` is non-null                |
+| `bundle`      | Existing component or typed media helper; no invented upstream stage |
+| `loader`      | Existing Modular or standard loader for this task                    |
+| `pipeline`    | Whole-pipeline call without editable Modular stages                  |
 
 Canonical IDs include `diffusion.load_models`, `diffusion.encode_prompt`,
 `diffusion.denoise` and `diffusion.decode_latents`. Specialized operations retain
@@ -1312,7 +1321,11 @@ new catalogs. The version 3 response requires the matching updated client.
 `POST /operations/resolve` is a read-only authoring request:
 
 ```json
-{"pipelineClass":"AnimaModularPipeline","task":"text_to_image","operationId":"diffusion.denoise"}
+{
+  "pipelineClass": "AnimaModularPipeline",
+  "task": "text_to_image",
+  "operationId": "diffusion.denoise"
+}
 ```
 
 The response is `{ "schemaVersion": 1, "operation": <v3 contract>, "node":
@@ -1781,7 +1794,12 @@ The optional-runtime mutation routes use exact JSON objects:
 - `POST /runtime/optional-runtimes/activate` additionally requires a bounded
   `environmentId`.
 - `POST /runtime/optional-runtimes/rollback` requires
-  `{ "consent": true }`.
+  `{ "consent": true }`. Recovery can additionally send literal
+  `"targetBase": true` to reset active and previous optional selections to a
+  verified base runtime, even when a previous overlay no longer validates.
+  This retains installed optional files and requires the same idle mutation
+  gate, exclusive runtime lease, and restart when an overlay was selected or
+  loaded. Missing or unverified base packages reject this reset.
 - `POST /runtime/optional-runtimes/jobs/{job_id}/cancel` accepts an empty body
   or an empty JSON object. `GET` on the same job path is read-only.
 
@@ -1789,11 +1807,32 @@ Unknown or duplicate fields, non-object bodies, non-literal consent, malformed
 identifiers/digests, oversized bodies, cross-kind jobs, and stale terminal jobs
 fail closed. The current profile rejects install and activation with HTTP `409`
 before reserving a lease, creating a job/staging directory, opening the
-network, or starting a subprocess. A successful future activation or rollback
+network, or starting a subprocess. A successful activation or rollback
 requires a worker restart; an unsupervised process remains
 `restart_required`. It releases the completed mutation gate: base-delivered
 work remains runnable, while `optional_overlay` work stays blocked until the
 worker restarts into the qualified active environment.
+
+Install and activation return HTTP `202` with `{ "error": false, "job": ... }`
+after persisting the operation, before lengthy fresh-process validation. The
+bounded job adds `operation: install | activate`, `createdAt`, and `updatedAt`.
+Activation progresses through `queued`, `running` (phase `validating`),
+`restarting`, and `verifying` before terminal `ready` or `failed`. For an
+unsupervised launch, status remains `restarting` with phase `restart_required`
+and instructions to restart MoDiff. Activation cannot be cancelled; installation
+retains its cancellation endpoint. Repeating the same pending activation returns
+the existing job without scheduling a second mutation.
+
+`GET /runtime/optional-runtimes` includes the latest persisted optional-runtime
+job as `latestJob` (or `null`). Setup restores its progress and resumes polling
+after a page refresh or worker outage. The replacement worker restores pending
+activation receipts and verifies its exact loaded environment, profile digest,
+qualified cutover contract, and runtime readiness before reporting `ready`.
+An interrupted operation that did not load that environment fails verification;
+a saved state pointer alone never reports successful activation. Job responses
+expose fixed progress messages and redact paths, credentials, and subprocess
+diagnostics. Core profiles delivered in the base installation publish
+`baseIncluded: true` and appear outside optional installation controls.
 
 ### Saved workflows and media
 
@@ -2160,22 +2199,61 @@ Stable product routes such as `/graph`, `/queue`, `/studio_outputs`, and `/workf
 
 `POST /auto_resource/workflow` accepts `{ "schemaVersion": 1, "graph": { "nodes": {}, "paths": [] } }` with a nonempty existing executable graph and optional `loops`. It validates reviewed model profiles, artifacts and resource candidates without executing nodes or installing models.
 
-The response includes `canAutoRun`, `issues`, `loaders`, `adapters`, `requirements`, `retainedRequirements`, `available`, `sharedMemory`, `patches`, `graphHash`, `plannedGraphHash`, `resolvedFields`, `requiresPreparation`, `preparationNodeIds`, `deferredFields` and `schedule`. A pending data preparation plan is provisional: actual outputs must pass another plan before model allocation. Only existing `offload_mode` and `auto_offload` fields may be patched; model identity, precision and creative inputs are preserved.
+The response includes `canAutoRun`, `issues`, `loaders`, `adapters`, `requirements`, `retainedRequirements`, `capacityRequirements`, `workingMemoryPolicy`, `available`, `sharedMemory`, `patches`, `graphHash`, `plannedGraphHash`, `resolvedFields`, `requiresPreparation`, `preparationNodeIds`, `deferredFields` and `schedule`. A pending data preparation plan is provisional: actual outputs must pass another plan before model allocation. Only existing `offload_mode` and `auto_offload` fields may be patched, including the authoritative offload field of a connected reviewed execution recipe; model identity, precision and creative inputs are preserved.
 
 Requests carry `runtimeHints.workflowAutoPlan` with `schemaVersion: 1`, `graphHash` and optional `resourceControlGroups` (arrays of `{nodeId, field}` bindings for shared offload controls). The backend verifies the graph hash, prepares supported data-only suppliers through the existing executor when needed, validates mirrored settings, and replans from fresh outputs. It emits existing `auto_resource_plan_applied` events with optional `resourceUpdates` containing `{nodeId, field, value, previousValue}`. The client applies those updates only to the owning workflow with unchanged fields. `runtimePreparation.workflowAuto` in task receipts records resolved fields, applied updates, preparation nodes, schedule and actual releases.
 
-Shared loaders count once. Independent loaders remain separate owners. Single/shared-owner caches remain reusable. Independent owners are retained when their combined envelope fits current capacity. When it does not fit, they use a dependency-respecting lifetime plan if it lowers peak memory; the same executor releases completed model caches and checks actual free memory before each subsequent owner. Detached material outputs survive, shared ownership stays live, and opaque model/device outputs block unsafe release. Loops retain all participating owners until the loop finishes. Release notifications use `auto_resource_cleanup`.
+Shared loaders count once. Independent loaders remain separate owners. Static Auto tiers declare `memorySemantics: "machine_capacity"`: their RAM and VRAM numbers are machine admission classes, checked against total capacity with the existing nominal-tier tolerance. `capacityRequirements` takes the maximum class across owners; those classes are never added together or treated as additional free working memory. Offloaded shared/unified accelerators retain the existing accessible-capacity policy. Disk requirements still describe actual free space.
 
-Idle planning refreshes OS host-memory availability and credits only the
-worker's measurable PyTorch accelerator reservations, capped by the accessible
-capacity. Process RSS is not treated as reclaimable model RAM. Shared/unified
-memory remains one physical pool: accelerator requirements also count against
-host memory. This conservative estimate can request an explicit cache release
-when a warm CPU/offload cache leaves insufficient free RAM; it does not promise
-that resident weights make every warm plan admissible. Plans are revalidated at
-execution, and incompatible owner/recipe identities or actual pressure trigger
-existing cache cleanup. Custom memory policy keeps explicit settings and does
-not acquire an Auto capacity guarantee.
+`workingMemoryRequirements`, when explicitly declared by a reviewed recipe, describe working demand and are additive across independent owners. `requirements` and `retainedRequirements` report those working demands and the runtime headroom policy. A capacity-only recipe reports `workingMemoryPolicy: "runtime_headroom_policy"`: its model-specific working demand remains unmeasured. The existing free-memory floors apply once per workflow; they do not establish measured workload fit. A separately declared working contract reports `explicit_working_demand`. Neither policy upgrades artifact, execution, or performance qualification.
+
+The built-in Spandrel Upscaler can declare a separate `resourceOwnerKind: "auxiliary_model"` for the exact installed `amd/realesrgan-x4plus/RealESRGAN_x4plus.pth` revision `bda69abcaf525425b371622349e975245ae090c2`, SHA-256 `4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1`. This bounded contract covers a single reviewed native text-to-image DecodeLatents output up to 1024 by 1024, tile size 256, overlap 32 and downscale 0.5. The normal controlled-artifact resolver checks installed bytes without loading the model or downloading files. Other selectors, image suppliers or settings need their own reviewed bound or Custom memory policy; the unrelated x2 Expert profile is not substituted.
+
+This auxiliary contract records known float32 weight/input/output storage and keeps the runtime headroom policy for unmeasured activations and loading transients. It has no invented machine-capacity class or measured performance qualification. The executor samples actual free memory immediately before auxiliary allocation, including retained-owner runs; projected cache reclamation is never free memory at that boundary. Both generation and upscaled Preview outputs remain part of the normal graph.
+
+The reviewed Qwen control-image branch can also declare a separate auxiliary owner for `AutoModelLoader`: `InstantX/Qwen-Image-ControlNet-Union` at `b13036f066d6dee7c20513e263d3d673055e9de8`, BF16, empty variant/subfolder/class override, repository code disabled, primary CUDA device, and explicit `none` offload. Inspection verifies the installed immutable config, full weight SHA-256 and bounded Safetensors header without loading a model, querying CUDA or downloading files. Its 181 BF16 tensor storages contain 3,536,007,168 bytes. This known storage is budgeted with conservative host-loading storage and accelerator storage; activation peaks remain unmeasured and retain the runtime headroom policy. Hashing the 3.54 GB file adds read-only validation I/O to inspection and dispatch.
+
+The auxiliary model must feed both the accepted Qwen 2512 ModelsLoader and that owner's Controlnet action, with the same VAE and sealed control/denoise/decode route. It remains live alongside the base owner through decoding and cannot be released early. A repeat run can credit only unique measured tensor storage belonging to the same valid loader cache identity; the executor rechecks that identity and storage immediately before the auxiliary node executes. Shared storage is counted once, conservative free-memory floors remain, and stale or missing ownership falls back to the cold allocation budget. Modified identities, placements, suppliers, branches or unsupported workload geometry fail closed. This declaration is not a measured fit, Windows qualification or performance proof.
+
+Single/shared-owner caches remain reusable. Independent owners with explicit working budgets use a dependency-respecting lifetime plan when it lowers peak memory; the same executor releases completed model caches and checks actual free memory before each subsequent owner. Detached material outputs survive, shared ownership stays live, and opaque model/device outputs block unsafe release. Loops retain all participating owners until the loop finishes. Release notifications use `auto_resource_cleanup`.
+
+Idle workflow planning samples actual available memory and verifies loader,
+upstream-input, and cache identities before recognizing reusable owners. Only
+unique measured tensor-weight storage reduces an explicit working-memory
+budget, in the memory domain where it resides; inference headroom remains reserved. Capacity classes receive no storage subtraction. Process
+RSS is not reclaimable model RAM. Shared/unified memory remains one physical
+pool: accelerator requirements also count against host memory. Form/catalog
+forecasts may additionally count idle allocator blocks (`reserved - allocated`),
+but never treat live GPU weights as free memory.
+
+If measured application weights could satisfy the working demand or runtime headroom policy after release, the
+workflow plan sets `requiresCachePreparation`. Execution releases those caches
+and samples actual capacity again before loading weights; a forecast never
+authorizes an allocation on its own. External pressure, retained references,
+incompatible recipes, and insufficient inference headroom can still block Run.
+Custom memory policy keeps explicit settings and does not acquire an Auto
+capacity guarantee.
+
+The exact `PipelineQuantizationConfigV2`, `DiffusersExecutionRecipe`, and `OutpaintCanvas` built-ins are reviewed data-only operations; `StitchImages` uses the existing Image Operations data contract. Planning never constructs a quantizer, executes a recipe, reads arbitrary supplier output, or loads weights. A connected recipe's device and offload controls are authoritative. Safe connected scalar controls are inspected or prepared through the existing executor. Per-component quantization and unsupported placement, compilation, cache, or memory-limit overrides produce explicit Custom-memory blockers instead of being ignored.
+
+Native Models Loader attention and optional VAE controls are captured through
+the same bounded scalar inspection and dispatch validation. Auto preserves these
+settings; it does not select a different attention kernel. Native LoRA descriptor
+chains must use exact `Lora.lora` → `Lora.previous_loras` connections and terminate
+at `ModelsLoader.lora_list`. Auto inspects each pinned descriptor's byte/shape
+budget once per receiving model owner, in executable order. Arbitrary list
+suppliers, disconnected adapters, unresolved artifact controls and duplicate
+adapter names do not establish a resource envelope.
+
+To observe a locally authorized isolated backend's host memory, use the bounded read-only capture helper:
+
+```bash
+./.venv/bin/python scripts/capture_runtime_memory.py \
+  --pid <backend-process-pid> --output /tmp/new-host-memory.jsonl \
+  --duration-seconds 900
+```
+
+The output path must be new. Capture is limited to one hour and binds the process PID plus creation time. Timestamped OS available RAM, process RSS, optional PSS/USS, and swap observations can be correlated with queue/node events and the backend's existing graph allocator measurements. Samples are lower bounds on peaks, include external system pressure, and never become reclaimable-memory credit or a model fit/performance qualification. The helper imports no Torch and does not change caches, packages, model data, or the runtime.
 
 Unknown model recipes, unreviewed custom/model-dependent resource suppliers, missing artifact evidence, nondefault accelerators and insufficient peak capacity produce explicit blockers. Expert preserves existing validation and explicit settings. Workflow receipts do not grant catalog, publication or model qualification authority.
 

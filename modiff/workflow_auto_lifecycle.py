@@ -33,7 +33,12 @@ def plan_owner_lifetimes(graph, loaders, adapters):
                 for key in budget:
                     budget[key] += adapter[key]
         intervals.append({'ownerId': loader['nodeId'], 'nodeIds': sorted(members),
-                          'first': min(positions), 'last': max(positions), 'requirements': budget})
+                          'first': order.index(loader['nodeId']) if loader.get('sharedWithModelOwnerId') else min(positions),
+                          'last': max(positions), 'requirements': budget,
+                          'capacityRequirements': loader.get('capacityRequirements') or {},
+                          'workingMemoryPolicy': loader.get('workingMemoryPolicy', 'explicit_working_demand'),
+                          'device': loader.get('settings', {}).get('device'),
+                          'offloadMode': loader.get('settings', {}).get('offloadMode', 'none')})
     # Loop steps execute atomically through the existing loop executor. Until a
     # loop has finished, every participating owner remains live. No release is
     # inserted into an opaque loop body.
@@ -144,7 +149,7 @@ def release_owner_caches(server, event, memory_manager):
 
 def assert_next_owner_capacity(server, owner, hardware=None):
     """Check actual free memory after releases, without adding reclaimable cache."""
-    from modiff.auto_resource import _hardware_snapshot
+    from modiff.auto_resource import _hardware_snapshot, _requirements_missing_for_dict
     snapshot = hardware if hardware is not None else _hardware_snapshot(server._runtime_fingerprint(), server.data_dir)
     accelerator = snapshot.get('accelerator', {})
     ram = snapshot.get('systemMemory', {}).get('availableBytes')
@@ -155,7 +160,25 @@ def assert_next_owner_capacity(server, owner, hardware=None):
         device = next((item for item in devices if item.get('type') == accelerator.get('kind') and item.get('memory_kind') in {'shared', 'unified'}), {})
         values = [value for value in (device.get('shared_memory_free'), device.get('torch_vram_free'), ram) if isinstance(value, (int, float))]
         vram = min(values) if values else vram
-    requirements = owner['requirements']
+    capacity = owner.get('capacityRequirements') or {}
+    if capacity:
+        missing = _requirements_missing_for_dict(snapshot, capacity, offload_mode=owner.get('offloadMode', 'none'))
+        if missing:
+            raise ValueError(f"Auto stopped before loading {owner['ownerId']}: " + '; '.join(missing))
+    requirements = dict(owner['requirements'])
+    if capacity or owner.get('workingMemoryPolicy') == 'runtime_headroom_policy':
+        # Capacity tiers never become free working demand at a release boundary.
+        # Keep the same runtime headroom policy used by the initial graph plan.
+        system_total = snapshot.get('systemMemory', {}).get('totalBytes')
+        ram_floor = max(4 * 1024 ** 3, int(system_total * .1) if isinstance(system_total, (int, float)) else 0)
+        requirements['systemRamBytes'] = max(requirements['systemRamBytes'], ram_floor)
+        if not str(owner.get('device') or '').startswith('cpu') and (
+            str(owner.get('device') or '').startswith(('cuda', 'mps', 'xpu'))
+            or accelerator.get('kind') in {'cuda', 'mps', 'xpu'}
+        ):
+            device_total = accelerator.get('totalBytes')
+            vram_floor = max(2 * 1024 ** 3, int(device_total * .1) if isinstance(device_total, (int, float)) else 0)
+            requirements['vramBytes'] = max(requirements['vramBytes'], vram_floor)
     demand = requirements['systemRamBytes'] + (requirements['vramBytes'] if shared else 0)
     if (demand and (ram is None or demand > ram)) or (requirements['vramBytes'] and (vram is None or requirements['vramBytes'] > vram)):
         raise ValueError(f"Auto stopped before loading {owner['ownerId']}: actual free memory after the release is below its planned requirement.")

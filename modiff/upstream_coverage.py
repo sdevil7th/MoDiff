@@ -22,7 +22,8 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
-from modiff.diffusers_profiles import EXPERIMENTAL_DIFFUSERS_PIPELINES
+from modiff.base_runtime import base_model_runtime_contract
+from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES, EXPERIMENTAL_DIFFUSERS_PIPELINES
 from modiff.modular_contract_only_registry import (
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME,
     CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS,
@@ -34,6 +35,7 @@ from modiff.optional_runtimes import (
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
 )
 from modiff.studio_execution_specs import STUDIO_EXECUTION_SPEC_DEFINITIONS
+from modiff.source_text import canonical_python_source
 
 
 UPSTREAM_COVERAGE_SCHEMA_VERSION = 1
@@ -458,7 +460,7 @@ _TRANSFORMERS_SEMANTIC_DEFINITIONS = (
         "label": "Native Emu3 image generation",
         "status": "research-blocked",
         "reason": (
-            "The production wheel has native token-to-image primitives, but MoDiff lacks a bounded decoder action."
+            "The reviewed reference wheel has native token-to-image primitives, but MoDiff lacks a bounded decoder action."
         ),
         "qualification": "no-modiff-action-contract",
         "modes": ["text_to_image"],
@@ -477,7 +479,10 @@ _TRANSFORMERS_SEMANTIC_DEFINITIONS = (
         "id": "cosmos3-edge-reasoner-orchestration",
         "label": "Cosmos3 Edge reasoner orchestration",
         "status": "research-blocked",
-        "reason": "Reviewed main contains the reasoner, but production 5.14.1 and MoDiff orchestration do not.",
+        "reason": (
+            "Reviewed main contains the reasoner, but the historical reference wheel 5.14.1 does not; "
+            "MoDiff lacks an orchestration action contract. Current base-version coverage is not inferred."
+        ),
         "qualification": "reviewed-main-only-no-production-or-action-contract",
         "modes": ["image_video_reasoning"],
         "nodeKeys": [],
@@ -534,6 +539,7 @@ const templates = candidates[0].map((item) => ({
   verificationStatus: item.verificationStatus,
   readinessPolicy: item.readinessPolicy ?? null,
   evidencePolicy: item.evidencePolicy ?? 'generated',
+  executionSelection: item.executionSelection ?? null,
 }));
 process.stdout.write(JSON.stringify(templates));
 """
@@ -761,7 +767,8 @@ def _verify_transformers_main_source(source: Path) -> str:
     return version
 
 
-def _transformers_production_contract() -> dict[str, Any]:
+def _transformers_reference_contract() -> dict[str, Any]:
+    """Preserve the exact historical artifact used for static semantic review."""
     profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID]
     packages = [package for package in profile.packages if package.distribution == "transformers"]
     locks = {
@@ -770,11 +777,11 @@ def _transformers_production_contract() -> dict[str, Any]:
         if item.get("distribution") == "transformers"
     }
     if len(packages) != 1 or len(locks) != 1:
-        raise UpstreamCoverageError("The production Transformers runtime contract is ambiguous.")
+        raise UpstreamCoverageError("The reviewed Transformers reference contract is ambiguous.")
     version, filename, sha256, byte_size = next(iter(locks))
     package = packages[0]
     if package.version != version:
-        raise UpstreamCoverageError("The production Transformers package and wheel locks disagree.")
+        raise UpstreamCoverageError("The reviewed Transformers reference package and wheel locks disagree.")
     return {
         "runtimeProfileId": profile.id,
         "runtimeProfileSpecDigest": profile.spec_digest,
@@ -782,6 +789,31 @@ def _transformers_production_contract() -> dict[str, Any]:
         "filename": filename,
         "sha256": sha256,
         "byteSize": byte_size,
+        "evidenceScope": "historical_reference_wheel",
+        "currentSetupDependency": False,
+    }
+
+
+def _transformers_coverage_scope(reference: dict[str, Any], *, main_version: str) -> dict[str, Any]:
+    """Separate static review evidence from the declared native base contract.
+
+    Installed versions belong to runtime receipts. Reading project declarations
+    neither imports packages nor requalifies these semantics on newer versions.
+    """
+    return {
+        "reviewedMainRevision": TRANSFORMERS_REVIEWED_MAIN_REVISION,
+        "reviewedMainVersion": main_version,
+        "reviewedMainDeliveredInProduction": False,
+        "semanticInventoryRule": (
+            "Finite reviewed inference semantics are classified; "
+            "AutoModel aliases are not counted as product features."
+        ),
+        "reviewedReferenceRuntime": reference,
+        "currentBaseRuntime": base_model_runtime_contract(),
+        "currentBaseCoverageVerified": False,
+        "legacyProductionFieldScope": "historical_reference_wheel_only",
+        # Retained wire alias; it does not describe the current setup/runtime.
+        "productionRuntime": reference,
     }
 
 
@@ -793,6 +825,8 @@ def _read_evidence(evidence: dict[str, list[str]], *, reader: Any, source_label:
         except (KeyError, OSError) as error:
             raise UpstreamCoverageError(f"{source_label} lacks {relative_path}.") from error
         try:
+            if relative_path.endswith(".py"):
+                content = canonical_python_source(content)
             text_content = content.decode("utf-8")
         except UnicodeDecodeError as error:
             raise UpstreamCoverageError(f"{source_label} has non-text evidence at {relative_path}.") from error
@@ -819,7 +853,7 @@ def _node_action_evidence(root: Path, node_keys: list[str]) -> list[dict[str, An
     evidence = []
     for source_path in sorted(actions_by_path):
         try:
-            content = source_path.read_bytes()
+            content = canonical_python_source(source_path.read_bytes())
             tree = ast.parse(content.decode("utf-8"), filename=str(source_path))
         except (OSError, UnicodeDecodeError, SyntaxError) as error:
             raise UpstreamCoverageError(f"Transformers coverage node source is unavailable: {source_path}") from error
@@ -846,20 +880,20 @@ def _transformers_semantic_coverage(
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     source = _normalize_transformers_source(transformers_source)
     main_version = _verify_transformers_main_source(source)
-    production = _transformers_production_contract()
+    reference = _transformers_reference_contract()
     wheel = transformers_wheel.resolve(strict=True)
-    if wheel.name != production["filename"] or wheel.stat().st_size != production["byteSize"]:
-        raise UpstreamCoverageError("The production Transformers wheel does not match the reviewed artifact lock.")
-    if _sha256_bytes(wheel.read_bytes()) != production["sha256"]:
-        raise UpstreamCoverageError("The production Transformers wheel digest does not match the reviewed lock.")
+    if wheel.name != reference["filename"] or wheel.stat().st_size != reference["byteSize"]:
+        raise UpstreamCoverageError("The reviewed Transformers reference wheel does not match its artifact lock.")
+    if _sha256_bytes(wheel.read_bytes()) != reference["sha256"]:
+        raise UpstreamCoverageError("The reviewed Transformers reference wheel digest does not match its lock.")
 
     with zipfile.ZipFile(wheel) as archive:
         wheel_version = _static_package_version(
             archive.read("transformers/__init__.py").decode("utf-8"),
-            label="Transformers production wheel __init__.py",
+            label="Transformers reviewed reference wheel __init__.py",
         )
-        if wheel_version != production["version"]:
-            raise UpstreamCoverageError("The production Transformers wheel version disagrees with its runtime lock.")
+        if wheel_version != reference["version"]:
+            raise UpstreamCoverageError("The reviewed Transformers reference wheel version disagrees with its lock.")
 
         items = []
         for definition in _TRANSFORMERS_SEMANTIC_DEFINITIONS:
@@ -877,7 +911,7 @@ def _transformers_semantic_coverage(
             production_evidence = _read_evidence(
                 definition["productionEvidence"],
                 reader=lambda path: archive.read(f"transformers/{path}"),
-                source_label="Transformers production wheel",
+                source_label="Transformers reviewed reference wheel",
             )
             production_absent_paths = list(definition.get("productionAbsentPaths", []))
             unexpected_paths = [
@@ -885,7 +919,7 @@ def _transformers_semantic_coverage(
             ]
             if unexpected_paths:
                 raise UpstreamCoverageError(
-                    f"Transformers production wheel now contains reviewed-main-only paths: {unexpected_paths}"
+                    f"Transformers reviewed reference wheel contains reviewed-main-only paths: {unexpected_paths}"
                 )
             items.append(
                 {
@@ -900,21 +934,18 @@ def _transformers_semantic_coverage(
                     "canonicalWorkflowIds": workflow_ids,
                     "publicTemplateEligible": False,
                     "reviewedMainEvidence": main_evidence,
+                    "evidenceScope": "historical_reference_wheel",
+                    "currentBaseCoverageVerified": False,
+                    "referenceWheelSupport": bool(production_evidence),
+                    "referenceWheelEvidence": production_evidence,
+                    "referenceWheelAbsentPaths": production_absent_paths,
+                    # Compatibility aliases, scoped to the reference above.
                     "productionWheelSupport": bool(production_evidence),
                     "productionWheelEvidence": production_evidence,
                     "productionWheelAbsentPaths": production_absent_paths,
                 }
             )
-    scope = {
-        "reviewedMainRevision": TRANSFORMERS_REVIEWED_MAIN_REVISION,
-        "reviewedMainVersion": main_version,
-        "reviewedMainDeliveredInProduction": False,
-        "semanticInventoryRule": (
-            "Finite reviewed inference semantics are classified; "
-            "AutoModel aliases are not counted as product features."
-        ),
-        "productionRuntime": production,
-    }
+    scope = _transformers_coverage_scope(reference, main_version=main_version)
     return scope, items
 
 
@@ -1131,6 +1162,44 @@ def _load_reviewed_gallery_manifest(root: Path, explicit_path: Path | None) -> d
     return gallery
 
 
+def _template_execution_coverage(selection: Any) -> dict[str, Any]:
+    """Bind fresh template authoring separately from historical creator graphs."""
+    if selection is None:
+        return {}
+    if not isinstance(selection, dict) or selection.get("schemaVersion") != 1:
+        raise UpstreamCoverageError("Public template execution selection is malformed.")
+    profile = DIFFUSERS_EXECUTION_PROFILES.get(selection.get("executionProfileId"))
+    binding = selection.get("bindingSpec")
+    if profile is None or not profile.public or profile.pipeline_class != selection.get("pipelineClass") or (
+        selection.get("task") not in profile.modes and (
+            profile.execution_path != "modular-diffusers" or profile.model_type != profile.pipeline_class
+        )
+    ):
+        raise UpstreamCoverageError("Public template execution selection has no exact backend profile/task.")
+    if profile.execution_path == "modular-diffusers":
+        from modiff.operation_starters import _modular_route
+
+        try:
+            _modular_route(profile.pipeline_class, selection.get("task"))
+        except ValueError as error:
+            raise UpstreamCoverageError("Public template execution selection has no reviewed native task route.") from error
+    if not isinstance(binding, dict) or not any(
+        item["modelType"] == binding.get("modelType") and item["mode"] == binding.get("mode")
+        and item["profile"]["pipeline_class"] == selection["pipelineClass"]
+        for item in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
+    ):
+        raise UpstreamCoverageError("Public template execution selection has no exact semantic binding specification.")
+    expected_implementation = "native_stages" if profile.execution_path == "modular-diffusers" else "whole_pipeline"
+    if selection.get("implementation") != expected_implementation:
+        raise UpstreamCoverageError("Public template implementation claim differs from its backend profile.")
+    return {
+        "executionSelection": selection,
+        "executionRecipeSource": "backend_operation_starter",
+        "canonicalWorkflowRole": "historical_creator_recipe_reference",
+        "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+    }
+
+
 def _workflow_and_template_coverage(
     root: Path,
     *,
@@ -1189,11 +1258,16 @@ def _workflow_and_template_coverage(
         template_ids_by_workflow[workflow_id].append(template["id"])
         gallery_record = gallery_records.get(template["id"])
         quality_review_status = gallery_record.get("qualityReviewStatus") if gallery_record else None
+        selected_execution = _template_execution_coverage(template.get("executionSelection"))
         template_items.append(
             {
                 "id": template["id"],
                 "status": "executable",
-                "reason": "The public template resolves to an exact checked-in canonical workflow.",
+                "reason": (
+                    "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe."
+                    if selected_execution else "The public template resolves to an exact checked-in canonical workflow."
+                ),
+                **selected_execution,
                 "modelType": template["modelType"],
                 "mode": template["mode"],
                 "canonicalWorkflowId": workflow_id,
@@ -1253,7 +1327,7 @@ def build_upstream_coverage(
     )
     if transformers_source is None or transformers_wheel is None:
         raise UpstreamCoverageError(
-            "Reviewed Transformers main source and the locked production wheel are required for coverage generation."
+            "Reviewed Transformers main source and the locked historical reference wheel are required for coverage generation."
         )
     transformers_scope, transformers_semantics = _transformers_semantic_coverage(
         root,
@@ -1269,7 +1343,7 @@ def build_upstream_coverage(
                 "revision": revision,
                 "verifiedSourceRevision": verified_source_revision,
                 "version": version,
-                "exportModuleSha256": _sha256_bytes((source / "__init__.py").read_bytes()),
+                "exportModuleSha256": _sha256_bytes(canonical_python_source((source / "__init__.py").read_bytes())),
                 "inventoryRule": "Every static top-level Diffusers export ending in Pipeline is classified once.",
             },
             "transformers": transformers_scope,
@@ -1293,6 +1367,9 @@ def build_upstream_coverage(
             "transformersSemanticStatusCounts": _status_counts(transformers_semantics),
             "transformersProductionSupportedSemanticCount": sum(
                 item["productionWheelSupport"] for item in transformers_semantics
+            ),
+            "transformersReferenceSupportedSemanticCount": sum(
+                item["referenceWheelSupport"] for item in transformers_semantics
             ),
             "workflowStatusCounts": _status_counts(workflows),
             "templateStatusCounts": _status_counts(templates),

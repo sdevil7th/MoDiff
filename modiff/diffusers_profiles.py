@@ -17,6 +17,7 @@ from modiff.optional_runtimes import (
     TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
     TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,
     optional_runtime_target,
     public_optional_runtime_profiles,
 )
@@ -228,15 +229,13 @@ class DiffusersExecutionProfile:
     max_low_memory_side: int | None
     max_low_memory_steps: int | None
     live_proof: bool
-    # All current profiles load Transformers-backed components and use the PEFT
-    # integration surface.  A future pure-Diffusers profile must opt out with
-    # ``optional_runtime_profiles=()`` rather than inheriting this composite.
-    optional_runtime_profiles: tuple[str, ...] = (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,)
+    # Standard Transformers and PEFT components belong to the base runtime.
+    # A specialized profile declares only its additional optional contract.
+    optional_runtime_profiles: tuple[str, ...] = ()
     # Keep optional-runtime discovery metadata separate from executable
-    # delivery. Linux/Windows x86-64 use the qualified overlay; unqualified
-    # architectures remain explicitly base-delivered.
-    optional_runtime_delivery: str = OPTIONAL_RUNTIME_DELIVERY_OVERLAY
-    optional_runtime_platform_deliveries: tuple[tuple[str, str, str], ...] = OPTIONAL_RUNTIME_PLATFORM_DELIVERIES
+    # delivery. Explicit optimization overlays retain their qualified targets.
+    optional_runtime_delivery: str = OPTIONAL_RUNTIME_DELIVERY_BASE
+    optional_runtime_platform_deliveries: tuple[tuple[str, str, str], ...] = ()
     compatible_repos: tuple[str, ...] = ()
     expert_quantization_modes: tuple[str, ...] = ()
     expert_cuda_policy: ExpertCudaPolicy | None = None
@@ -748,6 +747,29 @@ DIFFUSERS_EXECUTION_PROFILES["z-image:auto"] = replace(
     expert_mps_policy=MPS_EXPERIMENTAL_POLICY,
 )
 
+# Historical execution IDs remain valid, but ordinary model libraries now ship
+# with the application. Only profiles with additional optional packages retain
+# an overlay requirement; old saved workflow identities need no rewrite.
+BASE_MODEL_RUNTIME_PROFILE_IDS = frozenset({
+    TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,
+})
+for profile_id, profile in tuple(DIFFUSERS_EXECUTION_PROFILES.items()):
+    if profile.optional_runtime_profiles and set(profile.optional_runtime_profiles).issubset(BASE_MODEL_RUNTIME_PROFILE_IDS):
+        DIFFUSERS_EXECUTION_PROFILES[profile_id] = replace(
+            profile,
+            optional_runtime_profiles=(),
+            optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_BASE,
+            optional_runtime_platform_deliveries=(),
+        )
+    elif profile.optional_runtime_profiles:
+        DIFFUSERS_EXECUTION_PROFILES[profile_id] = replace(
+            profile,
+            optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
+            optional_runtime_platform_deliveries=OPTIONAL_RUNTIME_PLATFORM_DELIVERIES,
+        )
+
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 
 EXPERIMENTAL_DIFFUSERS_PIPELINES = []
@@ -1000,9 +1022,10 @@ def resolve_execution_profiles_for_loader(
             replace(
                 profile,
                 optional_runtime_profiles=(TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,),
+                optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
+                optional_runtime_platform_deliveries=(),
             )
             if quantization_mode in profile.expert_quantization_modes
-            and profile.optional_runtime_delivery_for_target() == OPTIONAL_RUNTIME_DELIVERY_OVERLAY
             else profile
             for profile in profiles
         )
@@ -1186,7 +1209,7 @@ def public_experimental_pipelines(
                 for profile_id in profile.get("optional_runtime_profiles", [])
             )
         )
-        if not optional_runtime_profile_ids:
+        if not optional_runtime_profile_ids and not execution_profiles:
             optional_runtime_profile_ids = list(
                 pipeline["optionalRuntimeProfileIds"]
                 if "optionalRuntimeProfileIds" in pipeline

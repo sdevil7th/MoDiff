@@ -42,8 +42,9 @@ class MainSupervisorTests(unittest.TestCase):
             patch.object(module.subprocess, "Popen", return_value=worker),
             patch.object(module.signal, "signal"),
             patch("modiff.supervisor_control.SupervisorController") as controller_class,
-            patch("modiff.supervisor_control.SupervisorControlServer"),
+            patch("modiff.supervisor_control.SupervisorControlServer") as server_class,
         ):
+            server_class.return_value.server.server_address = ("127.0.0.1", 43001)
             controller_class.return_value.consume_restart_request.return_value = False
             self.assertEqual(module.run_supervisor(), 0)
         self.assertEqual(
@@ -222,6 +223,7 @@ class MainSupervisorTests(unittest.TestCase):
         worker = Mock(wait=Mock(return_value=0))
         worker.poll.return_value = None
         control_server = Mock()
+        control_server.server.server_address = ("127.0.0.1", 43001)
         with (
             patch.object(module.subprocess, "Popen", return_value=worker),
             patch.object(module.signal, "signal"),
@@ -262,6 +264,9 @@ class MainSupervisorTests(unittest.TestCase):
             worker_env = call.kwargs["env"]
             self.assertEqual(command[-1], "--worker")
             self.assertEqual(worker_env["MODIFF_WORKER_SUPERVISED"], "1")
+            address = worker_env["MODIFF_SUPERVISOR_CONTROL_ADDRESS"]
+            self.assertRegex(address, r"^http://127\.0\.0\.1:[1-9][0-9]*$")
+            self.assertNotEqual(address, "http://127.0.0.1:0")
 
     def test_unexpected_worker_exit_is_reconciled_and_replaced(self):
         module = load_main_module()
@@ -280,6 +285,7 @@ class MainSupervisorTests(unittest.TestCase):
             patch.dict(os.environ, {"MODIFF_SUPERVISOR_CONTROL_PORT": "0"}),
         ):
             controller = controller_class.return_value
+            server_class.return_value.server.server_address = ("127.0.0.1", 43001)
             controller.consume_restart_request.return_value = False
             controller.reconcile_interrupted_worker.side_effect = [False, True]
             self.assertEqual(module.run_supervisor(), 0)
@@ -300,6 +306,7 @@ class MainSupervisorTests(unittest.TestCase):
             patch("modiff.supervisor_control.SupervisorControlServer") as server_class,
         ):
             event.return_value.wait.return_value = False
+            server_class.return_value.server.server_address = ("127.0.0.1", 43001)
             controller = controller_class.return_value
             controller.consume_restart_request.return_value = False
             self.assertEqual(module.run_supervisor(), -9)
@@ -348,8 +355,9 @@ marker.write_text(json.dumps({"replacementStarted": True, "previousWorker": stat
             patch.object(module.time, "monotonic", side_effect=[0, 1, 2, 70, 71, 72]),
             patch.object(module.threading, "Event") as event,
             patch("modiff.supervisor_control.SupervisorController") as controller_class,
-            patch("modiff.supervisor_control.SupervisorControlServer"),
+            patch("modiff.supervisor_control.SupervisorControlServer") as server_class,
         ):
+            server_class.return_value.server.server_address = ("127.0.0.1", 43001)
             event.return_value.wait.side_effect = [False, False, True]
             controller_class.return_value.consume_restart_request.return_value = False
             self.assertEqual(module.run_supervisor(), -9)

@@ -75,6 +75,12 @@ def seed_standard_operation_defaults(node, profile):
                 guidance_scale_2=capability.get("recommendedGuidance", adapter.secondary_guidance_default),
                 use_guidance_scale_2=True,
             )
+    if (node["module"] == "modules.ModularDiffusers" and node["action"] == "Guider"
+            and profile.pipeline_class in {"FluxModularPipeline", "FluxKontextModularPipeline"}):
+        # Ordinary native FLUX uses transformer embedded guidance. A connected
+        # true-CFG owner is an explicit opt-in, separate from that control.
+        defaults.update(enabled=False, guidance_scale=1.0)
+        node["params"]["guidance_scale"]["min"] = 0.0
     for key, value in defaults.items():
         field = node["params"].get(key)
         if value is None or field is None or field.get("hidden") or field.get("display") == "output":
@@ -435,6 +441,26 @@ def resolve_operation(modules, contracts, selection):
             metadata = get_model_type_metadata(contract["binding"]["pipelineClass"])
             if action == "Guider":
                 definition["params"]["guider"]["options"] = list(metadata["guider_options"])
+                # Match the pinned upstream encoder's ClassifierFreeGuidance
+                # configuration; Z-Image Turbo must keep CFG disabled.
+                if contract["pipelineClass"] in {
+                    "QwenImageModularPipeline", "QwenImageEditModularPipeline",
+                    "QwenImageEditPlusModularPipeline", "QwenImageLayeredModularPipeline",
+                    "ZImageModularPipeline",
+                }:
+                    values.update(
+                        guider="ClassifierFreeGuidance",
+                        guidance_scale=5.0 if contract["pipelineClass"] == "ZImageModularPipeline" else 4.0,
+                        enabled=contract["pipelineClass"] != "ZImageModularPipeline",
+                        guidance_rescale=0.0, use_original_formulation=False, start=0.0, stop=1.0,
+                    )
+                    definition["params"]["guidance_scale"]["min"] = 0.0
+                elif contract["pipelineClass"] in {"FluxModularPipeline", "FluxKontextModularPipeline"}:
+                    values.update(
+                        guider="ClassifierFreeGuidance", guidance_scale=1.0, enabled=False,
+                        guidance_rescale=0.0, use_original_formulation=False, start=0.0, stop=1.0,
+                    )
+                    definition["params"]["guidance_scale"]["min"] = 0.0
             else:
                 definition["params"]["blocks_select"]["options"] = list(metadata["layer_block_options"])
                 values["blocks_select"] = []

@@ -686,10 +686,62 @@ def _graph_param_value(node: Mapping[str, Any], key: str, default: Any = None) -
     param = params.get(key)
     if not isinstance(param, Mapping):
         return default
+    if param.get("sourceId"):
+        raise ValueError(f"Controlled LoRA {key} must be resolved before its exact artifact receipt is inspected.")
     return param.get("value", param.get("default", default))
 
 
-def lora_resource_requirement(node_id: str, node: Mapping[str, Any]) -> dict[str, Any]:
+def native_lora_chain_ids(graph: Mapping[str, Any], terminal_node_id: str) -> list[str]:
+    """Inspect only the declared native descriptor chain, without execution.
+
+    Artifact/scalar suppliers must be literal. Descriptor chaining is the one
+    reviewed exception, and must use executable Lora.lora -> previous_loras
+    connections. The caller separately validates exact bytes and model owners.
+    """
+    nodes = graph.get("nodes")
+    paths = graph.get("paths")
+    if not isinstance(nodes, Mapping) or not isinstance(paths, list):
+        raise ValueError("A native LoRA chain requires the executable API graph.")
+    nodes = {str(key): value for key, value in nodes.items()}
+    executable = {str(key) for path in paths if isinstance(path, list) for key in path}
+    chain = []
+    current = str(terminal_node_id)
+    while current:
+        if current in chain:
+            raise ValueError("A native LoRA descriptor chain cannot contain a cycle.")
+        if len(chain) >= MAX_LORA_ADAPTERS:
+            raise ValueError(f"At most {MAX_LORA_ADAPTERS} LoRA adapters may be chained together.")
+        node = nodes.get(current)
+        if current not in executable or not isinstance(node, Mapping) or (
+            node.get("module"), node.get("action")
+        ) != ("modules.ModularDiffusers", "Lora"):
+            raise ValueError("A native LoRA chain must contain executable native LoRA nodes.")
+        params = node.get("params", {})
+        if not isinstance(params, Mapping):
+            raise ValueError("A native LoRA chain needs declared adapter controls.")
+        if any(key != "previous_loras" and isinstance(param, Mapping) and param.get("sourceId")
+               for key, param in params.items()):
+            raise ValueError("The adapter's exact artifact and settings must be known before model loading.")
+        previous = params.get("previous_loras", {})
+        if not isinstance(previous, Mapping):
+            raise ValueError("Previous LoRAs must use the declared descriptor input.")
+        source = previous.get("sourceId")
+        if source:
+            if previous.get("sourceKey") != "lora":
+                raise ValueError("Previous LoRAs must connect to the native LoRA descriptor output.")
+            next_id = str(source)
+        else:
+            if previous.get("value", previous.get("default")) is not None:
+                raise ValueError("Static LoRA proof requires previous adapters as declared executable nodes.")
+            next_id = ""
+        chain.append(current)
+        current = next_id
+    return list(reversed(chain))
+
+
+def lora_resource_requirement(
+    node_id: str, node: Mapping[str, Any], *, graph: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """Inspect pinned Modular LoRA bytes and shapes without loading tensors.
 
     Budget float32 copies for loading/conversion plus the largest dense update.
@@ -698,10 +750,18 @@ def lora_resource_requirement(node_id: str, node: Mapping[str, Any]) -> dict[str
     if (node.get("module"), node.get("action")) != ("modules.ModularDiffusers", "Lora"):
         raise ValueError("This adapter does not declare a workflow Auto memory envelope.")
     params = node.get("params", {})
-    if any(isinstance(param, Mapping) and param.get("sourceId") for param in params.values()):
+    if graph is not None:
+        if not isinstance(graph.get("nodes"), Mapping) or graph["nodes"].get(node_id) != node:
+            raise ValueError("The adapter must match its authoritative executable graph node.")
+        native_lora_chain_ids(graph, node_id)
+    elif any(isinstance(param, Mapping) and param.get("sourceId") for param in params.values()):
         raise ValueError("Auto needs the adapter's exact artifact and settings before model loading.")
+    else:
+        native_lora_chain_ids({"nodes": {node_id: node}, "paths": [[node_id]]}, node_id)
     # Reuse all path, hash, scheduler and scalar checks from graph admission.
-    receipt = controlled_lora_receipts_from_graph({"nodes": {node_id: node}, "paths": [[node_id]]})[0]
+    own_node = deepcopy(node)
+    own_node.get("params", {}).pop("previous_loras", None)
+    receipt = controlled_lora_receipts_from_graph({"nodes": {node_id: own_node}, "paths": [[node_id]]})[0]
     selection = _graph_param_value(node, "model")
     artifact = receipt["artifact"]
     if artifact["source"] == "hub":
@@ -717,7 +777,8 @@ def lora_resource_requirement(node_id: str, node: Mapping[str, Any]) -> dict[str
     # factor. The largest dimension squared bounds that temporary update.
     largest_dimension = max((max(shape, default=0) for shape in shapes), default=0)
     budget = elements * 4 * 3 + largest_dimension * largest_dimension * 4
-    return {"systemRamBytes": budget, "vramBytes": budget, "artifact": artifact, "tensorCount": len(shapes)}
+    return {"systemRamBytes": budget, "vramBytes": budget, "artifact": artifact,
+            "tensorCount": len(shapes), "adapterName": receipt["adapterName"]}
 
 
 def controlled_lora_receipts_from_graph(graph: Any) -> list[dict[str, Any]]:
@@ -758,6 +819,12 @@ def controlled_lora_receipts_from_graph(graph: Any) -> list[dict[str, Any]]:
     if len(controlled_ids) > MAX_LORA_ADAPTERS:
         raise ValueError(f"At most {MAX_LORA_ADAPTERS} executable LoRA adapters are supported.")
 
+    native_chains = {
+        node_id: native_lora_chain_ids(graph, node_id)
+        for node_id in controlled_ids
+        if nodes_by_id[node_id].get("module") == "modules.ModularDiffusers"
+    }
+
     receipts: list[dict[str, Any]] = []
     for node_id in controlled_ids:
         node = nodes_by_id[node_id]
@@ -797,7 +864,9 @@ def controlled_lora_receipts_from_graph(graph: Any) -> list[dict[str, Any]]:
                 name_seed = PurePosixPath(
                     str(selection.get("value") or "").replace("\\", "/")
                 ).stem
-            adapter_name = generated_lora_adapter_name(name_seed, node_id)
+            adapter_name = _graph_param_value(node, "adapter_name", "")
+            if adapter_name is None or adapter_name == "":
+                adapter_name = generated_lora_adapter_name(name_seed, node_id)
         else:
             adapter_name = _graph_param_value(node, "adapter_name", default_adapter_name)
 
@@ -855,6 +924,20 @@ def controlled_lora_receipts_from_graph(graph: Any) -> list[dict[str, Any]]:
                 "descriptorSha256": descriptor["descriptor_sha256"],
             }
         )
+    native_receipts = {
+        node_id: receipt for node_id, receipt in zip(
+            [key for key in controlled_ids if nodes_by_id[key].get("module") == "modules.ModularDiffusers"],
+            [item for item in receipts if item["module"] == "modules.ModularDiffusers"],
+        )
+    }
+    for chain in native_chains.values():
+        names = [native_receipts[key]["adapterName"] for key in chain]
+        if len(names) != len(set(names)):
+            raise ValueError("LoRA descriptors must have unique adapter names within each native chain.")
+        overrides = [native_receipts[key]["scheduler"] for key in chain
+                     if native_receipts[key]["scheduler"] is not None]
+        if overrides and any(value != overrides[0] for value in overrides[1:]):
+            raise ValueError("Native LoRA scheduler overrides must agree within each descriptor chain.")
     return receipts
 
 

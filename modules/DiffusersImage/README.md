@@ -49,9 +49,10 @@ catalog revisions. Optional-runtime, resource, trust and local-file boundaries
 are unchanged. No downloads occur merely from catalog discovery.
 
 Component quantization constructs each config through its owning library.
-Diffusers-only transformer quantization does not import the optional Transformers
-package. Text-encoder quantization requires the reviewed, explicitly activated
-Transformers + PEFT runtime and reports that action when it is absent.
+Diffusers-only transformer quantization keeps Transformers imports lazy.
+Text-encoder quantization uses Transformers and PEFT from the required base
+installation. Additional quantization backends retain their separate verified
+dependency contracts.
 
 ## Optional typed call inputs
 

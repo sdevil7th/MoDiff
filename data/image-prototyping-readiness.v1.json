@@ -1,5 +1,5 @@
 {
-  "contentHash": "sha256:9877eca76b75cf9cd639437487570a1dc28826509ff159bb493b25fa9c10f3d1",
+  "contentHash": "sha256:ae7c55951899ca2e6a16f57b24464ec29cfe1a28ba4df83a46f2d6fa6b83f962",
   "coverageBoundary": {
     "backendArtifactPins": "snapshotted",
     "backendExecutionProfiles": "snapshotted",
@@ -94,17 +94,15 @@
       "knownDefects": [],
       "modelType": "AnimaModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "anima:official-modular-workflow"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "anima:official-modular-workflow/image_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -169,17 +167,15 @@
       "knownDefects": [],
       "modelType": "AnimaModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "anima:official-modular-workflow"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "anima:official-modular-workflow/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -249,17 +245,15 @@
       "knownDefects": [],
       "modelType": "AuraFlowPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "auraflow-v0.3:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "auraflow-v0.3:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -853,17 +847,15 @@
       "knownDefects": [],
       "modelType": "ChromaImg2ImgPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "chroma1-hd-img2img:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "chroma1-hd-img2img:direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -929,17 +921,15 @@
       "knownDefects": [],
       "modelType": "ChromaInpaintPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "chroma1-hd-inpaint:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "chroma1-hd-inpaint:direct/inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -1005,17 +995,15 @@
       "knownDefects": [],
       "modelType": "ChromaInpaintPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "chroma1-hd-inpaint:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "chroma1-hd-inpaint:direct/outpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -1081,17 +1069,15 @@
       "knownDefects": [],
       "modelType": "ChromaPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "chroma1-hd:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "chroma1-hd:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -1157,17 +1143,15 @@
       "knownDefects": [],
       "modelType": "CogView3PlusPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "cogview3-plus-3b:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "cogview3-plus-3b:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -1233,17 +1217,15 @@
       "knownDefects": [],
       "modelType": "CogView4Pipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "cogview4-6b:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "cogview4-6b:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -1309,17 +1291,15 @@
       "knownDefects": [],
       "modelType": "ConsistencyModelPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "consistency-imagenet64:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "consistency-imagenet64:direct/unconditional_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -1379,17 +1359,15 @@
       "knownDefects": [],
       "modelType": "Cosmos3DistilledModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "cosmos3-distilled-text-to-image:official-modular-workflow"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "cosmos3-distilled-text-to-image:official-modular-workflow/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -1453,17 +1431,15 @@
       "knownDefects": [],
       "modelType": "Cosmos3OmniModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "cosmos3-nano:official-modular-workflow"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "cosmos3-nano:official-modular-workflow/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -1534,17 +1510,15 @@
       "knownDefects": [],
       "modelType": "DDIMPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "ddim-cifar10:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "ddim-cifar10:direct/unconditional_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -1610,17 +1584,15 @@
       "knownDefects": [],
       "modelType": "DDPMPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "ddpm-cifar10:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "ddpm-cifar10:direct/unconditional_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -1678,17 +1650,15 @@
       "knownDefects": [],
       "modelType": "DepthAnythingV2MetricModel",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "depth-anything-v2-metric-outdoor-small:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "depth-anything-v2-metric-outdoor-small:direct/depth_estimation",
       "standardAndNativeAlternativesCoexist": false,
@@ -1746,17 +1716,15 @@
       "knownDefects": [],
       "modelType": "DepthAnythingV2Model",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "depth-anything-v2-small:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "depth-anything-v2-small:direct/depth_estimation",
       "standardAndNativeAlternativesCoexist": false,
@@ -1822,17 +1790,15 @@
       "knownDefects": [],
       "modelType": "DreamLitePipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "dreamlite-base:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "dreamlite-base:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -1898,17 +1864,15 @@
       "knownDefects": [],
       "modelType": "DreamLitePipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "dreamlite-base:edit-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "dreamlite-base:edit-direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -1974,17 +1938,15 @@
       "knownDefects": [],
       "modelType": "DreamLiteMobilePipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "dreamlite-mobile:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "dreamlite-mobile:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -2050,17 +2012,15 @@
       "knownDefects": [],
       "modelType": "DreamLiteMobilePipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "dreamlite-mobile:edit-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "dreamlite-mobile:edit-direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -2120,17 +2080,15 @@
       "knownDefects": [],
       "modelType": "ErnieImagePipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "ernie-image-turbo:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "ernie-image-turbo:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -2190,17 +2148,15 @@
       "knownDefects": [],
       "modelType": "ErnieImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "ernie-image-turbo:official-modular-workflow"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "ernie-image-turbo:official-modular-workflow/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -2271,17 +2227,15 @@
       "knownDefects": [],
       "modelType": "FluxCannyPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-canny:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-canny:direct/control_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -2348,17 +2302,15 @@
       "knownDefects": [],
       "modelType": "FluxCannyPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-canny:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-canny:direct/control_image@fuliucansheng/FLUX.1-Canny-dev-diffusers",
       "standardAndNativeAlternativesCoexist": false,
@@ -2424,17 +2376,15 @@
       "knownDefects": [],
       "modelType": "FluxCannyPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-canny:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-canny:img2img-direct/control_edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -2501,17 +2451,15 @@
       "knownDefects": [],
       "modelType": "FluxCannyPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-canny:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-canny:img2img-direct/control_edit_image@fuliucansheng/FLUX.1-Canny-dev-diffusers",
       "standardAndNativeAlternativesCoexist": false,
@@ -2577,17 +2525,15 @@
       "knownDefects": [],
       "modelType": "FluxCannyPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-canny:inpaint-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-canny:inpaint-direct/control_inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -2654,17 +2600,15 @@
       "knownDefects": [],
       "modelType": "FluxCannyPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-canny:inpaint-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-canny:inpaint-direct/control_inpaint@fuliucansheng/FLUX.1-Canny-dev-diffusers",
       "standardAndNativeAlternativesCoexist": false,
@@ -2730,17 +2674,15 @@
       "knownDefects": [],
       "modelType": "FluxControlNetImg2ImgPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-controlnet:control_edit_image:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-controlnet:control_edit_image:direct/control_edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -2806,17 +2748,15 @@
       "knownDefects": [],
       "modelType": "FluxControlNetPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-controlnet:control_image:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-controlnet:control_image:direct/control_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -2882,17 +2822,15 @@
       "knownDefects": [],
       "modelType": "FluxControlNetInpaintPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-controlnet:control_inpaint:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-controlnet:control_inpaint:direct/control_inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -2958,17 +2896,15 @@
       "knownDefects": [],
       "modelType": "FluxDepthPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-depth:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-depth:direct/control_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -3034,17 +2970,15 @@
       "knownDefects": [],
       "modelType": "FluxDepthPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-depth:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-depth:img2img-direct/control_edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -3110,17 +3044,15 @@
       "knownDefects": [],
       "modelType": "FluxDepthPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-depth:inpaint-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-depth:inpaint-direct/control_inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -3180,17 +3112,15 @@
       "knownDefects": [],
       "modelType": "FluxDevPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-dev:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-dev:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -3253,17 +3183,15 @@
       ],
       "modelType": "FluxDevPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-dev:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-dev:direct/text_to_image@black-forest-labs/FLUX.1-dev-FP8",
       "standardAndNativeAlternativesCoexist": true,
@@ -3334,17 +3262,15 @@
       "knownDefects": [],
       "modelType": "FluxDevPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-dev:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-dev:img2img-direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -3416,17 +3342,15 @@
       ],
       "modelType": "FluxDevPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-dev:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-dev:img2img-direct/edit_image@black-forest-labs/FLUX.1-dev-FP8",
       "standardAndNativeAlternativesCoexist": false,
@@ -3492,17 +3416,15 @@
       "knownDefects": [],
       "modelType": "FluxDevPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-dev:inpaint-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-dev:inpaint-direct/inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -3571,17 +3493,15 @@
       ],
       "modelType": "FluxDevPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-dev:inpaint-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-dev:inpaint-direct/inpaint@black-forest-labs/FLUX.1-dev-FP8",
       "standardAndNativeAlternativesCoexist": false,
@@ -3641,17 +3561,15 @@
       "knownDefects": [],
       "modelType": "FluxModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-dev:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-dev:modular/image_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -3716,17 +3634,15 @@
       "knownDefects": [],
       "modelType": "FluxModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-dev:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-dev:modular/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -3793,17 +3709,15 @@
       ],
       "modelType": "FluxModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-dev:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-dev:modular/image_to_image@black-forest-labs/FLUX.1-dev-FP8",
       "standardAndNativeAlternativesCoexist": false,
@@ -3871,17 +3785,15 @@
       ],
       "modelType": "FluxModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-dev:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-dev:modular/text_to_image@black-forest-labs/FLUX.1-dev-FP8",
       "standardAndNativeAlternativesCoexist": false,
@@ -3950,17 +3862,15 @@
       "knownDefects": [],
       "modelType": "FluxFillPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-fill:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-fill:direct/inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -4025,17 +3935,15 @@
       "knownDefects": [],
       "modelType": "FluxFillPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-fill:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-fill:direct/outpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -4101,17 +4009,15 @@
       "knownDefects": [],
       "modelType": "FluxKontextInpaintPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-kontext-inpaint:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-kontext-inpaint:direct/inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -4177,17 +4083,15 @@
       "knownDefects": [],
       "modelType": "FluxKontextInpaintPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-kontext-inpaint:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-kontext-inpaint:direct/outpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -4256,17 +4160,15 @@
       ],
       "modelType": "FluxKontextInpaintPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-kontext-inpaint:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-kontext-inpaint:direct/inpaint@black-forest-labs/FLUX.1-Kontext-dev-NVFP4",
       "standardAndNativeAlternativesCoexist": false,
@@ -4335,17 +4237,15 @@
       ],
       "modelType": "FluxKontextInpaintPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-kontext-inpaint:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-kontext-inpaint:direct/outpaint@black-forest-labs/FLUX.1-Kontext-dev-NVFP4",
       "standardAndNativeAlternativesCoexist": false,
@@ -4404,17 +4304,15 @@
       "knownDefects": [],
       "modelType": "FluxKontextPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-kontext:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-kontext:direct/edit_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -4484,17 +4382,15 @@
       "knownDefects": [],
       "modelType": "FluxKontextPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-kontext:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-kontext:direct/multi_image_reference_edit",
       "standardAndNativeAlternativesCoexist": true,
@@ -4556,17 +4452,15 @@
       ],
       "modelType": "FluxKontextPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-kontext:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-kontext:direct/edit_image@black-forest-labs/FLUX.1-Kontext-dev-NVFP4",
       "standardAndNativeAlternativesCoexist": true,
@@ -4637,17 +4531,15 @@
       ],
       "modelType": "FluxKontextPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-kontext:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-kontext:direct/multi_image_reference_edit@black-forest-labs/FLUX.1-Kontext-dev-NVFP4",
       "standardAndNativeAlternativesCoexist": true,
@@ -4707,17 +4599,15 @@
       "knownDefects": [],
       "modelType": "FluxKontextModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-kontext:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-kontext:modular/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -4781,17 +4671,15 @@
       "knownDefects": [],
       "modelType": "FluxKontextModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-kontext:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-kontext:modular/multi_image_reference_edit",
       "standardAndNativeAlternativesCoexist": false,
@@ -4856,17 +4744,15 @@
       "knownDefects": [],
       "modelType": "FluxKontextModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-kontext:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-kontext:modular/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -4933,17 +4819,15 @@
       ],
       "modelType": "FluxKontextModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-kontext:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-kontext:modular/edit_image@black-forest-labs/FLUX.1-Kontext-dev-NVFP4",
       "standardAndNativeAlternativesCoexist": false,
@@ -5010,17 +4894,15 @@
       ],
       "modelType": "FluxKontextModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-kontext:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-kontext:modular/multi_image_reference_edit@black-forest-labs/FLUX.1-Kontext-dev-NVFP4",
       "standardAndNativeAlternativesCoexist": false,
@@ -5088,17 +4970,15 @@
       ],
       "modelType": "FluxKontextModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-kontext:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-kontext:modular/text_to_image@black-forest-labs/FLUX.1-Kontext-dev-NVFP4",
       "standardAndNativeAlternativesCoexist": false,
@@ -5173,17 +5053,15 @@
       "knownDefects": [],
       "modelType": "FluxKreaPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-krea:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-krea:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -5240,17 +5118,15 @@
       "knownDefects": [],
       "modelType": "FluxKreaPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-krea:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-krea:modular/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -5320,17 +5196,15 @@
       "knownDefects": [],
       "modelType": "FluxReduxPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-redux:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-redux:direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -5396,17 +5270,15 @@
       "knownDefects": [],
       "modelType": "FluxReduxPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-redux:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-redux:direct/multi_image_reference_edit",
       "standardAndNativeAlternativesCoexist": false,
@@ -5477,17 +5349,15 @@
       "knownDefects": [],
       "modelType": "FluxSchnellPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-schnell:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-schnell:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -5544,17 +5414,15 @@
       "knownDefects": [],
       "modelType": "FluxSchnellPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux-schnell:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux-schnell:modular/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -5629,17 +5497,15 @@
       "knownDefects": [],
       "modelType": "Flux2Pipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-dev:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-dev:direct/multi_image_reference_edit",
       "standardAndNativeAlternativesCoexist": true,
@@ -5699,17 +5565,15 @@
       "knownDefects": [],
       "modelType": "Flux2Pipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-dev:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-dev:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -5769,17 +5633,15 @@
       "knownDefects": [],
       "modelType": "Flux2KleinBaseModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-klein-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-klein-base:modular/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -5844,17 +5706,15 @@
       "knownDefects": [],
       "modelType": "Flux2KleinBaseModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-klein-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-klein-base:modular/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -5924,17 +5784,15 @@
       "knownDefects": [],
       "modelType": "Flux2KleinInpaintPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-klein-inpaint:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-klein-inpaint:direct/inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -6000,17 +5858,15 @@
       "knownDefects": [],
       "modelType": "Flux2KleinInpaintPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-klein-inpaint:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-klein-inpaint:direct/outpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -6086,17 +5942,15 @@
       "knownDefects": [],
       "modelType": "Flux2KleinKVPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-klein-kv:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-klein-kv:direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -6172,17 +6026,15 @@
       "knownDefects": [],
       "modelType": "Flux2KleinKVPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-klein-kv:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-klein-kv:direct/multi_image_reference_edit",
       "standardAndNativeAlternativesCoexist": false,
@@ -6253,17 +6105,15 @@
       "knownDefects": [],
       "modelType": "Flux2KleinKVPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-klein-kv:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-klein-kv:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -6320,17 +6170,15 @@
       "knownDefects": [],
       "modelType": "Flux2KleinKVPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-klein-kv:t2i-modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-klein-kv:t2i-modular/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -6394,17 +6242,15 @@
       "knownDefects": [],
       "modelType": "Flux2KleinPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-klein:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-klein:direct/edit_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -6475,17 +6321,15 @@
       "knownDefects": [],
       "modelType": "Flux2KleinPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-klein:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-klein:direct/multi_image_reference_edit",
       "standardAndNativeAlternativesCoexist": true,
@@ -6545,17 +6389,15 @@
       "knownDefects": [],
       "modelType": "Flux2KleinPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-klein:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-klein:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -6615,17 +6457,15 @@
       "knownDefects": [],
       "modelType": "Flux2KleinModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-klein:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-klein:modular/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -6689,17 +6529,15 @@
       "knownDefects": [],
       "modelType": "Flux2KleinModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-klein:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-klein:modular/multi_image_reference_edit",
       "standardAndNativeAlternativesCoexist": false,
@@ -6764,17 +6602,15 @@
       "knownDefects": [],
       "modelType": "Flux2KleinModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2-klein:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2-klein:modular/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -6838,17 +6674,15 @@
       "knownDefects": [],
       "modelType": "Flux2ModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2:modular/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -6912,17 +6746,15 @@
       "knownDefects": [],
       "modelType": "Flux2ModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2:modular/multi_image_reference_edit",
       "standardAndNativeAlternativesCoexist": false,
@@ -6987,17 +6819,15 @@
       "knownDefects": [],
       "modelType": "Flux2ModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "flux2:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "flux2:modular/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -7067,17 +6897,15 @@
       "knownDefects": [],
       "modelType": "GlmImagePipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "glm-image:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "glm-image:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -7143,17 +6971,15 @@
       "knownDefects": [],
       "modelType": "HunyuanDiTControlNetPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "hunyuan-dit-v1-2-controlnet-canny:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "hunyuan-dit-v1-2-controlnet-canny:direct/control_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -7219,17 +7045,15 @@
       "knownDefects": [],
       "modelType": "HunyuanDiTPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "hunyuan-dit-v1-2-distilled-pag:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "hunyuan-dit-v1-2-distilled-pag:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -7295,17 +7119,15 @@
       "knownDefects": [],
       "modelType": "HunyuanDiTPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "hunyuan-dit-v1-2-distilled:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "hunyuan-dit-v1-2-distilled:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -7363,17 +7185,15 @@
       "knownDefects": [],
       "modelType": "HuggingFaceAnyToAnyModel",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "janus-pro-1b:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "janus-pro-1b:direct/image_to_text",
       "standardAndNativeAlternativesCoexist": false,
@@ -7431,17 +7251,15 @@
       "knownDefects": [],
       "modelType": "HuggingFaceAnyToAnyModel",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "janus-pro-1b:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "janus-pro-1b:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -7507,17 +7325,15 @@
       "knownDefects": [],
       "modelType": "JoyImageEditPlusPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "joyimage-edit-plus:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "joyimage-edit-plus:direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -7583,17 +7399,15 @@
       "knownDefects": [],
       "modelType": "JoyImageEditPlusPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "joyimage-edit-plus:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "joyimage-edit-plus:direct/multi_image_reference_edit",
       "standardAndNativeAlternativesCoexist": false,
@@ -7659,17 +7473,15 @@
       "knownDefects": [],
       "modelType": "JoyImageEditPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "joyimage-edit:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "joyimage-edit:direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -7735,17 +7547,15 @@
       "knownDefects": [],
       "modelType": "JoyImageEditPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "joyimage-edit:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "joyimage-edit:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -7811,17 +7621,15 @@
       "knownDefects": [],
       "modelType": "Kandinsky3Pipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "kandinsky3:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "kandinsky3:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -7887,17 +7695,15 @@
       "knownDefects": [],
       "modelType": "Kandinsky3Pipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "kandinsky3:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "kandinsky3:img2img-direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -7963,17 +7769,15 @@
       "knownDefects": [],
       "modelType": "LatentConsistencyModelPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "lcm-dreamshaper-v7:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "lcm-dreamshaper-v7:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -8039,17 +7843,15 @@
       "knownDefects": [],
       "modelType": "LatentConsistencyModelPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "lcm-dreamshaper-v7:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "lcm-dreamshaper-v7:img2img-direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -8115,17 +7917,15 @@
       "knownDefects": [],
       "modelType": "LongCatImageEditPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "longcat-image-edit:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "longcat-image-edit:direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -8191,17 +7991,15 @@
       "knownDefects": [],
       "modelType": "LongCatImagePipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "longcat-image:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "longcat-image:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -8267,17 +8065,15 @@
       "knownDefects": [],
       "modelType": "LuminaPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "lumina-next:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "lumina-next:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -8343,17 +8139,15 @@
       "knownDefects": [],
       "modelType": "Lumina2Pipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "lumina2:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "lumina2:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -8419,17 +8213,15 @@
       "knownDefects": [],
       "modelType": "MarigoldDepthPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "marigold-depth-lcm-v1-0:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "marigold-depth-lcm-v1-0:direct/depth_estimation",
       "standardAndNativeAlternativesCoexist": false,
@@ -8495,17 +8287,15 @@
       "knownDefects": [],
       "modelType": "NucleusMoEImagePipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "nucleus-image:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "nucleus-image:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -8571,17 +8361,15 @@
       "knownDefects": [],
       "modelType": "OmniGenPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "omnigen-v1:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "omnigen-v1:direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -8647,17 +8435,15 @@
       "knownDefects": [],
       "modelType": "OmniGenPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "omnigen-v1:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "omnigen-v1:direct/multi_image_reference_edit",
       "standardAndNativeAlternativesCoexist": false,
@@ -8723,17 +8509,15 @@
       "knownDefects": [],
       "modelType": "OmniGenPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "omnigen-v1:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "omnigen-v1:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -8799,17 +8583,15 @@
       "knownDefects": [],
       "modelType": "OvisImagePipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "ovis-image-7b:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "ovis-image-7b:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -8875,17 +8657,15 @@
       "knownDefects": [],
       "modelType": "PixArtSigmaPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "pixart-sigma-1024-pag:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "pixart-sigma-1024-pag:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -8951,17 +8731,15 @@
       "knownDefects": [],
       "modelType": "PixArtSigmaPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "pixart-sigma-1024:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "pixart-sigma-1024:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -9027,17 +8805,15 @@
       "knownDefects": [],
       "modelType": "PRXPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "prx-512-sft:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "prx-512-sft:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -9096,17 +8872,15 @@
       "knownDefects": [],
       "modelType": "QwenImageEditPlusModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-edit-plus:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-edit-plus:modular/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -9170,17 +8944,15 @@
       "knownDefects": [],
       "modelType": "QwenImageEditPlusModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-edit-plus:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-edit-plus:modular/multi_image_reference_edit",
       "standardAndNativeAlternativesCoexist": false,
@@ -9244,17 +9016,15 @@
       "knownDefects": [],
       "modelType": "QwenImageEditModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-edit:direct-inpaint"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-edit:direct-inpaint/inpaint",
       "standardAndNativeAlternativesCoexist": true,
@@ -9324,17 +9094,15 @@
       "knownDefects": [],
       "modelType": "QwenImageEditModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-edit:direct-inpaint"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-edit:direct-inpaint/outpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -9393,17 +9161,15 @@
       "knownDefects": [],
       "modelType": "QwenImageEditModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-edit:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-edit:modular/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -9467,17 +9233,15 @@
       "knownDefects": [],
       "modelType": "QwenImageEditModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-edit:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-edit:modular/modular_inpainting",
       "standardAndNativeAlternativesCoexist": false,
@@ -9548,17 +9312,15 @@
       "knownDefects": [],
       "modelType": "QwenImage21Pipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image-21:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-peft-5.17.0-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image-21:direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -9624,17 +9386,15 @@
       "knownDefects": [],
       "modelType": "QwenImage21Pipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image-21:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-peft-5.17.0-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image-21:direct/multi_image_reference_edit",
       "standardAndNativeAlternativesCoexist": false,
@@ -9700,17 +9460,15 @@
       "knownDefects": [],
       "modelType": "QwenImage21Pipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image-21:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-peft-5.17.0-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image-21:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -9770,17 +9528,15 @@
       "knownDefects": [],
       "modelType": "QwenImageControlNetPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image-controlnet:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image-controlnet:direct/control_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -9840,17 +9596,15 @@
       "knownDefects": [],
       "modelType": "QwenImageEditPlusPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image-edit-plus:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image-edit-plus:direct/edit_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -9910,17 +9664,15 @@
       "knownDefects": [],
       "modelType": "QwenImageEditPlusPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image-edit-plus:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image-edit-plus:direct/multi_image_reference_edit",
       "standardAndNativeAlternativesCoexist": true,
@@ -9980,17 +9732,15 @@
       "knownDefects": [],
       "modelType": "QwenImageEditPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image-edit:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image-edit:direct/edit_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -10050,17 +9800,15 @@
       "knownDefects": [],
       "modelType": "QwenImageLayeredPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image-layered:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image-layered:direct/layer_decomposition",
       "standardAndNativeAlternativesCoexist": true,
@@ -10125,17 +9873,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:img2img-direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -10194,17 +9940,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:inpaint-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:inpaint-direct/inpaint",
       "standardAndNativeAlternativesCoexist": true,
@@ -10268,17 +10012,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:modular/control_edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -10343,17 +10085,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:modular/control_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -10417,17 +10157,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:modular/control_inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -10492,17 +10230,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:modular/image_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -10566,17 +10302,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:modular/inpainting",
       "standardAndNativeAlternativesCoexist": false,
@@ -10640,17 +10374,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:modular/modular_text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -10714,17 +10446,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:modular/control_edit_image@Qwen/Qwen-Image",
       "standardAndNativeAlternativesCoexist": false,
@@ -10790,17 +10520,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:modular/control_image@Qwen/Qwen-Image",
       "standardAndNativeAlternativesCoexist": false,
@@ -10865,17 +10593,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:modular/control_inpaint@Qwen/Qwen-Image",
       "standardAndNativeAlternativesCoexist": false,
@@ -10941,17 +10667,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:modular/image_to_image@Qwen/Qwen-Image",
       "standardAndNativeAlternativesCoexist": false,
@@ -11016,17 +10740,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:modular/inpainting@Qwen/Qwen-Image",
       "standardAndNativeAlternativesCoexist": false,
@@ -11091,17 +10813,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:modular/modular_text_to_image@Qwen/Qwen-Image",
       "standardAndNativeAlternativesCoexist": false,
@@ -11165,17 +10885,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:modular/modular_text_to_image@unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
       "standardAndNativeAlternativesCoexist": false,
@@ -11238,17 +10956,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:t2i-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:t2i-direct/text_to_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -11312,17 +11028,15 @@
       "knownDefects": [],
       "modelType": "QwenImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-image:t2i-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-image:t2i-direct/text_to_image@unsloth/Qwen-Image-2512-unsloth-bnb-4bit",
       "standardAndNativeAlternativesCoexist": true,
@@ -11385,17 +11099,15 @@
       "knownDefects": [],
       "modelType": "QwenImageLayeredModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "qwen-layered:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "qwen-layered:modular/layer_decomposition",
       "standardAndNativeAlternativesCoexist": false,
@@ -11532,17 +11244,15 @@
       "knownDefects": [],
       "modelType": "SanaPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sana-600m-pag:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sana-600m-pag:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -11608,17 +11318,15 @@
       "knownDefects": [],
       "modelType": "SanaPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sana-600m:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sana-600m:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -11684,17 +11392,15 @@
       "knownDefects": [],
       "modelType": "SanaSprintPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sana-sprint-600m:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sana-sprint-600m:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -11760,17 +11466,15 @@
       "knownDefects": [],
       "modelType": "SanaSprintPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sana-sprint-600m:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sana-sprint-600m:img2img-direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -11836,17 +11540,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sd15-base:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sd15-base:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -11912,17 +11614,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sd15-base:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sd15-base:img2img-direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -11988,17 +11688,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sd15-base:inpaint-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sd15-base:inpaint-direct/inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -12064,17 +11762,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sd15-controlnet-canny:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sd15-controlnet-canny:direct/control_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -12140,17 +11836,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sd15-controlnet-canny:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sd15-controlnet-canny:img2img-direct/control_edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -12216,17 +11910,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sd15-controlnet-canny:inpaint-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sd15-controlnet-canny:inpaint-direct/control_inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -12292,17 +11984,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sd15-pag-controlnet-canny:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sd15-pag-controlnet-canny:direct/control_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -12368,17 +12058,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sd15-pag-controlnet-canny:inpaint-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sd15-pag-controlnet-canny:inpaint-direct/control_inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -12444,17 +12132,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sd15-pag:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sd15-pag:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -12520,17 +12206,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sd15-pag:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sd15-pag:img2img-direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -12596,17 +12280,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sd15-pag:inpaint-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sd15-pag:inpaint-direct/inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -12666,17 +12348,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -12736,17 +12416,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:img2img-direct/edit_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -12806,17 +12484,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:inpaint-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:inpaint-direct/inpaint",
       "standardAndNativeAlternativesCoexist": true,
@@ -12876,17 +12552,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/control_edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -12951,17 +12625,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/control_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -13025,17 +12697,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/control_inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -13100,17 +12770,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/control_union_edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -13175,17 +12843,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/control_union_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -13249,17 +12915,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/control_union_inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -13324,17 +12988,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -13399,17 +13061,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -13474,17 +13134,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/ip_adapter_control_edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -13550,17 +13208,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/ip_adapter_control_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -13625,17 +13281,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/ip_adapter_control_inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -13701,17 +13355,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/ip_adapter_control_union_edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -13777,17 +13429,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/ip_adapter_control_union_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -13852,17 +13502,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/ip_adapter_control_union_inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -13928,17 +13576,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/ip_adapter_edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -14004,17 +13650,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/ip_adapter_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -14079,17 +13723,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/ip_adapter_inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -14155,17 +13797,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-base:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-base:modular/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -14229,17 +13869,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLControlNetPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-controlnet-canny:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-controlnet-canny:direct/control_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -14299,17 +13937,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLControlNetPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-controlnet-canny:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-controlnet-canny:img2img-direct/control_edit_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -14369,17 +14005,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLControlNetPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-controlnet-canny:inpaint-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-controlnet-canny:inpaint-direct/control_inpaint",
       "standardAndNativeAlternativesCoexist": true,
@@ -14445,17 +14079,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLInstructPix2PixPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-instruct-pix2pix:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-instruct-pix2pix:direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -14528,17 +14160,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-pag-controlnet-canny:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-pag-controlnet-canny:direct/control_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -14611,17 +14241,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-pag-controlnet-canny:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-pag-controlnet-canny:img2img-direct/control_edit_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -14694,17 +14322,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-pag:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-pag:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -14777,17 +14403,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-pag:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-pag:img2img-direct/edit_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -14860,17 +14484,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-pag:inpaint-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-pag:inpaint-direct/inpaint",
       "standardAndNativeAlternativesCoexist": true,
@@ -14929,17 +14551,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-pag:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-pag:modular/control_edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -15003,17 +14623,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-pag:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-pag:modular/control_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -15074,17 +14692,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-pag:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-pag:modular/image_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -15148,17 +14764,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-pag:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-pag:modular/inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -15222,17 +14836,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLPAGPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-pag:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-pag:modular/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -15296,17 +14908,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLAdapterPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-t2i-adapter-canny:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-t2i-adapter-canny:direct/control_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -15377,17 +14987,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLTurboPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-turbo:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-turbo:direct/text_to_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -15444,17 +15052,15 @@
       "knownDefects": [],
       "modelType": "StableDiffusionXLTurboPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "sdxl-turbo:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "sdxl-turbo:modular/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -15516,17 +15122,15 @@
       "knownDefects": [],
       "modelType": "HuggingFaceImageTextToTextModel",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "smolvlm-256m-instruct:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "smolvlm-256m-instruct:direct/image_to_text",
       "standardAndNativeAlternativesCoexist": false,
@@ -15592,17 +15196,15 @@
       "knownDefects": [],
       "modelType": "ZImageInpaintPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "z-image-inpaint:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "z-image-inpaint:direct/inpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -15668,17 +15270,15 @@
       "knownDefects": [],
       "modelType": "ZImageInpaintPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "z-image-inpaint:direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "z-image-inpaint:direct/outpaint",
       "standardAndNativeAlternativesCoexist": false,
@@ -15737,17 +15337,15 @@
       "knownDefects": [],
       "modelType": "ZImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "z-image:auto"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "z-image:auto/text_to_image",
       "standardAndNativeAlternativesCoexist": true,
@@ -15816,17 +15414,15 @@
       "knownDefects": [],
       "modelType": "ZImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "z-image:img2img-direct"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "z-image:img2img-direct/edit_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -15885,17 +15481,15 @@
       "knownDefects": [],
       "modelType": "ZImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "z-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "z-image:modular/modular_image_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -15959,17 +15553,15 @@
       "knownDefects": [],
       "modelType": "ZImageModularPipeline",
       "optionalRuntime": {
-        "delivery": "optional_overlay",
+        "delivery": "base",
         "executionProfileIds": [
           "z-image:modular"
         ],
-        "profileIds": [
-          "huggingface-transformers-main-96fe6dce-peft-0.20.0"
-        ],
-        "reason": "optional_runtime_status_required",
-        "requiredNow": true,
+        "profileIds": [],
+        "reason": "no_optional_runtime_required",
+        "requiredNow": false,
         "schemaVersion": 1,
-        "state": "unavailable"
+        "state": "base_satisfied"
       },
       "routeId": "z-image:modular/modular_text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -15996,7 +15588,7 @@
     "modelArtifactCatalog": "sha256:5f3fa06b5e8bd1d5ee2a1fa1c618779e52399c94789d52d4f7fe6ad405c2726e",
     "modularWorkflowSnapshot": "sha256:8dad3f4ef31b456ef9c6e46718be9a17c023ae4306fdba129c72eeeed6573dc3",
     "operationInventory": "sha256:b5bb015392d8fec47716842bbf896ef977312039dfef1a987ad75295dc860158",
-    "publicExecutionProfiles": "sha256:35ef2af6b65bd70f8ee5e8f85ddb147f547fc4dc591c745e60360cf2eb2bdc79"
+    "publicExecutionProfiles": "sha256:554c007c1209df93490a00f3bb38693ae1ceaa2b4e4571f10227c580e63fc08d"
   },
   "summary": {
     "denominatorFrozen": false,

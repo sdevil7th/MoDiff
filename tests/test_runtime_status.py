@@ -210,6 +210,18 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
+    def test_worker_control_metadata_rejects_unsupervised_or_untrusted_addresses(self):
+        cases = [
+            ({}, {"available": False, "address": None}),
+            ({"MODIFF_SUPERVISOR_CONTROL_ADDRESS": "http://127.0.0.1:9001"}, {"available": False, "address": None}),
+            ({"MODIFF_WORKER_SUPERVISED": "1", "MODIFF_SUPERVISOR_CONTROL_ADDRESS": "http://127.0.0.1:9001"}, {"available": True, "address": "http://127.0.0.1:9001"}),
+        ]
+        for address in ["http://example.com:9001", "http://127.0.0.2:9001", "https://127.0.0.1:9001", "http://user@127.0.0.1:9001", "http://127.0.0.1:9001/queue", "http://127.0.0.1:0", "http://127.0.0.1:9001?x=1"]:
+            cases.append(({"MODIFF_WORKER_SUPERVISED": "1", "MODIFF_SUPERVISOR_CONTROL_ADDRESS": address}, {"available": False, "address": None}))
+        for environment, expected in cases:
+            with self.subTest(environment=environment), patch.dict(os.environ, environment, clear=True):
+                self.assertEqual(self.server._worker_control_status(), expected)
+
     def test_workflow_auto_revalidates_exact_graph_and_resources_before_node_execution(self):
         from modiff.workflow_auto_resource import workflow_graph_hash
         graph = {"sid": "sid", "nodes": {"data": {"module": "modules.Primitive", "action": "String", "params": {"value": {"value": "hello"}}}}, "paths": [["data"]]}
@@ -1417,7 +1429,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         for candidate in (
             {**base, "executionProfileId": "flux-schnell:replacement"},
             {**base, "autoResourceSchemaVersion": 3},
-            {**base, "optionalRuntimeProfileIds": []},
+            {**base, "optionalRuntimeProfileIds": ["stale-optional-runtime"]},
             {
                 **base,
                 "optionalRuntimeRequirement": {
@@ -2430,11 +2442,13 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         }
 
         with (
+            patch.dict(os.environ, {"MODIFF_WORKER_SUPERVISED": "1", "MODIFF_SUPERVISOR_CONTROL_ADDRESS": "http://127.0.0.1:43001"}),
             patch.object(
                 self.server,
                 "_runtime_fingerprint",
                 return_value={"fingerprint": "sha256:runtime-ready", "hardware": copy.deepcopy(snapshot)},
             ),
+            patch("modiff.server.get_hardware_snapshot", return_value=copy.deepcopy(snapshot)),
             patch("modiff.server.runtime_profile", return_value=profile),
         ):
             response = await self.server.runtime_status(None)
@@ -2455,11 +2469,35 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         }.issubset(payload))
         self.assertEqual(payload["hardware"], snapshot)
         self.assertEqual(payload["runtime_fingerprint"], "sha256:runtime-ready")
+        self.assertEqual(payload["workerControl"], {"available": True, "address": "http://127.0.0.1:43001"})
         self.assertEqual(payload["backend_source"], self.server.backend_source_identity)
         self.assertEqual(payload["runtime_profile"], profile)
         self.assertTrue(payload["ready"])
         self.assertEqual(payload["packages"]["torch"]["cuda_device_name"], "Mock CUDA")
         self.assertEqual(payload["packages"]["torch"]["cuda_memory_free_bytes"], 12 * GIB)
+
+    async def test_idle_status_refreshes_released_memory_without_changing_the_execution_identity(self):
+        before = hardware_snapshot()
+        self.server._last_runtime_fingerprint = {
+            "fingerprint": "sha256:previous-execution",
+            "resourceFingerprint": "sha256:resource-identity",
+            "hardware": copy.deepcopy(before),
+        }
+        self.server._package_status = available_package
+        after = copy.deepcopy(before)
+        after["devices"][0].update(torch_allocated=0, torch_reserved=0, vram_free=16 * GIB)
+        after["torch"]["cuda_memory_free_bytes"] = 16 * GIB
+        with (
+            patch("modiff.server.get_hardware_snapshot", return_value=after) as snapshot,
+            patch("modiff.server.runtime_profile", return_value={"execution_ready": True}),
+        ):
+            payload = json.loads((await self.server.runtime_status(None)).text)
+        snapshot.assert_called_once_with(self.server.data_dir, refresh=True)
+        self.assertEqual(payload["hardware"], after)
+        self.assertEqual(payload["hardware_snapshot_state"], "current_idle")
+        self.assertEqual(payload["packages"]["torch"]["cuda_memory_free_bytes"], 16 * GIB)
+        self.assertEqual(payload["runtime_fingerprint"], "sha256:resource-identity")
+        self.assertEqual(self.server._last_runtime_fingerprint["hardware"], before)
 
     async def test_runtime_status_uses_cached_hardware_while_a_graph_is_running(self):
         snapshot = hardware_snapshot()
@@ -2485,6 +2523,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
                 "_runtime_fingerprint",
                 side_effect=AssertionError("active status must not enter accelerator APIs"),
             ),
+            patch("modiff.server.get_hardware_snapshot", side_effect=AssertionError("no active memory probe")),
             patch("modiff.server.runtime_profile", return_value=profile),
         ):
             response = await self.server.runtime_status(None)
@@ -2493,7 +2532,25 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(payload["ready"])
         self.assertEqual(payload["runtime_fingerprint"], "sha256:cached-resource")
         self.assertEqual(payload["hardware"], snapshot)
+        self.assertEqual(payload["hardware_snapshot_state"], "cached_while_running")
         self.assertEqual(payload["queue"]["current"]["task_id"], "active-run")
+
+    async def test_runtime_status_requires_every_base_model_package(self):
+        snapshot = hardware_snapshot()
+        with (
+            patch.object(self.server, "_runtime_fingerprint", return_value={"hardware": snapshot}),
+            patch("modiff.server.get_hardware_snapshot", return_value=snapshot),
+            patch("modiff.server.runtime_profile", return_value={"execution_ready": True}),
+        ):
+            for missing in ("transformers", "peft", "accelerate", "safetensors"):
+                with self.subTest(missing=missing):
+                    self.server._package_status = lambda name, distribution_name=None: {
+                        "available": name != missing
+                    }
+                    payload = json.loads((await self.server.runtime_status(None)).text)
+                    self.assertFalse(payload["ready"])
+                    self.assertIn(missing, payload["missing_required_packages"])
+                    self.assertIn("peft", payload["packages"])
 
     async def test_system_stats_uses_cached_hardware_while_a_graph_is_running(self):
         snapshot = hardware_snapshot()
@@ -2536,6 +2593,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
                 "_runtime_fingerprint",
                 return_value={"fingerprint": "sha256:runtime-broken", "hardware": copy.deepcopy(snapshot)},
             ),
+            patch("modiff.server.get_hardware_snapshot", return_value=copy.deepcopy(snapshot)),
             patch("modiff.server.runtime_profile", return_value=profile),
         ):
             response = await self.server.runtime_status(None)
@@ -2621,7 +2679,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
                 for name, thread_id in phases:
                     self.assertNotEqual(thread_id, loop_thread, f"{name} ran on the HTTP event loop")
 
-    def test_auto_planning_counts_only_modiff_reserved_vram_as_reclaimable(self):
+    def test_auto_planning_counts_only_idle_modiff_reserved_vram_as_reclaimable(self):
         snapshot = hardware_snapshot()
         snapshot["devices"][0]["vram_free"] = 4 * GIB
         snapshot["devices"][0]["torch_vram_free"] = 5 * GIB
@@ -2635,6 +2693,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
             is_available=lambda: True,
             device_count=lambda: 1,
             memory_reserved=lambda _index: 6 * GIB,
+            memory_allocated=lambda _index: 4 * GIB,
         )
         self.server.node_cache = {"resident-loader": object()}
 
@@ -2645,16 +2704,32 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
             adjusted = self.server._auto_planning_runtime_fingerprint()
 
         adjusted_device = adjusted["hardware"]["devices"][0]
-        self.assertEqual(adjusted_device["vram_free"], 10 * GIB)
-        self.assertEqual(adjusted_device["torch_vram_free"], 11 * GIB)
-        self.assertEqual(adjusted_device["modiff_reclaimable_vram"], 6 * GIB)
+        self.assertEqual(adjusted_device["vram_free"], 6 * GIB)
+        self.assertEqual(adjusted_device["torch_vram_free"], 7 * GIB)
+        self.assertEqual(adjusted_device["modiff_reclaimable_vram"], 2 * GIB)
         self.assertEqual(
             adjusted["hardware"]["torch"]["cuda_memory_free_bytes"],
-            11 * GIB,
+            7 * GIB,
         )
         # The live snapshot remains authoritative and unmodified; the uplift is
         # scoped only to this Auto planning request.
         self.assertEqual(fingerprint["hardware"]["devices"][0]["vram_free"], 4 * GIB)
+
+    def test_auto_planning_invalid_or_fully_allocated_reservation_adds_no_capacity(self):
+        fingerprint = {"fingerprint": "raw", "hardware": hardware_snapshot()}
+        self.server.node_cache = {"resident-loader": object()}
+        for reserved, allocated in ((4 * GIB, 4 * GIB), (4 * GIB, 5 * GIB), (-1, 0), (4 * GIB, -1), (4 * GIB, None)):
+            fake_cuda = SimpleNamespace(
+                is_available=lambda: True,
+                device_count=lambda: 1,
+                memory_reserved=lambda _index: reserved,
+                memory_allocated=lambda _index: allocated,
+            )
+            with self.subTest(reserved=reserved, allocated=allocated), patch.object(
+                self.server, "_runtime_fingerprint", return_value=fingerprint
+            ), patch("modiff.server.import_module", return_value=SimpleNamespace(cuda=fake_cuda)):
+                adjusted = self.server._auto_planning_runtime_fingerprint()
+            self.assertEqual(adjusted, fingerprint)
 
     def test_auto_planning_reclaimable_vram_is_capped_at_physical_capacity(self):
         snapshot = hardware_snapshot()
@@ -2663,6 +2738,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
             is_available=lambda: True,
             device_count=lambda: 1,
             memory_reserved=lambda _index: 8 * GIB,
+            memory_allocated=lambda _index: 0,
         )
         self.server.node_cache = {"resident-loader": object()}
 
@@ -2680,7 +2756,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         snapshot = hardware_snapshot()
         snapshot["devices"][0].update(memory_kind="shared", vram_total=2 * GIB, vram_free=GIB, torch_vram_total=100 * GIB, torch_vram_free=90 * GIB)
         fingerprint = {"fingerprint": "shared", "hardware": snapshot}
-        fake_cuda = SimpleNamespace(is_available=lambda: True, device_count=lambda: 1, memory_reserved=lambda _: 5 * GIB)
+        fake_cuda = SimpleNamespace(is_available=lambda: True, device_count=lambda: 1, memory_reserved=lambda _: 5 * GIB, memory_allocated=lambda _: 0)
         self.server.node_cache = {"model": object()}
         with patch.object(self.server, "_runtime_fingerprint", return_value=fingerprint), patch("modiff.server.import_module", return_value=SimpleNamespace(cuda=fake_cuda)):
             device = self.server._auto_planning_runtime_fingerprint()["hardware"]["devices"][0]
@@ -2735,7 +2811,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
             adjusted = self.server._auto_planning_runtime_fingerprint()
         self.assertIsNone(adjusted["hardware"]["system"].get("ram_available"))
 
-    async def test_auto_plan_uses_capacity_after_releasing_its_resident_cache(self):
+    async def test_auto_plan_forecasts_only_idle_allocator_capacity(self):
         snapshot = hardware_snapshot()
         snapshot["devices"][0]["vram_free"] = 4 * GIB
         snapshot["devices"][0]["torch_vram_free"] = 5 * GIB
@@ -2744,6 +2820,7 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
             is_available=lambda: True,
             device_count=lambda: 1,
             memory_reserved=lambda _index: 6 * GIB,
+            memory_allocated=lambda _index: 4 * GIB,
         )
         self.server.node_cache = {"resident-loader": object()}
         request = JsonRequest(
@@ -2766,8 +2843,8 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(json.loads(response.text)["status"], "ready")
         planning_fingerprint = build_plan.call_args.kwargs["runtime_fingerprint"]
         planning_device = planning_fingerprint["hardware"]["devices"][0]
-        self.assertEqual(planning_device["vram_free"], 10 * GIB)
-        self.assertEqual(planning_device["torch_vram_free"], 11 * GIB)
+        self.assertEqual(planning_device["vram_free"], 6 * GIB)
+        self.assertEqual(planning_device["torch_vram_free"], 7 * GIB)
 
     async def test_graph_queue_rejects_a_broken_managed_runtime(self):
         runtime_block = {
@@ -2974,11 +3051,11 @@ class PreflightHardwareTests(unittest.TestCase):
         self.assertEqual(torch_status["cuda_device_name"], "Mock CUDA")
         self.assertTrue(torch_status["cuda_available"])
         self.assertEqual(
-            [item["module"] for item in report["packages"]["optional_runtime"]],
+            [item["module"] for item in report["packages"]["required"] if item["module"] in {"transformers", "peft"}],
             ["transformers", "peft"],
         )
-        self.assertIn(("transformers", False), checks)
-        self.assertIn(("peft", False), checks)
+        self.assertIn(("transformers", True), checks)
+        self.assertIn(("peft", True), checks)
         self.assertEqual(
             report["namespace"],
             {

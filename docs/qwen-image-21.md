@@ -17,14 +17,12 @@ this integration.
 
 The reviewed Diffusers source is
 [`fbf49e7f35857f76bc57b177e26f12b03687c668`](https://github.com/huggingface/diffusers/commit/fbf49e7f35857f76bc57b177e26f12b03687c668).
-Modular Diffusers is part of that same package. Qwen 2.1 requires the separate
-Transformers 5.17.0 / PEFT 0.20.0 optional profile, with Tokenizers 0.23.1.
-Browsing a workflow does not install it; use the app's explicit runtime setup
-action. This new optional profile has passed isolated Linux x86-64 installation,
-symbol, PEFT computation, activation and rollback qualification. Other targets
-remain pending for this profile. Its exact compatibility aliases cover the reviewed
-base and main Transformers profiles used by existing image/audio workflows;
-GGUF, bitsandbytes and other optional extras still require their own profiles.
+Modular Diffusers is part of that same package. Transformers and PEFT now come
+with ordinary backend setup, with compatible versions recorded in `uv.lock`.
+Qwen 2.1 needs no separate core runtime installation or activation. Older exact
+optional profiles describe historical qualification and are not prerequisites
+for a verified base environment. GGUF and other specialized optional extras
+retain their own compatibility requirements.
 
 Generic adapter contracts, a tiny real CPU denoiser/VAE test, and full-weight
 1024×1024/40-step text generation and two-reference editing pass on the reviewed

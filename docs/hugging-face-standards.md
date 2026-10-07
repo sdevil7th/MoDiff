@@ -35,11 +35,11 @@ Upstream repository layouts and release processes are not copied mechanically. M
 - Hugging Face Hub hosting does not make a library, model, or repository-supplied Python implementation first-party. Curated model and adapter references use immutable revisions where the Hub supports them, and remote code remains separately trust-gated.
 - Every library executes locally through MoDiff's existing node graph, resource lifecycle, progress/cancellation, Auto/Expert, file, and output contracts. Do not add alternate graph executors, hosted inference providers, browser-side model runtimes, or a second workflow representation.
 - Frontend nodes and task surfaces remain modality- or task-generic. The backend execution specification selects the reviewed library/model adapter and publishes its dynamic input, parameter, and output contract. The client must not infer Python classes or maintain a parallel model-specific parameter table.
-- Transformers is an optional runtime and is not part of the default application installation. Registry discovery, template browsing/opening, and Auto planning may report that it is required but must not install it. Installation requires an explicit user action against a reviewed optional-runtime profile, followed by version and compatibility verification before execution.
+- Transformers and PEFT are required base libraries installed during ordinary setup. Verify their compatibility without an optional install/activate flow. Registry discovery, template browsing, and Auto planning must never install packages. Additional optional runtimes require an explicit install action and verification before execution.
 - Accelerate, PEFT, quantization libraries, accelerator kernels, and ordinary deterministic image, audio, video, tensor, and file operations may support a model path when narrowly scoped and tested.
 - Keep the reviewed Diffusers revision pinned in the executable installer contract. Apply an equally explicit compatible-version or immutable-source contract to every additional execution library.
 
-Transition status: the legacy base dependency on Transformers and its required preflight check remain until roadmap segment P0.5 migrates existing Diffusers consumers to the staged optional-runtime contract. The policy above is the acceptance criterion for that migration, not a claim that the current installer already omits Transformers.
+Ordinary libraries use compatible version ranges and a committed uv resolution. Retain exact versions only for necessary compiled ABI contracts or immutable source integrations, including the reviewed Modular Diffusers block snapshot.
 
 ### Modular Diffusers
 

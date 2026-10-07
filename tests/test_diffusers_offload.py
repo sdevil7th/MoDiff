@@ -801,6 +801,7 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertIn("CUDA out of memory", str(context.exception))
         self.assertEqual(diagnostics["components_failed"][0]["name"], "text_encoder")
 
+    @patch("huggingface_hub.constants.HF_HUB_OFFLINE", False)
     def test_strict_component_loading_forwards_reviewed_weight_variant(self):
         pipeline = FakeStrictPipeline({"unet": FakeComponentSpec("unet")})
         diagnostics = {}

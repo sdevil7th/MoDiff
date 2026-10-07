@@ -25,6 +25,8 @@ PACKAGE_CHECKS = {
         ("huggingface_hub", "huggingface-hub"),
         ("accelerate", "accelerate"),
         ("safetensors", "safetensors"),
+        ("transformers", "transformers"),
+        ("peft", "peft"),
     ],
     "recommended": [
         ("torchvision", "torchvision"),
@@ -46,35 +48,24 @@ PACKAGE_CHECKS = {
         ("nunchaku", "nunchaku"),
         ("torchao", "torchao"),
     ],
-    # Optional-runtime packages are metadata observations only. Even --full
-    # must not import an unqualified base copy before the overlay boundary has
-    # validated its exact version, symbols, origin, and host binding.
-    "optional_runtime": [
-        ("transformers", "transformers"),
-        ("peft", "peft"),
-    ],
 }
 
 CANONICAL_ENTRYPOINT = "python -m modiff.preflight"
 
 def setup_guidance(root):
     return {
-        "preferredCommand": "./install.sh",
-        "macosCommand": "./install.sh --accelerator mps",
-        "cudaCommand": "./install.sh --accelerator nvidia",
-        "intelCommand": "./install.sh --accelerator intel",
-        "windowsCommand": r".\install.ps1 -Accelerator auto",
-        "repairCommand": (
-            r".\install.ps1 -Accelerator auto -Repair"
-            if os.name == "nt"
-            else "./install.sh --accelerator auto --repair"
-        ),
+        "preferredCommand": "uv sync --extra cpu",
+        "macosCommand": "uv sync",
+        "cudaCommand": "uv sync --extra cuda",
+        "intelCommand": "uv sync --extra xpu",
+        "windowsCommand": "uv sync --extra cpu",
+        "repairCommand": "uv sync --extra cpu",
         "projectRoot": str(root),
         "notes": [
             "Run commands from the project root.",
-            "Use the managed installer so PyTorch matches the selected accelerator profile.",
-            "Do not run a generic dependency sync inside a managed accelerator environment.",
-            "Use ./install.sh --repair (or install.ps1 --repair on Windows) when the installed profile no longer matches the host.",
+            "Select the extra matching your accelerator and use the same extra with uv run.",
+            "CPU, CUDA and XPU extras are mutually exclusive; macOS uses the PyPI MPS-capable wheel.",
+            "AMD SDK profiles retain their explicit requirements-file installation commands.",
         ],
     }
 

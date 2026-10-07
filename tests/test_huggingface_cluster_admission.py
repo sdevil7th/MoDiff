@@ -1115,7 +1115,10 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
         self.assertIn(("imageEncode", "width", "optionalWidth"), image_spec["bindings"])
         self.assertIn(("imageEncode", "height", "optionalHeight"), image_spec["bindings"])
         self.assertFalse(any("route_state" in handle for edge in image_spec["edges"] for handle in edge[1::2]))
-        self.assertNotIn(("prompt", "negative_prompt", "negativePrompt"), text_spec["bindings"])
+        # An enabled native guider consumes authored negative conditioning in
+        # both Z-Image tasks; admission must retain the public prompt binding.
+        self.assertIn(("prompt", "negative_prompt", "negativePrompt"), text_spec["bindings"])
+        self.assertIn(("prompt", "negative_prompt", "negativePrompt"), image_spec["bindings"])
         self.assertIs(result["executable"], False)
         self.assertIs(image["executable"], False)
 
@@ -1187,7 +1190,7 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
             )
         )
         self.assertTrue(
-            all(optional_runtime_profile_ids_for_execution(model_type, mode) for model_type, mode in pairs)
+            all(not optional_runtime_profile_ids_for_execution(model_type, mode) for model_type, mode in pairs)
         )
         self.assertTrue(all(result["executable"] is False for result in admitted))
 

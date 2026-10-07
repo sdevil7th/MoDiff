@@ -19,7 +19,7 @@ saved-workflow restoration.
 
 ## Developer setup with uv and npm
 
-Install Git, [uv `0.11.26`](https://docs.astral.sh/uv/getting-started/installation/),
+Install Git, [uv](https://docs.astral.sh/uv/getting-started/installation/),
 Node.js `24.12.0`, and npm `11.6.2`. uv can provision Python 3.12.
 Use two terminals for the backend and the editable frontend.
 
@@ -30,17 +30,19 @@ then start the backend. These commands work in Linux shells and Windows PowerShe
 git clone https://github.com/sdevil7th/MoDiff.git MoDiff
 git clone https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
 cd MoDiff
-uv run --no-project --no-sync --python 3.12 -m modiff.dev plan --accelerator cpu --backend-only --json
-uv run --no-project --no-sync --python 3.12 -m modiff.dev setup --accelerator cpu --backend-only --non-interactive
-uv run --no-project --no-sync --python 3.12 -m modiff.dev check --json --check-port 8088 --fail-on-error
-uv run --no-project --no-sync --python 3.12 -m modiff.dev run
+uv sync --extra cpu
+uv run --extra cpu python -m modiff.preflight --json --check-port 8088 --fail-on-error
+uv run --extra cpu python main.py
 ```
 
-The CPU profile is for API/UI development. For NVIDIA inference, replace `cpu`
-with `nvidia` in both `plan` and `setup`; other accelerators are covered in the
-[full setup guide](docs/developer-setup.md). Setup preserves an existing `.venv` and
-does not download model weights. Use the guide for deliberate environment repair;
-ordinary `uv sync` is not supported.
+The CPU profile is for API/UI development. For NVIDIA inference, use `--extra cuda`
+in each command; for Intel, use `--extra xpu`. On Apple Silicon, omit the extra.
+Transformers and PEFT are installed with the base application; ordinary image and
+LoRA workflows need no optional-runtime installation or activation. Setup installs
+Python packages without downloading model weights. `uv sync` reconciles `.venv`
+with the selected profile: use a separate checkout when testing a different
+accelerator. See the [full setup guide](docs/developer-setup.md) for specialized AMD profiles,
+explicit `uv pip` commands, repair, and upgrades.
 
 **Terminal 2 — frontend:** from the same parent directory, run:
 
@@ -69,8 +71,9 @@ use you need:
   available, but many image workflows will be slow and most large video/audio
   workflows will be impractical.
 
-The guided installer provisions its pinned `uv`, Python 3.12, and Node.js
-toolchains when the selected platform supports bootstrapping them. The managed
+Install uv through its official instructions or your package manager; MoDiff does
+not require an exact uv version. The guided installer can provision Python 3.12
+and Node.js when the selected platform supports bootstrapping them. The managed
 NVIDIA profile uses the reviewed PyTorch CUDA 12.8 wheels. Qualified Linux AMD
 hosts use the pinned ROCm profile. AMD's selected Windows stack is represented
 as a conditional target but remains blocked until MoDiff pins and validates its
@@ -244,6 +247,19 @@ cp config.example.ini config.ini
 
 ## Developer tools and service prototyping
 
+Image templates author the current ordinary workflow nodes, including real
+encoding stages where the selected implementation supports them. Templates
+preserve their creator settings and controlled LoRA/media branches. Existing
+saved workflows keep their original graph; historical Gallery examples are
+references rather than proof of a migrated graph. See
+[image template validation](docs/image-template-validation.md) for fresh
+output comparison, repeated-run Auto checks and the Windows handoff.
+The [Mellon comparison](docs/simpler-image-workflows-mellon-comparison.md)
+explains the next simplifications while retaining editable stages and existing
+capabilities. See [larger image model validation](docs/large-image-model-validation.md)
+and [AMD cloud preparation](docs/amd-cloud-qualification.md) for dedicated-device
+testing beyond the migrated templates.
+
 For installation, use the [uv/npm quick start](#developer-setup-with-uv-and-npm)
 above and the [full setup guide](docs/developer-setup.md).
 See [service prototyping](docs/service-prototyping.md) to export a named service
@@ -265,7 +281,7 @@ contract](docs/api-reference.md#graph-execution-and-queue-state).
 
 ## Managed installation profiles
 
-MoDiff's installer owns the executable Python/Torch environment. The project is intentionally marked `uv`-unmanaged, so ordinary `uv sync` and `uv run` are not supported setup or launch commands. The explicit `uv run --no-project --no-sync ... -m modiff.dev` bootstrap described above delegates to this same installer without project resolution. The installer stages a fresh environment, checks its package policy and a real device tensor, then atomically promotes it to `.venv/` while retaining the previous environment for rollback. When the sibling client is installed, setup also downloads and SHA-256 verifies the pinned rights-approved Template Gallery snapshot and bundles it under `web/template-gallery` so normal use does not wait on Hub media requests. Four permission-dependent preview files are currently unavailable; their templates remain usable and do not request those files.
+Ordinary setup uses native `uv sync` and `uv run` with the committed `uv.lock`. The guided installer remains available for staged installs and specialized accelerator wheel profiles. The installer stages a fresh environment, checks its package policy and a real device tensor, then atomically promotes it to `.venv/` while retaining the previous environment for rollback. When the sibling client is installed, setup also downloads and SHA-256 verifies the pinned rights-approved Template Gallery snapshot and bundles it under `web/template-gallery` so normal use does not wait on Hub media requests. Four permission-dependent preview files are currently unavailable; their templates remain usable and do not request those files.
 
 | Installer choice | Managed profile          | Current scope                                                                                                                                                              |
 | ---------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -408,8 +424,9 @@ Set-Location .\MoDiff
 Use the accelerator you deliberately selected instead of `auto` when retaining
 an explicit profile. The installer detects changes across profile
 requirements, `pyproject.toml`, and the accelerator manifest, then rebuilds the
-sibling client bundle during a normal paired installation. There is no
-repository `uv.lock` to regenerate. A `--backend-only`/`-BackendOnly` repair
+sibling client bundle during a normal paired installation. For native installs,
+run `uv sync` with the same accelerator extra after pulling; intentional dependency
+upgrades use `uv lock --upgrade-package <package>` followed by validation. A `--backend-only`/`-BackendOnly` repair
 does not update the installed client.
 
 For failures, begin with [troubleshooting](docs/troubleshooting.md) rather than

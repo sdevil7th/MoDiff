@@ -12,16 +12,18 @@ dependencies = [
   "aiohttp-cors>=0.7.0",
   "kornia>=0.8.1",
   "nanoid>=2.0.0",
-  # Keep unqualified targets base-delivered until their executable qualifier
-  # passes; Linux/Windows x86-64 receive the exact optional overlay on use.
-  "peft>=0.17.0; sys_platform == 'darwin' or platform_machine == 'aarch64' or platform_machine == 'arm64' or platform_machine == 'ARM64'",
+  "peft>=0.21.2",
   "protobuf>=6.31.1",
   "scipy>=1.15.2",
   "sentencepiece>=0.2.0",
-  "torch>=2.6.0",
+  "torch>=2.6.0; sys_platform != 'darwin'",
+  # The latest published CPython 3.12 macOS ARM wheels are Torch 2.11 /
+  # TorchVision 0.26. Universal locks otherwise select newer Linux-only builds.
+  "torch>=2.6.0,<2.12; sys_platform == 'darwin'",
   "torchsde>=0.2.6",
-  "torchvision>=0.21.0",
-  "transformers>=4.49.0; sys_platform == 'darwin' or platform_machine == 'aarch64' or platform_machine == 'arm64' or platform_machine == 'ARM64'",
+  "torchvision>=0.21.0; sys_platform != 'darwin'",
+  "torchvision>=0.21.0,<0.27; sys_platform == 'darwin'",
+  "transformers>=5.18.0",
   "diffusers @ git+https://github.com/huggingface/diffusers.git@fbf49e7f35857f76bc57b177e26f12b03687c668",
   "ftfy>=6.3.1",
   "huggingface-hub>=1.31.0,<2.0",
@@ -32,19 +34,19 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+cpu = ["torch>=2.6.0", "torchvision>=0.21.0"]
 apple-silicon = [
   "torch>=2.6.0; sys_platform == 'darwin'",
   "torchvision>=0.21.0; sys_platform == 'darwin'",
 ]
 cuda = [
-  "bitsandbytes==0.50.0; sys_platform == 'linux' or sys_platform == 'win32'",
-  # xFormers wheels are Torch-ABI specific. 0.0.32.post2 is the upstream
-  # release built for the managed NVIDIA profile's Torch 2.8 runtime; allowing
-  # an unbounded latest release currently resolves to a Torch 2.10+ build.
-  "xformers==0.0.32.post2; sys_platform == 'linux' or sys_platform == 'win32'",
+  "torch>=2.6.0; sys_platform == 'linux' or sys_platform == 'win32'",
+  "torchvision>=0.21.0; sys_platform == 'linux' or sys_platform == 'win32'",
 ]
-nunchaku = [
-  "nunchaku>=1.0.1.dev20250924; sys_platform == 'linux' or sys_platform == 'win32'"
+xpu = [
+  "torch>=2.12.1; sys_platform == 'linux' or sys_platform == 'win32'",
+  "torchvision>=0.27.1; sys_platform == 'linux' or sys_platform == 'win32'",
+  "triton-xpu; sys_platform == 'linux'",
 ]
 spandrel = ["spandrel"]
 gallery-media = ["opencv-python-headless>=4.11.0"]
@@ -77,25 +79,39 @@ indent-style = "space"
 include = ["modiff*", "modules*"]
 exclude = ["custom*", "data*", "tests*", "web*"]
 
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [tool.uv]
-# The accelerator-specific installer owns MoDiff's executable environment.
-# This prevents `uv run` / `uv sync` from replacing a validated CUDA, ROCm,
-# MPS, or CPU profile with the generic development resolution.
-managed = false
+conflicts = [
+  [{ extra = "cpu" }, { extra = "cuda" }, { extra = "xpu" }],
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [[tool.uv.index]]
 name = "pytorch-cu128"
 url = "https://download.pytorch.org/whl/cu128"
 explicit = true
 
+[[tool.uv.index]]
+name = "pytorch-xpu"
+url = "https://download.pytorch.org/whl/xpu"
+explicit = true
+
 [tool.uv.sources]
+triton-xpu = { index = "pytorch-xpu", extra = "xpu" }
 torch = [
-  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+  { index = "pytorch-cpu", extra = "cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+  { index = "pytorch-cu128", extra = "cuda", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+  { index = "pytorch-xpu", extra = "xpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 torchvision = [
-  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
-]
-nunchaku = [
-  { url = "https://github.com/nunchaku-tech/nunchaku/releases/download/v1.0.1dev20250924/nunchaku-1.0.1.dev20250924+torch2.8-cp312-cp312-linux_x86_64.whl", marker = "sys_platform == 'linux'" },
-  { url = "https://github.com/nunchaku-tech/nunchaku/releases/download/v1.0.1dev20250924/nunchaku-1.0.1.dev20250924+torch2.8-cp312-cp312-win_amd64.whl", marker = "sys_platform == 'win32'" },
+  { index = "pytorch-cpu", extra = "cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+  { index = "pytorch-cu128", extra = "cuda", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+  { index = "pytorch-xpu", extra = "xpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]

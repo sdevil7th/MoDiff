@@ -3693,6 +3693,10 @@ def quant_config_for(method: str, dtype: Any, modules_to_not_convert: list[str] 
             modules_to_not_convert=excluded,
         )
     if method in {"torchao_mxfp8", "torchao_nvfp4"}:
+        if method == "torchao_nvfp4":
+            from modiff.runtime_compilation import require_compilation
+
+            require_compilation(device="cuda:0")
         from diffusers import TorchAoConfig
 
         try:

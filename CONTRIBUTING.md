@@ -12,23 +12,20 @@ integrating another machine's work, read and follow
 
 For script-free `uv`/`npm` setup, use [Developer setup](docs/developer-setup.md).
 
-Use Python 3.12 and create the same managed CPU profile used by baseline CI:
+Use Python 3.12 and the native CPU profile used by baseline CI:
 
-```bash
-./install.sh --accelerator cpu --backend-only
+```text
+uv sync --extra cpu
 uv pip install --python .venv/bin/python -r requirements/test.txt
-./scripts/with-runtime-env.sh ./.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error
+uv run --extra cpu python -m modiff.preflight --json --check-port 8088 --fail-on-error
 ```
 
-On Windows PowerShell, use the corresponding managed commands:
-
-```powershell
-.\install.ps1 -Accelerator cpu -BackendOnly
-uv pip install --python .venv/Scripts/python.exe -r requirements/test.txt
-.\.venv\Scripts\python.exe -m modiff.preflight --json --check-port 8088 --fail-on-error
-```
-
-Choose the qualified accelerator profile relevant to a hardware-specific change and report that validation separately. Do not use `uv sync` or ordinary `uv run` (the documented `uv run --no-project --no-sync ... -m modiff.dev` bootstrap is the explicit exception): the project is intentionally `uv`-unmanaged because the installer, not the generic resolver, owns the executable Torch profile.
+On Windows, use `.venv/Scripts/python.exe` in explicit `uv pip --python` commands.
+For NVIDIA choose `--extra cuda`, for Intel `--extra xpu`, and on Apple Silicon
+omit the accelerator extra. Use the same extra for sync and run. Keep specialized
+AMD environments on their reviewed direct-wheel profile and use
+`./scripts/with-runtime-env.sh` there; a generic CPU sync would replace their
+Torch stack. Report hardware-specific validation separately.
 
 Do not commit `config.ini`, `.env` files, model caches, generated outputs, local logs, virtual environments, or test caches.
 
@@ -73,11 +70,11 @@ The selected file under `requirements/profiles/`, `pyproject.toml`, and `modiff/
 uv pip check --python .venv/bin/python
 ```
 
-Use the corresponding accelerator instead of `cpu` when the change affects CUDA, ROCm, or MPS. Update the compatibility manifest and public installation guidance only when the evidence supports the claim. MoDiff deliberately has no `uv.lock`; do not generate one or describe the top-level requirements files as a cross-platform lock.
+For native profiles, update the committed `uv.lock` using `uv lock --upgrade-package <package>` and sync the same accelerator extra. The lock records a reproducible resolution; it does not require exact pins for ordinary libraries. Retain immutable sources and compiled wheel/ABI constraints where the integration needs them. Use the corresponding accelerator when a change affects CUDA, ROCm, XPU, or MPS. Update compatibility claims only when validation supports them.
 
 MoDiff may integrate model libraries officially maintained and published by Hugging Face, but each library remains a separately reviewed execution dependency. Verify its upstream ownership, package provenance, license, supported version, loading behavior, and remote-code boundary. Hub hosting alone does not establish that a library or model is maintained by Hugging Face. Keep execution in the existing backend graph and expose task-generic contracts to the client.
 
-Transformers-specific execution is opt-in. Do not add Transformers to the base application environment or install an optional runtime merely because a template is viewed, nodes are discovered, or Auto compatibility is planned. A requiring workflow must identify its versioned optional runtime, show an explicit install/consent action, perform installation outside graph execution, and re-run package and compatibility checks before the workflow can run.
+Transformers and PEFT are required base dependencies. Verify ordinary image and LoRA readiness after setup without optional installation or activation. Keep imports lazy. Viewing a template, discovering nodes, or planning Auto must never install packages. Additional optional runtimes require an explicit install action outside graph execution and compatibility verification.
 
 ## Validation
 

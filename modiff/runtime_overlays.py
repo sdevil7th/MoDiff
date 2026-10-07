@@ -9,6 +9,7 @@ an isolated child interpreter before it can be promoted or activated.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import ast
 import base64
 import configparser
 import csv
@@ -1846,6 +1847,39 @@ def _accelerator_identity() -> dict[str, str]:
     )
 
     saved = read_state(Path(sys.prefix))
+    from modiff.base_runtime import base_runtime_status
+    native = base_runtime_status()
+    specialist_receipt = isinstance(saved, dict) and saved.get("profile") in {
+        "amd-rocm-linux", "amd-instinct-rocm-linux", "amd-pytorch-windows",
+    }
+    if native["verified"] and not specialist_receipt:
+        version = str(native["packages"].get("torch") or "")
+        local_version = version.partition("+")[2]
+        build = {}
+        try:
+            version_source = metadata.distribution("torch").locate_file("torch/version.py")
+            for statement in ast.parse(Path(version_source).read_text(encoding="utf-8")).body:
+                target = statement.target if isinstance(statement, ast.AnnAssign) else (
+                    statement.targets[0] if isinstance(statement, ast.Assign) and len(statement.targets) == 1 else None
+                )
+                if isinstance(target, ast.Name) and target.id in {"cuda", "hip"}:
+                    build[target.id] = ast.literal_eval(statement.value)
+        except (OSError, SyntaxError, TypeError, ValueError, metadata.PackageNotFoundError):
+            pass
+        profile_id = (
+            "intel-xpu" if "xpu" in local_version else
+            "amd-rocm-linux" if "rocm" in local_version or build.get("hip") else
+            "nvidia-cuda" if local_version.startswith("cu") or build.get("cuda") else
+            "apple-mps" if sys.platform == "darwin" and (saved or {}).get("profile") != "cpu" else "cpu"
+        )
+        paths = (PROJECT_ROOT / "pyproject.toml", PROJECT_ROOT / "uv.lock", MANIFEST_PATH)
+        contract_files = []
+        for path in paths:
+            body = path.read_bytes()
+            contract_files.append({"path": str(path.resolve(strict=True)), "size": len(body),
+                                   "sha256": hashlib.sha256(body).hexdigest()})
+        return {"profileId": profile_id, "lockDigest": native["current_digest"],
+                "manifestRevision": str(load_manifest().get("revision") or ""), "contractFiles": contract_files}
     if (
         not isinstance(saved, dict)
         or saved.get("runtime_contract_schema") != RUNTIME_CONTRACT_SCHEMA

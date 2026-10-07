@@ -3336,6 +3336,15 @@ _MODULAR_CONTROL_GRAPH_BINDINGS = (
     ("denoise", "guidance_scale", "guidanceScale"),
     ("denoise", "strength", "strength"),
 )
+# This exact text Control route admits the auxiliary on its own reviewed
+# placement. The base model's Auto policy must not change that auxiliary.
+# Edit and inpaint routes retain the generic bindings above.
+_MODULAR_QWEN_CONTROL_TEXT_GRAPH_BINDINGS = tuple(
+    (role, field, "false" if field == "auto_offload" else "controlnetOffloadMode")
+    if role == "controlnetModel" and field in {"auto_offload", "offload_mode"}
+    else (role, field, source)
+    for role, field, source in _MODULAR_CONTROL_GRAPH_BINDINGS
+)
 _MODULAR_QWEN_IMAGE_TO_IMAGE_GRAPH_EDGES = tuple(
     edge for edge in _MODULAR_SDXL_EDIT_GRAPH_EDGES if edge != ("models", "vae_out", "denoise", "vae")
 )
@@ -3702,6 +3711,13 @@ _EDIT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageEdit", "reference_strength", "conditioningScale"),
     ("diffusersImageEdit", "output_type", "outputType"),
     ("diffusersImageEdit", "max_sequence_length", "maxSequenceLength"),
+)
+# Reference-conditioned Redux, Kontext and Klein edit implementations do not
+# consume denoising strength. Reference weighting remains separately declared;
+# ordinary img2img and inpaint routes keep the complete edit bindings.
+_REFERENCE_EDIT_GRAPH_BINDINGS = tuple(
+    binding for binding in _EDIT_GRAPH_BINDINGS
+    if binding != ("diffusersImageEdit", "strength", "strength")
 )
 _QWEN_DIRECT_EDIT_GRAPH_BINDINGS = tuple(
     item
@@ -5574,6 +5590,7 @@ _BINDING_SOURCES = frozenset({"executionProfileId"}) | frozenset(
         *_MODULAR_EDIT_GRAPH_BINDINGS,
         *_MODULAR_LAYERED_GRAPH_BINDINGS,
         *_MODULAR_CONTROL_GRAPH_BINDINGS,
+        *_MODULAR_QWEN_CONTROL_TEXT_GRAPH_BINDINGS,
         *_MODULAR_QWEN_IMAGE_TO_IMAGE_GRAPH_BINDINGS,
         *_MODULAR_QWEN_INPAINT_GRAPH_BINDINGS,
         *_MODULAR_QWEN_EDIT_INPAINT_GRAPH_BINDINGS,
@@ -6087,8 +6104,8 @@ _MODULAR_FLUX_CAPABILITY = {
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
     "recommendedSteps": 28,
     "recommendedGuidance": 3.5,
-    "guidanceLabel": "Guidance",
-    "supportsNegativePrompt": False,
+    "guidanceLabel": "Distilled Guidance",
+    "supportsNegativePrompt": True,
     "supportsImageInput": True,
     "supportsMask": False,
     "supportsMultiImage": False,
@@ -6138,8 +6155,8 @@ _MODULAR_FLUX_KONTEXT_CAPABILITY = {
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
     "recommendedSteps": 28,
     "recommendedGuidance": 2.5,
-    "guidanceLabel": "Guidance",
-    "supportsNegativePrompt": False,
+    "guidanceLabel": "Distilled Guidance",
+    "supportsNegativePrompt": True,
     "supportsImageInput": True,
     "supportsMask": False,
     "supportsMultiImage": False,
@@ -8164,7 +8181,10 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
-        "bindings": _EDIT_GRAPH_BINDINGS,
+        # Redux conditions a text-to-image base on prior embeddings. Its
+        # adapter accepts the legacy strength field but never consumes it.
+        # Secondary-reference weighting remains a separate real control.
+        "bindings": _REFERENCE_EDIT_GRAPH_BINDINGS,
     },
     "flux-kontext:edit-image:v1": {
         "modelType": "FluxKontextPipeline",
@@ -8241,7 +8261,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
-        "bindings": _EDIT_GRAPH_BINDINGS,
+        "bindings": _REFERENCE_EDIT_GRAPH_BINDINGS,
     },
     "flux-kontext:multi-image-reference-edit:v1": {
         "modelType": "FluxKontextPipeline",
@@ -8272,7 +8292,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
-        "bindings": _EDIT_GRAPH_BINDINGS,
+        "bindings": _REFERENCE_EDIT_GRAPH_BINDINGS,
     },
     "flux-fill:inpaint:v1": {
         "modelType": "FluxFillPipeline",
@@ -8523,7 +8543,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
-        "bindings": _EDIT_GRAPH_BINDINGS,
+        "bindings": _REFERENCE_EDIT_GRAPH_BINDINGS,
     },
     "flux2-klein:multi-image-reference-edit:v1": {
         "modelType": "Flux2KleinPipeline",
@@ -8554,7 +8574,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
-        "bindings": _EDIT_GRAPH_BINDINGS,
+        "bindings": _REFERENCE_EDIT_GRAPH_BINDINGS,
     },
     "wan-22-i2v-a14b:image-to-video:v1": {
         "modelType": "WanImageToVideoPipeline",
@@ -9477,7 +9497,10 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "profile": _MODULAR_QWEN_EDIT_PROFILE,
         "roles": _MODULAR_EDIT_GRAPH_ROLES,
         "edges": _MODULAR_EDIT_GRAPH_EDGES,
-        "bindings": _MODULAR_EDIT_GRAPH_BINDINGS,
+        "bindings": _MODULAR_EDIT_GRAPH_BINDINGS + (
+            ("denoise", "width", "width"),
+            ("denoise", "height", "height"),
+        ),
     },
     "qwen-image-edit:modular-inpainting:v1": {
         "modelType": "QwenImageEditModularPipeline",
@@ -9495,7 +9518,13 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "profile": _MODULAR_FLUX_PROFILE,
         "roles": _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
         "edges": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_EDGES + _MODULAR_FLUX_DECODE_GEOMETRY_EDGES,
-        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        # Schnell and Krea reuse these semantic bindings. The ordinary Schnell
+        # starter uses 256 tokens; an authored recipe can select the reviewed
+        # 512-token limit without silently inheriting that starter default.
+        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS + (
+            ("prompt", "negative_prompt", "negativePrompt"),
+            ("prompt", "max_sequence_length", "maxSequenceLength"),
+        ),
         "capability": _MODULAR_FLUX_CAPABILITY,
         "autoRequirements": _MODULAR_FLUX_AUTO_REQUIREMENTS,
     },
@@ -9505,11 +9534,9 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "profile": _MODULAR_FLUX_PROFILE,
         "roles": _MODULAR_SDXL_EDIT_GRAPH_ROLES,
         "edges": _MODULAR_FLUX_IMAGE_TO_IMAGE_GRAPH_EDGES + _MODULAR_FLUX_DECODE_GEOMETRY_EDGES,
-        "bindings": tuple(
-            binding
-            for binding in _MODULAR_SDXL_EDIT_GRAPH_BINDINGS
-            if binding != ("prompt", "negative_prompt", "negativePrompt")
-        ) + _MODULAR_FLUX_IMAGE_ENCODE_GEOMETRY_BINDINGS,
+        "bindings": _MODULAR_SDXL_EDIT_GRAPH_BINDINGS + _MODULAR_FLUX_IMAGE_ENCODE_GEOMETRY_BINDINGS + (
+            ("prompt", "max_sequence_length", "maxSequenceLength"),
+        ),
     },
     "flux-kontext:modular-text-to-image:v1": {
         "modelType": "FluxKontextModularPipeline",
@@ -9517,7 +9544,10 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "profile": _MODULAR_FLUX_KONTEXT_PROFILE,
         "roles": _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
         "edges": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_EDGES + _MODULAR_FLUX_DECODE_GEOMETRY_EDGES,
-        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS + (
+            ("prompt", "negative_prompt", "negativePrompt"),
+            ("prompt", "max_sequence_length", "maxSequenceLength"),
+        ),
         "capability": _MODULAR_FLUX_KONTEXT_CAPABILITY,
         "autoRequirements": _MODULAR_FLUX_KONTEXT_AUTO_REQUIREMENTS,
     },
@@ -9532,10 +9562,9 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             for binding in _MODULAR_SDXL_EDIT_GRAPH_BINDINGS
             if binding
             not in {
-                ("prompt", "negative_prompt", "negativePrompt"),
                 ("denoise", "strength", "strength"),
             }
-        ),
+        ) + (("prompt", "max_sequence_length", "maxSequenceLength"),),
     },
     "flux2-klein:modular-text-to-image:v1": {
         "modelType": "Flux2KleinModularPipeline",
@@ -9595,7 +9624,11 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "profile": _MODULAR_Z_IMAGE_PROFILE,
         "roles": _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
         "edges": _MODULAR_Z_IMAGE_TEXT_TO_IMAGE_GRAPH_EDGES,
-        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        # Z-Image can encode negative conditioning with an enabled guider.
+        # Its ordinary starter leaves CFG disabled; authored templates retain
+        # their own guidance and negative text instead of inheriting FLUX's
+        # unguided binding omission.
+        "bindings": _MODULAR_TEXT_TO_IMAGE_GRAPH_BINDINGS,
         "autoRequirementKey": "ZImageModularPipeline:modular_text_to_image",
         "autoRequirements": _MODULAR_Z_IMAGE_AUTO_REQUIREMENTS,
     },
@@ -9605,11 +9638,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "profile": _MODULAR_Z_IMAGE_PROFILE,
         "roles": _MODULAR_SDXL_EDIT_GRAPH_ROLES,
         "edges": _MODULAR_Z_IMAGE_TO_IMAGE_GRAPH_EDGES,
-        "bindings": tuple(
-            binding
-            for binding in _MODULAR_SDXL_EDIT_GRAPH_BINDINGS
-            if binding != ("prompt", "negative_prompt", "negativePrompt")
-        ) + _MODULAR_FLUX_IMAGE_ENCODE_GEOMETRY_BINDINGS,
+        "bindings": _MODULAR_SDXL_EDIT_GRAPH_BINDINGS + _MODULAR_FLUX_IMAGE_ENCODE_GEOMETRY_BINDINGS,
         "autoRequirementKey": "ZImageModularPipeline:modular_image_to_image",
         "autoRequirements": _MODULAR_Z_IMAGE_AUTO_REQUIREMENTS,
     },
@@ -9805,7 +9834,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "profile": _MODULAR_CONTROL_PROFILE,
         "roles": _MODULAR_CONTROL_GRAPH_ROLES,
         "edges": _MODULAR_CONTROL_GRAPH_EDGES,
-        "bindings": _MODULAR_CONTROL_GRAPH_BINDINGS,
+        "bindings": _MODULAR_QWEN_CONTROL_TEXT_GRAPH_BINDINGS,
     },
     "qwen-image-2512:modular-image-to-image:v1": {
         "modelType": "QwenImageModularPipeline",
@@ -16028,7 +16057,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["flux-redux:multi-image-reference-edit:v1"] = 
     "profile": _flux_redux_profile(),
     "roles": _EDIT_GRAPH_ROLES,
     "edges": _EDIT_GRAPH_EDGES,
-    "bindings": _EDIT_GRAPH_BINDINGS,
+    "bindings": _REFERENCE_EDIT_GRAPH_BINDINGS,
 }
 for _flux_combined_spec_id, _flux_combined_definition in _FLUX_COMBINED_CONTROL_DEFINITIONS.items():
     _flux_control_family = _flux_combined_spec_id.split(":", 1)[0]
@@ -18174,7 +18203,10 @@ def studio_execution_profile_definitions() -> dict[str, dict[str, Any]]:
 
 def studio_auto_model_requirements() -> dict[str, dict[str, Any]]:
     return {
-        definition.get("autoRequirementKey", definition["modelType"]): deepcopy(definition["autoRequirements"])
+        definition.get("autoRequirementKey", definition["modelType"]): {
+            **deepcopy(definition["autoRequirements"]),
+            "memorySemantics": "machine_capacity",
+        }
         for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
         if "autoRequirements" in definition
     }

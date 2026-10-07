@@ -6,6 +6,7 @@ import sys
 import unittest
 
 from modiff.diffusers_profiles import execution_profiles_for_execution
+from modiff.base_runtime import base_model_runtime_contract
 from modiff.huggingface_node_library import (
     HuggingFaceNodeLibraryError,
     build_huggingface_node_library,
@@ -16,7 +17,6 @@ from modiff.modular_block_role_adapters import (
     PINNED_STATICALLY_CLOSED_BLOCK_ROLE_WORKFLOWS,
 )
 from modiff.modular_container_state_adapters import PINNED_CONTAINER_STATE_ADAPTER_TRUTH
-from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES
 
 
 class HuggingFaceNodeLibraryTests(unittest.TestCase):
@@ -86,13 +86,14 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
             self.assertEqual(definition["integrationStatus"], "reviewed_transformers_contract")
             self.assertTrue(definition["rootBlockDefinitionId"].startswith("transformers.composite-block:"))
             runtime = next(
-                component for component in definition["components"] if component["name"] == "optional_runtime"
+                component for component in definition["components"] if component["name"] == "model_runtime"
             )
             profile = execution_profiles_for_execution(definition["pipelineClass"], definition["workflowId"])[0]
             runtime_profile_ids = profile.optional_runtime_profile_ids_for_target()
-            self.assertEqual(len(runtime_profile_ids), 1)
-            runtime_profile = OPTIONAL_RUNTIME_PROFILES[runtime_profile_ids[0]]
-            self.assertEqual(runtime["type"], f"{runtime_profile.id}@{runtime_profile.spec_digest}")
+            self.assertEqual(runtime_profile_ids, ())
+            contract = base_model_runtime_contract()
+            self.assertEqual(runtime["type"], f"{contract['id']}@{contract['digest']}")
+            self.assertEqual(runtime["creationMethod"], "base_installation")
 
     def test_suggested_inputs_distinguish_publisher_examples_from_modiff_starters(self):
         flux = self.definition("FluxModularPipeline", "text2image")

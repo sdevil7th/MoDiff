@@ -18,6 +18,7 @@ def test_setup_preserves_existing_environment(tmp_path, monkeypatch, capsys):
 def test_runtime_uses_managed_python_and_profile_environment(tmp_path, monkeypatch):
     import json
     import os
+    import sys
 
     monkeypatch.setattr(dev, "ROOT", tmp_path)
     venv = tmp_path / ".venv"
@@ -26,6 +27,8 @@ def test_runtime_uses_managed_python_and_profile_environment(tmp_path, monkeypat
     python.touch()
     (venv / "modiff-profile.json").write_text(json.dumps({"profile": "amd-rocm-linux"}))
     monkeypatch.setattr(install, "_rocm_environment", lambda: {"ROCM_PATH": "/reviewed/rocm"})
+    for key in ("PYTORCH_ALLOC_CONF", "PYTORCH_CUDA_ALLOC_CONF", "PYTORCH_HIP_ALLOC_CONF"):
+        monkeypatch.delenv(key, raising=False)
     calls = []
     monkeypatch.setattr(dev.subprocess, "call", lambda cmd, **kw: calls.append((cmd, kw)) or 0)
     assert dev.main(["check", "--json"]) == 0
@@ -33,7 +36,8 @@ def test_runtime_uses_managed_python_and_profile_environment(tmp_path, monkeypat
     assert cmd == [str(python), "-m", "modiff.preflight", "--json"]
     assert kw["cwd"] == tmp_path
     assert kw["env"]["ROCM_PATH"] == "/reviewed/rocm"
-    assert kw["env"]["PYTORCH_CUDA_ALLOC_CONF"] == "expandable_segments:True"
+    allocator = kw["env"].get("PYTORCH_ALLOC_CONF", kw["env"].get("PYTORCH_CUDA_ALLOC_CONF"))
+    assert allocator == ("expandable_segments:True" if sys.platform.startswith("linux") else None)
     assert dev.main(["run"]) == 0
     assert calls.pop()[0] == [str(python), str(tmp_path / "main.py")]
 

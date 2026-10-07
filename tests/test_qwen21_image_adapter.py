@@ -80,16 +80,16 @@ def test_reference_and_output_limits_remain_bounded():
     assert IMAGE_PIPELINE_ADAPTERS["QwenImagePipeline"].max_output_side == 2048
 
 
-def test_qwen21_starters_share_existing_nodes_and_exact_runtime_requirement():
+def test_qwen21_starters_share_existing_nodes_and_base_runtime_requirement():
     from modules import MODULE_MAP
     from modiff.operation_catalog import build_operation_catalog
     from modiff.operation_starters import resolve_operation_starter
-    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
-    from modiff.optional_runtimes import TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES, OPTIONAL_RUNTIME_DELIVERY_BASE
 
     contracts = build_operation_catalog(MODULE_MAP, [], catalog_resolver=lambda: {})[0]
     profile = DIFFUSERS_EXECUTION_PROFILES["qwen-image-21:direct"]
-    assert profile.optional_runtime_profiles == (TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,)
+    assert profile.optional_runtime_profiles == ()
+    assert profile.optional_runtime_delivery == OPTIONAL_RUNTIME_DELIVERY_BASE
     for task in ("text_to_image", "edit_image", "multi_image_reference_edit"):
         graph = resolve_operation_starter(MODULE_MAP, contracts, {
             "pipelineClass": PIPELINE, "task": task, "executionProfileId": profile.id,

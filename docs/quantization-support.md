@@ -1,5 +1,16 @@
 # Quantization Support Matrix
 
+The native `uv sync --extra cuda` installation includes Transformers and PEFT,
+but does not require quantization packages or a Triton compiler. Quantization
+remains an explicit optional choice. Current GGUF, Quanto, and media overlays
+install only their additional packages and use the verified base model
+libraries. Their Linux x86-64 installation checks execute small CPU operations;
+they do not establish model, accelerator, Auto, or performance qualification.
+The historical model receipts below describe the runtime that produced them.
+The bitsandbytes overlay remains unavailable for the new base until a matching
+CUDA execution check passes; the specialized reviewed NVIDIA installer profile
+has its own existing bitsandbytes contract.
+
 This guide distinguishes code paths, model discovery, app delivery, and
 qualification. A quantization method or model is **supported** only when MoDiff
 can identify an exact model/revision, obtain the model and required runtime
@@ -52,7 +63,7 @@ quantization controls. `bnb_8bit`, GPTQ, AWQ, GGUF, and arbitrary
 | -------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `bnb_4bit`                       | Yes, including separate Diffusers and Transformers component configs   | Yes in the NVIDIA CUDA application profile                                                   | Exact Qwen and FLUX profiles                    | Supported only at the tiers listed above.                                                                        |
 | `bnb_8bit`                       | Yes                                                                    | Yes in the NVIDIA CUDA application profile                                                   | Exact FLUX profiles                             | Expert contract; no blanket model/platform claim.                                                                |
-| `quanto_float8`                  | Yes                                                                    | Yes; exact Transformers/PEFT/Quanto overlay on qualified Linux x86-64                        | Exact FLUX profiles when that overlay is active | Expert contract; isolated ROCm float8 qualification passed, while each full model recipe still needs live proof. |
+| `quanto_float8`                  | Yes                                                                    | Auxiliary Quanto/Ninja overlay using native base libraries on Linux x86-64                   | Exact FLUX profiles when that overlay is active | Expert contract; current CPU installation check passed. Prior ROCm receipts are historical; each full model recipe still needs matching live proof. |
 | `quanto_int8`                    | Backend generic loader only                                            | No                                                                                           | Not admitted by Studio profiles                 | Documented research.                                                                                             |
 | `torchao_float8`                 | Yes                                                                    | No; the legacy `torchao` package entry has no reviewed immutable install lock                | Hidden as unavailable at runtime                | Not end-to-end supported.                                                                                        |
 | `torchao_int8_weight_only`       | Backend generic loader only                                            | No                                                                                           | Not admitted by Studio profiles                 | Documented research.                                                                                             |
@@ -68,8 +79,8 @@ either case as a generic repository swap is unsafe.
 
 ### Installing and running the reviewed GGUF path
 
-1. In **Setup > Optional runtimes**, install and activate **Transformers main +
-   PEFT + GGUF 0.19.0**. The app verifies the immutable profile digest and
+1. In **Setup > Optional runtimes**, install and activate **GGUF 0.19.0**.
+   Transformers and PEFT remain in the base installation. The app verifies the immutable profile digest and
    wheel SHA-256, then restarts; do not install `gguf` into the base environment
    with an external `pip` command.
 2. In **Model Manager**, request repository
@@ -83,10 +94,10 @@ either case as a generic repository swap is unsafe.
    `741f7c3ce8b383c54771c7003378a50191e9efe9`, bfloat16 compute,
    `quantization_mode=none`, and no second quantizer.
 
-The exact Linux ROCm canary loaded the component, assembled the base, completed
+The historical Linux ROCm canary loaded the component, assembled the base, completed
 four denoising steps at 512×512, and persisted a reviewed image. This evidence
 does not qualify arbitrary GGUF files, other component classes, or other
-hardware targets.
+hardware targets or the updated native base without another model check.
 
 ## Quantized artifact inventory
 

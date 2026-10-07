@@ -36,6 +36,14 @@ def hardware(**overrides):
 
 
 class InstinctProfileTests(unittest.TestCase):
+    def setUp(self):
+        self.base_runtime = patch.object(runtime, "base_runtime_status", return_value={
+            "status": "verified", "verified": True, "matches": True,
+            "issues": [], "current_digest": "f" * 64,
+        })
+        self.base_runtime.start()
+        self.addCleanup(self.base_runtime.stop)
+
     def test_explicit_and_detected_instinct_do_not_select_ryzen(self):
         for selection in ("amd-instinct", "amd", "auto"):
             with self.subTest(selection=selection):
@@ -122,6 +130,10 @@ class InstinctProfileTests(unittest.TestCase):
             with (
                 patch.object(runtime, "load_manifest", return_value=manifest),
                 patch.object(runtime, "normalized_os", return_value="linux"),
+                patch.object(runtime, "base_runtime_status", return_value={
+                    "status": "verified", "verified": True, "matches": True,
+                    "issues": [], "current_digest": "f" * 64,
+                }),
                 patch.object(runtime, "_device_tensor_probe", return_value={"ready": True}),
             ):
                 report = runtime.runtime_profile(hardware(), venv=root)
@@ -176,6 +188,32 @@ class InstinctProfileTests(unittest.TestCase):
             self.assertIn("requires gfx942", result["message"])
         finally:
             runtime._device_tensor_probe.cache_clear()
+
+    def test_native_base_verification_does_not_mask_instinct_index_drift(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self._saved_state(temporary)
+            spec = runtime.load_manifest()["profiles"][PROFILE]
+            original = runtime.PROJECT_ROOT / spec["uv_config"]
+            changed_config = Path(temporary) / "instinct.uv.toml"
+            changed_config.write_text(original.read_text() + "\n# changed index contract\n")
+            manifest = runtime.load_manifest()
+            manifest["profiles"][PROFILE]["uv_config"] = str(changed_config)
+            with (
+                patch.object(runtime, "load_manifest", return_value=manifest),
+                patch.object(runtime, "normalized_os", return_value="linux"),
+                patch.object(runtime, "normalized_arch", return_value="x86_64"),
+                patch.object(runtime, "base_runtime_status", return_value={
+                    "status": "verified", "verified": True, "matches": True,
+                    "issues": [], "current_digest": "f" * 64,
+                }),
+                patch.object(runtime, "_device_tensor_probe", return_value={"ready": True}),
+            ):
+                report = runtime.runtime_profile(hardware(), venv=root)
+
+        self.assertFalse(report["execution_ready"])
+        self.assertTrue(report["repair_required"])
+        self.assertEqual(report["runtime_contract"]["status"], "drifted")
+        self.assertIn("runtime-contract-drift", [issue["code"] for issue in report["issues"]])
 
     def test_staged_smoke_checks_versions_and_gpu_architecture_before_tensor(self):
         fake = types.SimpleNamespace(

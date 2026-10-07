@@ -50,6 +50,17 @@ def executable_graph_for_spec(spec):
 
 
 class StudioExecutionSpecTests(unittest.TestCase):
+    def test_z_image_native_modes_retain_negative_conditioning_bindings(self):
+        self.assertTrue(STUDIO_MODEL_CAPABILITIES["ZImageModularPipeline"]["supportsNegativePrompt"])
+        for mode in ("modular_text_to_image", "modular_image_to_image"):
+            with self.subTest(mode=mode):
+                spec = studio_execution_spec_for_pair("ZImageModularPipeline", mode)
+                self.assertIn(("prompt", "negative_prompt", "negativePrompt"), spec["bindings"])
+                graph, hints = executable_graph_for_spec(spec)
+                encoder = graph["nodes"][hints["studioExecutionSpec"]["nodes"]["prompt"]]
+                self.assertIn("negative_prompt", encoder["params"])
+                assert_studio_execution_graph(graph, hints)
+
     def test_every_modular_models_loader_binds_the_exact_artifact_revision(self):
         modular_specs = [
             (spec_id, definition)
@@ -299,6 +310,19 @@ class StudioExecutionSpecTests(unittest.TestCase):
             ["edit_image", "multi_image_reference_edit"],
         )
         self.assertEqual(studio_model_dependencies_for_pair("FluxReduxPipeline", "text_to_image"), [])
+
+    def test_native_flux_recipe_binds_its_authored_prompt_token_limit(self):
+        spec = studio_execution_spec_for_pair("FluxModularPipeline", "text_to_image")
+        self.assertIn(("prompt", "max_sequence_length", "maxSequenceLength"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
+
+    def test_native_qwen_edit_recipe_binds_authored_output_dimensions(self):
+        spec = studio_execution_spec_for_pair("QwenImageEditModularPipeline", "edit_image")
+        self.assertIn(("denoise", "width", "width"), spec["bindings"])
+        self.assertIn(("denoise", "height", "height"), spec["bindings"])
+        graph, hints = executable_graph_for_spec(spec)
+        assert_studio_execution_graph(graph, hints)
 
     def test_flux_registry_owns_profile_capability_and_auto_contracts(self):
         specs = validate_studio_execution_specs(module_registry.MODULE_MAP)
@@ -1067,6 +1091,9 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertIn(("diffusersImageEdit", "reference_strength", "conditioningScale"), specs[5]["bindings"])
         self.assertEqual(specs[6]["roles"], specs[5]["roles"])
         self.assertEqual(specs[6]["edges"], specs[5]["edges"])
+        strength_binding = ("diffusersImageEdit", "strength", "strength")
+        self.assertNotIn(strength_binding, specs[5]["bindings"])
+        self.assertNotIn(strength_binding, specs[6]["bindings"])
         self.assertEqual(specs[6]["bindings"], specs[5]["bindings"])
         self.assertEqual(specs[6]["pipelineClass"], "FluxKontextPipeline")
         self.assertEqual(specs[7]["roles"], specs[6]["roles"])
@@ -1102,6 +1129,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(specs[11]["roles"], specs[5]["roles"])
         self.assertEqual(specs[11]["edges"], specs[5]["edges"])
         self.assertEqual(specs[11]["bindings"], specs[5]["bindings"])
+        self.assertNotIn(strength_binding, specs[11]["bindings"])
         self.assertEqual(specs[11]["pipelineClass"], "Flux2KleinPipeline")
         self.assertEqual(specs[12]["roles"], specs[11]["roles"])
         self.assertEqual(specs[12]["edges"], specs[11]["edges"])
@@ -1314,7 +1342,9 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 self.assertEqual(STUDIO_MODEL_CAPABILITIES[spec["modelType"]], definition["capability"])
             if "autoRequirements" in definition:
                 requirements_key = definition.get("autoRequirementKey", spec["modelType"])
-                self.assertEqual(AUTO_MODEL_REQUIREMENTS[requirements_key], definition["autoRequirements"])
+                self.assertEqual(AUTO_MODEL_REQUIREMENTS[requirements_key], {
+                    **definition["autoRequirements"], "memorySemantics": "machine_capacity",
+                })
 
     def test_combined_control_specs_are_exact_generic_graphs_with_immutable_profiles(self):
         specs = {item["id"]: item for item in validate_studio_execution_specs(module_registry.MODULE_MAP)}
@@ -2677,6 +2707,8 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(edit["executionProfileId"], multi["executionProfileId"])
         self.assertNotEqual(edit["contentHash"], multi["contentHash"])
         for spec in (edit, multi):
+            self.assertNotIn(("diffusersImageEdit", "strength", "strength"), spec["bindings"])
+            self.assertIn(("diffusersImageEdit", "reference_strength", "conditioningScale"), spec["bindings"])
             graph, hints = executable_graph_for_spec(spec)
             assert_studio_execution_graph(graph, hints)
         self.assertEqual(AUTO_MODEL_REQUIREMENTS["FluxReduxPipeline"]["supportedTasks"], ["edit_image"])

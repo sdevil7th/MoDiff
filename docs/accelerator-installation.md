@@ -1,8 +1,8 @@
 # Accelerator installation
 
-MoDiff owns Python/Torch profile selection. The browser shows the same setup checklist but never installs drivers or mutates Python.
+Ordinary setup uses native `uv sync --extra cpu`, `--extra cuda`, or `--extra xpu`; Apple Silicon uses `uv sync` without an extra. Use the same extra on `uv run python main.py`. Transformers and PEFT are mandatory base dependencies. See [developer setup](developer-setup.md) for direct commands, repair, and upgrades. The browser never installs drivers or mutates Python during discovery or planning.
 
-Run `./install.sh` on Linux/macOS or `.\install.ps1` on Windows. The guided installer explains every action before it runs, installs hash-verified app-local uv/Python 3.12, stages the backend, validates a real device tensor, and preserves the previous environment for rollback. When a sibling client is present and the build is not skipped, it downloads the verified Node 24 toolchain, downloads and SHA-256 verifies the complete pinned Template Gallery, and bundles those assets into the local client build. Hybrid NVIDIA/AMD machines must explicitly choose a profile.
+Run `./install.sh` on Linux/macOS or `.\install.ps1` on Windows. The guided installer explains every action before it runs, uses the operator's uv and provisions Python 3.12, stages the backend, validates a real device tensor, and preserves the previous environment for rollback. When a sibling client is present and the build is not skipped, it downloads the verified Node 24 toolchain, downloads and SHA-256 verifies the complete pinned Template Gallery, and bundles those assets into the local client build. Hybrid NVIDIA/AMD machines must explicitly choose a profile.
 
 The staged installer builds the exact Diffusers Git revision declared in
 `pyproject.toml` with canonical LF source bytes. It overrides Git line-ending
@@ -48,12 +48,11 @@ unrelated I/O errors are not retried. See
 After copying a checkout between operating systems, rerun the destination's
 installer. Virtual environments and app-local tool binaries are platform-specific:
 a Linux `.venv/bin/python` cannot satisfy Windows' `.venv/Scripts/python.exe`.
-Setup selects uv by the current platform's exact reviewed path and downloads
-the pinned archive when that executable is absent. It also selects Windows
-Node/npm launchers without falling back to Linux executables. Archive and uv
-executable hashes remain mandatory; a modified current-platform uv still fails
-integrity verification. Failed setup reports the current platform's installer
-resume command even if the copied journal contains an old launch command.
+Setup selects uv from the operator's PATH, or a usable legacy app-local copy.
+There is no exact uv version requirement; use `uv self update` for standalone uv
+or your package manager's upgrade command. Platform-specific Node/npm archives
+retain their reviewed hashes. Failed guided setup reports the current platform's
+resume command even if a copied journal contains an old launch command.
 
 Executable profiles are `nvidia-cuda`, `amd-rocm-linux`, `amd-instinct-rocm-linux` (preview), `intel-xpu`, `apple-mps`, and `cpu`. Choose Intel explicitly with `--accelerator intel`; Auto selects it when a supported Intel GPU is detected and no higher-priority NVIDIA/AMD profile applies. The XPU profile is preview-only and requires a successful `xpu:0` tensor before launch. The manifest retains `amd-pytorch-windows` as a conditional target, but installation remains blocked until MoDiff pins the complete official Windows SDK wheel set instead of guessing dependencies. Strix Halo on Ubuntu 24.04.3 uses the AMD ROCm 7.2/PyTorch 2.9.1 profile. The separate Instinct preview below targets MI300X/gfx942, not Ryzen. Ubuntu 26.04 is experimental and requires `--allow-experimental`; non-interactive Auto otherwise selects CPU. WSL and unqualified accelerators fall back to CPU.
 
@@ -97,13 +96,19 @@ source snapshot. Provisioning, downloads and idle time are billable. Back up
 outputs before destroying the instance; powering it off does not stop billing.
 See [the cloud qualification checklist](amd-cloud-qualification.md).
 
-The selected file under `requirements/profiles/`, `pyproject.toml`, and the
-accelerator compatibility manifest jointly form the saved runtime contract.
-Preflight recomputes that contract on every launch. If any input changed, is
-missing, or the saved profile predates the contract digest, the runtime status
-is `repair-required` and startup remains blocked even when the currently
-installed packages still import. Run the reported managed `--repair` command;
-do not bypass the check with a generic dependency sync.
+Native installs verify installed core packages and the reviewed Diffusers source
+without requiring an installer receipt. The committed uv lock records their
+resolution. Guided/vendor-wheel profiles retain their manifest and observed
+package checks. Repair native core packages with the same `uv sync` extra;
+repair a specialized AMD wheel stack with its guided installer. Do not replace
+a reviewed ROCm stack using a generic CPU/CUDA sync.
+
+On Windows, the shared process policy uses PyTorch's default allocator and does
+not set expandable segments. Normal image generation uses eager/native SDPA
+without Triton. Optional compilation requires an executed kernel probe;
+compiled-FlexAttention workflows check it before loading weights. Windows
+compiler setup needs a PyTorch-compatible `triton-windows` distribution and
+separate live GPU verification.
 
 ## Maintaining direct-wheel profiles
 

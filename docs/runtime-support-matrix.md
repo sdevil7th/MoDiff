@@ -1,5 +1,12 @@
 # Runtime support matrix
 
+Native uv setup includes Transformers and PEFT on every target. Ordinary
+generation uses eager PyTorch SDPA; Windows uses the default allocator and does
+not require Triton. Compiler-dependent optimizations require an executed kernel
+probe, and mandatory FlexAttention workflows check that capability before
+loading weights. The CI matrix exercises native CPU setup on Linux, Windows,
+and macOS; GPU and full-model claims still require the physical checks below.
+
 | Profile | Tier | Automated proof | Physical proof |
 |---|---|---|---|
 | NVIDIA CUDA (Windows/Ubuntu x64) | Supported | Manifest, resolver, CPU-host contract | Required for release |

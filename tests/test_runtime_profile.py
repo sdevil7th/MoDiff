@@ -41,6 +41,13 @@ def hardware(
 
 
 class RuntimeProfileTests(unittest.TestCase):
+    def setUp(self):
+        self.base_runtime = patch("modiff.runtime_profile.base_runtime_status", return_value={
+            "status": "verified", "verified": True, "matches": True,
+            "installationMode": "uv", "issues": [], "current_digest": "a" * 64,
+        })
+        self.base_runtime.start()
+        self.addCleanup(self.base_runtime.stop)
     def test_managed_macos_cpu_profile_ignores_the_wheels_optional_mps_capability(self):
         with tempfile.TemporaryDirectory() as temporary:
             venv = self.write_profile(temporary, "cpu")
@@ -209,6 +216,78 @@ class RuntimeProfileTests(unittest.TestCase):
         self.assertEqual(profile["device_validation"]["device"], "cuda:0")
         self.assertEqual(profile["runtime_contract"]["status"], "verified")
 
+    def test_native_base_verification_does_not_mask_specialist_receipt_drift(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            venv = self.write_profile(temporary, "amd-rocm-linux")
+            with (
+                patch("modiff.runtime_profile.normalized_os", return_value="linux"),
+                patch("modiff.runtime_profile.normalized_arch", return_value="x86_64"),
+                patch("modiff.runtime_profile.lock_digest", return_value="f" * 64),
+                patch("modiff.runtime_profile._device_tensor_probe", return_value={"ready": True, "device": "cuda:0"}),
+            ):
+                profile = runtime_profile(hardware(
+                    version="2.9.1+rocm7.2.0", hip_version="7.2.0", cuda_available=True,
+                ), venv=venv)
+
+        self.assertFalse(profile["execution_ready"])
+        self.assertTrue(profile["repair_required"])
+        self.assertEqual(profile["runtime_contract"]["status"], "drifted")
+        self.assertTrue(profile["runtime_contract"]["baseRuntime"]["verified"])
+        self.assertIn("runtime-contract-drift", [issue["code"] for issue in profile["issues"]])
+
+    def test_managed_rocm_rejects_a_different_rocm_build(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            venv = self.write_profile(temporary, "amd-rocm-linux")
+            with patch("modiff.runtime_profile._device_tensor_probe", return_value={"ready": True}):
+                profile = runtime_profile(hardware(
+                    version="2.10.0+rocm7.14.0", hip_version="7.14.0", cuda_available=True,
+                ), venv=venv)
+
+        self.assertFalse(profile["execution_ready"])
+        self.assertIn("profile-version-mismatch", [issue["code"] for issue in profile["issues"]])
+
+    def test_managed_rocm_accepts_reviewed_wheel_local_build_suffix(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            venv = self.write_profile(temporary, "amd-rocm-linux")
+            with patch("modiff.runtime_profile._device_tensor_probe", return_value={"ready": True}):
+                profile = runtime_profile(hardware(
+                    version="2.9.1+rocm7.2.0.lw.git7e1940d4", hip_version="7.2.0", cuda_available=True,
+                ), venv=venv)
+
+        self.assertTrue(profile["execution_ready"])
+
+    def test_specialist_requires_both_receipt_schema_and_native_base(self):
+        cases = (
+            (False, True, "runtime-contract-unverified"),
+            (True, False, "base-dependency-incompatible"),
+        )
+        for valid_schema, valid_base, expected_code in cases:
+            with self.subTest(valid_schema=valid_schema, valid_base=valid_base), tempfile.TemporaryDirectory() as temporary:
+                venv = self.write_profile(temporary, "amd-rocm-linux")
+                if not valid_schema:
+                    receipt_path = venv / "modiff-profile.json"
+                    receipt = json.loads(receipt_path.read_text())
+                    receipt["runtime_contract_schema"] = 1
+                    receipt_path.write_text(json.dumps(receipt))
+                native = {
+                    "status": "verified" if valid_base else "incompatible",
+                    "verified": valid_base, "matches": valid_base,
+                    "issues": [] if valid_base else ["Missing required package: peft."],
+                    "current_digest": "a" * 64,
+                }
+                with (
+                    patch("modiff.runtime_profile.base_runtime_status", return_value=native),
+                    patch("modiff.runtime_profile._device_tensor_probe", return_value={"ready": True}),
+                ):
+                    profile = runtime_profile(hardware(
+                        version="2.9.1+rocm7.2.0", hip_version="7.2.0", cuda_available=True,
+                    ), venv=venv)
+
+                self.assertFalse(profile["execution_ready"])
+                self.assertTrue(profile["repair_required"])
+                self.assertFalse(profile["runtime_contract"]["verified"])
+                self.assertIn(expected_code, [issue["code"] for issue in profile["issues"]])
+
     def test_matching_intel_xpu_profile_is_ready_after_device_tensor(self):
         with tempfile.TemporaryDirectory() as temporary:
             venv = self.write_profile(temporary, "intel-xpu")
@@ -229,7 +308,7 @@ class RuntimeProfileTests(unittest.TestCase):
         self.assertEqual(profile["installed"], "intel-xpu")
         self.assertEqual(profile["device_validation"]["device"], "xpu:0")
 
-    def test_changed_runtime_contract_requires_repair_before_preflight_is_ready(self):
+    def test_uv_repair_supersedes_an_obsolete_managed_contract(self):
         with tempfile.TemporaryDirectory() as temporary:
             venv = self.write_profile(temporary, "cpu")
             with (
@@ -243,12 +322,11 @@ class RuntimeProfileTests(unittest.TestCase):
             ):
                 profile = runtime_profile(hardware(version="2.8.0"), venv=venv)
 
-        self.assertFalse(profile["execution_ready"])
-        self.assertEqual(profile["status"], "repair-required")
-        self.assertTrue(profile["repair_required"])
-        self.assertEqual(profile["runtime_contract"]["status"], "drifted")
-        self.assertIn("runtime-contract-drift", [issue["code"] for issue in profile["issues"]])
-        self.assertEqual(profile["repair_command"], "./install.sh --accelerator cpu --repair")
+        self.assertTrue(profile["execution_ready"])
+        self.assertEqual(profile["status"], "ready")
+        self.assertFalse(profile["repair_required"])
+        self.assertEqual(profile["runtime_contract"]["status"], "verified")
+        self.assertEqual(profile["repair_command"], "uv sync --extra cpu")
 
     def test_legacy_contract_record_is_non_blocking_when_runtime_checks_pass(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -282,8 +360,7 @@ class RuntimeProfileTests(unittest.TestCase):
 
         self.assertTrue(profile["execution_ready"])
         self.assertFalse(profile["repair_required"])
-        self.assertEqual(profile["runtime_contract"]["status"], "legacy")
-        self.assertIn("runtime-contract-legacy", [issue["code"] for issue in profile["issues"]])
+        self.assertEqual(profile["runtime_contract"]["status"], "verified")
 
     def test_experimental_profile_repair_command_includes_required_opt_in(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -312,10 +389,10 @@ class RuntimeProfileTests(unittest.TestCase):
 
         self.assertEqual(
             profile["repair_command"],
-            "./install.sh --accelerator cpu --repair --allow-experimental",
+            "uv sync --extra cpu",
         )
 
-    def test_saved_profile_without_contract_digest_requires_repair(self):
+    def test_native_runtime_needs_no_installer_digest(self):
         with tempfile.TemporaryDirectory() as temporary:
             venv = Path(temporary)
             (venv / "modiff-profile.json").write_text(
@@ -328,9 +405,8 @@ class RuntimeProfileTests(unittest.TestCase):
             ):
                 profile = runtime_profile(hardware(version="2.8.0"), venv=venv)
 
-        self.assertEqual(profile["status"], "repair-required")
-        self.assertEqual(profile["runtime_contract"]["status"], "unverified")
-        self.assertIn("runtime-contract-unverified", [issue["code"] for issue in profile["issues"]])
+        self.assertEqual(profile["status"], "ready")
+        self.assertEqual(profile["runtime_contract"]["status"], "verified")
 
 
 if __name__ == "__main__":

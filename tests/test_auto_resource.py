@@ -2,6 +2,7 @@ import sys
 import tempfile
 import unittest
 import json
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 
@@ -43,6 +44,7 @@ from modiff.diffusers_profiles import (  # noqa: E402
     WAN_T2V_1_3B_REPO,
 )
 from modiff.auto_resource import FLUX_DEV_FP8_REPO  # noqa: E402
+from modiff.optional_runtimes import TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID  # noqa: E402
 
 
 GIB = 1024**3
@@ -51,9 +53,16 @@ GIB = 1024**3
 class AutoResourcePlanTests(unittest.TestCase):
     def test_batch_optional_runtime_inspection_is_shared_but_not_cached_across_requests(self):
         payload = {"forms": [self._qwen_payload()["form"]] * 3, "hardwareOverride": self._hardware()}
+        auxiliary_profile = replace(
+            DIFFUSERS_EXECUTION_PROFILES["qwen-image:modular"],
+            optional_runtime_profiles=(TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,),
+            optional_runtime_delivery="optional_overlay",
+            optional_runtime_platform_deliveries=(),
+        )
         with (
             tempfile.TemporaryDirectory() as directory,
             patch("modiff.diffusers_profiles.optional_runtime_target", return_value=("linux", "x86_64")),
+            patch("modiff.optional_runtime_execution.execution_profiles_for_execution", return_value=(auxiliary_profile,)),
             patch("modiff.optional_runtime_execution.public_optional_runtime_catalog", return_value={}) as catalog,
         ):
             first = build_auto_resource_plans(payload, runtime_fingerprint=self._runtime(), local_models=[], data_dir=directory)
@@ -63,6 +72,16 @@ class AutoResourcePlanTests(unittest.TestCase):
             self.assertTrue(all(item["state"] == "unavailable" for item in requirements))
             build_auto_resource_plans(payload, runtime_fingerprint=self._runtime(), local_models=[], data_dir=directory)
             self.assertEqual(catalog.call_count, 2)
+
+    def test_base_workflow_does_not_inspect_optional_runtime_catalog(self):
+        payload = {"forms": [self._qwen_payload()["form"]] * 3, "hardwareOverride": self._hardware()}
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch("modiff.optional_runtime_execution.public_optional_runtime_catalog") as catalog,
+        ):
+            result = build_auto_resource_plans(payload, runtime_fingerprint=self._runtime(), local_models=[], data_dir=directory)
+        catalog.assert_not_called()
+        self.assertTrue(all(plan["optionalRuntimeRequirement"]["state"] == "base_satisfied" for plan in result["plans"]))
 
     def test_resource_history_uses_stable_resource_fingerprint(self):
         self.assertEqual(
@@ -724,7 +743,7 @@ class AutoResourcePlanTests(unittest.TestCase):
                 {
                     "schemaVersion": 1,
                     "id": "qwen-image-edit:edit-image:v1",
-                    "contentHash": "studio-spec-v1-3bb31293",
+                    "contentHash": "studio-spec-v1-816ef0a1",
                     "executionProfileId": "qwen-edit:modular",
                 },
             )

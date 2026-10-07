@@ -244,6 +244,9 @@ class OptionalRuntimeServerTests(unittest.IsolatedAsyncioTestCase):
 
         with (
             mock.patch.object(
+                server_module, "public_optional_runtime_catalog", return_value={"profiles": []}
+            ),
+            mock.patch.object(
                 optimization_packages,
                 "OPTIONAL_RUNTIME_PROFILES",
                 {pending.id: pending},
@@ -380,6 +383,7 @@ class OptionalRuntimeServerTests(unittest.IsolatedAsyncioTestCase):
         with (
             mock.patch("modiff.optimization_packages.active_install", return_value=active),
             mock.patch("modiff.optional_runtimes.optional_runtime_target", return_value=("linux", "x86_64")),
+            mock.patch("modiff.base_runtime.base_runtime_status", return_value={"verified": True}),
         ):
             response = await self.server.runtime_optional_runtimes(object())
         body = response_json(response)
@@ -387,8 +391,9 @@ class OptionalRuntimeServerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(profile["stagedRequirements"]), 10)
         self.assertEqual(len(profile["artifactLocks"]), 60)
         self.assertTrue(all(lock["byteSize"] > 0 for lock in profile["artifactLocks"]))
-        self.assertTrue(profile["installActionAvailable"])
-        self.assertTrue(profile["activationAvailable"])
+        self.assertTrue(profile["baseIncluded"])
+        self.assertFalse(profile["installActionAvailable"])
+        self.assertFalse(profile["activationAvailable"])
         self.assertTrue(profile["cutoverReady"])
         self.assertEqual(
             body["activeInstallJob"],
@@ -552,6 +557,9 @@ class OptionalRuntimeServerTests(unittest.IsolatedAsyncioTestCase):
                 )
                 with (
                     mock.patch.object(
+                        server_module, "public_optional_runtime_catalog", return_value={"profiles": []}
+                    ),
+                    mock.patch.object(
                         server_module,
                         "validate_optional_runtime_install_request",
                         return_value={},
@@ -612,6 +620,9 @@ class OptionalRuntimeServerTests(unittest.IsolatedAsyncioTestCase):
 
         activation_task = None
         with (
+            mock.patch.object(
+                server_module, "public_optional_runtime_catalog", return_value={"profiles": []}
+            ),
             mock.patch.object(
                 server_module,
                 "validate_optional_runtime_activation_request",
@@ -680,8 +691,13 @@ class OptionalRuntimeServerTests(unittest.IsolatedAsyncioTestCase):
             finally:
                 release.set()
             activation_response = await asyncio.wait_for(activation_task, timeout=2)
+            job_id = response_json(activation_response)["job"]["id"]
+            for _ in range(100):
+                if self.server.optimization_jobs[job_id]["status"] not in {"queued", "running"}:
+                    break
+                await asyncio.sleep(0.01)
 
-        self.assertEqual(activation_response.status, 200)
+        self.assertEqual(activation_response.status, 202)
         self.assertIsNone(self.server._runtime_mutation_gate)
 
     def test_public_job_and_receipt_drop_paths_tokens_stderr_and_free_text(self):

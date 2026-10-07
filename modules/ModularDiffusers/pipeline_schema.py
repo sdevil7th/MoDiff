@@ -963,6 +963,7 @@ class MoDiffParam(metaclass=MoDiffParamMeta):
     label: str
     type: str
     display: str | None = None
+    hidden: bool | None = None
     default: Any = None
     min: float | None = None
     max: float | None = None

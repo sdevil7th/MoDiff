@@ -24,10 +24,10 @@ def graph(two=False, shared=False):
 
 @pytest.fixture
 def setup(monkeypatch, tmp_path):
-    profile = SimpleNamespace(model_type="TestPipeline", modes=("text_to_image",), loader_module="modules.ModularDiffusers", loader_action="ModelsLoader", execution_path="modular-diffusers")
+    profile = SimpleNamespace(id="test:modular", model_type="TestPipeline", modes=("text_to_image",), loader_module="modules.ModularDiffusers", loader_action="ModelsLoader", execution_path="modular-diffusers")
     monkeypatch.setattr(planner, "resolve_execution_profiles_for_loader", lambda module, action, values: ((profile,), None) if action == "ModelsLoader" else ((), None))
     hardware = {"accelerator": {"freeBytes": 1000, "memoryKind": "dedicated"}, "systemMemory": {"availableBytes": 1000}, "offloadDisk": {"freeBytes": 1000}}
-    candidate = {"id": "accepted-recipe", "modelRepo": "test/model", "modelType": "TestPipeline", "mode": "text_to_image", "loaderModule": profile.loader_module, "loaderAction": profile.loader_action, "executionPath": profile.execution_path,
+    candidate = {"id": "accepted-recipe", "executionProfileId": profile.id, "modelRepo": "test/model", "modelType": "TestPipeline", "mode": "text_to_image", "loaderModule": profile.loader_module, "loaderAction": profile.loader_action, "executionPath": profile.execution_path,
                  "dtype": "bfloat16", "quantizationMode": "none", "offloadMode": "none", "autoOffload": False,
                  "canAutoRun": True, "proof": {"status": "declared_safe"}, "generation": {"width": 1024, "height": 1024, "steps": 30}, "requirements": {"systemRamBytes": 300, "vramBytes": 200, "diskFreeBytes": 10}}
     requests = []
@@ -36,8 +36,9 @@ def setup(monkeypatch, tmp_path):
         requests.append(deepcopy(payload))
         return {"candidates": [deepcopy(candidate)]}
 
-    def plan(g):
-        return planner.build_workflow_auto_plan(g, runtime_fingerprint={}, local_models=[], data_dir=str(tmp_path), plan_recipe=recipe, hardware=hardware)
+    def plan(g, **kwargs):
+        kwargs.pop('dispatch', None)
+        return planner.build_workflow_auto_plan(g, runtime_fingerprint={}, local_models=[], data_dir=str(tmp_path), plan_recipe=recipe, hardware=hardware, **kwargs)
 
     return plan, candidate, hardware, requests
 
@@ -64,6 +65,239 @@ def test_shared_loader_is_counted_once_with_both_consumers(setup):
     assert result["canAutoRun"] is True
     assert result["requirements"]["systemRamBytes"] == 300
     assert result["loaders"][0]["consumers"] == ["generate", "generate2"]
+
+
+def test_machine_ram_capacity_is_not_an_additional_working_budget(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate["requirements"] = {"memorySemantics": "machine_capacity", "minimum": {
+        "systemRamBytes": 8 * gib, "vramBytes": 0, "diskFreeBytes": 0}}
+    hardware["systemMemory"].update(totalBytes=32 * gib, availableBytes=4279840768)
+    hardware["accelerator"].update(totalBytes=16 * gib, freeBytes=12 * gib)
+    result = plan(graph())
+    assert result["capacityRequirements"]["systemRamBytes"] == 8 * gib
+    assert result["requirements"]["systemRamBytes"] == 4 * gib
+    assert result["workingMemoryPolicy"] == "runtime_headroom_policy"
+    assert not result["canAutoRun"]  # Actual free RAM remains below the existing safety floor.
+    assert "needs 4.00 GiB" in " ".join(result["issues"])
+    assert "needs 8.00 GiB" not in " ".join(result["issues"])
+
+
+def test_machine_capacity_classes_take_maximum_across_independent_owners(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate["requirements"] = {"memorySemantics": "machine_capacity", "minimum": {
+        "systemRamBytes": 8 * gib, "vramBytes": 8 * gib, "diskFreeBytes": 10}}
+    hardware["systemMemory"].update(totalBytes=32 * gib, availableBytes=5 * gib)
+    hardware["accelerator"].update(totalBytes=16 * gib, freeBytes=4 * gib)
+    result = plan(graph(two=True))
+    assert result["canAutoRun"]
+    assert result["capacityRequirements"] == {"systemRamBytes": 8 * gib, "vramBytes": 8 * gib}
+    assert result["requirements"] == {"systemRamBytes": 4 * gib, "vramBytes": 2 * gib, "diskFreeBytes": 20}
+    assert all(owner["workingMemoryPolicy"] == "runtime_headroom_policy" for owner in result["loaders"])
+
+
+def test_explicit_working_demands_remain_additive_and_owner_creditable(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate["requirements"] = {"memorySemantics": "machine_capacity", "minimum": {
+        "systemRamBytes": 8 * gib, "vramBytes": 8 * gib, "diskFreeBytes": 0}}
+    candidate["workingMemoryRequirements"] = {"systemRamBytes": 6 * gib, "vramBytes": 4 * gib}
+    hardware["systemMemory"].update(totalBytes=32 * gib, availableBytes=7 * gib)
+    hardware["accelerator"].update(totalBytes=16 * gib, freeBytes=7 * gib)
+    g = graph(two=True)
+    # Both models are simultaneously needed; an early release cannot hide their working demand.
+    g["nodes"]["generate2"]["params"]["other_model"] = {"sourceId": "load", "sourceKey": "pipeline"}
+    result = plan(g)
+    assert not result["canAutoRun"]
+    assert result["requirements"]["systemRamBytes"] == 12 * gib
+    assert result["requirements"]["vramBytes"] == 8 * gib
+    assert result["workingMemoryPolicy"] == "explicit_working_demand"
+
+
+def test_machine_capacity_still_rejects_a_smaller_machine(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate["requirements"] = {"memorySemantics": "machine_capacity", "minimum": {
+        "systemRamBytes": 32 * gib, "vramBytes": 0, "diskFreeBytes": 0}}
+    hardware["systemMemory"].update(totalBytes=16 * gib, availableBytes=12 * gib)
+    result = plan(graph())
+    assert not result["canAutoRun"]
+    assert "32 GiB total" in " ".join(result["issues"])
+
+
+def test_capacity_policy_shared_pool_and_disk_use_actual_free_memory(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate["requirements"] = {"memorySemantics": "machine_capacity", "minimum": {
+        "systemRamBytes": 8 * gib, "vramBytes": 8 * gib, "diskFreeBytes": 2000}}
+    hardware["systemMemory"].update(totalBytes=32 * gib, availableBytes=5 * gib)
+    hardware["accelerator"].update(totalBytes=16 * gib, freeBytes=5 * gib, memoryKind="shared")
+    result = plan(graph())
+    assert not result["canAutoRun"]
+    assert "needs 6.00 GiB" in " ".join(result["issues"])
+    assert "diskFreeBytes" in " ".join(result["issues"])
+
+
+def test_offloaded_machine_capacity_uses_shared_accessible_gpu_pool(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate.update(offloadMode="model_cpu", autoOffload=True)
+    candidate["requirements"] = {"memorySemantics": "machine_capacity", "minimum": {
+        "accelerator": "cuda", "systemRamBytes": 32 * gib, "vramBytes": 24 * gib}}
+    hardware["systemMemory"].update(totalBytes=121 * gib, availableBytes=60 * gib)
+    hardware["accelerator"].update(kind="cuda", totalBytes=2 * gib, freeBytes=1 * gib,
+                                   memoryKind="shared", accessibleTotalBytes=96 * gib, sharedTotalBytes=121 * gib)
+    hardware["runtime"] = {"hardware": {"devices": [{"type": "cuda", "memory_kind": "shared",
+        "shared_memory_free": 60 * gib, "torch_vram_free": 90 * gib}]}}
+    result = plan(graph())
+    assert result["canAutoRun"]
+    assert result["capacityRequirements"]["vramBytes"] == 24 * gib
+    assert result["available"]["vramBytes"] == 60 * gib  # One host pool, not extra free VRAM.
+    assert result["requirements"]["vramBytes"] == 2 * gib
+    candidate.update(offloadMode="none", autoOffload=False)
+    resident = plan(graph())
+    assert not resident["canAutoRun"]  # Preserve existing direct-residency capacity ranking.
+    assert "24 GiB total" in " ".join(resident["issues"])
+
+
+def recipe_graph(offload="none", **recipe_values):
+    g = graph()
+    g['nodes'] = {
+        'quant': {'module': 'modules.DiffusersRuntime', 'action': 'PipelineQuantizationConfigV2',
+                  'params': {'backend': {'value': 'none'}, 'component_overrides': {'value': '{}'}}},
+        'recipe': {'module': 'modules.DiffusersRuntime', 'action': 'DiffusersExecutionRecipe',
+                   'params': {'offload_mode': {'value': offload}, 'device': {'value': 'cuda:0'},
+                              'quantization_config': {'sourceId': 'quant', 'sourceKey': 'quantization_config'},
+                              **{key: {'value': value} for key, value in recipe_values.items()}}},
+        **g['nodes'],
+    }
+    g['nodes']['load']['params']['execution_recipe'] = {'sourceId': 'recipe', 'sourceKey': 'execution_recipe'}
+    g['paths'] = [list(g['nodes'])]
+    return g
+
+
+def test_standard_recipe_helpers_are_owned_data_and_actual_offload_is_authoritative(setup):
+    plan, candidate, _, requests = setup
+    candidate.update(offloadMode='model_cpu', autoOffload=True)
+    g = recipe_graph(offload='model_cpu', attention_backend='_native_math')
+    before = deepcopy(g)
+    result = plan(g)
+    assert result['canAutoRun']
+    assert requests[-1]['form']['offloadMode'] == 'model_cpu'
+    assert not any('no connected' in issue for issue in result['issues'])
+    assert {patch['field'] for patch in result['patches']} == {'offload_mode', 'auto_offload'}
+    assert all(patch['nodeId'] == 'load' for patch in result['patches'])
+    assert g == before
+
+
+def test_auto_patches_authoritative_recipe_and_loader_mirror_together(setup):
+    plan, candidate, _, _ = setup
+    candidate.update(offloadMode='model_cpu', autoOffload=True)
+    result = plan(recipe_graph())
+    assert result['canAutoRun']
+    assert {'nodeId': 'recipe', 'field': 'offload_mode', 'value': 'model_cpu'} in result['patches']
+    assert {'nodeId': 'load', 'field': 'offload_mode', 'value': 'model_cpu'} in result['patches']
+    assert {'nodeId': 'load', 'field': 'auto_offload', 'value': True} in result['patches']
+
+
+@pytest.mark.parametrize('override', [
+    {'regional_compile': True}, {'layerwise_casting': True}, {'channels_last': True},
+    {'device_map': 'balanced'}, {'denoiser_cache': 'first_block'}, {'max_memory': '{"0":"1GiB"}'},
+    {'vae_tiling': False}, {'attention_backend': 'flash'},
+])
+def test_recipe_resource_overrides_are_never_ignored_by_auto(setup, override):
+    plan, _, _, _ = setup
+    result = plan(recipe_graph(**override))
+    assert not result['canAutoRun']
+    assert result['patches'] == []
+    assert 'Custom memory' in ' '.join(result['issues'])
+
+
+@pytest.mark.parametrize('backend,overrides', [('quanto_int8', '{}'), ('none', '{"transformer":"bnb_4bit"}')])
+def test_connected_active_per_component_quantizer_needs_its_own_recipe(setup, backend, overrides):
+    plan, _, _, _ = setup
+    g = recipe_graph()
+    g['nodes']['quant']['params'].update(backend={'value': backend}, component_overrides={'value': overrides})
+    result = plan(g)
+    assert not result['canAutoRun']
+    assert 'per-component quantization' in ' '.join(result['issues'])
+
+
+def test_connected_recipe_offload_control_cannot_be_silently_overwritten(setup):
+    plan, candidate, _, _ = setup
+    candidate.update(offloadMode='model_cpu', autoOffload=True)
+    g = recipe_graph()
+    g['nodes'] = {'control': {'module': 'modules.Primitive', 'action': 'String', 'params': {'value': {'value': 'none'}}}, **g['nodes']}
+    g['nodes']['recipe']['params']['offload_mode'] = {'sourceId': 'control', 'sourceKey': 'value'}
+    g['paths'] = [list(g['nodes'])]
+    result = plan(g)
+    assert not result['canAutoRun']
+    assert 'Connected recipe.offload_mode' in ' '.join(result['issues'])
+    assert result['patches'] == []
+
+
+def test_unknown_recipe_supplier_stays_unreviewed(setup):
+    plan, _, _, _ = setup
+    g = recipe_graph()
+    g['nodes']['recipe']['action'] = 'UnknownRecipe'
+    result = plan(g)
+    assert not result['canAutoRun']
+    assert 'cannot inspect this execution recipe supplier' in ' '.join(result['issues'])
+
+
+def test_outpaint_geometry_is_deferred_to_existing_data_preparation(setup):
+    plan, _, _, _ = setup
+    g = graph()
+    g['nodes'] = {'source': {'module': 'modules.Image', 'action': 'LoadImage', 'params': {}},
+                  'canvas': {'module': 'modules.DiffusersImage', 'action': 'OutpaintCanvas',
+                             'params': {'image': {'sourceId': 'source', 'sourceKey': 'image'}, 'width': {'value': 1024}}}, **g['nodes']}
+    g['nodes']['generate']['params']['width'] = {'sourceId': 'canvas', 'sourceKey': 'width_out'}
+    g['paths'] = [list(g['nodes'])]
+    result = plan(g)
+    assert result['canAutoRun'] and result['requiresPreparation']
+    assert result['preparationNodeIds'] == ['canvas', 'source']
+
+
+def test_native_runtime_policy_is_preserved_and_connected_controls_are_bound(setup):
+    plan, _, _, _ = setup
+    g = graph()
+    g['nodes'] = {'policy': {'module': 'modules.Primitive', 'action': 'String',
+                            'params': {'value': {'value': '_native_math'}}}, **g['nodes']}
+    g['nodes']['load']['params'].update(
+        attention_backend={'sourceId': 'policy', 'sourceKey': 'value'},
+        vae_slicing={'value': True}, vae_tiling={'value': True},
+    )
+    g['paths'] = [list(g['nodes'])]
+    before = deepcopy(g)
+    result = plan(g)
+    assert result['canAutoRun'], result['issues']
+    assert result['loaders'][0]['settings']['attention_backend'] == '_native_math'
+    assert result['loaders'][0]['settings']['vae_slicing'] is True
+    assert result['resolvedFields']['load']['attention_backend'] == '_native_math'
+    assert not result['patches']
+    assert g == before
+
+
+@pytest.mark.parametrize('field,value', [('attention_backend', 'flash'), ('vae_slicing', 'true'), ('vae_tiling', 1)])
+def test_native_runtime_policy_invalid_values_cannot_be_ignored_by_auto(setup, field, value):
+    plan, _, _, _ = setup
+    g = graph()
+    g['nodes']['load']['params'][field] = {'value': value}
+    result = plan(g)
+    assert not result['canAutoRun']
+    assert result['patches'] == []
+
+
+def test_native_runtime_policy_unknown_supplier_stays_unreviewed(setup):
+    plan, _, _, _ = setup
+    g = graph()
+    g['nodes'] = {'policy': {'module': 'unreviewed.Source', 'action': 'Policy', 'params': {}}, **g['nodes']}
+    g['nodes']['load']['params']['attention_backend'] = {'sourceId': 'policy', 'sourceKey': 'output'}
+    g['paths'] = [list(g['nodes'])]
+    result = plan(g)
+    assert not result['canAutoRun']
+    assert 'data-only preparation contract' in ' '.join(result['issues'])
 
 
 def test_release_schedule_visits_shared_path_prefixes_once(setup):
@@ -273,6 +507,23 @@ def test_shared_accelerator_uses_accessible_pool_but_one_system_budget(setup):
     assert result["available"]["vramBytes"] == 500
 
 
+def test_shared_cleanup_forecast_never_caps_accessible_free_memory_by_dedicated_vram(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate['requirements'] = {'systemRamBytes': 3 * gib, 'vramBytes': 3 * gib, 'diskFreeBytes': 0}
+    hardware['systemMemory'].update(totalBytes=32 * gib, availableBytes=4 * gib)
+    hardware['accelerator'].update(kind='cuda', memoryKind='shared', totalBytes=2 * gib, freeBytes=gib,
+                                   accessibleTotalBytes=96 * gib)
+    hardware['runtime'] = {'hardware': {'devices': [{'type': 'cuda', 'memory_kind': 'shared',
+        'shared_memory_free': 4 * gib, 'torch_vram_free': 90 * gib}]}}
+    result = plan(graph(), cache_snapshot={'reclaimable': {'systemRamBytes': 4 * gib, 'vramBytes': 0}})
+    assert result['canAutoRun'], result['issues']
+    assert result['requiresCachePreparation']
+    assert result['available']['vramBytes'] == 4 * gib
+    assert result['requirements']['systemRamBytes'] + result['requirements']['vramBytes'] == 6 * gib
+    assert result['reusedOwnerIds'] == []  # Forecast is release/recheck, never resident-owner proof.
+
+
 def test_lora_shape_budget_uses_pinned_bytes_and_rejects_changed_hash(tmp_path):
     import hashlib
     import numpy as np
@@ -288,6 +539,80 @@ def test_lora_shape_budget_uses_pinned_bytes_and_rejects_changed_hash(tmp_path):
     adapter["params"]["expected_sha256"]["value"] = "0" * 64
     with pytest.raises(ValueError, match="SHA|hash|checksum"):
         lora_resource_requirement("adapter", adapter)
+
+
+def native_lora_chain_graph(tmp_path, *, two_owners=False):
+    import hashlib
+    import numpy as np
+    from safetensors.numpy import save_file
+
+    path = tmp_path / "chain-adapter.safetensors"
+    save_file({"lora_A.weight": np.zeros((2, 4), dtype=np.float32),
+               "lora_B.weight": np.zeros((8, 2), dtype=np.float32)}, str(path))
+    g = graph(two=two_owners)
+    descriptors = {}
+    for key, name in (("style1", "first_style"), ("style2", "second_style")):
+        descriptors[key] = node("Lora", model={"source": "local", "value": str(path)},
+                                weight_name=path.name, expected_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+                                adapter_name=name, scale=1.0)
+    descriptors["style2"]["params"]["previous_loras"] = {"sourceId": "style1", "sourceKey": "lora"}
+    g["nodes"] = {**descriptors, **g["nodes"]}
+    for key in ("load", "load2") if two_owners else ("load",):
+        g["nodes"][key]["params"]["lora_list"] = {"sourceId": "style2", "sourceKey": "lora"}
+    g["paths"] = [list(g["nodes"])]
+    return g
+
+
+def test_native_lora_chain_budgets_each_descriptor_once_in_order(setup, tmp_path):
+    plan, _, hardware, _ = setup
+    hardware["systemMemory"]["availableBytes"] = hardware["accelerator"]["freeBytes"] = 10000
+    g = native_lora_chain_graph(tmp_path)
+    before = deepcopy(g)
+    result = plan(g)
+    assert result["canAutoRun"], result["issues"]
+    assert [item["nodeId"] for item in result["adapters"]] == ["style1", "style2"]
+    assert [item["loaderIds"] for item in result["adapters"]] == [["load"], ["load"]]
+    assert result["requirements"]["systemRamBytes"] == 300 + 544 * 2
+    assert result["requirements"]["vramBytes"] == 200 + 544 * 2
+    assert g == before
+
+
+def test_native_lora_chain_shared_by_independent_owners_counts_storage_per_owner(setup, tmp_path):
+    plan, _, hardware, _ = setup
+    hardware["systemMemory"]["availableBytes"] = hardware["accelerator"]["freeBytes"] = 10000
+    result = plan(native_lora_chain_graph(tmp_path, two_owners=True))
+    assert result["canAutoRun"], result["issues"]
+    assert all(item["loaderIds"] == ["load", "load2"] for item in result["adapters"])
+    assert result["requirements"]["systemRamBytes"] == 300 * 2 + 544 * 4
+
+
+@pytest.mark.parametrize("change", ["disconnected", "unknown_supplier", "wrong_output", "wrong_loader_port", "duplicate_name"])
+def test_native_lora_chain_invalid_shapes_fail_before_auto(setup, tmp_path, change):
+    plan, _, hardware, _ = setup
+    hardware["systemMemory"]["availableBytes"] = hardware["accelerator"]["freeBytes"] = 10000
+    g = native_lora_chain_graph(tmp_path)
+    if change == "disconnected":
+        del g["nodes"]["style2"]["params"]["previous_loras"]
+    elif change == "unknown_supplier":
+        g["nodes"]["style1"]["action"] = "UnknownDescriptor"
+    elif change == "wrong_output":
+        g["nodes"]["style2"]["params"]["previous_loras"]["sourceKey"] = "other"
+    elif change == "wrong_loader_port":
+        g["nodes"]["load"]["params"]["other_adapter"] = g["nodes"]["load"]["params"].pop("lora_list")
+    else:
+        g["nodes"]["style2"]["params"]["adapter_name"]["value"] = "first_style"
+    result = plan(g)
+    assert not result["canAutoRun"]
+    assert result["patches"] == []
+    assert any("adapter" in issue.lower() or "lora" in issue.lower() for issue in result["issues"])
+
+
+def test_native_lora_chain_cycles_are_rejected_without_supplier_execution(setup, tmp_path):
+    plan, _, _, _ = setup
+    g = native_lora_chain_graph(tmp_path)
+    g["nodes"]["style1"]["params"]["previous_loras"] = {"sourceId": "style2", "sourceKey": "lora"}
+    with pytest.raises(ValueError, match="cycle|ordered after"):
+        plan(g)
 
 
 def test_sequential_owners_fit_by_releasing_the_completed_owner(setup):
@@ -466,7 +791,7 @@ def test_data_preparation_runs_supplier_once_and_never_uses_prior_output():
         supplier.output = {'width': 1024}
     server.execute_node = execute
     server._auto_resource_contract_error = ValueError
-    server._build_workflow_auto_plan = lambda g: {'canAutoRun': True, 'requiresPreparation': False, 'preparationNodeIds': [], 'seen': RUNTIME_VALUES.get()[('source', 'width')]}
+    server._build_workflow_auto_plan = lambda g, **kwargs: {'canAutoRun': True, 'requiresPreparation': False, 'preparationNodeIds': [], 'seen': RUNTIME_VALUES.get()[('source', 'width')]}
     g = {'sid': 'session', 'nodes': {'source': {'module': 'modules.Image', 'action': 'Load', 'params': {}}}, 'paths': [['source'], ['source']]}
     plan, prepared = WebServer._prepare_workflow_auto_data(server, g, {'requiresPreparation': True, 'preparationNodeIds': ['source']})
     assert calls == ['invalidate', 'source'] and plan['seen'] == 1024 and prepared == {'source'}
@@ -644,3 +969,371 @@ def test_unqualified_recipe_explains_installed_files_are_not_auto_proof(setup):
     assert 'bfloat16' in message
     assert 'Custom memory' in message
     assert g == before
+
+
+def warm_cache(g, *, ram=6 * 1024 ** 3, vram=0):
+    return {"owners": {"load": {"cacheKey": planner.workflow_owner_cache_key(g, "load"),
+                                 "systemRamBytes": ram, "vramBytes": vram}},
+            "reclaimable": {"systemRamBytes": ram, "vramBytes": vram}}
+
+
+def test_warm_workflow_reuses_resident_weights_without_counting_full_ram_again(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate['requirements'] = {'systemRamBytes': 8 * gib, 'vramBytes': 0}
+    hardware['systemMemory'].update(totalBytes=32 * gib, availableBytes=12 * gib)
+    hardware['accelerator']['freeBytes'] = 16 * gib
+    g = graph()
+    cold = plan(g)
+    assert cold['canAutoRun']
+    hardware['systemMemory']['availableBytes'] = int(4.5 * gib)
+    # The loader/weights are unchanged while the prompt consumer changes.
+    g['nodes']['generate']['params']['prompt'] = {'value': 'a new image'}
+    warm = plan(g, cache_snapshot=warm_cache(g))
+    assert warm['canAutoRun'], warm['issues']
+    assert warm['requirements']['systemRamBytes'] == 4 * gib
+    assert warm['retainedRequirements']['systemRamBytes'] == 8 * gib
+    assert warm['reusedOwnerIds'] == ['load']
+    assert not warm['requiresCachePreparation']
+
+
+def test_reported_warm_ram_pressure_plans_cleanup_before_rechecking_capacity(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate['requirements'] = {'systemRamBytes': 8 * gib, 'vramBytes': 0}
+    hardware['systemMemory'].update(totalBytes=32 * gib, availableBytes=4279840768)
+    hardware['accelerator']['freeBytes'] = 16 * gib
+    g = graph()
+    result = plan(g, cache_snapshot=warm_cache(g))
+    assert result['canAutoRun'], result['issues']
+    assert result['requiresCachePreparation']
+    assert result['reusedOwnerIds'] == []
+    assert result['requirements']['systemRamBytes'] == 8 * gib
+    assert result['available']['systemRamBytes'] == 4279840768
+    assert 'recheck' in result['message'].lower()
+
+
+def test_resident_credit_does_not_authorize_external_memory_pressure(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate['requirements'] = {'systemRamBytes': 8 * gib, 'vramBytes': 0}
+    hardware['systemMemory'].update(totalBytes=32 * gib, availableBytes=gib)
+    hardware['accelerator']['freeBytes'] = 16 * gib
+    g = graph()
+    result = plan(g, cache_snapshot=warm_cache(g, ram=2 * gib))
+    assert not result['canAutoRun']
+    assert not result['requiresCachePreparation']
+    assert 'System RAM' in ' '.join(result['issues'])
+    assert 'GiB' in ' '.join(result['issues'])
+
+
+@pytest.mark.parametrize('kind', ['cuda', 'mps', 'xpu'])
+def test_shared_memory_reuse_keeps_combined_host_and_accelerator_headroom(setup, kind):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate['requirements'] = {'systemRamBytes': 8 * gib, 'vramBytes': 6 * gib}
+    hardware['systemMemory'].update(totalBytes=32 * gib, availableBytes=7 * gib)
+    hardware['accelerator'].update(kind=kind, totalBytes=16 * gib, freeBytes=7 * gib, memoryKind='shared',
+                                  sharedMemoryAvailableBytes=7 * gib)
+    g = graph()
+    g['nodes']['load']['params']['device']['value'] = 'mps' if kind == 'mps' else f'{kind}:0'
+    result = plan(g, cache_snapshot=warm_cache(g, ram=6 * gib, vram=6 * gib))
+    assert result['canAutoRun'], result['issues']
+    assert result['sharedMemory'] and result['reusedOwnerIds'] == ['load']
+    assert sum(result['requirements'][key] for key in ('systemRamBytes', 'vramBytes')) <= 7 * gib
+    hardware['systemMemory']['availableBytes'] = 5 * gib
+    hardware['accelerator'].update(freeBytes=5 * gib, sharedMemoryAvailableBytes=5 * gib)
+    pressured = plan(g, cache_snapshot=warm_cache(g, ram=6 * gib, vram=6 * gib))
+    assert pressured['requiresCachePreparation'] and pressured['reusedOwnerIds'] == []
+
+
+def test_live_vram_storage_is_credited_once_and_external_gpu_pressure_still_blocks(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate['requirements'] = {'systemRamBytes': 0, 'vramBytes': 8 * gib}
+    hardware['systemMemory'].update(totalBytes=32 * gib, availableBytes=12 * gib)
+    hardware['accelerator'].update(totalBytes=16 * gib, freeBytes=gib)
+    result = plan(graph(), cache_snapshot=warm_cache(graph(), ram=0, vram=6 * gib))
+    assert not result['canAutoRun'] and not result['requiresCachePreparation']
+    assert result['available']['vramBytes'] == gib
+    assert result['requirements']['vramBytes'] == 2 * gib
+    assert 'Accelerator memory' in ' '.join(result['issues'])
+
+
+def test_gpu_only_warm_owner_cannot_invent_host_loading_credit(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate['requirements'] = {'systemRamBytes': 8 * gib, 'vramBytes': 8 * gib}
+    hardware['systemMemory'].update(totalBytes=32 * gib, availableBytes=6 * gib)
+    hardware['accelerator'].update(totalBytes=16 * gib, freeBytes=4 * gib)
+    g = graph()
+    result = plan(g, cache_snapshot=warm_cache(g, ram=0, vram=6 * gib))
+    assert not result['canAutoRun'] and not result['requiresCachePreparation']
+    assert result['reusedOwnerIds'] == ['load']
+    assert result['requirements']['vramBytes'] == 2 * gib
+    # The aggregate recipe declares no separate transient host-loading demand.
+    # Known CUDA weights cannot reduce unmeasured host inference requirements.
+    assert result['requirements']['systemRamBytes'] == 8 * gib
+    assert result['available']['systemRamBytes'] == 6 * gib
+    assert 'System RAM' in ' '.join(result['issues'])
+
+
+@pytest.mark.parametrize('field,value', [('dtype', 'float16'), ('offload_mode', 'model_cpu'),
+                                       ('revision', 'a' * 40)])
+def test_owner_cache_identity_changes_with_loader_settings_but_not_consumers(field, value):
+    g = graph()
+    original = planner.workflow_owner_cache_key(g, 'load')
+    g['nodes']['generate']['params']['num_inference_steps']['value'] = 10
+    assert planner.workflow_owner_cache_key(g, 'load') == original
+    g['nodes']['load']['params'][field] = {'value': value}
+    assert planner.workflow_owner_cache_key(g, 'load') != original
+
+
+def test_owner_cache_identity_includes_connected_adapter_source():
+    g = graph()
+    g['nodes']['adapter'] = {'module': 'modules.ModularDiffusers', 'action': 'Lora',
+                             'params': {'repo_id': {'value': 'test/lora'}, 'scale': {'value': 1}}}
+    g['nodes']['load']['params']['lora'] = {'sourceId': 'adapter', 'sourceKey': 'lora'}
+    g['paths'] = [['adapter', 'load', 'generate', 'preview']]
+    original = planner.workflow_owner_cache_key(g, 'load')
+    g['nodes']['adapter']['params']['scale']['value'] = .5
+    assert planner.workflow_owner_cache_key(g, 'load') != original
+
+
+def test_owner_cache_identity_includes_actual_connected_resource_values():
+    g = graph()
+    g['nodes']['source'] = {'module': 'modules.Primitive', 'action': 'String',
+                             'params': {'value': {'value': 'test/model'}}}
+    g['nodes']['load']['params']['repo_id'] = {'sourceId': 'source', 'sourceKey': 'output'}
+    first = planner.workflow_owner_cache_key(g, 'load', {'load': {'repo_id': 'test/model'}})
+    assert planner.workflow_owner_cache_key(g, 'load', {'load': {'repo_id': 'test/other'}}) != first
+
+
+def test_cache_snapshot_counts_unique_storage_and_does_not_retain_model(tmp_path, monkeypatch):
+    import sys
+    import weakref
+    import torch
+    from modiff.server import WebServer, memory_manager
+
+    class Loader:
+        pass
+
+    class Model(torch.nn.Module):
+        def parameters(self, *args, **kwargs):
+            raise AssertionError('inspection must not invoke model overrides')
+
+    model = Model()
+    model.weight = torch.nn.Parameter(torch.zeros(16))
+    model.register_buffer('same_storage', model.weight.detach())
+    cached = Loader()
+    cached._cache_valid, cached._cache_invalidated = True, False
+    cached._mm_models, cached.output = ['weights'], {'model': model}
+    cached.loader = model
+    app = object.__new__(WebServer)
+    app.node_cache = {'load': cached}
+    monkeypatch.setattr(memory_manager, 'cache', {'weights': {'model': model}})
+    monkeypatch.setitem(sys.modules, 'modules.ModularDiffusers', SimpleNamespace(
+        components=SimpleNamespace(collections={'load': ['component']}, components={'component': model})))
+    owner = {'nodeId': 'load', 'cacheKey': 'reviewed-owner'}
+    app._record_workflow_auto_owner(owner)
+    snapshot = app._workflow_auto_cache_snapshot()
+    assert snapshot['reclaimable'] == {'systemRamBytes': 64, 'vramBytes': 0}
+    assert snapshot['owners']['load'] == {'cacheKey': 'reviewed-owner', 'systemRamBytes': 64, 'vramBytes': 0}
+    cached.output = {'model': model}
+    assert not app._workflow_auto_cache_snapshot()['owners']
+    app._record_workflow_auto_owner(owner)
+    cached._cache_invalidated = True
+    assert not app._workflow_auto_cache_snapshot()['owners']
+    assert app._workflow_auto_owner_records == {}
+    reference = weakref.ref(cached)
+    app.node_cache.clear()
+    del cached
+    assert reference() is None
+
+
+def test_workflow_inspection_and_dispatch_both_receive_owner_storage(tmp_path, monkeypatch):
+    from modiff.server import WebServer
+    import modiff.server as server_module
+    app = object.__new__(WebServer)
+    app.current_task = None
+    app.data_dir = str(tmp_path)
+    app._auto_resource_runtime_block = lambda: None
+    app._runtime_fingerprint = lambda: {'fingerprint': 'actual-free'}
+    app._auto_planning_runtime_fingerprint = lambda: pytest.fail('owner-aware workflow must not add all CUDA reservations')
+    cache = {'owners': {'load': {'systemRamBytes': 6 * 1024 ** 3}}, 'reclaimable': {}}
+    app._workflow_auto_cache_snapshot = lambda: cache
+    monkeypatch.setattr(server_module, 'get_local_models', lambda: [])
+    seen = []
+    monkeypatch.setattr(server_module, 'build_workflow_auto_plan', lambda g, **kw: seen.append(kw) or {'canAutoRun': True})
+    app._build_workflow_auto_plan(graph())
+    app.current_task = {'task_id': 'dispatch'}
+    app._build_workflow_auto_plan(graph(), dispatch=True)
+    assert all(item['cache_snapshot'] is cache for item in seen)
+    assert all(item['runtime_fingerprint']['fingerprint'] == 'actual-free' for item in seen)
+    app._auto_planning_runtime_fingerprint = lambda: {'fingerprint': 'before-active-run'}
+    app._workflow_auto_cache_snapshot = lambda: pytest.fail('active HTTP inspection must not walk loading models')
+    app._runtime_fingerprint = lambda: pytest.fail('active HTTP inspection must not enter accelerator probes')
+    app._build_workflow_auto_plan(graph())
+    assert seen[-1]['cache_snapshot'] == {}
+
+
+def test_cache_preparation_keeps_prepared_data_and_rechecks_its_actual_values():
+    from modiff.server import WebServer
+    from modiff.workflow_auto_values import RUNTIME_VALUES
+    app = object.__new__(WebServer)
+    prepared = SimpleNamespace(output={'width': 1024})
+    app.node_cache, app.current_task = {'source': prepared, 'old': object()}, None
+    messages = []
+    app.queue_message = messages.append
+    def release():
+        app.node_cache.clear()
+        return {'released': {'nodes': 2}, 'errors': []}
+    app._release_runtime_caches_for_retry = release
+    def replan(graph, **kwargs):
+        assert kwargs == {'dispatch': True}
+        assert app.node_cache == {'source': prepared}
+        assert RUNTIME_VALUES.get() == {('source', 'width'): 1024}
+        return {'canAutoRun': True, 'requiresCachePreparation': False, 'available': {}}
+    app._build_workflow_auto_plan = replan
+    result, cleanup = app._prepare_workflow_auto_cache({'sid': 'unit'},
+        {'canAutoRun': True, 'requiresCachePreparation': True}, {'source'})
+    assert result['canAutoRun'] and cleanup['released']['nodes'] == 2
+    assert app.node_cache['source'] is prepared and not RUNTIME_VALUES.get()
+    assert [item['performed'] for item in messages] == [False, True]
+
+
+@pytest.mark.parametrize('stale', ['source_invalidated', 'source_replaced', 'source_output',
+                                   'loader_inputs', 'loader_implementation', 'model_evicted'])
+def test_owner_credit_requires_ordinary_loader_and_upstream_cache_hits(monkeypatch, stale):
+    import torch
+    from modiff.server import WebServer, memory_manager
+    from modiff.node_cache_identity import implementation_identity, input_snapshot
+    class Cached:
+        CALLBACK = 'execute'
+        def execute(self):
+            pass
+    source, loader = Cached(), Cached()
+    for node in (source, loader):
+        node._cache_valid, node._cache_invalidated = True, False
+        node.params, node.output = {'revision': 'original'}, {'value': 'original'}
+        node._cache_input_snapshot = input_snapshot(node.params)
+        node._cache_implementation = implementation_identity(node)
+        node._mm_models, node._cache_input_sources = [], ()
+    loader._cache_input_sources = ('source',)
+    loader._mm_models = ['weights']
+    model = torch.nn.Linear(4, 4, bias=False)
+    monkeypatch.setattr(memory_manager, 'cache', {'weights': {'model': model}})
+    app = object.__new__(WebServer)
+    app.node_cache = {'load': loader, 'source': source}
+    app._record_workflow_auto_owner({'nodeId': 'load', 'cacheKey': 'owner'})
+    assert app._workflow_auto_cache_snapshot()['owners']['load']['systemRamBytes'] == 64
+    if stale == 'source_invalidated':
+        source._cache_invalidated = True
+    elif stale == 'source_replaced':
+        app.node_cache['source'] = Cached()
+    elif stale == 'source_output':
+        source.output = {'value': 'changed'}
+    elif stale == 'loader_inputs':
+        loader.params['revision'] = 'changed'
+    elif stale == 'loader_implementation':
+        loader._cache_implementation = None, None
+    else:
+        memory_manager.cache.clear()
+    assert not app._workflow_auto_cache_snapshot()['owners']
+
+
+@pytest.mark.parametrize('capacity_semantics', [False, True])
+def test_five_warm_dispatches_reuse_cpu_weights_and_generate_each_changed_prompt(setup, tmp_path, monkeypatch, capacity_semantics):
+    import torch
+    from modiff.server import WebServer, memory_manager
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate['requirements'] = {'systemRamBytes': 8 * gib, 'vramBytes': 0}
+    if capacity_semantics:
+        candidate['requirements'] = {'memorySemantics': 'machine_capacity', 'minimum': candidate['requirements']}
+    hardware['systemMemory'].update(totalBytes=32 * gib, availableBytes=12 * gib)
+    hardware['accelerator']['freeBytes'] = 16 * gib
+    model = torch.nn.Linear(4, 4, bias=False)
+    with torch.no_grad():
+        model.weight.fill_(1)
+    monkeypatch.setattr(memory_manager, 'cache', {'weights': {'model': model}})
+    class Loader:
+        pass
+    cached = Loader()
+    cached._cache_valid, cached._cache_invalidated = True, False
+    cached._mm_models, cached.output = ['weights'], {'model': model}
+    app = WebServer(modules={}, work_dir=str(tmp_path), data_dir=str(tmp_path))
+    app.current_task = {'task_id': 'five-warm-runs', 'progress': 0}
+    app._build_workflow_auto_plan = lambda graph, **kwargs: plan(graph, cache_snapshot=app._workflow_auto_cache_snapshot())
+    app._prepare_auto_runtime_for_graph = lambda _: None
+    app._runtime_fingerprint = lambda: {'fingerprint': 'unit'}
+    app._runtime_measurement = lambda **_: {'elapsedSeconds': 0}
+    app._record_auto_resource_success = lambda *a, **k: None
+    app._record_optimization_observations = lambda *a, **k: []
+    messages, generations, outputs, weight_loads = [], [], [], []
+    app.queue_message = messages.append
+    def execute(node_id, node, sid):
+        if node_id == 'load':
+            if node_id not in app.node_cache:
+                weight_loads.append(node_id)
+                app.node_cache[node_id] = cached
+                # Real CPU computations use controlled memory samples. The
+                # capacity tier is never an additional free-RAM requirement.
+                hardware['systemMemory']['availableBytes'] = 5 * gib if capacity_semantics else 8 * gib - 32
+        elif node_id == 'generate':
+            generations.append((node['params']['prompt']['value'], node['params']['seed']['value']))
+            with torch.no_grad():
+                outputs.append(model(torch.full((1, 4), float(node['params']['seed']['value'] + 1))).tolist())
+    app.execute_node = execute
+    for index in range(5):
+        g = graph()
+        g['sid'] = 'unit'
+        g['nodes']['generate']['params'].update(prompt={'value': f'image {index}'}, seed={'value': index})
+        g['runtimeHints'] = {'resourceMode': 'auto', 'workflowAutoPlan': {'schemaVersion': 1, 'graphHash': planner.workflow_graph_hash(g)}}
+        app._execute_graph(g)
+    assert weight_loads == ['load']
+    assert generations == [(f'image {index}', index) for index in range(5)]
+    assert outputs == [[[4.0 * (index + 1)] * 4] for index in range(5)]
+    completed = [item for item in messages if item['type'] == 'graph_completed']
+    assert len(completed) == 5
+    assert all(item['runtimePreparation']['workflowAuto']['reusedOwnerIds'] == ['load'] for item in completed[1:])
+
+
+@pytest.mark.parametrize('memory_after_release', [12, 1])
+def test_dispatch_releases_cache_before_capacity_gate_and_requires_actual_ram(setup, tmp_path, memory_after_release):
+    from modiff.server import WebServer
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate['requirements'] = {'systemRamBytes': 8 * gib, 'vramBytes': 0}
+    hardware['systemMemory'].update(totalBytes=32 * gib, availableBytes=4279840768)
+    hardware['accelerator']['freeBytes'] = 16 * gib
+    g = graph()
+    g['sid'] = 'unit'
+    g['runtimeHints'] = {'resourceMode': 'auto', 'workflowAutoPlan': {'schemaVersion': 1, 'graphHash': planner.workflow_graph_hash(g)}}
+    app = WebServer(modules={}, work_dir=str(tmp_path), data_dir=str(tmp_path))
+    app.current_task = {'task_id': 'warm-test', 'progress': 0}
+    calls, messages = [], []
+    cache = warm_cache(g)
+    app._build_workflow_auto_plan = lambda graph, **kwargs: plan(graph, cache_snapshot=cache)
+    def release():
+        calls.append('release')
+        cache.clear()
+        hardware['systemMemory']['availableBytes'] = memory_after_release * gib
+        return {'errors': [], 'released': {'models': 1}}
+    app._release_runtime_caches_for_retry = release
+    app.queue_message = messages.append
+    app._prepare_auto_runtime_for_graph = lambda _: None
+    app._runtime_fingerprint = lambda: {'fingerprint': 'unit'}
+    app._runtime_measurement = lambda **_: {'elapsedSeconds': 0}
+    app._record_auto_resource_success = lambda *a, **k: None
+    app._record_optimization_observations = lambda *a, **k: []
+    app.execute_node = lambda id, *args: calls.append(id)
+    if memory_after_release == 1:
+        with pytest.raises(RuntimeError, match='System RAM.*8.00 GiB.*1.00 GiB'):
+            app._execute_graph(g)
+        assert calls == ['release']
+    else:
+        app._execute_graph(g)
+        assert calls == ['release', 'load', 'generate', 'preview']
+        completed = next(item for item in messages if item['type'] == 'graph_completed')
+        assert completed['runtimePreparation']['workflowAuto']['cachePreparation']['released']['models'] == 1

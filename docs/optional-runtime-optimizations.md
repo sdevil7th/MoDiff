@@ -1,26 +1,23 @@
 # Optional runtime optimizations
 
-Last reviewed: 2026-08-15
+Transformers and PEFT are now required base dependencies on every supported
+platform. A verified base installation satisfies ordinary image and LoRA
+workflows without an optional Install or Activate step. Read-only discovery,
+template browsing, and Auto planning remain non-installing.
 
-MoDiff treats accelerator extensions and optional model libraries as reviewed
-runtime contracts, not as uncontrolled additions to the main Python
-environment. The backend includes a fail-closed, artifact-locked app-owned
-staged overlay with explicit per-platform qualification and delivery. Existing hashless
-optimization overlays are classified as `legacy_unqualified`; they are never
-loaded or activated, and an explicit rollback deactivates them to the base
-environment.
+Additional accelerator/quantization libraries retain the artifact-locked,
+operator-requested staged overlay boundary. Historical core-only overlays are
+migration state, not normal first-use prerequisites. Installation and activation
+report progress until the replacement worker verifies readiness; an installed
+directory or an accepted restart request alone is not completion.
 
-The optional model-library boundary now publishes two immutable profiles. The
-published-wheel profile moves Transformers `5.14.1` and PEFT `0.20.0` together
-with their eight overlay-owned transitive distributions; its lock covers ten
-Python 3.12 wheels for Linux, macOS, and Windows on x86-64 and ARM64. A separate
-profile delivers exact Transformers `main` commit
-`96fe6dce36cc929a5ffd3e34296554c4cb6b669e` (`5.16.0.dev0`) with the same PEFT
-version and reviewed transitive closure. Linux x86-64 execution is bound to that
-exact-main profile, while Windows x86-64 retains the published-wheel profile.
-Linux ARM64, Windows ARM64, and both macOS architectures remain
-`candidate_unqualified` and base-delivered. Merely finding the requested
-versions—or merely publishing the locks—does not make either profile runnable.
+See the [native auxiliary runtime checks](auxiliary-runtime-native-qualification.md)
+for the current GGUF, Quanto, and media installation evidence and its limits.
+
+The historical qualification sections below describe their exact recorded
+versions and hosts. They do not require current installations to use those
+Transformers/PEFT versions, a pinned uv executable, or a Transformers-free base.
+Current ordinary dependency resolution lives in `pyproject.toml` and `uv.lock`.
 
 Deterministic source extraction normalizes timestamps with non-following POSIX
 operations or validated Windows file handles, rejecting reparse points and
@@ -59,6 +56,15 @@ rollback contracts. Setup implements that lifecycle behind the backend-owned
 install or repair requires explicit consent, polls only the returned bounded job
 identity, supports cancellation, and keeps activation and rollback behind their
 own consent steps. Ambiguous staged environments do not expose activation.
+Activation returns a persisted job promptly, then validates the runtime and
+reports restart and verification progress. The catalog exposes `latestJob`, so
+Setup restores the same operation after a browser refresh or worker restart.
+Activation becomes ready only when the replacement worker verifies the exact
+loaded environment and profile digest, qualified cutover contract, and backend
+readiness. Unsupervised launches retain explicit restart instructions. A
+temporary connection failure retains progress instead of resetting to Activate;
+failed verification exposes a bounded failure state. Only installation jobs
+support cancellation.
 The status catalog includes the effective `platform` and `machine`, and the
 client names that target beside the runtime state. A pending target renders no
 package controls and rejects direct install or activation before a lease, job,
@@ -69,16 +75,10 @@ capability contract permits it.
 
 ## First-use execution boundary
 
-Optional-runtime dependency metadata is intentionally separate from executable
-delivery. Every current Diffusers execution profile publishes a complete
-platform-delivery table: Linux and Windows x86-64 use `optional_overlay`, while
-pending architectures use `base`. A second explicit target table resolves the
-profile identity: Linux x86-64 requires exact Transformers `main`, Windows
-x86-64 requires the published `5.14.1` wheels, and the four pending targets
-remain base/candidate. The effective target is resolved from those reviewed
-tables rather than a hidden platform shortcut. Discovery, workflow
-browsing/opening, contract preview, and Auto planning remain non-installing on
-every target.
+Current core model-library requirements use `delivery: base` on every target.
+Readiness verifies the installed compatible Transformers/PEFT packages directly.
+It does not require an activated historical overlay. Additional optional runtime
+profiles still identify their delivery and activation state explicitly.
 
 Auto plans, workflow listings, model capabilities, and execution profiles
 publish the same seven-field `optionalRuntimeRequirement` contract:
@@ -92,9 +92,8 @@ runtime and one execution profile. States are `base_satisfied`, `missing`,
 Malformed or ambiguous contracts and status catalogs fail closed as
 `unavailable`.
 
-A base-delivered `base_satisfied` requirement is execution-ready. On qualified
-Linux/Windows x86-64 targets, when `requiredNow` is true, only `state: active`
-is ready. Active requires the
+A base-delivered `base_satisfied` requirement is execution-ready. A genuinely
+overlay-delivered requirement needs `state: active`. Active requires the
 current worker and status catalog to agree on the active overlay, and each
 required profile must have `contractState: qualified` and
 `cutoverReady: true`. An unqualified target cannot become overlay-runnable and
@@ -235,11 +234,10 @@ workflow or a contributor-controlled Mac. Until then, its checked contract
 keeps both direct base dependencies and `delivery: base`; a passing reviewed
 run can promote only that target in a later commit.
 
-Qualification preparation now includes exact filename, URL, SHA-256, and size
-locks for all sixty platform-wheel records, plus one immutable uv `0.11.26`
-archive/executable pair for each supported target. The base installer writes a
-receipt only after rehashing the reviewed executable, and the overlay path
-rehashes it independently. Archive validation requires one matching METADATA,
+Optional artifact locks include exact filenames, URLs, hashes, and sizes.
+uv itself comes from the operator's installation and is not version-pinned by
+MoDiff. Update standalone uv with `uv self update`, or use its package manager.
+Archive validation requires one matching METADATA,
 WHEEL, and complete unique RECORD; every non-RECORD row must carry the exact
 SHA-256 and size of its archived file, and RECORD must cover the archive exactly.
 On Windows, the watchdog enters a non-breakaway Job Object with kill-on-close
