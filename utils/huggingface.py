@@ -1598,6 +1598,14 @@ def get_local_models(compact: bool = False):
     local_models = {}
     for _, cache_dir in _hf_cache_locations():
         try:
+            cache_path = Path(cache_dir if cache_dir is not None else HUGGINGFACE_HUB_CACHE).expanduser()
+            try:
+                # Optional default roots need not exist. stat() distinguishes
+                # that absence from permission errors, unlike exists().
+                cache_path.stat()
+            except FileNotFoundError:
+                logger.debug('Skipping absent Hugging Face cache directory %s', cache_path)
+                continue
             cache = scan_cache_dir(cache_dir)
         except Exception as e:
             logger.error(f'Error scanning cache directory {cache_dir or "default"}: {e}')
