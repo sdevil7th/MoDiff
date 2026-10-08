@@ -6,6 +6,10 @@ and original workflows, while keeping each machine's runtime and results
 separate. A successful local image campaign or CPU CI run does not qualify a
 different accelerator, an untested media family, or every advertised route.
 
+For Windows, use the [Windows acceptance plan](windows-app-validation.md) for
+the checks for each feedback item, native and guided installation procedures, repeated
+generation sequence, failure handling, and required evidence.
+
 Follow the [engineering procedure](cluster-engineering-lessons.md),
 [workbench acceptance](workbench-acceptance.md), and
 [runtime support matrix](runtime-support-matrix.md). This guide coordinates

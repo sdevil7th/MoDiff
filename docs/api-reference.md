@@ -1747,23 +1747,37 @@ every required profile reports `contractState: qualified` and
 `cutoverReady: true`. Missing, malformed, ambiguous, duplicate, oversized, or
 inconsistent execution/catalog metadata resolves to `unavailable`, not active.
 
-The current composite Transformers + PEFT profile has a complete
-source-controlled six-target wheel lock for its ten exact `stagedRequirements`.
-Its effective response also reports `platform` and `machine`. Linux and Windows
-x86-64 report `contractState: qualified`, `cutoverReady: true`, and available
-install/activation actions. Linux ARM64, Windows ARM64, and both macOS targets
-report `candidate_unqualified`, remain base-delivered, and expose no actions.
-Each lock includes the exact
-filename, official PyPI URL, SHA-256, byte size, Python target, platform, and
-machine. Its metadata-only package status is `missing`,
+Transformers and PEFT are required base dependencies on every supported
+platform and architecture. Core-only execution profiles publish
+`delivery: base`, `requiredNow: false`, empty `profileIds`, and
+`state: base_satisfied`; they do not require an optional Install or Activate
+step. This requirement describes optional-overlay readiness. Base-package
+readiness is checked separately by preflight and `GET /health` or
+`GET /runtime/status`, which report Transformers and PEFT among the required
+packages. For a native uv installation, repair missing or incompatible base
+packages by repeating `uv sync` with the same accelerator extra used for setup,
+then run preflight and restart MoDiff. Specialized AMD installations retain
+their existing repair commands; see [Developer setup](developer-setup.md).
+
+The optional-runtime catalog retains historical core-only profile records and
+their exact artifact locks for inspection and migration. These profiles publish
+`baseIncluded: true`, `installActionAvailable: false`, and
+`activationAvailable: false`. Their recorded versions and target qualification
+flags do not replace the current base dependency contract in `pyproject.toml`
+and `uv.lock`.
+
+Profiles that require additional optional packages retain explicit
+target-specific delivery and activation contracts. Their metadata reports
+`platform`, `machine`, qualification, and action availability; artifact locks
+include the exact filename, official PyPI URL, SHA-256, byte size, Python target,
+platform, and machine. Metadata-only package status is `missing`,
 `wrong_version`, or `present_unqualified`; unreadable distribution metadata
 fails closed as `wrong_version` with `metadataState: unreadable`. These
 observations do not install anything during Auto planning, discovery, browsing,
-or workflow open. Every current Diffusers execution profile publishes its full
-platform delivery table. Linux/Windows x86-64 resolve to
-`delivery: optional_overlay` and `requiredNow: true`; pending targets resolve to
-`delivery: base` and `requiredNow: false`. An unknown or duplicate target fails
-closed rather than selecting an overlay implicitly.
+or workflow open. An unknown or duplicate target fails closed rather than
+selecting an overlay implicitly. See
+[Optional runtime optimizations](optional-runtime-optimizations.md) for the
+additional package contracts and historical qualification scope.
 
 `GET /runtime/optional-runtimes` returns the same profile catalog plus bounded
 overlay state, staged-environment summaries, and a redacted active job summary.
@@ -1805,9 +1819,12 @@ The optional-runtime mutation routes use exact JSON objects:
 
 Unknown or duplicate fields, non-object bodies, non-literal consent, malformed
 identifiers/digests, oversized bodies, cross-kind jobs, and stale terminal jobs
-fail closed. The current profile rejects install and activation with HTTP `409`
-before reserving a lease, creating a job/staging directory, opening the
-network, or starting a subprocess. A successful activation or rollback
+fail closed. Valid install or activation requests for a `baseIncluded: true`
+core profile return HTTP `409` with base-installation repair instructions before
+reserving a lease, creating a job/staging directory, opening the network, or
+starting a subprocess. Additional optional profiles reject unavailable or
+unqualified actions at the same boundary; qualified, available actions follow
+the job lifecycle below. A successful activation or rollback
 requires a worker restart; an unsupervised process remains
 `restart_required`. It releases the completed mutation gate: base-delivered
 work remains runnable, while `optional_overlay` work stays blocked until the

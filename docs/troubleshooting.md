@@ -393,9 +393,10 @@ nor padded to satisfy the public precomputed-embedding check.
 
 If a reviewed block reports `Cannot load conditional snapshot`, restore
 `data/modular-conditional-contracts.json` using
-`scripts/generate_modular_conditional_contracts.py` in the pinned optional
-Diffusers runtime. This is a no-weight structural generator. Its coverage comes
-from the validated reviewed workflow snapshot, preserving constructor configs;
+`scripts/generate_modular_conditional_contracts.py` in the reviewed runtime
+containing the pinned Diffusers revision. This is a no-weight structural
+generator. Its coverage comes from the validated reviewed workflow snapshot,
+preserving constructor configs;
 routing registry promotions must not remove classes from this companion.
 The generator validates hashes, branch truth tables and execution traces against
 the existing resolved snapshots. Run its `--check` mode and the conditional
