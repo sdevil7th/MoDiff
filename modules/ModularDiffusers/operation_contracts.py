@@ -114,11 +114,12 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                             "model_type": pipeline_class,
                         },
                     )
-                    # Only the loader's existing allowlist can select workflow
-                    # pruning. Other loaders retain their current unscoped path.
+                    # Package-owned stage adapters require the same exact
+                    # workflow on their loader and sealed stage state. Other
+                    # loaders retain the existing pruning allowlist boundary.
                     from .loaders import REVIEWED_BUILTIN_WORKFLOWS
 
-                    if workflow_id in REVIEWED_BUILTIN_WORKFLOWS.get(pipeline_class, ()):
+                    if whole or workflow_id in REVIEWED_BUILTIN_WORKFLOWS.get(pipeline_class, ()):
                         loader["binding"]["values"]["workflow_id"] = workflow_id
                     for port in loader["ports"]:
                         if port["name"] in members:

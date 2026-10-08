@@ -1,6 +1,8 @@
 """Exact snapshots support Hub's shared, sharded blob layout without widening authority."""
 import hashlib
 import json
+import os
+from pathlib import PurePosixPath
 
 import pytest
 
@@ -39,7 +41,7 @@ def test_exact_snapshot_and_index_accept_shared_blob_without_content_hash_assump
 
 @pytest.mark.parametrize("target", [
     "models--foreign--repo/blobs/other", "other-managed-data", "blobs/e8/" + BLOB_NAME,
-    "blobs/e9/not-a-blob", "blobs/e9/" + BLOB_NAME.upper(), "blobs/e9/" + "f" * 64 + "/extra",
+    "blobs/e9/not-a-blob", "blobs/aa/" + "A" * 64, "blobs/e9/" + "f" * 64 + "/extra",
 ])
 def test_shared_blob_does_not_authorize_other_managed_paths(installed, target):
     cache, _, marker, _ = installed
@@ -52,6 +54,20 @@ def test_shared_blob_does_not_authorize_other_managed_paths(installed, target):
         hf.exact_cached_snapshot_path(REPOSITORY, REVISION)
     with pytest.raises(OSError, match="cache|blob|snapshot"):
         _read_reviewed_pipeline_index(marker, repository=REPOSITORY, revision=REVISION)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Real Windows path resolution is required for this NTFS alias check.")
+def test_windows_case_variant_shared_blob_resolves_to_same_lowercase_file(installed):
+    _, snapshot, marker, blob = installed
+    case_alias = blob.with_name(blob.name.upper())
+    assert case_alias.exists() and case_alias.samefile(blob)
+    marker.unlink()
+    marker.symlink_to(case_alias)
+    assert marker.resolve().name == BLOB_NAME
+    assert hf.exact_cached_snapshot_path(REPOSITORY, REVISION) == snapshot
+    assert _read_reviewed_pipeline_index(marker, repository=REPOSITORY, revision=REVISION) == {
+        "_class_name": "Cosmos3OmniPipeline"
+    }
 
 
 @pytest.mark.parametrize("directory", ["blobs", "blobs/e9"])
@@ -111,6 +127,7 @@ def test_foreign_repository_alias_cannot_borrow_shared_blob_containment(installe
 @pytest.mark.parametrize("extended,ordinary", [
     (r"\\?\C:\hub\blobs\e9\blob", r"C:\hub\blobs\e9\blob"),
     (r"\\?\c:\hub\blobs\e9\blob", r"C:\hub\blobs\e9\blob"),
+    (rf"\\?\c:\HUB\BLOBS\E9\{BLOB_NAME.upper()}", rf"C:\hub\blobs\e9\{BLOB_NAME}"),
     (r"\\?\UNC\server\share\hub\blobs\e9\blob", r"\\server\share\hub\blobs\e9\blob"),
 ])
 def test_direct_windows_link_target_preserves_extended_path_spelling(extended, ordinary):
@@ -137,7 +154,7 @@ def test_windows_prefix_normalization_does_not_authorize_other_targets(other):
     assert _lexical_cache_path(PureWindowsPath(other)) != PureWindowsPath(r"C:\hub\blobs\e9\blob")
 
 
-def test_windows_prefix_normalization_leaves_posix_path_unchanged(tmp_path):
+def test_windows_prefix_normalization_leaves_posix_path_unchanged():
     from modiff.hf_cache_layout import _lexical_cache_path
-    path = tmp_path / r"\\?\C:\literal"
+    path = PurePosixPath("/hub") / r"\\?\C:\literal"
     assert _lexical_cache_path(path) is path

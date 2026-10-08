@@ -174,6 +174,9 @@ def test_exact_super_starter_uses_publisher_recipe_without_constructing_models()
     profiles, reason = resolve_execution_profiles_for_loader(loader["module"], loader["action"], loader["values"])
     assert reason is None and [row.id for row in profiles] == [PROFILE]
     denoise, prompt = nodes["WorkflowCosmos3OmniDenoise"], nodes["WorkflowCosmos3OmniTextEncode"]
+    assert loader["operation"]["binding"]["values"].get("workflow_id") == "text2image"
+    assert loader["params"]["workflow_id"]["value"] == "text2image"
+    assert loader["values"]["workflow_id"] == "text2image"
     assert denoise["values"]["num_inference_steps"] == 50
     assert denoise["values"]["guidance_scale"] == 4.0 and denoise["values"]["seed"] == 1143
     assert prompt["values"]["width"] == prompt["values"]["height"] == 1024

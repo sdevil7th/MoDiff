@@ -227,7 +227,7 @@ are different from MoDiff's image workflows.
 
 | Additional reviewed native family | Selected weight-file bytes | Scope of evidence |
 | --- | ---: | --- |
-| LLaDA2.1-flash, discrete diffusion text | 205,782,452,128 bytes (205.8 GB; approximately 191.65 GiB), 32 shards | Pinned publisher index, config, model source and stable `LLaDA2Pipeline` reviewed; no weight download or execution. |
+| LLaDA2.1-flash, discrete diffusion text | 205,782,452,128 bytes (205.8 GB; approximately 191.65 GiB), 32 shards | Full checkpoint downloaded and hash verified; standalone BF16 SDK smoke completed one 32-token block and 32 steps with CPU/GPU placement. No MoDiff workflow or answer-quality qualification. |
 | LLaDA2.0-flash, discrete diffusion text | 205,782,433,824 bytes (205.8 GB), 42 shards | Same index-based selection; separate checkpoint, not combined with 2.1. |
 | JoyAI-Echo, audio/video, with external Gemma 3 12B | 70,514,517,046 bytes (70.5 GB) | Native `EchoModularPipeline` index selects 46.1 GB in five Echo component folders plus 24.4 GB of gated Gemma weights; excludes standalone DMD, FP8 and FP4 duplicates. |
 | Nucleus-Image, text-to-image | 51,633,577,862 bytes (51.6 GB) | Native `NucleusMoEImagePipeline` index selects transformer, text encoder and VAE. The older `NucleusMoE-Image` Hub name redirects to `Nucleus-Image`. |
@@ -247,14 +247,52 @@ BF16 with a small FP32 subset. Its model card declares Apache-2.0. The older
 implementations. Their threshold, token editing and post-refinement controls
 cover the publisher's speed/quality modes. The official example loads a model
 through Transformers with `trust_remote_code=True`; the Flash config maps to
-publisher `LLaDA2MoeModelLM` Python code. This is Diffusers family support,
-not a tested Flash execution or admission into MoDiff. A separate reviewed
-model-loading implementation, text task/output contracts and hardware/output
-qualification would be required. Approximately 191.65 GiB of full weight files
-leaves essentially no headroom on the nominal 192 GB MI300X before runtime and
-activations; offload or sharding feasibility requires measurement.
+publisher `LLaDA2MoeModelLM` Python code. MoDiff admission still requires a
+separate reviewed model-loading implementation, text task/output contracts and
+hardware/output qualification. Approximately 191.65 GiB of full weight files
+requires placement headroom for runtime and activations; the measured SDK smoke
+below used CPU offload.
 [Native stable pipeline source](https://github.com/huggingface/diffusers/blob/086bf9578c0f4acbc66e48cd1e7cc26befd9e10f/src/diffusers/pipelines/llada2/pipeline_llada2.py),
 [exact publisher class mapping](https://huggingface.co/inclusionAI/LLaDA2.1-flash/blob/2bf95e86ade33c1adb5c1e223b7db2a76dc3bdd6/config.json).
+
+#### Standalone LLaDA2.1 Flash SDK smoke
+
+On the droplet's MI300X VF (`gfx942`), the original pinned checkpoint completed a
+standalone text smoke using native Diffusers `LLaDA2Pipeline` 0.41.0, Transformers
+5.19.0, Accelerate 1.15.0 and Torch `2.10.0+rocm7.14.0`. All 39 checkpoint,
+publisher code and tokenizer files, totaling 205,792,373,581 bytes, were verified
+by SHA-256 before local-only loading. Model parameters used BF16 without
+quantization; attention used SDPA and KV caching was disabled.
+
+An explicit Accelerate device map was inferred from the empty model, keeping
+complete decoder layers together. Its budgets were observed free GPU memory
+minus 16 GiB and available host RAM minus 32 GiB. The resulting map placed the
+embeddings and first 28 decoder layers on the GPU, with the final four decoder layers and
+output-side modules assigned to CPU offload. There was no disk offload or
+post-load whole-model device move. This measures that specific mixed placement;
+it does not establish full GPU residency.
+
+The smoke generated one 32-token block in exactly 32 successful forwards and
+32 callbacks. Its original 35-token chat prompt was left-padded to 64 input
+tokens with 29 padding positions whose attention mask was zero. The arithmetic
+input was `Calculate 1+5-28*0.5-200=?`. It used greedy sampling,
+temperature 0, seed 1143, threshold 1.1, minimum top-k 1, no editing, no
+post-refinement and no early EOS stop. These are explicit short-smoke settings,
+not a publisher quality preset.
+
+The SDK receipt recorded 159.58 seconds total, including 104.64 seconds of model
+loading and 46.60 seconds of generation. Torch reported peak allocated GPU
+memory of 179,769,529,856 bytes (179.77 GB); process peak RSS was
+199,948,599,296 bytes (199.95 GB). These distinct memory measurements are not
+the checkpoint's 205.8 GB file size or an Auto resource budget. The timings are
+observations from one run, not a throughput benchmark.
+
+The returned text exhausted its 32-token limit before the final arithmetic
+answer. This establishes a standalone BF16 text execution smoke only:
+MoDiff graph execution, image generation, longer responses, answer quality and
+Auto/Gallery qualification remain untested for this checkpoint. Cosmos's
+mandatory gated safety artifacts and its separate image-model execution remain
+pending; this text result grants no Cosmos or application admission.
 
 Echo's audited index is
 `jdopensource/JoyAI-Echo@d5a781ef08adb1f84748431ff5366de6e320d62d` and
