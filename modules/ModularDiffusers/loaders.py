@@ -16,7 +16,7 @@ from types import SimpleNamespace
 import torch
 from diffusers import ComponentSpec, ModularPipeline
 from diffusers.utils import logging as diffusers_logging
-from huggingface_hub import get_hf_file_metadata, hf_hub_download, hf_hub_url
+from huggingface_hub import _CACHED_NO_EXIST, get_hf_file_metadata, hf_hub_download, hf_hub_url, try_to_load_from_cache
 from huggingface_hub import constants as hub_constants
 from huggingface_hub.utils import EntryNotFoundError, HfHubHTTPError, LocalEntryNotFoundError
 
@@ -1316,6 +1316,75 @@ def reusable_standalone_component(
     return None
 
 
+def _processor_model_config_cache_state(spec, *, model_id, load_kwargs):
+    """Read only the exact processor config's local cache knowledge."""
+    processor_type = getattr(spec, "type_hint", None)
+    if not isinstance(processor_type, type):
+        return None
+    from transformers import ProcessorMixin
+
+    if not issubclass(processor_type, ProcessorMixin) or "tokenizer" not in processor_type.get_attributes():
+        return None
+    repository = getattr(spec, "pretrained_model_name_or_path", None)
+    revision = getattr(spec, "revision", None)
+    if repository != model_id or not (isinstance(revision, str) and re.fullmatch(r"[0-9a-fA-F]{40}", revision)):
+        return None
+    # A real local directory uses the factory's local config resolution, not
+    # the Hub's cache knowledge. Leave that independent loading path unchanged.
+    if Path(repository).is_dir():
+        return None
+    # ComponentSpec.load permits explicit loading-field overrides. A peer config
+    # must never authorize a different effective artifact, subfolder or variant.
+    if any(field in load_kwargs and load_kwargs[field] != getattr(spec, field) for field in spec.loading_fields()):
+        return None
+    subfolder = getattr(spec, "subfolder", None) or ""
+    config_file = f"{subfolder.rstrip('/')}/config.json" if subfolder else "config.json"
+    # An existing processor-specific model config remains authoritative,
+    # including its normal parse/permission diagnostics. This read never
+    # downloads a file or changes the selected snapshot.
+    own_config = try_to_load_from_cache(
+        repository, config_file, cache_dir=load_kwargs.get("cache_dir"), revision=revision,
+    )
+    if isinstance(own_config, str):
+        return "present"
+    return "absent" if own_config is _CACHED_NO_EXIST else "unknown"
+
+
+def _processor_model_config_binding(spec, component_specs, loaded_components, *, load_kwargs, cache_state):
+    """Copy an exact selected model config only for an unavailable processor config.
+
+    Transformers 5 resolves a model config before reading tokenizer_config.json.
+    Legacy processor subfolders may contain a complete tokenizer but no model
+    config. Preserve online unknown/config-present loads; use only established
+    absence or an explicitly offline load, and never search ambient models.
+    """
+    if cache_state != "absent" and not (cache_state == "unknown" and load_kwargs.get("local_files_only") is True):
+        return None
+    from transformers import PreTrainedConfig, PreTrainedModel
+
+    repository = spec.pretrained_model_name_or_path
+    revision = spec.revision
+    candidates = []
+    for name, component in loaded_components.items():
+        source_spec = component_specs.get(name)
+        source_type = getattr(source_spec, "type_hint", None)
+        config_type = getattr(source_type, "config_class", None)
+        if (
+            not isinstance(source_type, type)
+            or not issubclass(source_type, PreTrainedModel)
+            or not isinstance(config_type, type)
+            or not issubclass(config_type, PreTrainedConfig)
+            or not isinstance(component, source_type)
+            or not isinstance(getattr(component, "config", None), config_type)
+            or getattr(source_spec, "pretrained_model_name_or_path", None) != repository
+            or getattr(source_spec, "revision", None) != revision
+            or getattr(component, "_diffusers_load_id", None) != source_spec.load_id
+        ):
+            continue
+        candidates.append((name, component.config))
+    return (candidates[0][0], deepcopy(candidates[0][1])) if len(candidates) == 1 else None
+
+
 def load_components_strict(
     pipeline,
     names,
@@ -1328,6 +1397,7 @@ def load_components_strict(
     diagnostics,
     component_load_kwargs,
     incremental_group_offload=None,
+    selected_components=None,
 ):
     if names is None:
         names = [
@@ -1343,6 +1413,10 @@ def load_components_strict(
         raise ValueError(f"Invalid type for names: {type(names)}")
 
     required_names = set(required_names or [])
+    # These are the caller's explicitly selected reuse/override inputs, never a
+    # manager-wide or ambient lookup. The binding helper still proves the exact
+    # declared model type and complete artifact load id before copying a config.
+    loaded_components = dict(selected_components or {})
     components_to_load = [name for name in names if name in pipeline._component_specs]
     unknown_names = [name for name in names if name not in pipeline._component_specs]
     if unknown_names:
@@ -1377,7 +1451,49 @@ def load_components_strict(
             continue
 
         try:
-            component = spec.load(**load_kwargs)
+            config_cache_state = None
+            if "config" not in load_kwargs:
+                config_cache_state = _processor_model_config_cache_state(spec, model_id=model_id, load_kwargs=load_kwargs)
+                binding = _processor_model_config_binding(
+                    spec, pipeline._component_specs, loaded_components, load_kwargs=load_kwargs,
+                    cache_state=config_cache_state,
+                )
+                if binding is not None:
+                    source_name, config = binding
+                    load_kwargs["config"] = config
+                    diagnostics.setdefault("processor_config_bindings", {})[name] = {
+                        "component": source_name,
+                        "load_id": pipeline._component_specs[source_name].load_id,
+                    }
+            try:
+                component = spec.load(**load_kwargs)
+            except Exception as initial_error:
+                # An ordinary online load gets the first opportunity to fetch
+                # its own config. Retry once only when that attempt establishes
+                # a NEW exact-pin Hub negative marker; transport/access/parse
+                # failures with unknown or present config retain normal errors.
+                if "config" in load_kwargs or config_cache_state != "unknown":
+                    raise
+                cache_state_after = _processor_model_config_cache_state(spec, model_id=model_id, load_kwargs=load_kwargs)
+                if cache_state_after != "absent":
+                    raise
+                binding = _processor_model_config_binding(
+                    spec, pipeline._component_specs, loaded_components, load_kwargs=load_kwargs,
+                    cache_state=cache_state_after,
+                )
+                if binding is None:
+                    raise
+                source_name, config = binding
+                load_kwargs["config"] = config
+                diagnostics.setdefault("processor_config_bindings", {})[name] = {
+                    "component": source_name,
+                    "load_id": pipeline._component_specs[source_name].load_id,
+                }
+                diagnostics.setdefault("processor_config_retries", {})[name] = {
+                    "error": str(initial_error) or type(initial_error).__name__,
+                    "traceback": traceback.format_exc(),
+                }
+                component = spec.load(**load_kwargs)
         except Exception as exc:
             traceback_text = traceback.format_exc()
             failure = {
@@ -1402,6 +1518,7 @@ def load_components_strict(
             continue
 
         pipeline.register_components(**{name: component})
+        loaded_components[name] = component
         diagnostics.setdefault("components_loaded", []).append(name)
 
         if incremental_group_offload and name in GROUP_OFFLOAD_COMPONENTS:
@@ -3068,6 +3185,7 @@ class ModelsLoader(NodeBase):
                 }
                 if incremental_group_offload
                 else None,
+                selected_components=components_to_update,
             )
         self.loader.update_components(**components_to_update)
 
