@@ -2339,7 +2339,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:9c1ba3adf5fca22db79dde4491ac221061a71573ece0ca3d326d4e33782fc103",
+  "contentHash": "sha256:88fa02a0d4951ea325700dc1e30091186700d1ad2c19a5af392e98580e3d2bc5",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -8749,13 +8749,18 @@
       "executionRecipeSource": "backend_operation_starter",
       "executionSelection": {
         "bindingSpec": {
-          "mode": "inpaint",
+          "mode": "modular_inpainting",
           "modelType": "QwenImageEditModularPipeline"
         },
-        "executionProfileId": "qwen-edit:direct-inpaint",
-        "implementation": "whole_pipeline",
-        "note": "Retains the reviewed standard masked-edit semantics; native mask/generator parity has not been established.",
-        "pipelineClass": "QwenImageEditInpaintPipeline",
+        "componentPolicy": {
+          "attentionBackend": "auto",
+          "vaeSlicing": true,
+          "vaeTiling": true
+        },
+        "executionProfileId": "qwen-edit:modular",
+        "implementation": "native_stages",
+        "note": "Native masked stages preserve the reviewed whole-template preprocessing and composite through an owned compatibility adapter.",
+        "pipelineClass": "QwenImageEditModularPipeline",
         "schemaVersion": 1,
         "task": "inpaint"
       },
@@ -8779,13 +8784,18 @@
       "executionRecipeSource": "backend_operation_starter",
       "executionSelection": {
         "bindingSpec": {
-          "mode": "inpaint",
+          "mode": "modular_inpainting",
           "modelType": "QwenImageEditModularPipeline"
         },
-        "executionProfileId": "qwen-edit:direct-inpaint",
-        "implementation": "whole_pipeline",
-        "note": "Retains the reviewed standard masked-edit semantics; native mask/generator parity has not been established.",
-        "pipelineClass": "QwenImageEditInpaintPipeline",
+        "componentPolicy": {
+          "attentionBackend": "auto",
+          "vaeSlicing": true,
+          "vaeTiling": true
+        },
+        "executionProfileId": "qwen-edit:modular",
+        "implementation": "native_stages",
+        "note": "Native masked stages preserve the reviewed whole-template preprocessing and composite through an owned compatibility adapter.",
+        "pipelineClass": "QwenImageEditModularPipeline",
         "schemaVersion": 1,
         "task": "inpaint"
       },
@@ -8998,15 +9008,20 @@
       "executionRecipeSource": "backend_operation_starter",
       "executionSelection": {
         "bindingSpec": {
-          "mode": "outpaint",
+          "mode": "modular_inpainting",
           "modelType": "QwenImageEditModularPipeline"
         },
-        "executionProfileId": "qwen-edit:direct-inpaint",
-        "implementation": "whole_pipeline",
-        "note": "Retains the reviewed canvas preparation and standard masked-edit semantics; native parity has not been established.",
-        "pipelineClass": "QwenImageEditInpaintPipeline",
+        "componentPolicy": {
+          "attentionBackend": "auto",
+          "vaeSlicing": true,
+          "vaeTiling": true
+        },
+        "executionProfileId": "qwen-edit:modular",
+        "implementation": "native_stages",
+        "note": "Native masked stages preserve the reviewed whole-template preprocessing and composite through an owned compatibility adapter.",
+        "pipelineClass": "QwenImageEditModularPipeline",
         "schemaVersion": 1,
-        "task": "outpaint"
+        "task": "inpaint"
       },
       "galleryExamplePresent": true,
       "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
@@ -9028,15 +9043,20 @@
       "executionRecipeSource": "backend_operation_starter",
       "executionSelection": {
         "bindingSpec": {
-          "mode": "outpaint",
+          "mode": "modular_inpainting",
           "modelType": "QwenImageEditModularPipeline"
         },
-        "executionProfileId": "qwen-edit:direct-inpaint",
-        "implementation": "whole_pipeline",
-        "note": "Retains the reviewed canvas preparation and standard masked-edit semantics; native parity has not been established.",
-        "pipelineClass": "QwenImageEditInpaintPipeline",
+        "componentPolicy": {
+          "attentionBackend": "auto",
+          "vaeSlicing": true,
+          "vaeTiling": true
+        },
+        "executionProfileId": "qwen-edit:modular",
+        "implementation": "native_stages",
+        "note": "Native masked stages preserve the reviewed whole-template preprocessing and composite through an owned compatibility adapter.",
+        "pipelineClass": "QwenImageEditModularPipeline",
         "schemaVersion": 1,
-        "task": "outpaint"
+        "task": "inpaint"
       },
       "galleryExamplePresent": true,
       "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
@@ -9687,7 +9707,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "0c5fd669ea3597b7c8237e2c5d80de91a8aa807d3f2ac10c223ebf1fa5bb8313",
+    "templateBundleSha256": "082dab359de261b6e2b47ed35a09daa7ebe099edc7e5d9f01242900ce1edbd51",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
