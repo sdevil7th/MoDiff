@@ -31,15 +31,19 @@ support and PyTorch packages for that architecture. Stop for a separate profile
 review if the supplied machine is an MI100; do not use architecture overrides,
 install `gfx942` wheels on it or silently substitute a newer runtime.
 
-On the actual cloud machine, use the existing installer and device validation:
+On the actual cloud machine, use the
+[direct Instinct uv setup and launch commands](developer-setup.md#instinct-sdk-setup-on-linux).
+They install only into the fresh venv using the reviewed AMD requirements and
+adjacent index configuration, then run package checks and ordinary preflight.
+Receipt-free detection binds the actual single dedicated `gfx942` device and
+installed SDK package versions; do not create installer state by hand or rely on
+an environment profile selector. Verify the provider's actual kernel-mode driver
+against [AMD's compatibility matrix](https://instinct.docs.amd.com/projects/amdgpu-docs/en/latest/compatibility/compatibility-matrix.html)
+for the app-local SDK, rather than equating its advertised userspace version with
+driver compatibility. Keep host checks and the tiny tensor result in the evidence.
 
-```sh
-./install.sh --accelerator amd-instinct --system-check --json --backend-only
-./install.sh --accelerator amd-instinct --dry-run --backend-only
-```
-
-Follow [accelerator installation](accelerator-installation.md) after reviewing
-the host result. Do not copy a Ryzen virtualenv, apply Ryzen driver remediation
+The [guided installer](accelerator-installation.md#instinct-mi300x-cloud-preview)
+is a separate alternative. Do not copy a Ryzen virtualenv, apply Ryzen driver remediation
 or alter provider drivers speculatively. Use a dedicated non-root application
 user and a loopback backend, reached through an SSH tunnel on a separate local
 browser origin. Record the authorized test window and result-backup deadline;
@@ -59,7 +63,7 @@ Existing gated access or terms must remain separate from technical testing.
 
 Export the actual ordinary workflow, retaining its full original recipe. Put
 the unchanged export and original image/mask/reference bytes under the private
-run directory. From the backend checkout, run its managed Python:
+run directory. From the backend checkout, run its selected environment's Python:
 
 ```sh
 .venv/bin/python scripts/prepare_amd_image_validation.py \

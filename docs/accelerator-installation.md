@@ -67,9 +67,23 @@ The installer never changes firmware/BIOS or memory settings. It never executes 
 ## Instinct MI300X cloud preview
 
 The separate `amd-instinct-rocm-linux` profile targets `gfx942` on a
-provider-prepared Ubuntu 24.04 host. Start with AMD's PyTorch 2.10.0 / ROCm
-7.14 Quick Start image and use Python 3.12. This is a preview runtime contract,
-not a claim of completed MI300X model qualification.
+provider-prepared Ubuntu 24.04 host. Use Python 3.12 and the reviewed app-local
+PyTorch 2.10.0 / ROCm 7.14 SDK. Validate the actual host driver/kernel against
+[AMD's driver/runtime compatibility matrix](https://instinct.docs.amd.com/projects/amdgpu-docs/en/latest/compatibility/compatibility-matrix.html);
+an advertised provider ROCm version alone is insufficient. This is a preview
+runtime contract, not a claim of completed MI300X model qualification.
+
+For script-free setup, use the exact
+[direct uv commands](developer-setup.md#instinct-sdk-setup-on-linux): create the
+venv, install the reviewed requirements with their adjacent `.uv.toml`, run
+`uv pip check`, and invoke that environment's Python for preflight and `main.py`.
+No managed-install receipt is required. Runtime detection uses the actual single
+dedicated device and installed package metadata; it does not read
+`MODIFF_RUNTIME_PROFILE` as a profile-selection override. Torch/HIP and every
+reviewed SDK package pin must match, and required/prohibited package policy and
+a real `cuda:0` tensor must pass. No model is downloaded by those checks.
+
+The guided installer remains an alternative:
 
 ```bash
 ./install.sh --accelerator amd-instinct --backend-only --system-check --json
@@ -100,7 +114,8 @@ Native installs verify installed core packages and the reviewed Diffusers source
 without requiring an installer receipt. The committed uv lock records their
 resolution. Guided/vendor-wheel profiles retain their manifest and observed
 package checks. Repair native core packages with the same `uv sync` extra;
-repair a specialized AMD wheel stack with its guided installer. Do not replace
+repair the Instinct stack with its explicit reviewed `uv pip install` command
+or guided installer. Do not replace
 a reviewed ROCm stack using a generic CPU/CUDA sync.
 
 On Windows, the shared process policy uses PyTorch's default allocator and does
@@ -127,7 +142,9 @@ Changing a wheel URL or digest is a runtime-contract change. Rebuild that
 managed profile and rerun the accelerator manifest, installer, preflight, and
 physical-device qualification checks before release.
 
-On Linux, invoke developer preflight and test commands through
+For `/opt/rocm`-based Linux profiles, invoke developer preflight and test commands through
 `./scripts/with-runtime-env.sh`. The wrapper reads the installed profile and
 applies the same native runtime-library environment used by `run.sh`; this is
 required for ROCm wheels whose shared libraries live below `/opt/rocm`.
+The app-local Instinct Python SDK uses the direct Python commands above and must
+not receive Ryzen library-path injection.

@@ -53,6 +53,36 @@ use `--torch-backend=cu128 -e ".[cuda]"`. Run that environment's Python directly
 `python main.py` after activation, or its full executable path. Do not mix pip
 changes with `uv run` auto-sync unless those changes are declared in the project.
 
+## Instinct SDK setup on Linux
+
+For the reviewed MI300X/`gfx942` preview, use a fresh Python 3.12 environment and
+the adjacent AMD index configuration. From the backend checkout:
+
+```sh
+uv venv --python 3.12
+uv pip install --python .venv/bin/python \
+  --config-file requirements/profiles/amd-instinct-rocm-linux.uv.toml \
+  -r requirements/profiles/amd-instinct-rocm-linux.txt
+uv pip check --python .venv/bin/python
+.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error
+.venv/bin/python main.py
+```
+
+Launch the installed Python directly; a generic `uv sync` or auto-syncing
+`uv run` can replace the vendor wheels. This SDK provides its own ROCm userspace:
+do not inject a Ryzen `/opt/rocm` path or change provider drivers speculatively.
+Clear inherited Python/library-path overrides that point at a different runtime.
+
+An unmanaged installation needs no installer receipt or environment profile
+selector. Runtime detection recognizes one visible dedicated `gfx942` device and
+checks the reviewed Torch/HIP versions, SDK package pins and package policy,
+mandatory base dependencies and a real device tensor. Explicit requested or saved
+SDK selections remain authoritative. Mixed or unknown architectures are not
+automatically selected as Instinct. Runtime readiness does not qualify model
+outputs, memory fit, provider drivers or other GPUs. See
+[accelerator installation](accelerator-installation.md#instinct-mi300x-cloud-preview)
+and [cloud validation](amd-cloud-qualification.md) for host and evidence checks.
+
 ## Client development
 
 From the sibling `MoDiff-client` checkout:
@@ -75,7 +105,8 @@ must use their package manager. See [Astral's upgrade instructions](https://docs
 MoDiff accepts the operator's uv; there is no application-specific version pin.
 
 After pulling application changes, run `uv sync` with the same accelerator extra,
-then preflight and restart the backend. An intentional package upgrade uses
+then preflight and restart the backend. For the Instinct SDK, rerun its explicit
+`uv pip install` and `uv pip check` commands above instead. An intentional package upgrade uses
 `uv lock --upgrade-package transformers --upgrade-package peft`, then sync and
 validate. `uv lock --upgrade` upgrades all compatible dependencies and needs the
 full contributor gate. The exact Diffusers source is a compatibility exception:
