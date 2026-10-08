@@ -14,6 +14,7 @@ from collections.abc import Mapping, Sequence
 
 import numpy as np
 from PIL import Image
+from packaging.version import InvalidVersion, Version
 
 
 CONTRACT_FORMAT = "modiff.image-template-comparison-contract.v1"
@@ -45,11 +46,25 @@ def validate_comparison_contract(contract: Mapping) -> None:
     runtime = contract.get("runtime")
     if not isinstance(runtime, dict) or not all(
         isinstance(runtime.get(key), str) and runtime[key]
-        for key in ("torch", "diffusersCommit", "transformers", "peft", "platform", "device")
+        for key in ("torch", "transformers", "peft", "platform", "device")
     ):
         raise ValueError("Comparison requires the actual runtime and accelerator identity.")
-    if not _COMMIT.fullmatch(runtime["diffusersCommit"]):
-        raise ValueError("Comparison requires the immutable Diffusers source revision.")
+    if "diffusersCommit" in runtime:
+        if not isinstance(runtime["diffusersCommit"], str) or not _COMMIT.fullmatch(runtime["diffusersCommit"]):
+            raise ValueError("Comparison requires the immutable Diffusers source revision.")
+        if "diffusersWheelSha256" in runtime:
+            raise ValueError("Comparison must choose one actual Diffusers source or wheel identity.")
+    else:
+        version = runtime.get("diffusersVersion")
+        digest = runtime.get("diffusersWheelSha256")
+        if not isinstance(version, str) or not isinstance(digest, str) or not _HASH.fullmatch(digest):
+            raise ValueError("Comparison requires the actual Diffusers version and verified wheel SHA-256.")
+        try:
+            canonical_version = str(Version(version))
+        except InvalidVersion as error:
+            raise ValueError("Comparison requires an exact published Diffusers distribution version.") from error
+        if canonical_version != version:
+            raise ValueError("Comparison requires an exact published Diffusers distribution version.")
     inputs = contract.get("inputs")
     if not isinstance(inputs, list):
         raise ValueError("Comparison requires input hashes, including an explicit empty list for text-only recipes.")

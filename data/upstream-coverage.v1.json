@@ -2339,7 +2339,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:0c11dabea6b51576a551ce39a22afdf6524023375a540cd8179114170bd63bd1",
+  "contentHash": "sha256:02beb4fb55d4c90a0c34f90a7ae459e1d4530f70a26ceadbc6366fb08fafb0ad",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -9714,14 +9714,14 @@
         "delivery": "base",
         "dependencies": [
           "accelerate>=1.4.0",
-          "diffusers @ git+https://github.com/huggingface/diffusers.git@fbf49e7f35857f76bc57b177e26f12b03687c668",
+          "diffusers>=0.41.0",
           "huggingface-hub>=1.31.0,<2.0",
           "peft>=0.21.2",
           "torch>=2.6.0,<2.12; sys_platform == 'darwin'",
           "torch>=2.6.0; sys_platform != 'darwin'",
           "transformers>=5.18.0"
         ],
-        "digest": "sha256:cc281f8fbae5093d68b4dd963a8f80e32b1589991c8cda97a3ec0f26c9e700db",
+        "digest": "sha256:98449d8d9faca739ce5914f6c5ce25cf75b3fabde10c90a1c2818574f362adeb",
         "id": "modiff.base-model-runtime"
       },
       "legacyProductionFieldScope": "historical_reference_wheel_only",

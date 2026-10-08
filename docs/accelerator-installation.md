@@ -4,12 +4,13 @@ Ordinary setup uses native `uv sync --extra cpu`, `--extra cuda`, or `--extra xp
 
 Run `./install.sh` on Linux/macOS or `.\install.ps1` on Windows. The guided installer explains every action before it runs, uses the operator's uv and provisions Python 3.12, stages the backend, validates a real device tensor, and preserves the previous environment for rollback. When a sibling client is present and the build is not skipped, it downloads the verified Node 24 toolchain, downloads and SHA-256 verifies the complete pinned Template Gallery, and bundles those assets into the local client build. Hybrid NVIDIA/AMD machines must explicitly choose a profile.
 
-The staged installer builds the exact Diffusers Git revision declared in
-`pyproject.toml` with canonical LF source bytes. It overrides Git line-ending
-conversion only in the installer subprocess and bypasses uv's cache for this
-dependency, preventing reuse of an older CRLF-translated wheel. Other packages,
-including Torch, retain their ordinary cache behavior; reviewed source hashes
-and the pinned upstream revision remain unchanged.
+Ordinary setup declares `diffusers>=0.41.0`; the committed `uv.lock` records the
+tested stable release and its official PyPI wheel hash. The staged installer
+reinstalls only Diffusers from that verified locked wheel, without resolving its
+dependencies again. Other packages, including Torch, retain their ordinary
+cache behavior. Runtime readiness checks the actual installed release and APIs.
+Historical catalog audits separately verify their immutable upstream source
+revision; that checkout is not required to install or run the application.
 
 Useful modes:
 
@@ -110,8 +111,8 @@ source snapshot. Provisioning, downloads and idle time are billable. Back up
 outputs before destroying the instance; powering it off does not stop billing.
 See [the cloud qualification checklist](amd-cloud-qualification.md).
 
-Native installs verify installed core packages and the reviewed Diffusers source
-without requiring an installer receipt. The committed uv lock records their
+Native installs verify installed core packages and the compatible Diffusers
+release and runtime APIs without requiring a Git or installer receipt. The committed uv lock records their
 resolution. Guided/vendor-wheel profiles retain their manifest and observed
 package checks. Repair native core packages with the same `uv sync` extra;
 repair the Instinct stack with its explicit reviewed `uv pip install` command

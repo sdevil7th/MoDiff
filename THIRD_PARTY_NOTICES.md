@@ -1,5 +1,31 @@
 # Third-party notices
 
+## NVIDIA Cosmos3 publisher example caption
+
+`data/cosmos3-super-t2i-publisher-caption.v1.json` is an unchanged copy of
+NVIDIA's `assets/example_caption.json` from `nvidia/Cosmos3-Super-Text2Image`
+at immutable revision `daf3d374804be4c512c2135568a7cb95d4341d79`.
+Source: <https://huggingface.co/nvidia/Cosmos3-Super-Text2Image/resolve/daf3d374804be4c512c2135568a7cb95d4341d79/assets/example_caption.json>.
+The publisher's model-card metadata declares OpenMDW-1.1:
+<https://openmdw.ai/license/1-1/>. This records the publisher's declaration;
+it does not establish additional permissions or model qualification.
+The full agreement is retained at `licenses/OpenMDW-1.1.txt`.
+`data/cosmos3-super-t2i-publisher-caption-provenance.v1.json` records the
+original Git blob, byte size, source URL, and local SHA-256.
+
+## Cosmos Guardrail
+
+The owned constructors and blocklist decision sequence in
+`modules/ModularDiffusers/cosmos_safety.py` are copied/modified from
+`cosmos_guardrail/cosmos_guardrail.py` in
+[`cosmos-guardrail` 0.3.1](https://pypi.org/project/cosmos-guardrail/0.3.1/).
+Copyright 2024 The NVIDIA Team and The HuggingFace Team. All rights reserved.
+The original package also identifies its copied/modified upstream source as
+<https://github.com/NVIDIA/Cosmos>.
+The package declares Apache-2.0; the project `LICENSE` retains that agreement.
+The exact wheel's URL, SHA-256 and size are recorded in
+`data/cosmos-safety-runtime-artifacts.v1.json`.
+
 ## Mellon and Mellon Client
 
 Substantial portions of the backend source are adapted from
@@ -29,9 +55,9 @@ the Apache License 2.0; the project `LICENSE` contains that license text.
 
 Source: <https://github.com/huggingface/diffusers/blob/bb56997d4b7e87f0743f26a612f49ec4e7ce7213/src/diffusers/modular_pipelines/mellon_node_utils.py>
 
-That commit remains the provenance of the adapted source. The separately
-reviewed executable Diffusers dependency is currently pinned to
-`2f7e0154a9db246e95c9ede43edba7db5b130805`.
+That commit remains the provenance of the adapted source. The executable
+dependency follows the compatible installed Diffusers release required by
+`pyproject.toml`; its distribution and import identity are bound at runtime.
 
 ## Comfy workflow template research metadata
 

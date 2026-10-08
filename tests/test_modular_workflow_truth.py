@@ -124,9 +124,9 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         self.assertEqual(PINNED_DIFFUSERS_REVISION, "fbf49e7f35857f76bc57b177e26f12b03687c668")
         dependency_contract = Path("pyproject.toml").read_text(encoding="utf-8")
         self.assertIn(
-            f"diffusers.git@{PINNED_DIFFUSERS_REVISION}",
+            "diffusers>=0.41.0",
             dependency_contract,
-            "A Diffusers pin update requires an explicit review of the Modular workflow truth matrix.",
+            "Runtime readiness uses the declared compatible release independently of historical workflow provenance.",
         )
 
     @requires_transformers

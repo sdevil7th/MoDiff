@@ -13,6 +13,7 @@ from modiff.diffusers_offload_modes import (
 from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
 from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
 from modiff.model_artifact_catalog import require_catalog_revision
+from modiff.cosmos_safety_contract import COSMOS_SAFETY_RUNTIME_PROFILE_ID
 from modiff.optional_runtimes import (
     TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
     TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
@@ -762,6 +763,17 @@ for profile_id, profile in tuple(DIFFUSERS_EXECUTION_PROFILES.items()):
             optional_runtime_profiles=(),
             optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_BASE,
             optional_runtime_platform_deliveries=(),
+        )
+    elif profile.optional_runtime_profiles == (COSMOS_SAFETY_RUNTIME_PROFILE_ID,):
+        # Mandatory safety is never supplied by the native base. Unsupported
+        # package targets remain blocked until their own overlay is qualified.
+        DIFFUSERS_EXECUTION_PROFILES[profile_id] = replace(
+            profile,
+            optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
+            optional_runtime_platform_deliveries=tuple(
+                (platform_name, machine, OPTIONAL_RUNTIME_DELIVERY_OVERLAY)
+                for platform_name, machine, _delivery in OPTIONAL_RUNTIME_PLATFORM_DELIVERIES
+            ),
         )
     elif profile.optional_runtime_profiles:
         DIFFUSERS_EXECUTION_PROFILES[profile_id] = replace(

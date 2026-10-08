@@ -37,6 +37,7 @@ from modiff.optional_runtimes import (
     public_optional_runtime_profiles,
     optional_runtime_target,
 )
+from modiff.cosmos_safety_contract import COSMOS_SAFETY_RUNTIME_PROFILE_ID
 from modiff.server import WebServer
 
 
@@ -249,6 +250,24 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                         self.assertEqual(targeted, requirement)
                     continue
                 self.assertEqual(profile.optional_runtime_delivery, OPTIONAL_RUNTIME_DELIVERY_OVERLAY)
+                if profile.optional_runtime_profiles == (COSMOS_SAFETY_RUNTIME_PROFILE_ID,):
+                    self.assertEqual(len(profile.optional_runtime_platform_deliveries), 6)
+                    for platform_name, machine in (
+                        ("linux", "x86_64"), ("windows", "x86_64"),
+                        ("linux", "arm64"), ("windows", "arm64"),
+                        ("macos", "x86_64"), ("macos", "arm64"),
+                    ):
+                        targeted = declarative_requirement(
+                            (profile,), platform_name=platform_name, machine=machine,
+                        )
+                        self.assertEqual(set(targeted), expected_keys)
+                        self.assertEqual(targeted["delivery"], "optional_overlay")
+                        self.assertTrue(targeted["requiredNow"])
+                        self.assertEqual(targeted["profileIds"], [COSMOS_SAFETY_RUNTIME_PROFILE_ID])
+                        self.assertEqual(targeted["executionProfileIds"], [profile.id])
+                        self.assertEqual(targeted["state"], "unavailable")
+                        self.assertEqual(targeted["reason"], "optional_runtime_status_required")
+                    continue
                 if profile.id == "qwen-image-21:direct":
                     self.assertEqual(profile.optional_runtime_platform_deliveries, ())
                     for platform_name in ("linux", "windows", "macos"):

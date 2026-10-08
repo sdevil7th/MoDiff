@@ -175,6 +175,36 @@ if any(package.distribution == "opencv-python-headless" for package in candidate
         raise RuntimeError("the native media codec roundtrip changed the image")
     media = {"cannyShape": list(edges.shape), "codecRoundtrip": "passed", "codec": "png"}
 
+cosmos_safety = None
+if any(package.distribution == "cosmos-guardrail" for package in candidate.packages):
+    from modiff.optional_runtimes import assert_optional_runtime_distribution_compatibility
+    assert_optional_runtime_distribution_compatibility(candidate)
+    from cosmos_guardrail import CosmosSafetyChecker
+    import cv2
+    import numpy as np
+    from skimage.transform import resize
+    from nltk.tokenize.punkt import PunktSentenceTokenizer
+
+    symbols = ("Canny", "GaussianBlur", "Sobel", "calcOpticalFlowFarneback", "cvtColor", "remap", "imencode", "imdecode")
+    if not all(callable(getattr(cv2, name, None)) for name in symbols):
+        raise RuntimeError("the single OpenCV provider lacks required Gallery/Cosmos symbols")
+    image = np.zeros((16, 16, 3), dtype=np.uint8)
+    image[4:12, 4:12] = 255
+    encoded_ok, encoded = cv2.imencode(".png", image)
+    decoded = cv2.imdecode(encoded, cv2.IMREAD_UNCHANGED) if encoded_ok else None
+    edges = cv2.Canny(image, 50, 100)
+    if decoded is None or not np.array_equal(decoded, image) or not np.any(edges):
+        raise RuntimeError("the single OpenCV provider failed the real PNG/Canny workload")
+    if resize(image, (8, 8)).shape != (8, 8, 3) or PunktSentenceTokenizer().tokenize("An ordinary prompt.") != ["An ordinary prompt."]:
+        raise RuntimeError("the Cosmos auxiliary CPU processing workload failed")
+    if not all(callable(getattr(CosmosSafetyChecker, name, None)) for name in ("check_text_safety", "check_video_safety")):
+        raise RuntimeError("the official Cosmos checker methods are unavailable")
+    cosmos_safety = {
+        "opencvProvider": "opencv-python", "requiredSymbols": list(symbols),
+        "pngRoundtrip": "passed", "cannyShape": list(edges.shape), "auxiliaryCpuProcessing": "passed",
+        "scope": "Package/import/CPU codec qualification only; no pretrained safety decisions, GPU or model execution qualification.",
+    }
+
 print(json.dumps({
     "status": "passed",
     "environmentId": environment_id,
@@ -188,6 +218,7 @@ print(json.dumps({
     "quanto": quanto,
     "gguf": gguf,
     "galleryMedia": media,
+    "cosmosSafety": cosmos_safety,
 }, sort_keys=True))
 """
 

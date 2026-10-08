@@ -25,7 +25,9 @@ Composable routes expose meaningful independent nodes such as Load Models,
 Encode Prompt, Denoise and Decode Latents. Tasks can need additional image, mask,
 conditioning or audio operations. Whole-pipeline routes expose Generate/Edit
 operations instead; those nodes do not claim independently replaceable denoising.
-Qwen-Image 2.1 uses its supported whole-pipeline route at the reviewed Diffusers pin.
+Qwen-Image 2.1 uses its supported whole-pipeline route with the compatible
+installed Diffusers release. Its historical source review remains separately
+pinned.
 
 ## Group nodes into a reusable Block
 

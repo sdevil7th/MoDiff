@@ -24,7 +24,7 @@ dependencies = [
   "torchvision>=0.21.0; sys_platform != 'darwin'",
   "torchvision>=0.21.0,<0.27; sys_platform == 'darwin'",
   "transformers>=5.18.0",
-  "diffusers @ git+https://github.com/huggingface/diffusers.git@fbf49e7f35857f76bc57b177e26f12b03687c668",
+  "diffusers>=0.41.0",
   "ftfy>=6.3.1",
   "huggingface-hub>=1.31.0,<2.0",
   "imageio>=2.37.2",
@@ -50,6 +50,7 @@ xpu = [
 ]
 spandrel = ["spandrel"]
 gallery-media = ["opencv-python-headless>=4.11.0"]
+cosmos-safety = ["cosmos-guardrail==0.3.1", "opencv-python==5.0.0.93"]
 quantization = [
   "dfloat11[cuda12]; sys_platform == 'linux' or sys_platform == 'win32'",
   "gguf",
@@ -86,6 +87,9 @@ build-backend = "setuptools.build_meta"
 [tool.uv]
 conflicts = [
   [{ extra = "cpu" }, { extra = "cuda" }, { extra = "xpu" }],
+  # The packages share the cv2 namespace. Use one provider in a clean owned
+  # environment; runtime activation also checks distribution ownership.
+  [{ extra = "gallery-media" }, { extra = "cosmos-safety" }],
 ]
 
 [[tool.uv.index]]

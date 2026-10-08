@@ -148,12 +148,12 @@ class GuidedInstallerTests(unittest.TestCase):
                 (root / "tool" / "bin" / "executable").resolve(),
             )
 
-    def test_executable_project_dependency_pins_the_reviewed_diffusers_commit(self):
+    def test_executable_project_dependency_declares_compatible_diffusers_minimum(self):
         project = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text(encoding="utf-8"))
         diffusers = next(item for item in project["project"]["dependencies"] if item.startswith("diffusers"))
         self.assertEqual(
             diffusers,
-            "diffusers @ git+https://github.com/huggingface/diffusers.git@fbf49e7f35857f76bc57b177e26f12b03687c668",
+            "diffusers>=0.41.0",
         )
         self.assertNotIn("diffusers", project["tool"]["uv"].get("sources", {}))
 

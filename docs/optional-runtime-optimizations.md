@@ -190,6 +190,27 @@ base-delivered; their artifact locks alone do not make them eligible.
 
 ### Portable target qualification
 
+The Cosmos Guardrail 0.3.1 package profile has qualified delivery on Linux
+x86-64 with Python 3.12. The existing temporary qualifier installs its ten
+exact wheels, validates the staged imports and symbols, activates a fresh
+process, exercises tiny CPU CLIP/LoRA and PNG/Canny/scikit-image processing,
+then rolls back to the clean base. Installation and activation require explicit
+consent and a restart. Other targets remain pending.
+
+This profile uses `opencv-python` as the sole `cv2` provider. It conflicts with
+the Gallery media profile's headless provider and all OpenCV contrib providers;
+the inverse Gallery installation or activation is also rejected. Package
+delivery qualification does not qualify pretrained safety decisions, Cosmos
+model execution, GPU/ROCm memory or performance, Auto, or Gallery. The exact
+gated safety artifacts and each model's execution requirements remain separate
+prerequisites.
+
+The `cosmos-safety` project extra is an unqualified developer convenience.
+Ordinary app readiness requires the managed profile's ten exact wheels,
+explicit activation with its verified import paths and receipt seals, and the
+pinned gated safety snapshots. Installing the project extra alone does not
+establish that readiness.
+
 `scripts/qualify_optional_runtime.py` prepares the same bounded qualification
 on each supported operating-system/architecture pair without exposing a
 product API or changing the source-controlled target table. It accepts an

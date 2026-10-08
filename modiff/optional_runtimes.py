@@ -17,6 +17,7 @@ from collections.abc import Callable, Iterable, Mapping
 from copy import deepcopy
 from dataclasses import dataclass, replace
 from importlib import metadata
+from pathlib import Path
 from types import MappingProxyType
 
 
@@ -479,6 +480,7 @@ class OptionalRuntimeProfile:
     activation_available: bool = False
     target_contracts: tuple[OptionalRuntimeTargetContract, ...] = ()
     satisfies_profiles: tuple[tuple[str, str], ...] = ()
+    incompatible_distributions: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         targets = tuple((contract.platform, contract.machine) for contract in self.target_contracts)
@@ -554,6 +556,8 @@ class OptionalRuntimeProfile:
             ]
         if self.source_builds:
             spec["sourceBuilds"] = [deepcopy(source_build) for source_build in self.source_builds]
+        if self.incompatible_distributions:
+            spec["incompatibleDistributions"] = list(self.incompatible_distributions)
         return spec
 
     @property
@@ -1605,6 +1609,59 @@ _GALLERY_MEDIA_PROFILE = _native_base_auxiliary_profile(
     diffusers_symbols=(),
     linux_installation_qualified=True,
 )
+_GALLERY_MEDIA_PROFILE = replace(
+    _GALLERY_MEDIA_PROFILE,
+    incompatible_distributions=("opencv-python", "opencv-contrib-python", "opencv-contrib-python-headless"),
+)
+
+
+_cosmos_runtime_artifacts = json.loads(
+    (Path(__file__).resolve().parent.parent / "data/cosmos-safety-runtime-artifacts.v1.json").read_text(encoding="utf-8")
+)
+_COSMOS_SAFETY_PROFILE = OptionalRuntimeProfile(
+    id="cosmos-guardrail-0.3.1",
+    label="Cosmos Guardrail 0.3.1",
+    packages=tuple(OptionalRuntimePackageContract(
+        **{**value, "required_symbols": tuple(value["required_symbols"])}
+    ) for value in _cosmos_runtime_artifacts["packages"]),
+    base_packages=tuple(OptionalRuntimeBaseContract(*value) for value in (
+        ("packaging", "packaging", ">=21"), ("torch", "torch", ">=2.6"),
+        ("torchvision", "torchvision", ">=0.21"), ("transformers", "transformers", ">=5.18"),
+        ("peft", "peft", ">=0.14"), ("huggingface-hub", "huggingface_hub", ">=1.31,<2"),
+        ("attrs", "attrs", ">=25.1"), ("numpy", "numpy", ">=2,<3"),
+        ("scipy", "scipy", ">=1.11.4"), ("networkx", "networkx", ">=3"),
+        ("pillow", "PIL", ">=11.1"), ("protobuf", "google.protobuf", ""),
+        ("safetensors", "safetensors", ">=0.5.3"), ("sentencepiece", "sentencepiece", ">=0.2"),
+        ("requests", "requests", ">=2.28"), ("tqdm", "tqdm", ""),
+        ("imageio", "imageio", ""), ("imageio-ffmpeg", "imageio_ffmpeg", ""),
+        ("click", "click", ""), ("regex", "regex", ""),
+    )),
+    required_diffusers_symbols=("Cosmos3OmniModularPipeline", "Cosmos3DistilledModularPipeline"),
+    excluded_qualification_symbols=("add_weighted_adapter",),
+    artifact_locks=tuple(_cosmos_runtime_artifacts["artifactLocks"]),
+    incompatible_distributions=("opencv-python-headless", "opencv-contrib-python", "opencv-contrib-python-headless"),
+    target_contracts=tuple(OptionalRuntimeTargetContract(
+        platform=platform_name, machine=machine,
+        contract_state="qualified" if (platform_name, machine) == ("linux", "x86_64") else "candidate_unqualified",
+        cutover_ready=(platform_name, machine) == ("linux", "x86_64"),
+        install_action_available=(platform_name, machine) == ("linux", "x86_64"),
+        activation_available=(platform_name, machine) == ("linux", "x86_64"),
+    ) for platform_name, _python_tag, machine in _OPTIONAL_RUNTIME_TARGETS),
+)
+
+
+def assert_optional_runtime_distribution_compatibility(profile, *, version_resolver=None):
+    """An optional package must not silently replace another provider's import namespace."""
+    resolve_version = version_resolver or metadata.version
+    for distribution in profile.incompatible_distributions:
+        try:
+            resolve_version(distribution)
+        except metadata.PackageNotFoundError:
+            continue
+        raise RuntimeError(
+            f"Optional runtime {profile.id!r} requires {distribution!r} to be absent; "
+            "prepare a reviewed environment with a single provider before installing or activating it."
+        )
 
 
 OPTIONAL_RUNTIME_PROFILES: Mapping[str, OptionalRuntimeProfile] = MappingProxyType(
@@ -1616,6 +1673,7 @@ OPTIONAL_RUNTIME_PROFILES: Mapping[str, OptionalRuntimeProfile] = MappingProxyTy
         _TRANSFORMERS_MAIN_PEFT_GGUF_PROFILE.id: _TRANSFORMERS_MAIN_PEFT_GGUF_PROFILE,
         _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.id: _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE,
         _GALLERY_MEDIA_PROFILE.id: _GALLERY_MEDIA_PROFILE,
+        _COSMOS_SAFETY_PROFILE.id: _COSMOS_SAFETY_PROFILE,
     }
 )
 

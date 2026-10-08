@@ -178,3 +178,21 @@ def test_workflow_scoped_native_variants_are_not_omitted_or_leaked_to_other_task
     assert alternate["disposition"] == "native_integrated"
     assert f"qwen-image:modular/modular_image_to_image@{repository}" not in rows
     assert rows[f"qwen-image:t2i-direct/text_to_image@{repository}"]["disposition"] == "preserved_standard_alternative"
+
+
+def test_cosmos_super_readiness_names_the_exact_artifact_and_keeps_evidence_pending():
+    from modiff.image_prototyping_readiness import build_image_prototyping_readiness
+
+    rows = build_image_prototyping_readiness(ROOT)["routes"]
+    selected = [row for row in rows if row["artifact"]["repository"] == "nvidia/Cosmos3-Super-Text2Image"]
+    assert len(selected) == 2
+    assert {row["task"] for row in selected} == {"text_to_image"}
+    for row in selected:
+        assert row["displayName"] == "Cosmos3-Super-Text2Image"
+        assert row["artifact"]["revision"] == "daf3d374804be4c512c2135568a7cb95d4341d79"
+        assert row["evidence"]["nativeOutput"] == "pending"
+        assert row["evidence"]["platform"] == "pending"
+        assert row["evidence"]["browser"] == "pending_final_candidate"
+        assert row["optionalRuntime"]["profileIds"] == ["cosmos-guardrail-0.3.1"]
+        assert row["optionalRuntime"]["requiredNow"] is True
+        assert row["optionalRuntime"]["state"] == "unavailable"

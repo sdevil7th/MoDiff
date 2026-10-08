@@ -197,7 +197,9 @@ class WanAnimate2ArtifactReviewTests(unittest.TestCase):
         self.assertEqual(reviewed["distilled"]["defaultGuidanceScale"], 1.0)
 
     def test_pinned_source_receipt_is_exact_while_live_qualification_stays_closed(self):
-        diffusers_root = Path(diffusers.__file__).resolve().parent
+        from modiff.upstream_coverage import reviewed_diffusers_source
+
+        diffusers_root = reviewed_diffusers_source()
         current_hashes = []
         reviewed_hashes = []
         for source in self.review["sourceReview"]["files"]:

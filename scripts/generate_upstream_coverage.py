@@ -26,7 +26,7 @@ def main() -> int:
     parser.add_argument(
         "--diffusers-source",
         type=Path,
-        help="Exact pinned Diffusers Git checkout/package (defaults to the installed package).",
+        help="Exact catalog-reviewed Diffusers Git checkout/package; supply it explicitly when the installed release differs from the catalog source.",
     )
     parser.add_argument(
         "--transformers-source",

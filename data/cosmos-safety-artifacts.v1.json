@@ -1,0 +1,459 @@
+{
+  "schemaVersion": 1,
+  "sourceOnlyReview": true,
+  "artifacts": [
+    {
+      "kind": "blocklist_and_retinaface",
+      "repository": "nvidia/Cosmos-Guardrail1",
+      "revision": "d6d4bfa899a71454a700907664f3e88f503950cf",
+      "gated": "auto",
+      "marker": "blocklist/exact_match/blocked",
+      "files": [
+        {
+          "path": "blocklist/custom/blocklist",
+          "byteSize": 3643,
+          "blobHash": "8f694e654295c5bff6ae30fdb29047d8dba468e0"
+        },
+        {
+          "path": "blocklist/exact_match/blocked",
+          "byteSize": 16158,
+          "blobHash": "9e62284cb5ed834ee6904a44446a789c4db6d056"
+        },
+        {
+          "path": "blocklist/nltk_data/corpora/wordnet.zip",
+          "byteSize": 10775600,
+          "blobHash": "cbda5ea6eef7f36a97a43d4a75f85e07fccbb4f23657d27b4ccbc93e2646ab59"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab.zip",
+          "byteSize": 4259017,
+          "blobHash": "c2b16c23d738effbdc5789d7aa601397c13ba2819bf922fb904687f3f16657ed"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/README",
+          "byteSize": 8574,
+          "blobHash": "49a637cb19b758348071ed19edb29d33ab435b33"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/czech/abbrev_types.txt",
+          "byteSize": 462,
+          "blobHash": "addf93e5edbb1dd14b83f3f67d272efaef348ad5"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/czech/collocations.tab",
+          "byteSize": 1390,
+          "blobHash": "a455cf31496e566cd3330255ce4e158e28f7ab4c"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/czech/ortho_context.tab",
+          "byteSize": 684150,
+          "blobHash": "9142df3336b3dc0eb60d2a70b8ee005449763ebd"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/czech/sent_starters.txt",
+          "byteSize": 352,
+          "blobHash": "c81aad32035c6b0a7f90756515d885510ed01bd0"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/danish/abbrev_types.txt",
+          "byteSize": 1130,
+          "blobHash": "6fc09d901dade22248c02d631753175f083ac704"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/danish/collocations.tab",
+          "byteSize": 1693,
+          "blobHash": "97f345f7de214797e17e1989c072883e7391bacd"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/danish/ortho_context.tab",
+          "byteSize": 743835,
+          "blobHash": "fb97fe71815d42542632401c1ecc104be05ea57a"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/danish/sent_starters.txt",
+          "byteSize": 415,
+          "blobHash": "5458df91e0297ace2b480dbeeb836913c30284db"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/dutch/abbrev_types.txt",
+          "byteSize": 434,
+          "blobHash": "4afec6e3301699597ac153e12bb89a581d2f12db"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/dutch/collocations.tab",
+          "byteSize": 623,
+          "blobHash": "501015d123edc9a42c71265fc894a8d9c912e559"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/dutch/ortho_context.tab",
+          "byteSize": 428403,
+          "blobHash": "6a37ed3f0f93afa9b221bdfa00b7d7c5fa12ee63"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/dutch/sent_starters.txt",
+          "byteSize": 310,
+          "blobHash": "e246bfdfbe6927bb1760439a9e7f938391f9627e"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/english/abbrev_types.txt",
+          "byteSize": 619,
+          "blobHash": "b38862b8c3126ae4ad3468f3377a7b2708554c17"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/english/collocations.tab",
+          "byteSize": 594,
+          "blobHash": "c7032b7fc96369e446570185d07cd195c7bd5381"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/english/ortho_context.tab",
+          "byteSize": 236303,
+          "blobHash": "a33a364852803f59d77bd6b8433801dbf7581439"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/english/sent_starters.txt",
+          "byteSize": 241,
+          "blobHash": "478fd8334c5508d522b87a2ba7c06c38f56bf7b6"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/estonian/abbrev_types.txt",
+          "byteSize": 224,
+          "blobHash": "c68ab829b328223e471cc6d309c635b6d174160d"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/estonian/collocations.tab",
+          "byteSize": 1825,
+          "blobHash": "c7a6177a5f0e1faf0622d8c29f6dfca5acf0d8cf"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/estonian/ortho_context.tab",
+          "byteSize": 936992,
+          "blobHash": "97d74744c4d2698558fc520d0727c0f0ac248e8c"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/estonian/sent_starters.txt",
+          "byteSize": 679,
+          "blobHash": "7221cccbd6b8b6134d98dd0bc7f463131c952e9e"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/finnish/abbrev_types.txt",
+          "byteSize": 484,
+          "blobHash": "8cb53791b1dbcd6bd43b3b0165bc7061b9169dd9"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/finnish/collocations.tab",
+          "byteSize": 3046,
+          "blobHash": "f383d5ab44e8270ef923d2c9fe4bd8b776d75546"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/finnish/ortho_context.tab",
+          "byteSize": 1189717,
+          "blobHash": "2fe97158665831ec291127243dc3a2c90f32d9a1"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/finnish/sent_starters.txt",
+          "byteSize": 810,
+          "blobHash": "38abd4895899c25b4bc0b86d7cc8ee918a161991"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/french/abbrev_types.txt",
+          "byteSize": 245,
+          "blobHash": "82ef7f3f807dd77610d4e300975636c993fc3b0f"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/french/collocations.tab",
+          "byteSize": 334,
+          "blobHash": "1fe9b9b04b2d53669d2b64247394a987bf5419c5"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/french/ortho_context.tab",
+          "byteSize": 334275,
+          "blobHash": "56ce056b0421f7f2250f48e8539ce97b68d720fd"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/french/sent_starters.txt",
+          "byteSize": 233,
+          "blobHash": "bd9f4d3357910f0a4dd2102152cdada4fd8e4722"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/german/abbrev_types.txt",
+          "byteSize": 246,
+          "blobHash": "5acff23e04e7c48e3634427694699ee14ec794cb"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/german/collocations.tab",
+          "byteSize": 527,
+          "blobHash": "e85c5004e1e9c4da8c614c6cb82a11cb0aeb5c96"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/german/ortho_context.tab",
+          "byteSize": 943500,
+          "blobHash": "52ff05ac9c2b8bfa18c806e3ce2172f3f1686a45"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/german/sent_starters.txt",
+          "byteSize": 762,
+          "blobHash": "1240eca4f27964cc87a93b1042a09dd14964e2f3"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/greek/abbrev_types.txt",
+          "byteSize": 570,
+          "blobHash": "4d8a0a06b7255e8a19c7bf5b3d31e1e1a5e01280"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/greek/collocations.tab",
+          "byteSize": 118,
+          "blobHash": "2821727f8c461e648765a6a9c0de3e7d40b65764"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/greek/ortho_context.tab",
+          "byteSize": 632838,
+          "blobHash": "e61e774def6742368f3887b3c5ff632f556a959b"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/greek/sent_starters.txt",
+          "byteSize": 567,
+          "blobHash": "4099aed6cb48bcedf2225a9ee856393efacb213b"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/italian/abbrev_types.txt",
+          "byteSize": 534,
+          "blobHash": "13beb19640c04a4dfab2690763bc4825397d5d94"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/italian/collocations.tab",
+          "byteSize": 53,
+          "blobHash": "4fd846baeaa42f84954e2090182d8fbcc8ce22bc"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/italian/ortho_context.tab",
+          "byteSize": 369822,
+          "blobHash": "7b5c93d0b20ef6bab588227f1e04688ec17195bc"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/italian/sent_starters.txt",
+          "byteSize": 208,
+          "blobHash": "dcadf042465b7aca1cde274e2533054fb2f7dd2a"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/norwegian/abbrev_types.txt",
+          "byteSize": 496,
+          "blobHash": "3379948584ae4641073a1d345d1b0533ea1d37a4"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/norwegian/collocations.tab",
+          "byteSize": 869,
+          "blobHash": "7888449542c1fcff60c886fa88fd8c06c11a0ca7"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/norwegian/ortho_context.tab",
+          "byteSize": 734070,
+          "blobHash": "a9b7dd2386855537c256a373e0e2386f678150b4"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/norwegian/sent_starters.txt",
+          "byteSize": 378,
+          "blobHash": "70b191b1a4ca5d33a5688edd2d19bcf56aa19ba3"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/polish/abbrev_types.txt",
+          "byteSize": 973,
+          "blobHash": "d0c7a93629d95e96140d6d079ff2127f5f586f70"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/polish/collocations.tab",
+          "byteSize": 1101,
+          "blobHash": "1f4d291321dbd96e9f889c8230829da8f7d260fe"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/polish/ortho_context.tab",
+          "byteSize": 1066577,
+          "blobHash": "8c25887cf8384d5f3eb9e445ad27e48e00e0ba93"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/polish/sent_starters.txt",
+          "byteSize": 518,
+          "blobHash": "0a2158412aea35ae88429c8c193d2d8bfb97135e"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/portuguese/abbrev_types.txt",
+          "byteSize": 301,
+          "blobHash": "5840329505a37a244585c9cc39bc0b7a6b631e91"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/portuguese/collocations.tab",
+          "byteSize": 64,
+          "blobHash": "6355d4107725f98ef9e71e4f218acde01ecaa513"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/portuguese/ortho_context.tab",
+          "byteSize": 363124,
+          "blobHash": "e07acba10f239ebf5646fa61fe309595f6b656f2"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/portuguese/sent_starters.txt",
+          "byteSize": 209,
+          "blobHash": "494fe8b279928cb0e339419343ae60d8c71caffe"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/russian/abbrev_types.txt",
+          "byteSize": 15363,
+          "blobHash": "3bb31653f49b45888c8e6afe270e3ed5f5bb705d"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/russian/collocations.tab",
+          "byteSize": 0,
+          "blobHash": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/russian/ortho_context.tab",
+          "byteSize": 10,
+          "blobHash": "9b18d6eb42882f1d53bf4508aaf938e0345687cc"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/russian/sent_starters.txt",
+          "byteSize": 0,
+          "blobHash": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/slovene/abbrev_types.txt",
+          "byteSize": 280,
+          "blobHash": "72a14996107556cef68138d8f23b4b067513f8c5"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/slovene/collocations.tab",
+          "byteSize": 1131,
+          "blobHash": "04cb9ebbd81eb4dc5fdc50f40de59f0a55bcf46f"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/slovene/ortho_context.tab",
+          "byteSize": 445129,
+          "blobHash": "7add76758ebffb3f5fa5a6ef04e308d77d5685df"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/slovene/sent_starters.txt",
+          "byteSize": 358,
+          "blobHash": "56ee9c75b0e7f9de6f4cb2d077eb0a486a308e39"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/spanish/abbrev_types.txt",
+          "byteSize": 234,
+          "blobHash": "2668423af54897cc0554e25152006a8d5525dc53"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/spanish/collocations.tab",
+          "byteSize": 74,
+          "blobHash": "a3c8e4ac4403e95e089c2bff7e804bbdbe555f8b"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/spanish/ortho_context.tab",
+          "byteSize": 337707,
+          "blobHash": "4387d2779a83bda1cc0b8f8b47e60169bcee39d2"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/spanish/sent_starters.txt",
+          "byteSize": 289,
+          "blobHash": "25cd8a03e9e166ac3b7f4f1acf0ede6da7d236c9"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/swedish/abbrev_types.txt",
+          "byteSize": 208,
+          "blobHash": "79b12d4cf6df9afb7210033a3a76306ce9d24180"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/swedish/collocations.tab",
+          "byteSize": 136,
+          "blobHash": "6565db7d5e853cc5d5e1d838f6063f89bc7f0d1a"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/swedish/ortho_context.tab",
+          "byteSize": 616904,
+          "blobHash": "ebec8ccc3a1b6d62e18d990cd3232588d7394ae5"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/swedish/sent_starters.txt",
+          "byteSize": 295,
+          "blobHash": "5ccb1347ea11616c9f3a7a6fdb25c2e60a86db25"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/turkish/abbrev_types.txt",
+          "byteSize": 424,
+          "blobHash": "f610cc126be9b94ea685bab4f2ad7324075f80d7"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/turkish/collocations.tab",
+          "byteSize": 273,
+          "blobHash": "c6305c90cd18f20a2e776f5ed87093ff21b815c0"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/turkish/ortho_context.tab",
+          "byteSize": 642682,
+          "blobHash": "9efceb5d33bc9c8a99f608a010f3944aec42e7d2"
+        },
+        {
+          "path": "blocklist/nltk_data/tokenizers/punkt_tab/turkish/sent_starters.txt",
+          "byteSize": 613,
+          "blobHash": "67c39626372185a21983d7bba64abc8123da4195"
+        },
+        {
+          "path": "blocklist/whitelist/whitelisted",
+          "byteSize": 5,
+          "blobHash": "42b509ed5ed5f2471f7aafeba5b3bdc32dd8b65c"
+        },
+        {
+          "path": "face_blur_filter/Resnet50_Final.pth",
+          "byteSize": 109497761,
+          "blobHash": "6d1de9c2944f2ccddca5f5e010ea5ae64a39845a86311af6fdf30841b0a5a16d"
+        }
+      ]
+    },
+    {
+      "kind": "qwen_text_guard",
+      "repository": "Qwen/Qwen3Guard-Gen-0.6B",
+      "revision": "fada3b2f655b89601929198343c94cd2f64d93cc",
+      "gated": false,
+      "marker": "config.json",
+      "files": [
+        {
+          "path": "LICENSE",
+          "byteSize": 11343,
+          "blobHash": "6634c8cc3133b3848ec74b9f275acaaa1ea618ab"
+        },
+        {
+          "path": "config.json",
+          "byteSize": 727,
+          "blobHash": "eea5267ae100b197dd81cb1823d797bb18ebbc13"
+        },
+        {
+          "path": "generation_config.json",
+          "byteSize": 161,
+          "blobHash": "76b0c0e82f202eb40ea0ed77df1afb0ac6a4cd4e"
+        },
+        {
+          "path": "merges.txt",
+          "byteSize": 1671853,
+          "blobHash": "31349551d90c7606f325fe0f11bbb8bd5fa0d7c7"
+        },
+        {
+          "path": "model.safetensors",
+          "byteSize": 1503300328,
+          "blobHash": "4f3ce47ebd968cddb67de08d8764f8ede7c410a7d1fb9e08145a4c7a2f2e5c0f"
+        },
+        {
+          "path": "tokenizer.json",
+          "byteSize": 11422654,
+          "blobHash": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "byteSize": 9601,
+          "blobHash": "409e51f8f3d4316361001ea16127a4aa7db80903"
+        },
+        {
+          "path": "vocab.json",
+          "byteSize": 2776833,
+          "blobHash": "4783fe10ac3adce15ac8f358ef5462739852c569"
+        }
+      ]
+    }
+  ]
+}

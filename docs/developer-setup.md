@@ -20,7 +20,13 @@ On Apple Silicon, omit the extra: `uv sync` and `uv run python main.py` use the
 PyPI wheel with MPS support. CPU is useful for API/UI development; it does not
 make large models practical on machines with insufficient memory.
 
-The committed `uv.lock` records the dependency resolution. Transformers and
+Diffusers is an ordinary published dependency with a compatible minimum; the
+committed `uv.lock` records the stable release tested with this source. Native
+setup consumes that lock, and the specialized installer installs its
+hash-verified official Diffusers wheel. Changing a runtime version also changes
+optional-overlay bindings and requires explicit validation before activation.
+Upstream catalog revisions remain separate, immutable source-review evidence.
+Transformers and
 PEFT are mandatory base libraries, so ordinary text-to-image and LoRA workflows
 need no optional install or Activate step. Accelerator extras route Torch and
 its companion wheels to their matching official index. Basic CUDA setup does
@@ -109,9 +115,12 @@ then preflight and restart the backend. For the Instinct SDK, rerun its explicit
 `uv pip install` and `uv pip check` commands above instead. An intentional package upgrade uses
 `uv lock --upgrade-package transformers --upgrade-package peft`, then sync and
 validate. `uv lock --upgrade` upgrades all compatible dependencies and needs the
-full contributor gate. The exact Diffusers source is a compatibility exception:
-current Modular block contracts bind that revision; update it together with those
-contracts and tests. Compiled accelerator wheels also need matching ABI versions.
+full contributor gate. Diffusers follows its ordinary compatible minimum and
+tested stable lock resolution. Historical catalog regeneration separately binds
+its reviewed source revision; it must not pretend that revision is the installed
+release. Source-audit tests acquire that exact source fixture independently of
+setup, preflight, and runtime smoke. Compiled accelerator wheels also need
+matching ABI versions.
 
 A missing base library is repaired by rerunning the same sync command, without
 optional activation. Additional optional packages retain explicit install and

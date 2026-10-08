@@ -1656,6 +1656,8 @@ def validate_optional_runtime_install_request(
         raise ValueError("The optional runtime specDigest does not match the reviewed catalog.")
     if profile.contract_for_target().install_action_available is not True:
         raise RuntimeError("This optional runtime is not qualified for installation.")
+    from modiff.optional_runtimes import assert_optional_runtime_distribution_compatibility
+    assert_optional_runtime_distribution_compatibility(profile)
     base_contracts = list(optional_runtime_base_contracts([profile_id]))
     # Establish constraints, exact observed versions/origins, accelerator lock,
     # and Diffusers identity before a lease or staging directory can exist.
@@ -1688,6 +1690,8 @@ def validate_optional_runtime_activation_request(
         raise ValueError("The optional runtime specDigest does not match the reviewed catalog.")
     if profile.contract_for_target().activation_available is not True:
         raise RuntimeError("This optional runtime is not qualified for activation.")
+    from modiff.optional_runtimes import assert_optional_runtime_distribution_compatibility
+    assert_optional_runtime_distribution_compatibility(profile)
     return spec
 
 

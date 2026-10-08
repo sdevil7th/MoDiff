@@ -83,12 +83,10 @@ def build_operation_inventory(root: Path, *, diffusers_source=None):
     # Source auditing stays out of ordinary startup/discovery.
     from modiff.upstream_coverage import (
         _pipeline_coverage,
-        _verify_diffusers_source_revision,
-        installed_diffusers_source,
+        reviewed_diffusers_source,
     )
 
-    source = diffusers_source or installed_diffusers_source()
-    _verify_diffusers_source_revision(source, PINNED_DIFFUSERS_REVISION)
+    source = reviewed_diffusers_source(diffusers_source)
     version, coverage = _pipeline_coverage(root, source)
     auto_path = source / "pipelines" / "auto_pipeline.py"
     auto = _auto_tasks(auto_path.read_text())

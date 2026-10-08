@@ -15,7 +15,9 @@ import sys
 import tarfile
 import tempfile
 import time
+import tomllib
 import urllib.request
+from urllib.parse import urlparse
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -517,21 +519,35 @@ def _dependency_environment() -> dict[str, str]:
 
 
 def _install_reviewed_diffusers(uv: str, python: Path) -> None:
-    # Read the executable contract, avoiding another independently maintained
-    # revision. A prior uv cache may contain a wheel built from CRLF checkout
-    # bytes; bypass that cache only for this VCS dependency, not Torch.
-    project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    matches = re.findall(
-        r'"(diffusers @ git\+https://github\.com/huggingface/diffusers\.git@[0-9a-f]{40})"',
-        project,
-    )
+    """Install the tested ordinary wheel from the committed dependency lock.
+
+    The project declares the compatible minimum; uv.lock binds this setup's
+    reviewed resolution. A VCS checkout and host Git line endings are irrelevant
+    to the published wheel. Profile installation keeps this compatible version.
+    """
+    with (ROOT / "uv.lock").open("rb") as handle:
+        lock = tomllib.load(handle)
+    candidates = [package for package in lock.get("package", []) if package.get("name") == "diffusers"]
+    if len(candidates) != 1:
+        raise RuntimeError("The dependency lock must contain one Diffusers package.")
+    package = candidates[0]
+    if package.get("source") != {"registry": "https://pypi.org/simple"}:
+        raise RuntimeError("The tested Diffusers resolution must use the official package registry.")
+    version = package.get("version")
+    wheels = package.get("wheels", [])
+    expected_name = f"diffusers-{version}-py3-none-any.whl"
+    matches = [wheel for wheel in wheels if Path(urlparse(wheel.get("url", "")).path).name == expected_name]
     if len(matches) != 1:
-        raise RuntimeError("The executable Diffusers dependency must name one immutable reviewed commit.")
-    _run(
-        [uv, "pip", "install", "--python", str(python), "--no-cache", "--no-deps",
-         "--reinstall-package", "diffusers", matches[0]],
-        env=_dependency_environment(),
-    )
+        raise RuntimeError("The Diffusers lock must bind one portable published wheel.")
+    wheel = matches[0]
+    url = urlparse(wheel.get("url", ""))
+    digest = wheel.get("hash", "")
+    if (url.scheme != "https" or url.hostname != "files.pythonhosted.org" or url.username or url.password
+            or url.query or url.fragment or not re.fullmatch(r"sha256:[0-9a-f]{64}", digest)):
+        raise RuntimeError("The Diffusers lock has an invalid wheel source or hash.")
+    _run([uv, "pip", "install", "--python", str(python), "--no-deps",
+          "--reinstall-package", "diffusers",
+          f"{wheel['url']}#sha256={digest.removeprefix('sha256:')}"])
 
 
 def _ensure_venv(uv: str, target: Path) -> Path:

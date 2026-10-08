@@ -240,6 +240,12 @@ class Cosmos3ArtifactReviewTests(unittest.TestCase):
                         "kind": "safety_checker",
                         "repo": "nvidia/Cosmos-Guardrail1",
                         "revision": "d6d4bfa899a71454a700907664f3e88f503950cf",
+                    },
+                    {
+                        "id": "cosmos3-mandatory-text-safety-classifier",
+                        "kind": "safety_checker",
+                        "repo": "Qwen/Qwen3Guard-Gen-0.6B",
+                        "revision": "fada3b2f655b89601929198343c94cd2f64d93cc",
                     }
                 ],
             )
@@ -260,7 +266,7 @@ class Cosmos3ArtifactReviewTests(unittest.TestCase):
         repository = "nvidia/Cosmos3-Nano"
         revision = "7a312c868bcce8e40b3eb40861300a9d0ba3fde1"
         self.assertEqual(COSMOS3_NANO_PIPELINE_CONFIG.default_repo, repository)
-        self.assertNotIn(model_type, PINNED_MODULAR_REPOSITORY_VARIANTS)
+        self.assertEqual(PINNED_MODULAR_REPOSITORY_VARIANTS[model_type], (repository, "nvidia/Cosmos3-Super-Text2Image"))
         self.assertEqual(
             ModelsLoader._reviewed_builtin_selection(
                 model_type=model_type,

@@ -174,6 +174,115 @@ composite cannot establish decomposition quality. Keep execution, UI lifecycle,
 resource observations, numerical comparison and visual acceptance as separate
 claims. No result qualifies an untested recipe, platform or source revision.
 
+## Large-model selection
+
+The 2026-10-08 publisher-metadata review compares one executable checkpoint's
+selected components. A repository can contain original and converted weights,
+several task variants, and duplicate precision formats; its total size is not
+one model's inference requirement. Weight-file bytes also do not establish RAM,
+VRAM or activation peaks.
+
+| Reviewed checkpoint | Selected full-precision weight files | Current test boundary |
+| --- | ---: | --- |
+| MiniMax H3, one converted audio/video workflow | 144,016,405,316 bytes (144.0 GB) | Metadata and existing source contracts reviewed; no model download or execution in this campaign. Territory eligibility must be resolved first. |
+| Cosmos3-Super-Text2Image, five-component Omni text-to-image workflow | 131,299,159,064 bytes (131.3 GB) | Source/runtime integration and hardware/output qualification are separate requirements; no completed generation is claimed. |
+| FLUX.2-dev, selected Diffusers component weights | Approximately 112.8 GB | Required gated access, complete artifacts and live execution remain pending. |
+
+These three entries cover the reviewed image and audio/video workflows,
+not an exhaustive ranking of every model on the Hub. No reviewed single
+Diffusers image checkpoint in this audit contains 200 GB–1 TB of required
+weights. MiniMax's whole repository contains approximately 498.3 GB of
+safetensors, including original/converted task variants; the two converted
+task selections share components and together contain approximately 210.3 GB.
+Neither figure describes one 498.3 GB or 210.3 GB inference checkpoint.
+[MiniMax Diffusers integration](https://huggingface.co/docs/diffusers/main/en/api/pipelines/minimax_h3).
+
+The selected Cosmos snapshot at
+`daf3d374804be4c512c2135568a7cb95d4341d79` contains 132,489,727,416 bytes
+of safetensors. Its vision encoder contributes 1,190,568,352 bytes and is
+not an executable component of the reviewed text-to-image Modular index.
+The transformer, VAE and sound tokenizer account for the table's 131.3 GB.
+Use that exact publisher index and example caption with the full BF16
+50-step, CFG 4, 1024-square, seed-1143 recipe. The mandatory safety runtime
+and its exact local artifacts must succeed before generation-model loading.
+Do not replace the full model with a 4-step or quantized checkpoint for this
+qualification.
+[Publisher checkpoint](https://huggingface.co/nvidia/Cosmos3-Super-Text2Image/tree/daf3d374804be4c512c2135568a7cb95d4341d79),
+[Cosmos Diffusers integration](https://huggingface.co/docs/diffusers/main/api/pipelines/cosmos3).
+
+MiniMax H3's published community license excludes the United States, United
+Kingdom, European Union and Republic of Korea. Confirm the actual compute
+region as well as the operator's eligibility before any model download or
+execution; an ungated repository does not establish authorization. The current
+campaign's observed compute region is an excluded territory, so this model
+requires separate publisher authorization or a suitable, authorized environment.
+[Exact publisher license](https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/42ed227ee7df40d41602854ae760620d6eb651fe/LICENSE).
+
+### Broader native Diffusers survey
+
+Stable Diffusers 0.41 also includes discrete diffusion **text** pipelines. This
+matters when interpreting the request for a 200 GB–1 TB model: LLaDA2 Flash is
+a real checkpoint above 200 GB, while its output and integration requirements
+are different from MoDiff's image workflows.
+
+| Additional reviewed native family | Selected weight-file bytes | Scope of evidence |
+| --- | ---: | --- |
+| LLaDA2.1-flash, discrete diffusion text | 205,782,452,128 bytes (205.8 GB; approximately 191.65 GiB), 32 shards | Pinned publisher index, config, model source and stable `LLaDA2Pipeline` reviewed; no weight download or execution. |
+| LLaDA2.0-flash, discrete diffusion text | 205,782,433,824 bytes (205.8 GB), 42 shards | Same index-based selection; separate checkpoint, not combined with 2.1. |
+| JoyAI-Echo, audio/video, with external Gemma 3 12B | 70,514,517,046 bytes (70.5 GB) | Native `EchoModularPipeline` index selects 46.1 GB in five Echo component folders plus 24.4 GB of gated Gemma weights; excludes standalone DMD, FP8 and FP4 duplicates. |
+| Nucleus-Image, text-to-image | 51,633,577,862 bytes (51.6 GB) | Native `NucleusMoEImagePipeline` index selects transformer, text encoder and VAE. The older `NucleusMoE-Image` Hub name redirects to `Nucleus-Image`. |
+| Ideogram 4, text-to-image | Unknown | Native `Ideogram4Pipeline` is present; public checkpoint metadata returned HTTP 401, so no checkpoint-size ranking is established. |
+
+The LLaDA2.1 Flash snapshot is
+`2bf95e86ade33c1adb5c1e223b7db2a76dc3bdd6`; its safetensors index selects
+all 32 unique shard files once. The publisher describes a 100B non-embedding
+MoE model; Hub metadata records approximately 102.9B total parameters, mostly
+BF16 with a small FP32 subset. Its model card declares Apache-2.0. The older
+2.0 Flash snapshot is `744c3f8c6c8317d2377d6d16d8a3d4be2caef563`.
+[Exact 2.1 index](https://huggingface.co/inclusionAI/LLaDA2.1-flash/blob/2bf95e86ade33c1adb5c1e223b7db2a76dc3bdd6/model.safetensors.index.json),
+[publisher model card](https://huggingface.co/inclusionAI/LLaDA2.1-flash/blob/2bf95e86ade33c1adb5c1e223b7db2a76dc3bdd6/README.md),
+[exact 2.0 index](https://huggingface.co/inclusionAI/LLaDA2.0-flash/blob/744c3f8c6c8317d2377d6d16d8a3d4be2caef563/model.safetensors.index.json).
+
+`LLaDA2Pipeline` and `BlockRefinementScheduler` are native stable Diffusers
+implementations. Their threshold, token editing and post-refinement controls
+cover the publisher's speed/quality modes. The official example loads a model
+through Transformers with `trust_remote_code=True`; the Flash config maps to
+publisher `LLaDA2MoeModelLM` Python code. This is Diffusers family support,
+not a tested Flash execution or admission into MoDiff. A separate reviewed
+model-loading implementation, text task/output contracts and hardware/output
+qualification would be required. Approximately 191.65 GiB of full weight files
+leaves essentially no headroom on the nominal 192 GB MI300X before runtime and
+activations; offload or sharding feasibility requires measurement.
+[Native stable pipeline source](https://github.com/huggingface/diffusers/blob/086bf9578c0f4acbc66e48cd1e7cc26befd9e10f/src/diffusers/pipelines/llada2/pipeline_llada2.py),
+[exact publisher class mapping](https://huggingface.co/inclusionAI/LLaDA2.1-flash/blob/2bf95e86ade33c1adb5c1e223b7db2a76dc3bdd6/config.json).
+
+Echo's audited index is
+`jdopensource/JoyAI-Echo@d5a781ef08adb1f84748431ff5366de6e320d62d` and
+its external Gemma snapshot is
+`google/gemma-3-12b-it@96b6f1eccf38110c56df3a15bffe176da04bfd80`.
+The publisher index leaves the external revision unpinned; this audit binds
+that snapshot explicitly. Its `ltx2` connector/vocoder type hints resolve
+to Diffusers' built-in LTX-2 pipeline namespace. Gated Gemma access, compatible
+local components and hardware/output qualification remain separate checks.
+[Exact Echo index](https://huggingface.co/jdopensource/JoyAI-Echo/blob/d5a781ef08adb1f84748431ff5366de6e320d62d/modular_model_index.json),
+[Echo integration](https://huggingface.co/docs/diffusers/v0.41.0/api/pipelines/echo).
+Nucleus uses `5e963db4fd0a65c7e4faf53ca2d4eca567c4dcfa`.
+[Exact Nucleus index](https://huggingface.co/NucleusAI/Nucleus-Image/blob/5e963db4fd0a65c7e4faf53ca2d4eca567c4dcfa/model_index.json),
+[Ideogram integration](https://huggingface.co/docs/diffusers/v0.41.0/api/pipelines/ideogram4).
+
+The expanded survey also inspected native GLM-Image, FIBO, PRX Pixel,
+HunyuanImage 2.1 and DiffusionGemma publisher metadata; their reviewed required
+weights are smaller than the three image/audio-video entries above. The much
+larger HunyuanImage **3.0** Transformers/custom-code checkpoint does not become
+native Diffusers support through the similarly named **2.1** pipeline. No
+reviewed native image checkpoint in this bounded survey supplies 200 GB–1 TB
+of required weights; this remains a survey result, not a universal size limit.
+
+Downloaded weights, CPU package qualification and a successful task each prove
+only their recorded scope. Keep standard-runtime compatibility, mandatory
+moderation, new-node workflow authoring, numerical/visual quality, repeated
+execution and measured Auto resource qualification distinct in the report.
+
 ## References
 
 - [AMD ROCm 7.14 compatibility matrix](https://rocm.docs.amd.com/en/docs-7.14.0/compatibility/compatibility-matrix.html)

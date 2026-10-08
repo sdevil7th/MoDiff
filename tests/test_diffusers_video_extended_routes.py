@@ -1,7 +1,6 @@
 from source_contract_helpers import source_sha256
 
 import ast
-from pathlib import Path
 import sys
 import unittest
 from types import SimpleNamespace
@@ -100,12 +99,14 @@ class RecordingVideoPipeline:
 class DiffusersVideoExtendedRouteTests(unittest.TestCase):
     def test_exact_pinned_upstream_sources_and_call_signatures_are_preserved(self):
         import diffusers
+        import inspect
+        from modiff.upstream_coverage import reviewed_diffusers_source
 
         self.assertEqual(
             PINNED_DIFFUSERS_REVISION,
             "fbf49e7f35857f76bc57b177e26f12b03687c668",
         )
-        diffusers_root = Path(diffusers.__file__).resolve().parent
+        diffusers_root = reviewed_diffusers_source()
         for relative_path, class_name, expected_digest, required_parameters in (
             UPSTREAM_PIPELINE_SOURCES
         ):
@@ -137,6 +138,8 @@ class DiffusersVideoExtendedRouteTests(unittest.TestCase):
                     )
                 }
                 self.assertTrue(required_parameters.issubset(parameters))
+                installed = getattr(diffusers, class_name)
+                self.assertTrue(required_parameters.issubset(inspect.signature(installed.__call__).parameters))
 
     def test_extended_routes_are_additive_exact_class_adapters_with_generic_modes(self):
         expected = {

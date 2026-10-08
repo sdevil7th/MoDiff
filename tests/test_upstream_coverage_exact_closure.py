@@ -4,10 +4,8 @@ from collections import Counter
 from pathlib import Path
 import unittest
 
-import diffusers
-
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION
-from modiff.upstream_coverage import _REVIEWED_PIPELINE_DECISIONS, _pipeline_coverage
+from modiff.upstream_coverage import _REVIEWED_PIPELINE_DECISIONS, _pipeline_coverage, reviewed_diffusers_source
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,7 +46,7 @@ NEW_EQUIVALENT_PIPELINES = {
 
 class UpstreamCoverageExactClosureTests(unittest.TestCase):
     def test_exact_pin_closes_with_the_reviewed_finite_partition(self):
-        source = Path(diffusers.__file__).resolve().parent
+        source = reviewed_diffusers_source()
         self.assertEqual(PINNED_DIFFUSERS_REVISION, "fbf49e7f35857f76bc57b177e26f12b03687c668")
         self.assertEqual(source_sha256(source / "__init__.py"), PINNED_EXPORT_SHA256)
         self.assertTrue(PROMOTED_PIPELINES.isdisjoint(_REVIEWED_PIPELINE_DECISIONS))

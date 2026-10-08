@@ -35,7 +35,8 @@ from modiff.modular_workflow_contracts import (
 from modiff.modular_workflow_discovery import load_reviewed_modular_workflow_snapshot
 from modiff.operation_inventory import OPERATION_INVENTORY_PATH, load_operation_inventory
 from modiff.studio_execution_specs import (
-    reviewed_repository_download_files, studio_capability_definitions, studio_execution_spec_for_pair,
+    reviewed_repository_download_files, studio_capability_definition, studio_capability_definitions,
+    studio_execution_spec_for_pair,
 )
 
 
@@ -365,7 +366,9 @@ def build_image_prototyping_readiness(root: Path) -> dict[str, Any]:
     routes = []
     seen_route_ids = set()
     for profile in sorted(advertised_profiles, key=lambda item: (item["id"], item.get("_artifact_variant", ""))):
-        capability = capabilities.get(profile["model_type"])
+        capability = studio_capability_definition(
+            profile["model_type"], repository=profile.get("default_repo"),
+        ) or capabilities.get(profile["model_type"])
         for mode in sorted(item for item in profile["modes"] if item in _IMAGE_TASKS):
             task = _canonical_task(mode)
             route_id = f"{profile['id']}/{mode}"

@@ -225,8 +225,13 @@ order. Each JSON contract must declare
   40-character `revision` for every entry.
 - `settings` contains actually consumed values and a resolved nonnegative integer
   `seed`. Include generator, scheduler, adapters and preprocessing when relevant.
-- `runtime` records `torch`, `diffusersCommit`, `transformers`, `peft`, `platform`
-  and `device`. The Diffusers commit is an immutable 40-character revision.
+- `runtime` records `torch`, `transformers`, `peft`, `platform` and `device`.
+  Record either the actual Git-installed `diffusersCommit`, or the exact
+  published `diffusersVersion` and the verified installation artifact's
+  `diffusersWheelSha256`. A historical catalog commit does not identify a
+  separately installed wheel. Preserve existing commit-based comparison records;
+  the two identity forms are not interchangeable or automatically comparable. Git identities retain the immutable 40-character
+  revision requirement.
 - `inputs` is the ordered list of consumed `role` and `sha256` pairs, or `[]` for
   a text-only recipe. Include masks and references without reordering them.
 - `expectedOutputs` lists the complete ordered `width` and `height` values.

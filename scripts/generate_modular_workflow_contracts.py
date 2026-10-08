@@ -8,7 +8,17 @@ import json
 from collections.abc import Mapping
 from pathlib import Path
 
-import diffusers
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+if __name__ == "__main__":
+    from modiff.catalog_source_audit import prepare_catalog_source_audit
+    prepare_catalog_source_audit(Path(__file__))
+
+import diffusers  # noqa: E402
 from diffusers.modular_pipelines.modular_pipeline import PipelineState
 
 from modiff.modular_contract_only_registry import (

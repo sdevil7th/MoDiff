@@ -15,10 +15,13 @@ this integration.
 
 ## Runtime and current qualification
 
-The reviewed Diffusers source is
+The historical source review inspected
 [`fbf49e7f35857f76bc57b177e26f12b03687c668`](https://github.com/huggingface/diffusers/commit/fbf49e7f35857f76bc57b177e26f12b03687c668).
-Modular Diffusers is part of that same package. Transformers and PEFT now come
-with ordinary backend setup, with compatible versions recorded in `uv.lock`.
+Ordinary setup now uses `diffusers>=0.41.0`, with the tested stable release
+recorded in `uv.lock`; the historical source revision does not identify the
+installed wheel. Modular Diffusers is part of the same package. Transformers
+and PEFT come with ordinary backend setup, with compatible versions recorded
+in `uv.lock`.
 Qwen 2.1 needs no separate core runtime installation or activation. Older exact
 optional profiles describe historical qualification and are not prerequisites
 for a verified base environment. GGUF and other specialized optional extras

@@ -20,7 +20,7 @@ These rules apply to AI-assisted work in this repository. `CONTRIBUTING.md` is t
 
 ## Hugging Face Model Libraries
 
-- Keep the reviewed Diffusers revision pinned in the executable installation contract and update its compatibility test when changing it.
+- Declare the reviewed Diffusers minimum in the executable installation contract and record the tested stable resolution in `uv.lock`. Keep immutable upstream catalog provenance separate from the installed distribution identity; update no-download compatibility tests and source-generated contracts when changing either.
 - Treat support for each additional official Hugging Face library as an explicit integration: document its purpose and provenance, constrain its compatible version, keep heavyweight imports lazy, and add no-download compatibility and boundary tests.
 - Official-library eligibility is not blanket trust for Hub artifacts or repository code. Prefer `safetensors`; pin curated models and adapters immutably; and require a separate explicit operator decision for any reviewed remote-code path.
 - Use Diffusers loaders, pipelines, components, schedulers, adapters, and offload hooks instead of reimplementing upstream behavior.

@@ -47,12 +47,14 @@ from modiff.modular_workflow_contracts import (
     PINNED_MODULAR_REPOSITORY_IGNORED_STANDARD_COMPONENT_TYPES,
     PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES,
     PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES,
+    PINNED_MODULAR_REPOSITORY_COMPONENT_SOURCES,
     PINNED_MODULAR_REPOSITORY_VARIANTS,
     PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS,
     reviewed_modular_weight_variant,
 )
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
-from utils.huggingface import exact_cached_snapshot_path
+from utils.huggingface import exact_cached_snapshot_path, _containing_hf_cache_root
+from modiff.hf_cache_layout import resolve_snapshot_cache_file
 
 from . import MESSAGE_DURATION, MODULAR_MODEL_TYPE_OPTIONS, components
 from .custom_pipeline import (
@@ -648,18 +650,15 @@ def _read_reviewed_pipeline_index(path, *, repository, revision):
         if directory.is_symlink() or is_junction:
             raise EnvironmentError(f"The cached pipeline snapshot boundary must not be linked: '{directory}'.")
 
-    read_path = index_path
-    if index_path.is_symlink():
-        try:
-            blob_path = repo_cache_path / "blobs"
-            if blob_path.is_symlink() or bool(getattr(blob_path, "is_junction", lambda: False)()):
-                raise ValueError("the repository blobs directory is linked")
-            read_path = index_path.resolve(strict=True)
-            read_path.relative_to(blob_path.resolve(strict=True))
-        except (OSError, RuntimeError, ValueError) as error:
-            raise EnvironmentError(
-                f"The cached pipeline index for {repository}@{revision} does not resolve inside its repository cache."
-            ) from error
+    try:
+        read_path = resolve_snapshot_cache_file(
+            index_path, snapshot=snapshot_path,
+            cache_root=_containing_hf_cache_root(snapshot_path), repository=repository,
+        )
+    except (OSError, RuntimeError, ValueError) as error:
+        raise EnvironmentError(
+            f"The cached pipeline index for {repository}@{revision} does not resolve inside its allowed blob cache."
+        ) from error
     if not read_path.is_file():
         raise EnvironmentError(f"The cached pipeline index for {repository}@{revision} is not a regular file.")
 
@@ -777,6 +776,31 @@ def _validate_reviewed_pipeline_index(model_type, repository, revision):
             f"The cached standard index for reviewed Modular pipeline {model_type!r} declares incompatible "
             f"blocks class {observed_blocks_class_name!r}."
         )
+
+    pinned_component_sources = PINNED_MODULAR_REPOSITORY_COMPONENT_SOURCES.get(repository)
+    if pinned_component_sources is not None:
+        if (
+            filename != ModularPipeline.config_name
+            or revision != require_catalog_revision(repository, model_type=model_type)
+            or {name for name in document if not name.startswith("_")} != set(pinned_component_sources)
+        ):
+            raise ValueError("The exact reviewed Modular artifact has an incompatible component inventory/revision.")
+        loading_keys = {"pretrained_model_name_or_path", "revision", "subfolder", "type_hint", "variant"}
+        for name, component_type in pinned_component_sources.items():
+            raw = document.get(name)
+            if not isinstance(raw, list) or len(raw) != 3 or not isinstance(raw[2], dict):
+                raise ValueError(f"The exact reviewed Modular artifact has a malformed {name!r} loading descriptor.")
+            fields = raw[2]
+            if (
+                tuple(raw[:2]) != component_type
+                or fields.get("type_hint") != list(component_type)
+                or set(fields) != loading_keys
+                or fields["pretrained_model_name_or_path"] != repository
+                or fields["subfolder"] != name
+                or fields["revision"] not in (None, revision)
+                or fields["variant"] is not None
+            ):
+                raise ValueError(f"The exact reviewed Modular artifact has an incompatible {name!r} loading descriptor.")
 
     expected_component_names = set(installed_pipeline._component_specs)
     for name, raw_value in document.items():
@@ -2399,6 +2423,10 @@ class ModelsLoader(NodeBase):
         """Enforce custom identity and remote-code policy before cache reuse."""
 
         model_type = kwargs.get("model_type")
+        from modiff.cosmos_safety_contract import COSMOS_SAFETY_MODEL_TYPES
+        if model_type in COSMOS_SAFETY_MODEL_TYPES:
+            from .cosmos_safety import require_cosmos_safety_runtime
+            require_cosmos_safety_runtime()
         from .qwen_inpaint_compatibility import validate_owner_compatibility
 
         validate_owner_compatibility(kwargs.get('inpaint_compatibility', 'native'),
@@ -2477,6 +2505,8 @@ class ModelsLoader(NodeBase):
                     if getattr(components.components[key], "_modiff_offload_node_id", None) == str(self.node_id)}
         if any(disk_ids.intersection(ids) for owner, ids in components.collections.items() if owner != self.node_id):
             raise ValueError("Cannot transfer a disk-offload owner with shared component ownership.")
+        from .cosmos_safety import reassign_cosmos_safety_owner
+        reassign_cosmos_safety_owner(self.output.get("pipeline_components"), self.node_id, node_id)
         for key in disk_ids:
             components.components[key]._modiff_offload_node_id = str(node_id)
         owned = components.collections.pop(self.node_id, None)
@@ -2587,6 +2617,10 @@ class ModelsLoader(NodeBase):
         """
 
         if reviewed_variant in (None, ""):
+            from modiff.modular_workflow_contracts import require_reviewed_modular_repository_workflow
+            source, repository = cls._selected_repository(repo_id, custom=False)
+            if source == "hub":
+                require_reviewed_modular_repository_workflow(model_type, repository, revision, workflow_id)
             return repo_id, revision
         if not isinstance(reviewed_variant, str):
             raise TypeError("A reviewed Modular Diffusers model selection must be a repository string.")
@@ -2605,6 +2639,8 @@ class ModelsLoader(NodeBase):
                 f"Modular pipeline {model_type!r} does not admit model variant {selected_repository!r}."
             )
         selected_revision = require_catalog_revision(selected_repository, model_type=model_type)
+        from modiff.modular_workflow_contracts import require_reviewed_modular_repository_workflow
+        require_reviewed_modular_repository_workflow(model_type, selected_repository, selected_revision, workflow_id)
         return {"source": "hub", "value": selected_repository}, selected_revision
 
     @classmethod
@@ -2860,6 +2896,10 @@ class ModelsLoader(NodeBase):
         from .qwen_inpaint_compatibility import validate_owner_compatibility
 
         validate_owner_compatibility(inpaint_compatibility, model_type=model_type, workflow_id=workflow_id)
+        from modiff.cosmos_safety_contract import COSMOS_SAFETY_MODEL_TYPES
+        from .cosmos_safety import require_cosmos_safety_runtime
+        if model_type in COSMOS_SAFETY_MODEL_TYPES:
+            require_cosmos_safety_runtime()
         runtime_policy = modular_runtime_policy(attention_backend, vae_slicing, vae_tiling, inpaint_compatibility)
         if type(trust_remote_code) is not bool:
             raise TypeError("ModelsLoader trust_remote_code must be a JSON boolean.")
@@ -3158,6 +3198,15 @@ class ModelsLoader(NodeBase):
             use_group_offload=use_group_offload,
             quant_config=quant_config,
         )
+        # Mandatory moderation artifacts and checker construction must succeed
+        # before loading the much larger generation components. Publication
+        # below uses the same ordinary managed owner and sealed bundle.
+        cosmos_safety_checker = None
+        if model_type in COSMOS_SAFETY_MODEL_TYPES:
+            from .cosmos_safety import build_cosmos_safety_checker
+            cosmos_safety_checker = build_cosmos_safety_checker(
+                owner_node_id=self.node_id, model_type=model_type,
+            )
         with self.diffusers_loading_progress():
             load_components_strict(
                 self.loader,
@@ -3351,25 +3400,43 @@ class ModelsLoader(NodeBase):
         # Mint only after every loading and component-info step succeeded. A
         # cache hit keeps these dictionaries (and this identity token), while
         # each successful re-execution receives a new token.
-        pipeline_instance_token = issue_pipeline_instance_token(
-            model_type=model_type,
-            repo_id=real_repo_id,
-            repo_source=_source,
-            revision=revision,
-        )
+        checker_model_id = None
+        try:
+            if cosmos_safety_checker is not None:
+                from modiff.cosmos_safety_contract import COSMOS_SAFETY_BUNDLE_MEMBER
+                checker_model_id = self.mm_add(cosmos_safety_checker)
+                loaded_components["pipeline_components"][COSMOS_SAFETY_BUNDLE_MEMBER] = {
+                    "model_id": checker_model_id, "owner_node_id": self.node_id,
+                }
+                self._loader_diagnostics["cosmos_safety"] = {
+                    "owner_node_id": self.node_id,
+                    "model_id": checker_model_id,
+                    "artifacts": list(cosmos_safety_checker._modiff_cosmos_artifacts),
+                    "package_version": "0.3.1",
+                }
+            pipeline_instance_token = issue_pipeline_instance_token(
+                model_type=model_type,
+                repo_id=real_repo_id,
+                repo_source=_source,
+                revision=revision,
+            )
 
-        # Make every connected output self-describing. Runtime cleanup may
-        # recreate downstream nodes without replaying their dynamic UI signal.
-        annotate_modular_loader_outputs(
-            loaded_components,
-            repo_id=real_repo_id,
-            repo_source=_source,
-            model_type=model_type,
-            revision=revision,
-            trust_remote_code=bool(trust_remote_code),
-            custom_identity=custom_identity,
-            pipeline_instance_token=pipeline_instance_token,
-        )
+            # Make every connected output self-describing. Runtime cleanup may
+            # recreate downstream nodes without replaying their dynamic UI signal.
+            annotate_modular_loader_outputs(
+                loaded_components,
+                repo_id=real_repo_id,
+                repo_source=_source,
+                model_type=model_type,
+                revision=revision,
+                trust_remote_code=bool(trust_remote_code),
+                custom_identity=custom_identity,
+                pipeline_instance_token=pipeline_instance_token,
+            )
+        except Exception:
+            if checker_model_id is not None:
+                self.mm_remove(checker_model_id)
+            raise
 
         logger.debug(f" ModelsLoader: Final component_manager state: {components}")
 
