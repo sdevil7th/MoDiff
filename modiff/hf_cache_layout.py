@@ -1,5 +1,5 @@
 """Finite snapshot/blob containment for the supported Hugging Face cache layouts."""
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import os
 import re
 
@@ -9,6 +9,17 @@ def _require_unlinked_directory(path):
         raise ValueError("Installed Hugging Face cache directories must not be linked.")
     if not path.is_dir():
         raise ValueError("Installed Hugging Face cache directory is missing.")
+
+
+def _lexical_cache_path(path):
+    """Compare Windows substitute-path spelling without following another link."""
+    if isinstance(path, PureWindowsPath):
+        value = str(path)
+        if value[:8].casefold() == "\\\\?\\unc\\":
+            return PureWindowsPath("\\\\" + value[8:])
+        if value.startswith("\\\\?\\") and re.match(r"[A-Za-z]:\\", value[4:]):
+            return PureWindowsPath(value[4:])
+    return path
 
 
 def resolve_snapshot_cache_file(alias, *, snapshot, cache_root, repository):
@@ -46,7 +57,7 @@ def resolve_snapshot_cache_file(alias, *, snapshot, cache_root, repository):
     # repository alias (or another link) borrow the shared blob's containment.
     if alias.is_symlink():
         direct_target = Path(os.path.abspath(alias.parent / os.readlink(alias)))
-        if direct_target != resolved:
+        if _lexical_cache_path(direct_target) != _lexical_cache_path(resolved):
             raise ValueError("Installed Hugging Face snapshot links must point directly at an allowed blob.")
 
     own_blobs = repo_cache.resolve(strict=True) / "blobs"

@@ -106,3 +106,38 @@ def test_foreign_repository_alias_cannot_borrow_shared_blob_containment(installe
         hf.exact_cached_snapshot_path(REPOSITORY, REVISION)
     with pytest.raises(OSError, match="cache"):
         _read_reviewed_pipeline_index(marker, repository=REPOSITORY, revision=REVISION)
+
+
+@pytest.mark.parametrize("extended,ordinary", [
+    (r"\\?\C:\hub\blobs\e9\blob", r"C:\hub\blobs\e9\blob"),
+    (r"\\?\c:\hub\blobs\e9\blob", r"C:\hub\blobs\e9\blob"),
+    (r"\\?\UNC\server\share\hub\blobs\e9\blob", r"\\server\share\hub\blobs\e9\blob"),
+])
+def test_direct_windows_link_target_preserves_extended_path_spelling(extended, ordinary):
+    from pathlib import PureWindowsPath
+    from modiff.hf_cache_layout import _lexical_cache_path
+    # os.readlink exposes the substitute path; Path.resolve removes this prefix
+    # for a nonextended alias. Compare lexical identities, never follow links.
+    direct, resolved = PureWindowsPath(extended), PureWindowsPath(ordinary)
+    assert direct != resolved  # The previous equality guard rejected this valid target.
+    assert _lexical_cache_path(direct) == _lexical_cache_path(resolved)
+
+
+@pytest.mark.parametrize("other", [
+    r"\\?\C:\hub\models--foreign--repo\snapshots\a\model_index.json",
+    r"\\?\C:\hub\blobs\e9\other",
+    r"\\?\D:\hub\blobs\e9\blob",
+    r"\\?\GLOBALROOT\Device\hub\blobs\e9\blob",
+    r"\\.\C:\hub\blobs\e9\blob",
+    r"\\?\C:relative",
+])
+def test_windows_prefix_normalization_does_not_authorize_other_targets(other):
+    from pathlib import PureWindowsPath
+    from modiff.hf_cache_layout import _lexical_cache_path
+    assert _lexical_cache_path(PureWindowsPath(other)) != PureWindowsPath(r"C:\hub\blobs\e9\blob")
+
+
+def test_windows_prefix_normalization_leaves_posix_path_unchanged(tmp_path):
+    from modiff.hf_cache_layout import _lexical_cache_path
+    path = tmp_path / r"\\?\C:\literal"
+    assert _lexical_cache_path(path) is path
