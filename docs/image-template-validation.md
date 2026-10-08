@@ -80,6 +80,25 @@ forms are numerically interchangeable. This adapter is limited to the reviewed
 text-to-image input branch; edit, layered, inpaint and ControlNet branches retain
 their existing native behavior and require their own paired validation.
 
+### Qwen image-edit processor inputs
+
+Qwen Edit and Edit Plus prompt encoding forwards an existing processor
+`mm_token_type_ids` tensor when the selected text encoder explicitly supports
+that argument. The bridge applies to their ordinary native encoding leaves and
+whole Edit, Edit Plus and EditInpaint prompt methods. It preserves the upstream
+prompt template, image packing, padding, attention masks, device and dtype; it
+neither constructs token types nor replaces a shared encoder's forward method.
+Missing processor fields and older encoder signatures retain their original
+call. Text-only Qwen Image, Layered and Qwen 2.1 keep their existing paths.
+
+The field carries image-token identity into the encoder's multimodal position
+calculation. Genuine tiny CPU processor/model tests compare the resulting
+positions and hidden states with a direct explicit-field call, including shared
+component and offload-hook preservation. This compatibility check does not prove
+full-model visual quality or repeat an earlier image-parity check under the new
+source. Retain prior receipts and bind subsequent model runs to their actual
+encoder implementation and runtime.
+
 ### Qwen Edit masked native templates
 
 The pinned `QwenImageEditModularPipeline` has a genuine

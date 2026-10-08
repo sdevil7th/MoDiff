@@ -157,6 +157,23 @@ hashes in private evidence. Back up and verify those bytes before any authorized
 destructive turnover. Never delete operator caches, stop unowned processes or
 promise provider-side teardown without its explicit authority.
 
+## Execution and visual quality
+
+Completed full BF16 Qwen Edit-2511 runs on a dedicated `gfx942` device establish
+execution only for their recorded source, runtime, inputs and recipe. A matched
+two-reference, 40-step comparison across native and official whole execution,
+including separate math-attention and multimodal-token controls, still produced
+strong image artifacts and missed the requested edit. These results do not
+establish visual acceptance or show that either attention selection or the
+processor compatibility bridge resolves that case.
+
+Review canonical source images and edit instructions separately from complex
+synthetic-reference cases. Preserve every ordered Layered RGBA output and inspect
+its alpha as well as its color; a successful task, layer count or flattened
+composite cannot establish decomposition quality. Keep execution, UI lifecycle,
+resource observations, numerical comparison and visual acceptance as separate
+claims. No result qualifies an untested recipe, platform or source revision.
+
 ## References
 
 - [AMD ROCm 7.14 compatibility matrix](https://rocm.docs.amd.com/en/docs-7.14.0/compatibility/compatibility-matrix.html)
