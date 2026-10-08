@@ -3735,8 +3735,11 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
 
     async def listgraphs(self, request):
         path = Path(self.data_dir) / "graphs"
-        if not path.exists():
-            return web.json_response({"error": True, "message": "No graph directory found."}, status=404)
+        try:
+            path.stat()
+        except FileNotFoundError:
+            # A fresh installation need not have legacy graph files yet.
+            return web.json_response([])
 
         graphs = list_files(str(path), recursive=True, extensions=["json"])
         workflow_metadata: dict[str, dict] = {}

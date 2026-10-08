@@ -1710,6 +1710,23 @@ class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(root_profile["optionalRuntimeRequirement"]["state"], "active")
         catalog.assert_called_once_with()
 
+    async def test_listgraphs_missing_optional_directory_is_an_empty_library(self):
+        graph_dir = Path(self.temporary.name) / "graphs"
+        self.assertFalse(graph_dir.exists())
+        with mock.patch.object(server_module, "public_optional_runtime_catalog") as catalog:
+            missing = await self.server.listgraphs(object())
+            graph_dir.mkdir()
+            empty = await self.server.listgraphs(object())
+        self.assertEqual(missing.status, 200)
+        self.assertEqual(response_json(missing), [])
+        self.assertEqual(response_json(empty), response_json(missing))
+        catalog.assert_not_called()
+
+    async def test_listgraphs_does_not_hide_unreadable_optional_directory(self):
+        with mock.patch.object(Path, "stat", side_effect=PermissionError("unreadable graphs")):
+            with self.assertRaises(PermissionError):
+                await self.server.listgraphs(object())
+
     async def test_listgraphs_snapshots_catalog_once_and_keeps_no_contract_shape_valid(self):
         data_dir = Path(self.temporary.name)
         graph_dir = data_dir / "graphs" / "studio"
