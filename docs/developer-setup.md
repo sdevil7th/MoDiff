@@ -119,13 +119,21 @@ activation, with progress through verification and worker replacement. Failed
 or stale overlays must be repaired through their own runtime action; deleting
 models, workflows, or output history is unnecessary.
 
-## Windows allocator and compilation
+## Allocator and optional compilation
 
-MoDiff uses PyTorch's default allocator on Windows and does not inject
-`expandable_segments:True`. Explicit `PYTORCH_ALLOC_CONF` or the legacy
-`PYTORCH_CUDA_ALLOC_CONF` setting is preserved; remove unsupported allocator
-options if your PyTorch build warns. Linux launch paths share the same pre-import
-allocator policy.
+MoDiff uses PyTorch's default allocator on Windows, macOS and Linux ROCm. Linux
+CUDA retains `expandable_segments:True`. The shared launch policy detects ROCm
+from installed Torch package metadata before importing Torch; it applies to both
+Ryzen and Instinct profiles. Explicit `PYTORCH_ALLOC_CONF`,
+`PYTORCH_CUDA_ALLOC_CONF` and `PYTORCH_HIP_ALLOC_CONF` settings are preserved,
+including an empty setting. Remove unsupported options if your build warns.
+
+ROCm expandable segments can retain file descriptors for HIP virtual-memory
+allocations and report an allocation failure while physical device memory is
+still available. MoDiff does not enable them by default or change process limits.
+If explicitly testing another allocator, use a fresh process and record the
+allocator settings, file-descriptor limit/count and actual memory observations.
+Prior hardware results remain tied to their recorded allocator policy.
 
 Ordinary image workflows use eager execution and native SDPA without Triton.
 Compilation is optional and requires an executed kernel probe. A workflow that

@@ -42,6 +42,16 @@ against [AMD's compatibility matrix](https://instinct.docs.amd.com/projects/amdg
 for the app-local SDK, rather than equating its advertised userspace version with
 driver compatibility. Keep host checks and the tiny tensor result in the evidence.
 
+Normal Linux ROCm launch uses Torch's default allocator, without injected
+expandable segments, for both Instinct and Ryzen. Explicit allocator environment
+settings still take precedence. Some HIP virtual-memory allocation paths retain
+file descriptors per segment and can fail with ample free GPU memory; capture
+the worker's allocator environment and file-descriptor soft/hard limits alongside
+memory observations. Do not diagnose that failure as an Auto RAM/VRAM budget
+rejection or change process limits automatically. Compare allocator settings only
+in separately labeled fresh processes with the same unchanged recipe; a result
+does not qualify another allocator policy or GPU.
+
 The [guided installer](accelerator-installation.md#instinct-mi300x-cloud-preview)
 is a separate alternative. Do not copy a Ryzen virtualenv, apply Ryzen driver remediation
 or alter provider drivers speculatively. Use a dedicated non-root application

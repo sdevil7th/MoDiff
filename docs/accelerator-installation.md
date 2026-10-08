@@ -118,8 +118,16 @@ repair the Instinct stack with its explicit reviewed `uv pip install` command
 or guided installer. Do not replace
 a reviewed ROCm stack using a generic CPU/CUDA sync.
 
-On Windows, the shared process policy uses PyTorch's default allocator and does
-not set expandable segments. Normal image generation uses eager/native SDPA
+On Windows, macOS and Linux ROCm, the shared pre-Torch process policy uses
+PyTorch's default allocator. This includes both reviewed Ryzen and Instinct
+profiles; Linux CUDA retains expandable segments. All explicit modern and legacy
+operator allocator settings are preserved. HIP virtual-memory allocation can
+exhaust file descriptors before physical memory, so MoDiff does not enable
+expandable segments on ROCm or raise process limits automatically. Record any
+explicit allocator experiment separately from ordinary generation and prior
+hardware qualification.
+
+Normal image generation uses eager/native SDPA
 without Triton. Optional compilation requires an executed kernel probe;
 compiled-FlexAttention workflows check it before loading weights. Windows
 compiler setup needs a PyTorch-compatible `triton-windows` distribution and
