@@ -1091,21 +1091,46 @@ def _component_runtime_policy(name, policy):
 
 def assert_explicit_component_runtime_policy(name, component, policy):
     """Connected models remain owned by their source and cannot be reconfigured."""
+    from modules.DiffusersRuntime.main import rocm_vision_attention_requires_configuration
+
+    if rocm_vision_attention_requires_configuration(component, torch_module=torch):
+        raise ValueError(
+            f'The connected {name} needs stable ROCm vision attention; configure its source model owner before sharing it.'
+        )
     expected = _component_runtime_policy(name, policy)
     if getattr(component, '_modiff_modular_runtime_policy', {}) != expected:
         raise ValueError(f'The connected {name} has a different attention/VAE policy; configure its model owner before sharing it.')
 
 
-def apply_modular_runtime_policy(pipeline, policy):
-    """Apply existing runtime helpers only to explicitly selected settings."""
-    from modules.DiffusersRuntime.main import apply_attention_backend, configure_vae_memory, configure_rocm_vision_attention
+def apply_modular_runtime_policy(pipeline, policy, *, owned_component_names=()):
+    """Configure fresh owned vision components and explicitly selected settings.
 
-    result = {'requested': dict(policy), 'attention': None, 'vae': None}
+    Default ownership is empty. A shared component must already satisfy the
+    same vision boundary; a downstream model owner cannot change it in place.
+    """
+    from modules.DiffusersRuntime.main import (
+        apply_attention_backend, configure_vae_memory, configure_rocm_vision_attention,
+        rocm_vision_attention_requires_configuration,
+    )
+
+    owned_names = set(owned_component_names)
+    unowned_ids = {id(component) for name, component in pipeline.components.items() if name not in owned_names}
+    fresh_components = {name: component for name, component in pipeline.components.items() if name in owned_names}
+    vision_candidates = {
+        name: component for name, component in fresh_components.items()
+        if rocm_vision_attention_requires_configuration(component, torch_module=torch)
+    }
+    if any(id(component) in unowned_ids for component in vision_candidates.values()):
+        raise ValueError('A fresh vision component aliases a source-owned model; configure its source model owner before sharing it.')
+
+    result = {'requested': dict(policy), 'attention': None, 'vae': None, 'rocmVisionAttention': []}
+    vision_configuration_complete = False
     try:
-        if policy.get('inpaint_compatibility') == 'whole_v1':
-            # This is performed only by the selected owner, after reuse has
-            # excluded components with another compatibility policy.
-            result['rocmVisionAttention'] = configure_rocm_vision_attention(pipeline)
+        # Use the same generic ROCm helper as whole pipelines, only on the
+        # components this owner actually loaded. Existing inpaint compatibility
+        # retains its separate VAE/mask semantics and component policy identity.
+        result['rocmVisionAttention'] = configure_rocm_vision_attention(SimpleNamespace(components=fresh_components))
+        vision_configuration_complete = True
         if policy['attention_backend'] != 'inherit':
             result['attention'] = apply_attention_backend(pipeline, policy['attention_backend'])
         explicit = {field for field in ('vae_slicing', 'vae_tiling') if policy[field] is not None}
@@ -1129,7 +1154,9 @@ def apply_modular_runtime_policy(pipeline, policy):
         # Partially applied policies must never look like untouched legacy
         # components to another owner after a failed configuration attempt.
         for name, component in pipeline.components.items():
-            if isinstance(component, torch.nn.Module) and _component_runtime_policy(name, policy):
+            if isinstance(component, torch.nn.Module) and (
+                name in vision_candidates or (vision_configuration_complete and _component_runtime_policy(name, policy))
+            ):
                 component._modiff_modular_runtime_policy = {'configuration_failed': True}
         raise
     return result
@@ -1149,6 +1176,12 @@ def component_reuse_compatible(
 
     if not isinstance(component, torch.nn.Module):
         return True
+    from modules.DiffusersRuntime.main import rocm_vision_attention_requires_configuration
+
+    # Inspection only: a default-SDPA ROCm vision model from another source
+    # needs a fresh owner load, never an in-place downstream reconfiguration.
+    if rocm_vision_attention_requires_configuration(component, torch_module=torch):
+        return False
     if getattr(component, '_modiff_modular_runtime_policy', {}) != (runtime_policy or {}):
         return False
 
@@ -2032,6 +2065,14 @@ class AutoModelLoader(NodeBase):
             )
             with self.diffusers_loading_progress():
                 model = spec.load(**component_load_kwargs_for(model_type, {"torch_dtype": dtype}))
+            # This spec.load branch owns the new component. Stabilize its
+            # default ROCm vision attention before placement or publication;
+            # resident components above remain owned by their source loader.
+            apply_modular_runtime_policy(
+                SimpleNamespace(components={model_type: model}),
+                modular_runtime_policy(),
+                owned_component_names=(model_type,),
+            )
             self.progress(
                 99,
                 phase="component_placement",
@@ -3030,7 +3071,10 @@ class ModelsLoader(NodeBase):
             )
         self.loader.update_components(**components_to_update)
 
-        self._loader_diagnostics['runtime_policy'] = apply_modular_runtime_policy(self.loader, runtime_policy)
+        self._loader_diagnostics['runtime_policy'] = apply_modular_runtime_policy(
+            self.loader, runtime_policy,
+            owned_component_names=self._loader_diagnostics.get('components_loaded', ()),
+        )
         applied_policy = dict(runtime_policy)
         applied_attention = self._loader_diagnostics['runtime_policy']['attention']
         if runtime_policy['attention_backend'] != 'inherit' and not (

@@ -148,6 +148,16 @@ reported as `runtime_compatibility` / `attention_backend_mask_unsupported`
 with an Auto/native retry hint rather than being mislabeled as invalid user
 input.
 
+On ROCm, the ordinary modular model loaders apply the existing vision-attention
+helper to freshly loaded components before placement and publication. It changes
+an exposed default vision SDPA implementation to eager through the component's
+public setter. A shared component must already satisfy that boundary: downstream
+loaders reload a default-SDPA vision component or reject an explicit connection
+instead of changing its source owner's model. The standalone model loader applies
+the same rule to its own fresh loads. Existing eager or alternate vision choices,
+text and denoiser attention, and non-ROCm components keep their current settings.
+This policy alignment does not establish output quality or numerical parity.
+
 ### Exact Transformers main source delivery
 
 The exact-main profile does not execute upstream setup or build code. The app

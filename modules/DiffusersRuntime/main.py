@@ -1035,6 +1035,18 @@ def assert_runtime_quantization_full_residency(
     return {"source_weight_bytes": source_bytes, "required_bytes": required, "free_bytes": free_bytes}
 
 
+def rocm_vision_attention_requires_configuration(component: Any, *, torch_module: Any = None) -> bool:
+    """Inspect the same default vision boundary without changing source ownership."""
+    if torch_module is None:
+        import torch as torch_module
+    if not getattr(getattr(torch_module, "version", None), "hip", None):
+        return False
+    vision = getattr(getattr(component, "config", None), "vision_config", None)
+    return getattr(vision, "_attn_implementation", None) == "sdpa" and callable(
+        getattr(component, "set_attn_implementation", None)
+    )
+
+
 def configure_rocm_vision_attention(pipeline: Any, *, torch_module: Any = None) -> list[str]:
     """Keep ROCm vision SDPA failures out of multimodal prompt embeddings.
 
@@ -1048,11 +1060,10 @@ def configure_rocm_vision_attention(pipeline: Any, *, torch_module: Any = None) 
         return []
     applied = []
     for name, component in getattr(pipeline, "components", {}).items():
-        vision = getattr(getattr(component, "config", None), "vision_config", None)
-        setter = getattr(component, "set_attn_implementation", None)
-        if getattr(vision, "_attn_implementation", None) != "sdpa" or not callable(setter):
+        if not rocm_vision_attention_requires_configuration(component, torch_module=torch_module):
             continue
-        setter({"vision_config": "eager"})
+        vision = component.config.vision_config
+        component.set_attn_implementation({"vision_config": "eager"})
         if vision._attn_implementation != "eager":
             raise RuntimeError(f"Could not apply stable ROCm vision attention to {name}.")
         applied.append(name)
