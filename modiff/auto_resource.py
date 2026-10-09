@@ -1576,7 +1576,7 @@ def _disk_snapshot(
 def _mps_accelerator(name: Any = None, device: dict[str, Any] | None = None) -> dict[str, Any]:
     device = device if isinstance(device, dict) else {}
     total = _safe_int(device.get("planning_memory_total") or device.get("vram_total"))
-    free = _safe_int(device.get("planning_memory_free") or device.get("vram_free"))
+    free = _first_known_int(device.get("planning_memory_free"), device.get("vram_free"))
     return {
         "kind": "mps",
         "backend": "mps",
@@ -1620,7 +1620,7 @@ def _normalized_accelerator_snapshot(normalized_hardware: dict[str, Any] | None)
         total = _safe_int(device.get("planning_memory_total") or device.get("vram_total"))
         if total is None:
             total = _safe_int(device.get("torch_vram_total"))
-        free = _safe_int(device.get("planning_memory_free") or device.get("vram_free"))
+        free = _first_known_int(device.get("planning_memory_free"), device.get("vram_free"))
         if free is None:
             free = _safe_int(device.get("torch_vram_free"))
         return {
@@ -1654,7 +1654,7 @@ def _normalized_accelerator_snapshot(normalized_hardware: dict[str, Any] | None)
     device = device_by_kind["xpu"]
     if device is not None:
         total = _safe_int(device.get("planning_memory_total") or device.get("vram_total") or device.get("torch_vram_total"))
-        free = _safe_int(device.get("planning_memory_free") or device.get("vram_free") or device.get("torch_vram_free"))
+        free = _first_known_int(device.get("planning_memory_free"), device.get("vram_free"), device.get("torch_vram_free"))
         return {
             "kind": "xpu",
             "backend": "xpu",
@@ -1903,6 +1903,15 @@ def _safe_int(value: Any) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def _first_known_int(*values: Any) -> int | None:
+    # Zero free bytes is a known exhausted pool, not a missing measurement.
+    for value in values:
+        parsed = _safe_int(value)
+        if parsed is not None:
+            return parsed
+    return None
 
 
 def _vram_band(total_bytes: int | None) -> str:
