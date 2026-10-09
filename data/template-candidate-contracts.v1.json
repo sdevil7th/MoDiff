@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:ca252bc2ed74aea66a6069ffe381fae89fa5fda64a37ccd01e452def4a1c4a4c",
+  "contentHash": "sha256:ea699cf0054e8322ce92b08ca5c54fdf2e0f3d98fbd213e32e11fd8ec27b26cc",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -86,7 +86,8 @@
       "qualifiedRuntimeProfiles": [],
       "requiredArtifacts": [
         "stable-diffusion-v1-5/stable-diffusion-v1-5",
-        "guoyww/animatediff-motion-adapter-v1-5-2"
+        "guoyww/animatediff-motion-adapter-v1-5-2",
+        "lllyasviel/control_v11p_sd15_canny"
       ],
       "requiredInputs": {
         "modelRequirements": [
@@ -283,7 +284,8 @@
       "qualifiedRuntimeProfiles": [],
       "requiredArtifacts": [
         "stable-diffusion-v1-5/stable-diffusion-v1-5",
-        "guoyww/animatediff-motion-adapter-v1-5-2"
+        "guoyww/animatediff-motion-adapter-v1-5-2",
+        "lllyasviel/control_v11p_sd15_canny"
       ],
       "requiredInputs": {
         "modelRequirements": [
@@ -2931,7 +2933,9 @@
       "qualificationStatus": "graph-qualified-execution-pending",
       "qualifiedRuntimeProfiles": [],
       "requiredArtifacts": [
-        "lllyasviel/FramePackI2V_HY"
+        "lllyasviel/FramePackI2V_HY",
+        "hunyuanvideo-community/HunyuanVideo",
+        "lllyasviel/flux_redux_bfl"
       ],
       "requiredInputs": {
         "modelRequirements": [
@@ -6687,19 +6691,19 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:507d70c1cdb862ceb73869be6448f4acc4aef757e3e3fd0c652c4a815cfade62",
+      "contentHash": "sha256:d39d80b969a77652e41de5b409ea8d6f094b6465d30ffb22e9b8aacdc369bb2c",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:6f2924b81e45d5243d25444754241786960cb7c875700fa9f0e4cce207185e01"
+      "sha256": "sha256:4897ceaa66209bf961a27c58923af8445770c64ad4b497f5c1c17d6d79d3fdea"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:e0770f481ed444f78e215ceb2055c11d0d26f7259653e63ae3cd327cd2833cf8"
+      "sha256": "sha256:5aba426ed8f5daf920acc7fd09e10e647f6aedd3fc5f241f365a2c6ca4b314fa"
     }
   },
   "summary": {
     "candidateContractCount": 148,
-    "canonicalWorkflowCount": 200,
-    "canonicalWorkflowsWithPublicTemplates": 52,
+    "canonicalWorkflowCount": 202,
+    "canonicalWorkflowsWithPublicTemplates": 54,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
@@ -6712,6 +6716,6 @@
       "json": 9,
       "video": 33
     },
-    "publicTemplateCount": 78
+    "publicTemplateCount": 80
   }
 }

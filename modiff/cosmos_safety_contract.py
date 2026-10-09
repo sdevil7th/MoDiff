@@ -56,13 +56,14 @@ def cosmos_safety_artifacts():
     return artifacts
 
 
-def _alias_stat_identity(details):
-    # Reading a file or traversing a link can update its access time. Bind the
-    # remaining stat fields, including precise modification/change timestamps.
+def _alias_identity(value):
+    # Reading a valid artifact may update its access time. Keep the alias's
+    # identity and mutation metadata without treating that read as a change.
+    # Compare values from the same stat API: Windows path stat reports birth
+    # time as ctime, while descriptor fstat can report actual change time.
     return (
-        details.st_mode, details.st_ino, details.st_dev, details.st_nlink,
-        details.st_uid, details.st_gid, details.st_size,
-        details.st_mtime_ns, details.st_ctime_ns,
+        value.st_mode, value.st_ino, value.st_dev, value.st_nlink, value.st_uid,
+        value.st_gid, value.st_size, value.st_mtime_ns, value.st_ctime_ns,
     )
 
 
@@ -87,7 +88,7 @@ def verify_cosmos_safety_snapshot(snapshot, artifact):
         )
         if not resolved.is_file():
             raise ValueError("A Cosmos safety artifact is not a regular file.")
-        alias_before = _alias_stat_identity(alias.lstat())
+        alias_before = alias.lstat()
         before = resolved.stat()
         if before.st_size != entry["byteSize"]:
             raise ValueError(f"Cosmos safety artifact size differs: {entry['path']}")
@@ -97,6 +98,8 @@ def verify_cosmos_safety_snapshot(snapshot, artifact):
             digest.update(f"blob {before.st_size}\0".encode("ascii"))
         with resolved.open("rb") as handle:
             opened = os.fstat(handle.fileno())
+            # Path stat and fstat share file identity/size/mtime, but Windows
+            # exposes different ctime semantics (CPython issue 157671).
             if (
                 (opened.st_dev, opened.st_ino, opened.st_size, opened.st_mtime_ns)
                 != (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
@@ -106,12 +109,9 @@ def verify_cosmos_safety_snapshot(snapshot, artifact):
                 digest.update(chunk)
             after = os.fstat(handle.fileno())
         if (
-            # Windows path stat and fstat can expose different ctime semantics
-            # (CPython issue 157671). Compare precise change time within fstat;
-            # alias metadata is independently compared within lstat below.
-            (opened.st_dev, opened.st_ino, opened.st_size, opened.st_mtime_ns, opened.st_ctime_ns)
-            != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns)
-            or _alias_stat_identity(alias.lstat()) != alias_before
+            _alias_identity(opened) != _alias_identity(after)
+            or _alias_identity(before) != _alias_identity(resolved.stat())
+            or _alias_identity(alias.lstat()) != _alias_identity(alias_before)
             or alias.resolve(strict=True) != resolved
             or digest.hexdigest() != entry["blobHash"]
         ):

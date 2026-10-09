@@ -20,6 +20,18 @@ weight storage can receive credit once, within its owner's explicit budget.
 Free host memory and accelerator memory remain separate on dedicated GPUs and
 share one pool on shared-memory accelerators.
 
+A fully resident `none` recipe uses the disk requirement of its accepted
+residency tier, rather than inheriting the minimum tier's SSD-offload floor.
+Actual disk-offload placement and missing-model download requirements retain
+their own capacity checks. This removes a false disk blocker without promising
+that unreviewed models fit in memory.
+
+A measured free-memory value of zero remains zero. CUDA, XPU and MPS snapshots
+fall back to another reading only when the preferred reading is unavailable;
+truth-value checks must not replace a fully occupied device's zero with older
+free-memory telemetry. The next-owner capacity check consumes that preserved
+reading and blocks allocation when the requested headroom is unavailable.
+
 Some reviewed recipes have a machine tier but no complete working-memory demand.
 They keep the existing single-owner runtime headroom policy: at least 4 GiB or
 10% of total system RAM, and, when applicable, 2 GiB or 10% of accelerator
@@ -77,6 +89,9 @@ demands, shared loader reuse, sequential image retention and loop boundaries.
 Executor tests separately assert owner destruction, retained image pixels and
 real capacity-check calls using controlled hardware snapshots. Those tests are
 not GPU model-fit or visual-quality qualification.
+The zero-free regression passes a fully occupied XPU reading through the actual
+hardware snapshot and next-owner capacity guard; it verifies that a requested
+1 GiB allocation is rejected despite a positive fallback reading.
 
 A hardware receipt remains tied to its exact models, revisions, workload,
 runtime, device and observed behavior. A successful multi-model run on a large

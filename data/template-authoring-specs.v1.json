@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:dc55bae5447263c82317a575f7d0de8617c4492f34bca6209987637a7daef53d",
+  "contentHash": "sha256:c3db27f2458b9f3e40b316ed7ff11b15a6aaeb421b58c4b97d7aac23edc160d0",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:ca252bc2ed74aea66a6069ffe381fae89fa5fda64a37ccd01e452def4a1c4a4c",
+      "contentHash": "sha256:ea699cf0054e8322ce92b08ca5c54fdf2e0f3d98fbd213e32e11fd8ec27b26cc",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:f3a06d6f028ba425abcb34ed4b2aa8bb212fc03465f0ea5ff6f1eb3e1399ea50"
+      "sha256": "sha256:fc1fda4fc0714347150a3703730df6907b464b30c9e77191324a52bad2b69ec3"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:e0770f481ed444f78e215ceb2055c11d0d26f7259653e63ae3cd327cd2833cf8"
+      "sha256": "sha256:5aba426ed8f5daf920acc7fd09e10e647f6aedd3fc5f241f365a2c6ca4b314fa"
     }
   },
   "specifications": [
@@ -208,7 +208,8 @@
         ],
         "requiredArtifacts": [
           "stable-diffusion-v1-5/stable-diffusion-v1-5",
-          "guoyww/animatediff-motion-adapter-v1-5-2"
+          "guoyww/animatediff-motion-adapter-v1-5-2",
+          "lllyasviel/control_v11p_sd15_canny"
         ]
       },
       "assetState": "not_generated",
@@ -765,7 +766,8 @@
         ],
         "requiredArtifacts": [
           "stable-diffusion-v1-5/stable-diffusion-v1-5",
-          "guoyww/animatediff-motion-adapter-v1-5-2"
+          "guoyww/animatediff-motion-adapter-v1-5-2",
+          "lllyasviel/control_v11p_sd15_canny"
         ]
       },
       "assetState": "not_generated",
@@ -8778,7 +8780,9 @@
           }
         ],
         "requiredArtifacts": [
-          "lllyasviel/FramePackI2V_HY"
+          "lllyasviel/FramePackI2V_HY",
+          "hunyuanvideo-community/HunyuanVideo",
+          "lllyasviel/flux_redux_bfl"
         ]
       },
       "assetState": "not_generated",

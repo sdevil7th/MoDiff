@@ -185,8 +185,8 @@ VRAM or activation peaks.
 | Reviewed checkpoint | Selected full-precision weight files | Current test boundary |
 | --- | ---: | --- |
 | MiniMax H3, one converted audio/video workflow | 144,016,405,316 bytes (144.0 GB) | Metadata and existing source contracts reviewed; no model download or execution in this campaign. Territory eligibility must be resolved first. |
-| Cosmos3-Super-Text2Image, five-component Omni text-to-image workflow | 131,299,159,064 bytes (131.3 GB) | Source/runtime integration and hardware/output qualification are separate requirements; no completed generation is claimed. |
-| FLUX.2-dev, selected Diffusers component weights | Approximately 112.8 GB | Required gated access, complete artifacts and live execution remain pending. |
+| Cosmos3-Super-Text2Image, five-component Omni text-to-image workflow | 131,299,159,064 bytes (131.3 GB) | Reported Linux Custom image success at BE `3b7cab8` / FE `6d54bf8` is scoped separately below; Auto, Windows and Gallery remain unqualified. |
+| FLUX.2-dev, selected Diffusers component weights | Approximately 112.8 GB | Reported Linux Custom full-weight image success at BE `3b7cab8` / FE `6d54bf8` is scoped separately below; Auto, Windows and Gallery remain unqualified. |
 
 These three entries cover the reviewed image and audio/video workflows,
 not an exhaustive ranking of every model on the Hub. No reviewed single
@@ -290,9 +290,13 @@ observations from one run, not a throughput benchmark.
 The returned text exhausted its 32-token limit before the final arithmetic
 answer. This establishes a standalone BF16 text execution smoke only:
 MoDiff graph execution, image generation, longer responses, answer quality and
-Auto/Gallery qualification remain untested for this checkpoint. Cosmos's
-mandatory gated safety artifacts and its separate image-model execution remain
-pending; this text result grants no Cosmos or application admission.
+Auto/Gallery qualification remain untested for this checkpoint. This text
+result grants no Cosmos or application admission. A later, separately
+reported Linux Custom run at BE `3b7cab8` / FE `6d54bf8` completed
+Cosmos mandatory safety and image execution, and FLUX.2-dev full-weight image
+execution; see the [scoped image follow-up](huggingface-feedback-and-validation.md#p2-original-cosmos-decode-safety-configuration).
+Those reports do not qualify Auto, Windows or Gallery, and their raw private
+hardware receipts are not present in this checkout.
 
 Echo's audited index is
 `jdopensource/JoyAI-Echo@d5a781ef08adb1f84748431ff5366de6e320d62d` and

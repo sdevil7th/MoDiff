@@ -231,6 +231,91 @@ def test_safety_rejects_subsecond_handle_ctime_change(tmp_path, monkeypatch, glo
     assert observed == [path_ctime_ns, path_ctime_ns + 100]
 
 
+@pytest.mark.parametrize("fault", [None, "digest", "retarget_during_read"])
+def test_safety_migrated_blob_bridge_preserves_digest_and_live_target_checks(tmp_path, monkeypatch, fault):
+    snapshot, artifact, alias = artifact_snapshot(tmp_path, global_blob=True)
+    target = alias.resolve(strict=True)
+    bridge = snapshot.parent.parent / "blobs" / artifact["files"][0]["blobHash"]
+    bridge.parent.mkdir()
+    bridge.symlink_to(os.path.relpath(target, bridge.parent))
+    alias.unlink()
+    alias.symlink_to(os.path.relpath(bridge, alias.parent))
+    if fault == "digest":
+        target.write_bytes(b"x" * artifact["files"][0]["byteSize"])
+    elif fault == "retarget_during_read":
+        other = target.with_name("e9" + "3" * 62)
+        other.write_bytes(target.read_bytes())
+        original_open = Path.open
+
+        @contextmanager
+        def reading_handle(handle):
+            with handle:
+                def read(size):
+                    data = handle.read(size)
+                    if data:
+                        bridge.unlink()
+                        bridge.symlink_to(os.path.relpath(other, bridge.parent))
+                    return data
+                yield SimpleNamespace(read=read, fileno=handle.fileno)
+
+        def open_file(path, *args, **kwargs):
+            handle = original_open(path, *args, **kwargs)
+            return reading_handle(handle) if path == target and args == ("rb",) else handle
+
+        monkeypatch.setattr(Path, "open", open_file)
+    if fault:
+        with pytest.raises(ValueError, match="reviewed digest"):
+            verify_cosmos_safety_snapshot(snapshot, artifact)
+    else:
+        assert verify_cosmos_safety_snapshot(snapshot, artifact) == snapshot
+
+
+@pytest.mark.parametrize("global_blob", [False, True])
+@pytest.mark.parametrize("changed_field", ["atime", "mode", "inode", "device", "size", "mtime", "ctime"])
+def test_safety_rechecks_alias_identity_after_read_without_rejecting_access_time(
+    tmp_path, monkeypatch, global_blob, changed_field,
+):
+    snapshot, artifact, alias = artifact_snapshot(tmp_path, global_blob=global_blob)
+    target = alias.resolve(strict=True)
+    original_open = Path.open
+    original_lstat = Path.lstat
+    bytes_read = bytearray()
+
+    @contextmanager
+    def reading_handle(handle):
+        with handle:
+            def read(size):
+                data = handle.read(size)
+                bytes_read.extend(data)
+                return data
+            yield SimpleNamespace(read=read, fileno=handle.fileno)
+
+    def open_file(path, *args, **kwargs):
+        handle = original_open(path, *args, **kwargs)
+        return reading_handle(handle) if path == target and args == ("rb",) else handle
+
+    def alias_stat(path, *args, **kwargs):
+        value = original_lstat(path, *args, **kwargs)
+        if path != alias or not bytes_read:
+            return value
+        fields = list(value)
+        index = {"mode": 0, "inode": 1, "device": 2, "size": 6, "atime": 7, "mtime": 8, "ctime": 9}[changed_field]
+        fields[index] += 1
+        nanoseconds = {f"st_{field}_ns": getattr(value, f"st_{field}_ns") for field in ("atime", "mtime", "ctime")}
+        if changed_field in {"atime", "mtime", "ctime"}:
+            nanoseconds[f"st_{changed_field}_ns"] += 1_000_000_000
+        return os.stat_result(fields, nanoseconds)
+
+    monkeypatch.setattr(Path, "open", open_file)
+    monkeypatch.setattr(Path, "lstat", alias_stat)
+    if changed_field == "atime":
+        assert verify_cosmos_safety_snapshot(snapshot, artifact) == snapshot
+    else:
+        with pytest.raises(ValueError, match="reviewed digest"):
+            verify_cosmos_safety_snapshot(snapshot, artifact)
+    assert bytes(bytes_read) == b"reviewed safety bytes"
+
+
 def test_safety_checks_git_blob_digest_for_small_config_bytes(tmp_path):
     snapshot, artifact, path = artifact_snapshot(tmp_path)
     raw = path.read_bytes()
@@ -239,6 +324,97 @@ def test_safety_checks_git_blob_digest_for_small_config_bytes(tmp_path):
     path.write_bytes(b"x" * len(raw))
     with pytest.raises(ValueError, match="digest"):
         verify_cosmos_safety_snapshot(snapshot, artifact)
+
+
+@pytest.mark.parametrize("global_blob", [False, True])
+@pytest.mark.parametrize("changed_field", [None, "mode", "inode", "device", "size", "mtime", "ctime"])
+def test_safety_compares_descriptor_metadata_with_descriptor_metadata(
+    tmp_path, monkeypatch, global_blob, changed_field,
+):
+    snapshot, artifact, alias = artifact_snapshot(tmp_path, global_blob=global_blob)
+    target = alias.resolve(strict=True)
+    original_open, original_fstat = Path.open, os.fstat
+    bytes_read = bytearray()
+
+    @contextmanager
+    def reading_handle(handle):
+        with handle:
+            def read(size):
+                data = handle.read(size)
+                bytes_read.extend(data)
+                return data
+            yield SimpleNamespace(read=read, fileno=handle.fileno)
+
+    def open_file(path, *args, **kwargs):
+        handle = original_open(path, *args, **kwargs)
+        return reading_handle(handle) if path == target and args == ("rb",) else handle
+
+    def descriptor_stat(fd):
+        value = original_fstat(fd)
+        fields = list(value)
+        nanoseconds = {f"st_{field}_ns": getattr(value, f"st_{field}_ns") for field in ("atime", "mtime", "ctime")}
+        # CPython 3.12 Windows path stat reports creation time here, while
+        # fstat reports ChangeTime. Keep this descriptor value consistently
+        # different from the path value before and after the genuine read.
+        fields[9] += 2
+        nanoseconds["st_ctime_ns"] += 2_000_000_000
+        if changed_field and bytes_read:
+            index = {"mode": 0, "inode": 1, "device": 2, "size": 6, "mtime": 8, "ctime": 9}[changed_field]
+            fields[index] += 1
+            if changed_field in {"mtime", "ctime"}:
+                nanoseconds[f"st_{changed_field}_ns"] += 1_000_000_000
+        return os.stat_result(fields, nanoseconds)
+
+    monkeypatch.setattr(Path, "open", open_file)
+    monkeypatch.setattr(os, "fstat", descriptor_stat)
+    if changed_field:
+        with pytest.raises(ValueError, match="reviewed digest"):
+            verify_cosmos_safety_snapshot(snapshot, artifact)
+    else:
+        assert verify_cosmos_safety_snapshot(snapshot, artifact) == snapshot
+    assert bytes(bytes_read) == b"reviewed safety bytes"
+
+
+@pytest.mark.parametrize("global_blob", [False, True])
+@pytest.mark.parametrize("changed_field", ["mode", "inode", "device", "size", "mtime", "ctime"])
+def test_safety_rechecks_target_path_metadata_separately_from_descriptor(
+    tmp_path, monkeypatch, global_blob, changed_field,
+):
+    snapshot, artifact, alias = artifact_snapshot(tmp_path, global_blob=global_blob)
+    target = alias.resolve(strict=True)
+    original_open, original_stat = Path.open, Path.stat
+    bytes_read = bytearray()
+
+    @contextmanager
+    def reading_handle(handle):
+        with handle:
+            def read(size):
+                data = handle.read(size)
+                bytes_read.extend(data)
+                return data
+            yield SimpleNamespace(read=read, fileno=handle.fileno)
+
+    def open_file(path, *args, **kwargs):
+        handle = original_open(path, *args, **kwargs)
+        return reading_handle(handle) if path == target and args == ("rb",) else handle
+
+    def target_stat(path, *args, **kwargs):
+        value = original_stat(path, *args, **kwargs)
+        if path != target or not bytes_read:
+            return value
+        fields = list(value)
+        index = {"mode": 0, "inode": 1, "device": 2, "size": 6, "mtime": 8, "ctime": 9}[changed_field]
+        fields[index] += 1
+        nanoseconds = {f"st_{field}_ns": getattr(value, f"st_{field}_ns") for field in ("atime", "mtime", "ctime")}
+        if changed_field in {"mtime", "ctime"}:
+            nanoseconds[f"st_{changed_field}_ns"] += 1_000_000_000
+        return os.stat_result(fields, nanoseconds)
+
+    monkeypatch.setattr(Path, "open", open_file)
+    monkeypatch.setattr(Path, "stat", target_stat)
+    with pytest.raises(ValueError, match="reviewed digest"):
+        verify_cosmos_safety_snapshot(snapshot, artifact)
+    assert bytes(bytes_read) == b"reviewed safety bytes"
 
 
 @pytest.mark.parametrize("fault", ["digest", "size", "missing", "outside", "foreign_repository", "revision"])
@@ -416,6 +592,40 @@ def sealed_bundle(checker, *, owner="owner", model_type=MODEL_TYPE):
     return model_id, bundle
 
 
+def genuine_cosmos_stage(stage="decode"):
+    from diffusers import Cosmos3OmniModularPipeline
+    from modules.ModularDiffusers.workflow_blocks import _official_stage_block
+    blocks = Cosmos3OmniModularPipeline().blocks.get_workflow("text2image")
+    return _official_stage_block(blocks, stage).init_pipeline()
+
+
+@pytest.mark.parametrize("stage", ["decode", "after_decode"])
+@pytest.mark.parametrize("configured_default", [None, False])
+def test_genuine_partial_sdk_stage_initializes_mandatory_safety_default(monkeypatch, stage, configured_default):
+    # Exercise the genuine SDK configuration/property without downloading models
+    # or requiring the optional runtime. Ownership validation remains unchanged.
+    class SmallOwnedChecker(torch.nn.Linear):
+        pass
+    monkeypatch.setitem(sys.modules, "cosmos_guardrail.cosmos_guardrail", SimpleNamespace(CosmosSafetyChecker=SmallOwnedChecker))
+    checker = SmallOwnedChecker(1, 1)
+    checker._modiff_cosmos_owned_checker = True
+    checker._modiff_cosmos_owner = "owner"
+    checker._modiff_cosmos_model_type = MODEL_TYPE
+    checker._modiff_cosmos_artifacts = tuple((item["repository"], item["revision"]) for item in cosmos_safety_artifacts())
+    model_id, bundle = sealed_bundle(checker)
+    try:
+        pipeline = genuine_cosmos_stage(stage)
+        if configured_default is not None:
+            pipeline.register_to_config(enable_safety_checker=configured_default)
+        with patch.object(safety, "require_cosmos_safety_runtime"):
+            safety.attach_cosmos_safety_checker(pipeline, bundle, model_type=MODEL_TYPE)
+        assert pipeline.safety_checker is checker
+        assert pipeline.requires_safety_checker is True
+        assert pipeline.config.enable_safety_checker is True
+    finally:
+        safety.memory_manager.remove(model_id)
+
+
 def test_genuine_factory_owns_models_and_preserves_package_methods(genuine_factory):
     checker, upstream, calls = genuine_factory
     assert isinstance(checker, upstream.CosmosSafetyChecker)
@@ -443,12 +653,11 @@ def test_same_managed_checker_attaches_to_each_stage_and_retains_output_transfor
     checker, _, _ = genuine_factory
     model_id, bundle = sealed_bundle(checker)
     try:
-        stages = [SimpleNamespace(enable_safety_checker=lambda value: attached.append(value)) for _ in range(3)]
-        attached = []
+        stages = [genuine_cosmos_stage(stage) for stage in ("text_encoder", "decode", "after_decode")]
         with patch.object(safety, "require_cosmos_safety_runtime"):
             for stage in stages:
                 safety.attach_cosmos_safety_checker(stage, bundle, model_type=MODEL_TYPE)
-        assert attached == [checker] * 3
+        assert all(stage.safety_checker is checker and stage.requires_safety_checker is True for stage in stages)
         checker.video_guardrail.postprocessors[0].postprocess = lambda value: value + 1
         assert checker.check_video_safety(4) == 5
     finally:
@@ -567,9 +776,9 @@ def test_loader_owner_reassignment_and_separate_owners_preserve_identity(ordinar
     assert node.node_id == bundle[COSMOS_SAFETY_BUNDLE_MEMBER]["owner_node_id"] == builds[0]._modiff_cosmos_owner == "adopted-owner"
     assert node(**kwargs)["pipeline_components"] is bundle
     assert require_component_binding(bundle, label="adopted") is token
-    attached = []
-    safety.attach_cosmos_safety_checker(SimpleNamespace(enable_safety_checker=attached.append), bundle, model_type=MODEL_TYPE)
-    assert attached == [builds[0]]
+    stage = genuine_cosmos_stage()
+    safety.attach_cosmos_safety_checker(stage, bundle, model_type=MODEL_TYPE)
+    assert stage.safety_checker is builds[0] and stage.requires_safety_checker is True
     other = make("other-owner")
     foreign = other(**kwargs)["pipeline_components"]
     assert foreign[COSMOS_SAFETY_BUNDLE_MEMBER]["model_id"] != model_id

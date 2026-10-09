@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-08T09:45:53.930Z",
+  "generatedAt": "2026-10-09T09:16:32.182Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 267,
-  "supportedPairCount": 200,
+  "supportedCanonicalPairCount": 279,
+  "supportedPairCount": 202,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -223,7 +223,8 @@
       "qualificationScope": "exact-model-recipe-runtime-hardware",
       "requiredArtifacts": [
         "stable-diffusion-v1-5/stable-diffusion-v1-5",
-        "guoyww/animatediff-motion-adapter-v1-5-2"
+        "guoyww/animatediff-motion-adapter-v1-5-2",
+        "lllyasviel/control_v11p_sd15_canny"
       ],
       "requiredInputs": {
         "modelRequirements": [
@@ -387,7 +388,8 @@
       "qualificationScope": "exact-model-recipe-runtime-hardware",
       "requiredArtifacts": [
         "stable-diffusion-v1-5/stable-diffusion-v1-5",
-        "guoyww/animatediff-motion-adapter-v1-5-2"
+        "guoyww/animatediff-motion-adapter-v1-5-2",
+        "lllyasviel/control_v11p_sd15_canny"
       ],
       "requiredInputs": {
         "modelRequirements": [
@@ -1471,6 +1473,168 @@
       "graphHash": "908ea0ae4985dcfb36841e262ef7d6bed37d7c3667690d01f6e7cf7b384ef029"
     },
     {
+      "id": "Cosmos3OmniModularPipeline:text_to_image",
+      "modelType": "Cosmos3OmniModularPipeline",
+      "modelFamily": "Cosmos 3",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "nvidia/Cosmos3-Super-Text2Image",
+        "nvidia/Cosmos-Guardrail1",
+        "Qwen/Qwen3Guard-Gen-0.6B"
+      ],
+      "requiredInputs": {
+        "note": "The official text-to-image workflow seals num_frames to exactly 1.",
+        "modelRequirements": [
+          {
+            "id": "cosmos3-mandatory-safety-guardrail",
+            "label": "NVIDIA Cosmos Guardrail 1",
+            "repo": "nvidia/Cosmos-Guardrail1",
+            "revision": "d6d4bfa899a71454a700907664f3e88f503950cf",
+            "kind": "safety_checker",
+            "downloadFiles": [
+              "blocklist/custom/blocklist",
+              "blocklist/exact_match/blocked",
+              "blocklist/nltk_data/corpora/wordnet.zip",
+              "blocklist/nltk_data/tokenizers/punkt_tab.zip",
+              "blocklist/nltk_data/tokenizers/punkt_tab/README",
+              "blocklist/nltk_data/tokenizers/punkt_tab/czech/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/czech/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/czech/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/czech/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/danish/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/danish/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/danish/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/danish/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/dutch/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/dutch/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/dutch/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/dutch/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/english/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/english/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/english/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/english/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/estonian/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/estonian/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/estonian/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/estonian/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/finnish/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/finnish/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/finnish/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/finnish/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/french/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/french/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/french/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/french/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/german/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/german/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/german/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/german/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/greek/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/greek/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/greek/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/greek/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/italian/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/italian/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/italian/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/italian/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/norwegian/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/norwegian/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/norwegian/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/norwegian/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/polish/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/polish/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/polish/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/polish/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/portuguese/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/portuguese/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/portuguese/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/portuguese/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/russian/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/russian/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/russian/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/russian/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/slovene/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/slovene/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/slovene/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/slovene/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/spanish/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/spanish/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/spanish/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/spanish/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/swedish/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/swedish/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/swedish/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/swedish/sent_starters.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/turkish/abbrev_types.txt",
+              "blocklist/nltk_data/tokenizers/punkt_tab/turkish/collocations.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/turkish/ortho_context.tab",
+              "blocklist/nltk_data/tokenizers/punkt_tab/turkish/sent_starters.txt",
+              "blocklist/whitelist/whitelisted",
+              "face_blur_filter/Resnet50_Final.pth"
+            ],
+            "requiredForModes": [
+              "text_to_image"
+            ],
+            "description": "Mandatory gated Cosmos text-and-video safety checker; access and the NVIDIA Open Model License must be acknowledged before any execution qualification."
+          },
+          {
+            "id": "cosmos3-mandatory-text-safety-classifier",
+            "label": "Qwen3Guard 0.6B",
+            "repo": "Qwen/Qwen3Guard-Gen-0.6B",
+            "revision": "fada3b2f655b89601929198343c94cd2f64d93cc",
+            "kind": "safety_checker",
+            "downloadFiles": [
+              "LICENSE",
+              "config.json",
+              "generation_config.json",
+              "merges.txt",
+              "model.safetensors",
+              "tokenizer.json",
+              "tokenizer_config.json",
+              "vocab.json"
+            ],
+            "requiredForModes": [
+              "text_to_image"
+            ],
+            "description": "Exact required text classifier used by the reviewed Cosmos Guardrail 0.3.1 runtime."
+          }
+        ]
+      },
+      "pipelineClasses": [
+        "Cosmos3OmniModularPipeline"
+      ],
+      "sourceTemplateId": "cosmos3_super_text_to_image",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/cosmos3-omni-modular-pipeline/text-to-image.json",
+      "graphHash": "7e006ec3242973b64b793da1f680d128ebac6ba32acc1e3d7b9e54c75da6d569",
+      "auxiliaryTerminalBinding": {
+        "schemaVersion": 1,
+        "executionSpecId": "cosmos3-nano:modular-text-to-image:v1",
+        "executionSpecContentHash": "studio-spec-v1-91ed105d",
+        "terminals": [
+          {
+            "role": "afterDecode",
+            "nodeId": "node-03",
+            "nodeKey": "modules.ModularDiffusers.WorkflowCosmos3OmniAfterDecode",
+            "operationId": "diffusion.postprocess_media",
+            "pipelineClass": "Cosmos3OmniModularPipeline",
+            "task": "text_to_image",
+            "workflowId": "text2image",
+            "blockName": "after_decode"
+          }
+        ]
+      }
+    },
+    {
       "id": "DDIMPipeline:unconditional_image",
       "modelType": "DDIMPipeline",
       "modelFamily": "DDIM",
@@ -1812,6 +1976,32 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux2-klein-pipeline/text-to-image.json",
       "graphHash": "b55065a934b38e2c3663aa4efa20fcfa972c9fe349848b2cdec655e5f5b737c6"
+    },
+    {
+      "id": "Flux2ModularPipeline:text_to_image",
+      "modelType": "Flux2ModularPipeline",
+      "modelFamily": "FLUX Image",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "black-forest-labs/FLUX.2-dev"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "Flux2ModularPipeline"
+      ],
+      "sourceTemplateId": "flux2_dev_text_to_image",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/flux2-modular-pipeline/text-to-image.json",
+      "graphHash": "43652152408b2248039c0fe5769ba0fd57d9f91b54e4349d81616eb17ebeb542"
     },
     {
       "id": "FluxCannyPipeline:control_edit_image",
@@ -2571,7 +2761,8 @@
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware",
       "requiredArtifacts": [
-        "black-forest-labs/FLUX.1-Redux-dev"
+        "black-forest-labs/FLUX.1-Redux-dev",
+        "black-forest-labs/FLUX.1-dev"
       ],
       "requiredInputs": {
         "modelRequirements": [
@@ -2616,7 +2807,8 @@
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware",
       "requiredArtifacts": [
-        "black-forest-labs/FLUX.1-Redux-dev"
+        "black-forest-labs/FLUX.1-Redux-dev",
+        "black-forest-labs/FLUX.1-dev"
       ],
       "requiredInputs": {
         "modelRequirements": [
@@ -3022,7 +3214,9 @@
       "qualifiedRuntimeProfiles": [],
       "qualificationScope": "exact-model-recipe-runtime-hardware",
       "requiredArtifacts": [
-        "lllyasviel/FramePackI2V_HY"
+        "lllyasviel/FramePackI2V_HY",
+        "hunyuanvideo-community/HunyuanVideo",
+        "lllyasviel/flux_redux_bfl"
       ],
       "requiredInputs": {
         "modelRequirements": [
@@ -3269,176 +3463,6 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/kandinsky3-pipeline/text-to-image.json",
       "graphHash": "0e7b481bc0912757839a955bde03caa456c74f67d38444ed73bc820dbb153270"
-    },
-    {
-      "id": "LatentConsistencyModelPipeline:edit_image",
-      "modelType": "LatentConsistencyModelPipeline",
-      "modelFamily": "Latent Consistency Models",
-      "mode": "edit_image",
-      "mediaKind": "image",
-      "supportTier": "supported",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "requiredArtifacts": [
-        "SimianLuo/LCM_Dreamshaper_v7"
-      ],
-      "requiredInputs": {
-        "requiredImages": [
-          "referenceImages"
-        ],
-        "note": "Requires one source image for latent-consistency image-to-image transformation."
-      },
-      "pipelineClasses": [
-        "LatentConsistencyModelImg2ImgPipeline",
-        "LatentConsistencyModelPipeline"
-      ],
-      "sourceTemplateId": "task-template:lcm-dreamshaper-v7:edit-image:v1",
-      "minimumAppVersion": "0.2.0",
-      "minimumBackendVersion": "0.2.0",
-      "graphPath": "studio/latent-consistency-model-pipeline/edit-image.json",
-      "graphHash": "68e60aa18f9117ecf934edaba51b9e822471bca6ef316d65d6bf438e5486d556"
-    },
-    {
-      "id": "LatentConsistencyModelPipeline:text_to_image",
-      "modelType": "LatentConsistencyModelPipeline",
-      "modelFamily": "Latent Consistency Models",
-      "mode": "text_to_image",
-      "mediaKind": "image",
-      "supportTier": "supported",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "requiredArtifacts": [
-        "SimianLuo/LCM_Dreamshaper_v7"
-      ],
-      "requiredInputs": [],
-      "pipelineClasses": [
-        "LatentConsistencyModelImg2ImgPipeline",
-        "LatentConsistencyModelPipeline"
-      ],
-      "sourceTemplateId": "task-template:lcm-dreamshaper-v7:text-to-image:v1",
-      "minimumAppVersion": "0.2.0",
-      "minimumBackendVersion": "0.2.0",
-      "graphPath": "studio/latent-consistency-model-pipeline/text-to-image.json",
-      "graphHash": "284e99d7f54edcf8fe6bac0724df73e79a301c17b19cf0a06e150f5272f785d3"
-    },
-    {
-      "id": "LattePipeline:text_to_video",
-      "modelType": "LattePipeline",
-      "modelFamily": "Latte",
-      "mode": "text_to_video",
-      "mediaKind": "video",
-      "supportTier": "supported",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "requiredArtifacts": [
-        "maxin-cn/Latte-1"
-      ],
-      "requiredInputs": {
-        "note": "Uses the exact Latte safetensors snapshot and its native 16-frame recipe with sequential CPU offload."
-      },
-      "pipelineClasses": [
-        "LattePipeline"
-      ],
-      "sourceTemplateId": "task-template:latte:text-to-video:v1",
-      "minimumAppVersion": "0.2.0",
-      "minimumBackendVersion": "0.2.0",
-      "graphPath": "studio/latte-pipeline/text-to-video.json",
-      "graphHash": "f7ccecdc033c0469bdd98853c937b487373fd88c0f36ed5a02e64e55bc07bd87"
-    },
-    {
-      "id": "LongCatAudioDiTPipeline:text_to_audio",
-      "modelType": "LongCatAudioDiTPipeline",
-      "modelFamily": "LongCat AudioDiT",
-      "mode": "text_to_audio",
-      "mediaKind": "audio",
-      "supportTier": "supported",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "requiredArtifacts": [
-        "ruixiangma/LongCat-AudioDiT-1B-Diffusers"
-      ],
-      "requiredInputs": [],
-      "pipelineClasses": [
-        "LongCatAudioDiTPipeline"
-      ],
-      "sourceTemplateId": "task-template:longcat-audio-dit-1b:text-to-audio:v1",
-      "minimumAppVersion": "0.2.0",
-      "minimumBackendVersion": "0.2.0",
-      "graphPath": "studio/long-cat-audio-di-t-pipeline/text-to-audio.json",
-      "graphHash": "5567eadc3dba7a50b9411ca2b91764d6edea102a49f8a98cd9fff2e7e6b4ab54"
-    },
-    {
-      "id": "LongCatImageEditPipeline:edit_image",
-      "modelType": "LongCatImageEditPipeline",
-      "modelFamily": "LongCat Image",
-      "mode": "edit_image",
-      "mediaKind": "image",
-      "supportTier": "supported",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "requiredArtifacts": [
-        "meituan-longcat/LongCat-Image-Edit"
-      ],
-      "requiredInputs": {
-        "requiredImages": [
-          "referenceImages"
-        ],
-        "note": "Requires one source image between 1:4 and 4:1 aspect ratio; output is normalized to an approximately one-megapixel bucket."
-      },
-      "pipelineClasses": [
-        "LongCatImageEditPipeline"
-      ],
-      "sourceTemplateId": "task-template:longcat-image-edit:edit-image:v1",
-      "minimumAppVersion": "0.2.0",
-      "minimumBackendVersion": "0.2.0",
-      "graphPath": "studio/long-cat-image-edit-pipeline/edit-image.json",
-      "graphHash": "14bd74d7ddff1ff37e1c2ce0028c5cae7dc9dce9ffc81d86161b98e564c237a2"
-    },
-    {
-      "id": "LongCatImagePipeline:text_to_image",
-      "modelType": "LongCatImagePipeline",
-      "modelFamily": "LongCat Image",
-      "mode": "text_to_image",
-      "mediaKind": "image",
-      "supportTier": "supported",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "requiredArtifacts": [
-        "meituan-longcat/LongCat-Image"
-      ],
-      "requiredInputs": [],
-      "pipelineClasses": [
-        "LongCatImagePipeline"
-      ],
-      "sourceTemplateId": "task-template:longcat-image:text-to-image:v1",
-      "minimumAppVersion": "0.2.0",
-      "minimumBackendVersion": "0.2.0",
-      "graphPath": "studio/long-cat-image-pipeline/text-to-image.json",
-      "graphHash": "2f609ab2ff5b46a03d6ac2e6ed4db3a9ca53208d403ec003013e41c9429fa549"
     },
     {
       "id": "LTX2ConditionPipeline:image_to_video",
@@ -3738,6 +3762,176 @@
       "graphHash": "64a2640aa4a1dcf3e94071b965f969de0158df18d06fe3e387755a7164a6cff7"
     },
     {
+      "id": "LatentConsistencyModelPipeline:edit_image",
+      "modelType": "LatentConsistencyModelPipeline",
+      "modelFamily": "Latent Consistency Models",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "SimianLuo/LCM_Dreamshaper_v7"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one source image for latent-consistency image-to-image transformation."
+      },
+      "pipelineClasses": [
+        "LatentConsistencyModelImg2ImgPipeline",
+        "LatentConsistencyModelPipeline"
+      ],
+      "sourceTemplateId": "task-template:lcm-dreamshaper-v7:edit-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/latent-consistency-model-pipeline/edit-image.json",
+      "graphHash": "68e60aa18f9117ecf934edaba51b9e822471bca6ef316d65d6bf438e5486d556"
+    },
+    {
+      "id": "LatentConsistencyModelPipeline:text_to_image",
+      "modelType": "LatentConsistencyModelPipeline",
+      "modelFamily": "Latent Consistency Models",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "SimianLuo/LCM_Dreamshaper_v7"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "LatentConsistencyModelImg2ImgPipeline",
+        "LatentConsistencyModelPipeline"
+      ],
+      "sourceTemplateId": "task-template:lcm-dreamshaper-v7:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/latent-consistency-model-pipeline/text-to-image.json",
+      "graphHash": "284e99d7f54edcf8fe6bac0724df73e79a301c17b19cf0a06e150f5272f785d3"
+    },
+    {
+      "id": "LattePipeline:text_to_video",
+      "modelType": "LattePipeline",
+      "modelFamily": "Latte",
+      "mode": "text_to_video",
+      "mediaKind": "video",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "maxin-cn/Latte-1"
+      ],
+      "requiredInputs": {
+        "note": "Uses the exact Latte safetensors snapshot and its native 16-frame recipe with sequential CPU offload."
+      },
+      "pipelineClasses": [
+        "LattePipeline"
+      ],
+      "sourceTemplateId": "task-template:latte:text-to-video:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/latte-pipeline/text-to-video.json",
+      "graphHash": "f7ccecdc033c0469bdd98853c937b487373fd88c0f36ed5a02e64e55bc07bd87"
+    },
+    {
+      "id": "LongCatAudioDiTPipeline:text_to_audio",
+      "modelType": "LongCatAudioDiTPipeline",
+      "modelFamily": "LongCat AudioDiT",
+      "mode": "text_to_audio",
+      "mediaKind": "audio",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "ruixiangma/LongCat-AudioDiT-1B-Diffusers"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "LongCatAudioDiTPipeline"
+      ],
+      "sourceTemplateId": "task-template:longcat-audio-dit-1b:text-to-audio:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/long-cat-audio-di-t-pipeline/text-to-audio.json",
+      "graphHash": "5567eadc3dba7a50b9411ca2b91764d6edea102a49f8a98cd9fff2e7e6b4ab54"
+    },
+    {
+      "id": "LongCatImageEditPipeline:edit_image",
+      "modelType": "LongCatImageEditPipeline",
+      "modelFamily": "LongCat Image",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "meituan-longcat/LongCat-Image-Edit"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ],
+        "note": "Requires one source image between 1:4 and 4:1 aspect ratio; output is normalized to an approximately one-megapixel bucket."
+      },
+      "pipelineClasses": [
+        "LongCatImageEditPipeline"
+      ],
+      "sourceTemplateId": "task-template:longcat-image-edit:edit-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/long-cat-image-edit-pipeline/edit-image.json",
+      "graphHash": "14bd74d7ddff1ff37e1c2ce0028c5cae7dc9dce9ffc81d86161b98e564c237a2"
+    },
+    {
+      "id": "LongCatImagePipeline:text_to_image",
+      "modelType": "LongCatImagePipeline",
+      "modelFamily": "LongCat Image",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "meituan-longcat/LongCat-Image"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "LongCatImagePipeline"
+      ],
+      "sourceTemplateId": "task-template:longcat-image:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/long-cat-image-pipeline/text-to-image.json",
+      "graphHash": "2f609ab2ff5b46a03d6ac2e6ed4db3a9ca53208d403ec003013e41c9429fa549"
+    },
+    {
       "id": "Lumina2Pipeline:text_to_image",
       "modelType": "Lumina2Pipeline",
       "modelFamily": "Lumina 2.0",
@@ -4015,6 +4209,32 @@
       "graphHash": "aed20632974012552f5c9dc17e23636eebad26af57974c7c25a52a434bc70a15"
     },
     {
+      "id": "PRXPipeline:text_to_image",
+      "modelType": "PRXPipeline",
+      "modelFamily": "PRX",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "Photoroom/prx-512-t2i-sft"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "PRXPipeline"
+      ],
+      "sourceTemplateId": "task-template:prx-512-sft:text-to-image:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/prx-pipeline/text-to-image.json",
+      "graphHash": "ba58b2b75dac0fe633cddae8120b7ad6043c2bb57a45394d9a71eb75f9357e1c"
+    },
+    {
       "id": "PixArtSigmaPAGPipeline:text_to_image",
       "modelType": "PixArtSigmaPAGPipeline",
       "modelFamily": "PixArt",
@@ -4065,32 +4285,6 @@
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/pix-art-sigma-pipeline/text-to-image.json",
       "graphHash": "963d6a6c939ccb429d6b70bfee97d2821a761e5648afe1f36922eecef0f6027b"
-    },
-    {
-      "id": "PRXPipeline:text_to_image",
-      "modelType": "PRXPipeline",
-      "modelFamily": "PRX",
-      "mode": "text_to_image",
-      "mediaKind": "image",
-      "supportTier": "supported",
-      "qualificationStatus": "graph-qualified-execution-pending",
-      "graphQualificationStatus": "graph-qualified-execution-pending",
-      "runtimeQualificationStatus": "unqualified",
-      "optimizationQualificationStatus": "unqualified",
-      "qualifiedRuntimeProfiles": [],
-      "qualificationScope": "exact-model-recipe-runtime-hardware",
-      "requiredArtifacts": [
-        "Photoroom/prx-512-t2i-sft"
-      ],
-      "requiredInputs": [],
-      "pipelineClasses": [
-        "PRXPipeline"
-      ],
-      "sourceTemplateId": "task-template:prx-512-sft:text-to-image:v1",
-      "minimumAppVersion": "0.2.0",
-      "minimumBackendVersion": "0.2.0",
-      "graphPath": "studio/prx-pipeline/text-to-image.json",
-      "graphHash": "ba58b2b75dac0fe633cddae8120b7ad6043c2bb57a45394d9a71eb75f9357e1c"
     },
     {
       "id": "QwenImageControlNetPipeline:control_image",

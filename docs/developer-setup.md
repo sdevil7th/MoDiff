@@ -117,7 +117,9 @@ npm run dev
 Keep the backend running and open the URL printed by Vite. `npm ci` consumes the
 committed npm lock. `npm run check` runs the quality gate and builds `dist/`;
 `npm run check:ui` runs browser regressions. Backend launch does not rebuild the
-client. See [CONTRIBUTING](../CONTRIBUTING.md) for backend test dependencies and
+client. Before either validation gate, run `npx playwright install chromium`:
+request/proxy unit tests also launch a browser. A fresh Linux host may additionally
+need `npx playwright install-deps chromium`. See [CONTRIBUTING](../CONTRIBUTING.md) for backend test dependencies and
 mirroring a validated production bundle while preserving `web/user/`.
 
 ## Upgrades and repair
@@ -169,10 +171,10 @@ empty setting; changing it requires a fresh app process. This does not change
 CUDA allocation policy, model offload settings or the host memory admission floor.
 See the [allocator's documented environment options](https://github.com/microsoft/mimalloc/blob/v2.1.7/readme.md#environment-options).
 
-Ordinary image workflows use eager execution and native SDPA without Triton.
-Compilation is optional and requires an executed kernel probe. A workflow that
-requires compiled FlexAttention checks its compiler before resolving or loading
-model weights. Windows compilation uses a compatible
+Standard eager image recipes use native SDPA without Triton. Optional
+compilation requires an executed kernel probe. Some advanced model recipes
+require compiled FlexAttention; those retain their compiler prerequisite check
+before resolving or loading model weights. Windows compilation uses a compatible
 [triton-windows toolchain](https://github.com/triton-lang/triton-windows), whose
 PyTorch compatibility must be checked separately; package import alone does not
 prove that kernels work. A failed probe leaves ordinary eager workflows usable.
