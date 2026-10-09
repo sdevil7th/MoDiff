@@ -153,6 +153,97 @@ def test_safety_checks_git_blob_digest_for_small_config_bytes(tmp_path):
         verify_cosmos_safety_snapshot(snapshot, artifact)
 
 
+@pytest.mark.parametrize("global_blob", [False, True])
+@pytest.mark.parametrize("changed_field", [None, "mode", "inode", "device", "size", "mtime", "ctime"])
+def test_safety_compares_descriptor_metadata_with_descriptor_metadata(
+    tmp_path, monkeypatch, global_blob, changed_field,
+):
+    snapshot, artifact, alias = artifact_snapshot(tmp_path, global_blob=global_blob)
+    target = alias.resolve(strict=True)
+    original_open, original_fstat = Path.open, os.fstat
+    bytes_read = bytearray()
+
+    @contextmanager
+    def reading_handle(handle):
+        with handle:
+            def read(size):
+                data = handle.read(size)
+                bytes_read.extend(data)
+                return data
+            yield SimpleNamespace(read=read, fileno=handle.fileno)
+
+    def open_file(path, *args, **kwargs):
+        handle = original_open(path, *args, **kwargs)
+        return reading_handle(handle) if path == target and args == ("rb",) else handle
+
+    def descriptor_stat(fd):
+        value = original_fstat(fd)
+        fields = list(value)
+        nanoseconds = {f"st_{field}_ns": getattr(value, f"st_{field}_ns") for field in ("atime", "mtime", "ctime")}
+        # CPython 3.12 Windows path stat reports creation time here, while
+        # fstat reports ChangeTime. Keep this descriptor value consistently
+        # different from the path value before and after the genuine read.
+        fields[9] += 2
+        nanoseconds["st_ctime_ns"] += 2_000_000_000
+        if changed_field and bytes_read:
+            index = {"mode": 0, "inode": 1, "device": 2, "size": 6, "mtime": 8, "ctime": 9}[changed_field]
+            fields[index] += 1
+            if changed_field in {"mtime", "ctime"}:
+                nanoseconds[f"st_{changed_field}_ns"] += 1_000_000_000
+        return os.stat_result(fields, nanoseconds)
+
+    monkeypatch.setattr(Path, "open", open_file)
+    monkeypatch.setattr(os, "fstat", descriptor_stat)
+    if changed_field:
+        with pytest.raises(ValueError, match="reviewed digest"):
+            verify_cosmos_safety_snapshot(snapshot, artifact)
+    else:
+        assert verify_cosmos_safety_snapshot(snapshot, artifact) == snapshot
+    assert bytes(bytes_read) == b"reviewed safety bytes"
+
+
+@pytest.mark.parametrize("global_blob", [False, True])
+@pytest.mark.parametrize("changed_field", ["mode", "inode", "device", "size", "mtime", "ctime"])
+def test_safety_rechecks_target_path_metadata_separately_from_descriptor(
+    tmp_path, monkeypatch, global_blob, changed_field,
+):
+    snapshot, artifact, alias = artifact_snapshot(tmp_path, global_blob=global_blob)
+    target = alias.resolve(strict=True)
+    original_open, original_stat = Path.open, Path.stat
+    bytes_read = bytearray()
+
+    @contextmanager
+    def reading_handle(handle):
+        with handle:
+            def read(size):
+                data = handle.read(size)
+                bytes_read.extend(data)
+                return data
+            yield SimpleNamespace(read=read, fileno=handle.fileno)
+
+    def open_file(path, *args, **kwargs):
+        handle = original_open(path, *args, **kwargs)
+        return reading_handle(handle) if path == target and args == ("rb",) else handle
+
+    def target_stat(path, *args, **kwargs):
+        value = original_stat(path, *args, **kwargs)
+        if path != target or not bytes_read:
+            return value
+        fields = list(value)
+        index = {"mode": 0, "inode": 1, "device": 2, "size": 6, "mtime": 8, "ctime": 9}[changed_field]
+        fields[index] += 1
+        nanoseconds = {f"st_{field}_ns": getattr(value, f"st_{field}_ns") for field in ("atime", "mtime", "ctime")}
+        if changed_field in {"mtime", "ctime"}:
+            nanoseconds[f"st_{changed_field}_ns"] += 1_000_000_000
+        return os.stat_result(fields, nanoseconds)
+
+    monkeypatch.setattr(Path, "open", open_file)
+    monkeypatch.setattr(Path, "stat", target_stat)
+    with pytest.raises(ValueError, match="reviewed digest"):
+        verify_cosmos_safety_snapshot(snapshot, artifact)
+    assert bytes(bytes_read) == b"reviewed safety bytes"
+
+
 @pytest.mark.parametrize("fault", ["digest", "size", "missing", "outside", "foreign_repository", "revision"])
 def test_safety_rejects_incomplete_or_changed_artifact(tmp_path, fault):
     snapshot, artifact, path = artifact_snapshot(tmp_path, global_blob=True)

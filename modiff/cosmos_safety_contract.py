@@ -59,6 +59,8 @@ def cosmos_safety_artifacts():
 def _alias_identity(value):
     # Reading a valid artifact may update its access time. Keep the alias's
     # identity and mutation metadata without treating that read as a change.
+    # Compare values from the same stat API: Windows path stat reports birth
+    # time as ctime, while descriptor fstat can report actual change time.
     return (
         value.st_mode, value.st_ino, value.st_dev, value.st_nlink, value.st_uid,
         value.st_gid, value.st_size, value.st_mtime_ns, value.st_ctime_ns,
@@ -102,8 +104,8 @@ def verify_cosmos_safety_snapshot(snapshot, artifact):
                 digest.update(chunk)
             after = os.fstat(handle.fileno())
         if (
-            (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns)
-            != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns)
+            _alias_identity(opened) != _alias_identity(after)
+            or _alias_identity(before) != _alias_identity(resolved.stat())
             or _alias_identity(alias.lstat()) != _alias_identity(alias_before)
             or alias.resolve(strict=True) != resolved
             or digest.hexdigest() != entry["blobHash"]
