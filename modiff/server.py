@@ -14139,7 +14139,13 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
 
         capabilities = []
         for raw_capability in STUDIO_MODEL_CAPABILITIES.values():
-            capability = dict(raw_capability)
+            capability = deepcopy(raw_capability)
+            for mode in capability.get("modes") or []:
+                requirements = studio_model_requirements_for_pair(capability.get("modelType"), mode)
+                if requirements:
+                    capability.setdefault("modeRequirements", {}).setdefault(mode, {})[
+                        "modelRequirements"
+                    ] = requirements
             profiles = profiles_by_model.get(capability.get("modelType"), [])
             pipeline_classes = sorted(
                 {profile.get("pipeline_class") for profile in profiles if profile.get("pipeline_class")}

@@ -78,6 +78,32 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("flux2-modular:equivalent-standard", DIFFUSERS_EXECUTION_PROFILES)
         self.assertFalse(DIFFUSERS_EXECUTION_PROFILES["flux2-modular:equivalent-standard"].public)
 
+    async def test_public_mode_dependencies_retain_exact_authoritative_safety_artifacts(self):
+        from copy import deepcopy
+        from modiff.server import STUDIO_MODEL_CAPABILITIES
+        from modiff.studio_execution_specs import studio_model_requirements_for_pair
+
+        original = deepcopy(STUDIO_MODEL_CAPABILITIES)
+        server = WebServer(module_registry.MODULE_MAP)
+        with patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("Constructed executable node")):
+            response = await server.model_capabilities(FakeRequest())
+        capabilities = json.loads(response.text)["capabilities"]
+        for capability in capabilities:
+            for mode in capability["modes"]:
+                requirements = studio_model_requirements_for_pair(capability["modelType"], mode)
+                if requirements:
+                    with self.subTest(model=capability["modelType"], mode=mode):
+                        self.assertEqual(capability["modeRequirements"][mode]["modelRequirements"], requirements)
+        cosmos = next(item for item in capabilities if item["modelType"] == "Cosmos3OmniModularPipeline")
+        requirements = cosmos["modeRequirements"]["text_to_image"]["modelRequirements"]
+        self.assertEqual([item["repo"] for item in requirements], ["nvidia/Cosmos-Guardrail1", "Qwen/Qwen3Guard-Gen-0.6B"])
+        self.assertEqual([len(item["downloadFiles"]) for item in requirements], [79, 8])
+        self.assertIn("num_frames", cosmos["modeRequirements"]["text_to_image"]["note"])
+        self.assertFalse(cosmos["autoEligible"])
+        self.assertFalse(cosmos["galleryEligible"])
+        self.assertFalse(cosmos["liveProof"])
+        self.assertEqual(STUDIO_MODEL_CAPABILITIES, original)
+
     async def test_starter_endpoint_describes_nodes_without_construction_or_receipts(self):
         server = WebServer(module_registry.MODULE_MAP)
         selection = {"pipelineClass": "AnimaModularPipeline", "task": "text_to_image"}
