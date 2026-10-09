@@ -148,6 +148,16 @@ reported as `runtime_compatibility` / `attention_backend_mask_unsupported`
 with an Auto/native retry hint rather than being mislabeled as invalid user
 input.
 
+On ROCm, the ordinary modular model loaders apply the existing vision-attention
+helper to freshly loaded components before placement and publication. It changes
+an exposed default vision SDPA implementation to eager through the component's
+public setter. A shared component must already satisfy that boundary: downstream
+loaders reload a default-SDPA vision component or reject an explicit connection
+instead of changing its source owner's model. The standalone model loader applies
+the same rule to its own fresh loads. Existing eager or alternate vision choices,
+text and denoiser attention, and non-ROCm components keep their current settings.
+This policy alignment does not establish output quality or numerical parity.
+
 ### Exact Transformers main source delivery
 
 The exact-main profile does not execute upstream setup or build code. The app
@@ -179,6 +189,27 @@ targets are actionable. The other four target records remain pending and
 base-delivered; their artifact locks alone do not make them eligible.
 
 ### Portable target qualification
+
+The Cosmos Guardrail 0.3.1 package profile has qualified delivery on Linux
+x86-64 with Python 3.12. The existing temporary qualifier installs its ten
+exact wheels, validates the staged imports and symbols, activates a fresh
+process, exercises tiny CPU CLIP/LoRA and PNG/Canny/scikit-image processing,
+then rolls back to the clean base. Installation and activation require explicit
+consent and a restart. Other targets remain pending.
+
+This profile uses `opencv-python` as the sole `cv2` provider. It conflicts with
+the Gallery media profile's headless provider and all OpenCV contrib providers;
+the inverse Gallery installation or activation is also rejected. Package
+delivery qualification does not qualify pretrained safety decisions, Cosmos
+model execution, GPU/ROCm memory or performance, Auto, or Gallery. The exact
+gated safety artifacts and each model's execution requirements remain separate
+prerequisites.
+
+The `cosmos-safety` project extra is an unqualified developer convenience.
+Ordinary app readiness requires the managed profile's ten exact wheels,
+explicit activation with its verified import paths and receipt seals, and the
+pinned gated safety snapshots. Installing the project extra alone does not
+establish that readiness.
 
 `scripts/qualify_optional_runtime.py` prepares the same bounded qualification
 on each supported operating-system/architecture pair without exposing a

@@ -900,12 +900,16 @@ class ServerSecurityTests(unittest.IsolatedAsyncioTestCase):
             while "leaving-session" not in self.server.ws_sessions:
                 await asyncio.sleep(0)
             lookup = asyncio.create_task(asyncio.to_thread(
-                self.server.get_signal_value, "node", "input", "leaving-session", 0.15,
+                self.server.get_signal_value, "node", "input", "leaving-session", 60,
             ))
-            await serving
-            result = await lookup
+            # Use the production lookup deadline and a separate, much shorter
+            # test bound. A busy test event loop must not turn a disconnect
+            # assertion into a race against a 150 ms response deadline.
+            await asyncio.wait_for(serving, timeout=5)
+            result = await asyncio.wait_for(lookup, timeout=5)
         self.assertEqual(result, {"__MODIFF_ERROR": "websocket_closed"})
         self.assertEqual(self.server.pending_ws_requests, {})
+        self.assertEqual(self.server.pending_ws_request_sessions, {})
 
     async def test_signal_disconnect_preserves_other_browser_requests(self):
         first = asyncio.get_running_loop().create_future()

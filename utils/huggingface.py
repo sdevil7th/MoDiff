@@ -1599,6 +1599,14 @@ def get_local_models(compact: bool = False):
     local_models = {}
     for _, cache_dir in _hf_cache_locations():
         try:
+            cache_path = Path(cache_dir if cache_dir is not None else HUGGINGFACE_HUB_CACHE).expanduser()
+            try:
+                # Optional default roots need not exist. stat() distinguishes
+                # that absence from permission errors, unlike exists().
+                cache_path.stat()
+            except FileNotFoundError:
+                logger.debug('Skipping absent Hugging Face cache directory %s', cache_path)
+                continue
             cache = scan_cache_dir(cache_dir)
         except CacheNotFound:
             # Cache folders are created on the first download, not discovery.
@@ -1859,12 +1867,15 @@ def exact_cached_snapshot_path(repo_id: str, revision: str, marker_file: str = '
     if alias != expected_alias:
         raise ValueError('Installed Hugging Face cache lookup did not preserve the requested snapshot marker.')
 
-    resolved_marker = resolve_managed_hf_cache_file(alias)
+    resolve_managed_hf_cache_file(alias)
     try:
         snapshot.resolve(strict=True).relative_to(
             _containing_hf_cache_root(snapshot)
         )
-        resolved_marker.relative_to(repository_cache.resolve(strict=True))
+        from modiff.hf_cache_layout import resolve_snapshot_cache_file
+        resolve_snapshot_cache_file(
+            alias, snapshot=snapshot, cache_root=_containing_hf_cache_root(snapshot), repository=repo_id,
+        )
     except (OSError, RuntimeError, ValueError) as error:
         raise ValueError('Installed Hugging Face snapshot resolves outside its managed repository cache.') from error
     return snapshot

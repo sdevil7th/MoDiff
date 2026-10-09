@@ -32,7 +32,7 @@ def base_model_runtime_contract() -> dict:
 
 
 def base_runtime_status(*, version_resolver=None, distribution_resolver=None) -> dict:
-    """Verify declared base versions and immutable source identity, read-only.
+    """Verify declared base versions and any explicitly declared source identity, read-only.
 
     Installation is always an explicit uv operation. This observation is also
     suitable for graph inspection: it never imports Transformers, PEFT or Torch.

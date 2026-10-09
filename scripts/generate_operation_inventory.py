@@ -14,8 +14,9 @@ from modiff.operation_inventory import OPERATION_INVENTORY_PATH, build_operation
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
+    parser.add_argument("--diffusers-source", type=Path, help="Exact reviewed catalog source, independent of the installed runtime release.")
     args = parser.parse_args()
-    rendered = json.dumps(build_operation_inventory(ROOT), indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    rendered = json.dumps(build_operation_inventory(ROOT, diffusers_source=args.diffusers_source), indent=2, sort_keys=True, ensure_ascii=False) + "\n"
     if args.check:
         if OPERATION_INVENTORY_PATH.read_text() != rendered:
             parser.error("The pinned operation inventory is stale; regenerate it.")

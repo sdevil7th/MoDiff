@@ -2,7 +2,6 @@ from source_contract_helpers import source_sha256
 
 import ast
 from contextlib import nullcontext
-from pathlib import Path
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
@@ -122,6 +121,8 @@ class QwenImageControlNetPipeline:
 class QwenStandardSafeWaveTests(unittest.TestCase):
     def test_exact_pinned_upstream_sources_and_call_signatures_are_preserved(self):
         import diffusers
+        import inspect
+        from modiff.upstream_coverage import reviewed_diffusers_source
 
         self.assertEqual(PINNED_DIFFUSERS_REVISION, "fbf49e7f35857f76bc57b177e26f12b03687c668")
         cases = (
@@ -167,7 +168,7 @@ class QwenStandardSafeWaveTests(unittest.TestCase):
                 },
             ),
         )
-        diffusers_root = Path(diffusers.__file__).resolve().parent
+        diffusers_root = reviewed_diffusers_source()
         for filename, class_name, expected_digest, required_parameters in cases:
             with self.subTest(pipeline=class_name):
                 source_path = diffusers_root / "pipelines" / "qwenimage" / filename
@@ -191,6 +192,8 @@ class QwenStandardSafeWaveTests(unittest.TestCase):
                     )
                 }
                 self.assertTrue(required_parameters.issubset(parameters))
+                installed = getattr(diffusers, class_name)
+                self.assertTrue(required_parameters.issubset(inspect.signature(installed.__call__).parameters))
 
     def test_exact_adapters_are_separate_and_reuse_only_admitted_artifacts(self):
         control = IMAGE_PIPELINE_ADAPTERS["QwenImageControlNetPipeline"]

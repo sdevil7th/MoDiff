@@ -10,12 +10,12 @@ from __future__ import annotations
 
 import ast
 import hashlib
-import importlib.metadata
 import json
+import os
 import re
 import shutil
+import stat
 import subprocess
-import tomllib
 import zipfile
 from collections import Counter, defaultdict
 from collections.abc import Iterable
@@ -52,9 +52,6 @@ TRANSFORMERS_REVIEWED_MAIN_REVISION = TRANSFORMERS_MAIN_COMMIT
 TRANSFORMERS_REVIEWED_MAIN_VERSION = "5.16.0.dev0"
 
 _PIPELINE_SYMBOL = re.compile(r"[A-Za-z][A-Za-z0-9_]*Pipeline")
-_PINNED_DIFFUSERS_DEPENDENCY = re.compile(
-    r"^diffusers\s*@\s*git\+https://github\.com/huggingface/diffusers\.git@([0-9a-f]{40})$"
-)
 
 # These entries record a reviewed routing decision, not a claim that the two
 # upstream implementations are byte-identical.  The targets are exact MoDiff
@@ -574,20 +571,21 @@ def _status_counts(items: Iterable[dict[str, Any]]) -> dict[str, int]:
 
 
 def _pinned_diffusers_revision(root: Path) -> str:
-    with (root / "pyproject.toml").open("rb") as handle:
-        project = tomllib.load(handle).get("project", {})
-    matches = []
-    for dependency in project.get("dependencies", []):
-        if not isinstance(dependency, str):
-            continue
-        match = _PINNED_DIFFUSERS_DEPENDENCY.fullmatch(dependency.strip())
-        if match:
-            matches.append(match.group(1))
-    if matches != [PINNED_DIFFUSERS_REVISION]:
-        raise UpstreamCoverageError(
-            "The executable Diffusers dependency, workflow truth, and coverage generator must share one pin."
-        )
-    return matches[0]
+    """Read immutable catalog provenance independently of runtime installation.
+
+    The catalog describes this exact reviewed upstream source, not every later
+    compatible installed release. The caller still verifies the actual source
+    revision before inspecting it. Ordinary published runtime requirements and
+    their installation receipts must not rewrite historical source evidence.
+    """
+    try:
+        snapshot = json.loads((root / "data" / "modular-workflow-contracts.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise UpstreamCoverageError("The reviewed Diffusers catalog provenance is unavailable.") from exc
+    revision = snapshot.get("diffusersRevision") if isinstance(snapshot, dict) else None
+    if revision != PINNED_DIFFUSERS_REVISION:
+        raise UpstreamCoverageError("The workflow truth and coverage generator must share one reviewed source revision.")
+    return revision
 
 
 def _normalize_diffusers_source(path: Path) -> Path:
@@ -614,12 +612,25 @@ def installed_diffusers_source() -> Path:
     return _normalize_diffusers_source(Path(specification.origin))
 
 
+def reviewed_diffusers_source(source: Path | None = None) -> Path:
+    """Locate exact historical catalog source, without changing the runtime.
+
+    Explicit source or the source-audit-only environment variable supports CI
+    regeneration after the ordinary installed release has advanced. The source
+    remains subject to the existing immutable upstream revision verification.
+    """
+    declared = source or os.environ.get("MODIFF_DIFFUSERS_CATALOG_SOURCE")
+    selected = _normalize_diffusers_source(Path(declared)) if declared else installed_diffusers_source()
+    _verify_diffusers_source_revision(selected, PINNED_DIFFUSERS_REVISION)
+    return selected
+
+
 def _git_diffusers_revision(source: Path) -> str | None:
     git = shutil.which("git")
     if git is None:
         return None
     root_result = subprocess.run(
-        [git, "-C", str(source), "rev-parse", "--show-toplevel"],
+        [git, "--no-replace-objects", "-C", str(source), "rev-parse", "--show-toplevel"],
         text=True,
         capture_output=True,
         timeout=10,
@@ -629,7 +640,7 @@ def _git_diffusers_revision(source: Path) -> str | None:
         return None
     checkout_root = Path(root_result.stdout.strip()).resolve()
     remote_result = subprocess.run(
-        [git, "-C", str(checkout_root), "config", "--get", "remote.origin.url"],
+        [git, "--no-replace-objects", "-C", str(checkout_root), "config", "--get", "remote.origin.url"],
         text=True,
         capture_output=True,
         timeout=10,
@@ -641,7 +652,7 @@ def _git_diffusers_revision(source: Path) -> str | None:
         # Do not mistake that parent repository's HEAD for the upstream pin.
         return None
     head_result = subprocess.run(
-        [git, "-C", str(checkout_root), "rev-parse", "HEAD"],
+        [git, "--no-replace-objects", "-C", str(checkout_root), "rev-parse", "HEAD"],
         text=True,
         capture_output=True,
         timeout=10,
@@ -649,32 +660,73 @@ def _git_diffusers_revision(source: Path) -> str | None:
     )
     if head_result.returncode != 0:
         return None
-    relative_init = (source / "__init__.py").relative_to(checkout_root)
-    diff_result = subprocess.run(
-        [git, "-C", str(checkout_root), "diff", "--quiet", "HEAD", "--", str(relative_init)],
-        timeout=10,
-        check=False,
-    )
-    if diff_result.returncode != 0:
-        raise UpstreamCoverageError("The Diffusers export module has uncommitted source changes.")
+    _verify_git_package_bytes(git, checkout_root, source, head_result.stdout.strip())
     return head_result.stdout.strip()
 
 
-def _installed_diffusers_revision(source: Path) -> str | None:
-    try:
-        distribution = importlib.metadata.distribution("diffusers")
-        installed_root = Path(distribution.locate_file("")).resolve()
-        source.relative_to(installed_root)
-        direct_url = json.loads(distribution.read_text("direct_url.json") or "{}")
-    except (importlib.metadata.PackageNotFoundError, ValueError, json.JSONDecodeError, OSError):
-        return None
-    vcs_info = direct_url.get("vcs_info") if isinstance(direct_url, dict) else None
-    revision = vcs_info.get("commit_id") if isinstance(vcs_info, dict) else None
-    return revision if isinstance(revision, str) and re.fullmatch(r"[0-9a-f]{40}", revision) else None
+def _verify_git_package_bytes(git: str, checkout_root: Path, source: Path, revision: str) -> None:
+    """Verify HEAD, index, and physical package bytes without diff/stat shortcuts.
+
+    Index flags such as assume-unchanged and external diff/textconv helpers must
+    not turn changed Python into immutable catalog evidence. Historical audit
+    checkouts use canonical Git bytes; ordinary installed wheels do not use this
+    checkout verification path.
+    """
+    relative_package = source.relative_to(checkout_root).as_posix()
+
+    def git_records(*arguments: str) -> list[bytes]:
+        result = subprocess.run(
+            [git, "--no-replace-objects", "-C", str(checkout_root), *arguments, "--", relative_package],
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+        if result.returncode != 0:
+            raise UpstreamCoverageError("The Diffusers package source tree could not be verified.")
+        return [record for record in result.stdout.split(b"\0") if record]
+
+    expected = {}
+    for record in git_records("ls-tree", "-r", "-z", revision):
+        declaration, raw_path = record.split(b"\t", 1)
+        mode, kind, digest = declaration.split(b" ")
+        if kind != b"blob" or mode not in {b"100644", b"100755"}:
+            raise UpstreamCoverageError("The Diffusers package source contains a non-regular tracked file.")
+        expected[raw_path] = (mode, digest)
+    if not expected or os.fsencode(f"{relative_package}/__init__.py") not in expected:
+        raise UpstreamCoverageError("The Diffusers package source is not tracked by the reviewed checkout.")
+
+    indexed = {}
+    for record in git_records("ls-files", "--stage", "-z"):
+        declaration, raw_path = record.split(b"\t", 1)
+        mode, digest, stage = declaration.split(b" ")
+        if stage != b"0" or raw_path in indexed:
+            raise UpstreamCoverageError("The Diffusers package source index has unresolved changes.")
+        indexed[raw_path] = (mode, digest)
+    if indexed != expected:
+        raise UpstreamCoverageError("The Diffusers package source index differs from the reviewed HEAD.")
+
+    for raw_path, (_mode, expected_digest) in expected.items():
+        path = checkout_root / os.fsdecode(raw_path)
+        try:
+            if not stat.S_ISREG(path.lstat().st_mode) or path.resolve() != path:
+                raise UpstreamCoverageError("The Diffusers package source contains a non-regular working file.")
+            with path.open("rb") as stream:
+                body = stream.read()
+        except OSError as error:
+            raise UpstreamCoverageError("The Diffusers package source has a missing or unreadable file.") from error
+        digest = hashlib.sha1(b"blob " + str(len(body)).encode("ascii") + b"\0" + body).hexdigest().encode("ascii")
+        if digest != expected_digest:
+            raise UpstreamCoverageError("The Diffusers package source bytes differ from the reviewed HEAD.")
+
+    # Do not exclude ignored files: an ignored Python module can still be read
+    # by the static parser. Interpreter bytecode caches are not source inputs.
+    for raw_path in git_records("ls-files", "--others", "-z"):
+        if Path(os.fsdecode(raw_path)).suffix.lower() in {".py", ".pyi"}:
+            raise UpstreamCoverageError("The Diffusers package source contains untracked Python files.")
 
 
 def _verify_diffusers_source_revision(source: Path, expected_revision: str) -> str:
-    revision = _git_diffusers_revision(source) or _installed_diffusers_revision(source)
+    revision = _git_diffusers_revision(source)
     if revision != expected_revision:
         found = revision or "unverifiable source"
         raise UpstreamCoverageError(
@@ -1318,7 +1370,7 @@ def build_upstream_coverage(
 
     root = root.resolve(strict=True)
     revision = _pinned_diffusers_revision(root)
-    source = _normalize_diffusers_source(diffusers_source) if diffusers_source else installed_diffusers_source()
+    source = reviewed_diffusers_source(diffusers_source)
     verified_source_revision = _verify_diffusers_source_revision(source, revision)
     version, pipelines = _pipeline_coverage(root, source)
     workflows, templates, template_bundle_hash = _workflow_and_template_coverage(

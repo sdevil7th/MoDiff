@@ -3633,6 +3633,10 @@ def supports_arg(pipeline: Any, arg_name: str) -> bool:
 def pipeline_class_from_name(name: str):
     import diffusers
 
+    if name in ("QwenImageEditPipeline", "QwenImageEditPlusPipeline", "QwenImageEditInpaintPipeline"):
+        from .qwen_vl import QWEN_EDIT_PIPELINE_CLASSES
+
+        return QWEN_EDIT_PIPELINE_CLASSES[name]
     pipeline_class = getattr(diffusers, name, None)
     if pipeline_class is None:
         raise ValueError(f"Diffusers does not expose pipeline class {name}. Update diffusers or choose another class.")

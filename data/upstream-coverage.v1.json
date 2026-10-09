@@ -2339,7 +2339,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:88fa02a0d4951ea325700dc1e30091186700d1ad2c19a5af392e98580e3d2bc5",
+  "contentHash": "sha256:abcca1d3432f095bf140a666c8bb0f418f14d8ea766e737d6f3de0caba0f2e9e",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -7630,7 +7630,7 @@
           "modelType": "ZImageModularPipeline"
         },
         "componentPolicy": {
-          "attentionBackend": "_native_math",
+          "attentionBackend": "auto",
           "vaeSlicing": true,
           "vaeTiling": true
         },
@@ -8494,7 +8494,7 @@
           "modelType": "ZImageModularPipeline"
         },
         "componentPolicy": {
-          "attentionBackend": "_native_math",
+          "attentionBackend": "auto",
           "vaeSlicing": true,
           "vaeTiling": true
         },
@@ -9513,7 +9513,7 @@
           "modelType": "ZImageModularPipeline"
         },
         "componentPolicy": {
-          "attentionBackend": "_native_math",
+          "attentionBackend": "auto",
           "vaeSlicing": true,
           "vaeTiling": true
         },
@@ -9551,7 +9551,7 @@
           "modelType": "ZImageModularPipeline"
         },
         "componentPolicy": {
-          "attentionBackend": "_native_math",
+          "attentionBackend": "auto",
           "vaeSlicing": true,
           "vaeTiling": true
         },
@@ -9592,7 +9592,7 @@
           "modelType": "ZImageModularPipeline"
         },
         "componentPolicy": {
-          "attentionBackend": "_native_math",
+          "attentionBackend": "auto",
           "vaeSlicing": true,
           "vaeTiling": true
         },
@@ -9630,7 +9630,7 @@
           "modelType": "ZImageModularPipeline"
         },
         "componentPolicy": {
-          "attentionBackend": "_native_math",
+          "attentionBackend": "auto",
           "vaeSlicing": true,
           "vaeTiling": true
         },
@@ -9668,7 +9668,7 @@
           "modelType": "ZImageModularPipeline"
         },
         "componentPolicy": {
-          "attentionBackend": "_native_math",
+          "attentionBackend": "auto",
           "vaeSlicing": true,
           "vaeTiling": true
         },
@@ -9707,21 +9707,21 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "082dab359de261b6e2b47ed35a09daa7ebe099edc7e5d9f01242900ce1edbd51",
+    "templateBundleSha256": "6d30ce9c4004228c3f74233d07e64c3abe65dad98000f0f925e635219d4c5de1",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
         "delivery": "base",
         "dependencies": [
           "accelerate>=1.4.0",
-          "diffusers @ git+https://github.com/huggingface/diffusers.git@fbf49e7f35857f76bc57b177e26f12b03687c668",
+          "diffusers==0.41.0",
           "huggingface-hub>=1.31.0,<2.0",
           "peft>=0.21.2",
           "torch>=2.6.0,<2.12; sys_platform == 'darwin'",
           "torch>=2.6.0; sys_platform != 'darwin'",
           "transformers>=5.18.0"
         ],
-        "digest": "sha256:cc281f8fbae5093d68b4dd963a8f80e32b1589991c8cda97a3ec0f26c9e700db",
+        "digest": "sha256:cc7a00bd6942e5d4e95f6cc8a80efab42b1e26c9c4df9862568cd7b6af15f32c",
         "id": "modiff.base-model-runtime"
       },
       "legacyProductionFieldScope": "historical_reference_wheel_only",

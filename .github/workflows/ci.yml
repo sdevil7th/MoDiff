@@ -45,4 +45,18 @@ jobs:
       - run: ${{ matrix.managed-python }} -m modiff.preflight --json --check-port 8088 --fail-on-error
       - run: ${{ matrix.managed-python }} scripts/smoke_base_runtime.py
       - run: ${{ matrix.managed-python }} scripts/smoke_service_package.py
+      # Static catalog proof is independent of the ordinary installed release.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        env:
+          # Source audit checks exact Git blob bytes, including on Windows.
+          GIT_CONFIG_COUNT: '1'
+          GIT_CONFIG_KEY_0: core.autocrlf
+          GIT_CONFIG_VALUE_0: 'false'
+        with:
+          repository: huggingface/diffusers
+          ref: fbf49e7f35857f76bc57b177e26f12b03687c668
+          path: .reviewed-upstream/diffusers
+          persist-credentials: false
       - run: ${{ matrix.managed-python }} -m pytest -q
+        env:
+          MODIFF_DIFFUSERS_CATALOG_SOURCE: ${{ github.workspace }}/.reviewed-upstream/diffusers/src/diffusers

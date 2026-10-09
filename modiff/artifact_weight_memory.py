@@ -7,11 +7,21 @@ from pathlib import Path
 import re
 import struct
 
+from modiff.hf_cache_layout import resolve_snapshot_cache_file
+
 _FLOAT_DTYPES = {"F16", "BF16", "F32", "F64"}
 _DTYPE_BYTES = {"float16": 2, "bfloat16": 2, "float32": 4, "float64": 8}
 _STORED_BYTES = {"F16": 2, "BF16": 2, "F32": 4, "F64": 8, "I8": 1, "U8": 1,
                  "I16": 2, "U16": 2, "I32": 4, "U32": 4, "I64": 8, "U64": 8, "BOOL": 1}
 _MAX_HEADER_BYTES = 16 * 1024 * 1024
+
+
+def _snapshot_file(alias: Path, snapshot: Path) -> Path:
+    repository_cache = snapshot.parent.parent
+    repository = repository_cache.name.removeprefix("models--").replace("--", "/")
+    return resolve_snapshot_cache_file(
+        alias, snapshot=snapshot, cache_root=repository_cache.parent, repository=repository,
+    )
 
 
 def _json_file(path: Path):
@@ -54,6 +64,7 @@ def artifact_parameter_lower_bound(status: dict, revision: str | None, dtype: st
 
     Indexed tensors are counted once. Unknown/unsupported layouts yield no
     estimate rather than granting readiness or fabricating a working budget.
+    Snapshot files use the same repository/shared blob boundary as execution.
     No weights, Python model code, optional imports or downloads are executed.
     """
     if not revision or not re.fullmatch(r"[0-9a-f]{40}", revision) or dtype not in _DTYPE_BYTES or not status.get("complete"):
@@ -61,14 +72,11 @@ def artifact_parameter_lower_bound(status: dict, revision: str | None, dtype: st
     for snapshot in status.get("snapshots") or []:
         if not snapshot.get("complete") or not snapshot.get("path"):
             continue
-        path = Path(snapshot["path"])
+        path = Path(snapshot["path"]).absolute()
         if path.name.lower() != revision.lower():
             continue
         try:
-            cache_root = path.parent.parent.resolve()
-            if not path.resolve().is_relative_to(cache_root) or not (path / "model_index.json").resolve().is_relative_to(cache_root):
-                continue
-            index = _json_file(path / "model_index.json")
+            index = _json_file(_snapshot_file(path / "model_index.json", path))
             if not isinstance(index, dict) or len(index) > 128:
                 continue
             components = {}
@@ -78,16 +86,15 @@ def artifact_parameter_lower_bound(status: dict, revision: str | None, dtype: st
                 if Path(component).name != component or component in {".", ".."} or any(char in component for char in "\\/:"):
                     raise ValueError("Invalid component path")
                 folder = path / component
-                if not folder.resolve().is_relative_to(cache_root):
+                if (folder.is_symlink() or getattr(folder, "is_junction", lambda: False)()
+                        or not folder.resolve().is_relative_to(path.resolve())):
                     raise ValueError("Escaping component path")
                 files = {}
                 indexes = list(folder.glob("*.safetensors.index.json"))
                 if len(indexes) > 1:
                     return None
                 if indexes:
-                    if not indexes[0].resolve().is_relative_to(cache_root):
-                        raise ValueError("Escaping weight index")
-                    weight_map = _json_file(indexes[0]).get("weight_map")
+                    weight_map = _json_file(_snapshot_file(indexes[0], path)).get("weight_map")
                     if not isinstance(weight_map, dict) or len(weight_map) > 100_000:
                         return None
                     for tensor, filename in weight_map.items():
@@ -103,9 +110,7 @@ def artifact_parameter_lower_bound(status: dict, revision: str | None, dtype: st
                     return None
                 amount = 0
                 for filename, tensors in files.items():
-                    file = folder / filename
-                    if not file.resolve().is_relative_to(cache_root):
-                        raise ValueError("Escaping weight path")
+                    file = _snapshot_file(folder / filename, path)
                     amount += _weight_bytes(file, _DTYPE_BYTES[dtype], tensors)
                 if amount:
                     components[component] = amount
@@ -113,7 +118,7 @@ def artifact_parameter_lower_bound(status: dict, revision: str | None, dtype: st
                 return {"revision": revision, "dtype": dtype, "components": components,
                         "totalBytes": sum(components.values()), "largestComponentBytes": max(components.values()),
                         "proofScope": "parameter_storage_lower_bound_only"}
-        except (OSError, ValueError, KeyError, TypeError, struct.error):
+        except (OSError, RuntimeError, ValueError, KeyError, TypeError, struct.error):
             continue
     return None
 

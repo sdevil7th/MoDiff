@@ -20,10 +20,10 @@ class OperationInventoryTests(unittest.TestCase):
 
     def test_inventory_reproduces_with_crlf_upstream_python_source(self):
         from modiff.operation_inventory import build_operation_inventory, load_operation_inventory
-        from modiff.upstream_coverage import installed_diffusers_source
+        from modiff.upstream_coverage import reviewed_diffusers_source
 
         root = Path(__file__).resolve().parents[1]
-        source = installed_diffusers_source()
+        source = reviewed_diffusers_source()
         python_sources = {source / "__init__.py", source / "pipelines" / "auto_pipeline.py"}
         read_bytes = Path.read_bytes
 
@@ -41,10 +41,10 @@ class OperationInventoryTests(unittest.TestCase):
 
     def test_inventory_source_receipts_still_detect_code_and_snapshot_byte_changes(self):
         from modiff.operation_inventory import build_operation_inventory, load_operation_inventory
-        from modiff.upstream_coverage import installed_diffusers_source
+        from modiff.upstream_coverage import reviewed_diffusers_source
 
         root = Path(__file__).resolve().parents[1]
-        source = installed_diffusers_source()
+        source = reviewed_diffusers_source()
         reviewed = load_operation_inventory()
         read_bytes = Path.read_bytes
         for name, changed_path, extra_bytes in (

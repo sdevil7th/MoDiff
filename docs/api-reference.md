@@ -15,6 +15,10 @@ resolve to loopback.
 
 ## Route groups
 
+`GET /listgraphs` returns an empty JSON array when the optional legacy `graphs`
+directory is absent, just as it does for an empty directory. It does not create
+the directory. Filesystem access failures still surface as errors.
+
 | Area                    | Routes                                                                                                                                                                                                                                                                                                                                                                               | Purpose                                                                                                                                                                                                         |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Bundled client          | `GET /`, `/favicon.ico`, `/assets/*`, optional `/template-gallery/*`, `/user/*`, `/static/{module}/{file}`                                                                                                                                                                                                                                                                           | Serve the generated frontend and module UI assets. The Gallery route exists only for an explicit offline/local asset build; normal releases use an immutable public Hugging Face Dataset.                       |

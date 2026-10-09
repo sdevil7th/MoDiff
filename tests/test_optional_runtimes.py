@@ -637,6 +637,7 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(
                 {profile["id"] for profile in capabilities["optionalRuntimeProfiles"]},
                 {
+                    "cosmos-guardrail-0.3.1",
                     GALLERY_MEDIA_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,

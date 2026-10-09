@@ -21,7 +21,7 @@ def write_weights(path, tensors):
 
 @pytest.fixture
 def snapshot(tmp_path):
-    root = tmp_path / "models--test--model" / "snapshots" / REVISION
+    root = tmp_path / "hub" / "models--test--model" / "snapshots" / REVISION
     root.mkdir(parents=True)
     (root / "model_index.json").write_text(json.dumps({"transformer": ["diffusers", "Transformer"], "text_encoder": ["transformers", "Encoder"]}))
     for name in ("transformer", "text_encoder"):
@@ -49,6 +49,89 @@ def test_sharded_indexes_count_each_selected_tensor_once(snapshot):
     (folder / "model.safetensors.index.json").write_text(json.dumps({"weight_map": {"one": "weights.safetensors", "two": "weights.safetensors"}}))
     result = artifact_parameter_lower_bound(status, REVISION, "bfloat16")
     assert result["components"]["transformer"] == 8
+
+
+def shared_blob_alias(alias, cache_root, number):
+    # Hub storage identities need not be hashes of the file bytes.
+    name = f"{number:064x}"
+    target = cache_root / "blobs" / name[:2] / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    alias.replace(target)
+    alias.symlink_to(target)
+
+
+@pytest.mark.parametrize("sharded", [False, True])
+def test_parameter_bound_reads_exact_snapshot_shared_blobs(snapshot, sharded):
+    root, status = snapshot
+    folder = root / "transformer"
+    expected = {"transformer": 24, "text_encoder": 12}
+    if sharded:
+        write_weights(folder / "weights.safetensors", {
+            "one": ("F32", [2], 8), "two": ("F32", [2], 8), "unused": ("F32", [20], 80),
+        })
+        (folder / "model.safetensors.index.json").write_text(json.dumps({
+            "weight_map": {"one": "weights.safetensors", "two": "weights.safetensors"},
+        }))
+        expected["transformer"] = 8
+    aliases = [root / "model_index.json", folder / "weights.safetensors",
+               root / "text_encoder" / "weights.safetensors"]
+    if sharded:
+        aliases.append(folder / "model.safetensors.index.json")
+    for number, alias in enumerate(aliases, start=1):
+        shared_blob_alias(alias, root.parent.parent.parent, number)
+
+    result = artifact_parameter_lower_bound(status, REVISION, "bfloat16")
+    assert result is not None
+    assert result["components"] == expected
+    assert result["totalBytes"] == sum(expected.values())
+    assert result["largestComponentBytes"] == max(expected.values())
+    assert result["revision"] == REVISION
+    assert impossible_parameter_residency({"accelerator": {"kind": "cuda", "totalBytes": 16}}, result, "none")
+
+
+def test_parameter_bound_preserves_repository_blob_layout(snapshot):
+    root, status = snapshot
+    blobs = root.parent.parent / "blobs"
+    blobs.mkdir()
+    for number, alias in enumerate([
+        root / "model_index.json", root / "transformer" / "weights.safetensors",
+        root / "text_encoder" / "weights.safetensors",
+    ]):
+        target = blobs / str(number)
+        alias.replace(target)
+        alias.symlink_to(target)
+    assert artifact_parameter_lower_bound(status, REVISION, "bfloat16")["totalBytes"] == 36
+
+
+def test_parameter_bound_rejects_linked_component_directory(snapshot):
+    root, status = snapshot
+    folder = root / "transformer"
+    target = root / "other-component"
+    folder.rename(target)
+    folder.symlink_to(target, target_is_directory=True)
+    assert artifact_parameter_lower_bound(status, REVISION, "bfloat16") is None
+
+
+@pytest.mark.parametrize("member", ["model_index.json", "transformer/model.safetensors.index.json", "transformer/weights.safetensors"])
+@pytest.mark.parametrize("target_kind", ["outside", "foreign_repository", "other_snapshot", "malformed_shared_blob"])
+def test_parameter_bound_rejects_snapshot_file_link_escapes(snapshot, tmp_path, member, target_kind):
+    root, status = snapshot
+    (root / "transformer" / "model.safetensors.index.json").write_text(json.dumps({
+        "weight_map": {"matrix": "weights.safetensors"},
+    }))
+    cache_root = root.parent.parent.parent
+    targets = {
+        "outside": tmp_path / "outside" / "file",
+        "foreign_repository": cache_root / "models--foreign--model" / "blobs" / "file",
+        "other_snapshot": root.parent / ("b" * 40) / "file",
+        "malformed_shared_blob": cache_root / "blobs" / "ff" / ("a" * 64),
+    }
+    target = targets[target_kind]
+    target.parent.mkdir(parents=True, exist_ok=True)
+    alias = root / member
+    alias.replace(target)
+    alias.symlink_to(target)
+    assert artifact_parameter_lower_bound(status, REVISION, "bfloat16") is None
 
 
 @pytest.mark.parametrize("revision,dtype,complete", [("b" * 40, "bfloat16", True), ("main", "bfloat16", True), (REVISION, "int4", True), (REVISION, "float32", False)])

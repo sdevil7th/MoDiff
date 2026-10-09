@@ -46,6 +46,11 @@ custom/*
 
 data/*
 !data/model-artifact-catalog.json
+!data/cosmos-safety-artifacts.v1.json
+!data/cosmos-safety-runtime-artifacts.v1.json
+!data/cosmos3-super-t2i-files.v1.json
+!data/cosmos3-super-t2i-publisher-caption.v1.json
+!data/cosmos3-super-t2i-publisher-caption-provenance.v1.json
 !data/image-prototyping-readiness.v1.json
 !data/huggingface-cluster-promotion-receipts.v1.json
 !data/huggingface-cluster-promotion-receipts.v2.json
@@ -101,3 +106,6 @@ __pycache__
 *.njsproj
 *.sln
 *.sw?
+
+# Static upstream catalog source used only by backend CI audits.
+.reviewed-upstream/

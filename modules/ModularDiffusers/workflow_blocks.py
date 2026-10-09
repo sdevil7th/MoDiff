@@ -271,6 +271,10 @@ class _OfficialWorkflowBlockMixin:
             expected_model_type=pipeline_class,
             expected_role="pipeline_components",
         )
+        from modiff.modular_workflow_contracts import require_reviewed_modular_repository_workflow
+        require_reviewed_modular_repository_workflow(
+            pipeline_class, token._repo_id, token._revision, workflow_id,
+        )
         pipeline_type = pipeline_class_from_model_type(pipeline_class)
         definition = pipeline_type()
         blocks = definition.blocks
@@ -302,6 +306,8 @@ class _OfficialWorkflowBlockMixin:
             )
         if installed:
             pipeline.update_components(**installed)
+        from .cosmos_safety import attach_cosmos_safety_checker
+        attach_cosmos_safety_checker(pipeline, pipeline_components, model_type=pipeline_class)
         return token, pipeline
 
 

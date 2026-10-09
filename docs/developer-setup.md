@@ -20,7 +20,13 @@ On Apple Silicon, omit the extra: `uv sync` and `uv run python main.py` use the
 PyPI wheel with MPS support. CPU is useful for API/UI development; it does not
 make large models practical on machines with insufficient memory.
 
-The committed `uv.lock` records the dependency resolution. Transformers and
+Diffusers is an ordinary published dependency pinned to the reviewed stable
+release `diffusers==0.41.0`; the committed `uv.lock` records its artifact hashes. Native
+setup consumes that lock, and the specialized installer installs its
+hash-verified official Diffusers wheel. Changing a runtime version also changes
+optional-overlay bindings and requires explicit validation before activation.
+Upstream catalog revisions remain separate, immutable source-review evidence.
+Transformers and
 PEFT are mandatory base libraries, so ordinary text-to-image and LoRA workflows
 need no optional install or Activate step. Accelerator extras route Torch and
 its companion wheels to their matching official index. Basic CUDA setup does
@@ -53,6 +59,36 @@ use `--torch-backend=cu128 -e ".[cuda]"`. Run that environment's Python directly
 `python main.py` after activation, or its full executable path. Do not mix pip
 changes with `uv run` auto-sync unless those changes are declared in the project.
 
+## Instinct SDK setup on Linux
+
+For the reviewed MI300X/`gfx942` preview, use a fresh Python 3.12 environment and
+the adjacent AMD index configuration. From the backend checkout:
+
+```sh
+uv venv --python 3.12
+uv pip install --python .venv/bin/python \
+  --config-file requirements/profiles/amd-instinct-rocm-linux.uv.toml \
+  -r requirements/profiles/amd-instinct-rocm-linux.txt
+uv pip check --python .venv/bin/python
+.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error
+.venv/bin/python main.py
+```
+
+Launch the installed Python directly; a generic `uv sync` or auto-syncing
+`uv run` can replace the vendor wheels. This SDK provides its own ROCm userspace:
+do not inject a Ryzen `/opt/rocm` path or change provider drivers speculatively.
+Clear inherited Python/library-path overrides that point at a different runtime.
+
+An unmanaged installation needs no installer receipt or environment profile
+selector. Runtime detection recognizes one visible dedicated `gfx942` device and
+checks the reviewed Torch/HIP versions, SDK package pins and package policy,
+mandatory base dependencies and a real device tensor. Explicit requested or saved
+SDK selections remain authoritative. Mixed or unknown architectures are not
+automatically selected as Instinct. Runtime readiness does not qualify model
+outputs, memory fit, provider drivers or other GPUs. See
+[accelerator installation](accelerator-installation.md#instinct-mi300x-cloud-preview)
+and [cloud validation](amd-cloud-qualification.md) for host and evidence checks.
+
 ## Client development
 
 From the sibling `MoDiff-client` checkout:
@@ -75,12 +111,16 @@ must use their package manager. See [Astral's upgrade instructions](https://docs
 MoDiff accepts the operator's uv; there is no application-specific version pin.
 
 After pulling application changes, run `uv sync` with the same accelerator extra,
-then preflight and restart the backend. An intentional package upgrade uses
+then preflight and restart the backend. For the Instinct SDK, rerun its explicit
+`uv pip install` and `uv pip check` commands above instead. An intentional package upgrade uses
 `uv lock --upgrade-package transformers --upgrade-package peft`, then sync and
 validate. `uv lock --upgrade` upgrades all compatible dependencies and needs the
-full contributor gate. The exact Diffusers source is a compatibility exception:
-current Modular block contracts bind that revision; update it together with those
-contracts and tests. Compiled accelerator wheels also need matching ABI versions.
+full contributor gate. Upgrading Diffusers requires an intentional edit to its
+reviewed release pin, lock update, and compatibility checks. Historical catalog regeneration separately binds
+its reviewed source revision; it must not pretend that revision is the installed
+release. Source-audit tests acquire that exact source fixture independently of
+setup, preflight, and runtime smoke. Compiled accelerator wheels also need
+matching ABI versions.
 
 A missing base library is repaired by rerunning the same sync command, without
 optional activation. Additional optional packages retain explicit install and
@@ -88,13 +128,21 @@ activation, with progress through verification and worker replacement. Failed
 or stale overlays must be repaired through their own runtime action; deleting
 models, workflows, or output history is unnecessary.
 
-## Windows allocator and compilation
+## Allocator and optional compilation
 
-MoDiff uses PyTorch's default allocator on Windows and does not inject
-`expandable_segments:True`. Explicit `PYTORCH_ALLOC_CONF` or the legacy
-`PYTORCH_CUDA_ALLOC_CONF` setting is preserved; remove unsupported allocator
-options if your PyTorch build warns. Linux launch paths share the same pre-import
-allocator policy.
+MoDiff uses PyTorch's default allocator on Windows, macOS and Linux ROCm. Linux
+CUDA retains `expandable_segments:True`. The shared launch policy detects ROCm
+from installed Torch package metadata before importing Torch; it applies to both
+Ryzen and Instinct profiles. Explicit `PYTORCH_ALLOC_CONF`,
+`PYTORCH_CUDA_ALLOC_CONF` and `PYTORCH_HIP_ALLOC_CONF` settings are preserved,
+including an empty setting. Remove unsupported options if your build warns.
+
+ROCm expandable segments can retain file descriptors for HIP virtual-memory
+allocations and report an allocation failure while physical device memory is
+still available. MoDiff does not enable them by default or change process limits.
+If explicitly testing another allocator, use a fresh process and record the
+allocator settings, file-descriptor limit/count and actual memory observations.
+Prior hardware results remain tied to their recorded allocator policy.
 
 Before importing Torch, Windows app launch also defaults `MIMALLOC_PURGE_DELAY`
 to `0`. This asks Torch's bundled CPU allocator to return unused pages promptly:

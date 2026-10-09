@@ -52,6 +52,53 @@ class RuntimeOverlayArtifactTests(unittest.TestCase):
             "bin/ninja",
         )
 
+    def test_target_data_scheme_is_sealed_normalized_and_drift_checked(self):
+        name = "demo_pkg-1.0.0.data/data/wordlist/profanity_wordlist.txt"
+        members = self._with_complete_record(
+            [*self._default_members(), (name, b"reviewed words\n")],
+            "demo_pkg-1.0.0.dist-info",
+        )
+        artifact, archive = self._create_locked_wheel(members)
+        seal = runtime_overlays.locked_artifact_file_seal([artifact], self.archive_root)
+        self.assertEqual(seal["wordlist/profanity_wordlist.txt"], hashlib.sha256(b"reviewed words\n").hexdigest())
+        self.assertNotIn(name, seal)
+        with zipfile.ZipFile(archive) as wheel:
+            for info in wheel.infolist():
+                if info.is_dir():
+                    continue
+                destination = self.site_packages / runtime_overlays._wheel_target_path(info.filename)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(wheel.read(info))
+        runtime_overlays.normalize_locked_wheel_install(self.site_packages, [artifact], self.archive_root)
+        anchor = runtime_overlays.verify_artifact_anchored_overlay(self.site_packages, [artifact], self.archive_root)
+        self.assertEqual(anchor["fileSeal"], seal)
+        (self.site_packages / "wordlist/profanity_wordlist.txt").write_bytes(b"replaced")
+        with self.assertRaisesRegex(RuntimeError, "differs"):
+            runtime_overlays.verify_artifact_anchored_overlay(self.site_packages, [artifact], self.archive_root)
+
+    def test_target_data_scheme_preserves_collision_and_path_guards(self):
+        with self.subTest("collision"):
+            members = self._with_complete_record(
+                [*self._default_members(), ("demo_pkg-1.0.0.data/data/demo_pkg/__init__.py", b"collision")],
+                "demo_pkg-1.0.0.dist-info",
+            )
+            self.assert_invalid_wheel(members)
+        for member in (
+            "demo_pkg-1.0.0.data/data/../escape",
+            "demo_pkg-1.0.0.data/data/sitecustomize.py",
+            "demo_pkg-1.0.0.data/data/activate.pth",
+            "demo_pkg-1.0.0.data/data/C:/escape",
+            "demo_pkg-1.0.0.data/headers/header.h",
+            "demo_pkg-1.0.0.data/unknown/payload",
+        ):
+            with self.subTest(member=member), self.assertRaises(RuntimeError):
+                runtime_overlays._wheel_target_path(member)
+
+    def test_target_data_payload_requires_complete_authenticated_record(self):
+        members = [*self._default_members(),
+                   ("demo_pkg-1.0.0.data/data/wordlist/profanity_wordlist.txt", b"unrecorded data")]
+        self.assert_invalid_wheel(members)
+
     @staticmethod
     def _with_complete_record(members, dist_info):
         record_name = f"{dist_info}/RECORD"

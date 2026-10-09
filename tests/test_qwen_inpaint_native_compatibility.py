@@ -142,11 +142,12 @@ def test_real_vision_policy_is_owner_scoped_and_component_reuse_is_distinct(monk
     # configuration helper on a real Transformers component, without GPU use.
     monkeypatch.setattr(torch.version, "hip", "test-rocm")
     default = loaders.modular_runtime_policy()
-    loaders.apply_modular_runtime_policy(owner, default)
-    assert encoder.config.vision_config._attn_implementation == "sdpa"
+    applied_default = loaders.apply_modular_runtime_policy(owner, default, owned_component_names=["text_encoder"])
+    assert applied_default["rocmVisionAttention"] == ["text_encoder"]
+    assert encoder.config.vision_config._attn_implementation == "eager"
     selected = loaders.modular_runtime_policy(inpaint_compatibility="whole_v1")
-    applied = loaders.apply_modular_runtime_policy(owner, selected)
-    assert applied["rocmVisionAttention"] == ["text_encoder"]
+    applied = loaders.apply_modular_runtime_policy(owner, selected, owned_component_names=["text_encoder"])
+    assert applied["rocmVisionAttention"] == []
     assert encoder.config.vision_config._attn_implementation == "eager"
     assert encoder.config.text_config._attn_implementation == "sdpa"
     loaders.record_pipeline_component_runtime_policy(owner, offload_mode="none", device="cpu", runtime_policy=selected)
@@ -165,16 +166,24 @@ def test_vision_configuration_failure_marks_modified_components_unreusable(monke
     from modules.DiffusersRuntime import main
 
     encoder, vae = torch.nn.Linear(2, 2), torch.nn.Linear(2, 2)
+    encoder.config = SimpleNamespace(vision_config=SimpleNamespace(_attn_implementation="sdpa"))
+    encoder.set_attn_implementation = lambda value: None
+    monkeypatch.setattr(torch.version, "hip", "test-rocm")
     owner = SimpleNamespace(components={"text_encoder": encoder, "vae": vae})
     def fail(_owner):
         raise RuntimeError("vision policy rejected")
     monkeypatch.setattr(main, "configure_rocm_vision_attention", fail)
     with pytest.raises(RuntimeError, match="vision policy rejected"):
-        loaders.apply_modular_runtime_policy(owner, loaders.modular_runtime_policy(inpaint_compatibility="whole_v1"))
-    for component in owner.components.values():
-        assert component._modiff_modular_runtime_policy == {"configuration_failed": True}
-        assert not loaders.component_reuse_compatible(component, dtype=torch.float32,
-            requested_quantization=None, offload_mode="none", device="cpu")
+        loaders.apply_modular_runtime_policy(owner, loaders.modular_runtime_policy(inpaint_compatibility="whole_v1"),
+                                             owned_component_names=["text_encoder"])
+    assert encoder._modiff_modular_runtime_policy == {"configuration_failed": True}
+    assert not loaders.component_reuse_compatible(encoder, dtype=torch.float32,
+        requested_quantization=None, offload_mode="none", device="cpu")
+    # The vision helper failed before any VAE policy hook; leave that model's
+    # existing source ownership untouched.
+    assert not hasattr(vae, "_modiff_modular_runtime_policy")
+    assert loaders.component_reuse_compatible(vae, dtype=torch.float32,
+        requested_quantization=None, offload_mode="none", device="cpu")
 
 
 def test_image_encoder_cannot_forge_compatibility_against_actual_vae_owner():

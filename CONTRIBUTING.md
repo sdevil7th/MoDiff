@@ -29,6 +29,38 @@ Torch stack. Report hardware-specific validation separately.
 
 Do not commit `config.ini`, `.env` files, model caches, generated outputs, local logs, virtual environments, or test caches.
 
+## Historical source-audit fixture
+
+Ordinary setup, startup, preflight and the tiny runtime/LoRA smoke use the
+installed reviewed Diffusers release pinned in `pyproject.toml`. They require no upstream checkout.
+Static catalog reproduction tests separately inspect the immutable revision
+recorded in `data/modular-workflow-contracts.json`. Backend CI fetches that exact
+official source into the ignored `.reviewed-upstream/` directory and sets
+`MODIFF_DIFFUSERS_CATALOG_SOURCE` only for those checks. Ordinary runtime and
+pytest imports keep the installed release. The three dynamic no-weight Modular
+catalog CLIs alone launch a private audit child that imports the byte-verified
+historical package, verifies its origin and version, and disables operator
+config, credentials, custom extensions and downloads. It never installs that
+source or changes the parent import path.
+
+For a full local source-audit gate, obtain the same fixture outside the backend
+checkout and set its package path. In a POSIX shell:
+
+```sh
+git init ../reviewed-upstream-diffusers
+git -C ../reviewed-upstream-diffusers remote add origin https://github.com/huggingface/diffusers.git
+git -C ../reviewed-upstream-diffusers fetch --depth=1 origin fbf49e7f35857f76bc57b177e26f12b03687c668
+git -C ../reviewed-upstream-diffusers -c core.autocrlf=false checkout --detach FETCH_HEAD
+export MODIFF_DIFFUSERS_CATALOG_SOURCE="$(cd ../reviewed-upstream-diffusers/src/diffusers && pwd)"
+```
+
+On PowerShell, set `$env:MODIFF_DIFFUSERS_CATALOG_SOURCE` to the resolved package
+path after the same Git steps. Regenerators verify the source revision and reject
+an unavailable or different checkout. They preserve the historical catalog
+revision and source hashes, while recording the current base-runtime dependency
+contract separately. Updating catalog provenance is a separate reviewed change;
+it must classify added and removed exports before regenerating contracts.
+
 ## Backend conventions
 
 - Put backend framework implementation in `modiff/` and built-in node implementations in `modules/`.
@@ -63,14 +95,14 @@ Add focused tests for registry visibility, constructor safety, field contracts, 
 
 ## Dependency changes
 
-The selected file under `requirements/profiles/`, `pyproject.toml`, and `modiff/compatibility/accelerators.v1.json` jointly define the executable runtime contract. Keep direct wheel URLs hash-verified, keep remote source dependencies pinned to immutable revisions, and retain the exact reviewed Diffusers commit. After an intentional dependency or profile edit, rebuild the relevant managed profile:
+The selected file under `requirements/profiles/`, `pyproject.toml`, and `modiff/compatibility/accelerators.v1.json` jointly define the executable runtime contract. Keep direct wheel URLs hash-verified, keep remote source dependencies pinned to immutable revisions, and keep the reviewed Diffusers release pinned with its locked artifact hashes. Immutable catalog-source provenance describes inspected upstream code; runtime binding describes the distribution actually installed. A normal published wheel needs no Git checkout receipt. After an intentional dependency or profile edit, rebuild the relevant managed profile:
 
 ```bash
 ./install.sh --accelerator cpu --backend-only --repair
 uv pip check --python .venv/bin/python
 ```
 
-For native profiles, update the committed `uv.lock` using `uv lock --upgrade-package <package>` and sync the same accelerator extra. The lock records a reproducible resolution; it does not require exact pins for ordinary libraries. Retain immutable sources and compiled wheel/ABI constraints where the integration needs them. Use the corresponding accelerator when a change affects CUDA, ROCm, XPU, or MPS. Update compatibility claims only when validation supports them.
+For native profiles, update the committed `uv.lock` using `uv lock --upgrade-package <package>` and sync the same accelerator extra. The lock records a reproducible resolution; ordinary libraries can use compatible ranges while Diffusers retains its reviewed release pin. Retain immutable sources and compiled wheel/ABI constraints where the integration needs them. Use the corresponding accelerator when a change affects CUDA, ROCm, XPU, or MPS. Update compatibility claims only when validation supports them.
 
 MoDiff may integrate model libraries officially maintained and published by Hugging Face, but each library remains a separately reviewed execution dependency. Verify its upstream ownership, package provenance, license, supported version, loading behavior, and remote-code boundary. Hub hosting alone does not establish that a library or model is maintained by Hugging Face. Keep execution in the existing backend graph and expose task-generic contracts to the client.
 

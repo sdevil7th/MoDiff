@@ -1,5 +1,5 @@
 {
-  "contentHash": "sha256:ae7c55951899ca2e6a16f57b24464ec29cfe1a28ba4df83a46f2d6fa6b83f962",
+  "contentHash": "sha256:44422b14a04764f45631fac05704f11c3aa36e1ff385071116907593154e8eed",
   "coverageBoundary": {
     "backendArtifactPins": "snapshotted",
     "backendExecutionProfiles": "snapshotted",
@@ -1359,15 +1359,17 @@
       "knownDefects": [],
       "modelType": "Cosmos3DistilledModularPipeline",
       "optionalRuntime": {
-        "delivery": "base",
+        "delivery": "optional_overlay",
         "executionProfileIds": [
           "cosmos3-distilled-text-to-image:official-modular-workflow"
         ],
-        "profileIds": [],
-        "reason": "no_optional_runtime_required",
-        "requiredNow": false,
+        "profileIds": [
+          "cosmos-guardrail-0.3.1"
+        ],
+        "reason": "optional_runtime_status_required",
+        "requiredNow": true,
         "schemaVersion": 1,
-        "state": "base_satisfied"
+        "state": "unavailable"
       },
       "routeId": "cosmos3-distilled-text-to-image:official-modular-workflow/text_to_image",
       "standardAndNativeAlternativesCoexist": false,
@@ -1426,22 +1428,253 @@
         "profileId": "cosmos3-nano:official-modular-workflow"
       },
       "integratedNativeAlternativeProfileIds": [
-        "cosmos3-nano:official-modular-workflow"
+        "cosmos3-nano:official-modular-workflow",
+        "cosmos3-super-text-to-image:official-modular-workflow"
       ],
       "knownDefects": [],
       "modelType": "Cosmos3OmniModularPipeline",
       "optionalRuntime": {
-        "delivery": "base",
+        "delivery": "optional_overlay",
         "executionProfileIds": [
           "cosmos3-nano:official-modular-workflow"
         ],
-        "profileIds": [],
-        "reason": "no_optional_runtime_required",
-        "requiredNow": false,
+        "profileIds": [
+          "cosmos-guardrail-0.3.1"
+        ],
+        "reason": "optional_runtime_status_required",
+        "requiredNow": true,
         "schemaVersion": 1,
-        "state": "base_satisfied"
+        "state": "unavailable"
       },
       "routeId": "cosmos3-nano:official-modular-workflow/text_to_image",
+      "standardAndNativeAlternativesCoexist": false,
+      "task": "text_to_image",
+      "upstream": {
+        "candidateNativePipelineClass": null,
+        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "fullStageChain": true,
+        "inventoryCoverage": "executable",
+        "nativePipelineClass": "Cosmos3OmniModularPipeline",
+        "nativeWorkflowId": "text2image",
+        "requiredCoreRolesPresent": true,
+        "stageRoles": [
+          "decode_latents",
+          "denoise",
+          "encode_prompt",
+          "postprocess_image"
+        ]
+      }
+    },
+    {
+      "advertisementEntryPoints": [
+        "execution_profile:cosmos3-nano:official-modular-workflow",
+        "execution_profile_artifact:nvidia/Cosmos3-Super-Text2Image",
+        "model_capability:Cosmos3OmniModularPipeline",
+        "node_model_dropdown:modules.ModularDiffusers.ModelsLoader",
+        "studio_execution_spec:cosmos3-nano:modular-text-to-image:v1"
+      ],
+      "artifact": {
+        "declaredFileCount": 47,
+        "exactBytes": 132505794218,
+        "gated": false,
+        "inventoryState": "exact_bytes",
+        "license": "openmdw-1.1",
+        "repository": "nvidia/Cosmos3-Super-Text2Image",
+        "revision": "daf3d374804be4c512c2135568a7cb95d4341d79"
+      },
+      "artifactVariantOf": "cosmos3-nano:official-modular-workflow/text_to_image",
+      "canonicalTask": "text_to_image",
+      "displayName": "Cosmos3-Super-Text2Image",
+      "disposition": "native_integrated",
+      "dispositionReason": "complete_native_stage_chain_declared",
+      "evidence": {
+        "browser": "pending_final_candidate",
+        "nativeOutput": "pending",
+        "parameterConsumption": "pending",
+        "platform": "pending",
+        "reuse": "pending",
+        "service": "pending",
+        "structural": "implemented_awaiting_qualification"
+      },
+      "exactVariantReview": null,
+      "exception": null,
+      "implementation": {
+        "executionPath": "modular-diffusers",
+        "loader": "modules.ModularDiffusers.ModelsLoader",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "profileId": "cosmos3-nano:official-modular-workflow"
+      },
+      "integratedNativeAlternativeProfileIds": [
+        "cosmos3-nano:official-modular-workflow",
+        "cosmos3-super-text-to-image:official-modular-workflow"
+      ],
+      "knownDefects": [],
+      "modelType": "Cosmos3OmniModularPipeline",
+      "optionalRuntime": {
+        "delivery": "optional_overlay",
+        "executionProfileIds": [
+          "cosmos3-nano:official-modular-workflow"
+        ],
+        "profileIds": [
+          "cosmos-guardrail-0.3.1"
+        ],
+        "reason": "optional_runtime_status_required",
+        "requiredNow": true,
+        "schemaVersion": 1,
+        "state": "unavailable"
+      },
+      "routeId": "cosmos3-nano:official-modular-workflow/text_to_image@nvidia/Cosmos3-Super-Text2Image",
+      "standardAndNativeAlternativesCoexist": false,
+      "task": "text_to_image",
+      "upstream": {
+        "candidateNativePipelineClass": null,
+        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "fullStageChain": true,
+        "inventoryCoverage": "executable",
+        "nativePipelineClass": "Cosmos3OmniModularPipeline",
+        "nativeWorkflowId": "text2image",
+        "requiredCoreRolesPresent": true,
+        "stageRoles": [
+          "decode_latents",
+          "denoise",
+          "encode_prompt",
+          "postprocess_image"
+        ]
+      }
+    },
+    {
+      "advertisementEntryPoints": [
+        "execution_profile:cosmos3-super-text-to-image:official-modular-workflow",
+        "model_capability:Cosmos3OmniModularPipeline",
+        "node_model_dropdown:modules.ModularDiffusers.ModelsLoader"
+      ],
+      "artifact": {
+        "declaredFileCount": 47,
+        "exactBytes": 132505794218,
+        "gated": false,
+        "inventoryState": "exact_bytes",
+        "license": "openmdw-1.1",
+        "repository": "nvidia/Cosmos3-Super-Text2Image",
+        "revision": "daf3d374804be4c512c2135568a7cb95d4341d79"
+      },
+      "artifactVariantOf": null,
+      "canonicalTask": "text_to_image",
+      "displayName": "Cosmos3-Super-Text2Image",
+      "disposition": "native_integrated",
+      "dispositionReason": "complete_native_stage_chain_declared",
+      "evidence": {
+        "browser": "pending_final_candidate",
+        "nativeOutput": "pending",
+        "parameterConsumption": "pending",
+        "platform": "pending",
+        "reuse": "pending",
+        "service": "pending",
+        "structural": "implemented_awaiting_qualification"
+      },
+      "exactVariantReview": null,
+      "exception": null,
+      "implementation": {
+        "executionPath": "modular-diffusers",
+        "loader": "modules.ModularDiffusers.ModelsLoader",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "profileId": "cosmos3-super-text-to-image:official-modular-workflow"
+      },
+      "integratedNativeAlternativeProfileIds": [
+        "cosmos3-nano:official-modular-workflow",
+        "cosmos3-super-text-to-image:official-modular-workflow"
+      ],
+      "knownDefects": [],
+      "modelType": "Cosmos3OmniModularPipeline",
+      "optionalRuntime": {
+        "delivery": "optional_overlay",
+        "executionProfileIds": [
+          "cosmos3-super-text-to-image:official-modular-workflow"
+        ],
+        "profileIds": [
+          "cosmos-guardrail-0.3.1"
+        ],
+        "reason": "optional_runtime_status_required",
+        "requiredNow": true,
+        "schemaVersion": 1,
+        "state": "unavailable"
+      },
+      "routeId": "cosmos3-super-text-to-image:official-modular-workflow/text_to_image",
+      "standardAndNativeAlternativesCoexist": false,
+      "task": "text_to_image",
+      "upstream": {
+        "candidateNativePipelineClass": null,
+        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "fullStageChain": true,
+        "inventoryCoverage": "executable",
+        "nativePipelineClass": "Cosmos3OmniModularPipeline",
+        "nativeWorkflowId": "text2image",
+        "requiredCoreRolesPresent": true,
+        "stageRoles": [
+          "decode_latents",
+          "denoise",
+          "encode_prompt",
+          "postprocess_image"
+        ]
+      }
+    },
+    {
+      "advertisementEntryPoints": [
+        "execution_profile:cosmos3-super-text-to-image:official-modular-workflow",
+        "execution_profile_artifact:nvidia/Cosmos3-Nano",
+        "model_capability:Cosmos3OmniModularPipeline",
+        "node_model_dropdown:modules.ModularDiffusers.ModelsLoader"
+      ],
+      "artifact": {
+        "declaredFileCount": 24,
+        "exactBytes": 33758023657,
+        "gated": false,
+        "inventoryState": "exact_bytes",
+        "license": "openmdw-1.1",
+        "repository": "nvidia/Cosmos3-Nano",
+        "revision": "7a312c868bcce8e40b3eb40861300a9d0ba3fde1"
+      },
+      "artifactVariantOf": "cosmos3-super-text-to-image:official-modular-workflow/text_to_image",
+      "canonicalTask": "text_to_image",
+      "displayName": "Cosmos3-Nano",
+      "disposition": "native_integrated",
+      "dispositionReason": "complete_native_stage_chain_declared",
+      "evidence": {
+        "browser": "pending_final_candidate",
+        "nativeOutput": "pending",
+        "parameterConsumption": "pending",
+        "platform": "pending",
+        "reuse": "pending",
+        "service": "pending",
+        "structural": "implemented_awaiting_qualification"
+      },
+      "exactVariantReview": null,
+      "exception": null,
+      "implementation": {
+        "executionPath": "modular-diffusers",
+        "loader": "modules.ModularDiffusers.ModelsLoader",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "profileId": "cosmos3-super-text-to-image:official-modular-workflow"
+      },
+      "integratedNativeAlternativeProfileIds": [
+        "cosmos3-nano:official-modular-workflow",
+        "cosmos3-super-text-to-image:official-modular-workflow"
+      ],
+      "knownDefects": [],
+      "modelType": "Cosmos3OmniModularPipeline",
+      "optionalRuntime": {
+        "delivery": "optional_overlay",
+        "executionProfileIds": [
+          "cosmos3-super-text-to-image:official-modular-workflow"
+        ],
+        "profileIds": [
+          "cosmos-guardrail-0.3.1"
+        ],
+        "reason": "optional_runtime_status_required",
+        "requiredNow": true,
+        "schemaVersion": 1,
+        "state": "unavailable"
+      },
+      "routeId": "cosmos3-super-text-to-image:official-modular-workflow/text_to_image@nvidia/Cosmos3-Nano",
       "standardAndNativeAlternativesCoexist": false,
       "task": "text_to_image",
       "upstream": {
@@ -15585,17 +15818,17 @@
   "schemaVersion": 1,
   "sources": {
     "exactVariantReviews": "sha256:59206575f988315da524f206822ca6186bf713a46325ce130918825008c9a2aa",
-    "modelArtifactCatalog": "sha256:5f3fa06b5e8bd1d5ee2a1fa1c618779e52399c94789d52d4f7fe6ad405c2726e",
+    "modelArtifactCatalog": "sha256:261c2fc46d1a3c27b1b390780984684792acf562ef1465d489b5660b06bff5e5",
     "modularWorkflowSnapshot": "sha256:8dad3f4ef31b456ef9c6e46718be9a17c023ae4306fdba129c72eeeed6573dc3",
     "operationInventory": "sha256:b5bb015392d8fec47716842bbf896ef977312039dfef1a987ad75295dc860158",
-    "publicExecutionProfiles": "sha256:554c007c1209df93490a00f3bb38693ae1ceaa2b4e4571f10227c580e63fc08d"
+    "publicExecutionProfiles": "sha256:0016031bd2048760e7eb55f68af6b9a02bfc97a0b48c8efe72ad589c1156b523"
   },
   "summary": {
     "denominatorFrozen": false,
     "dispositions": {
       "blocked": 2,
       "documented_whole_pipeline_exception": 89,
-      "native_integrated": 70,
+      "native_integrated": 73,
       "non_diffusion_image_task": 14,
       "preserved_standard_alternative": 38
     },
@@ -15605,7 +15838,7 @@
     ],
     "knownDefectRouteCount": 12,
     "nativeIntegrationMissingCount": 0,
-    "profileCount": 124,
-    "routeCount": 213
+    "profileCount": 125,
+    "routeCount": 216
   }
 }

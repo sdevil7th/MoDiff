@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import json
+from pathlib import Path
 from typing import Any
 
 from modiff.operation_contracts import MODULAR_STAGE_OPERATIONS
@@ -1358,6 +1359,11 @@ HUNYUAN_VIDEO_15_I2V_DIFFUSERS_FILES = [
 ]
 COSMOS3_NANO_REPO = "nvidia/Cosmos3-Nano"
 COSMOS3_GUARDRAIL_REPO = "nvidia/Cosmos-Guardrail1"
+COSMOS3_TEXT_GUARD_REPO = "Qwen/Qwen3Guard-Gen-0.6B"
+COSMOS3_SUPER_T2I_REPO = "nvidia/Cosmos3-Super-Text2Image"
+COSMOS3_SUPER_T2I_DIFFUSERS_FILES = json.loads(
+    (Path(__file__).resolve().parents[1] / "data/cosmos3-super-t2i-files.v1.json").read_text(encoding="utf-8")
+)["files"]
 COSMOS3_DISTILLED_T2I_REPO = "nvidia/Cosmos3-Super-Text2Image-4Step"
 COSMOS3_DISTILLED_I2V_REPO = "nvidia/Cosmos3-Super-Image2Video-4Step"
 COSMOS3_NANO_DIFFUSERS_FILES = [
@@ -1989,6 +1995,8 @@ _COSMOS3_DISTILLED_STRUCTURAL_MODES = ("text_to_image", "image_to_video")
 
 
 def _cosmos3_guardrail_dependency(mode):
+    from modiff.cosmos_safety_contract import cosmos_safety_artifacts
+    artifacts = cosmos_safety_artifacts()
     return (
         {
             "id": "cosmos3-mandatory-safety-guardrail",
@@ -1996,11 +2004,22 @@ def _cosmos3_guardrail_dependency(mode):
             "repo": COSMOS3_GUARDRAIL_REPO,
             "revision": require_catalog_revision(COSMOS3_GUARDRAIL_REPO),
             "kind": "safety_checker",
+            "downloadFiles": [entry["path"] for entry in artifacts[0]["files"]],
             "requiredForModes": [mode],
             "description": (
                 "Mandatory gated Cosmos text-and-video safety checker; access and the NVIDIA Open Model "
                 "License must be acknowledged before any execution qualification."
             ),
+        },
+        {
+            "id": "cosmos3-mandatory-text-safety-classifier",
+            "label": "Qwen3Guard 0.6B",
+            "repo": COSMOS3_TEXT_GUARD_REPO,
+            "revision": require_catalog_revision(COSMOS3_TEXT_GUARD_REPO),
+            "kind": "safety_checker",
+            "downloadFiles": [entry["path"] for entry in artifacts[1]["files"]],
+            "requiredForModes": [mode],
+            "description": "Exact required text classifier used by the reviewed Cosmos Guardrail 0.3.1 runtime.",
         },
     )
 
@@ -5104,6 +5123,7 @@ _COSMOS3_OMNI_TEXT_COMMON_GRAPH_BINDINGS = (
     ("afterDecode", "block_path", "workflowAfterDecodeBlock"),
 )
 _COSMOS3_OMNI_TEXT_TO_IMAGE_GRAPH_BINDINGS = _COSMOS3_OMNI_TEXT_COMMON_GRAPH_BINDINGS + (
+    ("models", "reviewed_variant", "modelVariant"),
     ("prompt", "num_frames", "oneFrame"),
 )
 _COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_BINDINGS = _COSMOS3_OMNI_TEXT_COMMON_GRAPH_BINDINGS + (
@@ -7247,6 +7267,8 @@ _COSMOS3_NANO_MODULAR_PROFILE = {
     "max_low_memory_steps": None,
     "live_proof": False,
     "compatible_repos": (),
+    "optional_runtime_profiles": ("cosmos-guardrail-0.3.1",),
+    "optional_runtime_delivery": "optional_overlay",
 }
 
 _COSMOS3_NANO_MODULAR_CAPABILITY = {
@@ -7399,6 +7421,41 @@ _COSMOS3_NANO_STUDIO_EXECUTION_SPEC_DEFINITIONS = {
     for mode, (spec_id, roles, edges, bindings) in _COSMOS3_NANO_WORKFLOW_GRAPHS.items()
 }
 
+# This is an exact artifact/profile over the existing Omni T2I graph, not a
+# second (pipeline, task) specification or an execution/publication receipt.
+_COSMOS3_SUPER_T2I_MODULAR_PROFILE = {
+    **deepcopy(_COSMOS3_NANO_MODULAR_PROFILE),
+    "id": "cosmos3-super-text-to-image:official-modular-workflow",
+    "modes": ("text_to_image",),
+    "default_repo": COSMOS3_SUPER_T2I_REPO,
+}
+_COSMOS3_SUPER_T2I_MODULAR_CAPABILITY = {
+    **deepcopy(_COSMOS3_NANO_MODULAR_CAPABILITY),
+    "label": "Cosmos 3 Super Text2Image (Modular Diffusers)",
+    "displayName": "Cosmos3-Super-Text2Image",
+    "defaultRepo": COSMOS3_SUPER_T2I_REPO,
+    "downloadFiles": COSMOS3_SUPER_T2I_DIFFUSERS_FILES,
+    "artifactLabel": "Exact reviewed full BF16 Cosmos 3 Super Text2Image snapshot",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 50,
+    "recommendedGuidance": 4.0,
+    "guidanceLabel": "Classifier-free guidance",
+    "recommendedSeed": 1143,
+    "recommendedFrames": 1,
+    "supportsImageInput": False,
+    "supportsVideoInput": False,
+    "outputKind": "image",
+    "modes": ["text_to_image"],
+    "modeOutputKinds": {"text_to_image": "image"},
+    "modeRequirements": {"text_to_image": {"note": "Uses the exact full-model publisher JSON-caption recipe."}},
+    "revisionCandidates": [require_catalog_revision(COSMOS3_SUPER_T2I_REPO, model_type="Cosmos3OmniModularPipeline")],
+    "notes": [
+        "The exact full-model artifact uses Omni T2I, not the separately reviewed 4-step Distilled pipeline.",
+        "The publisher recipe is BF16, 50 steps, CFG 4, 1024 square pixels and seed 1143; no offload or quantization is claimed.",
+        "Mandatory safety access/runtime, hardware/resource/output qualification, Auto and Gallery remain closed.",
+    ],
+}
+
 
 def _cosmos3_distilled_profile(mode, repository):
     slug = "text-to-image" if mode == "text_to_image" else "image-to-video"
@@ -7422,6 +7479,8 @@ def _cosmos3_distilled_profile(mode, repository):
         "max_low_memory_steps": None,
         "live_proof": False,
         "compatible_repos": (),
+        "optional_runtime_profiles": ("cosmos-guardrail-0.3.1",),
+        "optional_runtime_delivery": "optional_overlay",
     }
 
 
@@ -18156,6 +18215,7 @@ def studio_execution_profile_definitions() -> dict[str, dict[str, Any]]:
         definition["profile"]["id"]: deepcopy(definition["profile"])
         for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
     }
+    profiles[_COSMOS3_SUPER_T2I_MODULAR_PROFILE["id"]] = deepcopy(_COSMOS3_SUPER_T2I_MODULAR_PROFILE)
     # A recipe identity is not a new upstream pipeline class. Keep ordinary
     # SDXL loaders and persisted standard PAG profiles unchanged; this explicit
     # selection adds the official native guider to a new operation starter.
@@ -18236,6 +18296,7 @@ def studio_expert_resource_requirements(
 
 
 _REVIEWED_REPOSITORY_DOWNLOAD_FILES = {
+    COSMOS3_SUPER_T2I_REPO: COSMOS3_SUPER_T2I_DIFFUSERS_FILES,
     "Qwen/Qwen-Image": QWEN_IMAGE_ORIGINAL_DIFFUSERS_FILES,
     "Qwen/Qwen-Image-2512": QWEN_IMAGE_2512_DIFFUSERS_FILES,
     "Qwen/Qwen-Image-Edit": QWEN_IMAGE_EDIT_DIFFUSERS_FILES,
@@ -18258,8 +18319,10 @@ def reviewed_repository_download_files(repo: str) -> list[str]:
     return list(_REVIEWED_REPOSITORY_DOWNLOAD_FILES.get(repo, ()))
 
 
-def studio_capability_definition(model_type: str) -> dict[str, Any]:
+def studio_capability_definition(model_type: str, *, repository: str | None = None) -> dict[str, Any]:
     """Copy only one model's defaults, with the same precedence as the catalog."""
+    if model_type == "Cosmos3OmniModularPipeline" and repository == COSMOS3_SUPER_T2I_REPO:
+        return deepcopy(_COSMOS3_SUPER_T2I_MODULAR_CAPABILITY)
     for definition in reversed(STUDIO_EXECUTION_SPEC_DEFINITIONS.values()):
         if definition["modelType"] == model_type and "capability" in definition:
             return deepcopy(definition["capability"])

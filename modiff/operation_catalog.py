@@ -30,9 +30,11 @@ def seed_standard_operation_defaults(node, profile):
         return
     from modiff.studio_execution_specs import studio_capability_definition
 
-    capability = studio_capability_definition(profile.model_type)
+    capability = studio_capability_definition(profile.model_type, repository=profile.default_repo)
     if node["action"] == profile.loader_action:
         defaults = {"dtype": capability.get("defaultDtype")}
+        if profile.id == "cosmos3-super-text-to-image:official-modular-workflow":
+            defaults.update(auto_offload=False, offload_mode="none")
     elif node["module"] == "modules.DiffusersAudio":
         # The owner overlay identifies the controls used by this task. Seed only
         # visible fields below; the ordinary generator also holds inactive
@@ -52,7 +54,13 @@ def seed_standard_operation_defaults(node, profile):
             "guidance_scale": capability.get("recommendedGuidance"),
             "width": size.get("width"),
             "height": size.get("height"),
+            "seed": capability.get("recommendedSeed"),
+            "num_frames": capability.get("recommendedFrames") if profile.id == "cosmos3-super-text-to-image:official-modular-workflow" else None,
         }
+        if profile.id == "cosmos3-super-text-to-image:official-modular-workflow" and "prompt" in node["params"]:
+            from pathlib import Path
+            caption = json.loads((Path(__file__).resolve().parents[1] / "data/cosmos3-super-t2i-publisher-caption.v1.json").read_text(encoding="utf-8"))
+            defaults.update(prompt=json.dumps(caption), negative_prompt="")
         if node["module"] == "modules.DiffusersVideo":
             defaults.update(
                 num_frames=capability.get("recommendedFrames"),
@@ -238,6 +246,7 @@ def _standard_schema(contract, modules):
 def build_operation_catalog(modules, profiles, *, catalog_resolver=None):
     from modules.ModularDiffusers.modular_utils import get_modular_operation_contracts
     from modules.ModularDiffusers.operation_contracts import get_modular_task_operation_contracts
+    from modiff.modular_workflow_contracts import PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS
     from modiff.optional_runtime_execution import (
         loader_optional_runtime_requirement,
         optional_runtime_requirement_blocks_execution,
@@ -326,10 +335,18 @@ def build_operation_catalog(modules, profiles, *, catalog_resolver=None):
                     p["pipeline_class"] == c["binding"]["pipelineClass"]
                     and c["nodeKey"] == p["loader_module"] + "." + p["loader_action"]
                     # Modular workflow owners establish stage task support. Studio's
-                    # curated profile modes are not the ordinary graph allowlist.
+                    # curated modes do not replace that allowlist, but an exact
+                    # artifact's declared workflow limits still restrict its profile.
                     and (task in p["modes"] or (
                         p["execution_path"] == "modular-diffusers" and p["model_type"] == p["pipeline_class"]
                     ))
+                    and (
+                        p["execution_path"] != "modular-diffusers"
+                        or (p["pipeline_class"], p["default_repo"]) not in PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS
+                        or c.get("workflowId") in PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS[
+                            (p["pipeline_class"], p["default_repo"])
+                        ]
+                    )
                     for c in loaders
                 )
             ]

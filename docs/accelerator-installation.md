@@ -4,12 +4,13 @@ Ordinary setup uses native `uv sync --extra cpu`, `--extra cuda`, or `--extra xp
 
 Run `./install.sh` on Linux/macOS or `.\install.ps1` on Windows. The guided installer explains every action before it runs, uses the operator's uv and provisions Python 3.12, stages the backend, validates a real device tensor, and preserves the previous environment for rollback. When a sibling client is present and the build is not skipped, it downloads the verified Node 24 toolchain, downloads and SHA-256 verifies the complete pinned Template Gallery, and bundles those assets into the local client build. Hybrid NVIDIA/AMD machines must explicitly choose a profile.
 
-The staged installer builds the exact Diffusers Git revision declared in
-`pyproject.toml` with canonical LF source bytes. It overrides Git line-ending
-conversion only in the installer subprocess and bypasses uv's cache for this
-dependency, preventing reuse of an older CRLF-translated wheel. Other packages,
-including Torch, retain their ordinary cache behavior; reviewed source hashes
-and the pinned upstream revision remain unchanged.
+Ordinary setup pins `diffusers==0.41.0`; the committed `uv.lock` records the
+reviewed stable release and its official PyPI wheel hash. The staged installer
+reinstalls only Diffusers from that verified locked wheel, without resolving its
+dependencies again. Other packages, including Torch, retain their ordinary
+cache behavior. Runtime readiness checks the actual installed release and APIs.
+Historical catalog audits separately verify their immutable upstream source
+revision; that checkout is not required to install or run the application.
 
 Useful modes:
 
@@ -67,9 +68,23 @@ The installer never changes firmware/BIOS or memory settings. It never executes 
 ## Instinct MI300X cloud preview
 
 The separate `amd-instinct-rocm-linux` profile targets `gfx942` on a
-provider-prepared Ubuntu 24.04 host. Start with AMD's PyTorch 2.10.0 / ROCm
-7.14 Quick Start image and use Python 3.12. This is a preview runtime contract,
-not a claim of completed MI300X model qualification.
+provider-prepared Ubuntu 24.04 host. Use Python 3.12 and the reviewed app-local
+PyTorch 2.10.0 / ROCm 7.14 SDK. Validate the actual host driver/kernel against
+[AMD's driver/runtime compatibility matrix](https://instinct.docs.amd.com/projects/amdgpu-docs/en/latest/compatibility/compatibility-matrix.html);
+an advertised provider ROCm version alone is insufficient. This is a preview
+runtime contract, not a claim of completed MI300X model qualification.
+
+For script-free setup, use the exact
+[direct uv commands](developer-setup.md#instinct-sdk-setup-on-linux): create the
+venv, install the reviewed requirements with their adjacent `.uv.toml`, run
+`uv pip check`, and invoke that environment's Python for preflight and `main.py`.
+No managed-install receipt is required. Runtime detection uses the actual single
+dedicated device and installed package metadata; it does not read
+`MODIFF_RUNTIME_PROFILE` as a profile-selection override. Torch/HIP and every
+reviewed SDK package pin must match, and required/prohibited package policy and
+a real `cuda:0` tensor must pass. No model is downloaded by those checks.
+
+The guided installer remains an alternative:
 
 ```bash
 ./install.sh --accelerator amd-instinct --backend-only --system-check --json
@@ -96,15 +111,24 @@ source snapshot. Provisioning, downloads and idle time are billable. Back up
 outputs before destroying the instance; powering it off does not stop billing.
 See [the cloud qualification checklist](amd-cloud-qualification.md).
 
-Native installs verify installed core packages and the reviewed Diffusers source
-without requiring an installer receipt. The committed uv lock records their
+Native installs verify installed core packages and the pinned reviewed Diffusers
+release and runtime APIs without requiring a Git or installer receipt. The committed uv lock records their
 resolution. Guided/vendor-wheel profiles retain their manifest and observed
 package checks. Repair native core packages with the same `uv sync` extra;
-repair a specialized AMD wheel stack with its guided installer. Do not replace
+repair the Instinct stack with its explicit reviewed `uv pip install` command
+or guided installer. Do not replace
 a reviewed ROCm stack using a generic CPU/CUDA sync.
 
-On Windows, the shared process policy uses PyTorch's default allocator and does
-not set expandable segments. Normal image generation uses eager/native SDPA
+On Windows, macOS and Linux ROCm, the shared pre-Torch process policy uses
+PyTorch's default allocator. This includes both reviewed Ryzen and Instinct
+profiles; Linux CUDA retains expandable segments. All explicit modern and legacy
+operator allocator settings are preserved. HIP virtual-memory allocation can
+exhaust file descriptors before physical memory, so MoDiff does not enable
+expandable segments on ROCm or raise process limits automatically. Record any
+explicit allocator experiment separately from ordinary generation and prior
+hardware qualification.
+
+Normal image generation uses eager/native SDPA
 without Triton. Optional compilation requires an executed kernel probe;
 compiled-FlexAttention workflows check it before loading weights. Windows
 compiler setup needs a PyTorch-compatible `triton-windows` distribution and
@@ -127,7 +151,9 @@ Changing a wheel URL or digest is a runtime-contract change. Rebuild that
 managed profile and rerun the accelerator manifest, installer, preflight, and
 physical-device qualification checks before release.
 
-On Linux, invoke developer preflight and test commands through
+For `/opt/rocm`-based Linux profiles, invoke developer preflight and test commands through
 `./scripts/with-runtime-env.sh`. The wrapper reads the installed profile and
 applies the same native runtime-library environment used by `run.sh`; this is
 required for ROCm wheels whose shared libraries live below `/opt/rocm`.
+The app-local Instinct Python SDK uses the direct Python commands above and must
+not receive Ryzen library-path injection.

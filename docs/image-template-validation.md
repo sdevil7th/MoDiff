@@ -80,6 +80,25 @@ forms are numerically interchangeable. This adapter is limited to the reviewed
 text-to-image input branch; edit, layered, inpaint and ControlNet branches retain
 their existing native behavior and require their own paired validation.
 
+### Qwen image-edit processor inputs
+
+Qwen Edit and Edit Plus prompt encoding forwards an existing processor
+`mm_token_type_ids` tensor when the selected text encoder explicitly supports
+that argument. The bridge applies to their ordinary native encoding leaves and
+whole Edit, Edit Plus and EditInpaint prompt methods. It preserves the upstream
+prompt template, image packing, padding, attention masks, device and dtype; it
+neither constructs token types nor replaces a shared encoder's forward method.
+Missing processor fields and older encoder signatures retain their original
+call. Text-only Qwen Image, Layered and Qwen 2.1 keep their existing paths.
+
+The field carries image-token identity into the encoder's multimodal position
+calculation. Genuine tiny CPU processor/model tests compare the resulting
+positions and hidden states with a direct explicit-field call, including shared
+component and offload-hook preservation. This compatibility check does not prove
+full-model visual quality or repeat an earlier image-parity check under the new
+source. Retain prior receipts and bind subsequent model runs to their actual
+encoder implementation and runtime.
+
 ### Qwen Edit masked native templates
 
 The pinned `QwenImageEditModularPipeline` has a genuine
@@ -206,8 +225,13 @@ order. Each JSON contract must declare
   40-character `revision` for every entry.
 - `settings` contains actually consumed values and a resolved nonnegative integer
   `seed`. Include generator, scheduler, adapters and preprocessing when relevant.
-- `runtime` records `torch`, `diffusersCommit`, `transformers`, `peft`, `platform`
-  and `device`. The Diffusers commit is an immutable 40-character revision.
+- `runtime` records `torch`, `transformers`, `peft`, `platform` and `device`.
+  Record either the actual Git-installed `diffusersCommit`, or the exact
+  published `diffusersVersion` and the verified installation artifact's
+  `diffusersWheelSha256`. A historical catalog commit does not identify a
+  separately installed wheel. Preserve existing commit-based comparison records;
+  the two identity forms are not interchangeable or automatically comparable. Git identities retain the immutable 40-character
+  revision requirement.
 - `inputs` is the ordered list of consumed `role` and `sha256` pairs, or `[]` for
   a text-only recipe. Include masks and references without reordering them.
 - `expectedOutputs` lists the complete ordered `width` and `height` values.

@@ -326,7 +326,7 @@ def test_existing_native_sibling_input_masks_keep_their_exact_upstream_semantics
 @pytest.mark.parametrize("pipeline_class", [
     QwenImageEditPlusModularPipeline, QwenImageLayeredModularPipeline,
 ])
-def test_edit_plus_and_layered_blueprints_are_not_traversed_or_mutated(pipeline_class):
+def test_edit_plus_changes_only_vl_call_and_layered_blueprint_is_untouched(pipeline_class):
     tree = pipeline_class().blocks
     original = deepcopy(tree)
     leaves = []
@@ -337,12 +337,21 @@ def test_edit_plus_and_layered_blueprints_are_not_traversed_or_mutated(pipeline_
             visit(child, path + (name,))
 
     visit(tree)
-    assert native_blocks.prepare_native_pipeline_blocks(pipeline_class, tree) is tree
+    adapted = native_blocks.prepare_native_pipeline_blocks(pipeline_class, tree)
     assert all(block_at(tree, path) is block for path, block in leaves)
-    assert tree.input_names == original.input_names and tree.component_names == original.component_names
+    assert adapted.input_names == original.input_names and adapted.component_names == original.component_names
+    if pipeline_class is QwenImageLayeredModularPipeline:
+        assert adapted is tree
+    else:
+        from modules.ModularDiffusers.qwen_vl import QwenImageEditPlusTextEncoderStep
+
+        assert type(block_at(adapted, ("text_encoder", "encode"))) is QwenImageEditPlusTextEncoderStep
+        for path, block in leaves:
+            if path != ("text_encoder", "encode"):
+                assert type(block_at(adapted, path)) is type(block)
 
 
-def test_edit_adapter_changes_only_opt_in_inpaint_media_leaves_not_prompt_masks_or_denoising():
+def test_edit_adapter_changes_only_vl_call_and_opt_in_inpaint_media_leaves():
     tree = QwenImageEditModularPipeline().blocks
     adapted = native_blocks.prepare_native_pipeline_blocks(QwenImageEditModularPipeline, tree)
     changed = set()
@@ -356,6 +365,7 @@ def test_edit_adapter_changes_only_opt_in_inpaint_media_leaves_not_prompt_masks_
 
     compare(tree, adapted)
     assert changed == {
+        ("text_encoder", "encode"),
         ("vae_encoder", "edit_inpaint", "preprocess"),
         ("vae_encoder", "edit_inpaint", "encode"),
         ("decode", "inpaint_decode", "postprocess"),

@@ -51,6 +51,12 @@ def _bind_execution_profile(loader, task, identity, repository=None):
         profile.default_repo, profile.fallback_repo, *profile.compatible_repos, *workflow_repositories,
     }):
         raise ValueError("The repository is not an exact reviewed artifact for this execution profile.")
+    if profile.execution_path == "modular-diffusers":
+        from modiff.modular_workflow_contracts import require_reviewed_modular_repository_workflow
+        require_reviewed_modular_repository_workflow(
+            profile.pipeline_class, repository, require_catalog_revision(repository, model_type=profile.model_type),
+            loader["operation"].get("workflowId"),
+        )
     if loader["operation"]["decomposition"] == "integrated":
         if repository != profile.default_repo:
             raise ValueError("Integrated artifact variants require their own reviewed execution profile.")

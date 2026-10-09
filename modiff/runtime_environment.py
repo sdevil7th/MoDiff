@@ -1,8 +1,9 @@
 """Process defaults that must be applied before importing Torch.
 
-Windows wheels cannot all use expandable CUDA segments. Use PyTorch's default
-GPU allocator there and return unused CPU allocator pages promptly. Leave an
-operator's allocator configuration intact.
+Windows wheels cannot all use expandable CUDA segments. On Linux ROCm,
+expandable segments can exhaust file descriptors before device memory. Use
+PyTorch's default GPU allocator on those runtimes, return unused Windows CPU
+allocator pages promptly, and preserve explicit operator settings.
 """
 
 from __future__ import annotations
@@ -50,6 +51,8 @@ def configure_allocator(
                 torch_version = importlib.metadata.version("torch")
             except importlib.metadata.PackageNotFoundError:
                 torch_version = ""
+        if "+rocm" in torch_version.lower():
+            return {"source": "torch_default", "variable": None, "setting": None, "warning": None}
         version = re.match(r"^(\d+)\.(\d+)", torch_version)
         modern = version is not None and tuple(map(int, version.groups())) >= (2, 9)
         variable = "PYTORCH_ALLOC_CONF" if modern else "PYTORCH_CUDA_ALLOC_CONF"

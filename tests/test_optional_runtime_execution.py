@@ -37,6 +37,7 @@ from modiff.optional_runtimes import (
     public_optional_runtime_profiles,
     optional_runtime_target,
 )
+from modiff.cosmos_safety_contract import COSMOS_SAFETY_RUNTIME_PROFILE_ID
 from modiff.server import WebServer
 
 
@@ -249,6 +250,24 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                         self.assertEqual(targeted, requirement)
                     continue
                 self.assertEqual(profile.optional_runtime_delivery, OPTIONAL_RUNTIME_DELIVERY_OVERLAY)
+                if profile.optional_runtime_profiles == (COSMOS_SAFETY_RUNTIME_PROFILE_ID,):
+                    self.assertEqual(len(profile.optional_runtime_platform_deliveries), 6)
+                    for platform_name, machine in (
+                        ("linux", "x86_64"), ("windows", "x86_64"),
+                        ("linux", "arm64"), ("windows", "arm64"),
+                        ("macos", "x86_64"), ("macos", "arm64"),
+                    ):
+                        targeted = declarative_requirement(
+                            (profile,), platform_name=platform_name, machine=machine,
+                        )
+                        self.assertEqual(set(targeted), expected_keys)
+                        self.assertEqual(targeted["delivery"], "optional_overlay")
+                        self.assertTrue(targeted["requiredNow"])
+                        self.assertEqual(targeted["profileIds"], [COSMOS_SAFETY_RUNTIME_PROFILE_ID])
+                        self.assertEqual(targeted["executionProfileIds"], [profile.id])
+                        self.assertEqual(targeted["state"], "unavailable")
+                        self.assertEqual(targeted["reason"], "optional_runtime_status_required")
+                    continue
                 if profile.id == "qwen-image-21:direct":
                     self.assertEqual(profile.optional_runtime_platform_deliveries, ())
                     for platform_name in ("linux", "windows", "macos"):
@@ -1709,6 +1728,23 @@ class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(root_profile["optionalRuntimeRequirement"]["state"], "active")
         catalog.assert_called_once_with()
+
+    async def test_listgraphs_missing_optional_directory_is_an_empty_library(self):
+        graph_dir = Path(self.temporary.name) / "graphs"
+        self.assertFalse(graph_dir.exists())
+        with mock.patch.object(server_module, "public_optional_runtime_catalog") as catalog:
+            missing = await self.server.listgraphs(object())
+            graph_dir.mkdir()
+            empty = await self.server.listgraphs(object())
+        self.assertEqual(missing.status, 200)
+        self.assertEqual(response_json(missing), [])
+        self.assertEqual(response_json(empty), response_json(missing))
+        catalog.assert_not_called()
+
+    async def test_listgraphs_does_not_hide_unreadable_optional_directory(self):
+        with mock.patch.object(Path, "stat", side_effect=PermissionError("unreadable graphs")):
+            with self.assertRaises(PermissionError):
+                await self.server.listgraphs(object())
 
     async def test_listgraphs_snapshots_catalog_once_and_keeps_no_contract_shape_valid(self):
         data_dir = Path(self.temporary.name)

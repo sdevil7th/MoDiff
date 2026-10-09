@@ -217,7 +217,13 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 "kind": "safety_checker",
                 "repo": "nvidia/Cosmos-Guardrail1",
                 "revision": "d6d4bfa899a71454a700907664f3e88f503950cf",
-            }
+            },
+            {
+                "id": "cosmos3-mandatory-text-safety-classifier",
+                "kind": "safety_checker",
+                "repo": "Qwen/Qwen3Guard-Gen-0.6B",
+                "revision": "fada3b2f655b89601929198343c94cd2f64d93cc",
+            },
         ]
 
         self.assertEqual(

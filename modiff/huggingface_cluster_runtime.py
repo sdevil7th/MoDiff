@@ -104,6 +104,8 @@ def _effective_reviewed_artifact(
     revision = str((pin or {}).get("revision") or "")
     if not re.fullmatch(r"[0-9a-f]{40}", revision):
         raise _invalid("the selected model variant has no immutable catalog revision.")
+    from modiff.modular_workflow_contracts import require_reviewed_modular_repository_workflow
+    require_reviewed_modular_repository_workflow(str(profile.model_type), selected, revision, workflow_id)
     return {"repo": selected, "revision": revision}
 _DIRECT_LOADER_CONTRACTS = {
     "direct-diffusers-image": ("modules.DiffusersImage", "LoadPipeline"),

@@ -119,3 +119,40 @@ class ModularOperationCatalogTests(unittest.TestCase):
         self.assertEqual(helper["decomposition"], "bundle")
         self.assertIsNone(helper["blockName"])
         self.assertEqual(next(p for p in helper["ports"] if p["name"] == "references")["semantics"]["kind"], "opaque")
+
+
+    def test_reviewed_explicit_workflow_loaders_bind_the_same_route_as_every_stage(self):
+        from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
+        from modiff.operation_catalog import build_operation_catalog, resolve_operation
+        from modules.ModularDiffusers.loaders import _reviewed_builtin_workflow_id, REVIEWED_BUILTIN_WORKFLOWS
+
+        with (
+            patch("socket.socket.connect", side_effect=AssertionError("Network during discovery")),
+            patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("Constructed node")),
+        ):
+            contracts, _ = build_operation_catalog(MODULE_MAP, [], catalog_resolver=lambda: {})
+            contracts = [c for c in contracts if c["task"] is not None
+                         and c["nodeKey"].startswith("modules.ModularDiffusers.")]
+            reviewed = []
+            for loader in contracts:
+                if loader["decomposition"] != "loader":
+                    continue
+                pipeline, workflow = loader["pipelineClass"], loader["workflowId"]
+                explicit = reviewed_whole_workflow_graph_adapter(pipeline, workflow)
+                selection = {key: loader[key] for key in ("pipelineClass", "task", "operationId")}
+                resolved = resolve_operation(MODULE_MAP, contracts, selection)
+                with self.subTest(pipeline=pipeline, task=loader["task"], workflow=workflow):
+                    if explicit or workflow in REVIEWED_BUILTIN_WORKFLOWS.get(pipeline, ()):
+                        self.assertEqual(loader["binding"]["values"].get("workflow_id"), workflow)
+                        self.assertEqual(resolved["params"]["workflow_id"]["value"], workflow)
+                        self.assertEqual(_reviewed_builtin_workflow_id(pipeline, workflow), workflow)
+                    else:
+                        self.assertNotIn("workflow_id", loader["binding"]["values"])
+                    if explicit:
+                        reviewed.append((pipeline, loader["task"]))
+                        stages = [c for c in contracts if c["pipelineClass"] == pipeline
+                                  and c["task"] == loader["task"] and c["decomposition"] == "block"]
+                        self.assertEqual(len(stages), len(explicit["actionSequence"]))
+                        self.assertTrue(all(c["binding"]["values"]["workflow_id"] == workflow for c in stages))
+            self.assertGreater(len(reviewed), 30)
+            self.assertIn(("Cosmos3OmniModularPipeline", "text_to_image"), reviewed)

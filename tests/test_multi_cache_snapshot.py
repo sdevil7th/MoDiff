@@ -1,5 +1,8 @@
 """Execution resolves the same installed roots as model discovery, without downloads."""
+import logging
+
 import pytest
+from huggingface_hub.errors import CorruptedCacheException
 
 from utils import huggingface as hf
 
@@ -75,3 +78,91 @@ def test_cross_cache_symlink_does_not_expand_file_authority(caches, tmp_path):
     linked.symlink_to(other_cache_file)
     with pytest.raises(ValueError, match="outside"):
         hf.resolve_managed_hf_cache_file(linked)
+
+
+def _installed_model(cache, repo_id="example/image"):
+    snapshot = cache / ("models--" + repo_id.replace("/", "--")) / "snapshots" / REVISION
+    snapshot.mkdir(parents=True)
+    (snapshot / "model_index.json").write_text('{"_class_name": "QwenImagePipeline"}')
+    return snapshot
+
+
+@pytest.mark.parametrize("compact", [False, True])
+def test_discovery_skips_absent_secondary_cache_without_error(tmp_path, monkeypatch, caplog, compact):
+    primary, secondary = tmp_path / "configured", tmp_path / "unused-default"
+    _installed_model(primary)
+    monkeypatch.setattr(hf, "_hf_cache_locations", lambda: [("configured", str(primary)), ("default", str(secondary))])
+    monkeypatch.setattr(hf.logger, "propagate", True)
+
+    with caplog.at_level(logging.DEBUG, logger="modiff"):
+        models = hf.get_local_models(compact=compact)
+
+    assert [model["id"] for model in models] == ["example/image"]
+    assert models[0]["class_names"] == ["QwenImagePipeline"]
+    if not compact:
+        assert models[0]["cache_dir"] == str(primary)
+        assert models[0]["cache_dirs"] == [str(primary)]
+    assert not secondary.exists()
+    assert not any(record.levelno >= logging.ERROR for record in caplog.records)
+    assert any(record.levelno == logging.DEBUG and str(secondary) in record.message for record in caplog.records)
+
+
+def test_discovery_still_scans_existing_secondary_cache(tmp_path, monkeypatch):
+    primary, secondary = tmp_path / "configured", tmp_path / "default"
+    _installed_model(primary, "example/primary")
+    _installed_model(secondary, "example/secondary")
+    monkeypatch.setattr(hf, "_hf_cache_locations", lambda: [("configured", str(primary)), ("default", str(secondary))])
+
+    models = hf.get_local_models()
+
+    assert [model["id"] for model in models] == ["example/primary", "example/secondary"]
+    assert [model["cache_dir"] for model in models] == [str(primary), str(secondary)]
+
+
+@pytest.mark.parametrize("failure", ["stat_permission", "scan_permission", "scan_corruption"])
+def test_discovery_retains_real_cache_errors_and_other_locations(tmp_path, monkeypatch, caplog, failure):
+    primary, secondary = tmp_path / "configured", tmp_path / "default"
+    primary.mkdir()
+    _installed_model(secondary)
+    monkeypatch.setattr(hf, "_hf_cache_locations", lambda: [("configured", str(primary)), ("default", str(secondary))])
+    monkeypatch.setattr(hf.logger, "propagate", True)
+    real_scan = hf.scan_cache_dir
+    real_stat = hf.Path.stat
+    error = CorruptedCacheException("corrupt cache") if failure == "scan_corruption" else PermissionError("cache access denied")
+
+    def scan(cache_dir):
+        if cache_dir == str(primary):
+            raise error
+        return real_scan(cache_dir)
+
+    def stat(path, *args, **kwargs):
+        if path == primary:
+            raise error
+        return real_stat(path, *args, **kwargs)
+
+    if failure == "stat_permission":
+        monkeypatch.setattr(hf.Path, "stat", stat)
+    else:
+        monkeypatch.setattr(hf, "scan_cache_dir", scan)
+    with caplog.at_level(logging.DEBUG, logger="modiff"):
+        models = hf.get_local_models()
+
+    assert [model["id"] for model in models] == ["example/image"]
+    assert models[0]["cache_dir"] == str(secondary)
+    errors = [record.message for record in caplog.records if record.levelno >= logging.ERROR]
+    assert errors == [f"Error scanning cache directory {primary}: {error}"]
+
+
+def test_discovery_retains_non_directory_cache_error(tmp_path, monkeypatch, caplog):
+    primary, secondary = tmp_path / "configured", tmp_path / "default"
+    primary.write_text("wrong cache path")
+    _installed_model(secondary)
+    monkeypatch.setattr(hf, "_hf_cache_locations", lambda: [("configured", str(primary)), ("default", str(secondary))])
+    monkeypatch.setattr(hf.logger, "propagate", True)
+
+    with caplog.at_level(logging.DEBUG, logger="modiff"):
+        models = hf.get_local_models()
+
+    assert [model["id"] for model in models] == ["example/image"]
+    errors = [record.message for record in caplog.records if record.levelno >= logging.ERROR]
+    assert len(errors) == 1 and str(primary) in errors[0] and "expects a directory" in errors[0]
