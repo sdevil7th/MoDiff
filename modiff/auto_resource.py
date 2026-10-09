@@ -2766,7 +2766,11 @@ def _declared_profile_candidates(
         ))
 
     if default_repo:
-        native_req = _requirements_for_offload(requirements, preferred_offload, minimum)
+        # Check the tier that actually admitted full residency. Falling back
+        # to the constrained minimum would require unused SSD offload space
+        # even when these installed weights remain entirely on the device.
+        native_fallback = on_device_requirements if full_residency_ready else minimum
+        native_req = _requirements_for_offload(requirements, preferred_offload, native_fallback)
         native_missing = _requirements_missing_for_dict(hardware, native_req, offload_mode=preferred_offload)
         default_cache_status = _artifact_cache_status(default_repo, local_models)
         candidates.append(_candidate(
