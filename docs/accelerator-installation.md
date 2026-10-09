@@ -1,6 +1,6 @@
 # Accelerator installation
 
-Ordinary setup uses native `uv sync --extra cpu`, `--extra cuda`, or `--extra xpu`; Apple Silicon uses `uv sync` without an extra. Use the same extra on `uv run python main.py`. Transformers and PEFT are mandatory base dependencies. See [developer setup](developer-setup.md) for direct commands, repair, and upgrades. The browser never installs drivers or mutates Python during discovery or planning.
+Developers can install with native `uv sync --extra cpu`, `--extra cuda`, or `--extra xpu`; Apple Silicon uses `uv sync` without an extra. Use the same extra on `uv run python main.py`. Users who prefer guided setup can use the installation scripts below. Both paths install Transformers and PEFT as mandatory base dependencies. See [developer setup](developer-setup.md) for direct commands, repair, and upgrades. The browser never installs drivers or mutates Python during discovery or planning.
 
 Run `./install.sh` on Linux/macOS or `.\install.ps1` on Windows. The guided installer explains every action before it runs, uses the operator's uv and provisions Python 3.12, stages the backend, validates a real device tensor, and preserves the previous environment for rollback. When a sibling client is present and the build is not skipped, it downloads the verified Node 24 toolchain, downloads and SHA-256 verifies the complete pinned Template Gallery, and bundles those assets into the local client build. Hybrid NVIDIA/AMD machines must explicitly choose a profile.
 
@@ -54,6 +54,12 @@ There is no exact uv version requirement; use `uv self update` for standalone uv
 or your package manager's upgrade command. Platform-specific Node/npm archives
 retain their reviewed hashes. Failed guided setup reports the current platform's
 resume command even if a copied journal contains an old launch command.
+
+Install uv using its [official installation instructions](https://docs.astral.sh/uv/getting-started/installation/)
+and make it available on PATH before starting a fresh guided setup. The scripts
+do not download uv automatically. If uv is missing or cannot run, resolve that
+prerequisite and retry the same setup command; a staged installation can continue
+with the printed resume command.
 
 Executable profiles are `nvidia-cuda`, `amd-rocm-linux`, `amd-instinct-rocm-linux` (preview), `intel-xpu`, `apple-mps`, and `cpu`. Choose Intel explicitly with `--accelerator intel`; Auto selects it when a supported Intel GPU is detected and no higher-priority NVIDIA/AMD profile applies. The XPU profile is preview-only and requires a successful `xpu:0` tensor before launch. The manifest retains `amd-pytorch-windows` as a conditional target, but installation remains blocked until MoDiff pins the complete official Windows SDK wheel set instead of guessing dependencies. Strix Halo on Ubuntu 24.04.3 uses the AMD ROCm 7.2/PyTorch 2.9.1 profile. The separate Instinct preview below targets MI300X/gfx942, not Ryzen. Ubuntu 26.04 is experimental and requires `--allow-experimental`; non-interactive Auto otherwise selects CPU. WSL and unqualified accelerators fall back to CPU.
 

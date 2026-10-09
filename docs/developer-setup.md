@@ -4,6 +4,11 @@ Install Git and [uv](https://docs.astral.sh/uv/getting-started/installation/).
 MoDiff does not require an exact uv version. uv provisions Python 3.12 from the
 project configuration. Client development uses Node 24.12.x and npm 11.6.2.
 
+Both setup paths are supported. Developers can use the direct uv/npm commands
+below; users who want staged setup, validation and recovery can use the
+[guided installation scripts](accelerator-installation.md). The installed app
+serves its bundled client and does not require a separate Vite development server.
+
 ## Native setup and launch
 
 For a fresh checkout, select the paired setup/workflow branch:

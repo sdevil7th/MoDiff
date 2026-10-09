@@ -31,6 +31,18 @@ Raw evidence, original failed attempts and source/output hashes remain privately
 retained; credentials, host addresses, personal paths, task IDs and generated
 media are excluded from this document and Git.
 
+The source table above preserves the earlier Linux review. Subsequent Windows
+integration combined its incoming changes with the retained Windows work at
+backend `305b1ef540e5df60d137fcd9e5b16d3b2fb14569` and client
+`261196ffd68c573ea52042763e13ba742745c614`. That pair passed the full backend
+CPU gate (5,396 tests), client quality gate (2,433 tests plus 34 Python asset
+tests), and browser gate (3 shared and 257 Studio tests). A fresh native CPU app
+also passed readiness, model-free service execution and production refresh with
+zero console warnings/errors. The skipped accelerator/platform checks and
+historical GPU outputs retain their original scopes. Final-pair Windows GPU
+generation, measured peaks and a real optional install/activation journey remain
+unqualified; the CPU gates do not close those checks.
+
 Keep these proof levels distinct:
 
 - **Implemented:** the source supplies the intended behavior.
@@ -105,10 +117,11 @@ optional activation is needed. Package setup does not download model weights.
 **Recorded result:** native CPU setup/preflight/smokes passed in Windows, Linux
 and macOS CI. The AMD droplet used ordinary direct uv/pip and npm setup.
 
-**Remaining:** README clone commands still select GitHub's older default `main`
-branches. Until release, explicitly select `fix-ui-ux-issues` in both repositories
-and correct setup links. Current-branch installation success does not fix a
-fresh-clone instruction that obtains different code.
+**Updated:** README clone commands now select `fix-ui-ux-issues` in both
+repositories. Keep direct developer commands and guided user installation
+scripts supported. Fresh installation must validate their tool discovery
+separately, including operator-installed uv without the legacy app-local tool
+directory; current-environment readiness is not fresh-install proof.
 
 ### 2. `--no-sync` and `--no-project` are redundant
 
@@ -275,8 +288,9 @@ repair and recover after the documented sync/restart.
 **Recorded result:** base/profile/readiness contracts and tiny interoperability
 checks passed. Cloud full-model execution used the standard installed libraries.
 
-**Remaining:** inspect fresh/damaged Windows setup and the actual UI result.
-Correcting clone references is necessary so users receive this implementation.
+**Remaining:** inspect fresh/damaged Windows setup and the actual UI result on
+the final source. Clone references are corrected. Historical Windows
+damage/repair evidence and the final healthy CPU smoke answer separate checks.
 
 ### 9. Installation/Activate completion is unclear and slow without status
 
@@ -297,11 +311,14 @@ confirmed before generation. Refresh/reopen must resume the same operation.
 passed. Direct AMD setup is not an actual optional Install → Activate lifecycle.
 A full real optional install/activation/generation journey remains unqualified.
 
-**Remaining defect:** client job polling catches every error, including permanent
-404, malformed payload and identity mismatch, then retries with stale progress.
-Expose connection/protocol state and safe reconciliation/retry while retaining
-the original job identity. A polling failure cannot fabricate a terminal backend
-failure or authorize another installation while the outcome is unknown.
+**Updated:** client job polling now pauses on permanent 404, malformed payload,
+identity mismatch and stale status, exposes the status-read failure, and bounds
+transient retries. Explicit retry reads the same job without starting another
+installation. Mocked polling and cutover tests passed; a real offered optional
+Install/Activate/generate journey remains unqualified. Unavailable platform
+candidates must stay explained and non-actionable. A polling failure cannot
+fabricate a terminal backend failure or authorize another installation while
+the outcome is unknown.
 
 ### 10. The second generation fails Auto's memory calculation
 
@@ -338,15 +355,16 @@ weights cannot invent host-RAM credit.
 
 A separate source review found a **combined-fit blind spot**: built-in
 machine-capacity recipes without `workingMemoryRequirements` contribute zero
-primary-owner RAM/VRAM demand, followed by one workflow headroom floor. Distinct
-native resident models can therefore be admitted without budgeting their combined
-weight/activation storage or selecting release scheduling. The retained executor
-rechecks auxiliaries but not each primary native loader. Native ComponentsManager
-resident placement does not use the standard `mm_load` eviction path.
-
-This is a confirmed static planning gap and plausible overcommit risk, not a newly
-observed OOM. Add separate working demands or withhold combined-fit authority when
-unknown. Do not sum machine tiers again or lower the floor to fit the guessed case.
+primary-owner RAM/VRAM demand, followed by one workflow headroom floor. This was
+a static planning gap and plausible overcommit risk, not a newly observed OOM.
+The integrated implementation now withholds overlapping combined-fit authority
+for unknown primary demands, permits only proved safe sequential ownership,
+destroys released ownership while retaining material outputs, and rechecks real
+capacity before the next primary allocation. Contract tests cover these bounds.
+Measured final-source model peaks, genuine resident reuse and affected Windows
+repeat/recovery runs remain open. Historical Windows repetitions proved automatic
+release/reload, not persistent resident reuse. Do not sum machine tiers again or
+lower the floor to fit a guessed case.
 
 ## Image templates and output comparisons
 

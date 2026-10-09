@@ -18,7 +18,16 @@ $uv = Get-Command uv -ErrorAction SilentlyContinue
 $python = Get-Command python -ErrorAction SilentlyContinue
 $ErrorActionPreference = "Continue"
 if ($uv) {
-  & $uv.Source run --no-project --python 3.12 python @argsList
+  $uvPath = $uv.Source
+  # Reuse the canonical version check when Python can already run it.
+  if ($python) {
+    & $python.Source -c "import sys" > $null 2>&1
+    if ($LASTEXITCODE -eq 0) {
+      $uvPath = & $python.Source -c "from pathlib import Path; from modiff.tool_locks import resolve_uv; print(resolve_uv(Path('.modiff')))"
+      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
+  }
+  & $uvPath run --no-project --python 3.12 python @argsList
 } elseif ($python) {
   & $python.Source @argsList
 } else {

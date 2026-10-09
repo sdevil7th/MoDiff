@@ -17,10 +17,11 @@ def test_install_redirected_native_stderr_preserves_exit_code(tmp_path, exit_cod
         pytest.skip("Windows PowerShell is unavailable")
     root = Path(__file__).resolve().parents[1]
     shutil.copy2(root / "install.ps1", tmp_path / "install.ps1")
-    (tmp_path / "python.cmd").write_text(
-        f"@echo off\necho python arguments: %*\necho native progress 1>&2\necho native finished\nexit /b {exit_code}\n",
-        encoding="ascii",
-    )
+    if launcher == "python":
+        (tmp_path / "python.cmd").write_text(
+            f"@echo off\necho python arguments: %*\necho native progress 1>&2\necho native finished\nexit /b {exit_code}\n",
+            encoding="ascii",
+        )
     if launcher == "uv":
         (tmp_path / "uv.cmd").write_text(
             f"@echo off\necho uv arguments: %*\necho native progress 1>&2\necho native finished\nexit /b {exit_code}\n",
