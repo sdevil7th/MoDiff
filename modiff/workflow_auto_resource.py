@@ -4,8 +4,9 @@ No model execution, installation, alternate graph format or source admission.
 Machine capacity classes are checked against totals. Explicit working budgets
 include every independent owner, with credit only for compatible live weight
 storage. Unmeasured working demand uses the existing runtime headroom policy;
-this is not a measured model-fit qualification. Cache preparation is rechecked
-against actual memory at Run.
+this is not a measured model-fit qualification or combined-fit authority for
+independent models. Such models require nonoverlapping owner lifetimes and the
+existing release/recheck schedule. Cache preparation is rechecked at Run.
 """
 from __future__ import annotations
 
@@ -789,9 +790,38 @@ def _build_workflow_auto_plan(
     for key, floor in policy_floors.items():
         schedule["peak"][key] = max(schedule["peak"][key], floor)
     schedule["sharedPeakBytes"] = max(schedule["sharedPeakBytes"], sum(policy_floors.values()))
-    # Retain independent owners when their combined envelope fits. A release
-    # schedule is needed only under pressure; dispatch rechecks this same
-    # envelope against current capacity before allocating any model.
+    # A machine tier and one free-memory floor do not bound the sum of distinct
+    # primary model weights/activations. Never retain several such owners on the
+    # assumption that their zero, unmeasured working demands establish fit.
+    # Reviewed auxiliary storage remains additive under its existing contract.
+    primary_ids = {owner["nodeId"] for owner in planned
+                   if owner.get("resourceOwnerKind") != "auxiliary_model"}
+    unknown_primary_ids = {owner["nodeId"] for owner in planned
+                           if owner["nodeId"] in primary_ids
+                           and owner["workingMemoryPolicy"] == "runtime_headroom_policy"}
+    unknown_combined_demand = len(primary_ids) > 1 and bool(unknown_primary_ids)
+    unknown_overlap = any(
+        first["ownerId"] in unknown_primary_ids and second["ownerId"] in primary_ids
+        and first["ownerId"] != second["ownerId"]
+        and first["first"] <= second["last"] and second["first"] <= first["last"]
+        for first in schedule["owners"] for second in schedule["owners"]
+    ) if unknown_combined_demand else False
+    # The established executor starts scheduled runs cold, detaches retained
+    # material outputs, destroys expired ownership and checks real free memory
+    # before the next load. Custom Python cannot grant that release guarantee.
+    unknown_release_required = (unknown_combined_demand and not custom_nodes
+                                and not unknown_overlap and bool(schedule["releases"]))
+    if unknown_combined_demand and not unknown_release_required:
+        issues.append(
+            "One or more independent model owners lack a complete working-memory demand, "
+            "and cannot be safely released before another owner is needed. "
+            "Auto cannot establish combined model fit from machine capacity tiers. "
+            "Use separate sequential image stages, a reviewed working-memory recipe, "
+            "or Custom memory to keep this workflow."
+        )
+    # Retain independent owners only when their complete combined working
+    # envelope fits. Under pressure use the existing release/recheck schedule.
+    # Unknown primary demands always need safe release, even when headroom fits.
     retained_demand = {**total, "systemRamBytes": total["systemRamBytes"] + (total["vramBytes"] if shared else 0)}
     retention_fits = all(
         not required or required <= (_number(available[key]) or 0)
@@ -799,8 +829,10 @@ def _build_workflow_auto_plan(
     )
     # Custom Python can retain references outside the graph. Its approval grants
     # execution, not a proof that early model eviction is safe.
-    use_schedule = not custom_nodes and not retention_fits and len(planned) > 1 and bool(schedule["releases"]) and any(
-        schedule["peak"][key] < total[key] for key in ("systemRamBytes", "vramBytes")
+    use_schedule = unknown_release_required or (
+        not custom_nodes and not retention_fits and len(planned) > 1 and bool(schedule["releases"]) and any(
+            schedule["peak"][key] < total[key] for key in ("systemRamBytes", "vramBytes")
+        )
     )
     if use_schedule:
         total = {**total, **schedule["peak"]}

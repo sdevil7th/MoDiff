@@ -83,7 +83,7 @@ def test_machine_ram_capacity_is_not_an_additional_working_budget(setup):
     assert "needs 8.00 GiB" not in " ".join(result["issues"])
 
 
-def test_machine_capacity_classes_take_maximum_across_independent_owners(setup):
+def test_machine_capacity_classes_take_maximum_but_unknown_owners_require_release(setup):
     plan, candidate, hardware, _ = setup
     gib = 1024 ** 3
     candidate["requirements"] = {"memorySemantics": "machine_capacity", "minimum": {
@@ -95,6 +95,107 @@ def test_machine_capacity_classes_take_maximum_across_independent_owners(setup):
     assert result["capacityRequirements"] == {"systemRamBytes": 8 * gib, "vramBytes": 8 * gib}
     assert result["requirements"] == {"systemRamBytes": 4 * gib, "vramBytes": 2 * gib, "diskFreeBytes": 20}
     assert all(owner["workingMemoryPolicy"] == "runtime_headroom_policy" for owner in result["loaders"])
+    # The machine tier and one free-memory floor cannot establish combined fit.
+    assert result["strategy"] == "dependency_order_release_owners"
+    schedule = result["schedule"]
+    assert schedule["executionOrder"].index("generate") < schedule["executionOrder"].index("load2")
+    assert schedule["releases"][0]["ownerIds"] == ["load"]
+
+
+@pytest.mark.parametrize("shared", [False, True])
+def test_unknown_overlapping_primary_owners_do_not_claim_combined_fit(setup, shared):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate["requirements"] = {"memorySemantics": "machine_capacity", "minimum": {
+        "systemRamBytes": 8 * gib, "vramBytes": 8 * gib, "diskFreeBytes": 0}}
+    hardware["systemMemory"].update(totalBytes=240 * gib, availableBytes=200 * gib)
+    hardware["accelerator"].update(totalBytes=192 * gib, freeBytes=150 * gib,
+                                   memoryKind="shared" if shared else "dedicated")
+    g = graph(two=True)
+    # A consumer needs both distinct native model owners at the same time.
+    g["nodes"]["generate2"]["params"]["other_model"] = {"sourceId": "load", "sourceKey": "pipeline"}
+    before = deepcopy(g)
+    result = plan(g)
+    assert not result["canAutoRun"]
+    assert "working-memory" in " ".join(result["issues"])
+    assert "Custom memory" in " ".join(result["issues"])
+    assert result["patches"] == []
+    assert g == before
+
+
+def test_unknown_single_primary_owner_keeps_shared_loader_reuse(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate["requirements"] = {"memorySemantics": "machine_capacity", "minimum": {
+        "systemRamBytes": 8 * gib, "vramBytes": 8 * gib, "diskFreeBytes": 0}}
+    hardware["systemMemory"].update(totalBytes=32 * gib, availableBytes=12 * gib)
+    hardware["accelerator"].update(totalBytes=16 * gib, freeBytes=12 * gib)
+    g = graph(shared=True)
+    result = plan(g, cache_snapshot=warm_cache(g))
+    assert result["canAutoRun"]
+    assert len(result["loaders"]) == 1
+    assert result["reusedOwnerIds"] == ["load"]
+    assert result["schedule"] is None
+
+
+def test_unknown_sequential_image_chain_releases_even_when_both_owners_are_cached(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate["requirements"] = {"memorySemantics": "machine_capacity", "minimum": {
+        "systemRamBytes": 8 * gib, "vramBytes": 8 * gib, "diskFreeBytes": 0}}
+    hardware["systemMemory"].update(totalBytes=240 * gib, availableBytes=200 * gib)
+    hardware["accelerator"].update(totalBytes=192 * gib, freeBytes=150 * gib)
+    g = graph(two=True)
+    g["nodes"]["generate2"]["params"]["image"] = {"sourceId": "generate", "sourceKey": "images"}
+    before = deepcopy(g)
+    cache = {"owners": {owner_id: {"cacheKey": planner.workflow_owner_cache_key(g, owner_id),
+                                  "systemRamBytes": 8 * gib, "vramBytes": 8 * gib}
+                         for owner_id in ("load", "load2")}}
+    result = plan(g, cache_snapshot=cache)
+    assert result["canAutoRun"]
+    assert result["reusedOwnerIds"] == []  # The existing scheduled executor starts cold.
+    assert result["schedule"]["releases"][0]["retainOutputs"] == {"generate": ["images"]}
+    assert g == before
+
+
+def test_unknown_owner_and_explicit_owner_cannot_hide_overlapping_demand(setup, tmp_path):
+    _, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate["requirements"] = {"memorySemantics": "machine_capacity", "minimum": {
+        "systemRamBytes": 8 * gib, "vramBytes": 8 * gib, "diskFreeBytes": 0}}
+    hardware["systemMemory"].update(totalBytes=32 * gib, availableBytes=24 * gib)
+    hardware["accelerator"].update(totalBytes=16 * gib, freeBytes=12 * gib)
+    g = graph(two=True)
+    g["nodes"]["load2"]["params"]["repo_id"]["value"]["value"] = "test/explicit"
+    g["nodes"]["generate2"]["params"]["other_model"] = {"sourceId": "load", "sourceKey": "pipeline"}
+    def recipe(payload, **kwargs):
+        selected = deepcopy(candidate)
+        selected["modelRepo"] = payload["form"]["modelRepo"]
+        if selected["modelRepo"] == "test/explicit":
+            selected["workingMemoryRequirements"] = {"systemRamBytes": 6 * gib, "vramBytes": 4 * gib}
+        return {"candidates": [selected]}
+    result = planner.build_workflow_auto_plan(g, runtime_fingerprint={}, local_models=[], data_dir=str(tmp_path),
+                                              plan_recipe=recipe, hardware=hardware)
+    assert {owner["workingMemoryPolicy"] for owner in result["loaders"]} == {
+        "runtime_headroom_policy", "explicit_working_demand"}
+    assert not result["canAutoRun"]
+    assert "working-memory" in " ".join(result["issues"])
+
+
+def test_unknown_primary_models_inside_atomic_loop_cannot_claim_sequential_release(setup):
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate["requirements"] = {"memorySemantics": "machine_capacity", "minimum": {
+        "systemRamBytes": 8 * gib, "vramBytes": 8 * gib, "diskFreeBytes": 0}}
+    hardware["systemMemory"].update(totalBytes=32 * gib, availableBytes=24 * gib)
+    hardware["accelerator"].update(totalBytes=16 * gib, freeBytes=12 * gib)
+    g = graph(two=True)
+    # The lifetime planner deliberately treats an opaque loop atomically.
+    g["loops"] = [{"id": "loop", "nodeIds": list(g["nodes"])}]
+    result = plan(g)
+    assert not result["canAutoRun"]
+    assert result["schedule"] is None
+    assert "working-memory" in " ".join(result["issues"])
 
 
 def test_explicit_working_demands_remain_additive_and_owner_creditable(setup):
@@ -798,13 +899,21 @@ def test_data_preparation_runs_supplier_once_and_never_uses_prior_output():
     assert not RUNTIME_VALUES.get()
 
 
-def test_existing_executor_releases_before_next_loader_and_retains_downstream_image(setup, monkeypatch, tmp_path):
+@pytest.mark.parametrize("capacity_semantics", [False, True])
+def test_existing_executor_releases_before_next_loader_and_retains_downstream_image(setup, monkeypatch, tmp_path,
+                                                                                   capacity_semantics):
     from modiff.server import WebServer
     import modiff.workflow_auto_lifecycle as lifecycle
     from PIL import Image
     import weakref
-    plan, _, hardware, _ = setup
+    plan, candidate, hardware, _ = setup
     hardware['systemMemory']['availableBytes'] = 450
+    if capacity_semantics:
+        gib = 1024 ** 3
+        candidate['requirements'] = {'memorySemantics': 'machine_capacity', 'minimum': {
+            'systemRamBytes': 8 * gib, 'vramBytes': 8 * gib, 'diskFreeBytes': 0}}
+        hardware['systemMemory'].update(totalBytes=32 * gib, availableBytes=12 * gib)
+        hardware['accelerator'].update(totalBytes=16 * gib, freeBytes=12 * gib)
     graph_data = graph(two=True)
     graph_data['nodes']['generate2']['params']['image'] = {'sourceId': 'generate', 'sourceKey': 'images'}
     graph_data['sid'] = 'test'
@@ -822,7 +931,12 @@ def test_existing_executor_releases_before_next_loader_and_retains_downstream_im
     app._release_node_modular_components = lambda _: 0
     app._best_effort_device_cache_clear = lambda: []
     app._best_effort_allocator_trim = lambda: (True, [])
-    monkeypatch.setattr(lifecycle, 'assert_next_owner_capacity', lambda *args: None)
+    capacity_checks = []
+    actual_check = lifecycle.assert_next_owner_capacity
+    def check_capacity(server, owner):
+        capacity_checks.append(owner['ownerId'])
+        actual_check(server, owner, hardware)
+    monkeypatch.setattr(lifecycle, 'assert_next_owner_capacity', check_capacity)
     class Model: pass
     calls, refs, messages = [], {}, []
     app.queue_message = messages.append
@@ -844,6 +958,7 @@ def test_existing_executor_releases_before_next_loader_and_retains_downstream_im
     for _ in range(2):
         app._execute_graph(deepcopy(graph_data))
     assert calls.count('load') == calls.count('load2') == 2
+    assert capacity_checks == ['load', 'load2', 'load', 'load2']
     completed = [item for item in messages if item.get('type') == 'graph_completed']
     assert len(completed) == 2
     assert completed[0]['runtimePreparation']['workflowAuto']['releases'][0]['ownerIds'] == ['load']

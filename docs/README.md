@@ -11,6 +11,7 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Understand HTTP and WebSocket surfaces                                   | [API reference](api-reference.md)                                                           |
 | Diagnose startup, ports, slow/stalled runs, devices, downloads, or media | [Troubleshooting](troubleshooting.md)                                                       |
 | Compare the qualified accelerator profiles and their proof levels        | [Runtime support matrix](runtime-support-matrix.md)                                         |
+| Understand Auto planning, independent model lifetimes and release checks | [Workflow Auto memory contracts](workflow-auto-memory.md) |
 | Check quantized model, dependency, download, and qualification support   | [Quantization support matrix](quantization-support.md)                                      |
 | Review optional attention, quantization, and compilation capabilities    | [Optional runtime optimizations](optional-runtime-optimizations.md)                         |
 | Check native auxiliary installation evidence and its platform limits       | [Auxiliary runtime checks](auxiliary-runtime-native-qualification.md)                        |
