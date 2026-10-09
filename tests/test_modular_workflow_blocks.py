@@ -1689,6 +1689,95 @@ class ModularWorkflowBlockTests(unittest.TestCase):
                 fps=24.0,
             )
 
+    @unittest.skipUnless(importlib.util.find_spec("transformers"), "requires the standard Transformers runtime")
+    def test_cosmos_omni_decode_publishes_only_sdk_moderated_images(self):
+        from types import MethodType
+        from diffusers.modular_pipelines.cosmos.decoders import Cosmos3VideoDecodeStep
+        from diffusers.modular_pipelines.modular_pipeline import PipelineState
+        from diffusers.pipelines.cosmos.pipeline_cosmos3_omni import Cosmos3OmniPipeline
+
+        # Exercise the genuine SDK decoder and safety round-trip with tiny CPU
+        # components. AfterDecode handles actions; image moderation must finish
+        # inside Decode before its image can reach an ordinary Preview.
+        for outcome in ("transformed", "blocked", "error"):
+            with self.subTest(outcome=outcome):
+                events = []
+                raw_image = Image.new("RGB", (2, 2), (5, 6, 7))
+
+                class Checker:
+                    def to(self, device):
+                        events.append(("checker_device", str(device)))
+                        return self
+
+                    def check_video_safety(self, frames):
+                        events.append(("moderate", tuple(frames.shape)))
+                        if outcome == "blocked":
+                            return None
+                        if outcome == "error":
+                            raise RuntimeError("moderation failed")
+                        checked = frames.copy()
+                        checked[...] = (13, 37, 83)
+                        return checked
+
+                def decode_vae(latents):
+                    events.append(("decode", tuple(latents.shape)))
+                    return SimpleNamespace(sample=latents)
+
+                def postprocess(decoded, output_type):
+                    self.assertEqual(output_type, "pil")
+                    events.append(("postprocess", tuple(decoded.shape)))
+                    return [[raw_image]]
+
+                components = SimpleNamespace(
+                    _execution_device=torch.device("cpu"),
+                    vae=SimpleNamespace(dtype=torch.float32, decode=decode_vae),
+                    _vae_latents_mean=torch.zeros(3, device="cpu"),
+                    _vae_latents_inv_std=torch.ones(3, device="cpu"),
+                    video_processor=SimpleNamespace(postprocess_video=postprocess),
+                    requires_safety_checker=True,
+                    safety_checker=Checker(),
+                )
+                components._apply_video_safety_check = MethodType(
+                    Cosmos3OmniPipeline._apply_video_safety_check, components,
+                )
+                sdk_decoder = Cosmos3VideoDecodeStep()
+
+                class DecoderStage:
+                    def __call__(self, *, state, output_type):
+                        state.set("output_type", output_type)
+                        _, decoded_state = sdk_decoder(components, state)
+                        return decoded_state
+
+                state = PipelineState(values={
+                    "latents": torch.zeros((1, 3, 1, 2, 2), device="cpu"),
+                })
+                token = object()
+                issued = _issue_workflow_state(
+                    token=token, pipeline_class="Cosmos3OmniModularPipeline",
+                    workflow_id="text2image", completed_stage="denoise", state=state,
+                )
+                adapter = WorkflowCosmos3OmniDecode(f"cosmos-sdk-moderation-{outcome}")
+                with mock.patch.object(adapter, "_prepare_pipeline", return_value=(token, DecoderStage())):
+                    arguments = dict(
+                        pipeline_components={}, pipeline_class="Cosmos3OmniModularPipeline",
+                        workflow_id="text2image", block_path="decode", state_in=issued,
+                    )
+                    if outcome == "transformed":
+                        result = adapter.execute(**arguments)
+                        self.assertEqual(result["image"].getpixel((0, 0)), (13, 37, 83))
+                        self.assertIsNot(result["image"], raw_image)
+                        self.assertIs(result["image"], state.get("videos")[0])
+                    else:
+                        error = ValueError if outcome == "blocked" else RuntimeError
+                        message = "unsafe content" if outcome == "blocked" else "moderation failed"
+                        with self.assertRaisesRegex(error, message):
+                            adapter.execute(**arguments)
+                        self.assertIsNone(state.get("videos"), "Unmoderated frames must not be published.")
+                self.assertEqual([event[0] for event in events], [
+                    "decode", "postprocess", "checker_device", "moderate", "checker_device",
+                ])
+                self.assertEqual(events[-1], ("checker_device", "cpu"))
+
     def test_minimax_h3_reference_assembler_preserves_typed_semantic_order(self):
         reference_types = (
             FakeMiniMaxH3Reference,
