@@ -26,7 +26,7 @@ def main() -> int:
     parser.add_argument(
         "--diffusers-source",
         type=Path,
-        help="Exact pinned Diffusers Git checkout/package (defaults to the installed package).",
+        help="Exact catalog-reviewed Diffusers Git checkout/package; supply it explicitly when the installed release differs from the catalog source.",
     )
     parser.add_argument(
         "--transformers-source",
@@ -38,7 +38,7 @@ def main() -> int:
         "--transformers-wheel",
         type=Path,
         required=True,
-        help="Exact locked production Transformers wheel; it is inspected as a zip and never installed.",
+        help="Exact locked historical Transformers reference wheel; inspected as a zip and never installed.",
     )
     parser.add_argument(
         "--gallery-manifest",

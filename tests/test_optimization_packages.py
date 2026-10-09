@@ -380,6 +380,97 @@ class OptimizationPackageTests(unittest.TestCase):
         safe_path.assert_not_called()
         self.assertEqual(optimizations.sys.path, original_path)
 
+    def test_startup_archives_obsolete_core_only_overlay_without_importing_it(self):
+        environment_id = 'runtime-1-deadbeef'
+        state = optimizations._default_state()
+        state.update(activeEnvironmentId=environment_id, activeTrustClass='artifact_locked_optional')
+        optimizations._write_state(state)
+        from modiff.optional_runtimes import TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
+        recorded = {'status': 'recorded', 'manifest': {
+            'packageContracts': [{'distribution': 'transformers'}, {'distribution': 'peft'}],
+            'specs': [{'kind': 'optional_runtime', 'id': TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID}],
+        }}
+        original_path = list(optimizations.sys.path)
+        with (
+            mock.patch('modiff.base_runtime.base_runtime_status', return_value={'verified': True}),
+            mock.patch.object(optimizations, 'reserve_install', side_effect=lambda *_args: self.lease()),
+            mock.patch.object(optimizations, 'release_install'),
+            mock.patch.object(optimizations, '_environment_inspection', return_value=recorded) as inspect,
+            mock.patch.object(optimizations, '_safe_environment_path', side_effect=AssertionError('core overlay must not import')),
+            mock.patch.dict(os.environ, {}, clear=False),
+        ):
+            self.assertIsNone(optimizations.activate_runtime_overlay())
+            self.assertEqual(os.environ['MODIFF_RUNTIME_OVERLAY_STATUS'], 'base')
+        inspect.assert_called_once_with(environment_id, verify_integrity=False)
+        archived = optimizations.read_state()
+        self.assertIsNone(archived['activeEnvironmentId'])
+        self.assertEqual(archived['previousEnvironmentId'], environment_id)
+        self.assertEqual(archived['previousTrustClass'], 'artifact_locked_optional')
+        self.assertEqual(optimizations.sys.path, original_path)
+
+    def test_startup_keeps_additional_optional_package_overlay_recovery_gate(self):
+        environment_id = 'runtime-1-deadbeef'
+        state = optimizations._default_state()
+        state.update(activeEnvironmentId=environment_id, activeTrustClass='artifact_locked_optional')
+        optimizations._write_state(state)
+        recorded = {'status': 'recorded', 'manifest': {
+            'packageContracts': [{'distribution': 'transformers'}, {'distribution': 'optimum-quanto'}],
+            'specs': [{'kind': 'optional_runtime', 'id': optimizations.TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID}],
+        }}
+        original_path = list(optimizations.sys.path)
+        with (
+            mock.patch('modiff.base_runtime.base_runtime_status', return_value={'verified': True}),
+            mock.patch.object(optimizations, 'reserve_install', side_effect=lambda *_args: self.lease()),
+            mock.patch.object(optimizations, 'release_install'),
+            mock.patch.object(optimizations, '_environment_inspection', return_value=recorded),
+            mock.patch.object(optimizations, '_safe_environment_path', side_effect=AssertionError('obsolete mixed overlay must not import')),
+            mock.patch.dict(os.environ, {}, clear=False),
+        ):
+            self.assertIsNone(optimizations.activate_runtime_overlay())
+            self.assertEqual(os.environ['MODIFF_RUNTIME_OVERLAY_STATUS'], 'repair_required')
+        self.assertEqual(optimizations.read_state()['activeEnvironmentId'], environment_id)
+        self.assertEqual(optimizations.sys.path, original_path)
+
+    def test_public_catalog_marks_only_mandatory_core_profiles_as_base_included(self):
+        from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES
+        with (
+            mock.patch('modiff.base_runtime.base_runtime_status', return_value={'verified': True}),
+            mock.patch('modiff.optional_runtimes.optional_runtime_target', return_value=('linux', 'x86_64')),
+        ):
+            profiles = optimizations.public_optional_runtime_catalog()['profiles']
+        for profile in profiles:
+            roots = [package.distribution for package in OPTIONAL_RUNTIME_PROFILES[profile['id']].packages
+                     if package.role == 'runtime_root']
+            core_only = bool(roots) and set(roots) <= {'transformers', 'peft'}
+            with self.subTest(profile=profile['id']):
+                self.assertEqual(profile['baseIncluded'], core_only)
+                if core_only:
+                    self.assertFalse(profile['installActionAvailable'])
+                    self.assertFalse(profile['activationAvailable'])
+        quanto = next(profile for profile in profiles if profile['id'] == optimizations.TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID)
+        self.assertFalse(quanto['baseIncluded'])
+
+    def test_missing_peft_does_not_offer_obsolete_core_overlay_installation(self):
+        from modiff.optional_runtimes import (
+            TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID, TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+            TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,
+        )
+        with mock.patch('modiff.base_runtime.base_runtime_status', return_value={
+            'verified': False, 'issues': ['Missing required package: peft.'],
+        }):
+            profiles = optimizations.public_optional_runtime_catalog()['profiles']
+        core_ids = {
+            TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+            TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+            TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,
+        }
+        for profile in profiles:
+            if profile['id'] in core_ids:
+                with self.subTest(profile=profile['id']):
+                    self.assertTrue(profile['baseIncluded'])
+                    self.assertFalse(profile['installActionAvailable'])
+                    self.assertFalse(profile['activationAvailable'])
+
     def test_schema_one_environment_requires_repair(self):
         self.create_environment("legacy-v1")
         self.assertEqual(
@@ -706,6 +797,9 @@ class OptimizationPackageTests(unittest.TestCase):
             stdout=json.dumps(
                 {
                     "supported": True,
+                    "executed": True,
+                    "device": "cpu",
+                    "backend": "inductor",
                     "compileAvailable": True,
                     "cudaAvailable": False,
                     "deviceCount": 0,

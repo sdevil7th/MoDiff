@@ -1,0 +1,8 @@
+# Optional historical binaries require Torch 2.8's ABI. Keep this specialist
+# contract outside native project extras so unused kernels cannot downgrade
+# ordinary CPU, CUDA, XPU or macOS installations. Install explicitly into a
+# separate environment with uv pip install --torch-backend=cu128 -r this file.
+torch==2.8.0
+torchvision==0.23.0
+bitsandbytes==0.50.0; sys_platform == 'linux' or sys_platform == 'win32'
+xformers==0.0.32.post2; sys_platform == 'linux' or sys_platform == 'win32'

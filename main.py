@@ -3,7 +3,9 @@
 import os
 import sys
 
-os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+from modiff.runtime_environment import configure_allocator
+
+configure_allocator()
 # Diffusers reads this once while its modules are imported. Configure it before
 # the worker imports any node packages so large sharded pipelines can load
 # their weight files concurrently. An explicit deployment setting still wins.
@@ -170,6 +172,12 @@ def run_supervisor():
             worker_env = os.environ.copy()
             worker_env["MODIFF_WORKER_SUPERVISED"] = "1"
             worker_env["MODIFF_SUPERVISOR_QUEUE_STATE"] = str(queue_state_path)
+            # Advertise the listener actually bound by this supervisor. Port
+            # overrides (including an ephemeral port in tests) must not make
+            # the browser guess the backend port plus one.
+            worker_env["MODIFF_SUPERVISOR_CONTROL_ADDRESS"] = (
+                f"http://127.0.0.1:{control_server.server.server_address[1]}"
+            )
             worker_started_at = time.monotonic()
             worker = subprocess.Popen(worker_process_command(worker_env), env=worker_env)
             controller.set_worker(worker)

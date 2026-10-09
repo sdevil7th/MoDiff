@@ -1,9 +1,11 @@
 import hashlib
+from copy import deepcopy
 import json
 import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION
@@ -21,6 +23,9 @@ from modiff.upstream_coverage import (
     UpstreamCoverageError,
     _load_reviewed_gallery_manifest,
     _load_public_templates,
+    _template_execution_coverage,
+    _transformers_coverage_scope,
+    _transformers_reference_contract,
     build_upstream_coverage,
     load_upstream_coverage,
     render_upstream_coverage,
@@ -57,12 +62,32 @@ class UpstreamCoverageTests(unittest.TestCase):
             with self.assertRaisesRegex(UpstreamCoverageError, "must not perform network"):
                 _load_public_templates(bundle)
 
+    def test_selected_native_template_binds_backend_recipe_without_promoting_historical_proof(self):
+        selection = {"schemaVersion": 1, "pipelineClass": "FluxModularPipeline", "task": "text_to_image",
+                     "executionProfileId": "flux-schnell:modular", "implementation": "native_stages",
+                     "bindingSpec": {"modelType": "FluxModularPipeline", "mode": "text_to_image"}}
+        result = _template_execution_coverage(selection)
+        self.assertEqual(result["executionSelection"], selection)
+        self.assertEqual(result["executionRecipeSource"], "backend_operation_starter")
+        self.assertEqual(result["canonicalWorkflowRole"], "historical_creator_recipe_reference")
+        self.assertEqual(result["galleryExecutionCompatibility"], "historical_reference_requires_new_execution_evidence")
+        self.assertEqual(_template_execution_coverage(None), {})
+        for field, value in (("pipelineClass", "FluxPipeline"), ("task", "inpaint"),
+                             ("executionProfileId", "not-reviewed"), ("implementation", "whole_pipeline")):
+            with self.subTest(field=field):
+                with self.assertRaises(UpstreamCoverageError):
+                    _template_execution_coverage({**selection, field: value})
+        wrong_binding = deepcopy(selection)
+        wrong_binding["bindingSpec"]["modelType"] = "FluxDevPipeline"
+        with self.assertRaises(UpstreamCoverageError):
+            _template_execution_coverage(wrong_binding)
+
     def test_checked_in_ledger_has_exact_reviewed_counts(self):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 200,
-                "canonicalWorkflowsWithPublicTemplates": 52,
+                "canonicalWorkflowCount": 202,
+                "canonicalWorkflowsWithPublicTemplates": 54,
                 "canonicalWorkflowsWithoutPublicTemplates": 148,
                 "diffusersPipelineSymbolCount": 334,
                 "pipelineStatusCounts": {
@@ -73,17 +98,18 @@ class UpstreamCoverageTests(unittest.TestCase):
                     "research-blocked": 116,
                     "unreviewed": 0,
                 },
-                "publicTemplateCount": 78,
+                "publicTemplateCount": 80,
                 "reviewedGalleryTemplateCount": 70,
                 "templateStatusCounts": {
                     "contract-only": 0,
                     "equivalent": 0,
-                    "executable": 78,
+                    "executable": 80,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
                 },
                 "transformersProductionSupportedSemanticCount": 6,
+                "transformersReferenceSupportedSemanticCount": 6,
                 "transformersSemanticCount": 7,
                 "transformersSemanticStatusCounts": {
                     "contract-only": 0,
@@ -96,7 +122,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "workflowStatusCounts": {
                     "contract-only": 0,
                     "equivalent": 0,
-                    "executable": 200,
+                    "executable": 202,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
@@ -239,7 +265,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(scope["version"], "0.41.0.dev0")
         self.assertRegex(scope["exportModuleSha256"], r"^[0-9a-f]{64}$")
 
-    def test_transformers_main_and_production_are_not_conflated(self):
+    def test_transformers_main_reference_and_current_base_are_not_conflated(self):
         scope = self.ledger["scope"]["transformers"]
         self.assertEqual(
             TRANSFORMERS_REVIEWED_MAIN_REVISION,
@@ -249,17 +275,41 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(scope["reviewedMainRevision"], TRANSFORMERS_REVIEWED_MAIN_REVISION)
         self.assertEqual(scope["reviewedMainVersion"], TRANSFORMERS_REVIEWED_MAIN_VERSION)
         self.assertFalse(scope["reviewedMainDeliveredInProduction"])
-        production = scope["productionRuntime"]
-        self.assertEqual(production["runtimeProfileId"], TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID)
-        self.assertEqual(production["version"], "5.14.1")
+        reference = scope["reviewedReferenceRuntime"]
+        self.assertEqual(scope["productionRuntime"], reference)
+        self.assertEqual(scope["legacyProductionFieldScope"], "historical_reference_wheel_only")
+        self.assertEqual(reference["evidenceScope"], "historical_reference_wheel")
+        self.assertFalse(reference["currentSetupDependency"])
+        self.assertFalse(scope["currentBaseCoverageVerified"])
+        self.assertEqual(scope["currentBaseRuntime"]["delivery"], "base")
+        self.assertIn("transformers>=5.18.0", scope["currentBaseRuntime"]["dependencies"])
+        self.assertIn("peft>=0.21.2", scope["currentBaseRuntime"]["dependencies"])
+        self.assertEqual(reference["runtimeProfileId"], TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID)
+        self.assertEqual(reference["version"], "5.14.1")
         self.assertEqual(
-            production["sha256"],
+            reference["sha256"],
             "9db974c4079ede2d1a3ea7ca5a240df33f2cc26fc2b36ba64c5f2a4f43b6e725",
         )
         profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID]
         package = next(item for item in profile.packages if item.distribution == "transformers")
-        self.assertEqual(package.version, production["version"])
-        self.assertEqual(profile.spec_digest, production["runtimeProfileSpecDigest"])
+        self.assertEqual(package.version, reference["version"])
+        self.assertEqual(profile.spec_digest, reference["runtimeProfileSpecDigest"])
+
+    def test_transformers_scope_declares_current_base_without_observing_installed_packages(self):
+        reference = _transformers_reference_contract()
+        with (
+            patch("importlib.metadata.version", side_effect=AssertionError("must not inspect installed versions")),
+            patch("importlib.metadata.distribution", side_effect=AssertionError("must not inspect installed packages")),
+        ):
+            scope = _transformers_coverage_scope(reference, main_version=TRANSFORMERS_REVIEWED_MAIN_VERSION)
+        self.assertEqual(scope["reviewedReferenceRuntime"], reference)
+        self.assertEqual(scope["productionRuntime"], reference)
+        self.assertEqual(reference["version"], "5.14.1")
+        self.assertFalse(reference["currentSetupDependency"])
+        self.assertFalse(scope["currentBaseCoverageVerified"])
+        self.assertIn("transformers>=5.18.0", scope["currentBaseRuntime"]["dependencies"])
+        self.assertIn("peft>=0.21.2", scope["currentBaseRuntime"]["dependencies"])
+        self.assertNotIn("transformers==5.14.1", scope["currentBaseRuntime"]["dependencies"])
 
     def test_transformers_semantic_inventory_is_finite_and_honest(self):
         items = self.ledger["transformersSemantics"]
@@ -295,6 +345,11 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertFalse(by_id["cosmos3-edge-reasoner-orchestration"]["productionWheelSupport"])
         self.assertTrue(all(not item["publicTemplateEligible"] for item in items))
         for item in items:
+            self.assertEqual(item["evidenceScope"], "historical_reference_wheel")
+            self.assertFalse(item["currentBaseCoverageVerified"])
+            self.assertEqual(item["referenceWheelSupport"], item["productionWheelSupport"])
+            self.assertEqual(item["referenceWheelEvidence"], item["productionWheelEvidence"])
+            self.assertEqual(item["referenceWheelAbsentPaths"], item["productionWheelAbsentPaths"])
             for evidence in item["nodeEvidence"]:
                 actual_hash = hashlib.sha256((ROOT / evidence["path"]).read_bytes()).hexdigest()
                 self.assertEqual(actual_hash, evidence["sha256"], item["id"])
@@ -312,11 +367,53 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(_canonical_json_sha256(graph_path), item["graphHash"], workflow_id)
 
         templates = self.ledger["publicTemplates"]
-        self.assertEqual(len({item["id"] for item in templates}), 78)
+        self.assertEqual(len({item["id"] for item in templates}), 80)
         self.assertTrue(all(item["canonicalWorkflowId"] in ledger_workflows for item in templates))
         self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 70)
         self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 70)
-        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 52)
+        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 54)
+
+        experimental_public_pairs = {
+            "flux2_dev_text_to_image": (
+                "Flux2ModularPipeline:text_to_image", "flux2:modular",
+            ),
+            "cosmos3_super_text_to_image": (
+                "Cosmos3OmniModularPipeline:text_to_image",
+                "cosmos3-super-text-to-image:official-modular-workflow",
+            ),
+        }
+        public_by_id = {item["id"]: item for item in templates}
+        historical_templates = [
+            item for item in templates if item["id"] not in experimental_public_pairs
+        ]
+        self.assertEqual(len(historical_templates), 78)
+        self.assertEqual(
+            sum(supported[item["canonicalWorkflowId"]]["mediaKind"] == "image"
+                for item in historical_templates),
+            54,
+        )
+        self.assertEqual(
+            sum(supported[item["canonicalWorkflowId"]]["mediaKind"] == "image"
+                for item in templates),
+            56,
+        )
+        for template_id, (workflow_id, profile_id) in experimental_public_pairs.items():
+            item = public_by_id[template_id]
+            self.assertEqual(item["canonicalWorkflowId"], workflow_id)
+            self.assertEqual(item["verificationStatus"], "unverified")
+            self.assertFalse(item["galleryExamplePresent"])
+            self.assertFalse(item["reviewedGalleryExample"])
+            self.assertEqual(item["executionSelection"]["executionProfileId"], profile_id)
+            self.assertEqual(item["executionSelection"]["implementation"], "native_stages")
+            self.assertEqual(item["executionSelection"]["memoryPolicy"], "custom_experimental")
+            self.assertEqual(item["executionRecipeSource"], "backend_operation_starter")
+            self.assertEqual(
+                ledger_workflows[workflow_id]["qualificationStatus"],
+                "graph-qualified-execution-pending",
+            )
+            self.assertEqual(supported[workflow_id]["runtimeQualificationStatus"], "unqualified")
+            self.assertEqual(supported[workflow_id]["optimizationQualificationStatus"], "unqualified")
+            self.assertEqual(supported[workflow_id]["qualifiedRuntimeProfiles"], [])
 
     def test_template_and_gallery_source_fingerprints_remain_current(self):
         expected_bundle_hash = hashlib.sha256(TEMPLATE_BUNDLE.read_bytes()).hexdigest()

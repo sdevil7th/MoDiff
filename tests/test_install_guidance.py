@@ -1,12 +1,10 @@
 import io
 import json
 import os
-import re
 import shutil
 import subprocess
 import sys
 import tempfile
-import textwrap
 import tomllib
 import types
 import unittest
@@ -122,35 +120,11 @@ class GuidedInstallerTests(unittest.TestCase):
             install._render_plan(plan)
         stream.flush()
 
-    def test_readme_documents_the_managed_cross_platform_install_contract(self):
+    def test_readme_documents_native_uv_setup_and_matching_launch_extras(self):
         readme = (Path(__file__).parents[1] / "README.md").read_text(encoding="utf-8")
-
-        required_commands = (
-            "git clone https://github.com/sdevil7th/MoDiff-client.git MoDiff-client",
-            "./install.sh --accelerator auto",
-            r".\install.ps1 -Accelerator auto",
-            "./install.sh --accelerator auto --system-check",
-            r".\install.ps1 -Accelerator auto -SystemCheck",
-            "./install.sh --accelerator auto --resume",
-            r".\install.ps1 -Accelerator auto -Resume",
-            "./install.sh --accelerator auto --repair",
-            r".\install.ps1 -Accelerator auto -Repair",
-            "./install.sh --accelerator cpu --backend-only",
-            r".\install.ps1 -Accelerator cpu -BackendOnly",
-            "./run.sh",
-            r".\run.ps1",
-            "curl --fail http://127.0.0.1:8088/health",
-        )
-        for command in required_commands:
+        for command in ("--extra cuda", "uv sync --extra cpu", "uv run --extra cpu python main.py"):
             with self.subTest(command=command):
                 self.assertIn(command, readme)
-
-        command_blocks = re.findall(r"```(?:bash|powershell|sh)?\n(.*?)```", readme, flags=re.DOTALL)
-        unsupported = re.compile(r"(?m)^\s*uv\s+(?:sync|run)\b")
-        self.assertFalse(
-            any(unsupported.search(block) for block in command_blocks),
-            "README command blocks must use the managed installer instead of uv sync/uv run",
-        )
 
     def test_archive_member_destination_rejects_escaping_paths(self):
         unsafe_names = (
@@ -174,12 +148,12 @@ class GuidedInstallerTests(unittest.TestCase):
                 (root / "tool" / "bin" / "executable").resolve(),
             )
 
-    def test_executable_project_dependency_pins_the_reviewed_diffusers_commit(self):
+    def test_executable_project_dependency_declares_compatible_diffusers_minimum(self):
         project = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text(encoding="utf-8"))
         diffusers = next(item for item in project["project"]["dependencies"] if item.startswith("diffusers"))
         self.assertEqual(
             diffusers,
-            "diffusers @ git+https://github.com/huggingface/diffusers.git@fbf49e7f35857f76bc57b177e26f12b03687c668",
+            "diffusers>=0.41.0",
         )
         self.assertNotIn("diffusers", project["tool"]["uv"].get("sources", {}))
 
@@ -209,9 +183,12 @@ class GuidedInstallerTests(unittest.TestCase):
                 requirements = (root / specification["requirements"]).read_text(encoding="utf-8")
                 self.assertRegex(requirements, r"(?m)^-e \.(?:\[[^]]+\])?$")
 
-    def test_uv_project_commands_cannot_replace_the_managed_runtime(self):
-        project = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text(encoding="utf-8"))
-        self.assertIs(project["tool"]["uv"]["managed"], False)
+    def test_native_uv_project_commands_are_enabled_with_a_lock(self):
+        root = Path(__file__).parents[1]
+        project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+        self.assertIsNot(project["tool"]["uv"].get("managed"), False)
+        self.assertTrue((root / "uv.lock").is_file())
+        self.assertIn("build-system", project)
 
     def test_all_launchers_validate_the_managed_profile_before_starting(self):
         root = Path(__file__).parents[1]
@@ -244,7 +221,7 @@ class GuidedInstallerTests(unittest.TestCase):
         self.assertIn("['execution_ready']", windows_launcher)
         self.assertNotIn("uv run", linux_launcher)
         self.assertNotRegex(linux_launcher, r"exec python(?:3)? main\.py")
-        self.assertIn("Run ./install.sh before starting", linux_launcher)
+        self.assertIn("uv sync --extra cpu", linux_launcher)
 
     @unittest.skipIf(os.name == "nt", "POSIX executable bits are not available on Windows")
     def test_documented_posix_entrypoints_are_executable(self):
@@ -257,52 +234,18 @@ class GuidedInstallerTests(unittest.TestCase):
                     f"{relative_path} must be executable because documentation invokes it directly",
                 )
 
-    def test_macos_optional_runtime_qualifier_is_manual_and_fail_closed(self):
+    def test_macos_native_runtime_qualifier_keeps_required_libraries_installed(self):
         root = Path(__file__).parents[1]
-        workflow = (root / ".github/workflows/qualify-optional-runtime-macos.yml").read_text(
-            encoding="utf-8"
-        )
-
+        workflow = (root / ".github/workflows/qualify-optional-runtime-macos.yml").read_text(encoding="utf-8")
         self.assertIn("workflow_dispatch:", workflow)
         self.assertNotIn("pull_request:", workflow)
         self.assertNotIn("push:", workflow)
         self.assertIn("runs-on: macos-15", workflow)
         self.assertIn('test "$(uname -m)" = "arm64"', workflow)
-        self.assertIn('test "$(git diff --name-only)" = "pyproject.toml"', workflow)
-        self.assertEqual(workflow.count('-  "peft>=0.17.0;'), 1)
-        self.assertEqual(workflow.count('-  "transformers>=4.49.0;'), 1)
-        patch_body = (
-            textwrap.dedent(
-                workflow.split("cat > \"$RUNNER_TEMP/prospective-base.patch\" <<'PATCH'\n", 1)[1]
-                .split("\n          PATCH", 1)[0]
-            )
-            + "\n"
-        )
-        # The qualifier runs on macOS; reproduce its LF checkout even when
-        # this contract test runs under Windows Git autocrlf.
-        with tempfile.TemporaryDirectory() as directory:
-            Path(directory, "pyproject.toml").write_text(
-                (root / "pyproject.toml").read_text(encoding="utf-8"),
-                encoding="utf-8", newline="\n",
-            )
-            patch_check = subprocess.run(
-                ["git", "apply", "--check", "-"],
-                cwd=directory,
-                input=patch_body.encode("utf-8"),
-                capture_output=True,
-                check=False,
-            )
-        self.assertEqual(patch_check.returncode, 0, patch_check.stderr)
-        self.assertIn("scripts/qualify_optional_runtime.py --preflight-only", workflow)
-        self.assertIn("scripts/qualify_optional_runtime.py --consent", workflow)
-        self.assertEqual(
-            workflow.count("huggingface-transformers-main-96fe6dce-peft-0.20.0"),
-            4,
-        )
-        self.assertNotIn("huggingface-transformers-main-a597f974-peft-0.20.0", workflow)
-        self.assertIn('assert value["status"] == "ready"', workflow)
-        self.assertIn('assert value["status"] == "passed"', workflow)
-        self.assertIn("prospective-base.diff", workflow)
+        self.assertIn("uv sync --locked", workflow)
+        self.assertIn("scripts/smoke_base_runtime.py", workflow)
+        self.assertNotIn("prospective-base.patch", workflow)
+        self.assertNotIn("cleanBase", workflow)
         self.assertIn("actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f", workflow)
 
     def test_structured_issue_contains_help_and_safe_action_metadata(self):

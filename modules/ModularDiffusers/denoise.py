@@ -12,7 +12,8 @@ from diffusers.modular_pipelines import BlockState, LoopSequentialPipelineBlocks
 
 from modiff.NodeBase import NodeBase
 
-from . import MESSAGE_DURATION, MODULAR_DENOISE_OPTIONS, components
+from . import MESSAGE_DURATION, MODULAR_DENOISE_OPTIONS, components, qwen_t2i_bundle_input_param
+from .component_bundle import normalize_component_bundle_inputs
 from .modular_utils import (
     get_model_type_metadata,
     normalize_modular_runtime_params,
@@ -188,6 +189,7 @@ class Denoise(NodeBase):
     skipParamsCheck = True
     node_type = "denoise"
     params = {
+        "pipeline_components": qwen_t2i_bundle_input_param("denoise"),
         "unet": {
             "label": "Denoise Model *",
             "display": "input",
@@ -208,7 +210,7 @@ class Denoise(NodeBase):
 
     def update_node(self, values, ref):
         node_params = {}
-        model_type = self.get_signal_value("unet")
+        model_type = self.get_signal_value("unet") or self.get_signal_value("pipeline_components")
 
         if self._model_type == model_type:
             if not model_type or self._pipeline_class is None:
@@ -586,8 +588,10 @@ class Denoise(NodeBase):
 
     def _cache_params_equal(self, previous, current):
         equal = route_cache_params_equal(previous, current, fallback=super()._cache_params_equal)
-        if equal and isinstance(current, dict) and not self._validate_route_cache_inputs(current):
-            return False
+        if equal and isinstance(current, dict):
+            normalized = normalize_component_bundle_inputs(current, node_type=self.node_type, component_manager=components)
+            if not self._validate_route_cache_inputs(normalized):
+                return False
         return equal
 
     def _raise_if_interrupted(self):
@@ -609,7 +613,7 @@ class Denoise(NodeBase):
         )
 
     def execute(self, **kwargs):
-        kwargs = dict(kwargs)
+        kwargs = normalize_component_bundle_inputs(dict(kwargs), node_type=self.node_type, component_manager=components)
         require_route_state_shape_before_identity_resolution(kwargs)
         reject_undeclared_modular_generator(kwargs)
         reject_route_reserved_inputs_before_identity_resolution(
@@ -1079,6 +1083,11 @@ class Denoise(NodeBase):
                 if "processed_mask_image" not in blocks.input_names:
                     raise ValueError("The selected Modular denoiser does not expose the routed mask input.")
                 node_kwargs["processed_mask_image"] = route_runtime_inputs["processed_mask_image"]
+            snapshot = route_runtime_inputs.get("qwen_inpaint_compatibility_state")
+            if snapshot is not None:
+                if "qwen_inpaint_compatibility_state" not in blocks.input_names:
+                    raise ValueError("The selected Modular denoiser does not expose routed Qwen compatibility state.")
+                node_kwargs["qwen_inpaint_compatibility_state"] = snapshot
             for name in ("mask", "masked_image_latents", "crops_coords"):
                 value = route_runtime_inputs.get(name)
                 if value is None:

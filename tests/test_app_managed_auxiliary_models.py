@@ -132,15 +132,23 @@ class AppManagedAuxiliaryModelTests(unittest.TestCase):
             )
 
     def test_hub_upscaler_missing_from_app_cache_fails_before_model_load(self):
-        with patch("utils.huggingface.cached_file_path", return_value=False):
-            with patch("modules.Spandrel.main.ModelLoader") as loader:
-                with self.assertRaisesRegex(FileNotFoundError, "Model Manager"):
-                    Upscaler("missing-upscaler").execute(
-                        image=object(),
-                        model_id={"source": "hub", "value": "example/upscaler/model.pth"},
-                        device="cpu",
-                    )
-                loader.assert_not_called()
+        for online_status in ("Auto", "Online", "Offline"):
+            with (
+                self.subTest(online_status=online_status),
+                patch.dict(CONFIG.hf, {"online_status": online_status}),
+                patch("utils.huggingface.cached_file_path", return_value=False),
+                patch("modules.Spandrel.main.ModelLoader") as loader,
+                self.assertRaisesRegex(FileNotFoundError, "Model Manager") as raised,
+            ):
+                Upscaler("missing-upscaler").execute(
+                    image=object(),
+                    model_id={"source": "hub", "value": "example/upscaler/model.pth"},
+                    device="cpu",
+                )
+            loader.assert_not_called()
+            self.assertIn("example/upscaler/model.pth", str(raised.exception))
+            self.assertNotIn("Model False", str(raised.exception))
+            self.assertEqual("Leave Offline mode" in str(raised.exception), online_status == "Offline")
 
     def test_exact_upscaler_selection_is_revalidated_before_model_load(self):
         managed_path = Path("C:/managed/exact.pth")

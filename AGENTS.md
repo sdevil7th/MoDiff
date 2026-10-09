@@ -13,14 +13,14 @@ These rules apply to AI-assisted work in this repository. `CONTRIBUTING.md` is t
 - MoDiff may execute models through an official library maintained and published by Hugging Face. A Hub repository, organization name, or compatible API is not enough: verify the library's upstream ownership and package provenance, then declare and review the exact integration in MoDiff's executable dependency contract.
 - All supported libraries run locally behind MoDiff's existing node graph, resource management, Auto/Expert, file, and security boundaries. Do not add an alternate graph executor, hosted inference provider, browser-side runtime, or library-owned workflow representation.
 - Keep nodes and client contracts task- or modality-generic. Library- and model-specific loading, parameter aliases, and output normalization belong in small backend adapters selected from a declared execution specification, not new model-named nodes or frontend branches.
-- Transformers is an optional runtime, not a default application dependency. Do not install it during startup, registry discovery, template browsing/opening, or Auto planning. A workflow that requires it must declare a reviewed optional runtime profile, present an explicit install/consent action, and verify the installed version before becoming runnable.
+- Transformers and PEFT are required application dependencies installed by ordinary setup. Keep their heavyweight imports lazy and verify base-runtime readiness without optional installation or activation. Startup, registry discovery, template browsing, and Auto planning must never install packages. Additional optional runtimes still require an explicit install action and version verification.
 - Ordinary deterministic media processing is allowed when narrowly scoped, documented, and covered by tests.
 - Never enable arbitrary remote Python code, mutable model revisions, or custom model execution implicitly. Trust-sensitive behavior requires an explicit operator choice and an immutable revision.
 - Prefer existing module, graph, configuration, error, and test patterns. Do not create a parallel workflow representation or model-loading path.
 
 ## Hugging Face Model Libraries
 
-- Keep the reviewed Diffusers revision pinned in the executable installation contract and update its compatibility test when changing it.
+- Declare the reviewed Diffusers minimum in the executable installation contract and record the tested stable resolution in `uv.lock`. Keep immutable upstream catalog provenance separate from the installed distribution identity; update no-download compatibility tests and source-generated contracts when changing either.
 - Treat support for each additional official Hugging Face library as an explicit integration: document its purpose and provenance, constrain its compatible version, keep heavyweight imports lazy, and add no-download compatibility and boundary tests.
 - Official-library eligibility is not blanket trust for Hub artifacts or repository code. Prefer `safetensors`; pin curated models and adapters immutably; and require a separate explicit operator decision for any reviewed remote-code path.
 - Use Diffusers loaders, pipelines, components, schedulers, adapters, and offload hooks instead of reimplementing upstream behavior.

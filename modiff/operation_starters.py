@@ -51,6 +51,12 @@ def _bind_execution_profile(loader, task, identity, repository=None):
         profile.default_repo, profile.fallback_repo, *profile.compatible_repos, *workflow_repositories,
     }):
         raise ValueError("The repository is not an exact reviewed artifact for this execution profile.")
+    if profile.execution_path == "modular-diffusers":
+        from modiff.modular_workflow_contracts import require_reviewed_modular_repository_workflow
+        require_reviewed_modular_repository_workflow(
+            profile.pipeline_class, repository, require_catalog_revision(repository, model_type=profile.model_type),
+            loader["operation"].get("workflowId"),
+        )
     if loader["operation"]["decomposition"] == "integrated":
         if repository != profile.default_repo:
             raise ValueError("Integrated artifact variants require their own reviewed execution profile.")
@@ -147,7 +153,9 @@ def resolve_operation_starter(modules, contracts, selection):
                 field["hidden"] = True  # the exact distilled transformer does not consume this control
         if profile.id == "flux-schnell:modular":
             text_encoder = nodes["diffusion.encode_prompt"]
-            text_encoder["params"]["max_sequence_length"].update(value=256, max=256)
+            # Keep the convenient Schnell default, while accepting the pinned
+            # upstream T5 encoder's reviewed 512-token creator recipes.
+            text_encoder["params"]["max_sequence_length"].update(value=256, max=512)
             text_encoder["values"]["max_sequence_length"] = 256
         if profile.id == "sdxl-turbo:modular":
             nodes["diffusion.guidance"]["params"]["guidance_scale"]["min"] = 0.0
@@ -319,11 +327,13 @@ def resolve_operation_starter(modules, contracts, selection):
             if len(members) > 1:
                 shared_inputs.append({"name": shared_name, "members": members})
 
-    # A connected Guider owns guidance. Resolve visibility in the draft itself:
+    # A connected Guider owns CFG. FLUX retains its separate embedded scalar.
+    # Resolve visibility in the draft itself:
     # mounting the frontend must not need a family-default schema refresh to
     # hide the unused scalar (whose bounds differ for distilled variants).
     for edge in edges:
-        if edge["targetHandle"] == "guider":
+        if (edge["targetHandle"] == "guider"
+                and pipeline not in {"FluxModularPipeline", "FluxKontextModularPipeline"}):
             guidance = nodes[edge["target"]]["params"].get("guidance_scale")
             if guidance is not None:
                 guidance["hidden"] = True

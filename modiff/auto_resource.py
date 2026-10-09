@@ -32,6 +32,7 @@ from modiff.diffusers_profiles import (
     LTX_VIDEO_REPO,
     QWEN_IMAGE_2512_PREQUANTIZED_REPO,
     QWEN_IMAGE_2512_REPO,
+    DIFFUSERS_EXECUTION_PROFILES,
     execution_profiles_for_execution,
     optional_runtime_profile_ids_for_execution,
 )
@@ -44,7 +45,7 @@ from modiff.model_artifact_catalog import (
     community_artifact_is_discoverable,
 )
 from modiff.optional_runtimes import public_optional_runtime_profiles
-from modiff.optional_runtime_execution import optional_runtime_requirement_for_execution
+from modiff.optional_runtime_execution import optional_runtime_requirement_for_execution, optional_runtime_requirement_for_profiles
 from modiff.studio_execution_specs import (
     studio_auto_model_requirements,
     studio_execution_spec_for_pair,
@@ -344,9 +345,15 @@ AUTO_MODEL_REQUIREMENTS: dict[str, dict[str, Any]] = {
 }
 
 AUTO_MODEL_REQUIREMENTS.update(studio_auto_model_requirements())
+for _declared_requirement in AUTO_MODEL_REQUIREMENTS.values():
+    # These tiers are checked against advertised machine totals by
+    # _requirements_missing, not additive free memory for a model load.
+    _declared_requirement.setdefault("memorySemantics", "machine_capacity")
 
 
-def _auto_requirements_for_pair(model_type: str, mode: str) -> dict[str, Any] | None:
+def _auto_requirements_for_pair(
+    model_type: str, mode: str, execution_profile_id: str | None = None,
+) -> dict[str, Any] | None:
     """Return the exact effective Auto specification for one declared pair.
 
     Resource requirements may be shared by several modes, but their loader
@@ -376,7 +383,20 @@ def _auto_requirements_for_pair(model_type: str, mode: str) -> dict[str, Any] | 
     if normalized_mode not in supported_tasks:
         return None
 
-    profiles = execution_profiles_for_execution(normalized_model, normalized_mode)
+    if execution_profile_id is not None:
+        # A native operation recipe can reuse the same model's declared
+        # capacity class without executing its historical whole-pipeline
+        # loader. Exact profile selection changes the executable target only;
+        # it neither grants a new task/model nor upgrades resource evidence.
+        if not isinstance(execution_profile_id, str) or execution_profile_id != execution_profile_id.strip():
+            return None
+        selected = DIFFUSERS_EXECUTION_PROFILES.get(execution_profile_id)
+        profiles = (selected,) if (
+            selected is not None and selected.model_type == normalized_model
+            and normalized_mode in selected.modes
+        ) else ()
+    else:
+        profiles = execution_profiles_for_execution(normalized_model, normalized_mode)
     if len(profiles) != 1:
         return None
     profile = profiles[0]
@@ -393,6 +413,8 @@ def _auto_requirements_for_pair(model_type: str, mode: str) -> dict[str, Any] | 
         "compatibleRepos": list(profile.compatible_repos),
         "modelDependencies": studio_model_dependencies_for_pair(normalized_model, normalized_mode),
     }
+    if profile.operation_recipe:
+        effective["supportedOffloadModes"] = list(profile.supported_offload_modes)
     allowed_lower_memory_repos = {
         repo
         for repo in (profile.fallback_repo, *profile.compatible_repos)
@@ -1554,7 +1576,7 @@ def _disk_snapshot(
 def _mps_accelerator(name: Any = None, device: dict[str, Any] | None = None) -> dict[str, Any]:
     device = device if isinstance(device, dict) else {}
     total = _safe_int(device.get("planning_memory_total") or device.get("vram_total"))
-    free = _safe_int(device.get("planning_memory_free") or device.get("vram_free"))
+    free = _first_known_int(device.get("planning_memory_free"), device.get("vram_free"))
     return {
         "kind": "mps",
         "backend": "mps",
@@ -1598,7 +1620,7 @@ def _normalized_accelerator_snapshot(normalized_hardware: dict[str, Any] | None)
         total = _safe_int(device.get("planning_memory_total") or device.get("vram_total"))
         if total is None:
             total = _safe_int(device.get("torch_vram_total"))
-        free = _safe_int(device.get("planning_memory_free") or device.get("vram_free"))
+        free = _first_known_int(device.get("planning_memory_free"), device.get("vram_free"))
         if free is None:
             free = _safe_int(device.get("torch_vram_free"))
         return {
@@ -1632,7 +1654,7 @@ def _normalized_accelerator_snapshot(normalized_hardware: dict[str, Any] | None)
     device = device_by_kind["xpu"]
     if device is not None:
         total = _safe_int(device.get("planning_memory_total") or device.get("vram_total") or device.get("torch_vram_total"))
-        free = _safe_int(device.get("planning_memory_free") or device.get("vram_free") or device.get("torch_vram_free"))
+        free = _first_known_int(device.get("planning_memory_free"), device.get("vram_free"), device.get("torch_vram_free"))
         return {
             "kind": "xpu",
             "backend": "xpu",
@@ -1883,6 +1905,15 @@ def _safe_int(value: Any) -> int | None:
         return None
 
 
+def _first_known_int(*values: Any) -> int | None:
+    # Zero free bytes is a known exhausted pool, not a missing measurement.
+    for value in values:
+        parsed = _safe_int(value)
+        if parsed is not None:
+            return parsed
+    return None
+
+
 def _vram_band(total_bytes: int | None) -> str:
     if not total_bytes:
         return "unknown"
@@ -2101,6 +2132,11 @@ def _candidate(
     device_map: str | None = None,
     reviewed_native_artifact: bool = False,
 ) -> dict[str, Any]:
+    requirements = deepcopy(requirements or {})
+    if requirements:
+        # Every built-in candidate constructor receives the same static
+        # capacity tiers that _requirements_missing checked against totals.
+        requirements.setdefault("memorySemantics", "machine_capacity")
     missing = list(requirements_missing or [])
     known_bad = list(known_bad_reasons or [])
     if manual_only_reason:
@@ -2239,7 +2275,16 @@ def _candidate(
             "actionLabel": action_label,
             "repair": repair_required,
         },
-        "requirements": requirements or {},
+        "requirements": requirements,
+        "memorySemantics": requirements.get("memorySemantics"),
+        "workingMemoryRequirements": requirements.get("workingMemoryRequirements"),
+        "workingMemoryPolicy": (
+            "explicit_working_demand" if (
+                isinstance(requirements.get("workingMemoryRequirements"), dict)
+                or requirements and requirements.get("memorySemantics") != "machine_capacity"
+            )
+            else "runtime_headroom_policy"
+        ),
         "requiredPackages": list(required_packages or []),
         "readiness": "ready" if status in READY_PROOF_STATUSES else status,
         "requiresLocalProbe": False,
@@ -2346,7 +2391,7 @@ def _qwen_text_to_image_candidates(
     prequantized_installed = bool(prequantized_cache_status.get("installed")) or _has_installed(QWEN_IMAGE_2512_PREQUANTIZED_REPO, installed)
     model_type = str(form.get("modelType") or "QwenImageModularPipeline")
     mode = str(form.get("mode") or "text_to_image")
-    specification = _auto_requirements_for_pair(model_type, mode)
+    specification = _auto_requirements_for_pair(model_type, mode, form.get("executionProfileId"))
     if specification is None:
         return _undeclared_pair_candidates(form)
     loader_module = str(specification["loaderModule"])
@@ -2613,7 +2658,7 @@ def _declared_profile_candidates(
     model_type = str(form.get("modelType") or "")
     mode = str(form.get("mode") or "")
     installed = _repo_id_set(local_models)
-    requirements = _auto_requirements_for_pair(model_type, mode)
+    requirements = _auto_requirements_for_pair(model_type, mode, form.get("executionProfileId"))
     if requirements is None:
         return _undeclared_pair_candidates(form)
     declared_default_repo = str(requirements.get("defaultRepo") or form.get("defaultRepo") or "")
@@ -2723,13 +2768,18 @@ def _declared_profile_candidates(
                 "lowerMemory": requirements.get("lowerMemory"),
                 "supportedOffloadModes": requirements.get("supportedOffloadModes"),
                 "coldLoadTarget": requirements.get("coldLoadTarget"),
+                "workingMemoryRequirements": requirements.get("workingMemoryRequirements"),
             },
             required_packages=required_packages,
             install_action_label="Install quantized artifact",
         ))
 
     if default_repo:
-        native_req = _requirements_for_offload(requirements, preferred_offload, minimum)
+        # Check the tier that actually admitted full residency. Falling back
+        # to the constrained minimum would require unused SSD offload space
+        # even when these installed weights remain entirely on the device.
+        native_fallback = on_device_requirements if full_residency_ready else minimum
+        native_req = _requirements_for_offload(requirements, preferred_offload, native_fallback)
         native_missing = _requirements_missing_for_dict(hardware, native_req, offload_mode=preferred_offload)
         default_cache_status = _artifact_cache_status(default_repo, local_models)
         candidates.append(_candidate(
@@ -2761,6 +2811,7 @@ def _declared_profile_candidates(
                 "supportedOffloadModes": requirements.get("supportedOffloadModes"),
                 "offloadRequirements": requirements.get("offloadRequirements"),
                 "coldLoadTarget": requirements.get("coldLoadTarget"),
+                "workingMemoryRequirements": requirements.get("workingMemoryRequirements"),
             },
             required_packages=required_packages,
             reviewed_native_artifact=bool(requested_repo),
@@ -3290,7 +3341,7 @@ def build_auto_resource_plan(
     hardware_override = payload.get("hardwareOverride") if isinstance(payload.get("hardwareOverride"), dict) else None
     hardware = hardware_override or _hardware_snapshot(runtime_fingerprint, data_dir)
 
-    exact_pair_requirements = _auto_requirements_for_pair(model_type, mode)
+    exact_pair_requirements = _auto_requirements_for_pair(model_type, mode, form.get("executionProfileId"))
     if exact_pair_requirements is None:
         candidates = _undeclared_pair_candidates(form)
     elif model_type == "QwenImageModularPipeline" and mode == "text_to_image":
@@ -3299,19 +3350,27 @@ def build_auto_resource_plan(
         candidates = _declared_profile_candidates(form, local_models, hardware)
 
     exact_pair_declared = exact_pair_requirements is not None
-    optional_runtime_profile_ids = optional_runtime_profile_ids_for_execution(
-        model_type,
-        mode,
+    exact_profile = (
+        DIFFUSERS_EXECUTION_PROFILES[exact_pair_requirements["executionProfileId"]]
+        if exact_pair_requirements is not None and form.get("executionProfileId") is not None else None
+    )
+    optional_runtime_profile_ids = (
+        exact_profile.optional_runtime_profile_ids_for_target()
+        if exact_profile is not None else optional_runtime_profile_ids_for_execution(model_type, mode)
     )
     optional_runtime_profiles = public_optional_runtime_profiles(
         optional_runtime_profile_ids
     )
-    optional_runtime_requirement = optional_runtime_requirement_for_execution(
-        model_type,
-        mode,
-        catalog_resolver=optional_runtime_catalog_resolver,
+    optional_runtime_requirement = (
+        optional_runtime_requirement_for_profiles((exact_profile,), catalog_resolver=optional_runtime_catalog_resolver)
+        if exact_profile is not None else optional_runtime_requirement_for_execution(
+            model_type, mode, catalog_resolver=optional_runtime_catalog_resolver)
     )
     studio_execution_spec = studio_execution_spec_for_pair(model_type, mode)
+    if exact_profile is not None and studio_execution_spec is not None and (
+        studio_execution_spec["executionProfileId"] != exact_profile.id
+    ):
+        studio_execution_spec = None  # A standard graph spec cannot describe this native recipe.
     studio_execution_spec_contract = (
         {
             "schemaVersion": studio_execution_spec["schemaVersion"],

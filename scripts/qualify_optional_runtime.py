@@ -5,7 +5,11 @@ This tool is deliberately outside the product API. It accepts a qualified
 target or temporarily projects one pending target in memory, operates only in
 a newly-created temporary managed root, and never changes source-controlled
 action/cutover policy.
-Run it from a clean prospective base where every staged distribution is absent.
+Run auxiliary qualification from a verified mandatory native base where every
+staged auxiliary distribution is absent. Historical core profile IDs remain
+available for their recorded qualification protocol; they do not repair or
+replace today's required base dependencies. This CPU workload cannot qualify
+bitsandbytes GPU binaries.
 """
 
 from __future__ import annotations
@@ -42,10 +46,13 @@ sys.path.insert(0, str(root))
 
 import modiff.optional_runtimes as optional_runtimes
 import modiff.optimization_packages as optimization_packages
+from modiff.base_runtime import base_runtime_status
 
 profile_id = sys.argv[2]
 candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[profile_id]
 plan = optimization_packages._artifact_install_plan(candidate)
+native_base = not any(package.distribution in {"transformers", "peft"} for package in candidate.packages)
+base_verified = base_runtime_status()["verified"] if native_base else None
 present = []
 for package in candidate.packages:
     try:
@@ -53,7 +60,7 @@ for package in candidate.packages:
     except metadata.PackageNotFoundError:
         continue
     present.append({"distribution": package.distribution, "version": str(version)[:128]})
-print(json.dumps({"plan": plan, "present": present}, sort_keys=True))
+print(json.dumps({"plan": plan, "present": present, "nativeBaseVerified": base_verified}, sort_keys=True))
 """
 
 _WORKLOAD_SCRIPT = r"""
@@ -70,6 +77,12 @@ import modiff.optional_runtimes as optional_runtimes
 
 profile_id = sys.argv[2]
 candidate = optional_runtimes.OPTIONAL_RUNTIME_PROFILES[profile_id]
+if any(package.distribution == "bitsandbytes" for package in candidate.packages):
+    raise RuntimeError("Bitsandbytes qualification requires a real GPU binary workload; this tool does not qualify it.")
+from modiff.base_runtime import base_runtime_status
+native_base = not any(package.distribution in {"transformers", "peft"} for package in candidate.packages)
+if native_base and not base_runtime_status()["verified"]:
+    raise RuntimeError("The mandatory native base is incompatible before auxiliary qualification.")
 qualified = optional_runtimes.project_optional_runtime_qualification(candidate)
 optional_runtimes.OPTIONAL_RUNTIME_PROFILES = {profile_id: qualified}
 
@@ -112,7 +125,8 @@ finite = bool(torch.isfinite(output).all().item())
 trainable = [name for name, value in model.named_parameters() if value.requires_grad]
 if not finite or list(output.shape) != [1, 4, 16] or len(trainable) != 4 or USE_PEFT_BACKEND is not True:
     raise RuntimeError("the no-weight Transformers/PEFT workload failed its invariant")
-if transformers.__version__ != candidate.packages[0].version:
+transformers_package = next((package for package in candidate.packages if package.distribution == "transformers"), None)
+if transformers_package and transformers.__version__ != transformers_package.version:
     raise RuntimeError("the workload loaded a different Transformers version")
 
 quanto = None
@@ -133,6 +147,64 @@ if any(package.distribution == "optimum-quanto" for package in candidate.package
     if quanto != {"configWeightsDtype": "float8", "finite": True, "shape": [2, 4]}:
         raise RuntimeError("the no-weight Quanto float8 workload failed its invariant")
 
+gguf = None
+if any(package.distribution == "gguf" for package in candidate.packages):
+    from diffusers import GGUFQuantizationConfig
+    from gguf import GGUFReader
+    config = GGUFQuantizationConfig(compute_dtype=torch.float32)
+    if config.compute_dtype is not torch.float32 or not callable(GGUFReader):
+        raise RuntimeError("the no-weight GGUF configuration workload failed its invariant")
+    gguf = {"configComputeDtype": str(config.compute_dtype), "readerAvailable": True}
+
+media = None
+if any(package.distribution == "opencv-python-headless" for package in candidate.packages):
+    import av
+    import cv2
+    import numpy as np
+    image = np.zeros((16, 16, 3), dtype=np.uint8)
+    image[4:12, 4:12] = 255
+    edges = cv2.Canny(image, 50, 100)
+    encoder = av.CodecContext.create("png", "w")
+    encoder.width, encoder.height, encoder.pix_fmt = 16, 16, "rgb24"
+    packets = encoder.encode(av.VideoFrame.from_ndarray(image, format="rgb24")) + encoder.encode(None)
+    decoder = av.CodecContext.create("png", "r")
+    decoded = [frame for packet in packets for frame in decoder.decode(packet)]
+    if edges.shape != (16, 16) or not np.any(edges) or len(decoded) != 1:
+        raise RuntimeError("the native media workload failed its invariant")
+    if not np.array_equal(decoded[0].to_ndarray(format="rgb24"), image):
+        raise RuntimeError("the native media codec roundtrip changed the image")
+    media = {"cannyShape": list(edges.shape), "codecRoundtrip": "passed", "codec": "png"}
+
+cosmos_safety = None
+if any(package.distribution == "cosmos-guardrail" for package in candidate.packages):
+    from modiff.optional_runtimes import assert_optional_runtime_distribution_compatibility
+    assert_optional_runtime_distribution_compatibility(candidate)
+    from cosmos_guardrail import CosmosSafetyChecker
+    import cv2
+    import numpy as np
+    from skimage.transform import resize
+    from nltk.tokenize.punkt import PunktSentenceTokenizer
+
+    symbols = ("Canny", "GaussianBlur", "Sobel", "calcOpticalFlowFarneback", "cvtColor", "remap", "imencode", "imdecode")
+    if not all(callable(getattr(cv2, name, None)) for name in symbols):
+        raise RuntimeError("the single OpenCV provider lacks required Gallery/Cosmos symbols")
+    image = np.zeros((16, 16, 3), dtype=np.uint8)
+    image[4:12, 4:12] = 255
+    encoded_ok, encoded = cv2.imencode(".png", image)
+    decoded = cv2.imdecode(encoded, cv2.IMREAD_UNCHANGED) if encoded_ok else None
+    edges = cv2.Canny(image, 50, 100)
+    if decoded is None or not np.array_equal(decoded, image) or not np.any(edges):
+        raise RuntimeError("the single OpenCV provider failed the real PNG/Canny workload")
+    if resize(image, (8, 8)).shape != (8, 8, 3) or PunktSentenceTokenizer().tokenize("An ordinary prompt.") != ["An ordinary prompt."]:
+        raise RuntimeError("the Cosmos auxiliary CPU processing workload failed")
+    if not all(callable(getattr(CosmosSafetyChecker, name, None)) for name in ("check_text_safety", "check_video_safety")):
+        raise RuntimeError("the official Cosmos checker methods are unavailable")
+    cosmos_safety = {
+        "opencvProvider": "opencv-python", "requiredSymbols": list(symbols),
+        "pngRoundtrip": "passed", "cannyShape": list(edges.shape), "auxiliaryCpuProcessing": "passed",
+        "scope": "Package/import/CPU codec qualification only; no pretrained safety decisions, GPU or model execution qualification.",
+    }
+
 print(json.dumps({
     "status": "passed",
     "environmentId": environment_id,
@@ -144,6 +216,9 @@ print(json.dumps({
     "trainableAdapterParameters": len(trainable),
     "diffusersPeftBackend": bool(USE_PEFT_BACKEND),
     "quanto": quanto,
+    "gguf": gguf,
+    "galleryMedia": media,
+    "cosmosSafety": cosmos_safety,
 }, sort_keys=True))
 """
 
@@ -166,6 +241,11 @@ for name in json.loads(sys.argv[2]):
     except metadata.PackageNotFoundError:
         continue
     present.append(name)
+names = json.loads(sys.argv[2])
+if not {"transformers", "peft"}.intersection(names):
+    from modiff.base_runtime import base_runtime_status
+    if not base_runtime_status()["verified"]:
+        raise RuntimeError("rollback did not preserve the verified mandatory native base")
 if active is not None or os.environ.get("MODIFF_RUNTIME_OVERLAY_STATUS") != "base" or present:
     raise RuntimeError(
         "rollback did not restore the clean base process: "
@@ -221,45 +301,21 @@ def _read_json_object(path: Path, *, maximum_bytes: int = 64 * 1024) -> dict[str
 
 
 def copy_verified_uv(source_managed_root: Path, target_managed_root: Path) -> dict[str, str]:
-    """Copy only the reviewed uv executable and exact receipt into the isolated root."""
+    """Copy the operator's uv and verify the isolated copy's byte identity."""
 
     sys.path.insert(0, str(ROOT))
-    from modiff.tool_locks import UV_TOOL_LOCKS
+    from modiff.tool_locks import resolve_uv
 
-    lock = UV_TOOL_LOCKS.get((_platform_name(), _machine_name()))
-    if lock is None:
-        raise RuntimeError("this platform has no reviewed immutable uv executable")
-    source = source_managed_root.resolve(strict=True) / "tools" / "uv"
-    receipt = _read_json_object(source / "receipt.json")
-    relative = receipt.get("executable")
-    if not isinstance(relative, str) or not relative or len(relative) > 256:
-        raise RuntimeError("the managed uv receipt has no bounded executable")
-    relative_path = Path(relative)
-    if relative_path.is_absolute() or ".." in relative_path.parts:
-        raise RuntimeError("the managed uv receipt escapes its tool directory")
-    executable = (source / relative_path).resolve(strict=True)
-    executable.relative_to(source)
+    executable = Path(resolve_uv(source_managed_root, platform_name=_platform_name(), machine=_machine_name()))
     digest, _size = _sha256(executable)
-    if (
-        receipt.get("schemaVersion") != 1
-        or receipt.get("archiveSha256") != lock["archiveSha256"]
-        or receipt.get("executableSha256") != lock["executableSha256"]
-        or digest != lock["executableSha256"]
-    ):
-        raise RuntimeError("the managed uv executable or receipt failed its reviewed identity")
     target = target_managed_root / "tools" / "uv"
-    target_executable = target / relative_path
+    target_executable = target / ("uv.exe" if _platform_name() == "windows" else "uv")
     target_executable.parent.mkdir(parents=True, exist_ok=False)
     shutil.copy2(executable, target_executable, follow_symlinks=False)
     copied_digest, _copied_size = _sha256(target_executable)
     if copied_digest != digest:
         raise RuntimeError("the isolated uv copy failed its identity check")
-    (target / "receipt.json").write_text(
-        json.dumps(receipt, indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
     return {
-        "archiveSha256": str(lock["archiveSha256"]),
         "executableSha256": digest,
     }
 
@@ -319,6 +375,9 @@ def qualification_preflight(profile_id: str = PROFILE_ID) -> dict[str, Any]:
     present = probe.get("present")
     if not isinstance(plan, list) or not isinstance(present, list):
         raise RuntimeError("the qualification preflight returned an invalid contract")
+    native_base_verified = probe.get("nativeBaseVerified") is True
+    requires_native_base = not any(package.distribution in {"transformers", "peft"} for package in candidate.packages)
+    workload_supported = not any(package.distribution == "bitsandbytes" for package in candidate.packages)
     uv_ready = False
     try:
         with tempfile.TemporaryDirectory(prefix="modiff-uv-preflight-") as temporary:
@@ -337,6 +396,8 @@ def qualification_preflight(profile_id: str = PROFILE_ID) -> dict[str, Any]:
         "status": (
             "ready"
             if not present
+            and (not requires_native_base or native_base_verified)
+            and workload_supported
             and uv_ready
             and sys.version_info[:2] == (3, 12)
             and source_revision_ready
@@ -353,6 +414,9 @@ def qualification_preflight(profile_id: str = PROFILE_ID) -> dict[str, Any]:
         "sourceFlagsDormant": not source_target.cutover_ready,
         "sourceTargetQualified": source_target.cutover_ready,
         "cleanBase": not present,
+        "requiresNativeBase": requires_native_base,
+        "nativeBaseVerified": native_base_verified if requires_native_base else None,
+        "workloadSupported": workload_supported,
         "stagedPackagesPresent": present,
         "managedUvReceiptPresent": uv_ready,
         "artifactCount": len(plan),

@@ -13,6 +13,7 @@ from pathlib import Path
 from modiff.operation_contracts import _identifier
 from modiff.modular_workflow_contracts import PINNED_DIFFUSERS_REVISION
 from modiff.modular_workflow_discovery import load_reviewed_modular_workflow_snapshot
+from modiff.source_text import canonical_python_source
 
 OPERATION_INVENTORY_PATH = Path(__file__).resolve().parents[1] / "data" / "diffusers-operation-inventory.v1.json"
 _AUTO_TASKS = {
@@ -82,12 +83,10 @@ def build_operation_inventory(root: Path, *, diffusers_source=None):
     # Source auditing stays out of ordinary startup/discovery.
     from modiff.upstream_coverage import (
         _pipeline_coverage,
-        _verify_diffusers_source_revision,
-        installed_diffusers_source,
+        reviewed_diffusers_source,
     )
 
-    source = diffusers_source or installed_diffusers_source()
-    _verify_diffusers_source_revision(source, PINNED_DIFFUSERS_REVISION)
+    source = reviewed_diffusers_source(diffusers_source)
     version, coverage = _pipeline_coverage(root, source)
     auto_path = source / "pipelines" / "auto_pipeline.py"
     auto = _auto_tasks(auto_path.read_text())
@@ -121,7 +120,11 @@ def build_operation_inventory(root: Path, *, diffusers_source=None):
         "diffusersRevision": PINNED_DIFFUSERS_REVISION,
         "diffusersVersion": version,
         "sources": {
-            name: "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+            # Upstream Python receipts identify Git source independently of
+            # checkout newlines. The reviewed JSON snapshot stays byte-exact.
+            name: "sha256:" + hashlib.sha256(
+                canonical_python_source(path.read_bytes()) if path.suffix == ".py" else path.read_bytes()
+            ).hexdigest()
             for name, path in (
                 ("exports", source / "__init__.py"),
                 ("autoTasks", auto_path),

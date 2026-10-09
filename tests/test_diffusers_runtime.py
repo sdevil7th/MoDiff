@@ -12,6 +12,7 @@ from modules.DiffusersRuntime.main import (
     LoadPrequantizedDiffusersComponent,
     PipelineQuantizationConfigV2,
     apply_attention_backend,
+    apply_execution_recipe_to_pipeline,
     build_quantization_config_v2,
     build_execution_recipe,
     build_runtime_capabilities,
@@ -562,7 +563,9 @@ class DiffusersRuntimeTests(unittest.TestCase):
 
         self.assertEqual(result["vendor"], "nvidia")
         self.assertTrue(result["quantization_backends"]["torchao_float8"]["available"])
-        self.assertTrue(result["compile"]["available"])
+        self.assertFalse(result["compile"]["available"])
+        self.assertTrue(result["compile"]["api_available"])
+        self.assertTrue(result["compile"]["probe_required"])
 
     def test_capability_probe_reports_xpu_without_claiming_cuda_kernels(self):
         fake_torch = types.SimpleNamespace(
@@ -714,15 +717,17 @@ class DiffusersRuntimeTests(unittest.TestCase):
 
     def test_regional_compile_uses_diffusers_repeated_block_api(self):
         pipeline = FakePipeline()
-        result = configure_regional_compile(
-            pipeline,
-            enabled=True,
-            components="transformer",
-            backend="inductor",
-            mode="reduce-overhead",
-            fullgraph=False,
-            dynamic=True,
-        )
+        with patch("modules.DiffusersRuntime.main.require_compilation") as probe:
+            result = configure_regional_compile(
+                pipeline,
+                enabled=True,
+                components="transformer",
+                backend="inductor",
+                mode="reduce-overhead",
+                fullgraph=False,
+                dynamic=True,
+            )
+        probe.assert_called_once()
 
         self.assertEqual(result["applied"], ["transformer"])
         self.assertEqual(
@@ -736,6 +741,34 @@ class DiffusersRuntimeTests(unittest.TestCase):
                 }
             ],
         )
+
+    def test_loader_recipe_probes_target_before_cpu_pipeline_placement(self):
+        pipeline = FakePipeline()
+        pipeline._execution_device = "cpu"
+        with patch("modules.DiffusersRuntime.main.require_compilation") as probe:
+            result = apply_execution_recipe_to_pipeline(pipeline, {
+                "device": "cuda:1", "regional_compile": True,
+                "compile_components": "transformer", "compile_backend": "inductor",
+            })
+
+        probe.assert_called_once_with(device="cuda:1", backend="inductor")
+        self.assertEqual(result["compile"]["applied"], ["transformer"])
+        self.assertEqual(pipeline.moves, [])
+
+    def test_failed_target_probe_prevents_regional_compilation(self):
+        pipeline = FakePipeline()
+        pipeline._execution_device = "cpu"
+        with (
+            patch("modules.DiffusersRuntime.main.require_compilation", side_effect=RuntimeError("GPU compiler unavailable")) as probe,
+            self.assertRaisesRegex(RuntimeError, "GPU compiler unavailable"),
+        ):
+            apply_execution_recipe_to_pipeline(pipeline, {
+                "device": "cuda:0", "regional_compile": True,
+                "compile_components": "transformer",
+            })
+
+        probe.assert_called_once_with(device="cuda:0", backend="inductor")
+        self.assertEqual(pipeline.transformer.compile_calls, [])
 
     def test_layerwise_casting_is_explicit_and_idempotent(self):
         pipeline = FakePipeline()

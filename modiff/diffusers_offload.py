@@ -290,7 +290,72 @@ def apply_model_offload(model, *, component_name, mode, device, node_id, scope="
     )
 
 
-def configure_components_manager_offload(manager, *, mode, device):
+def assert_components_manager_offload_ownership(manager, *, mode, device, node_id=None, configure_global=True):
+    """Reject a global hook change that would reconfigure a surviving owner.
+
+    The upstream manager rebuilds or removes hooks for *every* registered
+    Module, including components that another loader promised to keep resident
+    or group-offloaded. Exclusively owned old components can change with their
+    loader; shared and unowned live components cannot acquire another policy.
+    This inspection runs before placement or weight allocation.
+    """
+    effective_mode = normalize_offload_mode(mode, auto_offload=mode != OFFLOAD_MODE_NONE, device=device)
+    entries = getattr(manager, "components", {}) or {}
+    collections = getattr(manager, "collections", {}) or {}
+    own = set(collections.get(node_id, ())) if node_id is not None else set()
+    shared = {key for owner, keys in collections.items() if owner != node_id for key in keys}
+    peers = [(key, component) for key, component in entries.items()
+             if isinstance(component, torch.nn.Module) and (key not in own or key in shared)]
+    enabled = bool(getattr(manager, "_auto_offload_enabled", False))
+    # A standalone loader's placement is local while the shared manager is
+    # disabled. With the manager enabled, add() rebuilds global hooks too.
+    if not configure_global and not enabled:
+        return
+    group_modes = {OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK, OFFLOAD_MODE_SEQUENTIAL_CPU}
+    current_device = getattr(manager, "_auto_offload_device", None)
+    local_add_conflict = (not configure_global and enabled and (
+        effective_mode == OFFLOAD_MODE_NONE or current_device is None
+        or normalize_execution_device(current_device) != normalize_execution_device(device)))
+    if not peers and not local_add_conflict:
+        return
+    conflict = local_add_conflict or enabled and effective_mode == OFFLOAD_MODE_NONE
+    if effective_mode == OFFLOAD_MODE_MODEL_CPU or enabled and effective_mode in group_modes:
+        normalized_device = normalize_execution_device(device)
+        live_hooks = {getattr(wrapper, "model_id", None): wrapper
+                      for wrapper in getattr(manager, "model_hooks", None) or ()}
+
+        def compatible_peer(key, component):
+            recorded_mode = getattr(component, "_modiff_offload_mode", None)
+            recorded_device = getattr(component, "_modiff_execution_device", None)
+            if recorded_mode not in {OFFLOAD_MODE_MODEL_CPU, *group_modes} or recorded_device is None:
+                return False
+            if normalize_execution_device(recorded_device) != normalized_device:
+                return False
+            if _is_group_offloaded(component):
+                # Standalone model_cpu placement uses group hooks too. The
+                # installed manager preserves their own placement, provided
+                # both hooks send inputs to the same execution device.
+                from diffusers.hooks.group_offloading import _get_group_onload_device
+
+                return normalize_execution_device(_get_group_onload_device(component)) == normalized_device
+            wrapper = live_hooks.get(key)
+            return (recorded_mode == OFFLOAD_MODE_MODEL_CPU and enabled
+                    and getattr(wrapper, "model", None) is component
+                    and getattr(component, "_hf_hook", None) is getattr(wrapper, "hook", None)
+                    and getattr(wrapper, "hook", None) is not None)
+
+        # Policy metadata alone is not evidence of an active compatible hook.
+        conflict = (local_add_conflict
+                    or enabled and (current_device is None or normalize_execution_device(current_device) != normalized_device)
+                    or any(not compatible_peer(key, component) for key, component in peers))
+    if conflict:
+        raise ValueError(
+            "Cannot change global CPU offload while an existing live model owner uses an incompatible policy. "
+            "Finish and release that owner before loading this model, or use separate sequential image stages."
+        )
+
+
+def configure_components_manager_offload(manager, *, mode, device, node_id=None):
     """Safely configure Modular Diffusers' shared ComponentsManager.
 
     ``ComponentsManager.enable_auto_cpu_offload`` queries accelerator free
@@ -304,6 +369,9 @@ def configure_components_manager_offload(manager, *, mode, device):
         requested_mode,
         auto_offload=True,
         device=normalized_device,
+    )
+    assert_components_manager_offload_ownership(
+        manager, mode=effective_mode, device=normalized_device, node_id=node_id,
     )
     enabled = bool(getattr(manager, "_auto_offload_enabled", False))
 
@@ -323,6 +391,12 @@ def configure_components_manager_offload(manager, *, mode, device):
             components=[],
         )
 
+    if (enabled and effective_mode in {OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK, OFFLOAD_MODE_SEQUENTIAL_CPU}
+            and normalize_execution_device(getattr(manager, "_auto_offload_device", None)) == normalized_device):
+        # Diffusers 0.41 supports group hooks alongside manager CPU hooks.
+        # Keep the latter alive for existing owners; group hooks own placement.
+        return OffloadResult(mode=effective_mode, applied=False,
+                             method="components_manager_preserved_cpu_offload", components=[])
     if enabled:
         manager.disable_auto_cpu_offload()
     return OffloadResult(

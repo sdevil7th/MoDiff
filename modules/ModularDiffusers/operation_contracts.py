@@ -1,6 +1,7 @@
 """Operation bindings projected from the existing reviewed Modular owners."""
 
 from copy import deepcopy
+from modiff.component_bundle_contracts import with_qwen_t2i_bundle_contract
 
 from modiff.modular_action_bindings import MODULAR_ACTION_BINDINGS, MODULAR_AUXILIARY_OPERATION_BINDINGS
 from modiff.modular_block_contracts import load_reviewed_modular_block_snapshot
@@ -97,6 +98,11 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     loader=True,
                 )
                 members = _loader_members(root, blocks, definitions, pipeline_class)
+                if pipeline_class == "QwenImageModularPipeline" and task == "text_to_image":
+                    # ModelsLoader groups only pretrained text encoders and
+                    # tokenizers; Guider is a separate controlled input.
+                    members["text_encoders"] = [item for item in members["text_encoders"]
+                                                if item["name"] in {"text_encoder", "tokenizer"}]
                 if loader:
                     for port in loader["ports"]:
                         if port["direction"] == "output" or port["name"] in {"unet", "vae", "controlnet"}:
@@ -108,11 +114,12 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                             "model_type": pipeline_class,
                         },
                     )
-                    # Only the loader's existing allowlist can select workflow
-                    # pruning. Other loaders retain their current unscoped path.
+                    # Package-owned stage adapters require the same exact
+                    # workflow on their loader and sealed stage state. Other
+                    # loaders retain the existing pruning allowlist boundary.
                     from .loaders import REVIEWED_BUILTIN_WORKFLOWS
 
-                    if workflow_id in REVIEWED_BUILTIN_WORKFLOWS.get(pipeline_class, ()):
+                    if whole or workflow_id in REVIEWED_BUILTIN_WORKFLOWS.get(pipeline_class, ()):
                         loader["binding"]["values"]["workflow_id"] = workflow_id
                     for port in loader["ports"]:
                         if port["name"] in members:
@@ -211,7 +218,7 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                         if (port["direction"] == "input" and port["semantics"]["kind"] == "media"
                                 and port["name"] in adapter["requiredInputs"]):
                             port["required"] = True
-                    result.append(record)
+                    result.append(with_qwen_t2i_bundle_contract(record))
                     helper_types.update(t for p in record["ports"] if p["direction"] == "input" for t in p["types"])
                 for type_name in sorted(helper_types & MODULAR_AUXILIARY_OPERATION_BINDINGS.keys()):
                     operation_id, node_key = MODULAR_AUXILIARY_OPERATION_BINDINGS[type_name]
@@ -221,7 +228,12 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     if helper:
                         helper.update(nodeType="reference_assembly", decomposition="bundle")
                         result.append(with_operation_semantics(helper, workflow_id=workflow_id))
-                if pipeline_class == "StableDiffusionXLModularPipeline" and "custom_guider" in helper_types:
+                if pipeline_class in {
+                    "StableDiffusionXLModularPipeline", "QwenImageModularPipeline",
+                    "QwenImageEditModularPipeline", "QwenImageEditPlusModularPipeline",
+                    "QwenImageLayeredModularPipeline", "ZImageModularPipeline",
+                    "FluxModularPipeline", "FluxKontextModularPipeline",
+                } and "custom_guider" in helper_types:
                     helper = build_pipeline_operation_contract(
                         modules, pipeline_class=pipeline_class, task=task,
                         operation_id="diffusion.guidance", node_key="modules.ModularDiffusers.Guider",
@@ -237,7 +249,7 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     layers = build_pipeline_operation_contract(
                         modules, pipeline_class=pipeline_class, task=task,
                         operation_id="diffusion.guidance_layers", node_key="modules.ModularDiffusers.Layers",
-                    )
+                    ) if pipeline_class == "StableDiffusionXLModularPipeline" else None
                     if layers:
                         layers.update(nodeType="guidance_layers", decomposition="bundle")
                         result.append(with_operation_semantics(

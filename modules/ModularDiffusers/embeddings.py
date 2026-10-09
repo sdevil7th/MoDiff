@@ -1,12 +1,15 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 import logging
 
-from diffusers import ComponentSpec
+from diffusers import ComponentSpec, guiders as builtin_guiders
+from diffusers.guiders.guider_utils import BaseGuidance
 
 from modiff.NodeBase import NodeBase
 
-from . import MESSAGE_DURATION, MODULAR_IMAGE_ENCODER_OPTIONS, MODULAR_TEXT_ENCODER_OPTIONS, components
+from . import MESSAGE_DURATION, MODULAR_IMAGE_ENCODER_OPTIONS, MODULAR_TEXT_ENCODER_OPTIONS, components, qwen_t2i_bundle_input_param
+from .component_bundle import normalize_component_bundle_inputs
 from .modular_utils import (
+    get_model_type_metadata,
     normalize_modular_runtime_params,
     pipeline_class_from_model_type,
     pipeline_class_from_runtime_inputs,
@@ -84,6 +87,7 @@ class EncodePrompt(NodeBase):
     skipParamsCheck = True
     node_type = "text_encoder"
     params = {
+        "pipeline_components": qwen_t2i_bundle_input_param("text_encoder"),
         "text_encoders": {
             "label": "Text Encoders *",
             "required": True,
@@ -102,11 +106,18 @@ class EncodePrompt(NodeBase):
             "display": "input",
             "description": "Optional connected prompt. When connected, this replaces the inline Prompt value.",
         },
+        "guider": {
+            "label": "Guider",
+            "type": "custom_guider",
+            "display": "input",
+            "hidden": True,
+            "description": "Shared Diffusers guidance used by prompt encoding and denoising when the selected pipeline supports it.",
+        },
     }
 
     def update_node(self, values, ref):
         node_params = {}
-        model_type = self.get_signal_value("text_encoders")
+        model_type = self.get_signal_value("text_encoders") or self.get_signal_value("pipeline_components")
 
         if self._model_type == model_type:
             if not model_type or self._pipeline_class is None:
@@ -153,7 +164,7 @@ class EncodePrompt(NodeBase):
         self._pipeline_class = None
 
     def execute(self, **kwargs):
-        kwargs = dict(kwargs)
+        kwargs = normalize_component_bundle_inputs(dict(kwargs), node_type=self.node_type, component_manager=components)
         prompt_input = kwargs.pop("prompt_input", None)
         if prompt_input is not None:
             kwargs["prompt"] = prompt_input
@@ -177,10 +188,23 @@ class EncodePrompt(NodeBase):
 
         # Enforce the backend-issued action schema before initializing blocks.
         kwargs = normalize_modular_runtime_params(kwargs, node_config)
+        explicit_guider = kwargs.get("guider")
+        if explicit_guider is not None:
+            if not isinstance(explicit_guider, BaseGuidance):
+                raise TypeError("Connected guider must be a Diffusers BaseGuidance instance.")
+            metadata = get_model_type_metadata(getattr(self._pipeline_class, "__name__", None))
+            if (
+                metadata is None
+                or type(explicit_guider).__name__ not in metadata["guider_options"]
+                or type(explicit_guider) is not getattr(builtin_guiders, type(explicit_guider).__name__, None)
+                or "guider" not in node_config["model_input_names"]
+                or "guider" not in blocks.component_names
+            ):
+                raise ValueError("Connected guider is not allowed by the actual prompt encoder pipeline contract.")
         if repo_id == "black-forest-labs/FLUX.1-schnell":
             length = kwargs.get("max_sequence_length", 256)
-            if type(length) is not int or not 1 <= length <= 256:
-                raise ValueError("FLUX.1 schnell requires a maximum sequence length between 1 and 256.")
+            if type(length) is not int or not 1 <= length <= 512:
+                raise ValueError("FLUX.1 schnell requires a maximum sequence length between 1 and 512.")
             kwargs["max_sequence_length"] = length
 
         # Components came from the reviewed ModelsLoader contract. Re-reading
@@ -195,10 +219,23 @@ class EncodePrompt(NodeBase):
             kwargs, target_key_names=model_input_names, target_model_names=expected_component_names
         )
 
+        component_updates = {}
         if model_ids:
             components_to_update = components.get_components_by_ids(ids=model_ids, return_dict_with_names=True)
             if components_to_update:
-                self._pipeline.update_components(**components_to_update)
+                component_updates.update(components_to_update)
+        if explicit_guider is not None:
+            encoding_guider = explicit_guider
+            if explicit_guider.get_state()["num_inference_steps"] is not None:
+                # Upstream encoders inspect num_conditions, which includes the
+                # shared Denoise guider's last step/window. A fresh encoding-only
+                # copy requires every configured condition, including guidance
+                # that starts after step zero. Keep the original denoising state
+                # and current enable/disable toggle intact.
+                encoding_guider = explicit_guider.new(enabled=explicit_guider._enabled)
+            component_updates["guider"] = encoding_guider
+        if component_updates:
+            self._pipeline.update_components(**component_updates)
 
         # 4. compile a dict of runtime inputs from kwargs based on node_config["input_names"]
         node_kwargs = {}
@@ -266,6 +303,12 @@ class EncodePrompt(NodeBase):
             else:
                 outputs[name] = node_output_state.get(name)
         return outputs
+
+    def _cache_params_equal(self, previous, current):
+        equal = super()._cache_params_equal(previous, current)
+        if equal and isinstance(current, dict):
+            normalize_component_bundle_inputs(current, node_type=self.node_type, component_manager=components)
+        return equal
 
 
 class ImageEmbeddings(NodeBase):

@@ -1,57 +1,104 @@
 # Developer setup with uv and npm
 
-Use these commands from the backend checkout on Linux or Windows PowerShell.
-They invoke Python directly; no downloaded shell or PowerShell launcher is required.
-Install Git and [uv 0.11.26](https://docs.astral.sh/uv/getting-started/installation/)
-first. uv can provision Python 3.12. For the client, use Node 24.12.x and npm 11.6.2.
+Install Git and [uv](https://docs.astral.sh/uv/getting-started/installation/).
+MoDiff does not require an exact uv version. uv provisions Python 3.12 from the
+project configuration. Client development uses Node 24.12.x and npm 11.6.2.
+
+## Native setup and launch
+
+For a fresh checkout, select the paired setup/workflow branch:
 
 ```text
-uv run --no-project --no-sync --python 3.12 -m modiff.dev plan --accelerator cpu --backend-only --json
-uv run --no-project --no-sync --python 3.12 -m modiff.dev setup --accelerator cpu --backend-only --non-interactive
-uv run --no-project --no-sync --python 3.12 -m modiff.dev check --json --check-port 8088 --fail-on-error
-uv run --no-project --no-sync --python 3.12 -m modiff.dev run
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+cd MoDiff
 ```
 
-Open http://127.0.0.1:8088. The CPU profile is a small, no-model starting point for
-API and UI development. It is not a claim that large diffusion models fit in CPU
-memory. Setup downloads Python packages, including Torch; it does not download
-inference weights. The backend-only path serves the checked frontend bundle.
+These updates have not yet been released on `main`. Keep the backend and client
+on the same branch, or use the exact paired commits in the validation handoff.
 
-`plan` only inspects the selected installer profile. `setup` delegates to the same
-reviewed installer used by `install.sh` and `install.ps1`: exact Diffusers source,
-platform Torch sources, package constraints, device smoke, staged promotion and
-rollback are shared. Guided installation remains available.
+From the backend checkout, these commands work in Linux shells and Windows
+PowerShell without invoking repository installer scripts:
 
-An existing `.venv` is preserved. Use `check` to inspect it. To deliberately replace
-its installed profile, repeat `setup` with `--repair` and the intended accelerator.
-Do not repair your working GPU environment to CPU just to test the example; use a
-separate checkout. `run` selects the installed interpreter and applies its ROCm
-process environment before Torch imports. Ctrl+C stops the supervised runtime.
+```text
+uv sync --extra cpu
+uv run --extra cpu python -m modiff.preflight --json --check-port 8088 --fail-on-error
+uv run --extra cpu python main.py
+```
 
-## Accelerator and optional runtime choices
+For NVIDIA, use `--extra cuda` in every command. For Intel, use `--extra xpu`.
+On Apple Silicon, omit the extra: `uv sync` and `uv run python main.py` use the
+PyPI wheel with MPS support. CPU is useful for API/UI development; it does not
+make large models practical on machines with insufficient memory.
 
-Replace `cpu` with the appropriate installer selector: `auto`, `nvidia`, `amd`,
-`amd-instinct`, `intel`, or `mps`. The authoritative support tiers, operating
-systems and prerequisites are in the [accelerator guide](accelerator-installation.md).
-An experimental profile still requires explicit `--allow-experimental` consent;
-using uv does not qualify new hardware or bypass a missing system prerequisite.
-`plan` reports the same required driver/system actions as guided setup.
+Diffusers is an ordinary published dependency with a compatible minimum; the
+committed `uv.lock` records the stable release tested with this source. Native
+setup consumes that lock, and the specialized installer installs its
+hash-verified official Diffusers wheel. Changing a runtime version also changes
+optional-overlay bindings and requires explicit validation before activation.
+Upstream catalog revisions remain separate, immutable source-review evidence.
+Transformers and
+PEFT are mandatory base libraries, so ordinary text-to-image and LoRA workflows
+need no optional install or Activate step. Accelerator extras route Torch and
+its companion wheels to their matching official index. Basic CUDA setup does
+not require xFormers, bitsandbytes, or a Triton compiler on Windows.
 
-MoDiff intentionally has no `uv.lock` and is marked `uv`-unmanaged. Ordinary
-`uv run` and `uv sync` are not supported inside the accelerator environment.
-[`--no-project`](https://docs.astral.sh/uv/reference/cli/#uv-run--no-project) disables
-project discovery/resolution; `--no-sync` is redundant alongside it in uv 0.11.26
-and uv prints a harmless warning. These explicit bootstrap commands do not ask
-uv to resolve or replace the project's Torch profile. `uv pip` with an explicit
-`--python` remains the supported contributor command for test dependencies.
+Setup downloads Python packages, not model weights. Open <http://127.0.0.1:8088>
+for the bundled app. Model downloads and gated-model access still use the normal
+model-manager flow. Ctrl+C stops the supervised backend.
 
-Selected `requirements/profiles/*.txt`, `pyproject.toml`, and the accelerator
-manifest jointly define the reviewed executable contract. They are not a complete
-cross-platform transitive lock. The installer writes a profile receipt and checks
-it at startup. Service export additionally records the observed package versions.
-Optional runtimes retain their separate reviewed install, verification and
-activation steps in Model Manager; opening a graph or exporting a service never
-installs them. Keep credentials outside graph files and packages.
+Keep the same accelerator extra on sync and run: running without it can reconcile
+away packages belonging to the selected extra. `uv sync` reconciles an existing
+`.venv`; test a different accelerator in a separate checkout rather than replacing
+a working GPU stack. AMD vendor-wheel environments retain the specialized
+[accelerator installation](accelerator-installation.md) path. Do not run a generic
+CPU/CUDA sync over a reviewed ROCm environment.
+
+## Explicit uv pip alternative
+
+For an environment managed with direct pip commands, choose the Torch backend
+explicitly as well as the project extra:
+
+```text
+uv venv --python 3.12
+uv pip install --python .venv/bin/python --torch-backend=cpu -e ".[cpu]"
+uv pip check --python .venv/bin/python
+```
+
+On Windows, replace `.venv/bin/python` with `.venv/Scripts/python.exe`. For NVIDIA,
+use `--torch-backend=cu128 -e ".[cuda]"`. Run that environment's Python directly:
+`python main.py` after activation, or its full executable path. Do not mix pip
+changes with `uv run` auto-sync unless those changes are declared in the project.
+
+## Instinct SDK setup on Linux
+
+For the reviewed MI300X/`gfx942` preview, use a fresh Python 3.12 environment and
+the adjacent AMD index configuration. From the backend checkout:
+
+```sh
+uv venv --python 3.12
+uv pip install --python .venv/bin/python \
+  --config-file requirements/profiles/amd-instinct-rocm-linux.uv.toml \
+  -r requirements/profiles/amd-instinct-rocm-linux.txt
+uv pip check --python .venv/bin/python
+.venv/bin/python -m modiff.preflight --json --check-port 8088 --fail-on-error
+.venv/bin/python main.py
+```
+
+Launch the installed Python directly; a generic `uv sync` or auto-syncing
+`uv run` can replace the vendor wheels. This SDK provides its own ROCm userspace:
+do not inject a Ryzen `/opt/rocm` path or change provider drivers speculatively.
+Clear inherited Python/library-path overrides that point at a different runtime.
+
+An unmanaged installation needs no installer receipt or environment profile
+selector. Runtime detection recognizes one visible dedicated `gfx942` device and
+checks the reviewed Torch/HIP versions, SDK package pins and package policy,
+mandatory base dependencies and a real device tensor. Explicit requested or saved
+SDK selections remain authoritative. Mixed or unknown architectures are not
+automatically selected as Instinct. Runtime readiness does not qualify model
+outputs, memory fit, provider drivers or other GPUs. See
+[accelerator installation](accelerator-installation.md#instinct-mi300x-cloud-preview)
+and [cloud validation](amd-cloud-qualification.md) for host and evidence checks.
 
 ## Client development
 
@@ -62,39 +109,66 @@ npm ci
 npm run dev
 ```
 
-Use the URL printed by Vite with the backend running on its default loopback
-address. `npm ci` consumes the committed lockfile. `npm run check` runs the client
-quality gate and builds `dist/`; `npm run check:ui` runs browser regressions.
-The backend's development command does not rebuild the client on every launch.
-See [CONTRIBUTING](../CONTRIBUTING.md) for installing backend test requirements
-and mirroring a validated production client bundle.
+Keep the backend running and open the URL printed by Vite. `npm ci` consumes the
+committed npm lock. `npm run check` runs the quality gate and builds `dist/`;
+`npm run check:ui` runs browser regressions. Backend launch does not rebuild the
+client. Before either validation gate, run `npx playwright install chromium`:
+request/proxy unit tests also launch a browser. A fresh Linux host may additionally
+need `npx playwright install-deps chromium`. See [CONTRIBUTING](../CONTRIBUTING.md) for backend test dependencies and
+mirroring a validated production bundle while preserving `web/user/`.
 
-## Bundled app without a separate frontend server
+## Upgrades and repair
 
-For normal app use without Vite, clone the backend and client into sibling
-`MoDiff/` and `MoDiff-client/` directories as shown in the
-[README](../README.md#developer-setup-with-uv-and-npm).
-From the backend checkout, omit `--backend-only` so setup also installs the
-locked client dependencies and builds the frontend bundle:
+Standalone uv installations support `uv self update`; package-manager installs
+must use their package manager. See [Astral's upgrade instructions](https://docs.astral.sh/uv/getting-started/installation/#upgrading-uv).
+MoDiff accepts the operator's uv; there is no application-specific version pin.
 
-```text
-uv run --no-project --no-sync --python 3.12 -m modiff.dev plan --accelerator auto --json
-uv run --no-project --no-sync --python 3.12 -m modiff.dev setup --accelerator auto --non-interactive
-uv run --no-project --no-sync --python 3.12 -m modiff.dev check --json --check-port 8088 --fail-on-error
-uv run --no-project --no-sync --python 3.12 -m modiff.dev run
-```
+After pulling application changes, run `uv sync` with the same accelerator extra,
+then preflight and restart the backend. For the Instinct SDK, rerun its explicit
+`uv pip install` and `uv pip check` commands above instead. An intentional package upgrade uses
+`uv lock --upgrade-package transformers --upgrade-package peft`, then sync and
+validate. `uv lock --upgrade` upgrades all compatible dependencies and needs the
+full contributor gate. Diffusers follows its ordinary compatible minimum and
+tested stable lock resolution. Historical catalog regeneration separately binds
+its reviewed source revision; it must not pretend that revision is the installed
+release. Source-audit tests acquire that exact source fixture independently of
+setup, preflight, and runtime smoke. Compiled accelerator wheels also need
+matching ABI versions.
 
-`plan` is read-only. Review its selected accelerator and any blockers before
-running `setup`. Replace `auto` with an explicit supported profile when needed.
-Open <http://127.0.0.1:8088>; no separate frontend process is required.
-The same existing-environment preservation and repair rules above apply.
+A missing base library is repaired by rerunning the same sync command, without
+optional activation. Additional optional packages retain explicit install and
+activation, with progress through verification and worker replacement. Failed
+or stale overlays must be repaired through their own runtime action; deleting
+models, workflows, or output history is unnecessary.
+
+## Allocator and optional compilation
+
+MoDiff uses PyTorch's default allocator on Windows, macOS and Linux ROCm. Linux
+CUDA retains `expandable_segments:True`. The shared launch policy detects ROCm
+from installed Torch package metadata before importing Torch; it applies to both
+Ryzen and Instinct profiles. Explicit `PYTORCH_ALLOC_CONF`,
+`PYTORCH_CUDA_ALLOC_CONF` and `PYTORCH_HIP_ALLOC_CONF` settings are preserved,
+including an empty setting. Remove unsupported options if your build warns.
+
+ROCm expandable segments can retain file descriptors for HIP virtual-memory
+allocations and report an allocation failure while physical device memory is
+still available. MoDiff does not enable them by default or change process limits.
+If explicitly testing another allocator, use a fresh process and record the
+allocator settings, file-descriptor limit/count and actual memory observations.
+Prior hardware results remain tied to their recorded allocator policy.
+
+Standard eager image recipes use native SDPA without Triton. Optional
+compilation requires an executed kernel probe. Some advanced model recipes
+require compiled FlexAttention; those retain their compiler prerequisite check
+before resolving or loading model weights. Windows compilation uses a compatible
+[triton-windows toolchain](https://github.com/triton-lang/triton-windows), whose
+PyTorch compatibility must be checked separately; package import alone does not
+prove that kernels work. A failed probe leaves ordinary eager workflows usable.
 
 ## Verification scope
 
-The CPU matrix runs these setup/check commands and
-`scripts/smoke_service_package.py` on Linux, Windows and macOS. The smoke redirects
-all writable paths to temporary storage, binds an ephemeral loopback port, checks
-health, and compares a saved model-free graph with Manual and Auto service calls.
-A CI definition is not evidence of an executed Windows run. See the workbench
-milestone tracker for the platforms actually validated in the current change.
-See [service prototyping](service-prototyping.md) for the executable example.
+CPU CI runs native setup, preflight, tests, and the model-free service smoke on
+Linux, Windows, and macOS. An unexecuted CI definition is not proof of a Windows
+GPU run. Real model qualification must record the OS, accelerator, driver,
+packages, model, and repeated successful outputs. See
+[service prototyping](service-prototyping.md) for the model-free example.

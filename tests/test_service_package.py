@@ -457,13 +457,12 @@ def test_runtime_manifest_observes_active_overlay_first_and_omits_extension_path
     from types import SimpleNamespace
     from modiff import runtime_profile
 
-    monkeypatch.setattr(runtime_profile, "read_state", lambda _: {"profile": "cpu", "lock_digest": "reviewed"})
     monkeypatch.setattr(
         runtime_profile,
-        "load_manifest",
-        lambda: {"profiles": {"cpu": {"requirements": "requirements/profiles/cpu.txt"}}},
+        "runtime_profile",
+        lambda *args, **kw: {"installed": "cpu", "execution_ready": True,
+                            "runtime_contract": {"verified": True, "current_digest": "reviewed"}},
     )
-    monkeypatch.setattr(runtime_profile, "lock_digest", lambda *args, **kw: "reviewed")
     monkeypatch.setattr(
         "modiff.optional_runtime_execution.graph_optional_runtime_requirement",
         lambda _: {"profileIds": ["example-overlay"]},

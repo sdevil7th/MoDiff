@@ -11,11 +11,12 @@ from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+from types import SimpleNamespace
 
 import torch
 from diffusers import ComponentSpec, ModularPipeline
 from diffusers.utils import logging as diffusers_logging
-from huggingface_hub import get_hf_file_metadata, hf_hub_download, hf_hub_url
+from huggingface_hub import _CACHED_NO_EXIST, get_hf_file_metadata, hf_hub_download, hf_hub_url, try_to_load_from_cache
 from huggingface_hub import constants as hub_constants
 from huggingface_hub.utils import EntryNotFoundError, HfHubHTTPError, LocalEntryNotFoundError
 
@@ -34,6 +35,7 @@ from modiff.diffusers_offload import (
     OFFLOAD_MODE_NONE,
     apply_component_group_offload,
     apply_model_offload,
+    assert_components_manager_offload_ownership,
     configure_components_manager_offload,
     normalize_offload_mode,
     offload_mode_param,
@@ -46,12 +48,14 @@ from modiff.modular_workflow_contracts import (
     PINNED_MODULAR_REPOSITORY_IGNORED_STANDARD_COMPONENT_TYPES,
     PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES,
     PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES,
+    PINNED_MODULAR_REPOSITORY_COMPONENT_SOURCES,
     PINNED_MODULAR_REPOSITORY_VARIANTS,
     PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS,
     reviewed_modular_weight_variant,
 )
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
-from utils.huggingface import exact_cached_snapshot_path
+from utils.huggingface import exact_cached_snapshot_path, _containing_hf_cache_root
+from modiff.hf_cache_layout import resolve_snapshot_cache_file
 
 from . import MESSAGE_DURATION, MODULAR_MODEL_TYPE_OPTIONS, components
 from .custom_pipeline import (
@@ -647,18 +651,15 @@ def _read_reviewed_pipeline_index(path, *, repository, revision):
         if directory.is_symlink() or is_junction:
             raise EnvironmentError(f"The cached pipeline snapshot boundary must not be linked: '{directory}'.")
 
-    read_path = index_path
-    if index_path.is_symlink():
-        try:
-            blob_path = repo_cache_path / "blobs"
-            if blob_path.is_symlink() or bool(getattr(blob_path, "is_junction", lambda: False)()):
-                raise ValueError("the repository blobs directory is linked")
-            read_path = index_path.resolve(strict=True)
-            read_path.relative_to(blob_path.resolve(strict=True))
-        except (OSError, RuntimeError, ValueError) as error:
-            raise EnvironmentError(
-                f"The cached pipeline index for {repository}@{revision} does not resolve inside its repository cache."
-            ) from error
+    try:
+        read_path = resolve_snapshot_cache_file(
+            index_path, snapshot=snapshot_path,
+            cache_root=_containing_hf_cache_root(snapshot_path), repository=repository,
+        )
+    except (OSError, RuntimeError, ValueError) as error:
+        raise EnvironmentError(
+            f"The cached pipeline index for {repository}@{revision} does not resolve inside its allowed blob cache."
+        ) from error
     if not read_path.is_file():
         raise EnvironmentError(f"The cached pipeline index for {repository}@{revision} is not a regular file.")
 
@@ -777,6 +778,31 @@ def _validate_reviewed_pipeline_index(model_type, repository, revision):
             f"blocks class {observed_blocks_class_name!r}."
         )
 
+    pinned_component_sources = PINNED_MODULAR_REPOSITORY_COMPONENT_SOURCES.get(repository)
+    if pinned_component_sources is not None:
+        if (
+            filename != ModularPipeline.config_name
+            or revision != require_catalog_revision(repository, model_type=model_type)
+            or {name for name in document if not name.startswith("_")} != set(pinned_component_sources)
+        ):
+            raise ValueError("The exact reviewed Modular artifact has an incompatible component inventory/revision.")
+        loading_keys = {"pretrained_model_name_or_path", "revision", "subfolder", "type_hint", "variant"}
+        for name, component_type in pinned_component_sources.items():
+            raw = document.get(name)
+            if not isinstance(raw, list) or len(raw) != 3 or not isinstance(raw[2], dict):
+                raise ValueError(f"The exact reviewed Modular artifact has a malformed {name!r} loading descriptor.")
+            fields = raw[2]
+            if (
+                tuple(raw[:2]) != component_type
+                or fields.get("type_hint") != list(component_type)
+                or set(fields) != loading_keys
+                or fields["pretrained_model_name_or_path"] != repository
+                or fields["subfolder"] != name
+                or fields["revision"] not in (None, revision)
+                or fields["variant"] is not None
+            ):
+                raise ValueError(f"The exact reviewed Modular artifact has an incompatible {name!r} loading descriptor.")
+
     expected_component_names = set(installed_pipeline._component_specs)
     for name, raw_value in document.items():
         if name in expected_component_names or not isinstance(raw_value, list):
@@ -888,6 +914,8 @@ def _instantiate_reviewed_builtin_pipeline(
 
     pipeline_class = pipeline_class_from_model_type(model_type)
     installed_pipeline = pipeline_class()
+    from .native_blocks import prepare_native_pipeline_blocks
+    installed_blocks = prepare_native_pipeline_blocks(pipeline_class, installed_pipeline.blocks)
     load_document = deepcopy(index_document)
     for component_name, type_hint in PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES.get(repository, {}).items():
         load_document[component_name] = list(type_hint)
@@ -904,7 +932,7 @@ def _instantiate_reviewed_builtin_pipeline(
     # forwarding that synthetic name upstream.
     workflow_kwargs = {"workflow": workflow_id} if workflow_id and workflow_id != "default" else {}
     pipeline = pipeline_class(
-        blocks=installed_pipeline.blocks,
+        blocks=installed_blocks,
         pretrained_model_name_or_path=repository,
         components_manager=components_manager,
         collection=collection,
@@ -1054,6 +1082,120 @@ def place_pipeline_components(pipeline, device, progress_callback=None):
     return [name for name, _component in resident_components]
 
 
+def modular_runtime_policy(attention_backend='inherit', vae_slicing=None, vae_tiling=None, inpaint_compatibility='native'):
+    """Normalize explicit native policies; missing controls preserve old nodes."""
+    if attention_backend is None or attention_backend == '':
+        attention_backend = 'inherit'
+    if not isinstance(attention_backend, str):
+        raise TypeError('Native Modular attention must be a declared backend string.')
+    if attention_backend not in {'inherit', 'auto', 'native', '_native_math'}:
+        raise ValueError('Native Modular attention must be inherit, auto, native, or _native_math.')
+    for name, value in (('vae_slicing', vae_slicing), ('vae_tiling', vae_tiling)):
+        if value is not None and type(value) is not bool:
+            raise TypeError(f'{name} must be an explicit boolean or unset.')
+    from .qwen_inpaint_compatibility import validate_compatibility
+
+    policy = {'attention_backend': attention_backend, 'vae_slicing': vae_slicing, 'vae_tiling': vae_tiling}
+    if validate_compatibility(inpaint_compatibility) == 'whole_v1':
+        policy['inpaint_compatibility'] = 'whole_v1'
+    return policy
+
+
+def _component_runtime_policy(name, policy):
+    policy = policy or {}
+    if name in {'unet', 'transformer', 'transformer_2', 'controlnet', 'prior'}:
+        backend = policy.get('attention_backend', 'inherit')
+        return {'attention_backend': backend} if backend != 'inherit' else {}
+    if name == 'vae':
+        return {field: policy[field] for field in ('vae_slicing', 'vae_tiling', 'inpaint_compatibility')
+                if policy.get(field) is not None}
+    if name in {'text_encoder', 'text_encoder_2', 'text_encoder_3'} and policy.get('inpaint_compatibility') == 'whole_v1':
+        return {'inpaint_compatibility': 'whole_v1'}
+    return {}
+
+
+def assert_explicit_component_runtime_policy(name, component, policy):
+    """Connected models remain owned by their source and cannot be reconfigured."""
+    from modules.DiffusersRuntime.main import rocm_vision_attention_requires_configuration
+
+    if rocm_vision_attention_requires_configuration(component, torch_module=torch):
+        raise ValueError(
+            f'The connected {name} needs stable ROCm vision attention; configure its source model owner before sharing it.'
+        )
+    expected = _component_runtime_policy(name, policy)
+    if getattr(component, '_modiff_modular_runtime_policy', {}) != expected:
+        raise ValueError(f'The connected {name} has a different attention/VAE policy; configure its model owner before sharing it.')
+
+
+def assert_explicit_component_placement_policy(name, component, *, offload_mode, device, node_id):
+    if not component_placement_matches(component, offload_mode=offload_mode, device=device, node_id=node_id):
+        raise ValueError(
+            f'The connected {name} has a different source-owned placement policy. '
+            'Use matching device and offload settings, or configure its source model owner before sharing it. '
+            'Disk-offloaded components cannot transfer hook/file ownership to another loader.'
+        )
+
+
+def apply_modular_runtime_policy(pipeline, policy, *, owned_component_names=()):
+    """Configure fresh owned vision components and explicitly selected settings.
+
+    Default ownership is empty. A shared component must already satisfy the
+    same vision boundary; a downstream model owner cannot change it in place.
+    """
+    from modules.DiffusersRuntime.main import (
+        apply_attention_backend, configure_vae_memory, configure_rocm_vision_attention,
+        rocm_vision_attention_requires_configuration,
+    )
+
+    owned_names = set(owned_component_names)
+    unowned_ids = {id(component) for name, component in pipeline.components.items() if name not in owned_names}
+    fresh_components = {name: component for name, component in pipeline.components.items() if name in owned_names}
+    vision_candidates = {
+        name: component for name, component in fresh_components.items()
+        if rocm_vision_attention_requires_configuration(component, torch_module=torch)
+    }
+    if any(id(component) in unowned_ids for component in vision_candidates.values()):
+        raise ValueError('A fresh vision component aliases a source-owned model; configure its source model owner before sharing it.')
+
+    result = {'requested': dict(policy), 'attention': None, 'vae': None, 'rocmVisionAttention': []}
+    vision_configuration_complete = False
+    try:
+        # Use the same generic ROCm helper as whole pipelines, only on the
+        # components this owner actually loaded. Existing inpaint compatibility
+        # retains its separate VAE/mask semantics and component policy identity.
+        result['rocmVisionAttention'] = configure_rocm_vision_attention(SimpleNamespace(components=fresh_components))
+        vision_configuration_complete = True
+        if policy['attention_backend'] != 'inherit':
+            result['attention'] = apply_attention_backend(pipeline, policy['attention_backend'])
+        explicit = {field for field in ('vae_slicing', 'vae_tiling') if policy[field] is not None}
+        if explicit:
+            # An unset feature must not invoke its enable/disable hooks. The
+            # existing helper gets only the concrete explicitly selected hooks.
+            owner = getattr(pipeline, 'vae', None) or pipeline
+            hooks = {}
+            for field, names in (
+                ('vae_slicing', ('enable_slicing', 'enable_vae_slicing', 'disable_slicing', 'disable_vae_slicing')),
+                ('vae_tiling', ('enable_tiling', 'enable_vae_tiling', 'disable_tiling', 'disable_vae_tiling')),
+            ):
+                if field in explicit:
+                    hooks.update({name: getattr(owner, name) for name in names if callable(getattr(owner, name, None))})
+            result['vae'] = configure_vae_memory(
+                SimpleNamespace(vae=SimpleNamespace(**hooks)),
+                slicing=bool(policy['vae_slicing']), tiling=bool(policy['vae_tiling']),
+            )
+            result['vae']['unsupported'] = [feature for feature in result['vae']['unsupported'] if f'vae_{feature}' in explicit]
+    except Exception:
+        # Partially applied policies must never look like untouched legacy
+        # components to another owner after a failed configuration attempt.
+        for name, component in pipeline.components.items():
+            if isinstance(component, torch.nn.Module) and (
+                name in vision_candidates or (vision_configuration_complete and _component_runtime_policy(name, policy))
+            ):
+                component._modiff_modular_runtime_policy = {'configuration_failed': True}
+        raise
+    return result
+
+
 def component_reuse_compatible(
     component,
     *,
@@ -1062,11 +1204,20 @@ def component_reuse_compatible(
     offload_mode,
     device,
     node_id=None,
+    runtime_policy=None,
 ):
     """Return whether a shared component matches the complete runtime policy."""
 
     if not isinstance(component, torch.nn.Module):
         return True
+    from modules.DiffusersRuntime.main import rocm_vision_attention_requires_configuration
+
+    # Inspection only: a default-SDPA ROCm vision model from another source
+    # needs a fresh owner load, never an in-place downstream reconfiguration.
+    if rocm_vision_attention_requires_configuration(component, torch_module=torch):
+        return False
+    if getattr(component, '_modiff_modular_runtime_policy', {}) != (runtime_policy or {}):
+        return False
 
     component_dtype = getattr(component, "dtype", None)
     if component_dtype is None:
@@ -1089,11 +1240,22 @@ def component_reuse_compatible(
         if existing_info != quant_config_to_info(requested_quantization):
             return False
 
-    target_device = str(torch.device(device))
+    return component_placement_matches(component, offload_mode=offload_mode, device=device, node_id=node_id)
+
+
+def component_placement_matches(component, *, offload_mode, device, node_id=None):
+    """Share a model without changing its source owner's placement or files."""
+    if not isinstance(component, torch.nn.Module):
+        return True
+    from modiff.diffusers_offload import normalize_execution_device, _is_group_offloaded
+
+    target_device = normalize_execution_device(device)
     recorded_mode = getattr(component, "_modiff_offload_mode", None)
     recorded_device = getattr(component, "_modiff_execution_device", None)
     if recorded_mode is not None or recorded_device is not None:
-        if recorded_mode != offload_mode or recorded_device != target_device:
+        if recorded_mode != offload_mode or recorded_device is None or normalize_execution_device(recorded_device) != target_device:
+            return False
+        if offload_mode == OFFLOAD_MODE_NONE and (hasattr(component, '_hf_hook') or _is_group_offloaded(component)):
             return False
         if offload_mode == OFFLOAD_MODE_GROUP_DISK:
             recorded_node_id = getattr(component, "_modiff_offload_node_id", None)
@@ -1104,7 +1266,7 @@ def component_reuse_compatible(
     # Legacy resident components have no explicit policy metadata. Their
     # current device is enough to prove compatibility only for a hook-free
     # resident run; never infer compatibility for an offloaded component.
-    if offload_mode != OFFLOAD_MODE_NONE:
+    if offload_mode != OFFLOAD_MODE_NONE or hasattr(component, '_hf_hook') or _is_group_offloaded(component):
         return False
     try:
         component_device = torch.device(component.device)
@@ -1113,7 +1275,7 @@ def component_reuse_compatible(
             component_device = next(component.parameters()).device
         except StopIteration:
             return False
-    return component_device == torch.device(device)
+    return normalize_execution_device(component_device) == target_device
 
 
 def reusable_component_ids(
@@ -1126,6 +1288,7 @@ def reusable_component_ids(
     offload_mode,
     device,
     node_id=None,
+    runtime_policy=None,
 ):
     """Find deterministic, name-scoped shared components safe for this run."""
 
@@ -1141,24 +1304,31 @@ def reusable_component_ids(
             offload_mode=offload_mode,
             device=device,
             node_id=node_id,
+            runtime_policy=_component_runtime_policy(name, runtime_policy),
         ):
             compatible_ids.append(component_id)
     return compatible_ids
 
 
-def record_pipeline_component_runtime_policy(pipeline, *, offload_mode, device, node_id=None):
+def record_pipeline_component_runtime_policy(
+    pipeline, *, offload_mode, device, node_id=None, runtime_policy=None, applied_runtime_policy=None,
+    excluded_component_names=(),
+):
     """Annotate model components after their placement/hooks have been applied."""
 
     try:
         pipeline_components = pipeline.components
     except (AttributeError, RuntimeError):
         pipeline_components = {}
-    for component in pipeline_components.values():
-        if not isinstance(component, torch.nn.Module):
+    for name, component in pipeline_components.items():
+        if name in excluded_component_names or not isinstance(component, torch.nn.Module):
             continue
         component._modiff_offload_mode = offload_mode
         component._modiff_execution_device = str(torch.device(device))
         component._modiff_offload_node_id = str(node_id) if offload_mode == OFFLOAD_MODE_GROUP_DISK else None
+        component._modiff_modular_runtime_policy = _component_runtime_policy(name, runtime_policy)
+        if applied_runtime_policy is not None:
+            component._modiff_modular_runtime_applied_policy = _component_runtime_policy(name, applied_runtime_policy)
 
 
 def reusable_standalone_component(
@@ -1192,6 +1362,75 @@ def reusable_standalone_component(
     return None
 
 
+def _processor_model_config_cache_state(spec, *, model_id, load_kwargs):
+    """Read only the exact processor config's local cache knowledge."""
+    processor_type = getattr(spec, "type_hint", None)
+    if not isinstance(processor_type, type):
+        return None
+    from transformers import ProcessorMixin
+
+    if not issubclass(processor_type, ProcessorMixin) or "tokenizer" not in processor_type.get_attributes():
+        return None
+    repository = getattr(spec, "pretrained_model_name_or_path", None)
+    revision = getattr(spec, "revision", None)
+    if repository != model_id or not (isinstance(revision, str) and re.fullmatch(r"[0-9a-fA-F]{40}", revision)):
+        return None
+    # A real local directory uses the factory's local config resolution, not
+    # the Hub's cache knowledge. Leave that independent loading path unchanged.
+    if Path(repository).is_dir():
+        return None
+    # ComponentSpec.load permits explicit loading-field overrides. A peer config
+    # must never authorize a different effective artifact, subfolder or variant.
+    if any(field in load_kwargs and load_kwargs[field] != getattr(spec, field) for field in spec.loading_fields()):
+        return None
+    subfolder = getattr(spec, "subfolder", None) or ""
+    config_file = f"{subfolder.rstrip('/')}/config.json" if subfolder else "config.json"
+    # An existing processor-specific model config remains authoritative,
+    # including its normal parse/permission diagnostics. This read never
+    # downloads a file or changes the selected snapshot.
+    own_config = try_to_load_from_cache(
+        repository, config_file, cache_dir=load_kwargs.get("cache_dir"), revision=revision,
+    )
+    if isinstance(own_config, str):
+        return "present"
+    return "absent" if own_config is _CACHED_NO_EXIST else "unknown"
+
+
+def _processor_model_config_binding(spec, component_specs, loaded_components, *, load_kwargs, cache_state):
+    """Copy an exact selected model config only for an unavailable processor config.
+
+    Transformers 5 resolves a model config before reading tokenizer_config.json.
+    Legacy processor subfolders may contain a complete tokenizer but no model
+    config. Preserve online unknown/config-present loads; use only established
+    absence or an explicitly offline load, and never search ambient models.
+    """
+    if cache_state != "absent" and not (cache_state == "unknown" and load_kwargs.get("local_files_only") is True):
+        return None
+    from transformers import PreTrainedConfig, PreTrainedModel
+
+    repository = spec.pretrained_model_name_or_path
+    revision = spec.revision
+    candidates = []
+    for name, component in loaded_components.items():
+        source_spec = component_specs.get(name)
+        source_type = getattr(source_spec, "type_hint", None)
+        config_type = getattr(source_type, "config_class", None)
+        if (
+            not isinstance(source_type, type)
+            or not issubclass(source_type, PreTrainedModel)
+            or not isinstance(config_type, type)
+            or not issubclass(config_type, PreTrainedConfig)
+            or not isinstance(component, source_type)
+            or not isinstance(getattr(component, "config", None), config_type)
+            or getattr(source_spec, "pretrained_model_name_or_path", None) != repository
+            or getattr(source_spec, "revision", None) != revision
+            or getattr(component, "_diffusers_load_id", None) != source_spec.load_id
+        ):
+            continue
+        candidates.append((name, component.config))
+    return (candidates[0][0], deepcopy(candidates[0][1])) if len(candidates) == 1 else None
+
+
 def load_components_strict(
     pipeline,
     names,
@@ -1204,6 +1443,7 @@ def load_components_strict(
     diagnostics,
     component_load_kwargs,
     incremental_group_offload=None,
+    selected_components=None,
 ):
     if names is None:
         names = [
@@ -1219,6 +1459,10 @@ def load_components_strict(
         raise ValueError(f"Invalid type for names: {type(names)}")
 
     required_names = set(required_names or [])
+    # These are the caller's explicitly selected reuse/override inputs, never a
+    # manager-wide or ambient lookup. The binding helper still proves the exact
+    # declared model type and complete artifact load id before copying a config.
+    loaded_components = dict(selected_components or {})
     components_to_load = [name for name in names if name in pipeline._component_specs]
     unknown_names = [name for name in names if name not in pipeline._component_specs]
     if unknown_names:
@@ -1253,7 +1497,49 @@ def load_components_strict(
             continue
 
         try:
-            component = spec.load(**load_kwargs)
+            config_cache_state = None
+            if "config" not in load_kwargs:
+                config_cache_state = _processor_model_config_cache_state(spec, model_id=model_id, load_kwargs=load_kwargs)
+                binding = _processor_model_config_binding(
+                    spec, pipeline._component_specs, loaded_components, load_kwargs=load_kwargs,
+                    cache_state=config_cache_state,
+                )
+                if binding is not None:
+                    source_name, config = binding
+                    load_kwargs["config"] = config
+                    diagnostics.setdefault("processor_config_bindings", {})[name] = {
+                        "component": source_name,
+                        "load_id": pipeline._component_specs[source_name].load_id,
+                    }
+            try:
+                component = spec.load(**load_kwargs)
+            except Exception as initial_error:
+                # An ordinary online load gets the first opportunity to fetch
+                # its own config. Retry once only when that attempt establishes
+                # a NEW exact-pin Hub negative marker; transport/access/parse
+                # failures with unknown or present config retain normal errors.
+                if "config" in load_kwargs or config_cache_state != "unknown":
+                    raise
+                cache_state_after = _processor_model_config_cache_state(spec, model_id=model_id, load_kwargs=load_kwargs)
+                if cache_state_after != "absent":
+                    raise
+                binding = _processor_model_config_binding(
+                    spec, pipeline._component_specs, loaded_components, load_kwargs=load_kwargs,
+                    cache_state=cache_state_after,
+                )
+                if binding is None:
+                    raise
+                source_name, config = binding
+                load_kwargs["config"] = config
+                diagnostics.setdefault("processor_config_bindings", {})[name] = {
+                    "component": source_name,
+                    "load_id": pipeline._component_specs[source_name].load_id,
+                }
+                diagnostics.setdefault("processor_config_retries", {})[name] = {
+                    "error": str(initial_error) or type(initial_error).__name__,
+                    "traceback": traceback.format_exc(),
+                }
+                component = spec.load(**load_kwargs)
         except Exception as exc:
             traceback_text = traceback.format_exc()
             failure = {
@@ -1278,6 +1564,7 @@ def load_components_strict(
             continue
 
         pipeline.register_components(**{name: component})
+        loaded_components[name] = component
         diagnostics.setdefault("components_loaded", []).append(name)
 
         if incremental_group_offload and name in GROUP_OFFLOAD_COMPONENTS:
@@ -1760,7 +2047,15 @@ class AutoModelLoader(NodeBase):
         "device": {"label": "Device", "type": "string", "value": DEFAULT_DEVICE, "options": DEVICE_LIST},
         "auto_offload": {"label": "Enable Auto Offload", "type": "boolean", "value": True},
         "offload_mode": offload_mode_param(),
-        "model": {"label": "Model", "display": "output", "type": "diffusers_auto_model"},
+        "model": {
+            "label": "Model",
+            "display": "output",
+            "type": "diffusers_auto_model",
+            "connectionRoleSelector": {
+                "field": "model_type",
+                "values": {"controlnet": "controlnet_component"},
+            },
+        },
     }
 
     def __init__(self, node_id=None):
@@ -1894,6 +2189,9 @@ class AutoModelLoader(NodeBase):
             auto_offload=bool(auto_offload),
             device=device,
         )
+        assert_components_manager_offload_ownership(
+            components, mode=normalized_offload_mode, device=device, node_id=self.node_id, configure_global=False,
+        )
         spec = ComponentSpec(
             name=model_type,
             type_hint=component_class,
@@ -1933,6 +2231,14 @@ class AutoModelLoader(NodeBase):
             )
             with self.diffusers_loading_progress():
                 model = spec.load(**component_load_kwargs_for(model_type, {"torch_dtype": dtype}))
+            # This spec.load branch owns the new component. Stabilize its
+            # default ROCm vision attention before placement or publication;
+            # resident components above remain owned by their source loader.
+            apply_modular_runtime_policy(
+                SimpleNamespace(components={model_type: model}),
+                modular_runtime_policy(),
+                owned_component_names=(model_type,),
+            )
             self.progress(
                 99,
                 phase="component_placement",
@@ -2026,6 +2332,24 @@ class ModelsLoader(NodeBase):
             "postProcess": str_to_dtype,
         },
         "device": {"label": "Device", "type": "string", "value": DEFAULT_DEVICE, "options": DEVICE_LIST},
+        "attention_backend": {
+            "label": "Attention Backend", "type": "string", "default": "inherit",
+            "options": ["inherit", "auto", "native", "_native_math"],
+            "description": "Inherit preserves existing native component defaults; explicit choices use the ordinary Diffusers attention API.",
+        },
+        "vae_slicing": {
+            "label": "VAE Slicing", "type": "boolean", "default": None, "hidden": True,
+            "description": "An unset policy preserves the native VAE configuration; templates may bind an explicit boolean.",
+        },
+        "vae_tiling": {
+            "label": "VAE Tiling", "type": "boolean", "default": None, "hidden": True,
+            "description": "An unset policy preserves the native VAE configuration; templates may bind an explicit boolean.",
+        },
+        "inpaint_compatibility": {
+            "label": "Inpaint Compatibility", "type": "string", "default": "native", "hidden": True,
+            "options": ["native", "whole_v1"],
+            "description": "Technical compatibility selection for the reviewed Qwen Edit inpainting candidate; existing nodes retain native policy.",
+        },
         "trust_remote_code": {
             "label": "Trust Remote Code",
             "type": "boolean",
@@ -2107,6 +2431,8 @@ class ModelsLoader(NodeBase):
             "label": "Pipeline Components",
             "display": "output",
             "type": "diffusers_modular_pipeline_components",
+            "signal": {"direction": "output", "origin": "model_type", "value": ""},
+            "connectionRole": "pipeline_components",
         },
         "quant_config": {"label": "Quant Config", "display": "input", "type": "quant_config"},
     }
@@ -2122,6 +2448,14 @@ class ModelsLoader(NodeBase):
         """Enforce custom identity and remote-code policy before cache reuse."""
 
         model_type = kwargs.get("model_type")
+        from modiff.cosmos_safety_contract import COSMOS_SAFETY_MODEL_TYPES
+        if model_type in COSMOS_SAFETY_MODEL_TYPES:
+            from .cosmos_safety import require_cosmos_safety_runtime
+            require_cosmos_safety_runtime()
+        from .qwen_inpaint_compatibility import validate_owner_compatibility
+
+        validate_owner_compatibility(kwargs.get('inpaint_compatibility', 'native'),
+                                     model_type=model_type, workflow_id=kwargs.get('workflow_id', ''))
         trust_remote_code = kwargs.get("trust_remote_code", False)
         if type(trust_remote_code) is not bool:
             raise TypeError("ModelsLoader trust_remote_code must be a JSON boolean.")
@@ -2196,6 +2530,8 @@ class ModelsLoader(NodeBase):
                     if getattr(components.components[key], "_modiff_offload_node_id", None) == str(self.node_id)}
         if any(disk_ids.intersection(ids) for owner, ids in components.collections.items() if owner != self.node_id):
             raise ValueError("Cannot transfer a disk-offload owner with shared component ownership.")
+        from .cosmos_safety import reassign_cosmos_safety_owner
+        reassign_cosmos_safety_owner(self.output.get("pipeline_components"), self.node_id, node_id)
         for key in disk_ids:
             components.components[key]._modiff_offload_node_id = str(node_id)
         owned = components.collections.pop(self.node_id, None)
@@ -2306,6 +2642,10 @@ class ModelsLoader(NodeBase):
         """
 
         if reviewed_variant in (None, ""):
+            from modiff.modular_workflow_contracts import require_reviewed_modular_repository_workflow
+            source, repository = cls._selected_repository(repo_id, custom=False)
+            if source == "hub":
+                require_reviewed_modular_repository_workflow(model_type, repository, revision, workflow_id)
             return repo_id, revision
         if not isinstance(reviewed_variant, str):
             raise TypeError("A reviewed Modular Diffusers model selection must be a repository string.")
@@ -2324,6 +2664,8 @@ class ModelsLoader(NodeBase):
                 f"Modular pipeline {model_type!r} does not admit model variant {selected_repository!r}."
             )
         selected_revision = require_catalog_revision(selected_repository, model_type=model_type)
+        from modiff.modular_workflow_contracts import require_reviewed_modular_repository_workflow
+        require_reviewed_modular_repository_workflow(model_type, selected_repository, selected_revision, workflow_id)
         return {"source": "hub", "value": selected_repository}, selected_revision
 
     @classmethod
@@ -2571,7 +2913,19 @@ class ModelsLoader(NodeBase):
         refresh_pipeline_identity_button=False,
         _reviewed_builtin_identity=None,
         _reviewed_custom_identity=None,
+        attention_backend='inherit',
+        vae_slicing=None,
+        vae_tiling=None,
+        inpaint_compatibility='native',
     ):
+        from .qwen_inpaint_compatibility import validate_owner_compatibility
+
+        validate_owner_compatibility(inpaint_compatibility, model_type=model_type, workflow_id=workflow_id)
+        from modiff.cosmos_safety_contract import COSMOS_SAFETY_MODEL_TYPES
+        from .cosmos_safety import require_cosmos_safety_runtime
+        if model_type in COSMOS_SAFETY_MODEL_TYPES:
+            require_cosmos_safety_runtime()
+        runtime_policy = modular_runtime_policy(attention_backend, vae_slicing, vae_tiling, inpaint_compatibility)
         if type(trust_remote_code) is not bool:
             raise TypeError("ModelsLoader trust_remote_code must be a JSON boolean.")
         if trust_remote_code:
@@ -2579,6 +2933,12 @@ class ModelsLoader(NodeBase):
                 "Modular Diffusers repository code is disabled until MoDiff provides a reviewed, task-scoped "
                 "authorization and isolated content-addressed execution path."
             )
+        if model_type in REQUIRED_REGIONAL_COMPILE_MODEL_TYPES:
+            from modiff.runtime_compilation import require_compilation
+
+            # Check the actual compiler/Flex kernel before repository resolution
+            # and weight allocation. These models cannot use eager fallback.
+            require_compilation(device=str(device), require_flex=True)
         is_custom_pipeline = model_type == CUSTOM_PIPELINE_MODEL_TYPE
         if is_custom_pipeline:
             if str(workflow_id or "").strip():
@@ -2630,11 +2990,12 @@ class ModelsLoader(NodeBase):
             auto_offload=auto_offload,
             device=device,
         )
-        self.record_generation_inputs({
+        generation_inputs = {
             "model_type": model_type, "repo_id": real_repo_id, "revision": revision,
             "dtype": dtype, "device": device, "auto_offload": auto_offload,
             "offload_mode": offload_mode, "quant_config": quant_config,
-        })
+            **runtime_policy,
+        }
         self._loader_diagnostics = {
             "node_id": self.node_id,
             "loader": "ModelsLoader",
@@ -2648,6 +3009,7 @@ class ModelsLoader(NodeBase):
             "auto_offload": bool(auto_offload),
             "trust_remote_code": bool(trust_remote_code),
             "quantized_components": [],
+            "runtime_policy": {"requested": runtime_policy, "attention": None, "vae": None},
             "components_to_load": [],
             "components_reused": [],
             "components_loaded": [],
@@ -2715,6 +3077,20 @@ class ModelsLoader(NodeBase):
                 components.get_components_by_ids(ids=[controlnet["model_id"]], return_dict_with_names=True)
             )
 
+        # Explicit component inputs remain owned by their source node. Validate
+        # before global offload setup, pipeline creation, or any policy hook.
+        for name, component in components_to_update.items():
+            assert_explicit_component_runtime_policy(name, component, runtime_policy)
+            component_mode = offload_mode
+            if offload_mode in {OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK} and name not in DEFAULT_GROUP_COMPONENTS:
+                # Group hooks leave auxiliary components such as ControlNet
+                # under their source owner's placement. Do not require or
+                # later stamp the pipeline's different policy onto them.
+                component_mode = getattr(component, '_modiff_offload_mode', None) or OFFLOAD_MODE_NONE
+            assert_explicit_component_placement_policy(
+                name, component, offload_mode=component_mode, device=device, node_id=self.node_id,
+            )
+
         if real_repo_id == "":
             self.notify(
                 "Please provide a valid Repository ID.",
@@ -2759,7 +3135,7 @@ class ModelsLoader(NodeBase):
 
         use_group_offload = offload_mode in [OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]
 
-        configure_components_manager_offload(components, mode=offload_mode, device=device)
+        configure_components_manager_offload(components, mode=offload_mode, device=device, node_id=self.node_id)
 
         if custom_binding is not None:
             self.loader = custom_binding.instantiate(
@@ -2830,6 +3206,7 @@ class ModelsLoader(NodeBase):
                     offload_mode=offload_mode,
                     device=device,
                     node_id=self.node_id,
+                    runtime_policy=runtime_policy,
                 )
 
                 if not comp_ids_to_reuse:
@@ -2855,6 +3232,15 @@ class ModelsLoader(NodeBase):
             use_group_offload=use_group_offload,
             quant_config=quant_config,
         )
+        # Mandatory moderation artifacts and checker construction must succeed
+        # before loading the much larger generation components. Publication
+        # below uses the same ordinary managed owner and sealed bundle.
+        cosmos_safety_checker = None
+        if model_type in COSMOS_SAFETY_MODEL_TYPES:
+            from .cosmos_safety import build_cosmos_safety_checker
+            cosmos_safety_checker = build_cosmos_safety_checker(
+                owner_node_id=self.node_id, model_type=model_type,
+            )
         with self.diffusers_loading_progress():
             load_components_strict(
                 self.loader,
@@ -2882,8 +3268,25 @@ class ModelsLoader(NodeBase):
                 }
                 if incremental_group_offload
                 else None,
+                selected_components=components_to_update,
             )
         self.loader.update_components(**components_to_update)
+
+        self._loader_diagnostics['runtime_policy'] = apply_modular_runtime_policy(
+            self.loader, runtime_policy,
+            owned_component_names=self._loader_diagnostics.get('components_loaded', ()),
+        )
+        applied_policy = dict(runtime_policy)
+        applied_attention = self._loader_diagnostics['runtime_policy']['attention']
+        if runtime_policy['attention_backend'] != 'inherit' and not (
+            applied_attention and (applied_attention['applied'] or applied_attention['reset'])
+        ):
+            applied_policy['attention_backend'] = None
+        applied_vae = self._loader_diagnostics['runtime_policy']['vae'] or {}
+        for field in ('vae_slicing', 'vae_tiling'):
+            applied_policy[field] = next((item['enabled'] for item in applied_vae.get('applied', [])
+                                          if item['feature'] == field.removeprefix('vae_')), None)
+        self._loader_diagnostics['runtime_policy']['applied_controls'] = applied_policy
 
         if model_type == "StableDiffusionXLModularPipeline":
             reset_owned_sdxl_ip_adapter_for_loader(self.loader)
@@ -2951,11 +3354,16 @@ class ModelsLoader(NodeBase):
             model_type=model_type,
         )
 
+        self.record_generation_inputs({**generation_inputs, **applied_policy})
+
         record_pipeline_component_runtime_policy(
             self.loader,
             offload_mode=offload_mode,
             device=device,
             node_id=self.node_id,
+            runtime_policy=runtime_policy,
+            applied_runtime_policy=applied_policy,
+            excluded_component_names=components_to_update,
         )
 
         print(f" ModelsLoader: reloaded components: {components_to_reload}")
@@ -3027,25 +3435,43 @@ class ModelsLoader(NodeBase):
         # Mint only after every loading and component-info step succeeded. A
         # cache hit keeps these dictionaries (and this identity token), while
         # each successful re-execution receives a new token.
-        pipeline_instance_token = issue_pipeline_instance_token(
-            model_type=model_type,
-            repo_id=real_repo_id,
-            repo_source=_source,
-            revision=revision,
-        )
+        checker_model_id = None
+        try:
+            if cosmos_safety_checker is not None:
+                from modiff.cosmos_safety_contract import COSMOS_SAFETY_BUNDLE_MEMBER
+                checker_model_id = self.mm_add(cosmos_safety_checker)
+                loaded_components["pipeline_components"][COSMOS_SAFETY_BUNDLE_MEMBER] = {
+                    "model_id": checker_model_id, "owner_node_id": self.node_id,
+                }
+                self._loader_diagnostics["cosmos_safety"] = {
+                    "owner_node_id": self.node_id,
+                    "model_id": checker_model_id,
+                    "artifacts": list(cosmos_safety_checker._modiff_cosmos_artifacts),
+                    "package_version": "0.3.1",
+                }
+            pipeline_instance_token = issue_pipeline_instance_token(
+                model_type=model_type,
+                repo_id=real_repo_id,
+                repo_source=_source,
+                revision=revision,
+            )
 
-        # Make every connected output self-describing. Runtime cleanup may
-        # recreate downstream nodes without replaying their dynamic UI signal.
-        annotate_modular_loader_outputs(
-            loaded_components,
-            repo_id=real_repo_id,
-            repo_source=_source,
-            model_type=model_type,
-            revision=revision,
-            trust_remote_code=bool(trust_remote_code),
-            custom_identity=custom_identity,
-            pipeline_instance_token=pipeline_instance_token,
-        )
+            # Make every connected output self-describing. Runtime cleanup may
+            # recreate downstream nodes without replaying their dynamic UI signal.
+            annotate_modular_loader_outputs(
+                loaded_components,
+                repo_id=real_repo_id,
+                repo_source=_source,
+                model_type=model_type,
+                revision=revision,
+                trust_remote_code=bool(trust_remote_code),
+                custom_identity=custom_identity,
+                pipeline_instance_token=pipeline_instance_token,
+            )
+        except Exception:
+            if checker_model_id is not None:
+                self.mm_remove(checker_model_id)
+            raise
 
         logger.debug(f" ModelsLoader: Final component_manager state: {components}")
 

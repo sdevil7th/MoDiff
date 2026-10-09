@@ -278,17 +278,15 @@ def model_pins(graph, registry):
 
 
 def runtime_contract(graph, source_identity, extension_store):
-    from modiff.runtime_profile import read_state, lock_digest, load_manifest, PROJECT_ROOT
+    from modiff.runtime_profile import runtime_profile
+    from modiff.hardware import get_hardware_snapshot
     from modiff.optional_runtime_execution import graph_optional_runtime_requirement
 
-    state = read_state(Path(sys.prefix)) or {}
-    profile = state.get("profile")
-    spec = load_manifest()["profiles"].get(profile)
-    if not spec:
-        raise ValueError("Service export requires a managed runtime profile. Use modiff.dev check.")
-    contract_hash = lock_digest(PROJECT_ROOT / spec["requirements"], profile=profile)
-    if state.get("lock_digest") != contract_hash:
-        raise ValueError("Managed dependency contract changed; check/repair the environment before exporting.")
+    observed = runtime_profile(get_hardware_snapshot(), venv=Path(sys.prefix))
+    if not observed["execution_ready"] or not observed["runtime_contract"]["verified"]:
+        raise ValueError("Service export requires a working runtime. Run preflight and follow its uv repair command.")
+    profile = observed["installed"]
+    contract_hash = observed["runtime_contract"]["current_digest"]
     custom = []
     for module in sorted({n["module"] for n in graph["nodes"].values() if n["module"].startswith("custom.")}):
         item = extension_store.require_enabled(module.removeprefix("custom."))

@@ -49,6 +49,7 @@ from modiff.execution_input_provenance import (
 )
 from modiff.studio_persistence_lock import STUDIO_PERSISTENCE_LOCK
 from modiff.field_metadata import is_metadata_field_action, metadata_field_callback
+from modiff.hf_cache_layout import HuggingFaceCacheLayoutError
 from modiff.path_identifiers import (
     data_path_identifier,
     is_data_path_identifier,
@@ -501,6 +502,7 @@ from modiff.optimization_packages import (
     record_workload_baseline as record_optimization_workload_baseline,
     rollback_environment as rollback_optimization_environment,
     rollback_optional_runtime_environment,
+    reset_optional_runtime_to_base,
     set_capability_enabled as set_optimization_capability_enabled,
     workload_key_for_form as optimization_workload_key_for_form,
     validate_optional_runtime_activation_request,
@@ -721,7 +723,7 @@ STUDIO_MODEL_CAPABILITIES = {
         "recommendedSteps": 8,
         "recommendedGuidance": 1,
         "guidanceLabel": "Guidance",
-        "supportsNegativePrompt": False,
+        "supportsNegativePrompt": True,
         "supportsImageInput": True,
         "supportsMask": False,
         "supportsMultiImage": False,
@@ -3734,8 +3736,11 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
 
     async def listgraphs(self, request):
         path = Path(self.data_dir) / "graphs"
-        if not path.exists():
-            return web.json_response({"error": True, "message": "No graph directory found."}, status=404)
+        try:
+            path.stat()
+        except FileNotFoundError:
+            # A fresh installation need not have legacy graph files yet.
+            return web.json_response([])
 
         graphs = list_files(str(path), recursive=True, extensions=["json"])
         workflow_metadata: dict[str, dict] = {}
@@ -5110,6 +5115,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             if isinstance(graph_runtime_hints, dict)
             else (self.current_task.get("runtimeHints") if self.current_task else {})
         )
+        runtime_hints = runtime_hints if isinstance(runtime_hints, dict) else {}
         workflow_snapshot = runtime_hints.get("workflowSnapshot") if isinstance(runtime_hints, dict) else None
         workflow_snapshot = workflow_snapshot if isinstance(workflow_snapshot, dict) else {}
         qualified_cluster_form = (
@@ -6447,6 +6453,19 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 ),
             }
         chain = self._exception_chain(e)
+        cache_layout_error = next(
+            (item for item in reversed(chain) if isinstance(item, HuggingFaceCacheLayoutError)), None,
+        )
+        if cache_layout_error is not None:
+            return {
+                "category": "model_integrity",
+                "error_code": "invalid_model_cache_layout",
+                "message": str(cache_layout_error),
+                "recovery_hint": (
+                    "Open Model Manager and repair or reinstall the exact affected model snapshot. "
+                    "Its installed cache layout failed validation; changing the prompt will not repair it."
+                ),
+            }
         chain_text = " | ".join(f"{type(item).__name__} {str(item) or type(item).__name__}" for item in chain)
         normalized = f"{exception_type} {message} {chain_text}".lower()
 
@@ -6610,7 +6629,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "python": sys.version.split(" ")[0],
             "platform": platform.platform(),
         }
-        for package_name in ("diffusers", "transformers", "accelerate", "bitsandbytes"):
+        for package_name in ("diffusers", "transformers", "peft", "accelerate", "safetensors", "bitsandbytes"):
             try:
                 packages[package_name] = metadata.version(package_name)
             except Exception:
@@ -9205,6 +9224,15 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         requirements = candidate.get("requirements")
         if not isinstance(requirements, dict):
             return {}
+        if requirements.get("memorySemantics") == "machine_capacity":
+            # Advertised machine tiers are not free working memory. Explicit
+            # model demands may still participate in the live cleanup policy.
+            from modiff.workflow_auto_resource import select_memory_requirement
+
+            working = candidate.get("workingMemoryRequirements")
+            if working is None:
+                working = requirements.get("workingMemoryRequirements")
+            return select_memory_requirement(working, candidate.get("offloadMode", "none"))
         minimum = requirements.get("minimum")
         return minimum if isinstance(minimum, dict) else {}
 
@@ -9443,16 +9471,11 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             if isinstance(device, dict) and device.get("type") == "cuda"
         ]
         accelerator = cuda_devices[0] if cuda_devices else None
-        available_vram = (
-            accelerator.get("torch_vram_free") or accelerator.get("vram_free")
-            if isinstance(accelerator, dict)
-            else None
-        )
-        total_vram = (
-            accelerator.get("torch_vram_total") or accelerator.get("vram_total")
-            if isinstance(accelerator, dict)
-            else None
-        )
+        from modiff.auto_resource import _first_known_int
+        available_vram = (_first_known_int(accelerator.get("torch_vram_free"), accelerator.get("vram_free"))
+                          if isinstance(accelerator, dict) else None)
+        total_vram = (_first_known_int(accelerator.get("torch_vram_total"), accelerator.get("vram_total"))
+                      if isinstance(accelerator, dict) else None)
         required_vram = minimums.get("vramBytes")
         vram_floor = max(
             2 * 1024**3,
@@ -10066,9 +10089,12 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             receipt = base_runtime_hints["workflowAutoPlan"]
             if receipt["graphHash"] != workflow_graph_hash(graph):
                 raise self._auto_resource_contract_error("The workflow changed after Auto planning. Plan the current graph again.")
-            workflow_auto_plan = self._build_workflow_auto_plan(graph)
+            workflow_auto_plan = self._build_workflow_auto_plan(graph, dispatch=True)
+            workflow_auto_plan, cache_preparation = self._prepare_workflow_auto_cache(graph, workflow_auto_plan)
             if workflow_auto_plan.get("requiresPreparation") and workflow_auto_plan["canAutoRun"]:
                 workflow_auto_plan, prepared_data_nodes = self._prepare_workflow_auto_data(graph, workflow_auto_plan)
+                workflow_auto_plan, data_cache_preparation = self._prepare_workflow_auto_cache(graph, workflow_auto_plan, prepared_data_nodes)
+                cache_preparation = data_cache_preparation or cache_preparation
             if prepared_data_nodes and workflow_auto_plan["canAutoRun"] and workflow_auto_plan["patches"]:
                 changes = {(item["nodeId"], item["field"]): item["value"] for item in workflow_auto_plan["patches"]}
                 for group in receipt.get("resourceControlGroups", []):
@@ -10141,8 +10167,28 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             self.node_cache.update(prepared_cache)
         del prepared_cache
         if workflow_auto_plan is not None:
+            if (runtime_preparation or {}).get("performed") or owner_schedule:
+                # Cleanup can invalidate a warm-owner credit. Replan after it,
+                # using the already executed data suppliers, before any model.
+                from modiff.workflow_auto_values import RUNTIME_VALUES
+                values = {(key, field): value for key in prepared_data_nodes
+                          for field, value in self.node_cache[key].output.items()}
+                token = RUNTIME_VALUES.set(values)
+                try:
+                    refreshed = self._build_workflow_auto_plan(graph, dispatch=True)
+                finally:
+                    RUNTIME_VALUES.reset(token)
+                if not refreshed["canAutoRun"] or refreshed["patches"] or refreshed.get("requiresCachePreparation"):
+                    raise self._auto_resource_contract_error("Auto memory changed after cache preparation: " + "; ".join(refreshed["issues"] or ["the selected resource settings need a fresh plan"]))
+                if owner_schedule:
+                    refreshed.update(schedule=owner_schedule, strategy="dependency_order_release_owners")
+                if workflow_auto_plan.get("appliedUpdates"):
+                    refreshed["appliedUpdates"] = workflow_auto_plan["appliedUpdates"]
+                workflow_auto_plan = refreshed
             runtime_preparation = {**(runtime_preparation or {}), "workflowAuto": {
                 "strategy": workflow_auto_plan["strategy"], "schedule": owner_schedule,
+                "cachePreparation": cache_preparation,
+                "reusedOwnerIds": workflow_auto_plan.get("reusedOwnerIds", []),
                 "preparedDataNodes": sorted(prepared_data_nodes), "resolvedFields": workflow_auto_plan.get("resolvedFields", {}),
                 "appliedUpdates": workflow_auto_plan.get("appliedUpdates", []),
                 "releases": [],
@@ -10349,6 +10395,31 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                             for owner in owner_schedule["owners"]:
                                 if owner["first"] == execution_index:
                                     assert_next_owner_capacity(self, owner)
+                        elif workflow_auto_plan:
+                            # Auxiliary models allocate after their upstream
+                            # generation. Recheck current memory at this boundary
+                            # even when retaining the diffusion owner was viable
+                            # at submission. Only an exact, still-live loader
+                            # cache hit can remove its measured weight demand;
+                            # projected reclamation is never available memory.
+                            from modiff.workflow_auto_lifecycle import assert_next_owner_capacity
+                            for owner in workflow_auto_plan["loaders"]:
+                                if owner["nodeId"] == id and owner.get("resourceOwnerKind") == "auxiliary_model":
+                                    requirements = dict(owner["requirements"])
+                                    if id in workflow_auto_plan.get("reusedOwnerIds", ()):
+                                        cached = self._workflow_auto_cache_snapshot().get("owners", {}).get(id, {})
+                                        if cached.get("cacheKey") == owner.get("cacheKey"):
+                                            for key in ("systemRamBytes", "vramBytes"):
+                                                measured = cached.get(key)
+                                                if type(measured) is int and measured > 0:
+                                                    requirements[key] -= min(requirements[key], measured)
+                                    assert_next_owner_capacity(self, {
+                                        "ownerId": id, "requirements": requirements,
+                                        "capacityRequirements": owner["capacityRequirements"],
+                                        "workingMemoryPolicy": owner["workingMemoryPolicy"],
+                                        "device": owner["settings"]["device"],
+                                        "offloadMode": owner["settings"]["offloadMode"],
+                                    })
                         graph_loop = graph_loops["by_node"].get(id)
                         if graph_loop is not None:
                             loop_id = graph_loop["id"]
@@ -10358,6 +10429,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                             executed_loops.add(loop_id)
                         elif id not in prepared_data_nodes:
                             self.execute_node(id, nodes[id], sid)
+                            if workflow_auto_plan:
+                                for owner in workflow_auto_plan["loaders"]:
+                                    if owner["nodeId"] == id:
+                                        self._record_workflow_auto_owner(owner)
 
                         if owner_schedule:
                             from modiff.workflow_auto_lifecycle import release_owner_caches
@@ -11538,7 +11613,11 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
     def _build_runtime_status_payload(self):
         runtime_fingerprint = self._runtime_fingerprint_for_control_request()
         hardware = runtime_fingerprint.get("hardware")
-        if not isinstance(hardware, dict):
+        cached_while_running = bool(self.current_task) and isinstance(hardware, dict)
+        if not cached_while_running:
+            # The identity snapshot survives a run and cache release. Memory
+            # counters in status must reflect the idle process now; never
+            # probe accelerator APIs alongside active inference.
             hardware = get_hardware_snapshot(self.data_dir, refresh=True)
         profile = runtime_profile(hardware, venv=Path(sys.prefix))
         packages = {
@@ -11547,12 +11626,16 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "torch": self._package_status("torch"),
             "diffusers": self._package_status("diffusers"),
             "transformers": self._package_status("transformers"),
+            "peft": self._package_status("peft"),
             "huggingface_hub": self._package_status("huggingface_hub", "huggingface-hub"),
             "accelerate": self._package_status("accelerate"),
             "safetensors": self._package_status("safetensors"),
         }
         packages["torch"].update(legacy_torch_status(hardware))
-        required = ["aiohttp", "aiohttp_cors", "torch", "diffusers", "huggingface_hub"]
+        required = [
+            "aiohttp", "aiohttp_cors", "torch", "diffusers", "huggingface_hub",
+            "transformers", "peft", "accelerate", "safetensors",
+        ]
         missing_required = [name for name in required if not packages.get(name, {}).get("available")]
 
         current_task = None
@@ -11569,6 +11652,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         return {
             "error": False,
             "ready": ready,
+            "workerControl": self._worker_control_status(),
             "runtime_fingerprint": (
                 runtime_fingerprint.get("resourceFingerprint") or runtime_fingerprint.get("fingerprint")
             ),
@@ -11593,11 +11677,13 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 "hf_cache_dir": CONFIG.hf.get("cache_dir"),
                 "hf_online_status": CONFIG.hf.get("online_status"),
                 "hf_token_configured": bool(CONFIG.hf.get("token")),
+                "pytorch_alloc_conf": os.environ.get("PYTORCH_ALLOC_CONF"),
                 "pytorch_cuda_alloc_conf": os.environ.get("PYTORCH_CUDA_ALLOC_CONF"),
                 "paths": CONFIG.paths,
             },
             "packages": packages,
             "hardware": hardware,
+            "hardware_snapshot_state": "cached_while_running" if cached_while_running else "current_idle",
             "missing_required_packages": missing_required,
             "modules": {
                 "registered_count": len(self.modules),
@@ -11611,6 +11697,26 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 "interrupt_requested": self.interrupt_flag,
             },
         }
+
+    def _worker_control_status(self):
+        address = os.environ.get("MODIFF_SUPERVISOR_CONTROL_ADDRESS", "")
+        if os.environ.get("MODIFF_WORKER_SUPERVISED") == "1":
+            try:
+                parsed = urlparse(address)
+                if (
+                    parsed.scheme == "http"
+                    and parsed.hostname == "127.0.0.1"
+                    and parsed.netloc == f"127.0.0.1:{parsed.port}"
+                    and parsed.port is not None
+                    and 1 <= parsed.port <= 65535
+                    and parsed.path in {"", "/"}
+                    and not parsed.query
+                    and not parsed.fragment
+                ):
+                    return {"available": True, "address": f"http://{parsed.netloc}"}
+            except ValueError:
+                pass
+        return {"available": False, "address": None}
 
     async def runtime_status(self, _request):
         body = await self._coalesced_control_response(
@@ -11728,9 +11834,18 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     job = self._read_runtime_job_file(match.group(1))
                     if not isinstance(job, dict):
                         continue
-                    if job.get("kind") not in {"optimization", "optional_runtime"}:
+                    if job.get("kind") not in {"optimization", "optional_runtime", "optional_runtime_activation"}:
                         continue
-                    if job.get("status") in {"queued", "running", "cancelling"}:
+                    if job.get("kind") == "optional_runtime_activation" and job.get("status") in {"queued", "running"}:
+                        job["status"] = "verifying"
+                        job["progress"] = {"phase": "verifying", "updatedAt": time.time()}
+                        job["updatedAt"] = time.time()
+                        try:
+                            self._persist_optimization_job(job)
+                        except (OSError, TypeError, ValueError):
+                            logger.warning("Could not reconcile an interrupted runtime activation", exc_info=True)
+                            os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "repair_required"
+                    elif job.get("status") in {"queued", "running", "cancelling"}:
                         job["status"] = "failed"
                         job["error"] = "Optional-runtime installation failed."
                         job["progress"] = {
@@ -11803,6 +11918,13 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "running": {"running", "cancelling", "cancelled", "failed", "ready"},
             "cancelling": {"cancelling", "cancelled", "failed"},
         }
+        if job.get("kind") == "optional_runtime_activation":
+            transitions = {
+                "queued": {"running", "failed"},
+                "running": {"restarting", "verifying", "failed"},
+                "restarting": {"verifying", "ready", "failed"},
+                "verifying": {"verifying", "ready", "failed"},
+            }
         if current_status in terminal or requested_status not in transitions.get(
             current_status, set()
         ):
@@ -12001,7 +12123,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         status = (
             str(job.get("status"))
             if job.get("status")
-            in {"queued", "running", "cancelling", "cancelled", "failed", "ready"}
+            in {"queued", "running", "cancelling", "cancelled", "failed", "ready", "restarting", "verifying"}
             else "failed"
         )
         phase = str(progress.get("phase") or "")
@@ -12017,10 +12139,24 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "cancelled": "Installation was cancelled; the active environment was unchanged.",
             "failed": "Installation failed; the active environment was unchanged.",
         }
+        activation = job.get("kind") == "optional_runtime_activation"
+        if activation:
+            public_result["restartRequired"] = result.get("restartRequired") is True
+            phase_messages.update({
+                "queued": "Activation is queued.",
+                "validating": "Validating the runtime before activation.",
+                "activating": "Selecting the validated runtime.",
+                "restarting": "MoDiff is restarting. Waiting for the replacement worker.",
+                "restart_required": "Restart MoDiff to finish activation; this launch is not supervised.",
+                "verifying": "Verifying the loaded runtime and backend readiness.",
+                "ready": "The runtime is loaded and MoDiff is ready.",
+                "failed": "Runtime activation could not be verified. Refresh Setup and inspect runtime status.",
+            })
         if phase not in phase_messages:
             phase = status if status in phase_messages else "failed"
         public = {
             "id": job_id,
+            "operation": "activate" if activation else "install",
             "status": status,
             "progress": {
                 "phase": phase,
@@ -12040,7 +12176,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         if result:
             public["result"] = public_result
         if job.get("error"):
-            public["error"] = "Optional-runtime installation failed."
+            public["error"] = "Optional-runtime activation failed." if activation else "Optional-runtime installation failed."
         return public
 
     @staticmethod
@@ -12180,9 +12316,60 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
     async def runtime_optional_runtimes(self, _request):
         body = await self._coalesced_control_response(
             "runtime_optional_runtimes",
-            lambda: self._json_response_bytes(public_optional_runtime_catalog()),
+            lambda: self._json_response_bytes(self._optional_runtime_catalog_snapshot()),
         )
         return web.Response(body=body, content_type="application/json")
+
+    def _optional_runtime_catalog_snapshot(self):
+        catalog = public_optional_runtime_catalog()
+        overlay = catalog.get("overlay") or {}
+        state = overlay.get("state") or {}
+        for job in list(self.optimization_jobs.values()):
+            if job.get("kind") != "optional_runtime_activation" or job.get("status") not in {
+                "restarting", "verifying"
+            }:
+                continue
+            result = job.get("result") if isinstance(job.get("result"), dict) else {}
+            if result.get("restartRequired") and job.get("restartFromInstance") == self.instance:
+                continue
+            process = overlay.get("processLoadStatus")
+            profile = next(
+                (item for item in catalog.get("profiles", []) if item.get("id") == job.get("profileId")),
+                None,
+            )
+            matched = (
+                process == "active"
+                and state.get("activeEnvironmentId") == job.get("environmentId")
+                and isinstance(profile, dict)
+                and profile.get("specDigest") == job.get("specDigest")
+                and profile.get("overlayStatus") == "active"
+                and profile.get("contractState") == "qualified"
+                and profile.get("cutoverReady") is True
+            )
+            ready = self._build_runtime_status_payload().get("ready") is True
+            if matched and ready:
+                self._update_optimization_job(
+                    job["id"], status="ready", progress={"phase": "ready", "updatedAt": time.time()}
+                )
+            elif process in {"active", "base", "repair_required", "busy_recovery_only"}:
+                self._update_optimization_job(
+                    job["id"], status="failed", error="Activation verification failed.",
+                    progress={"phase": "failed", "updatedAt": time.time()},
+                )
+        jobs = [
+            job for job in list(self.optimization_jobs.values())
+            if job.get("kind") in {"optional_runtime", "optional_runtime_activation"}
+        ]
+        latest = max(
+            jobs,
+            key=lambda job: job.get("createdAt", 0)
+            if isinstance(job.get("createdAt"), (int, float))
+            and not isinstance(job["createdAt"], bool)
+            and math.isfinite(job["createdAt"]) else 0,
+            default=None,
+        )
+        catalog["latestJob"] = self._public_runtime_job(latest)
+        return catalog
 
     async def _run_optimization_install_job(
         self, job_id, capability_id, profile, hardware, lease, gate_token
@@ -12399,6 +12586,20 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             {"error": False, "job": self._public_runtime_job(job)}, status=202
         )
 
+    async def _assert_optional_runtime_profile_is_not_base(self, profile_id):
+        catalog = await asyncio.to_thread(public_optional_runtime_catalog)
+        if any(
+            profile.get("id") == profile_id and profile.get("baseIncluded") is True
+            for profile in catalog.get("profiles", [])
+        ):
+            raise RuntimeError(
+                "Transformers and PEFT are required in the base runtime. "
+                "Repair or update the base installation using the matching accelerator instructions in "
+                "docs/developer-setup.md: native uv sync with the same accelerator extra, or the reviewed "
+                "vendor uv pip commands for a specialized runtime, "
+                "then restart MoDiff. These libraries cannot be installed or activated as optional overlays."
+            )
+
     async def runtime_optional_runtime_install(self, request):
         if self.current_task or self.queued_tasks:
             return web.json_response(
@@ -12427,6 +12628,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 raise ValueError(
                     "profileId, exact specDigest, and literal consent=true are required."
                 )
+            await self._assert_optional_runtime_profile_is_not_base(profile_id)
             # Qualification, digest, artifact-lock, base binding, and managed
             # installer checks all run before a lease, job, staging path, or
             # subprocess can be created.
@@ -12504,7 +12706,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         job = self.optimization_jobs.get(job_id)
         if not isinstance(job, dict):
             job = self._read_runtime_job_file(job_id)
-        if isinstance(job, dict) and job.get("kind") != expected_kind:
+        if isinstance(job, dict) and job.get("kind") == "optional_runtime_activation" and expected_kind == "optional_runtime":
+            await self.runtime_optional_runtimes(request)
+            job = self.optimization_jobs.get(job_id, job)
+        elif isinstance(job, dict) and job.get("kind") != expected_kind:
             job = None
         public_job = self._public_runtime_job(job)
         if not public_job:
@@ -12575,7 +12780,6 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 status=409,
             )
         gate_token = None
-        keep_gate = False
         try:
             body = await self._strict_runtime_control_json(
                 request,
@@ -12597,44 +12801,99 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 raise ValueError(
                     "environmentId, profileId, exact specDigest, and literal consent=true are required."
                 )
+            await self._assert_optional_runtime_profile_is_not_base(profile_id)
             validate_optional_runtime_activation_request(
                 profile_id, spec_digest, consent=True
             )
+            for job in self.optimization_jobs.values():
+                if (
+                    job.get("kind") == "optional_runtime_activation"
+                    and job.get("status") in {"queued", "running", "restarting", "verifying"}
+                    and job.get("environmentId") == environment_id
+                    and job.get("profileId") == profile_id
+                    and job.get("specDigest") == spec_digest
+                ):
+                    return web.json_response(
+                        {"error": False, "job": self._public_runtime_job(job)}, status=202
+                    )
             gate_token = self._reserve_worker_runtime_gate(
                 "optional_runtime_activation", environment_id
             )
-            result = await asyncio.to_thread(
-                activate_optional_runtime_environment,
-                environment_id,
-                profile_id,
-                spec_digest,
-                consent=True,
-            )
-            result = self._public_runtime_mutation_result(result)
-            restarting = bool(result.get("restartRequired")) and self._schedule_optional_runtime_restart()
-            if result.get("restartRequired"):
-                os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "restart_required"
-            keep_gate = restarting
+            job_id = f"optjob-{nanoid.generate(size=12)}"
+            created_at = time.time()
+            job = {
+                "id": job_id,
+                "kind": "optional_runtime_activation",
+                "environmentId": environment_id,
+                "profileId": profile_id,
+                "specDigest": spec_digest,
+                "restartFromInstance": self.instance,
+                "status": "queued",
+                "progress": {"phase": "queued", "updatedAt": created_at},
+                "createdAt": created_at,
+                "updatedAt": created_at,
+            }
+            self._persist_optimization_job(job)
+            self.optimization_jobs[job_id] = job
+            asyncio.create_task(self._run_optional_runtime_activation_job(job_id, gate_token))
+            gate_token = None  # The durable operation now owns the mutation gate.
             return web.json_response(
-                {
-                    "error": False,
-                    **result,
-                    "restarting": restarting,
-                    "message": (
-                        "The validated optional runtime is active. MoDiff is restarting."
-                        if restarting
-                        else "The validated optional runtime is active. Restart MoDiff to load it."
-                        if result.get("restartRequired")
-                        else "This optional runtime is already active."
-                    ),
-                }
+                {"error": False, "job": self._public_runtime_job(job)}, status=202
             )
         except ValueError as exc:
             return web.json_response({"error": True, "message": str(exc)}, status=400)
         except (RuntimeError, OverlayInstallBusy) as exc:
             return web.json_response({"error": True, "message": str(exc)}, status=409)
+        except OSError:
+            return web.json_response(
+                {"error": True, "message": "Could not persist the runtime activation operation."},
+                status=500,
+            )
         finally:
-            if gate_token is not None and not keep_gate:
+            if gate_token is not None:
+                self._release_worker_runtime_gate(gate_token)
+
+    async def _run_optional_runtime_activation_job(self, job_id, gate_token):
+        restarting = False
+        job = self.optimization_jobs[job_id]
+        try:
+            self._update_optimization_job(
+                job_id, status="running", progress={"phase": "validating", "updatedAt": time.time()}
+            )
+            if self.optimization_jobs[job_id].get("status") != "running":
+                raise RuntimeError("Activation progress could not be persisted.")
+            result = await asyncio.to_thread(
+                activate_optional_runtime_environment,
+                job["environmentId"], job["profileId"], job["specDigest"], consent=True,
+            )
+            restart_required = (
+                result.get("restartRequired") is True
+                or os.environ.get("MODIFF_RUNTIME_OVERLAY_STATUS") != "active"
+            )
+            phase = "restarting" if os.environ.get("MODIFF_WORKER_SUPERVISED") == "1" else "restart_required"
+            self._update_optimization_job(
+                job_id,
+                status="restarting" if restart_required else "verifying",
+                result={
+                    "environmentId": job["environmentId"],
+                    "requiresActivation": False,
+                    "restartRequired": restart_required,
+                },
+                progress={"phase": phase if restart_required else "verifying", "updatedAt": time.time()},
+            )
+            if self.optimization_jobs[job_id].get("status") not in {"restarting", "verifying"}:
+                raise RuntimeError("Activation restart state could not be persisted.")
+            if restart_required:
+                os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "restart_required"
+                restarting = self._schedule_optional_runtime_restart()
+        except Exception:
+            logger.warning("Optional-runtime activation failed", exc_info=True)
+            self._update_optimization_job(
+                job_id, status="failed", error="Runtime activation failed.",
+                progress={"phase": "failed", "updatedAt": time.time()},
+            )
+        finally:
+            if not restarting:
                 self._release_worker_runtime_gate(gate_token)
 
     async def runtime_optional_runtime_rollback(self, request):
@@ -12651,29 +12910,45 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         keep_gate = False
         try:
             body = await self._strict_runtime_control_json(
-                request, allowed={"consent"}, required={"consent"}
+                request, allowed={"consent", "targetBase"}, required={"consent"}
             )
             if body.get("consent") is not True:
                 raise ValueError("Literal consent=true is required to roll back an optional runtime.")
+            if "targetBase" in body and body["targetBase"] is not True:
+                raise ValueError("Optional targetBase must be literal true.")
+            target_base = body.get("targetBase") is True
             gate_token = self._reserve_worker_runtime_gate(
-                "optional_runtime_rollback", "previous_environment"
+                "optional_runtime_rollback", "base_environment" if target_base else "previous_environment"
             )
-            result = await asyncio.to_thread(rollback_optional_runtime_environment, consent=True)
+            result = await asyncio.to_thread(
+                reset_optional_runtime_to_base if target_base else rollback_optional_runtime_environment,
+                consent=True,
+            )
             result = self._public_runtime_mutation_result(result)
             restarting = bool(result.get("restartRequired")) and self._schedule_optional_runtime_restart()
             if result.get("restartRequired"):
                 os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "restart_required"
             keep_gate = restarting
+            if target_base:
+                message = (
+                    "The base runtime is selected. MoDiff is restarting."
+                    if restarting
+                    else "The base runtime is selected. Restart MoDiff to finish reset."
+                    if result.get("restartRequired")
+                    else "Optional selections are cleared; the base runtime is ready."
+                )
+            else:
+                message = (
+                    "The previous optional runtime is restored. MoDiff is restarting."
+                    if restarting
+                    else "The previous optional runtime is selected. Restart MoDiff to finish rollback."
+                )
             return web.json_response(
                 {
                     "error": False,
                     **result,
                     "restarting": restarting,
-                    "message": (
-                        "The previous optional runtime is restored. MoDiff is restarting."
-                        if restarting
-                        else "The previous optional runtime is selected. Restart MoDiff to finish rollback."
-                    ),
+                    "message": message,
                 }
             )
         except ValueError as exc:
@@ -13875,7 +14150,13 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
 
         capabilities = []
         for raw_capability in STUDIO_MODEL_CAPABILITIES.values():
-            capability = dict(raw_capability)
+            capability = deepcopy(raw_capability)
+            for mode in capability.get("modes") or []:
+                requirements = studio_model_requirements_for_pair(capability.get("modelType"), mode)
+                if requirements:
+                    capability.setdefault("modeRequirements", {}).setdefault(mode, {})[
+                        "modelRequirements"
+                    ] = requirements
             profiles = profiles_by_model.get(capability.get("modelType"), [])
             pipeline_classes = sorted(
                 {profile.get("pipeline_class") for profile in profiles if profile.get("pipeline_class")}
@@ -14106,7 +14387,18 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
 
             def describe():
                 local_models = get_local_models()
-                fingerprint = self._auto_planning_runtime_fingerprint()
+                if self.current_task:
+                    # Authoring cannot observe live model ownership while an
+                    # active task may hold accelerator/runtime locks. Run will
+                    # recheck the submitted graph using actual free capacity.
+                    fingerprint = self._runtime_fingerprint_for_control_request()
+                    cache_snapshot = {}
+                else:
+                    # New starter IDs cannot reuse a previous graph owner, but
+                    # measured prior weights may permit release-and-recheck.
+                    # Do not also uplift allocator capacity for this graph plan.
+                    fingerprint = self._runtime_fingerprint()
+                    cache_snapshot = self._workflow_auto_cache_snapshot()
                 artifacts = {}
 
                 def installed(profile):
@@ -14123,6 +14415,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 def inspect(graph):
                     return build_workflow_auto_plan(
                         graph, runtime_fingerprint=fingerprint, local_models=local_models, data_dir=self.data_dir,
+                        cache_snapshot=cache_snapshot,
                     )
 
                 result = resolve_task_starter(
@@ -14197,19 +14490,19 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         }
 
     def _auto_planning_runtime_fingerprint(self):
-        """Report capacity available after releasing MoDiff-owned CUDA cache.
+        """Forecast free capacity plus idle CUDA allocator reservations.
 
-        Auto plans are requested between graph runs while the preceding
-        pipeline is intentionally kept resident for reuse.  Sampling raw free
-        VRAM at that point makes the planner count MoDiff's own reusable cache
-        as external pressure.  A high-memory native recipe can consequently
-        downshift to CPU offload, which changes the runtime signature and
-        evicts the exact cache the next graph could have reused.
+        Form and model-catalog plans are advisory cold-load forecasts. Between
+        graph runs, idle allocator blocks can be released without unloading a
+        resident pipeline; live weight storage requires an owner-aware graph
+        plan or a real release followed by another capacity sample.
 
-        Add only this worker's PyTorch reservation back to the free-memory
-        sample, capped by physical capacity.  Memory owned by other processes
-        remains unavailable, so real external pressure still selects a safer
-        plan.
+        Add only reserved-minus-allocated storage back to the free-memory
+        sample, capped by physical capacity. Live weights and outputs remain
+        allocated; they do not become free through this form-level forecast.
+        Workflow planning separately measures and validates reusable owners.
+        External process memory remains unavailable. Dispatch samples actual
+        resources again before execution.
         """
         cached_identity = isinstance(self._last_runtime_fingerprint, dict)
         fingerprint = self._runtime_fingerprint_for_control_request()
@@ -14265,7 +14558,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         reclaimable_by_index = {}
         for index in range(int(torch.cuda.device_count())):
             try:
-                reclaimable_by_index[index] = max(0, int(torch.cuda.memory_reserved(index)))
+                reserved = int(torch.cuda.memory_reserved(index))
+                allocated = int(torch.cuda.memory_allocated(index))
+                reclaimable_by_index[index] = max(0, reserved - allocated) if min(reserved, allocated) >= 0 else 0
             except Exception:
                 reclaimable_by_index[index] = 0
 
@@ -14382,18 +14677,190 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 prepared.add(node_id)
             token = RUNTIME_VALUES.set(values)
             try:
-                plan = self._build_workflow_auto_plan(graph)
+                plan = self._build_workflow_auto_plan(graph, dispatch=True)
             finally:
                 RUNTIME_VALUES.reset(token)
             if not plan["canAutoRun"]:
                 return plan, prepared
         raise self._auto_resource_contract_error("Auto data preparation exceeded its graph bound.")
 
-    def _build_workflow_auto_plan(self, graph):
+    def _prepare_workflow_auto_cache(self, graph, plan, prepared_nodes=()):
+        if not plan.get("requiresCachePreparation") or not plan["canAutoRun"]:
+            return plan, None
+        from modiff.workflow_auto_values import RUNTIME_VALUES
+        self.queue_message({"type": "auto_resource_cleanup", "sid": graph["sid"],
+            "task_id": self.current_task.get("task_id") if self.current_task else None,
+            "performed": False, "reasons": ["checking memory after releasing previous model cache"],
+            "message": "Releasing previous model cache, then checking actual available memory."})
+        retained = {key: self.node_cache[key] for key in prepared_nodes if key in self.node_cache}
+        values = {(key, field): value for key, node in retained.items() for field, value in node.output.items()}
+        cleanup = self._release_runtime_caches_for_retry()
+        self.node_cache.update(retained)
+        if cleanup.get("errors"):
+            raise self._auto_resource_contract_error("Auto cache preparation failed: " + "; ".join(cleanup["errors"]))
+        token = RUNTIME_VALUES.set(values)
+        try:
+            refreshed = self._build_workflow_auto_plan(graph, dispatch=True)
+        finally:
+            RUNTIME_VALUES.reset(token)
+        if refreshed.get("requiresCachePreparation"):
+            raise self._auto_resource_contract_error("Auto cache preparation did not release enough memory. Close other memory-heavy applications and Run again.")
+        self.queue_message({"type": "auto_resource_cleanup", "sid": graph["sid"],
+            "task_id": self.current_task.get("task_id") if self.current_task else None,
+            "performed": True, "reasons": ["previous model cache released; actual memory rechecked"],
+            "cleanup": cleanup, "available": refreshed.get("available", {})})
+        return refreshed, cleanup
+
+    def _record_workflow_auto_owner(self, owner):
+        """Bind reuse to a successful live loader without retaining its model."""
+        import weakref
+        cached = self.node_cache.get(owner["nodeId"])
+        if not getattr(cached, "_cache_valid", False) or getattr(cached, "_cache_invalidated", False):
+            return
+        try:
+            reference = weakref.ref(cached)
+        except TypeError:
+            return
+        records = getattr(self, "_workflow_auto_owner_records", None)
+        if records is None:
+            self._workflow_auto_owner_records = records = {}
+        dependencies, pending = {}, list(getattr(cached, "_cache_input_sources", ()))
+        while pending:
+            node_id = pending.pop()
+            if node_id in dependencies or node_id == owner["nodeId"]:
+                continue
+            source = self.node_cache.get(node_id)
+            if source is None:
+                return
+            try:
+                dependencies[node_id] = (weakref.ref(source), id(source.output),
+                    getattr(source, "_cache_input_snapshot", None), getattr(source, "_cache_implementation", None))
+            except TypeError:
+                return
+            pending.extend(getattr(source, "_cache_input_sources", ()))
+        records[owner["nodeId"]] = {"node": reference, "outputIdentity": id(cached.output),
+                                   "cacheKey": owner["cacheKey"], "dependencies": dependencies,
+                                   "inputSnapshot": getattr(cached, "_cache_input_snapshot", None),
+                                   "implementation": getattr(cached, "_cache_implementation", None)}
+
+    def _workflow_auto_cache_snapshot(self):
+        """Count unique live weight storage, not RSS or presumed freed bytes.
+
+        Read registered component ownership and ordinary model-manager records.
+        Walking base Module dictionaries avoids invoking custom model methods
+        or executing data suppliers. Unknown/meta/packed storage earns no credit.
+        """
+        torch_runtime = import_module("torch")
+        module_type, tensor_type = torch_runtime.nn.Module, torch_runtime.Tensor
+        tensor_types = {tensor_type, torch_runtime.nn.Parameter}
+
+        def storages(models):
+            pending, seen, result = list(models), set(), {}
+            while pending:
+                model = pending.pop()
+                if id(model) in seen:
+                    continue
+                seen.add(id(model))
+                try:
+                    state = object.__getattribute__(model, "__dict__")
+                except AttributeError:
+                    state = {}
+                if isinstance(model, module_type):
+                    pending.extend((state.get("_modules") or {}).values())
+                    tensors = [*(state.get("_parameters") or {}).values(), *(state.get("_buffers") or {}).values()]
+                    for tensor in tensors:
+                        if type(tensor) not in tensor_types or tensor.device.type not in {"cpu", "cuda", "mps", "xpu"}:
+                            continue
+                        try:
+                            storage = tensor_type.untyped_storage(tensor)
+                            size = int(storage.nbytes())
+                            key = (str(tensor.device), int(storage.data_ptr()), size)
+                        except (RuntimeError, NotImplementedError):
+                            continue
+                        if size:
+                            result[key] = ("systemRamBytes" if tensor.device.type == "cpu" else "vramBytes", size)
+                else:
+                    # Official pipeline components are stored as direct Module
+                    # attributes; no pipeline.components property is called.
+                    pending.extend(value for value in state.values() if isinstance(value, module_type))
+            return result
+
+        manager = getattr(sys.modules.get("modules.ModularDiffusers"), "components", None)
+        collections = dict(getattr(manager, "collections", {}) or {})
+        components = dict(getattr(manager, "components", {}) or {})
+        models = dict(memory_manager.cache)
+        records = getattr(self, "_workflow_auto_owner_records", {})
+        from modiff.node_cache_identity import implementation_identity, input_snapshot
+
+        def reusable(node):
+            if not getattr(node, "_cache_valid", False) or getattr(node, "_cache_invalidated", False):
+                return False
+            if any(key not in models for key in getattr(node, "_mm_models", ())):
+                return False
+            implementation = getattr(node, "_cache_implementation", None)
+            if implementation is not None and implementation != implementation_identity(node):
+                return False
+            loaded = sys.modules.get(f"{getattr(node, 'module_name', '')}.main")
+            action = getattr(loaded, getattr(node, "class_name", ""), None)
+            if isinstance(action, type) and type(node) is not action:
+                return False
+            snapshot = getattr(node, "_cache_input_snapshot", None)
+            if snapshot is not None:
+                ignored = set(getattr(node, "cache_ignored_params", ()) or ())
+                if snapshot != input_snapshot({key: value for key, value in node.params.items() if key not in ignored}):
+                    return False
+            return True
+
+        owned = {}
+        all_storage = storages([*components.values(), *(item.get("model") for item in models.values())])
+        for node_id, record in list(records.items()):
+            cached = self.node_cache.get(node_id)
+            if (record["node"]() is not cached or cached is None
+                    or not reusable(cached) or record["outputIdentity"] != id(cached.output)
+                    or record["inputSnapshot"] != getattr(cached, "_cache_input_snapshot", None)
+                    or record["implementation"] != getattr(cached, "_cache_implementation", None)
+                    or any(reference() is not self.node_cache.get(key)
+                           or reference() is None or id(reference().output) != output_id
+                           or snapshot != getattr(reference(), "_cache_input_snapshot", None)
+                           or implementation != getattr(reference(), "_cache_implementation", None)
+                           or not reusable(reference())
+                           for key, (reference, output_id, snapshot, implementation) in record["dependencies"].items())):
+                records.pop(node_id, None)
+                continue
+            selected = [components[key] for key in collections.get(node_id, ()) if key in components]
+            selected.extend(models[key].get("model") for key in getattr(cached, "_mm_models", ()) if key in models)
+            selected.extend(value for key, value in vars(cached).items() if key in {"loader", "pipeline"})
+            found = storages(selected)
+            all_storage.update(found)
+            entry = {"cacheKey": record["cacheKey"], "systemRamBytes": 0, "vramBytes": 0, "weightStorage": []}
+            for key, (pool, size) in found.items():
+                # Keep each owner's actual storage eligibility. Deduplication
+                # happens after the planner matches current owners; an earlier
+                # unrelated cache record must not consume their reuse credit.
+                entry[pool] += size
+                entry["weightStorage"].append({"id": f"{key[0]}:{key[1]}:{key[2]}", "pool": pool, "bytes": size})
+            owned[node_id] = entry
+        reclaimable = {"systemRamBytes": 0, "vramBytes": 0}
+        for pool, size in all_storage.values():
+            reclaimable[pool] += size
+        return {"owners": owned, "reclaimable": reclaimable}
+
+    def _build_workflow_auto_plan(self, graph, *, dispatch=False):
         runtime_block = self._auto_resource_runtime_block()
         if runtime_block:
             raise ValueError(runtime_block.get("message") or "The installed runtime requires repair before Auto can run.")
-        return build_workflow_auto_plan(graph, runtime_fingerprint=self._auto_planning_runtime_fingerprint(), local_models=get_local_models(), data_dir=self.data_dir)
+        active_inspection = bool(self.current_task) and not dispatch
+        if active_inspection:
+            # Stay responsive while another task owns accelerator locks. The
+            # queued task will sample actual capacity before its first model.
+            fingerprint, cache = self._auto_planning_runtime_fingerprint(), {}
+        else:
+            # Workflow reuse already accounts for weight storage explicitly;
+            # do not also add CUDA reservations to raw free memory.
+            fingerprint = self._runtime_fingerprint()
+            cache = self._workflow_auto_cache_snapshot()
+        return build_workflow_auto_plan(graph, runtime_fingerprint=fingerprint, local_models=get_local_models(),
+                                        data_dir=self.data_dir, cache_snapshot=cache)
 
     async def workflow_auto_resource_plan(self, request):
         try:

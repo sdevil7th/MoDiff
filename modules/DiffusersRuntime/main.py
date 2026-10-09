@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from modiff.NodeBase import NodeBase
+from modiff.runtime_compilation import cached_compilation_status, require_compilation
 from modiff.model_artifact_catalog import (
     catalog_artifact_file,
     catalog_repository_pin,
@@ -548,6 +549,7 @@ def configure_regional_compile(
     pipeline: Any,
     *,
     enabled: bool,
+    device: str | None = None,
     components: Any = None,
     backend: str = "inductor",
     mode: str = "default",
@@ -556,6 +558,14 @@ def configure_regional_compile(
 ) -> dict[str, Any]:
     if not enabled:
         return {"requested": False, "applied": []}
+    # Loader recipes are applied before placement/offload hooks. Their target
+    # must take precedence over a freshly loaded pipeline's CPU device.
+    execution_device = device or getattr(pipeline, "_execution_device", None)
+    if execution_device is None:
+        import torch
+
+        execution_device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    require_compilation(device=str(execution_device), backend=str(backend or "inductor"))
     requested_components = _string_list(components) or ["transformer", "transformer_2", "unet", "prior"]
     applied = []
     unsupported = []
@@ -1025,6 +1035,18 @@ def assert_runtime_quantization_full_residency(
     return {"source_weight_bytes": source_bytes, "required_bytes": required, "free_bytes": free_bytes}
 
 
+def rocm_vision_attention_requires_configuration(component: Any, *, torch_module: Any = None) -> bool:
+    """Inspect the same default vision boundary without changing source ownership."""
+    if torch_module is None:
+        import torch as torch_module
+    if not getattr(getattr(torch_module, "version", None), "hip", None):
+        return False
+    vision = getattr(getattr(component, "config", None), "vision_config", None)
+    return getattr(vision, "_attn_implementation", None) == "sdpa" and callable(
+        getattr(component, "set_attn_implementation", None)
+    )
+
+
 def configure_rocm_vision_attention(pipeline: Any, *, torch_module: Any = None) -> list[str]:
     """Keep ROCm vision SDPA failures out of multimodal prompt embeddings.
 
@@ -1038,11 +1060,10 @@ def configure_rocm_vision_attention(pipeline: Any, *, torch_module: Any = None) 
         return []
     applied = []
     for name, component in getattr(pipeline, "components", {}).items():
-        vision = getattr(getattr(component, "config", None), "vision_config", None)
-        setter = getattr(component, "set_attn_implementation", None)
-        if getattr(vision, "_attn_implementation", None) != "sdpa" or not callable(setter):
+        if not rocm_vision_attention_requires_configuration(component, torch_module=torch_module):
             continue
-        setter({"vision_config": "eager"})
+        vision = component.config.vision_config
+        component.set_attn_implementation({"vision_config": "eager"})
         if vision._attn_implementation != "eager":
             raise RuntimeError(f"Could not apply stable ROCm vision attention to {name}.")
         applied.append(name)
@@ -1084,6 +1105,7 @@ def apply_execution_recipe_to_pipeline(pipeline: Any, recipe: dict[str, Any]) ->
     compile_result = configure_regional_compile(
         pipeline,
         enabled=bool(recipe.get("regional_compile", False)),
+        device=recipe.get("device"),
         components=recipe.get("compile_components"),
         backend=recipe.get("compile_backend") or "inductor",
         mode=recipe.get("compile_mode") or "default",
@@ -1132,6 +1154,11 @@ def build_runtime_capabilities(
         if backend == "xpu"
         else "cpu"
     )
+    compile_device = str((accelerator or {}).get("device") or "cpu")
+    if compile_device.startswith("cpu:"):
+        compile_device = "cpu"
+    compiler = cached_compilation_status(device=compile_device)
+    flex_compiler = cached_compilation_status(device=compile_device, require_flex=True)
 
     capability = None
     if backend == "cuda":
@@ -1192,11 +1219,11 @@ def build_runtime_capabilities(
             "reason": "NVIDIA cuDNN attention" if vendor == "nvidia" else "Requires NVIDIA CUDA",
         },
         "flex": {
-            "available": backend == "cuda" and hasattr(getattr(torch_module, "nn", None), "attention"),
+            "available": backend == "cuda" and bool(flex_compiler.get("available")),
             "reason": (
-                "PyTorch FlexAttention is available"
-                if backend == "cuda" and hasattr(getattr(torch_module, "nn", None), "attention")
-                else "Requires a PyTorch accelerator build with FlexAttention"
+                "Compiled FlexAttention kernel executed successfully"
+                if backend == "cuda" and flex_compiler.get("available")
+                else "Requires a successful compiled FlexAttention probe on this accelerator"
             ),
         },
         "flash": {
@@ -1355,7 +1382,8 @@ def build_runtime_capabilities(
         "attention_backends": attention,
         "quantization_backends": quantization,
         "compile": {
-            "available": callable(getattr(torch_module, "compile", None)),
+            **compiler,
+            "api_available": callable(getattr(torch_module, "compile", None)),
             "regional_requires_model_probe": True,
         },
         "denoiser_cache": {

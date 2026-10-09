@@ -15,8 +15,9 @@ import sys
 import tarfile
 import tempfile
 import time
+import tomllib
 import urllib.request
-import uuid
+from urllib.parse import urlparse
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -35,7 +36,7 @@ from modiff.runtime_profile import (
     runtime_contract_paths,
 )
 from modiff.setup_catalog import CATALOG, PHASES, enrich_issue
-from modiff.tool_locks import UV_TOOL_LOCKS
+from modiff.tool_locks import resolve_uv
 
 ROOT = Path(__file__).resolve().parents[1]
 VENV = ROOT / ".venv"
@@ -48,10 +49,6 @@ DIAGNOSTICS_DIR = MANAGED_ROOT / "diagnostics"
 WEB_ROOT = ROOT / "web"
 
 TOOL_ARCHIVES = {
-    **{
-        (os_name, machine, "uv"): (str(lock["url"]), str(lock["archiveSha256"]))
-        for (os_name, machine), lock in UV_TOOL_LOCKS.items()
-    },
     ("linux", "x86_64", "node"): ("https://nodejs.org/dist/v24.12.0/node-v24.12.0-linux-x64.tar.xz", "bdebee276e58d0ef5448f3d5ac12c67daa963dd5e0a9bb621a53d1cefbc852fd"),
     ("macos", "arm64", "node"): ("https://nodejs.org/dist/v24.12.0/node-v24.12.0-darwin-arm64.tar.gz", "319f221adc5e44ff0ed57e8a441b2284f02b8dc6fc87b8eb92a6a93643fd8080"),
     ("windows", "x86_64", "node"): ("https://nodejs.org/dist/v24.12.0/node-v24.12.0-win-x64.zip", "9c125f61ae947b52e779095830f9cac267846a043ef7192183c84016aaad2812"),
@@ -522,21 +519,35 @@ def _dependency_environment() -> dict[str, str]:
 
 
 def _install_reviewed_diffusers(uv: str, python: Path) -> None:
-    # Read the executable contract, avoiding another independently maintained
-    # revision. A prior uv cache may contain a wheel built from CRLF checkout
-    # bytes; bypass that cache only for this VCS dependency, not Torch.
-    project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    matches = re.findall(
-        r'"(diffusers @ git\+https://github\.com/huggingface/diffusers\.git@[0-9a-f]{40})"',
-        project,
-    )
+    """Install the tested ordinary wheel from the committed dependency lock.
+
+    The project declares the compatible minimum; uv.lock binds this setup's
+    reviewed resolution. A VCS checkout and host Git line endings are irrelevant
+    to the published wheel. Profile installation keeps this compatible version.
+    """
+    with (ROOT / "uv.lock").open("rb") as handle:
+        lock = tomllib.load(handle)
+    candidates = [package for package in lock.get("package", []) if package.get("name") == "diffusers"]
+    if len(candidates) != 1:
+        raise RuntimeError("The dependency lock must contain one Diffusers package.")
+    package = candidates[0]
+    if package.get("source") != {"registry": "https://pypi.org/simple"}:
+        raise RuntimeError("The tested Diffusers resolution must use the official package registry.")
+    version = package.get("version")
+    wheels = package.get("wheels", [])
+    expected_name = f"diffusers-{version}-py3-none-any.whl"
+    matches = [wheel for wheel in wheels if Path(urlparse(wheel.get("url", "")).path).name == expected_name]
     if len(matches) != 1:
-        raise RuntimeError("The executable Diffusers dependency must name one immutable reviewed commit.")
-    _run(
-        [uv, "pip", "install", "--python", str(python), "--no-cache", "--no-deps",
-         "--reinstall-package", "diffusers", matches[0]],
-        env=_dependency_environment(),
-    )
+        raise RuntimeError("The Diffusers lock must bind one portable published wheel.")
+    wheel = matches[0]
+    url = urlparse(wheel.get("url", ""))
+    digest = wheel.get("hash", "")
+    if (url.scheme != "https" or url.hostname != "files.pythonhosted.org" or url.username or url.password
+            or url.query or url.fragment or not re.fullmatch(r"sha256:[0-9a-f]{64}", digest)):
+        raise RuntimeError("The Diffusers lock has an invalid wheel source or hash.")
+    _run([uv, "pip", "install", "--python", str(python), "--no-deps",
+          "--reinstall-package", "diffusers",
+          f"{wheel['url']}#sha256={digest.removeprefix('sha256:')}"])
 
 
 def _ensure_venv(uv: str, target: Path) -> Path:
@@ -631,51 +642,7 @@ def _validate_uv_directory(managed_uv: Path) -> None:
 
 
 def _ensure_uv() -> str:
-    managed_uv = MANAGED_ROOT / "tools" / "uv"
-    key = (normalized_os(), normalized_arch())
-    lock = UV_TOOL_LOCKS.get(key)
-    if lock is None:
-        raise RuntimeError("The app-local uv executable has no reviewed platform lock")
-    if managed_uv.exists() or managed_uv.is_symlink():
-        _validate_uv_directory(managed_uv)
-    # A copied checkout may contain another platform's uv. Only the exact
-    # reviewed path for this host can satisfy setup; never execute a name match.
-    executable = managed_uv / lock["executable"]
-    if not executable.exists() and not executable.is_symlink():
-        _download_tool("uv")
-    _validate_uv_directory(managed_uv)
-    if not executable.is_file():
-        raise RuntimeError("The app-local uv archive did not contain the expected executable")
-    info = executable.lstat()
-    if stat.S_ISLNK(info.st_mode) or bool(
-        getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
-    ):
-        raise RuntimeError("The app-local uv executable is linked")
-    executable = executable.resolve(strict=True)
-    try:
-        relative = executable.relative_to(managed_uv.resolve(strict=True)).as_posix()
-    except ValueError as exc:
-        raise RuntimeError("The app-local uv executable escapes its managed directory") from exc
-    executable_hash = hashlib.sha256(executable.read_bytes()).hexdigest()
-    if relative != lock["executable"] or executable_hash != lock["executableSha256"]:
-        raise RuntimeError("The app-local uv executable failed its reviewed integrity check")
-    executable.chmod(executable.stat().st_mode | 0o111)
-    receipt = {
-        "schemaVersion": 1,
-        "archiveSha256": lock["archiveSha256"],
-        "executable": relative,
-        "executableSha256": executable_hash,
-    }
-    temporary = managed_uv / f".receipt.{uuid.uuid4().hex}.tmp"
-    try:
-        with temporary.open("x", encoding="utf-8", newline="\n") as output:
-            output.write(json.dumps(receipt, sort_keys=True, separators=(",", ":")) + "\n")
-            output.flush()
-            os.fsync(output.fileno())
-        temporary.replace(managed_uv / "receipt.json")
-    finally:
-        temporary.unlink(missing_ok=True)
-    return str(executable)
+    return resolve_uv(MANAGED_ROOT, platform_name=normalized_os(), machine=normalized_arch())
 
 
 def _ensure_node() -> dict[str, str]:

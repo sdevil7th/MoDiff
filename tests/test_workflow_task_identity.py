@@ -43,16 +43,10 @@ def modular_graph(pipeline, mode):
 
 
 def test_auto_resolves_sdxl_img2img_from_the_executable_graph(monkeypatch, tmp_path):
-    from types import SimpleNamespace
     from modiff import workflow_auto_resource as planner
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
 
-    profile = SimpleNamespace(
-        model_type="StableDiffusionXLModularPipeline",
-        modes=("text_to_image", "image_to_image"),
-        loader_module="modules.ModularDiffusers",
-        loader_action="ModelsLoader",
-        execution_path="modular-diffusers",
-    )
+    profile = DIFFUSERS_EXECUTION_PROFILES["sdxl-base:modular"]
     monkeypatch.setattr(
         planner,
         "resolve_execution_profiles_for_loader",
@@ -74,7 +68,10 @@ def test_auto_resolves_sdxl_img2img_from_the_executable_graph(monkeypatch, tmp_p
         plan_recipe=recipe,
         hardware={"systemMemory": {}, "accelerator": {}, "offloadDisk": {}},
     )
-    assert requests and requests[0]["form"]["mode"] == "image_to_image"
+    # The actual registered profile names this upstream image-to-image task
+    # edit_image; task discovery must retain that exact recipe identity.
+    assert requests and requests[0]["form"]["mode"] == "edit_image"
+    assert requests[0]["form"]["executionProfileId"] == profile.id
     assert not result["canAutoRun"], "Resolving a task does not grant an unqualified resource recipe."
     assert graph == before
 

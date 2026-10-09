@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import json
+from pathlib import Path
 from typing import Any
 
 from modiff.operation_contracts import MODULAR_STAGE_OPERATIONS
@@ -1358,6 +1359,11 @@ HUNYUAN_VIDEO_15_I2V_DIFFUSERS_FILES = [
 ]
 COSMOS3_NANO_REPO = "nvidia/Cosmos3-Nano"
 COSMOS3_GUARDRAIL_REPO = "nvidia/Cosmos-Guardrail1"
+COSMOS3_TEXT_GUARD_REPO = "Qwen/Qwen3Guard-Gen-0.6B"
+COSMOS3_SUPER_T2I_REPO = "nvidia/Cosmos3-Super-Text2Image"
+COSMOS3_SUPER_T2I_DIFFUSERS_FILES = json.loads(
+    (Path(__file__).resolve().parents[1] / "data/cosmos3-super-t2i-files.v1.json").read_text(encoding="utf-8")
+)["files"]
 COSMOS3_DISTILLED_T2I_REPO = "nvidia/Cosmos3-Super-Text2Image-4Step"
 COSMOS3_DISTILLED_I2V_REPO = "nvidia/Cosmos3-Super-Image2Video-4Step"
 COSMOS3_NANO_DIFFUSERS_FILES = [
@@ -1989,6 +1995,8 @@ _COSMOS3_DISTILLED_STRUCTURAL_MODES = ("text_to_image", "image_to_video")
 
 
 def _cosmos3_guardrail_dependency(mode):
+    from modiff.cosmos_safety_contract import cosmos_safety_artifacts
+    artifacts = cosmos_safety_artifacts()
     return (
         {
             "id": "cosmos3-mandatory-safety-guardrail",
@@ -1996,11 +2004,22 @@ def _cosmos3_guardrail_dependency(mode):
             "repo": COSMOS3_GUARDRAIL_REPO,
             "revision": require_catalog_revision(COSMOS3_GUARDRAIL_REPO),
             "kind": "safety_checker",
+            "downloadFiles": [entry["path"] for entry in artifacts[0]["files"]],
             "requiredForModes": [mode],
             "description": (
                 "Mandatory gated Cosmos text-and-video safety checker; access and the NVIDIA Open Model "
                 "License must be acknowledged before any execution qualification."
             ),
+        },
+        {
+            "id": "cosmos3-mandatory-text-safety-classifier",
+            "label": "Qwen3Guard 0.6B",
+            "repo": COSMOS3_TEXT_GUARD_REPO,
+            "revision": require_catalog_revision(COSMOS3_TEXT_GUARD_REPO),
+            "kind": "safety_checker",
+            "downloadFiles": [entry["path"] for entry in artifacts[1]["files"]],
+            "requiredForModes": [mode],
+            "description": "Exact required text classifier used by the reviewed Cosmos Guardrail 0.3.1 runtime.",
         },
     )
 
@@ -3336,6 +3355,15 @@ _MODULAR_CONTROL_GRAPH_BINDINGS = (
     ("denoise", "guidance_scale", "guidanceScale"),
     ("denoise", "strength", "strength"),
 )
+# This exact text Control route admits the auxiliary on its own reviewed
+# placement. The base model's Auto policy must not change that auxiliary.
+# Edit and inpaint routes retain the generic bindings above.
+_MODULAR_QWEN_CONTROL_TEXT_GRAPH_BINDINGS = tuple(
+    (role, field, "false" if field == "auto_offload" else "controlnetOffloadMode")
+    if role == "controlnetModel" and field in {"auto_offload", "offload_mode"}
+    else (role, field, source)
+    for role, field, source in _MODULAR_CONTROL_GRAPH_BINDINGS
+)
 _MODULAR_QWEN_IMAGE_TO_IMAGE_GRAPH_EDGES = tuple(
     edge for edge in _MODULAR_SDXL_EDIT_GRAPH_EDGES if edge != ("models", "vae_out", "denoise", "vae")
 )
@@ -3702,6 +3730,13 @@ _EDIT_GRAPH_BINDINGS = _IMAGE_PIPELINE_BINDINGS + (
     ("diffusersImageEdit", "reference_strength", "conditioningScale"),
     ("diffusersImageEdit", "output_type", "outputType"),
     ("diffusersImageEdit", "max_sequence_length", "maxSequenceLength"),
+)
+# Reference-conditioned Redux, Kontext and Klein edit implementations do not
+# consume denoising strength. Reference weighting remains separately declared;
+# ordinary img2img and inpaint routes keep the complete edit bindings.
+_REFERENCE_EDIT_GRAPH_BINDINGS = tuple(
+    binding for binding in _EDIT_GRAPH_BINDINGS
+    if binding != ("diffusersImageEdit", "strength", "strength")
 )
 _QWEN_DIRECT_EDIT_GRAPH_BINDINGS = tuple(
     item
@@ -5088,6 +5123,7 @@ _COSMOS3_OMNI_TEXT_COMMON_GRAPH_BINDINGS = (
     ("afterDecode", "block_path", "workflowAfterDecodeBlock"),
 )
 _COSMOS3_OMNI_TEXT_TO_IMAGE_GRAPH_BINDINGS = _COSMOS3_OMNI_TEXT_COMMON_GRAPH_BINDINGS + (
+    ("models", "reviewed_variant", "modelVariant"),
     ("prompt", "num_frames", "oneFrame"),
 )
 _COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_BINDINGS = _COSMOS3_OMNI_TEXT_COMMON_GRAPH_BINDINGS + (
@@ -5574,6 +5610,7 @@ _BINDING_SOURCES = frozenset({"executionProfileId"}) | frozenset(
         *_MODULAR_EDIT_GRAPH_BINDINGS,
         *_MODULAR_LAYERED_GRAPH_BINDINGS,
         *_MODULAR_CONTROL_GRAPH_BINDINGS,
+        *_MODULAR_QWEN_CONTROL_TEXT_GRAPH_BINDINGS,
         *_MODULAR_QWEN_IMAGE_TO_IMAGE_GRAPH_BINDINGS,
         *_MODULAR_QWEN_INPAINT_GRAPH_BINDINGS,
         *_MODULAR_QWEN_EDIT_INPAINT_GRAPH_BINDINGS,
@@ -6087,8 +6124,8 @@ _MODULAR_FLUX_CAPABILITY = {
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
     "recommendedSteps": 28,
     "recommendedGuidance": 3.5,
-    "guidanceLabel": "Guidance",
-    "supportsNegativePrompt": False,
+    "guidanceLabel": "Distilled Guidance",
+    "supportsNegativePrompt": True,
     "supportsImageInput": True,
     "supportsMask": False,
     "supportsMultiImage": False,
@@ -6138,8 +6175,8 @@ _MODULAR_FLUX_KONTEXT_CAPABILITY = {
     "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
     "recommendedSteps": 28,
     "recommendedGuidance": 2.5,
-    "guidanceLabel": "Guidance",
-    "supportsNegativePrompt": False,
+    "guidanceLabel": "Distilled Guidance",
+    "supportsNegativePrompt": True,
     "supportsImageInput": True,
     "supportsMask": False,
     "supportsMultiImage": False,
@@ -6881,7 +6918,7 @@ _MINIMAX_H3_MODULAR_CAPABILITY = {
     "notes": [
         "The loader seals t2va/fl2va to transformer and ref2va to transformer_ref; it never loads both partitions for one Cluster.",
         "Creator defaults are 1344x768, 124 frames at fixed 24 FPS, 50 steps, and seed 0; no negative prompt or guidance input is invented.",
-        "Install and Run remain closed pending license/territory eligibility, an exact selective metadata closure, optional Transformers runtime, and measured 4-accelerator qualification.",
+        "Install and Run remain closed pending license/territory eligibility, an exact selective metadata closure, a compatible base Transformers installation, and measured 4-accelerator qualification.",
         "The current estimate-only floor is 160 GiB selective disk, 256 GiB system RAM, 192 GiB aggregate accelerator memory, and four accelerators.",
         "Public execution, Auto, templates, Gallery, and live proof remain disabled.",
     ],
@@ -7230,6 +7267,8 @@ _COSMOS3_NANO_MODULAR_PROFILE = {
     "max_low_memory_steps": None,
     "live_proof": False,
     "compatible_repos": (),
+    "optional_runtime_profiles": ("cosmos-guardrail-0.3.1",),
+    "optional_runtime_delivery": "optional_overlay",
 }
 
 _COSMOS3_NANO_MODULAR_CAPABILITY = {
@@ -7382,6 +7421,41 @@ _COSMOS3_NANO_STUDIO_EXECUTION_SPEC_DEFINITIONS = {
     for mode, (spec_id, roles, edges, bindings) in _COSMOS3_NANO_WORKFLOW_GRAPHS.items()
 }
 
+# This is an exact artifact/profile over the existing Omni T2I graph, not a
+# second (pipeline, task) specification or an execution/publication receipt.
+_COSMOS3_SUPER_T2I_MODULAR_PROFILE = {
+    **deepcopy(_COSMOS3_NANO_MODULAR_PROFILE),
+    "id": "cosmos3-super-text-to-image:official-modular-workflow",
+    "modes": ("text_to_image",),
+    "default_repo": COSMOS3_SUPER_T2I_REPO,
+}
+_COSMOS3_SUPER_T2I_MODULAR_CAPABILITY = {
+    **deepcopy(_COSMOS3_NANO_MODULAR_CAPABILITY),
+    "label": "Cosmos 3 Super Text2Image (Modular Diffusers)",
+    "displayName": "Cosmos3-Super-Text2Image",
+    "defaultRepo": COSMOS3_SUPER_T2I_REPO,
+    "downloadFiles": COSMOS3_SUPER_T2I_DIFFUSERS_FILES,
+    "artifactLabel": "Exact reviewed full BF16 Cosmos 3 Super Text2Image snapshot",
+    "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+    "recommendedSteps": 50,
+    "recommendedGuidance": 4.0,
+    "guidanceLabel": "Classifier-free guidance",
+    "recommendedSeed": 1143,
+    "recommendedFrames": 1,
+    "supportsImageInput": False,
+    "supportsVideoInput": False,
+    "outputKind": "image",
+    "modes": ["text_to_image"],
+    "modeOutputKinds": {"text_to_image": "image"},
+    "modeRequirements": {"text_to_image": {"note": "Uses the exact full-model publisher JSON-caption recipe."}},
+    "revisionCandidates": [require_catalog_revision(COSMOS3_SUPER_T2I_REPO, model_type="Cosmos3OmniModularPipeline")],
+    "notes": [
+        "The exact full-model artifact uses Omni T2I, not the separately reviewed 4-step Distilled pipeline.",
+        "The publisher recipe is BF16, 50 steps, CFG 4, 1024 square pixels and seed 1143; no offload or quantization is claimed.",
+        "Mandatory safety access/runtime, hardware/resource/output qualification, Auto and Gallery remain closed.",
+    ],
+}
+
 
 def _cosmos3_distilled_profile(mode, repository):
     slug = "text-to-image" if mode == "text_to_image" else "image-to-video"
@@ -7405,6 +7479,8 @@ def _cosmos3_distilled_profile(mode, repository):
         "max_low_memory_steps": None,
         "live_proof": False,
         "compatible_repos": (),
+        "optional_runtime_profiles": ("cosmos-guardrail-0.3.1",),
+        "optional_runtime_delivery": "optional_overlay",
     }
 
 
@@ -8164,7 +8240,10 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
-        "bindings": _EDIT_GRAPH_BINDINGS,
+        # Redux conditions a text-to-image base on prior embeddings. Its
+        # adapter accepts the legacy strength field but never consumes it.
+        # Secondary-reference weighting remains a separate real control.
+        "bindings": _REFERENCE_EDIT_GRAPH_BINDINGS,
     },
     "flux-kontext:edit-image:v1": {
         "modelType": "FluxKontextPipeline",
@@ -8241,7 +8320,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
-        "bindings": _EDIT_GRAPH_BINDINGS,
+        "bindings": _REFERENCE_EDIT_GRAPH_BINDINGS,
     },
     "flux-kontext:multi-image-reference-edit:v1": {
         "modelType": "FluxKontextPipeline",
@@ -8272,7 +8351,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
-        "bindings": _EDIT_GRAPH_BINDINGS,
+        "bindings": _REFERENCE_EDIT_GRAPH_BINDINGS,
     },
     "flux-fill:inpaint:v1": {
         "modelType": "FluxFillPipeline",
@@ -8523,7 +8602,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
-        "bindings": _EDIT_GRAPH_BINDINGS,
+        "bindings": _REFERENCE_EDIT_GRAPH_BINDINGS,
     },
     "flux2-klein:multi-image-reference-edit:v1": {
         "modelType": "Flux2KleinPipeline",
@@ -8554,7 +8633,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         },
         "roles": _EDIT_GRAPH_ROLES,
         "edges": _EDIT_GRAPH_EDGES,
-        "bindings": _EDIT_GRAPH_BINDINGS,
+        "bindings": _REFERENCE_EDIT_GRAPH_BINDINGS,
     },
     "wan-22-i2v-a14b:image-to-video:v1": {
         "modelType": "WanImageToVideoPipeline",
@@ -9477,7 +9556,10 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "profile": _MODULAR_QWEN_EDIT_PROFILE,
         "roles": _MODULAR_EDIT_GRAPH_ROLES,
         "edges": _MODULAR_EDIT_GRAPH_EDGES,
-        "bindings": _MODULAR_EDIT_GRAPH_BINDINGS,
+        "bindings": _MODULAR_EDIT_GRAPH_BINDINGS + (
+            ("denoise", "width", "width"),
+            ("denoise", "height", "height"),
+        ),
     },
     "qwen-image-edit:modular-inpainting:v1": {
         "modelType": "QwenImageEditModularPipeline",
@@ -9495,7 +9577,13 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "profile": _MODULAR_FLUX_PROFILE,
         "roles": _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
         "edges": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_EDGES + _MODULAR_FLUX_DECODE_GEOMETRY_EDGES,
-        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        # Schnell and Krea reuse these semantic bindings. The ordinary Schnell
+        # starter uses 256 tokens; an authored recipe can select the reviewed
+        # 512-token limit without silently inheriting that starter default.
+        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS + (
+            ("prompt", "negative_prompt", "negativePrompt"),
+            ("prompt", "max_sequence_length", "maxSequenceLength"),
+        ),
         "capability": _MODULAR_FLUX_CAPABILITY,
         "autoRequirements": _MODULAR_FLUX_AUTO_REQUIREMENTS,
     },
@@ -9505,11 +9593,9 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "profile": _MODULAR_FLUX_PROFILE,
         "roles": _MODULAR_SDXL_EDIT_GRAPH_ROLES,
         "edges": _MODULAR_FLUX_IMAGE_TO_IMAGE_GRAPH_EDGES + _MODULAR_FLUX_DECODE_GEOMETRY_EDGES,
-        "bindings": tuple(
-            binding
-            for binding in _MODULAR_SDXL_EDIT_GRAPH_BINDINGS
-            if binding != ("prompt", "negative_prompt", "negativePrompt")
-        ) + _MODULAR_FLUX_IMAGE_ENCODE_GEOMETRY_BINDINGS,
+        "bindings": _MODULAR_SDXL_EDIT_GRAPH_BINDINGS + _MODULAR_FLUX_IMAGE_ENCODE_GEOMETRY_BINDINGS + (
+            ("prompt", "max_sequence_length", "maxSequenceLength"),
+        ),
     },
     "flux-kontext:modular-text-to-image:v1": {
         "modelType": "FluxKontextModularPipeline",
@@ -9517,7 +9603,10 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "profile": _MODULAR_FLUX_KONTEXT_PROFILE,
         "roles": _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
         "edges": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_EDGES + _MODULAR_FLUX_DECODE_GEOMETRY_EDGES,
-        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS + (
+            ("prompt", "negative_prompt", "negativePrompt"),
+            ("prompt", "max_sequence_length", "maxSequenceLength"),
+        ),
         "capability": _MODULAR_FLUX_KONTEXT_CAPABILITY,
         "autoRequirements": _MODULAR_FLUX_KONTEXT_AUTO_REQUIREMENTS,
     },
@@ -9532,10 +9621,9 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             for binding in _MODULAR_SDXL_EDIT_GRAPH_BINDINGS
             if binding
             not in {
-                ("prompt", "negative_prompt", "negativePrompt"),
                 ("denoise", "strength", "strength"),
             }
-        ),
+        ) + (("prompt", "max_sequence_length", "maxSequenceLength"),),
     },
     "flux2-klein:modular-text-to-image:v1": {
         "modelType": "Flux2KleinModularPipeline",
@@ -9595,7 +9683,11 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "profile": _MODULAR_Z_IMAGE_PROFILE,
         "roles": _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES,
         "edges": _MODULAR_Z_IMAGE_TEXT_TO_IMAGE_GRAPH_EDGES,
-        "bindings": _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_BINDINGS,
+        # Z-Image can encode negative conditioning with an enabled guider.
+        # Its ordinary starter leaves CFG disabled; authored templates retain
+        # their own guidance and negative text instead of inheriting FLUX's
+        # unguided binding omission.
+        "bindings": _MODULAR_TEXT_TO_IMAGE_GRAPH_BINDINGS,
         "autoRequirementKey": "ZImageModularPipeline:modular_text_to_image",
         "autoRequirements": _MODULAR_Z_IMAGE_AUTO_REQUIREMENTS,
     },
@@ -9605,11 +9697,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "profile": _MODULAR_Z_IMAGE_PROFILE,
         "roles": _MODULAR_SDXL_EDIT_GRAPH_ROLES,
         "edges": _MODULAR_Z_IMAGE_TO_IMAGE_GRAPH_EDGES,
-        "bindings": tuple(
-            binding
-            for binding in _MODULAR_SDXL_EDIT_GRAPH_BINDINGS
-            if binding != ("prompt", "negative_prompt", "negativePrompt")
-        ) + _MODULAR_FLUX_IMAGE_ENCODE_GEOMETRY_BINDINGS,
+        "bindings": _MODULAR_SDXL_EDIT_GRAPH_BINDINGS + _MODULAR_FLUX_IMAGE_ENCODE_GEOMETRY_BINDINGS,
         "autoRequirementKey": "ZImageModularPipeline:modular_image_to_image",
         "autoRequirements": _MODULAR_Z_IMAGE_AUTO_REQUIREMENTS,
     },
@@ -9805,7 +9893,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
         "profile": _MODULAR_CONTROL_PROFILE,
         "roles": _MODULAR_CONTROL_GRAPH_ROLES,
         "edges": _MODULAR_CONTROL_GRAPH_EDGES,
-        "bindings": _MODULAR_CONTROL_GRAPH_BINDINGS,
+        "bindings": _MODULAR_QWEN_CONTROL_TEXT_GRAPH_BINDINGS,
     },
     "qwen-image-2512:modular-image-to-image:v1": {
         "modelType": "QwenImageModularPipeline",
@@ -16028,7 +16116,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["flux-redux:multi-image-reference-edit:v1"] = 
     "profile": _flux_redux_profile(),
     "roles": _EDIT_GRAPH_ROLES,
     "edges": _EDIT_GRAPH_EDGES,
-    "bindings": _EDIT_GRAPH_BINDINGS,
+    "bindings": _REFERENCE_EDIT_GRAPH_BINDINGS,
 }
 for _flux_combined_spec_id, _flux_combined_definition in _FLUX_COMBINED_CONTROL_DEFINITIONS.items():
     _flux_control_family = _flux_combined_spec_id.split(":", 1)[0]
@@ -18127,6 +18215,7 @@ def studio_execution_profile_definitions() -> dict[str, dict[str, Any]]:
         definition["profile"]["id"]: deepcopy(definition["profile"])
         for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
     }
+    profiles[_COSMOS3_SUPER_T2I_MODULAR_PROFILE["id"]] = deepcopy(_COSMOS3_SUPER_T2I_MODULAR_PROFILE)
     # A recipe identity is not a new upstream pipeline class. Keep ordinary
     # SDXL loaders and persisted standard PAG profiles unchanged; this explicit
     # selection adds the official native guider to a new operation starter.
@@ -18174,7 +18263,10 @@ def studio_execution_profile_definitions() -> dict[str, dict[str, Any]]:
 
 def studio_auto_model_requirements() -> dict[str, dict[str, Any]]:
     return {
-        definition.get("autoRequirementKey", definition["modelType"]): deepcopy(definition["autoRequirements"])
+        definition.get("autoRequirementKey", definition["modelType"]): {
+            **deepcopy(definition["autoRequirements"]),
+            "memorySemantics": "machine_capacity",
+        }
         for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
         if "autoRequirements" in definition
     }
@@ -18204,6 +18296,7 @@ def studio_expert_resource_requirements(
 
 
 _REVIEWED_REPOSITORY_DOWNLOAD_FILES = {
+    COSMOS3_SUPER_T2I_REPO: COSMOS3_SUPER_T2I_DIFFUSERS_FILES,
     "Qwen/Qwen-Image": QWEN_IMAGE_ORIGINAL_DIFFUSERS_FILES,
     "Qwen/Qwen-Image-2512": QWEN_IMAGE_2512_DIFFUSERS_FILES,
     "Qwen/Qwen-Image-Edit": QWEN_IMAGE_EDIT_DIFFUSERS_FILES,
@@ -18226,8 +18319,10 @@ def reviewed_repository_download_files(repo: str) -> list[str]:
     return list(_REVIEWED_REPOSITORY_DOWNLOAD_FILES.get(repo, ()))
 
 
-def studio_capability_definition(model_type: str) -> dict[str, Any]:
+def studio_capability_definition(model_type: str, *, repository: str | None = None) -> dict[str, Any]:
     """Copy only one model's defaults, with the same precedence as the catalog."""
+    if model_type == "Cosmos3OmniModularPipeline" and repository == COSMOS3_SUPER_T2I_REPO:
+        return deepcopy(_COSMOS3_SUPER_T2I_MODULAR_CAPABILITY)
     for definition in reversed(STUDIO_EXECUTION_SPEC_DEFINITIONS.values()):
         if definition["modelType"] == model_type and "capability" in definition:
             return deepcopy(definition["capability"])
@@ -18315,6 +18410,16 @@ def _execution_spec_role_params(
         for field in ("controlnet",):
             if field not in connected_optional_inputs:
                 params.pop(field, None)
+        bound_fields = {
+            field
+            for role, field, _source in public["bindings"]
+            if role in loader_roles
+        }
+        # The private Qwen inpaint selector is an opt-in owner policy, not a
+        # new default field of every existing immutable registered graph.
+        # Keep it only when this exact specification actually uses it.
+        if "inpaint_compatibility" not in connected_optional_inputs | bound_fields:
+            params.pop("inpaint_compatibility", None)
     node_type = _MODULAR_NODE_TYPES.get(node_key)
     if public["executionPath"] != "modular-diffusers" or node_type is None:
         return params

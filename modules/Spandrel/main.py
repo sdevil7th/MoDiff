@@ -74,12 +74,13 @@ class Upscaler(NodeBase):
                 )
 
             if not model_path:
-                if online_status == "Offline":
-                    #logger.error(f"Model {model_path} not found in cache and online status is `offline`. Consider changing the online status or adding the model to the cache manually.")
-                    raise FileNotFoundError(f"Model {model_path} not found in cache and online status is `offline`. Consider changing the online status or adding the model to the cache manually.")
-
+                offline_hint = (
+                    " Leave Offline mode before downloading, or add the pinned file to the cache manually."
+                    if online_status == "Offline" else ""
+                )
                 raise FileNotFoundError(
                     f"Upscaler {repo_id}/{file} is not installed. Install the pinned file through Model Manager first."
+                    + offline_hint
                 )
 
         else:

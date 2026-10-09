@@ -756,6 +756,7 @@ class StandaloneComponentBindingTests(unittest.TestCase):
                 )
         bind_output.assert_not_called()
 
+    @patch("huggingface_hub.constants.HF_HUB_OFFLINE", False)
     def test_auto_model_fingerprint_change_cannot_republish_a_resident_model(self):
         node = AutoModelLoader()
         identity_a = _standalone_identity(

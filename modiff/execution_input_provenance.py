@@ -23,6 +23,9 @@ FIELD_NAMES = {
     "revision": "revision", "dtype": "dtype", "device": "device",
     "model_type": "modelType", "pipeline_class": "modelType",
     "auto_offload": "autoOffload", "offload_mode": "offloadMode",
+    "attention_backend": "attentionBackend",
+    "vae_slicing": "vaeSlicing", "enable_vae_slicing": "vaeSlicing",
+    "vae_tiling": "vaeTiling", "enable_vae_tiling": "vaeTiling",
     "output_type": "outputType", "quant_config": "quantConfig",
     "conditioning_scale": "conditioningScale", "control_mode": "controlMode",
     "control_guidance_start": "controlGuidanceStart", "control_guidance_end": "controlGuidanceEnd",
@@ -33,6 +36,12 @@ FIELD_NAMES = {
     "use_kv_cache": "attentionContextReuse",
 }
 NODE_FIELD_NAMES = {
+    ('ModularDiffusers', 'Guider'): {
+        **FIELD_NAMES,
+        'guider': 'guiderType', 'enabled': 'guidanceEnabled',
+        'use_original_formulation': 'guidanceOriginalFormulation',
+        'guidance_rescale': 'guidanceRescale', 'start': 'guidanceStart', 'stop': 'guidanceStop',
+    },
     ('DiffusersImage', 'ControlComponent'): {
         'model_id': 'controlComponentRepo', 'revision': 'controlComponentRevision',
         'shared_conditions': 'controlComponentSharedConditions',

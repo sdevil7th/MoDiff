@@ -279,6 +279,15 @@ When several component roles share that transport type, declare
 to the consumer's `signalCompatibility`; the editor then rejects, for example,
 a scheduler object wired to a denoiser input even when both came from the same
 pipeline class.
+
+When one output changes component kind with a scalar selection, publish
+`connectionRoleSelector: {"field": "model_type", "values": {"controlnet": "controlnet_component"}}`
+instead of giving every kind the same static role. The editor resolves only an
+unconnected scalar field against that bounded declared map. Missing, unknown,
+connected or malformed selections cannot satisfy a role requirement. For
+example, Auto Model Loader's ControlNet choice can connect to a ControlNet
+consumer; its VAE and transformer choices cannot.
+
 For structured pipeline signals whose value contains an `actions` mapping, use
 `{"required": true, "action": "$node"}` to require a non-empty entry for the
 current node action (and, when the signal has a current `mode`, membership in that

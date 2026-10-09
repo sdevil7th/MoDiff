@@ -120,6 +120,44 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
             self.assertFalse(result["sourceRevisionReady"])
             self.assertEqual(result["source"], source)
 
+    def test_auxiliary_qualification_requires_verified_native_base(self):
+        from modiff.optional_runtimes import TRANSFORMERS_MAIN_PEFT_GGUF_RUNTIME_PROFILE_ID
+        with (
+            mock.patch.object(qualification, "_platform_name", return_value="linux"),
+            mock.patch.object(qualification, "_machine_name", return_value="x86_64"),
+            mock.patch.object(qualification, "_json_process", return_value={
+                "plan": [{"byteSize": 1}], "present": [], "nativeBaseVerified": False,
+            }),
+            mock.patch.object(qualification, "copy_verified_uv"),
+            mock.patch.object(qualification, "_source_revision", return_value={
+                "commit": "a" * 40, "dirty": False, "available": True,
+            }),
+        ):
+            result = qualification.qualification_preflight(TRANSFORMERS_MAIN_PEFT_GGUF_RUNTIME_PROFILE_ID)
+        self.assertEqual(result["status"], "not_ready")
+        self.assertTrue(result["requiresNativeBase"])
+        self.assertFalse(result["nativeBaseVerified"])
+        self.assertTrue(result["cleanBase"])
+        self.assertTrue(result["workloadSupported"])
+
+    def test_no_weight_tool_cannot_qualify_bitsandbytes_without_gpu_binary_workload(self):
+        from modiff.optional_runtimes import TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID
+        with (
+            mock.patch.object(qualification, "_platform_name", return_value="linux"),
+            mock.patch.object(qualification, "_machine_name", return_value="x86_64"),
+            mock.patch.object(qualification, "_json_process", return_value={
+                "plan": [{"byteSize": 1}], "present": [], "nativeBaseVerified": True,
+            }),
+            mock.patch.object(qualification, "copy_verified_uv"),
+            mock.patch.object(qualification, "_source_revision", return_value={
+                "commit": "a" * 40, "dirty": False, "available": True,
+            }),
+        ):
+            result = qualification.qualification_preflight(TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID)
+        self.assertEqual(result["status"], "not_ready")
+        self.assertTrue(result["nativeBaseVerified"])
+        self.assertFalse(result["workloadSupported"])
+
     def test_source_revision_rejects_noncommit_output(self):
         completed = mock.Mock(stdout="main\n")
         with mock.patch.object(
@@ -142,31 +180,18 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
             status = qualification.main(["--preflight-only"])
         self.assertEqual(status, 1)
 
-    def test_verified_uv_copy_rejects_a_forged_executable(self):
-        from modiff.tool_locks import UV_TOOL_LOCKS
-
-        lock = UV_TOOL_LOCKS[(qualification._platform_name(), qualification._machine_name())]
+    def test_verified_uv_copy_rejects_an_invalid_executable(self):
+        from modiff import tool_locks
         executable_name = "uv.exe" if qualification._platform_name() == "windows" else "uv"
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             source = root / "source" / "tools" / "uv"
             source.mkdir(parents=True)
             (source / executable_name).write_bytes(b"forged")
-            (source / "receipt.json").write_text(
-                json.dumps(
-                    {
-                        "schemaVersion": 1,
-                        "archiveSha256": lock["archiveSha256"],
-                        "executableSha256": lock["executableSha256"],
-                        "executable": executable_name,
-                    }
-                ),
-                encoding="utf-8",
-            )
-
             target = root / "target"
-            with self.assertRaisesRegex(RuntimeError, "reviewed identity"):
-                qualification.copy_verified_uv(root / "source", target)
+            with mock.patch.object(tool_locks.shutil, "which", return_value=None):
+                with self.assertRaisesRegex(RuntimeError, "Cannot run uv"):
+                    qualification.copy_verified_uv(root / "source", target)
             self.assertFalse(target.exists())
 
     def test_evidence_is_bounded_and_never_overwrites(self):

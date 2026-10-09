@@ -9,6 +9,7 @@ an isolated child interpreter before it can be promoted or activated.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import ast
 import base64
 import configparser
 import csv
@@ -39,9 +40,6 @@ import zipfile
 
 
 PYPI_SIMPLE_INDEX = "https://pypi.org/simple"
-PINNED_DIFFUSERS_SOURCE_URL = "https://github.com/huggingface/diffusers.git"
-PINNED_DIFFUSERS_COMMIT = "fbf49e7f35857f76bc57b177e26f12b03687c668"
-PINNED_DIFFUSERS_VERSION = "0.41.0.dev0"
 _DIGEST_PREFIX = "sha256:"
 MANAGED_ROOT = Path(
     os.environ.get("MODIFF_MANAGED_ROOT") or Path(__file__).resolve().parents[1] / ".modiff"
@@ -1098,11 +1096,14 @@ def _wheel_target_path(member_name: str) -> str:
         # the normal Wheel mapping for actual scheme members.
         if len(parts) == 1:
             parts = [".modiff-wheel-data", parts[0]]
-        elif len(parts) == 2 and parts[1] in {"purelib", "platlib", "scripts"}:
+        elif len(parts) == 2 and parts[1] in {"purelib", "platlib", "scripts", "data"}:
             parts = [".modiff-wheel-data", *parts]
-        elif len(parts) < 3 or parts[1] not in {"purelib", "platlib", "scripts"}:
+        elif len(parts) < 3 or parts[1] not in {"purelib", "platlib", "scripts", "data"}:
             raise RuntimeError("A locked wheel uses an unsupported data installation scheme.")
         else:
+            # The owned uv --target installation maps standard Wheel data
+            # members into that same overlay root. Keep the complete payload
+            # in its authenticated seal; never install into sys.prefix.
             parts = (["bin"] if parts[1] == "scripts" else []) + parts[2:]
     if not parts:
         raise RuntimeError("A locked wheel member has no install target.")
@@ -1796,38 +1797,41 @@ def _import_identity(import_name: str, metadata_origin: str) -> dict[str, Any]:
     return {"origin": resolved_origin, "searchLocations": sorted(locations)}
 
 
-def _diffusers_identity() -> dict[str, str]:
+def _diffusers_identity() -> dict[str, Any]:
+    """Bind the compatible installed package, separately from catalog source provenance."""
+    from packaging.requirements import Requirement
+    from modiff.base_runtime import base_model_runtime_contract
+
+    declarations = [
+        Requirement(item) for item in base_model_runtime_contract()["dependencies"]
+        if Requirement(item).name.lower().replace("_", "-") == "diffusers"
+    ]
+    if len(declarations) != 1 or declarations[0].url is not None or not declarations[0].specifier:
+        raise RuntimeError("Diffusers must have one ordinary compatible-version declaration.")
+    requirement = declarations[0]
     try:
         distribution = metadata.distribution("diffusers")
     except metadata.PackageNotFoundError as exc:
-        raise RuntimeError("The pinned Diffusers distribution is unavailable.") from exc
+        raise RuntimeError("The compatible Diffusers distribution is unavailable.") from exc
+    if not requirement.specifier.contains(str(distribution.version), prereleases=False):
+        raise RuntimeError(f"Diffusers {distribution.version} does not satisfy {requirement.specifier}.")
     try:
-        direct = json.loads(distribution.read_text("direct_url.json") or "")
-    except (TypeError, ValueError) as exc:
-        raise RuntimeError("Diffusers has no readable immutable source receipt.") from exc
-    vcs = direct.get("vcs_info") if isinstance(direct, dict) else None
-    source = str(direct.get("url") or "") if isinstance(direct, dict) else ""
-    commit = str(vcs.get("commit_id") or "") if isinstance(vcs, dict) else ""
-    requested = str(vcs.get("requested_revision") or "") if isinstance(vcs, dict) else ""
-    if (
-        str(distribution.version) != PINNED_DIFFUSERS_VERSION
-        or source != PINNED_DIFFUSERS_SOURCE_URL
-        or not isinstance(vcs, dict)
-        or vcs.get("vcs") != "git"
-        or commit != PINNED_DIFFUSERS_COMMIT
-        or requested != PINNED_DIFFUSERS_COMMIT
-        or "dir_info" in direct
-    ):
-        raise RuntimeError("Installed Diffusers does not match MoDiff's reviewed source and commit.")
+        raw_direct = distribution.read_text("direct_url.json")
+        direct = json.loads(raw_direct) if raw_direct else None
+    except (OSError, TypeError, ValueError) as exc:
+        raise RuntimeError("Diffusers has unreadable installation provenance.") from exc
+    if direct is not None and (not isinstance(direct, dict) or "dir_info" in direct):
+        raise RuntimeError("Diffusers must be an installed distribution, not an editable source tree.")
+    record = distribution.read_text("RECORD")
+    if not isinstance(record, str) or not record:
+        raise RuntimeError("Diffusers has no installed distribution record.")
     metadata_origin = _resolved_distribution_origin(distribution)
     return {
         "distribution": "diffusers",
         "version": str(distribution.version),
-        "sourceUrl": source,
-        "vcs": "git",
-        "dirInfoPresent": False,
-        "commitId": commit,
-        "requestedRevision": requested,
+        "declaration": str(requirement),
+        "directUrl": direct,
+        "recordDigest": f"sha256:{hashlib.sha256(record.encode('utf-8')).hexdigest()}",
         "metadataOrigin": metadata_origin,
         "importIdentity": _import_identity("diffusers", metadata_origin),
     }
@@ -1846,6 +1850,39 @@ def _accelerator_identity() -> dict[str, str]:
     )
 
     saved = read_state(Path(sys.prefix))
+    from modiff.base_runtime import base_runtime_status
+    native = base_runtime_status()
+    specialist_receipt = isinstance(saved, dict) and saved.get("profile") in {
+        "amd-rocm-linux", "amd-instinct-rocm-linux", "amd-pytorch-windows",
+    }
+    if native["verified"] and not specialist_receipt:
+        version = str(native["packages"].get("torch") or "")
+        local_version = version.partition("+")[2]
+        build = {}
+        try:
+            version_source = metadata.distribution("torch").locate_file("torch/version.py")
+            for statement in ast.parse(Path(version_source).read_text(encoding="utf-8")).body:
+                target = statement.target if isinstance(statement, ast.AnnAssign) else (
+                    statement.targets[0] if isinstance(statement, ast.Assign) and len(statement.targets) == 1 else None
+                )
+                if isinstance(target, ast.Name) and target.id in {"cuda", "hip"}:
+                    build[target.id] = ast.literal_eval(statement.value)
+        except (OSError, SyntaxError, TypeError, ValueError, metadata.PackageNotFoundError):
+            pass
+        profile_id = (
+            "intel-xpu" if "xpu" in local_version else
+            "amd-rocm-linux" if "rocm" in local_version or build.get("hip") else
+            "nvidia-cuda" if local_version.startswith("cu") or build.get("cuda") else
+            "apple-mps" if sys.platform == "darwin" and (saved or {}).get("profile") != "cpu" else "cpu"
+        )
+        paths = (PROJECT_ROOT / "pyproject.toml", PROJECT_ROOT / "uv.lock", MANIFEST_PATH)
+        contract_files = []
+        for path in paths:
+            body = path.read_bytes()
+            contract_files.append({"path": str(path.resolve(strict=True)), "size": len(body),
+                                   "sha256": hashlib.sha256(body).hexdigest()})
+        return {"profileId": profile_id, "lockDigest": native["current_digest"],
+                "manifestRevision": str(load_manifest().get("revision") or ""), "contractFiles": contract_files}
     if (
         not isinstance(saved, dict)
         or saved.get("runtime_contract_schema") != RUNTIME_CONTRACT_SCHEMA
@@ -2269,6 +2306,12 @@ for spec_record in payload["specs"]:
     observed_digest = "sha256:" + hashlib.sha256(canonical).hexdigest()
     if observed_digest != spec_record["specDigest"]:
         raise RuntimeError("the executable optional-runtime spec digest does not match")
+    for incompatible in spec_record["spec"].get("incompatibleDistributions", []):
+        try:
+            metadata.distribution(incompatible)
+        except metadata.PackageNotFoundError:
+            continue
+        raise RuntimeError(f"optional runtime has a conflicting import provider: {incompatible}")
 
 canonical_binding = json.dumps(payload["binding"], sort_keys=True, separators=(",", ":")).encode("utf-8")
 if "sha256:" + hashlib.sha256(canonical_binding).hexdigest() != payload["bindingDigest"]:
@@ -2359,20 +2402,23 @@ for base in payload["binding"]["basePackages"]:
         raise RuntimeError(f"base-owned distribution {base['distribution']!r} violates its reviewed constraint")
 
 diffusers = metadata.distribution("diffusers")
-direct = json.loads(diffusers.read_text("direct_url.json") or "")
-vcs = direct.get("vcs_info") if isinstance(direct, dict) else None
+raw_direct = diffusers.read_text("direct_url.json")
+direct = json.loads(raw_direct) if raw_direct else None
 diffusers_identity = payload["binding"]["diffusers"]
+requirement = importlib.import_module("packaging.requirements").Requirement(diffusers_identity["declaration"])
+record = diffusers.read_text("RECORD")
 if (
-    str(diffusers.version) != diffusers_identity["version"]
-    or direct.get("url") != diffusers_identity["sourceUrl"]
-    or not isinstance(vcs, dict)
-    or vcs.get("vcs") != diffusers_identity["vcs"]
-    or vcs.get("commit_id") != diffusers_identity["commitId"]
-    or vcs.get("requested_revision") != diffusers_identity["requestedRevision"]
-    or ("dir_info" in direct) != diffusers_identity["dirInfoPresent"]
+    requirement.url is not None
+    or not requirement.specifier.contains(str(diffusers.version), prereleases=False)
+    or str(diffusers.version) != diffusers_identity["version"]
+    or direct != diffusers_identity["directUrl"]
+    or (direct is not None and (not isinstance(direct, dict) or "dir_info" in direct))
+    or not isinstance(record, str)
+    or f"sha256:{hashlib.sha256(record.encode('utf-8')).hexdigest()}" != diffusers_identity["recordDigest"]
     or str(Path(getattr(diffusers, "_path", "")).resolve(strict=True)) != diffusers_identity["metadataOrigin"]
 ):
-    raise RuntimeError("Diffusers identity drifted during validation")
+    raise RuntimeError("Diffusers installation identity drifted during validation")
+
 assert_import_origin(
     "diffusers",
     diffusers_identity["metadataOrigin"],

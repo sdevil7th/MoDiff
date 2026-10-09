@@ -1,0 +1,88 @@
+{
+  "subjects": [
+    {
+      "description": "Two damp human hands working a spinning cylinder of wet gray clay on a pottery wheel, fingers gently pinching and pulling the walls upward to form a narrow neck and rounded belly",
+      "appearance_details": "Hands coated with a thin sheen of slip, glistening with water; fingertips leave subtle ridges and fingerprints in the clay; knuckles slightly creased, nails short and rimmed with gray clay; small splatters of clay on the back of the wrists",
+      "relationship": "The primary actor shaping the central spinning clay form on the wheel",
+      "location": "Center foreground, framing the clay column",
+      "relative_size": "Hands and clay occupy roughly the central 60 percent of the frame",
+      "orientation": "Hands angled inward from left and right, palms cupping the clay symmetrically",
+      "pose": "Both hands curled around the clay, thumbs and index fingers pinched at the upper neck while remaining fingers support the rounded belly below",
+      "clothing": "",
+      "expression": "",
+      "gender": "Unknown",
+      "age": "Adult",
+      "skin_tone_and_texture": "Light to medium skin tone, slick with watery slip giving a glossy sheen, fine pores and small wrinkles visible at knuckles",
+      "facial_features": "",
+      "number_of_subjects": 1,
+      "number_of_arms": 2,
+      "number_of_legs": 0,
+      "number_of_hands": 2,
+      "number_of_fingers": 10
+    },
+    {
+      "description": "A spinning cylinder of wet gray stoneware clay being formed into a vase shape with a narrow neck and rounded belly",
+      "appearance_details": "Concentric horizontal rings spiral around the surface from the rotation; glistening film of water; subtle fingerprint impressions; small drips of slip running down the lower belly onto the wheel head",
+      "relationship": "The object being shaped by the hands; central focal point of the scene",
+      "location": "Absolute center of the frame, rising vertically from the wheel head",
+      "relative_size": "Approximately one third of the frame height, dominant central form",
+      "orientation": "Vertical axis, rotating",
+      "pose": "Upright cylindrical-to-vase form mid-throw, neck tapering, belly bulging",
+      "clothing": "",
+      "expression": "",
+      "gender": "N/A",
+      "age": "N/A",
+      "skin_tone_and_texture": "",
+      "facial_features": "",
+      "number_of_subjects": 1,
+      "number_of_arms": 0,
+      "number_of_legs": 0,
+      "number_of_hands": 0,
+      "number_of_fingers": 0
+    }
+  ],
+  "subject_details": {
+    "clay_state": "Wet gray stoneware, plastic and pliable, glistening with slip",
+    "wheel_motion": "Visible motion blur in concentric ring patterns indicating rotation",
+    "forming_stage": "Mid-throw, transitioning from cylinder to vase form with narrow neck and rounded belly",
+    "slip_splatter": "Splattered clay droplets dot the black apron and the wheel tray",
+    "tools_in_background": "Wooden ribs, wire cutter, sponge, and metal trimming tools softly blurred behind"
+  },
+  "background_setting": "A dim pottery studio with a matte black wheel tray and splash pan surrounding the spinning wheel head. Behind the potter, softly blurred, sit a row of throwing tools: wooden ribs, a metal kidney, a wire cutter coiled on a small shelf, and a sponge in a shallow water bowl. The black apron worn by the potter forms part of the lower background, dotted with dried clay flecks. The studio walls are deep charcoal, allowing the warm directional light to sculpt the central action.",
+  "lighting": {
+    "conditions": "Warm, controlled studio lighting with a single key source",
+    "direction": "From the right side of the frame, slightly elevated",
+    "shadows": "Soft, defined shadows falling to the left of the clay form and beneath the hands; subtle contact shadow on the wheel head",
+    "illumination_effect": "Highlights the wet sheen on the clay, accentuates concentric ring textures and fingerprint detail, and creates a moody chiaroscuro that isolates the hands and clay from the darker background"
+  },
+  "aesthetics": {
+    "composition": "Centered symmetrical composition with the clay form on the vertical axis, hands framing it from both sides; rule-of-thirds intersections align with the neck and belly of the vase",
+    "color_scheme": "Muted earth tones dominated by cool grays of the clay, warm amber highlights from the studio light, deep blacks of the apron and wheel tray, and natural skin tones",
+    "mood_atmosphere": "Meditative, tactile, focused craftsmanship",
+    "patterns": "Concentric horizontal rings spiraling around the clay surface from the wheel's rotation"
+  },
+  "cinematography": {
+    "framing": "Medium close-up",
+    "camera_angle": "Slightly above rim height, looking gently down onto the hands and clay",
+    "depth_of_field": "Shallow",
+    "focus": "Crisp focus on the hands and the wet clay surface",
+    "lens_focal_length": "35mm"
+  },
+  "style_medium": "Photography",
+  "artistic_style": "Photorealistic studio product/process photography",
+  "context": "Editorial or artisanal documentation of a hand-thrown ceramic vase being formed on a pottery wheel",
+  "text_and_signage_elements": [],
+  "quadrant_scan": {
+    "top_left": "Softly blurred dark background with faint warm rim light catching the edge of a wooden rib tool on a shelf",
+    "top_right": "Warm directional studio light source area; brightest highlights spill across the upper right, illuminating the narrow neck of the vase",
+    "bottom_left": "Edge of the black apron speckled with dried clay flecks and the curved rim of the splash pan in shadow",
+    "bottom_right": "Wheel tray dotted with splattered clay droplets and trickles of slip; partial view of the rotating wheel head",
+    "absolute_center": "The wet gray clay vase form mid-throw, cradled by two slip-coated hands pinching the neck and supporting the rounded belly, concentric rings glistening under warm light"
+  },
+  "comprehensive_t2i_caption": "A photorealistic studio photograph captured at slightly above rim height with a 35mm lens shows a pottery wheel in motion at the center of the frame. A cylinder of wet gray stoneware clay spins, its surface scored with fine concentric rings from rotation and glistening with a thin film of water and slip. Two damp human hands, coated in pale gray slip, gently pinch and pull the walls upward, the thumbs and index fingers narrowing the neck while the lower fingers cradle and shape a rounded belly, transforming the cylinder into a vase. Warm directional studio light from the right rakes across the scene, accentuating the sheen of water, the subtle ridges of fingerprints, and the soft modeling of the clay's curves, while casting gentle shadows to the left. Splattered droplets of clay dot a black apron worn by the potter and the matte black wheel tray and splash pan beneath. In the softly blurred background, a row of pottery tools — wooden ribs, a metal kidney, a wire cutter, and a damp sponge in a water bowl — sit on a charcoal-toned shelf. The depth of field is shallow, holding crisp focus on the hands and clay while the surroundings dissolve into a moody, warm-toned haze. The atmosphere is meditative and tactile, celebrating the intimate craftsmanship of hand-thrown ceramics.",
+  "resolution": {
+    "H": 1024,
+    "W": 1024
+  },
+  "aspect_ratio": "1,1"
+}

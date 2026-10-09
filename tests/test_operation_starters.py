@@ -179,8 +179,10 @@ class OperationStarterTests(unittest.TestCase):
         text = self.resolve("FluxModularPipeline", "text_to_image")
         image = self.resolve("FluxModularPipeline", "image_to_image")
         edit = self.resolve("FluxKontextModularPipeline", "edit_image")
-        self.assertEqual(len(text["nodes"]), 4)
-        self.assertEqual(len(image["nodes"]), 5)
+        self.assertEqual(len(text["nodes"]), 5)
+        self.assertEqual(len(image["nodes"]), 6)
+        for starter in (text, image, edit):
+            self.assertTrue(any(n["operation"]["operationId"] == "diffusion.guidance" for n in starter["nodes"]))
         self.assertEqual(image["workflowId"], "image2image")
         self.assertEqual(edit["workflowId"], "image_conditioned")
         self.assertTrue(any(i["field"] == "image" for i in image["requiredInputs"]))

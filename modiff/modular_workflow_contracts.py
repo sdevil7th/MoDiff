@@ -38,6 +38,8 @@ HUNYUAN_VIDEO_15_I2V_REPOSITORY = (
 )
 COSMOS3_DISTILLED_T2I_REPOSITORY = "nvidia/Cosmos3-Super-Text2Image-4Step"
 COSMOS3_DISTILLED_I2V_REPOSITORY = "nvidia/Cosmos3-Super-Image2Video-4Step"
+COSMOS3_NANO_REPOSITORY = "nvidia/Cosmos3-Nano"
+COSMOS3_SUPER_T2I_REPOSITORY = "nvidia/Cosmos3-Super-Text2Image"
 MINIMAX_H3_REPOSITORY = "MiniMaxAI/MiniMax-H3"
 HELIOS_BASE_REPOSITORY = "BestWishYsh/Helios-Base"
 HELIOS_MID_REPOSITORY = "BestWishYsh/Helios-Mid"
@@ -70,6 +72,7 @@ PINNED_MODULAR_REPOSITORY_VARIANTS = {
         COSMOS3_DISTILLED_T2I_REPOSITORY,
         COSMOS3_DISTILLED_I2V_REPOSITORY,
     ),
+    "Cosmos3OmniModularPipeline": (COSMOS3_NANO_REPOSITORY, COSMOS3_SUPER_T2I_REPOSITORY),
     "HunyuanVideo15ModularPipeline": (
         HUNYUAN_VIDEO_15_T2V_REPOSITORY,
         HUNYUAN_VIDEO_15_I2V_REPOSITORY,
@@ -94,6 +97,7 @@ PINNED_MODULAR_REPOSITORY_VARIANTS = {
 # the BlockDefinitionV2 graph. A missing entry means the registered artifact
 # remains the sole choice for that workflow.
 PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS = {
+    ("Cosmos3OmniModularPipeline", "text2image"): (COSMOS3_NANO_REPOSITORY, COSMOS3_SUPER_T2I_REPOSITORY),
     ("ErnieImageModularPipeline", "text2image"): (ERNIE_IMAGE_TURBO_REPOSITORY,),
     ("QwenImageModularPipeline", "text2image"): (
         QWEN_IMAGE_REPOSITORY,
@@ -101,6 +105,38 @@ PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS = {
         QWEN_IMAGE_2512_PREQUANTIZED_REPOSITORY,
     ),
 }
+
+# A same-class artifact may implement only a subset of the class's workflows.
+# This exact checkpoint is reviewed for T2I only; neither raw kwargs nor a
+# connected sealed bundle may turn it into a Nano video/action checkpoint.
+PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS = {
+    ("Cosmos3OmniModularPipeline", COSMOS3_SUPER_T2I_REPOSITORY): frozenset({"text2image"}),
+}
+
+# The publisher's Super index points every executable component at this same
+# immutable checkpoint. Its outer classes and loading descriptors are part of
+# the artifact contract, rather than permission to fetch another Omni model.
+PINNED_MODULAR_REPOSITORY_COMPONENT_SOURCES = {
+    COSMOS3_SUPER_T2I_REPOSITORY: {
+        "text_tokenizer": ("transformers", "Qwen2TokenizerFast"),
+        "vae": ("diffusers", "AutoencoderKLWan"),
+        "transformer": ("diffusers", "Cosmos3OmniTransformer"),
+        "scheduler": ("diffusers", "UniPCMultistepScheduler"),
+        "sound_tokenizer": ("diffusers", "Cosmos3AVAEAudioTokenizer"),
+    },
+}
+
+
+def require_reviewed_modular_repository_workflow(model_type, repository, revision, workflow_id):
+    workflows = PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS.get((model_type, repository))
+    if workflows is None:
+        return
+    from modiff.model_artifact_catalog import require_catalog_revision
+
+    if workflow_id not in workflows or revision != require_catalog_revision(repository, model_type=model_type):
+        raise ValueError("The selected exact Modular artifact does not support this reviewed workflow/revision.")
+
+
 # Weight filename variants are a separate contract from the repository choices
 # above.  ModularPipeline.load_components() accepts ``variant`` as a loading
 # override for every component.  Keep the reviewed override repository-scoped
@@ -166,6 +202,9 @@ PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES = {
         "text_tokenizer": ("transformers", "Qwen2TokenizerFast"),
     },
     COSMOS3_DISTILLED_I2V_REPOSITORY: {
+        "text_tokenizer": ("transformers", "Qwen2TokenizerFast"),
+    },
+    COSMOS3_SUPER_T2I_REPOSITORY: {
         "text_tokenizer": ("transformers", "Qwen2TokenizerFast"),
     },
     # Transformers 5 consolidates legacy ``*TokenizerFast`` exports into the

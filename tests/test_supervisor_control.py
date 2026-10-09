@@ -3,6 +3,9 @@ import os
 import tempfile
 import threading
 import unittest
+import errno
+import socket
+import struct
 from concurrent.futures import ThreadPoolExecutor
 from http.client import HTTPConnection
 from pathlib import Path
@@ -22,6 +25,82 @@ from modiff.supervisor_control import (
 
 
 class SupervisorControlTests(unittest.TestCase):
+    def test_response_write_handles_only_client_disconnect_errors(self):
+        handler_class = supervisor_control._handler(Mock())
+        for failure in (BrokenPipeError(errno.EPIPE, "closed"),
+                        ConnectionResetError(errno.ECONNRESET, "reset"),
+                        ConnectionAbortedError(errno.ECONNABORTED, "aborted")):
+            for operation in ("end_headers", "write"):
+                with self.subTest(error=type(failure).__name__, operation=operation):
+                    handler = handler_class.__new__(handler_class)
+                    handler.headers = {}
+                    handler.send_response = Mock()
+                    handler.send_header = Mock()
+                    handler.end_headers = Mock(side_effect=failure if operation == "end_headers" else None)
+                    handler.wfile = Mock()
+                    if operation == "write":
+                        handler.wfile.write.side_effect = failure
+                    handler._send(200, {"error": False})
+        handler = handler_class.__new__(handler_class)
+        handler.headers = {}
+        handler.send_response = Mock()
+        handler.send_header = Mock()
+        handler.end_headers = Mock()
+        handler.wfile = Mock()
+        handler.wfile.write.side_effect = OSError(errno.EIO, "unexpected I/O failure")
+        with self.assertRaises(OSError):
+            handler._send(200, {"error": False})
+
+    def test_aborted_health_response_does_not_log_server_failure_or_break_next_request(self):
+        with tempfile.TemporaryDirectory() as directory:
+            controller = SupervisorController(Path(directory) / "supervisor-queue.json")
+            entered, release, finished = threading.Event(), threading.Event(), threading.Event()
+            real_status = controller.status
+
+            def delayed_status():
+                entered.set()
+                release.wait(timeout=2)
+                return real_status()
+
+            server = SupervisorControlServer(controller, "127.0.0.1", 0)
+            port = server.server.server_address[1]
+            server.start()
+            try:
+                with patch.object(controller, "status", side_effect=delayed_status), \
+                     patch.object(server.server, "handle_error") as handle_error:
+                    handler_class = server.server.RequestHandlerClass
+                    real_send = handler_class._send
+
+                    def record_send(handler, *args):
+                        try:
+                            return real_send(handler, *args)
+                        finally:
+                            finished.set()
+
+                    with patch.object(handler_class, "_send", record_send):
+                        client = socket.create_connection(("127.0.0.1", port), timeout=2)
+                        try:
+                            client.sendall(f"GET /health HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\n\r\n".encode())
+                            self.assertTrue(entered.wait(timeout=2))
+                            linger_format = "hh" if os.name == "nt" else "ii"
+                            client.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack(linger_format, 1, 0))
+                        finally:
+                            client.close()
+                        release.set()
+                        self.assertTrue(finished.wait(timeout=2))
+                    handle_error.assert_not_called()
+                connection = HTTPConnection("127.0.0.1", port, timeout=2)
+                try:
+                    connection.request("GET", "/health")
+                    response = connection.getresponse()
+                    self.assertEqual(response.status, 200)
+                    self.assertFalse(json.loads(response.read())["error"])
+                finally:
+                    connection.close()
+            finally:
+                release.set()
+                server.close()
+
     @unittest.skipUnless(os.name == "nt", "requires Windows file sharing")
     def test_queue_publication_recovers_after_a_concurrent_reader_closes(self):
         with tempfile.TemporaryDirectory() as directory:

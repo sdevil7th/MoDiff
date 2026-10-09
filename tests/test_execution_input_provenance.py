@@ -11,6 +11,33 @@ def node(params=None):
     return {"module": "modules.Diffusers", "action": "Encode", "params": params or {}}
 
 
+def test_native_and_connected_recipe_memory_policies_have_comparable_consumed_fields():
+    native = {"module": "modules.ModularDiffusers", "action": "ModelsLoader", "params": {}}
+    native_graph = {"nodes": {"loader": native}}
+    native_record = capture_generation_inputs("loader", native, {
+        "attention_backend": "_native_math", "vae_slicing": True, "vae_tiling": True,
+    })
+    native_receipt = build_resolved_execution_inputs(native_graph, {"loader": native_record},
+        task_id="native", attempt_index=0, node_id="loader")
+    recipe = {"module": "modules.DiffusersRuntime", "action": "DiffusersExecutionRecipe", "params": {}}
+    loader = {"module": "modules.DiffusersImage", "action": "LoadPipeline", "params": {
+        "execution_recipe": {"sourceId": "recipe", "sourceKey": "recipe"},
+    }}
+    legacy_graph = {"nodes": {"recipe": recipe, "loader": loader}}
+    legacy_records = {
+        "recipe": capture_generation_inputs("recipe", recipe, {
+            "attention_backend": "_native_math", "vae_slicing": True, "vae_tiling": True,
+        }),
+        "loader": capture_generation_inputs("loader", loader, {
+            "enable_vae_slicing": True, "enable_vae_tiling": True,
+        }),
+    }
+    legacy_receipt = build_resolved_execution_inputs(legacy_graph, legacy_records,
+        task_id="legacy", attempt_index=0, node_id="loader")
+    for key, expected in (("attentionBackend", "_native_math"), ("vaeSlicing", True), ("vaeTiling", True)):
+        assert native_receipt["summary"][key] == legacy_receipt["summary"][key] == expected
+
+
 def test_adapter_alias_origins_follow_the_consumed_control_and_overrides():
     from modiff.execution_input_provenance import bind_generation_input_origins
 
@@ -160,3 +187,28 @@ def test_json_equivalent_numbers_agree_but_booleans_do_not_and_mismatched_receip
     assert receipt["ambiguousFields"] == ["guidanceScale"]
     wrong = {"taskId": "other", "nodeId": "b", "resolvedExecutionInputs": receipt}
     assert "resolvedExecutionInputs" not in apply_resolved_execution_inputs(wrong, receipt)
+
+
+def test_shared_guider_receipt_distinguishes_scale_one_formulations_without_global_enabled_capture():
+    guide = {'module': 'modules.ModularDiffusers', 'action': 'Guider', 'params': {}}
+    encoder = node({'guider': {'sourceId': 'guide', 'sourceKey': 'guider_out'}})
+    graph = {'nodes': {'guide': guide, 'encode': encoder}}
+    consumed = {'guider': 'ClassifierFreeGuidance', 'guidance_scale': 1.0, 'enabled': True,
+                'use_original_formulation': True, 'guidance_rescale': 0.0, 'start': 0.0, 'stop': 1.0}
+    records = {'guide': capture_generation_inputs('guide', guide, consumed),
+               'encode': capture_generation_inputs('encode', encoder, {'enabled': False, 'prompt': 'actual'})}
+    receipt = build_resolved_execution_inputs(graph, records, task_id='run', attempt_index=0, node_id='encode')
+    assert receipt['summary'] == {
+        'guiderType': 'ClassifierFreeGuidance', 'guidanceScale': 1, 'guidanceEnabled': True,
+        'guidanceOriginalFormulation': True, 'guidanceRescale': 0, 'guidanceStart': 0,
+        'guidanceStop': 1, 'prompt': 'actual',
+    }
+    assert 'enabled' not in records['encode']['fields']
+    assert receipt['ambiguousFields'] == []
+    for field, summary in [('enabled', 'guidanceEnabled'), ('use_original_formulation', 'guidanceOriginalFormulation')]:
+        alternate = capture_generation_inputs('guide', guide, {**consumed, field: False})
+        changed = build_resolved_execution_inputs(graph, {**records, 'guide': alternate},
+                                                 task_id='run', attempt_index=0, node_id='encode')
+        assert changed['summary']['guidanceScale'] == 1
+        assert changed['summary'][summary] is False
+        assert changed['summary'] != receipt['summary']

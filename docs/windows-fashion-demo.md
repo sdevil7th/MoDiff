@@ -11,15 +11,18 @@ In your existing MoDiff checkout, preserve uncommitted local work before switchi
 
 ```powershell
 git fetch origin
-git switch feat/generic-diffusers-workbench
+git switch fix-ui-ux-issues
 git pull --ff-only
-.\install.ps1 -Accelerator nvidia
-.\run.ps1
+uv sync --extra cuda
+uv run --extra cuda python -m modiff.preflight --json --check-port 8088 --fail-on-error
+uv run --extra cuda python main.py
 ```
 
-The installer provisions the reviewed Windows environment; do not copy a Linux
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first;
+it provisions Python and the selected Windows dependencies. Do not copy a Linux
 virtual environment or optional-runtime directory. Open the local address shown
-by the launcher. Use Setup's explicit optional-runtime installation/activation
+by the launcher. Transformers and PEFT are included in normal setup. Use Setup's
+explicit optional-runtime installation/activation
 when a selected workflow requires it, then follow any restart instruction.
 Opening a workflow or enabling Developer mode does not grant code consent.
 

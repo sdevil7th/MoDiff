@@ -30,9 +30,11 @@ def seed_standard_operation_defaults(node, profile):
         return
     from modiff.studio_execution_specs import studio_capability_definition
 
-    capability = studio_capability_definition(profile.model_type)
+    capability = studio_capability_definition(profile.model_type, repository=profile.default_repo)
     if node["action"] == profile.loader_action:
         defaults = {"dtype": capability.get("defaultDtype")}
+        if profile.id == "cosmos3-super-text-to-image:official-modular-workflow":
+            defaults.update(auto_offload=False, offload_mode="none")
     elif node["module"] == "modules.DiffusersAudio":
         # The owner overlay identifies the controls used by this task. Seed only
         # visible fields below; the ordinary generator also holds inactive
@@ -52,7 +54,14 @@ def seed_standard_operation_defaults(node, profile):
             "guidance_scale": capability.get("recommendedGuidance"),
             "width": size.get("width"),
             "height": size.get("height"),
+            "seed": capability.get("recommendedSeed"),
+            "num_frames": capability.get("recommendedFrames") if profile.id == "cosmos3-super-text-to-image:official-modular-workflow" else None,
         }
+        if profile.id == "cosmos3-super-text-to-image:official-modular-workflow" and "prompt" in node["params"]:
+            from pathlib import Path
+            caption = (Path(__file__).resolve().parents[1] / "data/cosmos3-super-t2i-publisher-caption.v1.json").read_text(encoding="utf-8")
+            json.loads(caption)  # Validate the artifact without changing its tokenizer input bytes.
+            defaults.update(prompt=caption, negative_prompt="")
         if node["module"] == "modules.DiffusersVideo":
             defaults.update(
                 num_frames=capability.get("recommendedFrames"),
@@ -75,6 +84,12 @@ def seed_standard_operation_defaults(node, profile):
                 guidance_scale_2=capability.get("recommendedGuidance", adapter.secondary_guidance_default),
                 use_guidance_scale_2=True,
             )
+    if (node["module"] == "modules.ModularDiffusers" and node["action"] == "Guider"
+            and profile.pipeline_class in {"FluxModularPipeline", "FluxKontextModularPipeline"}):
+        # Ordinary native FLUX uses transformer embedded guidance. A connected
+        # true-CFG owner is an explicit opt-in, separate from that control.
+        defaults.update(enabled=False, guidance_scale=1.0)
+        node["params"]["guidance_scale"]["min"] = 0.0
     for key, value in defaults.items():
         field = node["params"].get(key)
         if value is None or field is None or field.get("hidden") or field.get("display") == "output":
@@ -232,6 +247,7 @@ def _standard_schema(contract, modules):
 def build_operation_catalog(modules, profiles, *, catalog_resolver=None):
     from modules.ModularDiffusers.modular_utils import get_modular_operation_contracts
     from modules.ModularDiffusers.operation_contracts import get_modular_task_operation_contracts
+    from modiff.modular_workflow_contracts import PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS
     from modiff.optional_runtime_execution import (
         loader_optional_runtime_requirement,
         optional_runtime_requirement_blocks_execution,
@@ -320,10 +336,18 @@ def build_operation_catalog(modules, profiles, *, catalog_resolver=None):
                     p["pipeline_class"] == c["binding"]["pipelineClass"]
                     and c["nodeKey"] == p["loader_module"] + "." + p["loader_action"]
                     # Modular workflow owners establish stage task support. Studio's
-                    # curated profile modes are not the ordinary graph allowlist.
+                    # curated modes do not replace that allowlist, but an exact
+                    # artifact's declared workflow limits still restrict its profile.
                     and (task in p["modes"] or (
                         p["execution_path"] == "modular-diffusers" and p["model_type"] == p["pipeline_class"]
                     ))
+                    and (
+                        p["execution_path"] != "modular-diffusers"
+                        or (p["pipeline_class"], p["default_repo"]) not in PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS
+                        or c.get("workflowId") in PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS[
+                            (p["pipeline_class"], p["default_repo"])
+                        ]
+                    )
                     for c in loaders
                 )
             ]
@@ -435,6 +459,26 @@ def resolve_operation(modules, contracts, selection):
             metadata = get_model_type_metadata(contract["binding"]["pipelineClass"])
             if action == "Guider":
                 definition["params"]["guider"]["options"] = list(metadata["guider_options"])
+                # Match the pinned upstream encoder's ClassifierFreeGuidance
+                # configuration; Z-Image Turbo must keep CFG disabled.
+                if contract["pipelineClass"] in {
+                    "QwenImageModularPipeline", "QwenImageEditModularPipeline",
+                    "QwenImageEditPlusModularPipeline", "QwenImageLayeredModularPipeline",
+                    "ZImageModularPipeline",
+                }:
+                    values.update(
+                        guider="ClassifierFreeGuidance",
+                        guidance_scale=5.0 if contract["pipelineClass"] == "ZImageModularPipeline" else 4.0,
+                        enabled=contract["pipelineClass"] != "ZImageModularPipeline",
+                        guidance_rescale=0.0, use_original_formulation=False, start=0.0, stop=1.0,
+                    )
+                    definition["params"]["guidance_scale"]["min"] = 0.0
+                elif contract["pipelineClass"] in {"FluxModularPipeline", "FluxKontextModularPipeline"}:
+                    values.update(
+                        guider="ClassifierFreeGuidance", guidance_scale=1.0, enabled=False,
+                        guidance_rescale=0.0, use_original_formulation=False, start=0.0, stop=1.0,
+                    )
+                    definition["params"]["guidance_scale"]["min"] = 0.0
             else:
                 definition["params"]["blocks_select"]["options"] = list(metadata["layer_block_options"])
                 values["blocks_select"] = []
@@ -445,6 +489,11 @@ def resolve_operation(modules, contracts, selection):
             config = metadata["node_params"][contract["nodeType"]]
             for name, overlay in config["params"].items():
                 definition["params"].setdefault(name, {}).update(deepcopy(overlay))
+            if action in {"EncodePrompt", "Denoise", "DecodeLatents"} and not any(
+                port["direction"] == "input" and port["name"] == "pipeline_components"
+                for port in contract["ports"]
+            ):
+                definition["params"].pop("pipeline_components", None)
             if action == "Controlnet":
                 # A standalone ControlNet has no ModelsLoader payload from
                 # which to recover this identity after instance recreation.

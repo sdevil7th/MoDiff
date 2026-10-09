@@ -56,7 +56,10 @@ class Cosmos3DistilledStructuralAdmissionTests(unittest.TestCase):
             self.assertEqual(result["status"], "admitted")
             self.assertEqual(result["reasons"], [])
             self.assertEqual(result["artifact"], {"repo": repository, "revision": revision})
-            self.assertEqual(result["modelDependencies"], [GUARDRAIL])
+            self.assertEqual(result["modelDependencies"], [GUARDRAIL, {
+                "id": "cosmos3-mandatory-text-safety-classifier", "kind": "safety_checker",
+                "repo": "Qwen/Qwen3Guard-Gen-0.6B", "revision": "fada3b2f655b89601929198343c94cd2f64d93cc",
+            }])
             self.assertFalse(result["executable"])
             self.assertFalse(result["publication"]["executable"])
             self.assertFalse(result["publication"]["autoEligible"])

@@ -80,8 +80,10 @@ Install and validate the backend from the repository root:
 ./run.sh
 ```
 
-On Windows, use `install.ps1`, `.venv\Scripts\python.exe`, and `run.ps1` as shown in the root quick start. The
-managed installer owns the executable Torch profile; `uv sync` and `uv run` are intentionally unsupported.
+On Windows, use `install.ps1`, `.venv\Scripts\python.exe`, and `run.ps1` as shown in the root quick start.
+Ordinary CPU, CUDA, XPU and macOS installations also support the native `uv`
+commands and accelerator extras documented there. AMD SDK profiles retain their
+explicit managed installation and runtime environment wrapper.
 
 Open <http://127.0.0.1:8088>. Keep the server on loopback; it has no authentication or remote-code sandbox.
 
@@ -111,6 +113,57 @@ The bundled `text_to_image` graph illustrates five stages:
 5. **Preview Image** publishes the generated image to the client/cache surface.
 
 The exact fields and defaults come from the live registry. For example, Flux, Qwen Image, Z-Image, and Wan pipelines do not share one universal guidance, prompt, or step contract. Refresh or recreate a graph when a model's dynamic definition changes.
+
+Current developer starters can group actual encoding nodes as **Encode Inputs**.
+Qwen Image, Z-Image, FLUX.1 and Kontext starters expose one **Guidance** owner connected to both
+Encode Prompt and Denoise. Encode Prompt accepts a real upstream `BaseGuidance`
+object only when the selected pipeline declares a compatible guider component;
+it rejects an unsupported object or pipeline before initialization. Qwen's
+default classifier-free guidance scale is 4; Z-Image's upstream default guider
+is disabled. The seven templates converted from the whole Z-Image pipeline
+instead retain its classifier-free guidance: enabled, original formulation and
+the creator's scale. A scale of 1 in that whole pipeline still evaluates both
+the positive and negative prompts. FLUX.1 and Kontext support the exact upstream
+classifier-free guider through small app-owned blocks. Their ordinary starters
+keep true CFG disabled. When enabled, Encode Prompt supplies both conditioning
+sets and Denoise evaluates positive and negative model passes in separate cache
+contexts, then combines them through the shared guider. Transformer embedded
+guidance remains a separate Denoise scalar. Migrated Dev/Krea and Kontext
+templates preserve the old Gallery's effective embedded scale of 3.5 alongside
+its primary true CFG scale; Schnell consumes no embedded guidance tensor.
+Execution receipts capture the shared guider's class, enabled state,
+formulation, scale, rescaling and step window.
+
+FLUX Schnell's ordinary developer starter defaults to 256 text tokens and accepts
+up to 512, matching the reviewed upstream limit. Its migrated image template
+retains the original 512-token setting; larger values are rejected.
+
+Models Loader's optional attention policy supports `inherit`, `auto`, `native`
+and `_native_math`. `inherit` and unset VAE slicing/tiling preserve existing
+native graphs. Migrated templates bind their original explicit attention and VAE
+settings through the existing Diffusers runtime helpers. Loader diagnostics
+report requested settings, applied hooks and unsupported features separately;
+generation inputs record the settings actually applied. Component reuse requires
+matching relevant policies. A connected component owned by another node cannot
+be reconfigured through a conflicting loader policy.
+
+Ordinary Z-Image model loading and denoising keep normalized scheduler time in
+FP32, matching the whole Z-Image pipeline, while retaining the model's latent
+dtype. The exact classifier-free guider also evaluates its conditions in one
+combined batch and performs prediction arithmetic in FP32 before the final sign
+change, following the whole pipeline. Its configured enabled state, formulation,
+scale and step window remain authoritative. Other guider classes retain their
+upstream execution. These small app-owned blocks are installed only in freshly
+constructed, exact reviewed Z-Image trees; explicitly expanded or edited upstream
+compositions retain their authored block implementations.
+
+Ordinary FLUX.1 Schnell, Dev and Krea stages likewise retain the whole pipeline's
+time convention: cast scheduler time to the latent dtype before normalization.
+The upstream denoiser handles other model arguments and embedded guidance,
+and the scheduler receives its original time. The classifier-free adapter
+preserves this order for FLUX.1 and Kontext. Klein retains its upstream
+implementation. This prevents BF16 rounding differences in the
+Dev/Krea schedules from changing the model's effective time input.
 
 The Qwen Image text-to-image Cluster's Model selector also admits the catalog-pinned
 `unsloth/Qwen-Image-2512-unsloth-bnb-4bit` checkpoint at
@@ -235,8 +288,8 @@ loader execution, UNet mutation, adapter parameters/scale, encoder, processor,
 Guider, source pixels, and embedding tensors through cache and Denoise
 boundaries. Re-running Models Loader removes only that current owned mutation
 before issuing a new loader receipt. This single-adapter path is contract-only:
-it is not a public mode or template, requires the optional Transformers runtime
-to have been installed explicitly, and remains pending manual publication
+it is not a public mode or template, uses the required base Transformers runtime,
+and remains pending manual publication
 approval even though visible-frontend qualification outputs now exist.
 Multiple adapters and Multi-ControlNet remain disabled. Wan
 first/last-frame topology remains unadvertised, but its official artifact is
@@ -337,6 +390,18 @@ Quantization can reduce memory but may introduce unsupported kernels, longer loa
 
 LoRA nodes load a compatible adapter and connect it to loader inputs that declare LoRA support. Base model, adapter architecture, target components, and scale must be compatible. A Hub search result alone does not establish that compatibility.
 
+**Adapter Name** preserves an explicitly authored name. Leave it empty to use
+the existing stable generated identity. Connect one LoRA node's output to the
+next node's **Previous LoRAs** input to create an ordered adapter chain, then
+connect the final output to the loader. Names, order, scales, exact weight bytes
+and scheduler overrides remain part of the execution contract. The node verifies
+earlier descriptors before appending; the loader verifies the complete chain
+again before applying it. Duplicate names and altered or missing weights fail
+before adapter mutation. Existing single-LoRA connections remain valid.
+
+When migrating a template, use the [image validation guide](../../docs/image-template-validation.md)
+to compare fresh outputs under the same consumed recipe.
+
 ### Pipeline documentation
 
 Modular nodes expose a `Doc` output where the upstream block provides documentation. Connect it to `Data Viewer` to inspect active blocks and accepted inputs. Treat live `/nodes` metadata as the executable contract when prose and the installed upstream revision disagree.
@@ -354,6 +419,11 @@ intensity into three channels without changing resolution or thresholds. Choose
 including the reviewed Qwen ControlNet route. The public image socket alone
 does not guarantee compatible channels or preprocessing. Existing saved Canny
 nodes are not silently converted.
+
+The reviewed Qwen Controlnet node accepts finite conditioning strengths from
+0 to 2, including the original Gallery values 1.2 and 1.1. The strength
+multiplies ControlNet residuals; it is not a time fraction. Guidance start/end
+remain bounded at 0 to 1, and other families retain their existing schemas.
 
 ### Native numeric edits
 

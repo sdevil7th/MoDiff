@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 
 import torch
 from diffusers import Flux2KleinModularPipeline
+from modiff.component_bundle_contracts import qwen_t2i_bundle_input_param
 from modiff.model_artifact_catalog import resolve_model_revision
 from modiff.operation_contracts import MODULAR_STAGE_OPERATIONS, build_modular_operation_contracts
 from modiff.modular_contract_only_registry import (
@@ -465,11 +466,23 @@ def _qwen_image_max_sequence_length_param():
     )
 
 
+def _qwen_t2i_bundle_wrapper_input(node_type):
+    """Declare the wrapper's optional transport in the authoritative Qwen spec."""
+    field = qwen_t2i_bundle_input_param(node_type, hidden=False)
+    return PipelineParam(
+        name="pipeline_components",
+        **{name: field[name] for name in ("label", "type", "display", "hidden", "onSignal", "signalCompatibility")},
+    )
+
+
 QWEN_IMAGE_NODE_SPECS = {
     "controlnet": {
         "inputs": [
             PipelineParam.control_image(),
-            PipelineParam.controlnet_conditioning_scale(),
+            # Qwen's ControlNet strength multiplies the residuals; it is not
+            # a fraction of the denoising window. Match the existing reviewed
+            # whole-image range without changing the other families' schemas.
+            PipelineParam.controlnet_conditioning_scale(max=2.0),
             PipelineParam.control_guidance_start(),
             PipelineParam.control_guidance_end(),
             PipelineParam.height(step=16),
@@ -509,6 +522,7 @@ QWEN_IMAGE_NODE_SPECS = {
             PipelineParam.scheduler(),
             PipelineParam.controlnet_bundle(display="input"),
         ],
+        "wrapper_inputs": [_qwen_t2i_bundle_wrapper_input("denoise")],
         "outputs": [
             PipelineParam.latents(display="output"),
             PipelineParam.route_state_out(),
@@ -547,7 +561,9 @@ QWEN_IMAGE_NODE_SPECS = {
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
+        "wrapper_inputs": [_qwen_t2i_bundle_wrapper_input("text_encoder")],
         "outputs": [
             PipelineParam.embeddings(display="output"),
             PipelineParam.doc(),
@@ -564,6 +580,7 @@ QWEN_IMAGE_NODE_SPECS = {
         "model_inputs": [
             PipelineParam.vae(),
         ],
+        "wrapper_inputs": [_qwen_t2i_bundle_wrapper_input("decoder")],
         "outputs": [
             PipelineParam.images(),
             PipelineParam.doc(),
@@ -622,6 +639,11 @@ QWEN_IMAGE_EDIT_NODE_SPECS = {
             PipelineParam.mask_image(),
             PipelineParam.padding_mask_crop(),
             PipelineParam.seed(),
+            PipelineParam(
+                name="inpaint_compatibility", label="Inpaint compatibility", type="string",
+                options=["native", "whole_v1"], default="native", hidden=True,
+                required_block_params=["inpaint_compatibility"],
+            ),
         ],
         "model_inputs": [
             PipelineParam.vae(),
@@ -643,6 +665,7 @@ QWEN_IMAGE_EDIT_NODE_SPECS = {
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.embeddings(display="output"),
@@ -735,6 +758,7 @@ QWEN_IMAGE_EDIT_PLUS_NODE_SPECS = {
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.embeddings(display="output"),
@@ -864,6 +888,7 @@ QWEN_IMAGE_LAYERED_NODE_SPECS = {
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.embeddings(display="output"),
@@ -918,6 +943,7 @@ FLUX_NODE_SPECS = {
         "model_inputs": [
             PipelineParam.unet(),
             PipelineParam.scheduler(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.latents(display="output"),
@@ -957,7 +983,7 @@ FLUX_NODE_SPECS = {
     "text_encoder": {
         "inputs": [
             PipelineParam.prompt(),
-            # No negative_prompt - pipeline does not support this
+            PipelineParam.negative_prompt(),
             PipelineParam(
                 name="max_sequence_length", label="Maximum Sequence Length", type="int",
                 default=512, min=1, max=512, step=1,
@@ -966,6 +992,7 @@ FLUX_NODE_SPECS = {
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.embeddings(display="output"),
@@ -1003,6 +1030,7 @@ FLUX_PIPELINE_CONFIG = PipelineConfig(
     default_repo="black-forest-labs/FLUX.1-dev",
     default_dtype="bfloat16",
     layer_block_options=FLUX_LAYER_BLOCK_OPTIONS,
+    guider_options=("ClassifierFreeGuidance",),
 )
 
 
@@ -1025,6 +1053,7 @@ FLUX_KONTEXT_NODE_SPECS = {
         "model_inputs": [
             PipelineParam.unet(),
             PipelineParam.scheduler(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.latents(display="output"),
@@ -1062,10 +1091,16 @@ FLUX_KONTEXT_NODE_SPECS = {
     "text_encoder": {
         "inputs": [
             PipelineParam.prompt(),
-            # No negative_prompt
+            PipelineParam.negative_prompt(),
+            PipelineParam(
+                name="max_sequence_length", label="Maximum Sequence Length", type="int",
+                default=512, min=1, max=512, step=1,
+                fieldOptions={"controlTier": "advanced"},
+            ),
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.embeddings(display="output"),
@@ -1103,6 +1138,7 @@ FLUX_KONTEXT_PIPELINE_CONFIG = PipelineConfig(
     default_dtype="bfloat16",
     layer_block_options=FLUX_LAYER_BLOCK_OPTIONS,
     denoise_image_latent_dimensions=IMAGE_LATENT_DIMENSIONS,
+    guider_options=("ClassifierFreeGuidance",),
 )
 
 # =============================================================================
@@ -1292,10 +1328,11 @@ Z_IMAGE_NODE_SPECS = {
     "text_encoder": {
         "inputs": [
             PipelineParam.prompt(),
-            # No negative_prompt - pipeline does not support this
+            PipelineParam.negative_prompt(),
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.embeddings(display="output"),
@@ -2155,7 +2192,9 @@ def pipeline_class_to_modiff_node_config(pipeline_class, node_type=None, *, reso
         else:
             pipeline = pipeline_class()
 
-        node_type_blocks = pipeline.blocks.sub_blocks[node_params["block_name"]]
+        from .native_blocks import prepare_native_pipeline_blocks
+        native_blocks = prepare_native_pipeline_blocks(pipeline_class, pipeline.blocks)
+        node_type_blocks = native_blocks.sub_blocks[node_params["block_name"]]
 
     return node_type_blocks, node_params
 

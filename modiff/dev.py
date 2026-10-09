@@ -1,6 +1,5 @@
-"""Script-free entry point for the existing managed installer and runtime.
+"""Legacy managed-installer entry point; ordinary setup uses ``uv sync``.
 
-Bootstrap with ``uv run --no-project --no-sync --python 3.12 -m modiff.dev``.
 This module intentionally uses only the standard library until dispatch.
 """
 
@@ -17,16 +16,17 @@ ROOT = Path(__file__).resolve().parents[1]
 def runtime_command(command: str, arguments: list[str]) -> tuple[list[str], dict[str, str]]:
     from modiff.install import _rocm_environment
     from modiff.runtime_profile import read_state
+    from modiff.runtime_environment import configure_allocator
 
     venv = ROOT / ".venv"
     python = venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     if not python.is_file():
-        raise ValueError("No managed environment exists. Run modiff.dev plan, then modiff.dev setup.")
+        raise ValueError("No environment exists. Run uv sync --extra cpu, or choose your accelerator extra.")
     state = read_state(venv) or {}
     environment = os.environ.copy()
     if state.get("profile") == "amd-rocm-linux":
         environment = _rocm_environment()
-    environment.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+    configure_allocator(environment)
     target = ["-m", "modiff.preflight"] if command == "check" else [str(ROOT / "main.py")]
     return [str(python), *target, *arguments], environment
 

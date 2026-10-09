@@ -1,114 +1,36 @@
-"""Installer recovery from toolchains copied from another platform."""
+"""Operator uv discovery and recovery from copied toolchains."""
 
-import hashlib
 import json
 from pathlib import Path
-import zipfile
+import subprocess
 
 import pytest
 
-from modiff import install
+from modiff import install, tool_locks
 
 
-@pytest.mark.parametrize(
-    "platform_name,expected,foreign",
-    [
-        ("windows", "uv.exe", "uv-x86_64-unknown-linux-gnu/uv"),
-        ("linux", "uv-x86_64-unknown-linux-gnu/uv", "uv.exe"),
-        ("macos", "uv-x86_64-apple-darwin/uv", "uv-x86_64-unknown-linux-gnu/uv"),
-    ],
-)
-def test_uv_downloads_current_platform_instead_of_reusing_foreign_binary(
-    tmp_path, monkeypatch, platform_name, expected, foreign
-):
-    managed = tmp_path / "tools" / "uv"
-    old = managed / foreign
-    old.parent.mkdir(parents=True)
-    old.write_bytes(b"foreign binary")
-    binary = b"reviewed current-platform binary"
-    lock = {
-        "executable": expected,
-        "executableSha256": hashlib.sha256(binary).hexdigest(),
-        "archiveSha256": "a" * 64,
-    }
-    monkeypatch.setattr(install, "MANAGED_ROOT", tmp_path)
-    monkeypatch.setattr(install, "normalized_os", lambda: platform_name)
-    monkeypatch.setattr(install, "normalized_arch", lambda: "x86_64")
-    monkeypatch.setattr(install, "UV_TOOL_LOCKS", {(platform_name, "x86_64"): lock})
-    downloads = []
-
-    def download(name):
-        downloads.append(name)
-        executable = managed / expected
-        executable.parent.mkdir(parents=True, exist_ok=True)
-        executable.write_bytes(binary)
-        return managed
-
-    monkeypatch.setattr(install, "_download_tool", download)
-    assert Path(install._ensure_uv()) == managed / expected
-    assert downloads == ["uv"]
-    receipt = json.loads((managed / "receipt.json").read_text(encoding="utf-8"))
-    assert receipt == {"schemaVersion": 1, **lock}
-    # A verified current-platform executable is reused without downloading.
-    assert Path(install._ensure_uv()) == managed / expected
-    assert downloads == ["uv"]
+@pytest.mark.parametrize("platform_name,foreign", [("windows", "uv-linux/uv"), ("linux", "uv.exe"), ("macos", "uv-linux/uv")])
+def test_foreign_app_local_uv_is_never_executed(tmp_path, monkeypatch, platform_name, foreign):
+    executable = tmp_path / "tools" / "uv" / foreign
+    executable.parent.mkdir(parents=True)
+    executable.write_bytes(b"foreign")
+    monkeypatch.setattr(tool_locks.shutil, "which", lambda _: None)
+    monkeypatch.setattr(tool_locks, "_uv_version", lambda _: pytest.fail("Do not execute foreign binaries"))
+    with pytest.raises(RuntimeError, match="Install uv"):
+        tool_locks.resolve_uv(tmp_path, platform_name=platform_name, machine="x86_64")
 
 
-def test_uv_still_rejects_tampered_current_platform_binary(tmp_path, monkeypatch):
-    managed = tmp_path / "tools" / "uv"
-    managed.mkdir(parents=True)
-    (managed / "uv.exe").write_bytes(b"tampered")
-    monkeypatch.setattr(install, "MANAGED_ROOT", tmp_path)
-    monkeypatch.setattr(install, "normalized_os", lambda: "windows")
-    monkeypatch.setattr(install, "normalized_arch", lambda: "x86_64")
-    monkeypatch.setattr(install, "_download_tool", lambda _: pytest.fail("Must reject tampering"))
-    with pytest.raises(RuntimeError, match="integrity check"):
-        install._ensure_uv()
-    assert not (managed / "receipt.json").exists()
+def test_operator_uv_upgrade_does_not_require_an_old_receipt(tmp_path, monkeypatch):
+    executable = tmp_path / "uv"
+    executable.write_bytes(b"operator uv")
+    monkeypatch.setattr(tool_locks.shutil, "which", lambda _: str(executable))
+    observed = []
+    monkeypatch.setattr(tool_locks, "_uv_version", lambda path: observed.append(path) or "0.12.23")
+    assert tool_locks.resolve_uv(tmp_path) == str(executable)
+    assert observed == [executable]
 
 
-@pytest.mark.parametrize("tampered", [False, True])
-def test_uv_verifies_archive_and_extracted_binary_during_platform_replacement(tmp_path, monkeypatch, tampered):
-    managed = tmp_path / "tools" / "uv"
-    foreign = managed / "linux" / "uv"
-    foreign.parent.mkdir(parents=True)
-    foreign.write_bytes(b"linux")
-    downloads = tmp_path / "downloads"
-    downloads.mkdir()
-    archive = downloads / "uv.zip"
-    reviewed = b"reviewed windows binary"
-    with zipfile.ZipFile(archive, "w") as bundle:
-        bundle.writestr("uv.exe", b"tampered" if tampered else reviewed)
-    archive_hash = hashlib.sha256(archive.read_bytes()).hexdigest()
-    url = "https://github.com/astral-sh/uv/releases/download/test/uv.zip"
-    lock = {
-        "url": url, "archiveSha256": archive_hash, "executable": "uv.exe",
-        "executableSha256": hashlib.sha256(reviewed).hexdigest(),
-    }
-    monkeypatch.setattr(install, "MANAGED_ROOT", tmp_path)
-    monkeypatch.setattr(install, "normalized_os", lambda: "windows")
-    monkeypatch.setattr(install, "normalized_arch", lambda: "x86_64")
-    monkeypatch.setattr(install, "UV_TOOL_LOCKS", {("windows", "x86_64"): lock})
-    monkeypatch.setattr(install, "TOOL_ARCHIVES", {("windows", "x86_64", "uv"): (url, archive_hash)})
-    monkeypatch.setattr(install.urllib.request, "urlopen", lambda _: pytest.fail("Use verified cached archive"))
-    if tampered:
-        with pytest.raises(RuntimeError, match="integrity check"):
-            install._ensure_uv()
-        assert not (managed / "receipt.json").exists()
-    else:
-        assert Path(install._ensure_uv()).read_bytes() == reviewed
-    assert not foreign.exists()
-
-
-def test_unsupported_uv_platform_fails_before_downloading(tmp_path, monkeypatch):
-    monkeypatch.setattr(install, "MANAGED_ROOT", tmp_path)
-    monkeypatch.setattr(install, "normalized_arch", lambda: "unsupported")
-    monkeypatch.setattr(install, "_download_tool", lambda _: pytest.fail("No reviewed lock"))
-    with pytest.raises(RuntimeError, match="reviewed platform lock"):
-        install._ensure_uv()
-
-
-def test_linked_uv_directory_is_rejected_before_download(tmp_path, monkeypatch):
+def test_linked_app_local_uv_is_rejected_when_path_uv_is_absent(tmp_path, monkeypatch):
     outside = tmp_path / "outside"
     outside.mkdir()
     tools = tmp_path / "tools"
@@ -117,10 +39,15 @@ def test_linked_uv_directory_is_rejected_before_download(tmp_path, monkeypatch):
         (tools / "uv").symlink_to(outside, target_is_directory=True)
     except OSError:
         pytest.skip("Creating symlinks requires permission on this host")
-    monkeypatch.setattr(install, "MANAGED_ROOT", tmp_path)
-    monkeypatch.setattr(install, "_download_tool", lambda _: pytest.fail("Must reject linked directory"))
-    with pytest.raises(RuntimeError, match="directory is unsafe"):
-        install._ensure_uv()
+    monkeypatch.setattr(tool_locks.shutil, "which", lambda _: None)
+    with pytest.raises(RuntimeError, match="Install uv"):
+        tool_locks.resolve_uv(tmp_path)
+
+
+def test_uv_must_report_a_real_version(tmp_path, monkeypatch):
+    monkeypatch.setattr(tool_locks.subprocess, "run", lambda *args, **kw: subprocess.CompletedProcess(args, 0, stdout="forged", stderr=""))
+    with pytest.raises(RuntimeError, match="did not report a uv version"):
+        tool_locks._uv_version(tmp_path / "uv")
 
 
 @pytest.mark.parametrize("stale_action", ["./run.sh", r".\run.ps1"])

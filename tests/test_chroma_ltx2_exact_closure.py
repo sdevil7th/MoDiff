@@ -236,9 +236,11 @@ class LTX2Pipeline:
 class ChromaLTX2ExactClosureTests(unittest.TestCase):
     def test_exact_pinned_sources_and_call_surfaces_are_preserved(self):
         import diffusers
+        import inspect
+        from modiff.upstream_coverage import reviewed_diffusers_source
 
         self.assertEqual(PINNED_DIFFUSERS_REVISION, "fbf49e7f35857f76bc57b177e26f12b03687c668")
-        root = Path(diffusers.__file__).resolve().parent / "pipelines"
+        root = reviewed_diffusers_source() / "pipelines"
         cases = (
             (
                 root / "chroma" / "pipeline_chroma_img2img.py",
@@ -295,6 +297,8 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
             with self.subTest(pipeline=class_name):
                 self.assertTrue(source_path.is_file())
                 self.assertEqual(source_sha256(source_path), digest)
+                installed = getattr(diffusers, class_name)
+                self.assertTrue(required_parameters.issubset(inspect.signature(installed.__call__).parameters))
                 self.assertTrue(
                     required_parameters.issubset(_parameter_names(_pinned_call_node(source_path, class_name)))
                 )

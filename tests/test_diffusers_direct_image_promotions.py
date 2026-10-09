@@ -3,7 +3,6 @@ from source_contract_helpers import source_sha256
 import ast
 from contextlib import nullcontext
 import json
-from pathlib import Path
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
@@ -315,12 +314,14 @@ class FakeRequest:
 class DiffusersDirectImagePromotionTests(unittest.IsolatedAsyncioTestCase):
     def test_exact_pinned_sources_bases_constructors_and_calls_are_preserved(self):
         import diffusers
+        import inspect
+        from modiff.upstream_coverage import reviewed_diffusers_source
 
         self.assertEqual(
             PINNED_DIFFUSERS_REVISION,
             "fbf49e7f35857f76bc57b177e26f12b03687c668",
         )
-        diffusers_root = Path(diffusers.__file__).resolve().parent
+        diffusers_root = reviewed_diffusers_source()
         for relative_path, class_name, digest, bases, init_parameters, call_parameters in PINNED_SOURCES:
             with self.subTest(pipeline_class=class_name):
                 source_path = diffusers_root / relative_path
@@ -335,6 +336,9 @@ class DiffusersDirectImagePromotionTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(tuple(ast.unparse(base) for base in class_node.bases), bases)
                 self.assertEqual(_method_parameters(class_node, "__init__"), init_parameters)
                 self.assertEqual(_method_parameters(class_node, "__call__"), call_parameters)
+                installed = getattr(diffusers, class_name)
+                self.assertTrue(set(init_parameters).issubset(inspect.signature(installed.__init__).parameters))
+                self.assertTrue(set(call_parameters).issubset(inspect.signature(installed.__call__).parameters))
 
     def test_adapters_reuse_only_exact_immutable_safe_artifacts(self):
         expected_adapters = {

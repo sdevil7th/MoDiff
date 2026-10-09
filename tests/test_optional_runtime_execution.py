@@ -16,6 +16,7 @@ from modiff.diffusers_profiles import (
     FLUX_KONTEXT_NVFP4_REPO,
     OPTIONAL_RUNTIME_DELIVERY_BASE,
     OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
+    OPTIONAL_RUNTIME_PLATFORM_DELIVERIES,
     execution_profiles_for_execution,
     optional_runtime_requirement_for_profiles as declarative_requirement,
     resolve_execution_profiles_for_loader,
@@ -36,6 +37,7 @@ from modiff.optional_runtimes import (
     public_optional_runtime_profiles,
     optional_runtime_target,
 )
+from modiff.cosmos_safety_contract import COSMOS_SAFETY_RUNTIME_PROFILE_ID
 from modiff.server import WebServer
 
 
@@ -120,6 +122,8 @@ def runtime_catalog(
                 "overlayStatus": overlay_status,
                 "contractState": "qualified" if qualified else "candidate_unqualified",
                 "cutoverReady": qualified,
+                # This helper explicitly models historical optional delivery.
+                "baseIncluded": False,
             }
         ],
         "overlay": {"processLoadStatus": process_status},
@@ -129,6 +133,8 @@ def runtime_catalog(
 @contextmanager
 def overlay_delivery(profile_id=EXECUTION_PROFILE_ID, **changes):
     original = DIFFUSERS_EXECUTION_PROFILES[profile_id]
+    changes.setdefault("optional_runtime_profiles", original.optional_runtime_profiles or (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,))
+    changes.setdefault("optional_runtime_platform_deliveries", OPTIONAL_RUNTIME_PLATFORM_DELIVERIES)
     updated = replace(
         original,
         optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
@@ -170,6 +176,28 @@ def isolate_linux_runtime_fixture(test_case):
         patcher = mock.patch(f"{module}.optional_runtime_target", side_effect=target)
         patcher.start()
         test_case.addCleanup(patcher.stop)
+    # Overlay protocol/security tests explicitly model the historical core
+    # overlay as an opt-in fixture. Actual production model profiles remain
+    # base-delivered; the production policy and atomic registry cases below
+    # exercise those declarations without this fixture.
+    if test_case._testMethodName not in {
+        "test_every_current_profile_has_explicit_platform_scoped_delivery",
+        "test_exact_pair_registry_has_atomic_optional_delivery",
+    }:
+        fixtures = {
+            key: replace(profile, optional_runtime_profiles=(TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
+                         optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
+                         optional_runtime_platform_deliveries=OPTIONAL_RUNTIME_PLATFORM_DELIVERIES)
+            for key, profile in DIFFUSERS_EXECUTION_PROFILES.items()
+            if profile.optional_runtime_delivery == OPTIONAL_RUNTIME_DELIVERY_BASE
+            and profile.execution_path not in {
+                "builtin-audio-operation", "builtin-data-operation", "builtin-image-operation", "builtin-video-operation",
+                "spandrel-video-upscale", "spandrel-image-upscale",
+            }
+        }
+        patcher = mock.patch.dict(DIFFUSERS_EXECUTION_PROFILES, fixtures)
+        patcher.start()
+        test_case.addCleanup(patcher.stop)
 
 
 class OptionalRuntimeRequirementTests(unittest.TestCase):
@@ -196,17 +224,6 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
             with self.subTest(profile=profile.id):
                 if profile.optional_runtime_delivery == OPTIONAL_RUNTIME_DELIVERY_BASE:
-                    self.assertIn(
-                        profile.id,
-                        {
-                            BUILTIN_AUDIO_PROFILE_ID,
-                            BUILTIN_DATA_PROFILE_ID,
-                            BUILTIN_IMAGE_PROFILE_ID,
-                            BUILTIN_VIDEO_PROFILE_ID,
-                            SPANDREL_IMAGE_UPSCALE_PROFILE_ID,
-                            SPANDREL_VIDEO_UPSCALE_PROFILE_ID,
-                        },
-                    )
                     self.assertEqual(profile.optional_runtime_profiles, ())
                     self.assertEqual(profile.optional_runtime_platform_deliveries, ())
                     requirement = profile.to_public_dict()["optionalRuntimeRequirement"]
@@ -233,6 +250,24 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                         self.assertEqual(targeted, requirement)
                     continue
                 self.assertEqual(profile.optional_runtime_delivery, OPTIONAL_RUNTIME_DELIVERY_OVERLAY)
+                if profile.optional_runtime_profiles == (COSMOS_SAFETY_RUNTIME_PROFILE_ID,):
+                    self.assertEqual(len(profile.optional_runtime_platform_deliveries), 6)
+                    for platform_name, machine in (
+                        ("linux", "x86_64"), ("windows", "x86_64"),
+                        ("linux", "arm64"), ("windows", "arm64"),
+                        ("macos", "x86_64"), ("macos", "arm64"),
+                    ):
+                        targeted = declarative_requirement(
+                            (profile,), platform_name=platform_name, machine=machine,
+                        )
+                        self.assertEqual(set(targeted), expected_keys)
+                        self.assertEqual(targeted["delivery"], "optional_overlay")
+                        self.assertTrue(targeted["requiredNow"])
+                        self.assertEqual(targeted["profileIds"], [COSMOS_SAFETY_RUNTIME_PROFILE_ID])
+                        self.assertEqual(targeted["executionProfileIds"], [profile.id])
+                        self.assertEqual(targeted["state"], "unavailable")
+                        self.assertEqual(targeted["reason"], "optional_runtime_status_required")
+                    continue
                 if profile.id == "qwen-image-21:direct":
                     self.assertEqual(profile.optional_runtime_platform_deliveries, ())
                     for platform_name in ("linux", "windows", "macos"):
@@ -1694,6 +1729,23 @@ class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(root_profile["optionalRuntimeRequirement"]["state"], "active")
         catalog.assert_called_once_with()
 
+    async def test_listgraphs_missing_optional_directory_is_an_empty_library(self):
+        graph_dir = Path(self.temporary.name) / "graphs"
+        self.assertFalse(graph_dir.exists())
+        with mock.patch.object(server_module, "public_optional_runtime_catalog") as catalog:
+            missing = await self.server.listgraphs(object())
+            graph_dir.mkdir()
+            empty = await self.server.listgraphs(object())
+        self.assertEqual(missing.status, 200)
+        self.assertEqual(response_json(missing), [])
+        self.assertEqual(response_json(empty), response_json(missing))
+        catalog.assert_not_called()
+
+    async def test_listgraphs_does_not_hide_unreadable_optional_directory(self):
+        with mock.patch.object(Path, "stat", side_effect=PermissionError("unreadable graphs")):
+            with self.assertRaises(PermissionError):
+                await self.server.listgraphs(object())
+
     async def test_listgraphs_snapshots_catalog_once_and_keeps_no_contract_shape_valid(self):
         data_dir = Path(self.temporary.name)
         graph_dir = data_dir / "graphs" / "studio"
@@ -1994,6 +2046,11 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
                 return_value={},
             ),
             mock.patch.object(
+                server_module,
+                "public_optional_runtime_catalog",
+                return_value=runtime_catalog(qualified=True),
+            ),
+            mock.patch.object(
                 self.server,
                 "_schedule_optional_runtime_restart",
                 return_value=False,
@@ -2011,8 +2068,18 @@ class FieldActionOptionalRuntimeTests(unittest.IsolatedAsyncioTestCase):
                 ) as backend:
                     os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "base"
                     response = await getattr(self.server, method_name)(JsonRequest(body))
-                    self.assertEqual(response.status, 200)
-                    self.assertFalse(response_json(response)["restarting"])
+                    if method_name == "runtime_optional_runtime_activate":
+                        self.assertEqual(response.status, 202)
+                        job_id = response_json(response)["job"]["id"]
+                        for _ in range(100):
+                            if self.server.optimization_jobs[job_id]["status"] not in {"queued", "running"}:
+                                break
+                            await asyncio.sleep(0.01)
+                        self.assertEqual(self.server.optimization_jobs[job_id]["status"], "restarting")
+                        self.assertEqual(self.server.optimization_jobs[job_id]["progress"]["phase"], "restart_required")
+                    else:
+                        self.assertEqual(response.status, 200)
+                        self.assertFalse(response_json(response)["restarting"])
                     self.assertEqual(
                         os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"],
                         "restart_required",

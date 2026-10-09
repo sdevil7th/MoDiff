@@ -159,25 +159,18 @@ class OptionalRuntimeContractTests(unittest.TestCase):
             {artifact["sha256"] for artifact in gguf_locks},
             {"70bcd10edfe697fb2dad6e40af2234b9d8ece9a41a99761405121ebda1c3c1cd"},
         )
-        self.assertEqual(
-            profile.satisfies_profiles,
-            (
-                (
-                    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
-                    OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID].spec_digest,
-                ),
-            ),
-        )
+        self.assertEqual(profile.satisfies_profiles, ())
         self.assertEqual(
             profile.contract_for_target(platform_name="windows", machine="x86_64").contract_state,
             "candidate_unqualified",
         )
 
-    def test_bitsandbytes_composite_is_exact_app_delivered_and_linux_x86_64_qualified(self):
+    def test_bitsandbytes_auxiliary_lock_requires_new_base_cuda_qualification(self):
         profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID]
         linux = profile.contract_for_target(platform_name="linux", machine="x86_64")
-        self.assertEqual(linux.contract_state, "qualified")
-        self.assertTrue(linux.install_action_available)
+        self.assertEqual(linux.contract_state, "candidate_unqualified")
+        self.assertFalse(linux.install_action_available)
+        self.assertFalse(linux.activation_available)
         self.assertEqual(
             (profile.packages[-1].distribution, profile.packages[-1].version),
             ("bitsandbytes", "0.50.0"),
@@ -199,15 +192,7 @@ class OptionalRuntimeContractTests(unittest.TestCase):
                 }
             ],
         )
-        self.assertEqual(
-            profile.satisfies_profiles,
-            (
-                (
-                    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
-                    OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID].spec_digest,
-                ),
-            ),
-        )
+        self.assertEqual(profile.satisfies_profiles, ())
         self.assertEqual(
             profile.contract_for_target(platform_name="windows", machine="x86_64").contract_state,
             "candidate_unqualified",
@@ -227,15 +212,7 @@ class OptionalRuntimeContractTests(unittest.TestCase):
             {artifact["distribution"] for artifact in profile.artifact_locks[-2:]},
             {"optimum-quanto", "ninja"},
         )
-        self.assertEqual(
-            profile.satisfies_profiles,
-            (
-                (
-                    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
-                    OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID].spec_digest,
-                ),
-            ),
-        )
+        self.assertEqual(profile.satisfies_profiles, ())
 
         self.assertEqual(
             profile.contract_for_target(platform_name="windows", machine="x86_64").contract_state,
@@ -405,95 +382,29 @@ class OptionalRuntimeContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Unknown optional runtime profile"):
             optional_runtime_requirements(["unknown-runtime"])
 
-    def test_execution_profiles_reference_the_central_composite(self):
-        expected = (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,)
+    def test_core_execution_profiles_use_base_and_extra_packages_keep_exact_contracts(self):
+        core_ids = {TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID, TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+                    TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID}
         self.assertTrue(DIFFUSERS_EXECUTION_PROFILES)
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
             with self.subTest(profile=profile.id):
                 if profile.optional_runtime_delivery == OPTIONAL_RUNTIME_DELIVERY_BASE:
-                    self.assertIn(
-                        profile.id,
-                        {
-                            "builtin-audio-operations:direct",
-                            "builtin-data-operations:direct",
-                            "builtin-image-operations:direct",
-                            "builtin-video-operations:direct",
-                            "real-esrgan-x2-image-upscale:direct",
-                            "real-esrgan-x2-video-upscale:direct",
-                        },
-                    )
                     self.assertEqual(profile.optional_runtime_profiles, ())
-                    for mode in profile.modes:
-                        self.assertEqual(
-                            optional_runtime_profile_ids_for_execution(
-                                profile.model_type,
-                                mode,
-                                platform_name="linux",
-                                machine="x86_64",
-                            ),
-                            (),
-                        )
-                        self.assertEqual(
-                            optional_runtime_profile_ids_for_execution(
-                                profile.model_type,
-                                mode,
-                                platform_name="windows",
-                                machine="AMD64",
-                            ),
-                            (),
-                        )
-                    continue
-                if profile.id == "qwen-image-21:direct":
-                    self.assertEqual(profile.optional_runtime_profiles, (TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,))
-                    for platform_name in ("linux", "windows", "macos"):
+                    for platform_name, machine in (("linux", "x86_64"), ("windows", "AMD64"), ("macos", "arm64")):
                         self.assertEqual(profile.optional_runtime_profile_ids_for_target(
-                            platform_name=platform_name, machine="x86_64"), (TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,))
-                    continue
-                self.assertEqual(profile.optional_runtime_profiles, expected)
-                if profile.operation_recipe:
-                    # Exact operation selection resolves dependencies from the
-                    # selected profile, not the legacy model/task resolver.
-                    self.assertEqual(profile.optional_runtime_profile_ids_for_target(
-                        platform_name="linux", machine="x86_64"), (TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,))
-                    self.assertEqual(profile.optional_runtime_profile_ids_for_target(
-                        platform_name="windows", machine="AMD64"), expected)
-                    continue
-                for mode in profile.modes:
-                    self.assertIn(
-                        TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
-                        optional_runtime_profile_ids_for_execution(
-                            profile.model_type,
-                            mode,
-                            platform_name="linux",
-                            machine="x86_64",
-                        ),
-                    )
-                    self.assertEqual(
-                        optional_runtime_profile_ids_for_execution(
-                            profile.model_type,
-                            mode,
-                            platform_name="windows",
-                            machine="AMD64",
-                        ),
-                        (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,),
-                    )
-
-        host_profile_id = optional_runtime_profile_ids_for_execution(
-            "ZImageModularPipeline",
-            "text_to_image",
-        )[0]
-        public_profile = public_execution_profiles()[0]
-        self.assertEqual(
-            public_profile["optional_runtime_profiles"],
-            [host_profile_id],
-        )
-        self.assertNotIn("optionalRuntimeProfiles", public_profile)
+                            platform_name=platform_name, machine=machine), ())
+                else:
+                    self.assertTrue(profile.optional_runtime_profiles)
+                    self.assertFalse(set(profile.optional_runtime_profiles).issubset(core_ids))
+                    for profile_id in profile.optional_runtime_profiles:
+                        self.assertIn(profile_id, OPTIONAL_RUNTIME_PROFILES)
+        self.assertEqual(optional_runtime_profile_ids_for_execution("ZImageModularPipeline", "text_to_image"), ())
+        z_image = next(profile for profile in public_execution_profiles() if profile["id"] == "z-image:auto")
+        self.assertEqual(z_image["optional_runtime_profiles"], [])
+        self.assertNotIn("optionalRuntimeProfiles", z_image)
 
     def test_optional_metadata_state_does_not_change_auto_readiness(self):
-        host_profile_id = optional_runtime_profile_ids_for_execution(
-            "ZImageModularPipeline",
-            "text_to_image",
-        )[0]
+        host_profile_id = TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID
         transformers_version = OPTIONAL_RUNTIME_PROFILES[host_profile_id].packages[0].version
         observations = {
             "present_unqualified": _version_resolver({"transformers": transformers_version, "peft": "0.20.0"}),
@@ -516,10 +427,10 @@ class OptionalRuntimeContractTests(unittest.TestCase):
                         local_models=["Tongyi-MAI/Z-Image-Turbo"],
                         data_dir=temp_dir,
                     )
-                self.assertEqual(
-                    plan["optionalRuntimeProfiles"][0]["status"],
-                    expected_status,
-                )
+                self.assertEqual(plan["optionalRuntimeProfiles"], [])
+                self.assertEqual(plan["optionalRuntimeProfileIds"], [])
+                self.assertEqual(plan["optionalRuntimeRequirement"]["delivery"], "base")
+                self.assertEqual(plan["optionalRuntimeRequirement"]["state"], "base_satisfied")
                 outcomes[expected_status] = (
                     plan["status"],
                     plan["readiness"],
@@ -591,10 +502,7 @@ assert not any(
 
 class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
     async def test_auto_capabilities_and_listgraphs_are_non_installing_and_import_free(self):
-        host_profile_id = optional_runtime_profile_ids_for_execution(
-            "ZImageModularPipeline",
-            "text_to_image",
-        )[0]
+        host_profile_id = TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID
         host_target = OPTIONAL_RUNTIME_PROFILES[host_profile_id].contract_for_target()
         with tempfile.TemporaryDirectory() as temp_dir:
             data_dir = Path(temp_dir)
@@ -701,22 +609,16 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
 
             self.assertEqual(
                 plan["optionalRuntimeProfileIds"],
-                [host_profile_id],
+                [],
             )
             self.assertEqual(
                 plan["candidates"][0]["optionalRuntimeProfileIds"],
-                [host_profile_id],
+                [],
             )
             # This metadata-only slice must not affect the existing Auto result.
             self.assertEqual(plan["canAutoRun"], bool(plan["selectedCandidate"]))
-            self.assertEqual(
-                plan["optionalRuntimeProfiles"][0]["contractState"],
-                host_target.contract_state,
-            )
-            self.assertEqual(
-                plan["optionalRuntimeProfiles"][0]["cutoverReady"],
-                host_target.cutover_ready,
-            )
+            self.assertEqual(plan["optionalRuntimeProfiles"], [])
+            self.assertEqual(plan["optionalRuntimeRequirement"]["delivery"], "base")
             self.assertEqual(template_open_response.status, 200)
             optional_runtime_catalog = json.loads(optional_runtime_response.text)
             selected_catalog_profile = next(
@@ -735,6 +637,7 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(
                 {profile["id"] for profile in capabilities["optionalRuntimeProfiles"]},
                 {
+                    "cosmos-guardrail-0.3.1",
                     GALLERY_MEDIA_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
@@ -751,19 +654,18 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
             )
             self.assertEqual(
                 z_image["optionalRuntimeProfileIds"],
-                [host_profile_id],
+                [],
             )
 
             graph_tree = json.loads(listgraphs_response.text)
             graph_file = next(_walk_graph_files(graph_tree))
             self.assertEqual(
                 graph_file["optionalRuntimeProfileIds"],
-                [host_profile_id],
+                [],
             )
-            self.assertEqual(
-                graph_file["optionalRuntimeProfiles"][0]["contractState"],
-                host_target.contract_state,
-            )
+            self.assertEqual(graph_file["optionalRuntimeProfiles"], [])
+            self.assertEqual(graph_file["optionalRuntimeRequirement"]["delivery"], "base")
+
 
 
 if __name__ == "__main__":

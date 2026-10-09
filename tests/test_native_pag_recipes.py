@@ -41,8 +41,10 @@ def test_pag_recipes_have_one_explicit_guider_and_preserve_native_stage_wires(ca
     assert layers["blocks_select"] == ["mid_block.attentions.0.transformer_blocks"]
     assert layers["mid_block.attentions.0.transformer_blocks"]["indices"] == "0,1,2,3,4,5,6,7,8,9"
     consumers = {e["target"] for e in result["edges"] if e["source"] == "diffusion.guidance"}
-    expected = {key for key, node in nodes.items() if "guider" in node["params"] and key != "diffusion.guidance"}
-    assert consumers == expected
+    # SDXL installs its guider at denoising. The encoder guider input is
+    # dynamically available only for the explicitly reviewed Qwen/Z recipes.
+    assert consumers == {"diffusion.denoise"}
+    assert nodes["diffusion.encode_prompt"]["params"]["guider"].get("hidden") is True
     assert not any(item["field"] == "guider" for item in result["requiredInputs"])
     row = next(p for p in support if p["pipelineClass"] == result["pipelineClass"])
     assert "sdxl-pag:modular" in next(t for t in row["tasks"] if t["task"] == task)["executionProfileIds"]
@@ -155,16 +157,17 @@ def test_exact_native_artifact_defaults_and_loader_admission(catalog, profile_id
 
 
 @pytest.mark.skipif(importlib.util.find_spec("transformers") is None,
-                    reason="requires the staged optional Transformers runtime")
+                    reason="requires the base Transformers runtime")
 def test_schnell_prompt_limit_is_enforced_before_pipeline_construction():
     import diffusers
     from modules.ModularDiffusers.embeddings import EncodePrompt
     node = object.__new__(EncodePrompt)
+    node.node_id = "schnell-prompt-limit-test"
     node._pipeline_class = diffusers.FluxModularPipeline
-    with pytest.raises(ValueError, match="schnell.*256"):
+    with pytest.raises(ValueError, match="max_sequence_length.*512"):
         node.execute(text_encoders={"model_type": "FluxModularPipeline",
                                    "repo_id": "black-forest-labs/FLUX.1-schnell"},
-                     prompt="test", max_sequence_length=300)
+                     prompt="test", max_sequence_length=513)
 
 
 def test_operation_recipes_do_not_replace_legacy_auto_owners():

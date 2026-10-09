@@ -22,7 +22,9 @@ from modiff.modular_contract_only_registry import (
 )
 from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
 from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
-from modiff.upstream_coverage import _INTENTIONALLY_EXCLUDED_PIPELINES
+from modiff.upstream_coverage import (
+    _INTENTIONALLY_EXCLUDED_PIPELINES, _diffusers_version_and_symbols, reviewed_diffusers_source,
+)
 from modules.ModularDiffusers.loaders import ModelsLoader
 from modules.ModularDiffusers.modular_utils import (
     _get_registry_instance,
@@ -94,6 +96,9 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
             )
         )
 
+        _version, historical_symbols = _diffusers_version_and_symbols(reviewed_diffusers_source())
+        historical_modular_classes = {name for name in historical_symbols
+                                      if name.endswith("ModularPipeline") and name != "ModularPipeline"}
         exported_modular_classes = {
             name
             for name in dir(diffusers)
@@ -107,9 +112,12 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
             | set(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME)
             | set(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS)
             | set(CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY)
-            | (exported_modular_classes & set(_INTENTIONALLY_EXCLUDED_PIPELINES)),
-            exported_modular_classes,
+            | (historical_modular_classes & set(_INTENTIONALLY_EXCLUDED_PIPELINES)),
+            historical_modular_classes,
         )
+
+        self.assertEqual(exported_modular_classes, historical_modular_classes | {"EchoModularPipeline"})
+        self.assertNotIn("EchoModularPipeline", get_all_model_types(include_contract_only=True))
 
         for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES:
             with self.subTest(pipeline=specification.class_name):

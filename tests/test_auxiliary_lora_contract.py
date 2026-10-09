@@ -13,6 +13,8 @@ from modiff.auxiliary_lora import (
     LORA_DESCRIPTOR_SCHEMA,
     build_lora_descriptor,
     controlled_lora_receipts_from_graph,
+    lora_resource_requirement,
+    native_lora_chain_ids,
     resolve_lora_descriptor,
 )
 from modules.ModularDiffusers.adapters import Lora
@@ -67,6 +69,169 @@ def _resign_descriptor(descriptor):
 
 
 class AuxiliaryLoraContractTests(unittest.TestCase):
+    def test_public_lora_node_exposes_named_ordered_adapter_inputs(self):
+        from modules import MODULE_MAP
+
+        params = MODULE_MAP["modules.ModularDiffusers"]["Lora"]["params"]
+        self.assertEqual(params["adapter_name"]["type"], "string")
+        self.assertEqual(params["adapter_name"]["default"], "")
+        self.assertEqual(params["previous_loras"]["display"], "input")
+        self.assertEqual(params["previous_loras"]["type"], params["lora"]["type"])
+
+    def test_ordinary_node_dispatch_preserves_named_chain_and_invalidates_changed_scale(self):
+        with tempfile.TemporaryDirectory() as directory:
+            first, second = Path(directory) / "first.safetensors", Path(directory) / "second.safetensors"
+            _write_tiny_safetensors(first)
+            _write_tiny_safetensors(second, marker=2)
+            first_node, second_node = Lora("first"), Lora("second")
+
+            def inputs(path, name, scale, previous=None):
+                return {"model": {"source": "local", "value": str(path)},
+                        "weight_name": path.name, "revision": "", "expected_sha256": "",
+                        "scale": scale, "adapter_name": name, "previous_loras": previous,
+                        "scheduler_class": "", "scheduler_config": "{}"}
+
+            # The real dispatcher, validation and cache run. Only discovery of
+            # these temporary local fixtures is suppressed to avoid server I/O.
+            with patch("modiff.NodeBase.modelstore.is_local_cached", return_value=True):
+                previous = first_node(**inputs(first, "first_style", "0.4"))["lora"]
+                chain_inputs = inputs(second, "second_style", "0.8", previous)
+                result = second_node(**chain_inputs)["lora"]
+                self.assertEqual([item["adapter_name"] for item in result], ["first_style", "second_style"])
+                self.assertEqual([item["scale"] for item in result], [0.4, 0.8])
+                self.assertIs(second_node(**chain_inputs)["lora"], result)
+                self.assertEqual(second_node._cache_reason, "unchanged_inputs")
+                changed = second_node(**{**chain_inputs, "scale": "0.25"})["lora"]
+                self.assertEqual([item["scale"] for item in changed], [0.4, 0.25])
+                self.assertEqual(second_node._cache_reason, "inputs_changed")
+
+    def test_native_lora_preserves_explicit_name_in_descriptor_and_graph_receipt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            weight = Path(directory) / "style.safetensors"
+            _write_tiny_safetensors(weight)
+            selection = {"source": "local", "value": str(weight)}
+            descriptor = Lora("native-style").execute(selection, 0.75, adapter_name="original_style")["lora"]
+            self.assertEqual(descriptor["adapter_name"], "original_style")
+            graph = {"nodes": {"native-style": {
+                "module": "modules.ModularDiffusers", "action": "Lora",
+                "params": {"model": {"value": selection}, "scale": {"value": 0.75},
+                           "adapter_name": {"value": "original_style"}},
+            }}, "paths": [["native-style"]]}
+            receipt = controlled_lora_receipts_from_graph(graph)[0]
+            self.assertEqual(receipt["adapterName"], "original_style")
+            self.assertEqual(receipt["descriptorSha256"], descriptor["descriptor_sha256"])
+
+    def test_native_lora_chain_preserves_order_scales_and_existing_descriptor(self):
+        with tempfile.TemporaryDirectory() as directory:
+            first, second = Path(directory) / "first.safetensors", Path(directory) / "second.safetensors"
+            _write_tiny_safetensors(first)
+            _write_tiny_safetensors(second, marker=2)
+            before = Lora("first").execute({"source": "local", "value": str(first)}, 0.4,
+                                           adapter_name="first_style")["lora"]
+            saved = copy.deepcopy(before)
+            result = Lora("second").execute({"source": "local", "value": str(second)}, 0.8,
+                                            adapter_name="second_style", previous_loras=before)["lora"]
+            self.assertEqual([item["adapter_name"] for item in result], ["first_style", "second_style"])
+            self.assertEqual([item["scale"] for item in result], [0.4, 0.8])
+            self.assertEqual(before, saved)
+            pipeline = MutationTrackingPipeline()
+            update_lora_adapters(pipeline, result)
+            self.assertEqual(pipeline.events[-1], ("set", ["first_style", "second_style"], [0.4, 0.8]))
+
+    def test_native_graph_chain_receipts_and_resource_inspection_preserve_each_adapter(self):
+        with tempfile.TemporaryDirectory() as directory:
+            weights = [Path(directory) / f"style-{index}.safetensors" for index in range(2)]
+            for index, weight in enumerate(weights):
+                _write_tiny_safetensors(weight, marker=index + 1)
+            nodes = {str(index): {
+                "module": "modules.ModularDiffusers", "action": "Lora", "params": {
+                    "model": {"value": {"source": "local", "value": str(weight)}},
+                    "adapter_name": {"value": f"style_{index}"}, "scale": {"value": (0.4, 0.8)[index]},
+                },
+            } for index, weight in enumerate(weights)}
+            nodes["1"]["params"]["previous_loras"] = {"sourceId": "0", "sourceKey": "lora"}
+            graph = {"nodes": nodes, "paths": [["0", "1"]]}
+            self.assertEqual(native_lora_chain_ids(graph, "1"), ["0", "1"])
+            receipts = controlled_lora_receipts_from_graph(graph)
+            self.assertEqual([item["adapterName"] for item in receipts], ["style_0", "style_1"])
+            self.assertEqual([item["scale"] for item in receipts], [0.4, 0.8])
+            requirement = lora_resource_requirement("1", nodes["1"], graph=graph)
+            self.assertEqual(requirement["adapterName"], "style_1")
+            self.assertEqual(requirement["artifact"]["sha256"], hashlib.sha256(weights[1].read_bytes()).hexdigest())
+            self.assertEqual(requirement["tensorCount"], 1)
+            self.assertGreater(requirement["systemRamBytes"], 0)
+            with self.assertRaisesRegex(ValueError, "exact artifact"):
+                lora_resource_requirement("1", nodes["1"])
+            nodes["1"]["params"]["adapter_name"]["value"] = "style_0"
+            with self.assertRaisesRegex(ValueError, "unique adapter names"):
+                controlled_lora_receipts_from_graph(graph)
+
+    def test_native_graph_chain_rejects_unresolved_sources_cycles_and_literal_descriptors(self):
+        base = {"nodes": {
+            "first": {"module": "modules.ModularDiffusers", "action": "Lora", "params": {}},
+            "last": {"module": "modules.ModularDiffusers", "action": "Lora", "params": {
+                "previous_loras": {"sourceId": "first", "sourceKey": "lora"},
+            }},
+        }, "paths": [["first", "last"]]}
+        mutations = [
+            lambda graph: graph["nodes"]["first"].update(module="custom.unreviewed"),
+            lambda graph: graph["nodes"]["last"]["params"]["previous_loras"].update(sourceKey="data"),
+            lambda graph: graph["nodes"]["last"]["params"]["previous_loras"].update(sourceId="missing"),
+            lambda graph: graph["nodes"]["first"]["params"].update(previous_loras={"sourceId": "last", "sourceKey": "lora"}),
+            lambda graph: graph["nodes"]["last"]["params"].update(scale={"sourceId": "first", "sourceKey": "lora", "value": 1}),
+            lambda graph: graph.update(paths=[["last"]]),
+            lambda graph: graph["nodes"]["first"]["params"].update(previous_loras={"value": {"schema": LORA_DESCRIPTOR_SCHEMA}}),
+        ]
+        for mutate in mutations:
+            with self.subTest(mutation=mutate.__code__.co_firstlineno):
+                graph = copy.deepcopy(base)
+                mutate(graph)
+                with self.assertRaises(ValueError):
+                    native_lora_chain_ids(graph, "last")
+        nodes = {str(index): {"module": "modules.ModularDiffusers", "action": "Lora", "params": (
+            {"previous_loras": {"sourceId": str(index - 1), "sourceKey": "lora"}} if index else {}
+        )} for index in range(33)}
+        with self.assertRaisesRegex(ValueError, "At most 32"):
+            native_lora_chain_ids({"nodes": nodes, "paths": [list(nodes)]}, "32")
+
+    def test_connected_adapter_controls_cannot_claim_stale_literal_receipts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            weight = Path(directory) / "style.safetensors"
+            _write_tiny_safetensors(weight)
+            graph = {"nodes": {"adapter": {
+                "module": "modules.DiffusersImage", "action": "LoadAdapter", "params": {
+                    "adapter_path": {"value": {"source": "local", "value": str(weight)}},
+                    "adapter_name": {"value": "style"}, "scale": {
+                        "value": 0.5, "sourceId": "dynamic-control", "sourceKey": "value",
+                    },
+                    "pipeline": {"sourceId": "pipeline", "sourceKey": "pipeline"},
+                },
+            }}, "paths": [["adapter"]]}
+            with self.assertRaisesRegex(ValueError, "scale must be resolved"):
+                controlled_lora_receipts_from_graph(graph)
+            graph["nodes"]["adapter"]["params"]["scale"] = {"value": 0.5}
+            self.assertEqual(controlled_lora_receipts_from_graph(graph)[0]["scale"], 0.5)
+
+    def test_native_lora_chain_revalidates_prior_bytes_names_and_limit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            first, second = Path(directory) / "first.safetensors", Path(directory) / "second.safetensors"
+            _write_tiny_safetensors(first)
+            _write_tiny_safetensors(second, marker=2)
+            selection = {"source": "local", "value": str(second)}
+            before = Lora("first").execute({"source": "local", "value": str(first)}, 1,
+                                           adapter_name="first_style")["lora"]
+            with self.assertRaisesRegex(ValueError, "unique adapter names"):
+                Lora("second").execute(selection, 1, adapter_name="first_style", previous_loras=before)
+            with self.assertRaisesRegex(ValueError, "At most 32"):
+                Lora("second").execute(selection, 1, adapter_name="second_style", previous_loras=[before] * 32)
+            tampered = copy.deepcopy(before)
+            tampered["scale"] = 0.5
+            with self.assertRaises(ValueError):
+                Lora("second").execute(selection, 1, adapter_name="second_style", previous_loras=tampered)
+            _write_tiny_safetensors(first, marker=3)
+            with self.assertRaisesRegex(ValueError, "SHA-256|hash|changed"):
+                Lora("second").execute(selection, 1, adapter_name="second_style", previous_loras=before)
+
     def test_generated_names_allow_versioned_weights_and_nested_node_ids_without_collisions(self):
         import torch
 

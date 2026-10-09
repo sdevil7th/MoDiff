@@ -7,14 +7,24 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Goal                                                                     | Guide                                                                                       |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
 | Install, verify, run a first workflow, configure, or update MoDiff       | [Project README](../README.md) and [`config.example.ini`](../config.example.ini)            |
+| Set up the backend and client with native uv/npm commands                  | [Developer setup](developer-setup.md)                                                       |
 | Understand HTTP and WebSocket surfaces                                   | [API reference](api-reference.md)                                                           |
 | Diagnose startup, ports, slow/stalled runs, devices, downloads, or media | [Troubleshooting](troubleshooting.md)                                                       |
 | Compare the qualified accelerator profiles and their proof levels        | [Runtime support matrix](runtime-support-matrix.md)                                         |
+| Understand Auto planning, independent model lifetimes and release checks | [Workflow Auto memory contracts](workflow-auto-memory.md) |
 | Check quantized model, dependency, download, and qualification support   | [Quantization support matrix](quantization-support.md)                                      |
 | Review optional attention, quantization, and compilation capabilities    | [Optional runtime optimizations](optional-runtime-optimizations.md)                         |
+| Check native auxiliary installation evidence and its platform limits       | [Auxiliary runtime checks](auxiliary-runtime-native-qualification.md)                        |
 | Build Modular Diffusers graphs and understand experimental compatibility | [Modular Diffusers guide](../modules/ModularDiffusers/README.md)                            |
 | Use ordinary image actions and their optional typed inputs               | [Ordinary Diffusers image nodes](../modules/DiffusersImage/README.md)                       |
 | Run the qualified image demo                                             | [Image demo checkpoint](image-demo.md)                                                      |
+| Migrate image templates and compare fresh generated outputs               | [Image template validation](image-template-validation.md)                                   |
+| Compare Mellon and plan simpler image nodes without losing graph capabilities | [Simpler image workflows](simpler-image-workflows-mellon-comparison.md)                       |
+| Preserve guidance settings safely when changing models | [Guidance control transfer](guidance-control-transfer.md) |
+| Reduce reviewed text-to-image component wiring without another loader | [Component bundle authoring](component-bundle-authoring.md) |
+| Validate the application on local, AMD Linux and Windows hardware | [Three-machine application validation](three-machine-app-validation.md) |
+| Review Hugging Face feedback, implemented fixes, test evidence and Windows merge work | [Feedback and validation handoff](huggingface-feedback-and-validation.md) |
+| Review larger image-model validation and prioritize a dedicated AMD GPU | [Large image models](large-image-model-validation.md) and [AMD cloud preparation](amd-cloud-qualification.md) |
 | Rehearse editable image stages and portable custom art direction          | [Image modularity demo](modularity-demo.md)                                                 |
 | Build a visually meaningful fashion-editing demonstration                 | [SoHo fashion editorial demo](fashion-editorial-demo.md)                                    |
 | Transfer the fashion demo to a Windows NVIDIA machine                     | [Windows fashion demo setup](windows-fashion-demo.md)                                       |

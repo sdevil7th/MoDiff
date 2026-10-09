@@ -13,7 +13,7 @@
     "publishesTemplates": false,
     "researchOnly": true
   },
-  "contentHash": "sha256:ed9cf2796b2d9468d520e85f79ac834ffc2a18cadd17dff8ce00de23fc797d81",
+  "contentHash": "sha256:d4e0e2f50fef81c1f6f94261b4409bf1e34a494d4a7b7136c7af7594428f4f7a",
   "contractKind": "non_executable_comfy_contract_resolution_ledger",
   "resolutions": [
     {
@@ -671,7 +671,7 @@
       },
       "contractId": "comfy-research:template:Image_capybara_v0_1_text_to_image",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -706,6 +706,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -1763,7 +1769,7 @@
       },
       "contractId": "comfy-research:template:hidream_i1_dev",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -1798,6 +1804,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -2011,7 +2023,7 @@
       },
       "contractId": "comfy-research:template:hidream_i1_fast",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -2046,6 +2058,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -2259,7 +2277,7 @@
       },
       "contractId": "comfy-research:template:hidream_i1_full",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -2294,6 +2312,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -2744,7 +2768,7 @@
       },
       "contractId": "comfy-research:template:image_anima_base_v1",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -2779,6 +2803,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -3108,7 +3138,7 @@
       },
       "contractId": "comfy-research:template:image_anima_preview",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -3143,6 +3173,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -3660,7 +3696,7 @@
       },
       "contractId": "comfy-research:template:image_boogu_image_0_1_turbo_t2i",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -3695,6 +3731,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -3896,7 +3938,7 @@
       },
       "contractId": "comfy-research:template:image_chroma1_radiance_text_to_image",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
@@ -3984,8 +4026,8 @@
         "recommendedWorkflowEquivalent": false
       },
       "contractId": "comfy-research:template:image_chroma_text_to_image",
-      "currentFamilyOptionCount": 5,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentFamilyOptionCount": 6,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_family_candidate_exact_checkpoint_not_proven",
       "recognizedMoDiffFamilies": [
@@ -4248,7 +4290,7 @@
       },
       "contractId": "comfy-research:template:image_ernie_image",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
@@ -4770,8 +4812,8 @@
         "recommendedWorkflowEquivalent": false
       },
       "contractId": "comfy-research:template:image_flux2_text_to_image",
-      "currentFamilyOptionCount": 4,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentFamilyOptionCount": 5,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
@@ -4863,8 +4905,8 @@
         "recommendedWorkflowEquivalent": false
       },
       "contractId": "comfy-research:template:image_flux2_text_to_image_9b",
-      "currentFamilyOptionCount": 4,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentFamilyOptionCount": 5,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
@@ -4952,7 +4994,7 @@
       },
       "contractId": "comfy-research:template:image_ideogram4_t2i",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -4987,6 +5029,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -5192,7 +5240,7 @@
       },
       "contractId": "comfy-research:template:image_ideogram4_t2i_int8",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -5227,6 +5275,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -5432,7 +5486,7 @@
       },
       "contractId": "comfy-research:template:image_kandinsky5_t2i",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
@@ -5522,7 +5576,7 @@
       },
       "contractId": "comfy-research:template:image_krea2_turbo_t2i",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -5557,6 +5611,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -5762,7 +5822,7 @@
       },
       "contractId": "comfy-research:template:image_krea2_turbo_t2i_int8",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -5797,6 +5857,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -6002,7 +6068,7 @@
       },
       "contractId": "comfy-research:template:image_lens_t2i",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -6037,6 +6103,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -6238,7 +6310,7 @@
       },
       "contractId": "comfy-research:template:image_lens_turbo_t2i",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -6273,6 +6345,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -6877,7 +6955,7 @@
       },
       "contractId": "comfy-research:template:image_mage_flow_t2i_int8",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -6912,6 +6990,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -7113,7 +7197,7 @@
       },
       "contractId": "comfy-research:template:image_mage_flow_turbo_t2i_int8",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -7148,6 +7232,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -7349,7 +7439,7 @@
       },
       "contractId": "comfy-research:template:image_netayume_lumina_t2i",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
@@ -7435,7 +7525,7 @@
       },
       "contractId": "comfy-research:template:image_newbieimage_exp0_1-t2i",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -7470,6 +7560,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -7761,7 +7857,7 @@
       },
       "contractId": "comfy-research:template:image_omnigen2_t2i",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
@@ -7847,7 +7943,7 @@
       },
       "contractId": "comfy-research:template:image_pixeldit_t2i",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -7882,6 +7978,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -8083,7 +8185,7 @@
       },
       "contractId": "comfy-research:template:image_qwen_image",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
@@ -8182,7 +8284,7 @@
       },
       "contractId": "comfy-research:template:image_qwen_image_2512_with_2steps_lora",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
       "recognizedMoDiffFamilies": [
@@ -8234,6 +8336,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -9136,7 +9244,7 @@
       },
       "contractId": "comfy-research:template:image_z_image",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
@@ -9228,7 +9336,7 @@
       },
       "contractId": "comfy-research:template:image_z_image_int8",
       "currentFamilyOptionCount": 1,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [
@@ -9921,7 +10029,7 @@
       },
       "contractId": "comfy-research:template:sd3.5_simple_example",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_task_boundary_only_different_model_generation",
       "recognizedMoDiffFamilies": [],
@@ -9956,6 +10064,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -10150,7 +10264,7 @@
       },
       "contractId": "comfy-research:template:sdxl_refiner_prompt_example",
       "currentFamilyOptionCount": 3,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_family_candidate_auxiliary_artifact_not_admitted_exact_checkpoint_not_proven",
       "recognizedMoDiffFamilies": [
@@ -10481,7 +10595,7 @@
       },
       "contractId": "comfy-research:template:template_qwen_Image_2512_360_lora",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_family_candidate_partition_and_auxiliary_exact_checkpoint_not_proven",
       "recognizedMoDiffFamilies": [
@@ -10533,6 +10647,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -11409,7 +11529,7 @@
       },
       "contractId": "comfy-research:template:utility_pid_latent_upscale_dit",
       "currentFamilyOptionCount": 0,
-      "currentTaskBoundaryOptionCount": 37,
+      "currentTaskBoundaryOptionCount": 39,
       "exactCatalogModelReproductionRequiresAdmission": true,
       "mappingMeaning": "source_reviewed_family_candidate_auxiliary_artifact_not_admitted_exact_checkpoint_not_proven",
       "recognizedMoDiffFamilies": [
@@ -11458,6 +11578,12 @@
           "canonicalWorkflowId": "CogView4Pipeline:text_to_image",
           "modelFamily": "CogView4",
           "modelType": "CogView4Pipeline",
+          "qualificationStatus": "graph-qualified-execution-pending"
+        },
+        {
+          "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+          "modelFamily": "Cosmos 3",
+          "modelType": "Cosmos3OmniModularPipeline",
           "qualificationStatus": "graph-qualified-execution-pending"
         },
         {
@@ -16499,18 +16625,18 @@
       "sha256": "sha256:d743007946b424026f86f0890bf7926953ad4808512b91018d100b4ea2940c75"
     },
     "templateAuthoringSpecs": {
-      "contentHash": "sha256:25433f08dc2d43521b16c1b6ab53e9d0dfaeb78a1e794fee7c1695df65fa0dea",
+      "contentHash": "sha256:2ed1b600beb23056517767f10ce538fa70e33f791c289bea4775664a0b8200e1",
       "path": "data/template-authoring-specs.v1.json",
-      "sha256": "sha256:17ff9c9bbe8b7283c8ff960699d4f1cbe6baae15aaa8e487328ded4601359321"
+      "sha256": "sha256:87fd8a163c2640dc17cd389799c715207277452b2b984070fb26ab9043268c9e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:ed25c084c7fb0be603cc00e79e49d3b6dc53b053c88cd2bcd97711811eb239d1",
+      "contentHash": "sha256:ac39301bfa49319b9009d0a6ae4371fdaaaec40e3824de242aed3408495263e7",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:bfd3e3c6a565549bea2b7d545f78b89eda39129b14213f4323e73c94c8acfb83"
+      "sha256": "sha256:6823eaa931bba63a5627538a6fa3d99040bf882ab79790621dfd3f4ffb040b48"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:e0770f481ed444f78e215ceb2055c11d0d26f7259653e63ae3cd327cd2833cf8"
+      "sha256": "sha256:5aba426ed8f5daf920acc7fd09e10e647f6aedd3fc5f241f365a2c6ca4b314fa"
     }
   },
   "summary": {

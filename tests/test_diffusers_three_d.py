@@ -1,5 +1,5 @@
+import ast
 import importlib.util
-import hashlib
 import inspect
 from pathlib import Path
 import unittest
@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from PIL import Image
+from source_contract_helpers import source_sha256
 
 from modules.DiffusersThreeD.main import (
     DEFAULT_THREE_D_CONTRACT,
@@ -64,7 +65,7 @@ class FakeShapEImg2ImgPipeline(FakeShapEPipeline):
 
 class DiffusersThreeDTests(unittest.TestCase):
     @requires_transformers
-    def test_exact_diffusers_pin_exports_the_bounded_image_signature(self):
+    def test_compatible_diffusers_exports_the_bounded_image_signature(self):
         from diffusers import ShapEImg2ImgPipeline
 
         signature = inspect.signature(ShapEImg2ImgPipeline.__call__)
@@ -83,11 +84,26 @@ class DiffusersThreeDTests(unittest.TestCase):
                 "return_dict",
             ],
         )
-        source = Path(inspect.getsourcefile(ShapEImg2ImgPipeline))
+        # Catalog bytes remain pinned historical evidence. The installed stable
+        # runtime may add type annotations without changing execution behavior.
+        from modiff.upstream_coverage import reviewed_diffusers_source
+        source = reviewed_diffusers_source() / "pipelines/shap_e/pipeline_shap_e_img2img.py"
         self.assertEqual(
-            hashlib.sha256(source.read_bytes()).hexdigest(),
+            source_sha256(source),
             "3636799e64fc57201e25c5d426c3f1c6f27ae1e27334c2adb3238f0139788d24",
         )
+        actual = Path(inspect.getsourcefile(ShapEImg2ImgPipeline))
+
+        def execution_tree(path):
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    node.returns = None
+                elif isinstance(node, ast.arg):
+                    node.annotation = None
+            return ast.dump(tree, include_attributes=False)
+
+        self.assertEqual(execution_tree(actual), execution_tree(source))
 
     def test_exact_artifact_and_contract_are_fail_closed(self):
         self.assertEqual(
