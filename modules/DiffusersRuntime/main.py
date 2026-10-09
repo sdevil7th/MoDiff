@@ -343,10 +343,30 @@ def _restore_diffusers_attention_registry_default() -> str:
     return default_backend.value
 
 
+def native_flash_attention_available(torch_module: Any) -> bool:
+    """Check compiled support without allocating a model or invoking a kernel."""
+    cuda_backend = getattr(getattr(torch_module, "backends", None), "cuda", None)
+    probe = getattr(cuda_backend, "is_flash_attention_available", None)
+    try:
+        return bool(probe()) if callable(probe) else False
+    except Exception:
+        return False
+
+
+def require_attention_backend(backend: str) -> None:
+    if backend != "_native_flash":
+        return
+    import torch
+
+    if not native_flash_attention_available(torch):
+        raise RuntimeError("Native flash SDPA is unavailable in this Torch build. Select auto attention.")
+
+
 def apply_attention_backend(pipeline: Any, backend: str, components: Any = None) -> dict[str, Any]:
     requested = str(backend or "auto")
     if requested not in ATTENTION_BACKENDS:
         raise ValueError(f"Unsupported attention backend {requested!r}.")
+    require_attention_backend(requested)
 
     requested_components = _string_list(components)
     candidate_names = requested_components or list(ATTENTION_COMPONENTS)
@@ -927,6 +947,7 @@ def loader_runtime_options(
     if not isinstance(recipe, dict):
         raise TypeError("Execution Recipe must come from a Diffusers Execution Recipe node.")
     device = str(recipe.get("device") or kwargs.get("device") or default_device)
+    require_attention_backend(str(recipe.get("attention_backend") or "auto"))
     recipe_offload = recipe.get("offload_mode")
     auto_offload = bool(kwargs.get("auto_offload", True))
     if recipe_offload is not None:
@@ -1192,12 +1213,17 @@ def build_runtime_capabilities(
     hub_kernels_available = vendor == "nvidia" and package_available("kernels")
     sage_available = backend == "cuda" and package_available("sageattention")
     xformers_available = vendor == "nvidia" and package_available("xformers")
+    native_flash_available = backend == "cuda" and native_flash_attention_available(torch_module)
     attention = {
         "native": {"available": True, "reason": "PyTorch SDPA fallback"},
         "_native_math": {"available": True, "reason": "Portable PyTorch math fallback"},
         "_native_flash": {
-            "available": backend == "cuda",
-            "reason": "PyTorch accelerator flash SDPA" if backend == "cuda" else "Requires a CUDA/ROCm torch backend",
+            "available": native_flash_available,
+            "reason": (
+                "PyTorch build includes accelerator flash SDPA"
+                if native_flash_available
+                else "Native flash SDPA is unavailable in this Torch build. Select auto attention."
+            ),
         },
         "_native_efficient": {
             "available": backend == "cuda",

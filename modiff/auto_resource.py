@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from modiff.optimization_packages import qualified_auto_overrides, workload_key_for_form
+from modiff.artifact_weight_memory import artifact_parameter_lower_bound, impossible_parameter_residency
 
 from modiff.diffusers_offload_modes import (
     OFFLOAD_MODE_GROUP_CPU,
@@ -3413,6 +3414,27 @@ def build_auto_resource_plan(
                 "workloadKey": workload_key,
                 "selection": overrides,
             }
+
+    # History and qualified overrides cannot make an impossible dense native
+    # placement fit. Apply this lower-bound check to every candidate builder,
+    # after its final artifact, dtype and placement have been selected.
+    for candidate in candidates:
+        if (candidate.get("artifactFormat") != "native"
+                or candidate.get("quantizationMode", "none") != "none"
+                or candidate.get("loadedQuantization", "none") != "none"):
+            continue
+        resolved = (candidate.get("artifactResolution") or {}).get("resolved") or {}
+        bound = artifact_parameter_lower_bound(
+            candidate.get("artifactValidation") or {}, resolved.get("revision"),
+            str(candidate.get("dtype") or "bfloat16"),
+        )
+        missing = impossible_parameter_residency(hardware, bound, str(candidate.get("offloadMode") or "none"))
+        if not missing:
+            continue
+        candidate["requirementsMissing"] = list(dict.fromkeys([*(candidate.get("requirementsMissing") or []), *missing]))
+        reason = "; ".join(candidate["requirementsMissing"])
+        candidate.update(canAutoRun=False, readiness="skipped", healthBadge="Not suitable locally", skipReason=reason)
+        candidate["proof"] = {**(candidate.get("proof") or {}), "status": "skipped", "message": reason}
 
     ready = [
         candidate for candidate in candidates

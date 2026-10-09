@@ -96,6 +96,15 @@ MoDiff uses PyTorch's default allocator on Windows and does not inject
 options if your PyTorch build warns. Linux launch paths share the same pre-import
 allocator policy.
 
+Before importing Torch, Windows app launch also defaults `MIMALLOC_PURGE_DELAY`
+to `0`. This asks Torch's bundled CPU allocator to return unused pages promptly:
+its delayed purge can retain freed tensor memory while idle and leave too little
+host RAM for a subsequent Auto plan. Immediate purging can cost allocation
+performance. An explicit `MIMALLOC_PURGE_DELAY` value is preserved, including an
+empty setting; changing it requires a fresh app process. This does not change
+CUDA allocation policy, model offload settings or the host memory admission floor.
+See the [allocator's documented environment options](https://github.com/microsoft/mimalloc/blob/v2.1.7/readme.md#environment-options).
+
 Ordinary image workflows use eager execution and native SDPA without Triton.
 Compilation is optional and requires an executed kernel probe. A workflow that
 requires compiled FlexAttention checks its compiler before resolving or loading

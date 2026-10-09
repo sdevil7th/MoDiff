@@ -111,6 +111,10 @@ schedule otherwise; actual free memory is checked before the next owner loads.
 
 ### Managed file identifiers
 
+`GET /listgraphs` returns an empty array when the legacy graph directory has
+not been created. Listing never creates that directory; access and IO errors
+remain failures.
+
 `POST /file` stores uploads below the configured data directory and returns a
 portable `@data/<relative-path>` identifier, such as
 `@data/images/source.png`. Pass that opaque identifier unchanged to graph
@@ -120,6 +124,13 @@ is outside `work_dir` or on another Windows drive. The backend rejects `..`,
 malformed namespace values, and symlink escapes. Existing work-root-relative
 values such as `data/images/legacy.png` remain readable when they resolve
 inside a configured root.
+
+Executor-produced audio/video previews inside configured `audio`/`videos`
+folders are copied to retained Studio storage under the data root before
+publication. Their preview URLs use `@data` identifiers and remain available
+after execution caches are released. The 256 MB media retention limit applies.
+HTTP file and workflow-share requests still cannot read arbitrary paths in
+those output folders; traversal and resolved symlink escapes remain rejected.
 
 ### Runtime status
 
@@ -1502,6 +1513,13 @@ variation, continuation, and repaint use the generic Diffusers runtime recipe, a
 loader/generator, source-audio loader where required, and audio export nodes;
 continuation additionally seals loudness matching and joining. Repaint reuses
 the source-audio route with its exact task and range bindings.
+The generic ACE repaint adapter replaces only the selected half-open interval
+on the requested delivery sample grid, preserving the source waveform outside
+that interval and its full duration. When delivery and source rates differ,
+the source is resampled before composition. Decoded channels must match and
+the generated waveform must cover the complete selected interval. Ordinary
+WAV export quantization still applies; this waveform-preservation contract does
+not promise byte-identical PCM files or seamless perceptual transitions.
 Qwen Image Edit inpaint seals the reviewed direct pipeline, source-image and
 mask loaders, generic inpaint node, preview route, and exact form bindings.
 Outpaint reuses that reviewed loader and generator while sealing the distinct
@@ -2028,6 +2046,9 @@ must still agree across output, provenance and media records. Existing history
 normalization, atomic writes and detection of external file changes apply; no
 outputs or workflow snapshots are pruned to improve lookup speed.
 Completion, cancellation, and failure are distinct terminal states.
+Terminal receipts replace in-progress messages with their terminal status,
+while explicit failure/cancellation diagnostics remain available. Clients
+must give terminal status priority over progress fields in older receipts.
 
 Use the WebSocket for live progress and `GET /queue` to restore state after reconnect. Do not infer success only from an HTTP `200` returned by `POST /graph`.
 
@@ -2218,11 +2239,27 @@ Stable product routes such as `/graph`, `/queue`, `/studio_outputs`, and `/workf
 
 The response includes `canAutoRun`, `issues`, `loaders`, `adapters`, `requirements`, `retainedRequirements`, `capacityRequirements`, `workingMemoryPolicy`, `available`, `sharedMemory`, `patches`, `graphHash`, `plannedGraphHash`, `resolvedFields`, `requiresPreparation`, `preparationNodeIds`, `deferredFields` and `schedule`. A pending data preparation plan is provisional: actual outputs must pass another plan before model allocation. Only existing `offload_mode` and `auto_offload` fields may be patched, including the authoritative offload field of a connected reviewed execution recipe; model identity, precision and creative inputs are preserved.
 
+Every Automatic execution, including a managed Studio workflow, requires a whole-workflow planning receipt before runtime preparation. A primary-model `autoResourcePlan` alone is insufficient; missing receipts fail with `workflow_auto_plan_required`. Custom memory preserves explicit graph settings. A whole-workflow plan owns execution resource settings and is not overwritten by the primary-model candidate. It grants one graph attempt; primary-model retry recipes are not selected for that execution. A failure needs a fresh whole-workflow plan.
+
 Requests carry `runtimeHints.workflowAutoPlan` with `schemaVersion: 1`, `graphHash` and optional `resourceControlGroups` (arrays of `{nodeId, field}` bindings for shared offload controls). The backend verifies the graph hash, prepares supported data-only suppliers through the existing executor when needed, validates mirrored settings, and replans from fresh outputs. It emits existing `auto_resource_plan_applied` events with optional `resourceUpdates` containing `{nodeId, field, value, previousValue}`. The client applies those updates only to the owning workflow with unchanged fields. `runtimePreparation.workflowAuto` in task receipts records resolved fields, applied updates, preparation nodes, schedule and actual releases.
 
 Shared loaders count once. Independent loaders remain separate owners. Static Auto tiers declare `memorySemantics: "machine_capacity"`: their RAM and VRAM numbers are machine admission classes, checked against total capacity with the existing nominal-tier tolerance. `capacityRequirements` takes the maximum class across owners; those classes are never added together or treated as additional free working memory. Offloaded shared/unified accelerators retain the existing accessible-capacity policy. Disk requirements still describe actual free space.
 
+Built-in direct Diffusers image, audio and video loaders construct independent
+pipeline objects for different node IDs. Their graph-derived cleanup identity
+therefore includes those owner IDs: switching to a different direct-loader
+graph releases stale app-owned model caches before loading, even when its
+artifact and settings match. An unchanged direct-loader graph can reuse its
+resident pipeline. Existing Modular shared-component ownership remains
+separate. Cleanup metadata grants no model or execution qualification.
+
 `workingMemoryRequirements`, when explicitly declared by a reviewed recipe, describe working demand and are additive across independent owners. `requirements` and `retainedRequirements` report those working demands and the runtime headroom policy. A capacity-only recipe reports `workingMemoryPolicy: "runtime_headroom_policy"`: its model-specific working demand remains unmeasured. The existing free-memory floors apply once per workflow; they do not establish measured workload fit. A separately declared working contract reports `explicit_working_demand`. Neither policy upgrades artifact, execution, or performance qualification.
+
+Forced `_native_math` attention needs a declared working-memory budget when
+Auto selects a machine-capacity recipe. This guard applies to both native
+loader controls and a connected Diffusers Execution Recipe, including bounded
+Primitive controls. Auto preserves the authored attention setting in its
+resolved receipt; it does not silently replace an unbudgeted math policy.
 
 The built-in Spandrel Upscaler can declare a separate `resourceOwnerKind: "auxiliary_model"` for the exact installed `amd/realesrgan-x4plus/RealESRGAN_x4plus.pth` revision `bda69abcaf525425b371622349e975245ae090c2`, SHA-256 `4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1`. This bounded contract covers a single reviewed native text-to-image DecodeLatents output up to 1024 by 1024, tile size 256, overlap 32 and downscale 0.5. The normal controlled-artifact resolver checks installed bytes without loading the model or downloading files. Other selectors, image suppliers or settings need their own reviewed bound or Custom memory policy; the unrelated x2 Expert profile is not substituted.
 

@@ -557,6 +557,11 @@ def _build_workflow_auto_plan(
                 from modiff.workflow_task_identity import modular_graph_tasks
 
                 modes = modular_graph_tasks(nodes, loader_id, consumers, profile.model_type)
+                if modes == {"edit_image", "multi_image_reference_edit"}:
+                    # These reviewed tasks share the same image-conditioned route.
+                    # Prefer the conservative multi-reference mode when declared;
+                    # explicit, conflicting mode literals must remain ambiguous.
+                    modes = {"multi_image_reference_edit" if "multi_image_reference_edit" in profile.modes else "edit_image"}
                 if len(modes) == 1 and not modes.issubset(profile.modes):
                     from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH
 
@@ -627,6 +632,14 @@ def _build_workflow_auto_plan(
                 raise ValueError(reason)
             candidate = candidates[0]
             envelope = candidate.get("requirements", {})
+            if (values.get("attention_backend") == "_native_math"
+                    and envelope.get("memorySemantics") == "machine_capacity"
+                    and not isinstance(candidate.get("workingMemoryRequirements") or envelope.get("workingMemoryRequirements"), dict)):
+                raise ValueError(
+                    "Forced math attention has no declared working-memory budget for this Auto recipe. "
+                    "Select automatic attention or Custom memory to preserve the original policy. "
+                    "A machine-capacity tier does not cover the math attention working set."
+                )
             declared = select_memory_requirement(envelope, candidate.get("offloadMode"))
             if not isinstance(declared, dict) or any(_number(declared.get(key)) is None for key in capacity_requirements):
                 raise ValueError("The accepted recipe has no complete memory requirement contract.")
@@ -677,7 +690,9 @@ def _build_workflow_auto_plan(
                             "candidateId": candidate["id"], "proofStatus": candidate["proof"]["status"],
                             "consumers": consumers, "requirements": requirements,
                             "capacityRequirements": capacity, "workingMemoryPolicy": working_policy,
-                            "settings": {**form, **settings, **native_runtime_controls}})
+                            "settings": {**form, **settings, **native_runtime_controls,
+                                         **({"attention_backend": recipe_controls["attention_backend"]}
+                                            if "attention_backend" in recipe_controls else {})}})
         except DeferredResourceValue as error:
             preparation_nodes.update(error.node_ids)
             deferred_fields.append(error.target)

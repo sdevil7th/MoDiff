@@ -52,7 +52,8 @@ def inspect_execution_recipe_controls(nodes, loader_id, literal):
 
     # The eager native/math paths retain ordinary SDPA behavior. Other kernels,
     # placement, compilation and caches need their separate accepted recipes.
-    if str(control('attention_backend', 'auto') or 'auto') not in {'auto', 'native', '_native_math'}:
+    attention_backend = str(control('attention_backend', 'auto') or 'auto')
+    if attention_backend not in {'auto', 'native', '_native_math'}:
         raise ValueError('The connected attention backend has no accepted workflow Auto recipe; select Custom memory to preserve it.')
     for field in ('regional_compile', 'layerwise_casting', 'channels_last'):
         if bool(control(field, False)):
@@ -94,7 +95,8 @@ def inspect_execution_recipe_controls(nodes, loader_id, literal):
         raise ValueError('Inline quantization configuration requires Custom memory.')
     offload = str(control('offload_mode', 'none') or 'none')
     device = str(control('device', 'cuda:0') or 'cuda:0')
-    return {'offload_mode': offload, 'auto_offload': offload != 'none', 'device': device}, {
+    return {'offload_mode': offload, 'auto_offload': offload != 'none', 'device': device,
+            'attention_backend': attention_backend}, {
         'offload_mode': (recipe_id, 'offload_mode'), 'device': (recipe_id, 'device'),
     }
 

@@ -1812,7 +1812,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "current_node_name": self.current_task.get("current_node_name"),
             "node_progress": self.current_task.get("node_progress"),
             "phase": self.current_task.get("phase"),
-            "message": self.current_task.get("message"),
+            "message": status.capitalize(),
             "current_step": self.current_task.get("current_step"),
             "total_steps": self.current_task.get("total_steps"),
             "component": self.current_task.get("component"),
@@ -3735,8 +3735,11 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
 
     async def listgraphs(self, request):
         path = Path(self.data_dir) / "graphs"
-        if not path.exists():
-            return web.json_response({"error": True, "message": "No graph directory found."}, status=404)
+        try:
+            path.stat()
+        except FileNotFoundError:
+            # A fresh installation has no legacy graphs. GET must not create it.
+            return web.json_response([])
 
         graphs = list_files(str(path), recursive=True, extensions=["json"])
         workflow_metadata: dict[str, dict] = {}
@@ -5036,6 +5039,40 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         )
         digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:24]
         return f"run-output-{digest}"
+
+    def _generated_file_preview(self, value, *, node_id, field_key, index, display):
+        """Publish executor-produced media without widening HTTP file access.
+
+        Only the native dispatch path may copy from an operator-configured
+        output folder. HTTP history/share requests retain work/data boundaries.
+        """
+        preview = file_backed_media_preview(value)
+        if not preview or not preview.startswith("/file?"):
+            return preview
+        raw_path = os.fspath(value)
+        if self._resolve_managed_path_identifier(raw_path) is not None:
+            return preview
+        source = Path(raw_path).expanduser().resolve(strict=False)
+        root_key = {"ui_audio": "audio", "ui_video": "videos"}.get(display)
+        output_root = CONFIG.paths.get(root_key) if root_key else None
+        if not output_root or not self._path_within(source, output_root) or not source.is_file():
+            return preview
+        if source.stat().st_size > MAX_WORKFLOW_SHARE_MEDIA_BYTES:
+            raise ValueError("Generated preview media exceeds the 256 MB retention limit.")
+        task = self.current_task or {}
+        output_id = self._generated_output_id(
+            task.get("task_id") or nanoid.generate(size=12), task.get("attempt_index"), node_id, field_key
+        )
+        target = self._studio_outputs_dir() / f"{output_id}_item_{index:02d}{source.suffix.lower()}"
+        identifier = data_path_identifier(target, self.data_dir)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        temporary = target.with_name(f".{target.name}.{nanoid.generate(size=12)}.tmp")
+        try:
+            shutil.copyfile(source, temporary)
+            temporary.replace(target)
+        finally:
+            temporary.unlink(missing_ok=True)
+        return f"/file?file={quote(identifier, safe='')}"
 
     def _persist_generated_output_update(self, message, *, display):
         """Capture a generated preview before its cache entry can be replaced.
@@ -9245,6 +9282,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             # Diffusers pipeline node or by Diffusers component-loader nodes.
             # Those resident objects are not interchangeable.
             "loaderContract": runtime_hints.get("loaderContract"),
+            # Direct loaders construct independent pipeline objects per node.
+            # Matching model settings alone cannot reuse another node's owner.
+            "independentLoaderNodeIds": runtime_hints.get("independentLoaderNodeIds") or [],
             "dtype": candidate.get("dtype") or runtime_hints.get("dtype"),
             "modelRevision": candidate.get("revision") or runtime_hints.get("modelRevision"),
             "quantizationMode": (candidate.get("quantizationMode") or runtime_hints.get("quantizationMode")),
@@ -9306,6 +9346,14 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         hints["loaderContract"] = self._graph_loader_contract(nodes)
         if not isinstance(nodes, dict):
             return hints or None
+        direct_owner_ids = sorted(
+            node_id for node_id, node in nodes.items()
+            if isinstance(node, dict) and node.get("action") == "LoadPipeline"
+            and node.get("module") in {
+                "modules.DiffusersAudio", "modules.DiffusersImage", "modules.DiffusersVideo",
+            }
+        )
+        hints["independentLoaderNodeIds"] = direct_owner_ids
         loader_actions = {"LoadPipeline", "ModelsLoader", "AutoModelLoader"}
         loaders = [
             node
@@ -9321,7 +9369,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             # process-wide reload of the surviving owner on the next run.
             derived = [self._runtime_cleanup_hints_for_graph({"loader": loader}, hints) for loader in loaders]
             if len({self._auto_candidate_cache_signature(item) for item in derived}) == 1:
-                return derived[0]
+                return {**derived[0], "independentLoaderNodeIds": direct_owner_ids}
             return hints or None
         loader = loaders[0]
         params = loader.get("params") if isinstance(loader.get("params"), dict) else {}
@@ -10119,6 +10167,11 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 changes = [f"{item['nodeId']}.{item['field']} = {item['value']}" for item in workflow_auto_plan["patches"]]
                 raise self._auto_resource_contract_error("Workflow Auto needs a fresh plan: " + "; ".join(workflow_auto_plan["issues"] or changes or ["resource settings changed"]))
         assert_studio_execution_graph(graph, base_runtime_hints)
+        if base_runtime_hints and base_runtime_hints.get("resourceMode") == "auto" and workflow_auto_plan is None:
+            raise self._auto_resource_contract_error(
+                "A whole-workflow Auto plan is required before execution. Plan the current graph again or select Custom memory.",
+                code="workflow_auto_plan_required",
+            )
         if isinstance(base_runtime_hints, dict):
             self._bind_controlled_artifact_receipts(graph, base_runtime_hints)
             base_runtime_hints["loaderContract"] = self._graph_loader_contract(nodes)
@@ -10183,7 +10236,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             }}
         if self.current_task and runtime_preparation is not None:
             self.current_task["runtimePreparation"] = runtime_preparation
-        retry_plans = self._coerce_retry_plan_list(base_runtime_hints)
+        # A complete Auto plan grants one attempt. Primary-model retry recipes
+        # cannot reconfigure a combined graph without a fresh whole-scope plan.
+        retry_plans = self._coerce_retry_plan_list(base_runtime_hints) if workflow_auto_plan is None else []
         retry_history = []
         deterministic_receipt = None
         attempt_index = 0
@@ -10205,7 +10260,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 if workflow_auto_plan is None:
                     self._assert_auto_resource_candidate_ready(runtime_hints)
                 auto_plan = runtime_hints.get("autoResourcePlan")
-                if isinstance(auto_plan, dict):
+                # The complete plan already owns resource settings. A primary
+                # Studio candidate describes one model, not the whole graph.
+                if isinstance(auto_plan, dict) and workflow_auto_plan is None:
                     proven = self._auto_resource_candidate_is_proven(auto_plan)
                     # Every Auto plan must address one exact visible loader,
                     # even when qualification is still advisory.  Simulate
@@ -11295,7 +11352,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     for i, item in enumerate(source_value):
                         if item is None:
                             continue
-                        file_url = file_backed_media_preview(item)
+                        file_url = self._generated_file_preview(item, node_id=id, field_key=ui_key, index=i, display=display)
                         url = file_url or f"/cache/{id}/{data_key}/{i}?t={time.time()}"
                         data_value.append(url)
                         if file_url:

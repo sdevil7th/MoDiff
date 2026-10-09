@@ -293,7 +293,8 @@ class DiffusersRuntimeTests(unittest.TestCase):
         pipeline.transformer.set_attention_backend = set_backend_and_mutate_registry
         original_backend, _original_fn = _AttentionBackendRegistry.get_active_backend()
         try:
-            result = apply_attention_backend(pipeline, "_native_flash")
+            with patch("modules.DiffusersRuntime.main.native_flash_attention_available", return_value=True):
+                result = apply_attention_backend(pipeline, "_native_flash")
             active_backend, _active_fn = _AttentionBackendRegistry.get_active_backend()
         finally:
             _AttentionBackendRegistry.set_active_backend(original_backend)
@@ -489,6 +490,46 @@ class DiffusersRuntimeTests(unittest.TestCase):
         self.assertNotIn("aiter_fa2_hub", result["attention_backends"])
         self.assertFalse(result["attention_backends"]["flash"]["available"])
         self.assertFalse(result["quantization_backends"]["torchao_float8"]["available"])
+
+    def test_native_flash_requires_actual_torch_build_support(self):
+        for support in (False, True, None, "raises"):
+            with self.subTest(support=support):
+                def probe():
+                    if support == "raises":
+                        raise RuntimeError("Unavailable capability probe")
+                    return support
+
+                cuda_backend = types.SimpleNamespace()
+                if support is not None:
+                    cuda_backend.is_flash_attention_available = probe
+                fake_torch = types.SimpleNamespace(
+                    __version__="test-cuda-build",
+                    version=types.SimpleNamespace(hip=None, cuda="12.8"),
+                    cuda=types.SimpleNamespace(
+                        get_device_capability=lambda _index: (8, 9),
+                        is_bf16_supported=lambda: True,
+                    ),
+                    backends=types.SimpleNamespace(cuda=cuda_backend),
+                )
+                result = build_runtime_capabilities(
+                    {"devices": [{"type": "cuda", "device": "cuda:0"}]},
+                    torch_module=fake_torch,
+                    package_available=lambda _name: False,
+                )
+                self.assertEqual(result["attention_backends"]["_native_flash"]["available"], support is True)
+                self.assertTrue(result["attention_backends"]["native"]["available"])
+
+    def test_unavailable_native_flash_recipe_is_rejected_before_loader_materialization(self):
+        with patch("torch.backends.cuda.is_flash_attention_available", return_value=False):
+            with self.assertRaisesRegex(RuntimeError, "Native flash SDPA.*Select auto"):
+                loader_runtime_options(
+                    {"execution_recipe": {"device": "cuda:0", "attention_backend": "_native_flash"}},
+                    default_device="cuda:0", default_offload_mode="model_cpu",
+                )
+            pipeline = FakePipeline()
+            with self.assertRaisesRegex(RuntimeError, "Native flash SDPA.*Select auto"):
+                apply_attention_backend(pipeline, "_native_flash")
+            self.assertEqual(pipeline.transformer.backends, [])
 
     def test_capability_probe_excludes_obsolete_rocm_attention_backend(self):
         class FakeCuda:

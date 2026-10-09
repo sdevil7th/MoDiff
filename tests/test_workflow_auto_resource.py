@@ -279,6 +279,61 @@ def test_native_runtime_policy_is_preserved_and_connected_controls_are_bound(set
     assert g == before
 
 
+@pytest.mark.parametrize('attention', ['inherit', 'auto', 'native', '_native_math'])
+def test_capacity_tiers_do_not_admit_unbudgeted_forced_math_attention(setup, attention):
+    plan, candidate, hardware, _ = setup
+    gib = 1024**3
+    hardware.update(
+        accelerator={'kind': 'cuda', 'totalBytes': 16*gib, 'freeBytes': 16*gib, 'memoryKind': 'dedicated'},
+        systemMemory={'totalBytes': 32*gib, 'availableBytes': 32*gib},
+        offloadDisk={'freeBytes': 100*gib},
+    )
+    candidate['requirements'] = {'memorySemantics': 'machine_capacity',
+                                 'minimum': {'accelerator': 'gpu', 'vramBytes': 8*gib, 'systemRamBytes': 24*gib, 'diskFreeBytes': 0}}
+    g = graph()
+    g['nodes']['load']['params']['attention_backend'] = {'value': attention}
+    before = deepcopy(g)
+    result = plan(g)
+    assert result['canAutoRun'] == (attention != '_native_math'), result['issues']
+    assert g == before
+    if attention == '_native_math':
+        assert not result['patches']
+        assert any('working-memory budget' in issue for issue in result['issues'])
+
+
+@pytest.mark.parametrize('attention', ['auto', 'native', '_native_math'])
+@pytest.mark.parametrize('connected', [False, True])
+@pytest.mark.parametrize('working_budget', [False, True])
+def test_connected_recipe_math_requires_a_working_budget(setup, attention, connected, working_budget):
+    plan, candidate, hardware, _ = setup
+    gib = 1024**3
+    hardware.update(
+        accelerator={'kind': 'cuda', 'totalBytes': 16*gib, 'freeBytes': 16*gib, 'memoryKind': 'dedicated'},
+        systemMemory={'totalBytes': 32*gib, 'availableBytes': 32*gib},
+        offloadDisk={'freeBytes': 100*gib},
+    )
+    candidate['requirements'] = {'memorySemantics': 'machine_capacity',
+                                 'minimum': {'accelerator': 'gpu', 'vramBytes': 8*gib, 'systemRamBytes': 24*gib, 'diskFreeBytes': 0}}
+    if working_budget:
+        candidate['workingMemoryRequirements'] = {'systemRamBytes': gib, 'vramBytes': gib, 'diskFreeBytes': 0}
+    g = recipe_graph(attention_backend=attention)
+    if connected:
+        g['nodes'] = {'policy': {'module': 'modules.Primitive', 'action': 'String',
+                                 'params': {'value': {'value': attention}}}, **g['nodes']}
+        g['nodes']['recipe']['params']['attention_backend'] = {'sourceId': 'policy', 'sourceKey': 'output'}
+        g['paths'] = [list(g['nodes'])]
+    before = deepcopy(g)
+    result = plan(g)
+    admitted = attention != '_native_math' or working_budget
+    assert result['canAutoRun'] == admitted, result['issues']
+    assert g == before
+    if admitted:
+        assert result['loaders'][0]['settings']['attention_backend'] == attention
+    else:
+        assert not result['patches']
+        assert any('working-memory budget' in issue for issue in result['issues'])
+
+
 @pytest.mark.parametrize('field,value', [('attention_backend', 'flash'), ('vae_slicing', 'true'), ('vae_tiling', 1)])
 def test_native_runtime_policy_invalid_values_cannot_be_ignored_by_auto(setup, field, value):
     plan, _, _, _ = setup
@@ -798,17 +853,20 @@ def test_data_preparation_runs_supplier_once_and_never_uses_prior_output():
     assert not RUNTIME_VALUES.get()
 
 
-def test_existing_executor_releases_before_next_loader_and_retains_downstream_image(setup, monkeypatch, tmp_path):
+@pytest.mark.parametrize('with_primary_candidate', [False, True])
+def test_existing_executor_releases_before_next_loader_and_retains_downstream_image(setup, monkeypatch, tmp_path, with_primary_candidate):
     from modiff.server import WebServer
     import modiff.workflow_auto_lifecycle as lifecycle
     from PIL import Image
     import weakref
-    plan, _, hardware, _ = setup
+    plan, candidate, hardware, _ = setup
     hardware['systemMemory']['availableBytes'] = 450
     graph_data = graph(two=True)
     graph_data['nodes']['generate2']['params']['image'] = {'sourceId': 'generate', 'sourceKey': 'images'}
     graph_data['sid'] = 'test'
     graph_data['runtimeHints'] = {'resourceMode': 'auto', 'workflowAutoPlan': {'schemaVersion': 1, 'graphHash': planner.workflow_graph_hash(graph_data)}}
+    if with_primary_candidate:
+        graph_data['runtimeHints']['autoResourcePlan'] = deepcopy(candidate)
     app = WebServer(modules={}, work_dir=str(tmp_path), data_dir=str(tmp_path))
     app.current_task = {'task_id': 'lifetime-test', 'progress': 0}
     app.interrupt_flag = False
@@ -841,6 +899,13 @@ def test_existing_executor_releases_before_next_loader_and_retains_downstream_im
         else:
             app.node_cache[node_id] = SimpleNamespace(output={}, params={}, _mm_models=[])
     app.execute_node = execute
+    def legacy_primary_application(*args):
+        pytest.fail('A primary candidate must not overwrite a whole-workflow plan.')
+    app._apply_resource_retry_plan_to_graph = legacy_primary_application
+    if with_primary_candidate:
+        def legacy_primary_retries(*args):
+            pytest.fail('A whole-workflow execution must not select primary-model retry plans.')
+        app._coerce_retry_plan_list = legacy_primary_retries
     for _ in range(2):
         app._execute_graph(deepcopy(graph_data))
     assert calls.count('load') == calls.count('load2') == 2
@@ -1337,3 +1402,23 @@ def test_dispatch_releases_cache_before_capacity_gate_and_requires_actual_ram(se
         assert calls == ['release', 'load', 'generate', 'preview']
         completed = next(item for item in messages if item['type'] == 'graph_completed')
         assert completed['runtimePreparation']['workflowAuto']['cachePreparation']['released']['models'] == 1
+
+
+@pytest.mark.parametrize('with_primary_candidate', [False, True])
+def test_auto_requires_whole_workflow_receipt_before_runtime_preparation(setup, tmp_path, with_primary_candidate):
+    from modiff.server import WebServer
+    _, candidate, _, _ = setup
+    g = graph(two=True)
+    g['sid'] = 'unit'
+    g['runtimeHints'] = {'resourceMode': 'auto'}
+    if with_primary_candidate:
+        g['runtimeHints']['autoResourcePlan'] = deepcopy(candidate)
+    app = WebServer(modules={}, work_dir=str(tmp_path), data_dir=str(tmp_path))
+    prepared = []
+    def prepare(_):
+        prepared.append(True)
+        raise AssertionError('Reached runtime preparation without a whole-workflow receipt.')
+    app._prepare_auto_runtime_for_graph = prepare
+    with pytest.raises(RuntimeError, match='whole-workflow Auto plan'):
+        app._execute_graph(g)
+    assert not prepared

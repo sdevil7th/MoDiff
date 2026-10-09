@@ -1,18 +1,19 @@
 # Transformers depth workflows
 
-In Developer → Workflows → Depth estimation, select an installed depth model
+In New → Depth estimation, select an installed depth model
 and preview the connected workflow. Load Models and Predict Map use the same
 ordinary graph, image input, output preview and Saved Block controls as other
 workflows. The underlying task nodes are Load Depth Estimation Model and Predict
 Depth; the two reviewed Depth Anything V2 variants share these nodes.
 
 The loader uses the official Hugging Face Transformers AutoImageProcessor and
-AutoModelForDepthEstimation APIs. It requires the existing reviewed optional
-Transformers runtime, an immutable Hub commit or an explicitly selected local
+AutoModelForDepthEstimation APIs. It requires the reviewed Transformers base
+runtime installed by ordinary setup, an immutable Hub commit or an explicitly selected local
 model, local files, native classes and safetensors. Browsing or opening a workflow
 does not install a runtime, download weights or authorize repository Python.
-The execution profiles declare the same optional-runtime boundary as the existing
-Transformers text and vision nodes. Models remain in the existing graph cache.
+The execution profiles use the same required base-runtime contract as the existing
+Transformers text and vision nodes. Heavyweight imports remain lazy. Models remain
+in the existing graph cache.
 
 ## Inputs and outputs
 

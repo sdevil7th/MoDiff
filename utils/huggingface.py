@@ -3,6 +3,7 @@ import logging
 logger = logging.getLogger('modiff')
 from huggingface_hub import scan_cache_dir, logging as hf_logging, repo_exists as hf_repo_exists, HfApi, try_to_load_from_cache
 from huggingface_hub.utils import validate_repo_id
+from huggingface_hub.errors import CacheNotFound
 hf_logging.set_verbosity_error()
 from modiff.config import CONFIG
 from modiff.model_artifact_catalog import resolve_model_revision
@@ -1599,6 +1600,9 @@ def get_local_models(compact: bool = False):
     for _, cache_dir in _hf_cache_locations():
         try:
             cache = scan_cache_dir(cache_dir)
+        except CacheNotFound:
+            # Cache folders are created on the first download, not discovery.
+            continue
         except Exception as e:
             logger.error(f'Error scanning cache directory {cache_dir or "default"}: {e}')
             continue

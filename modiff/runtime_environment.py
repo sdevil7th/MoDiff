@@ -1,7 +1,8 @@
 """Process defaults that must be applied before importing Torch.
 
 Windows wheels cannot all use expandable CUDA segments. Use PyTorch's default
-allocator there, and leave an operator's allocator configuration intact.
+GPU allocator there and return unused CPU allocator pages promptly. Leave an
+operator's allocator configuration intact.
 """
 
 from __future__ import annotations
@@ -21,6 +22,12 @@ def configure_allocator(
 ) -> dict[str, str | bool | None]:
     environment = os.environ if environment is None else environment
     platform_name = sys.platform if platform_name is None else platform_name
+    if platform_name == "win32":
+        # Windows Torch uses mimalloc. Its delayed purge can retain freed tensor
+        # pages while idle, starving the next Auto plan even after owner cleanup.
+        # Apply the supported startup option before Torch loads its allocator;
+        # GPU allocator overrides must not bypass this independent host default.
+        environment.setdefault("MIMALLOC_PURGE_DELAY", "0")
     explicit_key = next(
         (key for key in ("PYTORCH_ALLOC_CONF", "PYTORCH_CUDA_ALLOC_CONF", "PYTORCH_HIP_ALLOC_CONF") if key in environment),
         None,

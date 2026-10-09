@@ -124,6 +124,15 @@ not evidence of harmless compilation. Inspect pressure promptly, distinguish a
 kernel OOM kill from an assumed driver failure, and verify supervisor/UI recovery
 before retrying a known failed or cancelled task.
 
+On Windows, freed CPU tensors can leave committed pages in Torch's bundled
+mimalloc allocator while the process is idle. Empty model registries, a small
+GC-visible tensor sample and `torch.cuda.empty_cache()` do not establish that
+host memory was returned. Compare a bounded allocate/free reproduction with
+process commit and OS availability, then repeat the original model sequence.
+The existing pre-import startup policy defaults `MIMALLOC_PURGE_DELAY=0` on
+Windows and preserves an explicit operator value. Document its allocation
+performance tradeoff; an allocator-only reproduction is not model fit proof.
+
 ## Native edits and dynamic input types
 
 A successful run seeded through numeric test data does not prove the same field
@@ -600,6 +609,11 @@ runtimes or rewrite graph inputs.
 - Test legacy NanoID prefixes, public wires, completed previews, mixed selections,
   missing destinations and Undo/Redo. Native evidence must use actual selection
   and drag gestures; a reducer test alone does not prove toolbar behavior.
+- Composing complete Blocks preserves each child's local primary preview. The
+  new outer Block keeps its own primary, or the first child primary in graph
+  order, and retains later child previews as secondary outer previews. Prove
+  sibling and mixed-node composition without weakening the one-primary schema
+  invariant or changing child definitions, values, hierarchy, or wires.
 
 ## Auto owner lifetimes and computed controls
 

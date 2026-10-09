@@ -5,6 +5,75 @@ import pytest
 from modiff.workflow_auto_resource import build_workflow_auto_plan
 
 
+@pytest.mark.parametrize('pipeline', ['Flux2KleinModularPipeline', 'FluxKontextModularPipeline'])
+@pytest.mark.parametrize('conflicting_explicit_modes', [False, True])
+@pytest.mark.parametrize('registered_profile', [False, True])
+def test_inferred_reviewed_edit_aliases_use_conservative_resource_mode(
+    monkeypatch, tmp_path, pipeline, conflicting_explicit_modes, registered_profile,
+):
+    from types import SimpleNamespace
+    from modiff import workflow_auto_resource as planner
+
+    graph = modular_graph(pipeline, 'edit_image')
+    if conflicting_explicit_modes:
+        graph['nodes']['loader']['params']['mode'] = {'value': 'edit_image'}
+        graph['nodes']['denoise']['params']['mode'] = {'value': 'multi_image_reference_edit'}
+    before = deepcopy(graph)
+    profile = SimpleNamespace(
+        id='test:reviewed-edit', model_type=pipeline,
+        modes=('edit_image', 'multi_image_reference_edit'),
+        loader_module='modules.ModularDiffusers', loader_action='ModelsLoader',
+        execution_path='modular-diffusers',
+    )
+    if registered_profile:
+        if pipeline == 'Flux2KleinModularPipeline':
+            from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+
+            registered = DIFFUSERS_EXECUTION_PROFILES['flux2-klein:modular']
+            graph['nodes']['loader']['params']['execution_profile_id'] = {'value': 'flux2-klein:modular'}
+            graph['nodes']['loader']['params']['repo_id'] = {'value': registered.default_repo}
+        profiles, reason = planner.resolve_execution_profiles_for_loader(
+            'modules.ModularDiffusers', 'ModelsLoader',
+            {field: param['value'] for field, param in graph['nodes']['loader']['params'].items()},
+        )
+        assert reason is None and len(profiles) == 1
+        profile = profiles[0]
+        before = deepcopy(graph)
+    monkeypatch.setattr(
+        planner, 'resolve_execution_profiles_for_loader',
+        lambda module, action, values: ((profile,), None) if action == 'ModelsLoader' else ((), None),
+    )
+    requests = []
+
+    def recipe(payload, **kwargs):
+        form = payload['form']
+        requests.append(deepcopy(form))
+        return {'candidates': [{
+            'id': 'reviewed-edit', 'executionProfileId': profile.id,
+            'modelRepo': form['modelRepo'], 'modelType': pipeline,
+            'mode': form['mode'], 'loaderModule': profile.loader_module,
+            'loaderAction': profile.loader_action, 'executionPath': profile.execution_path,
+            'dtype': 'float32', 'quantizationMode': 'none', 'offloadMode': 'none',
+            'autoOffload': False, 'canAutoRun': True, 'proof': {'status': 'declared_safe'},
+            'requirements': {'systemRamBytes': 1, 'vramBytes': 0, 'diskFreeBytes': 0},
+        }]}
+
+    result = planner.build_workflow_auto_plan(
+        graph, runtime_fingerprint={}, local_models=[], data_dir=str(tmp_path),
+        plan_recipe=recipe,
+        hardware={'systemMemory': {'availableBytes': 1000},
+                  'accelerator': {'freeBytes': 1000}, 'offloadDisk': {'freeBytes': 1000}},
+    )
+    assert graph == before
+    if conflicting_explicit_modes:
+        assert not result['canAutoRun'] and any('ambiguous' in issue for issue in result['issues'])
+        assert requests == []
+    else:
+        assert result['canAutoRun'], result['issues']
+        expected = 'multi_image_reference_edit' if 'multi_image_reference_edit' in profile.modes else 'edit_image'
+        assert requests[0]['mode'] == expected
+
+
 def modular_graph(pipeline, mode):
     from modiff.modular_action_bindings import MODULAR_ACTION_BINDINGS
     from modiff.modular_workflow_contracts import PINNED_MODULAR_WORKFLOW_TRUTH

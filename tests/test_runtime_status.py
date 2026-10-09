@@ -2,6 +2,8 @@ import copy
 import asyncio
 import io
 import hashlib
+import importlib.util
+import itertools
 import json
 import mimetypes
 import os
@@ -17,17 +19,16 @@ from unittest.mock import AsyncMock, Mock, patch
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-sys.modules.setdefault(
-    "aiohttp_cors",
-    types.SimpleNamespace(
+if "aiohttp_cors" not in sys.modules and importlib.util.find_spec("aiohttp_cors") is None:
+    sys.modules["aiohttp_cors"] = types.SimpleNamespace(
         setup=lambda *args, **kwargs: None,
         ResourceOptions=lambda *args, **kwargs: None,
-    ),
-)
-sys.modules.setdefault(
-    "nanoid",
-    types.SimpleNamespace(generate=lambda size=12: "test-id"),
-)
+    )
+if "nanoid" not in sys.modules and importlib.util.find_spec("nanoid") is None:
+    _test_nanoid_ids = itertools.count()
+    sys.modules["nanoid"] = types.SimpleNamespace(
+        generate=lambda size=12: f"{next(_test_nanoid_ids):0{size}x}",
+    )
 
 from modiff import preflight  # noqa: E402
 from modiff.auto_resource import build_auto_resource_plan  # noqa: E402
@@ -1003,6 +1004,40 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         changed = self.server._runtime_cleanup_hints_for_graph({'a': loader}, {'resourceMode': 'expert'})
         self.assertNotEqual(self.server._auto_candidate_cache_signature(single), self.server._auto_candidate_cache_signature(changed))
         self.assertNotIn('autoResourcePlan', multiple)
+
+    def test_independent_direct_pipeline_owner_requires_cleanup_but_same_node_is_reused(self):
+        for module in ('modules.DiffusersAudio', 'modules.DiffusersImage', 'modules.DiffusersVideo'):
+            for resource_mode in ('auto', 'expert'):
+                for incoming_id in ('resident-loader', 'new-loader'):
+                    with self.subTest(module=module, resource_mode=resource_mode, incoming_id=incoming_id):
+                        loader = {'module': module, 'action': 'LoadPipeline', 'params': {
+                            'pipeline_class': {'value': 'TestPipeline'},
+                            'model_id': {'value': {'source': 'hub', 'value': 'test/model'}},
+                            'revision': {'value': 'a' * 40}, 'dtype': {'value': 'bfloat16'},
+                            'offload_mode': {'value': 'none'},
+                        }}
+                        resident = self.server._runtime_cleanup_hints_for_graph(
+                            {'resident-loader': loader}, {'resourceMode': resource_mode})
+                        incoming = self.server._runtime_cleanup_hints_for_graph(
+                            {incoming_id: loader}, {'resourceMode': resource_mode})
+                        self.server.node_cache = {'resident-loader': object()}
+                        self.server._last_auto_model_family = resident['modelType']
+                        self.server._last_auto_resource_signature = self.server._auto_candidate_cache_signature(resident)
+                        snapshot = hardware_snapshot()
+                        snapshot['system']['ram_available'] = 8 * GIB
+                        snapshot['devices'][0]['torch_vram_free'] = 3 * GIB
+                        snapshot['devices'][0]['vram_free'] = 3 * GIB
+                        with (
+                            patch('modiff.server.get_hardware_snapshot', return_value=snapshot),
+                            patch.object(self.server, '_release_runtime_caches_for_retry',
+                                         return_value={'released': {'nodes': 1, 'models': 1}, 'errors': []}) as release,
+                            patch.object(self.server, 'queue_message'),
+                        ):
+                            result = self.server._prepare_auto_runtime_for_graph(incoming)
+                        replaced = incoming_id != 'resident-loader'
+                        self.assertEqual(result['performed'], replaced)
+                        self.assertEqual(result['residentRecipeReusable'], not replaced)
+                        self.assertEqual(release.call_count, int(replaced))
 
     def test_structurally_customized_graph_derives_cleanup_identity_without_route_authority(self):
         graph_nodes = {
