@@ -1487,6 +1487,36 @@ class DiffusersVideoRegistryTests(unittest.TestCase):
         self.assertEqual(execute.call_args_list[0].kwargs["seed"], 101)
         self.assertEqual(execute.call_args_list[1].kwargs["seed"], 100)
 
+    def test_sequence_callbacks_emit_one_aggregate_update_and_keep_eta_across_shot_boundaries(self):
+        pipeline = SimpleNamespace(_modiff_video_pipeline_class="LTXConditionPipeline", _num_timesteps=2)
+        node = GenerateSequence("aggregate-sequence-progress")
+        node._sid = "sequence-session"
+        payload = {"latents": object()}
+
+        def fake_execute(worker, **kwargs):
+            for index in range(2):
+                self.assertIs(worker.pipe_callback(pipeline, index, None, payload), payload)
+            return {"video_out": [kwargs["prompt"]], "frames_out": 1}
+
+        with (
+            patch.object(Generate, "execute", fake_execute),
+            patch("modiff.NodeBase._server", return_value=SimpleNamespace(current_task={})),
+            patch("modiff.NodeBase.time.time", side_effect=[100.0, 110.0, 140.0, 150.0]),
+            patch.object(node, "progress") as progress,
+        ):
+            result = node.execute(pipeline=pipeline, prompts_json='["First shot", "Second shot"]')
+
+        updates = [call.kwargs for call in progress.call_args_list if call.kwargs.get("phase") == "denoising"]
+        self.assertEqual(len(updates), 4, "One completed model step must emit one aggregate progress event")
+        self.assertEqual([item["current_step"] for item in updates], [1, 2, 3, 4])
+        self.assertEqual([item["total_steps"] for item in updates], [4, 4, 4, 4])
+        self.assertIsNone(updates[0]["average_step_seconds"])
+        self.assertEqual(updates[1]["eta_seconds"], 20.0)
+        self.assertEqual(updates[2]["average_step_seconds"], 20.0)
+        self.assertEqual(updates[2]["eta_seconds"], 20.0)
+        self.assertEqual(updates[3]["eta_seconds"], 0.0)
+        self.assertEqual(result["clips"], [["First shot"], ["Second shot"]])
+
     def test_wan_vace_legacy_adapter_covers_all_studio_modes(self):
         adapter = get_video_pipeline_adapter("WanVACEPipeline")
         self.assertEqual(adapter.default_repo, "Wan-AI/Wan2.1-VACE-1.3B-diffusers")

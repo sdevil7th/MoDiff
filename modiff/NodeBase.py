@@ -587,7 +587,12 @@ class NodeBase:
         self.__dict__.pop("params", None)
         self.__dict__.pop("output", None)
 
-    def pipe_callback(self, pipe, step_index, timestep, callback_kwargs):
+    def pipe_callback(
+        self, pipe, step_index, timestep, callback_kwargs, *,
+        progress_step_offset: int = 0,
+        progress_total_steps: int | None = None,
+        progress_message: str | None = None,
+    ):
         if not self.node_id:
             return callback_kwargs
 
@@ -621,14 +626,16 @@ class NodeBase:
         if self._progress_started_at is None:
             self._progress_started_at = now
         elapsed = max(0.0, now - self._progress_started_at)
-        completed_steps = step_index + 1
-        total_steps = int(pipe._num_timesteps)
+        completed_steps = progress_step_offset + step_index + 1
+        total_steps = int(pipe._num_timesteps if progress_total_steps is None else progress_total_steps)
         # The timer starts at the first completed-step callback, so at step 0
         # there is not yet a measured interval. From step 1 onward, divide by
         # the number of intervals since that boundary (step_index), not by the
         # total completed-step count. Dividing by completed_steps made the
         # first useful long-video ETA exactly half of the observed runtime.
-        measured_intervals = step_index
+        # Multi-shot callbacks use the completed sequence count so the timer
+        # and remaining work keep the same scope across local step-index resets.
+        measured_intervals = completed_steps - 1
         average_step_seconds = elapsed / measured_intervals if measured_intervals > 0 else None
         eta_seconds = average_step_seconds * max(0, total_steps - completed_steps) if average_step_seconds is not None else None
         self._progress_last_at = now
@@ -636,7 +643,7 @@ class NodeBase:
         self.progress(
             progress,
             phase="denoising",
-            message=f"Denoising {completed_steps}/{total_steps}",
+            message=progress_message or f"Denoising {completed_steps}/{total_steps}",
             current_step=completed_steps,
             total_steps=total_steps,
             elapsed_seconds=elapsed,

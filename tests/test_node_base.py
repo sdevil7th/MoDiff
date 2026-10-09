@@ -660,6 +660,27 @@ class NodeBaseDeepEqualTests(unittest.TestCase):
         self.assertEqual(second.kwargs["average_step_seconds"], 600.0)
         self.assertEqual(second.kwargs["eta_seconds"], 22_800.0)
 
+    def test_sequence_progress_context_preserves_shot_local_cfg_cutoff(self):
+        node = _Generate("sequence-cfg-test")
+        node._progress_started_at = 100.0
+        pipe = SimpleNamespace(_num_timesteps=2, _cfg_cutoff_step=0.5, _guidance_scale=5.0)
+        payload = {"prompt_embeds": ["negative", "positive"], "pooled_prompt_embeds": ["negative", "positive"]}
+        with (
+            patch("modiff.NodeBase._server", return_value=SimpleNamespace(current_task={})),
+            patch("modiff.NodeBase.time.time", return_value=150.0),
+            patch.object(node, "progress") as progress,
+        ):
+            self.assertIs(node.pipe_callback(
+                pipe, 1, None, payload, progress_step_offset=2,
+                progress_total_steps=6, progress_message="Shot 2/3: denoising 2/2",
+            ), payload)
+        self.assertEqual(pipe._guidance_scale, 0.0)
+        self.assertEqual(payload["prompt_embeds"], ["positive"])
+        self.assertEqual(payload["pooled_prompt_embeds"], ["positive"])
+        self.assertEqual(progress.call_args.kwargs["current_step"], 4)
+        self.assertEqual(progress.call_args.kwargs["total_steps"], 6)
+        self.assertEqual(progress.call_args.kwargs["message"], "Shot 2/3: denoising 2/2")
+
     @unittest.skipUnless(
         importlib.util.find_spec("transformers"),
         "requires the staged optional Transformers runtime",

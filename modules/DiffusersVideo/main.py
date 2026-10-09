@@ -4926,24 +4926,17 @@ class GenerateSequence(NodeBase):
                 message=f"Generating shot {index + 1} of {len(shots)}",
             )
 
-            # Preserve interruption, timeout and Diffusers callback behavior,
-            # then remap the current shot's denoising percentage onto the full
-            # sequence. Without this wrapper every new shot made progress jump
-            # back to zero, which was especially misleading for 30-second jobs.
+            # Keep cancellation/timeout/CFG behavior on local shot indices, but
+            # emit one progress update with the sequence's step count and ETA.
             def sequence_pipe_callback(pipe, step_index, timestep, callback_kwargs, *, shot_index=index):
-                result = self.pipe_callback(pipe, step_index, timestep, callback_kwargs)
                 shot_steps = max(1, int(pipe._num_timesteps))
                 completed_in_shot = step_index + 1
-                total_steps = len(shots) * shot_steps
-                completed_steps = shot_index * shot_steps + completed_in_shot
-                self.progress(
-                    int(completed_steps / total_steps * 100),
-                    phase="denoising",
-                    message=(f"Shot {shot_index + 1}/{len(shots)}: denoising {completed_in_shot}/{shot_steps}"),
-                    current_step=completed_steps,
-                    total_steps=total_steps,
+                return self.pipe_callback(
+                    pipe, step_index, timestep, callback_kwargs,
+                    progress_step_offset=shot_index * shot_steps,
+                    progress_total_steps=len(shots) * shot_steps,
+                    progress_message=f"Shot {shot_index + 1}/{len(shots)}: denoising {completed_in_shot}/{shot_steps}",
                 )
-                return result
 
             shot_generator.pipe_callback = sequence_pipe_callback
             values = dict(

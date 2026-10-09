@@ -402,3 +402,15 @@ At known idle stop only owned app/sampler/Vite, retain footer/port/process absen
 and preservation receipts. Report each pass/fail/blocked/unrun, duration/hash and
 private evidence path. No operator cleanup, secrets/private history in Git, or
 qualification promotion from this plan.
+
+## Sequence progress checks
+
+For multi-shot generation, each completed model step must emit one progress
+event whose step count, total, average interval and ETA all describe the complete
+sequence. Shot-local indices still drive Diffusers CFG cutoff, cancellation and
+runtime-limit handling. A sequence must not briefly report a completed single
+shot as the whole task, or divide elapsed sequence time by a reset shot index.
+Check the first step of the next shot as well as steady-state denoising; preserve
+decoding/composition time and label ETA as an estimate rather than measured total
+runtime. Controlled fake-clock tests establish accounting behavior; live
+multi-shot receipts and media establish actual execution separately.
