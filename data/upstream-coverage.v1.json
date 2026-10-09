@@ -506,6 +506,19 @@
       "status": "executable"
     },
     {
+      "graphHash": "7e006ec3242973b64b793da1f680d128ebac6ba32acc1e3d7b9e54c75da6d569",
+      "graphPath": "studio/cosmos3-omni-modular-pipeline/text-to-image.json",
+      "id": "Cosmos3OmniModularPipeline:text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Cosmos3OmniModularPipeline",
+      "publicTemplateIds": [
+        "cosmos3_super_text_to_image"
+      ],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
       "graphHash": "4245498fbf0418f391842d4e6c3a608bebf796a9c7846848f4e4af3d32ac9c5d",
       "graphPath": "studio/ddim-pipeline/unconditional-image.json",
       "id": "DDIMPipeline:unconditional_image",
@@ -640,6 +653,19 @@
         "flux2_klein_text_to_image"
       ],
       "qualificationStatus": "graph-qualified",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "43652152408b2248039c0fe5769ba0fd57d9f91b54e4349d81616eb17ebeb542",
+      "graphPath": "studio/flux2-modular-pipeline/text-to-image.json",
+      "id": "Flux2ModularPipeline:text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Flux2ModularPipeline",
+      "publicTemplateIds": [
+        "flux2_dev_text_to_image"
+      ],
+      "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
       "status": "executable"
     },
@@ -2339,7 +2365,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:8626387fa72767bb51e9820566f833e139079411703cda60d6bd991cbb38046d",
+  "contentHash": "sha256:ac39301bfa49319b9009d0a6ae4371fdaaaec40e3824de242aed3408495263e7",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -7620,6 +7646,39 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "backendDefaultInputs": [
+          "prompt"
+        ],
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Cosmos3OmniModularPipeline"
+        },
+        "executionProfileId": "cosmos3-super-text-to-image:official-modular-workflow",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": false,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": null,
+      "galleryVerificationStatus": null,
+      "id": "cosmos3_super_text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Cosmos3OmniModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": false,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "ZImageModularPipeline:text_to_image:fast_lora",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
@@ -7657,6 +7716,36 @@
       "readinessPolicy": "requires_input",
       "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux2ModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux2ModularPipeline"
+        },
+        "executionProfileId": "flux2:modular",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux2ModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": false,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": null,
+      "galleryVerificationStatus": null,
+      "id": "flux2_dev_text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Flux2ModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": false,
       "status": "executable",
       "verificationStatus": "unverified"
     },
@@ -9707,7 +9796,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "7d890d55cdec76fd4bdf6580bc5b088f1568e12ab1e7e63c0d5be7c9590a4d71",
+    "templateBundleSha256": "21b782ea4ede570079597c217cc34ce73a140b2c5904515be20ff82be24ee7ac",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -9754,8 +9843,8 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 200,
-    "canonicalWorkflowsWithPublicTemplates": 52,
+    "canonicalWorkflowCount": 202,
+    "canonicalWorkflowsWithPublicTemplates": 54,
     "canonicalWorkflowsWithoutPublicTemplates": 148,
     "diffusersPipelineSymbolCount": 334,
     "pipelineStatusCounts": {
@@ -9766,12 +9855,12 @@
       "research-blocked": 116,
       "unreviewed": 0
     },
-    "publicTemplateCount": 78,
+    "publicTemplateCount": 80,
     "reviewedGalleryTemplateCount": 70,
     "templateStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 78,
+      "executable": 80,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0
@@ -9790,7 +9879,7 @@
     "workflowStatusCounts": {
       "contract-only": 0,
       "equivalent": 0,
-      "executable": 200,
+      "executable": 202,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0

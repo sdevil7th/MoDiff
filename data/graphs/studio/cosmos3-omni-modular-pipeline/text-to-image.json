@@ -1,0 +1,3323 @@
+{
+  "edges": [
+    {
+      "id": "edge-01",
+      "source": "node-02",
+      "sourceHandle": "pipeline_components",
+      "target": "node-03",
+      "targetHandle": "pipeline_components",
+      "type": "default"
+    },
+    {
+      "id": "edge-02",
+      "source": "node-02",
+      "sourceHandle": "pipeline_components",
+      "target": "node-04",
+      "targetHandle": "pipeline_components",
+      "type": "default"
+    },
+    {
+      "id": "edge-03",
+      "source": "node-02",
+      "sourceHandle": "pipeline_components",
+      "target": "node-05",
+      "targetHandle": "pipeline_components",
+      "type": "default"
+    },
+    {
+      "id": "edge-04",
+      "source": "node-02",
+      "sourceHandle": "pipeline_components",
+      "target": "node-06",
+      "targetHandle": "pipeline_components",
+      "type": "default"
+    },
+    {
+      "id": "edge-05",
+      "source": "node-04",
+      "sourceHandle": "image",
+      "target": "node-01",
+      "targetHandle": "image",
+      "type": "default"
+    },
+    {
+      "id": "edge-06",
+      "source": "node-04",
+      "sourceHandle": "state_out",
+      "target": "node-03",
+      "targetHandle": "state_in",
+      "type": "default"
+    },
+    {
+      "id": "edge-07",
+      "source": "node-05",
+      "sourceHandle": "state_out",
+      "target": "node-04",
+      "targetHandle": "state_in",
+      "type": "default"
+    },
+    {
+      "id": "edge-08",
+      "source": "node-06",
+      "sourceHandle": "state_out",
+      "target": "node-05",
+      "targetHandle": "state_in",
+      "type": "default"
+    }
+  ],
+  "layout": {
+    "algorithm": "modiff-layered-v1",
+    "horizontalGap": 140,
+    "positionHash": "af010b9a1c31ed29ab4975464af35d86150ea4b95ae40179dbd0232fcf445fe1",
+    "verticalGap": 72
+  },
+  "nodes": [
+    {
+      "data": {
+        "action": "Preview",
+        "cache": false,
+        "category": "image",
+        "description": "Preview an image",
+        "label": "Preview Image",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.Image",
+        "params": {
+          "device": {
+            "default": "cpu:0",
+            "options": {
+              "cpu": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              },
+              "cpu:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
+              }
+            },
+            "type": "string"
+          },
+          "export": {
+            "default": "0",
+            "description": "Export the image at the given index. Leave empty to export all images.",
+            "type": "str"
+          },
+          "filtered": {
+            "display": "output",
+            "label": "Selected image",
+            "type": "image"
+          },
+          "image": {
+            "display": "input",
+            "onChange": {
+              "action": "show",
+              "condition": {
+                "type": "latent"
+              },
+              "data": {
+                "false": [],
+                "true": [
+                  "vae",
+                  "device"
+                ]
+              }
+            },
+            "type": [
+              "image",
+              "latent"
+            ]
+          },
+          "output": {
+            "display": "output",
+            "label": "All images",
+            "type": "image"
+          },
+          "preview": {
+            "dataSource": "output",
+            "display": "ui_image",
+            "type": "url"
+          },
+          "vae": {
+            "display": "input",
+            "label": "VAE",
+            "type": "pipeline"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": false,
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-01",
+      "position": {
+        "x": 1760,
+        "y": 14
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "ModelsLoader",
+        "cache": false,
+        "category": "loader",
+        "description": "",
+        "label": "Load Models",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "authored": [
+            "dtype",
+            "device",
+            "auto_offload",
+            "offload_mode",
+            "trust_remote_code"
+          ],
+          "defaults": {
+            "attention_backend": "inherit",
+            "auto_offload": false,
+            "device": "cpu:0",
+            "dtype": "bfloat16",
+            "model_type": "Cosmos3OmniModularPipeline",
+            "offload_mode": "none",
+            "repo_id": {
+              "source": "hub",
+              "value": "nvidia/Cosmos3-Super-Text2Image"
+            },
+            "reviewed_variant": "nvidia/Cosmos3-Super-Text2Image",
+            "revision": "daf3d374804be4c512c2135568a7cb95d4341d79",
+            "trust_remote_code": false
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "Cosmos3OmniModularPipeline",
+              "values": {
+                "model_type": "Cosmos3OmniModularPipeline",
+                "workflow_id": "text2image"
+              }
+            },
+            "blockName": null,
+            "decomposition": "loader",
+            "nodeKey": "modules.ModularDiffusers.ModelsLoader",
+            "nodeType": "loader",
+            "operationId": "diffusion.load_models",
+            "pipelineClass": "Cosmos3OmniModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "model_type",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "model_type",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "repo_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "repo_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "reviewed_variant",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "reviewed_variant",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "device",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "device",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "attention_backend",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "attention_backend",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "vae_slicing",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "vae_slicing",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "vae_tiling",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "vae_tiling",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "inpaint_compatibility",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "inpaint_compatibility",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "trust_remote_code",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "trust_remote_code",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "revision",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "revision",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "workflow_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "workflow_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "modiff_pipeline_identity",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "modiff_pipeline_identity",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "object"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "auto_offload",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "auto_offload",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "offload_mode",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "offload_mode",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "unet",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "unet",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "transformer",
+                      "type": "diffusers.models.transformers.transformer_cosmos3.Cosmos3OmniTransformer"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "vae",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "vae",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "vae",
+                      "type": "diffusers.models.autoencoders.autoencoder_kl_wan.AutoencoderKLWan"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "controlnet",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "controlnet",
+                "semantics": {
+                  "kind": "component",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "lora_list",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "lora_list",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "custom_lora"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "text_encoders",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "text_encoders",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "text_tokenizer",
+                      "type": "transformers.models.auto.tokenization_auto.AutoTokenizer"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_models"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "unet_out",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "unet_out",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "transformer",
+                      "type": "diffusers.models.transformers.transformer_cosmos3.Cosmos3OmniTransformer"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "vae_out",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "vae_out",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "vae",
+                      "type": "diffusers.models.autoencoders.autoencoder_kl_wan.AutoencoderKLWan"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "scheduler",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "scheduler",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "scheduler",
+                      "type": "diffusers.schedulers.scheduling_unipc_multistep.UniPCMultistepScheduler"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": true,
+                "name": "image_encoder",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "image_encoder",
+                "semantics": {
+                  "kind": "component",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "pipeline_components",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline_components",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "scheduler",
+                      "type": "diffusers.schedulers.scheduling_unipc_multistep.UniPCMultistepScheduler"
+                    },
+                    {
+                      "name": "text_tokenizer",
+                      "type": "transformers.models.auto.tokenization_auto.AutoTokenizer"
+                    },
+                    {
+                      "name": "transformer",
+                      "type": "diffusers.models.transformers.transformer_cosmos3.Cosmos3OmniTransformer"
+                    },
+                    {
+                      "name": "vae",
+                      "type": "diffusers.models.autoencoders.autoencoder_kl_wan.AutoencoderKLWan"
+                    },
+                    {
+                      "name": "video_processor",
+                      "type": "diffusers.video_processor.VideoProcessor"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_modular_pipeline_components"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "quant_config",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "quant_config",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "quant_config"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "text_to_image",
+            "workflowId": "text2image"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
+        "params": {
+          "attention_backend": {
+            "default": "inherit",
+            "description": "Inherit preserves existing native component defaults; explicit choices use the ordinary Diffusers attention API.",
+            "label": "Attention Backend",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "inherit",
+                "schemaVersion": 1,
+                "value": "inherit"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "auto",
+                "schemaVersion": 1,
+                "value": "auto"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "native",
+                "schemaVersion": 1,
+                "value": "native"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "_native_math",
+                "schemaVersion": 1,
+                "value": "_native_math"
+              }
+            ],
+            "type": "string"
+          },
+          "auto_offload": {
+            "label": "Enable Auto Offload",
+            "type": "boolean",
+            "value": false
+          },
+          "controlnet": {
+            "display": "input",
+            "hidden": true,
+            "label": "ControlNet",
+            "type": "diffusers_auto_model"
+          },
+          "device": {
+            "label": "Device",
+            "options": {
+              "cpu": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              },
+              "cpu:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu:0",
+                "schemaVersion": 1,
+                "value": "cpu:0"
+              }
+            },
+            "type": "string",
+            "value": "cuda:0"
+          },
+          "dtype": {
+            "label": "dtype",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "float32",
+                "schemaVersion": 1,
+                "value": "float32"
+              },
+              {
+                "availability": "unavailable",
+                "compatibility": "incompatible",
+                "disabledReason": "float16 is not supported by the active runtime.",
+                "installationState": "unavailable",
+                "label": "float16",
+                "schemaVersion": 1,
+                "value": "float16"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "bfloat16",
+                "schemaVersion": 1,
+                "value": "bfloat16"
+              }
+            ],
+            "value": "bfloat16"
+          },
+          "image_encoder": {
+            "connectionRole": "image_encoder",
+            "display": "output",
+            "hidden": true,
+            "label": "Image Encoder",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity",
+              "value": "Cosmos3OmniModularPipeline"
+            },
+            "type": "diffusers_auto_model"
+          },
+          "inpaint_compatibility": {
+            "default": "native",
+            "description": "Technical compatibility selection for the reviewed Qwen Edit inpainting candidate; existing nodes retain native policy.",
+            "hidden": true,
+            "label": "Inpaint Compatibility",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "native",
+                "schemaVersion": 1,
+                "value": "native"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "whole_v1",
+                "schemaVersion": 1,
+                "value": "whole_v1"
+              }
+            ],
+            "type": "string"
+          },
+          "lora_list": {
+            "display": "input",
+            "label": "Lora",
+            "type": "custom_lora"
+          },
+          "model_type": {
+            "description": "Selects the Modular Diffusers pipeline class. This filters compatible checkpoints and publishes the component contract used by connected nodes; it is not the model checkpoint itself.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Pipeline Type",
+            "onChange": "set_filters",
+            "options": {
+              "": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "",
+                "schemaVersion": 1,
+                "value": ""
+              },
+              "AnimaModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Anima",
+                "schemaVersion": 1,
+                "value": "AnimaModularPipeline"
+              },
+              "Cosmos3DistilledModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Cosmos 3 Distilled",
+                "schemaVersion": 1,
+                "value": "Cosmos3DistilledModularPipeline"
+              },
+              "Cosmos3OmniModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Cosmos 3 Nano",
+                "schemaVersion": 1,
+                "value": "Cosmos3OmniModularPipeline"
+              },
+              "DummyCustomPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Custom",
+                "schemaVersion": 1,
+                "value": "DummyCustomPipeline"
+              },
+              "ErnieImageModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ERNIE Image Turbo",
+                "schemaVersion": 1,
+                "value": "ErnieImageModularPipeline"
+              },
+              "Flux2KleinBaseModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux 2 Klein Base",
+                "schemaVersion": 1,
+                "value": "Flux2KleinBaseModularPipeline"
+              },
+              "Flux2KleinModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux 2 Klein Distilled",
+                "schemaVersion": 1,
+                "value": "Flux2KleinModularPipeline"
+              },
+              "Flux2ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux 2",
+                "schemaVersion": 1,
+                "value": "Flux2ModularPipeline"
+              },
+              "FluxKontextModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux Kontext",
+                "schemaVersion": 1,
+                "value": "FluxKontextModularPipeline"
+              },
+              "FluxModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux",
+                "schemaVersion": 1,
+                "value": "FluxModularPipeline"
+              },
+              "HeliosModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Helios",
+                "schemaVersion": 1,
+                "value": "HeliosModularPipeline"
+              },
+              "HeliosPyramidDistilledModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Helios Pyramid Distilled",
+                "schemaVersion": 1,
+                "value": "HeliosPyramidDistilledModularPipeline"
+              },
+              "HeliosPyramidModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Helios Pyramid",
+                "schemaVersion": 1,
+                "value": "HeliosPyramidModularPipeline"
+              },
+              "HunyuanVideo15ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "HunyuanVideo 1.5",
+                "schemaVersion": 1,
+                "value": "HunyuanVideo15ModularPipeline"
+              },
+              "Ideogram4ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Ideogram 4 (Contract only)",
+                "schemaVersion": 1,
+                "value": "Ideogram4ModularPipeline"
+              },
+              "Krea2ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Krea 2 (Contract only)",
+                "schemaVersion": 1,
+                "value": "Krea2ModularPipeline"
+              },
+              "Krea2TurboModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Krea 2 Turbo (Contract only)",
+                "schemaVersion": 1,
+                "value": "Krea2TurboModularPipeline"
+              },
+              "LTX25ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LTX-2.5 (Contract only)",
+                "schemaVersion": 1,
+                "value": "LTX25ModularPipeline"
+              },
+              "MiniMaxH3ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MiniMax H3",
+                "schemaVersion": 1,
+                "value": "MiniMaxH3ModularPipeline"
+              },
+              "MiniMaxMusic3ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MiniMax Music 3",
+                "schemaVersion": 1,
+                "value": "MiniMaxMusic3ModularPipeline"
+              },
+              "QwenImageEditModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Qwen-Image-Edit",
+                "schemaVersion": 1,
+                "value": "QwenImageEditModularPipeline"
+              },
+              "QwenImageEditPlusModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Qwen-Image-Edit-2511",
+                "schemaVersion": 1,
+                "value": "QwenImageEditPlusModularPipeline"
+              },
+              "QwenImageLayeredModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Qwen-Image-Layered",
+                "schemaVersion": 1,
+                "value": "QwenImageLayeredModularPipeline"
+              },
+              "QwenImageModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Qwen-Image-2512",
+                "schemaVersion": 1,
+                "value": "QwenImageModularPipeline"
+              },
+              "StableDiffusion3ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Stable Diffusion 3 (Contract only)",
+                "schemaVersion": 1,
+                "value": "StableDiffusion3ModularPipeline"
+              },
+              "StableDiffusionXLModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Stable Diffusion XL",
+                "schemaVersion": 1,
+                "value": "StableDiffusionXLModularPipeline"
+              },
+              "WanAnimate2DistilledModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Wan Animate 2 Distilled",
+                "schemaVersion": 1,
+                "value": "WanAnimate2DistilledModularPipeline"
+              },
+              "WanAnimate2ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Wan Animate 2",
+                "schemaVersion": 1,
+                "value": "WanAnimate2ModularPipeline"
+              },
+              "WanImage2VideoModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "WAN2 I2V",
+                "schemaVersion": 1,
+                "value": "WanImage2VideoModularPipeline"
+              },
+              "WanModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "WAN2 T2V",
+                "schemaVersion": 1,
+                "value": "WanModularPipeline"
+              },
+              "ZImageModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Z-Image",
+                "schemaVersion": 1,
+                "value": "ZImageModularPipeline"
+              }
+            },
+            "type": "string",
+            "value": "Cosmos3OmniModularPipeline"
+          },
+          "modiff_pipeline_identity": {
+            "hidden": true,
+            "label": "Custom Pipeline Identity",
+            "type": "object",
+            "value": null
+          },
+          "offload_mode": {
+            "default": "model_cpu",
+            "label": "Offload Mode",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "auto_cpu",
+                "schemaVersion": 1,
+                "value": "auto_cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "none",
+                "schemaVersion": 1,
+                "value": "none"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "model_cpu",
+                "schemaVersion": 1,
+                "value": "model_cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "group_cpu",
+                "schemaVersion": 1,
+                "value": "group_cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "group_disk",
+                "schemaVersion": 1,
+                "value": "group_disk"
+              }
+            ],
+            "type": "string",
+            "value": "none"
+          },
+          "pipeline_components": {
+            "connectionRole": "pipeline_components",
+            "display": "output",
+            "hidden": false,
+            "label": "Pipeline Components",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity",
+              "value": "Cosmos3OmniModularPipeline"
+            },
+            "type": "diffusers_modular_pipeline_components"
+          },
+          "quant_config": {
+            "display": "input",
+            "label": "Quant Config",
+            "type": "quant_config"
+          },
+          "refresh_pipeline_identity_button": {
+            "display": "ui_button",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "label": "Review and Refresh Custom Contract",
+            "onChange": "refresh_pipeline_identity",
+            "value": false
+          },
+          "repo_id": {
+            "display": "modelselect",
+            "fieldOptions": {
+              "filter": {
+                "hub": {
+                  "className": [
+                    "Cosmos3OmniModularPipeline"
+                  ]
+                }
+              },
+              "noValidation": true,
+              "sources": [
+                "hub",
+                "local"
+              ],
+              "suppressInitialFieldAction": true
+            },
+            "label": "Repository ID",
+            "onChange": "refresh_pipeline_identity",
+            "type": "string",
+            "value": {
+              "source": "hub",
+              "value": "nvidia/Cosmos3-Super-Text2Image"
+            }
+          },
+          "reviewed_variant": {
+            "description": "Select an immutable, reviewed checkpoint for this exact Modular Diffusers pipeline family. Changing it does not replace the workflow graph or reset its parameters.",
+            "fieldOptions": {
+              "controlTier": "essential"
+            },
+            "hidden": false,
+            "label": "Model",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "nvidia/Cosmos3-Nano",
+                "schemaVersion": 1,
+                "value": "nvidia/Cosmos3-Nano"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "nvidia/Cosmos3-Super-Text2Image",
+                "schemaVersion": 1,
+                "value": "nvidia/Cosmos3-Super-Text2Image"
+              }
+            ],
+            "type": "string",
+            "value": "nvidia/Cosmos3-Super-Text2Image"
+          },
+          "revision": {
+            "description": "Required exact 40-character commit hash for Hub custom contracts.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Revision",
+            "onChange": "refresh_pipeline_identity",
+            "type": "string",
+            "value": "daf3d374804be4c512c2135568a7cb95d4341d79"
+          },
+          "scheduler": {
+            "connectionRole": "scheduler",
+            "display": "output",
+            "hidden": false,
+            "label": "Scheduler",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity",
+              "value": "Cosmos3OmniModularPipeline"
+            },
+            "type": "diffusers_auto_model"
+          },
+          "text_encoders": {
+            "connectionRole": "text_encoders",
+            "display": "output",
+            "hidden": false,
+            "label": "Text Encoders",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity",
+              "value": "Cosmos3OmniModularPipeline"
+            },
+            "type": "diffusers_auto_models"
+          },
+          "trust_remote_code": {
+            "description": "Repository code execution is disabled; keep this off for contract preview.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Trust Remote Code",
+            "onChange": "refresh_pipeline_identity",
+            "type": "boolean",
+            "value": false
+          },
+          "unet": {
+            "display": "input",
+            "hidden": false,
+            "label": "Denoise Model",
+            "type": "diffusers_auto_model"
+          },
+          "unet_out": {
+            "connectionRole": "denoiser",
+            "display": "output",
+            "hidden": false,
+            "label": "Denoise Model",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity",
+              "value": "Cosmos3OmniModularPipeline"
+            },
+            "type": "diffusers_auto_model"
+          },
+          "vae": {
+            "display": "input",
+            "hidden": false,
+            "label": "VAE",
+            "type": "diffusers_auto_model"
+          },
+          "vae_out": {
+            "connectionRole": "vae",
+            "display": "output",
+            "hidden": false,
+            "label": "VAE",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity",
+              "value": "Cosmos3OmniModularPipeline"
+            },
+            "type": "diffusers_auto_model"
+          },
+          "vae_slicing": {
+            "default": null,
+            "description": "An unset policy preserves the native VAE configuration; templates may bind an explicit boolean.",
+            "hidden": true,
+            "label": "VAE Slicing",
+            "type": "boolean"
+          },
+          "vae_tiling": {
+            "default": null,
+            "description": "An unset policy preserves the native VAE configuration; templates may bind an explicit boolean.",
+            "hidden": true,
+            "label": "VAE Tiling",
+            "type": "boolean"
+          },
+          "workflow_id": {
+            "description": "Exact reviewed component partition selected by a first-party Cluster Node.",
+            "hidden": true,
+            "label": "Reviewed Workflow",
+            "type": "string",
+            "value": "text2image"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": true,
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-02",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "WorkflowCosmos3OmniAfterDecode",
+        "cache": false,
+        "category": "Modular Diffusers",
+        "description": "Run Cosmos 3 Omni's official post-decode action-output block.",
+        "label": "Postprocess Media",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "authored": [
+            "pipeline_class",
+            "workflow_id",
+            "block_path"
+          ],
+          "defaults": {},
+          "operation": {
+            "binding": {
+              "pipelineClass": "Cosmos3OmniModularPipeline",
+              "values": {
+                "block_path": "after_decode",
+                "pipeline_class": "Cosmos3OmniModularPipeline",
+                "workflow_id": "text2image"
+              }
+            },
+            "blockName": "after_decode",
+            "decomposition": "block",
+            "nodeKey": "modules.ModularDiffusers.WorkflowCosmos3OmniAfterDecode",
+            "nodeType": "after_decode",
+            "operationId": "diffusion.postprocess_media",
+            "pipelineClass": "Cosmos3OmniModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline_components",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline_components",
+                "semantics": {
+                  "kind": "component",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_modular_pipeline_components"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "state_in",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "state_in",
+                "semantics": {
+                  "kind": "state",
+                  "members": [
+                    {
+                      "name": "action_latents",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "action_mode",
+                      "type": "builtins.str"
+                    },
+                    {
+                      "name": "raw_action_dim_resolved",
+                      "type": "builtins.int"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline:text2image",
+                  "state": "decode"
+                },
+                "types": [
+                  "modular_workflow_state"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "pipeline_class",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pipeline_class",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "workflow_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "workflow_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "block_path",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "block_path",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "action",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "action",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "any"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "text_to_image",
+            "workflowId": "text2image"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
+        "params": {
+          "action": {
+            "display": "output",
+            "label": "Action",
+            "type": "any"
+          },
+          "block_path": {
+            "default": "after_decode",
+            "hidden": true,
+            "type": "string",
+            "value": "after_decode"
+          },
+          "pipeline_class": {
+            "default": "Cosmos3OmniModularPipeline",
+            "hidden": true,
+            "type": "string",
+            "value": "Cosmos3OmniModularPipeline"
+          },
+          "pipeline_components": {
+            "display": "input",
+            "label": "Pipeline Components",
+            "required": true,
+            "type": "diffusers_modular_pipeline_components"
+          },
+          "state_in": {
+            "display": "input",
+            "label": "Workflow State",
+            "required": true,
+            "type": "modular_workflow_state"
+          },
+          "workflow_id": {
+            "default": "text2video",
+            "hidden": true,
+            "type": "string",
+            "value": "text2image"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": true,
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-03",
+      "position": {
+        "x": 1760,
+        "y": 360
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "WorkflowCosmos3OmniDecode",
+        "cache": false,
+        "category": "Modular Diffusers",
+        "description": "Decode Cosmos 3 Omni vision and optional synchronized sound latents.",
+        "label": "Decode Latents",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "authored": [
+            "pipeline_class",
+            "workflow_id",
+            "block_path"
+          ],
+          "defaults": {},
+          "operation": {
+            "binding": {
+              "pipelineClass": "Cosmos3OmniModularPipeline",
+              "values": {
+                "block_path": "decode",
+                "pipeline_class": "Cosmos3OmniModularPipeline",
+                "workflow_id": "text2image"
+              }
+            },
+            "blockName": "decode",
+            "decomposition": "block",
+            "nodeKey": "modules.ModularDiffusers.WorkflowCosmos3OmniDecode",
+            "nodeType": "decode",
+            "operationId": "diffusion.decode_latents",
+            "pipelineClass": "Cosmos3OmniModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline_components",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline_components",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "vae",
+                      "type": "diffusers.models.autoencoders.autoencoder_kl_wan.AutoencoderKLWan"
+                    },
+                    {
+                      "name": "video_processor",
+                      "type": "diffusers.video_processor.VideoProcessor"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_modular_pipeline_components"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "state_in",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "state_in",
+                "semantics": {
+                  "kind": "state",
+                  "members": [
+                    {
+                      "name": "latents",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "output_type",
+                      "type": "builtins.str"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline:text2image",
+                  "state": "denoise"
+                },
+                "types": [
+                  "modular_workflow_state"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "pipeline_class",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pipeline_class",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "workflow_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "workflow_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "block_path",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "block_path",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "image",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "image",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "videos",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "videos",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "video"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "audio",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "audio",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "audio"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "sample_rate",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "sample_rate",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "state_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "state_out",
+                "semantics": {
+                  "kind": "state",
+                  "members": [
+                    {
+                      "name": "videos",
+                      "type": "list[PIL.Image.Image]"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline:text2image",
+                  "state": "decode"
+                },
+                "types": [
+                  "modular_workflow_state"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "text_to_image",
+            "workflowId": "text2image"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
+        "params": {
+          "audio": {
+            "display": "output",
+            "label": "Audio",
+            "type": "audio"
+          },
+          "block_path": {
+            "default": "decode",
+            "hidden": true,
+            "type": "string",
+            "value": "decode"
+          },
+          "image": {
+            "display": "output",
+            "label": "Image",
+            "type": "image"
+          },
+          "pipeline_class": {
+            "default": "Cosmos3OmniModularPipeline",
+            "hidden": true,
+            "type": "string",
+            "value": "Cosmos3OmniModularPipeline"
+          },
+          "pipeline_components": {
+            "display": "input",
+            "label": "Pipeline Components",
+            "required": true,
+            "type": "diffusers_modular_pipeline_components"
+          },
+          "sample_rate": {
+            "display": "output",
+            "label": "Sample Rate",
+            "type": "int"
+          },
+          "state_in": {
+            "display": "input",
+            "label": "Workflow State",
+            "required": true,
+            "type": "modular_workflow_state"
+          },
+          "state_out": {
+            "display": "output",
+            "label": "Workflow State",
+            "type": "modular_workflow_state"
+          },
+          "videos": {
+            "display": "output",
+            "label": "Videos",
+            "type": "video"
+          },
+          "workflow_id": {
+            "default": "text2video",
+            "hidden": true,
+            "type": "string",
+            "value": "text2image"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": true,
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-04",
+      "position": {
+        "x": 1320,
+        "y": 131
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "WorkflowCosmos3OmniDenoise",
+        "cache": false,
+        "category": "Modular Diffusers",
+        "description": "Run Cosmos 3 Omni's exact modality-selected denoise block.",
+        "label": "Denoise",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "authored": [
+            "pipeline_class",
+            "workflow_id",
+            "block_path",
+            "num_inference_steps",
+            "guidance_scale",
+            "seed"
+          ],
+          "defaults": {
+            "guidance_scale": 4,
+            "num_inference_steps": 50,
+            "seed": 1143
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "Cosmos3OmniModularPipeline",
+              "values": {
+                "block_path": "denoise",
+                "pipeline_class": "Cosmos3OmniModularPipeline",
+                "workflow_id": "text2image"
+              }
+            },
+            "blockName": "denoise",
+            "decomposition": "block",
+            "nodeKey": "modules.ModularDiffusers.WorkflowCosmos3OmniDenoise",
+            "nodeType": "denoise",
+            "operationId": "diffusion.denoise",
+            "pipelineClass": "Cosmos3OmniModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline_components",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline_components",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "scheduler",
+                      "type": "diffusers.schedulers.scheduling_unipc_multistep.UniPCMultistepScheduler"
+                    },
+                    {
+                      "name": "transformer",
+                      "type": "diffusers.models.transformers.transformer_cosmos3.Cosmos3OmniTransformer"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_modular_pipeline_components"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "state_in",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "state_in",
+                "semantics": {
+                  "kind": "state",
+                  "members": [
+                    {
+                      "name": "cond_input_ids",
+                      "type": "opaque"
+                    },
+                    {
+                      "name": "cond_text_segment",
+                      "type": "builtins.dict"
+                    },
+                    {
+                      "name": "cond_vision_segment",
+                      "type": "builtins.dict"
+                    },
+                    {
+                      "name": "fps",
+                      "type": "builtins.float"
+                    },
+                    {
+                      "name": "fps_vision",
+                      "type": "builtins.float"
+                    },
+                    {
+                      "name": "generator",
+                      "type": "torch._C.Generator"
+                    },
+                    {
+                      "name": "guidance_scale",
+                      "type": "builtins.float"
+                    },
+                    {
+                      "name": "height",
+                      "type": "builtins.int"
+                    },
+                    {
+                      "name": "latents",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "mixed_precision_first_steps",
+                      "type": "builtins.int"
+                    },
+                    {
+                      "name": "mixed_precision_format",
+                      "type": "builtins.str"
+                    },
+                    {
+                      "name": "mixed_precision_last_steps",
+                      "type": "builtins.int"
+                    },
+                    {
+                      "name": "mixed_precision_reasoner_policy",
+                      "type": "builtins.str"
+                    },
+                    {
+                      "name": "num_frames",
+                      "type": "builtins.int"
+                    },
+                    {
+                      "name": "num_inference_steps",
+                      "type": "builtins.int"
+                    },
+                    {
+                      "name": "num_warmup_steps",
+                      "type": "builtins.int"
+                    },
+                    {
+                      "name": "timesteps",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "uncond_input_ids",
+                      "type": "opaque"
+                    },
+                    {
+                      "name": "uncond_text_segment",
+                      "type": "builtins.dict"
+                    },
+                    {
+                      "name": "uncond_vision_segment",
+                      "type": "builtins.dict"
+                    },
+                    {
+                      "name": "velocity_vision",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "vision_condition_frames",
+                      "type": "list[builtins.int]"
+                    },
+                    {
+                      "name": "vision_condition_indexes_for_pack",
+                      "type": "list[builtins.int]"
+                    },
+                    {
+                      "name": "width",
+                      "type": "builtins.int"
+                    },
+                    {
+                      "name": "x0_tokens_vision",
+                      "type": "torch.Tensor"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline:text2image",
+                  "state": "text_encoder"
+                },
+                "types": [
+                  "modular_workflow_state"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "pipeline_class",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pipeline_class",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "workflow_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "workflow_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "block_path",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "block_path",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "num_inference_steps",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "num_inference_steps",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "guidance_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "guidance_scale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "seed",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "seed",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "state_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "state_out",
+                "semantics": {
+                  "kind": "state",
+                  "members": [
+                    {
+                      "name": "cond_position_ids",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "cond_sequence_length",
+                      "type": "builtins.int"
+                    },
+                    {
+                      "name": "cond_text_segment",
+                      "type": "builtins.dict"
+                    },
+                    {
+                      "name": "cond_vision_segment",
+                      "type": "builtins.dict"
+                    },
+                    {
+                      "name": "fps_vision",
+                      "type": "builtins.float"
+                    },
+                    {
+                      "name": "latents",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "num_warmup_steps",
+                      "type": "builtins.int"
+                    },
+                    {
+                      "name": "timesteps",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "uncond_position_ids",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "uncond_sequence_length",
+                      "type": "builtins.int"
+                    },
+                    {
+                      "name": "uncond_text_segment",
+                      "type": "builtins.dict"
+                    },
+                    {
+                      "name": "uncond_vision_segment",
+                      "type": "builtins.dict"
+                    },
+                    {
+                      "name": "velocity_action",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "velocity_sound",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "velocity_vision",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "vision_condition_indexes_for_pack",
+                      "type": "list[builtins.int]"
+                    },
+                    {
+                      "name": "vision_condition_mask",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "vision_conditioning_latents",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "vision_timesteps",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "vision_tokens",
+                      "type": "list[torch.Tensor]"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline:text2image",
+                  "state": "denoise"
+                },
+                "types": [
+                  "modular_workflow_state"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "text_to_image",
+            "workflowId": "text2image"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
+        "params": {
+          "block_path": {
+            "default": "denoise",
+            "hidden": true,
+            "type": "string",
+            "value": "denoise"
+          },
+          "guidance_scale": {
+            "default": 6,
+            "label": "Guidance Scale",
+            "max": 20,
+            "min": 1,
+            "step": 0.1,
+            "type": "float",
+            "value": 4
+          },
+          "num_inference_steps": {
+            "default": 50,
+            "label": "Steps",
+            "max": 100,
+            "min": 1,
+            "type": "int",
+            "value": 50
+          },
+          "pipeline_class": {
+            "default": "Cosmos3OmniModularPipeline",
+            "hidden": true,
+            "type": "string",
+            "value": "Cosmos3OmniModularPipeline"
+          },
+          "pipeline_components": {
+            "display": "input",
+            "label": "Pipeline Components",
+            "required": true,
+            "type": "diffusers_modular_pipeline_components"
+          },
+          "seed": {
+            "default": 0,
+            "display": "random",
+            "label": "Seed",
+            "max": 4294967295,
+            "min": 0,
+            "type": "int",
+            "value": {
+              "isRandom": false,
+              "value": 1143
+            }
+          },
+          "state_in": {
+            "display": "input",
+            "label": "Workflow State",
+            "required": true,
+            "type": "modular_workflow_state"
+          },
+          "state_out": {
+            "display": "output",
+            "label": "Workflow State",
+            "type": "modular_workflow_state"
+          },
+          "workflow_id": {
+            "default": "text2video",
+            "hidden": true,
+            "type": "string",
+            "value": "text2image"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": true,
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-05",
+      "position": {
+        "x": 880,
+        "y": 145
+      },
+      "type": "custom"
+    },
+    {
+      "data": {
+        "action": "WorkflowCosmos3OmniTextEncode",
+        "cache": false,
+        "category": "Modular Diffusers",
+        "description": "Run Cosmos 3 Omni's exact standard or action-aware text block.",
+        "label": "Encode Prompt",
+        "memory": [
+          0,
+          0,
+          0
+        ],
+        "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "authored": [
+            "pipeline_class",
+            "workflow_id",
+            "block_path",
+            "negative_prompt",
+            "width",
+            "height",
+            "fps",
+            "num_frames"
+          ],
+          "defaults": {
+            "action_chunk_size": 16,
+            "action_domain_name": "droid_lerobot",
+            "action_resolution_tier": 480,
+            "action_view_point": "ego_view",
+            "add_duration_template": true,
+            "add_resolution_template": true,
+            "fps": 24,
+            "height": 1024,
+            "negative_prompt": "",
+            "num_frames": 1,
+            "prompt": "{\n  \"subjects\": [\n    {\n      \"description\": \"Two damp human hands working a spinning cylinder of wet gray clay on a pottery wheel, fingers gently pinching and pulling the walls upward to form a narrow neck and rounded belly\",\n      \"appearance_details\": \"Hands coated with a thin sheen of slip, glistening with water; fingertips leave subtle ridges and fingerprints in the clay; knuckles slightly creased, nails short and rimmed with gray clay; small splatters of clay on the back of the wrists\",\n      \"relationship\": \"The primary actor shaping the central spinning clay form on the wheel\",\n      \"location\": \"Center foreground, framing the clay column\",\n      \"relative_size\": \"Hands and clay occupy roughly the central 60 percent of the frame\",\n      \"orientation\": \"Hands angled inward from left and right, palms cupping the clay symmetrically\",\n      \"pose\": \"Both hands curled around the clay, thumbs and index fingers pinched at the upper neck while remaining fingers support the rounded belly below\",\n      \"clothing\": \"\",\n      \"expression\": \"\",\n      \"gender\": \"Unknown\",\n      \"age\": \"Adult\",\n      \"skin_tone_and_texture\": \"Light to medium skin tone, slick with watery slip giving a glossy sheen, fine pores and small wrinkles visible at knuckles\",\n      \"facial_features\": \"\",\n      \"number_of_subjects\": 1,\n      \"number_of_arms\": 2,\n      \"number_of_legs\": 0,\n      \"number_of_hands\": 2,\n      \"number_of_fingers\": 10\n    },\n    {\n      \"description\": \"A spinning cylinder of wet gray stoneware clay being formed into a vase shape with a narrow neck and rounded belly\",\n      \"appearance_details\": \"Concentric horizontal rings spiral around the surface from the rotation; glistening film of water; subtle fingerprint impressions; small drips of slip running down the lower belly onto the wheel head\",\n      \"relationship\": \"The object being shaped by the hands; central focal point of the scene\",\n      \"location\": \"Absolute center of the frame, rising vertically from the wheel head\",\n      \"relative_size\": \"Approximately one third of the frame height, dominant central form\",\n      \"orientation\": \"Vertical axis, rotating\",\n      \"pose\": \"Upright cylindrical-to-vase form mid-throw, neck tapering, belly bulging\",\n      \"clothing\": \"\",\n      \"expression\": \"\",\n      \"gender\": \"N/A\",\n      \"age\": \"N/A\",\n      \"skin_tone_and_texture\": \"\",\n      \"facial_features\": \"\",\n      \"number_of_subjects\": 1,\n      \"number_of_arms\": 0,\n      \"number_of_legs\": 0,\n      \"number_of_hands\": 0,\n      \"number_of_fingers\": 0\n    }\n  ],\n  \"subject_details\": {\n    \"clay_state\": \"Wet gray stoneware, plastic and pliable, glistening with slip\",\n    \"wheel_motion\": \"Visible motion blur in concentric ring patterns indicating rotation\",\n    \"forming_stage\": \"Mid-throw, transitioning from cylinder to vase form with narrow neck and rounded belly\",\n    \"slip_splatter\": \"Splattered clay droplets dot the black apron and the wheel tray\",\n    \"tools_in_background\": \"Wooden ribs, wire cutter, sponge, and metal trimming tools softly blurred behind\"\n  },\n  \"background_setting\": \"A dim pottery studio with a matte black wheel tray and splash pan surrounding the spinning wheel head. Behind the potter, softly blurred, sit a row of throwing tools: wooden ribs, a metal kidney, a wire cutter coiled on a small shelf, and a sponge in a shallow water bowl. The black apron worn by the potter forms part of the lower background, dotted with dried clay flecks. The studio walls are deep charcoal, allowing the warm directional light to sculpt the central action.\",\n  \"lighting\": {\n    \"conditions\": \"Warm, controlled studio lighting with a single key source\",\n    \"direction\": \"From the right side of the frame, slightly elevated\",\n    \"shadows\": \"Soft, defined shadows falling to the left of the clay form and beneath the hands; subtle contact shadow on the wheel head\",\n    \"illumination_effect\": \"Highlights the wet sheen on the clay, accentuates concentric ring textures and fingerprint detail, and creates a moody chiaroscuro that isolates the hands and clay from the darker background\"\n  },\n  \"aesthetics\": {\n    \"composition\": \"Centered symmetrical composition with the clay form on the vertical axis, hands framing it from both sides; rule-of-thirds intersections align with the neck and belly of the vase\",\n    \"color_scheme\": \"Muted earth tones dominated by cool grays of the clay, warm amber highlights from the studio light, deep blacks of the apron and wheel tray, and natural skin tones\",\n    \"mood_atmosphere\": \"Meditative, tactile, focused craftsmanship\",\n    \"patterns\": \"Concentric horizontal rings spiraling around the clay surface from the wheel's rotation\"\n  },\n  \"cinematography\": {\n    \"framing\": \"Medium close-up\",\n    \"camera_angle\": \"Slightly above rim height, looking gently down onto the hands and clay\",\n    \"depth_of_field\": \"Shallow\",\n    \"focus\": \"Crisp focus on the hands and the wet clay surface\",\n    \"lens_focal_length\": \"35mm\"\n  },\n  \"style_medium\": \"Photography\",\n  \"artistic_style\": \"Photorealistic studio product/process photography\",\n  \"context\": \"Editorial or artisanal documentation of a hand-thrown ceramic vase being formed on a pottery wheel\",\n  \"text_and_signage_elements\": [],\n  \"quadrant_scan\": {\n    \"top_left\": \"Softly blurred dark background with faint warm rim light catching the edge of a wooden rib tool on a shelf\",\n    \"top_right\": \"Warm directional studio light source area; brightest highlights spill across the upper right, illuminating the narrow neck of the vase\",\n    \"bottom_left\": \"Edge of the black apron speckled with dried clay flecks and the curved rim of the splash pan in shadow\",\n    \"bottom_right\": \"Wheel tray dotted with splattered clay droplets and trickles of slip; partial view of the rotating wheel head\",\n    \"absolute_center\": \"The wet gray clay vase form mid-throw, cradled by two slip-coated hands pinching the neck and supporting the rounded belly, concentric rings glistening under warm light\"\n  },\n  \"comprehensive_t2i_caption\": \"A photorealistic studio photograph captured at slightly above rim height with a 35mm lens shows a pottery wheel in motion at the center of the frame. A cylinder of wet gray stoneware clay spins, its surface scored with fine concentric rings from rotation and glistening with a thin film of water and slip. Two damp human hands, coated in pale gray slip, gently pinch and pull the walls upward, the thumbs and index fingers narrowing the neck while the lower fingers cradle and shape a rounded belly, transforming the cylinder into a vase. Warm directional studio light from the right rakes across the scene, accentuating the sheen of water, the subtle ridges of fingerprints, and the soft modeling of the clay's curves, while casting gentle shadows to the left. Splattered droplets of clay dot a black apron worn by the potter and the matte black wheel tray and splash pan beneath. In the softly blurred background, a row of pottery tools — wooden ribs, a metal kidney, a wire cutter, and a damp sponge in a water bowl — sit on a charcoal-toned shelf. The depth of field is shallow, holding crisp focus on the hands and clay while the surroundings dissolve into a moody, warm-toned haze. The atmosphere is meditative and tactile, celebrating the intimate craftsmanship of hand-thrown ceramics.\",\n  \"resolution\": {\n    \"H\": 1024,\n    \"W\": 1024\n  },\n  \"aspect_ratio\": \"1,1\"\n}",
+            "raw_actions_json": "[]",
+            "use_system_prompt": true,
+            "width": 1024
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "Cosmos3OmniModularPipeline",
+              "values": {
+                "block_path": "text_encoder",
+                "pipeline_class": "Cosmos3OmniModularPipeline",
+                "workflow_id": "text2image"
+              }
+            },
+            "blockName": "text_encoder",
+            "decomposition": "block",
+            "nodeKey": "modules.ModularDiffusers.WorkflowCosmos3OmniTextEncode",
+            "nodeType": "text_encoder",
+            "operationId": "diffusion.encode_prompt",
+            "pipelineClass": "Cosmos3OmniModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline_components",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline_components",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "text_tokenizer",
+                      "type": "transformers.models.auto.tokenization_auto.AutoTokenizer"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_modular_pipeline_components"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "pipeline_class",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pipeline_class",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "workflow_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "workflow_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "block_path",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "block_path",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "negative_prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "negative_prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "image",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "image",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "image"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "video",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "video",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "video"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "width",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "width",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "height",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "height",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "num_frames",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "num_frames",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "fps",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "fps",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "use_system_prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "use_system_prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "add_resolution_template",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "add_resolution_template",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "add_duration_template",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "add_duration_template",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "action_chunk_size",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "action_chunk_size",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "action_domain_name",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "action_domain_name",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "action_resolution_tier",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "action_resolution_tier",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "action_view_point",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "action_view_point",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "raw_actions_json",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "raw_actions_json",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "state_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "state_out",
+                "semantics": {
+                  "kind": "state",
+                  "members": [
+                    {
+                      "name": "cond_input_ids",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "height",
+                      "type": "builtins.int"
+                    },
+                    {
+                      "name": "num_frames",
+                      "type": "builtins.int"
+                    },
+                    {
+                      "name": "uncond_input_ids",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "width",
+                      "type": "builtins.int"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "Cosmos3OmniModularPipeline:text2image",
+                  "state": "text_encoder"
+                },
+                "types": [
+                  "modular_workflow_state"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "text_to_image",
+            "workflowId": "text2image"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
+        "params": {
+          "action_chunk_size": {
+            "default": 16,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Action Chunk Size",
+            "max": 256,
+            "min": 1,
+            "type": "int"
+          },
+          "action_domain_name": {
+            "default": "droid_lerobot",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Action Domain",
+            "type": "string"
+          },
+          "action_resolution_tier": {
+            "default": 480,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Action Resolution Tier",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "256",
+                "schemaVersion": 1,
+                "value": "256"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "480",
+                "schemaVersion": 1,
+                "value": "480"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "704",
+                "schemaVersion": 1,
+                "value": "704"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "720",
+                "schemaVersion": 1,
+                "value": "720"
+              }
+            ],
+            "type": "int"
+          },
+          "action_view_point": {
+            "default": "ego_view",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Action Viewpoint",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ego_view",
+                "schemaVersion": 1,
+                "value": "ego_view"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "third_person_view",
+                "schemaVersion": 1,
+                "value": "third_person_view"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "wrist_view",
+                "schemaVersion": 1,
+                "value": "wrist_view"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "concat_view",
+                "schemaVersion": 1,
+                "value": "concat_view"
+              }
+            ],
+            "type": "string"
+          },
+          "add_duration_template": {
+            "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Add Duration Template",
+            "type": "boolean"
+          },
+          "add_resolution_template": {
+            "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Add Resolution Template",
+            "type": "boolean"
+          },
+          "block_path": {
+            "default": "text_encoder",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "type": "string",
+            "value": "text_encoder"
+          },
+          "fps": {
+            "default": 24,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "FPS",
+            "max": 120,
+            "min": 1,
+            "type": "float",
+            "value": 24
+          },
+          "height": {
+            "default": 720,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Height",
+            "max": 2048,
+            "min": 256,
+            "step": 16,
+            "type": "int",
+            "value": 1024
+          },
+          "image": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Action Reference Image",
+            "type": "image"
+          },
+          "negative_prompt": {
+            "default": "",
+            "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Negative Prompt",
+            "type": "text",
+            "value": ""
+          },
+          "num_frames": {
+            "default": 189,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Frames",
+            "max": 481,
+            "min": 1,
+            "type": "int",
+            "value": 1
+          },
+          "pipeline_class": {
+            "default": "Cosmos3OmniModularPipeline",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "type": "string",
+            "value": "Cosmos3OmniModularPipeline"
+          },
+          "pipeline_components": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Pipeline Components",
+            "required": true,
+            "type": "diffusers_modular_pipeline_components"
+          },
+          "prompt": {
+            "default": "",
+            "display": "textarea",
+            "fieldOptions": {
+              "exampleAttribution": "MoDiff task example",
+              "suppressInitialFieldAction": true
+            },
+            "label": "Prompt",
+            "type": "text",
+            "value": "{\n  \"subjects\": [\n    {\n      \"description\": \"Two damp human hands working a spinning cylinder of wet gray clay on a pottery wheel, fingers gently pinching and pulling the walls upward to form a narrow neck and rounded belly\",\n      \"appearance_details\": \"Hands coated with a thin sheen of slip, glistening with water; fingertips leave subtle ridges and fingerprints in the clay; knuckles slightly creased, nails short and rimmed with gray clay; small splatters of clay on the back of the wrists\",\n      \"relationship\": \"The primary actor shaping the central spinning clay form on the wheel\",\n      \"location\": \"Center foreground, framing the clay column\",\n      \"relative_size\": \"Hands and clay occupy roughly the central 60 percent of the frame\",\n      \"orientation\": \"Hands angled inward from left and right, palms cupping the clay symmetrically\",\n      \"pose\": \"Both hands curled around the clay, thumbs and index fingers pinched at the upper neck while remaining fingers support the rounded belly below\",\n      \"clothing\": \"\",\n      \"expression\": \"\",\n      \"gender\": \"Unknown\",\n      \"age\": \"Adult\",\n      \"skin_tone_and_texture\": \"Light to medium skin tone, slick with watery slip giving a glossy sheen, fine pores and small wrinkles visible at knuckles\",\n      \"facial_features\": \"\",\n      \"number_of_subjects\": 1,\n      \"number_of_arms\": 2,\n      \"number_of_legs\": 0,\n      \"number_of_hands\": 2,\n      \"number_of_fingers\": 10\n    },\n    {\n      \"description\": \"A spinning cylinder of wet gray stoneware clay being formed into a vase shape with a narrow neck and rounded belly\",\n      \"appearance_details\": \"Concentric horizontal rings spiral around the surface from the rotation; glistening film of water; subtle fingerprint impressions; small drips of slip running down the lower belly onto the wheel head\",\n      \"relationship\": \"The object being shaped by the hands; central focal point of the scene\",\n      \"location\": \"Absolute center of the frame, rising vertically from the wheel head\",\n      \"relative_size\": \"Approximately one third of the frame height, dominant central form\",\n      \"orientation\": \"Vertical axis, rotating\",\n      \"pose\": \"Upright cylindrical-to-vase form mid-throw, neck tapering, belly bulging\",\n      \"clothing\": \"\",\n      \"expression\": \"\",\n      \"gender\": \"N/A\",\n      \"age\": \"N/A\",\n      \"skin_tone_and_texture\": \"\",\n      \"facial_features\": \"\",\n      \"number_of_subjects\": 1,\n      \"number_of_arms\": 0,\n      \"number_of_legs\": 0,\n      \"number_of_hands\": 0,\n      \"number_of_fingers\": 0\n    }\n  ],\n  \"subject_details\": {\n    \"clay_state\": \"Wet gray stoneware, plastic and pliable, glistening with slip\",\n    \"wheel_motion\": \"Visible motion blur in concentric ring patterns indicating rotation\",\n    \"forming_stage\": \"Mid-throw, transitioning from cylinder to vase form with narrow neck and rounded belly\",\n    \"slip_splatter\": \"Splattered clay droplets dot the black apron and the wheel tray\",\n    \"tools_in_background\": \"Wooden ribs, wire cutter, sponge, and metal trimming tools softly blurred behind\"\n  },\n  \"background_setting\": \"A dim pottery studio with a matte black wheel tray and splash pan surrounding the spinning wheel head. Behind the potter, softly blurred, sit a row of throwing tools: wooden ribs, a metal kidney, a wire cutter coiled on a small shelf, and a sponge in a shallow water bowl. The black apron worn by the potter forms part of the lower background, dotted with dried clay flecks. The studio walls are deep charcoal, allowing the warm directional light to sculpt the central action.\",\n  \"lighting\": {\n    \"conditions\": \"Warm, controlled studio lighting with a single key source\",\n    \"direction\": \"From the right side of the frame, slightly elevated\",\n    \"shadows\": \"Soft, defined shadows falling to the left of the clay form and beneath the hands; subtle contact shadow on the wheel head\",\n    \"illumination_effect\": \"Highlights the wet sheen on the clay, accentuates concentric ring textures and fingerprint detail, and creates a moody chiaroscuro that isolates the hands and clay from the darker background\"\n  },\n  \"aesthetics\": {\n    \"composition\": \"Centered symmetrical composition with the clay form on the vertical axis, hands framing it from both sides; rule-of-thirds intersections align with the neck and belly of the vase\",\n    \"color_scheme\": \"Muted earth tones dominated by cool grays of the clay, warm amber highlights from the studio light, deep blacks of the apron and wheel tray, and natural skin tones\",\n    \"mood_atmosphere\": \"Meditative, tactile, focused craftsmanship\",\n    \"patterns\": \"Concentric horizontal rings spiraling around the clay surface from the wheel's rotation\"\n  },\n  \"cinematography\": {\n    \"framing\": \"Medium close-up\",\n    \"camera_angle\": \"Slightly above rim height, looking gently down onto the hands and clay\",\n    \"depth_of_field\": \"Shallow\",\n    \"focus\": \"Crisp focus on the hands and the wet clay surface\",\n    \"lens_focal_length\": \"35mm\"\n  },\n  \"style_medium\": \"Photography\",\n  \"artistic_style\": \"Photorealistic studio product/process photography\",\n  \"context\": \"Editorial or artisanal documentation of a hand-thrown ceramic vase being formed on a pottery wheel\",\n  \"text_and_signage_elements\": [],\n  \"quadrant_scan\": {\n    \"top_left\": \"Softly blurred dark background with faint warm rim light catching the edge of a wooden rib tool on a shelf\",\n    \"top_right\": \"Warm directional studio light source area; brightest highlights spill across the upper right, illuminating the narrow neck of the vase\",\n    \"bottom_left\": \"Edge of the black apron speckled with dried clay flecks and the curved rim of the splash pan in shadow\",\n    \"bottom_right\": \"Wheel tray dotted with splattered clay droplets and trickles of slip; partial view of the rotating wheel head\",\n    \"absolute_center\": \"The wet gray clay vase form mid-throw, cradled by two slip-coated hands pinching the neck and supporting the rounded belly, concentric rings glistening under warm light\"\n  },\n  \"comprehensive_t2i_caption\": \"A photorealistic studio photograph captured at slightly above rim height with a 35mm lens shows a pottery wheel in motion at the center of the frame. A cylinder of wet gray stoneware clay spins, its surface scored with fine concentric rings from rotation and glistening with a thin film of water and slip. Two damp human hands, coated in pale gray slip, gently pinch and pull the walls upward, the thumbs and index fingers narrowing the neck while the lower fingers cradle and shape a rounded belly, transforming the cylinder into a vase. Warm directional studio light from the right rakes across the scene, accentuating the sheen of water, the subtle ridges of fingerprints, and the soft modeling of the clay's curves, while casting gentle shadows to the left. Splattered droplets of clay dot a black apron worn by the potter and the matte black wheel tray and splash pan beneath. In the softly blurred background, a row of pottery tools — wooden ribs, a metal kidney, a wire cutter, and a damp sponge in a water bowl — sit on a charcoal-toned shelf. The depth of field is shallow, holding crisp focus on the hands and clay while the surroundings dissolve into a moody, warm-toned haze. The atmosphere is meditative and tactile, celebrating the intimate craftsmanship of hand-thrown ceramics.\",\n  \"resolution\": {\n    \"H\": 1024,\n    \"W\": 1024\n  },\n  \"aspect_ratio\": \"1,1\"\n}"
+          },
+          "raw_actions_json": {
+            "default": "[]",
+            "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Raw Actions (JSON)",
+            "type": "text",
+            "value": "[]"
+          },
+          "state_out": {
+            "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Workflow State",
+            "type": "modular_workflow_state"
+          },
+          "use_system_prompt": {
+            "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Use System Prompt",
+            "type": "boolean"
+          },
+          "video": {
+            "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Action Reference Video",
+            "type": "video"
+          },
+          "width": {
+            "default": 1280,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Width",
+            "max": 2048,
+            "min": 256,
+            "step": 16,
+            "type": "int",
+            "value": 1024
+          },
+          "workflow_id": {
+            "default": "text2video",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "hidden": true,
+            "type": "string",
+            "value": "text2image"
+          }
+        },
+        "resizable": true,
+        "skipParamsCheck": true,
+        "style": {},
+        "time": [
+          0,
+          0,
+          0
+        ],
+        "type": "custom"
+      },
+      "id": "node-06",
+      "position": {
+        "x": 440,
+        "y": 0
+      },
+      "type": "custom"
+    }
+  ]
+}

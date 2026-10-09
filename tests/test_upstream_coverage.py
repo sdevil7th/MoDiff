@@ -86,8 +86,8 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 200,
-                "canonicalWorkflowsWithPublicTemplates": 52,
+                "canonicalWorkflowCount": 202,
+                "canonicalWorkflowsWithPublicTemplates": 54,
                 "canonicalWorkflowsWithoutPublicTemplates": 148,
                 "diffusersPipelineSymbolCount": 334,
                 "pipelineStatusCounts": {
@@ -98,12 +98,12 @@ class UpstreamCoverageTests(unittest.TestCase):
                     "research-blocked": 116,
                     "unreviewed": 0,
                 },
-                "publicTemplateCount": 78,
+                "publicTemplateCount": 80,
                 "reviewedGalleryTemplateCount": 70,
                 "templateStatusCounts": {
                     "contract-only": 0,
                     "equivalent": 0,
-                    "executable": 78,
+                    "executable": 80,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
@@ -122,7 +122,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "workflowStatusCounts": {
                     "contract-only": 0,
                     "equivalent": 0,
-                    "executable": 200,
+                    "executable": 202,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
@@ -367,11 +367,53 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(_canonical_json_sha256(graph_path), item["graphHash"], workflow_id)
 
         templates = self.ledger["publicTemplates"]
-        self.assertEqual(len({item["id"] for item in templates}), 78)
+        self.assertEqual(len({item["id"] for item in templates}), 80)
         self.assertTrue(all(item["canonicalWorkflowId"] in ledger_workflows for item in templates))
         self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 70)
         self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 70)
-        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 52)
+        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 54)
+
+        experimental_public_pairs = {
+            "flux2_dev_text_to_image": (
+                "Flux2ModularPipeline:text_to_image", "flux2:modular",
+            ),
+            "cosmos3_super_text_to_image": (
+                "Cosmos3OmniModularPipeline:text_to_image",
+                "cosmos3-super-text-to-image:official-modular-workflow",
+            ),
+        }
+        public_by_id = {item["id"]: item for item in templates}
+        historical_templates = [
+            item for item in templates if item["id"] not in experimental_public_pairs
+        ]
+        self.assertEqual(len(historical_templates), 78)
+        self.assertEqual(
+            sum(supported[item["canonicalWorkflowId"]]["mediaKind"] == "image"
+                for item in historical_templates),
+            54,
+        )
+        self.assertEqual(
+            sum(supported[item["canonicalWorkflowId"]]["mediaKind"] == "image"
+                for item in templates),
+            56,
+        )
+        for template_id, (workflow_id, profile_id) in experimental_public_pairs.items():
+            item = public_by_id[template_id]
+            self.assertEqual(item["canonicalWorkflowId"], workflow_id)
+            self.assertEqual(item["verificationStatus"], "unverified")
+            self.assertFalse(item["galleryExamplePresent"])
+            self.assertFalse(item["reviewedGalleryExample"])
+            self.assertEqual(item["executionSelection"]["executionProfileId"], profile_id)
+            self.assertEqual(item["executionSelection"]["implementation"], "native_stages")
+            self.assertEqual(item["executionSelection"]["memoryPolicy"], "custom_experimental")
+            self.assertEqual(item["executionRecipeSource"], "backend_operation_starter")
+            self.assertEqual(
+                ledger_workflows[workflow_id]["qualificationStatus"],
+                "graph-qualified-execution-pending",
+            )
+            self.assertEqual(supported[workflow_id]["runtimeQualificationStatus"], "unqualified")
+            self.assertEqual(supported[workflow_id]["optimizationQualificationStatus"], "unqualified")
+            self.assertEqual(supported[workflow_id]["qualifiedRuntimeProfiles"], [])
 
     def test_template_and_gallery_source_fingerprints_remain_current(self):
         expected_bundle_hash = hashlib.sha256(TEMPLATE_BUNDLE.read_bytes()).hexdigest()

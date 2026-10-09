@@ -238,6 +238,9 @@ def attach_cosmos_safety_checker(pipeline, pipeline_components, *, model_type):
         )
     ):
         raise ValueError("The connected Cosmos safety checker is stale or belongs to another owner.")
+    # Partial SDK stages omit this config default; the SDK property reads it
+    # even after enable_safety_checker sets its runtime flag. Safety is mandatory.
+    pipeline.register_to_config(enable_safety_checker=True)
     pipeline.enable_safety_checker(checker)
 
 
