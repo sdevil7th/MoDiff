@@ -1,8 +1,9 @@
 """Mandatory safety stays exact, owned, fail-closed, and separate from qualification."""
 import ast
 import hashlib
+import os
 import sys
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
 from copy import deepcopy
 from importlib import metadata
 from pathlib import Path
@@ -55,6 +56,52 @@ def artifact_snapshot(tmp_path, *, global_blob=False):
 def test_safety_verifies_content_not_storage_name(tmp_path, global_blob):
     snapshot, artifact, _ = artifact_snapshot(tmp_path, global_blob=global_blob)
     assert verify_cosmos_safety_snapshot(snapshot, artifact) == snapshot
+
+
+@pytest.mark.parametrize("global_blob", [False, True])
+@pytest.mark.parametrize("changed_field", ["atime", "mode", "inode", "device", "size", "mtime", "ctime"])
+def test_safety_rechecks_alias_identity_after_read_without_rejecting_access_time(
+    tmp_path, monkeypatch, global_blob, changed_field,
+):
+    snapshot, artifact, alias = artifact_snapshot(tmp_path, global_blob=global_blob)
+    target = alias.resolve(strict=True)
+    original_open = Path.open
+    original_lstat = Path.lstat
+    bytes_read = bytearray()
+
+    @contextmanager
+    def reading_handle(handle):
+        with handle:
+            def read(size):
+                data = handle.read(size)
+                bytes_read.extend(data)
+                return data
+            yield SimpleNamespace(read=read, fileno=handle.fileno)
+
+    def open_file(path, *args, **kwargs):
+        handle = original_open(path, *args, **kwargs)
+        return reading_handle(handle) if path == target and args == ("rb",) else handle
+
+    def alias_stat(path, *args, **kwargs):
+        value = original_lstat(path, *args, **kwargs)
+        if path != alias or not bytes_read:
+            return value
+        fields = list(value)
+        index = {"mode": 0, "inode": 1, "device": 2, "size": 6, "atime": 7, "mtime": 8, "ctime": 9}[changed_field]
+        fields[index] += 1
+        nanoseconds = {f"st_{field}_ns": getattr(value, f"st_{field}_ns") for field in ("atime", "mtime", "ctime")}
+        if changed_field in {"atime", "mtime", "ctime"}:
+            nanoseconds[f"st_{changed_field}_ns"] += 1_000_000_000
+        return os.stat_result(fields, nanoseconds)
+
+    monkeypatch.setattr(Path, "open", open_file)
+    monkeypatch.setattr(Path, "lstat", alias_stat)
+    if changed_field == "atime":
+        assert verify_cosmos_safety_snapshot(snapshot, artifact) == snapshot
+    else:
+        with pytest.raises(ValueError, match="reviewed digest"):
+            verify_cosmos_safety_snapshot(snapshot, artifact)
+    assert bytes(bytes_read) == b"reviewed safety bytes"
 
 
 def test_safety_checks_git_blob_digest_for_small_config_bytes(tmp_path):

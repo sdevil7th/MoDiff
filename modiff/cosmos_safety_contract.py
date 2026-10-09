@@ -56,6 +56,15 @@ def cosmos_safety_artifacts():
     return artifacts
 
 
+def _alias_identity(value):
+    # Reading a valid artifact may update its access time. Keep the alias's
+    # identity and mutation metadata without treating that read as a change.
+    return (
+        value.st_mode, value.st_ino, value.st_dev, value.st_nlink, value.st_uid,
+        value.st_gid, value.st_size, value.st_mtime_ns, value.st_ctime_ns,
+    )
+
+
 def verify_cosmos_safety_snapshot(snapshot, artifact):
     """Verify exact selected bytes within the supported managed Hub blob layouts.
 
@@ -95,7 +104,8 @@ def verify_cosmos_safety_snapshot(snapshot, artifact):
         if (
             (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns)
             != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns)
-            or alias.lstat() != alias_before or alias.resolve(strict=True) != resolved
+            or _alias_identity(alias.lstat()) != _alias_identity(alias_before)
+            or alias.resolve(strict=True) != resolved
             or digest.hexdigest() != entry["blobHash"]
         ):
             raise ValueError(f"Cosmos safety artifact failed its reviewed digest: {entry['path']}")
