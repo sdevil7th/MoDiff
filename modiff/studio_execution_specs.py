@@ -6918,7 +6918,7 @@ _MINIMAX_H3_MODULAR_CAPABILITY = {
     "notes": [
         "The loader seals t2va/fl2va to transformer and ref2va to transformer_ref; it never loads both partitions for one Cluster.",
         "Creator defaults are 1344x768, 124 frames at fixed 24 FPS, 50 steps, and seed 0; no negative prompt or guidance input is invented.",
-        "Install and Run remain closed pending license/territory eligibility, an exact selective metadata closure, optional Transformers runtime, and measured 4-accelerator qualification.",
+        "Install and Run remain closed pending license/territory eligibility, an exact selective metadata closure, a compatible base Transformers installation, and measured 4-accelerator qualification.",
         "The current estimate-only floor is 160 GiB selective disk, 256 GiB system RAM, 192 GiB aggregate accelerator memory, and four accelerators.",
         "Public execution, Auto, templates, Gallery, and live proof remain disabled.",
     ],

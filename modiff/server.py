@@ -9471,16 +9471,11 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             if isinstance(device, dict) and device.get("type") == "cuda"
         ]
         accelerator = cuda_devices[0] if cuda_devices else None
-        available_vram = (
-            accelerator.get("torch_vram_free") or accelerator.get("vram_free")
-            if isinstance(accelerator, dict)
-            else None
-        )
-        total_vram = (
-            accelerator.get("torch_vram_total") or accelerator.get("vram_total")
-            if isinstance(accelerator, dict)
-            else None
-        )
+        from modiff.auto_resource import _first_known_int
+        available_vram = (_first_known_int(accelerator.get("torch_vram_free"), accelerator.get("vram_free"))
+                          if isinstance(accelerator, dict) else None)
+        total_vram = (_first_known_int(accelerator.get("torch_vram_total"), accelerator.get("vram_total"))
+                      if isinstance(accelerator, dict) else None)
         required_vram = minimums.get("vramBytes")
         vram_floor = max(
             2 * 1024**3,
@@ -12599,7 +12594,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         ):
             raise RuntimeError(
                 "Transformers and PEFT are required in the base runtime. "
-                "Repair or update the base installation with uv sync from the MoDiff backend directory, "
+                "Repair or update the base installation using the matching accelerator instructions in "
+                "docs/developer-setup.md: native uv sync with the same accelerator extra, or the reviewed "
+                "vendor uv pip commands for a specialized runtime, "
                 "then restart MoDiff. These libraries cannot be installed or activated as optional overlays."
             )
 
@@ -14814,7 +14811,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     return False
             return True
 
-        owned, credited = {}, set()
+        owned = {}
         all_storage = storages([*components.values(), *(item.get("model") for item in models.values())])
         for node_id, record in list(records.items()):
             cached = self.node_cache.get(node_id)
@@ -14835,11 +14832,13 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             selected.extend(value for key, value in vars(cached).items() if key in {"loader", "pipeline"})
             found = storages(selected)
             all_storage.update(found)
-            entry = {"cacheKey": record["cacheKey"], "systemRamBytes": 0, "vramBytes": 0}
+            entry = {"cacheKey": record["cacheKey"], "systemRamBytes": 0, "vramBytes": 0, "weightStorage": []}
             for key, (pool, size) in found.items():
-                if key not in credited:
-                    entry[pool] += size
-                    credited.add(key)
+                # Keep each owner's actual storage eligibility. Deduplication
+                # happens after the planner matches current owners; an earlier
+                # unrelated cache record must not consume their reuse credit.
+                entry[pool] += size
+                entry["weightStorage"].append({"id": f"{key[0]}:{key[1]}:{key[2]}", "pool": pool, "bytes": size})
             owned[node_id] = entry
         reclaimable = {"systemRamBytes": 0, "vramBytes": 0}
         for pool, size in all_storage.values():

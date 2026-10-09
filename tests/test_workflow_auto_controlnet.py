@@ -281,9 +281,14 @@ def test_actual_auxiliary_preflight_cache_hit_and_shared_tensor_storage_are_coun
     app._record_workflow_auto_owner({"nodeId": "load", "cacheKey": "base-key"})
     snapshot = app._workflow_auto_cache_snapshot()
     assert snapshot["reclaimable"] == {"systemRamBytes": 64, "vramBytes": 0}
-    assert sum(item["systemRamBytes"] for item in snapshot["owners"].values()) == 64
+    # Eligibility belongs to each compatible owner; the planner deduplicates
+    # these shared identities after selecting current owners. Reclamation is
+    # still one real storage, never the sum of per-owner eligibility.
+    storages = {storage['id']: storage['bytes'] for owner in snapshot['owners'].values()
+                for storage in owner['weightStorage']}
+    assert sum(storages.values()) == 64
     assert snapshot["owners"]["aux"]["systemRamBytes"] == 64
-    assert snapshot["owners"]["load"]["systemRamBytes"] == 0
+    assert snapshot["owners"]["load"]["systemRamBytes"] == 64
     aux.params["revision"] = "changed"
     assert not app._workflow_auto_cache_snapshot()["owners"]
 

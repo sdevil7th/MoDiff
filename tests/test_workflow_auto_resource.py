@@ -67,6 +67,55 @@ def test_shared_loader_is_counted_once_with_both_consumers(setup):
     assert result["loaders"][0]["consumers"] == ["generate", "generate2"]
 
 
+@pytest.mark.parametrize("offload_modes", [("model_cpu", "none"), ("none", "model_cpu")])
+@pytest.mark.parametrize("overlap", [False, True])
+def test_mixed_global_offload_policies_require_nonoverlapping_owner_release(setup, tmp_path, offload_modes, overlap):
+    _, candidate, hardware, _ = setup
+    g = graph(two=True)
+    for node_id, mode in zip(("load", "load2"), offload_modes):
+        g["nodes"][node_id]["params"]["offload_mode"]["value"] = mode
+        g["nodes"][node_id]["params"]["auto_offload"]["value"] = mode != "none"
+    if overlap:
+        g["nodes"]["generate2"]["params"]["other_model"] = {"sourceId": "load", "sourceKey": "pipeline"}
+
+    def recipe(payload, **_kwargs):
+        mode = payload["form"]["offloadMode"]
+        return {"candidates": [{**deepcopy(candidate), "offloadMode": mode, "autoOffload": mode != "none"}]}
+
+    result = planner.build_workflow_auto_plan(g, runtime_fingerprint={}, local_models=[], data_dir=str(tmp_path),
+                                              plan_recipe=recipe, hardware=hardware)
+    if overlap:
+        assert not result["canAutoRun"]
+        assert "global CPU offload" in " ".join(result["issues"])
+        assert not result["patches"]
+    else:
+        assert result["canAutoRun"]
+        assert result["strategy"] == "dependency_order_release_owners"
+        assert result["schedule"]["releases"][0]["ownerIds"] == ["load"]
+        assert result["requirements"]["systemRamBytes"] == 300
+
+
+@pytest.mark.parametrize('overlap', [False, True])
+def test_group_and_global_offload_policies_can_keep_the_existing_lifetimes(setup, tmp_path, overlap):
+    _, candidate, hardware, _ = setup
+    g = graph(two=True)
+    g['nodes']['load']['params']['offload_mode']['value'] = 'model_cpu'
+    g['nodes']['load2']['params']['offload_mode']['value'] = 'group_cpu'
+    if overlap:
+        g['nodes']['generate2']['params']['other_model'] = {'sourceId': 'load', 'sourceKey': 'pipeline'}
+
+    def recipe(payload, **_kwargs):
+        mode = payload['form']['offloadMode']
+        return {'candidates': [{**deepcopy(candidate), 'offloadMode': mode, 'autoOffload': True}]}
+
+    result = planner.build_workflow_auto_plan(g, runtime_fingerprint={}, local_models=[], data_dir=str(tmp_path),
+                                              plan_recipe=recipe, hardware=hardware)
+    assert result['canAutoRun'], result['issues']
+    assert result['schedule'] is None
+    assert result['strategy'] == 'dependency_order_retained_owners'
+    assert result['requirements']['systemRamBytes'] == 600
+
+
 def test_machine_ram_capacity_is_not_an_additional_working_budget(setup):
     plan, candidate, hardware, _ = setup
     gib = 1024 ** 3
@@ -1253,7 +1302,9 @@ def test_cache_snapshot_counts_unique_storage_and_does_not_retain_model(tmp_path
     app._record_workflow_auto_owner(owner)
     snapshot = app._workflow_auto_cache_snapshot()
     assert snapshot['reclaimable'] == {'systemRamBytes': 64, 'vramBytes': 0}
-    assert snapshot['owners']['load'] == {'cacheKey': 'reviewed-owner', 'systemRamBytes': 64, 'vramBytes': 0}
+    assert snapshot['owners']['load'] == {'cacheKey': 'reviewed-owner', 'systemRamBytes': 64, 'vramBytes': 0,
+                                         'weightStorage': [{'id': f'cpu:{model.weight.untyped_storage().data_ptr()}:64',
+                                                            'pool': 'systemRamBytes', 'bytes': 64}]}
     cached.output = {'model': model}
     assert not app._workflow_auto_cache_snapshot()['owners']
     app._record_workflow_auto_owner(owner)
@@ -1264,6 +1315,48 @@ def test_cache_snapshot_counts_unique_storage_and_does_not_retain_model(tmp_path
     app.node_cache.clear()
     del cached
     assert reference() is None
+
+
+@pytest.mark.parametrize('two_matching_owners', [False, True])
+def test_shared_storage_credit_is_selected_before_deduplication(setup, tmp_path, monkeypatch, two_matching_owners):
+    import sys
+    import torch
+    from modiff.server import WebServer, memory_manager
+
+    plan, candidate, hardware, _ = setup
+    gib = 1024 ** 3
+    candidate['requirements'] = {'systemRamBytes': 4 * gib + 64, 'vramBytes': 0}
+    g = graph(two=two_matching_owners)
+    model = torch.nn.Linear(4, 4, bias=False)  # One genuine 64-byte CPU storage.
+    app = object.__new__(WebServer)
+    first_owner = 'load' if two_matching_owners else 'outside-graph'
+    second_owner = 'load2' if two_matching_owners else 'load'
+
+    class Loader:
+        pass
+
+    app.node_cache = {}
+    for owner_id in (first_owner, second_owner):
+        cached = Loader()
+        cached._cache_valid, cached._cache_invalidated = True, False
+        cached._mm_models, cached.output = [], {'model': model}
+        app.node_cache[owner_id] = cached
+    monkeypatch.setattr(memory_manager, 'cache', {})
+    monkeypatch.setitem(sys.modules, 'modules.ModularDiffusers', SimpleNamespace(components=SimpleNamespace(
+        collections={first_owner: ['shared'], second_owner: ['shared']}, components={'shared': model})))
+    for owner_id in (first_owner, second_owner):
+        app._record_workflow_auto_owner({'nodeId': owner_id, 'cacheKey': planner.workflow_owner_cache_key(g, owner_id)
+                                        if owner_id in g['nodes'] else 'unrelated-live-owner'})
+    hardware['systemMemory'].update(totalBytes=32 * gib,
+                                   availableBytes=(8 * gib + 96 if two_matching_owners else 4 * gib + 32))
+    hardware['accelerator']['freeBytes'] = 16 * gib
+    snapshot = app._workflow_auto_cache_snapshot()
+    assert snapshot['reclaimable'] == {'systemRamBytes': 64, 'vramBytes': 0}
+    result = plan(g, cache_snapshot=snapshot)
+    assert result['canAutoRun'], result['issues']
+    assert not result['requiresCachePreparation']
+    assert result['reusedOwnerIds'] == (['load', 'load2'] if two_matching_owners else ['load'])
+    assert result['requirements']['systemRamBytes'] == (8 * gib + 64 if two_matching_owners else 4 * gib)
 
 
 def test_workflow_inspection_and_dispatch_both_receive_owner_storage(tmp_path, monkeypatch):

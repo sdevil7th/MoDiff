@@ -35,6 +35,7 @@ from modiff.diffusers_offload import (
     OFFLOAD_MODE_NONE,
     apply_component_group_offload,
     apply_model_offload,
+    assert_components_manager_offload_ownership,
     configure_components_manager_offload,
     normalize_offload_mode,
     offload_mode_param,
@@ -1126,6 +1127,15 @@ def assert_explicit_component_runtime_policy(name, component, policy):
         raise ValueError(f'The connected {name} has a different attention/VAE policy; configure its model owner before sharing it.')
 
 
+def assert_explicit_component_placement_policy(name, component, *, offload_mode, device, node_id):
+    if not component_placement_matches(component, offload_mode=offload_mode, device=device, node_id=node_id):
+        raise ValueError(
+            f'The connected {name} has a different source-owned placement policy. '
+            'Use matching device and offload settings, or configure its source model owner before sharing it. '
+            'Disk-offloaded components cannot transfer hook/file ownership to another loader.'
+        )
+
+
 def apply_modular_runtime_policy(pipeline, policy, *, owned_component_names=()):
     """Configure fresh owned vision components and explicitly selected settings.
 
@@ -1230,11 +1240,22 @@ def component_reuse_compatible(
         if existing_info != quant_config_to_info(requested_quantization):
             return False
 
-    target_device = str(torch.device(device))
+    return component_placement_matches(component, offload_mode=offload_mode, device=device, node_id=node_id)
+
+
+def component_placement_matches(component, *, offload_mode, device, node_id=None):
+    """Share a model without changing its source owner's placement or files."""
+    if not isinstance(component, torch.nn.Module):
+        return True
+    from modiff.diffusers_offload import normalize_execution_device, _is_group_offloaded
+
+    target_device = normalize_execution_device(device)
     recorded_mode = getattr(component, "_modiff_offload_mode", None)
     recorded_device = getattr(component, "_modiff_execution_device", None)
     if recorded_mode is not None or recorded_device is not None:
-        if recorded_mode != offload_mode or recorded_device != target_device:
+        if recorded_mode != offload_mode or recorded_device is None or normalize_execution_device(recorded_device) != target_device:
+            return False
+        if offload_mode == OFFLOAD_MODE_NONE and (hasattr(component, '_hf_hook') or _is_group_offloaded(component)):
             return False
         if offload_mode == OFFLOAD_MODE_GROUP_DISK:
             recorded_node_id = getattr(component, "_modiff_offload_node_id", None)
@@ -1245,7 +1266,7 @@ def component_reuse_compatible(
     # Legacy resident components have no explicit policy metadata. Their
     # current device is enough to prove compatibility only for a hook-free
     # resident run; never infer compatibility for an offloaded component.
-    if offload_mode != OFFLOAD_MODE_NONE:
+    if offload_mode != OFFLOAD_MODE_NONE or hasattr(component, '_hf_hook') or _is_group_offloaded(component):
         return False
     try:
         component_device = torch.device(component.device)
@@ -1254,7 +1275,7 @@ def component_reuse_compatible(
             component_device = next(component.parameters()).device
         except StopIteration:
             return False
-    return component_device == torch.device(device)
+    return normalize_execution_device(component_device) == target_device
 
 
 def reusable_component_ids(
@@ -1291,6 +1312,7 @@ def reusable_component_ids(
 
 def record_pipeline_component_runtime_policy(
     pipeline, *, offload_mode, device, node_id=None, runtime_policy=None, applied_runtime_policy=None,
+    excluded_component_names=(),
 ):
     """Annotate model components after their placement/hooks have been applied."""
 
@@ -1299,7 +1321,7 @@ def record_pipeline_component_runtime_policy(
     except (AttributeError, RuntimeError):
         pipeline_components = {}
     for name, component in pipeline_components.items():
-        if not isinstance(component, torch.nn.Module):
+        if name in excluded_component_names or not isinstance(component, torch.nn.Module):
             continue
         component._modiff_offload_mode = offload_mode
         component._modiff_execution_device = str(torch.device(device))
@@ -2166,6 +2188,9 @@ class AutoModelLoader(NodeBase):
             offload_mode,
             auto_offload=bool(auto_offload),
             device=device,
+        )
+        assert_components_manager_offload_ownership(
+            components, mode=normalized_offload_mode, device=device, node_id=self.node_id, configure_global=False,
         )
         spec = ComponentSpec(
             name=model_type,
@@ -3056,6 +3081,15 @@ class ModelsLoader(NodeBase):
         # before global offload setup, pipeline creation, or any policy hook.
         for name, component in components_to_update.items():
             assert_explicit_component_runtime_policy(name, component, runtime_policy)
+            component_mode = offload_mode
+            if offload_mode in {OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK} and name not in DEFAULT_GROUP_COMPONENTS:
+                # Group hooks leave auxiliary components such as ControlNet
+                # under their source owner's placement. Do not require or
+                # later stamp the pipeline's different policy onto them.
+                component_mode = getattr(component, '_modiff_offload_mode', None) or OFFLOAD_MODE_NONE
+            assert_explicit_component_placement_policy(
+                name, component, offload_mode=component_mode, device=device, node_id=self.node_id,
+            )
 
         if real_repo_id == "":
             self.notify(
@@ -3101,7 +3135,7 @@ class ModelsLoader(NodeBase):
 
         use_group_offload = offload_mode in [OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]
 
-        configure_components_manager_offload(components, mode=offload_mode, device=device)
+        configure_components_manager_offload(components, mode=offload_mode, device=device, node_id=self.node_id)
 
         if custom_binding is not None:
             self.loader = custom_binding.instantiate(
@@ -3329,6 +3363,7 @@ class ModelsLoader(NodeBase):
             node_id=self.node_id,
             runtime_policy=runtime_policy,
             applied_runtime_policy=applied_policy,
+            excluded_component_names=components_to_update,
         )
 
         print(f" ModelsLoader: reloaded components: {components_to_reload}")

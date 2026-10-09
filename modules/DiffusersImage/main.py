@@ -3810,8 +3810,9 @@ def build_qwen_pipeline_quantization_config(
 
     if "text_encoder" in components and find_spec("transformers") is None:
         raise RuntimeError(
-            "Text encoder quantization requires the reviewed Transformers + PEFT optional runtime. "
-            "Install and activate it through MoDiff's runtime manager."
+            "Text encoder quantization requires Transformers, which is missing from the required base installation. "
+            "Repair the base installation using the uv command for your accelerator in docs/developer-setup.md, "
+            "then restart MoDiff."
         )
 
     quant_mapping = {}

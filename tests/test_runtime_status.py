@@ -2349,6 +2349,23 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("available accelerator memory is below the safety floor", result["reasons"])
         release.assert_called_once()
 
+    def test_auto_pre_run_cleanup_preserves_known_zero_device_free_memory(self):
+        self.server.node_cache = {"cached-node": object()}
+        hints = {"resourceMode": "auto", "modelType": "QwenImage", "offloadMode": "none"}
+        self.server._last_auto_model_family = "QwenImage"
+        self.server._last_auto_resource_signature = self.server._auto_candidate_cache_signature(hints)
+        snapshot = hardware_snapshot()
+        snapshot["devices"][0].update(torch_vram_free=0, vram_free=8 * GIB)
+        with (
+            patch("modiff.server.get_hardware_snapshot", return_value=snapshot),
+            patch.object(self.server, "_release_runtime_caches_for_retry", return_value={"released": {}, "errors": []}) as release,
+            patch.object(self.server, "queue_message"),
+        ):
+            result = self.server._prepare_auto_runtime_for_graph(hints)
+        self.assertEqual(result["availableVramBytes"], 0)
+        self.assertIn("available accelerator memory is below the safety floor", result["reasons"])
+        release.assert_called_once()
+
     def test_failed_or_cancelled_run_cleanup_trims_device_and_process_allocators(self):
         cleanup_order = []
 

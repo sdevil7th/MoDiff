@@ -285,6 +285,13 @@ checks passed. Cloud full-model execution used the standard installed libraries.
 **Remaining:** inspect fresh/damaged Windows setup and the actual UI result.
 Correcting clone references is necessary so users receive this implementation.
 
+**Diagnostic follow-up:** remaining Qwen quantization and LTX condition-import
+errors now direct missing or incompatible foundational packages to the matching
+accelerator's base repair instructions. Text, vision and speech profile descriptions
+also call Transformers a standard installation. Base-overlay rejection preserves
+the accelerator selection rather than recommending a bare sync that could replace
+specialized vendor wheels. Genuine additional runtimes retain their own actions.
+
 ### 9. Installation/Activate completion is unclear and slow without status
 
 **Plan and approach:** remove the core-library activation ceremony. For genuine
@@ -385,6 +392,18 @@ demonstrated that the old truthiness fallback could admit an allocation into an
 exhausted device pool. CUDA/MPS partial snapshots receive the same correction;
 unknown measurements and existing shared-pool rules retain their prior fallback.
 This is a reproduced CPU contract defect, not an observed MI300X OOM.
+
+**Local ownership follow-up:** native global model-CPU hooks and resident owners
+now require the existing release schedule when their lifetimes are separate;
+incompatible overlap is rejected before loading. Genuine group/global hooks on
+the same device retain their supported connected-loader path. Explicit borrowed
+components are checked before allocation and keep their source placement,
+metadata and disk-file ownership, including resident ControlNet under group
+offload. A separate genuine shared-storage regression fixes reuse credit being
+consumed by an unrelated cached owner: compatible current owners are selected
+before physical bytes are deduplicated. Pre-run CUDA cleanup also preserves
+known zero free memory. Focused checks passed 530 tests and 510 subtests on a
+consistent CPU runtime; these fixes still need live GPU ownership acceptance.
 
 ## Image templates and output comparisons
 
@@ -505,11 +524,47 @@ Completed CI evidence for the reviewed code:
   and [PR run 37922683061](https://github.com/sdevil7th/MoDiff-client/actions/runs/37922683061)
   use `6d54bf8` and backend `3b7cab8`. Both passed `npm run check` and
   Windows/macOS platform smokes; their full browser CI suites were still running
-  at the six-hour cutoff, **12:01:52 UTC**. Local browser results above remain
-  independently completed evidence; this is not a final green CI claim.
+  at the six-hour cutoff, **12:01:52 UTC**. Both later exceeded their configured
+  one-hour job limit while still progressing. The shared-control tests completed;
+  the mocked suites did not produce a final result. Local browser results above
+  remain independently completed evidence; these cancelled CI runs are not passes.
+  The browser gate now has a separate job with its own native backend setup and
+  production build. The complete quality gate, browser tests, retry settings and
+  one-hour limits remain intact; failure or cancellation requests evidence upload.
+  The revised CI needs its own completed run after publication.
 
 These runs predate this documentation change. Future changes need their own
 appropriate checks; preserving the old receipts does not relabel them as new runs.
+
+### Local completion checks on 9 October 2026
+
+The follow-up changes were reviewed against backend `8eba6fb` and client
+`6d54bf8`, without repeating production model runs. A separate clean CPU copy
+passed native `uv sync --extra cpu --locked`, explicit test-dependency
+installation, `uv pip check` and ordinary preflight. The consistent runtime was
+Torch 2.14.1 CPU, Diffusers 0.41.0, Transformers 5.18.0 and PEFT 0.21.2.
+The real tiny eager generation/LoRA smoke passed repeat generation, named adapter
+weights, scale changes and replacement. The isolated HTTP/service smoke passed
+with zero model downloads. A separate clean `npm ci` on Node 24.12.0/npm 11.6.2
+installed the reviewed lock successfully. The working ROCm environment and
+frontend dependencies were left intact.
+
+The required Ruff gate and full native CPU suite passed: **5,399 tests,
+43 skips and 11,414 subtests**, in 562.06 seconds. The complete client
+`npm run check` passed. Its 108-file production build still matches every
+backend bundle byte, so no generated bundle rewrite was needed. Existing
+source-ledger builders reproduced all five reviewed ledgers without differences;
+no catalog or qualification status was promoted. Gallery repair regressions
+passed 88 tests, including changed recipes, tasks, inputs, sources, substituted
+outputs and collection order. The fresh Gallery failures and remaining hardware
+boundaries are recorded below; these CPU gates do not close them.
+
+The full client browser gate also completed: **three shared-control cases** in
+14.8 seconds and **255 mocked Studio cases** in 22.4 minutes, with no failures or
+skips. It covers authoring, model/task changes, manual wiring, Auto submission,
+durable status/recovery, template import/export and ordered output navigation.
+Mocked backend responses do not establish model generation or GPU memory fit.
+The revised split CI still requires a completed remote run after publication.
 
 ### Full-model and workflow evidence
 
@@ -587,9 +642,18 @@ machine-capacity tiers into additional allocation charges.
 
 Focused regressions cover distinct owners, reuse/shared identity, unknown demand,
 unsafe overlap and primary-loader pre-allocation checks. Remaining work is
-measured per-recipe working/load/activation budgets, constrained-device hardware
-release acceptance and mixed ComponentsManager offload ownership. Preserve full
-creative settings and the corrected capacity/free distinction.
+measured per-recipe working/load/activation budgets and constrained-device
+hardware release/ownership acceptance. The mixed ComponentsManager boundary,
+borrowed placement, compatible group hooks and shared-storage credit are now
+diagnosed and CPU checked as described in point 10. Preserve full creative
+settings and the corrected capacity/free distinction.
+
+The executable resource inventory contains 37 declarations and 80 declared Auto
+profile/mode pairs, with no complete explicit working-memory budgets. A retained
+memory ledger separates nine task windows: three MI300X Custom image runs and
+six local Radeon Auto Qwen runs. Their loading, resident storage and sampled
+inference peaks remain observations tied to their original recipes and sources;
+they were not converted into production budgets or new qualification claims.
 
 Relevant source: [workflow planner](../modiff/workflow_auto_resource.py),
 [owner lifecycle](../modiff/workflow_auto_lifecycle.py),
@@ -611,6 +675,31 @@ missing current-recipe proof, not evidence that all 54 image graphs fail. Keep
 historical provenance visible; merely changing hashes cannot qualify new graphs.
 Acceptance: the current Gallery gate passes with complete media/task/model/recipe
 evidence and independent quality review.
+
+**Offline reconciliation:** the 70 retained examples comprise 14 consistent
+published Gallery contracts, 51 historical recipes, three entries with missing
+proof/media and two older audio outputs that do not meet current duration
+contracts. The 14 consistent contracts are not fresh latest-worker, Auto or
+Windows runs. No exact real metadata repair was established; all 66 saved errors
+remain unresolved. Ten current public templates have no accepted public example.
+
+The maintainer repair tool previously attached current creator settings and
+hashes to an older executed graph without checking equivalence. It now requires
+retained original template authority, consumed settings, canonical graph, exact
+task/node receipts and pinned input identities before rewriting sidecars.
+Original source/runtime/model identities, capture time and ordered output byte
+identities are preserved, with immutable before-copies and a rollback boundary.
+Changed recipes, substituted media or missing
+authority fail before writes; no retained real evidence was rewritten during
+this review. See the client [Gallery asset guide](https://github.com/sdevil7th/MoDiff-client/blob/fix-ui-ux-issues/docs/template-gallery-assets.md).
+
+A fresh offline verification on 9 October reproduced the same 66 errors over
+70 examples. Strict current-template coverage reported 14 asset-backed templates,
+65 uncovered templates and one user-supplied template, with five missing video
+motion previews. This coverage gate is stricter than the count of ten templates
+without any public example: historical examples do not supply current-recipe
+authority. Bounded recovery searches did not recover the two legacy Qwen runs'
+complete original model sets; the missing evidence and Ghibli hold remain open.
 
 ### P2: optional-runtime polling and staged activation
 
