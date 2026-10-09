@@ -6,6 +6,17 @@ project configuration. Client development uses Node 24.12.x and npm 11.6.2.
 
 ## Native setup and launch
 
+For a fresh checkout, select the paired setup/workflow branch:
+
+```text
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+cd MoDiff
+```
+
+These updates have not yet been released on `main`. Keep the backend and client
+on the same branch, or use the exact paired commits in the validation handoff.
+
 From the backend checkout, these commands work in Linux shells and Windows
 PowerShell without invoking repository installer scripts:
 

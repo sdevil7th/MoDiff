@@ -23,12 +23,15 @@ Install Git, [uv](https://docs.astral.sh/uv/getting-started/installation/),
 Node.js `24.12.0`, and npm `11.6.2`. uv can provision Python 3.12.
 Use two terminals for the backend and the editable frontend.
 
+The setup and workflow updates described here are on `fix-ui-ux-issues` in both
+repositories. Select that branch until these changes are released on `main`.
+
 **Terminal 1 — backend:** clone both repositories into the same parent directory,
 then start the backend. These commands work in Linux shells and Windows PowerShell.
 
 ```text
-git clone https://github.com/sdevil7th/MoDiff.git MoDiff
-git clone https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
 cd MoDiff
 uv sync --extra cpu
 uv run --extra cpu python -m modiff.preflight --json --check-port 8088 --fail-on-error
@@ -92,8 +95,8 @@ client automatically.
 Linux or macOS:
 
 ```bash
-git clone https://github.com/sdevil7th/MoDiff.git MoDiff
-git clone https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
 cd MoDiff
 ./install.sh --accelerator auto --system-check
 ./install.sh --accelerator auto
@@ -103,8 +106,8 @@ cd MoDiff
 Windows PowerShell:
 
 ```powershell
-git clone https://github.com/sdevil7th/MoDiff.git MoDiff
-git clone https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
 cd MoDiff
 .\install.ps1 -Accelerator auto -SystemCheck
 .\install.ps1 -Accelerator auto
@@ -175,7 +178,7 @@ machine, or fast enough for practical use.
 7. Open **Gallery** after completion to inspect, download, restore, or reuse the
    output. Export important workflows instead of relying only on browser state.
 
-The client [Studio user guide](https://github.com/sdevil7th/MoDiff-client/blob/main/docs/studio-user-flow.md)
+The client [Studio user guide](https://github.com/sdevil7th/MoDiff-client/blob/fix-ui-ux-issues/docs/studio-user-flow.md)
 explains the complete guided workflow, Auto/Expert controls, Queue, Gallery,
 and recovery behavior.
 

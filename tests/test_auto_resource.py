@@ -975,6 +975,96 @@ class AutoResourcePlanTests(unittest.TestCase):
             self.assertEqual(selected["deviceMap"], "cuda")
             self.assertEqual(selected["studioExecutionSpecContract"]["executionProfileId"], "qwen-edit-plus:modular")
 
+    def test_cached_full_residency_does_not_require_unselected_offload_disk_space(self):
+        cases = (
+            ("QwenImageEditPlusModularPipeline", "edit_image"),
+            ("QwenImageEditPlusModularPipeline", "multi_image_reference_edit"),
+            ("QwenImageLayeredModularPipeline", "layer_decomposition"),
+        )
+        for model_type, mode in cases:
+            with self.subTest(model_type=model_type, mode=mode):
+                requirements = AUTO_MODEL_REQUIREMENTS[model_type]
+                self.assertGreater(requirements["minimum"]["diskFreeBytes"], GIB)
+                self.assertNotIn("diskFreeBytes", requirements["fullResidency"])
+                plan = self._plan(
+                    {"form": {"modelType": model_type, "mode": mode}},
+                    runtime=self._runtime(vram_gib=192, free_gib=180),
+                    repos=[requirements["defaultRepo"]],
+                    hardware=self._hardware(
+                        vram_gib=192, free_gib=180, system_ram_gib=240, disk_free_gib=1,
+                    ),
+                )
+
+                self.assertEqual(plan["status"], "ready")
+                selected = plan["selectedCandidate"]
+                self.assertEqual(selected["offloadMode"], "none")
+                self.assertEqual(selected["requirementsMissing"], [])
+                self.assertTrue(selected["artifactStatus"]["complete"])
+
+    def test_full_residency_keeps_explicit_none_offload_disk_requirement(self):
+        model_type = "QwenImageEditPlusModularPipeline"
+        requirements = AUTO_MODEL_REQUIREMENTS[model_type]
+        declared = {
+            **requirements,
+            "offloadRequirements": {
+                "none": {**requirements["fullResidency"], "diskFreeBytes": 2 * GIB},
+            },
+        }
+        with patch.dict(AUTO_MODEL_REQUIREMENTS, {model_type: declared}):
+            plan = self._plan(
+                {"form": {"modelType": model_type, "mode": "edit_image"}},
+                runtime=self._runtime(vram_gib=192, free_gib=180),
+                repos=[requirements["defaultRepo"]],
+                hardware=self._hardware(
+                    vram_gib=192, free_gib=180, system_ram_gib=240, disk_free_gib=1,
+                ),
+            )
+
+        self.assertNotEqual(plan["status"], "ready")
+        candidate = plan["candidates"][0]
+        self.assertEqual(candidate["offloadMode"], "none")
+        self.assertIn("Offload disk requires at least 2 GiB free", candidate["requirementsMissing"])
+
+    def test_disk_offload_still_requires_free_space_for_installed_weights(self):
+        model_type = "QwenImageEditPlusModularPipeline"
+        requirements = AUTO_MODEL_REQUIREMENTS[model_type]
+        declared = {**requirements, "supportedOffloadModes": ["none", "group_disk"]}
+        with patch.dict(AUTO_MODEL_REQUIREMENTS, {model_type: declared}):
+            plan = self._plan(
+                {"form": {"modelType": model_type, "mode": "edit_image"}},
+                runtime=self._runtime(vram_gib=24, free_gib=22),
+                repos=[requirements["defaultRepo"]],
+                hardware=self._hardware(
+                    vram_gib=24, free_gib=22, system_ram_gib=96, disk_free_gib=1,
+                ),
+            )
+
+        self.assertNotEqual(plan["status"], "ready")
+        candidate = plan["candidates"][0]
+        self.assertEqual(candidate["offloadMode"], "group_disk")
+        self.assertIn("Offload disk requires at least 35 GiB free", candidate["requirementsMissing"])
+
+    def test_full_residency_with_low_disk_does_not_make_missing_artifacts_runnable(self):
+        model_type = "QwenImageEditPlusModularPipeline"
+        repo = AUTO_MODEL_REQUIREMENTS[model_type]["defaultRepo"]
+        for incomplete in (False, True):
+            with self.subTest(incomplete_cached_snapshot=incomplete):
+                plan = self._plan(
+                    {"form": {"modelType": model_type, "mode": "edit_image"}},
+                    runtime=self._runtime(vram_gib=192, free_gib=180),
+                    repos=[repo] if incomplete else [],
+                    incomplete_repos=[repo] if incomplete else [],
+                    hardware=self._hardware(
+                        vram_gib=192, free_gib=180, system_ram_gib=240, disk_free_gib=1,
+                    ),
+                )
+
+                self.assertNotEqual(plan["status"], "ready")
+                self.assertIsNone(plan["selectedCandidate"])
+                candidate = plan["candidates"][0]
+                self.assertEqual(candidate["offloadMode"], "none")
+                self.assertFalse(candidate["artifactStatus"]["complete"])
+
     def test_qwen_control_uses_native_residency_on_98_gib(self):
         plan = self._plan(
             {
