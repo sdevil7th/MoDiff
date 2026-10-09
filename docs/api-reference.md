@@ -1603,7 +1603,11 @@ of its canonical validated definition material.
 The form must include every resource-impacting key (`width`, `height`, `steps`,
 `numFrames`, `device`, `dtype`, `quantizationMode`, `autoOffload`, and
 `offloadMode`), and any form field bound to a V2 control must equal that
-instance value. A successful response is a short-lived, instance-local `auto`
+instance value after the shared narrow scalar projection. Single-file media
+fields accept the native upload's one-string list as that exact file path;
+multi-file or substituted paths still fail equality validation. This does not
+change the instance values, its execution hash, or filesystem validation.
+A successful response is a short-lived, instance-local `auto`
 receipt. Graph, public interface, value, artifact, recipe, runtime, admission,
 canonical-definition, or resource-field substitution fails closed.
 Structurally or publicly customized registered Blocks are intentionally not

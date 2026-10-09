@@ -913,9 +913,20 @@ def _auto_recipe(candidate: Mapping[str, Any], form: Mapping[str, Any]) -> dict[
     }
 
 
-def _project_instance_value_to_form(value: Any, current: Any) -> Any:
+_SINGLE_MEDIA_FORM_FIELDS = frozenset({
+    "sourceAudio", "referenceAudio", "sourceVideo", "controlVideo", "maskVideo",
+    "controlImage", "maskImage", "ipAdapterImage",
+})
+
+
+def _project_instance_value_to_form(value: Any, current: Any, *, form_key: str = "") -> Any:
     """Mirror the client's narrow scalar projection into a Studio form."""
 
+    if (
+        form_key in _SINGLE_MEDIA_FORM_FIELDS and isinstance(current, str)
+        and isinstance(value, list) and len(value) == 1 and isinstance(value[0], str)
+    ):
+        return value[0]
     if isinstance(current, (int, float)) and not isinstance(current, bool) and isinstance(value, str):
         try:
             number = float(value)
@@ -1090,7 +1101,7 @@ def qualify_huggingface_cluster_auto_authority(
         form_key = source_by_input.get(control_id, control_id)
         if form_key not in form:
             continue
-        projected = _project_instance_value_to_form(value, form[form_key])
+        projected = _project_instance_value_to_form(value, form[form_key], form_key=form_key)
         if not _same_json_value(projected, form[form_key]):
             raise _auto_invalid(
                 f"the planner form field {form_key} does not match the validated V2 instance value."

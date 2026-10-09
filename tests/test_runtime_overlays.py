@@ -1031,11 +1031,19 @@ else:
         managed = self.root / "watchdog-managed"
         lock_path = managed / "optimizations" / "install.lock"
         started = self.root / "watchdog-started"
+        attempt_escape = self.root / "watchdog-attempt-escape"
         escaped = self.root / "watchdog-escaped"
-        grandchild = (
-            "import time; from pathlib import Path; "
-            f"time.sleep(1.5); Path({str(escaped)!r}).write_text('escaped')"
-        )
+        grandchild = f"""
+import time
+from pathlib import Path
+attempt_escape = Path({str(attempt_escape)!r})
+deadline = time.monotonic() + 30
+while not attempt_escape.exists() and time.monotonic() < deadline:
+    time.sleep(0.01)
+if attempt_escape.exists():
+    time.sleep(1.5)
+    Path({str(escaped)!r}).write_text('escaped')
+"""
         child = (
             "import subprocess, sys, time; from pathlib import Path; "
             f"subprocess.Popen([sys.executable, '-c', {grandchild!r}]); "
@@ -1069,8 +1077,13 @@ finally:
         while not started.exists() and time.monotonic() < deadline:
             time.sleep(0.02)
         self.assertTrue(started.exists(), "watchdog child did not start")
+        # A delayed test runner must not confuse work done before parent death
+        # with an escaped descendant. Start its escape clock only after death.
+        time.sleep(1.75)
+        self.assertFalse(escaped.exists())
         process.kill()
         process.wait(timeout=10)
+        attempt_escape.write_text("attempt escape after parent death")
 
         acquired = None
         with (
