@@ -13,20 +13,27 @@ be understandable before generation starts.
 
 ## Source and evidence scope
 
-| Source                             | Reviewed checkpoint                                                                                                                                         | Evidence boundary                                                                                                                            |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Published backend                  | `5f38a40af6d9f3befbd4c744a4700ab9865e323d`, branch `fix-ui-ux-issues`                                                                                       | Clean, pushed; full local CPU gate and completed cross-platform CPU CI                                                                       |
-| Published client                   | `bfad8134b82f6b77affbd10599a71740c578cae1`, same branch                                                                                                     | Clean, pushed; full client quality/browser gates and platform build CI                                                                       |
-| AMD droplet's latest tested source | Backend `11db2aa999e5d0b88525b7dda23f410aad61f289`; client `579472eb2b6865024c0993eb11c3d94c3901630e`                                                       | Both clean; fresh stable-Diffusers Qwen run and later delivery checks use this pair; earlier GPU runs retain their earlier source identities |
-| Local image campaign               | Per-run frozen sources; later publication checkpoint backend `123ede05172fe6049922af014e0bfb5b1dff7aa1` / client `c7af71571d51298427a4ee28205d02f5ccec7efa` | Recorded local ROCm parity, Auto and production-browser results; not reassigned to the latest published pair                                 |
-| Windows user's separate checkout   | Not inspected by this Linux review                                                                                                                          | Its source changes and actual GPU results must be retained and reviewed on Windows; available Windows CI is CPU evidence                     |
+| Source                           | Reviewed checkpoint                                                                                                                                         | Evidence boundary                                                                                                                                                                                          |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Published full-image backend     | `3b7cab86f5ddb17baf7a34d5b98ff40efb2736f1`, branch `fix-ui-ux-issues` | Two exact full-weight image recipes, 202 canonical graphs, regenerated source metadata and mandatory partial-stage Cosmos safety; final local CPU gate: 5,382 passed, 43 skipped, 11,399 subtests |
+| Published full-image client      | `6d54bf8028d7a717d883bceb1f124a1f1abf8835`, same branch | 80 public/56 image recipes, exact variant labels and clearly marked editorial cards; complete quality gate, full prior browser regression and final focused card test passed; immutable CI backend pairing is `3b7cab8` |
+| Reviewed backend core            | `18445cf985732c3c59d22b5931d72150fa49a284`, branch `fix-ui-ux-issues`                                                                                       | Combined-owner Auto guards, zero-free telemetry, original Cosmos caption and authoritative task dependencies; local full CPU suite passed; then-current Windows pytest exposed the verifier defect subsequently corrected at `4432062` below |
+| Reviewed client recovery         | `3e4f49c627f992ab7ec5b6ec3330d849255c2b2e`, same branch                                                                                                     | Bounded optional-job recovery and empty-UI-state authoring correction; full check, 3 shared-control and 254 mocked Studio cases passed; immutable CI backend pairing points to `18445cf`                   |
+| AMD Cosmos runtime lifecycle     | Backend `18445cf985732c3c59d22b5931d72150fa49a284`; client `3e4f49c627f992ab7ec5b6ec3330d849255c2b2e`                                                       | Real Setup installation, same-job refresh, staged validation, activation and replacement-worker readiness passed; model inference remains a separate boundary                                              |
+| AMD full FLUX.2 execution        | Backend `ad79f3a8067febb338980e2838cec1bc7086b199`; client `bfad8134b82f6b77affbd10599a71740c578cae1`                                                       | Frozen clean pair used for the full original-weight FLUX.2 runs below; later source changes do not inherit those receipts                                                                                  |
+| AMD original Cosmos template     | Backend `3b7cab86f5ddb17baf7a34d5b98ff40efb2736f1`; client `6d54bf8028d7a717d883bceb1f124a1f1abf8835` | Ordinary Template Create, original cold and changed-seed Custom recipes, mandatory Decode/AfterDecode, fresh media and bounded visual review passed; Auto and Gallery remain unqualified |
+| AMD original FLUX template       | Backend `3b7cab86f5ddb17baf7a34d5b98ff40efb2736f1`; client `6d54bf8028d7a717d883bceb1f124a1f1abf8835` | Ordinary Template Create and original configured 50-step Custom cold Run passed; original PNG byte-identical to the accepted historical native output; editing, Auto and Gallery remain separate |
+| AMD Qwen execution and delivery  | Backend `11db2aa999e5d0b88525b7dda23f410aad61f289`; client `579472eb2b6865024c0993eb11c3d94c3901630e`                                                       | Fresh stable-Diffusers Qwen run, negative-conditioning control and retained Layered delivery use this pair; earlier GPU runs retain their earlier identities                                               |
+| Local image campaign             | Per-run frozen sources; later publication checkpoint backend `123ede05172fe6049922af014e0bfb5b1dff7aa1` / client `c7af71571d51298427a4ee28205d02f5ccec7efa` | Recorded local ROCm parity, Auto and production-browser results; not reassigned to the latest published pair                                                                                               |
+| Windows user's separate checkout | Separate GPU checkout not inspected; available Windows CPU CI reviewed                                                                                                                          | Its source changes and actual GPU results must be retained and reviewed on Windows; available Windows CI is CPU evidence                                                                                   |
 
 These identifiers describe application code, not this documentation commit.
-The review found no additional uncommitted code on the droplet to merge. The
-latest published pair was not redeployed or GPU-tested during the review.
+The initial review found no additional uncommitted droplet code to merge. Its
+historical results were inspected without repeating model runs. A subsequent
+six-hour image completion block added the focused fixes and new executions
+explicitly described below. The frozen source pair on each receipt remains the
+authority; a later publication does not relabel earlier execution evidence.
 
-No application tests, installations, model runs or restarts were repeated to
-prepare this handoff. Existing source, logs, receipts and CI results were read.
 Raw evidence, original failed attempts and source/output hashes remain privately
 retained; credentials, host addresses, personal paths, task IDs and generated
 media are excluded from this document and Git.
@@ -105,10 +112,11 @@ optional activation is needed. Package setup does not download model weights.
 **Recorded result:** native CPU setup/preflight/smokes passed in Windows, Linux
 and macOS CI. The AMD droplet used ordinary direct uv/pip and npm setup.
 
-**Remaining:** README clone commands still select GitHub's older default `main`
-branches. Until release, explicitly select `fix-ui-ux-issues` in both repositories
-and correct setup links. Current-branch installation success does not fix a
-fresh-clone instruction that obtains different code.
+**Follow-up implemented:** both READMEs and the Windows fashion guide now clone
+`fix-ui-ux-issues` explicitly, and client setup links select that branch. Existing
+command-contract assertions check the paired commands. This corrects instructions
+that previously obtained GitHub's older default `main` code; no release merge
+into the default branches is implied.
 
 ### 2. `--no-sync` and `--no-project` are redundant
 
@@ -179,9 +187,9 @@ a Transformers Install/Activate detour. A damaged environment exposes repair.
 in CPU smokes; full recorded Qwen/Z-Image cloud generation used the installed
 base library.
 
-**Remaining:** fix the fresh-clone branch references and review Windows's fresh
-installation result. Do not reinterpret successful runs as compatibility with
-every future Transformers release.
+**Remaining:** review Windows's actual fresh GPU installation result; the clone
+references are now corrected. Do not reinterpret successful runs as compatibility
+with every future Transformers release.
 
 ### 5. PEFT should be installed for ordinary LoRA use
 
@@ -293,14 +301,26 @@ failure; Activate does not appear while cutover remains active; readiness is
 confirmed before generation. Refresh/reopen must resume the same operation.
 
 **Recorded result:** job/state/restart contracts and transient reconnect tests
-passed. Direct AMD setup is not an actual optional Install → Activate lifecycle.
-A full real optional install/activation/generation journey remains unqualified.
+passed. On MI300X, the ordinary Setup card installed Cosmos Guardrail 0.3.1 in
+17.1 seconds. One refresh during installation resumed the same durable job;
+isolated validation passed and the staged Activate action appeared. A single
+ordinary Activate completed in 36.1 seconds, including visible restart/retry
+progress and ready status from the replacement worker with the exact active
+environment/spec. There was one Install and one Activate, with an idle queue
+after completion. This closes that package/UI lifecycle on the recorded Linux
+runtime; safety-model inference, generation and Windows require separate proof.
 
-**Remaining defect:** client job polling catches every error, including permanent
-404, malformed payload and identity mismatch, then retries with stale progress.
-Expose connection/protocol state and safe reconciliation/retry while retaining
-the original job identity. A polling failure cannot fabricate a terminal backend
-failure or authorize another installation while the outcome is unknown.
+**Follow-up implemented:** permanent 404, malformed payload, identity mismatch
+and older status timestamps pause with a visible error and last known progress.
+Transient failures, including a non-JSON HTTP 503 during restart, use bounded
+backoff. **Retry status** reads the same durable job; it does not repeat
+Install/Activate. Actual rendered mocked cases cover those failures, recovery
+and duplicate-mutation prevention. The real installation/activation receipts
+are preserved as two connected journeys: the installation recorder stopped
+because its private assertion misunderstood the cheap catalog's intentional
+`staged_unchecked` status. A separately bound activation continuation completed
+without reinstalling or bypassing integrity validation. Inference remains
+separately gated.
 
 ### 10. The second generation fails Auto's memory calculation
 
@@ -343,15 +363,40 @@ weight/activation storage or selecting release scheduling. The retained executor
 rechecks auxiliaries but not each primary native loader. Native ComponentsManager
 resident placement does not use the standard `mm_load` eviction path.
 
-This is a confirmed static planning gap and plausible overcommit risk, not a newly
-observed OOM. Add separate working demands or withhold combined-fit authority when
-unknown. Do not sum machine tiers again or lower the floor to fit the guessed case.
+**Follow-up implemented:** unknown independent primary-owner demand no longer
+advertises combined fit from capacity tiers and one headroom floor. Proven safe
+sequential lifetimes use existing owner release and a real pre-allocation memory
+resample. Unknown overlapping, opaque/custom or non-releasable lifetimes reject
+Auto with actionable guidance. Single-owner warm reuse and complete explicit
+working budgets retain their existing behavior. Genuine executor CPU tests verify
+that the prior owner is destroyed before the next loader allocates, while its
+decoded pixels survive. This closes the diagnosed planning authority gap; real
+constrained-device release remains a separate hardware acceptance check.
+
+A further diagnosed false blocker charged the minimum tier's SSD-offload disk
+floor even when the accepted full-residency tier selected `none`. The planner now
+uses the accepted residency tier's disk requirement unless an explicit placement
+requirement applies. Actual group-disk offload and missing-artifact/download
+capacity checks remain enforced.
+
+Known zero free device memory now also retains priority over a fallback
+process-local estimate. A genuine XPU hardware-probe/next-owner regression
+demonstrated that the old truthiness fallback could admit an allocation into an
+exhausted device pool. CUDA/MPS partial snapshots receive the same correction;
+unknown measurements and existing shared-pool rules retain their prior fallback.
+This is a reproduced CPU contract defect, not an observed MI300X OOM.
 
 ## Image templates and output comparisons
 
-All **54 fresh image templates** use the ordinary operation-authoring transaction.
-Their visible graph is the graph submitted to Run, with exact reviewed selections
-and preserved creator prompts, inputs, seeds and settings.
+The historical **54-template image migration** uses the ordinary
+operation-authoring transaction. Its visible graph is the graph submitted to Run,
+with exact reviewed selections and preserved creator prompts, inputs, seeds and
+settings. The current source catalog has **80 public templates, including 56
+image templates**: the original 54 plus full FLUX.2-dev and original Cosmos3 Super
+native-stage recipes. Those two additions are advanced, unverified Custom
+recipes with editorial illustrations, without generated Gallery examples or
+Auto qualification. The family counts below describe the unchanged historical
+54-recipe comparison set.
 
 | Native-stage family                                | Recipes |
 | -------------------------------------------------- | ------: |
@@ -392,23 +437,51 @@ and same-task active refresh recovery. This work was done and logged; a broader
 remaining qualification gate does not erase it.
 
 These results do not prove all 54 recipes on the latest stable runtime, every
-setting or Windows. An old saved workflow is preserved, rather than automatically
+setting or Windows. The separate full FLUX.2-dev and Cosmos3 Super public source
+recipes use advanced, unverified Custom selections with exact revisions and
+mandatory prerequisites. Their source-contract admission does not qualify
+ordinary template creation, generation, Auto or Gallery media. Both new
+templates completed ordinary Create and original configured 50-step Runs on
+the final pair: Cosmos cold/changed-seed and FLUX cold, with accepted outputs
+recorded below. This does not promote their catalog status or Auto/Gallery. Keep the original 54-recipe comparison set intact and record
+each new template's actual Create and Run separately. An old saved workflow is preserved, rather than automatically
 rewritten into a new template. Historical Gallery examples remain labelled
 **Previous recipe example** when their execution selection has changed.
 
 ## Existing tests: expected versus recorded results
 
+The final full-image publication above passed the native CPU suite in 490.30
+seconds. Its preceding attempt is retained: four checks still expected the old
+200/78/52 source inventory, and one treated the required SDK side-output terminal
+as unused. The corrected tests explicitly preserve hidden 148, Gallery 70 and
+the historical 54 image recipes, enforce the new recipes' unverified Custom
+boundaries, and recognize a terminal only through the backend's declared roles
+and complete matching graph. Missing, duplicate, foreign-owner or undeclared
+edges/nodes still fail; no Cosmos stage was deleted to satisfy the check.
+
+The published client's complete `npm run check` passed. The browser regression
+passed three shared-control and 255 mocked Studio cases before the final artwork
+addition; the final mounted variant/card test then passed with real local PNG
+decoding. The actual emitted bundle has 108 files (4,862,356 bytes), with index
+SHA-256 `43aae210b49e9a5fdd5d7d1b187129fbb21bdfc5116070960448ad2eb0c15aae`.
+The mirrored backend bundle matches every emitted byte and preserves user files.
+The model-free HTTP/service smoke passed with zero model downloads. These checks
+remain distinct from actual template GPU generation and constrained-memory Auto.
+
 ### Installation, code and browser coverage
 
-| Check                                                                                          | Expected result                                                                                          | Recorded result and limit                                                                                    |
-| ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Native CPU setup: `uv sync --extra cpu --locked`, test requirements, `uv pip check`, preflight | Dependency consistency and ready standard runtime                                                        | Passed in backend CI on Windows/Linux/macOS; CPU scope                                                       |
-| `scripts/smoke_base_runtime.py`                                                                | Tiny genuine generation plus Transformers/PEFT and named-LoRA interoperability, repeat/scale/replacement | Passed; no production weights or GPU fit proof                                                               |
-| `scripts/smoke_service_package.py`                                                             | Existing HTTP/queue/service execution using isolated temporary storage                                   | Passed; model-free scope                                                                                     |
-| Full local backend `python -m pytest -q`                                                       | Current CPU/source regression gate green with explicit skips                                             | 5,291 passed, 31 skipped, 11,331 subtests passed at the published code checkpoint                            |
-| Client `npm ci`, `npm run check`, `npm run check:ui`                                           | Locked installation, lint/types/contracts/build/browser regressions pass                                 | Existing final quality/browser gates and CI passed; mocked cases do not qualify generation                   |
-| Windows/macOS client platform smoke                                                            | Package-lock/license/typecheck/build work on those OSes                                                  | Passed; separate from Windows GPU execution                                                                  |
-| Gallery acceptance / `gallery:verify`                                                          | Current example recipe, media, complete provenance and technical gates pass                              | Last retained report failed with 66 errors over 70 examples; standard quality gate passing does not close it |
+| Check                                                                                          | Expected result                                                                                          | Recorded result and limit                                                                                                                                                                                            |
+| ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Native CPU setup: `uv sync --extra cpu --locked`, test requirements, `uv pip check`, preflight | Dependency consistency and ready standard runtime                                                        | Passed in backend CI on Windows/Linux/macOS; CPU scope                                                                                                                                                               |
+| `scripts/smoke_base_runtime.py`                                                                | Tiny genuine generation plus Transformers/PEFT and named-LoRA interoperability, repeat/scale/replacement | Passed; no production weights or GPU fit proof                                                                                                                                                                       |
+| `scripts/smoke_service_package.py`                                                             | Existing HTTP/queue/service execution using isolated temporary storage                                   | Passed; model-free scope                                                                                                                                                                                             |
+| Historical full local backend `python -m pytest -q`                                            | CPU/source regression gate green with explicit skips                                                     | 5,291 passed, 31 skipped, 11,331 subtests passed at `5f38a40`; retained historical evidence                                                                                                                             |
+| Final full-image backend `python -m pytest -q`                                                 | Current source and exact catalog regressions green with explicit skips                                   | 5,382 passed, 43 skipped, 11,399 subtests passed in 490.30 seconds at `3b7cab8`; native CPU scope                                                                                                                        |
+| Follow-up native CPU backend gate                                                              | Current Auto/setup/runtime regressions with genuine installed stable Diffusers and exact catalog fixture | Verifier-fix checkpoint `cc6f54e`: 5,327 passed, 43 skipped and 11,392 subtests passed in 586.34 seconds. Earlier CLI import-path failures and stale bundle-ledger failure remain retained; their diagnosed corrections preceded this full green run |
+| Historical client `npm ci`, `npm run check`, `npm run check:ui`                                | Locked installation, lint/types/contracts/build/browser regressions pass                                 | Published `bfad813` quality/browser gates and CI passed; current local publication gates are recorded above; mocked cases do not qualify generation                                                                      |
+| Follow-up optional-runtime client gate                                                         | Visible safe status recovery, no duplicate mutation, complete UI regression coverage                     | Full `npm run check`, HTTP service-package smoke and UI: 3 shared-control plus 254 mocked Studio tests passed. Real optional install/refresh/activation also passed on the frozen pair; generation remains separate  |
+| Windows/macOS client platform smoke                                                            | Package-lock/license/typecheck/build work on those OSes                                                  | Passed; separate from Windows GPU execution                                                                                                                                                                          |
+| Gallery acceptance / `gallery:verify`                                                          | Current example recipe, media, complete provenance and technical gates pass                              | Last retained report failed with 66 errors over 70 examples; standard quality gate passing does not close it                                                                                                         |
 
 Completed CI evidence for the reviewed code:
 
@@ -417,36 +490,54 @@ Completed CI evidence for the reviewed code:
 - [Client run 37848002505](https://github.com/sdevil7th/MoDiff-client/actions/runs/37848002505):
   quality and Windows/macOS platform jobs succeeded at `bfad813`, paired with
   backend `5f38a40`.
+- [Follow-up backend run 37894213823](https://github.com/sdevil7th/MoDiff/actions/runs/37894213823):
+  lint and Windows/Linux/macOS native CPU setup, preflight, tiny base/LoRA smoke,
+  HTTP service smoke and full pytest jobs succeeded at `ad79f3a`.
+- Final full-image backend [push run 37922619939](https://github.com/sdevil7th/MoDiff/actions/runs/37922619939)
+  and [PR run 37922624852](https://github.com/sdevil7th/MoDiff/actions/runs/37922624852)
+  both succeeded at `3b7cab8`, including ordinary uv setup, dependency checks,
+  preflight, runtime/service smokes and required lint. Each Windows suite passed
+  5,393 tests and 11,398 subtests with 32 skips; each Linux/macOS suite passed
+  5,379 tests and 11,399 subtests with 46 skips. These platform totals remain
+  separate from the local native CPU environment's 5,382 passes and 43 skips.
+
+- Final client [push run 37922676741](https://github.com/sdevil7th/MoDiff-client/actions/runs/37922676741)
+  and [PR run 37922683061](https://github.com/sdevil7th/MoDiff-client/actions/runs/37922683061)
+  use `6d54bf8` and backend `3b7cab8`. Both passed `npm run check` and
+  Windows/macOS platform smokes; their full browser CI suites were still running
+  at the six-hour cutoff, **12:01:52 UTC**. Local browser results above remain
+  independently completed evidence; this is not a final green CI claim.
 
 These runs predate this documentation change. Future changes need their own
 appropriate checks; preserving the old receipts does not relabel them as new runs.
 
 ### Full-model and workflow evidence
 
-| Machine/workload                                             | Expected result                                                                             | Recorded result and limit                                                                                                                                                          |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Local Radeon 8060S/gfx1151 shared-memory ROCm image campaign | Original recipe preserved; matched old/new ordered outputs; actual Auto/recompute behavior  | Scoped parity and repairs described above; shared memory does not qualify dedicated 16 GB Windows VRAM                                                                             |
-| Local Qwen Control cold/warm Auto                            | Actual model reuse and fresh required execution without repeated loading                    | Four original full runs; 144 ControlNet forwards, 288 base predictions, 144 scheduler updates; exact decoded repeatability; current-only repairs                                   |
-| MI300X Z-Image Turbo                                         | Full 1024-square BF16/no-quant 8-step recipe, preview and refresh                           | Completed after the allocator correction; initial HIP failure retained                                                                                                             |
-| MI300X Qwen Image 2512                                       | Full 1024-square BF16/no-quant 50-step T2I, real seed change, preview/refresh               | Completed; this large-memory result does not reproduce the original low-free-RAM host                                                                                              |
-| Qwen T2I → img2img by Load Image/task adaptation             | Immediate readiness; same external image feeds required stages; authored strength consumed  | Ordinary upload without refresh passed; authored 50 steps/strength 0.5 yielded 25 effective updates                                                                                |
-| Qwen img2img → Edit 2511 by model/task Apply                 | Preserve compatible edits/input; correct new model and required image wires; full execution | Full 40-step execution and UI recovery passed; inherited complex prompt output failed visual review                                                                                |
-| Independent Qwen producer → Edit consumer                    | Both actual owners and sinks, explicit typed media chain, full 50+40 steps                  | Completed; peak Torch allocation about 111.83 GiB; consumer quality failed and smaller-GPU combined fit remains unproved                                                           |
-| Qwen Edit 2511 canonical single-reference                    | Requested full edit with original source/recipe                                             | Full 40-step execution and separate visual inspection recorded; not interchangeable with the failed two-reference recipe                                                           |
-| Fresh stable 0.41 Qwen two-reference edit                    | Original prompts/ordered inputs, 40 steps, seed 5103, true CFG 4; usable output and refresh | One ordinary Auto Run completed with zero recorded browser errors; peak allocation 62,294,398,976 bytes; strong speckles and absent requested lavender sprig mean visual FAIL      |
-| Same complex Qwen whole/native-math/vision/MM-token controls | Distinguish integration, attention and processor hypotheses                                 | Full execution completed but artifacts/instruction failure remained; no demonstrated native-only defect or hardware cause                                                          |
-| Qwen Layered                                                 | Full 30-step, three ordered 640-square RGBA outputs with alpha/media identity               | Original and separately labelled substituted-source runs completed; later full-size collection navigation/refresh passed; count/composite alone is not semantic quality acceptance |
-| Active refresh and Stop/retry                                | Same task survives refresh; Stop reaches terminal cancellation before fresh retry           | Scoped real passes; one worker-replacement journey retained connection diagnostics; not universal zero-error recovery                                                              |
-| Manual wiring, Undo/Redo, Save/reopen                        | Same authored graph/settings persist and later Run executes it                              | Contract/mocked coverage and actual prepare-only journeys exist; not every saved/reopened modification received a full GPU Run                                                     |
+| Machine/workload                                             | Expected result                                                                                               | Recorded result and limit                                                                                                                                                                                                                                          |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Local Radeon 8060S/gfx1151 shared-memory ROCm image campaign | Original recipe preserved; matched old/new ordered outputs; actual Auto/recompute behavior                    | Scoped parity and repairs described above; shared memory does not qualify dedicated 16 GB Windows VRAM                                                                                                                                                             |
+| Local Qwen Control cold/warm Auto                            | Actual model reuse and fresh required execution without repeated loading                                      | Four original full runs; 144 ControlNet forwards, 288 base predictions, 144 scheduler updates; exact decoded repeatability; current-only repairs                                                                                                                   |
+| MI300X Z-Image Turbo                                         | Full 1024-square BF16/no-quant 8-step recipe, preview and refresh                                             | Completed after the allocator correction; initial HIP failure retained                                                                                                                                                                                             |
+| MI300X Qwen Image 2512                                       | Full 1024-square BF16/no-quant 50-step T2I, real seed change, preview/refresh                                 | Completed; this large-memory result does not reproduce the original low-free-RAM host                                                                                                                                                                              |
+| Qwen T2I → img2img by Load Image/task adaptation             | Immediate readiness; same external image feeds required stages; authored strength consumed                    | Ordinary upload without refresh passed; authored 50 steps/strength 0.5 yielded 25 effective updates                                                                                                                                                                |
+| Qwen img2img → Edit 2511 by model/task Apply                 | Preserve compatible edits/input; correct new model and required image wires; full execution                   | Full 40-step execution and UI recovery passed; inherited complex prompt output failed visual review                                                                                                                                                                |
+| Independent Qwen producer → Edit consumer                    | Both actual owners and sinks, explicit typed media chain, full 50+40 steps                                    | Completed; peak Torch allocation about 111.83 GiB; consumer quality failed and smaller-GPU combined fit remains unproved                                                                                                                                           |
+| Qwen Edit 2511 canonical single-reference                    | Requested full edit with original source/recipe                                                               | Full 40-step execution and separate visual inspection recorded; not interchangeable with the failed two-reference recipe                                                                                                                                           |
+| Fresh stable 0.41 Qwen two-reference edit                    | Original prompts/ordered inputs, 40 steps, seed 5103, true CFG 4; usable output and refresh                   | One ordinary Auto Run completed with zero recorded browser errors; peak allocation 62,294,398,976 bytes; strong speckles and absent requested lavender sprig mean visual FAIL                                                                                      |
+| Qwen two-reference one-space negative-prompt control         | Preserve the original positive conditioning and full recipe; isolate publisher-style negative-prompt behavior | Full genuine 40-step Auto execution and preview/reload completed; strong speckles and absent lavender remained: visual FAIL                                                                                                                                        |
+| Same complex Qwen whole/native-math/vision/MM-token controls | Distinguish integration, attention and processor hypotheses                                                   | Full execution completed but artifacts/instruction failure remained; no demonstrated native-only defect or hardware cause                                                                                                                                          |
+| Qwen Layered                                                 | Full 30-step, three ordered 640-square RGBA outputs with alpha/media identity                                 | Original and separately labelled substituted-source runs completed; collection delivery/navigation/refresh passed. Retained original layers pass bounded object separation, but opaque shoe-shaped remnants/shadows fail strict clean hidden-background acceptance |
+| Active refresh and Stop/retry                                | Same task survives refresh; Stop reaches terminal cancellation before fresh retry                             | Scoped real passes; one worker-replacement journey retained connection diagnostics; not universal zero-error recovery                                                                                                                                              |
+| Manual wiring, Undo/Redo, Save/reopen                        | Same authored graph/settings persist and later Run executes it                                                | Contract/mocked coverage and actual prepare-only journeys exist; not every saved/reopened modification received a full GPU Run                                                                                                                                     |
 
 ### Large checkpoints and access boundaries
 
-| Model                    | Expected checkpoint                                                                 | Actual outcome                                                                                                                                                                                                                                                  |
-| ------------------------ | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| LLaDA2.1 Flash           | Load original 205.8 GB BF16 weights and exercise native Diffusers                   | Standalone **text** smoke completed one 32-token block/32 forwards, 28 GPU decoder layers plus four CPU-offloaded layers; peak Torch GPU allocation 179.77 GB and process RSS 199.95 GB; answer truncated before its result; no MoDiff/image/Auto qualification |
-| Cosmos3-Super-Text2Image | Full 131.3 GB active image selection, mandatory guardrails, original 50-step recipe | Generation weights downloaded/verified; legitimate gated guardrail access pending; no completed generation                                                                                                                                                      |
-| FLUX.2-dev               | Exact admitted full image route and complete model access                           | Required gated access pending; no completed generation                                                                                                                                                                                                          |
-| MiniMax H3               | One selected full 144 GB audio/video workflow                                       | Not downloaded/executed; publisher territorial eligibility must be resolved for the compute environment                                                                                                                                                         |
+| Model                    | Expected checkpoint                                                                 | Actual outcome                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------ | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| LLaDA2.1 Flash           | Load original 205.8 GB BF16 weights and exercise native Diffusers                   | Standalone **text** smoke completed one 32-token block/32 forwards, 28 GPU decoder layers plus four CPU-offloaded layers; peak Torch GPU allocation 179.77 GB and process RSS 199.95 GB; answer truncated before its result; no MoDiff/image/Auto qualification                                                                                                                                                                                                                                                                |
+| Cosmos3-Super-Text2Image | Full 131.3 GB active image selection, mandatory guardrails, original 50-step recipe | Original generation weights and exact mandatory guardrail artifacts downloaded/verified; legitimate access and ordinary runtime Install/Activate passed. The first accepted attempt failed before weights at the documented Hub shared-blob bridge; backend `49d1f5b` corrected that boundary. The subsequent original 50-step native run loaded, encoded and denoised, then failed in Decode because the partial SDK stage lacked its mandatory safety configuration. Zero image outputs were delivered and no seed repeat ran. The reviewed adapter correction passed genuine SDK CPU regressions. On the final `3b7cab8`/`6d54bf8` pair, ordinary Template Create and both original configured 50-step Runs completed: cold seed 1143 in 133.67 seconds and resident seed 1144 in 35.95 seconds. Both original 1024-square images passed independent bounded publisher-scene review; actual task-bound events confirm mandatory AfterDecode succeeded in both. The second run reused the loader and encoder while denoising, decoding, AfterDecode and Preview actually recomputed. This validates those Custom attempts, without changing the catalog's unqualified status or promoting Auto/Gallery                                                                                                                                                                                                                                                                          |
+| FLUX.2-dev               | Exact admitted full image route and complete model access                           | Original 112.8 GB required checkpoint downloaded/verified. Whole and native stages each completed cold and genuine changed-seed runs: 50 steps, 1024-square, BF16, guidance 4, no quantization/offload. All four original outputs pass bounded composition/text review. Encoder sequence length is whole-authored 512/native SDK-default 512. Whole/native same-seed RGB MAE is 10.1297/255 and 4.20973/255 for the two seeds: visually similar, not pixel exact. On the final `3b7cab8`/`6d54bf8` pair, the new ordinary template completed Create and its unchanged configured 50-step cold Run in 113.85 seconds. Its original PNG is byte-for-byte identical to the earlier accepted native seed-20260905 output, and independent visual review passed. Editing, Auto and Gallery remain separate |
+| MiniMax H3               | One selected full 144 GB audio/video workflow                                       | Not downloaded/executed; publisher territorial eligibility must be resolved for the compute environment                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 The bounded metadata survey did not identify a reviewed single native Diffusers
 image checkpoint with 200 GB–1 TB of required weights. Repository totals can
@@ -473,15 +564,14 @@ timeouts/hardlinks, copied read-only fixture failures and missing test browsers
 were separately retained as tooling/fixture issues. Their correction does not
 turn an unrelated application or visual failure into a pass.
 
-## Remaining issues and brief fix plans
+## Follow-up fixes and remaining issues
 
 ### P1: fresh-clone instructions obtain older code
 
-Correct both READMEs, stale client setup links and the Windows fashion guide to
-select the paired reviewed branch until it is released. Keep the branch explicit
-in fresh-checkout examples. Review commands for the same accelerator extra and
-correct Windows executable paths. Acceptance: fresh native instructions obtain
-the intended code and install/start without wrappers or core activation.
+**Implemented and contract checked:** both READMEs, client setup links and the
+Windows fashion guide select the paired reviewed branch. Native examples retain
+the same accelerator extra and correct platform executable paths. Actual fresh
+GPU installation on Windows remains a separate check.
 
 Relevant source: [backend README](../README.md), client README/setup links, and
 [Windows fashion guide](windows-fashion-demo.md). Default branches were still
@@ -489,18 +579,17 @@ older `main` heads when reviewed; no release merge was performed by this handoff
 
 ### P1: incomplete combined Auto working-memory authority
 
-Extend existing recipe/owner planning with separate working-storage, load-transient
-and activation requirements for the actual placement/workload. Deduplicate proven
-shared storage; count independent owners. Make uncertain combined fit explicit
-instead of interpreting one headroom floor as their storage budget. Use the
-existing executor's safe last-use releases and actual pre-allocation resampling.
+**Diagnosed guard implemented and CPU checked:** the existing planner now
+withholds combined-fit authority for unknown independent owners, selects safe
+existing release lifetimes and checks actual free memory before the next loader.
+Unknown overlap requires Custom or reviewed working budgets. It does not convert
+machine-capacity tiers into additional allocation charges.
 
-Add focused coverage for distinct native resident owners, shared components,
-mixed placements, unknown demand and primary-loader pre-allocation checks. Later
-hardware acceptance must exercise an unchanged full recipe on a constrained
-device. Preserve creative settings and the corrected capacity/free distinction.
-Review mixed ComponentsManager offload ownership separately before promising
-unrestricted combinations.
+Focused regressions cover distinct owners, reuse/shared identity, unknown demand,
+unsafe overlap and primary-loader pre-allocation checks. Remaining work is
+measured per-recipe working/load/activation budgets, constrained-device hardware
+release acceptance and mixed ComponentsManager offload ownership. Preserve full
+creative settings and the corrected capacity/free distinction.
 
 Relevant source: [workflow planner](../modiff/workflow_auto_resource.py),
 [owner lifecycle](../modiff/workflow_auto_lifecycle.py),
@@ -523,33 +612,150 @@ historical provenance visible; merely changing hashes cannot qualify new graphs.
 Acceptance: the current Gallery gate passes with complete media/task/model/recipe
 evidence and independent quality review.
 
-### P2: optional-runtime polling hides persistent failures
+### P2: optional-runtime polling and staged activation
 
-In the client's `RuntimeOptimizationsCard`, distinguish abort/unmount, transient
-connection loss and permanent/protocol failure. Display polling state, reconcile
-the durable job/catalog through a safe Retry, and retain identity throughout.
-Do not infer job termination from a connection error. Cover 404, malformed response,
-identity mismatch, recovery after restart and prevention of duplicate mutations.
-Acceptance: no indefinite unexplained stale busy state, and real backend readiness
-still controls activation completion.
+**Implemented and browser checked:** visible bounded polling separates abort,
+transient connection loss and permanent/protocol failure, retains durable identity
+and permits read-only status recovery. Mocked rendered tests cover 404, malformed
+response, identity mismatch, stale timestamps, non-JSON 503 cutover recovery and
+no duplicate mutations. Actual install, same-job refresh and replacement-worker
+activation passed on MI300X. The last known progress survived transient network
+loss and cleared when the same operation became ready. Safety-model inference
+and generation remain independent acceptance checks.
+
+### P2: harmless empty UI state invalidated an authoring preview
+
+A genuine mocked-browser failure exposed a race between an absent `uiState`
+and an empty plain object added while the user reviewed a model/task change.
+The shared comparison now treats only those two empty representations equally.
+Authored values, nonempty UI metadata, bindings, wiring and layout still
+invalidate stale transactions. Undo/Redo and sibling metadata remain covered;
+the complete 254-case Studio suite passed after the fix.
+
+### P2: Windows safety-artifact verification
+
+The inspected Windows CPU run passed ordinary uv setup, dependency checks,
+preflight, tiny generation/LoRA and HTTP smokes, but failed one safety-artifact
+test among 5,323 passing tests. The alias check compared access time as well as
+file identity. Reading an unchanged regular file can update its access time,
+which must not be interpreted as content replacement.
+
+**Implemented and pushed:** `cc6f54eea82896adf6607735ca6b204625ce3113` excludes
+access time from the alias mutation check while preserving mode, device/inode,
+size, modification/change timestamps, resolved target and full digest checks.
+Controlled tests reject real identity/metadata changes and accept an access-time
+change. The native Linux CPU gate passed with 5,327 tests, 43 skips and 11,392
+subtests. The subsequent Windows CI runs still failed regular-file safety
+verification: the PR run had 5,337 passes and one failure; the push run had
+5,336 passes and two failures, with 32 skips each. Both still failed the
+access-time regression, and the push also failed the content-versus-storage-name
+case. The first correction was therefore insufficient on Windows. These failed
+runs remain retained; the second correction below preserves the identity,
+alias-resolution and full-content checks while addressing the exact timestamp
+comparison defect.
+
+**Second correction verified on Windows:** `4432062b1ce64f77e2a804e7ae2c4a30c234e97e`
+compares open-file metadata with open-file metadata, and pathname metadata with
+pathname metadata. CPython 3.12 on Windows reports creation time through pathname
+`stat` and change time through descriptor `fstat`; comparing those timestamp
+families directly could reject unchanged bytes. The correction retains both
+mutation checks, file identity, alias resolution and the full content digest.
+The respective conversions are visible in CPython's
+[pathname implementation](https://github.com/python/cpython/blob/v3.12.10/Modules/posixmodule.c)
+and [descriptor implementation](https://github.com/python/cpython/blob/v3.12.10/Python/fileutils.c).
+The new regressions also reject target-path changes that an unchanged snapshot
+alias alone would miss. Both the [push CI run](https://github.com/sdevil7th/MoDiff/actions/runs/37915550014)
+and [PR CI run](https://github.com/sdevil7th/MoDiff/actions/runs/37915557820)
+passed on Windows, Linux and macOS. Each Windows run passed 5,388 tests and
+11,391 subtests with 32 skips. This closes the reproduced CPU verifier defect;
+actual Windows GPU validation remains separate.
+
+A separate earlier Windows run crashed inside a native Torch BF16 Linear
+operation with SIGILL; that test passed in the completed run and neither of the
+two subsequent Windows runs crashed there. The failed record remains retained;
+later passes do not establish the original crash's cause.
+
+### P2: original Cosmos decode safety configuration
+
+The first full native retry on backend `49d1f5b` and client `3e4f49c` passed the
+corrected Hugging Face shared-blob boundary. It loaded the original Super model,
+encoded the unchanged publisher caption and completed all 50 denoising steps at
+1024-square, BF16, CFG 4, fixed seed 1143 and no offload or quantization. Decode
+then failed because the partial Diffusers stage lacked
+`config.enable_safety_checker`; its `requires_safety_checker` property raised an
+attribute error. This was not an OOM. The task delivered zero images, and the
+changed-seed repeat did not run.
+
+**Reviewed correction:** the existing owned safety adapter registers the
+mandatory `True` configuration before enabling and attaching the verified
+checker. This preserves mandatory safety validation and the real AfterDecode
+dependency. Four genuine stable-Diffusers partial Decode/AfterDecode regressions
+failed before the change and passed after it, covering missing and false
+configuration. The focused Linux CPU gate passed 157 tests and four subtests,
+with 15 existing skips. The final `3b7cab8`/`6d54bf8` pair then passed actual
+ordinary Template Create and two configured 50-step GPU Runs: seed 1143 cold and seed
+1144 with resident weights. Real task-bound events confirm Decode, mandatory
+AfterDecode and Preview succeeded for both, with newly produced images. Both
+1024-square original PNGs passed independent review of coherent hands, wet-gray
+clay vase, pottery wheel and warm studio lighting. The second Run reused its
+unchanged loader/encoder and recomputed the required downstream stages. The
+complete archive contains 122 verified payload files, including task, original
+media, runtime, graph, browser and memory evidence; both owned samplers were
+retired after completed tasks and an idle queue. Preserve the earlier failed
+task and zero-output receipt. These Custom runs do not qualify Auto, other
+recipes, Windows GPU execution or public Gallery media.
+
+The receipts bind the unchanged configured 50-step SDK recipe and completed
+stages; the retained browser messages do not independently count every model
+forward. No extra execution-count claim is inferred from the progress label.
+
+After both original images and all execution evidence were archived and
+verified, one ordinary cache action released only the Cosmos model owner.
+The fresh cache state confirmed its absence, with an idle queue and unchanged
+worker/source. Torch allocation fell from 129,698,521,088 to 213,909,504 bytes,
+and reservation from 135,226,458,112 to 213,909,504 bytes. This demonstrates that
+scoped release on the recorded large GPU; it does not establish constrained
+multi-model Auto scheduling.
+
+### Original full FLUX template parity and the next editing check
+
+On the same final pair, ordinary FLUX Template Create and the unchanged
+configured 50-step cold Run completed in 113.85 seconds. All five task-bound
+stage events report successful fresh execution. The original 1024-square PNG
+is byte-for-byte identical to the earlier accepted native seed-20260905 output;
+independent review confirms the blue teapot, readable **MORNING LIGHT** text,
+plant and warm window scene. Raw and durable delivery and the visible Preview
+are correlated to the new task. All 70 archive payload files matched their
+size/content manifest; the sole sampler was retired after completion and idle.
+
+The next large-GPU check is reference editing through the ordinary UI: import
+this accepted current graph, attach **Load Image**, use its actual producer PNG
+and request sage-green glaze while preserving the composition and text. Keep
+the original 50 steps, 1024-square, seed, guidance and precision, then verify the
+actual consumed reference, same-owner reuse, fresh downstream execution and
+requested visual change. Source-only test preparation received independent
+review and 33 CPU lineage/artifact checks, but no editing Run was submitted in
+this block. Ordered multiple references and model replacement remain further
+separate cases. Do not turn that preparation into an editing or Auto pass.
 
 ### P2: complex Qwen output quality remains unacceptable
 
-Keep the failed original output and controls. No reviewed source comparison
-established a native-only error; whole execution also fails this recipe. A later
-single-variable publisher-style conditioning control may help distinguish recipe
-effects, but it must preserve the original positive prompt, inputs, seed, steps,
-CFG and precision. Record differences as another recipe, not an improvement to
-the original until visually established. Avoid speculative default changes or
-claims that the processor bridge fixes quality.
+The original output and controls remain retained. A full 40-step single-variable
+publisher-style control changed only the negative prompt to one ASCII space,
+preserving positive prompt, ordered references, seed, CFG and precision. It still
+produced strong speckles and omitted the requested lavender. This is another
+recorded visual failure; no native-only or hardware cause has been established.
+Further work needs a matched upstream known-good reference or a reproducible
+conditioning hypothesis. Avoid speculative global defaults or claims that the
+processor bridge fixes quality.
 
 ### P3: test-browser prerequisite ordering
 
-Move Chromium installation before `npm run check` in client Windows guidance and
-make the frontend contributor prerequisites clear in setup links. `npm ci` itself
-passed on AMD; its initial quality failure was missing Chromium. Acceptance:
-documented fresh contributor checks reach the gate with browser prerequisites
-available, matching existing CI/CONTRIBUTING ordering.
+**Implemented:** client README/Windows guidance and the backend setup link now
+put Chromium installation before `npm run check`, since request/proxy unit tests
+also use it. `npm ci` itself passed on AMD; its initial quality failure was missing
+Chromium. Fresh Linux validation also documents Playwright's browser system
+dependencies. CI/CONTRIBUTING already used this ordering.
 
 ### Remaining qualification work
 
@@ -558,18 +764,22 @@ available, matching existing CI/CONTRIBUTING ordering.
 - Complete route-specific cold/warm/recompute, prompt change, model-return,
   saved/reopened Run, full-weight LoRA replacement and resource-limited recovery
   only where existing evidence is incomplete.
-- Qualify real optional Install → verify → Activate → restart → generation on
-  an admitted extra runtime; base Transformers/PEFT need none of those steps.
-- Resolve legitimate gated access and runtime closure before Cosmos/FLUX.2 work.
-  Respect model eligibility and mandatory guardrails.
+- Preserve the completed real optional Install → verify → Activate → restart
+  receipts and the accepted Cosmos cold/repeat generation; qualify other
+  untested safety-enabled routes separately. Base
+  Transformers/PEFT need none of those activation steps.
+- Legitimate FLUX.2 and Cosmos guardrail access is now available. The exact full
+  FLUX.2 runtime closure and both guardrail selections are downloaded and verified.
+  Cosmos's normal sealed optional-runtime Install/Activate and subsequent
+  ordinary-template cold/changed-seed safety-enabled generation passed. Preserve
+  the old native zero-output failure and the final pair's separate accepted
+  receipts; Auto, further workflows and Gallery admission remain distinct.
 - Refresh exact-template/current-runtime evidence only for affected routes;
   preserve prior completed comparisons and failed attempts.
 
-The first implementation batch can handle setup references, browser ordering and
-optional-job diagnostics without expensive model runs. The next batch should
-address combined Auto demand with focused planner/executor checks. Gallery evidence
-reconciliation can reuse trustworthy retained results; missing output/quality/
-hardware checks are a separate bounded campaign after the Windows merge.
+The setup-reference, optional-job diagnostics and combined-owner guard batches
+are implemented. Gallery evidence reconciliation can reuse trustworthy retained
+results; missing output/quality/hardware checks remain bounded, separate work.
 
 ## Windows comparison and merge procedure
 
