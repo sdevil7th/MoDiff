@@ -184,10 +184,31 @@ def test_exact_super_starter_uses_publisher_recipe_without_constructing_models()
     source = (Path(__file__).resolve().parents[1] / "data/cosmos3-super-t2i-publisher-caption.v1.json").read_bytes()
     assert hashlib.sha256(source).hexdigest() == "c068a8d430c87bc752c775567113463c8fa3c9370ac7047318852bdc124bd5e3"
     assert json.loads(prompt["values"]["prompt"]) == json.loads(source)
+    assert prompt["values"]["prompt"].encode("utf-8") == source
+    assert prompt["params"]["prompt"]["value"].encode("utf-8") == source
     with pytest.raises(ValueError, match="workflow/revision"):
         resolve_operation_starter(MODULE_MAP, contracts, {
             "pipelineClass": PIPELINE, "task": "text_to_video", "executionProfileId": PROFILE,
         })
+
+
+def test_super_caption_default_still_rejects_invalid_json_before_authoring():
+    from modiff.operation_catalog import seed_standard_operation_defaults
+
+    node = {"module": "modules.ModularDiffusers", "action": "WorkflowCosmos3OmniTextEncode",
+            "params": {"prompt": {"type": "string", "value": "untouched"}}, "values": {}}
+    original_read = Path.read_text
+
+    def read_caption(path, *args, **kwargs):
+        if path.name == "cosmos3-super-t2i-publisher-caption.v1.json":
+            return "{invalid publisher JSON"
+        return original_read(path, *args, **kwargs)
+
+    with patch.object(Path, "read_text", autospec=True, side_effect=read_caption):
+        with pytest.raises(json.JSONDecodeError):
+            seed_standard_operation_defaults(node, DIFFUSERS_EXECUTION_PROFILES[PROFILE])
+    assert node["params"]["prompt"]["value"] == "untouched"
+    assert "prompt" not in node["values"]
 
 
 def test_super_sealed_bundle_cannot_run_video_stage_and_cross_variant_state_is_rejected():

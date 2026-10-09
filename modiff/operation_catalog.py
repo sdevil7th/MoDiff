@@ -59,8 +59,9 @@ def seed_standard_operation_defaults(node, profile):
         }
         if profile.id == "cosmos3-super-text-to-image:official-modular-workflow" and "prompt" in node["params"]:
             from pathlib import Path
-            caption = json.loads((Path(__file__).resolve().parents[1] / "data/cosmos3-super-t2i-publisher-caption.v1.json").read_text(encoding="utf-8"))
-            defaults.update(prompt=json.dumps(caption), negative_prompt="")
+            caption = (Path(__file__).resolve().parents[1] / "data/cosmos3-super-t2i-publisher-caption.v1.json").read_text(encoding="utf-8")
+            json.loads(caption)  # Validate the artifact without changing its tokenizer input bytes.
+            defaults.update(prompt=caption, negative_prompt="")
         if node["module"] == "modules.DiffusersVideo":
             defaults.update(
                 num_frames=capability.get("recommendedFrames"),
