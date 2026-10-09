@@ -124,6 +124,117 @@ def test_foreign_repository_alias_cannot_borrow_shared_blob_containment(installe
         _read_reviewed_pipeline_index(marker, repository=REPOSITORY, revision=REVISION)
 
 
+def repository_blob_bridge(installed):
+    cache, snapshot, marker, blob = installed
+    bridge = snapshot.parent.parent / "blobs" / ("b" * 40)
+    bridge.parent.mkdir()
+    bridge.symlink_to(os.path.relpath(blob, bridge.parent))
+    marker.unlink()
+    marker.symlink_to(os.path.relpath(bridge, marker.parent))
+    return cache, snapshot, marker, blob, bridge
+
+
+def test_migrated_repository_blob_bridge_keeps_exact_snapshot_and_index(installed):
+    _, snapshot, marker, _, _ = repository_blob_bridge(installed)
+    assert hf.exact_cached_snapshot_path(REPOSITORY, REVISION) == snapshot
+    assert _read_reviewed_pipeline_index(marker, repository=REPOSITORY, revision=REVISION) == {
+        "_class_name": "Cosmos3OmniPipeline"
+    }
+
+
+def test_migrated_blob_bridge_accepts_nested_snapshot_files(installed):
+    from modiff.hf_cache_layout import resolve_snapshot_cache_file
+    cache, snapshot, _, blob, bridge = repository_blob_bridge(installed)
+    alias = snapshot / "text_tokenizer" / "tokenizer.json"
+    alias.parent.mkdir()
+    alias.symlink_to(os.path.relpath(bridge, alias.parent))
+    assert resolve_snapshot_cache_file(
+        alias, snapshot=snapshot, cache_root=cache, repository=REPOSITORY,
+    ) == blob
+
+
+@pytest.mark.parametrize("fault", [
+    "foreign_repository", "extra_repository_hop", "foreign_alias_hop", "shared_file_hop",
+    "linked_repository_blobs", "linked_shared_shard", "wrong_shared_shard", "nested_repository_blob",
+    "own_regular_file", "invalid_repository_blob_name",
+])
+def test_migrated_blob_bridge_does_not_authorize_extra_links_or_directories(installed, tmp_path, fault):
+    cache, snapshot, marker, blob, bridge = repository_blob_bridge(installed)
+    if fault == "foreign_repository":
+        target = cache / "models--foreign--repo/blobs" / bridge.name
+        target.parent.mkdir(parents=True)
+        target.symlink_to(blob)
+        marker.unlink()
+        marker.symlink_to(target)
+    elif fault in {"extra_repository_hop", "foreign_alias_hop", "shared_file_hop"}:
+        target = {
+            "extra_repository_hop": bridge.parent / ("c" * 40),
+            "foreign_alias_hop": cache / "models--foreign--repo/blobs" / ("c" * 40),
+            "shared_file_hop": cache / "blobs/e9" / ("e9" + "c" * 62),
+        }[fault]
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.symlink_to(blob)
+        bridge.unlink()
+        bridge.symlink_to(target)
+    elif fault in {"linked_repository_blobs", "linked_shared_shard"}:
+        directory = bridge.parent if fault == "linked_repository_blobs" else blob.parent
+        real = tmp_path / "real-blob-directory"
+        directory.rename(real)
+        directory.symlink_to(real, target_is_directory=True)
+        if fault == "linked_repository_blobs":
+            moved_bridge = real / bridge.name
+            moved_bridge.unlink()
+            moved_bridge.symlink_to(blob)
+    elif fault == "wrong_shared_shard":
+        target = cache / "blobs/aa" / BLOB_NAME
+        target.parent.mkdir()
+        target.write_bytes(blob.read_bytes())
+        bridge.unlink()
+        bridge.symlink_to(target)
+    elif fault == "nested_repository_blob":
+        target = bridge.parent / "nested" / bridge.name
+        target.parent.mkdir()
+        target.symlink_to(blob)
+        marker.unlink()
+        marker.symlink_to(target)
+    elif fault == "own_regular_file":
+        target = bridge.parent / ("c" * 40)
+        target.write_bytes(blob.read_bytes())
+        bridge.unlink()
+        bridge.symlink_to(target)
+    else:
+        target = bridge.with_name("not-an-etag")
+        target.symlink_to(blob)
+        marker.unlink()
+        marker.symlink_to(target)
+    with pytest.raises((ValueError, OSError), match="cache|blob|snapshot"):
+        hf.exact_cached_snapshot_path(REPOSITORY, REVISION)
+    with pytest.raises(OSError, match="cache|blob|snapshot"):
+        _read_reviewed_pipeline_index(marker, repository=REPOSITORY, revision=REVISION)
+
+
+def test_invalid_cache_layout_has_precise_wrapped_loader_diagnostic(installed):
+    from modiff.server import WebServer
+    cache, _, marker, blob, _ = repository_blob_bridge(installed)
+    foreign = cache / "models--foreign--repo/blobs" / ("d" * 40)
+    foreign.parent.mkdir(parents=True)
+    foreign.symlink_to(blob)
+    marker.unlink()
+    marker.symlink_to(foreign)
+    with pytest.raises(OSError) as caught:
+        _read_reviewed_pipeline_index(marker, repository=REPOSITORY, revision=REVISION)
+    wrapped = RuntimeError("Error executing modules.ModularDiffusers.ModelsLoader")
+    wrapped.__cause__ = caught.value
+    result = WebServer._classify_exception(object.__new__(WebServer), wrapped)
+    assert result["category"] == "model_integrity"
+    assert result["error_code"] == "invalid_model_cache_layout"
+    assert "blob" in result["message"]
+    assert "Model Manager" in result["recovery_hint"]
+    assert "remains runnable" not in result["recovery_hint"]
+    ordinary = WebServer._classify_exception(object.__new__(WebServer), ValueError("Width must be positive"))
+    assert ordinary["error_code"] == "invalid_node_input"
+
+
 @pytest.mark.parametrize("extended,ordinary", [
     (r"\\?\C:\hub\blobs\e9\blob", r"C:\hub\blobs\e9\blob"),
     (r"\\?\c:\hub\blobs\e9\blob", r"C:\hub\blobs\e9\blob"),
@@ -158,3 +269,34 @@ def test_windows_prefix_normalization_leaves_posix_path_unchanged():
     from modiff.hf_cache_layout import _lexical_cache_path
     path = PurePosixPath("/hub") / r"\\?\C:\literal"
     assert _lexical_cache_path(path) is path
+
+
+@pytest.mark.parametrize("root,target", [
+    (r"C:\hub\models--example--reviewed\blobs", rf"\\?\C:\hub\models--example--reviewed\blobs\{'b' * 40}"),
+    (r"C:\hub\models--example--reviewed\blobs", rf"\\?\c:\HUB\MODELS--EXAMPLE--REVIEWED\BLOBS\{'b' * 40}"),
+    (r"\\server\share\hub\models--example--reviewed\blobs", rf"\\?\UNC\server\share\hub\models--example--reviewed\blobs\{'b' * 64}"),
+])
+def test_windows_migrated_blob_bridge_owns_extended_and_case_variant_paths(root, target):
+    from pathlib import PureWindowsPath
+    from modiff.hf_cache_layout import _flat_repository_blob_path
+    # readlink's substitute-path prefix differs from the concrete cache root.
+    # This is the old production relative_to operation, which rejected the link.
+    with pytest.raises(ValueError):
+        PureWindowsPath(target).relative_to(PureWindowsPath(root))
+    assert _flat_repository_blob_path(PureWindowsPath(target), PureWindowsPath(root)).name in {
+        "b" * 40, "b" * 64,
+    }
+
+
+@pytest.mark.parametrize("target", [
+    rf"\\?\C:\hub\models--foreign--repo\blobs\{'b' * 40}",
+    rf"\\?\D:\hub\models--example--reviewed\blobs\{'b' * 40}",
+    rf"\\?\C:\hub\models--example--reviewed\blobs\nested\{'b' * 40}",
+    r"\\?\C:\hub\models--example--reviewed\blobs\not-an-etag",
+    rf"\\?\UNC\other\share\hub\models--example--reviewed\blobs\{'b' * 40}",
+])
+def test_windows_migrated_blob_bridge_rejects_foreign_drives_repositories_and_nested_paths(target):
+    from pathlib import PureWindowsPath
+    from modiff.hf_cache_layout import HuggingFaceCacheLayoutError, _flat_repository_blob_path
+    with pytest.raises(HuggingFaceCacheLayoutError):
+        _flat_repository_blob_path(PureWindowsPath(target), PureWindowsPath(r"C:\hub\models--example--reviewed\blobs"))

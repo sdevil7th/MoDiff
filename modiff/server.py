@@ -49,6 +49,7 @@ from modiff.execution_input_provenance import (
 )
 from modiff.studio_persistence_lock import STUDIO_PERSISTENCE_LOCK
 from modiff.field_metadata import is_metadata_field_action, metadata_field_callback
+from modiff.hf_cache_layout import HuggingFaceCacheLayoutError
 from modiff.path_identifiers import (
     data_path_identifier,
     is_data_path_identifier,
@@ -6452,6 +6453,19 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 ),
             }
         chain = self._exception_chain(e)
+        cache_layout_error = next(
+            (item for item in reversed(chain) if isinstance(item, HuggingFaceCacheLayoutError)), None,
+        )
+        if cache_layout_error is not None:
+            return {
+                "category": "model_integrity",
+                "error_code": "invalid_model_cache_layout",
+                "message": str(cache_layout_error),
+                "recovery_hint": (
+                    "Open Model Manager and repair or reinstall the exact affected model snapshot. "
+                    "Its installed cache layout failed validation; changing the prompt will not repair it."
+                ),
+            }
         chain_text = " | ".join(f"{type(item).__name__} {str(item) or type(item).__name__}" for item in chain)
         normalized = f"{exception_type} {message} {chain_text}".lower()
 

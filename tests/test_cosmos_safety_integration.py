@@ -58,6 +58,45 @@ def test_safety_verifies_content_not_storage_name(tmp_path, global_blob):
     assert verify_cosmos_safety_snapshot(snapshot, artifact) == snapshot
 
 
+@pytest.mark.parametrize("fault", [None, "digest", "retarget_during_read"])
+def test_safety_migrated_blob_bridge_preserves_digest_and_live_target_checks(tmp_path, monkeypatch, fault):
+    snapshot, artifact, alias = artifact_snapshot(tmp_path, global_blob=True)
+    target = alias.resolve(strict=True)
+    bridge = snapshot.parent.parent / "blobs" / artifact["files"][0]["blobHash"]
+    bridge.parent.mkdir()
+    bridge.symlink_to(os.path.relpath(target, bridge.parent))
+    alias.unlink()
+    alias.symlink_to(os.path.relpath(bridge, alias.parent))
+    if fault == "digest":
+        target.write_bytes(b"x" * artifact["files"][0]["byteSize"])
+    elif fault == "retarget_during_read":
+        other = target.with_name("e9" + "3" * 62)
+        other.write_bytes(target.read_bytes())
+        original_open = Path.open
+
+        @contextmanager
+        def reading_handle(handle):
+            with handle:
+                def read(size):
+                    data = handle.read(size)
+                    if data:
+                        bridge.unlink()
+                        bridge.symlink_to(os.path.relpath(other, bridge.parent))
+                    return data
+                yield SimpleNamespace(read=read, fileno=handle.fileno)
+
+        def open_file(path, *args, **kwargs):
+            handle = original_open(path, *args, **kwargs)
+            return reading_handle(handle) if path == target and args == ("rb",) else handle
+
+        monkeypatch.setattr(Path, "open", open_file)
+    if fault:
+        with pytest.raises(ValueError, match="reviewed digest"):
+            verify_cosmos_safety_snapshot(snapshot, artifact)
+    else:
+        assert verify_cosmos_safety_snapshot(snapshot, artifact) == snapshot
+
+
 @pytest.mark.parametrize("global_blob", [False, True])
 @pytest.mark.parametrize("changed_field", ["atime", "mode", "inode", "device", "size", "mtime", "ctime"])
 def test_safety_rechecks_alias_identity_after_read_without_rejecting_access_time(
