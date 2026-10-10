@@ -774,6 +774,7 @@ class ProcessImage(NodeBase):
         operation = str(kwargs.get("operation") or "image_adjustment")
         if operation not in IMAGE_OPERATION_MODES:
             raise ValueError(f"Unsupported built-in image operation {operation!r}.")
+        self.record_generation_inputs({**kwargs, 'pipeline_class': 'BuiltinImageOperationV1', 'executed_task': operation})
         image = kwargs.get("image")
         if operation == "image_adjustment":
             fields = (

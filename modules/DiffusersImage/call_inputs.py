@@ -200,8 +200,14 @@ def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=
     schedules do not establish the saved seed or number of executed steps.
     """
     from modiff.execution_input_provenance import FIELD_NAMES
+    from .main import IMAGE_ACTION_MODES
 
     effective = {**call_kwargs, **(encoded_inputs or {})}
+    # Called after action validation: capture the selected runtime mode, never
+    # an advisory graph/form label. Legacy shared-mode pipelines stay unknown.
+    mode = getattr(values.get('pipeline'), '_modiff_image_mode', None)
+    allowed = set(adapter.modes) & set(IMAGE_ACTION_MODES[node.class_name])
+    effective['executed_task'] = mode if mode in allowed else (next(iter(allowed)) if len(allowed) == 1 else None)
     source_fields = {}
     for source, destination in (
         ('guidance_scale', adapter.guidance_parameter),

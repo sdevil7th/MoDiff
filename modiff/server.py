@@ -14465,6 +14465,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 artifacts = {}
 
                 def installed(profile):
+                    # These reviewed local processors have no model artifact.
+                    # Runtime readiness and Auto capacity are checked separately.
+                    if profile["execution_path"] == "builtin-image-operation":
+                        return True
                     repo = profile["default_repo"]
                     try:
                         revision = require_catalog_revision(repo, model_type=profile["model_type"])

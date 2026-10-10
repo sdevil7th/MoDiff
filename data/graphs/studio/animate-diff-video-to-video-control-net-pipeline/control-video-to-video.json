@@ -871,7 +871,7 @@
               }
             ],
             "type": "string",
-            "value": false
+            "value": "none"
           },
           "device": {
             "default": "cuda:0",

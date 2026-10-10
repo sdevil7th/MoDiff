@@ -1,4 +1,6 @@
 from copy import deepcopy
+import json
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 
@@ -50,6 +52,42 @@ def executable_graph_for_spec(spec):
 
 
 class StudioExecutionSpecTests(unittest.TestCase):
+    def test_published_canonical_recipes_use_the_registered_denoiser_cache_enum(self):
+        root = Path(__file__).resolve().parents[1]
+        manifest = json.loads((root / 'data/workflow-library-manifest.json').read_text(encoding='utf-8'))
+        options = module_registry.MODULE_MAP['modules.DiffusersRuntime']['DiffusersExecutionRecipe']['params'][
+            'denoiser_cache']['options']
+        checked = 0
+        for row in manifest['workflows']:
+            graph = json.loads((root / 'data/graphs' / row['graphPath']).read_text(encoding='utf-8'))
+            for node in graph['nodes']:
+                data = node['data']
+                if (data.get('module'), data.get('action')) != (
+                        'modules.DiffusersRuntime', 'DiffusersExecutionRecipe'):
+                    continue
+                with self.subTest(workflow=row['id'], node=node['id']):
+                    field = data['params']['denoiser_cache']
+                    self.assertIn(field.get('value', field.get('default')), options)
+                checked += 1
+        self.assertGreaterEqual(checked, 18)
+
+    def test_disabled_denoiser_cache_bindings_preserve_the_registered_enum(self):
+        options = module_registry.MODULE_MAP['modules.DiffusersRuntime']['DiffusersExecutionRecipe']['params'][
+            'denoiser_cache']['options']
+        checked = set()
+        # Resolve the shared client binding constants, then check the actual
+        # node enum rather than permitting a boolean spelling of disabled.
+        constants = {'false': False, 'denoiserCache': 'none'}
+        for spec in validate_studio_execution_specs(module_registry.MODULE_MAP):
+            recipe_roles = {role for role, key, _x, _y in spec['roles']
+                            if key == 'modules.DiffusersRuntime.DiffusersExecutionRecipe'}
+            for role, field, source in spec['bindings']:
+                if role in recipe_roles and field == 'denoiser_cache':
+                    with self.subTest(spec=spec['id']):
+                        self.assertIn(constants[source], options)
+                    checked.add(spec['modelType'])
+        self.assertTrue({'DDPMPipeline', 'DDIMPipeline', 'ConsistencyModelPipeline', 'ShapEPipeline'} <= checked)
+
     def test_unselected_inpaint_policy_preserves_every_registered_loader_schema(self):
         node_key = "modules.ModularDiffusers.ModelsLoader"
         definition = module_registry.MODULE_MAP["modules.ModularDiffusers"]["ModelsLoader"]

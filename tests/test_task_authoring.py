@@ -240,3 +240,56 @@ class TaskAuthoringTests(unittest.TestCase):
         server._runtime_fingerprint.assert_not_called()
         server._workflow_auto_cache_snapshot.assert_not_called()
         server._runtime_fingerprint_for_control_request.assert_called_once()
+
+    def builtin_starter_http(self, task, policy, *, ready=True, fits=True, reviewed_path=True):
+        from modiff.server import WebServer
+
+        catalog = deepcopy(self.catalog)
+        profile = next(p for p in catalog['diffusersExecutionProfiles']
+                       if task in p['modes'] and p['execution_path'].startswith('builtin-'))
+        if not reviewed_path:
+            profile['execution_path'] = 'unreviewed-artifact-free-runtime'
+        if not ready:
+            for pipeline in catalog['pipelineSupport']:
+                if pipeline['pipelineClass'] == profile['pipeline_class']:
+                    for support in pipeline['tasks']:
+                        support['dependencies'] = 'blocked'
+        server = SimpleNamespace(
+            modules=MODULE_MAP, data_dir='unused-model-free-starter-test', current_task=None,
+            _model_capabilities_response=AsyncMock(return_value=json.dumps(catalog).encode()),
+            _runtime_fingerprint=Mock(return_value={}),
+            _workflow_auto_cache_snapshot=Mock(return_value={}),
+            _describe_registered_node=Mock(return_value={}),
+        )
+        request = SimpleNamespace(json=AsyncMock(return_value={
+            'task': task, 'preferredProfileId': profile['id'], 'resourceMode': policy,
+        }))
+        with (
+            patch('modiff.server.get_local_models', return_value=[]),
+            patch('modiff.auto_resource.artifact_revision_cache_status', return_value={'complete': False}) as artifacts,
+            patch('modiff.workflow_auto_resource.build_workflow_auto_plan', return_value={
+                'canAutoRun': fits, 'requirements': {'systemRamBytes': 0, 'vramBytes': 0},
+            }) as inspect,
+            patch('modiff.NodeBase.NodeBase.__init__', side_effect=AssertionError('constructed executable node')),
+        ):
+            response = asyncio.run(WebServer.resolve_task_starter(server, request))
+        return response, json.loads(response.text), profile, inspect, artifacts
+
+    def test_http_builtin_image_tasks_need_no_model_artifact_in_both_policies(self):
+        tasks = ('image_adjustment', 'image_filter', 'image_crop', 'image_upscale',
+                 'image_stitch', 'image_tile', 'image_channels', 'mask_composite')
+        for task in tasks:
+            for policy in ('auto', 'expert'):
+                with self.subTest(task=task, policy=policy):
+                    response, body, profile, inspect, artifacts = self.builtin_starter_http(task, policy)
+                    self.assertEqual(response.status, 200, body)
+                    self.assertEqual(body['profileId'], profile['id'])
+                    self.assertFalse(body['unbound'])
+                    self.assertEqual(inspect.call_count, int(policy == 'auto'))
+                    self.assertTrue(all(not call.args[0].startswith('builtin://') for call in artifacts.call_args_list))
+
+    def test_builtin_selection_keeps_runtime_capacity_and_reviewed_path_guards(self):
+        for controls in ({'ready': False}, {'fits': False}, {'reviewed_path': False}):
+            with self.subTest(controls=controls):
+                response, body, _, _, _ = self.builtin_starter_http('image_crop', 'auto', **controls)
+                self.assertEqual(response.status, 400, body)

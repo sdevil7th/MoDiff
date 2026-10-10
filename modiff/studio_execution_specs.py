@@ -4197,6 +4197,8 @@ _STABLE_VIDEO_DIFFUSION_GRAPH_BINDINGS = tuple(
         }
         else "nativeMath"
         if (role, param) == ("diffusersRecipe", "attention_backend")
+        else "denoiserCache"
+        if (role, param) == ("diffusersRecipe", "denoiser_cache")
         else "false"
         if (role, param)
         in {
@@ -4223,6 +4225,8 @@ _ANIMATEDIFF_GRAPH_BINDINGS = tuple(
         }
         else "nativeMath"
         if (role, param) == ("diffusersRecipe", "attention_backend")
+        else "denoiserCache"
+        if (role, param) == ("diffusersRecipe", "denoiser_cache")
         else "false"
         if (role, param)
         in {
@@ -4292,6 +4296,8 @@ _COGVIDEOX_GRAPH_BINDINGS = tuple(
         }
         else "nativeMath"
         if (role, param) == ("diffusersRecipe", "attention_backend")
+        else "denoiserCache"
+        if (role, param) == ("diffusersRecipe", "denoiser_cache")
         else "false"
         if (role, param)
         in {
@@ -4324,6 +4330,8 @@ _SANA_VIDEO_I2V_GRAPH_BINDINGS = tuple(
         }
         else "nativeMath"
         if (role, param) == ("diffusersRecipe", "attention_backend")
+        else "denoiserCache"
+        if (role, param) == ("diffusersRecipe", "denoiser_cache")
         else "false"
         if (role, param)
         in {
@@ -5489,7 +5497,7 @@ _THREE_D_GRAPH_BINDINGS = (
     ("diffusersRecipe", "vae_slicing", "false"),
     ("diffusersRecipe", "vae_tiling", "false"),
     ("diffusersRecipe", "regional_compile", "false"),
-    ("diffusersRecipe", "denoiser_cache", "false"),
+    ("diffusersRecipe", "denoiser_cache", "denoiserCache"),
     ("diffusersRecipe", "layerwise_casting", "false"),
     ("diffusersRecipe", "channels_last", "false"),
     ("diffusersThreeDPipeline", "model_id", "artifact"),
@@ -5544,7 +5552,7 @@ _UNCONDITIONAL_GRAPH_BINDINGS = (
     ("diffusersRecipe", "vae_slicing", "false"),
     ("diffusersRecipe", "vae_tiling", "false"),
     ("diffusersRecipe", "regional_compile", "false"),
-    ("diffusersRecipe", "denoiser_cache", "false"),
+    ("diffusersRecipe", "denoiser_cache", "denoiserCache"),
     ("diffusersRecipe", "layerwise_casting", "false"),
     ("diffusersRecipe", "channels_last", "false"),
     ("diffusersImagePipeline", "model_id", "artifact"),

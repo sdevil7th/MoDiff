@@ -123,6 +123,19 @@ def tag_test_image_pipeline(pipeline, pipeline_class, mode, *, repo=None, revisi
 
 
 class DiffusersImageRegistryTests(unittest.TestCase):
+    def test_missing_base_transformers_quantization_error_requests_setup_repair(self):
+        from modules.DiffusersImage.main import build_qwen_pipeline_quantization_config
+
+        with patch('importlib.util.find_spec', side_effect=lambda name: None if name == 'transformers' else object()):
+            with self.assertRaises(RuntimeError) as raised:
+                build_qwen_pipeline_quantization_config(
+                    components=['text_encoder'], quantization_mode='bnb_4bit', compute_dtype='bfloat16')
+        message = str(raised.exception)
+        self.assertIn('required', message)
+        self.assertIn('repair', message.lower())
+        self.assertNotIn('optional runtime', message)
+        self.assertNotIn('activate', message.lower())
+
     def test_prequantized_transformer_is_an_optional_loader_input(self):
         # Ordinary pipelines load their own transformer. Graph repair must not
         # invent a connection to an unrelated `any` output for this override.

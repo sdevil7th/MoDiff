@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:d939d5bd81d308c68b5972a1074ea02509305db2bf4c11c2af259f80bb2a8db9",
+  "contentHash": "sha256:03bde7211a14fcf42fea7c14737defcf9b880d02da35d75926f33f0ba4d38ceb",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:578252953dcc3795559d13a6ceb51921cd89af35c45a873fe7d3ea7df59a8a45",
+      "contentHash": "sha256:b7738da8d060b7961ae3f3fae0ebd26b7b155e9782703a4fb68f5cfe260b5d75",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:6c28da4c08aa9ba36937e918256a5de9625bfa79ce43199d7fe67ca63c0d6405"
+      "sha256": "sha256:4bbb368ecc88db5915c9bd20f4a0a2a921899a7457086a77d0172b7d76eb0f91"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:5aba426ed8f5daf920acc7fd09e10e647f6aedd3fc5f241f365a2c6ca4b314fa"
+      "sha256": "sha256:63607c560de1b952de19d2da91645a064dbcf3254326515664cd3deaec51cf35"
     }
   },
   "specifications": [
@@ -42,7 +42,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/allegro-pipeline/text-to-video.json",
-        "sha256": "cdfc32ad3b048e8d31f9f8b521fa4c4ce5ccaffc4a8344b28f1a5c974bc51ec8"
+        "sha256": "1b26825dbd79d6dbaf95dd5a4c99f54b597ba85567995fa9851ecade5295a0cf"
       },
       "canonicalWorkflowId": "AllegroPipeline:text_to_video",
       "claims": {
@@ -130,7 +130,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "cdfc32ad3b048e8d31f9f8b521fa4c4ce5ccaffc4a8344b28f1a5c974bc51ec8",
+        "sourceGraphSha256": "1b26825dbd79d6dbaf95dd5a4c99f54b597ba85567995fa9851ecade5295a0cf",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -217,7 +217,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/animate-diff-control-net-pipeline/control-to-video.json",
-        "sha256": "c40e7cfc5cf39f435903714fb69e7edbf5bec9a76f26707ad8492a4981b6fbd8"
+        "sha256": "c622fb3f3d7e2d6610c99950ff161da565041fc8ca0c1e1d143cc5aac7dde2a0"
       },
       "canonicalWorkflowId": "AnimateDiffControlNetPipeline:control_to_video",
       "claims": {
@@ -330,7 +330,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "c40e7cfc5cf39f435903714fb69e7edbf5bec9a76f26707ad8492a4981b6fbd8",
+        "sourceGraphSha256": "c622fb3f3d7e2d6610c99950ff161da565041fc8ca0c1e1d143cc5aac7dde2a0",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -423,7 +423,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/animate-diff-pag-pipeline/text-to-video.json",
-        "sha256": "9805d228316d45a5ca880ce668ec2d4214a3e96d23036edef83ce6f78b2ae0c3"
+        "sha256": "400920045f0721d5cbcb6b998fb1ce2f50b28941e45d0d38449dc4681f302bcd"
       },
       "canonicalWorkflowId": "AnimateDiffPAGPipeline:text_to_video",
       "claims": {
@@ -521,7 +521,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "9805d228316d45a5ca880ce668ec2d4214a3e96d23036edef83ce6f78b2ae0c3",
+        "sourceGraphSha256": "400920045f0721d5cbcb6b998fb1ce2f50b28941e45d0d38449dc4681f302bcd",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -600,7 +600,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/animate-diff-pipeline/text-to-video.json",
-        "sha256": "831c3df4b164bfb7d639386ac03061739c062d1c4c14c5bc8374bba0027574f4"
+        "sha256": "48fe1e6332fe0b264bdb490855e9963bba00026b4d62573d10efacf45ec0df73"
       },
       "canonicalWorkflowId": "AnimateDiffPipeline:text_to_video",
       "claims": {
@@ -688,7 +688,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "831c3df4b164bfb7d639386ac03061739c062d1c4c14c5bc8374bba0027574f4",
+        "sourceGraphSha256": "48fe1e6332fe0b264bdb490855e9963bba00026b4d62573d10efacf45ec0df73",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -775,7 +775,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/animate-diff-video-to-video-control-net-pipeline/control-video-to-video.json",
-        "sha256": "8b6e7e0237c39de482c80cae6aaa2b2be0b2c9ea01ca4eb111c865a7d0b49e8d"
+        "sha256": "198481430613e5ea931fa24c7e0a0d4a96b8ccbbee25724a3382771ba6bb4cc8"
       },
       "canonicalWorkflowId": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
       "claims": {
@@ -903,7 +903,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "8b6e7e0237c39de482c80cae6aaa2b2be0b2c9ea01ca4eb111c865a7d0b49e8d",
+        "sourceGraphSha256": "198481430613e5ea931fa24c7e0a0d4a96b8ccbbee25724a3382771ba6bb4cc8",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -1009,7 +1009,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/animate-diff-video-to-video-pipeline/video-to-video.json",
-        "sha256": "43bb3eb29e332feac0bf86590da49757d7df9a03c2a80b57d019feb268710f25"
+        "sha256": "dbe83fdb9d6cfe2e390d8c46475f608745e67ebd291aed07a6e7ddb3f22540fc"
       },
       "canonicalWorkflowId": "AnimateDiffVideoToVideoPipeline:video_to_video",
       "claims": {
@@ -1112,7 +1112,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "43bb3eb29e332feac0bf86590da49757d7df9a03c2a80b57d019feb268710f25",
+        "sourceGraphSha256": "dbe83fdb9d6cfe2e390d8c46475f608745e67ebd291aed07a6e7ddb3f22540fc",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -1206,7 +1206,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/animate-lcm-pipeline/text-to-video.json",
-        "sha256": "6ea55a2398afb88c617d489d433d6dcc88d574b9b1c252f5e23f4f27ed5392b2"
+        "sha256": "ec78786fb350afbd18869b02afd3c20bd728ff0adb30bfc82b053d321409bcd4"
       },
       "canonicalWorkflowId": "AnimateLCMPipeline:text_to_video",
       "claims": {
@@ -1294,7 +1294,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "6ea55a2398afb88c617d489d433d6dcc88d574b9b1c252f5e23f4f27ed5392b2",
+        "sourceGraphSha256": "ec78786fb350afbd18869b02afd3c20bd728ff0adb30bfc82b053d321409bcd4",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -4284,7 +4284,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/cog-video-x-pipeline/text-to-video.json",
-        "sha256": "8d7f75409e9cdcc215d19f8cbaa95a2f1a38f1d48f9cf13eb0ca4d9a4defda75"
+        "sha256": "89dc18421080e3d859322e4909ab41852544b3e97cc0dc728d8347e466e3fb7f"
       },
       "canonicalWorkflowId": "CogVideoXPipeline:text_to_video",
       "claims": {
@@ -4372,7 +4372,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "8d7f75409e9cdcc215d19f8cbaa95a2f1a38f1d48f9cf13eb0ca4d9a4defda75",
+        "sourceGraphSha256": "89dc18421080e3d859322e4909ab41852544b3e97cc0dc728d8347e466e3fb7f",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -4442,7 +4442,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/cog-video-x-video-to-video-pipeline/video-to-video.json",
-        "sha256": "c28875202a2106122d5beb9cdb7d6374f5f0f3f83397f26d9a1223096a2f0194"
+        "sha256": "43ffb2496ac8030a57a03fb351f056ad5d6f9878d50abe736b50b1201f68483d"
       },
       "canonicalWorkflowId": "CogVideoXVideoToVideoPipeline:video_to_video",
       "claims": {
@@ -4545,7 +4545,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "c28875202a2106122d5beb9cdb7d6374f5f0f3f83397f26d9a1223096a2f0194",
+        "sourceGraphSha256": "43ffb2496ac8030a57a03fb351f056ad5d6f9878d50abe736b50b1201f68483d",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -4876,7 +4876,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/consistency-model-pipeline/unconditional-image.json",
-        "sha256": "908ea0ae4985dcfb36841e262ef7d6bed37d7c3667690d01f6e7cf7b384ef029"
+        "sha256": "6492991b2db9723f5c04102fad89eecc7fb589aa35ca960a44c71ba643bce082"
       },
       "canonicalWorkflowId": "ConsistencyModelPipeline:unconditional_image",
       "claims": {
@@ -4919,7 +4919,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "908ea0ae4985dcfb36841e262ef7d6bed37d7c3667690d01f6e7cf7b384ef029",
+        "sourceGraphSha256": "6492991b2db9723f5c04102fad89eecc7fb589aa35ca960a44c71ba643bce082",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -4989,7 +4989,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/ddim-pipeline/unconditional-image.json",
-        "sha256": "4245498fbf0418f391842d4e6c3a608bebf796a9c7846848f4e4af3d32ac9c5d"
+        "sha256": "f407f50919e092b31a7f25828eb537d497ea125c058d92c9195f0728fbbf9fff"
       },
       "canonicalWorkflowId": "DDIMPipeline:unconditional_image",
       "claims": {
@@ -5032,7 +5032,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "4245498fbf0418f391842d4e6c3a608bebf796a9c7846848f4e4af3d32ac9c5d",
+        "sourceGraphSha256": "f407f50919e092b31a7f25828eb537d497ea125c058d92c9195f0728fbbf9fff",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -5102,7 +5102,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/ddpm-pipeline/unconditional-image.json",
-        "sha256": "5ddd44044fe27763f8bf23e9a1b00d1aedcac6ee61965e218771b60f4cbf2267"
+        "sha256": "01c7db757569d7422f6d1e69bb15058f1ffc70c33764a0ea75483dd707e164df"
       },
       "canonicalWorkflowId": "DDPMPipeline:unconditional_image",
       "claims": {
@@ -5145,7 +5145,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "5ddd44044fe27763f8bf23e9a1b00d1aedcac6ee61965e218771b60f4cbf2267",
+        "sourceGraphSha256": "01c7db757569d7422f6d1e69bb15058f1ffc70c33764a0ea75483dd707e164df",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -11135,7 +11135,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/latte-pipeline/text-to-video.json",
-        "sha256": "f7ccecdc033c0469bdd98853c937b487373fd88c0f36ed5a02e64e55bc07bd87"
+        "sha256": "8e3f511b31acd09ada2593eb8887805008626d612108c04857422825a409eec9"
       },
       "canonicalWorkflowId": "LattePipeline:text_to_video",
       "claims": {
@@ -11223,7 +11223,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "f7ccecdc033c0469bdd98853c937b487373fd88c0f36ed5a02e64e55bc07bd87",
+        "sourceGraphSha256": "8e3f511b31acd09ada2593eb8887805008626d612108c04857422825a409eec9",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -12066,7 +12066,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/mochi-pipeline/text-to-video.json",
-        "sha256": "87aefb0a156179b01c43d042dbdb7bd0f6caa5ef41a88ee5671f016ececf0008"
+        "sha256": "81702273ec3340b01500d98b487268110774360e5b583d0d28949120ab7c7638"
       },
       "canonicalWorkflowId": "MochiPipeline:text_to_video",
       "claims": {
@@ -12154,7 +12154,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "87aefb0a156179b01c43d042dbdb7bd0f6caa5ef41a88ee5671f016ececf0008",
+        "sourceGraphSha256": "81702273ec3340b01500d98b487268110774360e5b583d0d28949120ab7c7638",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -14269,7 +14269,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/sana-image-to-video-pipeline/image-to-video.json",
-        "sha256": "3eebc15a62f325ec1449c74e14bb7e4721f67b58fc08acda9149ae564ab1214e"
+        "sha256": "269686882ea0a6a506a009af2747c83e3ee1579798b6918c411a630431584213"
       },
       "canonicalWorkflowId": "SanaImageToVideoPipeline:image_to_video",
       "claims": {
@@ -14362,7 +14362,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "3eebc15a62f325ec1449c74e14bb7e4721f67b58fc08acda9149ae564ab1214e",
+        "sourceGraphSha256": "269686882ea0a6a506a009af2747c83e3ee1579798b6918c411a630431584213",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -14969,7 +14969,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/sana-video-pipeline/text-to-video.json",
-        "sha256": "ef446576e85b5d6d65a3055b120dd25fe369300e124ebaae147c2aea5586efaf"
+        "sha256": "aa1faeb049abadb43a037cc70a3d25dbdd70b354a08dabff5e6fcfdd5e7ebe85"
       },
       "canonicalWorkflowId": "SanaVideoPipeline:text_to_video",
       "claims": {
@@ -15057,7 +15057,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "ef446576e85b5d6d65a3055b120dd25fe369300e124ebaae147c2aea5586efaf",
+        "sourceGraphSha256": "aa1faeb049abadb43a037cc70a3d25dbdd70b354a08dabff5e6fcfdd5e7ebe85",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -15127,7 +15127,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/shap-e-pipeline/text-to-3d.json",
-        "sha256": "931b9b7b9c15512bd2b8cc7ad9f7fe2bdf60c6634d93c29f3d66de5e43e5014b"
+        "sha256": "8daae7cf3f9240ed1f48430815693f01cafb3d9e4a3bba076c1454960e3a3a0f"
       },
       "canonicalWorkflowId": "ShapEPipeline:text_to_3d",
       "claims": {
@@ -15170,7 +15170,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "931b9b7b9c15512bd2b8cc7ad9f7fe2bdf60c6634d93c29f3d66de5e43e5014b",
+        "sourceGraphSha256": "8daae7cf3f9240ed1f48430815693f01cafb3d9e4a3bba076c1454960e3a3a0f",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -19626,7 +19626,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/stable-video-diffusion-pipeline/image-to-video.json",
-        "sha256": "996846e2afd38677bd72d7b063760925674c5c87fbfebc27308388e8e1283d34"
+        "sha256": "af888bb621931ca767664a4974ee619fa63bdb56731c5df6122747747f8fff75"
       },
       "canonicalWorkflowId": "StableVideoDiffusionPipeline:image_to_video",
       "claims": {
@@ -19719,7 +19719,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "996846e2afd38677bd72d7b063760925674c5c87fbfebc27308388e8e1283d34",
+        "sourceGraphSha256": "af888bb621931ca767664a4974ee619fa63bdb56731c5df6122747747f8fff75",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {

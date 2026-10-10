@@ -189,19 +189,60 @@ def resource_consumers(nodes: dict, loader_id: str, loader_ids: set[str]) -> lis
         found.update(additions)
 
 
+_IMAGE_OWNERS = {
+    ('modules.DiffusersImage', 'LoadPipeline'),
+    ('modules.HuggingFaceTransformers', 'LoadDepthEstimationModel'),
+    ('modules.HuggingFaceTransformers', 'LoadImageTextToTextModel'),
+    ('modules.ImageOperations', 'ProcessImage'),
+}
+
+
+def _ordinary_image_tasks(nodes, records, key, loaders, model):
+    module, action = nodes[key]['module'], nodes[key]['action']
+    if module == 'modules.ImageOperations':
+        from modules.ImageOperations.main import IMAGE_OPERATION_MODES
+
+        actions = {action: set(IMAGE_OPERATION_MODES)} if model == 'BuiltinImageOperationV1' else {}
+        consumers = [key]
+    elif module == 'modules.DiffusersImage':
+        from modules.DiffusersImage.main import IMAGE_ACTION_MODES, IMAGE_PIPELINE_ADAPTERS
+
+        adapter = IMAGE_PIPELINE_ADAPTERS.get(model)
+        actions = {a: set(tasks) & set(adapter.modes) for a, tasks in IMAGE_ACTION_MODES.items()} if adapter else {}
+        consumers = resource_consumers(nodes, key, loaders)
+    else:
+        actions = {
+            'PredictDepth': {'depth_estimation'} if model == 'AutoModelForDepthEstimation' else set(),
+            'GenerateImageVideoText': {'image_to_text'} if model == 'AutoModelForImageTextToText' else set(),
+        }
+        consumers = resource_consumers(nodes, key, loaders)
+    tasks = set()
+    for consumer in consumers:
+        node = nodes[consumer]
+        if node['module'] != module or node['action'] not in actions:
+            continue
+        task = records.get(consumer, {}).get('fields', {}).get('executed_task', {}).get('value')
+        if not isinstance(task, str) or task not in actions[node['action']]:
+            return set()
+        tasks.add(task)
+    return tasks
+
+
 def graph_task_receipts(nodes, records):
-    """Recognize only the output ancestry with captured Modular loader identity."""
+    """Use captured owner identity and validated image calls in output ancestry."""
     loaders = {
         key
         for key, node in nodes.items()
-        if (node.get("module"), node.get("action")) == ("modules.ModularDiffusers", "ModelsLoader")
+        if (node.get("module"), node.get("action")) in _IMAGE_OWNERS | {('modules.ModularDiffusers', 'ModelsLoader')}
     }
     result = []
     for key in sorted(loaders):
-        model = records.get(key, {}).get("fields", {}).get("model_type", {}).get("value")
+        modular = nodes[key]['module'] == 'modules.ModularDiffusers'
+        model = records.get(key, {}).get("fields", {}).get("model_type" if modular else 'pipeline_class', {}).get("value")
         if not isinstance(model, str):
             return []  # Incomplete owner evidence must not select another owner's task.
-        tasks = modular_graph_tasks(nodes, key, resource_consumers(nodes, key, loaders), model)
+        tasks = (modular_graph_tasks(nodes, key, resource_consumers(nodes, key, loaders), model) if modular
+                 else _ordinary_image_tasks(nodes, records, key, loaders, model))
         result.append(
             {"loaderId": key, "pipelineClass": model, "task": next(iter(tasks)) if len(tasks) == 1 else None}
         )

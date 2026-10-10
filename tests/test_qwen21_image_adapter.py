@@ -1,6 +1,4 @@
 """Generic image contracts for Qwen 2.1; no weights or optional imports required."""
-from types import SimpleNamespace
-
 import pytest
 from PIL import Image
 
@@ -51,10 +49,13 @@ def test_cache_flag_reaches_native_call_and_consumed_receipt(value):
     target = {}
     apply_call_inputs(selected, target)
     assert target["use_kv_cache"] is value
-    records = []
-    node = SimpleNamespace(record_generation_inputs=records.append)
-    record_image_call_inputs(node, selected, target, IMAGE_PIPELINE_ADAPTERS[PIPELINE])
-    assert records[0]["use_kv_cache"] is value
+    from modules.DiffusersImage.main import Generate
+
+    node = Generate('qwen21')
+    record_image_call_inputs(node, {**selected, 'pipeline': runtime('text_to_image')}, target, IMAGE_PIPELINE_ADAPTERS[PIPELINE])
+    fields = node._execution_input_record['fields']
+    assert fields['use_kv_cache'] == {'source': 'literal', 'value': value}
+    assert fields['executed_task'] == {'source': 'literal', 'value': 'text_to_image'}
 
 
 @pytest.mark.parametrize("value", [0, 1, "false", "true", {}, []])

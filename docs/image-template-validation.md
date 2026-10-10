@@ -38,6 +38,13 @@ failed and incomplete attempts alongside later passing runs. An offline image
 viewer helps review, but the indexed raw contracts and receipts establish what
 ran. Private evidence and local Gallery caches do not arrive through `git pull`.
 
+Legacy whole-image graph exports may carry Studio presentation roles without a
+current managed execution receipt. Import preserves those ordinary node values
+and wires and uses the existing graph validation path. Presentation roles alone
+must not create a managed binding. Explicit managed receipts, including invalid
+ones, remain subject to their existing validation and are not discarded by this
+legacy import recovery.
+
 For the next design steps, see the
 [Mellon comparison and simpler image workflows](simpler-image-workflows-mellon-comparison.md).
 For routes beyond the image templates, see

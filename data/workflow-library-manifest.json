@@ -206,7 +206,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/allegro-pipeline/text-to-video.json",
-      "graphHash": "cdfc32ad3b048e8d31f9f8b521fa4c4ce5ccaffc4a8344b28f1a5c974bc51ec8"
+      "graphHash": "1b26825dbd79d6dbaf95dd5a4c99f54b597ba85567995fa9851ecade5295a0cf"
     },
     {
       "id": "AnimateDiffControlNetPipeline:control_to_video",
@@ -275,7 +275,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/animate-diff-control-net-pipeline/control-to-video.json",
-      "graphHash": "c40e7cfc5cf39f435903714fb69e7edbf5bec9a76f26707ad8492a4981b6fbd8"
+      "graphHash": "c622fb3f3d7e2d6610c99950ff161da565041fc8ca0c1e1d143cc5aac7dde2a0"
     },
     {
       "id": "AnimateDiffPAGPipeline:text_to_video",
@@ -323,7 +323,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/animate-diff-pag-pipeline/text-to-video.json",
-      "graphHash": "9805d228316d45a5ca880ce668ec2d4214a3e96d23036edef83ce6f78b2ae0c3"
+      "graphHash": "400920045f0721d5cbcb6b998fb1ce2f50b28941e45d0d38449dc4681f302bcd"
     },
     {
       "id": "AnimateDiffPipeline:text_to_video",
@@ -371,7 +371,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/animate-diff-pipeline/text-to-video.json",
-      "graphHash": "831c3df4b164bfb7d639386ac03061739c062d1c4c14c5bc8374bba0027574f4"
+      "graphHash": "48fe1e6332fe0b264bdb490855e9963bba00026b4d62573d10efacf45ec0df73"
     },
     {
       "id": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
@@ -441,7 +441,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/animate-diff-video-to-video-control-net-pipeline/control-video-to-video.json",
-      "graphHash": "8b6e7e0237c39de482c80cae6aaa2b2be0b2c9ea01ca4eb111c865a7d0b49e8d"
+      "graphHash": "198481430613e5ea931fa24c7e0a0d4a96b8ccbbee25724a3382771ba6bb4cc8"
     },
     {
       "id": "AnimateDiffVideoToVideoPipeline:video_to_video",
@@ -492,7 +492,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/animate-diff-video-to-video-pipeline/video-to-video.json",
-      "graphHash": "43bb3eb29e332feac0bf86590da49757d7df9a03c2a80b57d019feb268710f25"
+      "graphHash": "dbe83fdb9d6cfe2e390d8c46475f608745e67ebd291aed07a6e7ddb3f22540fc"
     },
     {
       "id": "AnimateLCMPipeline:text_to_video",
@@ -541,7 +541,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/animate-lcm-pipeline/text-to-video.json",
-      "graphHash": "6ea55a2398afb88c617d489d433d6dcc88d574b9b1c252f5e23f4f27ed5392b2"
+      "graphHash": "ec78786fb350afbd18869b02afd3c20bd728ff0adb30bfc82b053d321409bcd4"
     },
     {
       "id": "AudioLDM2Pipeline:text_to_audio",
@@ -1361,7 +1361,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/cog-video-x-pipeline/text-to-video.json",
-      "graphHash": "8d7f75409e9cdcc215d19f8cbaa95a2f1a38f1d48f9cf13eb0ca4d9a4defda75"
+      "graphHash": "89dc18421080e3d859322e4909ab41852544b3e97cc0dc728d8347e466e3fb7f"
     },
     {
       "id": "CogVideoXVideoToVideoPipeline:video_to_video",
@@ -1392,7 +1392,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/cog-video-x-video-to-video-pipeline/video-to-video.json",
-      "graphHash": "c28875202a2106122d5beb9cdb7d6374f5f0f3f83397f26d9a1223096a2f0194"
+      "graphHash": "43ffb2496ac8030a57a03fb351f056ad5d6f9878d50abe736b50b1201f68483d"
     },
     {
       "id": "CogView3PlusPipeline:text_to_image",
@@ -1470,7 +1470,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/consistency-model-pipeline/unconditional-image.json",
-      "graphHash": "908ea0ae4985dcfb36841e262ef7d6bed37d7c3667690d01f6e7cf7b384ef029"
+      "graphHash": "6492991b2db9723f5c04102fad89eecc7fb589aa35ca960a44c71ba643bce082"
     },
     {
       "id": "Cosmos3OmniModularPipeline:text_to_image",
@@ -1658,7 +1658,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ddim-pipeline/unconditional-image.json",
-      "graphHash": "4245498fbf0418f391842d4e6c3a608bebf796a9c7846848f4e4af3d32ac9c5d"
+      "graphHash": "f407f50919e092b31a7f25828eb537d497ea125c058d92c9195f0728fbbf9fff"
     },
     {
       "id": "DDPMPipeline:unconditional_image",
@@ -1684,7 +1684,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ddpm-pipeline/unconditional-image.json",
-      "graphHash": "5ddd44044fe27763f8bf23e9a1b00d1aedcac6ee61965e218771b60f4cbf2267"
+      "graphHash": "01c7db757569d7422f6d1e69bb15058f1ffc70c33764a0ea75483dd707e164df"
     },
     {
       "id": "DreamLiteMobilePipeline:edit_image",
@@ -3846,7 +3846,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/latte-pipeline/text-to-video.json",
-      "graphHash": "f7ccecdc033c0469bdd98853c937b487373fd88c0f36ed5a02e64e55bc07bd87"
+      "graphHash": "8e3f511b31acd09ada2593eb8887805008626d612108c04857422825a409eec9"
     },
     {
       "id": "LongCatAudioDiTPipeline:text_to_audio",
@@ -4066,7 +4066,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/mochi-pipeline/text-to-video.json",
-      "graphHash": "87aefb0a156179b01c43d042dbdb7bd0f6caa5ef41a88ee5671f016ececf0008"
+      "graphHash": "81702273ec3340b01500d98b487268110774360e5b583d0d28949120ab7c7638"
     },
     {
       "id": "NucleusMoEImagePipeline:text_to_image",
@@ -4814,7 +4814,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/sana-image-to-video-pipeline/image-to-video.json",
-      "graphHash": "3eebc15a62f325ec1449c74e14bb7e4721f67b58fc08acda9149ae564ab1214e"
+      "graphHash": "269686882ea0a6a506a009af2747c83e3ee1579798b6918c411a630431584213"
     },
     {
       "id": "SanaPAGPipeline:text_to_image",
@@ -4953,7 +4953,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/sana-video-pipeline/text-to-video.json",
-      "graphHash": "ef446576e85b5d6d65a3055b120dd25fe369300e124ebaae147c2aea5586efaf"
+      "graphHash": "aa1faeb049abadb43a037cc70a3d25dbdd70b354a08dabff5e6fcfdd5e7ebe85"
     },
     {
       "id": "ShapEPipeline:text_to_3d",
@@ -4979,7 +4979,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/shap-e-pipeline/text-to-3d.json",
-      "graphHash": "931b9b7b9c15512bd2b8cc7ad9f7fe2bdf60c6634d93c29f3d66de5e43e5014b"
+      "graphHash": "8daae7cf3f9240ed1f48430815693f01cafb3d9e4a3bba076c1454960e3a3a0f"
     },
     {
       "id": "SpandrelImageUpscale:image_upscale",
@@ -6162,7 +6162,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/stable-video-diffusion-pipeline/image-to-video.json",
-      "graphHash": "996846e2afd38677bd72d7b063760925674c5c87fbfebc27308388e8e1283d34"
+      "graphHash": "af888bb621931ca767664a4974ee619fa63bdb56731c5df6122747747f8fff75"
     },
     {
       "id": "Wan22Pipeline:text_to_video",

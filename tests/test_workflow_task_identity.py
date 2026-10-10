@@ -262,6 +262,46 @@ def test_output_history_uses_recognized_graph_task_without_rewriting_form():
     ]
 
 
+@pytest.mark.parametrize('module,loader,consumer,pipeline,task', [
+    ('DiffusersImage', 'LoadPipeline', 'Inpaint', 'ZImageInpaintPipeline', 'inpaint'),
+    ('DiffusersImage', 'LoadPipeline', 'Inpaint', 'ZImageInpaintPipeline', 'outpaint'),
+    ('DiffusersImage', 'LoadPipeline', 'PredictMap', 'MarigoldDepthPipeline', 'depth_estimation'),
+    ('DiffusersImage', 'LoadPipeline', 'UnconditionalGenerate', 'DDPMPipeline', 'unconditional_image'),
+    ('HuggingFaceTransformers', 'LoadDepthEstimationModel', 'PredictDepth', 'AutoModelForDepthEstimation', 'depth_estimation'),
+    ('HuggingFaceTransformers', 'LoadImageTextToTextModel', 'GenerateImageVideoText', 'AutoModelForImageTextToText', 'image_to_text'),
+    ('ImageOperations', 'ProcessImage', None, 'BuiltinImageOperationV1', 'image_crop'),
+])
+def test_ordinary_image_receipts_use_validated_consumer_task(module, loader, consumer, pipeline, task):
+    from modiff.execution_input_provenance import capture_generation_inputs, build_resolved_execution_inputs
+    from modiff.workflow_task_identity import graph_task_receipts
+
+    nodes = {'owner': {'module': 'modules.' + module, 'action': loader, 'params': {}}}
+    records = {'owner': capture_generation_inputs('owner', nodes['owner'], {'pipeline_class': pipeline})}
+    output_id = 'owner'
+    if consumer:
+        output_id = 'consumer'
+        nodes[output_id] = {'module': 'modules.' + module, 'action': consumer, 'params': {
+            'pipeline' if loader != 'LoadImageTextToTextModel' else 'model': {
+                'sourceId': 'owner', 'sourceKey': 'pipeline' if loader != 'LoadImageTextToTextModel' else 'model'}}}
+        records[output_id] = capture_generation_inputs(output_id, nodes[output_id], {'executed_task': task})
+    else:
+        records['owner'] = capture_generation_inputs('owner', nodes['owner'], {
+            'pipeline_class': pipeline, 'executed_task': task})
+    expected = [{'loaderId': 'owner', 'pipelineClass': pipeline, 'task': task}]
+    assert graph_task_receipts(nodes, records) == expected
+    receipt = build_resolved_execution_inputs({'nodes': nodes}, records, task_id='run', attempt_index=0, node_id=output_id)
+    assert receipt['graphTasks'] == expected
+    # An authoring label cannot rescue absent or conflicting consumed evidence.
+    nodes[output_id]['params']['mode'] = {'value': task}
+    records[output_id]['fields'].pop('executed_task')
+    assert graph_task_receipts(nodes, records)[0]['task'] is None
+    assert graph_task_receipts(nodes, {}) == []
+    if consumer:
+        records[output_id] = capture_generation_inputs(output_id, nodes[output_id], {'executed_task': 'video_to_video'})
+        assert graph_task_receipts(nodes, records)[0]['task'] is None
+
+
+
 def test_conflicting_explicit_modes_remain_unresolved_even_for_a_single_mode_profile(monkeypatch, tmp_path):
     from types import SimpleNamespace
     from modiff import workflow_auto_resource as planner

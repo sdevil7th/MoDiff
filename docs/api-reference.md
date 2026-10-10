@@ -2116,7 +2116,7 @@ not an unbounded per-iteration trace. This is not
 an assertion about internal library defaults, random seeds generated inside a
 library, output quality, model licensing, or publication qualification.
 
-For concrete Modular graphs, the receipt can also include `graphTasks`, a bounded
+For concrete Modular graphs and reviewed ordinary image actions, the receipt can include `graphTasks`, a bounded
 list of `{loaderId, pipelineClass, task}` records for captured model owners in the
 output's actual ancestry. This is recognition of the owner's reviewed operation
 and state-edge contract, separate from captured call arguments. `task: null`
@@ -2128,6 +2128,14 @@ may remain unresolved. Neither recognition nor the history label grants executio
 model support or resource qualification. Workflow Auto uses the same recognition
 when existing explicit mode/workflow bindings do not select a task, and still
 requires its ordinary exact-profile, artifact and memory checks.
+
+Ordinary image consumers capture `executed_task` at their validated call boundary.
+Whole Diffusers image owners, Transformers depth/image-caption owners and built-in
+image processors use that scoped evidence with their captured execution class.
+Inpaint and outpaint remain distinct when the loaded pipeline carries its exact
+mode; ambiguous legacy pipelines remain unlabeled. Mixed owners, missing records
+and truncated evidence cannot borrow a task from the form. These history receipts
+do not change Auto planning or establish support for another runtime.
 
 The allowlist is maintained in `modiff/execution_input_provenance.py` and the
 paired client `resolvedExecutionInputs.ts`. Capture never serializes arbitrary

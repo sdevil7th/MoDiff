@@ -36,6 +36,12 @@ FIELD_NAMES = {
     "use_kv_cache": "attentionContextReuse",
 }
 NODE_FIELD_NAMES = {
+    **{('DiffusersImage', action): {**FIELD_NAMES, 'executed_task': 'executedTask'}
+       for action in ('Generate', 'Edit', 'Inpaint', 'ControlGenerate', 'ControlEdit', 'ControlInpaint',
+                      'LayerDecompose', 'UnconditionalGenerate', 'PredictMap')},
+    **{('HuggingFaceTransformers', action): {**FIELD_NAMES, 'executed_task': 'executedTask'}
+       for action in ('PredictDepth', 'GenerateImageVideoText')},
+    ('ImageOperations', 'ProcessImage'): {**FIELD_NAMES, 'executed_task': 'executedTask'},
     ('ModularDiffusers', 'Guider'): {
         **FIELD_NAMES,
         'guider': 'guiderType', 'enabled': 'guidanceEnabled',

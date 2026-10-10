@@ -1415,6 +1415,7 @@ class GenerateImageVideoText(NodeBase):
         batch = _batch_to_device(processor(**processor_kwargs), device=receipt["runtime"]["device"])
         input_ids = batch["input_ids"]
         input_tokens = _shape(input_ids)[1]
+        self.record_generation_inputs({**kwargs, 'executed_task': 'image_to_text' if images and not video else None})
         with torch.inference_mode():
             sequences = _output_sequences(model.generate(**batch, **controls))
         output_tokens = _shape(sequences)[1]
@@ -1597,6 +1598,7 @@ class PredictDepth(NodeBase):
         image, _pixels = _normalized_media_item(images[0], field="image")
         resolution = _bounded_int(kwargs.get("processing_resolution"), field="processing_resolution", default=0, minimum=0, maximum=2048)
         match_input = _bounded_bool(kwargs.get("match_input_resolution"), field="match_input_resolution", default=True)
+        self.record_generation_inputs({**kwargs, 'executed_task': 'depth_estimation'})
         return predict_depth(
             model, processor, image, receipt=receipt, resolution=resolution, match_input=match_input,
             convention=kwargs.get("depth_convention", "model_default"),

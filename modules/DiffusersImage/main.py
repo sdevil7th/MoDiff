@@ -3810,8 +3810,8 @@ def build_qwen_pipeline_quantization_config(
 
     if "text_encoder" in components and find_spec("transformers") is None:
         raise RuntimeError(
-            "Text encoder quantization requires the reviewed Transformers + PEFT optional runtime. "
-            "Install and activate it through MoDiff's runtime manager."
+            "Transformers is a required MoDiff application dependency and is missing. "
+            "Repair the ordinary MoDiff installation and restart the app before quantizing the text encoder."
         )
 
     quant_mapping = {}
@@ -4732,6 +4732,7 @@ class UnconditionalGenerate(NodeBase):
                 call_kwargs["callback_steps"] = 1
         self._active_pipeline = pipeline
         try:
+            record_image_call_inputs(self, values, call_kwargs, adapter)
             result = pipeline(**call_kwargs)
         finally:
             self._active_pipeline = None
@@ -4826,7 +4827,7 @@ class PredictMap(NodeBase):
 
     def execute(self, **kwargs):
         pipeline = kwargs.get("pipeline")
-        _adapter, values = preflight_prediction_map_action(pipeline, kwargs)
+        adapter, values = preflight_prediction_map_action(pipeline, kwargs)
 
         import torch
 
@@ -4849,6 +4850,7 @@ class PredictMap(NodeBase):
         }
         self._active_pipeline = pipeline
         try:
+            record_image_call_inputs(self, values, call_kwargs, adapter)
             result = pipeline(**call_kwargs)
         finally:
             self._active_pipeline = None
