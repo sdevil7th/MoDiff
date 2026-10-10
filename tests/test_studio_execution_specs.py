@@ -52,6 +52,47 @@ def executable_graph_for_spec(spec):
 
 
 class StudioExecutionSpecTests(unittest.TestCase):
+    def test_empty_component_bindings_use_lists_for_multiple_choice_fields(self):
+        constants = {'empty': '', 'emptyList': []}
+        checked = set()
+        for spec in validate_studio_execution_specs(module_registry.MODULE_MAP):
+            roles = {role: key for role, key, _x, _y in spec['roles']}
+            for role, name, source in spec['bindings']:
+                if source not in constants:
+                    continue
+                module, action = roles[role].rsplit('.', 1)
+                field = module_registry.MODULE_MAP[module][action]['params'][name]
+                if not field.get('fieldOptions', {}).get('multiple') or 'options' not in field:
+                    continue
+                with self.subTest(spec=spec['id'], role=role, field=name):
+                    self.assertIsInstance(constants[source], list)
+                    self.assertEqual(constants[source], [])
+                checked.add(spec['modelType'])
+        self.assertTrue({'DDPMPipeline', 'DDIMPipeline', 'ConsistencyModelPipeline'} <= checked)
+
+    def test_published_canonical_multiple_choice_values_retain_list_shape(self):
+        root = Path(__file__).resolve().parents[1]
+        manifest = json.loads((root / 'data/workflow-library-manifest.json').read_text(encoding='utf-8'))
+        checked = 0
+        for row in manifest['workflows']:
+            graph = json.loads((root / 'data/graphs' / row['graphPath']).read_text(encoding='utf-8'))
+            for node in graph['nodes']:
+                data = node['data']
+                definition = module_registry.MODULE_MAP.get(data.get('module'), {}).get(data.get('action'), {})
+                for name, field in definition.get('params', {}).items():
+                    if not field.get('fieldOptions', {}).get('multiple') or 'options' not in field:
+                        continue
+                    saved = data.get('params', {}).get(name)
+                    if not saved:
+                        continue
+                    with self.subTest(workflow=row['id'], node=node['id'], field=name):
+                        value = saved.get('value', saved.get('default'))
+                        self.assertIsInstance(value, list)
+                        for option in value:
+                            self.assertIn(option, field['options'])
+                    checked += 1
+        self.assertGreaterEqual(checked, 3)
+
     def test_published_canonical_recipes_use_the_registered_denoiser_cache_enum(self):
         root = Path(__file__).resolve().parents[1]
         manifest = json.loads((root / 'data/workflow-library-manifest.json').read_text(encoding='utf-8'))
@@ -2262,7 +2303,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(spec["executionPath"], "direct-diffusers-video")
         self.assertEqual(spec["defaultRepo"], "stabilityai/stable-video-diffusion-img2vid-xt-1-1")
         self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
-        self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+        self.assertIn(("diffusersQuantization", "components", "emptyList"), spec["bindings"])
         self.assertIn(("diffusersRecipe", "attention_backend", "nativeMath"), spec["bindings"])
         self.assertIn(("wanGenerate", "prompt", "empty"), spec["bindings"])
         self.assertIn(("wanGenerate", "negative_prompt", "empty"), spec["bindings"])
@@ -2276,7 +2317,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(spec["executionProfileId"], "cogvideox-2b:direct")
         self.assertEqual(spec["defaultRepo"], "zai-org/CogVideoX-2b")
         self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
-        self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+        self.assertIn(("diffusersQuantization", "components", "emptyList"), spec["bindings"])
         self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])
         self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
@@ -2416,7 +2457,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(spec["executionProfileId"], "allegro:direct")
         self.assertEqual(spec["defaultRepo"], "rhymes-ai/Allegro")
         self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
-        self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+        self.assertIn(("diffusersQuantization", "components", "emptyList"), spec["bindings"])
         self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])
         self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
@@ -2428,7 +2469,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(spec["executionProfileId"], "latte:direct")
         self.assertEqual(spec["defaultRepo"], "maxin-cn/Latte-1")
         self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
-        self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+        self.assertIn(("diffusersQuantization", "components", "emptyList"), spec["bindings"])
         self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])
         self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
@@ -2440,7 +2481,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
         self.assertEqual(spec["executionProfileId"], "mochi:direct")
         self.assertEqual(spec["defaultRepo"], "genmo/mochi-1-preview")
         self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
-        self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+        self.assertIn(("diffusersQuantization", "components", "emptyList"), spec["bindings"])
         self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])
         self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
         graph, hints = executable_graph_for_spec(spec)
@@ -2458,7 +2499,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 self.assertEqual(spec["executionProfileId"], profile_id)
                 self.assertEqual(spec["defaultRepo"], "Efficient-Large-Model/SANA-Video_2B_480p_diffusers")
                 self.assertIn(("wanPipeline", "revision", "defaultRevision"), spec["bindings"])
-                self.assertIn(("diffusersQuantization", "components", "empty"), spec["bindings"])
+                self.assertIn(("diffusersQuantization", "components", "emptyList"), spec["bindings"])
                 self.assertIn(("diffusersRecipe", "vae_tiling", "false"), spec["bindings"])
                 self.assertNotIn(("wanGenerate", "scheduler_flow_shift", "shift"), spec["bindings"])
                 graph, hints = executable_graph_for_spec(spec)

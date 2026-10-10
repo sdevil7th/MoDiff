@@ -405,6 +405,18 @@ class NodeBase:
                     value = self.default_params[key]['default'] if 'default' in self.default_params[key] else None
                     params[key] = value
 
+                if (
+                    isinstance(value, str) and value == ''
+                    and self.default_params[key].get('fieldOptions', {}).get('multiple')
+                    and isinstance(self.default_params[key].get('options'), (list, dict))
+                    and '' not in self.default_params[key]['options']
+                ):
+                    # Historical drafts encoded a cleared multiple selection as
+                    # text. Preserve its empty meaning without accepting any
+                    # nonempty invalid option or changing a declared blank choice.
+                    value = []
+                    params[key] = value
+
                 if 'type' in self.default_params[key]:
                     type = self.default_params[key]['type']
                     if isinstance(type, list):

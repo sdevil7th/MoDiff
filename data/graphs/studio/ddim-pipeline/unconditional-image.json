@@ -1230,7 +1230,7 @@
               }
             ],
             "type": "string",
-            "value": ""
+            "value": []
           },
           "resolved_artifact": {
             "display": "output",

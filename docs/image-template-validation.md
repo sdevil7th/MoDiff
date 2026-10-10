@@ -315,3 +315,11 @@ Record the actual Windows OS, GPU, VRAM, RAM, driver, runtime, model revisions,
 plans, consumed settings and raw outputs. A Linux GPU run, a mocked Windows test
 or a successful compiler import does not close this platform gate. Keep explicit
 per-route failures and capacity limits; do not change default recipes to hide them.
+
+Empty component selections are lists (`[]`), including when quantization is
+disabled. Execution specs use the typed `emptyList` binding rather than the text
+`empty` binding for multiple-choice components. The node boundary accepts the
+historical blank-string representation only for a multiple-choice field that
+does not declare a blank option; it records the consumed empty list. Nonempty
+unknown selections, single-choice blanks and declared option constraints remain
+strict. Canonical recipe repairs must preserve all other controls, pins and wires.

@@ -412,7 +412,7 @@
               }
             ],
             "type": "string",
-            "value": ""
+            "value": []
           },
           "dtype": {
             "default": "bfloat16",

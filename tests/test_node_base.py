@@ -19,6 +19,50 @@ from modiff.NodeBase import NodeBase, deep_equal, node_message_context  # noqa: 
 
 
 class NodeBaseDeepEqualTests(unittest.TestCase):
+    def test_legacy_empty_multiple_selection_is_empty_without_accepting_invalid_options(self):
+        class ComponentConsumer(NodeBase):
+            def execute(self, **kwargs):
+                self.received = kwargs['components']
+                return {}
+
+        module = '.'.join(ComponentConsumer.__module__.split('.')[:-1])
+        definition = {module: {'ComponentConsumer': {'params': {
+            'components': {'type': 'string', 'options': ['transformer', 'vae'],
+                           'fieldOptions': {'multiple': True}, 'default': []},
+        }}}}
+        with patch('modiff.NodeBase._module_map', return_value=definition):
+            for value in ('', [], None, ['transformer']):
+                with self.subTest(value=value):
+                    node = ComponentConsumer('legacy-empty-components')
+                    supplied = {'components': value}
+                    node(**supplied)
+                    self.assertEqual(node.received, ['transformer'] if value == ['transformer'] else [])
+                    self.assertEqual(supplied, {'components': value})
+            for value in ('invalid', ' ', ['transformer', 'invalid']):
+                with self.subTest(value=value):
+                    node = ComponentConsumer('invalid-components')
+                    with self.assertRaisesRegex(ValueError, 'Invalid option for components'):
+                        node(components=value)
+                    self.assertFalse(hasattr(node, 'received'))
+
+    def test_declared_empty_option_and_single_selector_are_not_normalized_to_empty_lists(self):
+        class SelectorConsumer(NodeBase):
+            def execute(self, **kwargs):
+                self.received = kwargs['choice']
+                return {}
+
+        module = '.'.join(SelectorConsumer.__module__.split('.')[:-1])
+        for multiple in (False, True):
+            with self.subTest(multiple=multiple):
+                definition = {module: {'SelectorConsumer': {'params': {
+                    'choice': {'type': 'string', 'options': ['', 'selected'],
+                               'fieldOptions': {'multiple': multiple}, 'default': 'selected'},
+                }}}}
+                with patch('modiff.NodeBase._module_map', return_value=definition):
+                    node = SelectorConsumer('declared-empty-option')
+                    node(choice='')
+                    self.assertEqual(node.received, '')
+
     def test_snapshot_bounds_branching_cycles_and_detects_nested_edits(self):
         from modiff.node_cache_identity import input_snapshot
         value = {'items': [1]}

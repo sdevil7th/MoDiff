@@ -88,7 +88,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "1b26825dbd79d6dbaf95dd5a4c99f54b597ba85567995fa9851ecade5295a0cf",
+      "graphHash": "acc05da225bf77e85d83e08dc07869ba6f0be3765ba3db69112f80279cb6d2d5",
       "graphPath": "studio/allegro-pipeline/text-to-video.json",
       "id": "AllegroPipeline:text_to_video",
       "mode": "text_to_video",
@@ -99,7 +99,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "c622fb3f3d7e2d6610c99950ff161da565041fc8ca0c1e1d143cc5aac7dde2a0",
+      "graphHash": "6a28c8772ec7ddc6b46371415601fef5fb5e539288a108d7dee322cd6faecc5b",
       "graphPath": "studio/animate-diff-control-net-pipeline/control-to-video.json",
       "id": "AnimateDiffControlNetPipeline:control_to_video",
       "mode": "control_to_video",
@@ -110,7 +110,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "400920045f0721d5cbcb6b998fb1ce2f50b28941e45d0d38449dc4681f302bcd",
+      "graphHash": "3dedf345bd395ec117fc62509dfcb495e7511caf4a7548eeee5fd54164d4d71b",
       "graphPath": "studio/animate-diff-pag-pipeline/text-to-video.json",
       "id": "AnimateDiffPAGPipeline:text_to_video",
       "mode": "text_to_video",
@@ -121,7 +121,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "48fe1e6332fe0b264bdb490855e9963bba00026b4d62573d10efacf45ec0df73",
+      "graphHash": "edb7d98df3e6d04d7322b0ca6a472e7c25f0483cf4596e54459f513b8b1118df",
       "graphPath": "studio/animate-diff-pipeline/text-to-video.json",
       "id": "AnimateDiffPipeline:text_to_video",
       "mode": "text_to_video",
@@ -132,7 +132,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "198481430613e5ea931fa24c7e0a0d4a96b8ccbbee25724a3382771ba6bb4cc8",
+      "graphHash": "5f1bee4be4569336f16c38aa23ac92d6b5d6be013e478bb7453de8a5373e0f5f",
       "graphPath": "studio/animate-diff-video-to-video-control-net-pipeline/control-video-to-video.json",
       "id": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
       "mode": "control_video_to_video",
@@ -143,7 +143,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "dbe83fdb9d6cfe2e390d8c46475f608745e67ebd291aed07a6e7ddb3f22540fc",
+      "graphHash": "80ddf4fb49b6b0ff44503ca19d0dd55bf4c97217948c702dbad596b915f5664f",
       "graphPath": "studio/animate-diff-video-to-video-pipeline/video-to-video.json",
       "id": "AnimateDiffVideoToVideoPipeline:video_to_video",
       "mode": "video_to_video",
@@ -154,7 +154,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "ec78786fb350afbd18869b02afd3c20bd728ff0adb30bfc82b053d321409bcd4",
+      "graphHash": "586e3e3b69a8c04316d5ec271b984884f7300bc3490bf00118caedda6d55ce80",
       "graphPath": "studio/animate-lcm-pipeline/text-to-video.json",
       "id": "AnimateLCMPipeline:text_to_video",
       "mode": "text_to_video",
@@ -451,7 +451,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "89dc18421080e3d859322e4909ab41852544b3e97cc0dc728d8347e466e3fb7f",
+      "graphHash": "06d741c8e687d2a305222d32e04e42307021a4e6dedbea2323f43e851f9f2677",
       "graphPath": "studio/cog-video-x-pipeline/text-to-video.json",
       "id": "CogVideoXPipeline:text_to_video",
       "mode": "text_to_video",
@@ -462,7 +462,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "43ffb2496ac8030a57a03fb351f056ad5d6f9878d50abe736b50b1201f68483d",
+      "graphHash": "1c7ecbbc85f354360673bc56f7cf59fa18cf53dea470477901ed6bced448b985",
       "graphPath": "studio/cog-video-x-video-to-video-pipeline/video-to-video.json",
       "id": "CogVideoXVideoToVideoPipeline:video_to_video",
       "mode": "video_to_video",
@@ -495,7 +495,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "6492991b2db9723f5c04102fad89eecc7fb589aa35ca960a44c71ba643bce082",
+      "graphHash": "d3a63e94386c6e833fedd2b2ac2c96911bccac7c415ff44b747375bf969d6280",
       "graphPath": "studio/consistency-model-pipeline/unconditional-image.json",
       "id": "ConsistencyModelPipeline:unconditional_image",
       "mode": "unconditional_image",
@@ -519,7 +519,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "f407f50919e092b31a7f25828eb537d497ea125c058d92c9195f0728fbbf9fff",
+      "graphHash": "01cc6213daa98b045bcc448f12ed5eb6fef2f658cc1801135671ee31eb77ae31",
       "graphPath": "studio/ddim-pipeline/unconditional-image.json",
       "id": "DDIMPipeline:unconditional_image",
       "mode": "unconditional_image",
@@ -530,7 +530,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "01c7db757569d7422f6d1e69bb15058f1ffc70c33764a0ea75483dd707e164df",
+      "graphHash": "9e7f94fc98bfefe14c82d08f263c40820c40c832cd6960ff97543b4509a7d1b8",
       "graphPath": "studio/ddpm-pipeline/unconditional-image.json",
       "id": "DDPMPipeline:unconditional_image",
       "mode": "unconditional_image",
@@ -1345,7 +1345,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "8e3f511b31acd09ada2593eb8887805008626d612108c04857422825a409eec9",
+      "graphHash": "e6d9dc9edddd4efe5186cf152749c17a37e7d668b05ad7aedd9cd9f7e3438cd3",
       "graphPath": "studio/latte-pipeline/text-to-video.json",
       "id": "LattePipeline:text_to_video",
       "mode": "text_to_video",
@@ -1435,7 +1435,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "81702273ec3340b01500d98b487268110774360e5b583d0d28949120ab7c7638",
+      "graphHash": "840a2cf21e3489c69bebdc2fdccab1e8a71848a491467f31e78c070f0ba56f1d",
       "graphPath": "studio/mochi-pipeline/text-to-video.json",
       "id": "MochiPipeline:text_to_video",
       "mode": "text_to_video",
@@ -1732,7 +1732,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "269686882ea0a6a506a009af2747c83e3ee1579798b6918c411a630431584213",
+      "graphHash": "027ade4a9594743485b4176bc1a018871cd69ee69cf9ed029a00baee21c3ee46",
       "graphPath": "studio/sana-image-to-video-pipeline/image-to-video.json",
       "id": "SanaImageToVideoPipeline:image_to_video",
       "mode": "image_to_video",
@@ -1787,7 +1787,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "aa1faeb049abadb43a037cc70a3d25dbdd70b354a08dabff5e6fcfdd5e7ebe85",
+      "graphHash": "776a41955b7d3a12298f3edb9e2a198a596fa0cd36ab91c53f020c0d09ab0bf8",
       "graphPath": "studio/sana-video-pipeline/text-to-video.json",
       "id": "SanaVideoPipeline:text_to_video",
       "mode": "text_to_video",
@@ -1798,7 +1798,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "8daae7cf3f9240ed1f48430815693f01cafb3d9e4a3bba076c1454960e3a3a0f",
+      "graphHash": "9e7414d85a616a30f1a91e7b69b8a8a6e56ea6c27783f4419eaa499ae5e33db1",
       "graphPath": "studio/shap-e-pipeline/text-to-3d.json",
       "id": "ShapEPipeline:text_to_3d",
       "mode": "text_to_3d",
@@ -2117,7 +2117,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "af888bb621931ca767664a4974ee619fa63bdb56731c5df6122747747f8fff75",
+      "graphHash": "9d7dcff585e2d46f200a5654331643b2f0447546242f14ce397d80366b6001b0",
       "graphPath": "studio/stable-video-diffusion-pipeline/image-to-video.json",
       "id": "StableVideoDiffusionPipeline:image_to_video",
       "mode": "image_to_video",
@@ -2365,7 +2365,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:e781ce8aab126ac4b79ef8bcca726978932b772f5a82f515e682dcc8a0ee836c",
+  "contentHash": "sha256:7ae0eab54f53ffb75a58a72565d4ea2f74720d06acab74829209b4b5ec7b950d",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -9796,7 +9796,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "026bdc9c8780343913de9058df52b8774109db7ea920d2efb1d232188c46d420",
+    "templateBundleSha256": "92d797e90e7b0791fb57cb98fce6ed1bdaf86e2496b8f4914a4cc711ad83403c",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {

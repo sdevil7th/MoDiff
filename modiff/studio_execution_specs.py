@@ -4189,12 +4189,10 @@ _STABLE_VIDEO_DIFFUSION_GRAPH_BINDINGS = tuple(
     (
         role,
         param,
-        "empty"
-        if (role, param)
-        in {
-            ("diffusersQuantization", "components"),
-            ("diffusersRecipe", "attention_components"),
-        }
+        "emptyList"
+        if (role, param) == ("diffusersQuantization", "components")
+        else "empty"
+        if (role, param) == ("diffusersRecipe", "attention_components")
         else "nativeMath"
         if (role, param) == ("diffusersRecipe", "attention_backend")
         else "denoiserCache"
@@ -4217,12 +4215,10 @@ _ANIMATEDIFF_GRAPH_BINDINGS = tuple(
     (
         role,
         param,
-        "empty"
-        if (role, param)
-        in {
-            ("diffusersQuantization", "components"),
-            ("diffusersRecipe", "attention_components"),
-        }
+        "emptyList"
+        if (role, param) == ("diffusersQuantization", "components")
+        else "empty"
+        if (role, param) == ("diffusersRecipe", "attention_components")
         else "nativeMath"
         if (role, param) == ("diffusersRecipe", "attention_backend")
         else "denoiserCache"
@@ -4288,12 +4284,10 @@ _COGVIDEOX_GRAPH_BINDINGS = tuple(
     (
         role,
         param,
-        "empty"
-        if (role, param)
-        in {
-            ("diffusersQuantization", "components"),
-            ("diffusersRecipe", "attention_components"),
-        }
+        "emptyList"
+        if (role, param) == ("diffusersQuantization", "components")
+        else "empty"
+        if (role, param) == ("diffusersRecipe", "attention_components")
         else "nativeMath"
         if (role, param) == ("diffusersRecipe", "attention_backend")
         else "denoiserCache"
@@ -4322,12 +4316,10 @@ _SANA_VIDEO_I2V_GRAPH_BINDINGS = tuple(
     (
         role,
         param,
-        "empty"
-        if (role, param)
-        in {
-            ("diffusersQuantization", "components"),
-            ("diffusersRecipe", "attention_components"),
-        }
+        "emptyList"
+        if (role, param) == ("diffusersQuantization", "components")
+        else "empty"
+        if (role, param) == ("diffusersRecipe", "attention_components")
         else "nativeMath"
         if (role, param) == ("diffusersRecipe", "attention_backend")
         else "denoiserCache"
@@ -5487,7 +5479,7 @@ _THREE_D_GRAPH_EDGES = (
 )
 _THREE_D_GRAPH_BINDINGS = (
     ("diffusersQuantization", "backend", "quantizationMode"),
-    ("diffusersQuantization", "components", "empty"),
+    ("diffusersQuantization", "components", "emptyList"),
     ("diffusersQuantization", "dtype", "dtype"),
     ("diffusersRecipe", "device_map", "deviceMapNone"),
     ("diffusersRecipe", "offload_mode", "offloadMode"),
@@ -5562,7 +5554,7 @@ _UNCONDITIONAL_GRAPH_BINDINGS = (
     ("diffusersImagePipeline", "dtype", "dtype"),
     ("diffusersImagePipeline", "device", "device"),
     ("diffusersImagePipeline", "quantization_mode", "quantizationMode"),
-    ("diffusersImagePipeline", "quantized_components", "empty"),
+    ("diffusersImagePipeline", "quantized_components", "emptyList"),
     ("diffusersImagePipeline", "auto_offload", "autoOffload"),
     ("diffusersImagePipeline", "offload_mode", "offloadMode"),
     ("diffusersUnconditionalGenerate", "batch_size", "batchSize"),
