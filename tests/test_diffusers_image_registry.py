@@ -1903,6 +1903,9 @@ class DiffusersImageRegistryTests(unittest.TestCase):
                     {"_execution_device": "cpu", "__call__": call},
                 )
                 pipeline = tag_test_image_pipeline(fake_type(), pipeline_name, mode)
+                if adapter.resize_reference_to_output:
+                    from diffusers.image_processor import VaeImageProcessor
+                    pipeline.image_processor = VaeImageProcessor(vae_scale_factor=8)
                 # This is a signature fixture, not a model proof. Mirror the
                 # explicit mixed-dtype encoder boundary used by current adapters.
                 if adapter.prompt_embedding_dtype_component is not None:

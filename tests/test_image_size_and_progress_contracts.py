@@ -88,3 +88,68 @@ def test_resolution_binning_policy_rejects_non_boolean_and_missing_upstream_cont
         replace(adapter, use_resolution_binning=0)
     with pytest.raises(ValueError, match="resolution-binning control"):
         adapter.apply_generation_parameters(lambda: None, {"num_inference_steps": 25}, {})
+
+
+@pytest.mark.parametrize("source_size,output_size", [((512, 512), (640, 640)), ((640, 640), (640, 640)), ((512, 512), (768, 640))])
+def test_z_image_edit_matches_source_latents_to_explicit_output_without_changing_recipe(source_size, output_size):
+    from diffusers.image_processor import VaeImageProcessor
+
+    class Pipeline:
+        image_processor = VaeImageProcessor(vae_scale_factor=8)
+
+        def __call__(self, *, image, width, height):
+            pass
+
+    pipeline = Pipeline()
+    pipeline.image_processor.resize = Mock(wraps=pipeline.image_processor.resize)
+    image = Image.new("RGB", source_size, "blue")
+    before = image.tobytes()
+    values = {"num_inference_steps": 8, "width": output_size[0], "height": output_size[1]}
+    target = {"image": image}
+    get_image_pipeline_adapter("ZImageImg2ImgPipeline").apply_generation_parameters(pipeline, values, target)
+    # The reviewed SDK preprocesses without width/height before separately
+    # allocating output-sized noise. Reproduce that exact geometry boundary.
+    tensor = pipeline.image_processor.preprocess(target["image"])
+    assert tuple(tensor.shape[-2:]) == (target["height"], target["width"])
+    assert values == {"num_inference_steps": 8, "width": output_size[0], "height": output_size[1]}
+    assert image.size == source_size and image.tobytes() == before
+    if source_size == output_size:
+        pipeline.image_processor.resize.assert_called_once()  # SDK preprocess only
+        assert target["image"] is image
+    else:
+        assert pipeline.image_processor.resize.call_args_list[0].kwargs == {
+            "height": output_size[1], "width": output_size[0],
+        }
+
+
+@pytest.mark.parametrize("name", ["ZImageInpaintPipeline", "Flux2KleinPipeline", "Flux2KleinInpaintPipeline", "QwenImageEditPipeline"])
+def test_other_image_adapters_keep_their_native_input_resolution_policy(name):
+    class Pipeline:
+        image_processor = Mock()
+
+        def __call__(self, *, image, width, height):
+            pass
+
+    pipeline = Pipeline()
+    image = Image.new("RGB", (512, 512), "blue")
+    target = {"image": image}
+    get_image_pipeline_adapter(name).apply_generation_parameters(
+        pipeline, {"num_inference_steps": 8, "width": 640, "height": 640}, target,
+    )
+    assert target["image"] is image
+    pipeline.image_processor.resize.assert_not_called()
+
+
+def test_z_image_edit_requires_its_reviewed_resize_boundary_for_different_output_size():
+    class Pipeline:
+        def __call__(self, *, image, width, height):
+            pass
+
+    adapter = get_image_pipeline_adapter("ZImageImg2ImgPipeline")
+    with pytest.raises(ValueError, match="exact boolean"):
+        replace(adapter, resize_reference_to_output=1)
+    with pytest.raises(RuntimeError, match="reviewed image resize boundary"):
+        adapter.apply_generation_parameters(
+            Pipeline(), {"num_inference_steps": 8, "width": 640, "height": 640},
+            {"image": Image.new("RGB", (512, 512), "blue")},
+        )

@@ -169,6 +169,7 @@ class ImagePipelineAdapter:
     image_parameter: str = "image"
     reference_prompt_placeholders: bool = False
     max_input_image_size: int | None = None
+    resize_reference_to_output: bool = False
     max_sequence_length: int = 512
     max_sequence_length_parameter: str = "max_sequence_length"
     max_reference_images: int = 1
@@ -293,6 +294,8 @@ class ImagePipelineAdapter:
             raise ValueError("Image prompt rewriting must be an exact boolean when configured.")
         if self.use_resolution_binning is not None and type(self.use_resolution_binning) is not bool:
             raise ValueError("Image resolution binning must be an exact boolean when configured.")
+        if type(self.resize_reference_to_output) is not bool:
+            raise ValueError("Reference resize policy must be an exact boolean.")
         if self.clean_caption is not None and type(self.clean_caption) is not bool:
             raise ValueError("Image caption cleaning must be an exact boolean when configured.")
         if self.cfg_trunc_ratio is not None and not 0.0 <= self.cfg_trunc_ratio <= 1.0:
@@ -442,6 +445,17 @@ class ImagePipelineAdapter:
             target["cfg_normalization"] = self.cfg_normalization
         if self.max_input_image_size is not None and supports_arg(pipeline, "max_input_image_size"):
             target["max_input_image_size"] = self.max_input_image_size
+        if self.resize_reference_to_output and self.image_parameter in target:
+            image = target[self.image_parameter]
+            width, height = target.get("width"), target.get("height")
+            if isinstance(image, Image.Image) and width is not None and height is not None and image.size != (width, height):
+                # The reviewed Z-Image edit SDK preprocesses at source size but
+                # allocates noise at the explicit output size. Use its own
+                # processor to align those latents, preserving the recipe.
+                resize = getattr(getattr(pipeline, "image_processor", None), "resize", None)
+                if not callable(resize):
+                    raise RuntimeError(f"{self.pipeline_class} did not expose its reviewed image resize boundary.")
+                target[self.image_parameter] = resize(image, height=height, width=width)
 
     @contextmanager
     def prompt_encoding_context(self, pipeline: Any):
@@ -655,6 +669,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         Z_IMAGE_REPO,
         artifact_pipeline_classes=("ZImagePipeline", "ZImageImg2ImgPipeline"),
         safe_serialization_required=True,
+        resize_reference_to_output=True,
     ),
     "ZImageInpaintPipeline": ImagePipelineAdapter(
         "ZImageInpaintPipeline",

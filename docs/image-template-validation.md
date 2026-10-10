@@ -323,3 +323,10 @@ historical blank-string representation only for a multiple-choice field that
 does not declare a blank option; it records the consumed empty list. Nonempty
 unknown selections, single-choice blanks and declared option constraints remain
 strict. Canonical recipe repairs must preserve all other controls, pins and wires.
+
+The reviewed Z-Image image-edit pipeline preprocesses source images at their input
+size while allocating noise from the requested width and height. Its adapter uses
+the installed Diffusers image processor to resize a differently sized source to
+those explicit dimensions before invocation. This preserves the requested recipe
+and original source object. Other adapters retain their native resolution policy;
+source-size and actual-output receipts must still be recorded separately.
