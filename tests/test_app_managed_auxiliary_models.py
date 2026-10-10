@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import torch
+from PIL import Image
 from diffusers import FlowMatchEulerDiscreteScheduler
 from safetensors.numpy import save_file
 
@@ -225,6 +226,74 @@ class AppManagedAuxiliaryModelTests(unittest.TestCase):
 
         self.assertEqual(tuple(actual.shape), (1, 3, 22, 26))
         self.assertTrue(torch.equal(actual, expected))
+
+    def test_upscaler_reports_ordered_frame_progress_without_changing_pixels(self):
+        class NearestUpscaler:
+            device = "cpu"
+
+            def __call__(self, image):
+                return torch.nn.functional.interpolate(image, scale_factor=2, mode="nearest")
+
+        with tempfile.TemporaryDirectory() as directory:
+            weight = Path(directory) / "cached.pth"
+            weight.touch()
+            node = Upscaler("batch-progress")
+            node._model_path, node._model = str(weight), NearestUpscaler()
+            node.mm_add = MagicMock()
+            node.mm_exec = lambda function, _device, **_kwargs: function()
+            node.progress = MagicMock()
+            images = [Image.new("RGB", (5, 3), color) for color in ("red", "blue")]
+            result = node.execute(image=images, model_id=str(weight), device="cpu", tile_size=2)["output"]
+
+        self.assertEqual([image.size for image in result], [(10, 6), (10, 6)])
+        self.assertEqual([image.getpixel((3, 2)) for image in result], [(255, 0, 0), (0, 0, 255)])
+        updates = node.progress.call_args_list
+        self.assertEqual([call.kwargs.get("current_step") for call in updates], [0, 1, 2])
+        self.assertEqual([call.kwargs.get("total_steps") for call in updates], [2, 2, 2])
+        self.assertEqual([call.args[0] for call in updates], [0, 50, 100])
+        self.assertTrue(all(call.kwargs.get("phase") == "upscaling" for call in updates))
+
+    def test_upscaler_honors_interrupt_before_the_first_model_forward(self):
+        with tempfile.TemporaryDirectory() as directory:
+            weight = Path(directory) / "cached.pth"
+            weight.touch()
+            node = Upscaler("cancel-before-upscale")
+            model = MagicMock(device="cpu")
+            node._model_path, node._model = str(weight), model
+            node.mm_add = MagicMock()
+            node.mm_exec = lambda function, _device, **_kwargs: function()
+            node._interrupt = True
+            with self.assertRaises(InterruptedError):
+                node.execute(image=Image.new("RGB", (5, 3)), model_id=str(weight), device="cpu", tile_size=2)
+            model.assert_not_called()
+
+    def test_upscaler_stops_after_the_current_tile_or_untiled_forward(self):
+        for tile_size in (0, 2):
+            with self.subTest(tile_size=tile_size), tempfile.TemporaryDirectory() as directory:
+                weight = Path(directory) / "cached.pth"
+                weight.touch()
+                node = Upscaler("cancel-after-upscale-tile")
+                forwards = []
+
+                class InterruptingUpscaler:
+                    device = "cpu"
+
+                    def __call__(self, image):
+                        forwards.append(tuple(image.shape))
+                        node._interrupt = True
+                        return torch.nn.functional.interpolate(image, scale_factor=2, mode="nearest")
+
+                node._model_path, node._model = str(weight), InterruptingUpscaler()
+                node.mm_add = MagicMock()
+                node.mm_exec = lambda function, _device, **_kwargs: function()
+                node.progress = MagicMock()
+                with self.assertRaises(InterruptedError):
+                    node.execute(
+                        image=[Image.new("RGB", (5, 3)), Image.new("RGB", (5, 3))],
+                        model_id=str(weight), device="cpu", tile_size=tile_size,
+                    )
+                self.assertEqual(len(forwards), 1)
+                self.assertFalse(any(call.kwargs.get("current_step", 0) > 0 for call in node.progress.call_args_list))
 
 
 if __name__ == "__main__":

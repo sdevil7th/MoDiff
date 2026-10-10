@@ -5044,8 +5044,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
     def _generated_file_preview(self, value, *, node_id, field_key, index, display):
         """Publish executor-produced media without widening HTTP file access.
 
-        Only the native dispatch path may copy from an operator-configured
-        output folder. HTTP history/share requests retain work/data boundaries.
+        Only the native dispatch path may copy from configured output folders
+        or retained video assets. HTTP history/share requests retain work/data
+        boundaries and do not gain direct access to temporary media.
         """
         preview = file_backed_media_preview(value)
         if not preview or not preview.startswith("/file?"):
@@ -5056,7 +5057,12 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         source = Path(raw_path).expanduser().resolve(strict=False)
         root_key = {"ui_audio": "audio", "ui_video": "videos"}.get(display)
         output_root = CONFIG.paths.get(root_key) if root_key else None
-        if not output_root or not self._path_within(source, output_root) or not source.is_file():
+        output_roots = [output_root] if output_root else []
+        if display == "ui_video":
+            from modiff.media_assets import asset_root
+
+            output_roots.append(asset_root())
+        if not any(self._path_within(source, root) for root in output_roots) or not source.is_file():
             return preview
         if source.stat().st_size > MAX_WORKFLOW_SHARE_MEDIA_BYTES:
             raise ValueError("Generated preview media exceeds the 256 MB retention limit.")

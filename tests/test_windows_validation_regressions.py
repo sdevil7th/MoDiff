@@ -37,11 +37,17 @@ def test_fresh_legacy_graph_library_is_empty_without_get_mutation(tmp_path):
             asyncio.run(server.listgraphs(SimpleNamespace()))
 
 
-@pytest.mark.parametrize("kind,folder,suffix", [("audio", "audio", ".wav"), ("video", "videos", ".mp4")])
+@pytest.mark.parametrize("kind,folder,suffix", [
+    ("audio", "audio", ".wav"), ("video", "videos", ".mp4"), ("video", "retained", ".mp4"),
+])
 def test_generated_media_in_separate_output_roots_is_served_and_retained(tmp_path, kind, folder, suffix):
     work, data, media = (tmp_path / name for name in ("work", "data", folder))
+    paths = {folder: str(media)}
+    if folder == "retained":
+        media = tmp_path / "temp" / "media_assets" / "media-task"
+        paths = {"temp": str(tmp_path / "temp")}
     for root in (work, data, media):
-        root.mkdir()
+        root.mkdir(parents=True)
     source = media / f"output{suffix}"
     source.write_bytes(b"deterministic media fixture")
 
@@ -55,7 +61,7 @@ def test_generated_media_in_separate_output_roots_is_served_and_retained(tmp_pat
         "preview": {"type": "url", "display": f"ui_{kind}", "dataSource": "file"},
     }}}}
     with patch("modiff.NodeBase._module_map", return_value=definition), patch.dict(
-        "modiff.server.CONFIG.paths", {folder: str(media)}
+        "modiff.server.CONFIG.paths", paths
     ), patch("modiff.media_assets.probe_video_file", return_value={}):
         server = WebServer(modules=definition, work_dir=str(work), data_dir=str(data))
         server.node_cache["preview"] = MediaProducer("preview")
@@ -93,11 +99,18 @@ def test_missing_hub_cache_is_normal_but_real_scan_errors_are_logged(tmp_path):
         assert "denied" in error.call_args.args[0]
 
 
-@pytest.mark.parametrize("kind,folder,suffix", [("ui_audio", "audio", ".wav"), ("ui_video", "videos", ".mp4")])
+@pytest.mark.parametrize("kind,folder,suffix", [
+    ("ui_audio", "audio", ".wav"), ("ui_video", "videos", ".mp4"), ("ui_video", "retained", ".mp4"),
+])
 def test_generated_publication_rejects_sibling_and_resolved_link_escape(tmp_path, kind, folder, suffix):
     work, data, media, sibling = (tmp_path / name for name in ("work", "data", folder, f"{folder}-secret"))
+    paths = {folder: str(media)}
+    if folder == "retained":
+        media = tmp_path / "temp" / "media_assets"
+        sibling = tmp_path / "temp" / "media_assets-secret"
+        paths = {"temp": str(tmp_path / "temp")}
     for root in (work, data, media, sibling):
-        root.mkdir()
+        root.mkdir(parents=True)
     secret = sibling / f"secret{suffix}"
     secret.write_bytes(b"private")
     server = WebServer(modules={}, work_dir=str(work), data_dir=str(data))
@@ -109,8 +122,24 @@ def test_generated_publication_rejects_sibling_and_resolved_link_escape(tmp_path
             return secret
         return original_resolve(path, strict=strict)
 
-    with patch.dict("modiff.server.CONFIG.paths", {folder: str(media)}), patch.object(Path, "resolve", resolve_link):
+    with patch.dict("modiff.server.CONFIG.paths", paths), patch.object(Path, "resolve", resolve_link):
         for source in (secret, media / ".." / sibling.name / secret.name, media / f"linked{suffix}"):
             url = server._generated_file_preview(str(source), node_id="n", field_key="preview", index=0, display=kind)
             assert server._share_media_bytes_from_url(url) is None
+    assert not server._studio_outputs_dir().exists()
+
+
+def test_generated_retained_video_publication_does_not_admit_arbitrary_temp_files(tmp_path):
+    work, data, temporary = (tmp_path / name for name in ("work", "data", "temp"))
+    for root in (work, data, temporary):
+        root.mkdir()
+    source = temporary / "private.mp4"
+    source.write_bytes(b"private temporary file")
+    server = WebServer(modules={}, work_dir=str(work), data_dir=str(data))
+    server.current_task = {"task_id": "temp-boundary"}
+    with patch.dict("modiff.server.CONFIG.paths", {"temp": str(temporary)}):
+        url = server._generated_file_preview(
+            str(source), node_id="n", field_key="preview", index=0, display="ui_video",
+        )
+        assert server._share_media_bytes_from_url(url) is None
     assert not server._studio_outputs_dir().exists()

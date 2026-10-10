@@ -5,6 +5,7 @@ from os import path
 from pathlib import Path
 import shutil
 import tempfile
+import time
 
 logger = logging.getLogger('modiff')
 
@@ -33,6 +34,7 @@ class Upscaler(NodeBase):
         self._model = None
 
     def execute(self, **kwargs):
+        self._check_upscale_interrupt()
         image = kwargs.get("image")
         model_id = kwargs.get("model_id", None)
         model_source = model_id.get('source', 'local') if isinstance(model_id, dict) else 'local'
@@ -125,8 +127,28 @@ class Upscaler(NodeBase):
             raise e
 
         self.mm_add(model, priority=0)
+        started_at = time.perf_counter()
+
+        def frame_progress(completed, total):
+            self._check_upscale_interrupt()
+            elapsed = max(0.0, time.perf_counter() - started_at)
+            average = elapsed / completed if completed else None
+            self.progress(
+                int(100 * completed / total) if total else 100,
+                phase="upscaling",
+                message=f"Upscaling frame {completed}/{total}",
+                current_step=completed,
+                total_steps=total,
+                elapsed_seconds=elapsed,
+                average_step_seconds=average,
+                eta_seconds=average * (total - completed) if average is not None else None,
+            )
+
         output = self.mm_exec(
-            lambda: Upscaler.upscale(image, model, tile_size=tile_size, tile_overlap=tile_overlap),
+            lambda: Upscaler.upscale(
+                image, model, tile_size=tile_size, tile_overlap=tile_overlap,
+                check_interrupt=self._check_upscale_interrupt, frame_progress=frame_progress,
+            ),
             device,
             models=[model],
         )
@@ -136,8 +158,12 @@ class Upscaler(NodeBase):
 
         return { "output": output }
 
+    def _check_upscale_interrupt(self):
+        if self._interrupt:
+            raise InterruptedError("Execution interrupted by the user at an upscaler tile boundary.")
+
     @staticmethod
-    def _upscale_tensor_tiled(image, model, tile_size=256, tile_overlap=32):
+    def _upscale_tensor_tiled(image, model, tile_size=256, tile_overlap=32, *, check_interrupt=None):
         """Upscale one BCHW tensor without retaining full-resolution GPU features.
 
         ESRGAN-style networks can require tens of GiB of temporary activation
@@ -148,12 +174,17 @@ class Upscaler(NodeBase):
         """
         import torch
 
+        if check_interrupt is not None:
+            check_interrupt()
         if image.ndim == 3:
             image = image.unsqueeze(0)
         height, width = image.shape[-2:]
         tile_size = max(0, int(tile_size or 0))
         if tile_size == 0 or (height <= tile_size and width <= tile_size):
-            return model(image.to(model.device)).to("cpu")
+            output = model(image.to(model.device)).to("cpu")
+            if check_interrupt is not None:
+                check_interrupt()
+            return output
 
         overlap = max(0, min(int(tile_overlap or 0), tile_size // 2))
         output = None
@@ -163,12 +194,16 @@ class Upscaler(NodeBase):
             input_top = max(0, top - overlap)
             input_bottom = min(height, bottom + overlap)
             for left in range(0, width, tile_size):
+                if check_interrupt is not None:
+                    check_interrupt()
                 right = min(left + tile_size, width)
                 input_left = max(0, left - overlap)
                 input_right = min(width, right + overlap)
                 tile = image[..., input_top:input_bottom, input_left:input_right].to(model.device)
                 tile_output = model(tile).to("cpu")
                 del tile
+                if check_interrupt is not None:
+                    check_interrupt()
 
                 current_scale_y = tile_output.shape[-2] // (input_bottom - input_top)
                 current_scale_x = tile_output.shape[-1] // (input_right - input_left)
@@ -198,10 +233,12 @@ class Upscaler(NodeBase):
         return output
 
     @staticmethod
-    def upscale(image, model, tile_size=256, tile_overlap=32):
+    def upscale(image, model, tile_size=256, tile_overlap=32, *, check_interrupt=None, frame_progress=None):
         image = ImageToTensor(image)
         image = image if isinstance(image, list) else [image]
         output = []
+        if frame_progress is not None:
+            frame_progress(0, len(image))
 
         for img in image:
             if img.ndim == 3:
@@ -216,8 +253,11 @@ class Upscaler(NodeBase):
                     model,
                     tile_size=tile_size,
                     tile_overlap=tile_overlap,
+                    check_interrupt=check_interrupt,
                 )
             )
+            if frame_progress is not None:
+                frame_progress(len(output), len(image))
         del image
 
         if output:

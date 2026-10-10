@@ -414,3 +414,17 @@ Check the first step of the next shot as well as steady-state denoising; preserv
 decoding/composition time and label ETA as an estimate rather than measured total
 runtime. Controlled fake-clock tests establish accounting behavior; live
 multi-shot receipts and media establish actual execution separately.
+
+For a batch image/video upscale, record the initial frame count and every
+completed frame under the `upscaling` phase. ETA describes the remaining frames
+and excludes model loading. Stop must be checked before and after each tiled or
+untiled model forward, so a cancellation cannot silently continue the remaining
+tiles or frames. Pixel-preserving tile/stitch tests and cancellation tests are
+contract evidence; the full encoded video remains a separate live-output check.
+
+Retained video previews under the configured temporary `media_assets` directory
+use the existing internal generated-media publisher to create durable copies
+under app data. Check their served bytes, browser playback, content hashes and
+measured encoded metadata after generation. This publication does not grant
+generic HTTP access to temporary files; sibling paths and resolved symlink
+escapes remain rejected, and the existing retention size limit still applies.
