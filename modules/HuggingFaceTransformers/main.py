@@ -1636,7 +1636,9 @@ def image_text_operation_schema(pipeline, task, action):
     if action != generator:
         raise ValueError("No reviewed image/text operation binding.")
     fields = {"images": {"required": task == "image_to_text", "hidden": task != "image_to_text"}}
-    values = {}
+    # Fresh caption drafts need a visible instruction accepted by the runtime.
+    # Execution still validates the supplied prompt; saved graphs keep theirs.
+    values = {"prompt": "Describe the image."} if task == "image_to_text" else {}
     if generator == "GenerateImageVideoText":
         fields["video"] = {"hidden": True, "required": False}
     else:

@@ -324,9 +324,17 @@ does not declare a blank option; it records the consumed empty list. Nonempty
 unknown selections, single-choice blanks and declared option constraints remain
 strict. Canonical recipe repairs must preserve all other controls, pins and wires.
 
-The reviewed Z-Image image-edit pipeline preprocesses source images at their input
-size while allocating noise from the requested width and height. Its adapter uses
-the installed Diffusers image processor to resize a differently sized source to
+The reviewed Z-Image edit and inpaint pipelines preprocess source images at their
+input size while allocating noise and masks from the requested width and height.
+Their adapters use the installed Diffusers image processor to resize a differently sized source to
 those explicit dimensions before invocation. This preserves the requested recipe
-and original source object. Other adapters retain their native resolution policy;
+and original source object. Inpaint masks retain the SDK's explicit-size processing.
+Other adapters retain their native resolution policy;
 source-size and actual-output receipts must still be recorded separately.
+
+Fresh image-caption workflows include the visible, editable instruction
+`Describe the image.` for both reviewed image-to-text generator actions. Their
+runtime requires a nonempty prompt. This authoring default avoids publishing a
+draft that fails on an empty instruction; it does not rewrite saved prompts or
+substitute an instruction during execution. Other generation tasks retain their
+explicit operator prompt policy.

@@ -449,9 +449,9 @@ class ImagePipelineAdapter:
             image = target[self.image_parameter]
             width, height = target.get("width"), target.get("height")
             if isinstance(image, Image.Image) and width is not None and height is not None and image.size != (width, height):
-                # The reviewed Z-Image edit SDK preprocesses at source size but
-                # allocates noise at the explicit output size. Use its own
-                # processor to align those latents, preserving the recipe.
+                # Reviewed Z-Image edit/inpaint preprocessing keeps source size
+                # while noise and masks use the explicit output dimensions.
+                # Align with its own processor, preserving the recipe.
                 resize = getattr(getattr(pipeline, "image_processor", None), "resize", None)
                 if not callable(resize):
                     raise RuntimeError(f"{self.pipeline_class} did not expose its reviewed image resize boundary.")
@@ -677,6 +677,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         Z_IMAGE_REPO,
         artifact_pipeline_classes=("ZImagePipeline", "ZImageInpaintPipeline"),
         safe_serialization_required=True,
+        resize_reference_to_output=True,
     ),
     "StableDiffusionXLPipeline": ImagePipelineAdapter(
         "StableDiffusionXLPipeline",

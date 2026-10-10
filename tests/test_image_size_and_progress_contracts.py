@@ -122,7 +122,7 @@ def test_z_image_edit_matches_source_latents_to_explicit_output_without_changing
         }
 
 
-@pytest.mark.parametrize("name", ["ZImageInpaintPipeline", "Flux2KleinPipeline", "Flux2KleinInpaintPipeline", "QwenImageEditPipeline"])
+@pytest.mark.parametrize("name", ["Flux2KleinPipeline", "Flux2KleinInpaintPipeline", "QwenImageEditPipeline"])
 def test_other_image_adapters_keep_their_native_input_resolution_policy(name):
     class Pipeline:
         image_processor = Mock()
@@ -140,12 +140,13 @@ def test_other_image_adapters_keep_their_native_input_resolution_policy(name):
     pipeline.image_processor.resize.assert_not_called()
 
 
-def test_z_image_edit_requires_its_reviewed_resize_boundary_for_different_output_size():
+@pytest.mark.parametrize("name", ["ZImageImg2ImgPipeline", "ZImageInpaintPipeline"])
+def test_z_image_input_requires_its_reviewed_resize_boundary_for_different_output_size(name):
     class Pipeline:
         def __call__(self, *, image, width, height):
             pass
 
-    adapter = get_image_pipeline_adapter("ZImageImg2ImgPipeline")
+    adapter = get_image_pipeline_adapter(name)
     with pytest.raises(ValueError, match="exact boolean"):
         replace(adapter, resize_reference_to_output=1)
     with pytest.raises(RuntimeError, match="reviewed image resize boundary"):
@@ -153,3 +154,37 @@ def test_z_image_edit_requires_its_reviewed_resize_boundary_for_different_output
             Pipeline(), {"num_inference_steps": 8, "width": 640, "height": 640},
             {"image": Image.new("RGB", (512, 512), "blue")},
         )
+
+
+@pytest.mark.parametrize("mode", ["inpaint", "outpaint"])
+@pytest.mark.parametrize("source_size,output_size", [((512, 512), (1024, 1024)), ((512, 512), (1344, 768)), ((1024, 1024), (1024, 1024))])
+def test_z_inpaint_source_matches_upstream_explicit_mask_geometry(mode, source_size, output_size):
+    from diffusers.image_processor import VaeImageProcessor
+
+    class Pipeline:
+        image_processor = VaeImageProcessor(vae_scale_factor=8)
+        mask_processor = VaeImageProcessor(
+            vae_scale_factor=8, do_normalize=False, do_binarize=True, do_convert_grayscale=True,
+        )
+
+        def __call__(self, *, image, mask_image, width, height):
+            pass
+
+    pipeline = Pipeline()
+    image = Image.new("RGB", source_size, "blue")
+    mask = Image.new("L", source_size, 128)
+    image_bytes, mask_bytes = image.tobytes(), mask.tobytes()
+    values = {"num_inference_steps": 8, "width": output_size[0], "height": output_size[1], "mode": mode}
+    original_values = values.copy()
+    target = {"image": image, "mask_image": mask}
+    get_image_pipeline_adapter("ZImageInpaintPipeline").apply_generation_parameters(pipeline, values, target)
+    # Exact SDK boundary: image preprocess omits dimensions; mask preprocess
+    # receives explicit width/height before the tensors are multiplied.
+    init_image = pipeline.image_processor.preprocess(target["image"])
+    prepared_mask = pipeline.mask_processor.preprocess(target["mask_image"], height=target["height"], width=target["width"])
+    assert init_image.shape[-2:] == prepared_mask.shape[-2:]
+    masked_image = init_image * (prepared_mask < 0.5)
+    assert tuple(masked_image.shape[-2:]) == (output_size[1], output_size[0])
+    assert values == original_values and target["mask_image"] is mask
+    assert image.size == mask.size == source_size
+    assert image.tobytes() == image_bytes and mask.tobytes() == mask_bytes

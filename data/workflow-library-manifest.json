@@ -2920,7 +2920,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/hugging-face-any-to-any-model/image-to-text.json",
-      "graphHash": "dfbbb92d9c11f7da5ec40f2588caa817d470bdfada4a5fb9ca3b65a6b1b20add"
+      "graphHash": "a23a0c447f0e5f31303db4aa11c576db58d01f260baaff9fceb04b6941c4f43c"
     },
     {
       "id": "HuggingFaceAnyToAnyModel:text_generation",
@@ -3007,7 +3007,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/hugging-face-image-text-to-text-model/image-to-text.json",
-      "graphHash": "7eaed2db89f809328a6da1ffc2171c21abbf946b878b31a4bfa5c8a1c7ae3cf0"
+      "graphHash": "32fe79b7a89ec72f4d92b85f4bf4390d5e1c92208ee5b2e1fec5bedbd0fb4410"
     },
     {
       "id": "HuggingFaceSpeechRecognitionModel:speech_to_text",

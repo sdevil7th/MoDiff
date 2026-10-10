@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:fa8b7bef482cf18d5c9e85d91edc0ae3170be11be87eb2885d404c6ea91e72f2",
+  "contentHash": "sha256:af03cbc11954d0db00de7dfbafa8cacfb924cf13b95728af215f2fd997696bbb",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -2499,7 +2499,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "dfbbb92d9c11f7da5ec40f2588caa817d470bdfada4a5fb9ca3b65a6b1b20add",
+      "graphHash": "a23a0c447f0e5f31303db4aa11c576db58d01f260baaff9fceb04b6941c4f43c",
       "graphPath": "studio/hugging-face-any-to-any-model/image-to-text.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "json",
@@ -2619,7 +2619,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "7eaed2db89f809328a6da1ffc2171c21abbf946b878b31a4bfa5c8a1c7ae3cf0",
+      "graphHash": "32fe79b7a89ec72f4d92b85f4bf4390d5e1c92208ee5b2e1fec5bedbd0fb4410",
       "graphPath": "studio/hugging-face-image-text-to-text-model/image-to-text.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "json",
@@ -6691,13 +6691,13 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:5c51340aa3e971c8e92d0459ef107c1365f8e73b5603c7ebed96624b988739ee",
+      "contentHash": "sha256:22b105b428ab48566e0714a3c0d5eccec5410de7a98f37dd183e128a3391c9bc",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:b4dbc5056cd0ff0bc46793002f61705115bf8e8e3818428e319414a000b3ea02"
+      "sha256": "sha256:85c76bd1c0fc1d7adab2f1c677039f27fa5d20deaf1657a54b1472c8fa3fe815"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:9ed9ca72760eef6733e7f4f850af879b0cad69a52577402d7fb67800459d57c7"
+      "sha256": "sha256:d61e716fa5664f5e2238a5ff4ba67966efac3c880a0cae736e3a44a690b94945"
     }
   },
   "summary": {

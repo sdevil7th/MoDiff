@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:6de5537c8e5e9ad9eb2a8c98271293749886f53167987b48611e57c36bf16f6e",
+  "contentHash": "sha256:0b576241a76a51bdd9f54963990a93ec7b6aede268fad09e3fe8adac2bbfc725",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:fa8b7bef482cf18d5c9e85d91edc0ae3170be11be87eb2885d404c6ea91e72f2",
+      "contentHash": "sha256:af03cbc11954d0db00de7dfbafa8cacfb924cf13b95728af215f2fd997696bbb",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:2ad58089e38eb1caa8092e9dec4b62463a9a6103d4a9201f9684664502d82cd8"
+      "sha256": "sha256:e3779754d1a2fb87e8b84fd6e87df07004089abe6813ff5e794c211a688ac518"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:9ed9ca72760eef6733e7f4f850af879b0cad69a52577402d7fb67800459d57c7"
+      "sha256": "sha256:d61e716fa5664f5e2238a5ff4ba67966efac3c880a0cae736e3a44a690b94945"
     }
   },
   "specifications": [
@@ -7641,7 +7641,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/hugging-face-any-to-any-model/image-to-text.json",
-        "sha256": "dfbbb92d9c11f7da5ec40f2588caa817d470bdfada4a5fb9ca3b65a6b1b20add"
+        "sha256": "a23a0c447f0e5f31303db4aa11c576db58d01f260baaff9fceb04b6941c4f43c"
       },
       "canonicalWorkflowId": "HuggingFaceAnyToAnyModel:image_to_text",
       "claims": {
@@ -7666,7 +7666,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "dfbbb92d9c11f7da5ec40f2588caa817d470bdfada4a5fb9ca3b65a6b1b20add",
+        "sourceGraphSha256": "a23a0c447f0e5f31303db4aa11c576db58d01f260baaff9fceb04b6941c4f43c",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -7930,7 +7930,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/hugging-face-image-text-to-text-model/image-to-text.json",
-        "sha256": "7eaed2db89f809328a6da1ffc2171c21abbf946b878b31a4bfa5c8a1c7ae3cf0"
+        "sha256": "32fe79b7a89ec72f4d92b85f4bf4390d5e1c92208ee5b2e1fec5bedbd0fb4410"
       },
       "canonicalWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
       "claims": {
@@ -7950,7 +7950,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "7eaed2db89f809328a6da1ffc2171c21abbf946b878b31a4bfa5c8a1c7ae3cf0",
+        "sourceGraphSha256": "32fe79b7a89ec72f4d92b85f4bf4390d5e1c92208ee5b2e1fec5bedbd0fb4410",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
