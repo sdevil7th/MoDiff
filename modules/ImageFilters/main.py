@@ -12,8 +12,10 @@ class Canny(NodeBase):
         image = kwargs.get("image")
         low_threshold = kwargs.get("low_threshold", 0.1)
         high_threshold = kwargs.get("high_threshold", 0.2)
-        low_threshold = min(low_threshold, high_threshold)
-        high_threshold = max(low_threshold, high_threshold)
+        low_threshold, high_threshold = (
+            min(low_threshold, high_threshold),
+            max(low_threshold, high_threshold),
+        )
         device = kwargs.get("device")
 
         image = ImageToTensor(image)
