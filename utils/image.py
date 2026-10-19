@@ -1,5 +1,11 @@
 from PIL import Image
 
+
+def has_transparency(image: Image.Image) -> bool:
+    """Recognize stored alpha, including PNG palette and color-key transparency."""
+    return "A" in image.getbands() or "transparency" in image.info
+
+
 def resize(image: Image.Image | str | list[Image.Image | str], width: int, height: int, resample: int | str = Image.Resampling.BICUBIC) -> Image.Image | list[Image.Image]:
     """
     Resize an image or a list of images to the given width and height.

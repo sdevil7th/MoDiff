@@ -2637,6 +2637,18 @@ this does not admit arbitrary Tensor actions. Shared outer graph ancestors execu
 once per attempt, so consumers share a Generator's advancing state. A new attempt
 creates a fresh Generator. Explicit loop bodies retain their iteration semantics.
 
+### Deterministic image transparency
+
+Load Image derives its alpha mask from the file's original transparency before
+applying the selected alpha-channel conversion. Palette PNG transparency and
+RGB/grayscale PNG color keys count as transparency alongside explicit RGBA/LA
+channels. Remove Alpha returns RGB without a retained transparency marker;
+Ignore preserves the loaded image's original mode.
+
+Adjust Image, Filter Image and masked compositing preserve that transparency.
+Stitch Images composites it against the selected background. These operations
+use Pillow's normal RGBA conversion and do not modify the input image.
+
 ### Cached image pipelines and explicit dimensions
 
 Ordinary image pipeline loaders resolve a pinned, local-only Hub selection to

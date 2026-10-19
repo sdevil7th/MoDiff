@@ -6,6 +6,7 @@ from modiff.path_identifiers import resolve_runtime_input_path
 import logging
 from utils.torch_utils import DEVICE_LIST, DEFAULT_DEVICE
 from utils.paths import parse_filename
+from utils.image import has_transparency
 import hashlib
 import json
 
@@ -73,8 +74,8 @@ def flatten_pil_image_collection(value):
     return None
 
 def alpha_to_mask(image):
-    if "A" in image.getbands():
-        return image.getchannel("A").convert("L")
+    if has_transparency(image):
+        return image.convert("RGBA").getchannel("A")
     return Image.new("L", image.size, 255)
 
 class Load(NodeBase):
@@ -152,8 +153,9 @@ class Load(NodeBase):
                 alpha_channel = kwargs.get("alpha_channel", "ignore")
                 if alpha_channel == "add alpha" and image.mode != "RGBA":
                     image = image.convert("RGBA")
-                elif alpha_channel == "remove alpha" and image.mode == "RGBA":
-                    image = image.convert("RGB")
+                elif alpha_channel == "remove alpha" and has_transparency(image):
+                    image = image.convert("RGBA").convert("RGB")
+                    image.info.pop("transparency", None)
                 images.append(image)
                 widths.append(image.width)
                 heights.append(image.height)
