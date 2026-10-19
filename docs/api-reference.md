@@ -2654,6 +2654,11 @@ including empty input, unsupported formats and write failures. The original
 encoder or filesystem exception remains its cause. A failed save is not cached
 as a successful output; successful batch files retain their original order.
 
+Unsharp Mask accepts whole-number radius controls from 1 to 63, including the
+historical float representation. It retains the existing next-odd-kernel rule
+for even values. Fractional, nonfinite and out-of-range radii fail before kernel
+construction; creator defaults and saved control values are unchanged.
+
 ### Cached image pipelines and explicit dimensions
 
 Ordinary image pipeline loaders resolve a pinned, local-only Hub selection to
