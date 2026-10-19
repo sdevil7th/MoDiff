@@ -243,6 +243,7 @@ class Save(NodeBase):
         metadata = kwargs.get("metadata")
         output = []
         saved_images = []
+        last_error = None
 
         for index, img in enumerate(image):
             if img is None:
@@ -285,9 +286,13 @@ class Save(NodeBase):
                 saved_images.append(img.copy())
             except Exception as e:
                 logger.error(f"Error saving image {parsed_filename}: {e}")
+                last_error = e
 
         if len(output) == 0:
-            output = None
+            raise ValueError(
+                "Save Image could not save any selected image. "
+                "Check the input images, output filename, format and write access."
+            ) from last_error
         if len(output) == 1:
             output = output[0]
 

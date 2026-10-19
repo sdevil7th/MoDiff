@@ -2649,6 +2649,11 @@ Adjust Image, Filter Image and masked compositing preserve that transparency.
 Stitch Images composites it against the selected background. These operations
 use Pillow's normal RGBA conversion and do not modify the input image.
 
+Save Image fails with an actionable error if no selected image can be saved,
+including empty input, unsupported formats and write failures. The original
+encoder or filesystem exception remains its cause. A failed save is not cached
+as a successful output; successful batch files retain their original order.
+
 ### Cached image pipelines and explicit dimensions
 
 Ordinary image pipeline loaders resolve a pinned, local-only Hub selection to
