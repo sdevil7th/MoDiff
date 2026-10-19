@@ -60,6 +60,9 @@ def test_auxiliary_actions_remain_scoped_to_checked_installation_target(profile_
         qualified = (
             (platform_name, machine) == ("linux", "x86_64")
             and profile_id != runtimes.TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID
+        ) or (
+            (platform_name, machine) == ("windows", "x86_64")
+            and profile_id == runtimes.TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID
         )
         assert (policy.cutover_ready, policy.install_action_available, policy.activation_available) == (qualified,) * 3
         assert policy.contract_state == ("qualified" if qualified else "candidate_unqualified")
@@ -70,8 +73,9 @@ def test_bitsandbytes_new_native_base_needs_accelerator_qualification():
     profile = runtimes.OPTIONAL_RUNTIME_PROFILES[runtimes.TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID]
     for platform_name, _, machine in runtimes._OPTIONAL_RUNTIME_TARGETS:
         policy = profile.contract_for_target(platform_name=platform_name, machine=machine)
-        assert not policy.install_action_available and not policy.activation_available
-        assert not policy.cutover_ready
+        qualified = (platform_name, machine) == ("windows", "x86_64")
+        assert (policy.install_action_available, policy.activation_available, policy.cutover_ready) == (qualified,) * 3
+        assert policy.contract_state == ("qualified" if qualified else "candidate_unqualified")
 
 
 def test_auxiliary_wheel_bytes_keep_the_existing_reviewed_identity():
@@ -80,4 +84,9 @@ def test_auxiliary_wheel_bytes_keep_the_existing_reviewed_identity():
     quanto = runtimes.OPTIONAL_RUNTIME_PROFILES[runtimes.TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID]
     assert quanto.artifact_locks == runtimes._quanto_linux_x86_64_artifact_locks()
     bitsandbytes = runtimes.OPTIONAL_RUNTIME_PROFILES[runtimes.TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID]
-    assert bitsandbytes.artifact_locks == runtimes._bitsandbytes_linux_x86_64_artifact_locks()
+    assert tuple(lock for lock in bitsandbytes.artifact_locks if lock["platform"] == "linux") == runtimes._bitsandbytes_linux_x86_64_artifact_locks()
+    windows = [lock for lock in bitsandbytes.artifact_locks if lock["platform"] == "windows"]
+    assert len(windows) == 1
+    assert windows[0]["filename"] == "bitsandbytes-0.50.0-py3-none-win_amd64.whl"
+    assert windows[0]["byteSize"] == 37_961_095
+    assert windows[0]["sha256"] == "7f9ebf51d76a00341711cdd557af97555274b5aad3444975ff9927866a18bc11"

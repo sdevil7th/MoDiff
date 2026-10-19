@@ -7,9 +7,14 @@ install only their additional packages and use the verified base model
 libraries. Their Linux x86-64 installation checks execute small CPU operations;
 they do not establish model, accelerator, Auto, or performance qualification.
 The historical model receipts below describe the runtime that produced them.
-The bitsandbytes overlay remains unavailable for the new base until a matching
-CUDA execution check passes; the specialized reviewed NVIDIA installer profile
-has its own existing bitsandbytes contract.
+The prequantized Qwen BQ4 Auto declaration remains Linux-only; installing this
+Windows package does not grant Windows Auto model eligibility. Expert execution
+keeps its existing immutable model and graph admission checks.
+Windows x86-64 has a reviewed bitsandbytes 0.50.0 auxiliary wheel with explicit
+managed installation and activation. Its tiny CUDA checks establish package/API
+compatibility, not trained model, offload, memory-fit or Auto qualification. Other
+auxiliary targets remain pending; the specialized reviewed NVIDIA installer
+profile keeps its existing bitsandbytes contract.
 
 This guide distinguishes code paths, model discovery, app delivery, and
 qualification. A quantization method or model is **supported** only when MoDiff
@@ -39,7 +44,7 @@ turn that environment into a supported MoDiff runtime.
 
 | Model/artifact                                                                                      | Quantization            | Tier                                                 | App path and boundary                                                                                                                                                                                                                                            |
 | --------------------------------------------------------------------------------------------------- | ----------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `unsloth/Qwen-Image-2512-unsloth-bnb-4bit`                                                          | pre-quantized BnB 4-bit | Auto-qualified on reviewed NVIDIA CUDA profiles      | Studio Auto or Model Manager can request the immutable Hub snapshot. NVIDIA setup supplies `bitsandbytes`; the exact Qwen text-to-image profile admits this fallback. Other platforms remain blocked.                                                            |
+| `unsloth/Qwen-Image-2512-unsloth-bnb-4bit`                                                          | pre-quantized BnB 4-bit | Linux NVIDIA CUDA Auto declaration; Windows Auto refused      | Studio Auto or Model Manager can request the immutable Hub snapshot. NVIDIA setup supplies `bitsandbytes`; the exact Qwen text-to-image profile admits this fallback. Other platforms remain blocked.                                                            |
 | `black-forest-labs/FLUX.1-dev-FP8`                                                                  | native FP8 artifact     | App-admitted on declared CUDA/ROCm paths             | The exact FLUX Dev profiles admit the official immutable alternate and Auto can request it as the lower-memory artifact. Each platform/model recipe still requires a current live resource receipt.                                                              |
 | `black-forest-labs/FLUX.1-Kontext-dev-NVFP4`                                                        | native NVFP4 artifact   | App-admitted on NVIDIA Blackwell Linux               | The exact Kontext edit/inpaint profiles admit the official immutable alternate. Preflight requires CUDA compute capability 10.0 or newer. It is not a generic FP4 fallback.                                                                                      |
 | official Qwen Image and Qwen Image Edit-family repositories                                         | on-load BnB 4-bit       | Expert contract on NVIDIA CUDA                       | Exact Qwen profiles expose only `bnb_4bit`, with reviewed component selection and offload policy. It is not Auto-defaulted where prior kernel failures are known.                                                                                                |

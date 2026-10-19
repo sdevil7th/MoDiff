@@ -179,7 +179,7 @@ class Cosmos3ArtifactReviewTests(unittest.TestCase):
         self.assertFalse(self.review["admission"]["runtimeCatalogExposed"])
         self.assertFalse(self.review["admission"]["downloadCatalogExposed"])
 
-    def test_omni_workflows_preserve_modality_branches_and_after_decode(self):
+    def test_omni_workflows_preserve_modality_branches_and_omit_only_image_action_output(self):
         conditioned = {
             "image2video",
             "video2video",
@@ -205,7 +205,9 @@ class Cosmos3ArtifactReviewTests(unittest.TestCase):
             expected = ["text_encoder"]
             if workflow_id in conditioned:
                 expected.append("vae_encoder")
-            expected.extend(["denoise", "decode", "after_decode"])
+            expected.extend(["denoise", "decode"])
+            if workflow_id != "text2image":
+                expected.append("after_decode")
             self.assertEqual(adapter["upstreamBlockSequence"], expected)
             self.assertEqual(len(adapter["stateEdges"]), len(expected) - 1)
 

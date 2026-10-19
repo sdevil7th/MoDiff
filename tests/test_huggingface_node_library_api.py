@@ -30,8 +30,16 @@ class HuggingFaceNodeLibraryApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(second_response.status, 200)
         self.assertEqual(second["schemaVersion"], 6)
         self.assertEqual(second["providers"], ["diffusers", "transformers"])
-        self.assertEqual(len(second["definitions"]), 135)
-        self.assertEqual(len(second["blockDefinitions"]), 560)
+        self.assertEqual(len(second["definitions"]), 139)
+        self.assertEqual(len(second["blockDefinitions"]), 587)
+        stage_blocks = [block for block in second["blockDefinitions"]
+                        if block["description"] in {
+                            f"Existing MoDiff node modules.DiffusersImage.{action} used by this reviewed standard Diffusers composite."
+                            for action in ("EncodeInputs", "Denoise", "DecodeLatents")
+                        }]
+        self.assertEqual({block["className"] for block in stage_blocks}, {"EncodeInputs", "Denoise", "DecodeLatents"})
+        self.assertEqual(len(stage_blocks), 3)
+        self.assertEqual(len(second["blockDefinitions"]) - len(stage_blocks), 584)
         self.assertEqual(len(second["blockRoleAdapters"]), 322)
         self.assertEqual(len(second["containerStateAdapters"]), 9)
         self.assertNotEqual(second["definitions"][0]["label"], "Changed by caller")
@@ -132,8 +140,8 @@ class HuggingFaceNodeLibraryApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(first_response.status, 200)
         self.assertEqual(second_response.status, 200)
         self.assertEqual(second["schemaVersion"], 1)
-        self.assertEqual(len(second["pipelines"]), 34)
-        self.assertEqual(sum(len(item["conditionals"]) for item in second["pipelines"]), 73)
+        self.assertEqual(len(second["pipelines"]), 36)
+        self.assertEqual(sum(len(item["conditionals"]) for item in second["pipelines"]), 77)
         self.assertNotEqual(second["pipelines"][0]["pipelineClass"], "ChangedByCaller")
 
     async def test_expert_runtime_qualification_endpoint_returns_backend_receipt(self):

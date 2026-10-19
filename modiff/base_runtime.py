@@ -50,7 +50,15 @@ def base_runtime_status(*, version_resolver=None, distribution_resolver=None) ->
     if not SpecifierSet(python_requirement).contains(python_version):
         issues.append(f"Python {python_version} does not satisfy {python_requirement}.")
     source_revisions = {}
+    evaluation = None
+    try:
+        from modiff.diffusers_evaluation_runtime import selected_diffusers_evaluation_contract
+        evaluation = selected_diffusers_evaluation_contract(distribution_resolver=distribution_resolver)
+    except (OSError, RuntimeError, ValueError, TypeError, KeyError, metadata.PackageNotFoundError) as error:
+        issues.append(f"Diffusers evaluation contract is invalid: {error}")
     for declaration in document["project"]["dependencies"]:
+        if evaluation and Requirement(declaration).name.lower().replace("_", "-") == "diffusers":
+            declaration = evaluation["dependency"]
         requirement = Requirement(declaration)
         if requirement.marker and not requirement.marker.evaluate():
             continue
@@ -60,7 +68,7 @@ def base_runtime_status(*, version_resolver=None, distribution_resolver=None) ->
             issues.append(f"Missing required package: {requirement.name}.")
             continue
         packages[requirement.name] = version
-        if requirement.specifier and not requirement.specifier.contains(version, prereleases=False):
+        if requirement.specifier and not requirement.specifier.contains(version, prereleases=bool(evaluation and requirement.name.lower() == "diffusers")):
             issues.append(f"{requirement.name} {version} does not satisfy {requirement.specifier}.")
         if requirement.url and requirement.url.startswith("git+"):
             repository, commit = requirement.url.removeprefix("git+").rsplit("@", 1)
@@ -81,11 +89,13 @@ def base_runtime_status(*, version_resolver=None, distribution_resolver=None) ->
             if vcs_info.get("commit_id") != commit or vcs_info.get("vcs") != "git" or not same_repository:
                 issues.append(f"{requirement.name} must use the declared source revision {commit}.")
             source_revisions[requirement.name] = vcs_info.get("commit_id")
+    evaluation_identity = {key: value for key, value in evaluation.items() if key not in {"installedFiles", "wheelPath"}} if evaluation else None
     identity = {
         "python": list(sys.version_info[:2]),
         "packages": packages,
         "sourceRevisions": source_revisions,
         "dependencies": document["project"]["dependencies"],
+        **({"evaluationRuntime": evaluation_identity} if evaluation_identity else {}),
     }
     digest = hashlib.sha256(json.dumps(identity, sort_keys=True).encode("utf-8")).hexdigest()
     return {
@@ -93,6 +103,7 @@ def base_runtime_status(*, version_resolver=None, distribution_resolver=None) ->
         "verified": not issues,
         "matches": not issues,
         "installationMode": "uv",
+        **({"evaluationRuntime": evaluation_identity} if evaluation_identity else {}),
         "packages": packages,
         "issues": issues,
         "current_digest": digest,

@@ -472,7 +472,10 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
                         }
                     ],
                 )
-                self.assertEqual(result["sealedBindingValues"]["workflowAfterDecodeBlock"], "after_decode")
+                if workflow_id == "text2image":
+                    self.assertNotIn("workflowAfterDecodeBlock", result["sealedBindingValues"])
+                else:
+                    self.assertEqual(result["sealedBindingValues"]["workflowAfterDecodeBlock"], "after_decode")
                 self.assertIs(result["publication"]["insertable"], True)
                 self.assertIs(result["publication"]["executable"], False)
                 self.assertIs(result["publication"]["autoEligible"], False)
@@ -483,7 +486,10 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
                 roles.append("prompt")
                 if load_role:
                     roles.append("imageEncode")
-                roles.extend(["denoise", "decode", "afterDecode", sink_role])
+                roles.extend(["denoise", "decode"])
+                if workflow_id != "text2image":
+                    roles.append("afterDecode")
+                roles.append(sink_role)
                 self.assertEqual(
                     [role for role, _node_key, _x, _y in specification["roles"]],
                     roles,
@@ -501,7 +507,11 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
                 else:
                     self.assertIn(("prompt", "state_out", "denoise", "state_in"), specification["edges"])
                 self.assertIn(("denoise", "state_out", "decode", "state_in"), specification["edges"])
-                self.assertIn(("decode", "state_out", "afterDecode", "state_in"), specification["edges"])
+                if workflow_id == "text2image":
+                    self.assertNotIn(("decode", "state_out", "afterDecode", "state_in"), specification["edges"])
+                    self.assertEqual(specification["auxiliaryTerminalRoles"], ())
+                else:
+                    self.assertIn(("decode", "state_out", "afterDecode", "state_in"), specification["edges"])
                 if with_audio:
                     self.assertIn(("decode", "audio", "videoExport", "audio"), specification["edges"])
                 self.assertIn(("prompt", "num_frames", frame_source), specification["bindings"])

@@ -1,5 +1,22 @@
 # Third-party notices
 
+## Black Forest Labs FLUX 3 prompt-upsample system prompts
+
+`data/prompt-enhancement-system-prompts.v1.json` is an unchanged copy of
+`system_prompts.json` published by Black Forest Labs in
+`black-forest-labs/flux-3-image-klein-pup` at immutable revision
+`3f3edb52b2c55de0d49feab28598b68f7f8e4830`.
+Source: <https://huggingface.co/black-forest-labs/flux-3-image-klein-pup/resolve/3f3edb52b2c55de0d49feab28598b68f7f8e4830/system_prompts.json>.
+The retained file is 12,602 bytes, with SHA-256
+`b5da3ed8bc04ab59dbdb747930f7dbff847e868903fed8028f85ee1a4ac82fb4`.
+Only its filename differs; its contents have not been modified.
+
+The publisher's [model card at that revision](https://huggingface.co/black-forest-labs/flux-3-image-klein-pup/blob/3f3edb52b2c55de0d49feab28598b68f7f8e4830/README.md)
+declares the Apache License 2.0. The project `LICENSE` retains the full
+agreement. The captured repository inventory contains no separate `NOTICE`
+file. The publisher's requested citation is Black Forest Labs, *FLUX 3 Image
+Klein*, 2026, <https://bfl.ai/blog/flux-3-image-klein>.
+
 ## NVIDIA Cosmos3 publisher example caption
 
 `data/cosmos3-super-t2i-publisher-caption.v1.json` is an unchanged copy of

@@ -77,9 +77,21 @@ class OptimizationPackageTests(unittest.TestCase):
         self.assertIn("immutable artifact lock", by_id["torchao"]["disabledReason"])
 
     def test_reviewed_nvidia_base_bitsandbytes_is_execution_available(self):
+        native = optimizations.OPTIMIZATION_ROOT / "native-site"
+        package = native / "bitsandbytes"
+        metadata = native / "bitsandbytes-0.50.0.dist-info"
+        package.mkdir(parents=True)
+        metadata.mkdir()
+        (package / "__init__.py").write_text("# Origin fixture; not imported", encoding="utf-8")
+        distribution = SimpleNamespace(version="0.50.0", _path=metadata)
+        module_spec = SimpleNamespace(origin=str(package / "__init__.py"),
+                                      submodule_search_locations=[str(package)])
         with (
             mock.patch.object(optimizations, "_package_version", return_value="0.50.0"),
             mock.patch.object(optimizations, "_normalized_platform", return_value="linux"),
+            mock.patch.object(optimizations.importlib.metadata, "distribution", return_value=distribution),
+            mock.patch.object(optimizations.importlib.util, "find_spec", return_value=module_spec),
+            mock.patch.object(optimizations.sysconfig, "get_paths", return_value={"purelib": str(native), "platlib": str(native)}),
         ):
             catalog = optimizations.public_catalog(
                 runtime_profile={"installed": "nvidia-cuda"},
@@ -829,6 +841,20 @@ class OptimizationPackageTests(unittest.TestCase):
         ):
             optimizations.probe_capability("torchao", runtime_fingerprint={})
         run.assert_not_called()
+
+    def test_builtin_probe_disables_bytecode_without_an_inherited_environment_flag(self):
+        result = SimpleNamespace(returncode=0, stdout='{"supported":true}', stderr="")
+        with (
+            mock.patch.dict(os.environ, {}, clear=False),
+            mock.patch.object(optimizations.sys, "dont_write_bytecode", True),
+            mock.patch.object(optimizations.subprocess, "run", return_value=result) as run,
+        ):
+            os.environ.pop("PYTHONDONTWRITEBYTECODE", None)
+            optimizations.probe_capability("channels_last", runtime_fingerprint={})
+        command = run.call_args.args[0]
+        self.assertEqual(command[:3], [optimizations.sys.executable, "-B", "-c"])
+        self.assertIn("from diffusers.hooks import", command[-1])
+        self.assertNotIn("PYTHONDONTWRITEBYTECODE", run.call_args.kwargs["env"])
 
     def test_auto_combines_independently_qualified_capabilities(self):
         self.set_active_environment(self.ACTIVE_ENVIRONMENT_ID)

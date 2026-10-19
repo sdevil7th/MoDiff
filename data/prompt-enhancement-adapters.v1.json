@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "transformers-prompt-enhancement-v1",
+  "status": "contract_only",
+  "repository": "black-forest-labs/flux-3-image-klein-pup",
+  "revision": "3f3edb52b2c55de0d49feab28598b68f7f8e4830",
+  "transformersVersion": "5.18.0",
+  "modelClass": "Qwen3_5ForConditionalGeneration",
+  "processorClass": "Qwen3VLProcessor",
+  "maxNewTokens": 3584,
+  "maxReferences": 10,
+  "systemPromptsSha256": "b5da3ed8bc04ab59dbdb747930f7dbff847e868903fed8028f85ee1a4ac82fb4",
+  "chatTemplateSha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715",
+  "modelWeight": {
+    "path": "model.safetensors",
+    "byteSize": 18819722392,
+    "sha256": "f5062a1fba3e63afe5c88349a311903fec06c959b362f1247127e63d5c860ed4"
+  },
+  "public": false,
+  "autoEligible": false,
+  "templateEligible": false,
+  "liveProof": false
+}

@@ -1801,19 +1801,21 @@ def _diffusers_identity() -> dict[str, Any]:
     """Bind the compatible installed package, separately from catalog source provenance."""
     from packaging.requirements import Requirement
     from modiff.base_runtime import base_model_runtime_contract
+    from modiff.diffusers_evaluation_runtime import selected_diffusers_evaluation_contract
 
+    evaluation = selected_diffusers_evaluation_contract()
     declarations = [
         Requirement(item) for item in base_model_runtime_contract()["dependencies"]
         if Requirement(item).name.lower().replace("_", "-") == "diffusers"
     ]
     if len(declarations) != 1 or declarations[0].url is not None or not declarations[0].specifier:
         raise RuntimeError("Diffusers must have one ordinary compatible-version declaration.")
-    requirement = declarations[0]
+    requirement = Requirement(evaluation["dependency"]) if evaluation else declarations[0]
     try:
         distribution = metadata.distribution("diffusers")
     except metadata.PackageNotFoundError as exc:
         raise RuntimeError("The compatible Diffusers distribution is unavailable.") from exc
-    if not requirement.specifier.contains(str(distribution.version), prereleases=False):
+    if not requirement.specifier.contains(str(distribution.version), prereleases=bool(evaluation)):
         raise RuntimeError(f"Diffusers {distribution.version} does not satisfy {requirement.specifier}.")
     try:
         raw_direct = distribution.read_text("direct_url.json")
@@ -1830,6 +1832,7 @@ def _diffusers_identity() -> dict[str, Any]:
         "distribution": "diffusers",
         "version": str(distribution.version),
         "declaration": str(requirement),
+        **({"evaluationRuntime": evaluation} if evaluation else {}),
         "directUrl": direct,
         "recordDigest": f"sha256:{hashlib.sha256(record.encode('utf-8')).hexdigest()}",
         "metadataOrigin": metadata_origin,
@@ -2409,7 +2412,7 @@ requirement = importlib.import_module("packaging.requirements").Requirement(diff
 record = diffusers.read_text("RECORD")
 if (
     requirement.url is not None
-    or not requirement.specifier.contains(str(diffusers.version), prereleases=False)
+    or not requirement.specifier.contains(str(diffusers.version), prereleases=bool(diffusers_identity.get("evaluationRuntime")))
     or str(diffusers.version) != diffusers_identity["version"]
     or direct != diffusers_identity["directUrl"]
     or (direct is not None and (not isinstance(direct, dict) or "dir_info" in direct))
@@ -2418,6 +2421,85 @@ if (
     or str(Path(getattr(diffusers, "_path", "")).resolve(strict=True)) != diffusers_identity["metadataOrigin"]
 ):
     raise RuntimeError("Diffusers installation identity drifted during validation")
+
+def verify_evaluation_installation(evaluation, installation_identity, declaration):
+    if not sys.dont_write_bytecode:
+        raise RuntimeError("Diffusers evaluation requires a no-bytecode (-B) validator")
+    if (not isinstance(evaluation, dict) or evaluation.get("dependency") != str(declaration)
+            or not isinstance(evaluation.get("installedFiles"), dict) or not evaluation["installedFiles"]):
+        raise RuntimeError("Diffusers evaluation identity drifted during validation")
+    base_site = Path(installation_identity["metadataOrigin"]).parent
+    installed_files = evaluation["installedFiles"]
+    if len(installed_files) > 4096:
+        raise RuntimeError("Diffusers evaluation file census exceeds its bound")
+    checked_directories = {}
+
+    def evaluation_plain(path, *, directory=False):
+        details = path.lstat()
+        if (stat.S_ISLNK(details.st_mode)
+                or getattr(details, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)):
+            raise RuntimeError("Diffusers evaluation contains a link or reparse point")
+        if not (stat.S_ISDIR(details.st_mode) if directory else stat.S_ISREG(details.st_mode)):
+            raise RuntimeError("Diffusers evaluation has a non-plain filesystem entry")
+        return details
+
+    def directory_identity(details):
+        return details.st_dev, details.st_ino, details.st_mode, getattr(details, "st_file_attributes", 0)
+
+    total_bytes = 0
+    for relative, expected in installed_files.items():
+        candidate = base_site / relative
+        for parent in candidate.parents:
+            if parent not in checked_directories:
+                checked_directories[parent] = directory_identity(evaluation_plain(parent, directory=True))
+        before = evaluation_plain(candidate)
+        if not candidate.resolve(strict=True).is_relative_to(base_site):
+            raise RuntimeError("Diffusers evaluation file origin drifted during validation")
+        total_bytes += before.st_size
+        if before.st_size > 128 * 1024 * 1024 or total_bytes > 128 * 1024 * 1024:
+            raise RuntimeError("Diffusers evaluation files exceed the expanded bound")
+        hasher = hashlib.sha256()
+        observed = 0
+        with candidate.open("rb") as stream:
+            while chunk := stream.read(1024 * 1024):
+                observed += len(chunk)
+                if observed > before.st_size:
+                    raise RuntimeError("Diffusers evaluation file changed while validation read it")
+                hasher.update(chunk)
+        after = evaluation_plain(candidate)
+        if (observed != before.st_size
+                or any(getattr(before, key) != getattr(after, key) for key in ("st_dev", "st_ino", "st_size", "st_mtime_ns"))
+                or hasher.hexdigest() != expected):
+            raise RuntimeError("Diffusers evaluation file identity drifted during validation")
+    actual_package = set()
+    package_root = base_site / "diffusers"
+    observed_entries = 0
+    for directory, directories, files in os.walk(package_root, followlinks=False):
+        parent = Path(directory)
+        evaluation_plain(parent, directory=True)
+        observed_entries += 1 + len(directories) + len(files)
+        if observed_entries > 4096 * 4 or len(parent.relative_to(package_root).parts) > 64:
+            raise RuntimeError("Diffusers evaluation census exceeds its traversal bound")
+        for name in directories:
+            evaluation_plain(parent / name, directory=True)
+        for name in files:
+            candidate = parent / name
+            evaluation_plain(candidate)
+            if candidate.suffix.lower() == ".pyc":
+                raise RuntimeError("Diffusers evaluation installation contains unreviewed bytecode")
+            actual_package.add(candidate.relative_to(base_site).as_posix())
+            if len(actual_package) > 4096:
+                raise RuntimeError("Diffusers evaluation census exceeds its file bound")
+    if actual_package != {name for name in installed_files if name.startswith("diffusers/")}:
+        raise RuntimeError("Diffusers evaluation package census drifted during validation")
+    for parent, identity in checked_directories.items():
+        if directory_identity(evaluation_plain(parent, directory=True)) != identity:
+            raise RuntimeError("Diffusers evaluation ancestor changed during validation")
+
+
+evaluation = diffusers_identity.get("evaluationRuntime")
+if evaluation is not None:
+    verify_evaluation_installation(evaluation, diffusers_identity, requirement)
 
 assert_import_origin(
     "diffusers",

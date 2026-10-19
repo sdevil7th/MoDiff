@@ -30,7 +30,7 @@ backend was restarted, model weights downloaded, or user data modified.
 
 The checked identities are:
 
-| Historical workflow profile ID | Current spec digest |
+| Historical workflow profile ID | Historical spec digest checked 2026-10-06 |
 | --- | --- |
 | `huggingface-transformers-main-96fe6dce-peft-0.20.0-quanto-0.2.7` | `sha256:b5cf3eaff6041fd898066eeebbc5606d21b6b60426f0d26c2237ef45e394c9cd` |
 | `huggingface-transformers-main-96fe6dce-peft-0.20.0-gguf-0.19.0` | `sha256:a92395e7b3a652a2badbeb346d336de96819dc83e5698801825feef4aecf52ec` |
@@ -50,3 +50,35 @@ checks staged wheel scope, unchanged reviewed auxiliary artifact identities,
 required project dependency floors, changed composite spec digests, and the
 target action boundaries. The CPU computations above were separate production
 installer checks, not mocked unit tests.
+
+## Windows bitsandbytes package checks, 2026-10-14
+
+The current Windows-enabled auxiliary spec digest is
+`sha256:3905f3876edeb3a6cb79af897a3d04d8836d3a63573fec12ce3fccf4ddb67053`.
+The October 6 table above records its historical checked definitions.
+
+A separate Windows x86-64 run used CPython 3.12.11, Torch 2.11.0+cu128,
+Transformers 5.18.0, PEFT 0.21.2 and Diffusers 0.41.0. Only the exact
+`bitsandbytes-0.50.0-py3-none-win_amd64.whl` (37,961,095 bytes, SHA-256
+`7f9ebf51d76a00341711cdd557af97555274b5aad3444975ff9927866a18bc11`)
+was staged. The production managed installer authenticated its artifact and
+installed-file seals, bound the native libraries and passed isolated validation.
+Explicit activation loaded that owned overlay in a fresh process; rollback
+returned another fresh CUDA-hidden process to the verified base with BnB absent.
+The inactive audited installation was retained. No application worker was
+restarted by this temporary package check.
+
+On an NVIDIA device with compute capability 8.9, six tiny local cases passed:
+raw 4/8-bit linear forwards and official Flux/CLIP 4/8-bit loading, local
+serialization/reload, PEFT injection and finite tensor forwards. Peak Torch CUDA
+allocated memory was 9,708,032 bytes. This is not a host-memory or reserved-memory
+peak, quantization accuracy equivalence, pretrained-model compatibility, group
+hook, cache-lifetime, generated-image, safety, Auto-fit or performance result.
+No trained model was acquired. The evidence qualifies only this exact auxiliary
+package delivery; model/device/dtype/resource admission and live qualification
+remain separate. Only Windows x86-64 auxiliary actions change; all other target
+records remain unchanged. The prequantized Qwen BQ4 Auto artifact is explicitly
+Linux-only, preserving its historical reference behavior while refusing all
+Windows Auto placements even after package activation or stored optimization
+selections. This does not qualify the current Linux base for that model, and
+Expert model admission remains separate.

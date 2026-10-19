@@ -90,7 +90,7 @@ class DiffusersThreeDTests(unittest.TestCase):
         source = reviewed_diffusers_source() / "pipelines/shap_e/pipeline_shap_e_img2img.py"
         self.assertEqual(
             source_sha256(source),
-            "3636799e64fc57201e25c5d426c3f1c6f27ae1e27334c2adb3238f0139788d24",
+            "017d195070aa7026c6cc8910745373cb616df977ad5d88ea9a48a148c760ad52",
         )
         actual = Path(inspect.getsourcefile(ShapEImg2ImgPipeline))
 

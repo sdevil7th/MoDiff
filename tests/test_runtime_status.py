@@ -7,6 +7,7 @@ import itertools
 import json
 import mimetypes
 import os
+import subprocess
 import sys
 import tempfile
 import threading
@@ -50,6 +51,35 @@ GIB = 1024**3
 
 
 class BackendSourceIdentityTests(unittest.TestCase):
+    def test_git_identity_requires_exact_repository_or_linked_worktree(self):
+        with tempfile.TemporaryDirectory(prefix="modiff-exact-git-root-") as directory:
+            repository = Path(directory) / "repository"
+            repository.mkdir()
+            worktree = Path(directory) / "linked"
+
+            def git(*arguments):
+                return subprocess.run(
+                    ["git", "-c", "core.hooksPath=", *arguments], cwd=repository,
+                    check=True, capture_output=True, text=True, timeout=15,
+                ).stdout.strip()
+
+            (repository / "main.py").write_text("print('identity')\n", encoding="utf-8", newline="\n")
+            git("init", "--template=")
+            git("add", "main.py")
+            git("-c", "user.name=MoDiff fixture", "-c", "user.email=fixture@example.invalid",
+                "commit", "--no-gpg-sign", "-m", "source fixture")
+            commit = git("rev-parse", "HEAD")
+            self.assertEqual(backend_source_identity(repository)["gitCommit"], commit)
+            git("worktree", "add", "--detach", str(worktree), "HEAD")
+            try:
+                self.assertEqual(backend_source_identity(worktree)["gitCommit"], commit)
+                copied = repository / "copied-backend"
+                copied.mkdir()
+                (copied / "main.py").write_bytes((repository / "main.py").read_bytes())
+                self.assertIsNone(backend_source_identity(copied)["gitCommit"])
+            finally:
+                git("worktree", "remove", "--force", str(worktree))
+
     def test_source_identity_is_canonical_and_ignores_hidden_or_generated_files(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -500,7 +530,11 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(payload["task_id"], "active-task")
         self.assertCountEqual(payload["cancelled_queued_task_ids"], ["queued-one", "queued-two"])
         self.assertEqual(self.server.queued_tasks, {})
-        self.assertEqual(self.server.task_graphs, {})
+        self.assertEqual(set(self.server.task_graphs), {"queued-one", "queued-two"})
+        self.assertCountEqual(
+            [task["task_id"] for task in self.server.recent_tasks if task["status"] == "cancelled"],
+            ["queued-one", "queued-two"],
+        )
         self.assertTrue(self.server.interrupt_flag)
         self.assertTrue(self.server.current_task["interrupt_requested"])
         self.assertEqual(self.server.current_task["phase"], "stopping")

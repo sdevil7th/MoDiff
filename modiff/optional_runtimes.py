@@ -1603,6 +1603,25 @@ _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE = _native_base_auxiliary_profile(
     label="bitsandbytes 0.50.0",
     diffusers_symbols=("BitsAndBytesConfig",),
 )
+_TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE = replace(
+    _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE,
+    artifact_locks=(
+        *_TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.artifact_locks,
+        {
+            "distribution": "bitsandbytes", "version": "0.50.0",
+            "filename": "bitsandbytes-0.50.0-py3-none-win_amd64.whl",
+            "url": "https://files.pythonhosted.org/packages/78/40/7b2253f94ec8c6235606aa393f315d941d02c44f141b7bccae14202b3fea/bitsandbytes-0.50.0-py3-none-win_amd64.whl",
+            "sha256": "7f9ebf51d76a00341711cdd557af97555274b5aad3444975ff9927866a18bc11",
+            "byteSize": 37_961_095, "platform": "windows", "pythonTag": "cp312", "machine": "x86_64",
+        },
+    ),
+    target_contracts=tuple(
+        replace(contract, contract_state="qualified", cutover_ready=True,
+                install_action_available=True, activation_available=True)
+        if (contract.platform, contract.machine) == ("windows", "x86_64") else contract
+        for contract in _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.target_contracts
+    ),
+)
 _GALLERY_MEDIA_PROFILE = _native_base_auxiliary_profile(
     _GALLERY_MEDIA_PROFILE,
     label="Media codecs: OpenCV 5.0.0.93 + PyAV 18.1.0",

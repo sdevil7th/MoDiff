@@ -122,6 +122,26 @@ class OperationStarterTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "exact reviewed artifact"):
             resolve_operation_starter(MODULE_MAP, self.contracts, {**selection, "task": "image_to_image"})
 
+    def test_existing_direct_alias_uses_its_resolved_loader_class_without_a_stage_grant(self):
+        from modiff.operation_starters import resolve_operation_starter
+        from modiff.diffusers_profiles import public_execution_profiles
+        with patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("constructed")):
+            contracts, _ = build_operation_catalog(
+                MODULE_MAP, public_execution_profiles(), catalog_resolver=lambda: {}
+            )
+            result = resolve_operation_starter(MODULE_MAP, contracts, {
+                "pipelineClass": "ZImageModularPipeline", "task": "edit_image",
+                "executionProfileId": "z-image:img2img-direct",
+            })
+        self.assertEqual(len(result["nodes"]), 2)
+        self.assertEqual(result["nodes"][0]["values"]["pipeline_class"], "ZImageImg2ImgPipeline")
+        self.assertEqual(result["nodes"][0]["values"]["execution_profile_id"], "z-image:img2img-direct")
+        self.assertEqual([row["operation"]["decomposition"] for row in result["nodes"]], ["loader", "pipeline"])
+        self.assertEqual(result["nodes"][1]["action"], "Edit")
+        self.assertEqual(len(result["edges"]), 1)
+        self.assertEqual(result["edges"][0]["sourceHandle"], "pipeline")
+        self.assertEqual(result["edges"][0]["targetHandle"], "pipeline")
+
     def test_every_advertised_profile_task_binds_without_constructing_models(self):
         from modiff.operation_starters import resolve_operation_starter
         from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES, public_execution_profiles

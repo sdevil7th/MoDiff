@@ -70,12 +70,12 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 202,
+                "canonicalWorkflowCount": 203,
                 "publicTemplateCount": 80,
                 "canonicalWorkflowsWithPublicTemplates": 54,
-                "candidateContractCount": 148,
-                "mediaKindCounts": {"audio": 6, "image": 100, "json": 9, "video": 33},
-                "contractsRequiringInputExamples": 93,
+                "candidateContractCount": 149,
+                "mediaKindCounts": {"audio": 6, "image": 100, "json": 10, "video": 33},
+                "contractsRequiringInputExamples": 94,
                 "contractsWithComfyResearchRecords": 11,
                 "comfyResearchRecordCount": 14,
                 "comfyMappingStatusCounts": {"existing_contract_candidate": 14},
@@ -127,7 +127,7 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(len(contracts_by_id), len(self.ledger["contracts"]))
         self.assertEqual(set(contracts_by_id), set(manifest_by_id) - public_workflow_ids)
         self.assertFalse(set(contracts_by_id) & public_workflow_ids)
-        self.assertEqual(len(contracts_by_id), 148)
+        self.assertEqual(len(contracts_by_id), 149)
         experimental_public_pairs = {
             "flux2_dev_text_to_image": "Flux2ModularPipeline:text_to_image",
             "cosmos3_super_text_to_image": "Cosmos3OmniModularPipeline:text_to_image",
@@ -142,6 +142,28 @@ class TemplateCandidateContractTests(unittest.TestCase):
             manifest = manifest_by_id[workflow_id]
             for field in ("modelType", "mode", "mediaKind", "graphPath", "graphHash", *MANIFEST_BINDING_FIELDS):
                 self.assertEqual(contract[field], manifest[field], f"{workflow_id} field {field}")
+
+    def test_ctc_candidate_is_exact_json_binding_without_runtime_qualification(self):
+        workflow_id = "HuggingFaceCTCSpeechRecognitionModel:speech_to_text"
+        contract = next(row for row in self.ledger["contracts"] if row["canonicalWorkflowId"] == workflow_id)
+        manifest = next(row for row in self.manifest["workflows"] if row["id"] == workflow_id)
+        self.assertEqual(contract["modelType"], "HuggingFaceCTCSpeechRecognitionModel")
+        self.assertEqual((contract["mode"], contract["mediaKind"]), ("speech_to_text", "json"))
+        self.assertEqual(contract["pipelineClasses"], ["AutoModelForCTC"])
+        self.assertEqual(contract["requiredArtifacts"], ["facebook/wav2vec2-base-960h"])
+        self.assertEqual(contract["requiredInputs"]["requiredAudio"], ["sourceAudio"])
+        self.assertEqual(contract["publicationState"], "hidden_candidate")
+        self.assertEqual(contract["assetState"], "not_generated")
+        self.assertEqual(contract["assets"], [])
+        self.assertEqual(contract["graphQualificationStatus"], "graph-qualified-execution-pending")
+        for field in ("runtimeQualificationStatus", "optimizationQualificationStatus"):
+            self.assertEqual(contract[field], "unqualified")
+            self.assertEqual(contract[field], manifest[field])
+        self.assertEqual(contract["qualifiedRuntimeProfiles"], [])
+        self.assertEqual(contract["evidenceState"], {
+            "maximumClaim": "canonical_graph_binding_only", "execution": "not_claimed",
+            "runtime": "not_claimed", "quality": "not_claimed",
+        })
 
     def test_authoring_assets_publication_and_evidence_remain_pending(self):
         self.assertEqual(

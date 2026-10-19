@@ -4,6 +4,9 @@ This module deliberately inventories names before deciding whether they are usef
 or safe.  An exported Diffusers class is not evidence that MoDiff can execute it;
 unmatched names remain visibly ``unreviewed`` until a separate admission change
 adds stronger evidence.
+
+Unpublished source-only recipes cannot grant executable coverage or serve as
+executable equivalence targets. Their installed-runtime admission stays pending.
 """
 
 from __future__ import annotations
@@ -24,6 +27,8 @@ from typing import Any
 
 from modiff.base_runtime import base_model_runtime_contract
 from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES, EXPERIMENTAL_DIFFUSERS_PIPELINES
+from modiff.image_stage_contract import declared_backend_image_stages
+from modiff.model_artifact_catalog import catalog_repository_pin
 from modiff.modular_contract_only_registry import (
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME,
     CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS,
@@ -34,7 +39,7 @@ from modiff.optional_runtimes import (
     TRANSFORMERS_MAIN_COMMIT,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
 )
-from modiff.studio_execution_specs import STUDIO_EXECUTION_SPEC_DEFINITIONS
+from modiff.studio_execution_specs import STUDIO_EXECUTION_SPEC_DEFINITIONS, studio_execution_spec_for_pair
 from modiff.source_text import canonical_python_source
 
 
@@ -63,13 +68,6 @@ _EQUIVALENT_PIPELINE_TARGETS = {
     "FluxKontextModularPipeline": ("FluxKontextPipeline",),
     "FluxModularPipeline": ("FluxPipeline", "FluxImg2ImgPipeline"),
     "FluxPriorReduxPipeline": ("FluxReduxPipeline",),
-    # Upstream keeps this compatibility subclass solely to direct callers to
-    # Lumina2Pipeline; it delegates initialization to that exact executable
-    # class and emits a removal deprecation.
-    "Lumina2Text2ImgPipeline": ("Lumina2Pipeline",),
-    # The pinned compatibility class inherits the exact admitted Lumina
-    # implementation without adding another public task surface.
-    "LuminaText2ImgPipeline": ("LuminaPipeline",),
     # The exact admitted condition adapters already expose these task surfaces
     # for the same LTX families. This is task equivalence only: optional direct
     # pipeline features such as prompt enhancement are not claimed.
@@ -1086,8 +1084,12 @@ def _pipeline_coverage(root: Path, source: Path) -> tuple[str, list[dict[str, An
     version, symbols = _diffusers_version_and_symbols(source)
     symbol_set = set(symbols)
     exact_specs: dict[str, list[dict[str, str]]] = defaultdict(list)
+    unpublished_classes = set()
     for spec_id, definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.items():
         pipeline_class = definition["profile"]["pipeline_class"]
+        if definition["profile"].get("public") is False:
+            unpublished_classes.add(pipeline_class)
+            continue
         exact_specs[pipeline_class].append(
             {"id": spec_id, "modelType": definition["modelType"], "mode": definition["mode"]}
         )
@@ -1140,6 +1142,12 @@ def _pipeline_coverage(root: Path, source: Path) -> tuple[str, list[dict[str, An
         elif artifact_reviews:
             status = "research-blocked"
             reason = "Immutable source/artifact research exists, but executable admission remains blocked or pending."
+        elif name in unpublished_classes:
+            status = "research-blocked"
+            reason = (
+                "Only unpublished source-level execution specifications select this class; "
+                "installed-runtime admission remains pending."
+            )
         else:
             status = "unreviewed"
             reason = (
@@ -1214,7 +1222,7 @@ def _load_reviewed_gallery_manifest(root: Path, explicit_path: Path | None) -> d
     return gallery
 
 
-def _template_execution_coverage(selection: Any) -> dict[str, Any]:
+def _template_execution_coverage(selection: Any, *, artifact: Any = None) -> dict[str, Any]:
     """Bind fresh template authoring separately from historical creator graphs."""
     if selection is None:
         return {}
@@ -1241,9 +1249,29 @@ def _template_execution_coverage(selection: Any) -> dict[str, Any]:
         for item in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
     ):
         raise UpstreamCoverageError("Public template execution selection has no exact semantic binding specification.")
-    expected_implementation = "native_stages" if profile.execution_path == "modular-diffusers" else "whole_pipeline"
-    if selection.get("implementation") != expected_implementation:
-        raise UpstreamCoverageError("Public template implementation claim differs from its backend profile.")
+    if selection.get("implementation") == "pipeline_stages":
+        # A direct profile can retain whole-pipeline compatibility while its
+        # current exact primary task also declares separate backend stages.
+        # The label alone never promotes another profile, artifact or task.
+        pin = catalog_repository_pin(profile.default_repo, model_type=profile.model_type)
+        if artifact is None:
+            selected_artifact = {"repository": profile.default_repo, "revision": (pin or {}).get("revision")}
+        elif isinstance(artifact, dict) and artifact.get("source") == "hub":
+            selected_artifact = {"repository": artifact.get("value"), "revision": artifact.get("revision")}
+        else:
+            raise UpstreamCoverageError("Public staged template has no exact immutable primary artifact.")
+        selected_profile = {field: getattr(profile, field) for field in (
+            "id", "model_type", "pipeline_class", "execution_path", "loader_module", "loader_action",
+            "default_repo", "modes",
+        )}
+        spec = studio_execution_spec_for_pair(binding.get("modelType"), binding.get("mode"))
+        if (type(selection.get("schemaVersion")) is not int or set(binding) != {"modelType", "mode"}
+                or not declared_backend_image_stages(selected_profile, selection.get("task"), selected_artifact, spec)):
+            raise UpstreamCoverageError("Public staged template has no exact backend image-stage specification.")
+    else:
+        expected_implementation = "native_stages" if profile.execution_path == "modular-diffusers" else "whole_pipeline"
+        if selection.get("implementation") != expected_implementation:
+            raise UpstreamCoverageError("Public template implementation claim differs from its backend profile.")
     return {
         "executionSelection": selection,
         "executionRecipeSource": "backend_operation_starter",
@@ -1310,7 +1338,9 @@ def _workflow_and_template_coverage(
         template_ids_by_workflow[workflow_id].append(template["id"])
         gallery_record = gallery_records.get(template["id"])
         quality_review_status = gallery_record.get("qualityReviewStatus") if gallery_record else None
-        selected_execution = _template_execution_coverage(template.get("executionSelection"))
+        selected_execution = _template_execution_coverage(
+            template.get("executionSelection"), artifact=template.get("modelArtifact"),
+        )
         template_items.append(
             {
                 "id": template["id"],

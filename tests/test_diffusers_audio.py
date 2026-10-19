@@ -203,16 +203,15 @@ class DiffusersAudioGenerateTests(unittest.TestCase):
                 )
 
     @requires_transformers
-    def test_audioldm2_generation_helper_accepts_only_the_reviewed_optional_runtime(self):
+    def test_audioldm2_generation_helper_accepts_only_reviewed_runtimes(self):
         import transformers
         from modules.DiffusersAudio.main import (
-            _AUDIO_LDM2_TRANSFORMERS_VERSION,
+            _AUDIO_LDM2_TRANSFORMERS_VERSIONS,
             _reviewed_audioldm2_generation_helper,
         )
 
-        # The macOS base may contain Transformers without the reviewed main
-        # overlay. Presence alone must not bypass this exact-version boundary.
-        if transformers.__version__ != _AUDIO_LDM2_TRANSFORMERS_VERSION:
+        # Package presence alone must not bypass the exact version/source review.
+        if transformers.__version__ not in _AUDIO_LDM2_TRANSFORMERS_VERSIONS:
             with self.assertRaisesRegex(RuntimeError, "has not been reviewed"):
                 _reviewed_audioldm2_generation_helper()
             return

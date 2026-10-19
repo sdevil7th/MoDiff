@@ -14,6 +14,9 @@ from modiff.NodeBase import NodeBase
 
 from . import MESSAGE_DURATION, MODULAR_DENOISE_OPTIONS, components, qwen_t2i_bundle_input_param
 from .component_bundle import normalize_component_bundle_inputs
+from .reference_conditioning import (
+    REFERENCE_BINDING, declares_reference_binding, unmark_reference_embeddings, validate_denoise_reference_inputs,
+)
 from .modular_utils import (
     get_model_type_metadata,
     normalize_modular_runtime_params,
@@ -587,6 +590,8 @@ class Denoise(NodeBase):
         return True
 
     def _cache_params_equal(self, previous, current):
+        if isinstance(current, dict):
+            validate_denoise_reference_inputs(current, manager=components)
         equal = route_cache_params_equal(previous, current, fallback=super()._cache_params_equal)
         if equal and isinstance(current, dict):
             normalized = normalize_component_bundle_inputs(current, node_type=self.node_type, component_manager=components)
@@ -614,6 +619,10 @@ class Denoise(NodeBase):
 
     def execute(self, **kwargs):
         kwargs = normalize_component_bundle_inputs(dict(kwargs), node_type=self.node_type, component_manager=components)
+        validate_denoise_reference_inputs(kwargs, manager=components)
+        reference_binding = kwargs.pop(REFERENCE_BINDING, None)
+        if "embeddings" in kwargs:
+            kwargs["embeddings"] = unmark_reference_embeddings(kwargs["embeddings"])
         require_route_state_shape_before_identity_resolution(kwargs)
         reject_undeclared_modular_generator(kwargs)
         reject_route_reserved_inputs_before_identity_resolution(
@@ -635,6 +644,8 @@ class Denoise(NodeBase):
 
         # 1. Get node config
         blocks, node_config = require_modiff_node_contract(self._pipeline_class, self.node_type)
+        if reference_binding is not None and not declares_reference_binding(node_config):
+            raise ValueError("The selected denoiser does not declare reference conditioning.")
         validate_route_field_contract(kwargs, node_config)
 
         route_state = kwargs.get(ROUTE_STATE_INPUT)

@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def runtime_command(command: str, arguments: list[str]) -> tuple[list[str], dict[str, str]]:
     from modiff.install import _rocm_environment
     from modiff.runtime_profile import read_state
-    from modiff.runtime_environment import configure_allocator
+    from modiff.runtime_environment import configure_allocator, configure_model_loading
 
     venv = ROOT / ".venv"
     python = venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
@@ -27,6 +27,7 @@ def runtime_command(command: str, arguments: list[str]) -> tuple[list[str], dict
     if state.get("profile") == "amd-rocm-linux":
         environment = _rocm_environment()
     configure_allocator(environment)
+    configure_model_loading(environment)
     target = ["-m", "modiff.preflight"] if command == "check" else [str(ROOT / "main.py")]
     return [str(python), *target, *arguments], environment
 

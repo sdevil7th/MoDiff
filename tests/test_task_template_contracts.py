@@ -359,7 +359,7 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
         cosmos_video = self.contract_by_pair[("Cosmos3OmniModularPipeline", "text_to_video")]
         self.assertEqual(cosmos_image["mediaKind"], "image")
         self.assertEqual(cosmos_image["output"]["nodeKey"], "modules.Image.Preview")
-        self.assertEqual(cosmos_image["auxiliaryTerminalRoles"], ["afterDecode"])
+        self.assertEqual(cosmos_image["auxiliaryTerminalRoles"], [])
         self.assertEqual(cosmos_video["mediaKind"], "video")
         self.assertEqual(cosmos_video["output"]["nodeKey"], "modules.Video.Export")
         self.assertEqual(cosmos_video["auxiliaryTerminalRoles"], ["afterDecode"])

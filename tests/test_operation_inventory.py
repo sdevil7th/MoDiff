@@ -11,12 +11,25 @@ class OperationInventoryTests(unittest.TestCase):
 
         generated = build_operation_inventory(Path(__file__).resolve().parents[1])
         self.assertEqual(generated, load_operation_inventory())
-        self.assertEqual(len(generated["pipelines"]), 334)
+        self.assertEqual(len(generated["pipelines"]), 340)
         flux = next(p for p in generated["pipelines"] if p["pipelineClass"] == "FluxPipeline")
         self.assertIn({"task": "text_to_image", "source": "auto", "workflowId": None}, flux["upstreamTasks"])
         qwen = next(p for p in generated["pipelines"] if p["pipelineClass"] == "QwenImageModularPipeline")
         self.assertTrue(any(t["workflowId"] == "inpainting" for t in qwen["upstreamTasks"]))
         self.assertTrue(all(p["upstreamTasks"] for p in generated["pipelines"]))
+        by_name = {row["pipelineClass"]: row for row in generated["pipelines"]}
+        self.assertEqual(by_name["QwenImage21Pipeline"]["upstreamTasks"], [
+            {"task": "text_to_image", "source": "auto", "workflowId": None},
+        ])
+        self.assertEqual({name for name, row in by_name.items() if row["coverage"] == "unreviewed"},
+                         {
+                "EchoModularPipeline", "Kandinsky6SRPipeline", "Kandinsky6TI2VAPipeline",
+                "QwenImage21ModularPipeline", "QwenImage21TurboModularPipeline", "SanaWMPipeline",
+            })
+        for name in ("Flux3ModularPipeline", "Flux3DistilledModularPipeline"):
+            self.assertEqual(by_name[name]["coverage"], "research-blocked")
+        self.assertNotIn("Lumina2Text2ImgPipeline", by_name)
+        self.assertNotIn("LuminaText2ImgPipeline", by_name)
 
     def test_inventory_reproduces_with_crlf_upstream_python_source(self):
         from modiff.operation_inventory import build_operation_inventory, load_operation_inventory

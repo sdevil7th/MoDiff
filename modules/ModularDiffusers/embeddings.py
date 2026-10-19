@@ -4,10 +4,13 @@ import logging
 from diffusers import ComponentSpec, guiders as builtin_guiders
 from diffusers.guiders.guider_utils import BaseGuidance
 
-from modiff.NodeBase import NodeBase
+from modiff.NodeBase import NodeBase, _node_message_identity
 
 from . import MESSAGE_DURATION, MODULAR_IMAGE_ENCODER_OPTIONS, MODULAR_TEXT_ENCODER_OPTIONS, components, qwen_t2i_bundle_input_param
 from .component_bundle import normalize_component_bundle_inputs
+from .reference_conditioning import (
+    REFERENCE_BINDING, declares_reference_binding, mark_reference_embeddings, reference_summary, require_reference_binding,
+)
 from .modular_utils import (
     get_model_type_metadata,
     normalize_modular_runtime_params,
@@ -113,6 +116,10 @@ class EncodePrompt(NodeBase):
             "hidden": True,
             "description": "Shared Diffusers guidance used by prompt encoding and denoising when the selected pipeline supports it.",
         },
+        "layout_reference_summary": {
+            "label": "Bound Reference Summary", "type": "string", "display": "output", "hidden": True,
+            "description": "Display-only ordered reference identities and actual preprocessing sizes from the current encoder cache.",
+        },
     }
 
     def update_node(self, values, ref):
@@ -188,6 +195,27 @@ class EncodePrompt(NodeBase):
 
         # Enforce the backend-issued action schema before initializing blocks.
         kwargs = normalize_modular_runtime_params(kwargs, node_config)
+        reference_binding = kwargs.pop(REFERENCE_BINDING, None)
+        reference_ids = None
+        if reference_binding is not None:
+            if not declares_reference_binding(node_config):
+                raise ValueError("The selected prompt encoder does not declare reference conditioning.")
+            reference_ids = require_reference_binding(
+                reference_binding, component=kwargs.get("text_encoders"), role="text_encoders", manager=components,
+            )
+        layout_conditioning = kwargs.pop("layout_conditioning", None)
+        if layout_conditioning is not None:
+            declaration = node_config["params"].get("layout_conditioning", {})
+            if (declaration.get("type") != "layout_conditioning" or declaration.get("display") != "layout"
+                    or declaration.get("fieldOptions", {}).get("layoutConditioning")
+                    not in ({"schemaVersion": 1, "sourceRegions": False}, {"schemaVersion": 2, "sourceRegions": False},
+                            {"schemaVersion": 2, "sourceRegions": False, "supportsBoundSourceRegions": True})):
+                raise ValueError("The selected prompt encoder does not declare layout conditioning.")
+            from modiff.layout_conditioning import resolve_layout_prompt
+
+            kwargs["prompt"] = resolve_layout_prompt(
+                kwargs.get("prompt"), layout_conditioning, bound_reference_ids=reference_ids,
+            )
         explicit_guider = kwargs.get("guider")
         if explicit_guider is not None:
             if not isinstance(explicit_guider, BaseGuidance):
@@ -302,9 +330,20 @@ class EncodePrompt(NodeBase):
                     return None
             else:
                 outputs[name] = node_output_state.get(name)
+        if reference_binding is not None and "embeddings" in outputs:
+            require_reference_binding(reference_binding, component=kwargs.get("text_encoders"),
+                                      role="text_encoders", manager=components)
+            outputs["embeddings"] = mark_reference_embeddings(outputs["embeddings"], reference_binding)
+            outputs["layout_reference_summary"] = reference_summary(
+                reference_binding, component=kwargs.get("text_encoders"), role="text_encoders",
+                manager=components, identity=_node_message_identity(),
+            )
         return outputs
 
     def _cache_params_equal(self, previous, current):
+        if isinstance(current, dict) and current.get(REFERENCE_BINDING) is not None:
+            require_reference_binding(current[REFERENCE_BINDING], component=current.get("text_encoders"),
+                                      role="text_encoders", manager=components)
         equal = super()._cache_params_equal(previous, current)
         if equal and isinstance(current, dict):
             normalize_component_bundle_inputs(current, node_type=self.node_type, component_manager=components)

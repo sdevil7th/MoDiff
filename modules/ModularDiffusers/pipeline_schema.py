@@ -70,6 +70,32 @@ _LOCAL_EXECUTABLE_CONFIG_FILES = {
 }
 
 
+def normalize_component_dtype_overrides(value):
+    """Validate declarative component precision without importing a model."""
+    if not isinstance(value, (tuple, list)) or len(value) > 16:
+        raise ValueError("Component dtype overrides require bounded name/dtype pairs.")
+    result = []
+    for pair in value:
+        if (not isinstance(pair, (tuple, list)) or len(pair) != 2
+                or type(pair[0]) is not str or re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,127}", pair[0]) is None
+                or pair[0] in PROTOTYPE_SENSITIVE_FIELD_NAMES
+                or type(pair[1]) is not str or pair[1] not in {"float32", "float16", "bfloat16"}):
+            raise ValueError("Component dtype overrides require exact supported name/dtype pairs.")
+        result.append(tuple(pair))
+    if len({name for name, _dtype in result}) != len(result):
+        raise ValueError("Component dtype overrides cannot repeat a component.")
+    return tuple(result)
+
+
+def normalize_weight_formats(value):
+    """Validate optional storage choices; declarations grant no loading authority."""
+    if (not isinstance(value, (tuple, list)) or len(value) > 3
+            or any(type(item) is not str or item not in {"native", "fp8r", "nvfp4"} for item in value)
+            or len(set(value)) != len(value) or (value and value[0] != "native")):
+        raise ValueError("Weight formats require unique reviewed choices beginning with native.")
+    return tuple(value)
+
+
 class DuplicateConfigKeyError(ValueError):
     """Raised when a JSON object contains an ambiguous duplicate key."""
 
@@ -241,6 +267,8 @@ def _validate_pipeline_config_document(data: dict[str, Any], *, source_label: st
             raise EnvironmentError(
                 f"The config file at '{source_label}' requires string field '{field_name}'."
             )
+    normalize_component_dtype_overrides(data.get("component_dtype_overrides", ()))
+    normalize_weight_formats(data.get("weight_formats", ()))
     loader_component_outputs = data.get("loader_component_outputs", [])
     if not isinstance(loader_component_outputs, list) or len(loader_component_outputs) > MAX_LOADER_COMPONENT_OUTPUTS:
         raise EnvironmentError(
@@ -778,6 +806,7 @@ MODIFF_PARAM_TEMPLATES = {
     "padding_mask_crop": {
         "label": "Mask Crop Padding",
         "type": "int",
+        "default": None,
         "min": 0,
         "max": 8192,
         "step": 1,
@@ -928,6 +957,7 @@ class MoDiffParamMeta(type):
                 params = {"name": template.get("name", name), **template, **overrides}
                 if default is not None:
                     params["default"] = default
+                params["_default_is_explicit"] = "default" in params
                 return cls(**params)
 
             return factory
@@ -976,11 +1006,18 @@ class MoDiffParam(metaclass=MoDiffParamMeta):
     connectionRole: str | None = None
     signalCompatibility: dict[str, Any] | None = None
     required_block_params: str | list[str] | None = None
+    _default_is_explicit: bool = False
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dict for MoDiff schema, excluding None values and internal fields."""
+        """Publish declared defaults, excluding absent values and internal fields."""
         data = asdict(self)
-        return {k: v for k, v in data.items() if v is not None and k not in ("name", "required_block_params")}
+        public = {k: v for k, v in data.items()
+                  if v is not None and k not in ("name", "required_block_params", "_default_is_explicit")}
+        # None is ordinarily an absent dataclass field. A template can instead
+        # declare it as the actual optional default, as mask crop padding does.
+        if self.default is None and self._default_is_explicit:
+            public["default"] = None
+        return public
 
     # =========================================================================
     # Input: Generic input parameter factories (for custom blocks)
@@ -1442,6 +1479,8 @@ class MoDiffPipelineConfig:
         guider_options: tuple[str, ...] = (),
         scheduler_options: tuple[str, ...] = (),
         denoise_image_latent_dimensions: tuple[str, ...] = (),
+        component_dtype_overrides: tuple[tuple[str, str], ...] = (),
+        weight_formats: tuple[str, ...] = (),
     ):
         """
         Args:
@@ -1456,6 +1495,7 @@ class MoDiffPipelineConfig:
             guider_options: Exact Diffusers guider classes accepted for this pipeline.
             scheduler_options: Exact Diffusers scheduler replacements accepted for this pipeline.
             denoise_image_latent_dimensions: Legacy dimension inputs retained when image latents are supplied.
+            weight_formats: Reviewed storage choices; omission preserves native-only loading.
         """
         # Convert all node specs to MoDiff format immediately
         self.node_specs = node_specs
@@ -1463,6 +1503,8 @@ class MoDiffPipelineConfig:
         self.label = label
         self.default_repo = default_repo
         self.default_dtype = default_dtype
+        self.component_dtype_overrides = normalize_component_dtype_overrides(component_dtype_overrides)
+        self.weight_formats = normalize_weight_formats(weight_formats)
         if not isinstance(loader_component_outputs, (list, tuple)):
             raise ValueError("loader_component_outputs requires a list or tuple of component names.")
         normalized_loader_outputs = tuple(loader_component_outputs)
@@ -1583,6 +1625,9 @@ class MoDiffPipelineConfig:
             "guider_options": list(self.guider_options),
             "scheduler_options": list(self.scheduler_options),
             "denoise_image_latent_dimensions": list(self.denoise_image_latent_dimensions),
+            **({"component_dtype_overrides": [list(pair) for pair in self.component_dtype_overrides]}
+               if self.component_dtype_overrides else {}),
+            **({"weight_formats": list(self.weight_formats)} if self.weight_formats else {}),
             "node_params": self.node_params,
         }
 
@@ -1599,6 +1644,9 @@ class MoDiffPipelineConfig:
         instance.label = data.get("label", "")
         instance.default_repo = data.get("default_repo", "")
         instance.default_dtype = data.get("default_dtype", "")
+        instance.component_dtype_overrides = normalize_component_dtype_overrides(
+            data.get("component_dtype_overrides", ()))
+        instance.weight_formats = normalize_weight_formats(data.get("weight_formats", ()))
         instance.loader_component_outputs = tuple(data.get("loader_component_outputs", ()))
         instance.layer_block_options = tuple(data.get("layer_block_options", ()))
         instance.guider_options = tuple(data.get("guider_options", ()))

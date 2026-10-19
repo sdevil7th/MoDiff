@@ -106,21 +106,13 @@ def inspect_native_runtime_controls(nodes, loader_id, literal):
     loader = nodes[loader_id]
     if (loader['module'], loader['action']) != ('modules.ModularDiffusers', 'ModelsLoader'):
         return {}
-    controls = {}
-    if 'attention_backend' in loader['params']:
-        backend = literal(nodes, loader_id, 'attention_backend')
-        if backend in (None, ''):
-            backend = 'inherit'
-        if not isinstance(backend, str) or backend not in {'inherit', 'auto', 'native', '_native_math'}:
-            raise ValueError('Native Modular attention has no accepted Auto policy; use inherit, auto, native, or _native_math.')
-        controls['attention_backend'] = backend
-    for field in ('vae_slicing', 'vae_tiling'):
-        if field in loader['params']:
-            value = literal(nodes, loader_id, field)
-            if value is not None and type(value) is not bool:
-                raise ValueError(f'{loader_id}.{field} must be an explicit boolean or unset.')
-            controls[field] = value
-    return controls
+    from modiff.modular_runtime_policy import RUNTIME_POLICY_FIELDS, normalize_modular_runtime_policy
+
+    controls = {field: literal(nodes, loader_id, field) for field in RUNTIME_POLICY_FIELDS
+                if field in loader['params']}
+    normalized = normalize_modular_runtime_policy(**controls)
+    # Keep legacy plans sparse while preserving explicitly authored defaults.
+    return {field: normalized.get(field, controls[field]) for field in controls}
 
 
 def inspect_resource_value(nodes, node_id, field, visited=frozenset()):
@@ -159,6 +151,37 @@ def inspect_resource_value(nodes, node_id, field, visited=frozenset()):
         if not math.isfinite(number) or number <= 0 or not number.is_integer():
             raise ValueError(f'{source_id}.{field} must declare a positive integer dimension.')
         return int(number)
+    if (
+        (nodes[node_id]['module'], nodes[node_id]['action']) == ('modules.DiffusersImage', 'DecodeLatents')
+        and (source['module'], source['action']) == ('modules.DiffusersImage', 'Denoise')
+        and source_field in {'width_out', 'height_out'}
+        and field == source_field.removesuffix('_out')
+    ):
+        target = nodes[node_id]['params']
+        if (target.get('latents', {}).get('sourceId') != source_id
+                or target.get('latents', {}).get('sourceKey') != 'latents_out'
+                or target.get('latent_binding', {}).get('sourceId') != source_id
+                or target.get('latent_binding', {}).get('sourceKey') != 'latent_binding'
+                or target.get('pipeline', {}).get('sourceId') != source['params'].get('pipeline', {}).get('sourceId')
+                or target.get('pipeline', {}).get('sourceKey') != source['params'].get('pipeline', {}).get('sourceKey')
+                or not target.get('pipeline', {}).get('sourceId')):
+            raise ValueError(f'{node_id}.{field} has no matching image latent, binding and pipeline owner.')
+        from modiff.workflow_task_identity import direct_image_stage_owner
+        if direct_image_stage_owner(nodes, node_id) != direct_image_stage_owner(nodes, source_id):
+            raise ValueError('The image decoder geometry has a different concrete owner.')
+        # Forecast the declared sampler control only. Runtime dispatch compares
+        # its actual output to this capture before decoder allocation; no model
+        # output, Tensor shape or user supplier is evaluated during inspection.
+        dimension = value(field)
+        if isinstance(dimension, bool):
+            raise ValueError(f'{source_id}.{field} must declare a positive integer dimension.')
+        try:
+            number = float(dimension)
+        except (TypeError, ValueError) as error:
+            raise ValueError(f'{source_id}.{field} must declare a positive integer dimension.') from error
+        if not math.isfinite(number) or number <= 0 or not number.is_integer():
+            raise ValueError(f'{source_id}.{field} must declare a positive integer dimension.')
+        return int(number)
     if source['module'] == 'modules.Primitive':
         if source['action'] in {'String', 'Integer', 'Float', 'Boolean'}:
             return value('value')
@@ -177,3 +200,89 @@ def inspect_resource_value(nodes, node_id, field, visited=frozenset()):
             raise ValueError(f'{source_id} has no data output {source_field}.')
         return outputs[source_field]
     raise DeferredResourceValue(node_id, field, source_id, source_field, nodes)
+
+
+def filter_adapter_authoring_candidates(candidates, *, nodes, loader_id, consumers,
+                                        profile, mode, repository, literal, recipe_controls, candidate_fields):
+    """Keep populated image adapter routes inside their declared controls.
+
+    Inspect existing API parameters and already-reviewed pure recipe controls;
+    never execute a supplier, insert a field or invent an admitted placement.
+    Profiles without conditional permission and vanilla graphs keep their plan.
+    """
+    policy = getattr(profile, 'adapter_authoring', None)
+    required = getattr(policy, 'required_controls', ())
+    if not required:
+        return candidates
+    loader = nodes[loader_id]
+    native = (loader['module'], loader['action']) == ('modules.ModularDiffusers', 'ModelsLoader')
+    if native:
+        lora = loader['params'].get('lora_list', {})
+        requested = (lora.get('sourceId') is not None or lora.get('sourceKey') is not None
+                     or lora.get('value') not in (None, []) or lora.get('default') not in (None, []))
+    else:
+        requested = False
+        for key in consumers:
+            if nodes[key]['module'] + '.' + nodes[key]['action'] != policy.adapter_node_key:
+                continue
+            artifact = nodes[key]['params'].get('adapter_path', {})
+            if artifact.get('sourceId') is not None or artifact.get('sourceKey') is not None:
+                requested = True
+                continue
+            selection = artifact.get('value', artifact.get('default'))
+            empty = (selection is None or isinstance(selection, str) and not selection.strip()
+                     or type(selection) is dict and set(selection) == {'source', 'value'}
+                     and selection['source'] in {'hub', 'local'} and type(selection['value']) is str
+                     and not selection['value'].strip())
+            requested |= not empty
+    if not requested:
+        return candidates
+    expected_owner = {
+        'modules.ModularDiffusers.Lora': ('modules.ModularDiffusers', 'ModelsLoader', 'modular-diffusers'),
+        'modules.DiffusersImage.LoadAdapter': ('modules.DiffusersImage', 'LoadPipeline', 'direct-diffusers-image'),
+    }.get(policy.adapter_node_key)
+    if ((loader['module'], loader['action'], profile.execution_path) != expected_owner
+            or mode not in policy.tasks or mode not in profile.modes):
+        raise ValueError('The populated image adapter route has no matching selected task and loader permission.')
+    values = {}
+    for field, _expected in required:
+        param = loader['params'].get(field)
+        if (not isinstance(param, dict) or param.get('display') == 'output'
+                or param.get('sourceId') is not None or param.get('sourceKey') is not None):
+            raise ValueError('The selected image adapter route requires an explicit literal loader control: ' + field)
+        values[field] = literal(nodes, loader_id, field)
+    if not native:
+        recipe = loader['params'].get('execution_recipe', {})
+        if recipe.get('sourceId'):
+            source = nodes[recipe['sourceId']]
+            if (source['module'], source['action'], recipe.get('sourceKey')) != (
+                    'modules.DiffusersRuntime', 'DiffusersExecutionRecipe', 'execution_recipe'):
+                raise ValueError('Conditional adapter controls require the registered pure execution recipe.')
+            for field in ('offload_mode', 'device_map'):
+                control = source['params'].get(field, {})
+                if control.get('sourceId') is not None or control.get('sourceKey') is not None:
+                    raise ValueError('Conditional adapter recipe controls must be literal: ' + field)
+            # The existing inspector proves recipe/quantizer controls without
+            # execution. Offload overrides raw placement and derives Auto;
+            # a non-none raw device_map still wins in LoadPipeline.
+            for field in ('offload_mode', 'auto_offload'):
+                if field in recipe_controls:
+                    values[field] = recipe_controls[field]
+            if values.get('device_map') in (None, '', 'none'):
+                values['device_map'] = literal(nodes, recipe['sourceId'], 'device_map') or 'none'
+        elif recipe.get('value') is not None:
+            raise ValueError('Inline execution recipes cannot establish conditional adapter controls.')
+    result = []
+    for candidate in candidates:
+        revision = (candidate.get('artifactResolution', {}).get('resolved', {}).get('revision')
+                    or candidate.get('artifactRevision'))
+        if (repository, revision) not in policy.repository_revisions:
+            continue
+        effective = {**values, **{field: candidate[key] for field, key in candidate_fields.items() if field in values and key in candidate}}
+        if all(type(effective[field]) is type(expected) and effective[field] == expected
+               for field, expected in required):
+            result.append(candidate)
+    if not result:
+        raise ValueError('Auto has no admitted recipe satisfying the selected image adapter route controls. '
+                         'Select Expert and preserve the declared controls; memory and readiness checks still apply.')
+    return result

@@ -29,6 +29,7 @@ METADATA_ACTIONS = {
         **{action: frozenset({"update_image_contract"}) for action in (
             "Generate", "Edit", "LayerDecompose", "Inpaint", "ControlGenerate",
             "ControlEdit", "ControlInpaint", "UnconditionalGenerate", "PredictMap",
+            "EncodeInputs", "Denoise",
         )},
     },
     "modules.DiffusersAudio": {action: frozenset({"update_audio_contract"}) for action in ("LoadPipeline", "Generate")},

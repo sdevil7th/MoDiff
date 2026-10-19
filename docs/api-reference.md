@@ -158,8 +158,13 @@ address: null}`. The browser uses this address for emergency queue polling
 - Queue summary.
 - Normalized `hardware` data. Idle status refreshes current memory counters;
   active inference uses its cached hardware snapshot to avoid accelerator
-  probes. `hardware_snapshot_state` distinguishes `current_idle` from
-  `cached_while_running`. The runtime identity remains the startup/run identity.
+  probes. `hardware_snapshot_state` distinguishes `current_idle`,
+  `cached_while_running` and `cached_during_cleanup`. During cache teardown,
+  readiness uses the exact validated runtime snapshot and already observed
+  packages. Missing or stale validated metadata or unavailable package
+  observations return a structured
+  `runtime_cleanup_busy` response with HTTP 409; callers can retry after cleanup.
+  The runtime identity remains the startup/run identity.
 
 Compact queue/history entries expose `runtimeFingerprint` as the execution
 fingerprint from the full completion receipt, not its `resourceFingerprint`.
@@ -190,6 +195,12 @@ each waiting browser request; health and other control handlers need that
 worker capacity. Cancelling one request does not cancel the shared sample for
 other callers. This preserves the existing sample cache and response schema;
 it does not guarantee that every native probe releases the Python GIL.
+
+Cache teardown marks the existing guard before the model callback drains earlier
+resource probes. Resource, readiness and system-stat builders recheck that guard
+in their worker, including builders surviving HTTP cancellation. They avoid
+new accelerator probes during destruction. The cleanup callback retains fresh
+before/after CUDA diagnostics under the existing resource lock.
 
 While a queue task is active, resource monitoring and GPU diagnostic snapshots
 do not call the model process's Torch allocator or refresh its hardware probes.
@@ -1240,6 +1251,89 @@ These project the existing generic Modular configs, reviewed workflow adapters,
 standard image/video/audio/rendered-3D adapters and optional-runtime profiles.
 They do not add runtime actions or an alternate graph executor.
 
+Image-producing execution profiles additionally publish `repository_revisions`
+when their declared `default_repo`, `fallback_repo` or `compatible_repos` have
+reviewed immutable catalog pins. This optional array contains at most 32 exact
+`{"repo": "publisher/model", "revision": "<40 lowercase hex characters>"}` pairs,
+with one entry per repository. Mixed-modality profiles qualify when a declared
+mode produces an image. Other media profiles receive the same sidecar only when
+an explicit reviewed adapter-authoring policy matches their output kind.
+Unknown repositories and unrelated catalog artifacts earn no pair.
+The same pairs appear in each capability's `executionProfiles` and the root
+`diffusersExecutionProfiles` list. Select the pair for the actual profile and
+repository; the legacy flat `revisionCandidates` display list cannot establish
+that binding. `artifactSelections` retains its existing download-selection
+contract. These pairs do not enable LoRA support, Auto, execution, live proof or
+template/Gallery qualification; those existing contracts still apply.
+
+An explicitly reviewed execution profile may additionally publish the optional
+`adapterAuthoring` object. Its six required fields are `schemaVersion: 1`, `mediaKind` (`"image"` or `"audio"`),
+`adapterNodeKey`, `tasks`, `maxOwnedAdapters` and `repositoryRevisions`. Tasks and
+repository pairs are bounded and unique; each pair must agree with that profile's
+current immutable catalog pin. The owned-row maximum is an integer from 1 to 32
+for images and exactly 1 for the current direct audio transport.
+A policy may also include a nonempty `requiredControls` object with at most 32
+registered loader-control names. Names use lowercase identifier tokens up to
+64 characters and exclude prototype keys. Values are exactly Boolean, `null`,
+or trimmed, nonempty strings up to 128 UTF-16 code units; numbers, control
+characters, and Unicode line/paragraph separators are refused. An absent map
+preserves the six-field policy. A malformed or empty present map fails closed.
+Publication verifies the declared controls against the current registered
+loader metadata without constructing a node. Native adapter permission joins
+`modules.ModularDiffusers.Lora` to `ModelsLoader` on `modular-diffusers`;
+direct image permission joins `modules.DiffusersImage.LoadAdapter` to
+`LoadPipeline` on `direct-diffusers-image`. Direct audio permission joins
+`modules.DiffusersAudio.LoadAdapter` to `LoadPipeline` on
+`direct-diffusers-audio`. Publication also checks the registered audio pipeline
+input/output types, action compatibility and task-specific adapter support.
+
+Current conditional policies select only the immutable Super text-to-image
+pair and Redux editing pair. Super requires NONE placement, Auto Offload
+disabled, CPU weight staging, no quantization/external components, and remote
+code disabled. Redux requires effective NONE placement with Auto Offload
+disabled, no quantization/prequantized component, and declared `device_map=none`.
+The registered pure Diffusers Execution Recipe can override placement and
+derive Auto Offload. A non-`none` raw loader `device_map` still takes priority
+over the recipe; a recipe `device_map` applies when the raw value is `none`.
+Unknown, connected, custom or ambiguous required controls do not earn a grant.
+`null` means a registered optional input with no value or schema default,
+including the ordinary display-only API descriptor, rather than a generic
+equivalence between missing values and `null`. Auto candidates must satisfy
+the same declared controls; Auto does not add an otherwise unadmitted NONE
+placement or change precision/creative values to satisfy permission.
+These controls do not establish readiness, memory fit or live qualification;
+Cosmos mandatory safety and its existing delivery checks remain in force.
+
+Separate declarations select `flux-dev:modular`, `flux-schnell:modular` and
+`flux-krea:modular` for `text_to_image`; `flux-kontext:modular` for `edit_image`;
+and `flux2-klein:modular` for `text_to_image` and `edit_image`. Each uses
+`modules.ModularDiffusers.Lora` and only its own dense immutable model pair.
+A shared pipeline class does not grant another profile or repository permission.
+These declarations exclude compatible FP8/NVFP4 artifacts, Klein Base/KV
+profiles and video adapter authoring. `tasks` lists reviewed execution
+modes. A differently named authoring task must have an explicit current
+model-owner `binding.executionMode` that belongs to both the selected profile
+modes and policy tasks; without that field, only the exact task name is checked.
+
+The separate `ace-step-audio:direct` policy permits one owned
+`modules.DiffusersAudio.LoadAdapter` row for `text_to_audio`, `audio_variation`,
+`audio_continuation` and `audio_repaint`, using only the reviewed ACE XL or
+compatible Runware repository/revision pairs. It does not grant permission to
+other audio pipelines or establish multi-adapter blending. Editing or replacing
+the existing row remains possible at capacity; another Add is refused. Direct
+audio adapter branches retain their separate Automatic resource-planning limit.
+See [audio workflow stages](audio-workflows.md) for presentation and delivery.
+
+The client joins this policy to the current selected operation, profile, literal
+model/revision and registered typed adapter transport before enabling edits.
+Absent policy preserves the existing capability/canonical support checks;
+malformed or mismatched policy fails closed. Add rechecks the owned-row bound,
+while permitted editing/reordering and safe removal keep their ordinary graph
+transactions. The policy authorizes authoring separately from aggregate support,
+Auto admission, installation, execution, live proof and publication. Imported
+workflow metadata cannot replace current backend authority. The runtime still
+validates artifacts, adapter compatibility, ownership and resources at execution.
+
 An operation has `pipelineClass`, `task`, `operationId`, `nodeType`, `nodeKey`,
 `blockName`, `decomposition`, `support: "declared"`, `workflowId`, `binding` and
 `ports`. Identity is `(pipelineClass, operationId, task)`. Task-scoped bindings
@@ -1266,6 +1360,14 @@ from the selected `pipelineClass` for an existing reviewed standard fallback.
 `binding.values` contains only the exact lightweight selectors needed by the
 existing action, such as `model_type`, `pipeline_class`, `workflow_id` or
 `block_path`. Full field defaults and output signals are resolved on demand.
+An image model-owner binding may additionally publish `executionMode`, a bounded
+lowercase mode identifier of at most 64 characters, when a reviewed task adapter
+projects another task name onto an existing execution mode. For example, the
+reviewed multi-reference image task uses `edit_image`. This metadata stays
+outside `binding.values`, writes no executable parameter, and grants no runtime
+route. Clients use the unique current backend owner contract; saved graph hints
+cannot supply this authority. A present invalid value fails closed. The paired
+client parser accepts this optional v3 extension and retains bindings without it.
 Fallbacks retain public execution-profile task limits and reviewed local aliases.
 A task with Modular stages retains one coherent Modular loader/stage path;
 fallback generators are not mixed with that loader. Saved actions, including
@@ -1361,7 +1463,8 @@ active workflow or catalog view changes. Graph-wide changes use the explicit
 preview and transaction described below.
 
 `POST /operations/starter` accepts `pipelineClass`, a non-null `task`, and an
-optional `executionProfileId`. No other keys are accepted. The optional identity
+optional `executionProfileId` and `repository`, with `authoringRecipeId` available
+only alongside an exact profile. No other keys are accepted. The optional identity
 selects an exact public profile belonging to that loader and task, including its
 reviewed model repository and immutable revision. This distinguishes models that
 share a pipeline class (for example FLUX dev and schnell). The endpoint checks
@@ -1374,6 +1477,25 @@ and `upstreamBlocks`. Edges use canonical operation IDs temporarily as `source`
 and `target`, and real field names as `sourceHandle`/`targetHandle`. The client
 assigns ordinary canvas node/edge IDs at insertion; these authoring references
 are never an alternate executable graph format or an execution receipt.
+
+Fresh image templates can additionally select a reviewed `authoringRecipeId`.
+The response then adds `authoring`: schema/canonicalization version 1, exact recipe
+`id`, `baseSpecId`, `baseSpecContentHash`, permitted `executionProfileIds`, and the
+existing Studio `roles`, `edges` and `bindings` tuple formats. `initialValues`
+contains only `[role, field, primitive]` literals; it cannot select code, trust,
+repositories, revisions or execution identities. `contentHash` uses the same
+canonical JSON/UTF-16 FNV-1a procedure as Studio specs with the
+`studio-authoring-v1-` prefix. This checksum detects stale authoring data; it is
+not a signature or consent to execute external code.
+
+`generic-native-image:v1` resolves one exact native image specification/profile
+and derives the effective guidance binding from its actual starter. Retained
+recipes separately declare reviewed initial controls and media utility wiring.
+The client rejects an unsolicited, missing, mismatched or invalid recipe, checks
+its base specification ID/hash, validates ordinary typed fields and connections,
+and materializes one ordinary graph through the existing transaction. These
+declarations apply only to fresh creation. Opening a saved workflow performs no
+migration, and ordinary no-recipe starter requests keep their original shape.
 
 New ordinary image, audio, video and rendered-3D operations initialize visible
 controls from the selected profile's reviewed capability defaults. Video defaults
@@ -1693,6 +1815,17 @@ evidence is downgraded before Auto admission instead of being represented as
 live proof. Qualification proof remains advisory for an otherwise valid
 executable graph. Independently safe or passed candidates do not depend on that
 local history check.
+
+Controlled Hub LoRA and upscaler files retain their exact repository, immutable
+revision and relative snapshot alias. Resolution uses the same finite cache
+layout contract as pipeline execution: ordinary snapshot files, owned repository
+blobs, shared `blobs/<two-hex>/<64-hex>` files, and a single owned flat repository
+blob link directly to a shared file are supported. Foreign aliases, extra link
+hops, linked cache directories and malformed shared paths are rejected. Hub blob
+names are storage identities; they never replace verification of the actual
+content SHA-256. LoRA files still require a valid Safetensors header, and declared
+upscaler byte sizes remain mandatory when present. Resolution neither downloads
+weights nor changes the cache.
 
 Editing an image or video upscaler's Model selector resolves an installed Hub
 file to its exact cached commit and records its SHA-256 and byte size in the
@@ -2058,6 +2191,21 @@ Terminal receipts replace in-progress messages with their terminal status,
 while explicit failure/cancellation diagnostics remain available. Clients
 must give terminal status priority over progress fields in older receipts.
 
+`DELETE /queue/{task_id}` removes only the specified waiting task. Accepted
+work becomes `cancelled` with the reason `Cancelled before execution.`, no
+start time or output, and its original workflow/run identity retained in the
+same bounded recent history and lazy `/runs/{task_id}` lookup as other terminal
+runs. The worker's `POST /stop` fallback preserves the same receipts for queued
+work it cancels. An active task cannot be removed by `DELETE` (`400`); an
+unknown or already removed ID returns `404` without duplicating history.
+Cancellation removes admission eligibility immediately; the serial worker
+subsequently skips and drains the already queued entry without executing it.
+Pending generated Preview slots for cancelled queued work become `cancelled`.
+After a supervised worker replacement, retained terminal receipts likewise
+settle only their exact pending task IDs (`failed`, `cancelled`, or
+`completed_without_output`). Already delivered outputs and pending slots for
+other task IDs remain unchanged.
+
 Use the WebSocket for live progress and `GET /queue` to restore state after reconnect. Do not infer success only from an HTTP `200` returned by `POST /graph`.
 
 ### Studio preview state
@@ -2143,6 +2291,11 @@ model/tensor/media objects or credential fields. Per scalar string/list limits
 are 16,384 characters / 16 scalar items; value payloads are capped at 64 KiB per
 node, and node evidence at 256 nodes / 256 KiB per output, excluding bounded
 summary/envelope overhead. Unsupported/oversize values are explicitly omitted.
+
+Native loader calls capture the consumed `weight_loading_mode` as
+`summary.weightLoadingMode` (`cpu` or `cuda`). The paired client validates that
+enum and its agreement with captured node fields. It records the actual call,
+including cache reuse, rather than guessing from the historical form.
 These prompts/settings are sensitive local plaintext history under the existing
 retention/export boundary. `POST /studio_outputs` cannot introduce a trusted
 receipt; frontend enrichment preserves an existing backend receipt and its
@@ -2229,6 +2382,12 @@ Uploads are written under configured data subdirectories and share the configure
   validates and may replace an invalid target partial. The process-global Hub
   transport setting is restored to its exact prior value after each shared or
   exclusive window drains.
+  Final Install/Repair validation checks each selected file's exact byte size
+  when known, requested immutable snapshot identity, and managed cache/blob
+  containment before telemetry or loader-config parsing. Unknown file sizes
+  retain the existing presence-only policy; progress counters do not establish
+  exact completeness. These checks run after an explicit transfer, not during
+  browsing or polling, and do not implicitly hash model payloads.
 - `GET /template_gallery/status` verifies an existing local Gallery against the
   app's immutable Dataset identity. `GET /template_gallery/plan` obtains and
   validates the pinned manifest, returns exact download/staging reservations,
@@ -2253,11 +2412,11 @@ Stable product routes such as `/graph`, `/queue`, `/studio_outputs`, and `/workf
 
 `POST /auto_resource/workflow` accepts `{ "schemaVersion": 1, "graph": { "nodes": {}, "paths": [] } }` with a nonempty existing executable graph and optional `loops`. It validates reviewed model profiles, artifacts and resource candidates without executing nodes or installing models.
 
-The response includes `canAutoRun`, `issues`, `loaders`, `adapters`, `requirements`, `retainedRequirements`, `capacityRequirements`, `workingMemoryPolicy`, `available`, `sharedMemory`, `patches`, `graphHash`, `plannedGraphHash`, `resolvedFields`, `requiresPreparation`, `preparationNodeIds`, `deferredFields` and `schedule`. A pending data preparation plan is provisional: actual outputs must pass another plan before model allocation. Only existing `offload_mode` and `auto_offload` fields may be patched, including the authoritative offload field of a connected reviewed execution recipe; model identity, precision and creative inputs are preserved.
+The response includes `canAutoRun`, `issues`, `loaders`, `adapters`, `requirements`, `retainedRequirements`, `capacityRequirements`, `workingMemoryPolicy`, `available`, `sharedMemory`, `patches`, `graphHash`, `plannedGraphHash`, `resolvedFields`, `requiresPreparation`, `preparationNodeIds`, `deferredFields` and `schedule`. A pending data preparation plan is provisional: actual outputs must pass another plan before model allocation. Only existing `offload_mode`, `auto_offload` and supported native `weight_loading_mode` fields may be patched, including the authoritative offload field of a connected reviewed execution recipe; model identity, precision and creative inputs are preserved.
 
 Every Automatic execution, including a managed Studio workflow, requires a whole-workflow planning receipt before runtime preparation. A primary-model `autoResourcePlan` alone is insufficient; missing receipts fail with `workflow_auto_plan_required`. Custom memory preserves explicit graph settings. A whole-workflow plan owns execution resource settings and is not overwritten by the primary-model candidate. It grants one graph attempt; primary-model retry recipes are not selected for that execution. A failure needs a fresh whole-workflow plan.
 
-Requests carry `runtimeHints.workflowAutoPlan` with `schemaVersion: 1`, `graphHash` and optional `resourceControlGroups` (arrays of `{nodeId, field}` bindings for shared offload controls). The backend verifies the graph hash, prepares supported data-only suppliers through the existing executor when needed, validates mirrored settings, and replans from fresh outputs. It emits existing `auto_resource_plan_applied` events with optional `resourceUpdates` containing `{nodeId, field, value, previousValue}`. The client applies those updates only to the owning workflow with unchanged fields. `runtimePreparation.workflowAuto` in task receipts records resolved fields, applied updates, preparation nodes, schedule and actual releases.
+Requests carry `runtimeHints.workflowAutoPlan` with `schemaVersion: 1`, `graphHash` and optional `resourceControlGroups` (arrays of `{nodeId, field}` bindings for shared `offload_mode`, `auto_offload` or `weight_loading_mode` controls). The backend verifies the graph hash, prepares supported data-only suppliers through the existing executor when needed, validates mirrored settings, and replans from fresh outputs. It emits existing `auto_resource_plan_applied` events with optional `resourceUpdates` containing `{nodeId, field, value, previousValue}`. The client applies those updates only to the owning workflow with unchanged fields. `runtimePreparation.workflowAuto` in task receipts records resolved fields, applied updates, preparation nodes, schedule and actual releases.
 
 Shared loaders count once. Independent loaders remain separate owners. Static Auto tiers declare `memorySemantics: "machine_capacity"`: their RAM and VRAM numbers are machine admission classes, checked against total capacity with the existing nominal-tier tolerance. `capacityRequirements` takes the maximum class across owners; those classes are never added together or treated as additional free working memory. Offloaded shared/unified accelerators retain the existing accessible-capacity policy. Disk requirements still describe actual free space.
 
@@ -2270,6 +2429,121 @@ resident pipeline. Existing Modular shared-component ownership remains
 separate. Cleanup metadata grants no model or execution qualification.
 
 `workingMemoryRequirements`, when explicitly declared by a reviewed recipe, describe working demand and are additive across independent owners. `requirements` and `retainedRequirements` report those working demands and the runtime headroom policy. A capacity-only recipe reports `workingMemoryPolicy: "runtime_headroom_policy"`: its model-specific working demand remains unmeasured. The existing free-memory floors apply once per workflow; they do not establish measured workload fit. A separately declared working contract reports `explicit_working_demand`. Neither policy upgrades artifact, execution, or performance qualification.
+
+Dense native image candidates may additionally report
+`parameterStorageLowerBound`: the exact installed revision and requested dtype,
+per-component `components`, `totalBytes`, `largestComponentBytes`, and
+`proofScope: "parameter_storage_lower_bound_only"`. It is obtained from bounded
+local Safetensors metadata without loading models, importing their code or
+downloading files. This minimum does not establish activation peaks or fit.
+
+Native image admission also requires matching `parameterConversionReserve`
+metadata with `proofScope: "source_requested_loading_overlap_only"`. It binds
+source and requested payloads, conversion bytes, shard-layout hashes and serial
+or conservative overlap to the same revision, dtype and component set. Missing
+or invalid conversion evidence refuses the known native image loading route.
+The record is a conservative storage envelope, not measured resident memory.
+
+Owners can additionally report `parameterConversionRequirements` and
+`parameterConversionAdditionalBytes` for transient CPU conversions beyond
+retained storage. Supported `weight_loading_mode: "cuda"` candidates report
+`parameterLoadingRequirements.vramBytes` and
+`parameterGpuLoadingAdditionalBytes` separately from inference residency.
+Cold CUDA loading reserves the largest complete component plus the existing
+inference headroom. Only an exact complete warm owner waives the cold staging
+and conversion additions. Dispatch and scheduled next-owner checks retain the
+cold requirements after replacement. CPU is the default; graphs lacking this
+ordinary advanced control are preserved without an inserted field. See
+[Workflow Auto memory contracts](workflow-auto-memory.md) for eligibility,
+source-conversion, disk-LoRA and pool-specific credit rules.
+
+For these declared native image profiles, candidates may also include existing
+CUDA placement alternatives. `placementAlternativeOf` identifies the unchanged
+original candidate; each alternative has a stable placement suffix. Alternatives
+preserve the model, immutable artifact, dtype, quantization and workload. A pinned
+qualified offload selection stays binding. Missing validated dense storage
+metadata does not create additional ready alternatives.
+
+An already admitted default without cache preparation keeps its placement.
+Projected-cleanup admissions cannot preempt a fully admitted exact complete
+warm alternative. When resource admission fails or cache preparation is needed,
+the planner evaluates at most 64 complete plans using only the profile's
+declared alternatives and the same hardware and artifact snapshot. It returns
+resource-field patches only for a fully admitted graph; a failed search returns
+the original refusal without patches. This is bounded placement selection, not
+measured fit or additional execution qualification.
+
+Affected workflow owners report `parameterResidencyRequirements` separately
+from capacity tiers, with `parameterResidencyPhase: "cpu_resident"` or
+`"cpu_loading"`. Native CPU execution, model CPU offload and group CPU offload
+retain component storage on the host. Fully resident accelerator placement first
+loads the component bundle on CPU; incremental disk offload requires at least a complete
+component during loading. Known storage is included in `requirements`; unknown
+working demand keeps `runtime_headroom_policy` and its free-memory headroom.
+An explicit complete working budget retains its existing meaning.
+
+For declared unquantized native image owners on the primary dedicated NVIDIA
+CUDA device, `parameterResidencyRequirements.vramBytes` also includes known
+parameter storage: all components for resident placement, or the largest
+component for model CPU offload. This minimum is checked against observed free
+VRAM with the existing inference headroom and exact pool-specific live storage
+credit. Group-offload GPU peaks remain unknown. Shared/unified memory, other
+accelerators and other CUDA indices retain their existing planning behavior.
+
+For a loading-only owner, `parameterLoadingAdditionalBytes` identifies the
+known loading minimum beyond its declared RAM working demand. That additional
+cold requirement can be waived only for the exact successful native owner whose
+required ComponentsManager IDs, objects, collection and cached output remain
+live. The server validates this using internal weak bindings; request fields or
+summed CPU/GPU byte amounts cannot grant complete-owner reuse. Partial eviction,
+replacement or a changed owner returns to cold loading. Disk placeholders do
+not grant measured CPU storage credit.
+
+For declared native image disk-offload LoRAs, reviewed mutation targets load
+last and remain intact until the official Diffusers adapter loader, activation
+and scheduler configuration finish. Their loading minimum is the larger of
+the sum of those target components and the largest remaining component;
+adapter conversion and runtime headroom are additional requirements. Missing
+validated target storage cannot establish a smaller Auto loading budget.
+
+A successful disk-LoRA owner binds the ordered immutable adapter descriptors,
+resolved loader inputs, implementation, cached output and live component
+ownership. An unchanged owner can remain warm. Adapter addition, removal,
+replacement, strength or scheduler changes, changed loader inputs, partial
+eviction, shared mutation targets and implementation changes require ordinary
+owner preparation before loading. Unrelated caches and detached material
+outputs retain the existing preservation rules. Conflicting adapter scheduler
+overrides fail before owner release or allocation. These checks do not execute
+arbitrary suppliers during planning or change audio/video adapter behavior.
+
+Per-load Diffusers group-disk files follow the lifetime of their actual component,
+submodules and installed hook/configuration users. The logical graph owner ID
+stays unchanged; a SHA-256 storage name keeps opaque Block IDs local to the
+offload cache. Scope/component path segments reject traversal and indirection.
+A weak resource lease removes only its exact contained load directory after all
+users are released and its filesystem identity remains unchanged. Shared or
+retained hook users keep their files; detached media remains governed by the
+existing release rules. Whole-runtime cleanup collects dropped references first
+and preserves the disk root while live leases remain, reporting this through
+its existing cleanup errors. The released-offload-file diagnostic counts files
+removed by explicit root cleanup; it excludes files already reclaimed by lease
+finalizers. After ordinary idle shutdown drains workers, cache ownership is
+released through the existing cache lease and model executor before that
+executor closes. Busy or undrained work and externally retained hooks preserve
+their files. Forced termination can leave remnants for later explicit idle
+cleanup; ordinary finalization does not prove crash reclamation.
+
+Known dense group-disk owners also report `parameterDiskRequirements` with a
+`diskFreeBytes` allowance for serializing the complete base component set.
+`parameterDiskAdditionalBytes` is the amount above the existing declared disk
+floor. Only an exact complete warm owner can waive this extra cold serialization;
+the existing disk floor remains. Adapter conversion and working-memory budgets
+do not establish exact serialized adapter storage.
+
+Scheduled attempts start cold and carry
+the same storage requirements into post-release capacity checks. These fields
+do not change audio/video planning or grant model, memory or hardware
+qualification.
 
 Forced `_native_math` attention needs a declared working-memory budget when
 Auto selects a machine-capacity recipe. This guard applies to both native
@@ -2290,11 +2564,32 @@ Single/shared-owner caches remain reusable. Independent owners with explicit wor
 Idle workflow planning samples actual available memory and verifies loader,
 upstream-input, and cache identities before recognizing reusable owners. Only
 unique measured tensor-weight storage reduces an explicit working-memory
-budget, in the memory domain where it resides; inference headroom remains reserved. Capacity classes receive no storage subtraction. Process
+budget or verified resident-storage minimum, in the memory domain where it
+resides; inference headroom remains reserved. Capacity classes receive no
+storage subtraction. A complete-owner loading exemption is separate from this
+pool-specific storage credit. Process
 RSS is not reclaimable model RAM. Shared/unified memory remains one physical
 pool: accelerator requirements also count against host memory. Form/catalog
 forecasts may additionally count idle allocator blocks (`reserved - allocated`),
 but never treat live GPU weights as free memory.
+
+Idle whole-workflow inspection uses the existing cache and model-I/O leases.
+Busy inspection uses a previously validated runtime/hardware snapshot, performs
+no accelerator probe or allocator operation, and asks the operator to plan again
+if no current validated snapshot is available. Dispatch validates actual
+readiness and capacity again.
+
+For the declared primary dedicated-CUDA image scope, relevant GPU resource
+pressure can trigger one `empty_cache` attempt under the existing owned model
+thread and resource lock, followed by a fresh hardware sample and the same
+complete planner. Its private budget spans one graph attempt and its replans;
+idle HTTP inspection has its own bounded budget. Live owners stay registered.
+Allocator reservation counters grant no workflow capacity credit. A failed
+clear or insufficient observed free memory remains a refusal.
+Eligibility requires a known GPU parameter minimum or an exact complete warm
+native image owner with validated dense storage metadata. The latter can cover
+unchanged group offload without inventing its GPU peak; cold group placement
+does not acquire this warm-owner permission.
 
 If measured application weights could satisfy the working demand or runtime headroom policy after release, the
 workflow plan sets `requiresCachePreparation`. Execution releases those caches
@@ -2352,6 +2647,40 @@ still validates the selected pipeline's required files; no download, alternate
 revision, remote code, or serialization fallback is enabled by this resolution.
 Individual component loaders and explicit local selections keep their existing
 paths.
+
+Direct pipeline mutation state is owned by the actual `LoadPipeline` node and
+its ordered declared pipeline connections. Image `LoadAdapter` and audio
+`LoadAdapter`, `SetAdapters` and `FuseAdapters` use this shared cache contract.
+Several consumers may share one terminal mutation chain. A vanilla bypass or
+different mutation branch on that same mutable pipeline is rejected before
+model construction; use independent pipeline loaders for different policies.
+An empty image adapter remains a passthrough and preserves any upstream policy.
+
+Changing, removing or reassigning a mutation destroys the affected old/new
+owners and their cached consumers before replacement allocation. Unrelated
+owners and shared scalar suppliers remain resident, while completed material
+media is detached and retained. Unchanged literal policies and prompt-only edits
+keep compatible warm owners when loading and mutation controls are literal.
+Changing loader construction controls, including VAE flags, also releases the
+owner before replacement allocation. Reuse requires the same live loader/output,
+implementation, registered model identities, successful complete mutation chain
+and valid mutation caches;
+explicit output-cache invalidation or a failed/partial mutation cannot qualify.
+Literal adapter content identities are rechecked after chain dispatch before
+the owner is marked reusable.
+
+Connected loading or mutation controls are resolved only by ordinary node
+dispatch and conservatively prevent warm-owner reuse, even when the connected
+supplier itself remains a cache hit. The existing hinted connected
+`LoadAdapter` artifact-receipt rejection remains unchanged. Undeclared pipeline
+passthroughs and mutations inside loop bodies require a separately reviewed
+ownership/iteration contract and fail before model construction. The existing
+`ApplyPipelineRuntimeConfig.configured_pipeline` passthrough remains executable
+with this conservative reload policy. Union inputs, alias fields and other
+undeclared consumers of a canonical owned pipeline also prevent warm reuse;
+inspection never executes them to infer ownership. These cache
+markers do not grant Auto eligibility, resource credit or model qualification;
+the existing downstream direct-adapter Auto rejection remains in force.
 
 Hunyuan-DiT's generic image adapters accept explicit width and height from 512 to
 2048 in 32-pixel increments, with a combined ceiling of 1,048,576 pixels. The

@@ -60,6 +60,24 @@ def test_flex_probe_executes_compiled_attention():
     compile(script, "compiler-probe", "exec")
 
 
+def test_compiler_probe_disables_bytecode_without_an_inherited_environment_flag(monkeypatch):
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append((command, kwargs))
+        return SimpleNamespace(returncode=0, stdout=json.dumps({
+            "supported": True, "executed": True, "device": "cpu", "backend": "inductor",
+        }), stderr="")
+
+    monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
+    monkeypatch.setattr(compilation.sys, "dont_write_bytecode", True)
+    monkeypatch.setattr(compilation.subprocess, "run", run)
+    assert compilation.require_compilation(device="cpu")["available"]
+    command, kwargs = calls[0]
+    assert command[:3] == [compilation.sys.executable, "-B", "-c"]
+    assert "PYTHONDONTWRITEBYTECODE" not in kwargs["env"]
+
+
 @pytest.mark.parametrize("detail", [
     {"device": "cpu", "backend": "inductor", "flexExecuted": True},
     {"device": "cuda:0", "backend": "eager", "flexExecuted": True},

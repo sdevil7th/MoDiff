@@ -177,7 +177,7 @@ class OptionalRuntimeContractTests(unittest.TestCase):
         )
         bnb_locks = [artifact for artifact in profile.artifact_locks if artifact["distribution"] == "bitsandbytes"]
         self.assertEqual(
-            bnb_locks,
+            [artifact for artifact in bnb_locks if artifact["platform"] == "linux"],
             [
                 {
                     "distribution": "bitsandbytes",
@@ -193,10 +193,15 @@ class OptionalRuntimeContractTests(unittest.TestCase):
             ],
         )
         self.assertEqual(profile.satisfies_profiles, ())
-        self.assertEqual(
-            profile.contract_for_target(platform_name="windows", machine="x86_64").contract_state,
-            "candidate_unqualified",
-        )
+        self.assertEqual(len(bnb_locks), 2)
+        windows = profile.contract_for_target(platform_name="windows", machine="x86_64")
+        self.assertEqual(windows.contract_state, "qualified")
+        self.assertTrue(windows.cutover_ready)
+        self.assertTrue(windows.install_action_available)
+        self.assertTrue(windows.activation_available)
+        self.assertFalse(profile.cutover_ready)
+        self.assertFalse(profile.install_action_available)
+        self.assertFalse(profile.activation_available)
 
     def test_quanto_composite_is_exact_and_linux_x86_64_qualified(self):
         profile = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID]
@@ -527,7 +532,14 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
                 ),
                 encoding="utf-8",
             )
-            server = WebServer({}, work_dir=temp_dir, data_dir=temp_dir)
+            from modules import MODULE_MAP
+            # Capture only actual loader/adapter metadata before the import/install
+            # fences; publication must not synthesize a conditional grant.
+            registry = {module: {action: MODULE_MAP[module][action]} for module, action in (
+                ("modules.ModularDiffusers", "ModelsLoader"), ("modules.DiffusersImage", "LoadPipeline"),
+                ("modules.DiffusersAudio", "LoadAdapter"),
+            )}
+            server = WebServer(registry, work_dir=temp_dir, data_dir=temp_dir)
 
             original_import = builtins.__import__
 

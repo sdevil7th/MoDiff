@@ -1,4 +1,5 @@
 import asyncio
+import builtins
 import importlib.util
 import json
 import os
@@ -34,6 +35,31 @@ class MainSupervisorTests(unittest.TestCase):
         data_patch.start()
         self.addCleanup(data_patch.stop)
 
+    def test_windows_loading_defaults_precede_configuration_and_model_imports(self):
+        real_import = builtins.__import__
+        observed = []
+        config = ModuleType("modiff.config")
+        config.CONFIG = SimpleNamespace(hf={})
+        config.ColorCodes = SimpleNamespace(BLUE="")
+
+        def observe_import(name, *args, **kwargs):
+            self.assertNotIn(name.split(".", 1)[0], {"torch", "diffusers", "transformers", "peft"})
+            if name == "modiff.config":
+                observed.append((os.environ.get("HF_ENABLE_PARALLEL_LOADING"),
+                                 os.environ.get("HF_DEACTIVATE_ASYNC_LOAD")))
+            return real_import(name, *args, **kwargs)
+
+        with (
+            patch.dict(os.environ, {}, clear=False),
+            patch.dict(sys.modules, {"modiff.config": config}),
+            patch.object(sys, "platform", "win32"),
+            patch("builtins.__import__", side_effect=observe_import),
+        ):
+            os.environ.pop("HF_ENABLE_PARALLEL_LOADING", None)
+            os.environ.pop("HF_DEACTIVATE_ASYNC_LOAD", None)
+            load_main_module()
+        self.assertEqual(observed, [("0", "1")])
+
     def test_supervisor_uses_isolated_test_queue(self):
         module = load_main_module()
         worker = Mock(wait=Mock(return_value=0))
@@ -61,6 +87,7 @@ class MainSupervisorTests(unittest.TestCase):
             patch.object(module.sys, "base_prefix", "base"),
             patch.object(module.sys, "executable", "venv-python.exe"),
             patch.object(module.sys, "_base_executable", "base-python.exe"),
+            patch.object(module.sys, "dont_write_bytecode", False),
         ):
             self.assertEqual(
                 module.worker_process_command(worker_env),
@@ -80,6 +107,7 @@ class MainSupervisorTests(unittest.TestCase):
                 patch.object(module.sys, "prefix", prefix),
                 patch.object(module.sys, "base_prefix", "base"),
                 patch.object(module.sys, "executable", "current-python"),
+                patch.object(module.sys, "dont_write_bytecode", False),
             ):
                 worker_env = {"MODIFF_WORKER_SUPERVISED": "1"}
                 self.assertEqual(
@@ -87,6 +115,28 @@ class MainSupervisorTests(unittest.TestCase):
                     ["current-python", str(MAIN_PATH), "--worker"],
                 )
                 self.assertEqual(worker_env, {"MODIFF_WORKER_SUPERVISED": "1"})
+
+    def test_worker_preserves_no_bytecode_on_each_platform(self):
+        module = load_main_module()
+        for platform, prefix, executable in (
+            ("linux", "venv", "current-python"),
+            ("darwin", "venv", "current-python"),
+            ("win32", "base", "current-python"),
+            ("win32", "venv", "base-python"),
+        ):
+            with (
+                self.subTest(platform=platform, prefix=prefix),
+                patch.object(module.sys, "platform", platform),
+                patch.object(module.sys, "prefix", prefix),
+                patch.object(module.sys, "base_prefix", "base"),
+                patch.object(module.sys, "executable", "current-python"),
+                patch.object(module.sys, "_base_executable", "base-python"),
+                patch.object(module.sys, "dont_write_bytecode", True),
+            ):
+                self.assertEqual(
+                    module.worker_process_command({}),
+                    [executable, "-B", str(MAIN_PATH), "--worker"],
+                )
 
     def test_windows_worker_launch_rejects_missing_base_python(self):
         module = load_main_module()
@@ -116,6 +166,7 @@ class MainSupervisorTests(unittest.TestCase):
             "state['workerPid'] = os.getpid()\n"
             "Path(os.environ['MODIFF_SUPERVISOR_QUEUE_STATE']).write_text(json.dumps(state))\n"
             "identity = dict(pid=os.getpid(), executable=sys.executable, prefix=sys.prefix, "
+            "no_bytecode=sys.dont_write_bytecode, "
             "torch=importlib.util.find_spec('torch').origin)\n"
             "Path(os.environ['MODIFF_PROBE_IDENTITY']).write_text(json.dumps(identity))\n"
             "sys.stdin.readline()\n",
@@ -128,12 +179,16 @@ class MainSupervisorTests(unittest.TestCase):
                 current = {"task_id": "active", "status": "running"} if has_current else None
                 queued = {"next": {"task_id": "next", "status": "queued"}}
                 worker_env = os.environ.copy()
+                worker_env.pop("PYTHONDONTWRITEBYTECODE", None)
                 worker_env.update(
                     MODIFF_SUPERVISOR_QUEUE_STATE=str(state_path),
                     MODIFF_PROBE_IDENTITY=str(identity_path),
                     MODIFF_PROBE_STATE=json.dumps({"current": current, "queued": queued}),
                 )
-                with patch.object(module, "__file__", str(probe)):
+                with (
+                    patch.object(module, "__file__", str(probe)),
+                    patch.object(module.sys, "dont_write_bytecode", True),
+                ):
                     command = module.worker_process_command(worker_env)
                 worker = subprocess.Popen(
                     command, env=worker_env, stdin=subprocess.PIPE,
@@ -155,6 +210,7 @@ class MainSupervisorTests(unittest.TestCase):
                     self.assertEqual(worker.pid, identity["pid"])
                     self.assertEqual(identity["executable"], sys.executable)
                     self.assertEqual(identity["prefix"], sys.prefix)
+                    self.assertTrue(identity["no_bytecode"])
                     self.assertEqual(identity["torch"], importlib.util.find_spec("torch").origin)
                     status, response = controller.stop()
                     self.assertEqual(status, 200)

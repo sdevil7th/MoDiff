@@ -12,6 +12,94 @@ cache behavior. Runtime readiness checks the actual installed release and APIs.
 Historical catalog audits separately verify their immutable upstream source
 revision; that checkout is not required to install or run the application.
 
+### Explicit Diffusers source evaluation
+
+Source evaluation is separate from ordinary setup. The reviewed profile in
+[`data/diffusers-evaluation-runtime.v1.json`](../data/diffusers-evaluation-runtime.v1.json)
+currently admits only the locally built `diffusers==0.41.0.dev0` wheel from the
+official Hugging Face Diffusers commit
+`7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941` (source tree
+`f0974e02139382cb0c8a72dd29b15b53041e5d56`). This is a private evaluation
+artifact, not a published stable release. Keep the ordinary `0.41.0` installation
+and lock unchanged; stage evaluation in its own reviewed environment with its
+complete dependency lock. A development version string alone is insufficient.
+
+The exact wheel must be named `diffusers-0.41.0.dev0-py3-none-any.whl`, be
+6,306,536 bytes, and have SHA-256
+`c19c4721a952fd373d0cab705f582eb81675cad0fb844b88fb449c40de8c74a3`.
+The wheel is a separate reviewed artifact; pulling this repository does not
+provide it. Transfer the exact wheel to the other machine and verify its size
+and hash before installation. Rebuilding the same source revision does not
+establish the admitted wheel's byte identity. Its `py3-none-any` tag permits
+transfer between Windows and Linux, but does not establish compatible model
+dependencies or accelerator kernels. Prepare and review the target machine's
+complete dependency environment first, using its own ROCm/CUDA/CPU profile;
+do not copy another machine's virtual environment, CUDA lock or optional overlay.
+
+Install the verified artifact into that separate environment without replacing
+its dependencies or compiling bytecode. With pip, use `--no-deps --no-compile`.
+With uv, set `UV_COMPILE_BYTECODE=false` and use `--no-config --no-deps` as below.
+Keep the wheel at the same absolute path used for installation: validation
+compares the installed `direct_url.json` to that selected file. A previous
+installation containing bytecode requires a clean evaluation installation.
+The selectors only validate; they do not download, install or activate packages.
+
+After verifying the transferred wheel, substitute its absolute path and the
+evaluation interpreter in these Windows commands:
+
+```powershell
+$env:MODIFF_DIFFUSERS_EVALUATION_PROFILE = 'flux3-7ecb1e1'
+$env:MODIFF_DIFFUSERS_EVALUATION_WHEEL = 'D:\reviewed-artifacts\diffusers-0.41.0.dev0-py3-none-any.whl'
+$env:UV_COMPILE_BYTECODE = 'false'
+$env:PYTHONDONTWRITEBYTECODE = '1'
+uv --no-config pip install --python .\.venv-evaluation\Scripts\python.exe --no-index --no-deps --reinstall --link-mode copy $env:MODIFF_DIFFUSERS_EVALUATION_WHEEL
+if ($LASTEXITCODE -ne 0) { throw 'Evaluation wheel installation failed.' }
+& .\.venv-evaluation\Scripts\python.exe -B main.py
+```
+
+On Linux, including an SSH session with the reviewed ROCm environment:
+
+```bash
+export MODIFF_DIFFUSERS_EVALUATION_PROFILE='flux3-7ecb1e1'
+export MODIFF_DIFFUSERS_EVALUATION_WHEEL='/absolute/reviewed-artifacts/diffusers-0.41.0.dev0-py3-none-any.whl'
+export UV_COMPILE_BYTECODE=false
+export PYTHONDONTWRITEBYTECODE=1
+uv --no-config pip install --python .venv-evaluation/bin/python --no-index --no-deps --reinstall --link-mode copy "$MODIFF_DIFFUSERS_EVALUATION_WHEEL" &&
+  .venv-evaluation/bin/python -B main.py
+```
+
+Every evaluation process must disable bytecode writes (`-B`, including workers
+and compatibility probes). The supervisor preserves `-B` in its worker command,
+and compatibility probes launch with `-B`; the environment flag also protects
+other Python children. Validation checks the selected wheel, installed
+distribution and import origin, the complete installed package body census, and
+the absence of links, reparse points and bytecode files. Unknown profiles,
+changed artifacts or files, editable/source-path imports and mismatched origins
+fail closed. Fresh optional-runtime validation rechecks the same identity;
+install and activate any optional profile normally against this exact base.
+Do not borrow another environment's overlay or inject its `site-packages`.
+
+Successful runtime validation establishes exact installed-library identity. It
+does not qualify model output, hardware fit, quantization kernels, Auto routes,
+templates or LoRA behavior. Record those proof levels separately. To return to
+ordinary setup, close the evaluation process, remove both evaluation selectors
+from the launch environment, and launch the ordinary stable environment.
+
+Streamed group CPU offload needs host memory for retained CPU tensors and
+pinned transfer copies. MoDiff now reserves two complete component copies,
+using the larger of unique native storage and registered logical tensor bytes,
+and keeps the existing 8 GiB available-RAM floor after that reservation. Unknown
+storage, tensor subclasses and unmaterialized tensors select the existing
+synchronous group hooks. The bounded census reads registered native state;
+it does not call model traversal overrides or custom resource suppliers.
+
+This changes transfer scheduling only. Precision, generation settings and the
+requested group placement remain unchanged. It is a conservative execution-time
+staging check, not a full Auto capacity budget or proof of physical fit. Runtime
+measurements still distinguish physical available RAM, process commit and CUDA
+allocator counters, especially under Windows WDDM. The upstream behavior is
+documented in [Diffusers group offloading](https://huggingface.co/docs/diffusers/en/optimization/memory#group-offloading).
+
 Useful modes:
 
 - `--dry-run` or `--system-check`: explain the plan without changing anything.

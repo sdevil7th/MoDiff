@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.metadata
+import importlib.util
 import json
 import math
 import os
@@ -24,6 +25,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import sysconfig
 import threading
 import time
 import uuid
@@ -36,6 +38,7 @@ from typing import Any
 from modiff.optional_runtimes import (
     OPTIONAL_RUNTIME_PROFILES,
     TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID,
     optional_runtime_base_contracts,
     public_optional_runtime_profiles,
 )
@@ -1275,6 +1278,70 @@ def _public_sha256_digest(value: Any) -> str | None:
     )
 
 
+def _bitsandbytes_package_root(version: str | None) -> Path | None:
+    """Observe package/metadata co-location without importing the distribution."""
+    if version != "0.50.0":
+        return None
+    try:
+        distribution = importlib.metadata.distribution("bitsandbytes")
+        if distribution.version != version:
+            return None
+        metadata_path = Path(distribution._path).resolve(strict=True)
+        spec = importlib.util.find_spec("bitsandbytes")
+        if not metadata_path.is_dir() or spec is None or not isinstance(spec.origin, str):
+            return None
+        root = metadata_path.parent
+        package = (root / "bitsandbytes").resolve(strict=True)
+        origin = Path(spec.origin).resolve(strict=True)
+        locations = [Path(path).resolve(strict=True) for path in spec.submodule_search_locations or ()]
+        if origin != package / "__init__.py" or locations != [package]:
+            return None
+        return root
+    except (AttributeError, ImportError, OSError, TypeError, ValueError):
+        return None
+
+
+def _bitsandbytes_overlay_current(package_root, profile, catalog, state) -> bool:
+    """Join the current sealed startup selection to its metadata-only catalog."""
+    declared = OPTIONAL_RUNTIME_PROFILES[TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID]
+    target = declared.contract_for_target()
+    environment_id = _public_environment_id(state.get("activeEnvironmentId"))
+    if (package_root is None or not isinstance(profile, dict) or not isinstance(catalog, dict)
+            or catalog.get("schemaVersion") != 1 or environment_id is None
+            or state.get("_storageStatus") != "ok" or state.get("activeTrustClass") != "artifact_locked_optional"
+            or os.environ.get("MODIFF_RUNTIME_OVERLAY_STATUS") != "active"
+            or os.environ.get("MODIFF_OPTIMIZATION_ENVIRONMENT") != environment_id
+            or target.contract_state != "qualified" or not target.cutover_ready
+            or profile.get("specDigest") != declared.spec_digest
+            or profile.get("status") != "present_unqualified" or profile.get("contractState") != "qualified"
+            or any(profile.get(key) is not True for key in ("cutoverReady", "installActionAvailable", "activationAvailable"))
+            or (profile.get("platform"), profile.get("machine")) != (target.platform, target.machine)
+            or profile.get("overlayStatus") != "active"):
+        return False
+    overlay = catalog.get("overlay")
+    selection = overlay.get("state") if isinstance(overlay, dict) else None
+    if (not isinstance(selection, dict) or overlay.get("processLoadStatus") != "active"
+            or selection.get("activeEnvironmentId") != environment_id or selection.get("activeStatus") != "active"):
+        return False
+    try:
+        environments = _verified_existing_managed_directory(ENVIRONMENTS_DIR, managed_root=MANAGED_ROOT)
+        expected_root = (environments / environment_id / "site-packages").resolve(strict=True)
+        if package_root != expected_root:
+            return False
+        inspection = _environment_inspection(environment_id, verify_integrity=False)
+        manifest = inspection.get("manifest", {})
+        return bool(
+            inspection.get("status") in {"ready", "recorded"}
+            and Path(inspection["sitePackages"]).resolve(strict=True) == expected_root
+            and manifest.get("trustClass") == "artifact_locked_optional"
+            and inspection.get("validation", {}).get("status") == "passed"
+            and any(item.get("kind") == "optional_runtime" and item.get("id") == declared.id
+                    and item.get("specDigest") == declared.spec_digest for item in manifest.get("specs", ()))
+        )
+    except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError):
+        return False
+
+
 def public_catalog(
     *,
     runtime_profile: dict[str, Any] | None = None,
@@ -1291,6 +1358,8 @@ def public_catalog(
     accelerators = hardware.get("accelerators") if isinstance(hardware.get("accelerators"), list) else []
     device_count = len(devices or accelerators)
     enabled = {str(item) for item in state.get("enabledCapabilities") or []}
+    if optional_runtime_catalog is None:
+        optional_runtime_catalog = public_optional_runtime_catalog()
     optional_profiles = {
         item.get("id"): item
         for item in (
@@ -1343,14 +1412,21 @@ def public_catalog(
             reason = "The upstream feature is documented, but MoDiff has not qualified a safe execution contract yet."
         installed_version = _package_version(str(item.get("distribution"))) if item.get("distribution") else None
         installed = bool(installed_version) if item.get("distribution") else implemented
+        package_root = _bitsandbytes_package_root(installed_version) if capability_id == "bitsandbytes" else None
+        native_roots = set()
+        if package_root is not None:
+            try:
+                native_roots = {Path(sysconfig.get_path(key)).resolve(strict=True) for key in ("purelib", "platlib")}
+            except (OSError, TypeError, ValueError):
+                pass
         base_profile_delivered = bool(
-            capability_id == "bitsandbytes"
-            and profile_id == "nvidia-cuda"
-            and installed_version == "0.50.0"
+            capability_id == "bitsandbytes" and profile_id == "nvidia-cuda" and package_root in native_roots
         )
         optional_runtime_profile_id = (
             TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID
             if capability_id == "optimum_quanto"
+            else TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID
+            if capability_id == "bitsandbytes"
             else None
         )
         optional_profile = optional_profiles.get(optional_runtime_profile_id)
@@ -1362,6 +1438,10 @@ def public_catalog(
             and optional_profile.get("cutoverReady") is True
             and optional_profile.get("overlayStatus") == "active"
         )
+        if capability_id == "bitsandbytes":
+            optional_profile_delivered = _bitsandbytes_overlay_current(
+                package_root, optional_profile, optional_runtime_catalog, state,
+            )
         delivery_qualified = base_profile_delivered or optional_profile_delivered
         can_enable = compatible and (
             item.get("kind") == "runtime" or (item.get("kind") in {"package", "profile", "external"} and installed)
@@ -1383,7 +1463,7 @@ def public_catalog(
                     else "unqualified"
                 ),
                 "availableForExecution": bool(delivery_qualified and compatible),
-                "optionalRuntimeProfileId": optional_runtime_profile_id,
+                "optionalRuntimeProfileId": optional_runtime_profile_id if not base_profile_delivered else None,
                 "canInstall": item.get("kind") == "package" and compatible,
                 "canEnable": can_enable,
                 "requiresRestart": item.get("kind") == "package",
@@ -1401,6 +1481,8 @@ def public_catalog(
             item["disabledReason"] = (
                 reason or "No generally safe app-managed wheel matches every supported ROCm device and Torch ABI."
             )
+        if capability_id == "bitsandbytes" and delivery_qualified and not compatible:
+            item["disabledReason"] = reason
         capabilities.append(item)
     environments = []
     environment_scan = {
@@ -2686,7 +2768,8 @@ if not supported:
         started = time.monotonic()
         try:
             result = subprocess.run(
-                [sys.executable, "-c", script],
+                # Probes must not add bytecode to an exact evaluated package.
+                [sys.executable, "-B", "-c", script],
                 capture_output=True,
                 text=True,
                 timeout=120,

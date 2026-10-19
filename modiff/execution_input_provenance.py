@@ -23,6 +23,7 @@ FIELD_NAMES = {
     "revision": "revision", "dtype": "dtype", "device": "device",
     "model_type": "modelType", "pipeline_class": "modelType",
     "auto_offload": "autoOffload", "offload_mode": "offloadMode",
+    "weight_loading_mode": "weightLoadingMode",
     "attention_backend": "attentionBackend",
     "vae_slicing": "vaeSlicing", "enable_vae_slicing": "vaeSlicing",
     "vae_tiling": "vaeTiling", "enable_vae_tiling": "vaeTiling",
@@ -36,11 +37,24 @@ FIELD_NAMES = {
     "use_kv_cache": "attentionContextReuse",
 }
 NODE_FIELD_NAMES = {
+    ('ModularDiffusers', 'ModelsLoader'): {**FIELD_NAMES, 'weight_format': 'weightFormat'},
+    ('DiffusersImage', 'LoadPipeline'): {**FIELD_NAMES, 'mode': 'executionMode'},
     **{('DiffusersImage', action): {**FIELD_NAMES, 'executed_task': 'executedTask'}
        for action in ('Generate', 'Edit', 'Inpaint', 'ControlGenerate', 'ControlEdit', 'ControlInpaint',
-                      'LayerDecompose', 'UnconditionalGenerate', 'PredictMap')},
+                      'LayerDecompose', 'UnconditionalGenerate', 'PredictMap',
+                      'EncodeInputs', 'Denoise', 'DecodeLatents')},
     **{('HuggingFaceTransformers', action): {**FIELD_NAMES, 'executed_task': 'executedTask'}
-       for action in ('PredictDepth', 'GenerateImageVideoText')},
+       for action in ('PredictDepth',)},
+    ('HuggingFaceTransformers', 'GenerateImageVideoText'): {
+        **FIELD_NAMES, 'executed_task': 'executedTask',
+        'operation': 'textOperation', 'enhancement_max_new_tokens': 'enhancementMaxNewTokens',
+        'prompt_adapter_id': 'promptAdapterId', 'system_prompt_mode': 'systemPromptMode',
+        'system_prompt_sha256': 'systemPromptSha256',
+        'rendered_prompt_sha256': 'renderedPromptSha256', 'rendered_prompt_utf8_bytes': 'renderedPromptUtf8Bytes',
+        'rendered_input_ids_sha256': 'renderedInputIdsSha256', 'reference_source_sha256': 'referenceSourceSha256',
+        'processed_pixel_sha256': 'processedPixelSha256', 'processed_pixel_shape': 'processedPixelShape',
+        'processed_grid_sha256': 'processedGridSha256', 'processed_grid_shape': 'processedGridShape',
+    },
     ('ImageOperations', 'ProcessImage'): {**FIELD_NAMES, 'executed_task': 'executedTask'},
     ('ModularDiffusers', 'Guider'): {
         **FIELD_NAMES,

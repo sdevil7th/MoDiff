@@ -222,7 +222,7 @@ class ReviewedModularWorkflowStepTests(unittest.TestCase):
                         workflow["id"],
                     )
                     count += 1
-        self.assertEqual(count, 94)
+        self.assertEqual(count, 98)
 
     def test_explicit_loader_selection_rejects_unreviewed_family_and_workflow(self):
         with self.assertRaises(ValueError):

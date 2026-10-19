@@ -14,18 +14,18 @@
     "selectsInputAssets": false,
     "studioVisible": false
   },
-  "contentHash": "sha256:0b576241a76a51bdd9f54963990a93ec7b6aede268fad09e3fe8adac2bbfc725",
+  "contentHash": "sha256:97c24a642b78e7ba1dc32b9268104831fccf36e119664e6e73d0da3d4779cb63",
   "contractKind": "non_public_template_authoring_spec_ledger",
   "schemaVersion": 1,
   "sources": {
     "candidateContracts": {
-      "contentHash": "sha256:af03cbc11954d0db00de7dfbafa8cacfb924cf13b95728af215f2fd997696bbb",
+      "contentHash": "sha256:e9e6a6caa6ba8b0a9c22bb7ccc9cde0ef9f632c64693b824b6f2df96b9650490",
       "path": "data/template-candidate-contracts.v1.json",
-      "sha256": "sha256:e3779754d1a2fb87e8b84fd6e87df07004089abe6813ff5e794c211a688ac518"
+      "sha256": "sha256:80ca5c3e2dc59427872a33659a65e99446e45f858b6e3b94247494e867f34abf"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:d61e716fa5664f5e2238a5ff4ba67966efac3c880a0cae736e3a44a690b94945"
+      "sha256": "sha256:6d0f52c5bddb8c0ea547a5dcf833415b1aefe31028c0acfdbddeca6247f9f8d0"
     }
   },
   "specifications": [
@@ -1364,7 +1364,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/audio-ldm2-pipeline/text-to-audio.json",
-        "sha256": "5b41671f28ed075faf05595ed10540187457e85fffec0a1a6ac8540918a5cb5a"
+        "sha256": "cc9e3de4082c24e50d74e9e85cf5d7d371389fcb5f8a745cb351424926d9c5fe"
       },
       "canonicalWorkflowId": "AudioLDM2Pipeline:text_to_audio",
       "claims": {
@@ -1422,7 +1422,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "5b41671f28ed075faf05595ed10540187457e85fffec0a1a6ac8540918a5cb5a",
+        "sourceGraphSha256": "cc9e3de4082c24e50d74e9e85cf5d7d371389fcb5f8a745cb351424926d9c5fe",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -1615,7 +1615,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/builtin-audio-operation/audio-join.json",
-        "sha256": "a6be35f97da3b7617e2dd0001db5947ad456a9cd776cbcf076debe503ba1a9d7"
+        "sha256": "fa8adfa1e16c77b79342e884bd51a612df80b914b5e505716eee97159cec9abc"
       },
       "canonicalWorkflowId": "BuiltinAudioOperation:audio_join",
       "claims": {
@@ -1635,7 +1635,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "a6be35f97da3b7617e2dd0001db5947ad456a9cd776cbcf076debe503ba1a9d7",
+        "sourceGraphSha256": "fa8adfa1e16c77b79342e884bd51a612df80b914b5e505716eee97159cec9abc",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -1731,7 +1731,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/builtin-audio-operation/audio-loudness-match.json",
-        "sha256": "65e26126ba57bd17add8001a60e0bc8bcfbee8bdf2112c200be73569becf9f49"
+        "sha256": "952fdb83b52479710b5ebfe9f8f143a45ab3d4b5fe113f7637baf900340f469d"
       },
       "canonicalWorkflowId": "BuiltinAudioOperation:audio_loudness_match",
       "claims": {
@@ -1751,7 +1751,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "65e26126ba57bd17add8001a60e0bc8bcfbee8bdf2112c200be73569becf9f49",
+        "sourceGraphSha256": "952fdb83b52479710b5ebfe9f8f143a45ab3d4b5fe113f7637baf900340f469d",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -1847,7 +1847,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/builtin-audio-operation/audio-trim.json",
-        "sha256": "e82ae3ce5c33e45acf5356483144d98d180ebc419e810b78eaf440a0cb1d932a"
+        "sha256": "ae4928754d54e7c77fc81accd5bf3310830ed02c83052e835d9354c3bc627cc1"
       },
       "canonicalWorkflowId": "BuiltinAudioOperation:audio_trim",
       "claims": {
@@ -1867,7 +1867,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "e82ae3ce5c33e45acf5356483144d98d180ebc419e810b78eaf440a0cb1d932a",
+        "sourceGraphSha256": "ae4928754d54e7c77fc81accd5bf3310830ed02c83052e835d9354c3bc627cc1",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -7922,6 +7922,120 @@
         "cacheState": "must_be_rechecked_through_app_before_generation",
         "componentRequirements": [],
         "requiredArtifacts": [
+          "facebook/wav2vec2-base-960h"
+        ]
+      },
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": "draft_complete_input_selection_pending",
+      "canonicalGraph": {
+        "path": "studio/hugging-face-ctc-speech-recognition-model/speech-to-text.json",
+        "sha256": "a3706e4676b9035d3d5168999028c1e356a01113eefc6203970bfa047751f3b7"
+      },
+      "canonicalWorkflowId": "HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
+      "claims": {
+        "assetGenerated": false,
+        "inputSelected": false,
+        "publicTemplate": false,
+        "qualityApproved": false,
+        "rightsApproved": false,
+        "workflowExecuted": false
+      },
+      "defaultsPlan": {
+        "fields": [
+          {
+            "parameter": "chunk_length_seconds",
+            "role": "transcribeAudio",
+            "value": 30
+          },
+          {
+            "parameter": "stride_length_seconds",
+            "role": "transcribeAudio",
+            "value": 5
+          },
+          {
+            "parameter": "timestamps",
+            "role": "transcribeAudio",
+            "value": "segment"
+          }
+        ],
+        "requiresLockedSeedForGeneration": false,
+        "sourceGraphSha256": "a3706e4676b9035d3d5168999028c1e356a01113eefc6203970bfa047751f3b7",
+        "status": "canonical_defaults_captured_review_pending"
+      },
+      "generationPlan": {
+        "blockers": [
+          "reviewed_input_selection_and_rights_required",
+          "exact_model_cache_state_must_be_rechecked",
+          "exact_runtime_execution_receipt_required",
+          "resource_recipe_receipt_required",
+          "model_and_output_rights_review_required",
+          "generated_asset_and_human_quality_review_required"
+        ],
+        "requiresQualifiedAccelerator": false,
+        "status": "blocked_pending_external_evidence"
+      },
+      "id": "template-authoring:HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
+      "inputPlan": {
+        "items": [
+          {
+            "field": "sourceAudio",
+            "mediaKind": "audio",
+            "minimumCount": 1,
+            "rightsState": "review_required",
+            "selectionState": "pending_original_or_licensed_asset",
+            "technicalRequirements": [
+              "decodable_audio",
+              "matches_exact_workflow_input_contract",
+              "contains_no_unreviewed_brand_or_personal_data"
+            ]
+          }
+        ],
+        "status": "selection_required"
+      },
+      "mediaKind": "json",
+      "mode": "speech_to_text",
+      "modelFamily": "Wav2Vec2 CTC",
+      "modelType": "HuggingFaceCTCSpeechRecognitionModel",
+      "outputPlan": {
+        "mediaKinds": [
+          "json"
+        ],
+        "minimumAssetCount": 1,
+        "reviewCriteria": [
+          "bounded_decodable_result",
+          "instruction_or_source_alignment",
+          "no_unsupported_claims_or_hidden_detail_invention",
+          "receipt_matches_exact_input_and_runtime"
+        ]
+      },
+      "promptPlan": {
+        "editableBeforeQualification": true,
+        "mustBeLockedInGenerationReceipt": false,
+        "negativePrompt": {
+          "status": "not_supported_by_canonical_graph",
+          "value": null
+        },
+        "prompt": null,
+        "provenance": "original_modiff_mode_draft_v1",
+        "status": "not_applicable"
+      },
+      "publicationState": "hidden_candidate",
+      "purpose": "Author and review one json result for the exact Wav2Vec2 CTC speech to text workflow without changing its canonical graph contract.",
+      "rightsPlan": {
+        "inputMediaRights": "required",
+        "modelArtifactRights": "review_or_existing_catalog_decision_required",
+        "outputPublicationRights": "required",
+        "status": "review_required",
+        "thirdPartyBrandAndPersonalDataReview": "required"
+      },
+      "title": "Wav2Vec2 CTC — Speech To Text [HuggingFaceCTCSpeechRecognitionModel]"
+    },
+    {
+      "artifactPlan": {
+        "cacheState": "must_be_rechecked_through_app_before_generation",
+        "componentRequirements": [],
+        "requiredArtifacts": [
           "HuggingFaceTB/SmolVLM-256M-Instruct"
         ]
       },
@@ -8034,7 +8148,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/hugging-face-speech-recognition-model/speech-to-text.json",
-        "sha256": "c5f3371c28f0940789b095c748803cb7c308757bb2273e5e16ac9c20a3d6ccce"
+        "sha256": "ffad2aedbc329a71d4455d90f40078501f13f56645e1dc077bbc9e7d28dbafaf"
       },
       "canonicalWorkflowId": "HuggingFaceSpeechRecognitionModel:speech_to_text",
       "claims": {
@@ -8074,7 +8188,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "c5f3371c28f0940789b095c748803cb7c308757bb2273e5e16ac9c20a3d6ccce",
+        "sourceGraphSha256": "ffad2aedbc329a71d4455d90f40078501f13f56645e1dc077bbc9e7d28dbafaf",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -8158,7 +8272,7 @@
       "authoringState": "draft_complete_input_selection_pending",
       "canonicalGraph": {
         "path": "studio/hugging-face-speech-recognition-model/speech-translation.json",
-        "sha256": "b78d645c5ff9d4f5fb6b38227ae6512b4c28c1ba8e803facb223e2a7d525f0e4"
+        "sha256": "ceeda76f1c6b3e964676293ca3754adfade221b8cd5b832e1215c94b944d37a9"
       },
       "canonicalWorkflowId": "HuggingFaceSpeechRecognitionModel:speech_translation",
       "claims": {
@@ -8198,7 +8312,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": false,
-        "sourceGraphSha256": "b78d645c5ff9d4f5fb6b38227ae6512b4c28c1ba8e803facb223e2a7d525f0e4",
+        "sourceGraphSha256": "ceeda76f1c6b3e964676293ca3754adfade221b8cd5b832e1215c94b944d37a9",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -11293,7 +11407,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/long-cat-audio-di-t-pipeline/text-to-audio.json",
-        "sha256": "5567eadc3dba7a50b9411ca2b91764d6edea102a49f8a98cd9fff2e7e6b4ab54"
+        "sha256": "68e36a48139e32570f4ae111650c1ef8f170ae16ad0954cbbc46d42c7fb5cb13"
       },
       "canonicalWorkflowId": "LongCatAudioDiTPipeline:text_to_audio",
       "claims": {
@@ -11346,7 +11460,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "5567eadc3dba7a50b9411ca2b91764d6edea102a49f8a98cd9fff2e7e6b4ab54",
+        "sourceGraphSha256": "68e36a48139e32570f4ae111650c1ef8f170ae16ad0954cbbc46d42c7fb5cb13",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -15453,7 +15567,7 @@
       "authoringState": "draft_complete_execution_pending",
       "canonicalGraph": {
         "path": "studio/stable-audio-pipeline/text-to-audio.json",
-        "sha256": "6eac2cf6e052f16039824a0511e3aa659e90f9300300b0500be392d7283c9fd0"
+        "sha256": "9077ee369a0039de9e98d860117fe2be2774348b9f794baf2e41ca54c80b18b2"
       },
       "canonicalWorkflowId": "StableAudioPipeline:text_to_audio",
       "claims": {
@@ -15511,7 +15625,7 @@
           }
         ],
         "requiresLockedSeedForGeneration": true,
-        "sourceGraphSha256": "6eac2cf6e052f16039824a0511e3aa659e90f9300300b0500be392d7283c9fd0",
+        "sourceGraphSha256": "9077ee369a0039de9e98d860117fe2be2774348b9f794baf2e41ca54c80b18b2",
         "status": "canonical_defaults_captured_review_pending"
       },
       "generationPlan": {
@@ -21283,16 +21397,16 @@
   ],
   "summary": {
     "assetCount": 0,
-    "authoringSpecCount": 148,
+    "authoringSpecCount": 149,
     "authoringStateCounts": {
       "draft_complete_execution_pending": 55,
-      "draft_complete_input_selection_pending": 93
+      "draft_complete_input_selection_pending": 94
     },
-    "canonicalDefaultsCapturedCount": 148,
-    "generationPendingCount": 148,
-    "inputSelectionPendingCount": 93,
+    "canonicalDefaultsCapturedCount": 149,
+    "generationPendingCount": 149,
+    "inputSelectionPendingCount": 94,
     "promptDraftedCount": 123,
-    "promptNotApplicableCount": 25,
-    "rightsReviewPendingCount": 148
+    "promptNotApplicableCount": 26,
+    "rightsReviewPendingCount": 149
   }
 }

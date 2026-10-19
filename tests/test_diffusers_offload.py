@@ -1866,8 +1866,13 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
 
     def test_execute_graph_retries_oom_with_next_offload_mode_and_diagnostics(self):
         from modiff.server import WebServer
+        from modules.DiffusersImage import MODULE_MAP
 
         server = object.__new__(WebServer)
+        # Keep graph inspection on the real declared loader contract while the
+        # existing dispatch double isolates the OOM/retry orchestration.
+        server.modules = {"modules.DiffusersImage": MODULE_MAP}
+        server.node_cache = {}
         server.current_task = {"task_id": "task-1"}
         server.interrupt_flag = False
         messages = []

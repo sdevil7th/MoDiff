@@ -19,7 +19,12 @@ import time
 from typing import Any, Callable
 
 from modiff.auto_resource import READY_PROOF_STATUSES, build_auto_resource_plan, _hardware_snapshot, _requirements_missing_for_dict
+from modiff.artifact_weight_memory import native_cpu_parameter_phase, native_cpu_parameter_residency, native_disk_lora_loading_floor, native_gpu_parameter_residency, native_primary_cuda_parameter_owner, native_parameter_conversion_reserve
+from modiff.native_image_auto_placement import declared_image_owner
+from modiff.native_weight_loading import declared_cuda_weight_loaders, native_disk_lora_conversion_reserve, normalize_weight_loading_mode
+from modiff.runtime_environment import diffusers_parallel_loading_enabled
 from modiff.diffusers_profiles import resolve_execution_profiles_for_loader
+from modiff.studio_execution_specs import studio_capability_definition
 from modiff.huggingface_cluster_admission import REVIEWED_CLUSTER_EXECUTION_CANDIDATES
 from modiff.workflow_task_identity import resource_consumers as _consumers
 
@@ -29,9 +34,65 @@ _WORKLOAD = {
     "num_images_per_prompt": "batchSize", "max_sequence_length": "maxSequenceLength",
     "duration": "duration", "audio_duration": "audioDuration", "strength": "strength",
 }
-_SETTINGS = {"dtype": "dtype", "device": "device", "offload_mode": "offloadMode", "auto_offload": "autoOffload", "quantization_mode": "quantizationMode"}
+_SETTINGS = {"dtype": "dtype", "device": "device", "offload_mode": "offloadMode", "auto_offload": "autoOffload", "quantization_mode": "quantizationMode", "weight_loading_mode": "weight_loading_mode"}
 _DATA_MODULES = {"modules.Primitive", "modules.Text", "modules.Image", "modules.ImageOperations", "modules.Audio", "modules.Video"}
 from modiff.workflow_auto_values import DATA_ACTIONS as _DATA_ACTIONS
+
+
+def _declared_image_owner(profile, repository, mode):
+    """Use declared media metadata, including legacy specs without a capability.
+
+    Public legacy capabilities default to image output. When that lightweight
+    definition is absent, an exact existing profile/repository/spec must declare
+    an image Preview terminal; class names and user graph labels are not media
+    authority. This inspects ordinary immutable specification data only.
+    """
+    return declared_image_owner(profile, repository, mode, capability=studio_capability_definition(
+        profile.model_type, repository=repository,
+    ))
+
+
+def _native_weight_loading_candidates(candidates, *, node, profile, repository, mode, form, hardware):
+    """Declare CUDA cold loading only through an existing ordinary control.
+
+    Legacy graphs have no such control and remain CPU loading. The first CUDA
+    contract excludes mutation targets, quantization and external components.
+    """
+    control = node["params"].get("weight_loading_mode")
+    if control is None or profile.execution_path != "modular-diffusers":
+        return candidates
+    selected = normalize_weight_loading_mode(form["weight_loading_mode"])
+    result = []
+    unsupported = any(
+        param.get("sourceId") or param.get("value") is not None
+        for field in ("lora_list", "unet", "vae", "controlnet", "quant_config")
+        if (param := node["params"].get(field))
+    )
+    for candidate in candidates:
+        cpu = {**candidate, "weight_loading_mode": "cpu"}
+        if not control.get("sourceId") or selected == "cpu":
+            result.append(cpu)
+        bound, reserve = candidate.get("parameterStorageLowerBound"), candidate.get("parameterConversionReserve")
+        if (unsupported or candidate.get("offloadMode") != "group_disk"
+                or candidate.get("artifactFormat") != "native"
+                or candidate.get("quantizationMode", "none") != "none"
+                or candidate.get("loadedQuantization", "none") != "none"
+                or candidate.get("optimizationQualification")
+                or not _declared_image_owner(profile, repository, mode)
+                or not declared_cuda_weight_loaders(reserve, bound)
+                or not native_primary_cuda_parameter_owner(bound, execution_path=profile.execution_path,
+                    device=form["device"], dtype=form["dtype"], hardware=hardware)
+                or not native_parameter_conversion_reserve(reserve, lower_bound=bound,
+                    execution_path=profile.execution_path, offload_mode="group_disk", device=form["device"],
+                    dtype=form["dtype"], weight_loading_mode="cuda",
+                    parallel_loading=diffusers_parallel_loading_enabled())):
+            continue
+        if control.get("sourceId") and selected != "cuda":
+            continue
+        result.append({**candidate, "id": candidate["id"] + "-loading-cuda",
+                       "placementAlternativeOf": candidate.get("placementAlternativeOf") or candidate["id"],
+                       "weight_loading_mode": "cuda"})
+    return result
 
 
 def graph_material(graph: dict) -> dict:
@@ -171,6 +232,91 @@ def _native_lora_owners(graph, loaders):
         for descriptor_id in native_lora_chain_ids(graph, terminal):
             owners.setdefault(descriptor_id, set()).add(loader_id)
     return owners
+
+
+def _validate_direct_image_stage_workload(nodes, loader_id, profile, mode, values, consumers):
+    """Inspect one source-declared stage route; never execute encoding suppliers."""
+    if (nodes[loader_id]['module'], nodes[loader_id]['action']) != ('modules.DiffusersImage', 'LoadPipeline'):
+        return
+    stage_actions = {'EncodeInputs', 'Denoise', 'DecodeLatents'}
+    stages = [key for key in consumers if nodes[key]['module'] == 'modules.DiffusersImage'
+              and nodes[key]['action'] in stage_actions]
+    if not stages:
+        return  # Retained whole/compatible routes keep their existing behavior.
+    from modiff.workflow_task_identity import direct_image_stage_owner
+    owner, adapters = direct_image_stage_owner(nodes, stages[0])
+    image_consumers = [key for key in consumers if nodes[key]['module'] == 'modules.DiffusersImage' and key not in adapters]
+    if (owner != loader_id or len(stages) != 3 or len(image_consumers) != 3
+            or {nodes[key]['action'] for key in stages} != stage_actions):
+        raise ValueError('Auto requires one complete selected image stage route without mixed consumers.')
+    ids = {nodes[key]['action']: key for key in stages}
+    encode_id, denoise_id, decode_id = (ids[action] for action in ('EncodeInputs', 'Denoise', 'DecodeLatents'))
+    for key in stages:
+        if direct_image_stage_owner(nodes, key) != (loader_id, adapters):
+            raise ValueError('The image stages have different declared pipeline/adapter owners.')
+    for target, field, source, output in (
+        (denoise_id, 'encoded_inputs', encode_id, 'encoded_inputs'),
+        (decode_id, 'latents', denoise_id, 'latents_out'),
+        (decode_id, 'latent_binding', denoise_id, 'latent_binding'),
+        (decode_id, 'width', denoise_id, 'width_out'),
+        (decode_id, 'height', denoise_id, 'height_out'),
+    ):
+        param = nodes[target]['params'].get(field) or {}
+        if (param.get('sourceId'), param.get('sourceKey')) != (source, output):
+            raise ValueError('The image stage route has no exact conditioning, latent binding and geometry wiring.')
+    from modules.DiffusersImage.main import selected_image_stage_starter_spec, get_image_pipeline_adapter, _bounded_image_int
+    spec = selected_image_stage_starter_spec(profile.pipeline_class, mode, values)
+    if spec is None:
+        raise ValueError('The image stage route has no exact selected source specification.')
+    adapter = get_image_pipeline_adapter(profile.pipeline_class)
+
+    def bounded_control(field, minimum, maximum, step=None):
+        raw = _literal(nodes, denoise_id, field)
+        if raw is None:
+            raise ValueError(f'The image-stage {field} must have a known static value; use Expert.')
+        return _bounded_image_int(raw, field=field, default=minimum,
+                                  minimum=minimum, maximum=maximum, step=step)
+
+    width, height = (bounded_control(field, adapter.min_output_side, adapter.max_output_side,
+                                     adapter.output_side_step) for field in ('width', 'height'))
+    if width * height > adapter.max_output_pixels:
+        raise ValueError('Image stages exceed the reviewed output pixel bound.')
+    bounded_control('seed', 0, 4294967295)
+    bounded_control('max_sequence_length', 1, adapter.max_sequence_length)
+    roles = {key: role for role, key, _x, _y in spec['roles']}
+    encode_role = roles['modules.DiffusersImage.EncodeInputs']
+    denoise_role = roles['modules.DiffusersImage.Denoise']
+    encoder_bindings = {(field, source) for role, field, source in spec['bindings'] if role == encode_role}
+    shared = {field for role, field, source in spec['bindings'] if role == denoise_role
+              and (field, source) in encoder_bindings
+              and field in {'width', 'height', 'seed', 'max_sequence_length'}}
+    for field in shared:
+        left, right = (_literal(nodes, key, field) for key in (encode_id, denoise_id))
+        if (isinstance(left, bool) or isinstance(right, bool) or _number(left) is None or _number(right) is None
+                or float(left) != int(float(left)) or float(right) != int(float(right))
+                or float(left) < (0 if field == 'seed' else 1)
+                or int(float(left)) != int(float(right))):
+            raise ValueError(f'The declared image encoder and denoiser {field} controls must be known matching integers.')
+    for field in ('generator', 'latents', 'masked_image_latents', 'prompt_embeds', 'pooled_prompt_embeds',
+                  'negative_prompt_embeds', 'negative_pooled_prompt_embeds'):
+        param = nodes[encode_id]['params'].get(field) or {}
+        if (param.get('sourceId') or param.get('value') is not None
+                or param.get('default') is not None):
+            raise ValueError('Auto has no static batch bound for supplied image-stage material or external RNG/latents; use Expert.')
+    for field in ('prompt', 'prompt_2'):
+        prompt = _literal(nodes, encode_id, field)
+        if prompt is not None and not isinstance(prompt, str) and not (
+            isinstance(prompt, list) and len(prompt) == 1 and isinstance(prompt[0], str)
+        ):
+            raise ValueError('Auto has no accepted image-stage resource bound for an unknown or multiple-prompt batch.')
+    batch = (_literal(nodes, encode_id, 'num_images_per_prompt')
+             if 'num_images_per_prompt' in nodes[encode_id]['params'] else 1)
+    if isinstance(batch, bool) or _number(batch) is None or float(batch) < 1 or float(batch) != int(float(batch)):
+        raise ValueError('The image encoder must declare a known positive integer image count.')
+    if int(float(batch)) > 8 or int(float(batch)) * width * height > 16 * 1024 * 1024:
+        raise ValueError('The image encoder batch must produce at most 8 images and 16 megapixels in total.')
+    if 'num_images_per_prompt' in nodes[denoise_id]['params']:
+        raise ValueError('The selected image-stage image count belongs to Encode Inputs, not a second denoiser control.')
 
 
 def _workload_values(nodes: dict, node_id: str):
@@ -456,10 +602,83 @@ def _upscaler_owner(nodes, node_id, planned, hardware):
                          "quantizationMode": "none", **controls}}
 
 
+def _image_text_owner(graph, node_id, hardware):
+    """Inspect one declared ancillary owner through the normal graph boundary.
+
+    A registered generic node or matching model name alone grants no Auto
+    recipe. The exact current ancillary declaration, closure and immutable NF4
+    artifact must all join before a reviewed working envelope is consulted.
+    No processor/model construction, cache release or installation occurs here.
+    """
+    from modules import MODULE_MAP
+    from modiff.ancillary_execution import validate_execution_purpose
+    from modiff.transformers_image_text_resources import (
+        image_text_nf4_policy, inspect_image_text_nf4_storage,
+        reviewed_image_text_auto_envelope, validate_image_text_t2i_request,
+    )
+    selected = validate_execution_purpose(graph, MODULE_MAP)
+    if selected is None or selected['kind'] != 'explicit_preview':
+        raise ValueError('Image/text Auto requires one exact declared Preview closure; a generic loader alone grants no resource recipe.')
+    binding = selected['bindings'][0]
+    if binding['roleNodes']['provider'] != node_id:
+        raise ValueError('Image/text Auto provider differs from the selected declaration.')
+    nodes = graph['nodes']
+    values = {key: _literal(nodes, node_id, key) for key in
+              ('model_id', 'revision', 'dtype', 'device', 'quantization_mode')}
+    if values['quantization_mode'] != 'bnb_4bit':
+        raise ValueError('Image/text Auto has no complete working envelope for the selected quantization mode.')
+    recipe = image_text_nf4_policy(values['model_id'], values['revision'], values['dtype'], values['device'])
+    if hardware.get('accelerator', {}).get('kind') != 'cuda':
+        raise ValueError('The declared image/text NF4 Auto recipe requires the current primary NVIDIA CUDA accelerator.')
+    proposal = binding['roleNodes']['proposal']
+    inputs = {key: _literal(nodes, proposal, key) for key in
+              ('max_input_tokens', 'max_image_pixels', 'enhancement_max_new_tokens')}
+    image = nodes[proposal]['params'].get('images', {})
+    references = 0
+    if image.get('sourceId'):
+        files = _literal(nodes, image['sourceId'], 'file')
+        references = len(files) if type(files) is list else 1
+    request_values = {key: _literal(nodes, proposal, key) for key in
+        ('operation', 'do_sample', 'num_beams', 'repetition_penalty', 'use_chat_template',
+         'min_new_tokens', 'enhancement_max_new_tokens', 'layout_conditioning', 'video')
+        if key in nodes[proposal]['params']}
+    literal_images = image.get('value')
+    request_values['images'] = literal_images
+    validate_image_text_t2i_request(request_values, references=references)
+    # Inspect only the exact T2I structure before immutable metadata/header I/O.
+    # Actual native runtime and per-run configuration guards remain mandatory
+    # at Load/generate; these storage estimates grant no live qualification.
+    bounds = dict(input_tokens=inputs['max_input_tokens'], image_pixels=inputs['max_image_pixels'],
+                  references=references, new_tokens=inputs['enhancement_max_new_tokens'])
+    reviewed_image_text_auto_envelope(None, **bounds)
+    observation = inspect_image_text_nf4_storage(values['model_id'], values['revision'])
+    envelope = reviewed_image_text_auto_envelope(observation, **bounds)
+    return {'nodeId': node_id, 'resourceOwnerKind': 'auxiliary_model', 'modelType': 'ImageTextToText',
+        'mode': 'image_text_to_text', 'repository': values['model_id']['value'],
+        'candidateId': 'reviewed-image-text-nf4-bfloat16-envelope-v1', 'proofStatus': 'declared_safe',
+        'consumers': [proposal], 'capacityRequirements': {},
+        'requirements': dict(envelope['requirements']),
+        'parameterResidencyRequirements': dict(envelope['parameterResidencyRequirements']),
+        'parameterLoadingRequirements': dict(envelope['parameterLoadingRequirements']),
+        'workingMemoryPolicy': 'runtime_headroom_policy',
+        'artifact': observation['artifact'],
+        'workingDemandEvidence': {'kind': 'reviewed_bounded_image_text_storage',
+            'configSha256': observation['configSha256'],
+            'weightHeaderSha256': observation['weightHeaderSha256'],
+            'bounds': envelope['bounds'], 'quantization': recipe,
+            'inferencePeakMeasured': envelope['inferencePeakMeasured'],
+            **({'recipeId': envelope['recipeId'], 'budgetBounds': envelope['budgetBounds'],
+                'cpuPreparationRequirements': envelope['cpuPreparationRequirements']}
+               if envelope.get('recipeId') else {})},
+        'settings': {'device': values['device'], 'dtype': values['dtype'], 'offloadMode': 'none',
+            'autoOffload': False, 'quantizationMode': values['quantization_mode']}}
+
+
 def _build_workflow_auto_plan(
     graph: dict, *, runtime_fingerprint: dict, local_models: list | None, data_dir: str,
     plan_recipe: Callable = build_auto_resource_plan, hardware: dict | None = None,
     cache_snapshot: dict | None = None,
+    _placement_choices: dict | None = None, _placement_state: dict | None = None,
 ) -> dict:
     material = graph_material(graph)
     nodes = material["nodes"]
@@ -491,7 +710,8 @@ def _build_workflow_auto_plan(
             data_nodes.add(node_id)
             continue
         if (node["module"], node["action"]) in {("modules.Spandrel", "Upscaler"),
-                                                 ("modules.ModularDiffusers", "AutoModelLoader")}:
+                                                 ("modules.ModularDiffusers", "AutoModelLoader"),
+                                                 ("modules.HuggingFaceTransformers", "LoadImageTextToTextModel")}:
             # These concrete nodes own separate weights. Their exact auxiliary
             # contracts must not borrow unrelated pipeline/Expert profiles.
             auxiliary_owners.add(node_id)
@@ -521,7 +741,9 @@ def _build_workflow_auto_plan(
                 loaders[node_id] = profiles[0]
         elif re.search(r"load.*(?:model|pipeline|encoder)|modelsloader|automodelloader", node["action"], re.I):
             issues.append(f"{node_id}: no reviewed resource recipe exists for this model loader.")
-        elif node["module"] not in _DATA_MODULES and not node["module"].startswith("modules.Diffusers") and node["module"] != "modules.ModularDiffusers":
+        elif (node["module"] not in _DATA_MODULES and not node["module"].startswith("modules.Diffusers")
+                and node["module"] != "modules.ModularDiffusers"
+                and (node['module'], node['action']) != ('modules.HuggingFaceTransformers', 'GenerateImageVideoText')):
             issues.append(f"{node_id}: {node['module']}.{node['action']} has no workflow Auto resource contract.")
 
     owned = set(loaders)
@@ -588,10 +810,13 @@ def _build_workflow_auto_plan(
                     "device": values.get("device", "cpu"), "dtype": values.get("dtype", "float32"),
                     "offloadMode": values.get("offload_mode", "none"), "autoOffload": values.get("auto_offload", False),
                     "quantizationMode": values.get("quantization_mode", "none")}
+            if "weight_loading_mode" in nodes[loader_id]["params"]:
+                form["weight_loading_mode"] = normalize_weight_loading_mode(values["weight_loading_mode"])
             device = str(form["device"])
             kind = hardware.get("accelerator", {}).get("kind")
             if device != "cpu" and kind and (device.split(":", 1)[0] != kind or (":" in device and device.rsplit(":", 1)[1] != "0")):
                 raise ValueError("This device differs from the accelerator covered by the resource snapshot.")
+            _validate_direct_image_stage_workload(nodes, loader_id, profile, mode, values, consumers)
             for id in [loader_id, *consumers]:
                 for field, target, raw in _workload_values(nodes, id):
                     if raw is None:
@@ -615,7 +840,25 @@ def _build_workflow_auto_plan(
             if revision:
                 candidates = [candidate for candidate in candidates if (candidate.get("artifactResolution", {}).get("resolved", {}).get("revision") or candidate.get("artifactRevision")) == revision]
             candidates = [candidate for candidate in candidates if _candidate_covers_workload(candidate, form)]
-            candidates.sort(key=lambda candidate: candidate.get("offloadMode") != form["offloadMode"])
+            candidates = [candidate for candidate in candidates if not candidate.get("placementAlternativeOf")
+                          or native_cpu_parameter_residency(
+                              candidate.get("parameterStorageLowerBound"), execution_path=profile.execution_path,
+                              offload_mode=candidate.get("offloadMode", "none"), device=form["device"], dtype=form["dtype"],
+                          )]
+            candidates = _native_weight_loading_candidates(
+                candidates, node=nodes[loader_id], profile=profile, repository=repo,
+                mode=mode, form=form, hardware=hardware,
+            )
+            from modiff.workflow_auto_values import filter_adapter_authoring_candidates
+            candidates = filter_adapter_authoring_candidates(
+                candidates, nodes=nodes, loader_id=loader_id, consumers=consumers,
+                profile=profile, mode=mode, repository=repo, literal=_literal,
+                recipe_controls=recipe_controls, candidate_fields=_SETTINGS,
+            )
+            candidates.sort(key=lambda candidate: (
+                candidate.get("offloadMode") != form["offloadMode"],
+                candidate.get("weight_loading_mode", "cpu") != form.get("weight_loading_mode", "cpu"),
+            ))
             if not candidates:
                 batch_reason = (
                     f"No accepted recipe covers batchSize={form['batchSize']:g}. "
@@ -631,7 +874,16 @@ def _build_workflow_auto_plan(
                     "Review the model's resource recipes or select Custom memory to keep your settings."
                 )
                 raise ValueError(reason)
-            candidate = candidates[0]
+            choice = (_placement_choices or {}).get(loader_id)
+            candidate = next((item for item in candidates if item["id"] == choice), None) if choice else candidates[0]
+            if candidate is None:
+                raise ValueError("The internal placement choice is no longer an accepted exact recipe.")
+            if _placement_state is not None:
+                family = candidate.get("placementAlternativeOf") or candidate["id"]
+                alternatives = [item["id"] for item in candidates
+                                if (item.get("placementAlternativeOf") or item["id"]) == family]
+                if len(alternatives) > 1:
+                    _placement_state.setdefault("options", {})[loader_id] = alternatives
             envelope = candidate.get("requirements", {})
             if (values.get("attention_backend") == "_native_math"
                     and envelope.get("memorySemantics") == "machine_capacity"
@@ -669,9 +921,102 @@ def _build_workflow_auto_plan(
                 # Historical flat contracts and explicit extension/test budgets
                 # keep their strict additive working-demand meaning.
                 requirements = declared
+            native_image = _declared_image_owner(profile, repo, mode)
+            parameter_residency = native_cpu_parameter_residency(
+                candidate.get("parameterStorageLowerBound"), execution_path=profile.execution_path,
+                offload_mode=candidate.get("offloadMode", "none"), device=form["device"], dtype=form["dtype"],
+            ) if (candidate.get('quantizationMode', 'none') == 'none'
+                  and candidate.get('loadedQuantization', 'none') == 'none'
+                  and native_image) else {}
+            parameter_phase = native_cpu_parameter_phase(
+                offload_mode=candidate.get("offloadMode", "none"), device=form["device"],
+            ) if parameter_residency else None
+            if parameter_residency:
+                if (_placement_state is not None and native_primary_cuda_parameter_owner(
+                    candidate.get('parameterStorageLowerBound'), execution_path=profile.execution_path,
+                    device=form['device'], dtype=form['dtype'], hardware=hardware,
+                )):
+                    _placement_state.setdefault('cudaParameterOwnerIds', []).append(loader_id)
+                parameter_residency = {**parameter_residency, **native_gpu_parameter_residency(
+                    candidate.get('parameterStorageLowerBound'), execution_path=profile.execution_path,
+                    offload_mode=candidate.get('offloadMode', 'none'), device=form['device'],
+                    dtype=form['dtype'], hardware=hardware,
+                )}
+            native_loras = nodes[loader_id].get('params', {}).get('lora_list', {})
+            has_native_loras = bool(native_loras.get('sourceId')) or native_loras.get('value') not in (None, [])
+            if (profile.execution_path == 'modular-diffusers' and native_image
+                    and candidate.get('offloadMode') == 'group_disk' and not device.startswith('cpu')
+                    and has_native_loras):
+                parameter_residency = native_disk_lora_loading_floor(
+                    candidate.get('parameterStorageLowerBound'), targets=getattr(profile, 'lora_loadable_components', ()),
+                    dtype=form['dtype'],
+                ) if candidate.get('quantizationMode', 'none') == 'none' and candidate.get('loadedQuantization', 'none') == 'none' else {}
+                if not parameter_residency:
+                    raise ValueError('Native image disk LoRA needs reviewed loading targets and complete unquantized target parameter headers; select Custom memory for unknown storage.')
+                parameter_phase = 'cpu_loading'
+            conversion_additional = gpu_loading_additional = 0
+            conversion = {}
+            if parameter_residency:
+                conversion_args = {
+                    'lower_bound': candidate.get('parameterStorageLowerBound'),
+                    'dtype': form['dtype'], 'device': form['device'],
+                    'parallel_loading': diffusers_parallel_loading_enabled(),
+                }
+                if has_native_loras and candidate.get('offloadMode') == 'group_disk' and not device.startswith('cpu'):
+                    conversion = native_disk_lora_conversion_reserve(
+                        candidate.get('parameterConversionReserve'),
+                        targets=getattr(profile, 'lora_loadable_components', ()), **conversion_args,
+                    )
+                else:
+                    conversion = native_parameter_conversion_reserve(
+                        candidate.get('parameterConversionReserve'), execution_path=profile.execution_path,
+                        offload_mode=candidate.get('offloadMode', 'none'),
+                        weight_loading_mode=candidate.get('weight_loading_mode', 'cpu'), **conversion_args,
+                    )
+                if not conversion:
+                    raise ValueError('Native image loading needs complete source and converted-weight headers; select Custom memory for unknown loading storage.')
+                if parameter_phase == 'cpu_loading':
+                    parameter_residency = {**parameter_residency, 'systemRamBytes': max(
+                        parameter_residency['systemRamBytes'], conversion['systemRamBytes'],
+                    )}
+                else:
+                    # Retained CPU weights and transient conversion overlap are
+                    # different allocations. Only a complete warm loader can
+                    # waive the latter; actual storage credit stays bounded.
+                    conversion_additional = max(0, conversion['systemRamBytes'] - max(
+                        parameter_residency['systemRamBytes'], int(_number(requirements.get('systemRamBytes')) or 0),
+                    ))
+            gpu_loading = {}
+            if candidate.get('weight_loading_mode') == 'cuda':
+                gpu_loading = {'vramBytes': candidate['parameterStorageLowerBound']['largestComponentBytes']}
+                gpu_loading_additional = max(0, gpu_loading['vramBytes'] - int(_number(requirements.get('vramBytes')) or 0))
+            loading_additional = (max(0, parameter_residency['systemRamBytes']
+                                      - int(_number(requirements.get('systemRamBytes')) or 0))
+                                  if parameter_phase == 'cpu_loading' else 0)
+            if parameter_residency:
+                requirements = {**requirements, **{
+                    key: max(int(_number(requirements.get(key)) or 0), amount)
+                    for key, amount in parameter_residency.items()
+                }}
+            if conversion:
+                requirements = {**requirements, 'systemRamBytes': max(
+                    requirements['systemRamBytes'], conversion['systemRamBytes'],
+                )}
+            if gpu_loading:
+                requirements = {**requirements, 'vramBytes': max(requirements['vramBytes'], gpu_loading['vramBytes'])}
+            parameter_disk = {}
+            disk_additional = 0
+            if parameter_residency and candidate.get("offloadMode") == "group_disk" and not device.startswith("cpu"):
+                parameter_disk = {"diskFreeBytes": candidate["parameterStorageLowerBound"]["totalBytes"]}
+                disk_additional = max(0, parameter_disk["diskFreeBytes"] - int(_number(requirements.get("diskFreeBytes")) or 0))
+                requirements = {**requirements, "diskFreeBytes": max(
+                    int(_number(requirements.get("diskFreeBytes")) or 0), parameter_disk["diskFreeBytes"],
+                )}
             for key in total:
                 total[key] += int(_number(requirements.get(key)) or 0)
             settings = {"offloadMode": candidate.get("offloadMode", "none"), "autoOffload": candidate.get("autoOffload", False)}
+            if 'weight_loading_mode' in nodes[loader_id]['params']:
+                settings['weight_loading_mode'] = candidate.get('weight_loading_mode', 'cpu')
             if recipe_controls and values['offload_mode'] != settings['offloadMode']:
                 recipe_id, recipe_field = recipe_bindings['offload_mode']
                 if nodes[recipe_id]['params'].get(recipe_field, {}).get('sourceId'):
@@ -691,7 +1036,17 @@ def _build_workflow_auto_plan(
                             "candidateId": candidate["id"], "proofStatus": candidate["proof"]["status"],
                             "consumers": consumers, "requirements": requirements,
                             "capacityRequirements": capacity, "workingMemoryPolicy": working_policy,
-                            "settings": {**form, **settings, **native_runtime_controls,
+                            **({"parameterResidencyRequirements": parameter_residency,
+                                "parameterResidencyPhase": parameter_phase} if parameter_residency else {}),
+                            **({"parameterLoadingAdditionalBytes": loading_additional}
+                               if parameter_phase == 'cpu_loading' else {}),
+                            **({'parameterConversionRequirements': conversion,
+                                'parameterConversionAdditionalBytes': conversion_additional} if conversion else {}),
+                            **({'parameterLoadingRequirements': gpu_loading,
+                                'parameterGpuLoadingAdditionalBytes': gpu_loading_additional} if gpu_loading else {}),
+                            **({"parameterDiskRequirements": parameter_disk,
+                                "parameterDiskAdditionalBytes": disk_additional} if parameter_disk else {}),
+                            "settings": {**form, **native_runtime_controls, **settings,
                                          **({"attention_backend": recipe_controls["attention_backend"]}
                                             if "attention_backend" in recipe_controls else {})}})
         except DeferredResourceValue as error:
@@ -703,14 +1058,18 @@ def _build_workflow_auto_plan(
         if node_id not in auxiliary_owners:
             continue
         try:
-            owner = (_upscaler_owner if nodes[node_id]["module"] == "modules.Spandrel" else _controlnet_owner)(
-                nodes, node_id, planned, hardware)
+            if nodes[node_id]['module'] == 'modules.HuggingFaceTransformers':
+                owner = _image_text_owner(graph, node_id, hardware)
+            else:
+                owner = (_upscaler_owner if nodes[node_id]["module"] == "modules.Spandrel" else _controlnet_owner)(
+                    nodes, node_id, planned, hardware)
             planned.append(owner)
             for key in total:
                 total[key] += owner["requirements"][key]
         except (ValueError, TypeError, OSError) as error:
             issues.append(f"{node_id}: {error}")
     adapters = []
+    direct_adapter_owners = set()
     adapter_names = {}
     try:
         native_lora_owners = _native_lora_owners(material, loaders)
@@ -724,6 +1083,38 @@ def _build_workflow_auto_plan(
             try:
                 from modiff.auxiliary_lora import lora_resource_requirement
                 native = (node['module'], node['action']) == ('modules.ModularDiffusers', 'Lora')
+                if (node['module'], node['action']) == ('modules.DiffusersImage', 'LoadAdapter'):
+                    from modiff.workflow_task_identity import direct_image_stage_owner
+                    # Resolve the existing downstream resource scope backwards
+                    # through its exact declared builtin adapter chain.
+                    stages = [key for key in nodes if nodes[key]['module'] == 'modules.DiffusersImage'
+                              and nodes[key]['action'] == 'EncodeInputs']
+                    owners = set()
+                    for stage in stages:
+                        owner, chain = direct_image_stage_owner(nodes, stage)
+                        if node_id in chain:
+                            owners.add(owner)
+                    if len(owners) != 1:
+                        raise ValueError('The direct adapter needs one exclusive selected stage owner.')
+                    artifact = node['params'].get('adapter_path') or {}
+                    selection = artifact.get('value', artifact.get('default'))
+                    empty = (selection is None or isinstance(selection, str) and not selection.strip()
+                             or isinstance(selection, dict) and isinstance(selection.get('value'), str)
+                             and not selection['value'].strip())
+                    if not artifact.get('sourceId') and empty:
+                        continue  # Ordinary cleared LoadAdapter is an exact no-op.
+                    requirements = lora_resource_requirement(node_id, node, graph=material)
+                    direct_adapter_owners.update(owners)
+                    for owner_id in owners:
+                        names = adapter_names.setdefault(owner_id, set())
+                        if requirements['adapterName'] in names:
+                            raise ValueError('The direct LoRA chain contains a duplicate adapter name.')
+                        names.add(requirements['adapterName'])
+                    for key in ('systemRamBytes', 'vramBytes'):
+                        total[key] += requirements[key]
+                    adapters.append({'nodeId': node_id, 'loaderIds': sorted(owners), **requirements})
+                    continue
+
                 # One ordered descriptor may reach several independent owners.
                 # Arbitrary data/list suppliers and unrelated input ports cannot
                 # establish model ownership or hide unbudgeted adapter storage.
@@ -774,7 +1165,13 @@ def _build_workflow_auto_plan(
                               or accelerator.get("kind") in {"cuda", "xpu", "mps"})
                          for owner in policy_owners) else 0}
     for key, floor in policy_floors.items():
-        total[key] = max(total[key], floor)
+        known_parameters = any((owner.get('parameterResidencyRequirements', {}).get(key)
+                                or owner.get('parameterLoadingRequirements', {}).get(key))
+                               and owner['workingMemoryPolicy'] == 'runtime_headroom_policy'
+                               for owner in planned)
+        # Known parameters are a minimum additional cold allocation, not
+        # the inference headroom itself. Adapter storage remains additive.
+        total[key] = total[key] + floor if known_parameters else max(total[key], floor)
     retained_total = dict(total)
     cache_snapshot = cache_snapshot if isinstance(cache_snapshot, dict) else {}
     cached_owners = cache_snapshot.get("owners") or {}
@@ -786,22 +1183,56 @@ def _build_workflow_auto_plan(
     reused = []
     for owner in planned:
         owner["cacheKey"] = workflow_owner_cache_key(candidate_graph, owner["nodeId"], captured)
+        # Direct mutation nodes are downstream of the loader cache key. Without
+        # an exact adapter-state owner attestation, reserve cold storage rather
+        # than granting loader or adapter residency/conversion reuse credits.
+        if owner['nodeId'] in direct_adapter_owners:
+            continue
+
         cached = cached_owners.get(owner["nodeId"], {})
         if custom_nodes or preparation_nodes or cached.get("cacheKey") != owner["cacheKey"]:
             continue
+        loading_additional = owner.get('parameterLoadingAdditionalBytes', 0)
+        if owner.get('parameterResidencyPhase') == 'cpu_loading':
+            # A complete successful loader cache hit does not allocate its CPU
+            # staging set again. Partial storage or a surviving pipeline object
+            # cannot prove that every selected manager component is still live.
+            if cached.get('loadingPhaseReusable') is not True:
+                continue
+            resident_credit['systemRamBytes'] += loading_additional
+        conversion_additional = owner.get('parameterConversionAdditionalBytes', 0)
+        gpu_loading_additional = owner.get('parameterGpuLoadingAdditionalBytes', 0)
+        if cached.get('loadingPhaseReusable') is True:
+            resident_credit['systemRamBytes'] += conversion_additional
+            resident_credit['vramBytes'] += gpu_loading_additional
         reused.append(owner["nodeId"])
+        if cached.get('loadingPhaseReusable') is True:
+            total['diskFreeBytes'] -= owner.get('parameterDiskAdditionalBytes', 0)
         for key in resident_credit:
+            if (key == 'vramBytes' and owner.get('parameterResidencyRequirements', {}).get(key)
+                    and cached.get('loadingPhaseReusable') is not True):
+                continue  # Preserve CPU credit; GPU weights need a complete native bundle.
             budget = owner["requirements"][key] + sum(
                 adapter[key] for adapter in adapters if owner["nodeId"] in adapter["loaderIds"]
             )
+            if key == 'systemRamBytes':
+                budget -= loading_additional + conversion_additional
+                # Upstream disk hooks replace tensors with CPU empty_like
+                # placeholders. Their logical nbytes do not attest retained
+                # weight residency or physical RAM available for a warm run.
+                if owner['settings']['offloadMode'] == 'group_disk':
+                    continue
+            else:
+                budget -= gpu_loading_additional
             resident_credit[key] += min(budget, int(_number(cached.get(key)) or 0))
-    # Only an explicit working budget can receive weight-storage credit.
-    # A capacity-only recipe contributes no presumed cold-load bytes.
+    # Explicit budgets and verified parameter floors receive only actual live
+    # storage credit. A machine tier alone contributes no cold-load bytes;
+    # GPU-resident weights never receive credit against a CPU storage floor.
     for key, credit in resident_credit.items():
         if credit:
             total[key] = max(min(retained_total[key], floors[key]), total[key] - credit)
     from modiff.workflow_auto_lifecycle import plan_owner_lifetimes
-    schedule = plan_owner_lifetimes(material, planned, adapters)
+    schedule = plan_owner_lifetimes(material, planned, adapters, parameter_headroom=policy_floors)
     for key, floor in policy_floors.items():
         schedule["peak"][key] = max(schedule["peak"][key], floor)
     schedule["sharedPeakBytes"] = max(schedule["sharedPeakBytes"], sum(policy_floors.values()))
@@ -851,11 +1282,28 @@ def _build_workflow_auto_plan(
     )
     if use_schedule:
         total = {**total, **schedule["peak"]}
+        total['diskFreeBytes'] = retained_total['diskFreeBytes']
         reused = []  # The scheduled executor starts from an empty model cache.
     memory_required = (schedule["sharedPeakBytes"] if shared and use_schedule else total["systemRamBytes"] + (total["vramBytes"] if shared else 0))
     demand = {**total, "systemRamBytes": memory_required}
     memory_issues = [key for key, required in demand.items()
                      if required and (_number(available[key]) is None or required > _number(available[key]))]
+    if _placement_state is not None:
+        # Preserve the observed pressure before projected owner destruction can
+        # turn it into an admitted cache-preparation plan. Only internal exact
+        # complete native bundles establish a preferred warm CUDA placement.
+        gpu_owners = [owner['nodeId'] for owner in planned
+                      if owner.get('parameterResidencyRequirements', {}).get('vramBytes')
+                      or owner.get('parameterLoadingRequirements', {}).get('vramBytes')]
+        _placement_state.update(
+            rawResourceIssueKeys=tuple(memory_issues),
+            rawResourceOnly=bool(memory_issues) and not issues and not custom_nodes and not preparation_nodes,
+            knownGpuOwnerIds=tuple(gpu_owners),
+            # Complete warm group owners may refresh unused reservations too;
+            # their group GPU peak remains unknown and receives no new floor.
+            completeWarmGpuOwnerIds=tuple(node_id for node_id in _placement_state.get('cudaParameterOwnerIds', ())
+                if node_id in reused and cached_owners.get(node_id, {}).get('loadingPhaseReusable') is True),
+        )
     # Only measured app-owned weight storage can make cleanup a plausible plan.
     # Dispatch destroys ownership and rechecks real free memory: external
     # references or OS arenas may prevent the projected reclamation.
@@ -898,6 +1346,14 @@ def _build_workflow_auto_plan(
         free = _number(available[key])
         available_label = format_bytes(free) if free is not None else "unknown capacity"
         issues.append(f"Combined {labels[key]} ({key}): needs {format_bytes(required)}; {available_label} available.")
+    if _placement_state is not None:
+        # Structured private diagnostics gate placement exploration. No error
+        # message substring, user flag or client-selected candidate grants it.
+        _placement_state['resourceIssueKeys'] = tuple(memory_issues)
+        _placement_state['resourceOnly'] = bool(memory_issues) and len(issues) == len(memory_issues)
+        _placement_state['coldCpuBytes'] = sum(owner['requirements']['systemRamBytes'] for owner in planned)
+        _placement_state['coldGpuBytes'] = sum(owner['requirements']['vramBytes'] for owner in planned)
+        _placement_state['mayExplore'] = not custom_nodes and not preparation_nodes
     # The hash must describe exactly the patches returned to the client. Any
     # deferred supplier postpones all mutations until dispatch-time replanning.
     patches = patches if not issues and not preparation_nodes else []
@@ -918,12 +1374,111 @@ def _build_workflow_auto_plan(
             "message": ("Run will release previous model cache and recheck actual available memory before loading models. " if requires_cache_preparation else "") + ("Auto reuses compatible loaded weights and reserves additional inference headroom. " if reused else "") + ("Run will first execute the data suppliers and validate their actual resource values before loading models. " if preparation_nodes else "") + ("Auto finishes dependent work and releases completed model owners before loading the next owner. Downstream material outputs are retained." if use_schedule else "Auto uses the existing dependency order and budgets all retained model owners.") + " Shared loader nodes are counted once. Model, precision and creative controls are preserved."}
 
 
+_PLACEMENT_EVALUATION_LIMIT = 64
+
+
 def build_workflow_auto_plan(graph, **kwargs):
-    captured = {}
-    token = _RESOLVED_FIELDS.set(captured)
-    try:
-        result = _build_workflow_auto_plan(graph, **kwargs)
-        result["resolvedFields"] = captured
-        return result
-    finally:
-        _RESOLVED_FIELDS.reset(token)
+    """Choose declared image placements using the same complete graph admission.
+
+    Preserve an already admitted default/warm plan. Under known cold pressure,
+    explore at most 64 complete plans, sharing immutable recipe/header reads.
+    A refused search returns the original refusal with no graph mutations.
+    """
+    preferred_diagnostic = kwargs.pop('_preferred_diagnostic', None)
+    if preferred_diagnostic is not None and not isinstance(preferred_diagnostic, dict):
+        raise TypeError('The private preferred diagnostic must be an output dictionary.')
+    if any(key.startswith('_placement_') for key in kwargs):
+        raise TypeError('Placement choices are private planner state, not request options.')
+    if kwargs.get('hardware') is None:
+        kwargs['hardware'] = _hardware_snapshot(kwargs['runtime_fingerprint'], kwargs['data_dir'])
+    recipe = kwargs.pop('plan_recipe', build_auto_resource_plan)
+    recipes = {}
+
+    def cached_recipe(payload, **recipe_kwargs):
+        payload = {**payload, 'hardwareOverride': kwargs['hardware']}
+        key = json.dumps(payload, sort_keys=True, separators=(',', ':'), allow_nan=False)
+        if key not in recipes:
+            recipes[key] = recipe(payload, **recipe_kwargs)
+        return recipes[key]
+
+    def evaluate(choices):
+        captured, state = {}, {}
+        token = _RESOLVED_FIELDS.set(captured)
+        try:
+            result = _build_workflow_auto_plan(
+                graph, **kwargs, plan_recipe=cached_recipe,
+                _placement_choices=choices, _placement_state=state,
+            )
+            result['resolvedFields'] = captured
+            return result, state
+        finally:
+            _RESOLVED_FIELDS.reset(token)
+
+    original, state = evaluate({})
+    if preferred_diagnostic is not None:
+        preferred_diagnostic.clear()
+        preferred_diagnostic.update({key: state.get(key) for key in (
+            'rawResourceIssueKeys', 'rawResourceOnly', 'knownGpuOwnerIds',
+            'completeWarmGpuOwnerIds', 'mayExplore',
+        )})
+    if ((original['canAutoRun'] and not original.get('requiresCachePreparation'))
+            or not (state.get('resourceOnly') or state.get('rawResourceOnly')) or not state.get('mayExplore')):
+        return original
+    choices, current, evaluations = {}, original, 1
+    inspected = {(): (original, state)}
+
+    def inspect(proposal):
+        nonlocal evaluations
+        key = tuple(sorted(proposal.items()))
+        if key not in inspected:
+            if evaluations >= _PLACEMENT_EVALUATION_LIMIT:
+                return None
+            inspected[key] = evaluate(proposal)
+            evaluations += 1
+        return inspected[key]
+
+    # A template may retain its authored placement while a previous Auto run
+    # selected another declared mode. Prefer its exact complete warm owner to
+    # any plan that only fits after destroying caches. Normal graph admission
+    # still owns identity, headroom, scheduling and actual available capacity.
+    for owner_id, options in state.get('options', {}).items():
+        selected = next(owner['candidateId'] for owner in original['loaders'] if owner['nodeId'] == owner_id)
+        for candidate_id in options:
+            if candidate_id == selected:
+                continue
+            inspected_plan = inspect({owner_id: candidate_id})
+            if inspected_plan is None:
+                return original
+            result, diagnostic = inspected_plan
+            if (result['canAutoRun'] and not result.get('requiresCachePreparation')
+                    and not result.get('requiresPreparation') and not result.get('schedule')
+                    and owner_id in diagnostic.get('completeWarmGpuOwnerIds', ())):
+                return result
+    if original['canAutoRun']:
+        return original
+
+    def score(result, diagnostic):
+        return (result['requirements']['systemRamBytes'], result['requirements']['vramBytes'],
+                diagnostic['coldCpuBytes'], diagnostic['coldGpuBytes'])
+
+    # Peak demands remain primary. Cold CPU/GPU sums break scheduled-owner
+    # plateaus without replacing the actual peak or granting memory credit.
+    for owner_id, options in state.get('options', {}).items():
+        best, best_state, best_choices = current, state, choices
+        selected = next(owner['candidateId'] for owner in current['loaders'] if owner['nodeId'] == owner_id)
+        for candidate_id in options:
+            if candidate_id == selected:
+                continue
+            inspected_plan = inspect({**choices, owner_id: candidate_id})
+            if inspected_plan is None:
+                return original
+            proposal = {**choices, owner_id: candidate_id}
+            result, diagnostic = inspected_plan
+            if result['canAutoRun']:
+                return result
+            if (diagnostic.get('resourceOnly') and diagnostic.get('mayExplore')
+                    and set(diagnostic['resourceIssueKeys']) <= {'systemRamBytes', 'vramBytes'}
+                    and score(result, diagnostic) < score(best, best_state)):
+                best, best_state, best_choices = result, diagnostic, proposal
+        current, state, choices = best, best_state, best_choices
+    return original

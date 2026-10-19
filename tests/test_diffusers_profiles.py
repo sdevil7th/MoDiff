@@ -157,6 +157,8 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "FluxKontextModularPipeline",
             "Flux2KleinModularPipeline",
             "Flux2KleinBaseModularPipeline",
+            "Flux3ModularPipeline",
+            "Flux3DistilledModularPipeline",
             "Flux2ModularPipeline",
             "Flux2Pipeline",
             "FluxKreaPipeline",
@@ -400,7 +402,9 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
         }
         for profile_id, profile in DIFFUSERS_EXECUTION_PROFILES.items():
             expected = (
-                ("bnb_4bit",)
+                ()
+                if profile_id in {"flux3-klein-base:modular", "flux3-klein:modular"}
+                else ("bnb_4bit",)
                 if profile_id in qwen_ids
                 else flux_modes
                 if profile.model_type.startswith("Flux") and profile.model_type not in {

@@ -46,11 +46,19 @@ custom/*
 
 data/*
 !data/model-artifact-catalog.json
+!data/diffusers-evaluation-runtime.v1.json
+!data/flux3-artifact-review.v1.json
+!data/flux3-catalog-gate-review.v1.json
+!data/modular-weight-formats.v1.json
+!data/prompt-enhancement-adapters.v1.json
+!data/prompt-enhancement-system-prompts.v1.json
 !data/cosmos-safety-artifacts.v1.json
 !data/cosmos-safety-runtime-artifacts.v1.json
 !data/cosmos3-super-t2i-files.v1.json
 !data/cosmos3-super-t2i-publisher-caption.v1.json
 !data/cosmos3-super-t2i-publisher-caption-provenance.v1.json
+!data/studio-execution-spec-compatibility.v1.json
+!data/image-stage-spec-compatibility.v1.json
 !data/image-prototyping-readiness.v1.json
 !data/huggingface-cluster-promotion-receipts.v1.json
 !data/huggingface-cluster-promotion-receipts.v2.json

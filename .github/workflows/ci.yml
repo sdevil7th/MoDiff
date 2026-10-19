@@ -54,7 +54,7 @@ jobs:
           GIT_CONFIG_VALUE_0: 'false'
         with:
           repository: huggingface/diffusers
-          ref: fbf49e7f35857f76bc57b177e26f12b03687c668
+          ref: 7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941
           path: .reviewed-upstream/diffusers
           persist-credentials: false
       - run: ${{ matrix.managed-python }} -m pytest -q

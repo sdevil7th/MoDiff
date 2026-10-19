@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
 
+from modiff.native_component_lora import REVIEWED_SUPER_IMAGE_COMPONENT, reviewed_flux3_component_declaration
 from modiff.operation_contracts import MODULAR_STAGE_OPERATIONS
 from modiff.diffusers_offload_modes import (
     OFFLOAD_MODE_GROUP_CPU,
@@ -14,6 +16,7 @@ from modiff.diffusers_offload_modes import (
     OFFLOAD_MODE_SEQUENTIAL_CPU,
 )
 from modiff.model_artifact_catalog import require_catalog_revision
+from modiff.modular_weight_formats import weight_format_download_selections
 from modiff.optional_runtimes import TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID
 
 
@@ -4980,17 +4983,14 @@ _COSMOS3_OMNI_TEXT_TO_IMAGE_GRAPH_ROLES = (
     ("prompt", "modules.ModularDiffusers.WorkflowCosmos3OmniTextEncode", -580, -80),
     ("denoise", "modules.ModularDiffusers.WorkflowCosmos3OmniDenoise", -160, -80),
     ("decode", "modules.ModularDiffusers.WorkflowCosmos3OmniDecode", 260, -80),
-    ("afterDecode", "modules.ModularDiffusers.WorkflowCosmos3OmniAfterDecode", 680, 240),
     ("preview", "modules.Image.Preview", 680, -160),
 )
 _COSMOS3_OMNI_TEXT_TO_IMAGE_GRAPH_EDGES = (
     ("models", "pipeline_components", "prompt", "pipeline_components"),
     ("models", "pipeline_components", "denoise", "pipeline_components"),
     ("models", "pipeline_components", "decode", "pipeline_components"),
-    ("models", "pipeline_components", "afterDecode", "pipeline_components"),
     ("prompt", "state_out", "denoise", "state_in"),
     ("denoise", "state_out", "decode", "state_in"),
-    ("decode", "state_out", "afterDecode", "state_in"),
     ("decode", "image", "preview", "image"),
 )
 _COSMOS3_OMNI_TEXT_TO_VIDEO_GRAPH_ROLES = (
@@ -5122,7 +5122,9 @@ _COSMOS3_OMNI_TEXT_COMMON_GRAPH_BINDINGS = (
     ("afterDecode", "workflow_id", "workflowId"),
     ("afterDecode", "block_path", "workflowAfterDecodeBlock"),
 )
-_COSMOS3_OMNI_TEXT_TO_IMAGE_GRAPH_BINDINGS = _COSMOS3_OMNI_TEXT_COMMON_GRAPH_BINDINGS + (
+_COSMOS3_OMNI_TEXT_TO_IMAGE_GRAPH_BINDINGS = tuple(
+    binding for binding in _COSMOS3_OMNI_TEXT_COMMON_GRAPH_BINDINGS if binding[0] != "afterDecode"
+) + (
     ("models", "reviewed_variant", "modelVariant"),
     ("prompt", "num_frames", "oneFrame"),
 )
@@ -5579,7 +5581,7 @@ _AUTO_FIELDS = (
     "layerwiseCasting",
     "channelsLast",
 )
-_BINDING_SOURCES = frozenset({"executionProfileId"}) | frozenset(
+_BINDING_SOURCES = frozenset({"executionProfileId", "weightFormat"}) | frozenset(
     item[2]
     for item in (
         *_GRAPH_BINDINGS,
@@ -5690,6 +5692,7 @@ _MODULAR_EDIT_PLUS_PROFILE = {
     "loader_action": "ModelsLoader",
     "execution_path": "modular-diffusers",
     "pipeline_class": "QwenImageEditPlusModularPipeline",
+    "lora_loadable_components": ("transformer",),
     "default_repo": "Qwen/Qwen-Image-Edit-2511",
     "fallback_repo": None,
     "quantizable_components": ("transformer", "text_encoder"),
@@ -5715,6 +5718,7 @@ _MODULAR_QWEN_EDIT_PROFILE = {
     "loader_action": "ModelsLoader",
     "execution_path": "modular-diffusers",
     "pipeline_class": "QwenImageEditModularPipeline",
+    "lora_loadable_components": ("transformer",),
     "default_repo": "Qwen/Qwen-Image-Edit",
     "fallback_repo": None,
     "quantizable_components": ("transformer", "text_encoder"),
@@ -5789,6 +5793,7 @@ _MODULAR_SDXL_PROFILE = {
     "loader_action": "ModelsLoader",
     "execution_path": "modular-diffusers",
     "pipeline_class": "StableDiffusionXLModularPipeline",
+    "lora_loadable_components": ("unet", "text_encoder", "text_encoder_2"),
     "default_repo": SDXL_BASE_REPO,
     "fallback_repo": None,
     "quantizable_components": ("unet", "text_encoder", "text_encoder_2"),
@@ -5813,6 +5818,7 @@ _MODULAR_FLUX_PROFILE = {
     "loader_action": "ModelsLoader",
     "execution_path": "modular-diffusers",
     "pipeline_class": "FluxModularPipeline",
+    "lora_loadable_components": ("transformer", "text_encoder"),
     "default_repo": FLUX_DEV_REPO,
     "fallback_repo": None,
     "quantizable_components": ("transformer", "text_encoder_2"),
@@ -5837,6 +5843,7 @@ _MODULAR_FLUX_KONTEXT_PROFILE = {
     "loader_action": "ModelsLoader",
     "execution_path": "modular-diffusers",
     "pipeline_class": "FluxKontextModularPipeline",
+    "lora_loadable_components": ("transformer", "text_encoder"),
     "default_repo": FLUX_KONTEXT_REPO,
     "fallback_repo": None,
     "quantizable_components": ("transformer", "text_encoder_2"),
@@ -5861,6 +5868,7 @@ _MODULAR_FLUX2_KLEIN_PROFILE = {
     "loader_action": "ModelsLoader",
     "execution_path": "modular-diffusers",
     "pipeline_class": "Flux2KleinModularPipeline",
+    "lora_loadable_components": ("transformer",),
     "default_repo": FLUX2_KLEIN_REPO,
     "fallback_repo": None,
     "quantizable_components": ("transformer", "text_encoder"),
@@ -5885,6 +5893,7 @@ _MODULAR_FLUX2_KLEIN_BASE_PROFILE = {
     "loader_action": "ModelsLoader",
     "execution_path": "modular-diffusers",
     "pipeline_class": "Flux2KleinBaseModularPipeline",
+    "lora_loadable_components": ("transformer",),
     "default_repo": FLUX2_KLEIN_BASE_REPO,
     "fallback_repo": None,
     "quantizable_components": ("transformer", "text_encoder"),
@@ -5909,6 +5918,7 @@ _MODULAR_Z_IMAGE_PROFILE = {
     "loader_action": "ModelsLoader",
     "execution_path": "modular-diffusers",
     "pipeline_class": "ZImageModularPipeline",
+    "lora_loadable_components": ("transformer",),
     "default_repo": Z_IMAGE_REPO,
     "fallback_repo": None,
     "quantizable_components": ("transformer", "text_encoder"),
@@ -6330,6 +6340,7 @@ _MODULAR_LAYERED_PROFILE = {
     "loader_action": "ModelsLoader",
     "execution_path": "modular-diffusers",
     "pipeline_class": "QwenImageLayeredModularPipeline",
+    "lora_loadable_components": ("transformer",),
     "default_repo": "Qwen/Qwen-Image-Layered",
     "fallback_repo": None,
     "quantizable_components": ("transformer", "text_encoder"),
@@ -6361,6 +6372,7 @@ _MODULAR_CONTROL_PROFILE = {
     "loader_action": "ModelsLoader",
     "execution_path": "modular-diffusers",
     "pipeline_class": "QwenImageModularPipeline",
+    "lora_loadable_components": ("transformer",),
     "default_repo": "Qwen/Qwen-Image-2512",
     "fallback_repo": None,
     "quantizable_components": ("transformer", "text_encoder"),
@@ -6603,6 +6615,7 @@ _ANIMA_MODULAR_PROFILE = {
     "loader_action": "ModelsLoader",
     "execution_path": "modular-diffusers",
     "pipeline_class": "AnimaModularPipeline",
+    "lora_loadable_components": ("transformer", "text_conditioner"),
     "default_repo": ANIMA_REPO,
     "fallback_repo": None,
     "quantizable_components": ("transformer", "text_encoder"),
@@ -7413,10 +7426,10 @@ _COSMOS3_NANO_STUDIO_EXECUTION_SPEC_DEFINITIONS = {
         "roles": roles,
         "edges": edges,
         "bindings": bindings,
-        # The official workflow always runs ``after_decode``. Non-action
-        # routes return ``action=None`` from that side-output block, so it is
-        # an intentional terminal beside the user-facing media sink.
-        "auxiliaryTerminalRoles": ("afterDecode",),
+        # Image decoding already applies mandatory safety. The action-only
+        # side output is omitted from fresh T2I graphs; every other declaration
+        # and the historical executable AfterDecode node remain unchanged.
+        "auxiliaryTerminalRoles": () if mode == "text_to_image" else ("afterDecode",),
     }
     for mode, (spec_id, roles, edges, bindings) in _COSMOS3_NANO_WORKFLOW_GRAPHS.items()
 }
@@ -7426,6 +7439,7 @@ _COSMOS3_NANO_STUDIO_EXECUTION_SPEC_DEFINITIONS = {
 _COSMOS3_SUPER_T2I_MODULAR_PROFILE = {
     **deepcopy(_COSMOS3_NANO_MODULAR_PROFILE),
     "id": "cosmos3-super-text-to-image:official-modular-workflow",
+    "component_lora_declaration": REVIEWED_SUPER_IMAGE_COMPONENT,
     "modes": ("text_to_image",),
     "default_repo": COSMOS3_SUPER_T2I_REPO,
 }
@@ -14677,6 +14691,7 @@ _ERNIE_IMAGE_TURBO_MODULAR_PROFILE = {
     "loader_action": "ModelsLoader",
     "execution_path": "modular-diffusers",
     "pipeline_class": "ErnieImageModularPipeline",
+    "lora_loadable_components": ("transformer",),
     "supported_offload_modes": (
         OFFLOAD_MODE_NONE,
         OFFLOAD_MODE_MODEL_CPU,
@@ -16118,6 +16133,73 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS["flux-redux:multi-image-reference-edit:v1"] = 
     "edges": _EDIT_GRAPH_EDGES,
     "bindings": _REFERENCE_EDIT_GRAPH_BINDINGS,
 }
+
+def _with_declared_image_stages(definition, *, encode_fields, shared_fields):
+    result = dict(definition)
+    roles = definition['roles']
+    consumers = [role for role, key, _x, _y in roles if key.startswith('modules.DiffusersImage.')
+        and key.rsplit('.', 1)[-1] in {'Edit', 'Inpaint', 'ControlGenerate'}]
+    if len(consumers) != 1:
+        raise ValueError('One actual declared image consumer is required for a stage starter.')
+    consumer = consumers[0]
+    expanded = []
+    for role, key, x, y in roles:
+        if role == consumer:
+            expanded.extend((('imageEncode', 'modules.DiffusersImage.EncodeInputs', x, y),
+                ('denoise', 'modules.DiffusersImage.Denoise', x + 370, y),
+                ('decode', 'modules.DiffusersImage.DecodeLatents', x + 740, y)))
+        else:
+            expanded.append((role, key, x, y))
+    edges = []
+    for source, output, target, field in definition['edges']:
+        if target == consumer and field == 'pipeline':
+            edges.extend((source, output, stage, field) for stage in ('imageEncode', 'denoise', 'decode'))
+        elif target == consumer:
+            destination = 'imageEncode' if field in encode_fields else 'denoise'
+            edges.append((source, output, destination, field))
+            if field in shared_fields:
+                edges.append((source, output, 'denoise' if destination == 'imageEncode' else 'imageEncode', field))
+        elif source == consumer:
+            edges.append(('decode', output, target, field))
+        else:
+            edges.append((source, output, target, field))
+    edges.extend((('imageEncode', 'encoded_inputs', 'denoise', 'encoded_inputs'),
+        ('denoise', 'latents_out', 'decode', 'latents'),
+        ('denoise', 'latent_binding', 'decode', 'latent_binding'),
+        ('denoise', 'width_out', 'decode', 'width'),
+        ('denoise', 'height_out', 'decode', 'height')))
+    bindings = []
+    for role, field, parameter in definition['bindings']:
+        if role != consumer:
+            bindings.append((role, field, parameter))
+            continue
+        destination = ('decode' if field == 'output_type' else
+            'imageEncode' if field in encode_fields else 'denoise')
+        bindings.append((destination, field, parameter))
+        if field in shared_fields:
+            bindings.append(('denoise' if destination == 'imageEncode' else 'imageEncode', field, parameter))
+    result.update(roles=tuple(expanded), edges=tuple(edges), bindings=tuple(bindings))
+    return result
+
+
+_PRIOR_IMAGE_STAGE_INPUTS = frozenset({'image', 'prompt', 'negative_prompt', 'reference_strength',
+    'prompt_2', 'prompt_embeds', 'pooled_prompt_embeds', 'prompt_embeds_scale', 'pooled_prompt_embeds_scale'})
+_CONDITIONED_IMAGE_STAGE_INPUTS = frozenset({'image', 'mask_image', 'control_image', 'prompt',
+    'negative_prompt', 'prompt_2', 'prompt_embeds', 'pooled_prompt_embeds', 'num_images_per_prompt',
+    'width', 'height', 'max_sequence_length', 'joint_attention_kwargs', 'reference_strength'})
+for _stage_spec_id, _stage_encode_fields, _stage_shared_fields in (
+    ('flux-redux:edit-image:v1', _PRIOR_IMAGE_STAGE_INPUTS, frozenset()),
+    ('flux-redux:multi-image-reference-edit:v1', _PRIOR_IMAGE_STAGE_INPUTS, frozenset()),
+    ('flux-fill:inpaint:v1', _CONDITIONED_IMAGE_STAGE_INPUTS, frozenset({'width', 'height', 'max_sequence_length', 'joint_attention_kwargs'})),
+    ('flux-fill:outpaint:v1', _CONDITIONED_IMAGE_STAGE_INPUTS, frozenset({'width', 'height', 'max_sequence_length', 'joint_attention_kwargs'})),
+    ('flux-canny:control-image:v1', _CONDITIONED_IMAGE_STAGE_INPUTS | {'seed'}, frozenset({'width', 'height', 'seed', 'max_sequence_length', 'joint_attention_kwargs'})),
+    ('flux-depth:control-image:v1', _CONDITIONED_IMAGE_STAGE_INPUTS | {'seed'}, frozenset({'width', 'height', 'seed', 'max_sequence_length', 'joint_attention_kwargs'})),
+):
+    STUDIO_EXECUTION_SPEC_DEFINITIONS[_stage_spec_id] = _with_declared_image_stages(
+        STUDIO_EXECUTION_SPEC_DEFINITIONS[_stage_spec_id],
+        encode_fields=_stage_encode_fields, shared_fields=_stage_shared_fields)
+
+
 for _flux_combined_spec_id, _flux_combined_definition in _FLUX_COMBINED_CONTROL_DEFINITIONS.items():
     _flux_control_family = _flux_combined_spec_id.split(":", 1)[0]
     _flux_control_base = STUDIO_EXECUTION_SPEC_DEFINITIONS[f"{_flux_control_family}:control-image:v1"]
@@ -18158,6 +18240,89 @@ for _kv_mode in ("text_to_image", "edit_image", "multi_image_reference_edit"):
     STUDIO_EXECUTION_SPEC_DEFINITIONS[f"flux2-klein-kv:{_kv_mode.replace('_', '-')}:v1"] = _kv_definition
 
 
+# Future-source candidate only. These profiles remain non-public until an
+# approved installed release and pretrained execution are independently reviewed.
+_FLUX3_SOURCE_REVISION = "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941"
+_FLUX3_DIFFUSERS_FILES = (
+    "LICENSE.md", "NOTICE.md", "modular_model_index.json", "text_encoder/LICENSE",
+    "text_encoder/chat_template.json", "text_encoder/config.json", "text_encoder/generation_config.json",
+    "text_encoder/merges.txt", "text_encoder/model-00001-of-00002.safetensors",
+    "text_encoder/model-00002-of-00002.safetensors", "text_encoder/model.safetensors.index.json",
+    "text_encoder/preprocessor_config.json", "text_encoder/tokenizer.json",
+    "text_encoder/tokenizer_config.json", "text_encoder/video_preprocessor_config.json", "text_encoder/vocab.json",
+    "transformer/config.json", "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+    "transformer/diffusion_pytorch_model.safetensors.index.json",
+    "vae/config.json", "vae/diffusion_pytorch_model.safetensors",
+)
+_FLUX3_CANDIDATE_VARIANTS = (
+    ("flux3-klein-base:modular", "Flux3ModularPipeline", "FLUX 3 Image Klein Base",
+     "black-forest-labs/flux-3-image-klein-base", "1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4", 50, True),
+    ("flux3-klein:modular", "Flux3DistilledModularPipeline", "FLUX 3 Image Klein",
+     "black-forest-labs/flux-3-image-klein", "8454017f9ebaada30c998fccd9f67a80c7580f68", 16, False),
+)
+for _identity, _pipeline, _label, _repository, _revision, _steps, _cfg in _FLUX3_CANDIDATE_VARIANTS:
+    _profile = {
+        "id": _identity, "model_type": _pipeline, "pipeline_class": _pipeline,
+        "modes": ("text_to_image", "edit_image"), "loader_module": "modules.ModularDiffusers",
+        "loader_action": "ModelsLoader", "execution_path": "modular-diffusers",
+        "default_repo": _repository, "fallback_repo": None, "compatible_repos": (),
+        "quantizable_components": (), "default_quantized_components": (),
+        "supported_offload_modes": (OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU,
+                                    OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK),
+        "retry_offload_modes": (), "max_low_memory_side": None, "max_low_memory_steps": None,
+        "live_proof": False, "public": False,
+        "component_lora_declaration": reviewed_flux3_component_declaration(_pipeline),
+        "lora_loadable_components": ("transformer",),
+    }
+    _capability = {
+        "modelType": _pipeline, "label": _label, "displayName": _label, "family": "FLUX Image",
+        "defaultRepo": _repository, "defaultDtype": "bfloat16",
+        "defaultSize": {"width": 1024, "height": 1024, "aspectRatio": "1:1"},
+        "recommendedSteps": _steps, "recommendedGuidance": 3.5 if _cfg else 1.0,
+        "supportsGuidance": _cfg, "guidanceLabel": "Classifier-free guidance",
+        "supportsNegativePrompt": _cfg, "supportsImageInput": True, "supportsMask": False,
+        "supportsMultiImage": True, "supportsControlImage": False, "supportsLayers": False,
+        "supportsLora": False, "outputKind": "image", "modes": list(_profile["modes"]),
+        "modeRequirements": {"edit_image": {"requiredImages": ["referenceImages"]}},
+        "executionStatus": "contract_only", "supportTier": "experimental",
+        "qualificationStatus": "contract_only", "qualifiedModes": [],
+        "autoEligible": False, "templateEligible": False, "galleryEligible": False, "liveProof": False,
+        "revisionCandidates": [_revision],
+        "downloadFiles": list(_FLUX3_DIFFUSERS_FILES),
+        "weightFormatSelections": weight_format_download_selections(_pipeline, _repository, _revision),
+        "notes": ["Source-audit candidate only; the installed reviewed release has no FLUX 3 exports.",
+                  "Immutable artifact metadata is reviewed; pretrained weights and runtime qualification remain pending."],
+    }
+    for _task in ("text_to_image", "edit_image"):
+        _roles = _MODULAR_TEXT_TO_IMAGE_GRAPH_ROLES
+        _edges = _MODULAR_FLUX_TEXT_TO_IMAGE_GRAPH_EDGES
+        _bindings = tuple(binding for binding in _MODULAR_TEXT_TO_IMAGE_GRAPH_BINDINGS
+                          if binding != ("denoise", "guidance_scale", "guidanceScale")
+                          and (_cfg or binding != ("prompt", "negative_prompt", "negativePrompt")))
+        _bindings += (("prompt", "max_sequence_length", "maxSequenceLength"),
+                      ("models", "weight_format", "weightFormat"))
+        if _cfg:
+            _roles += (("guider", "modules.ModularDiffusers.Guider", -360, 160),)
+            _edges += (("guider", "guider_out", "denoise", "guider"),)
+            _bindings += (("guider", "guider", "classifierFreeGuidance"),
+                          ("guider", "model_type", "pipelineClass"),
+                          ("guider", "guidance_scale", "guidanceScale"))
+        if _task == "edit_image":
+            _roles += (("loadImage", "modules.Image.Load", -720, 320),
+                       ("imageEncode", "modules.ModularDiffusers.ImageEncode", -360, 320))
+            _edges += (("models", "vae_out", "imageEncode", "vae"),
+                       ("loadImage", "image", "imageEncode", "image"),
+                       ("imageEncode", "image_cond_latents", "denoise", "image_cond_latents"),
+                       ("imageEncode", "reference_binding", "prompt", "reference_binding"),
+                       ("imageEncode", "reference_binding", "denoise", "reference_binding"))
+            _bindings += (("loadImage", "file", "referenceImages"), ("loadImage", "alpha_channel", "alphaMode"))
+        STUDIO_EXECUTION_SPEC_DEFINITIONS[f"{_identity}:{_task.replace('_', '-')}:v1"] = {
+            "modelType": _pipeline, "mode": _task, "profile": _profile,
+            "roles": _roles, "edges": _edges, "bindings": _bindings, "capability": _capability,
+        }
+
+
 for _definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values():
     if _definition["profile"]["id"] in _EXPERT_IMAGE_QUANTIZATION_PROFILE_IDS:
         _definition["profile"]["expert_quantization_modes"] = _EXPERT_IMAGE_QUANTIZATION_MODES
@@ -18258,6 +18423,58 @@ def studio_execution_profile_definitions() -> dict[str, dict[str, Any]]:
     )
     legacy_ernie["public"] = False
     profiles[legacy_ernie["id"]] = legacy_ernie
+    # Permission belongs to each reviewed native task/artifact, not its shared
+    # class or alias derivation. FP8 and other FLUX recipes remain excluded.
+    for identity, repository, revision, tasks in (
+        ("flux-dev:modular", FLUX_DEV_REPO, "3de623fc3c33e44ffbe2bad470d0f45bccf2eb21", ("text_to_image",)),
+        ("flux-schnell:modular", FLUX_SCHNELL_REPO, "741f7c3ce8b383c54771c7003378a50191e9efe9", ("text_to_image",)),
+        ("flux-krea:modular", FLUX_KREA_REPO, "8162a9c7b05a641be098422bf2fcf335615c2f28", ("text_to_image",)),
+        ("flux-kontext:modular", FLUX_KONTEXT_REPO, "24e9dedc4ef646698dc8eb4e18ae2cec3c9fea0d", ("edit_image",)),
+        ("flux2-klein:modular", FLUX2_KLEIN_REPO, "e7b7dc27f91deacad38e78976d1f2b499d76a294", ("text_to_image", "edit_image")),
+    ):
+        profiles[identity]["adapter_authoring"] = {
+            "schema_version": 1,
+            "media_kind": "image",
+            "adapter_node_key": "modules.ModularDiffusers.Lora",
+            "tasks": tasks,
+            "max_owned_adapters": 32,
+            "repository_revisions": ((repository, revision),),
+        }
+    # The ordinary audio loader activates one named adapter, not a row blend.
+    # Permission is exact task/artifact authoring, separate from fit and Auto.
+    profiles["ace-step-audio:direct"]["adapter_authoring"] = {
+        "schema_version": 1,
+        "media_kind": "audio",
+        "adapter_node_key": "modules.DiffusersAudio.LoadAdapter",
+        "tasks": ("text_to_audio", "audio_variation", "audio_continuation", "audio_repaint"),
+        "max_owned_adapters": 1,
+        "repository_revisions": (
+            (ACE_STEP_REPO, "200ba991ae448051e14b0183157e35c2d27c9fb0"),
+            (ACE_STEP_LORA_BASE_REPO, "be23effe449c5957947f3020fd63bee23c64abe4"),
+        ),
+    }
+    # Conditional authoring is distinct from model fit, readiness and Auto.
+    profiles["cosmos3-super-text-to-image:official-modular-workflow"]["adapter_authoring"] = {
+        "schema_version": 1,
+        "media_kind": "image",
+        "adapter_node_key": "modules.ModularDiffusers.Lora",
+        "tasks": ("text_to_image",),
+        "max_owned_adapters": 32,
+        "repository_revisions": (("nvidia/Cosmos3-Super-Text2Image", "daf3d374804be4c512c2135568a7cb95d4341d79"),),
+        "required_controls": (("offload_mode", "none"), ("auto_offload", False),
+            ("weight_loading_mode", "cpu"), ("quant_config", None), ("unet", None),
+            ("vae", None), ("controlnet", None), ("trust_remote_code", False)),
+    }
+    profiles["flux-redux:direct"]["adapter_authoring"] = {
+        "schema_version": 1,
+        "media_kind": "image",
+        "adapter_node_key": "modules.DiffusersImage.LoadAdapter",
+        "tasks": ("edit_image", "multi_image_reference_edit"),
+        "max_owned_adapters": 32,
+        "repository_revisions": (("black-forest-labs/FLUX.1-Redux-dev", "c95859fbf7703ca4d6824b4da4407d7cd0434f81"),),
+        "required_controls": (("offload_mode", "none"), ("auto_offload", False),
+            ("device_map", "none"), ("quantization_mode", "none"), ("prequantized_transformer", None)),
+    }
     return profiles
 
 
@@ -18296,6 +18513,20 @@ def studio_expert_resource_requirements(
 
 
 _REVIEWED_REPOSITORY_DOWNLOAD_FILES = {
+    # Acquisition metadata only: no published PUP execution/profile grant.
+    "black-forest-labs/flux-3-image-klein-pup": (
+        "chat_template.jinja",
+        "config.json",
+        "generation_config.json",
+        "model.safetensors",
+        "preprocessor_config.json",
+        "processor_config.json",
+        "system_prompts.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+    ),
+    **{repository: _FLUX3_DIFFUSERS_FILES
+       for _profile_id, _class, _name, repository, _pin, _count, _guidance in _FLUX3_CANDIDATE_VARIANTS},
     COSMOS3_SUPER_T2I_REPO: COSMOS3_SUPER_T2I_DIFFUSERS_FILES,
     "Qwen/Qwen-Image": QWEN_IMAGE_ORIGINAL_DIFFUSERS_FILES,
     "Qwen/Qwen-Image-2512": QWEN_IMAGE_2512_DIFFUSERS_FILES,
@@ -18337,13 +18568,382 @@ def studio_capability_definitions() -> dict[str, dict[str, Any]]:
     }
 
 
-def studio_execution_spec_for_pair(model_type: str, mode: str) -> dict[str, Any] | None:
+def _historical_studio_execution_spec(spec_id: str, content_hash: str) -> dict[str, Any] | None:
+    # Exact source-bound whole-pipeline receipts remain executable; this does
+    # not migrate saved nodes or grant any new stage/placement permission.
+    image_stage_records = {('flux-redux:edit-image:v1', 'studio-spec-v1-36b6aa16'): ('FluxReduxPipeline', 'edit_image'), ('flux-redux:multi-image-reference-edit:v1', 'studio-spec-v1-9fc6eba6'): ('FluxReduxPipeline', 'multi_image_reference_edit'), ('flux-fill:inpaint:v1', 'studio-spec-v1-ba8c8dd1'): ('FluxFillPipeline', 'inpaint'), ('flux-fill:outpaint:v1', 'studio-spec-v1-5c0d7413'): ('FluxFillPipeline', 'outpaint'), ('flux-canny:control-image:v1', 'studio-spec-v1-82045f56'): ('FluxCannyPipeline', 'control_image'), ('flux-depth:control-image:v1', 'studio-spec-v1-2d8b881e'): ('FluxDepthPipeline', 'control_image')}
+    identity = image_stage_records.get((spec_id, content_hash))
+    if identity is not None:
+        path = Path(__file__).resolve().parents[1] / 'data/image-stage-spec-compatibility.v1.json'
+        with path.open('rb') as handle:
+            raw = handle.read(256 * 1024 + 1)
+        if len(raw) > 256 * 1024 or hashlib.sha256(raw).hexdigest() != 'd37e667983ec8ec9d956f842e56e93635efa2b87c2e034588222c5e58775d5ab':
+            raise RuntimeError('The historical image stage specification bytes changed.')
+        value = json.loads(raw)
+        records = value.get('specifications') if value.get('schemaVersion') == 1 else None
+        if (value.get('sourceSha256') != '4f8c3a466bd916e9eef855b56cda9f909596d4e33071d5184ca5a422de8f12eb' or type(records) is not list
+                or len(records) != 6):
+            raise RuntimeError('The historical image stage specification contract is invalid.')
+        matches = [row.get('specification') for row in records if type(row) is dict
+            and type(row.get('specification')) is dict
+            and (row['specification'].get('id'), row['specification'].get('contentHash')) == (spec_id, content_hash)]
+        if len(matches) != 1:
+            raise RuntimeError('The historical image stage specification identity changed.')
+        spec = matches[0]
+        if ((spec.get('modelType'), spec.get('mode')) != identity
+                or 'studio-spec-v1-' + _hash_string(_stable_json(
+                    {key: item for key, item in spec.items() if key != 'contentHash'})) != content_hash):
+            raise RuntimeError('The historical image stage specification contract changed.')
+        return deepcopy(spec)
+    # This one original receipt remains valid for saved managed image graphs.
+    # Do not accept unknown hashes or reconstruct it from changing defaults.
+    if (spec_id, content_hash) != (
+        "cosmos3-nano:modular-text-to-image:v1", "studio-spec-v1-91ed105d",
+    ):
+        return None
+    path = Path(__file__).resolve().parents[1] / "data/studio-execution-spec-compatibility.v1.json"
+    value = json.loads(path.read_text(encoding="utf-8"))
+    records = value.get("specifications") if value.get("schemaVersion") == 1 else None
+    if not isinstance(records, list) or len(records) != 1:
+        raise RuntimeError("The historical Studio execution specification contract is invalid.")
+    record = records[0]
+    spec = record.get("specification")
+    if (record.get("sourceCommit") != "661efe87a40c122b0692e32dde7e8bd55ed98ceb"
+            or not isinstance(spec, dict) or spec.get("id") != spec_id
+            or spec.get("contentHash") != content_hash
+            or spec.get("modelType") != "Cosmos3OmniModularPipeline"
+            or spec.get("mode") != "text_to_image"
+            or "studio-spec-v1-" + _hash_string(_stable_json(
+                {key: item for key, item in spec.items() if key != "contentHash"}
+            )) != content_hash):
+        raise RuntimeError("The historical Studio execution specification contract changed.")
+    return deepcopy(spec)
+
+
+def studio_execution_spec_for_pair(
+    model_type: str, mode: str, *, content_hash: str | None = None,
+) -> dict[str, Any] | None:
     matches = [
         _public_spec(spec_id, definition)
         for spec_id, definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.items()
         if definition["modelType"] == model_type and definition["mode"] == mode
     ]
-    return matches[0] if len(matches) == 1 else None
+    if len(matches) != 1:
+        return None
+    spec = matches[0]
+    if content_hash is None or content_hash == spec["contentHash"]:
+        return spec
+    historical = _historical_studio_execution_spec(spec["id"], content_hash)
+    return historical if historical and (historical["modelType"], historical["mode"]) == (model_type, mode) else None
+
+
+_RETAINED_COMPONENT_INITIAL_VALUES = (
+    ("models", "attention_backend", "auto"),
+    ("models", "vae_slicing", True),
+    ("models", "vae_tiling", True),
+)
+_RETAINED_MASKED_INITIAL_VALUES = _RETAINED_COMPONENT_INITIAL_VALUES + (
+    ("models", "inpaint_compatibility", "whole_v1"),
+    ("imageEncode", "inpaint_compatibility", "whole_v1"),
+)
+
+# These are fresh authoring choices over existing execution specifications,
+# not model defaults, runtime profiles, or another graph representation. The
+# exact pipeline/task/profile is required before any literal is returned. In
+# particular the developer Qwen inpaint starter stays on its native policy.
+_OPERATION_AUTHORING_RECIPES = {
+    "retained-z-image-text-to-image:v1": {
+        "specId": "z-image:modular-text-to-image:v1", "task": "text_to_image",
+        "profileId": "z-image:modular",
+        "initialValues": _RETAINED_COMPONENT_INITIAL_VALUES + (
+            ("guider", "enabled", True), ("guider", "use_original_formulation", True),
+        ),
+    },
+    "retained-qwen-image-text-to-image:v1": {
+        "specId": "qwen-image-2512:modular-text-to-image:v1", "task": "text_to_image",
+        "profileId": "qwen-image:modular", "initialValues": _RETAINED_COMPONENT_INITIAL_VALUES,
+    },
+    "retained-qwen-edit-inpaint:v1": {
+        "specId": "qwen-image-edit:modular-inpainting:v1", "task": "inpaint",
+        "profileId": "qwen-edit:modular", "initialValues": _RETAINED_MASKED_INITIAL_VALUES,
+    },
+    "retained-qwen-edit-outpaint:v1": {
+        "specId": "qwen-image-edit:modular-inpainting:v1", "task": "inpaint",
+        "profileId": "qwen-edit:modular", "initialValues": _RETAINED_MASKED_INITIAL_VALUES,
+    },
+}
+_NATIVE_IMAGE_AUTHORING_TASKS = frozenset({
+    "text_to_image", "image_to_image", "edit_image", "multi_image_reference_edit",
+    "inpaint", "outpaint", "control_image", "control_edit_image", "control_inpaint",
+    "layer_decomposition", "unconditional_image",
+})
+_AUTHORING_IDENTITY_BINDING_SOURCES = {
+    "repo_id": {"artifact"}, "model_id": {"artifact"}, "revision": {"defaultRevision"},
+    "pipeline_class": {"pipelineClass"}, "execution_profile_id": {"executionProfileId"},
+    "model_type": {"pipelineClass", "modelVariant"},
+    "variant": {"modelVariant"}, "reviewed_variant": {"modelVariant"},
+    "workflow_id": {"defaultWorkflow", "workflowId"}, "trust_remote_code": {"false"},
+    "block_path": {source for source in _BINDING_SOURCES
+                   if source.startswith("workflow") and source.endswith("Block")},
+}
+_AUTHORING_DEPENDENCY_IDENTITY_SOURCES = {
+    "model_type": {"kind", "controlnetKind"}, "model_id": {"repo", "controlnetRepo"},
+    "variant": {"empty", "fp16", "controlnetWeightVariant"},
+    "revision": {"revision", "controlnetRevision"},
+}
+# These scalar sources are part of the existing semantic form contract. Media
+# pickers and other transport values keep their reviewed base-spec bindings;
+# this does not reinterpret a file path or instantiate a library value.
+_AUTHORING_SCALAR_SOURCE_TYPES = {
+    **dict.fromkeys(("prompt", "negativePrompt", "outpaintFillColor", "device", "dtype",
+                     "offloadMode", "attentionBackend", "inpaintCompatibility", "outputType"), "string"),
+    **dict.fromkeys(("guidanceScale", "guidanceScale2", "strength", "fps", "eta"), "float"),
+    **dict.fromkeys(("steps", "width", "height", "batchSize", "seed", "maxSequenceLength",
+                     "oneFrame", "numFrames", "paddingMaskCrop", "outpaintLeft", "outpaintRight",
+                     "outpaintTop", "outpaintBottom", "outpaintOverlap", "outpaintFeather"), "int"),
+    **dict.fromkeys(("true", "false", "autoOffload", "vaeSlicing", "vaeTiling"), "bool"),
+}
+for _authoring_family, _authoring_spec, _authoring_task, _authoring_profile, _authoring_enabled in (
+    ("flux-schnell-text-to-image", "flux-dev:modular-text-to-image:v1", "text_to_image", "flux-schnell:modular", False),
+    ("flux-dev-text-to-image", "flux-dev:modular-text-to-image:v1", "text_to_image", "flux-dev:modular", True),
+    ("flux-krea-text-to-image", "flux-dev:modular-text-to-image:v1", "text_to_image", "flux-krea:modular", True),
+    ("flux-kontext-edit", "flux-kontext:modular-edit-image:v1", "edit_image", "flux-kontext:modular", True),
+    ("flux-kontext-multi-reference", "flux-kontext:modular-edit-image:v1", "multi_image_reference_edit", "flux-kontext:modular", True),
+):
+    _OPERATION_AUTHORING_RECIPES[f"retained-{_authoring_family}:v1"] = {
+        "specId": _authoring_spec, "task": _authoring_task, "profileId": _authoring_profile,
+        "initialValues": _RETAINED_COMPONENT_INITIAL_VALUES + (
+            ("guider", "enabled", _authoring_enabled),
+            ("guider", "use_original_formulation", False),
+            ("denoise", "guidance_scale", 3.5 if _authoring_enabled else 0),
+        ),
+    }
+for _authoring_mode, _authoring_task in (
+    ("text-to-image", "text_to_image"), ("edit", "edit_image"),
+    ("multi-reference", "multi_image_reference_edit"),
+):
+    _OPERATION_AUTHORING_RECIPES[f"retained-flux2-klein-{_authoring_mode}:v1"] = {
+        "specId": "flux2-klein:modular-text-to-image:v1" if _authoring_task == "text_to_image"
+                  else "flux2-klein:modular-edit-image:v1",
+        "task": _authoring_task, "profileId": "flux2-klein:modular",
+        "initialValues": _RETAINED_COMPONENT_INITIAL_VALUES,
+    }
+
+
+# Private source-audit authoring selections, never public discovery/profile grants.
+from modiff.ancillary_execution import PRIVATE_PARENTS as _ANCILLARY_PRIVATE_PARENTS
+for _ancillary_id, _ancillary_parent in _ANCILLARY_PRIVATE_PARENTS.items():
+    _OPERATION_AUTHORING_RECIPES[_ancillary_id] = {
+        "specId": _ancillary_parent["specId"], "task": _ancillary_parent["task"],
+        "profileId": _ancillary_parent["profileId"], "initialValues": (), "ancillaryPreview": True,
+    }
+
+
+def resolve_studio_operation_authoring_recipe(
+    modules: dict[str, Any], selection: dict[str, Any], starter: dict[str, Any],
+) -> dict[str, Any]:
+    """Return reviewed literals and ordinary form bindings for a fresh graph.
+
+    All execution stages still come from the resolved operation starter. Media
+    utilities use the same registry as an ordinary Studio execution spec. No
+    package/model loading, expression evaluation, or saved-graph migration is
+    performed here. The response is hash-covered data, not execution authority.
+    """
+    identity = selection.get("authoringRecipeId")
+    if not isinstance(identity, str) or not identity or identity != identity.strip() or len(identity) > 128:
+        raise ValueError("Select an exact reviewed authoring recipe.")
+    definition = _OPERATION_AUTHORING_RECIPES.get(identity)
+    if identity == "generic-native-image:v1":
+        # Fresh image templates share this projection. Resolve only existing
+        # exact specifications; do not guess a route from a class-name family.
+        aliases = {
+            "modular_text_to_image": "text_to_image", "modular_image_to_image": "image_to_image",
+            "modular_inpainting": "inpaint", "modular_control_image_to_image": "control_edit_image",
+            "modular_control_inpainting": "control_inpaint",
+        }
+        candidates = [
+            (spec_id, candidate)
+            for spec_id, candidate in STUDIO_EXECUTION_SPEC_DEFINITIONS.items()
+            if candidate["profile"]["pipeline_class"] == selection.get("pipelineClass")
+            and candidate["profile"]["execution_path"] == "modular-diffusers"
+            and aliases.get(candidate["mode"], candidate["mode"]) == selection.get("task")
+            and selection.get("task") in _NATIVE_IMAGE_AUTHORING_TASKS
+        ]
+        exact_profiles = [(spec_id, candidate) for spec_id, candidate in candidates
+                          if candidate["profile"]["id"] == selection.get("executionProfileId")]
+        if exact_profiles:
+            candidates = exact_profiles
+        if len(candidates) != 1:
+            raise ValueError("The generic image authoring recipe requires one exact native image specification.")
+        from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+
+        profile = DIFFUSERS_EXECUTION_PROFILES.get(selection.get("executionProfileId"))
+        candidate = candidates[0][1]
+        if (profile is None or not profile.public or profile.execution_path != "modular-diffusers"
+                or profile.backend_path != f"{candidate['profile']['loader_module']}.{candidate['profile']['loader_action']}"):
+            raise ValueError("The generic image authoring recipe requires its reviewed native execution profile.")
+        definition = {"specId": candidates[0][0], "task": selection["task"],
+                      "profileId": profile.id, "initialValues": ()}
+    if definition is None:
+        raise ValueError("The authoring recipe is not reviewed.")
+    spec = _public_spec(definition["specId"], STUDIO_EXECUTION_SPEC_DEFINITIONS[definition["specId"]])
+    if (selection.get("pipelineClass") != spec["pipelineClass"]
+            or selection.get("task") != definition["task"]
+            or selection.get("executionProfileId") != definition["profileId"]):
+        raise ValueError("The authoring recipe does not belong to this pipeline/task/profile.")
+    roles = list(spec["roles"])
+    edges = list(spec["edges"])
+    bindings = list(spec["bindings"])
+    literals = list(definition["initialValues"])
+    operation_roles = {}
+    role_params = {}
+    owned_identity_fields = {}
+    model_owner_roles = set()
+    for role, key, _x, _y in roles:
+        matches = [node for node in starter["nodes"] if node["operation"]["nodeKey"] == key]
+        if len(matches) > 1:
+            raise ValueError("The authoring recipe has an ambiguous execution role.")
+        if matches:
+            operation_roles[matches[0]["operation"]["operationId"]] = role
+            role_params[role] = matches[0]["params"]
+            owned_identity_fields[role] = set(matches[0]["operation"]["binding"]["values"])
+            if matches[0]["operation"]["decomposition"] in {"loader", "integrated"}:
+                model_owner_roles.add(role)
+        else:
+            module, action = key.rsplit(".", 1)
+            role_params[role] = modules.get(module, {}).get(action, {}).get("params", {})
+            if definition.get("ancillaryPreview") is True:
+                role_params[role] = _execution_spec_role_params(spec, key, {"params": role_params[role]})
+
+    # A genuine starter Guider owns CFG. The separate FLUX denoiser scalar is
+    # an embedded guidance value and is seeded only by its exact recipe above.
+    guiders = [node for node in starter["nodes"] if node["operation"]["operationId"] == "diffusion.guidance"]
+    if guiders:
+        if len(guiders) != 1:
+            raise ValueError("The authoring recipe requires one guidance owner.")
+        guidance = guiders[0]
+        roles.append(("guider", guidance["operation"]["nodeKey"], -360, -520))
+        operation_roles["diffusion.guidance"] = "guider"
+        role_params["guider"] = guidance["params"]
+        owned_identity_fields["guider"] = set(guidance["operation"]["binding"]["values"])
+        bindings = [item for item in bindings if item != ("denoise", "guidance_scale", "guidanceScale")]
+        bindings.append(("guider", "guidance_scale", "guidanceScale"))
+        for edge in starter["edges"]:
+            if edge["source"] != "diffusion.guidance":
+                continue
+            target = operation_roles.get(edge["target"])
+            if target is None:
+                raise ValueError("The guidance owner targets an undeclared role.")
+            declared = ("guider", edge["sourceHandle"], target, edge["targetHandle"])
+            if declared not in edges:
+                edges.append(declared)
+
+    if identity in {"retained-qwen-edit-inpaint:v1", "retained-qwen-edit-outpaint:v1"}:
+        if starter["workflowId"] != "image_conditioned_inpainting":
+            raise ValueError("The masked authoring recipe requires its reviewed native workflow.")
+        masked_bindings = (
+            ("imageEncode", "padding_mask_crop", "paddingMaskCrop"),
+            ("denoise", "width", "width"), ("denoise", "height", "height"),
+        )
+        bindings.extend(item for item in masked_bindings if item not in bindings)
+        if identity == "retained-qwen-edit-outpaint:v1":
+            roles = [item for item in roles if item[0] != "loadMask"]
+            roles.append(("outpaintCanvas", "modules.DiffusersImage.OutpaintCanvas", -520, 300))
+            role_params.pop("loadMask")
+            role_params["outpaintCanvas"] = modules["modules.DiffusersImage"]["OutpaintCanvas"]["params"]
+            edges = [edge for edge in edges if edge not in {
+                ("loadMask", "image", "imageEncode", "mask_image"),
+                ("loadImage", "image", "imageEncode", "image"),
+                ("loadImage", "image", "prompt", "image"),
+            }]
+            edges.extend((
+                ("loadImage", "image", "outpaintCanvas", "image"),
+                ("outpaintCanvas", "canvas", "imageEncode", "image"),
+                ("outpaintCanvas", "canvas", "prompt", "image"),
+                ("outpaintCanvas", "mask_image", "imageEncode", "mask_image"),
+            ))
+            bindings = [item for item in bindings if item[0] != "loadMask"]
+            bindings.extend((
+                ("outpaintCanvas", "width", "width"), ("outpaintCanvas", "height", "height"),
+                ("outpaintCanvas", "left", "outpaintLeft"), ("outpaintCanvas", "right", "outpaintRight"),
+                ("outpaintCanvas", "top", "outpaintTop"), ("outpaintCanvas", "bottom", "outpaintBottom"),
+                ("outpaintCanvas", "overlap", "outpaintOverlap"),
+                ("outpaintCanvas", "feather", "outpaintFeather"),
+                ("outpaintCanvas", "fill_color", "outpaintFillColor"),
+            ))
+
+    # Validate all additions against the same public fields used to materialize
+    # the graph. Literals are deliberately primitive and cannot select code,
+    # repositories, revisions, or profile identities.
+    from modiff.block_definition_v2 import _block_value_types_are_compatible_v2
+
+    base_bindings = set(spec["bindings"])
+    seen = set()
+    for role, field, source in bindings:
+        param = role_params.get(role, {}).get(field)
+        if (not isinstance(param, dict) or param.get("display") == "output"
+                or source not in _BINDING_SOURCES or (role, field) in seen):
+            raise ValueError("The authoring recipe has an invalid form binding.")
+        identity_sources = _AUTHORING_IDENTITY_BINDING_SOURCES.get(field)
+        if identity_sources is not None and role not in model_owner_roles and (role, field, source) in base_bindings:
+            # Auxiliary dependency selectors already declared by the base spec
+            # are distinct from the primary model/profile identity. Preserve
+            # only those exact dependency bindings, never creative overrides.
+            identity_sources = identity_sources | _AUTHORING_DEPENDENCY_IDENTITY_SOURCES.get(field, set())
+        if (identity_sources is not None and source not in identity_sources
+                or field in owned_identity_fields.get(role, set())
+                and identity_sources is None and (role, field, source) not in base_bindings):
+            raise ValueError("The authoring recipe form binding cannot replace an owned identity.")
+        source_type = _AUTHORING_SCALAR_SOURCE_TYPES.get(source)
+        if source_type is not None and not _block_value_types_are_compatible_v2(source_type, param.get("type")):
+            raise ValueError("The authoring recipe has an incompatible scalar form binding.")
+        seen.add((role, field))
+    initial_targets = set()
+    identity_fields = set(_AUTHORING_IDENTITY_BINDING_SOURCES)
+    for role, field, value in literals:
+        param = role_params.get(role, {}).get(field)
+        if (not isinstance(param, dict) or param.get("display") == "output" or field in identity_fields
+                or field in owned_identity_fields.get(role, set())
+                or (role, field) in seen or (role, field) in initial_targets
+                or value is not None and type(value) not in {str, bool, int, float}):
+            raise ValueError("The authoring recipe has an invalid initial literal.")
+        initial_targets.add((role, field))
+        if value is None and (param.get("required") is True or not (
+            "value" in param and param["value"] is None
+            or "default" in param and param["default"] is None
+        )):
+            raise ValueError("The authoring recipe null literal requires an explicit optional value.")
+        literal_type = {str: "string", bool: "bool", int: "int", float: "float"}.get(type(value))
+        if literal_type is not None and not _block_value_types_are_compatible_v2(literal_type, param.get("type")):
+            raise ValueError("The authoring recipe literal has an incompatible scalar type.")
+        if "options" in param and value not in param["options"]:
+            raise ValueError("The authoring recipe literal is not a declared option.")
+        if type(value) in {int, float} and (
+            not float("-inf") < value < float("inf")
+            or value < param.get("min", float("-inf")) or value > param.get("max", float("inf"))
+        ):
+            raise ValueError("The authoring recipe literal is outside its declared bounds.")
+    targets = set()
+    for source, output, target, input_ in edges:
+        left = role_params.get(source, {}).get(output)
+        right = role_params.get(target, {}).get(input_)
+        if (not isinstance(left, dict) or left.get("display") != "output"
+                or not isinstance(right, dict) or not (right.get("display") == "input" or right.get("isInput"))
+                or not _block_value_types_are_compatible_v2(left.get("type"), right.get("type"))
+                or (target, input_) in targets):
+            raise ValueError("The authoring recipe has an incompatible connection.")
+        targets.add((target, input_))
+    payload = {
+        "schemaVersion": 1, "canonicalizationVersion": STUDIO_EXECUTION_SPEC_CANONICALIZATION_VERSION,
+        "id": identity, "baseSpecId": spec["id"], "baseSpecContentHash": spec["contentHash"],
+        "executionProfileIds": (definition["profileId"],),
+        "roles": roles, "edges": edges, "bindings": bindings, "initialValues": literals,
+    }
+    if definition.get("ancillaryPreview") is True:
+        from modiff.ancillary_execution import ancillary_operations_for_parent
+        payload["ancillaryOperations"] = ancillary_operations_for_parent(modules, payload, selection, role_params)
+    payload["contentHash"] = "studio-authoring-v1-" + _hash_string(_stable_json(payload))
+    return deepcopy(payload)
 
 
 def _param_types(param: dict[str, Any]) -> set[str]:
@@ -18361,14 +18961,40 @@ _MODULAR_NODE_TYPES = {
 }
 
 
+def _omit_unbound_recipe_fields(public, node_key, params, fields):
+    """Keep new opt-in controls out of historical immutable role definitions."""
+    roles = {role for role, key, _x, _y in public["roles"] if key == node_key}
+    selected = {field for role, field, _source in public["bindings"] if role in roles}
+    selected.update(field for _source, _port, role, field in public["edges"] if role in roles)
+    for field in fields:
+        if field not in selected:
+            params.pop(field, None)
+
+
 def _execution_spec_role_params(
     public: dict[str, Any],
     node_key: str,
     node: dict[str, Any],
+    role: str | None = None,
 ) -> dict[str, Any]:
     params = deepcopy(node["params"])
+    if node_key == "modules.HuggingFaceTransformers.LoadImageTextToTextModel":
+        _omit_unbound_recipe_fields(public, node_key, params, ("quantization_mode",))
+    if node_key == "modules.HuggingFaceTransformers.GenerateImageVideoText":
+        from modules.HuggingFaceTransformers.main import PROMPT_ENHANCEMENT_RECIPE_FIELDS
+        _omit_unbound_recipe_fields(
+            public, node_key, params,
+            (*PROMPT_ENHANCEMENT_RECIPE_FIELDS, "max_input_tokens", "max_image_pixels"),
+        )
+        # Output opt-in is directional and belongs to this exact role. An
+        # input binding or another same-class role cannot expose the transport.
+        if role is None or not any(source == role and port == "proposal_summary"
+                                   for source, port, _target, _field in public["edges"]):
+            params.pop("proposal_summary", None)
     if node_key.startswith("modules.DiffusersImage."):
-        from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS, image_pipeline_contract, image_loader_field_params
+        from modules.DiffusersImage.main import (
+            IMAGE_PIPELINE_ADAPTERS, image_pipeline_contract, image_loader_field_params, image_action_field_params,
+        )
 
         image_adapter = IMAGE_PIPELINE_ADAPTERS.get(public["pipelineClass"])
         if image_adapter is not None:
@@ -18381,6 +19007,14 @@ def _execution_spec_role_params(
                 # field actions on insertion. Seed the same selected field
                 # schema that update_image_contract publishes for ordinary nodes.
                 for field, overlay in selected_contract["fieldParams"].items():
+                    if field in params:
+                        params[field].update(deepcopy(overlay))
+            action = node_key.rsplit('.', 1)[-1]
+            if image_adapter.stage_adapter is not None and action in {'EncodeInputs', 'Denoise', 'DecodeLatents'}:
+                # Compile the same selected stage sockets/requirements as the
+                # ordinary operation publisher. Raw static Decode controls stay
+                # intact; only these declared stage roles consume geometry.
+                for field, overlay in image_action_field_params(selected_contract, action).items():
                     if field in params:
                         params[field].update(deepcopy(overlay))
             if node_key == "modules.DiffusersImage.LoadPipeline":
@@ -18420,6 +19054,9 @@ def _execution_spec_role_params(
         # Keep it only when this exact specification actually uses it.
         if "inpaint_compatibility" not in connected_optional_inputs | bound_fields:
             params.pop("inpaint_compatibility", None)
+        # Storage choices are opt-in metadata of exact new recipes. Adding
+        # this loader control must not rewrite existing immutable Blocks.
+        _omit_unbound_recipe_fields(public, node_key, params, ("weight_format",))
     node_type = _MODULAR_NODE_TYPES.get(node_key)
     if public["executionPath"] != "modular-diffusers" or node_type is None:
         return params
@@ -18444,13 +19081,24 @@ def _execution_spec_role_params(
     return params
 
 
-def validate_studio_execution_specs(modules: dict[str, Any]) -> list[dict[str, Any]]:
-    """Validate every public execution-spec reference against the live node registry."""
+def validate_studio_execution_specs(
+    modules: dict[str, Any], *, include_private: bool = False,
+) -> list[dict[str, Any]]:
+    """Validate published specs; private source-audit candidates require explicit opt-in.
 
+    Private lookup remains available for exact saved/source-selected graphs.
+    Publication must not require APIs unavailable in the reviewed installed
+    runtime merely because a future execution declaration exists on disk.
+    """
+
+    if type(include_private) is not bool:
+        raise ValueError("Private execution-spec validation requires an explicit boolean.")
     output = []
     pairs = set()
     profiles: dict[str, dict[str, Any]] = {}
     for spec_id, definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.items():
+        if definition["profile"].get("public") is False and not include_private:
+            continue
         public = _public_spec(spec_id, definition)
         pair = (public["modelType"], public["mode"])
         profile_id = public["executionProfileId"]
@@ -18481,7 +19129,7 @@ def validate_studio_execution_specs(modules: dict[str, Any]) -> list[dict[str, A
             node = modules.get(module, {}).get(action)
             if not isinstance(node, dict) or not isinstance(node.get("params"), dict):
                 raise ValueError("Studio execution specification references an unknown node.")
-            roles[role] = {**node, "params": _execution_spec_role_params(public, node_key, node)}
+            roles[role] = {**node, "params": _execution_spec_role_params(public, node_key, node, role)}
 
         connections = set()
         adjacency = {role: set() for role in roles}
@@ -18574,6 +19222,10 @@ def assert_studio_execution_graph(graph: dict[str, Any], runtime_hints: dict[str
     if definition is None:
         raise RuntimeError("Studio execution specification receipt is unknown. Rebuild the managed graph.")
     spec = _public_spec(spec_id, definition)
+    if receipt.get("contentHash") != spec["contentHash"]:
+        historical = _historical_studio_execution_spec(spec_id, receipt.get("contentHash"))
+        if historical is not None:
+            spec = historical
     expected_candidate_contract = {
         "schemaVersion": spec["schemaVersion"],
         "id": spec["id"],

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from modiff.native_component_lora import ComponentLoraDeclaration
 from dataclasses import asdict, dataclass, replace
 import re
 
@@ -213,6 +214,108 @@ MPS_EXPERIMENTAL_POLICY = ExpertMpsPolicy(1, "experimental", "open_setup")
 
 
 @dataclass(frozen=True)
+class AdapterAuthoringPolicy:
+    """Reviewed graph-edit permission, separate from model/runtime qualification."""
+
+    schema_version: int
+    media_kind: str
+    adapter_node_key: str
+    tasks: tuple[str, ...]
+    max_owned_adapters: int
+    repository_revisions: tuple[tuple[str, str], ...]
+    required_controls: tuple[tuple[str, bool | str | None], ...] = ()
+
+    def __post_init__(self) -> None:
+        repository = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,95}/[A-Za-z0-9_][A-Za-z0-9_.-]{0,95}")
+        task = re.compile(r"[a-z][a-z0-9_]{0,63}")
+        if (
+            type(self.schema_version) is not int or self.schema_version != 1
+            or type(self.media_kind) is not str or type(self.adapter_node_key) is not str
+            or (self.media_kind, self.adapter_node_key) not in {
+                ("image", "modules.ModularDiffusers.Lora"),
+                ("image", "modules.DiffusersImage.LoadAdapter"),
+                ("audio", "modules.DiffusersAudio.LoadAdapter"),
+            }
+            or not isinstance(self.tasks, tuple) or not 1 <= len(self.tasks) <= 32
+            or any(not isinstance(value, str) or task.fullmatch(value) is None for value in self.tasks)
+            or len(set(self.tasks)) != len(self.tasks)
+            or type(self.max_owned_adapters) is not int or not 1 <= self.max_owned_adapters <= 32
+            or (self.media_kind == "audio" and self.max_owned_adapters != 1)
+            or not isinstance(self.repository_revisions, tuple) or not 1 <= len(self.repository_revisions) <= 32
+            or any(
+                not isinstance(pair, tuple) or len(pair) != 2
+                or not isinstance(pair[0], str) or repository.fullmatch(pair[0]) is None
+                or not isinstance(pair[1], str) or re.fullmatch(r"[0-9a-f]{40}", pair[1]) is None
+                for pair in self.repository_revisions
+            )
+            or len({pair[0].lower() for pair in self.repository_revisions}) != len(self.repository_revisions)
+        ):
+            raise ValueError("Invalid reviewed adapter authoring policy.")
+        if (
+            type(self.required_controls) is not tuple or len(self.required_controls) > 32
+            or any(
+                type(pair) is not tuple or len(pair) != 2
+                or type(pair[0]) is not str or re.fullmatch(r"[a-z][a-z0-9_]{0,63}", pair[0]) is None
+                or pair[0] in {"constructor", "prototype", "__proto__"}
+                or not (
+                    pair[1] is None or type(pair[1]) is bool
+                    or (type(pair[1]) is str and 1 <= len(pair[1].encode("utf-16-le", errors="surrogatepass")) // 2 <= 128
+                        and pair[1] == pair[1].strip()
+                        and not any(ord(char) < 32 or 127 <= ord(char) <= 159 or ord(char) in (0x2028, 0x2029) for char in pair[1]))
+                )
+                for pair in self.required_controls
+            )
+            or len({pair[0] for pair in self.required_controls}) != len(self.required_controls)
+        ):
+            raise ValueError("Invalid reviewed adapter authoring controls.")
+
+    def validate_required_controls(self, params) -> None:
+        """Validate declarations against registered metadata without construction."""
+        if not self.required_controls:
+            return
+        if not isinstance(params, dict):
+            raise ValueError("Adapter authoring requires current registered loader controls.")
+        for name, expected in self.required_controls:
+            definition = params.get(name)
+            if not isinstance(definition, dict) or definition.get("display") == "output":
+                raise ValueError("Adapter authoring control is not a registered loader input: " + name)
+            declared = definition.get("type")
+            types = declared if isinstance(declared, list) else [declared]
+            if (not 1 <= len(types) <= 16 or any(
+                    type(value) is not str or not 1 <= len(value) <= 128 or value != value.strip()
+                    or any(ord(char) < 32 or 127 <= ord(char) <= 159 or ord(char) in (0x2028, 0x2029) for char in value)
+                    for value in types)):
+                raise ValueError("Adapter authoring control has malformed declared types: " + name)
+            if expected is None:
+                valid = (definition.get("display") == "input"
+                         and definition.get("required", False) is False
+                         and definition.get("value") is None and definition.get("default") is None
+                         and all(isinstance(value, str) and value for value in types))
+            elif type(expected) is bool:
+                valid = any(value in {"bool", "boolean"} for value in types)
+            else:
+                valid = any(value in {"str", "string", "text"} for value in types)
+                options = definition.get("options")
+                if options is not None:
+                    valid = valid and isinstance(options, (list, dict)) and expected in options
+            if not valid:
+                raise ValueError("Adapter authoring control is incompatible with registered metadata: " + name)
+
+    def to_public_dict(self) -> dict:
+        public = {
+            "schemaVersion": self.schema_version,
+            "mediaKind": self.media_kind,
+            "adapterNodeKey": self.adapter_node_key,
+            "tasks": list(self.tasks),
+            "maxOwnedAdapters": self.max_owned_adapters,
+            "repositoryRevisions": [{"repo": repo, "revision": revision} for repo, revision in self.repository_revisions],
+        }
+        if self.required_controls:
+            public["requiredControls"] = dict(self.required_controls)
+        return public
+
+
+@dataclass(frozen=True)
 class DiffusersExecutionProfile:
     id: str
     model_type: str
@@ -243,8 +346,24 @@ class DiffusersExecutionProfile:
     expert_quantization_policy: ExpertQuantizationPolicy | None = None
     expert_mps_policy: ExpertMpsPolicy | None = None
     public: bool = True
+    # Private reviewed loading targets; discovery never imports model classes.
+    lora_loadable_components: tuple[str, ...] = ()
+    # Explicit authoring scope; upstream loading targets alone do not grant edits.
+    adapter_authoring: AdapterAuthoringPolicy | None = None
+    component_lora_declaration: ComponentLoraDeclaration | None = None
 
     def __post_init__(self) -> None:
+        declaration = self.component_lora_declaration
+        if declaration is not None and (type(declaration) is not ComponentLoraDeclaration
+                or declaration.profile_id != self.id or declaration.pipeline_class != self.pipeline_class
+                or declaration.repository != self.default_repo or declaration.task not in self.modes
+                or self.backend_path != 'modules.ModularDiffusers.ModelsLoader'):
+            raise ValueError('Invalid selected component LoRA profile contract.')
+        if (not isinstance(self.lora_loadable_components, tuple) or len(self.lora_loadable_components) > 32
+                or any(not isinstance(name, str) or not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]{0,127}', name)
+                       for name in self.lora_loadable_components)
+                or len(set(self.lora_loadable_components)) != len(self.lora_loadable_components)):
+            raise ValueError('Invalid reviewed LoRA loading components.')
         expected_loader = {
             "modular-diffusers": ("modules.ModularDiffusers", "ModelsLoader"),
             "dynamic-modular": ("modules.ModularDiffusers", "DynamicBlockNode"),
@@ -312,6 +431,21 @@ class DiffusersExecutionProfile:
                 f"{self.loader_module}.{self.loader_action} does not match execution path "
                 f"{self.execution_path!r}."
             )
+        if self.adapter_authoring is not None:
+            policy = self.adapter_authoring
+            if (
+                type(policy) is not AdapterAuthoringPolicy
+                or (self.execution_path, self.loader_module, self.loader_action) != {
+                    "modules.ModularDiffusers.Lora": ("modular-diffusers", "modules.ModularDiffusers", "ModelsLoader"),
+                    "modules.DiffusersImage.LoadAdapter": ("direct-diffusers-image", "modules.DiffusersImage", "LoadPipeline"),
+                    "modules.DiffusersAudio.LoadAdapter": ("direct-diffusers-audio", "modules.DiffusersAudio", "LoadPipeline"),
+                }.get(policy.adapter_node_key)
+                or not set(policy.tasks).issubset(self.modes)
+                or not set(repo for repo, _revision in policy.repository_revisions).issubset(
+                    {self.default_repo, self.fallback_repo, *self.compatible_repos}
+                )
+            ):
+                raise ValueError(f"Execution profile {self.id!r} has an incompatible adapter authoring policy.")
         reviewed_quantization_modes = {
             "bnb_4bit",
             "bnb_8bit",
@@ -404,7 +538,12 @@ class DiffusersExecutionProfile:
         if observe_optional_runtime and (platform_name is not None or machine is not None):
             raise ValueError("Runtime observations cannot use an explicit target")
         data = asdict(self)
+        data.pop('lora_loadable_components')
+        data.pop("adapter_authoring")
+        data.pop("component_lora_declaration")
         public = {key: list(value) if isinstance(value, tuple) else value for key, value in data.items()}
+        if self.adapter_authoring is not None:
+            public["adapterAuthoring"] = self.adapter_authoring.to_public_dict()
         public["optional_runtime_delivery"] = self.optional_runtime_delivery_for_target(
             platform_name=platform_name, machine=machine,
         )
@@ -557,6 +696,7 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         loader_action="ModelsLoader",
         execution_path="modular-diffusers",
         pipeline_class="QwenImageModularPipeline",
+        lora_loadable_components=("transformer",),
         default_repo=QWEN_IMAGE_2512_REPO,
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
@@ -604,6 +744,7 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         loader_action="ModelsLoader",
         execution_path="modular-diffusers",
         pipeline_class="QwenImageEditModularPipeline",
+        lora_loadable_components=("transformer",),
         default_repo="Qwen/Qwen-Image-Edit",
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
@@ -627,6 +768,7 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         loader_action="ModelsLoader",
         execution_path="modular-diffusers",
         pipeline_class="QwenImageEditPlusModularPipeline",
+        lora_loadable_components=("transformer",),
         default_repo="Qwen/Qwen-Image-Edit-2511",
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
@@ -650,6 +792,7 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         loader_action="ModelsLoader",
         execution_path="modular-diffusers",
         pipeline_class="QwenImageLayeredModularPipeline",
+        lora_loadable_components=("transformer",),
         default_repo="Qwen/Qwen-Image-Layered",
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
@@ -696,9 +839,22 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
     ),
 }
 
+def _execution_profile_from_definition(definition: dict) -> DiffusersExecutionProfile:
+    values = dict(definition)
+    if "adapter_authoring" in values:
+        declaration = values["adapter_authoring"]
+        if not isinstance(declaration, dict):
+            raise ValueError("Adapter authoring declarations must be explicit policy records.")
+        try:
+            values["adapter_authoring"] = AdapterAuthoringPolicy(**declaration)
+        except TypeError as exc:
+            raise ValueError("Invalid reviewed adapter authoring policy fields.") from exc
+    return DiffusersExecutionProfile(**values)
+
+
 DIFFUSERS_EXECUTION_PROFILES.update(
     {
-        profile_id: DiffusersExecutionProfile(**definition)
+        profile_id: _execution_profile_from_definition(definition)
         for profile_id, definition in studio_execution_profile_definitions().items()
     }
 )

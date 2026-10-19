@@ -376,10 +376,15 @@ for _cosmos3_omni_workflow, _cosmos3_omni_required_inputs in (
         [
             "workflow_cosmos3_omni_denoise",
             "workflow_cosmos3_omni_decoder",
-            "workflow_cosmos3_omni_after_decode",
         ]
     )
-    _cosmos3_omni_blocks.extend(["denoise", "decode", "after_decode"])
+    _cosmos3_omni_blocks.extend(["denoise", "decode"])
+    # Cosmos3ActionOutputStep returns action=None for text2image. Safety is
+    # enforced by TextEncode and Decode, so fresh image graphs need no action
+    # side output. Preserve every video/action adapter and the saved-node API.
+    if _cosmos3_omni_workflow != "text2image":
+        _cosmos3_omni_actions.append("workflow_cosmos3_omni_after_decode")
+        _cosmos3_omni_blocks.append("after_decode")
     PINNED_WHOLE_WORKFLOW_GRAPH_ADAPTERS[("Cosmos3OmniModularPipeline", _cosmos3_omni_workflow)] = _sequential_adapter(
         _cosmos3_omni_required_inputs,
         _cosmos3_omni_actions,
@@ -463,6 +468,25 @@ def reviewed_whole_workflow_graph_adapter(
 ) -> dict[str, Any] | None:
     contract = PINNED_WHOLE_WORKFLOW_GRAPH_ADAPTERS.get((pipeline_class, workflow_id))
     return deepcopy(contract) if contract is not None else None
+
+
+def reviewed_whole_workflow_action_adapter(
+    pipeline_class: str, workflow_id: str, action_key: str,
+) -> dict[str, Any] | None:
+    """Resolve existing executable actions without restoring fresh no-op stages."""
+    if (pipeline_class, workflow_id, action_key) == (
+        "Cosmos3OmniModularPipeline", "text2image", "workflow_cosmos3_omni_after_decode",
+    ):
+        # Saved image graphs can still call the original action side output.
+        # Its immutable upstream implementation and preceding Decode contract
+        # remain reviewed, although new image authoring no longer includes it.
+        return _sequential_adapter(
+            ["num_inference_steps", "prompt"],
+            ["workflow_cosmos3_omni_text_encoder", "workflow_cosmos3_omni_denoise",
+             "workflow_cosmos3_omni_decoder", "workflow_cosmos3_omni_after_decode"],
+            ["text_encoder", "denoise", "decode", "after_decode"],
+        )
+    return reviewed_whole_workflow_graph_adapter(pipeline_class, workflow_id)
 
 
 def reviewed_whole_workflow_model_types() -> frozenset[str]:

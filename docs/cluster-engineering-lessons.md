@@ -133,6 +133,15 @@ The existing pre-import startup policy defaults `MIMALLOC_PURGE_DELAY=0` on
 Windows and preserves an explicit operator value. Document its allocation
 performance tradeoff; an allocator-only reproduction is not model fit proof.
 
+Immediate purge does not guarantee reclamation when short-lived loader threads
+allocate tensors that another thread later frees. Preserve thread ownership and
+pool lifetime in allocator controls. Windows startup defaults official Diffusers
+and Transformers loading to serial before imports, preserving each explicit
+operator flag; other platforms retain their loading defaults. Document the
+load-time tradeoff and require a fresh process when flags change. Repeat the
+original model, cache release and next run separately; a CPU control or one
+successful image cannot establish broad fit or repeatability.
+
 ## Native edits and dynamic input types
 
 A successful run seeded through numeric test data does not prove the same field

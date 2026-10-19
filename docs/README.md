@@ -14,8 +14,11 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Understand Auto planning, independent model lifetimes and release checks | [Workflow Auto memory contracts](workflow-auto-memory.md) |
 | Check quantized model, dependency, download, and qualification support   | [Quantization support matrix](quantization-support.md)                                      |
 | Review optional attention, quantization, and compilation capabilities    | [Optional runtime optimizations](optional-runtime-optimizations.md)                         |
+| Review the narrowly scoped supporting safety dependency for Cosmos image execution | [Cosmos safety runtime](cosmos-safety-runtime.md) |
 | Check native auxiliary installation evidence and its platform limits       | [Auxiliary runtime checks](auxiliary-runtime-native-qualification.md)                        |
 | Build Modular Diffusers graphs and understand experimental compatibility | [Modular Diffusers guide](../modules/ModularDiffusers/README.md)                            |
+| Understand generic image encoding, denoising, decoding and adapter ownership | [Image pipeline stages](image-pipeline-stages.md) |
+| Understand real audio stages, sources, selected adapters and playback | [Audio workflow stages](audio-workflows.md) |
 | Use ordinary image actions and their optional typed inputs               | [Ordinary Diffusers image nodes](../modules/DiffusersImage/README.md)                       |
 | Run the qualified image demo                                             | [Image demo checkpoint](image-demo.md)                                                      |
 | Migrate image templates and compare fresh generated outputs               | [Image template validation](image-template-validation.md)                                   |
@@ -23,6 +26,7 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Preserve guidance settings safely when changing models | [Guidance control transfer](guidance-control-transfer.md) |
 | Reduce reviewed text-to-image component wiring without another loader | [Component bundle authoring](component-bundle-authoring.md) |
 | Validate the application on local, AMD Linux and Windows hardware | [Three-machine application validation](three-machine-app-validation.md) |
+| Qualify image nodes, workflows, templates and FLUX3 across Windows and ROCm | [Image cross-platform validation](image-cross-platform-validation.md) |
 | Review Hugging Face feedback, implemented fixes, test evidence and Windows merge work | [Feedback and validation handoff](huggingface-feedback-and-validation.md) |
 | Review larger image-model validation and prioritize a dedicated AMD GPU | [Large image models](large-image-model-validation.md) and [AMD cloud preparation](amd-cloud-qualification.md) |
 | Rehearse editable image stages and portable custom art direction          | [Image modularity demo](modularity-demo.md)                                                 |
@@ -32,6 +36,7 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 | Estimate depth with generic Transformers nodes                           | [Transformers depth workflows](../modules/HuggingFaceTransformers/README.md)                |
 | Build reusable attention-mask and LoRA-scale inputs                      | [Attention Arguments](../modules/DiffusersImage/README.md#attention-arguments)              |
 | Choose, edit and reuse FLUX Blocks                                       | [Using FLUX Blocks](../modules/DiffusersImage/README.md#using-flux-blocks)                  |
+| Review the private FLUX 3 adapter contract and its qualification limits | [FLUX 3 adapter execution](flux3-adapters.md) |
 | Implement the shared composite contract and V2 schemas                   | [Composite node contract](composite-node-contract.md)                                     |
 | Review workbench acceptance and unresolved qualification boundaries      | [Workbench acceptance](workbench-acceptance.md)                                           |
 | Review the Hugging Face-derived engineering and runtime requirements     | [Hugging Face engineering alignment](hugging-face-standards.md)                             |

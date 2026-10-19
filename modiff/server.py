@@ -709,6 +709,10 @@ class MissingConnectedOutputError(RuntimeError):
     pass
 
 
+class _RuntimeCleanupSnapshotUnavailable(ValueError):
+    pass
+
+
 STUDIO_MODEL_CAPABILITIES = {
     "ZImageModularPipeline": {
         "modelType": "ZImageModularPipeline",
@@ -1417,6 +1421,11 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         self.client_max_size = client_max_size
         self.work_dir = work_dir
         self.data_dir = data_dir
+        if supervisor_queue_state and self.recent_tasks:
+            # A vanished worker cannot finish its pending Preview transaction.
+            # Reconcile only persisted terminal task IDs; delivered outputs and
+            # unrelated pending work remain governed by their existing slots.
+            self._reconcile_terminal_preview_slots(self.recent_tasks)
         self._load_runtime_jobs()
         # Prime interval counters at startup so the first browser request can
         # usually report active time instead of waiting for a second poll.
@@ -1706,9 +1715,54 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         # Cleanup the runner.
         if self.runner:
             await self.runner.cleanup()
-        if self._model_executor is not None:
-            self._model_executor.shutdown(wait=False, cancel_futures=True)
-            self._model_executor = None
+
+        def shutdown_cache_busy(*, owned_cache=False, owned_model_io=False, owned_teardown=False):
+            return bool(
+                self.current_task or self._runtime_mutation_gate is not None
+                or not owned_teardown and self._node_cache_teardown_active
+                or any(not task.done() for task in tasks_to_wait)
+                or not owned_cache and self._node_cache_lock.locked()
+                or not owned_model_io and self.model_io_lock.locked()
+            )
+
+        async def release_shutdown_caches():
+            # Acquisition can yield to an already accepted operation. Preserve
+            # its model/hook ownership instead of waiting behind undrained work.
+            if shutdown_cache_busy(owned_cache=True):
+                logger.warning("Preserving runtime caches during shutdown: model work has not drained.")
+                return
+
+            def release_if_idle():
+                if shutdown_cache_busy(owned_cache=True, owned_model_io=self.serialize_model_io, owned_teardown=True):
+                    logger.warning("Preserving runtime caches during shutdown: model work has not drained.")
+                    return None
+                return self._release_runtime_caches_for_retry()
+
+            previous_teardown = self._node_cache_teardown_active
+            self._node_cache_teardown_active = True
+            try:
+                result = await self._run_executor_callback(release_if_idle, serialize_model_io=True)
+            finally:
+                self._node_cache_teardown_active = previous_teardown
+            if result and result.get("errors"):
+                logger.warning("Runtime cache cleanup during shutdown reported errors: %s",
+                               "; ".join(result["errors"]))
+
+        try:
+            # Supported graph work already owns this executor. Empty fixtures
+            # and discovery-only startup must not construct one or probe Torch.
+            if self.node_cache and self._model_executor is not None:
+                if shutdown_cache_busy():
+                    logger.warning("Preserving runtime caches during shutdown: model work has not drained.")
+                else:
+                    await self._with_node_cache_lease(release_shutdown_caches)
+        except Exception:
+            logger.warning("Runtime cache cleanup during shutdown failed; storage was preserved where possible.",
+                           exc_info=True)
+        finally:
+            if self._model_executor is not None:
+                self._model_executor.shutdown(wait=False, cancel_futures=True)
+                self._model_executor = None
 
     """
     ╭───────────────╮
@@ -1850,15 +1904,37 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             ):
                 if error_payload.get(key) is not None:
                     entry[key] = error_payload.get(key)
+        return self._retain_terminal_task(entry)
+
+    def _retain_terminal_task(self, entry):
+        """Keep terminal receipts and their graphs under the shared history bound."""
         self.recent_tasks = [entry, *[item for item in self.recent_tasks if item.get("task_id") != entry["task_id"]]][
             :30
         ]
         retained_ids = {str(item.get("task_id")) for item in self.recent_tasks if item.get("task_id")}
         retained_ids.update(str(value) for value in self.queued_tasks)
-        if self.current_task.get("task_id"):
+        if self.current_task and self.current_task.get("task_id"):
             retained_ids.add(str(self.current_task["task_id"]))
         self.task_graphs = {key: value for key, value in self.task_graphs.items() if key in retained_ids}
         return entry
+
+    def _record_queued_cancellation(self, task_id, task):
+        """Retain accepted work without pretending it started or changing the active owner."""
+        completed_at = time.time()
+        return self._retain_terminal_task({
+            "task_id": task_id,
+            "name": task.get("name"),
+            "sid": task.get("sid"),
+            "queued_at": task.get("queued_at"),
+            "started_at": None,
+            "completed_at": completed_at,
+            "updated_at": completed_at,
+            "progress": 0,
+            "status": "cancelled",
+            "message": "Cancelled before execution.",
+            **self._run_identity_payload(task.get("runtimeHints")),
+            **self._run_navigation_payload(task.get("runtimeHints")),
+        })
 
     def record_node_progress(self, payload):
         if not self.current_task or not isinstance(payload, dict):
@@ -2047,6 +2123,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 # queued, persisted, or later inspected by plan application.
                 graph["runtimeHints"] = runtime_hints
 
+        if graph is not None:
+            from modiff.ancillary_execution import validate_execution_purpose
+            validate_execution_purpose(graph, getattr(self, 'modules', None))
+
         self.queued_tasks[task_id] = {
             "task": task,
             "args": args,
@@ -2210,7 +2290,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         task_id = request.match_info.get("task_id")
         if task_id in self.queued_tasks:
             task = self.queued_tasks.pop(task_id)
-            self.task_graphs.pop(task_id, None)
+            terminal_entry = self._record_queued_cancellation(task_id, task)
+            # Publish accepted cancellation before yielding to the preview
+            # transaction, even if the requesting browser navigates away.
+            self._persist_supervisor_queue_state(force=True)
             preview_state = await self._run_studio_history_mutation(
                 self._mark_studio_preview_run_terminal, task_id, "cancelled"
             )
@@ -2222,6 +2305,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     "type": "task_cancelled",
                     "task_id": task_id,
                     **self._run_identity_payload(task.get("runtimeHints")),
+                    "status": terminal_entry["status"],
+                    "message": terminal_entry["message"],
+                    "completed_at": terminal_entry["completed_at"],
+                    "recent": compact_task_history(self.recent_tasks),
                     "queued": task_list,
                     "current": current_task,
                 }
@@ -2427,7 +2514,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                         if runtime_deadline_handle is not None:
                             runtime_deadline_handle.cancel()
                         runtime_cleanup = None
-                        if terminal_status in {"cancelled", "failed"}:
+                        from modiff.ancillary_owner_lifecycle import preserve_failed_attempt, clear_attempt
+                        if terminal_status in {"cancelled", "failed"} and not preserve_failed_attempt(self):
                             # A failed or cancelled graph must not leave model,
                             # node, component, or allocator ownership behind for
                             # the next queued run. Cancellation is cooperative
@@ -2443,6 +2531,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                             )
                             self._last_auto_model_family = None
                             self._last_auto_resource_signature = None
+                        clear_attempt(self)
                         if self.current_task:
                             task_sid = self.current_task.get("sid")
                             task_name = self.current_task.get("name")
@@ -2502,10 +2591,15 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         finally:
             logger.debug("Main worker shutting down")
 
-    async def _with_node_cache_lease(self, operation):
-        return await self._with_action_lease(self._node_cache_lock, operation)
+    async def _with_node_cache_lease(self, operation, *, busy_operation=None):
+        return await self._with_action_lease(self._node_cache_lock, operation, busy_operation=busy_operation)
 
-    async def _with_action_lease(self, lock, operation):
+    async def _with_action_lease(self, lock, operation, *, busy_operation=None):
+        # asyncio.Lock acquires an unlocked lock without yielding. Check here,
+        # immediately before acquisition, so advisory HTTP inspection never
+        # queues behind model work that started after its initial idle check.
+        if busy_operation is not None and lock.locked():
+            return await busy_operation()
         async with lock:
             task = asyncio.ensure_future(operation())
             cancelled = False
@@ -2539,6 +2633,13 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             # samples take the non-Torch path. Never wait on this lock in aiohttp.
             with self._runtime_resource_lock:
                 pass
+            if model_work:
+                previous_binding = getattr(self, '_model_executor_thread_binding', None)
+                self._model_executor_thread_binding = (id(self._model_executor), threading.get_ident())
+                try:
+                    return callback()
+                finally:
+                    self._model_executor_thread_binding = previous_binding
             return callback()
 
         if serialize_model_io and self.serialize_model_io:
@@ -3144,7 +3245,43 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
     ╰─────────────────────╯
     """
 
+    def _prune_prompt_cache_observations(self, node_ids=()):
+        if '_prompt_summary_observations' in self.__dict__:
+            from modiff.prompt_enhancement_summary import prune_cache_observations
+            prune_cache_observations(self, node_ids)
+
+    def _proposal_cache_metadata(self, request):
+        # Existing cache route, response-only observation. No execution,
+        # processor/materialization, source refresh or Apply/release authority.
+        if (set(request.query) != {'with_metadata'}
+                or request.query.getall('with_metadata') != ['1']
+                or request.match_info.get('index') is not None
+                or request.match_info.get('field') != 'proposal_summary'):
+            return web.json_response({'error': 'Unsupported native proposal metadata option.'}, status=400)
+        from modiff.prompt_enhancement_summary import (
+            MAX_BYTES, OBSERVATION_MAX_BYTES, read_cache_observation, require_native_cache_output,
+        )
+        node_id = request.match_info.get('node')
+        try:
+            require_native_cache_output(self, node_id)
+        except LookupError as error:
+            return web.json_response({'error': str(error)}, status=404)
+        except ValueError as error:
+            return web.json_response({'error': str(error)}, status=400)
+        try:
+            value = read_cache_observation(self, node_id)
+            # Explicit UTF-8 avoids the default ASCII serializer expanding
+            # non-ASCII text beyond the bounded raw-string/envelope contract.
+            encoded = json.dumps(value, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
+            if len(encoded.encode('utf-8')) > 2 * MAX_BYTES + 2 * OBSERVATION_MAX_BYTES:
+                raise ValueError('The native proposal metadata envelope exceeds its byte bound.')
+        except (ValueError, OSError) as error:
+            return web.json_response({'error': str(error)}, status=409)
+        return web.Response(text=encoded, content_type='application/json', headers={'Cache-Control': 'no-store'})
+
     async def cache(self, request):
+        if 'with_metadata' in request.query:
+            return self._proposal_cache_metadata(request)
         node = request.match_info.get("node")
         field = request.match_info.get("field")
         index = request.match_info.get("index", None)
@@ -3361,6 +3498,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 cached._mm_models = []
         cached = None
         for node in targets:
+            self._prune_prompt_cache_observations((node,))
             self.node_cache.pop(node, None)
         if targets or released_components:
             gc.collect()
@@ -4820,6 +4958,34 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 state["outputs"], state["previewSlots"], revision=revision
             )
         return {"revision": revision, "previewSlots": changed}
+
+    def _reconcile_terminal_preview_slots(self, tasks):
+        updates = {}
+        for task in tasks:
+            if not isinstance(task, dict) or task.get("status") not in {"cancelled", "failed", "completed"}:
+                continue
+            task_id = task.get("task_id")
+            if not task_id:
+                continue
+            state = self._mark_studio_preview_run_terminal(task_id, task["status"])
+            if state:
+                updates[task_id] = state
+        return updates
+
+    async def _publish_queued_cancellations(self, messages):
+        if not messages:
+            return
+        # One drained history transaction settles every accepted cancellation
+        # even if the requesting browser leaves while disk work is running.
+        updates = await self._run_studio_history_mutation(self._reconcile_terminal_preview_slots, messages)
+        for message in messages:
+            preview_state = updates.get(message["task_id"])
+            if preview_state:
+                message.update(
+                    preview_slots=preview_state["previewSlots"],
+                    preview_state_revision=preview_state["revision"],
+                )
+            self.queue_message(message)
 
     def _save_studio_output_image(self, output):
         image_data = output.pop("image_data", None)
@@ -6283,6 +6449,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 status=409,
             )
 
+        from modiff.ancillary_execution import AncillaryExecutionError
         try:
             task_id = await self.queue_task(
                 self.execute_graph,
@@ -6291,6 +6458,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 sid,
                 name="Graph execution",
             )
+        except AncillaryExecutionError as error:
+            return web.json_response({"error": True, "error_code": "ancillary_execution_mismatch",
+                                      "message": str(error), "sid": sid}, status=400)
         except RuntimeError as error:
             if not getattr(error, "modiff_error_code", None):
                 raise
@@ -7095,7 +7265,12 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         if not isinstance(value, dict):
             return None
 
+        if "executionPurpose" in value:
+            from modiff.ancillary_execution import parse_execution_purpose
+            execution_purpose = parse_execution_purpose(value["executionPurpose"])
+
         allowed = {
+            "executionPurpose",
             "source",
             "device",
             "cudaIndex",
@@ -7160,6 +7335,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "controlledGraphContracts",
         }
         hints = {key: value.get(key) for key in allowed if key in value}
+        if "executionPurpose" in value:
+            hints["executionPurpose"] = execution_purpose
         if "workflowAutoPlan" in hints:
             receipt = hints["workflowAutoPlan"]
             if not isinstance(receipt, dict) or not {"schemaVersion", "graphHash"} <= set(receipt) or bool(set(receipt) - {"schemaVersion", "graphHash", "resourceControlGroups"}) or receipt.get("schemaVersion") != 1 or not isinstance(receipt.get("graphHash"), str):
@@ -7168,7 +7345,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             if not isinstance(groups, list) or len(groups) > 2048 or any(
                 not isinstance(group, list) or not 2 <= len(group) <= 2048 or any(
                     not isinstance(item, dict) or set(item) != {"nodeId", "field"} or not isinstance(item["nodeId"], str)
-                    or item["field"] not in {"offload_mode", "auto_offload"} for item in group)
+                    or type(item["field"]) is not str
+                    or item["field"] not in {"offload_mode", "auto_offload", "weight_loading_mode"} for item in group)
                 for group in groups) or sum(map(len, groups)) > 4096:
                 raise self._auto_resource_contract_error("The workflow Auto shared-control groups are malformed.")
 
@@ -7383,6 +7561,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             specification = studio_execution_spec_for_pair(
                 str(hints.get("modelType") or ""),
                 str(hints.get("mode") or ""),
+                content_hash=receipt["contentHash"],
             )
             if (
                 specification is None
@@ -9205,6 +9384,11 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 current.__traceback__ = None
 
     def _release_runtime_caches_for_retry(self):
+        from modiff.native_component_lora import checked_component_cleanup
+        with checked_component_cleanup(self):
+            return self._release_runtime_caches_for_retry_inner()
+
+    def _release_runtime_caches_for_retry_inner(self):
         errors = []
         released = {
             "nodes": len(self.node_cache),
@@ -9232,16 +9416,16 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         errors.extend(diffusers_errors)
 
         try:
+            self._prune_prompt_cache_observations(tuple(self.node_cache))
             self.node_cache.clear()
         except Exception as e:
             errors.append(f"node cache: {e}")
-        released["offload_files"], offload_errors = self._release_diffusers_offload_cache()
-        errors.extend(offload_errors)
-
         try:
             gc.collect()
         except Exception as e:
             errors.append(f"gc.collect: {e}")
+        released["offload_files"], offload_errors = self._release_diffusers_offload_cache()
+        errors.extend(offload_errors)
         errors.extend(self._best_effort_device_cache_clear())
         allocator_trimmed, allocator_errors = self._best_effort_allocator_trim()
         errors.extend(allocator_errors)
@@ -9537,6 +9721,104 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             2 * 1024**3,
             int(total_vram * 0.1) if isinstance(total_vram, int) else 0,
         )
+        allocator_refresh = None
+
+        def complete_native_owner_ids():
+            # This is an allocator observation, never a model-execution or
+            # cache-hit grant. Read only issued native metadata/weak identities;
+            # normal dispatch still validates artifacts, hooks and every input.
+            from modiff.native_component_lora import _GRAPH_SCOPE, current_component_lora_context
+            from modiff.native_disk_lora import graph_dispatch_inputs
+            from modiff.node_cache_identity import implementation_identity, input_snapshot
+            from weakref import ReferenceType
+            scope = _GRAPH_SCOPE.get()
+            task = self.current_task
+            source = getattr(self, 'backend_source_identity', None)
+            if (resource_mode != 'expert' or not self._workflow_auto_owned_callback()
+                    or scope is None or not isinstance(task, dict) or not task.get('task_id')
+                    or task.get('interrupt_requested') or self.queued_tasks or memory_manager.cache
+                    or not isinstance(source, dict) or scope[1] != source.get('fingerprint')
+                    or not isinstance(task.get('args'), (tuple, list)) or not task['args']
+                    or task['args'][0] is not scope[0] or task.get('sid') != scope[0].get('sid')):
+                return None
+            manager = getattr(sys.modules.get('modules.ModularDiffusers'), 'components', None)
+            registered = getattr(manager, 'components', None)
+            collections = getattr(manager, 'collections', None)
+            loaded = sys.modules.get('modules.ModularDiffusers.main')
+            native_class = vars(loaded).get('ModelsLoader') if loaded is not None else None
+            if not isinstance(registered, dict) or not isinstance(collections, dict) or native_class is None:
+                return None
+            owners, covered = [], set()
+            try:
+                for owner_id, component_ids in collections.items():
+                    if not component_ids:
+                        continue
+                    cached = self.node_cache.get(owner_id)
+                    node = scope[0]['nodes'].get(owner_id)
+                    if (type(cached) is not native_class or not isinstance(node, dict)
+                            or (node.get('module'), node.get('action')) != ('modules.ModularDiffusers', 'ModelsLoader')
+                            or not cached._cache_valid or cached._cache_invalidated):
+                        return None
+                    state = vars(cached).get('_native_disk_lora_state')
+                    context = current_component_lora_context(owner_id)
+                    if (not isinstance(state, dict) or state.get('componentComplete') is not True
+                            or context is None or state.get('componentContext') != context.signature
+                            or type(state.get('pipeline')) is not ReferenceType
+                            or state['pipeline']() is not vars(cached).get('loader')
+                            or state.get('outputIdentity') != id(cached.output)
+                            or state.get('implementation') != implementation_identity(cached)
+                            or state.get('componentOutput') != input_snapshot(cached.output)
+                            or cached._cache_input_snapshot != input_snapshot(cached.params)):
+                        return None
+                    submitted, changed = graph_dispatch_inputs(scope[0], owner_id, self.node_cache)
+                    if changed or submitted != state.get('dispatchInputs'):
+                        return None
+                    members = set()
+                    pipeline_state = vars(cached.loader)
+                    for name, ids, reference in state['components']:
+                        if (type(reference) is not ReferenceType or reference() is None
+                                or pipeline_state.get(name) is not reference()
+                                or any(registered.get(key) is not reference() or key not in component_ids for key in ids)):
+                            return None
+                        members.update(ids)
+                    if members != set(component_ids):
+                        return None
+                    covered.update(members)
+                    owners.append(owner_id)
+                return sorted(owners) if owners and covered == set(registered) else None
+            except (AttributeError, KeyError, TypeError, ValueError):
+                return None
+
+        if (has_runtime_cache and type(available_vram) is int and available_vram < vram_floor
+                and resident_recipe_reusable and not reasons):
+            owners = complete_native_owner_ids()
+            if owners:
+                # Never add reserved-minus-allocated as fictional free memory.
+                # The existing one-shot helper owns thread/lease/source checks,
+                # releases only unused blocks, then observes actual capacity.
+                observed = self._refresh_workflow_auto_cuda_capacity(
+                    self._runtime_fingerprint(), getattr(self, '_workflow_auto_allocator_budget', None))
+                refreshed = observed.get('hardware') if isinstance(observed, dict) else None
+                new_system = refreshed.get('system') if isinstance(refreshed, dict) else None
+                new_devices = refreshed.get('devices') if isinstance(refreshed, dict) else None
+                new_primary = next((item for item in new_devices or []
+                    if isinstance(item, dict) and item.get('type') == 'cuda'), None)
+                new_ram = new_system.get('ram_available') if isinstance(new_system, dict) else None
+                new_total_ram = new_system.get('ram_total') if isinstance(new_system, dict) else None
+                new_vram = new_primary.get('torch_vram_free') if isinstance(new_primary, dict) else None
+                new_total_vram = new_primary.get('torch_vram_total') if isinstance(new_primary, dict) else None
+                valid = (observed is not None and observed.get('backendSource') == self.backend_source_identity
+                    and all(type(value) is int for value in (new_ram, new_total_ram, new_vram, new_total_vram))
+                    and 0 <= new_ram <= new_total_ram and 0 <= new_vram <= new_total_vram
+                    and new_total_ram == total_ram and new_total_vram == total_vram)
+                allocator_refresh = {'nativeOwnerIds': owners, 'capacityObserved': valid,
+                    'beforeAvailableVramBytes': available_vram,
+                    'afterAvailableVramBytes': new_vram if valid else None}
+                if valid:
+                    available_ram, available_vram = new_ram, new_vram
+                    if available_ram < ram_floor:
+                        reasons.append('available system memory is below the safety floor')
+
         if has_runtime_cache and isinstance(available_vram, int):
             if available_vram < vram_floor:
                 reasons.append("available accelerator memory is below the safety floor")
@@ -9562,6 +9844,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "availableVramBytes": available_vram,
             "cleanup": cleanup,
         }
+        if allocator_refresh is not None:
+            result['allocatorRefresh'] = allocator_refresh
         if cleanup is not None:
             self.queue_message(
                 {
@@ -9969,6 +10253,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                         raise
                     retry += 1
                     for node_id in loop["body"]:
+                        self._prune_prompt_cache_observations((node_id,))
                         self.node_cache.pop(node_id, None)
                     self.queue_message(
                         {
@@ -10117,6 +10402,13 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             logger.warning("Could not fully restore process-wide execution settings: %s", exc)
 
     def execute_graph(self, graph):
+        # A queued optional Preview may become inactive before its callback.
+        # Mint preservation on the actual lease before any first-use refusal;
+        # readiness failure must never authorize historical global eviction.
+        from modiff.ancillary_owner_lifecycle import observe_claimed_attempt
+        from modiff.ancillary_execution import validate_execution_purpose
+        observe_claimed_attempt(self, graph)
+        validate_execution_purpose(graph, getattr(self, 'modules', None))
         assert_optional_runtime_ready(graph_optional_runtime_requirement(graph))
         process_state = self._capture_execution_process_state()
         try:
@@ -10125,6 +10417,19 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             self._restore_execution_process_state(process_state, graph)
 
     def _execute_graph(self, graph):
+        from modiff.ancillary_owner_lifecycle import observe_claimed_attempt, owner_scope
+        observe_claimed_attempt(self, graph)
+        from modiff.ancillary_execution import validate_execution_purpose
+        purpose = validate_execution_purpose(graph, getattr(self, 'modules', None))
+        from modiff.native_component_lora import native_component_graph_scope, preflight_component_graph
+        source = getattr(self, 'backend_source_identity', {})
+        fingerprint = source.get('fingerprint') if isinstance(source, dict) else None
+        with owner_scope(self, graph, purpose), native_component_graph_scope(graph, fingerprint):
+            preflight_component_graph(self, graph)
+            return self._execute_graph_inner(graph)
+
+    def _execute_graph_inner(self, graph):
+        from modiff.ancillary_owner_lifecycle import active_preview, before_node, record_dispatched_owner, finish_preview, preview_execution_paths, bind_preview_auto_plan
         if "servicePackage" in graph:
             self._validate_service_graph(graph)
         sid = graph["sid"]
@@ -10133,8 +10438,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         # per attempt, retaining mutable outputs (notably Generators) across
         # consumers. The existing loop executor still owns repeated body calls.
         paths = [list(dict.fromkeys(node_id for path in graph["paths"] for node_id in path))]
+        paths = preview_execution_paths(self, paths)
         self._active_graph_node_ids = set(nodes)
         self._workflow_auto_resolved_fields = {}
+        self._workflow_auto_allocator_budget = {'used': False}
         prepared_data_nodes = set()
         graph_loops = self._prepare_graph_loops(graph)
 
@@ -10192,11 +10499,21 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 "A whole-workflow Auto plan is required before execution. Plan the current graph again or select Custom memory.",
                 code="workflow_auto_plan_required",
             )
+        if workflow_auto_plan is not None:
+            bind_preview_auto_plan(self, workflow_auto_plan)
         if isinstance(base_runtime_hints, dict):
             self._bind_controlled_artifact_receipts(graph, base_runtime_hints)
             base_runtime_hints["loaderContract"] = self._graph_loader_contract(nodes)
             graph["runtimeHints"] = deepcopy(base_runtime_hints)
+        from modiff.diffusers_pipeline_mutations import (
+            cleanup_hints_without_owned_mutations,
+            inspect_direct_pipeline_mutations,
+        )
+        direct_mutation_policies = inspect_direct_pipeline_mutations(graph, self.modules)
+        self._direct_pipeline_mutation_policies = direct_mutation_policies
+        mutation_preparation = self._prepare_direct_pipeline_owner_policies(graph, direct_mutation_policies)
         cleanup_runtime_hints = self._runtime_cleanup_hints_for_graph(nodes, base_runtime_hints)
+        cleanup_runtime_hints = cleanup_hints_without_owned_mutations(cleanup_runtime_hints, direct_mutation_policies)
         if workflow_auto_plan is not None:
             # Reuse the existing cache-switch/pressure cleanup. Resource identity
             # excludes prompts, seeds and placement, so unchanged model owners
@@ -10213,6 +10530,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             logger.info("Workflow Auto strategy: %s, %s owners, requirements %s", workflow_auto_plan["strategy"],
                         len(workflow_auto_plan["loaders"]), workflow_auto_plan["requirements"])
         if owner_schedule:
+            if active_preview(self):
+                raise self._auto_resource_contract_error('A declared Preview cannot enter global owner-schedule cleanup.')
             # Start the planned lifetime from an empty model cache. Prior-run
             # owners must not occupy slots reserved for this schedule.
             prepared_cache = {key: self.node_cache[key] for key in prepared_data_nodes if key in self.node_cache}
@@ -10223,7 +10542,18 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             if self.current_task:
                 self.current_task["workflowAutoSchedule"] = deepcopy(owner_schedule)
         prepared_cache = {key: self.node_cache[key] for key in prepared_data_nodes if key in self.node_cache}
-        runtime_preparation = self._prepare_auto_runtime_for_graph(cleanup_runtime_hints)
+        policy_preparation = self._prepare_workflow_auto_owner_policies(graph, workflow_auto_plan, prepared_data_nodes) if workflow_auto_plan and not owner_schedule and not active_preview(self) else None
+        runtime_preparation = None if active_preview(self) else self._prepare_auto_runtime_for_graph(cleanup_runtime_hints)
+        if mutation_preparation:
+            runtime_preparation = {**(runtime_preparation or {}), 'performed': True,
+                'residentRecipeReusable': False,
+                'reasons': [*(runtime_preparation or {}).get('reasons', []), 'direct pipeline mutation policy changed'],
+                'mutationPreparation': mutation_preparation}
+        if policy_preparation:
+            runtime_preparation = {**(runtime_preparation or {}), 'performed': True,
+                'resourceRecipeChanged': True, 'residentRecipeReusable': False,
+                'reasons': [*(runtime_preparation or {}).get('reasons', []), 'native model owner policy changed'],
+                'policyPreparation': policy_preparation}
         if prepared_cache:
             self.node_cache.update(prepared_cache)
         del prepared_cache
@@ -10258,7 +10588,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             self.current_task["runtimePreparation"] = runtime_preparation
         # A complete Auto plan grants one attempt. Primary-model retry recipes
         # cannot reconfigure a combined graph without a fresh whole-scope plan.
-        retry_plans = self._coerce_retry_plan_list(base_runtime_hints) if workflow_auto_plan is None else []
+        retry_plans = self._coerce_retry_plan_list(base_runtime_hints) if workflow_auto_plan is None and not active_preview(self) else []
         retry_history = []
         deterministic_receipt = None
         attempt_index = 0
@@ -10414,6 +10744,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                                 self.current_task["interrupt_requested"] = True
                             return
 
+                        before_node(self, id)
                         if self.current_task:
                             node = nodes.get(id, {})
                             module = node.get("module", "")
@@ -10460,7 +10791,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                             for owner in owner_schedule["owners"]:
                                 if owner["first"] == execution_index:
                                     assert_next_owner_capacity(self, owner)
-                        elif workflow_auto_plan:
+                        elif workflow_auto_plan and not active_preview(self):
                             # Auxiliary models allocate after their upstream
                             # generation. Recheck current memory at this boundary
                             # even when retaining the diffusion owner was viable
@@ -10494,6 +10825,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                             executed_loops.add(loop_id)
                         elif id not in prepared_data_nodes:
                             self.execute_node(id, nodes[id], sid)
+                            record_dispatched_owner(self, id)
                             if workflow_auto_plan:
                                 for owner in workflow_auto_plan["loaders"]:
                                     if owner["nodeId"] == id:
@@ -10616,6 +10948,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 retry_plan_index = next_retry_plan_index
                 continue
 
+            # NodeBase/execute_node argument frames have unwound. A scoped
+            # release failure must occur before completion is announced.
+            finish_preview(self)
             # the graph has completed
             runtime_measurement = self._runtime_measurement(
                 elapsed_seconds=time.monotonic() - attempt_started_at,
@@ -10759,23 +11094,27 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             )
 
         cancelled_queued = []
+        cancelled_messages = []
         for task_id, task in list(self.queued_tasks.items()):
             self.queued_tasks.pop(task_id, None)
-            self.task_graphs.pop(task_id, None)
+            terminal_entry = self._record_queued_cancellation(task_id, task)
             cancelled_queued.append(task_id)
-            self.queue_message(
+            cancelled_messages.append(
                 {
                     "type": "task_cancelled",
                     "task_id": task_id,
                     **self._run_identity_payload(task.get("runtimeHints")),
                     "status": "cancelled",
-                    "message": "Cancelled before execution.",
+                    "message": terminal_entry["message"],
+                    "completed_at": terminal_entry["completed_at"],
+                    "recent": compact_task_history(self.recent_tasks),
                 }
             )
 
         if not self.current_task:
             self.interrupt_flag = False
             self._persist_supervisor_queue_state(force=True)
+            await self._publish_queued_cancellations(cancelled_messages)
             return web.json_response(
                 {
                     "error": False,
@@ -10811,9 +11150,11 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             if active_pipeline is not None and hasattr(active_pipeline, "_interrupt"):
                 active_pipeline._interrupt = True
 
-        hard_restart_after_ms = self._schedule_forced_restart_if_still_running(
-            self.current_task.get("task_id") if self.current_task else None
-        )
+        active_task_id = self.current_task.get("task_id")
+        hard_restart_after_ms = self._schedule_forced_restart_if_still_running(active_task_id)
+        # Mark the active owner interrupted and arm its existing deadline before
+        # awaiting history work; queued cancellation never delays that policy.
+        await self._publish_queued_cancellations(cancelled_messages)
         return web.json_response(
             {
                 "error": False,
@@ -10823,7 +11164,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     else "Execution is stopping. If the active model call does not return promptly, "
                     "MoDiff will restart its backend worker to release RAM and VRAM."
                 ),
-                "task_id": self.current_task.get("task_id") if self.current_task else None,
+                "task_id": active_task_id,
                 "cancelled_queued_task_ids": cancelled_queued,
                 "cleanup_pending": True,
                 "hard_restart_scheduled": hard_restart_after_ms is not None,
@@ -10958,6 +11299,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 continue
             if getattr(cached_node, "class_name", None) != action:
                 continue
+            from modiff.native_component_lora import is_component_policy
+            state = getattr(cached_node, "_native_disk_lora_state", None)
+            if isinstance(state, dict) and is_component_policy(state.get("policy")):
+                continue  # Target AND mandatory checker transfer have no reviewed adoption contract.
             prepare_for_reuse = getattr(cached_node, "prepare_for_workflow_reuse", None)
             if callable(prepare_for_reuse):
                 prepare_for_reuse()
@@ -10968,6 +11313,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 sources = getattr(dependent, "_cache_input_sources", ())
                 if cached_id in sources:
                     dependent._cache_input_sources = frozenset(node_id if source == cached_id else source for source in sources)
+            self._prune_prompt_cache_observations((cached_id, node_id))
             self.node_cache.pop(cached_id, None)
             cached_node.node_id = node_id
             self.node_cache[node_id] = cached_node
@@ -10978,6 +11324,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         module = node["module"]
         action = node["action"]
         params = node["params"]
+        if '_reviewed_component_lora_identity' in params:
+            raise ValueError('Private component authority cannot be supplied by a workflow.')
 
         if module not in self.modules:
             raise ValueError(f"Invalid module: {module}")
@@ -11083,6 +11431,21 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             )
             self.queue_message(starting_progress)
 
+        component_context = None
+        if (module, action) == ('modules.ModularDiffusers', 'ModelsLoader'):
+            from modiff.native_component_lora import current_component_lora_context, prepare_former_component_owners
+            component_context = current_component_lora_context(id)
+            if component_context is not None:
+                if '_reviewed_component_lora_identity' in args:
+                    raise ValueError('Private component authority cannot be supplied by a dispatch override.')
+                if getattr(component_context, 'weight_format_contract', None) is not None:
+                    from modiff.artifact_verification import artifact_verification_for_current_node
+                    verification = artifact_verification_for_current_node(self, id, sid)
+                    component_context.validate_source_submission(args, _verification_callback=verification)
+                else:
+                    component_context.validate_source_submission(args)
+            prepare_former_component_owners(self, id, component_context, sid=sid)
+
         # Workflow node ids are document-local. A later graph may legitimately
         # reuse the same id for a different module/action, so never dispatch
         # through a cached instance whose executable identity no longer
@@ -11094,11 +11457,13 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             or getattr(cached_node, "class_name", None) != action
             or (isinstance(loaded_action, type) and type(cached_node) is not loaded_action)
         ):
+            self._prune_prompt_cache_observations((id,))
             self.node_cache.pop(id, None)
+        cached_node = None
 
         # if the node is not in the cache, initialize it
         if id not in self.node_cache:
-            reused_node_id = self._adopt_reusable_loader_node(id, module, action)
+            reused_node_id = None if component_context is not None else self._adopt_reusable_loader_node(id, module, action)
             if reused_node_id is None:
                 work_module = import_module(f"{module}.main")
                 work_action = getattr(work_module, action)
@@ -11116,6 +11481,14 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                         "message": "Reusing the resident loader across workflows; inputs will be revalidated.",
                     }
                 )
+
+        if (module, action) == ('modules.ModularDiffusers', 'ModelsLoader'):
+            # Expert uses the same native owner, including adoption across
+            # document-local IDs. Controls are now ordinary resolved arguments;
+            # no supplier execution or invented Auto budget is needed here.
+            if self._prepare_native_owner_runtime_policies({id: args}, sid, resolved=True, recompute=upstream_changed):
+                work_module = import_module(f'{module}.main')
+                self.node_cache[id] = getattr(work_module, action)(id)
 
         if not callable(self.node_cache[id]):
             raise TypeError(
@@ -11195,8 +11568,34 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             str(input_task.get("task_id")), int(input_task.get("attempt_index") or 0)
         ) if input_task and input_task.get("task_id") else None
         try:
-            self.node_cache[id](**args)
+            from modiff.diffusers_pipeline_mutations import begin_mutation, record_mutation_output
+
+            begin_mutation(self, id)
+            if (module, action) == ('modules.ModularDiffusers', 'ModelsLoader'):
+                self.node_cache[id]._selected_component_lora_context = component_context
+                if component_context is not None:
+                    args['_reviewed_component_lora_identity'] = component_context.signature
+            try:
+                self.node_cache[id](**args)
+            finally:
+                if (module, action) == ('modules.ModularDiffusers', 'ModelsLoader'):
+                    self.node_cache[id]._selected_component_lora_context = None
+            if (module, action) == ('modules.ModularDiffusers', 'ModelsLoader'):
+                from modiff.native_disk_lora import record_disk_lora_output
+                record_disk_lora_output(self.node_cache[id], args)
+            record_mutation_output(self, id)
+            from modiff.prompt_enhancement_summary import seal_dispatch_observation
+            seal_dispatch_observation(self, id)
         except Exception as e:
+            self._prune_prompt_cache_observations((id,))
+            if component_context is not None:
+                failed = self.node_cache.get(id)
+                state = getattr(failed, "_native_disk_lora_state", None)
+                if isinstance(state, dict):
+                    state["componentComplete"] = False
+                if failed is not None:
+                    failed.invalidate_cache()
+                failed = None
             heartbeat_stop.set()
             if heartbeat_thread is not None:
                 heartbeat_thread.join(timeout=0.2)
@@ -11613,7 +12012,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
 
         return web.json_response(annotated)
 
-    def _package_status(self, module_name, distribution_name=None):
+    def _package_status(self, module_name, distribution_name=None, *, loaded_only=False):
         package = {
             "available": False,
             "module": module_name,
@@ -11626,7 +12025,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             pass
 
         try:
-            module = import_module(module_name)
+            module = sys.modules.get(module_name) if loaded_only else import_module(module_name)
+            if module is None:
+                raise RuntimeError("Package availability was not observed before runtime cleanup.")
             package["available"] = True
             package["version"] = getattr(module, "__version__", package.get("version"))
         except Exception as e:
@@ -11639,6 +12040,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         with self.runtime_fingerprint_lock:
             if isinstance(self._last_runtime_fingerprint, dict):
                 return deepcopy(self._last_runtime_fingerprint)
+            if self._node_cache_teardown_active:
+                raise _RuntimeCleanupSnapshotUnavailable("Runtime cleanup is active without a current validated runtime snapshot. Wait for cleanup to finish.")
             # Directly constructed test/integration servers have not executed
             # ``run`` and therefore lack the startup snapshot. Only one worker
             # may perform that fallback probe.
@@ -11665,36 +12068,62 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                         self.control_snapshot_tasks.pop(key, None)
 
     async def system_stats(self, _request):
-        if self.current_task and isinstance(self._last_runtime_fingerprint, dict):
-            cached_hardware = self._last_runtime_fingerprint.get("hardware")
-            if isinstance(cached_hardware, dict):
-                return web.json_response(deepcopy(cached_hardware))
-        body = await self._coalesced_control_response(
-            "system_stats",
-            lambda: self._json_response_bytes(get_hardware_snapshot(self.data_dir)),
-        )
+        def collect():
+            # A shielded builder can outlive its request and start after the
+            # initial HTTP idle check. Recheck inside the actual worker.
+            with self._runtime_resource_lock:
+                if self._node_cache_teardown_active:
+                    fingerprint, _ = self._cleanup_runtime_snapshot()
+                    return self._json_response_bytes(fingerprint['hardware'])
+                if self.current_task and isinstance(self._last_runtime_fingerprint, dict):
+                    cached_hardware = self._last_runtime_fingerprint.get("hardware")
+                    if isinstance(cached_hardware, dict):
+                        return self._json_response_bytes(deepcopy(cached_hardware))
+                return self._json_response_bytes(get_hardware_snapshot(self.data_dir))
+
+        try:
+            body = await self._coalesced_control_response("system_stats", collect)
+        except _RuntimeCleanupSnapshotUnavailable as error:
+            return self._runtime_cleanup_busy_response(str(error))
         return web.Response(body=body, content_type="application/json")
 
+    @staticmethod
+    def _runtime_cleanup_busy_response(message):
+        return web.json_response({'error': True, 'error_code': 'runtime_cleanup_busy', 'message': message}, status=409)
+
+    def _cleanup_runtime_snapshot(self):
+        try:
+            fingerprint = self._cached_workflow_auto_fingerprint()
+        except ValueError as error:
+            raise _RuntimeCleanupSnapshotUnavailable("Runtime cleanup is active without a current validated runtime snapshot. Wait for cleanup to finish.") from error
+        return fingerprint, deepcopy(self._validated_runtime_profile['profile'])
+
     def _build_runtime_status_payload(self):
-        runtime_fingerprint = self._runtime_fingerprint_for_control_request()
+        with self._runtime_resource_lock:
+            return self._collect_runtime_status_payload()
+
+    def _collect_runtime_status_payload(self):
+        cleaning = self._node_cache_teardown_active
+        if cleaning:
+            runtime_fingerprint, profile = self._cleanup_runtime_snapshot()
+        else:
+            runtime_fingerprint = self._runtime_fingerprint_for_control_request()
         hardware = runtime_fingerprint.get("hardware")
         cached_while_running = bool(self.current_task) and isinstance(hardware, dict)
-        if not cached_while_running:
+        if not cleaning and not cached_while_running:
             # The identity snapshot survives a run and cache release. Memory
             # counters in status must reflect the idle process now; never
             # probe accelerator APIs alongside active inference.
             hardware = get_hardware_snapshot(self.data_dir, refresh=True)
-        profile = runtime_profile(hardware, venv=Path(sys.prefix))
+        if not cleaning:
+            profile = self._observe_runtime_profile(hardware, runtime_fingerprint)
         packages = {
-            "aiohttp": self._package_status("aiohttp"),
-            "aiohttp_cors": self._package_status("aiohttp_cors", "aiohttp-cors"),
-            "torch": self._package_status("torch"),
-            "diffusers": self._package_status("diffusers"),
-            "transformers": self._package_status("transformers"),
-            "peft": self._package_status("peft"),
-            "huggingface_hub": self._package_status("huggingface_hub", "huggingface-hub"),
-            "accelerate": self._package_status("accelerate"),
-            "safetensors": self._package_status("safetensors"),
+            name: self._package_status(name, distribution, loaded_only=True) if cleaning else self._package_status(name, distribution)
+            for name, distribution in (
+                ("aiohttp", None), ("aiohttp_cors", "aiohttp-cors"), ("torch", None),
+                ("diffusers", None), ("transformers", None), ("peft", None),
+                ("huggingface_hub", "huggingface-hub"), ("accelerate", None), ("safetensors", None),
+            )
         }
         packages["torch"].update(legacy_torch_status(hardware))
         required = [
@@ -11702,6 +12131,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "transformers", "peft", "accelerate", "safetensors",
         ]
         missing_required = [name for name in required if not packages.get(name, {}).get("available")]
+        if cleaning and missing_required:
+            raise _RuntimeCleanupSnapshotUnavailable("Runtime cleanup is active without prior required package observations. Wait for cleanup to finish.")
 
         current_task = None
         if self.current_task:
@@ -11748,7 +12179,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             },
             "packages": packages,
             "hardware": hardware,
-            "hardware_snapshot_state": "cached_while_running" if cached_while_running else "current_idle",
+            "hardware_snapshot_state": "cached_during_cleanup" if cleaning else "cached_while_running" if cached_while_running else "current_idle",
             "missing_required_packages": missing_required,
             "modules": {
                 "registered_count": len(self.modules),
@@ -11784,10 +12215,13 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         return {"available": False, "address": None}
 
     async def runtime_status(self, _request):
-        body = await self._coalesced_control_response(
-            "runtime_status",
-            lambda: self._json_response_bytes(self._build_runtime_status_payload()),
-        )
+        try:
+            body = await self._coalesced_control_response(
+                "runtime_status",
+                lambda: self._json_response_bytes(self._build_runtime_status_payload()),
+            )
+        except _RuntimeCleanupSnapshotUnavailable as error:
+            return self._runtime_cleanup_busy_response(str(error))
         return web.Response(body=body, content_type="application/json")
 
     def _optimization_runtime_context(self):
@@ -13245,7 +13679,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             }
         )
 
-    def _cuda_memory_snapshot(self):
+    def _cuda_memory_snapshot(self, *, owned_teardown=False):
         lock = getattr(self, "_runtime_resource_lock", None)
         if lock is None:
             # Diagnostics must not replace the original execution exception
@@ -13253,10 +13687,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             return {"available": False, "device_count": 0, "devices": [],
                     "error": "Runtime resource monitor is not initialized."}
         with lock:
-            return self._collect_cuda_memory_snapshot()
+            return self._collect_cuda_memory_snapshot(owned_teardown=True) if owned_teardown else self._collect_cuda_memory_snapshot()
 
-    def _collect_cuda_memory_snapshot(self):
-        if self.current_task or self._node_cache_teardown_active:
+    def _collect_cuda_memory_snapshot(self, *, owned_teardown=False):
+        if self.current_task or self._node_cache_teardown_active and not (owned_teardown and self._workflow_auto_owned_callback()):
             identity = self._last_runtime_fingerprint
             hardware = identity.get("hardware") if isinstance(identity, dict) else None
             return accelerator_cuda_diagnostic(active_accelerator_snapshot(hardware))
@@ -13939,19 +14373,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         return released_count, errors
 
     def _release_diffusers_offload_cache(self):
-        offload_path = Path("data") / "offload" / "diffusers"
-        if not offload_path.exists():
-            return 0, []
+        from modiff.diffusers_offload import release_disk_offload_cache
 
-        errors = []
-        released_count = 0
-        try:
-            released_count = sum(1 for item in offload_path.rglob("*") if item.is_file())
-            shutil.rmtree(offload_path)
-        except Exception as e:
-            logger.debug("Diffusers disk offload cache cleanup failed", exc_info=True)
-            errors.append(f"Diffusers disk offload cache: {e}")
-        return released_count, errors
+        return release_disk_offload_cache()
 
     async def runtime_gpu_cleanup(self, request):
         # Clearing node_cache while a graph node is executing invalidates the
@@ -13971,10 +14395,20 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 status=409,
             )
 
-        return await self._with_node_cache_lease(lambda: self._run_executor_callback(self._runtime_gpu_cleanup_idle))
+        async def release_in_background():
+            previous_teardown = self._node_cache_teardown_active
+            self._node_cache_teardown_active = True
+            try:
+                return await self._run_executor_callback(self._runtime_gpu_cleanup_idle, serialize_model_io=True)
+            finally:
+                self._node_cache_teardown_active = previous_teardown
+
+        return await self._with_node_cache_lease(release_in_background)
 
     def _runtime_gpu_cleanup_idle(self):
-        before = self._cuda_memory_snapshot()
+        # Only this owned cleanup callback may take fresh diagnostics while
+        # outside control builders remain on the no-probe teardown path.
+        before = self._cuda_memory_snapshot(owned_teardown=True)
         cleanup_errors = []
         released_nodes = len(self.node_cache)
         released_models = 0
@@ -14002,23 +14436,24 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         cleanup_errors.extend(diffusers_errors)
 
         try:
+            self._prune_prompt_cache_observations(tuple(self.node_cache))
             self.node_cache.clear()
         except Exception as e:
             logger.debug("Failed to clear node cache during accelerator cleanup", exc_info=True)
             cleanup_errors.append(f"node cache: {e}")
-
-        released_offload_files, offload_cache_errors = self._release_diffusers_offload_cache()
-        cleanup_errors.extend(offload_cache_errors)
 
         try:
             gc.collect()
         except Exception as e:
             cleanup_errors.append(f"gc.collect: {e}")
 
+        released_offload_files, offload_cache_errors = self._release_diffusers_offload_cache()
+        cleanup_errors.extend(offload_cache_errors)
+
         cleanup_errors.extend(self._best_effort_device_cache_clear())
         allocator_trimmed, allocator_errors = self._best_effort_allocator_trim()
         cleanup_errors.extend(allocator_errors)
-        after = self._cuda_memory_snapshot()
+        after = self._cuda_memory_snapshot(owned_teardown=True)
 
         message = (
             f"Accelerator cleanup complete. Released {released_nodes} cached node object(s), "
@@ -14159,6 +14594,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         from modiff.operation_contracts import OPERATION_CONTRACT_SCHEMA_VERSION
         from modiff.operation_catalog import build_operation_catalog
         from modiff.optional_runtime_execution import optional_runtime_requirement_for_profiles
+        from modiff.model_artifact_catalog import catalog_profile_repository_revisions
 
         optional_runtime_catalog_snapshot = None
         execution_specs = validate_studio_execution_specs(self.modules)
@@ -14299,6 +14735,69 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     specification["mode"] for specification in capability["studioExecutionSpecs"]
                 )
             capabilities.append(capability)
+        experimental_capabilities = public_experimental_pipelines(
+            observe_optional_runtime=True,
+            optional_runtime_catalog_resolver=request_optional_runtime_catalog,
+        )
+        repository_profiles = {}
+        profile_tasks_by_media = {}
+        for capability in capabilities + experimental_capabilities:
+            for profile in capability["executionProfiles"]:
+                policy = DIFFUSERS_EXECUTION_PROFILES[profile["id"]].adapter_authoring
+                for mode in profile["modes"]:
+                    media = (capability.get("modeOutputKinds") or {}).get(mode, capability["mediaKind"])
+                    profile_tasks_by_media.setdefault(profile["id"], {}).setdefault(media, set()).add(mode)
+                    # Preserve every existing image sidecar; add other media
+                    # only for an explicit reviewed policy of that same kind.
+                    if media == "image" or (policy is not None and media == policy.media_kind):
+                        repository_profiles[profile["id"]] = profile
+        repository_revisions = catalog_profile_repository_revisions(list(repository_profiles.values()))
+        for profiles in [published_execution_profiles, *[
+            capability["executionProfiles"] for capability in capabilities + experimental_capabilities
+        ]]:
+            for profile in profiles:
+                policy = DIFFUSERS_EXECUTION_PROFILES[profile["id"]].adapter_authoring
+                if policy is None and "adapterAuthoring" in profile:
+                    raise ValueError(f"Execution profile {profile['id']!r} published undeclared adapter authoring.")
+                if policy is not None and policy.required_controls:
+                    owner = self.modules.get(profile["loader_module"], {}).get(profile["loader_action"])
+                    if type(owner) is not dict:
+                        raise ValueError("Adapter authoring requires current registered loader metadata.")
+                    policy.validate_required_controls(owner.get("params"))
+                if policy is not None and policy.media_kind == "audio":
+                    from modules.DiffusersAudio.main import AUDIO_PIPELINE_ADAPTERS
+
+                    adapter = AUDIO_PIPELINE_ADAPTERS.get(profile["pipeline_class"])
+                    registered = self.modules.get("modules.DiffusersAudio", {}).get("LoadAdapter", {})
+                    params = registered.get("params", {}) if type(registered) is dict else {}
+                    input_ = params.get("pipeline") if type(params) is dict else None
+                    output = params.get("output") if type(params) is dict else None
+                    signal = output.get("signal") if type(output) is dict else None
+                    if (adapter is None or type(input_) is not dict or type(output) is not dict or type(signal) is not dict
+                            or input_.get("type") != "audio_diffusion_pipeline"
+                            or input_.get("display") != "input"
+                            or input_.get("signalCompatibility") != {"required": True, "action": "$node"}
+                            or input_.get("onSignal") != {"action": "signal", "target": "output"}
+                            or signal.get("direction") != "output" or signal.get("origin") != "pipeline"
+                            or output.get("type") != "audio_diffusion_pipeline"
+                            or output.get("display") != "output"
+                            or any(task not in adapter.modes or task not in adapter.contract_for_mode(task).signal_value(
+                                adapter.pipeline_class, profile["default_repo"],
+                            )["actions"].get("LoadAdapter", []) for task in policy.tasks)):
+                        raise ValueError("Adapter authoring requires its current registered audio adapter contract.")
+                if policy is not None and (
+                    not set(policy.tasks).issubset(profile_tasks_by_media.get(profile["id"], {}).get(policy.media_kind, set()))
+                    or profile.get("adapterAuthoring") != policy.to_public_dict()
+                    or any(
+                        {"repo": repo, "revision": revision} not in repository_revisions.get(profile["id"], [])
+                        for repo, revision in policy.repository_revisions
+                    )
+                ):
+                    raise ValueError(
+                        f"Execution profile {profile['id']!r} adapter authoring does not match its reviewed {policy.media_kind} task and catalog."
+                    )
+                if profile["id"] in repository_revisions:
+                    profile["repository_revisions"] = deepcopy(repository_revisions[profile["id"]])
         operation_contracts, pipeline_support = build_operation_catalog(
             self.modules, published_execution_profiles, catalog_resolver=request_optional_runtime_catalog,
         )
@@ -14351,10 +14850,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "diffusersExecutionProfiles": published_execution_profiles,
             "studioExecutionSpecs": execution_specs,
             "optionalRuntimeProfiles": public_optional_runtime_profiles(),
-            "experimentalCapabilities": public_experimental_pipelines(
-                observe_optional_runtime=True,
-                optional_runtime_catalog_resolver=request_optional_runtime_catalog,
-            ),
+            "experimentalCapabilities": experimental_capabilities,
             "source": "modiff-backend",
         }
 
@@ -14500,14 +14996,15 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         except ValueError as exc:
             return web.json_response({"error": str(exc)}, status=400)
 
-    def _auto_resource_runtime_block(self):
+    def _auto_resource_runtime_block(self, *, runtime_fingerprint=None):
         cached = (
+            runtime_fingerprint.get('hardware') if isinstance(runtime_fingerprint, dict) else
             self._last_runtime_fingerprint.get("hardware")
             if self.current_task and isinstance(self._last_runtime_fingerprint, dict)
             else None
         )
         hardware = deepcopy(cached) if isinstance(cached, dict) else get_hardware_snapshot(self.data_dir, refresh=True)
-        profile = runtime_profile(hardware, venv=Path(sys.prefix))
+        profile = self._observe_runtime_profile(hardware, runtime_fingerprint or getattr(self, '_last_runtime_fingerprint', None))
         if profile.get("execution_ready"):
             return None
         profile_issues = [issue for issue in profile.get("issues", []) if issue.get("severity") == "error"]
@@ -14754,6 +15251,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
     def _prepare_workflow_auto_cache(self, graph, plan, prepared_nodes=()):
         if not plan.get("requiresCachePreparation") or not plan["canAutoRun"]:
             return plan, None
+        from modiff.ancillary_owner_lifecycle import defer_preview_auto_cache
+        scoped = defer_preview_auto_cache(self, plan)
+        if scoped is not None:
+            return scoped
         from modiff.workflow_auto_values import RUNTIME_VALUES
         self.queue_message({"type": "auto_resource_cleanup", "sid": graph["sid"],
             "task_id": self.current_task.get("task_id") if self.current_task else None,
@@ -14805,10 +15306,180 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             except TypeError:
                 return
             pending.extend(getattr(source, "_cache_input_sources", ()))
+        from modiff.modular_runtime_policy import runtime_policy_from_settings
+        policy_settings = (getattr(cached, '_loader_diagnostics', {}) or {}).get('runtime_policy', {}).get('requested')
+        if policy_settings is None and (getattr(cached, 'module_name', None), getattr(cached, 'class_name', None)) == ('modules.ModularDiffusers', 'ModelsLoader'):
+            policy_settings = owner.get('settings')
+        native_binding = None
+        if owner.get('parameterResidencyRequirements'):
+            manager = getattr(sys.modules.get('modules.ModularDiffusers'), 'components', None)
+            registered = getattr(manager, 'components', {})
+            collection = frozenset(getattr(manager, 'collections', {}).get(owner['nodeId'], ()))
+            required = (getattr(cached, '_loader_diagnostics', {}) or {}).get('required_components')
+            bundle = cached.output.get('pipeline_components') if isinstance(cached.output, dict) else None
+            pipeline = getattr(cached, 'loader', None)
+            # Only a complete ordinary native loader result can waive a cold
+            # loading phase. No metadata/property/model method is executed.
+            if (not isinstance(required, list) or not 0 < len(required) <= 128
+                    or any(not isinstance(name, str) for name in required)
+                    or not isinstance(bundle, dict) or len(bundle) > 128
+                    or not set(required) <= bundle.keys() or not collection or len(collection) > 128):
+                records.pop(owner['nodeId'], None)
+                return
+            try:
+                pipeline_state = vars(pipeline)
+                members, supporting_models = {}, {}
+                for name, descriptor in bundle.items():
+                    component_id = descriptor.get('model_id') if isinstance(descriptor, dict) else None
+                    if not component_id and name not in required:
+                        continue  # Non-component annotations are not loader weights.
+                    component = registered.get(component_id) if isinstance(component_id, str) else None
+                    if (component is None and name not in required
+                            and component_id in getattr(cached, '_mm_models', ())
+                            and descriptor.get('owner_node_id') == owner['nodeId']):
+                        supporting = memory_manager.cache.get(component_id, {}).get('model')
+                        if supporting is None:
+                            records.pop(owner['nodeId'], None)
+                            return
+                        supporting_models[name] = (component_id, weakref.ref(supporting))
+                        continue
+                    if component is None or component_id not in collection or pipeline_state.get(name) is not component:
+                        records.pop(owner['nodeId'], None)
+                        return
+                    members[name] = (component_id, weakref.ref(component))
+                native_binding = {'pipeline': weakref.ref(pipeline), 'collection': collection,
+                                  'required': tuple(required), 'members': members,
+                                  'supportingModels': supporting_models}
+            except TypeError:
+                records.pop(owner['nodeId'], None)
+                return
         records[owner["nodeId"]] = {"node": reference, "outputIdentity": id(cached.output),
                                    "cacheKey": owner["cacheKey"], "dependencies": dependencies,
+                                   "runtimePolicy": runtime_policy_from_settings(policy_settings) if policy_settings is not None else None,
                                    "inputSnapshot": getattr(cached, "_cache_input_snapshot", None),
-                                   "implementation": getattr(cached, "_cache_implementation", None)}
+                                   "implementation": getattr(cached, "_cache_implementation", None),
+                                   **({'nativeComponentBinding': native_binding} if native_binding else {})}
+
+    def _prepare_workflow_auto_owner_policies(self, graph, plan, prepared_nodes=()):
+        """Destroy a policy-incompatible owner before replacement allocation.
+
+        The aggregate resource signature owns family/placement turnover. Native
+        policy changes are local to the affected owner and its cached consumers:
+        clearing every collection would destroy unrelated shared hooks/models.
+        This runs on the ordinary executor's cache lease, after data preparation.
+        """
+        policies = {owner['nodeId']: owner['settings'] for owner in plan['loaders']
+                    if (graph['nodes'][owner['nodeId']]['module'], graph['nodes'][owner['nodeId']]['action'])
+                    == ('modules.ModularDiffusers', 'ModelsLoader')}
+        from modiff.native_disk_lora import graph_disk_lora_policy, graph_dispatch_inputs
+        disk_policies, disk_inputs, recompute = {}, {}, set()
+        for owner in plan['loaders']:
+            node_id = owner['nodeId']
+            if node_id not in policies:
+                continue
+            settings = {**owner['settings'],
+                        'model_type': owner.get('modelType', owner['settings'].get('model_type')),
+                        'repo_id': owner.get('repository', owner['settings'].get('repo_id'))}
+            from modiff.native_component_lora import current_component_lora_context
+            disk_policies[node_id] = graph_disk_lora_policy(settings, graph, node_id,
+                component_context=current_component_lora_context(node_id))
+            if disk_policies[node_id] is None and not getattr(self.node_cache.get(node_id), '_native_disk_lora_state', None):
+                continue
+            disk_inputs[node_id], changed = graph_dispatch_inputs(graph, node_id, self.node_cache, prepared_nodes)
+            if changed:
+                recompute.add(node_id)
+        return self._prepare_native_owner_runtime_policies(
+            policies, graph['sid'], disk_policies=disk_policies, disk_inputs=disk_inputs, recompute=recompute,
+        )
+
+    def _prepare_direct_pipeline_owner_policies(self, graph, policies):
+        """Destroy changed direct mutation owners on the ordinary cache lease."""
+        from modiff.diffusers_pipeline_mutations import changed_mutation_owners
+        from modiff.workflow_auto_lifecycle import release_owner_caches
+
+        changed = changed_mutation_owners(self, policies)
+        if not changed:
+            return None
+        targets = set(self._dependent_cache_nodes(changed))
+        # Cached edges retain the former owner; submitted edges identify newly
+        # reassigned consumers. Neither traversal executes or trusts suppliers.
+        executable = {key for path in graph['paths'] for key in path}
+        while True:
+            added = {key for key in executable - targets if any(
+                param.get('sourceId') in targets for param in graph['nodes'][key].get('params', {}).values()
+            )}
+            if not added:
+                break
+            targets.update(added)
+        released = release_owner_caches(self, {
+            'ownerIds': changed, 'nodeIds': sorted(targets), 'retainOutputs': {}, 'retainMaterialOutputs': True,
+        }, memory_manager)
+        records = getattr(self, '_direct_pipeline_mutation_records', {})
+        for node_id in targets:
+            records.pop(node_id, None)
+        self.queue_message({'type': 'runtime_resource_cleanup', 'sid': graph['sid'], 'performed': True,
+            'task_id': self.current_task.get('task_id') if self.current_task else None,
+            'reasons': ['direct pipeline mutation policy changed'], **released})
+        return released
+
+    def _prepare_native_owner_runtime_policies(self, policies, sid, *, resolved=False, recompute=False,
+                                               disk_policies=None, disk_inputs=None):
+        """Release exact incompatible native ownership on the executor lease."""
+        from modiff.modular_runtime_policy import runtime_policy_from_settings
+        from modiff.workflow_auto_lifecycle import release_owner_caches
+        from modiff.native_disk_lora import disk_lora_binding_matches, dispatch_inputs, requested_disk_lora_policy
+        native_manager = getattr(sys.modules.get('modules.ModularDiffusers'), 'components', None)
+
+        records = getattr(self, '_workflow_auto_owner_records', {})
+        changed = []
+        for node_id, settings in policies.items():
+            cached = self.node_cache.get(node_id)
+            if cached is None:
+                continue
+            diagnostics = getattr(cached, '_loader_diagnostics', {}) or {}
+            previous = diagnostics.get('runtime_policy', {}).get('requested')
+            if previous is None:
+                record = records.get(node_id, {})
+                if record.get('node', lambda: None)() is cached and record.get('outputIdentity') == id(cached.output):
+                    previous = record.get('runtimePolicy')
+            policy_changed = previous is not None and runtime_policy_from_settings(previous) != runtime_policy_from_settings(settings)
+            from modiff.native_component_lora import current_component_lora_context
+            component_context = current_component_lora_context(node_id)
+            if resolved and component_context is not None:
+                from modiff.auxiliary_lora import resolve_lora_descriptors
+                from modiff.native_component_lora import validate_retained_factor_shapes
+                submitted_loras = settings.get('lora_list')
+                validate_retained_factor_shapes(cached, component_context,
+                    resolve_lora_descriptors(submitted_loras) if submitted_loras not in (None, []) else [], native_manager)
+            disk_policy = requested_disk_lora_policy(settings, component_context=component_context) \
+                if resolved else (disk_policies or {}).get(node_id)
+            state = getattr(cached, '_native_disk_lora_state', None)
+            if resolved or disk_policies is not None:
+                if disk_policy is not None or state:
+                    snapshot = dispatch_inputs(settings) if resolved else (disk_inputs or {}).get(node_id)
+                    force = recompute is True or isinstance(recompute, set) and node_id in recompute
+                    policy_changed = policy_changed or force or not disk_lora_binding_matches(cached, disk_policy, native_manager) \
+                        or snapshot is None or state.get('dispatchInputs') != snapshot
+            if policy_changed:
+                changed.append(node_id)
+        # Do not keep the last cached loader alive through the destruction check.
+        cached = None
+        if not changed:
+            return None
+        from modiff.native_component_lora import assert_component_release_exclusive
+        supporting = assert_component_release_exclusive(self, changed, native_manager)
+        targets = self._dependent_cache_nodes(changed)
+        released = release_owner_caches(self, {
+            'ownerIds': changed, 'nodeIds': targets, 'retainOutputs': {}, 'retainMaterialOutputs': True,
+        }, memory_manager)
+        if any(reference() is not None for _model_id, reference in supporting):
+            raise ValueError('Stopped before replacement: native component/safety references remain alive.')
+        for node_id in targets:
+            records.pop(node_id, None)
+        self.queue_message({'type': 'auto_resource_cleanup', 'sid': sid, 'performed': True,
+            'task_id': self.current_task.get('task_id') if self.current_task else None,
+            'reasons': ['native model owner policy changed'], **released})
+        return released
 
     def _workflow_auto_cache_snapshot(self):
         """Count unique live weight storage, not RSS or presumed freed bytes.
@@ -14820,9 +15491,64 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         torch_runtime = import_module("torch")
         module_type, tensor_type = torch_runtime.nn.Module, torch_runtime.Tensor
         tensor_types = {tensor_type, torch_runtime.nn.Parameter}
+        group_runtime = sys.modules.get('diffusers.hooks.group_offloading')
+        hook_runtime = sys.modules.get('diffusers.hooks.hooks')
+        group_types = vars(group_runtime) if group_runtime is not None else {}
+        registry_type = vars(hook_runtime).get('HookRegistry') if hook_runtime is not None else None
+
+        def base_state(value):
+            try:
+                return object.__getattribute__(value, '__dict__')
+            except AttributeError:
+                return {}
+
+        def storage_key(tensor):
+            if type(tensor) not in tensor_types or tensor.device.type not in {'cpu', 'cuda', 'mps', 'xpu'}:
+                return None
+            try:
+                storage = tensor_type.untyped_storage(tensor)
+                size = int(storage.nbytes())
+                return (str(tensor.device), int(storage.data_ptr()), size) if size else None
+            except (RuntimeError, NotImplementedError):
+                return None
+
+        def disk_placeholder_keys(state):
+            registry = state.get('_diffusers_hook')
+            if registry_type is None or type(registry) is not registry_type:
+                return ()
+            hooks = base_state(registry).get('hooks')
+            if type(hooks) is not dict:
+                return ()
+            keys = set()
+            for hook in hooks.values():
+                if type(hook) is not group_types.get('GroupOffloadingHook'):
+                    continue
+                group = base_state(hook).get('group')
+                if type(group) is not group_types.get('ModuleGroup'):
+                    continue
+                values = base_state(group)
+                if (values.get('_is_offloaded_to_disk') is not True
+                        or type(values.get('offload_to_disk_path')) is not str
+                        or not values['offload_to_disk_path']
+                        or type(values.get('offload_device')) is not torch_runtime.device
+                        or values['offload_device'].type != 'cpu'
+                        or type(values.get('onload_device')) is not torch_runtime.device
+                        or values['onload_device'].type not in {'cuda', 'xpu', 'mps'}
+                        or type(values.get('tensor_to_key')) is not dict):
+                    continue
+                # The SDK keeps its disk flag true after onload. Only the exact
+                # CPU tensor storage is a placeholder; live GPU weights and
+                # unrelated CPU parameters/buffers remain measurable storage.
+                for tensor in values['tensor_to_key']:
+                    key = storage_key(tensor)
+                    if key is not None and key[0] == 'cpu':
+                        keys.add(key)
+            return keys
+
+        excluded_storage = set()
 
         def storages(models):
-            pending, seen, result = list(models), set(), {}
+            pending, seen, result, placeholders = list(models), set(), {}, set()
             while pending:
                 model = pending.pop()
                 if id(model) in seen:
@@ -14833,24 +15559,19 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 except AttributeError:
                     state = {}
                 if isinstance(model, module_type):
+                    placeholders.update(disk_placeholder_keys(state))
                     pending.extend((state.get("_modules") or {}).values())
                     tensors = [*(state.get("_parameters") or {}).values(), *(state.get("_buffers") or {}).values()]
                     for tensor in tensors:
-                        if type(tensor) not in tensor_types or tensor.device.type not in {"cpu", "cuda", "mps", "xpu"}:
-                            continue
-                        try:
-                            storage = tensor_type.untyped_storage(tensor)
-                            size = int(storage.nbytes())
-                            key = (str(tensor.device), int(storage.data_ptr()), size)
-                        except (RuntimeError, NotImplementedError):
-                            continue
-                        if size:
-                            result[key] = ("systemRamBytes" if tensor.device.type == "cpu" else "vramBytes", size)
+                        key = storage_key(tensor)
+                        if key is not None:
+                            result[key] = ("systemRamBytes" if tensor.device.type == "cpu" else "vramBytes", key[2])
                 else:
                     # Official pipeline components are stored as direct Module
                     # attributes; no pipeline.components property is called.
                     pending.extend(value for value in state.values() if isinstance(value, module_type))
-            return result
+            excluded_storage.update(placeholders)
+            return {key: value for key, value in result.items() if key not in excluded_storage}
 
         manager = getattr(sys.modules.get("modules.ModularDiffusers"), "components", None)
         collections = dict(getattr(manager, "collections", {}) or {})
@@ -14878,7 +15599,31 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     return False
             return True
 
-        owned, credited = {}, set()
+        def complete_native_owner(node_id, cached, binding):
+            pipeline = getattr(cached, 'loader', None)
+            bundle = cached.output.get('pipeline_components') if isinstance(cached.output, dict) else None
+            required = (getattr(cached, '_loader_diagnostics', {}) or {}).get('required_components')
+            if (binding['pipeline']() is not pipeline or pipeline is None or not isinstance(bundle, dict)
+                    or tuple(required or ()) != binding['required']
+                    or frozenset(collections.get(node_id, ())) != binding['collection']):
+                return False
+            state = vars(pipeline)
+            current_members = {name: item.get('model_id') for name, item in bundle.items()
+                               if isinstance(item, dict) and item.get('model_id')}
+            expected_members = {name: item[0] for name, item in
+                                {**binding['members'], **binding['supportingModels']}.items()}
+            if current_members != expected_members:
+                return False
+            if any(reference() is None or models.get(component_id, {}).get('model') is not reference()
+                   or component_id not in getattr(cached, '_mm_models', ())
+                   or bundle[name].get('owner_node_id') != node_id
+                   for name, (component_id, reference) in binding['supportingModels'].items()):
+                return False
+            return all(reference() is not None and components.get(component_id) is reference()
+                       and state.get(name) is reference()
+                       for name, (component_id, reference) in binding['members'].items())
+
+        owned, owner_storages, credited = {}, {}, set()
         all_storage = storages([*components.values(), *(item.get("model") for item in models.values())])
         for node_id, record in list(records.items()):
             cached = self.node_cache.get(node_id)
@@ -14886,6 +15631,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     or not reusable(cached) or record["outputIdentity"] != id(cached.output)
                     or record["inputSnapshot"] != getattr(cached, "_cache_input_snapshot", None)
                     or record["implementation"] != getattr(cached, "_cache_implementation", None)
+                    or record.get('nativeComponentBinding') and not complete_native_owner(
+                        node_id, cached, record['nativeComponentBinding'])
                     or any(reference() is not self.node_cache.get(key)
                            or reference() is None or id(reference().output) != output_id
                            or snapshot != getattr(reference(), "_cache_input_snapshot", None)
@@ -14900,39 +15647,250 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             found = storages(selected)
             all_storage.update(found)
             entry = {"cacheKey": record["cacheKey"], "systemRamBytes": 0, "vramBytes": 0}
-            for key, (pool, size) in found.items():
-                if key not in credited:
-                    entry[pool] += size
-                    credited.add(key)
+            if record.get('nativeComponentBinding'):
+                entry['loadingPhaseReusable'] = True
             owned[node_id] = entry
+            owner_storages[node_id] = found
+        # An alias owned by a plain component cannot revive storage excluded by
+        # another installed disk hook. Finish discovery before granting credit.
+        for node_id, found in owner_storages.items():
+            for key, (pool, size) in found.items():
+                if key not in credited and key not in excluded_storage:
+                    owned[node_id][pool] += size
+                    credited.add(key)
         reclaimable = {"systemRamBytes": 0, "vramBytes": 0}
-        for pool, size in all_storage.values():
-            reclaimable[pool] += size
+        for key, (pool, size) in all_storage.items():
+            if key not in excluded_storage:
+                reclaimable[pool] += size
         return {"owners": owned, "reclaimable": reclaimable}
 
-    def _build_workflow_auto_plan(self, graph, *, dispatch=False):
-        runtime_block = self._auto_resource_runtime_block()
-        if runtime_block:
-            raise ValueError(runtime_block.get("message") or "The installed runtime requires repair before Auto can run.")
-        active_inspection = bool(self.current_task) and not dispatch
-        if active_inspection:
-            # Stay responsive while another task owns accelerator locks. The
-            # queued task will sample actual capacity before its first model.
-            fingerprint, cache = self._auto_planning_runtime_fingerprint(), {}
+    def _workflow_auto_inspection_busy(self, *, owned=False, owns_cache_lease=False):
+        cache_lock = getattr(self, '_node_cache_lock', None)
+        io_lock = getattr(self, 'model_io_lock', None)
+        return bool(self.current_task or getattr(self, '_runtime_mutation_gate', None)
+                    or getattr(self, '_node_cache_teardown_active', False)
+                    or not (owned or owns_cache_lease) and cache_lock is not None and cache_lock.locked()
+                    or not owned and getattr(self, 'serialize_model_io', False) and io_lock is not None and io_lock.locked())
+
+    def _workflow_auto_owned_callback(self):
+        executor = getattr(self, '_model_executor', None)
+        cache_lock = getattr(self, '_node_cache_lock', None)
+        io_lock = getattr(self, 'model_io_lock', None)
+        return bool(executor is not None and cache_lock is not None and cache_lock.locked()
+                    and getattr(self, '_model_executor_thread_binding', None) == (id(executor), threading.get_ident())
+                    and (not getattr(self, 'serialize_model_io', False) or io_lock is not None and io_lock.locked()))
+
+    def _runtime_profile_validation_key(self, fingerprint, profile=None):
+        """Bind an actual idle validation to immutable process/contract inputs."""
+        from modiff.base_runtime import base_runtime_status
+        from modiff.runtime_profile import MANIFEST_PATH, PROJECT_ROOT, state_path
+        source = getattr(self, 'backend_source_identity', None)
+        if (not isinstance(fingerprint, dict) or not getattr(self, 'instance', None)
+                or not isinstance(source, dict) or not source.get('fingerprint')
+                or fingerprint.get('backendSource') != source
+                or not (fingerprint.get('resourceFingerprint') or fingerprint.get('fingerprint'))):
+            return None
+        # Observe only the small files already read by runtime_profile. A saved
+        # specialist receipt can change readiness without changing Torch or the
+        # native package digest. Hashes bind cached advice, not a second check.
+        missing_file = object()
+        def metadata_body(path, limit, *, missing=False):
+            try:
+                with path.open('rb') as stream:
+                    body = stream.read(limit + 1)
+                return body if len(body) <= limit else None
+            except FileNotFoundError:
+                return missing_file if missing else None
+            except OSError:
+                return None
+
+        manifest_body = metadata_body(MANIFEST_PATH, 512 * 1024)
+        receipt_body = metadata_body(state_path(Path(sys.prefix)), 64 * 1024, missing=True)
+        if manifest_body is None or receipt_body is None:
+            return None
+        try:
+            manifest = json.loads(manifest_body)
+            saved = {} if receipt_body is missing_file else json.loads(receipt_body)
+        except (ValueError, UnicodeDecodeError):
+            return None
+        if (not isinstance(manifest, dict) or manifest.get('schema_version') != 1
+                or not isinstance(manifest.get('profiles'), dict) or len(manifest['profiles']) > 32
+                or not isinstance(saved, dict)):
+            return None
+        if receipt_body is missing_file:
+            receipt_body = b''
+        actual_profile = profile or (getattr(self, '_validated_runtime_profile', None) or {}).get('profile') or {}
+        selected = saved.get('profile') or actual_profile.get('requested') or actual_profile.get('installed') or actual_profile.get('detected')
+        if selected is not None and not isinstance(selected, str):
+            return None
+        specialist_files = []
+        specialist_packages = []
+        if selected in {'amd-rocm-linux', 'amd-instinct-rocm-linux', 'amd-pytorch-windows'}:
+            spec = manifest['profiles'].get(selected)
+            if not isinstance(spec, dict) or not isinstance(spec.get('requirements'), str):
+                return None
+            for name in ('requirements', 'uv_config'):
+                value = spec.get(name)
+                if value is None and name == 'uv_config':
+                    continue
+                if not isinstance(value, str) or not value or len(value) > 512:
+                    return None
+                path = PROJECT_ROOT / value
+                try:
+                    if not path.resolve().is_relative_to(PROJECT_ROOT.resolve()):
+                        return None
+                    body = metadata_body(path, 512 * 1024)
+                except (OSError, RuntimeError, ValueError):
+                    return None
+                if body is None:
+                    return None
+                specialist_files.append((value, hashlib.sha256(body).hexdigest()))
+                if selected == 'amd-instinct-rocm-linux' and name == 'requirements':
+                    # The specialist validator also observes SDK packages not
+                    # necessarily present in the base dependency contract.
+                    from packaging.requirements import Requirement, InvalidRequirement
+                    try:
+                        lines = body.decode('utf-8').splitlines()
+                        names = spec.get('required', []) + spec.get('prohibited', [])
+                        if (len(lines) > 512 or not isinstance(names, list) or len(names) > 128
+                                or any(not isinstance(item, str) for item in names)):
+                            return None
+                        names = set(names)
+                        for line in lines:
+                            line = line.strip()
+                            if not line or line.startswith('#') or line == '-e .':
+                                continue
+                            requirement = Requirement(line)
+                            if requirement.marker is None or requirement.marker.evaluate():
+                                names.add(requirement.name)
+                        for package in sorted(names):
+                            try:
+                                version = metadata.version(package)
+                            except metadata.PackageNotFoundError:
+                                version = None
+                            if version is not None and not isinstance(version, str):
+                                return None
+                            specialist_packages.append((package, version))
+                    except (OSError, UnicodeDecodeError, InvalidRequirement, TypeError, ValueError):
+                        return None
+        try:
+            base_digest = base_runtime_status()['current_digest']
+        except (OSError, ValueError, KeyError, TypeError):
+            return None
+        if not isinstance(base_digest, str) or not base_digest:
+            return None
+        return (self.instance, source['fingerprint'],
+                fingerprint.get('resourceFingerprint') or fingerprint['fingerprint'], sys.executable, sys.prefix,
+                base_digest, os.environ.get('MODIFF_RUNTIME_OVERLAY_STATUS', 'base'),
+                os.environ.get('MODIFF_OPTIMIZATION_ENVIRONMENT'),
+                hashlib.sha256(manifest_body).hexdigest(), hashlib.sha256(receipt_body).hexdigest(),
+                tuple(specialist_files), tuple(specialist_packages))
+
+    def _observe_runtime_profile(self, hardware, fingerprint):
+        """Cache the existing actual validation, never infer readiness from RAM."""
+        before = self._runtime_profile_validation_key(fingerprint)
+        profile = runtime_profile(hardware, venv=Path(sys.prefix))
+        if not self._workflow_auto_inspection_busy(owned=self._workflow_auto_owned_callback()):
+            key = self._runtime_profile_validation_key(fingerprint, profile)
+            self._validated_runtime_profile = (
+                {'key': key if before == key else None, 'profile': deepcopy(profile)}
+                if key is not None and profile.get('execution_ready') is True else None
+            )
+        return profile
+
+    def _cached_workflow_auto_fingerprint(self):
+        fingerprint = getattr(self, '_last_runtime_fingerprint', None)
+        validated = getattr(self, '_validated_runtime_profile', None)
+        key = self._runtime_profile_validation_key(fingerprint)
+        if (key is None or not isinstance(validated, dict) or validated.get('key') != key
+                or validated.get('profile', {}).get('execution_ready') is not True
+                or not isinstance(fingerprint.get('hardware'), dict)):
+            raise ValueError('Auto inspection is busy without a current validated runtime snapshot. Wait for model work to finish and plan again.')
+        return deepcopy(fingerprint)
+
+    def _refresh_workflow_auto_cuda_capacity(self, fingerprint, budget):
+        """Release unused CUDA blocks once on the existing owned model thread."""
+        if (not isinstance(budget, dict) or budget.get('used') is not False
+                or not self._workflow_auto_owned_callback()
+                or getattr(self, '_runtime_mutation_gate', None)
+                or getattr(self, '_node_cache_teardown_active', False)
+                or not isinstance(fingerprint, dict)
+                or not isinstance(fingerprint.get('backendSource'), dict)
+                or not fingerprint['backendSource'].get('fingerprint')
+                or fingerprint['backendSource'] != getattr(self, 'backend_source_identity', None)):
+            return None
+        budget['used'] = True  # A failed attempt must not become a retry loop.
+        try:
+            with self._runtime_resource_lock:
+                torch = import_module('torch')
+                if getattr(getattr(torch, 'version', None), 'hip', None) or not torch.cuda.is_available():
+                    return None
+                # The admitted resource snapshot covers the primary device,
+                # irrespective of a previous Expert caller's current device.
+                with torch.cuda.device(0):
+                    torch.cuda.empty_cache()
+                    return self._runtime_fingerprint()
+        except Exception as error:
+            logger.warning('Could not refresh unused CUDA capacity for workflow Auto: %s', error)
+            return None
+
+    def _build_workflow_auto_plan(self, graph, *, dispatch=False, allocator_budget=None, cached_only=False):
+        from modiff.ancillary_execution import validate_execution_purpose
+        validate_execution_purpose(graph, getattr(self, 'modules', None))
+        if dispatch and allocator_budget is None:
+            allocator_budget = getattr(self, '_workflow_auto_allocator_budget', None)
+        owned = allocator_budget is not None and self._workflow_auto_owned_callback()
+        cached_inspection = not dispatch and (cached_only or self._workflow_auto_inspection_busy(owned=owned))
+        if cached_inspection:
+            # Preserve a busy request's cached-only decision even if work drains
+            # before its control thread starts. No fallback accelerator probe.
+            fingerprint, cache = self._cached_workflow_auto_fingerprint(), {}
         else:
-            # Workflow reuse already accounts for weight storage explicitly;
-            # do not also add CUDA reservations to raw free memory.
             fingerprint = self._runtime_fingerprint()
+            runtime_block = self._auto_resource_runtime_block(runtime_fingerprint=fingerprint)
+            if runtime_block:
+                raise ValueError(runtime_block.get('message') or 'The installed runtime requires repair before Auto can run.')
             cache = self._workflow_auto_cache_snapshot()
-        return build_workflow_auto_plan(graph, runtime_fingerprint=fingerprint, local_models=get_local_models(),
-                                        data_dir=self.data_dir, cache_snapshot=cache)
+        diagnostic = {}
+        def plan(actual_fingerprint, actual_cache):
+            return build_workflow_auto_plan(graph, runtime_fingerprint=actual_fingerprint, local_models=get_local_models(),
+                data_dir=self.data_dir, cache_snapshot=actual_cache, _preferred_diagnostic=diagnostic)
+        result = plan(fingerprint, cache)
+        keys = set(diagnostic.get('rawResourceIssueKeys') or ())
+        if (owned and not cached_inspection and diagnostic.get('mayExplore') and diagnostic.get('rawResourceOnly')
+                and 'vramBytes' in keys and keys <= {'systemRamBytes', 'vramBytes'}
+                and (diagnostic.get('knownGpuOwnerIds') or diagnostic.get('completeWarmGpuOwnerIds'))
+                and (not result['canAutoRun'] or diagnostic.get('completeWarmGpuOwnerIds'))):
+            refreshed = self._refresh_workflow_auto_cuda_capacity(fingerprint, allocator_budget)
+            if refreshed is not None:
+                result = plan(refreshed, self._workflow_auto_cache_snapshot())
+        return result
 
     async def workflow_auto_resource_plan(self, request):
         try:
             payload = await request.json()
             if not isinstance(payload, dict) or set(payload) != {"schemaVersion", "graph"} or payload.get("schemaVersion") != 1 or not isinstance(payload.get("graph"), dict):
                 raise ValueError("Invalid workflow Auto planning request.")
-            plan = await asyncio.to_thread(self._build_workflow_auto_plan, payload["graph"])
+            graph = payload['graph']
+            from modiff.ancillary_execution import validate_execution_purpose
+            validate_execution_purpose(graph, getattr(self, 'modules', None))
+            if self._workflow_auto_inspection_busy():
+                plan = await asyncio.to_thread(self._build_workflow_auto_plan, graph, cached_only=True)
+            else:
+                async def inspect_owned():
+                    # Model I/O may have started after the initial idle check.
+                    # Return cached advice rather than waiting for that work.
+                    if self._workflow_auto_inspection_busy(owns_cache_lease=True):
+                        return await asyncio.to_thread(self._build_workflow_auto_plan, graph, cached_only=True)
+                    budget = {'used': False}
+                    return await self._run_executor_callback(
+                        lambda: self._build_workflow_auto_plan(graph, allocator_budget=budget),
+                        serialize_model_io=True,
+                    )
+                plan = await self._with_node_cache_lease(
+                    inspect_owned,
+                    busy_operation=lambda: asyncio.to_thread(self._build_workflow_auto_plan, graph, cached_only=True),
+                )
             return web.json_response(plan)
         except (ValueError, TypeError) as error:
             return web.json_response({"error": True, "message": str(error)}, status=400)

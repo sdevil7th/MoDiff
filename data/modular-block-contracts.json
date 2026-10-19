@@ -952,9 +952,9 @@
         }
       ],
       "configs": [],
-      "contentHash": "sha256:151336a9300619e099034a9ab05558e7b56baee4982cb18ba9f6121774621759",
+      "contentHash": "sha256:8a99621bbc00ff9a57c365efa111d64b113923f70534df7677766d04e61b9f37",
       "description": "Text encoder step that encodes Anima prompts into Qwen states and T5 token ids.",
-      "id": "diffusers.modular-block:AnimaTextEncoderStep:sha256:151336a9300619e099034a9ab05558e7b56baee4982cb18ba9f6121774621759",
+      "id": "diffusers.modular-block:AnimaTextEncoderStep:sha256:8a99621bbc00ff9a57c365efa111d64b113923f70534df7677766d04e61b9f37",
       "inputs": [
         {
           "default": null,
@@ -986,7 +986,7 @@
         {
           "default": null,
           "description": "Qwen prompt embeddings to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "qwen_prompt_embeds",
           "required": false,
           "type": "torch.Tensor"
@@ -994,7 +994,7 @@
         {
           "default": null,
           "description": "Qwen prompt attention mask to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "qwen_attention_mask",
           "required": false,
           "type": "torch.Tensor"
@@ -1002,7 +1002,7 @@
         {
           "default": null,
           "description": "T5 prompt token ids to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "t5_input_ids",
           "required": false,
           "type": "torch.Tensor"
@@ -1010,7 +1010,7 @@
         {
           "default": null,
           "description": "T5 prompt attention mask to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "t5_attention_mask",
           "required": false,
           "type": "torch.Tensor"
@@ -1018,7 +1018,7 @@
         {
           "default": null,
           "description": "Negative Qwen prompt embeddings to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "negative_qwen_prompt_embeds",
           "required": false,
           "type": "torch.Tensor"
@@ -1026,7 +1026,7 @@
         {
           "default": null,
           "description": "Negative Qwen prompt attention mask to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "negative_qwen_attention_mask",
           "required": false,
           "type": "torch.Tensor"
@@ -1034,7 +1034,7 @@
         {
           "default": null,
           "description": "Negative T5 prompt token ids to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "negative_t5_input_ids",
           "required": false,
           "type": "torch.Tensor"
@@ -1042,7 +1042,7 @@
         {
           "default": null,
           "description": "Negative T5 prompt attention mask to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "negative_t5_attention_mask",
           "required": false,
           "type": "torch.Tensor"
@@ -6728,6 +6728,1269 @@
         }
       ],
       "requiredInputs": [],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3DecodeStep",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "vae",
+          "type": "diffusers.models.autoencoders.autoencoder_kl_flux2.AutoencoderKLFlux2"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "vae_latent_channels": 32,
+            "vae_scale_factor": 16
+          },
+          "description": "",
+          "name": "image_processor",
+          "type": "diffusers.modular_pipelines.flux3.image_processor.Flux3ImageProcessor"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:8c3cb87e0595fb7aa9681df9c55a03d53d2d7e1a20bc70b9dd43b9038811c7d3",
+      "description": "Step that decodes the denoised latents into images using the FLUX.3 image VAE (the FLUX.2 packed autoencoder) with batch norm denormalization.",
+      "id": "diffusers.modular-block:Flux3DecodeStep:sha256:8c3cb87e0595fb7aa9681df9c55a03d53d2d7e1a20bc70b9dd43b9038811c7d3",
+      "inputs": [
+        {
+          "default": "pil",
+          "description": "Output format: 'pil', 'np', 'pt'.",
+          "kwargsType": null,
+          "name": "output_type",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "The denoised latents from the denoising step",
+          "kwargsType": null,
+          "name": "latents",
+          "required": true,
+          "type": "torch.Tensor"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "The generated images, can be a list of PIL.Image.Image, torch.Tensor or a numpy array",
+          "kwargsType": null,
+          "name": "images",
+          "required": false,
+          "type": "Union[list[PIL.Image.Image],numpy.ndarray,torch.Tensor]"
+        }
+      ],
+      "requiredInputs": [
+        "latents"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3DenoiseStep",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "transformer",
+          "type": "diffusers.models.transformers.transformer_flux3.Flux3Transformer2DModel"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "guidance_scale": 3.5
+          },
+          "description": "",
+          "name": "guider",
+          "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": null,
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:293d4931518f901f201fd734ed17feb7b67944b9ef5d5d23ab1d05cc115644b9",
+      "description": "Denoise step that iteratively denoises the latents for FLUX.3. Its loop logic is defined in `Flux3DenoiseLoopWrapper.__call__` method At each iteration, it runs blocks defined in `sub_blocks` sequentially: - `Flux3LoopDenoiser` - `Flux3LoopAfterDenoiser` This block supports text-to-image and image-to-image generation.",
+      "id": "diffusers.modular-block:Flux3DenoiseStep:sha256:293d4931518f901f201fd734ed17feb7b67944b9ef5d5d23ab1d05cc115644b9",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The timesteps to use for the denoising process.",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The number of inference steps to use for the denoising process.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": true,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The image latent tokens to denoise. Shape: (B, seq_len, C)",
+          "kwargsType": null,
+          "name": "latents",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Additional kwargs for attention processors.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "attention_kwargs",
+          "required": false,
+          "type": "dict[builtins.str,typing.Any]"
+        }
+      ],
+      "kind": "loop",
+      "outputs": [
+        {
+          "default": null,
+          "description": "The denoised latents",
+          "kwargsType": null,
+          "name": "latents",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "requiredInputs": [
+        "latents",
+        "num_inference_steps",
+        "timesteps"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
+    },
+    {
+      "className": "Flux3DistilledDenoiseStep",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "transformer",
+          "type": "diffusers.models.transformers.transformer_flux3.Flux3Transformer2DModel"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": null,
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:becd557d6fba84b018e6e288f0189f33fb07660ca967f2ec1a526e1433321b29",
+      "description": "Denoise step that iteratively denoises the latents for the step-distilled (flow-map) FLUX.3 model. Its loop logic is defined in `Flux3DenoiseLoopWrapper.__call__` method At each iteration, it runs blocks defined in `sub_blocks` sequentially: - `Flux3DistilledLoopDenoiser` - `Flux3LoopAfterDenoiser` This block supports text-to-image and image-to-image generation, without classifier-free guidance.",
+      "id": "diffusers.modular-block:Flux3DistilledDenoiseStep:sha256:becd557d6fba84b018e6e288f0189f33fb07660ca967f2ec1a526e1433321b29",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The timesteps to use for the denoising process.",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The number of inference steps to use for the denoising process.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": true,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The image latent tokens to denoise. Shape: (B, seq_len, C)",
+          "kwargsType": null,
+          "name": "latents",
+          "required": true,
+          "type": "torch.Tensor"
+        }
+      ],
+      "kind": "loop",
+      "outputs": [
+        {
+          "default": null,
+          "description": "The denoised latents",
+          "kwargsType": null,
+          "name": "latents",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "requiredInputs": [
+        "latents",
+        "num_inference_steps",
+        "timesteps"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
+    },
+    {
+      "className": "Flux3DistilledLoopDenoiser",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "transformer",
+          "type": "diffusers.models.transformers.transformer_flux3.Flux3Transformer2DModel"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:26a1225a9aeff304817010dce55f8987cdf321f9bcdaa54a6447118477622836",
+      "description": "Step within the denoising loop that predicts the velocity of the image tokens with a step-distilled (flow-map) FLUX.3 transformer: no classifier-free guidance, and each step also passes the transformer the timestep it jumps to. The static conditioning fields (`prompt_embeds`, `txt_ids`, `img_ids`, the reference image tokens and their ids) arrive via `denoiser_input_fields`. This block should be used to compose the `sub_blocks` attribute of a `LoopSequentialPipelineBlocks` object (e.g. `Flux3DistilledDenoiseStep`)",
+      "id": "diffusers.modular-block:Flux3DistilledLoopDenoiser:sha256:26a1225a9aeff304817010dce55f8987cdf321f9bcdaa54a6447118477622836",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The image latent tokens to denoise. Shape: (B, seq_len, C)",
+          "kwargsType": null,
+          "name": "latents",
+          "required": true,
+          "type": "torch.Tensor"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "The predicted velocity for this step",
+          "kwargsType": null,
+          "name": "noise_pred",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "requiredInputs": [
+        "latents"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
+    },
+    {
+      "className": "Flux3DistilledTextEncoderStep",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "text_encoder",
+          "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLForConditionalGeneration"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "tokenizer",
+          "type": "transformers.models.auto.processing_auto.AutoProcessor"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:c51f7b3c37607f3b72b62581146c3ee3326c2ac97da3f088f2fecbded8449223",
+      "description": "Text Encoder step that generates text embeddings using Qwen3-VL to guide the generation with the step-distilled FLUX.3 model, which samples without classifier-free guidance (no negative prompt). Takes one prompt per call; it goes through the chat template and is right-padded to a multiple of 80 tokens.",
+      "id": "diffusers.modular-block:Flux3DistilledTextEncoderStep:sha256:c51f7b3c37607f3b72b62581146c3ee3326c2ac97da3f088f2fecbded8449223",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The prompt to guide the generation (one prompt per call)",
+          "kwargsType": null,
+          "name": "prompt",
+          "required": true,
+          "type": "builtins.str"
+        },
+        {
+          "default": 8192,
+          "description": "Maximum number of prompt tokens; longer prompts are truncated.",
+          "kwargsType": null,
+          "name": "max_sequence_length",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": [
+            4,
+            8,
+            12,
+            16,
+            20,
+            24,
+            28,
+            32
+          ],
+          "description": "Indices of the text-encoder hidden layers whose states are stacked to form the text embeddings",
+          "kwargsType": null,
+          "name": "text_encoder_out_layers",
+          "required": false,
+          "type": "tuple[builtins.int]"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Text embeddings (stacked Qwen3-VL hidden states) used to guide the image generation",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "requiredInputs": [
+        "prompt"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3DistilledTextInputStep",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "transformer",
+          "type": "diffusers.models.transformers.transformer_flux3.Flux3Transformer2DModel"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:509c929045451a5a74d1617d7b28f4bdcf4365a03b011d7601a15709da883bf1",
+      "description": "This step: 1. Determines `batch_size` from `prompt_embeds` and the compute `dtype` from the transformer 2. Repeats the text embeddings to the batch size (batch_size * num_images_per_prompt) For the step-distilled FLUX.3 model, which samples without classifier-free guidance (no negative embeddings).",
+      "id": "diffusers.modular-block:Flux3DistilledTextInputStep:sha256:509c929045451a5a74d1617d7b28f4bdcf4365a03b011d7601a15709da883bf1",
+      "inputs": [
+        {
+          "default": 1,
+          "description": "The number of images to generate per prompt.",
+          "kwargsType": null,
+          "name": "num_images_per_prompt",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Pre-generated text embeddings. Can be generated from text_encoder step.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds",
+          "required": true,
+          "type": "torch.Tensor"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Number of prompts, the final batch size of model inputs should be batch_size * num_images_per_prompt",
+          "kwargsType": null,
+          "name": "batch_size",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Data type of model tensor inputs (the transformer's dtype)",
+          "kwargsType": null,
+          "name": "dtype",
+          "required": false,
+          "type": "torch.dtype"
+        },
+        {
+          "default": null,
+          "description": "Text embeddings used to guide the image generation",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "requiredInputs": [
+        "prompt_embeds"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3DistilledTextRoPEInputsStep",
+      "components": [],
+      "configs": [],
+      "contentHash": "sha256:33975f600a75a81bec941e92c830c54908da8291aca1c73712809194b2ae64f6",
+      "description": "Step that prepares the 4D RoPE position IDs of the text tokens for the step-distilled FLUX.3 model (no negative prompt). Place it after the text encoder step.",
+      "id": "diffusers.modular-block:Flux3DistilledTextRoPEInputsStep:sha256:33975f600a75a81bec941e92c830c54908da8291aca1c73712809194b2ae64f6",
+      "inputs": [
+        {
+          "default": null,
+          "description": "Text embeddings used to guide the generation. Can be generated from text_encoder step.",
+          "kwargsType": null,
+          "name": "prompt_embeds",
+          "required": true,
+          "type": "torch.Tensor"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "4D position IDs (T, H, W, L) for text tokens, used for RoPE calculation.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "txt_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "requiredInputs": [
+        "prompt_embeds"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3ImageCondInputStep",
+      "components": [],
+      "configs": [],
+      "contentHash": "sha256:d29b44b0204df86aadf02df3888cca0fa468eaea1b143693cce46e257fcad553",
+      "description": "Step that expands the reference image latents to the final batch size and sets the generation `height`/`width` when not provided: 1024 x 1024 pixels of area at the first reference image's aspect ratio, on the 16-pixel grid (a given side overrides its default). The reference images keep their own resolution, the generation size is independent of them.",
+      "id": "diffusers.modular-block:Flux3ImageCondInputStep:sha256:d29b44b0204df86aadf02df3888cca0fa468eaea1b143693cce46e257fcad553",
+      "inputs": [
+        {
+          "default": null,
+          "description": "Normalized packed latents of the reference images, one tensor of shape (B, C, height_i//16, width_i//16) per image",
+          "kwargsType": null,
+          "name": "image_cond_latents",
+          "required": true,
+          "type": "list[torch.Tensor]"
+        },
+        {
+          "default": null,
+          "description": "The height in pixels of the generated image; defaults to the first reference image's aspect ratio at the default area",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The width in pixels of the generated image; defaults to the first reference image's aspect ratio at the default area",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": 1,
+          "description": "The number of images to generate per prompt.",
+          "kwargsType": null,
+          "name": "num_images_per_prompt",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "",
+          "kwargsType": null,
+          "name": "batch_size",
+          "required": true,
+          "type": "builtins.int"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Normalized packed latents of the reference images, expanded to the final batch size",
+          "kwargsType": null,
+          "name": "image_cond_latents",
+          "required": false,
+          "type": "list[torch.Tensor]"
+        },
+        {
+          "default": null,
+          "description": "The height in pixels of the generated image",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The width in pixels of the generated image",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        }
+      ],
+      "requiredInputs": [
+        "batch_size",
+        "image_cond_latents"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3LoopAfterDenoiser",
+      "components": [
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": null,
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:0fb9198693e0446d502c73ca1f7d9f9a62b2e46fd9cd3b79c97844fe90b6cf6f",
+      "description": "Step within the denoising loop that updates the latents after denoising. This block should be used to compose the `sub_blocks` attribute of a `LoopSequentialPipelineBlocks` object (e.g. `Flux3DenoiseLoopWrapper`)",
+      "id": "diffusers.modular-block:Flux3LoopAfterDenoiser:sha256:0fb9198693e0446d502c73ca1f7d9f9a62b2e46fd9cd3b79c97844fe90b6cf6f",
+      "inputs": [],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "The denoised latents",
+          "kwargsType": null,
+          "name": "latents",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "requiredInputs": [],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3LoopDenoiser",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "transformer",
+          "type": "diffusers.models.transformers.transformer_flux3.Flux3Transformer2DModel"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "guidance_scale": 3.5
+          },
+          "description": "",
+          "name": "guider",
+          "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:ddacb7808f98947bae1eb2a24caec6fc5142be0c5d1c4262a12d446230c010cd",
+      "description": "Step within the denoising loop that predicts the velocity of the image tokens. The static conditioning fields (`img_ids`, the reference image tokens and their ids) arrive via `denoiser_input_fields`; everything matching the transformer signature is forwarded. This block should be used to compose the `sub_blocks` attribute of a `LoopSequentialPipelineBlocks` object (e.g. `Flux3DenoiseStep`)",
+      "id": "diffusers.modular-block:Flux3LoopDenoiser:sha256:ddacb7808f98947bae1eb2a24caec6fc5142be0c5d1c4262a12d446230c010cd",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The image latent tokens to denoise. Shape: (B, seq_len, C)",
+          "kwargsType": null,
+          "name": "latents",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Additional kwargs for attention processors.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "attention_kwargs",
+          "required": false,
+          "type": "dict[builtins.str,typing.Any]"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "The predicted velocity for this step",
+          "kwargsType": null,
+          "name": "noise_pred",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "requiredInputs": [
+        "latents"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
+    },
+    {
+      "className": "Flux3PrepareImageCondLatentsStep",
+      "components": [],
+      "configs": [],
+      "contentHash": "sha256:34d1f8844d0fe4bd97a835908d123fe40626843af7aa3a102c9f4b38cbbfc54d",
+      "description": "Step that packs the reference image latents into one token sequence with their position ids for FLUX.3 image-to-image generation. The references are told apart on the `l` position axis (-1, -2, ...).",
+      "id": "diffusers.modular-block:Flux3PrepareImageCondLatentsStep:sha256:34d1f8844d0fe4bd97a835908d123fe40626843af7aa3a102c9f4b38cbbfc54d",
+      "inputs": [
+        {
+          "default": null,
+          "description": "Normalized packed latents of the reference images, one tensor of shape (B, C, height_i//16, width_i//16) per image",
+          "kwargsType": null,
+          "name": "image_cond_latents",
+          "required": true,
+          "type": "list[torch.Tensor]"
+        },
+        {
+          "default": null,
+          "description": "The dtype of the model inputs",
+          "kwargsType": null,
+          "name": "dtype",
+          "required": false,
+          "type": "torch.dtype"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Reference image latent tokens, shape (batch_size, cond_seq_len, C)",
+          "kwargsType": "denoiser_input_fields",
+          "name": "image_cond_hidden_states",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Position IDs (T, H, W, L) of the reference image tokens, shape (cond_seq_len, 4)",
+          "kwargsType": "denoiser_input_fields",
+          "name": "image_cond_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "requiredInputs": [
+        "image_cond_latents"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3PrepareLatentsStep",
+      "components": [],
+      "configs": [],
+      "contentHash": "sha256:6cf05e7d49ff2ece98663d03dd007d67c8c1671bfdf5b3c6ffc584e82264b757",
+      "description": "Prepare latents step that prepares the initial noise image latents as tokens, with their position ids.",
+      "id": "diffusers.modular-block:Flux3PrepareLatentsStep:sha256:6cf05e7d49ff2ece98663d03dd007d67c8c1671bfdf5b3c6ffc584e82264b757",
+      "inputs": [
+        {
+          "default": 1024,
+          "description": "The height in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": 1024,
+          "description": "The width in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Pre-generated noisy latents for image generation.",
+          "kwargsType": null,
+          "name": "latents",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": 1,
+          "description": "The number of images to generate per prompt.",
+          "kwargsType": null,
+          "name": "num_images_per_prompt",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Torch generator for deterministic generation.",
+          "kwargsType": null,
+          "name": "generator",
+          "required": false,
+          "type": "torch._C.Generator"
+        },
+        {
+          "default": null,
+          "description": "Number of prompts, the final batch size of model inputs should be `batch_size * num_images_per_prompt`.",
+          "kwargsType": null,
+          "name": "batch_size",
+          "required": true,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The dtype of the model inputs",
+          "kwargsType": null,
+          "name": "dtype",
+          "required": false,
+          "type": "torch.dtype"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "The initial latents to use for the denoising process",
+          "kwargsType": null,
+          "name": "latents",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Position IDs (T, H, W, L) for the image latent tokens (for RoPE)",
+          "kwargsType": "denoiser_input_fields",
+          "name": "img_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "requiredInputs": [
+        "batch_size"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3ProcessImagesInputStep",
+      "components": [
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "vae_latent_channels": 32,
+            "vae_scale_factor": 16
+          },
+          "description": "",
+          "name": "image_processor",
+          "type": "diffusers.modular_pipelines.flux3.image_processor.Flux3ImageProcessor"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:3998bea9bf78f7e42dbf0c31dc14469cbd3c33fec3f2795dc3a9dd4998041fca",
+      "description": "Image preprocess step for FLUX.3 image-to-image generation. Each reference image keeps its own resolution: it is converted to RGB, downscaled only when it exceeds 4096 x 4096 pixels, and center-cropped to a multiple of 16 pixels.",
+      "id": "diffusers.modular-block:Flux3ProcessImagesInputStep:sha256:3998bea9bf78f7e42dbf0c31dc14469cbd3c33fec3f2795dc3a9dd4998041fca",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The reference image or images to condition the generation on; each keeps its own resolution (center-cropped to the 16-pixel grid)",
+          "kwargsType": null,
+          "name": "image",
+          "required": true,
+          "type": "UnionType[PIL.Image.Image,list[PIL.Image.Image]]"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "The preprocessed reference images, one tensor of shape (1, 3, height_i, width_i) in [-1, 1] per image",
+          "kwargsType": null,
+          "name": "condition_images",
+          "required": false,
+          "type": "list[torch.Tensor]"
+        }
+      ],
+      "requiredInputs": [
+        "image"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3SetTimestepsStep",
+      "components": [
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "shift": 6.93
+          },
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:b93c3a4c10d641c20687a185890492cd7fabf4d9f78348422385cc6e4da92cfb",
+      "description": "Step that sets the scheduler's timesteps for FLUX.3 inference (constant shift, configured on the scheduler).",
+      "id": "diffusers.modular-block:Flux3SetTimestepsStep:sha256:b93c3a4c10d641c20687a185890492cd7fabf4d9f78348422385cc6e4da92cfb",
+      "inputs": [
+        {
+          "default": 16,
+          "description": "The number of denoising steps.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Timesteps for the denoising process. (overrides `num_inference_steps` when provided)",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Custom sigmas for the denoising process. (overrides `num_inference_steps` when provided)",
+          "kwargsType": null,
+          "name": "sigmas",
+          "required": false,
+          "type": "list[builtins.float]"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "The timesteps to use for inference",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The number of denoising steps to perform at inference time",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": false,
+          "type": "builtins.int"
+        }
+      ],
+      "requiredInputs": [],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3SetTimestepsStep",
+      "components": [
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "shift": 6.93
+          },
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:f8196bd190f3b3af90b2c7b170e30fb7cbc09c1327c1e6685b841f9e485491f2",
+      "description": "Step that sets the scheduler's timesteps for FLUX.3 inference (constant shift, configured on the scheduler).",
+      "id": "diffusers.modular-block:Flux3SetTimestepsStep:sha256:f8196bd190f3b3af90b2c7b170e30fb7cbc09c1327c1e6685b841f9e485491f2",
+      "inputs": [
+        {
+          "default": 50,
+          "description": "The number of denoising steps.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Timesteps for the denoising process. (overrides `num_inference_steps` when provided)",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Custom sigmas for the denoising process. (overrides `num_inference_steps` when provided)",
+          "kwargsType": null,
+          "name": "sigmas",
+          "required": false,
+          "type": "list[builtins.float]"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "The timesteps to use for inference",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The number of denoising steps to perform at inference time",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": false,
+          "type": "builtins.int"
+        }
+      ],
+      "requiredInputs": [],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3TextEncoderStep",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "text_encoder",
+          "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLForConditionalGeneration"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "tokenizer",
+          "type": "transformers.models.auto.processing_auto.AutoProcessor"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:039d225c2981c3ae29341b05bf4e1601414eb4ca1def26398debfdb14373634b",
+      "description": "Text Encoder step that generates text embeddings using Qwen3-VL to guide the generation. Takes one prompt per call; it goes through the chat template and is right-padded to a multiple of 80 tokens.",
+      "id": "diffusers.modular-block:Flux3TextEncoderStep:sha256:039d225c2981c3ae29341b05bf4e1601414eb4ca1def26398debfdb14373634b",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The prompt to guide the generation (one prompt per call)",
+          "kwargsType": null,
+          "name": "prompt",
+          "required": true,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "The prompt not to guide the generation",
+          "kwargsType": null,
+          "name": "negative_prompt",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": 8192,
+          "description": "Maximum number of prompt tokens; longer prompts are truncated.",
+          "kwargsType": null,
+          "name": "max_sequence_length",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": [
+            4,
+            8,
+            12,
+            16,
+            20,
+            24,
+            28,
+            32
+          ],
+          "description": "Indices of the text-encoder hidden layers whose states are stacked to form the text embeddings",
+          "kwargsType": null,
+          "name": "text_encoder_out_layers",
+          "required": false,
+          "type": "tuple[builtins.int]"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Text embeddings (stacked Qwen3-VL hidden states) used to guide the image generation",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative text embeddings used to guide the image generation",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "requiredInputs": [
+        "prompt"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3TextInputStep",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "transformer",
+          "type": "diffusers.models.transformers.transformer_flux3.Flux3Transformer2DModel"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:c84d85a7936f49cbdd912c009caec937424c31b79dd2b18ca264d2e40d6dc403",
+      "description": "This step: 1. Determines `batch_size` from `prompt_embeds` and the compute `dtype` from the transformer 2. Ensures all text embeddings have consistent batch sizes (batch_size * num_images_per_prompt)",
+      "id": "diffusers.modular-block:Flux3TextInputStep:sha256:c84d85a7936f49cbdd912c009caec937424c31b79dd2b18ca264d2e40d6dc403",
+      "inputs": [
+        {
+          "default": 1,
+          "description": "The number of images to generate per prompt.",
+          "kwargsType": null,
+          "name": "num_images_per_prompt",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Pre-generated text embeddings. Can be generated from text_encoder step.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Pre-generated negative text embeddings. Can be generated from text_encoder step.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Number of prompts, the final batch size of model inputs should be batch_size * num_images_per_prompt",
+          "kwargsType": null,
+          "name": "batch_size",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Data type of model tensor inputs (the transformer's dtype)",
+          "kwargsType": null,
+          "name": "dtype",
+          "required": false,
+          "type": "torch.dtype"
+        },
+        {
+          "default": null,
+          "description": "Text embeddings used to guide the image generation",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative text embeddings used to guide the image generation",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "requiredInputs": [
+        "prompt_embeds"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3TextRoPEInputsStep",
+      "components": [],
+      "configs": [],
+      "contentHash": "sha256:132245bd92dd4284e6a36c49115abb39f2dd6e3ff170a255d5f8e26ea5ea867a",
+      "description": "Step that prepares the 4D RoPE position IDs of the text tokens for FLUX.3 denoising. Place it after the text encoder step.",
+      "id": "diffusers.modular-block:Flux3TextRoPEInputsStep:sha256:132245bd92dd4284e6a36c49115abb39f2dd6e3ff170a255d5f8e26ea5ea867a",
+      "inputs": [
+        {
+          "default": null,
+          "description": "Text embeddings used to guide the generation. Can be generated from text_encoder step.",
+          "kwargsType": null,
+          "name": "prompt_embeds",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative text embeddings used to guide the generation. Can be generated from text_encoder step.",
+          "kwargsType": null,
+          "name": "negative_prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "4D position IDs (T, H, W, L) for text tokens, used for RoPE calculation.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "txt_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "4D position IDs (T, H, W, L) for negative text tokens, used for RoPE calculation.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_txt_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "requiredInputs": [
+        "prompt_embeds"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3UnpackLatentsStep",
+      "components": [],
+      "configs": [],
+      "contentHash": "sha256:a5589e66828149d0baec7039097899ec31219bab644966c64d303eef34f3bc0c",
+      "description": "Step that unpacks the image latent tokens from the denoising step back onto their 2D grid.",
+      "id": "diffusers.modular-block:Flux3UnpackLatentsStep:sha256:a5589e66828149d0baec7039097899ec31219bab644966c64d303eef34f3bc0c",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The denoised image latent tokens from the denoising step. Shape: (B, seq_len, C)",
+          "kwargsType": null,
+          "name": "latents",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The height in pixels of the generated image; must match the size the latents were prepared at",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The width in pixels of the generated image; must match the size the latents were prepared at",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "The denoised latents, unpacked to (B, C, height, width).",
+          "kwargsType": null,
+          "name": "latents",
+          "required": false,
+          "type": "torch.Tensor"
+        }
+      ],
+      "requiredInputs": [
+        "latents"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "Flux3VaeEncoderStep",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "vae",
+          "type": "diffusers.models.autoencoders.autoencoder_kl_flux2.AutoencoderKLFlux2"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:605c718acacb2c97ad3aadf993e3a9659f0a6508bc2795506bf50a336044a81a",
+      "description": "VAE Encoder step that encodes the preprocessed reference images into normalized packed latents, one latent tensor per image.",
+      "id": "diffusers.modular-block:Flux3VaeEncoderStep:sha256:605c718acacb2c97ad3aadf993e3a9659f0a6508bc2795506bf50a336044a81a",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The preprocessed reference images, one tensor of shape (1, 3, height_i, width_i) in [-1, 1] per image",
+          "kwargsType": null,
+          "name": "condition_images",
+          "required": true,
+          "type": "list[torch.Tensor]"
+        }
+      ],
+      "kind": "block",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Normalized packed latents of the reference images, one tensor of shape (1, 128, height_i//16, width_i//16) per image",
+          "kwargsType": null,
+          "name": "image_cond_latents",
+          "required": false,
+          "type": "list[torch.Tensor]"
+        }
+      ],
+      "requiredInputs": [
+        "condition_images"
+      ],
       "schemaVersion": 1,
       "variadicInputs": []
     },
@@ -14075,9 +15338,9 @@
         }
       ],
       "configs": [],
-      "contentHash": "sha256:90b1b32fa3063bea72f05d9822019b415e7db81593bb44a0c4904dcde89d7f17",
+      "contentHash": "sha256:266354838c0318157b3be852742c2e88970c5e2b19002ffafcc66289200e3af3",
       "description": "Text encoder step that tokenizes the prompt(s) with the Krea 2 chat template, runs the Qwen3-VL text encoder, and stacks a fixed set of decoder-layer hidden states per token as the transformer's text conditioning. The negative prompt is encoded the same way when the guider enables CFG.",
-      "id": "diffusers.modular-block:Krea2TextEncoderStep:sha256:90b1b32fa3063bea72f05d9822019b415e7db81593bb44a0c4904dcde89d7f17",
+      "id": "diffusers.modular-block:Krea2TextEncoderStep:sha256:266354838c0318157b3be852742c2e88970c5e2b19002ffafcc66289200e3af3",
       "inputs": [
         {
           "default": null,
@@ -14109,7 +15372,7 @@
         {
           "default": null,
           "description": "Per-prompt stacked text features (B, text_seq_len, num_text_layers, text_hidden_dim).",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "prompt_embeds",
           "required": false,
           "type": "torch.Tensor"
@@ -14117,7 +15380,7 @@
         {
           "default": null,
           "description": "Per-prompt boolean text mask (B, text_seq_len).",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "prompt_embeds_mask",
           "required": false,
           "type": "torch.Tensor"
@@ -14125,7 +15388,7 @@
         {
           "default": null,
           "description": "Per-prompt negative text features (only when guidance is enabled).",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "negative_prompt_embeds",
           "required": false,
           "type": "torch.Tensor"
@@ -14133,7 +15396,7 @@
         {
           "default": null,
           "description": "Per-prompt negative text mask (only when guidance is enabled).",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "negative_prompt_embeds_mask",
           "required": false,
           "type": "torch.Tensor"
@@ -14498,9 +15761,9 @@
         }
       ],
       "configs": [],
-      "contentHash": "sha256:805859bd7416259c4b9315694e1aa389da79ced32f974d949664e7ceeef629ab",
+      "contentHash": "sha256:16568ee13ee7757f99cfa269d821d95efc2f5383b0d4b687b43b7b6d0b5f1c96",
       "description": "Text encoder step for the distilled Krea 2 turbo checkpoint that tokenizes the prompt(s) with the Krea 2 chat template, runs the Qwen3-VL text encoder, and stacks a fixed set of decoder-layer hidden states per token as the transformer's text conditioning. The distilled checkpoint runs without classifier-free guidance, so it takes no negative prompt and has no guider.",
-      "id": "diffusers.modular-block:Krea2TurboTextEncoderStep:sha256:805859bd7416259c4b9315694e1aa389da79ced32f974d949664e7ceeef629ab",
+      "id": "diffusers.modular-block:Krea2TurboTextEncoderStep:sha256:16568ee13ee7757f99cfa269d821d95efc2f5383b0d4b687b43b7b6d0b5f1c96",
       "inputs": [
         {
           "default": null,
@@ -14524,7 +15787,7 @@
         {
           "default": null,
           "description": "Per-prompt stacked text features (B, text_seq_len, num_text_layers, text_hidden_dim).",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "prompt_embeds",
           "required": false,
           "type": "torch.Tensor"
@@ -14532,7 +15795,7 @@
         {
           "default": null,
           "description": "Per-prompt boolean text mask (B, text_seq_len).",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "prompt_embeds_mask",
           "required": false,
           "type": "torch.Tensor"
@@ -21631,9 +22894,9 @@
         }
       ],
       "configs": [],
-      "contentHash": "sha256:ae88b42eb79f56c13905c2f25687e189aab697358a9889472fbde27f5340b64a",
-      "description": "Denormalizes the generated video latents and decodes them into video. The spatial tiling of the video VAE covers the canvas exactly, so the decoded frames need no crop back, but the decode itself runs under float16 autocast even though the VAE weights are float32, and the VAE produces ImageNet-normalized RGB that is reverted here.",
-      "id": "diffusers.modular-block:MiniMaxH3VideoDecodeStep:sha256:ae88b42eb79f56c13905c2f25687e189aab697358a9889472fbde27f5340b64a",
+      "contentHash": "sha256:d1623542dc5f83b58eaf549c3025313226cb6458cbca2c01fe2bb22a6fa7252a",
+      "description": "Denormalizes the generated video latents and decodes them into video. The spatial tiling of the video VAE covers the canvas exactly, so the decoded frames need no crop back, and the VAE produces ImageNet-normalized RGB that is reverted here.",
+      "id": "diffusers.modular-block:MiniMaxH3VideoDecodeStep:sha256:d1623542dc5f83b58eaf549c3025313226cb6458cbca2c01fe2bb22a6fa7252a",
       "inputs": [
         {
           "default": null,
@@ -27357,6 +28620,237 @@
         {
           "creationMethod": "from_pretrained",
           "defaultConfig": null,
+          "description": "The Qwen3-VL text encoder.",
+          "name": "text_encoder",
+          "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "The tokenizer paired with the text encoder.",
+          "name": "tokenizer",
+          "type": "transformers.models.auto.tokenization_auto.AutoTokenizer"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "transformer",
+          "type": "diffusers.models.transformers.transformer_krea2.Krea2Transformer2DModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "vae",
+          "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "vae_scale_factor": 16
+          },
+          "description": "",
+          "name": "image_processor",
+          "type": "diffusers.image_processor.VaeImageProcessor"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:1451dcc3128024f77e49e99996a90c647d3cb6ec8693e7d35004d8a651afb845",
+      "description": "",
+      "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:1451dcc3128024f77e49e99996a90c647d3cb6ec8693e7d35004d8a651afb845",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The prompt or prompts to guide image generation.",
+          "kwargsType": null,
+          "name": "prompt",
+          "required": true,
+          "type": "builtins.str"
+        },
+        {
+          "default": 512,
+          "description": "Maximum sequence length for prompt encoding.",
+          "kwargsType": null,
+          "name": "max_sequence_length",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": 1,
+          "description": "The number of images to generate per prompt.",
+          "kwargsType": null,
+          "name": "num_images_per_prompt",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Pre-generated noisy latents for image generation.",
+          "kwargsType": null,
+          "name": "latents",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": 1024,
+          "description": "The height in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": 1024,
+          "description": "The width in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Torch generator for deterministic generation.",
+          "kwargsType": null,
+          "name": "generator",
+          "required": false,
+          "type": "torch._C.Generator"
+        },
+        {
+          "default": 8,
+          "description": "The number of denoising steps.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": true,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Custom sigma schedule (defaults to a linear ramp).",
+          "kwargsType": null,
+          "name": "sigmas",
+          "required": false,
+          "type": "builtins.list"
+        },
+        {
+          "default": null,
+          "description": "Additional kwargs for attention processors.",
+          "kwargsType": null,
+          "name": "attention_kwargs",
+          "required": false,
+          "type": "dict[builtins.str,typing.Any]"
+        },
+        {
+          "default": "pil",
+          "description": "Output format: 'pil', 'np', 'pt'.",
+          "kwargsType": null,
+          "name": "output_type",
+          "required": false,
+          "type": "builtins.str"
+        }
+      ],
+      "kind": "sequential",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Per-prompt stacked text features (B, text_seq_len, num_text_layers, text_hidden_dim).",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Per-prompt boolean text mask (B, text_seq_len).",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds_mask",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Effective batch size (num prompts * num_images_per_prompt).",
+          "kwargsType": null,
+          "name": "batch_size",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The dtype of the text features.",
+          "kwargsType": null,
+          "name": "dtype",
+          "required": false,
+          "type": "torch.dtype"
+        },
+        {
+          "default": null,
+          "description": "The initial packed image latents (B, image_seq_len, in_channels).",
+          "kwargsType": null,
+          "name": "latents",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Number of image tokens (grid_h * grid_w).",
+          "kwargsType": null,
+          "name": "image_seq_len",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The denoising timesteps.",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Shared rotary coordinates (text_seq_len + grid_h * grid_w, 3).",
+          "kwargsType": null,
+          "name": "position_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Generated images.",
+          "kwargsType": null,
+          "name": "images",
+          "required": false,
+          "type": "list[PIL.Image.Image]"
+        }
+      ],
+      "requiredInputs": [
+        "batch_size",
+        "dtype",
+        "latents",
+        "num_inference_steps",
+        "position_ids",
+        "prompt",
+        "prompt_embeds",
+        "prompt_embeds_mask",
+        "timesteps"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": []
+    },
+    {
+      "className": "SequentialPipelineBlocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
           "description": "",
           "name": "text_encoder",
           "type": "transformers.modeling_utils.PreTrainedModel"
@@ -27994,9 +29488,9 @@
         }
       ],
       "configs": [],
-      "contentHash": "sha256:21a2a6062ea7b9a1b5a0725d1db6e3f24daa203fceb41c43af4bec184af3bf5a",
+      "contentHash": "sha256:1d91d14671c60d93368e99abb9a32cc462af25eda323d0d16a67ed17643074d4",
       "description": "",
-      "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:21a2a6062ea7b9a1b5a0725d1db6e3f24daa203fceb41c43af4bec184af3bf5a",
+      "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:1d91d14671c60d93368e99abb9a32cc462af25eda323d0d16a67ed17643074d4",
       "inputs": [
         {
           "default": null,
@@ -28100,7 +29594,7 @@
         {
           "default": null,
           "description": "Per-prompt stacked text features (B, text_seq_len, num_text_layers, text_hidden_dim).",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "prompt_embeds",
           "required": false,
           "type": "torch.Tensor"
@@ -28108,7 +29602,7 @@
         {
           "default": null,
           "description": "Per-prompt boolean text mask (B, text_seq_len).",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "prompt_embeds_mask",
           "required": false,
           "type": "torch.Tensor"
@@ -28116,7 +29610,7 @@
         {
           "default": null,
           "description": "Per-prompt negative text features (only when guidance is enabled).",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "negative_prompt_embeds",
           "required": false,
           "type": "torch.Tensor"
@@ -28124,7 +29618,7 @@
         {
           "default": null,
           "description": "Per-prompt negative text mask (only when guidance is enabled).",
-          "kwargsType": null,
+          "kwargsType": "denoiser_input_fields",
           "name": "negative_prompt_embeds_mask",
           "required": false,
           "type": "torch.Tensor"
@@ -32989,6 +34483,329 @@
           "defaultConfig": null,
           "description": "",
           "name": "text_encoder",
+          "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLForConditionalGeneration"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "tokenizer",
+          "type": "transformers.models.auto.processing_auto.AutoProcessor"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "vae_latent_channels": 32,
+            "vae_scale_factor": 16
+          },
+          "description": "",
+          "name": "image_processor",
+          "type": "diffusers.modular_pipelines.flux3.image_processor.Flux3ImageProcessor"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "vae",
+          "type": "diffusers.models.autoencoders.autoencoder_kl_flux2.AutoencoderKLFlux2"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "transformer",
+          "type": "diffusers.models.transformers.transformer_flux3.Flux3Transformer2DModel"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "shift": 6.93
+          },
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:49de7678956bfa794e0aede42594eb35b094f4359ad8ec05d6113637e3803044",
+      "description": "",
+      "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:49de7678956bfa794e0aede42594eb35b094f4359ad8ec05d6113637e3803044",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The prompt to guide the generation (one prompt per call)",
+          "kwargsType": null,
+          "name": "prompt",
+          "required": true,
+          "type": "builtins.str"
+        },
+        {
+          "default": 8192,
+          "description": "Maximum number of prompt tokens; longer prompts are truncated.",
+          "kwargsType": null,
+          "name": "max_sequence_length",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": [
+            4,
+            8,
+            12,
+            16,
+            20,
+            24,
+            28,
+            32
+          ],
+          "description": "Indices of the text-encoder hidden layers whose states are stacked to form the text embeddings",
+          "kwargsType": null,
+          "name": "text_encoder_out_layers",
+          "required": false,
+          "type": "tuple[builtins.int]"
+        },
+        {
+          "default": null,
+          "description": "The reference image or images to condition the generation on; each keeps its own resolution (center-cropped to the 16-pixel grid)",
+          "kwargsType": null,
+          "name": "image",
+          "required": true,
+          "type": "UnionType[PIL.Image.Image,list[PIL.Image.Image]]"
+        },
+        {
+          "default": 1,
+          "description": "The number of images to generate per prompt.",
+          "kwargsType": null,
+          "name": "num_images_per_prompt",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The height in pixels of the generated image; defaults to the first reference image's aspect ratio at the default area",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The width in pixels of the generated image; defaults to the first reference image's aspect ratio at the default area",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Pre-generated noisy latents for image generation.",
+          "kwargsType": null,
+          "name": "latents",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Torch generator for deterministic generation.",
+          "kwargsType": null,
+          "name": "generator",
+          "required": false,
+          "type": "torch._C.Generator"
+        },
+        {
+          "default": 16,
+          "description": "The number of denoising steps.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": true,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Timesteps for the denoising process. (overrides `num_inference_steps` when provided)",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Custom sigmas for the denoising process. (overrides `num_inference_steps` when provided)",
+          "kwargsType": null,
+          "name": "sigmas",
+          "required": false,
+          "type": "list[builtins.float]"
+        },
+        {
+          "default": "pil",
+          "description": "Output format: 'pil', 'np', 'pt'.",
+          "kwargsType": null,
+          "name": "output_type",
+          "required": false,
+          "type": "builtins.str"
+        }
+      ],
+      "kind": "sequential",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Text embeddings (stacked Qwen3-VL hidden states) used to guide the image generation",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The preprocessed reference images, one tensor of shape (1, 3, height_i, width_i) in [-1, 1] per image",
+          "kwargsType": null,
+          "name": "condition_images",
+          "required": false,
+          "type": "list[torch.Tensor]"
+        },
+        {
+          "default": null,
+          "description": "Normalized packed latents of the reference images, one tensor of shape (1, 128, height_i//16, width_i//16) per image",
+          "kwargsType": null,
+          "name": "image_cond_latents",
+          "required": false,
+          "type": "list[torch.Tensor]"
+        },
+        {
+          "default": null,
+          "description": "Number of prompts, the final batch size of model inputs should be batch_size * num_images_per_prompt",
+          "kwargsType": null,
+          "name": "batch_size",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Data type of model tensor inputs (the transformer's dtype)",
+          "kwargsType": null,
+          "name": "dtype",
+          "required": false,
+          "type": "torch.dtype"
+        },
+        {
+          "default": null,
+          "description": "The height in pixels of the generated image",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The width in pixels of the generated image",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The initial latents to use for the denoising process",
+          "kwargsType": null,
+          "name": "latents",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Position IDs (T, H, W, L) for the image latent tokens (for RoPE)",
+          "kwargsType": "denoiser_input_fields",
+          "name": "img_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Reference image latent tokens, shape (batch_size, cond_seq_len, C)",
+          "kwargsType": "denoiser_input_fields",
+          "name": "image_cond_hidden_states",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Position IDs (T, H, W, L) of the reference image tokens, shape (cond_seq_len, 4)",
+          "kwargsType": "denoiser_input_fields",
+          "name": "image_cond_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The timesteps to use for inference",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The number of denoising steps to perform at inference time",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "4D position IDs (T, H, W, L) for text tokens, used for RoPE calculation.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "txt_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The predicted velocity for this step",
+          "kwargsType": null,
+          "name": "noise_pred",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The generated images, can be a list of PIL.Image.Image, torch.Tensor or a numpy array",
+          "kwargsType": null,
+          "name": "images",
+          "required": false,
+          "type": "Union[list[PIL.Image.Image],numpy.ndarray,torch.Tensor]"
+        }
+      ],
+      "requiredInputs": [
+        "batch_size",
+        "condition_images",
+        "image",
+        "image_cond_latents",
+        "latents",
+        "num_inference_steps",
+        "prompt",
+        "prompt_embeds",
+        "timesteps"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
+    },
+    {
+      "className": "SequentialPipelineBlocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "text_encoder",
           "type": "transformers.modeling_utils.PreTrainedModel"
         },
         {
@@ -34455,6 +36272,378 @@
       ],
       "schemaVersion": 1,
       "variadicInputs": []
+    },
+    {
+      "className": "SequentialPipelineBlocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "text_encoder",
+          "type": "transformers.models.qwen3.modeling_qwen3.Qwen3Model"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "tokenizer",
+          "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "t5_tokenizer",
+          "type": "transformers.models.t5.tokenization_t5.T5Tokenizer"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "guidance_scale": 4.0
+          },
+          "description": "",
+          "name": "guider",
+          "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "vae",
+          "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "vae_scale_factor": 8
+          },
+          "description": "",
+          "name": "image_processor",
+          "type": "diffusers.image_processor.VaeImageProcessor"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "text_conditioner",
+          "type": "diffusers.models.condition_embedders.condition_embedder_anima.AnimaTextConditioner"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "transformer",
+          "type": "diffusers.models.transformers.transformer_cosmos.CosmosTransformer3DModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:51832da4991c2f97c59b490502257f3d347409655cc64411403ac02f2159061d",
+      "description": "",
+      "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:51832da4991c2f97c59b490502257f3d347409655cc64411403ac02f2159061d",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The prompt or prompts to guide image generation.",
+          "kwargsType": null,
+          "name": "prompt",
+          "required": true,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "The prompt or prompts not to guide the image generation.",
+          "kwargsType": null,
+          "name": "negative_prompt",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": 512,
+          "description": "Maximum sequence length for prompt encoding.",
+          "kwargsType": null,
+          "name": "max_sequence_length",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Reference image(s) for denoising. Can be a single image or list of images.",
+          "kwargsType": null,
+          "name": "image",
+          "required": true,
+          "type": "UnionType[PIL.Image.Image,list[PIL.Image.Image]]"
+        },
+        {
+          "default": null,
+          "description": "The height in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The width in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Torch generator for deterministic generation.",
+          "kwargsType": null,
+          "name": "generator",
+          "required": false,
+          "type": "torch._C.Generator"
+        },
+        {
+          "default": 1,
+          "description": "The number of images to generate per prompt.",
+          "kwargsType": null,
+          "name": "num_images_per_prompt",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": 50,
+          "description": "The number of denoising steps.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": true,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Custom sigmas for the denoising process.",
+          "kwargsType": null,
+          "name": "sigmas",
+          "required": false,
+          "type": "list[builtins.float]"
+        },
+        {
+          "default": 0.9,
+          "description": "Strength for img2img/inpainting.",
+          "kwargsType": null,
+          "name": "strength",
+          "required": false,
+          "type": "builtins.float"
+        },
+        {
+          "default": null,
+          "description": "Pre-generated noisy latents for image generation.",
+          "kwargsType": null,
+          "name": "latents",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": "pil",
+          "description": "Output format: 'pil', 'np', 'pt'.",
+          "kwargsType": null,
+          "name": "output_type",
+          "required": false,
+          "type": "builtins.str"
+        }
+      ],
+      "kind": "sequential",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Qwen prompt embeddings to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "qwen_prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Qwen prompt attention mask to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "qwen_attention_mask",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "T5 prompt token ids to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "t5_input_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "T5 prompt attention mask to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "t5_attention_mask",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative Qwen prompt embeddings to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_qwen_prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative Qwen prompt attention mask to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_qwen_attention_mask",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative T5 prompt token ids to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_t5_input_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative T5 prompt attention mask to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_t5_attention_mask",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Encoded image latents.",
+          "kwargsType": null,
+          "name": "image_latents",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Image height used for generation.",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Image width used for generation.",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Prompt embeddings expanded to the final denoising batch.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative prompt embeddings expanded to the final denoising batch.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Number of input prompts before `num_images_per_prompt` expansion.",
+          "kwargsType": null,
+          "name": "batch_size",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Dtype used by the Anima denoiser.",
+          "kwargsType": null,
+          "name": "dtype",
+          "required": false,
+          "type": "torch.dtype"
+        },
+        {
+          "default": null,
+          "description": "Timestep schedule sliced by strength.",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Number of denoising steps after strength-based slicing.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Noisy latents for the denoising loop.",
+          "kwargsType": null,
+          "name": "latents",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Cosmos padding mask for image latents.",
+          "kwargsType": null,
+          "name": "padding_mask",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Generated images. (tensor output of the VAE decoder)",
+          "kwargsType": null,
+          "name": "images",
+          "required": false,
+          "type": "list[PIL.Image.Image]"
+        }
+      ],
+      "requiredInputs": [
+        "batch_size",
+        "dtype",
+        "image",
+        "image_latents",
+        "images",
+        "latents",
+        "num_inference_steps",
+        "padding_mask",
+        "prompt",
+        "prompt_embeds",
+        "qwen_attention_mask",
+        "qwen_prompt_embeds",
+        "t5_attention_mask",
+        "t5_input_ids",
+        "timesteps"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "The conditional model inputs for the Anima denoiser.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
     },
     {
       "className": "SequentialPipelineBlocks",
@@ -36333,6 +38522,270 @@
           "defaultConfig": null,
           "description": "",
           "name": "text_encoder",
+          "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLForConditionalGeneration"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "tokenizer",
+          "type": "transformers.models.auto.processing_auto.AutoProcessor"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "transformer",
+          "type": "diffusers.models.transformers.transformer_flux3.Flux3Transformer2DModel"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "shift": 6.93
+          },
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "vae",
+          "type": "diffusers.models.autoencoders.autoencoder_kl_flux2.AutoencoderKLFlux2"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "vae_latent_channels": 32,
+            "vae_scale_factor": 16
+          },
+          "description": "",
+          "name": "image_processor",
+          "type": "diffusers.modular_pipelines.flux3.image_processor.Flux3ImageProcessor"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:5cb8cace29e96f758ab2b46dd0658db68429b3f5d9d4b5e7df20cedc7af7974a",
+      "description": "",
+      "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:5cb8cace29e96f758ab2b46dd0658db68429b3f5d9d4b5e7df20cedc7af7974a",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The prompt to guide the generation (one prompt per call)",
+          "kwargsType": null,
+          "name": "prompt",
+          "required": true,
+          "type": "builtins.str"
+        },
+        {
+          "default": 8192,
+          "description": "Maximum number of prompt tokens; longer prompts are truncated.",
+          "kwargsType": null,
+          "name": "max_sequence_length",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": [
+            4,
+            8,
+            12,
+            16,
+            20,
+            24,
+            28,
+            32
+          ],
+          "description": "Indices of the text-encoder hidden layers whose states are stacked to form the text embeddings",
+          "kwargsType": null,
+          "name": "text_encoder_out_layers",
+          "required": false,
+          "type": "tuple[builtins.int]"
+        },
+        {
+          "default": 1,
+          "description": "The number of images to generate per prompt.",
+          "kwargsType": null,
+          "name": "num_images_per_prompt",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": 1024,
+          "description": "The height in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": 1024,
+          "description": "The width in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Pre-generated noisy latents for image generation.",
+          "kwargsType": null,
+          "name": "latents",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Torch generator for deterministic generation.",
+          "kwargsType": null,
+          "name": "generator",
+          "required": false,
+          "type": "torch._C.Generator"
+        },
+        {
+          "default": 16,
+          "description": "The number of denoising steps.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": true,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Timesteps for the denoising process. (overrides `num_inference_steps` when provided)",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Custom sigmas for the denoising process. (overrides `num_inference_steps` when provided)",
+          "kwargsType": null,
+          "name": "sigmas",
+          "required": false,
+          "type": "list[builtins.float]"
+        },
+        {
+          "default": "pil",
+          "description": "Output format: 'pil', 'np', 'pt'.",
+          "kwargsType": null,
+          "name": "output_type",
+          "required": false,
+          "type": "builtins.str"
+        }
+      ],
+      "kind": "sequential",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Text embeddings (stacked Qwen3-VL hidden states) used to guide the image generation",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Number of prompts, the final batch size of model inputs should be batch_size * num_images_per_prompt",
+          "kwargsType": null,
+          "name": "batch_size",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Data type of model tensor inputs (the transformer's dtype)",
+          "kwargsType": null,
+          "name": "dtype",
+          "required": false,
+          "type": "torch.dtype"
+        },
+        {
+          "default": null,
+          "description": "The initial latents to use for the denoising process",
+          "kwargsType": null,
+          "name": "latents",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Position IDs (T, H, W, L) for the image latent tokens (for RoPE)",
+          "kwargsType": "denoiser_input_fields",
+          "name": "img_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The timesteps to use for inference",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The number of denoising steps to perform at inference time",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "4D position IDs (T, H, W, L) for text tokens, used for RoPE calculation.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "txt_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The predicted velocity for this step",
+          "kwargsType": null,
+          "name": "noise_pred",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The generated images, can be a list of PIL.Image.Image, torch.Tensor or a numpy array",
+          "kwargsType": null,
+          "name": "images",
+          "required": false,
+          "type": "Union[list[PIL.Image.Image],numpy.ndarray,torch.Tensor]"
+        }
+      ],
+      "requiredInputs": [
+        "batch_size",
+        "latents",
+        "num_inference_steps",
+        "prompt",
+        "prompt_embeds",
+        "timesteps"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
+    },
+    {
+      "className": "SequentialPipelineBlocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "text_encoder",
           "type": "transformers.models.clip.modeling_clip.CLIPTextModel"
         },
         {
@@ -37562,352 +40015,6 @@
           "defaultConfig": null,
           "description": "",
           "name": "text_encoder",
-          "type": "transformers.models.qwen3.modeling_qwen3.Qwen3Model"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "tokenizer",
-          "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "t5_tokenizer",
-          "type": "transformers.models.t5.tokenization_t5.T5Tokenizer"
-        },
-        {
-          "creationMethod": "from_config",
-          "defaultConfig": {
-            "guidance_scale": 4.0
-          },
-          "description": "",
-          "name": "guider",
-          "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "text_conditioner",
-          "type": "diffusers.models.condition_embedders.condition_embedder_anima.AnimaTextConditioner"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "transformer",
-          "type": "diffusers.models.transformers.transformer_cosmos.CosmosTransformer3DModel"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "scheduler",
-          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "vae",
-          "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
-        },
-        {
-          "creationMethod": "from_config",
-          "defaultConfig": {
-            "vae_scale_factor": 8
-          },
-          "description": "",
-          "name": "image_processor",
-          "type": "diffusers.image_processor.VaeImageProcessor"
-        }
-      ],
-      "configs": [],
-      "contentHash": "sha256:6b74633cff74b0599d70c8a68220bd6edcee91d769ab715b04917e702ed34a68",
-      "description": "",
-      "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:6b74633cff74b0599d70c8a68220bd6edcee91d769ab715b04917e702ed34a68",
-      "inputs": [
-        {
-          "default": null,
-          "description": "The prompt or prompts to guide image generation.",
-          "kwargsType": null,
-          "name": "prompt",
-          "required": true,
-          "type": "builtins.str"
-        },
-        {
-          "default": null,
-          "description": "The prompt or prompts not to guide the image generation.",
-          "kwargsType": null,
-          "name": "negative_prompt",
-          "required": false,
-          "type": "builtins.str"
-        },
-        {
-          "default": 512,
-          "description": "Maximum sequence length for prompt encoding.",
-          "kwargsType": null,
-          "name": "max_sequence_length",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": 1,
-          "description": "The number of images to generate per prompt.",
-          "kwargsType": null,
-          "name": "num_images_per_prompt",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "The height in pixels of the generated image.",
-          "kwargsType": null,
-          "name": "height",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "The width in pixels of the generated image.",
-          "kwargsType": null,
-          "name": "width",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Pre-generated noisy latents for image generation.",
-          "kwargsType": null,
-          "name": "latents",
-          "required": true,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Torch generator for deterministic generation.",
-          "kwargsType": null,
-          "name": "generator",
-          "required": false,
-          "type": "torch._C.Generator"
-        },
-        {
-          "default": 50,
-          "description": "The number of denoising steps.",
-          "kwargsType": null,
-          "name": "num_inference_steps",
-          "required": true,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Custom sigmas for the denoising process.",
-          "kwargsType": null,
-          "name": "sigmas",
-          "required": false,
-          "type": "list[builtins.float]"
-        },
-        {
-          "default": "pil",
-          "description": "Output format: 'pil', 'np', 'pt'.",
-          "kwargsType": null,
-          "name": "output_type",
-          "required": false,
-          "type": "builtins.str"
-        }
-      ],
-      "kind": "sequential",
-      "outputs": [
-        {
-          "default": null,
-          "description": "Qwen prompt embeddings to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "qwen_prompt_embeds",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Qwen prompt attention mask to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "qwen_attention_mask",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "T5 prompt token ids to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "t5_input_ids",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "T5 prompt attention mask to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "t5_attention_mask",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Negative Qwen prompt embeddings to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "negative_qwen_prompt_embeds",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Negative Qwen prompt attention mask to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "negative_qwen_attention_mask",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Negative T5 prompt token ids to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "negative_t5_input_ids",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Negative T5 prompt attention mask to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "negative_t5_attention_mask",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Prompt embeddings expanded to the final denoising batch.",
-          "kwargsType": "denoiser_input_fields",
-          "name": "prompt_embeds",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Negative prompt embeddings expanded to the final denoising batch.",
-          "kwargsType": "denoiser_input_fields",
-          "name": "negative_prompt_embeds",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Number of input prompts before `num_images_per_prompt` expansion.",
-          "kwargsType": null,
-          "name": "batch_size",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Dtype used by the Anima denoiser.",
-          "kwargsType": null,
-          "name": "dtype",
-          "required": false,
-          "type": "torch.dtype"
-        },
-        {
-          "default": null,
-          "description": "Image height used for generation.",
-          "kwargsType": null,
-          "name": "height",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Image width used for generation.",
-          "kwargsType": null,
-          "name": "width",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Noisy latents for the denoising process.",
-          "kwargsType": null,
-          "name": "latents",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Cosmos padding mask for image latents.",
-          "kwargsType": null,
-          "name": "padding_mask",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Timesteps for the denoising loop.",
-          "kwargsType": null,
-          "name": "timesteps",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Number of denoising steps.",
-          "kwargsType": null,
-          "name": "num_inference_steps",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Generated images. (tensor output of the VAE decoder)",
-          "kwargsType": null,
-          "name": "images",
-          "required": false,
-          "type": "list[PIL.Image.Image]"
-        }
-      ],
-      "requiredInputs": [
-        "batch_size",
-        "dtype",
-        "images",
-        "latents",
-        "num_inference_steps",
-        "padding_mask",
-        "prompt",
-        "prompt_embeds",
-        "qwen_attention_mask",
-        "qwen_prompt_embeds",
-        "t5_attention_mask",
-        "t5_input_ids",
-        "timesteps"
-      ],
-      "schemaVersion": 1,
-      "variadicInputs": [
-        {
-          "default": null,
-          "description": "The conditional model inputs for the Anima denoiser.",
-          "kwargsType": "denoiser_input_fields",
-          "required": false,
-          "type": "opaque"
-        }
-      ]
-    },
-    {
-      "className": "SequentialPipelineBlocks",
-      "components": [
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "text_encoder",
           "type": "transformers.models.qwen3.modeling_qwen3.Qwen3ForCausalLM"
         },
         {
@@ -39105,237 +41212,6 @@
         "prompt_embeds",
         "timesteps",
         "txt_ids"
-      ],
-      "schemaVersion": 1,
-      "variadicInputs": []
-    },
-    {
-      "className": "SequentialPipelineBlocks",
-      "components": [
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "The Qwen3-VL text encoder.",
-          "name": "text_encoder",
-          "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLModel"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "The tokenizer paired with the text encoder.",
-          "name": "tokenizer",
-          "type": "transformers.models.auto.tokenization_auto.AutoTokenizer"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "transformer",
-          "type": "diffusers.models.transformers.transformer_krea2.Krea2Transformer2DModel"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "scheduler",
-          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "vae",
-          "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
-        },
-        {
-          "creationMethod": "from_config",
-          "defaultConfig": {
-            "vae_scale_factor": 16
-          },
-          "description": "",
-          "name": "image_processor",
-          "type": "diffusers.image_processor.VaeImageProcessor"
-        }
-      ],
-      "configs": [],
-      "contentHash": "sha256:7be3b3d4de4ec29ce0040ef57d70d46670743988cdcb58dc980a150462e5a355",
-      "description": "",
-      "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:7be3b3d4de4ec29ce0040ef57d70d46670743988cdcb58dc980a150462e5a355",
-      "inputs": [
-        {
-          "default": null,
-          "description": "The prompt or prompts to guide image generation.",
-          "kwargsType": null,
-          "name": "prompt",
-          "required": true,
-          "type": "builtins.str"
-        },
-        {
-          "default": 512,
-          "description": "Maximum sequence length for prompt encoding.",
-          "kwargsType": null,
-          "name": "max_sequence_length",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": 1,
-          "description": "The number of images to generate per prompt.",
-          "kwargsType": null,
-          "name": "num_images_per_prompt",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Pre-generated noisy latents for image generation.",
-          "kwargsType": null,
-          "name": "latents",
-          "required": true,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": 1024,
-          "description": "The height in pixels of the generated image.",
-          "kwargsType": null,
-          "name": "height",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": 1024,
-          "description": "The width in pixels of the generated image.",
-          "kwargsType": null,
-          "name": "width",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Torch generator for deterministic generation.",
-          "kwargsType": null,
-          "name": "generator",
-          "required": false,
-          "type": "torch._C.Generator"
-        },
-        {
-          "default": 8,
-          "description": "The number of denoising steps.",
-          "kwargsType": null,
-          "name": "num_inference_steps",
-          "required": true,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Custom sigma schedule (defaults to a linear ramp).",
-          "kwargsType": null,
-          "name": "sigmas",
-          "required": false,
-          "type": "builtins.list"
-        },
-        {
-          "default": null,
-          "description": "Additional kwargs for attention processors.",
-          "kwargsType": null,
-          "name": "attention_kwargs",
-          "required": false,
-          "type": "dict[builtins.str,typing.Any]"
-        },
-        {
-          "default": "pil",
-          "description": "Output format: 'pil', 'np', 'pt'.",
-          "kwargsType": null,
-          "name": "output_type",
-          "required": false,
-          "type": "builtins.str"
-        }
-      ],
-      "kind": "sequential",
-      "outputs": [
-        {
-          "default": null,
-          "description": "Per-prompt stacked text features (B, text_seq_len, num_text_layers, text_hidden_dim).",
-          "kwargsType": null,
-          "name": "prompt_embeds",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Per-prompt boolean text mask (B, text_seq_len).",
-          "kwargsType": null,
-          "name": "prompt_embeds_mask",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Effective batch size (num prompts * num_images_per_prompt).",
-          "kwargsType": null,
-          "name": "batch_size",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "The dtype of the text features.",
-          "kwargsType": null,
-          "name": "dtype",
-          "required": false,
-          "type": "torch.dtype"
-        },
-        {
-          "default": null,
-          "description": "The initial packed image latents (B, image_seq_len, in_channels).",
-          "kwargsType": null,
-          "name": "latents",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Number of image tokens (grid_h * grid_w).",
-          "kwargsType": null,
-          "name": "image_seq_len",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "The denoising timesteps.",
-          "kwargsType": null,
-          "name": "timesteps",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Shared rotary coordinates (text_seq_len + grid_h * grid_w, 3).",
-          "kwargsType": null,
-          "name": "position_ids",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Generated images.",
-          "kwargsType": null,
-          "name": "images",
-          "required": false,
-          "type": "list[PIL.Image.Image]"
-        }
-      ],
-      "requiredInputs": [
-        "batch_size",
-        "dtype",
-        "latents",
-        "num_inference_steps",
-        "position_ids",
-        "prompt",
-        "prompt_embeds",
-        "prompt_embeds_mask",
-        "timesteps"
       ],
       "schemaVersion": 1,
       "variadicInputs": []
@@ -44770,6 +46646,311 @@
           "defaultConfig": null,
           "description": "",
           "name": "text_encoder",
+          "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLForConditionalGeneration"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "tokenizer",
+          "type": "transformers.models.auto.processing_auto.AutoProcessor"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "transformer",
+          "type": "diffusers.models.transformers.transformer_flux3.Flux3Transformer2DModel"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "shift": 6.93
+          },
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "guidance_scale": 3.5
+          },
+          "description": "",
+          "name": "guider",
+          "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "vae",
+          "type": "diffusers.models.autoencoders.autoencoder_kl_flux2.AutoencoderKLFlux2"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "vae_latent_channels": 32,
+            "vae_scale_factor": 16
+          },
+          "description": "",
+          "name": "image_processor",
+          "type": "diffusers.modular_pipelines.flux3.image_processor.Flux3ImageProcessor"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:94b10913751f219df5310bc8318ab4fcf07a4373c3876e894085d4239acc6543",
+      "description": "",
+      "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:94b10913751f219df5310bc8318ab4fcf07a4373c3876e894085d4239acc6543",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The prompt to guide the generation (one prompt per call)",
+          "kwargsType": null,
+          "name": "prompt",
+          "required": true,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "The prompt not to guide the generation",
+          "kwargsType": null,
+          "name": "negative_prompt",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": 8192,
+          "description": "Maximum number of prompt tokens; longer prompts are truncated.",
+          "kwargsType": null,
+          "name": "max_sequence_length",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": [
+            4,
+            8,
+            12,
+            16,
+            20,
+            24,
+            28,
+            32
+          ],
+          "description": "Indices of the text-encoder hidden layers whose states are stacked to form the text embeddings",
+          "kwargsType": null,
+          "name": "text_encoder_out_layers",
+          "required": false,
+          "type": "tuple[builtins.int]"
+        },
+        {
+          "default": 1,
+          "description": "The number of images to generate per prompt.",
+          "kwargsType": null,
+          "name": "num_images_per_prompt",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": 1024,
+          "description": "The height in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": 1024,
+          "description": "The width in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Pre-generated noisy latents for image generation.",
+          "kwargsType": null,
+          "name": "latents",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Torch generator for deterministic generation.",
+          "kwargsType": null,
+          "name": "generator",
+          "required": false,
+          "type": "torch._C.Generator"
+        },
+        {
+          "default": 50,
+          "description": "The number of denoising steps.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": true,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Timesteps for the denoising process. (overrides `num_inference_steps` when provided)",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Custom sigmas for the denoising process. (overrides `num_inference_steps` when provided)",
+          "kwargsType": null,
+          "name": "sigmas",
+          "required": false,
+          "type": "list[builtins.float]"
+        },
+        {
+          "default": null,
+          "description": "Additional kwargs for attention processors.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "attention_kwargs",
+          "required": false,
+          "type": "dict[builtins.str,typing.Any]"
+        },
+        {
+          "default": "pil",
+          "description": "Output format: 'pil', 'np', 'pt'.",
+          "kwargsType": null,
+          "name": "output_type",
+          "required": false,
+          "type": "builtins.str"
+        }
+      ],
+      "kind": "sequential",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Text embeddings (stacked Qwen3-VL hidden states) used to guide the image generation",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative text embeddings used to guide the image generation",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Number of prompts, the final batch size of model inputs should be batch_size * num_images_per_prompt",
+          "kwargsType": null,
+          "name": "batch_size",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Data type of model tensor inputs (the transformer's dtype)",
+          "kwargsType": null,
+          "name": "dtype",
+          "required": false,
+          "type": "torch.dtype"
+        },
+        {
+          "default": null,
+          "description": "The initial latents to use for the denoising process",
+          "kwargsType": null,
+          "name": "latents",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Position IDs (T, H, W, L) for the image latent tokens (for RoPE)",
+          "kwargsType": "denoiser_input_fields",
+          "name": "img_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The timesteps to use for inference",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The number of denoising steps to perform at inference time",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "4D position IDs (T, H, W, L) for text tokens, used for RoPE calculation.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "txt_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "4D position IDs (T, H, W, L) for negative text tokens, used for RoPE calculation.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_txt_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The predicted velocity for this step",
+          "kwargsType": null,
+          "name": "noise_pred",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The generated images, can be a list of PIL.Image.Image, torch.Tensor or a numpy array",
+          "kwargsType": null,
+          "name": "images",
+          "required": false,
+          "type": "Union[list[PIL.Image.Image],numpy.ndarray,torch.Tensor]"
+        }
+      ],
+      "requiredInputs": [
+        "batch_size",
+        "latents",
+        "num_inference_steps",
+        "prompt",
+        "prompt_embeds",
+        "timesteps"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
+    },
+    {
+      "className": "SequentialPipelineBlocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "text_encoder",
           "type": "transformers.models.clip.modeling_clip.CLIPTextModel"
         },
         {
@@ -48775,378 +50956,6 @@
         {
           "default": null,
           "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
-          "kwargsType": "denoiser_input_fields",
-          "required": false,
-          "type": "opaque"
-        }
-      ]
-    },
-    {
-      "className": "SequentialPipelineBlocks",
-      "components": [
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "text_encoder",
-          "type": "transformers.models.qwen3.modeling_qwen3.Qwen3Model"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "tokenizer",
-          "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "t5_tokenizer",
-          "type": "transformers.models.t5.tokenization_t5.T5Tokenizer"
-        },
-        {
-          "creationMethod": "from_config",
-          "defaultConfig": {
-            "guidance_scale": 4.0
-          },
-          "description": "",
-          "name": "guider",
-          "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "vae",
-          "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
-        },
-        {
-          "creationMethod": "from_config",
-          "defaultConfig": {
-            "vae_scale_factor": 8
-          },
-          "description": "",
-          "name": "image_processor",
-          "type": "diffusers.image_processor.VaeImageProcessor"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "text_conditioner",
-          "type": "diffusers.models.condition_embedders.condition_embedder_anima.AnimaTextConditioner"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "transformer",
-          "type": "diffusers.models.transformers.transformer_cosmos.CosmosTransformer3DModel"
-        },
-        {
-          "creationMethod": "from_pretrained",
-          "defaultConfig": null,
-          "description": "",
-          "name": "scheduler",
-          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
-        }
-      ],
-      "configs": [],
-      "contentHash": "sha256:a1372f3ca54f698b6337418286e142a66c371290a799af255d0a6c474dfc52aa",
-      "description": "",
-      "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:a1372f3ca54f698b6337418286e142a66c371290a799af255d0a6c474dfc52aa",
-      "inputs": [
-        {
-          "default": null,
-          "description": "The prompt or prompts to guide image generation.",
-          "kwargsType": null,
-          "name": "prompt",
-          "required": true,
-          "type": "builtins.str"
-        },
-        {
-          "default": null,
-          "description": "The prompt or prompts not to guide the image generation.",
-          "kwargsType": null,
-          "name": "negative_prompt",
-          "required": false,
-          "type": "builtins.str"
-        },
-        {
-          "default": 512,
-          "description": "Maximum sequence length for prompt encoding.",
-          "kwargsType": null,
-          "name": "max_sequence_length",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Reference image(s) for denoising. Can be a single image or list of images.",
-          "kwargsType": null,
-          "name": "image",
-          "required": true,
-          "type": "UnionType[PIL.Image.Image,list[PIL.Image.Image]]"
-        },
-        {
-          "default": null,
-          "description": "The height in pixels of the generated image.",
-          "kwargsType": null,
-          "name": "height",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "The width in pixels of the generated image.",
-          "kwargsType": null,
-          "name": "width",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Torch generator for deterministic generation.",
-          "kwargsType": null,
-          "name": "generator",
-          "required": false,
-          "type": "torch._C.Generator"
-        },
-        {
-          "default": 1,
-          "description": "The number of images to generate per prompt.",
-          "kwargsType": null,
-          "name": "num_images_per_prompt",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": 50,
-          "description": "The number of denoising steps.",
-          "kwargsType": null,
-          "name": "num_inference_steps",
-          "required": true,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Custom sigmas for the denoising process.",
-          "kwargsType": null,
-          "name": "sigmas",
-          "required": false,
-          "type": "list[builtins.float]"
-        },
-        {
-          "default": 0.9,
-          "description": "Strength for img2img/inpainting.",
-          "kwargsType": null,
-          "name": "strength",
-          "required": false,
-          "type": "builtins.float"
-        },
-        {
-          "default": null,
-          "description": "Pre-generated noisy latents for image generation.",
-          "kwargsType": null,
-          "name": "latents",
-          "required": true,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": "pil",
-          "description": "Output format: 'pil', 'np', 'pt'.",
-          "kwargsType": null,
-          "name": "output_type",
-          "required": false,
-          "type": "builtins.str"
-        }
-      ],
-      "kind": "sequential",
-      "outputs": [
-        {
-          "default": null,
-          "description": "Qwen prompt embeddings to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "qwen_prompt_embeds",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Qwen prompt attention mask to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "qwen_attention_mask",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "T5 prompt token ids to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "t5_input_ids",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "T5 prompt attention mask to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "t5_attention_mask",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Negative Qwen prompt embeddings to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "negative_qwen_prompt_embeds",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Negative Qwen prompt attention mask to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "negative_qwen_attention_mask",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Negative T5 prompt token ids to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "negative_t5_input_ids",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Negative T5 prompt attention mask to be consumed by the Anima text conditioner.",
-          "kwargsType": null,
-          "name": "negative_t5_attention_mask",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Encoded image latents.",
-          "kwargsType": null,
-          "name": "image_latents",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Image height used for generation.",
-          "kwargsType": null,
-          "name": "height",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Image width used for generation.",
-          "kwargsType": null,
-          "name": "width",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Prompt embeddings expanded to the final denoising batch.",
-          "kwargsType": "denoiser_input_fields",
-          "name": "prompt_embeds",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Negative prompt embeddings expanded to the final denoising batch.",
-          "kwargsType": "denoiser_input_fields",
-          "name": "negative_prompt_embeds",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Number of input prompts before `num_images_per_prompt` expansion.",
-          "kwargsType": null,
-          "name": "batch_size",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Dtype used by the Anima denoiser.",
-          "kwargsType": null,
-          "name": "dtype",
-          "required": false,
-          "type": "torch.dtype"
-        },
-        {
-          "default": null,
-          "description": "Timestep schedule sliced by strength.",
-          "kwargsType": null,
-          "name": "timesteps",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Number of denoising steps after strength-based slicing.",
-          "kwargsType": null,
-          "name": "num_inference_steps",
-          "required": false,
-          "type": "builtins.int"
-        },
-        {
-          "default": null,
-          "description": "Noisy latents for the denoising loop.",
-          "kwargsType": null,
-          "name": "latents",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Cosmos padding mask for image latents.",
-          "kwargsType": null,
-          "name": "padding_mask",
-          "required": false,
-          "type": "torch.Tensor"
-        },
-        {
-          "default": null,
-          "description": "Generated images. (tensor output of the VAE decoder)",
-          "kwargsType": null,
-          "name": "images",
-          "required": false,
-          "type": "list[PIL.Image.Image]"
-        }
-      ],
-      "requiredInputs": [
-        "batch_size",
-        "dtype",
-        "image",
-        "image_latents",
-        "images",
-        "latents",
-        "num_inference_steps",
-        "padding_mask",
-        "prompt",
-        "prompt_embeds",
-        "qwen_attention_mask",
-        "qwen_prompt_embeds",
-        "t5_attention_mask",
-        "t5_input_ids",
-        "timesteps"
-      ],
-      "schemaVersion": 1,
-      "variadicInputs": [
-        {
-          "default": null,
-          "description": "The conditional model inputs for the Anima denoiser.",
           "kwargsType": "denoiser_input_fields",
           "required": false,
           "type": "opaque"
@@ -56513,6 +58322,370 @@
           "defaultConfig": null,
           "description": "",
           "name": "text_encoder",
+          "type": "transformers.models.qwen3_vl.modeling_qwen3_vl.Qwen3VLForConditionalGeneration"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "tokenizer",
+          "type": "transformers.models.auto.processing_auto.AutoProcessor"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "vae_latent_channels": 32,
+            "vae_scale_factor": 16
+          },
+          "description": "",
+          "name": "image_processor",
+          "type": "diffusers.modular_pipelines.flux3.image_processor.Flux3ImageProcessor"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "vae",
+          "type": "diffusers.models.autoencoders.autoencoder_kl_flux2.AutoencoderKLFlux2"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "transformer",
+          "type": "diffusers.models.transformers.transformer_flux3.Flux3Transformer2DModel"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "shift": 6.93
+          },
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "guidance_scale": 3.5
+          },
+          "description": "",
+          "name": "guider",
+          "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:cb5d54bfd61ba0bbbb6328b845f8a3acb1f0bc1cb8ef5b940ee9e86913fabead",
+      "description": "",
+      "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:cb5d54bfd61ba0bbbb6328b845f8a3acb1f0bc1cb8ef5b940ee9e86913fabead",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The prompt to guide the generation (one prompt per call)",
+          "kwargsType": null,
+          "name": "prompt",
+          "required": true,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "The prompt not to guide the generation",
+          "kwargsType": null,
+          "name": "negative_prompt",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": 8192,
+          "description": "Maximum number of prompt tokens; longer prompts are truncated.",
+          "kwargsType": null,
+          "name": "max_sequence_length",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": [
+            4,
+            8,
+            12,
+            16,
+            20,
+            24,
+            28,
+            32
+          ],
+          "description": "Indices of the text-encoder hidden layers whose states are stacked to form the text embeddings",
+          "kwargsType": null,
+          "name": "text_encoder_out_layers",
+          "required": false,
+          "type": "tuple[builtins.int]"
+        },
+        {
+          "default": null,
+          "description": "The reference image or images to condition the generation on; each keeps its own resolution (center-cropped to the 16-pixel grid)",
+          "kwargsType": null,
+          "name": "image",
+          "required": true,
+          "type": "UnionType[PIL.Image.Image,list[PIL.Image.Image]]"
+        },
+        {
+          "default": 1,
+          "description": "The number of images to generate per prompt.",
+          "kwargsType": null,
+          "name": "num_images_per_prompt",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The height in pixels of the generated image; defaults to the first reference image's aspect ratio at the default area",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The width in pixels of the generated image; defaults to the first reference image's aspect ratio at the default area",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Pre-generated noisy latents for image generation.",
+          "kwargsType": null,
+          "name": "latents",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Torch generator for deterministic generation.",
+          "kwargsType": null,
+          "name": "generator",
+          "required": false,
+          "type": "torch._C.Generator"
+        },
+        {
+          "default": 50,
+          "description": "The number of denoising steps.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": true,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Timesteps for the denoising process. (overrides `num_inference_steps` when provided)",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Custom sigmas for the denoising process. (overrides `num_inference_steps` when provided)",
+          "kwargsType": null,
+          "name": "sigmas",
+          "required": false,
+          "type": "list[builtins.float]"
+        },
+        {
+          "default": null,
+          "description": "Additional kwargs for attention processors.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "attention_kwargs",
+          "required": false,
+          "type": "dict[builtins.str,typing.Any]"
+        },
+        {
+          "default": "pil",
+          "description": "Output format: 'pil', 'np', 'pt'.",
+          "kwargsType": null,
+          "name": "output_type",
+          "required": false,
+          "type": "builtins.str"
+        }
+      ],
+      "kind": "sequential",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Text embeddings (stacked Qwen3-VL hidden states) used to guide the image generation",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative text embeddings used to guide the image generation",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The preprocessed reference images, one tensor of shape (1, 3, height_i, width_i) in [-1, 1] per image",
+          "kwargsType": null,
+          "name": "condition_images",
+          "required": false,
+          "type": "list[torch.Tensor]"
+        },
+        {
+          "default": null,
+          "description": "Normalized packed latents of the reference images, one tensor of shape (1, 128, height_i//16, width_i//16) per image",
+          "kwargsType": null,
+          "name": "image_cond_latents",
+          "required": false,
+          "type": "list[torch.Tensor]"
+        },
+        {
+          "default": null,
+          "description": "Number of prompts, the final batch size of model inputs should be batch_size * num_images_per_prompt",
+          "kwargsType": null,
+          "name": "batch_size",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Data type of model tensor inputs (the transformer's dtype)",
+          "kwargsType": null,
+          "name": "dtype",
+          "required": false,
+          "type": "torch.dtype"
+        },
+        {
+          "default": null,
+          "description": "The height in pixels of the generated image",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The width in pixels of the generated image",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The initial latents to use for the denoising process",
+          "kwargsType": null,
+          "name": "latents",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Position IDs (T, H, W, L) for the image latent tokens (for RoPE)",
+          "kwargsType": "denoiser_input_fields",
+          "name": "img_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Reference image latent tokens, shape (batch_size, cond_seq_len, C)",
+          "kwargsType": "denoiser_input_fields",
+          "name": "image_cond_hidden_states",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Position IDs (T, H, W, L) of the reference image tokens, shape (cond_seq_len, 4)",
+          "kwargsType": "denoiser_input_fields",
+          "name": "image_cond_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The timesteps to use for inference",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The number of denoising steps to perform at inference time",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "4D position IDs (T, H, W, L) for text tokens, used for RoPE calculation.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "txt_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "4D position IDs (T, H, W, L) for negative text tokens, used for RoPE calculation.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_txt_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The predicted velocity for this step",
+          "kwargsType": null,
+          "name": "noise_pred",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "The generated images, can be a list of PIL.Image.Image, torch.Tensor or a numpy array",
+          "kwargsType": null,
+          "name": "images",
+          "required": false,
+          "type": "Union[list[PIL.Image.Image],numpy.ndarray,torch.Tensor]"
+        }
+      ],
+      "requiredInputs": [
+        "batch_size",
+        "condition_images",
+        "image",
+        "image_cond_latents",
+        "latents",
+        "num_inference_steps",
+        "prompt",
+        "prompt_embeds",
+        "timesteps"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "conditional model inputs for the denoiser: e.g. prompt_embeds, negative_prompt_embeds, etc.",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
+    },
+    {
+      "className": "SequentialPipelineBlocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "text_encoder",
           "type": "transformers.modeling_utils.PreTrainedModel"
         },
         {
@@ -63404,6 +65577,352 @@
         {
           "default": null,
           "description": "All conditional model inputs that need to be prepared with guider. It should contain prompt_embeds/negative_prompt_embeds, add_time_ids/negative_add_time_ids, pooled_prompt_embeds/negative_pooled_prompt_embeds, and ip_adapter_embeds/negative_ip_adapter_embeds (optional).please add `kwargs_type=denoiser_input_fields` to their parameter spec (`OutputParam`) when they are created and added to the pipeline state",
+          "kwargsType": "denoiser_input_fields",
+          "required": false,
+          "type": "opaque"
+        }
+      ]
+    },
+    {
+      "className": "SequentialPipelineBlocks",
+      "components": [
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "text_encoder",
+          "type": "transformers.models.qwen3.modeling_qwen3.Qwen3Model"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "tokenizer",
+          "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "t5_tokenizer",
+          "type": "transformers.models.t5.tokenization_t5.T5Tokenizer"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "guidance_scale": 4.0
+          },
+          "description": "",
+          "name": "guider",
+          "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "text_conditioner",
+          "type": "diffusers.models.condition_embedders.condition_embedder_anima.AnimaTextConditioner"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "transformer",
+          "type": "diffusers.models.transformers.transformer_cosmos.CosmosTransformer3DModel"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "scheduler",
+          "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+        },
+        {
+          "creationMethod": "from_pretrained",
+          "defaultConfig": null,
+          "description": "",
+          "name": "vae",
+          "type": "diffusers.models.autoencoders.autoencoder_kl_qwenimage.AutoencoderKLQwenImage"
+        },
+        {
+          "creationMethod": "from_config",
+          "defaultConfig": {
+            "vae_scale_factor": 8
+          },
+          "description": "",
+          "name": "image_processor",
+          "type": "diffusers.image_processor.VaeImageProcessor"
+        }
+      ],
+      "configs": [],
+      "contentHash": "sha256:ed1042a9c3cad97b3fd53eb110b1ce86ba80d439ebf8b51141d5b76826207ad9",
+      "description": "",
+      "id": "diffusers.modular-block:SequentialPipelineBlocks:sha256:ed1042a9c3cad97b3fd53eb110b1ce86ba80d439ebf8b51141d5b76826207ad9",
+      "inputs": [
+        {
+          "default": null,
+          "description": "The prompt or prompts to guide image generation.",
+          "kwargsType": null,
+          "name": "prompt",
+          "required": true,
+          "type": "builtins.str"
+        },
+        {
+          "default": null,
+          "description": "The prompt or prompts not to guide the image generation.",
+          "kwargsType": null,
+          "name": "negative_prompt",
+          "required": false,
+          "type": "builtins.str"
+        },
+        {
+          "default": 512,
+          "description": "Maximum sequence length for prompt encoding.",
+          "kwargsType": null,
+          "name": "max_sequence_length",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": 1,
+          "description": "The number of images to generate per prompt.",
+          "kwargsType": null,
+          "name": "num_images_per_prompt",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The height in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "The width in pixels of the generated image.",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Pre-generated noisy latents for image generation.",
+          "kwargsType": null,
+          "name": "latents",
+          "required": true,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Torch generator for deterministic generation.",
+          "kwargsType": null,
+          "name": "generator",
+          "required": false,
+          "type": "torch._C.Generator"
+        },
+        {
+          "default": 50,
+          "description": "The number of denoising steps.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": true,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Custom sigmas for the denoising process.",
+          "kwargsType": null,
+          "name": "sigmas",
+          "required": false,
+          "type": "list[builtins.float]"
+        },
+        {
+          "default": "pil",
+          "description": "Output format: 'pil', 'np', 'pt'.",
+          "kwargsType": null,
+          "name": "output_type",
+          "required": false,
+          "type": "builtins.str"
+        }
+      ],
+      "kind": "sequential",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Qwen prompt embeddings to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "qwen_prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Qwen prompt attention mask to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "qwen_attention_mask",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "T5 prompt token ids to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "t5_input_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "T5 prompt attention mask to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "t5_attention_mask",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative Qwen prompt embeddings to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_qwen_prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative Qwen prompt attention mask to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_qwen_attention_mask",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative T5 prompt token ids to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_t5_input_ids",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative T5 prompt attention mask to be consumed by the Anima text conditioner.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_t5_attention_mask",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Prompt embeddings expanded to the final denoising batch.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Negative prompt embeddings expanded to the final denoising batch.",
+          "kwargsType": "denoiser_input_fields",
+          "name": "negative_prompt_embeds",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Number of input prompts before `num_images_per_prompt` expansion.",
+          "kwargsType": null,
+          "name": "batch_size",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Dtype used by the Anima denoiser.",
+          "kwargsType": null,
+          "name": "dtype",
+          "required": false,
+          "type": "torch.dtype"
+        },
+        {
+          "default": null,
+          "description": "Image height used for generation.",
+          "kwargsType": null,
+          "name": "height",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Image width used for generation.",
+          "kwargsType": null,
+          "name": "width",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Noisy latents for the denoising process.",
+          "kwargsType": null,
+          "name": "latents",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Cosmos padding mask for image latents.",
+          "kwargsType": null,
+          "name": "padding_mask",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Timesteps for the denoising loop.",
+          "kwargsType": null,
+          "name": "timesteps",
+          "required": false,
+          "type": "torch.Tensor"
+        },
+        {
+          "default": null,
+          "description": "Number of denoising steps.",
+          "kwargsType": null,
+          "name": "num_inference_steps",
+          "required": false,
+          "type": "builtins.int"
+        },
+        {
+          "default": null,
+          "description": "Generated images. (tensor output of the VAE decoder)",
+          "kwargsType": null,
+          "name": "images",
+          "required": false,
+          "type": "list[PIL.Image.Image]"
+        }
+      ],
+      "requiredInputs": [
+        "batch_size",
+        "dtype",
+        "images",
+        "latents",
+        "num_inference_steps",
+        "padding_mask",
+        "prompt",
+        "prompt_embeds",
+        "qwen_attention_mask",
+        "qwen_prompt_embeds",
+        "t5_attention_mask",
+        "t5_input_ids",
+        "timesteps"
+      ],
+      "schemaVersion": 1,
+      "variadicInputs": [
+        {
+          "default": null,
+          "description": "The conditional model inputs for the Anima denoiser.",
           "kwargsType": "denoiser_input_fields",
           "required": false,
           "type": "opaque"
@@ -73706,15 +76225,15 @@
       "variadicInputs": []
     }
   ],
-  "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+  "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
   "schemaVersion": 1,
   "workflows": [
     {
-      "contentHash": "sha256:01d7bf48230600e42e42096fad6b24fa06f2d2740eff760ce319a0dd411ed81a",
+      "contentHash": "sha256:bc5227ec63ee2349561376dcb8883a55d1798aedab4a0a8a81ed94f4258a629b",
       "pipelineClass": "AnimaModularPipeline",
       "placements": [
         {
-          "blockDefinitionId": "diffusers.modular-block:AnimaTextEncoderStep:sha256:151336a9300619e099034a9ab05558e7b56baee4982cb18ba9f6121774621759",
+          "blockDefinitionId": "diffusers.modular-block:AnimaTextEncoderStep:sha256:8a99621bbc00ff9a57c365efa111d64b113923f70534df7677766d04e61b9f37",
           "legacyPath": "text_encoder",
           "order": 0,
           "path": [
@@ -73821,17 +76340,17 @@
           ]
         }
       ],
-      "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:a1372f3ca54f698b6337418286e142a66c371290a799af255d0a6c474dfc52aa",
+      "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:51832da4991c2f97c59b490502257f3d347409655cc64411403ac02f2159061d",
       "schemaVersion": 1,
       "workflowId": "img2img",
       "workflowKind": "sequential"
     },
     {
-      "contentHash": "sha256:e34e5481d7198e4e5e5adb5a71801de32a305e851f3336bac679c85246ecde16",
+      "contentHash": "sha256:a09344af1df3e1f58b7dc505c1085660b76c0212dc8dc5ab0d446f05de17ac71",
       "pipelineClass": "AnimaModularPipeline",
       "placements": [
         {
-          "blockDefinitionId": "diffusers.modular-block:AnimaTextEncoderStep:sha256:151336a9300619e099034a9ab05558e7b56baee4982cb18ba9f6121774621759",
+          "blockDefinitionId": "diffusers.modular-block:AnimaTextEncoderStep:sha256:8a99621bbc00ff9a57c365efa111d64b113923f70534df7677766d04e61b9f37",
           "legacyPath": "text_encoder",
           "order": 0,
           "path": [
@@ -73922,7 +76441,7 @@
           ]
         }
       ],
-      "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:6b74633cff74b0599d70c8a68220bd6edcee91d769ab715b04917e702ed34a68",
+      "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:ed1042a9c3cad97b3fd53eb110b1ce86ba80d439ebf8b51141d5b76826207ad9",
       "schemaVersion": 1,
       "workflowId": "text2image",
       "workflowKind": "sequential"
@@ -76503,6 +79022,438 @@
       "workflowKind": "sequential"
     },
     {
+      "contentHash": "sha256:e6eced005c1c1a308b239c9fb98afc07a0f79780baee460aef1e0f446f283558",
+      "pipelineClass": "Flux3DistilledModularPipeline",
+      "placements": [
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DistilledTextEncoderStep:sha256:c51f7b3c37607f3b72b62581146c3ee3326c2ac97da3f088f2fecbded8449223",
+          "legacyPath": "text_encoder",
+          "order": 0,
+          "path": [
+            "text_encoder"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3ProcessImagesInputStep:sha256:3998bea9bf78f7e42dbf0c31dc14469cbd3c33fec3f2795dc3a9dd4998041fca",
+          "legacyPath": "vae_encoder.preprocess",
+          "order": 1,
+          "path": [
+            "vae_encoder.preprocess"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3VaeEncoderStep:sha256:605c718acacb2c97ad3aadf993e3a9659f0a6508bc2795506bf50a336044a81a",
+          "legacyPath": "vae_encoder.encode",
+          "order": 2,
+          "path": [
+            "vae_encoder.encode"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DistilledTextInputStep:sha256:509c929045451a5a74d1617d7b28f4bdcf4365a03b011d7601a15709da883bf1",
+          "legacyPath": "denoise.input",
+          "order": 3,
+          "path": [
+            "denoise.input"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3ImageCondInputStep:sha256:d29b44b0204df86aadf02df3888cca0fa468eaea1b143693cce46e257fcad553",
+          "legacyPath": "denoise.cond_input",
+          "order": 4,
+          "path": [
+            "denoise.cond_input"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3PrepareLatentsStep:sha256:6cf05e7d49ff2ece98663d03dd007d67c8c1671bfdf5b3c6ffc584e82264b757",
+          "legacyPath": "denoise.prepare_latents",
+          "order": 5,
+          "path": [
+            "denoise.prepare_latents"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3PrepareImageCondLatentsStep:sha256:34d1f8844d0fe4bd97a835908d123fe40626843af7aa3a102c9f4b38cbbfc54d",
+          "legacyPath": "denoise.prepare_image_cond_latents",
+          "order": 6,
+          "path": [
+            "denoise.prepare_image_cond_latents"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3SetTimestepsStep:sha256:b93c3a4c10d641c20687a185890492cd7fabf4d9f78348422385cc6e4da92cfb",
+          "legacyPath": "denoise.set_timesteps",
+          "order": 7,
+          "path": [
+            "denoise.set_timesteps"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DistilledTextRoPEInputsStep:sha256:33975f600a75a81bec941e92c830c54908da8291aca1c73712809194b2ae64f6",
+          "legacyPath": "denoise.prepare_rope_inputs",
+          "order": 8,
+          "path": [
+            "denoise.prepare_rope_inputs"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DistilledDenoiseStep:sha256:becd557d6fba84b018e6e288f0189f33fb07660ca967f2ec1a526e1433321b29",
+          "legacyPath": "denoise.denoise",
+          "order": 9,
+          "path": [
+            "denoise.denoise"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DistilledLoopDenoiser:sha256:26a1225a9aeff304817010dce55f8987cdf321f9bcdaa54a6447118477622836",
+          "legacyPath": "denoise.denoise.denoiser",
+          "order": 0,
+          "path": [
+            "denoise.denoise",
+            "denoiser"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3LoopAfterDenoiser:sha256:0fb9198693e0446d502c73ca1f7d9f9a62b2e46fd9cd3b79c97844fe90b6cf6f",
+          "legacyPath": "denoise.denoise.after_denoiser",
+          "order": 1,
+          "path": [
+            "denoise.denoise",
+            "after_denoiser"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3UnpackLatentsStep:sha256:a5589e66828149d0baec7039097899ec31219bab644966c64d303eef34f3bc0c",
+          "legacyPath": "denoise.after_denoise",
+          "order": 10,
+          "path": [
+            "denoise.after_denoise"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DecodeStep:sha256:8c3cb87e0595fb7aa9681df9c55a03d53d2d7e1a20bc70b9dd43b9038811c7d3",
+          "legacyPath": "decode",
+          "order": 11,
+          "path": [
+            "decode"
+          ]
+        }
+      ],
+      "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:49de7678956bfa794e0aede42594eb35b094f4359ad8ec05d6113637e3803044",
+      "schemaVersion": 1,
+      "workflowId": "image_conditioned",
+      "workflowKind": "sequential"
+    },
+    {
+      "contentHash": "sha256:f8c102c824f588ad783538e48c4568fecdc99a930f38a574fdc9d0d77731ba73",
+      "pipelineClass": "Flux3DistilledModularPipeline",
+      "placements": [
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DistilledTextEncoderStep:sha256:c51f7b3c37607f3b72b62581146c3ee3326c2ac97da3f088f2fecbded8449223",
+          "legacyPath": "text_encoder",
+          "order": 0,
+          "path": [
+            "text_encoder"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DistilledTextInputStep:sha256:509c929045451a5a74d1617d7b28f4bdcf4365a03b011d7601a15709da883bf1",
+          "legacyPath": "denoise.input",
+          "order": 1,
+          "path": [
+            "denoise.input"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3PrepareLatentsStep:sha256:6cf05e7d49ff2ece98663d03dd007d67c8c1671bfdf5b3c6ffc584e82264b757",
+          "legacyPath": "denoise.prepare_latents",
+          "order": 2,
+          "path": [
+            "denoise.prepare_latents"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3SetTimestepsStep:sha256:b93c3a4c10d641c20687a185890492cd7fabf4d9f78348422385cc6e4da92cfb",
+          "legacyPath": "denoise.set_timesteps",
+          "order": 3,
+          "path": [
+            "denoise.set_timesteps"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DistilledTextRoPEInputsStep:sha256:33975f600a75a81bec941e92c830c54908da8291aca1c73712809194b2ae64f6",
+          "legacyPath": "denoise.prepare_rope_inputs",
+          "order": 4,
+          "path": [
+            "denoise.prepare_rope_inputs"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DistilledDenoiseStep:sha256:becd557d6fba84b018e6e288f0189f33fb07660ca967f2ec1a526e1433321b29",
+          "legacyPath": "denoise.denoise",
+          "order": 5,
+          "path": [
+            "denoise.denoise"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DistilledLoopDenoiser:sha256:26a1225a9aeff304817010dce55f8987cdf321f9bcdaa54a6447118477622836",
+          "legacyPath": "denoise.denoise.denoiser",
+          "order": 0,
+          "path": [
+            "denoise.denoise",
+            "denoiser"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3LoopAfterDenoiser:sha256:0fb9198693e0446d502c73ca1f7d9f9a62b2e46fd9cd3b79c97844fe90b6cf6f",
+          "legacyPath": "denoise.denoise.after_denoiser",
+          "order": 1,
+          "path": [
+            "denoise.denoise",
+            "after_denoiser"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3UnpackLatentsStep:sha256:a5589e66828149d0baec7039097899ec31219bab644966c64d303eef34f3bc0c",
+          "legacyPath": "denoise.after_denoise",
+          "order": 6,
+          "path": [
+            "denoise.after_denoise"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DecodeStep:sha256:8c3cb87e0595fb7aa9681df9c55a03d53d2d7e1a20bc70b9dd43b9038811c7d3",
+          "legacyPath": "decode",
+          "order": 7,
+          "path": [
+            "decode"
+          ]
+        }
+      ],
+      "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:5cb8cace29e96f758ab2b46dd0658db68429b3f5d9d4b5e7df20cedc7af7974a",
+      "schemaVersion": 1,
+      "workflowId": "text2image",
+      "workflowKind": "sequential"
+    },
+    {
+      "contentHash": "sha256:f53c0f68d238210e95f2a0ad1064e41c00a179599fcfde1e0f5f80c794b73415",
+      "pipelineClass": "Flux3ModularPipeline",
+      "placements": [
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3TextEncoderStep:sha256:039d225c2981c3ae29341b05bf4e1601414eb4ca1def26398debfdb14373634b",
+          "legacyPath": "text_encoder",
+          "order": 0,
+          "path": [
+            "text_encoder"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3ProcessImagesInputStep:sha256:3998bea9bf78f7e42dbf0c31dc14469cbd3c33fec3f2795dc3a9dd4998041fca",
+          "legacyPath": "vae_encoder.preprocess",
+          "order": 1,
+          "path": [
+            "vae_encoder.preprocess"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3VaeEncoderStep:sha256:605c718acacb2c97ad3aadf993e3a9659f0a6508bc2795506bf50a336044a81a",
+          "legacyPath": "vae_encoder.encode",
+          "order": 2,
+          "path": [
+            "vae_encoder.encode"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3TextInputStep:sha256:c84d85a7936f49cbdd912c009caec937424c31b79dd2b18ca264d2e40d6dc403",
+          "legacyPath": "denoise.input",
+          "order": 3,
+          "path": [
+            "denoise.input"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3ImageCondInputStep:sha256:d29b44b0204df86aadf02df3888cca0fa468eaea1b143693cce46e257fcad553",
+          "legacyPath": "denoise.cond_input",
+          "order": 4,
+          "path": [
+            "denoise.cond_input"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3PrepareLatentsStep:sha256:6cf05e7d49ff2ece98663d03dd007d67c8c1671bfdf5b3c6ffc584e82264b757",
+          "legacyPath": "denoise.prepare_latents",
+          "order": 5,
+          "path": [
+            "denoise.prepare_latents"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3PrepareImageCondLatentsStep:sha256:34d1f8844d0fe4bd97a835908d123fe40626843af7aa3a102c9f4b38cbbfc54d",
+          "legacyPath": "denoise.prepare_image_cond_latents",
+          "order": 6,
+          "path": [
+            "denoise.prepare_image_cond_latents"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3SetTimestepsStep:sha256:f8196bd190f3b3af90b2c7b170e30fb7cbc09c1327c1e6685b841f9e485491f2",
+          "legacyPath": "denoise.set_timesteps",
+          "order": 7,
+          "path": [
+            "denoise.set_timesteps"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3TextRoPEInputsStep:sha256:132245bd92dd4284e6a36c49115abb39f2dd6e3ff170a255d5f8e26ea5ea867a",
+          "legacyPath": "denoise.prepare_rope_inputs",
+          "order": 8,
+          "path": [
+            "denoise.prepare_rope_inputs"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DenoiseStep:sha256:293d4931518f901f201fd734ed17feb7b67944b9ef5d5d23ab1d05cc115644b9",
+          "legacyPath": "denoise.denoise",
+          "order": 9,
+          "path": [
+            "denoise.denoise"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3LoopDenoiser:sha256:ddacb7808f98947bae1eb2a24caec6fc5142be0c5d1c4262a12d446230c010cd",
+          "legacyPath": "denoise.denoise.denoiser",
+          "order": 0,
+          "path": [
+            "denoise.denoise",
+            "denoiser"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3LoopAfterDenoiser:sha256:0fb9198693e0446d502c73ca1f7d9f9a62b2e46fd9cd3b79c97844fe90b6cf6f",
+          "legacyPath": "denoise.denoise.after_denoiser",
+          "order": 1,
+          "path": [
+            "denoise.denoise",
+            "after_denoiser"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3UnpackLatentsStep:sha256:a5589e66828149d0baec7039097899ec31219bab644966c64d303eef34f3bc0c",
+          "legacyPath": "denoise.after_denoise",
+          "order": 10,
+          "path": [
+            "denoise.after_denoise"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DecodeStep:sha256:8c3cb87e0595fb7aa9681df9c55a03d53d2d7e1a20bc70b9dd43b9038811c7d3",
+          "legacyPath": "decode",
+          "order": 11,
+          "path": [
+            "decode"
+          ]
+        }
+      ],
+      "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:cb5d54bfd61ba0bbbb6328b845f8a3acb1f0bc1cb8ef5b940ee9e86913fabead",
+      "schemaVersion": 1,
+      "workflowId": "image_conditioned",
+      "workflowKind": "sequential"
+    },
+    {
+      "contentHash": "sha256:42752171fb5f1b955697d557ac1941092707fa9b5b83e89bfc7c48f4daf1cc1c",
+      "pipelineClass": "Flux3ModularPipeline",
+      "placements": [
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3TextEncoderStep:sha256:039d225c2981c3ae29341b05bf4e1601414eb4ca1def26398debfdb14373634b",
+          "legacyPath": "text_encoder",
+          "order": 0,
+          "path": [
+            "text_encoder"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3TextInputStep:sha256:c84d85a7936f49cbdd912c009caec937424c31b79dd2b18ca264d2e40d6dc403",
+          "legacyPath": "denoise.input",
+          "order": 1,
+          "path": [
+            "denoise.input"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3PrepareLatentsStep:sha256:6cf05e7d49ff2ece98663d03dd007d67c8c1671bfdf5b3c6ffc584e82264b757",
+          "legacyPath": "denoise.prepare_latents",
+          "order": 2,
+          "path": [
+            "denoise.prepare_latents"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3SetTimestepsStep:sha256:f8196bd190f3b3af90b2c7b170e30fb7cbc09c1327c1e6685b841f9e485491f2",
+          "legacyPath": "denoise.set_timesteps",
+          "order": 3,
+          "path": [
+            "denoise.set_timesteps"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3TextRoPEInputsStep:sha256:132245bd92dd4284e6a36c49115abb39f2dd6e3ff170a255d5f8e26ea5ea867a",
+          "legacyPath": "denoise.prepare_rope_inputs",
+          "order": 4,
+          "path": [
+            "denoise.prepare_rope_inputs"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DenoiseStep:sha256:293d4931518f901f201fd734ed17feb7b67944b9ef5d5d23ab1d05cc115644b9",
+          "legacyPath": "denoise.denoise",
+          "order": 5,
+          "path": [
+            "denoise.denoise"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3LoopDenoiser:sha256:ddacb7808f98947bae1eb2a24caec6fc5142be0c5d1c4262a12d446230c010cd",
+          "legacyPath": "denoise.denoise.denoiser",
+          "order": 0,
+          "path": [
+            "denoise.denoise",
+            "denoiser"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3LoopAfterDenoiser:sha256:0fb9198693e0446d502c73ca1f7d9f9a62b2e46fd9cd3b79c97844fe90b6cf6f",
+          "legacyPath": "denoise.denoise.after_denoiser",
+          "order": 1,
+          "path": [
+            "denoise.denoise",
+            "after_denoiser"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3UnpackLatentsStep:sha256:a5589e66828149d0baec7039097899ec31219bab644966c64d303eef34f3bc0c",
+          "legacyPath": "denoise.after_denoise",
+          "order": 6,
+          "path": [
+            "denoise.after_denoise"
+          ]
+        },
+        {
+          "blockDefinitionId": "diffusers.modular-block:Flux3DecodeStep:sha256:8c3cb87e0595fb7aa9681df9c55a03d53d2d7e1a20bc70b9dd43b9038811c7d3",
+          "legacyPath": "decode",
+          "order": 7,
+          "path": [
+            "decode"
+          ]
+        }
+      ],
+      "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:94b10913751f219df5310bc8318ab4fcf07a4373c3876e894085d4239acc6543",
+      "schemaVersion": 1,
+      "workflowId": "text2image",
+      "workflowKind": "sequential"
+    },
+    {
       "contentHash": "sha256:71eaacc173a6c2254aee3e196aae85c911ebcf1922aa84a10b8b41fb6ef45e53",
       "pipelineClass": "FluxKontextModularPipeline",
       "placements": [
@@ -78223,11 +81174,11 @@
       "workflowKind": "sequential"
     },
     {
-      "contentHash": "sha256:5a9abe843ce6f30bfdfb00ab8331e6ed51e539c7a335ae897dea8651d7d21448",
+      "contentHash": "sha256:0b31447b603c8c2cb92c21dc022858c4583e24cd4452e33c93ca80b0e51244c8",
       "pipelineClass": "Krea2ModularPipeline",
       "placements": [
         {
-          "blockDefinitionId": "diffusers.modular-block:Krea2TextEncoderStep:sha256:90b1b32fa3063bea72f05d9822019b415e7db81593bb44a0c4904dcde89d7f17",
+          "blockDefinitionId": "diffusers.modular-block:Krea2TextEncoderStep:sha256:266354838c0318157b3be852742c2e88970c5e2b19002ffafcc66289200e3af3",
           "legacyPath": "text_encoder",
           "order": 0,
           "path": [
@@ -78310,17 +81261,17 @@
           ]
         }
       ],
-      "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:21a2a6062ea7b9a1b5a0725d1db6e3f24daa203fceb41c43af4bec184af3bf5a",
+      "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:1d91d14671c60d93368e99abb9a32cc462af25eda323d0d16a67ed17643074d4",
       "schemaVersion": 1,
       "workflowId": "text2image",
       "workflowKind": "sequential"
     },
     {
-      "contentHash": "sha256:9978549c153f7f2e2bf2d9d0de7fce654b6dda83e5a27e7c341ab7ae52d1e56f",
+      "contentHash": "sha256:befbbf591dd7aa3ff0334ddc89bdb282afda0da3d9096e694df6b735193b8ed8",
       "pipelineClass": "Krea2TurboModularPipeline",
       "placements": [
         {
-          "blockDefinitionId": "diffusers.modular-block:Krea2TurboTextEncoderStep:sha256:805859bd7416259c4b9315694e1aa389da79ced32f974d949664e7ceeef629ab",
+          "blockDefinitionId": "diffusers.modular-block:Krea2TurboTextEncoderStep:sha256:16568ee13ee7757f99cfa269d821d95efc2f5383b0d4b687b43b7b6d0b5f1c96",
           "legacyPath": "text_encoder",
           "order": 0,
           "path": [
@@ -78403,7 +81354,7 @@
           ]
         }
       ],
-      "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:7be3b3d4de4ec29ce0040ef57d70d46670743988cdcb58dc980a150462e5a355",
+      "rootBlockDefinitionId": "diffusers.modular-block:SequentialPipelineBlocks:sha256:1451dcc3128024f77e49e99996a90c647d3cb6ec8693e7d35004d8a651afb845",
       "schemaVersion": 1,
       "workflowId": "text2image",
       "workflowKind": "sequential"
@@ -79691,7 +82642,7 @@
       "workflowKind": "sequential"
     },
     {
-      "contentHash": "sha256:4b31930b88e10cc1d1f38788abb5994c2b353d51cc4619d55beafab053595af7",
+      "contentHash": "sha256:36b7121a1fdd17c98165e7b1d54fedd90f84f1942e0ba00b6654725b0a791cdf",
       "pipelineClass": "MiniMaxH3ModularPipeline",
       "placements": [
         {
@@ -79793,7 +82744,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:MiniMaxH3VideoDecodeStep:sha256:ae88b42eb79f56c13905c2f25687e189aab697358a9889472fbde27f5340b64a",
+          "blockDefinitionId": "diffusers.modular-block:MiniMaxH3VideoDecodeStep:sha256:d1623542dc5f83b58eaf549c3025313226cb6458cbca2c01fe2bb22a6fa7252a",
           "legacyPath": "decode.video",
           "order": 10,
           "path": [
@@ -79815,7 +82766,7 @@
       "workflowKind": "sequential"
     },
     {
-      "contentHash": "sha256:f6a49f83201302f28b88ad478dd6091af89ec554876bb20c8c56fa78f2ff8a5a",
+      "contentHash": "sha256:41a15055570220a159eff515bb2adcd7578c73376c184be0bf9ec599c67ae71e",
       "pipelineClass": "MiniMaxH3ModularPipeline",
       "placements": [
         {
@@ -79917,7 +82868,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:MiniMaxH3VideoDecodeStep:sha256:ae88b42eb79f56c13905c2f25687e189aab697358a9889472fbde27f5340b64a",
+          "blockDefinitionId": "diffusers.modular-block:MiniMaxH3VideoDecodeStep:sha256:d1623542dc5f83b58eaf549c3025313226cb6458cbca2c01fe2bb22a6fa7252a",
           "legacyPath": "decode.video",
           "order": 10,
           "path": [
@@ -79939,7 +82890,7 @@
       "workflowKind": "sequential"
     },
     {
-      "contentHash": "sha256:04a9600efc152c03a6faa52afca8e568e8c31bcffb90f05acfca309d3bc7c8e9",
+      "contentHash": "sha256:cc4b8945b620cd39e3f9e53398a7c8433c88d7edd2da37493f92b8a2cdad3ae7",
       "pipelineClass": "MiniMaxH3ModularPipeline",
       "placements": [
         {
@@ -80017,7 +82968,7 @@
           ]
         },
         {
-          "blockDefinitionId": "diffusers.modular-block:MiniMaxH3VideoDecodeStep:sha256:ae88b42eb79f56c13905c2f25687e189aab697358a9889472fbde27f5340b64a",
+          "blockDefinitionId": "diffusers.modular-block:MiniMaxH3VideoDecodeStep:sha256:d1623542dc5f83b58eaf549c3025313226cb6458cbca2c01fe2bb22a6fa7252a",
           "legacyPath": "decode.video",
           "order": 7,
           "path": [

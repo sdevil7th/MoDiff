@@ -15,7 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
-PINNED_DIFFUSERS_REVISION = "fbf49e7f35857f76bc57b177e26f12b03687c668"
+PINNED_DIFFUSERS_REVISION = "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941"
 WAN_T2V_REPOSITORY = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
 WAN_T2V_14B_REPOSITORY = "Wan-AI/Wan2.1-T2V-14B-Diffusers"
 WAN_I2V_REPOSITORY = "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"
@@ -117,12 +117,36 @@ PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS = {
 # immutable checkpoint. Its outer classes and loading descriptors are part of
 # the artifact contract, rather than permission to fetch another Omni model.
 PINNED_MODULAR_REPOSITORY_COMPONENT_SOURCES = {
+    'black-forest-labs/flux-3-image-klein': {
+        'text_encoder': ('transformers', 'Qwen3VLForConditionalGeneration'),
+        'tokenizer': ('transformers', 'Qwen3VLProcessor'),
+        'transformer': ('diffusers', 'Flux3Transformer2DModel'),
+        'vae': ('diffusers', 'AutoencoderKLFlux2'),
+    },
+    'black-forest-labs/flux-3-image-klein-base': {
+        'text_encoder': ('transformers', 'Qwen3VLForConditionalGeneration'),
+        'tokenizer': ('transformers', 'Qwen3VLProcessor'),
+        'transformer': ('diffusers', 'Flux3Transformer2DModel'),
+        'vae': ('diffusers', 'AutoencoderKLFlux2'),
+    },
     COSMOS3_SUPER_T2I_REPOSITORY: {
         "text_tokenizer": ("transformers", "Qwen2TokenizerFast"),
         "vae": ("diffusers", "AutoencoderKLWan"),
         "transformer": ("diffusers", "Cosmos3OmniTransformer"),
         "scheduler": ("diffusers", "UniPCMultistepScheduler"),
         "sound_tokenizer": ("diffusers", "Cosmos3AVAEAudioTokenizer"),
+    },
+}
+
+
+# Exact captured FLUX 3 indexes reuse the text encoder folder for the
+# official processor. Other components retain the name-based default.
+PINNED_MODULAR_REPOSITORY_COMPONENT_SUBFOLDERS = {
+    'black-forest-labs/flux-3-image-klein': {
+        'tokenizer': 'text_encoder',
+    },
+    'black-forest-labs/flux-3-image-klein-base': {
+        'tokenizer': 'text_encoder',
     },
 }
 
@@ -161,6 +185,12 @@ def reviewed_modular_weight_variant(model_type: str, repository: str) -> str | N
 # while the installed Modular blocks declare their reviewed base/factory types.
 # These are exact repository-scoped aliases, not general subclass admission.
 PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES = {
+    'black-forest-labs/flux-3-image-klein': {
+        'tokenizer': ('transformers', 'Qwen3VLProcessor'),
+    },
+    'black-forest-labs/flux-3-image-klein-base': {
+        'tokenizer': ('transformers', 'Qwen3VLProcessor'),
+    },
     # Turbo's pinned standard index explicitly omits the optional IP-Adapter
     # image encoder and uses the ancestral scheduler for its distilled recipe.
     "stabilityai/sdxl-turbo": {
@@ -943,9 +973,12 @@ def _cosmos3_omni_workflow_truth() -> PinnedModularPipelineTruth:
                 ModularModeTruth(
                     workflow,
                     frozenset({"num_inference_steps", "prompt"}),
-                    actions,
-                    edges,
-                    block_sequence,
+                    # The image adapter ends after moderated Decode. The
+                    # package's action-output block has no image effect;
+                    # preserve it in every video route and upstream snapshot.
+                    actions[:-1] if workflow == "text2image" else actions,
+                    edges[:-1] if workflow == "text2image" else edges,
+                    block_sequence[:-1] if workflow == "text2image" else block_sequence,
                 ),
             )
             for mode, workflow in (
@@ -1636,6 +1669,38 @@ PINNED_MODULAR_WORKFLOW_TRUTH: dict[str, PinnedModularPipelineTruth] = {
                     _IMAGE_TO_OUTPUT_EDGES,
                 ),
             ),
+        ),
+    ),
+    "Flux3ModularPipeline": PinnedModularPipelineTruth(
+        blocks_class="Flux3AutoBlocks",
+        workflows=(_workflow("text2image", "prompt"), _workflow("image_conditioned", "prompt", "image")),
+        modes=(
+            ("text_to_image", ModularModeTruth(
+                "text2image", frozenset({"prompt"}),
+                ("text_encoder", "denoise", "decoder"), _TEXT_TO_OUTPUT_EDGES,
+                ("text_encoder", "denoise", "decode"))),
+            ("edit_image", ModularModeTruth(
+                "image_conditioned", frozenset({"prompt", "image"}),
+                ("text_encoder", "vae_encoder", "denoise", "decoder"),
+                _TEXT_TO_OUTPUT_EDGES + (StateEdgeTruth("vae_encoder", "image_cond_latents",
+                                                      "denoise", "image_cond_latents"),),
+                ("text_encoder", "vae_encoder", "denoise", "decode"))),
+        ),
+    ),
+    "Flux3DistilledModularPipeline": PinnedModularPipelineTruth(
+        blocks_class="Flux3DistilledAutoBlocks",
+        workflows=(_workflow("text2image", "prompt"), _workflow("image_conditioned", "prompt", "image")),
+        modes=(
+            ("text_to_image", ModularModeTruth(
+                "text2image", frozenset({"prompt"}),
+                ("text_encoder", "denoise", "decoder"), _TEXT_TO_OUTPUT_EDGES,
+                ("text_encoder", "denoise", "decode"))),
+            ("edit_image", ModularModeTruth(
+                "image_conditioned", frozenset({"prompt", "image"}),
+                ("text_encoder", "vae_encoder", "denoise", "decoder"),
+                _TEXT_TO_OUTPUT_EDGES + (StateEdgeTruth("vae_encoder", "image_cond_latents",
+                                                      "denoise", "image_cond_latents"),),
+                ("text_encoder", "vae_encoder", "denoise", "decode"))),
         ),
     ),
     "ZImageModularPipeline": PinnedModularPipelineTruth(

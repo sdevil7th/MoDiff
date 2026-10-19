@@ -292,6 +292,46 @@
           }
         },
         {
+          "name": "weight_loading_mode",
+          "semanticName": "weight_loading_mode",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": false,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
+          "name": "weight_format",
+          "semanticName": "weight_format",
+          "direction": "input",
+          "roles": [
+            "value"
+          ],
+          "types": [
+            "string"
+          ],
+          "required": false,
+          "hidden": true,
+          "semantics": {
+            "kind": "value",
+            "scope": null,
+            "state": null,
+            "owner": "none",
+            "members": []
+          }
+        },
+        {
           "name": "unet",
           "semanticName": "unet",
           "direction": "input",

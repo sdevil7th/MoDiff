@@ -589,8 +589,22 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
         )
 
     def test_declared_sdk_terminals_require_the_exact_connected_graph(self):
-        graph = json.loads((GRAPH_ROOT / "studio/cosmos3-omni-modular-pipeline/text-to-image.json").read_text())
-        spec = studio_execution_spec_for_pair("Cosmos3OmniModularPipeline", "text_to_image")
+        # Saved image graphs retain the exact reviewed historical declaration.
+        # Reconstruct its structural witness without relying on a fresh catalog
+        # graph that intentionally no longer contains the action-only terminal.
+        spec = studio_execution_spec_for_pair(
+            "Cosmos3OmniModularPipeline", "text_to_image", content_hash="studio-spec-v1-91ed105d",
+        )
+        graph = {
+            "nodes": [
+                {"id": role, "data": {"module": key.rsplit(".", 1)[0], "action": key.rsplit(".", 1)[1]}}
+                for role, key, _x, _y in spec["roles"]
+            ],
+            "edges": [
+                {"source": source, "sourceHandle": output, "target": target, "targetHandle": input_}
+                for source, output, target, input_ in spec["edges"]
+            ],
+        }
         terminal = next(node for node in graph["nodes"] if node["data"]["action"] == "WorkflowCosmos3OmniAfterDecode")
         self.assertEqual(_declared_sdk_terminal_node_ids(graph, spec), {terminal["id"]})
         mutations = (
@@ -606,6 +620,9 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                 mutate(candidate)
                 self.assertEqual(_declared_sdk_terminal_node_ids(candidate, spec), set())
         self.assertEqual(_declared_sdk_terminal_node_ids(graph, None), set())
+        self.assertEqual(_declared_sdk_terminal_node_ids(
+            graph, studio_execution_spec_for_pair("Cosmos3OmniModularPipeline", "text_to_image"),
+        ), set())
         self.assertEqual(_declared_sdk_terminal_node_ids(graph, studio_execution_spec_for_pair("Flux2ModularPipeline", "text_to_image")), set())
 
     def test_every_catalog_node_contributes_to_a_visible_or_exported_output(self):

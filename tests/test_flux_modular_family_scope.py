@@ -65,3 +65,32 @@ def test_saved_flux2_fallback_loader_retains_its_explicit_profile_without_reappe
         assert profiles[0].pipeline_class == "Flux2Pipeline"
     assert legacy_id not in {profile["id"] for profile in public_execution_profiles()}
     assert studio_execution_spec_for_pair("Flux2ModularPipeline", "text_to_image")["loaderAction"] == "ModelsLoader"
+
+
+def test_future_flux3_discovery_is_separate_from_published_native_matrix():
+    import gzip
+    import json
+    from pathlib import Path
+
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES, public_execution_profiles
+
+    from tests.test_flux_modular_loop_matrix import admissions as loop_admissions
+
+    future_names = {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}
+    library = reviewed_huggingface_node_library()
+    future = [item for item in library["definitions"] if item["pipelineClass"] in future_names]
+    assert {(item["pipelineClass"], item["workflowId"]) for item in future} == {
+        (name, workflow) for name in future_names for workflow in ("text2image", "image_conditioned")
+    }
+    assert all(not item["executionAdmissions"] and item["executionClaim"] == "discovery_only" for item in future)
+    assert not future_names & {item["pipelineClass"] for item in loop_admissions()}
+    public = public_execution_profiles()
+    assert not future_names & {item["model_type"] for item in public}
+    profiles = [item for item in DIFFUSERS_EXECUTION_PROFILES.values() if item.model_type in future_names]
+    assert len(profiles) == 2
+    assert all(item.public is False and item.live_proof is False and item.expert_quantization_modes == () for item in profiles)
+    catalog = json.loads(gzip.decompress((Path(__file__).resolve().parents[1] /
+                                       "modiff/registered_block_v2_catalog.v1.json.gz").read_bytes()))
+    assert not {item["id"] for item in future} & {
+        item["definition"]["source"]["manifestDefinitionId"] for item in catalog["entries"]
+    }

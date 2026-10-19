@@ -107,12 +107,26 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     for port in loader["ports"]:
                         if port["direction"] == "output" or port["name"] in {"unet", "vae", "controlnet"}:
                             port["roles"] = ["component"]
+                    execution_mode = None
+                    if adapter.get("source") == "mode" and task != adapter.get("adapterId"):
+                        from modiff.studio_execution_specs import studio_capability_definition
+
+                        capability = studio_capability_definition(pipeline_class)
+                        mode = adapter["adapterId"]
+                        if (
+                            capability and mode in capability.get("modes", ())
+                            and (capability.get("modeOutputKinds") or {}).get(
+                                mode, capability.get("outputKind")
+                            ) == "image"
+                        ):
+                            execution_mode = mode
                     loader = with_operation_semantics(
                         loader,
                         workflow_id=workflow_id,
                         values={
                             "model_type": pipeline_class,
                         },
+                        execution_mode=execution_mode,
                     )
                     # Package-owned stage adapters require the same exact
                     # workflow on their loader and sealed stage state. Other

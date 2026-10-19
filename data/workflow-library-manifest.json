@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-09T09:16:32.182Z",
+  "generatedAt": "2026-10-15T08:49:38.906Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
   "supportedCanonicalPairCount": 279,
-  "supportedPairCount": 202,
+  "supportedPairCount": 203,
   "workflows": [
     {
       "id": "AceStepAudioPipeline:audio_continuation",
@@ -35,7 +35,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ace-step-audio-pipeline/audio-continuation.json",
-      "graphHash": "1eb14851568eca312bd55ed91db7ee62393a3903711c2e12494676d252149c86"
+      "graphHash": "4d3b01905fa77657443a04ac441d2f82c695b4fa84120f1c8e4f0a71f73acff0"
     },
     {
       "id": "AceStepAudioPipeline:audio_repaint",
@@ -66,7 +66,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ace-step-audio-pipeline/audio-repaint.json",
-      "graphHash": "97492e39122ed9626854e7aa421ebc52747c1ed9d5847824e5b15b061cd7f3aa"
+      "graphHash": "5bb3ebdec7ccd6f402f97f0093a1cf0f116a148a9283a2fb1406a267665ea3b4"
     },
     {
       "id": "AceStepAudioPipeline:audio_variation",
@@ -97,7 +97,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ace-step-audio-pipeline/audio-variation.json",
-      "graphHash": "e886340bea3007684f2dd40a5b1abb31c13899d28a74d5a0204b6eabe74825b1"
+      "graphHash": "460449268f5a53c5cd1e235f568053791108f24208a7f9054866f49fb2240b8d"
     },
     {
       "id": "AceStepAudioPipeline:text_to_audio",
@@ -123,7 +123,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ace-step-audio-pipeline/text-to-audio.json",
-      "graphHash": "779237d7b0aa389679a44bd9034dedab87bd13a0511ca1fa23206175b92f7388"
+      "graphHash": "94c0b8932bfa91fa831d457bfdaabe73f24d7e195e65f3164543d6bc2d42a810"
     },
     {
       "id": "AceStepAudioPipeline:text_to_audio:ace_step_chinese_new_year_lora",
@@ -140,8 +140,8 @@
       "qualificationScope": "exact-model-recipe-runtime-hardware",
       "variant": "lora-theme",
       "requiredArtifacts": [
-        "Runware/acestep-v15-turbo-diffusers",
-        "ACE-Step/ACE-Step-v1.5-chinese-new-year-LoRA"
+        "ACE-Step/ACE-Step-v1.5-chinese-new-year-LoRA",
+        "Runware/acestep-v15-turbo-diffusers"
       ],
       "requiredInputs": [],
       "pipelineClasses": [
@@ -151,7 +151,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ace-step-audio-pipeline/text-to-audio--ace-step-chinese-new-year-lora.json",
-      "graphHash": "cb3602ee33819e3fdf262a4638d8072fb3afbf56e7a9a7614970efce436322b5"
+      "graphHash": "de99a9b5808b8b33fe525f91790fd305a2f103794f7a90999fedc5ba090bc066"
     },
     {
       "id": "AceStepAudioPipeline:text_to_audio:ace_step_custom_lora",
@@ -178,7 +178,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/ace-step-audio-pipeline/text-to-audio--ace-step-custom-lora.json",
-      "graphHash": "e8378a69bccf761d9fd347f37267e9717ddc8ef3f14eb81f5a0c82e944c357cf"
+      "graphHash": "eeb52c80e746abc5784265660a69066dd105f8815d0e5f844f622a9530d201ce"
     },
     {
       "id": "AllegroPipeline:text_to_video",
@@ -567,7 +567,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/audio-ldm2-pipeline/text-to-audio.json",
-      "graphHash": "5b41671f28ed075faf05595ed10540187457e85fffec0a1a6ac8540918a5cb5a"
+      "graphHash": "cc9e3de4082c24e50d74e9e85cf5d7d371389fcb5f8a745cb351424926d9c5fe"
     },
     {
       "id": "AuraFlowPipeline:text_to_image",
@@ -625,7 +625,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/builtin-audio-operation/audio-join.json",
-      "graphHash": "a6be35f97da3b7617e2dd0001db5947ad456a9cd776cbcf076debe503ba1a9d7"
+      "graphHash": "fa8adfa1e16c77b79342e884bd51a612df80b914b5e505716eee97159cec9abc"
     },
     {
       "id": "BuiltinAudioOperation:audio_loudness_match",
@@ -657,7 +657,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/builtin-audio-operation/audio-loudness-match.json",
-      "graphHash": "65e26126ba57bd17add8001a60e0bc8bcfbee8bdf2112c200be73569becf9f49"
+      "graphHash": "952fdb83b52479710b5ebfe9f8f143a45ab3d4b5fe113f7637baf900340f469d"
     },
     {
       "id": "BuiltinAudioOperation:audio_trim",
@@ -688,7 +688,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/builtin-audio-operation/audio-trim.json",
-      "graphHash": "e82ae3ce5c33e45acf5356483144d98d180ebc419e810b78eaf440a0cb1d932a"
+      "graphHash": "ae4928754d54e7c77fc81accd5bf3310830ed02c83052e835d9354c3bc627cc1"
     },
     {
       "id": "BuiltinDataOperation:data_conversion",
@@ -1615,24 +1615,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/cosmos3-omni-modular-pipeline/text-to-image.json",
-      "graphHash": "7e006ec3242973b64b793da1f680d128ebac6ba32acc1e3d7b9e54c75da6d569",
-      "auxiliaryTerminalBinding": {
-        "schemaVersion": 1,
-        "executionSpecId": "cosmos3-nano:modular-text-to-image:v1",
-        "executionSpecContentHash": "studio-spec-v1-91ed105d",
-        "terminals": [
-          {
-            "role": "afterDecode",
-            "nodeId": "node-03",
-            "nodeKey": "modules.ModularDiffusers.WorkflowCosmos3OmniAfterDecode",
-            "operationId": "diffusion.postprocess_media",
-            "pipelineClass": "Cosmos3OmniModularPipeline",
-            "task": "text_to_image",
-            "workflowId": "text2image",
-            "blockName": "after_decode"
-          }
-        ]
-      }
+      "graphHash": "1a624746561f2fdd3d52ec522bb96b3203a0de1e390b9f1ffbbdcaccfa1909c9"
     },
     {
       "id": "DDIMPipeline:unconditional_image",
@@ -2068,7 +2051,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-canny-pipeline/control-image.json",
-      "graphHash": "aa7a7c4d4a20d937a100f05997ffd7bb779a3a6db3b2c6c39871e1d86164aba9"
+      "graphHash": "932406161bede54f441595b58be51d52f828468e7c56ca896486cbb8de4f7420"
     },
     {
       "id": "FluxCannyPipeline:control_inpaint",
@@ -2170,7 +2153,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-depth-pipeline/control-image.json",
-      "graphHash": "70a5b82096c1de039bbe9173da55060da1d588b72327c2ec8190cb21be73dc92"
+      "graphHash": "6bce7f3b71f77b21b259cae200e851ed84f6b180777bf2c26019b90b71d55012"
     },
     {
       "id": "FluxDepthPipeline:control_inpaint",
@@ -2573,7 +2556,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-fill-pipeline/inpaint.json",
-      "graphHash": "cc7df8dfaa8268b581df0e7d2af27e269a5958941c18130a43a1f4e8622b4cfe"
+      "graphHash": "c16db181498fc65031fd04a67d8b89c05986bcbb694bf1fed65c4171ecc84488"
     },
     {
       "id": "FluxFillPipeline:outpaint",
@@ -2599,7 +2582,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-fill-pipeline/outpaint.json",
-      "graphHash": "d30e0b684b7e035c2b23c383812228f56c0cda74485522cdc5c2a7ce889f3e7a"
+      "graphHash": "a6431f367e163244190d7d3adc6f08c8dea8426e29aa991e857387db936b81fd"
     },
     {
       "id": "FluxKontextInpaintPipeline:inpaint",
@@ -2791,7 +2774,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-redux-pipeline/edit-image.json",
-      "graphHash": "5b2ba5b59e130ad0c2cfadbadc16e5d010bb061c28eca3fe962323023cf9129a"
+      "graphHash": "4e1878660270774973c30b877a084e5a7c9bc35f545e33813619890ac4f54779"
     },
     {
       "id": "FluxReduxPipeline:multi_image_reference_edit",
@@ -2837,7 +2820,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/flux-redux-pipeline/multi-image-reference-edit.json",
-      "graphHash": "263256ddcd89d18112c1588c9f462fca1bb0604fc0511c5fbb92f24615c7f19a"
+      "graphHash": "ea5cd03da3c4830e84642d73f4597e5b0ffe11a93f78d8001cb314f4e2d901f9"
     },
     {
       "id": "FluxSchnellPipeline:text_to_image",
@@ -2979,6 +2962,37 @@
       "graphHash": "27877ccbec2b98f8e1d501aadefb7e14fe303382d2351b1ba66ed56fdacdd0b5"
     },
     {
+      "id": "HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
+      "modelType": "HuggingFaceCTCSpeechRecognitionModel",
+      "modelFamily": "Wav2Vec2 CTC",
+      "mode": "speech_to_text",
+      "mediaKind": "json",
+      "supportTier": "supported",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "facebook/wav2vec2-base-960h"
+      ],
+      "requiredInputs": {
+        "requiredAudio": [
+          "sourceAudio"
+        ],
+        "note": "Requires one bounded local audio source and returns an English CTC transcript."
+      },
+      "pipelineClasses": [
+        "AutoModelForCTC"
+      ],
+      "sourceTemplateId": "task-template:wav2vec2-base-960h:speech-to-text:v1",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "studio/hugging-face-ctc-speech-recognition-model/speech-to-text.json",
+      "graphHash": "a3706e4676b9035d3d5168999028c1e356a01113eefc6203970bfa047751f3b7"
+    },
+    {
       "id": "HuggingFaceImageTextToTextModel:image_to_text",
       "modelType": "HuggingFaceImageTextToTextModel",
       "modelFamily": "SmolVLM",
@@ -3038,7 +3052,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/hugging-face-speech-recognition-model/speech-to-text.json",
-      "graphHash": "c5f3371c28f0940789b095c748803cb7c308757bb2273e5e16ac9c20a3d6ccce"
+      "graphHash": "ffad2aedbc329a71d4455d90f40078501f13f56645e1dc077bbc9e7d28dbafaf"
     },
     {
       "id": "HuggingFaceSpeechRecognitionModel:speech_translation",
@@ -3069,7 +3083,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/hugging-face-speech-recognition-model/speech-translation.json",
-      "graphHash": "b78d645c5ff9d4f5fb6b38227ae6512b4c28c1ba8e803facb223e2a7d525f0e4"
+      "graphHash": "ceeda76f1c6b3e964676293ca3754adfade221b8cd5b832e1215c94b944d37a9"
     },
     {
       "id": "HuggingFaceTextGenerationModel:text_generation",
@@ -3872,7 +3886,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/long-cat-audio-di-t-pipeline/text-to-audio.json",
-      "graphHash": "5567eadc3dba7a50b9411ca2b91764d6edea102a49f8a98cd9fff2e7e6b4ab54"
+      "graphHash": "68e36a48139e32570f4ae111650c1ef8f170ae16ad0954cbbc46d42c7fb5cb13"
     },
     {
       "id": "LongCatImageEditPipeline:edit_image",
@@ -4038,7 +4052,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/mini-max-music3-modular-pipeline/text-to-audio.json",
-      "graphHash": "0f481695e525099c8ca281baa422e9442171d196988562605823f36f6acca41c"
+      "graphHash": "357b868b4b00010f91d2345f1790bd4b1fa9fe68fa8bfcc2d962a69df869c4cf"
     },
     {
       "id": "MochiPipeline:text_to_video",
@@ -5067,7 +5081,7 @@
       "minimumAppVersion": "0.2.0",
       "minimumBackendVersion": "0.2.0",
       "graphPath": "studio/stable-audio-pipeline/text-to-audio.json",
-      "graphHash": "6eac2cf6e052f16039824a0511e3aa659e90f9300300b0500be392d7283c9fd0"
+      "graphHash": "9077ee369a0039de9e98d860117fe2be2774348b9f794baf2e41ca54c80b18b2"
     },
     {
       "id": "StableDiffusionPAGPipeline:control_image",

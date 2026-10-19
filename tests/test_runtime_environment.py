@@ -3,7 +3,7 @@ import builtins
 import pytest
 
 from modiff import runtime_environment
-from modiff.runtime_environment import configure_allocator
+from modiff.runtime_environment import configure_allocator, configure_model_loading
 
 
 def test_windows_and_macos_use_default_allocator():
@@ -95,3 +95,45 @@ def test_profile_environment_does_not_override_actual_torch_backend():
     result = configure_allocator(environment, platform_name="linux", torch_version="2.10.0+cu130")
     assert environment["PYTORCH_ALLOC_CONF"] == "expandable_segments:True"
     assert result["source"] == "platform_default"
+
+
+@pytest.mark.parametrize("platform_name", ["win32", "linux", "darwin", "freebsd"])
+def test_model_loading_platform_defaults_without_model_imports(monkeypatch, platform_name):
+    real_import = builtins.__import__
+
+    def reject_model_import(name, *args, **kwargs):
+        assert name.split(".", 1)[0] not in {"torch", "diffusers", "transformers", "peft"}
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", reject_model_import)
+    environment = {"HF_PARALLEL_LOADING_WORKERS": "3", "unrelated": "preserved"}
+    configure_model_loading(environment, platform_name=platform_name)
+    assert environment == {
+        "HF_PARALLEL_LOADING_WORKERS": "3", "unrelated": "preserved",
+        "HF_ENABLE_PARALLEL_LOADING": "0" if platform_name == "win32" else "YES",
+        **({"HF_DEACTIVATE_ASYNC_LOAD": "1"} if platform_name == "win32" else {}),
+    }
+    expected = environment.copy()
+    configure_model_loading(environment, platform_name=platform_name)
+    assert environment == expected
+
+
+@pytest.mark.parametrize("platform_name", ["win32", "linux", "darwin"])
+@pytest.mark.parametrize("key", ["HF_ENABLE_PARALLEL_LOADING", "HF_DEACTIVATE_ASYNC_LOAD"])
+@pytest.mark.parametrize("value", ["", "0", "1", "false", "YES"])
+def test_model_loading_preserves_each_explicit_operator_flag(platform_name, key, value):
+    environment = {key: value}
+    configure_model_loading(environment, platform_name=platform_name)
+    expected = {"HF_ENABLE_PARALLEL_LOADING": "0" if platform_name == "win32" else "YES"}
+    if platform_name == "win32":
+        expected["HF_DEACTIVATE_ASYNC_LOAD"] = "1"
+    expected[key] = value
+    assert environment == expected
+
+
+def test_model_loading_preserves_both_explicit_choices_and_worker_count():
+    environment = {"HF_ENABLE_PARALLEL_LOADING": "YES", "HF_DEACTIVATE_ASYNC_LOAD": "",
+                   "HF_PARALLEL_LOADING_WORKERS": "2"}
+    expected = environment.copy()
+    configure_model_loading(environment, platform_name="win32")
+    assert environment == expected

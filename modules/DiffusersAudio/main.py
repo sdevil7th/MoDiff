@@ -964,7 +964,9 @@ def crop_tail(audio: dict[str, Any], start_seconds: float, duration_seconds: flo
     }
 
 
-_AUDIO_LDM2_TRANSFORMERS_VERSION = "5.16.0.dev0"
+# The required base release retains the exact helper reviewed in the earlier
+# optional runtime. Accept those two releases only, still verifying source below.
+_AUDIO_LDM2_TRANSFORMERS_VERSIONS = frozenset({"5.16.0.dev0", "5.18.0"})
 _AUDIO_LDM2_GENERATION_UPDATE_SHA256 = "fb244c4da03341e837bbf50b900e70ea88a6fee722a43aa40c6172dfedfd15ef"
 
 
@@ -980,7 +982,7 @@ def _reviewed_audioldm2_generation_helper() -> tuple[type, Any]:
     helper = GenerationMixin._update_model_kwargs_for_generation
     helper_sha256 = hashlib.sha256(inspect.getsource(helper).encode("utf-8")).hexdigest()
     if (
-        transformers.__version__ != _AUDIO_LDM2_TRANSFORMERS_VERSION
+        transformers.__version__ not in _AUDIO_LDM2_TRANSFORMERS_VERSIONS
         or helper_sha256 != _AUDIO_LDM2_GENERATION_UPDATE_SHA256
     ):
         raise RuntimeError(

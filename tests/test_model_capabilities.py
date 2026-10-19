@@ -1027,7 +1027,13 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             ["control_image", "control_edit_image", "control_inpaint"],
         )
         self.assertEqual(depth_spec["mode"], "control_image")
-        self.assertIn("diffusersImageControl", [item[0] for item in depth_spec["roles"]])
+        self.assertEqual([(role, key) for role, key, _x, _y in depth_spec["roles"]
+                          if role in {"imageEncode", "denoise", "decode"}], [
+            ("imageEncode", "modules.DiffusersImage.EncodeInputs"),
+            ("denoise", "modules.DiffusersImage.Denoise"),
+            ("decode", "modules.DiffusersImage.DecodeLatents"),
+        ])
+        self.assertNotIn("diffusersImageControl", [item[0] for item in depth_spec["roles"]])
         self.assertIn("loadImage", [item[0] for item in depth_spec["roles"]])
 
         canny_spec = by_model["FluxCannyPipeline"]["studioExecutionSpecs"][0]
@@ -1049,7 +1055,13 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(redux_spec["mode"], "edit_image")
         self.assertEqual(redux_multi_spec["pipelineClass"], "FluxReduxPipeline")
         self.assertNotEqual(redux_multi_spec["contentHash"], redux_spec["contentHash"])
-        self.assertIn("diffusersImageEdit", [item[0] for item in redux_spec["roles"]])
+        self.assertEqual([(role, key) for role, key, _x, _y in redux_spec["roles"]
+                          if role in {"imageEncode", "denoise", "decode"}], [
+            ("imageEncode", "modules.DiffusersImage.EncodeInputs"),
+            ("denoise", "modules.DiffusersImage.Denoise"),
+            ("decode", "modules.DiffusersImage.DecodeLatents"),
+        ])
+        self.assertNotIn("diffusersImageEdit", [item[0] for item in redux_spec["roles"]])
         redux_requirement = by_model["FluxReduxPipeline"]["modeRequirements"]["edit_image"]["modelRequirements"][0]
         self.assertEqual(redux_requirement["repo"], "black-forest-labs/FLUX.1-dev")
         self.assertEqual(
@@ -1083,7 +1095,13 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(fill_spec["pipelineClass"], "FluxFillPipeline")
         self.assertEqual(fill_outpaint_spec["pipelineClass"], "FluxFillPipeline")
         self.assertNotEqual(fill_outpaint_spec["contentHash"], fill_spec["contentHash"])
-        self.assertIn("diffusersImageInpaint", [item[0] for item in fill_spec["roles"]])
+        self.assertEqual([(role, key) for role, key, _x, _y in fill_spec["roles"]
+                          if role in {"imageEncode", "denoise", "decode"}], [
+            ("imageEncode", "modules.DiffusersImage.EncodeInputs"),
+            ("denoise", "modules.DiffusersImage.Denoise"),
+            ("decode", "modules.DiffusersImage.DecodeLatents"),
+        ])
+        self.assertNotIn("diffusersImageInpaint", [item[0] for item in fill_spec["roles"]])
         self.assertIn("loadMask", [item[0] for item in fill_spec["roles"]])
 
         klein_specs = by_model["Flux2KleinPipeline"]["studioExecutionSpecs"]

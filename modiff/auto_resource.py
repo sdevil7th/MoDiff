@@ -11,7 +11,8 @@ from pathlib import Path
 from typing import Any, Callable
 
 from modiff.optimization_packages import qualified_auto_overrides, workload_key_for_form
-from modiff.artifact_weight_memory import artifact_parameter_lower_bound, impossible_parameter_residency
+from modiff.artifact_weight_memory import artifact_parameter_lower_bound, artifact_parameter_conversion_reserve, impossible_parameter_residency, native_cpu_parameter_residency
+from modiff.native_image_auto_placement import declared_image_owner
 
 from modiff.diffusers_offload_modes import (
     OFFLOAD_MODE_GROUP_CPU,
@@ -2783,7 +2784,7 @@ def _declared_profile_candidates(
         native_req = _requirements_for_offload(requirements, preferred_offload, native_fallback)
         native_missing = _requirements_missing_for_dict(hardware, native_req, offload_mode=preferred_offload)
         default_cache_status = _artifact_cache_status(default_repo, local_models)
-        candidates.append(_candidate(
+        native_kwargs = dict(
             candidate_id=f"{model_type or 'studio'}-{mode or 'mode'}-native-bf16",
             rank=5 if full_residency_ready else 30,
             model_type=model_type,
@@ -2816,7 +2817,36 @@ def _declared_profile_candidates(
             },
             required_packages=required_packages,
             reviewed_native_artifact=bool(requested_repo),
-        ))
+        )
+        native_candidate = _candidate(**native_kwargs)
+        candidates.append(native_candidate)
+        profile = DIFFUSERS_EXECUTION_PROFILES.get(requirements.get("executionProfileId"))
+        if (profile is not None and execution_path == "modular-diffusers"
+                and accelerator_kind == "cuda" and declared_image_owner(profile, default_repo, mode)):
+            # Enumerate only existing declared native image placements. The
+            # original candidate identity/preference stays intact. Dense header
+            # evidence and complete graph admission decide whether an alternative
+            # may actually replace it; capability alone is not model-fit proof.
+            for alternative_mode in dict.fromkeys(supported_offload):
+                if alternative_mode == preferred_offload or alternative_mode not in {
+                    OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK,
+                }:
+                    continue
+                alternative_requirements = _requirements_for_offload(requirements, alternative_mode, minimum)
+                missing = _requirements_missing_for_dict(hardware, alternative_requirements, offload_mode=alternative_mode)
+                missing += _cache_missing_for_status(default_cache_status, "default")
+                # Reuse the existing candidate boundary rather than promoting
+                # a skipped hardware tier by changing placement metadata alone.
+                alternative = _candidate(**{
+                    **native_kwargs,
+                    "candidate_id": f"{native_candidate['id']}-placement-{alternative_mode}",
+                    "rank": native_candidate["rank"] + 1,
+                    "offload_mode": alternative_mode,
+                    "device_map": "cuda" if alternative_mode == OFFLOAD_MODE_NONE else None,
+                    "requirements_missing": missing,
+                })
+                alternative["placementAlternativeOf"] = native_candidate["id"]
+                candidates.append(alternative)
 
     existing_artifacts = {
         str(candidate.get("resolvedArtifact") or candidate.get("artifact") or "").lower()
@@ -3395,6 +3425,9 @@ def build_auto_resource_plan(
             candidate["studioExecutionSpecContract"] = dict(studio_execution_spec_contract)
 
     candidates = _apply_catalog_hardware_support(candidates, hardware)
+    catalog_blocked = {candidate["id"] for candidate in candidates
+                       if candidate.get("proof", {}).get("source") == "model_artifact_catalog"
+                       and candidate.get("proof", {}).get("status") == "known_bad"}
     candidates = _apply_community_confirmation(candidates, form)
     candidates = _apply_history_to_candidates(candidates, history=history or read_auto_resource_history(data_dir), hardware=hardware)
     candidates = _rank_candidates_for_preference(candidates, preference)
@@ -3405,7 +3438,7 @@ def build_auto_resource_plan(
     )
     workload_key = workload_key_for_form(form)
     for candidate in candidates:
-        if candidate.get("exactPairDeclared") is False:
+        if candidate.get("exactPairDeclared") is False or candidate["id"] in catalog_blocked:
             continue
         artifact = str(
             candidate.get("resolvedArtifact")
@@ -3428,19 +3461,45 @@ def build_auto_resource_plan(
                 "selection": overrides,
             }
 
+    # Stored optimization selections cannot override declared artifact support.
+    candidates = _apply_catalog_hardware_support(candidates, hardware)
+
+    # An exact qualified mode is a sealed placement choice, not permission to
+    # fan it out into alternative candidate identities.
+    pinned_originals = {candidate["id"] for candidate in candidates
+                        if not candidate.get("placementAlternativeOf")
+                        and "offloadMode" in candidate.get("optimizationQualification", {}).get("selection", {})}
+    candidates = [candidate for candidate in candidates if candidate.get("placementAlternativeOf") not in pinned_originals]
+
     # History and qualified overrides cannot make an impossible dense native
     # placement fit. Apply this lower-bound check to every candidate builder,
     # after its final artifact, dtype and placement have been selected.
+    parameter_census = {}
     for candidate in candidates:
+        candidate.pop("parameterStorageLowerBound", None)
+        candidate.pop("parameterConversionReserve", None)
         if (candidate.get("artifactFormat") != "native"
                 or candidate.get("quantizationMode", "none") != "none"
                 or candidate.get("loadedQuantization", "none") != "none"):
             continue
         resolved = (candidate.get("artifactResolution") or {}).get("resolved") or {}
-        bound = artifact_parameter_lower_bound(
-            candidate.get("artifactValidation") or {}, resolved.get("revision"),
-            str(candidate.get("dtype") or "bfloat16"),
-        )
+        validation = candidate.get("artifactValidation") or {}
+        dtype = str(candidate.get("dtype") or "bfloat16")
+        census_key = (candidate.get("modelRepo"), resolved.get("revision"), dtype,
+                      json.dumps(validation, sort_keys=True, separators=(",", ":")))
+        if census_key not in parameter_census:
+            parameter_census[census_key] = (
+                artifact_parameter_lower_bound(validation, resolved.get("revision"), dtype),
+                artifact_parameter_conversion_reserve(validation, resolved.get("revision"), dtype),
+            )
+        bound, conversion = deepcopy(parameter_census[census_key])
+        if bound is not None:
+            # Storage evidence travels to owner-aware graph admission. Checking
+            # cold host bytes here would incorrectly reject compatible warm
+            # owners, whose live CPU weights are already outside available RAM.
+            candidate["parameterStorageLowerBound"] = bound
+            if conversion is not None:
+                candidate["parameterConversionReserve"] = conversion
         missing = impossible_parameter_residency(hardware, bound, str(candidate.get("offloadMode") or "none"))
         if not missing:
             continue
@@ -3449,6 +3508,16 @@ def build_auto_resource_plan(
         candidate.update(canAutoRun=False, readiness="skipped", healthBadge="Not suitable locally", skipReason=reason)
         candidate["proof"] = {**(candidate.get("proof") or {}), "status": "skipped", "message": reason}
 
+    # Unknown layouts retain the historical original candidate and proof level.
+    # Publishing ready alternatives without the dense census would also let
+    # non-workflow consumers mistake capability for a bounded placement choice.
+    candidates = [candidate for candidate in candidates if not candidate.get("placementAlternativeOf")
+                  or native_cpu_parameter_residency(
+                      candidate.get("parameterStorageLowerBound"),
+                      execution_path=candidate.get("executionPath", ""),
+                      offload_mode=candidate.get("offloadMode", "none"),
+                      device=str(form.get("device") or "cpu"), dtype=candidate.get("dtype", ""),
+                  )]
     ready = [
         candidate for candidate in candidates
         if candidate.get("exactPairDeclared") is not False

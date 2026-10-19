@@ -1190,14 +1190,63 @@ def _write_repo_download_plan(repo_id: str, cache_dir: str | None, plan: dict):
         logger.debug(f"Could not write download plan for {repo_id}: {e}")
 
 
+def _selected_snapshot_file_issues(repo_id: str, cache_dir: str | None, plan: dict | None):
+    """Validate selected paths, immutable identity and known sizes without scans.
+
+    This does not parse configs, hash payloads, inspect unselected files, or
+    establish runtime/model-content qualification.
+    """
+    file_issues = []
+    expected_files = _plan_validation_files(plan)
+    if expected_files:
+        from modiff.hf_cache_layout import resolve_snapshot_cache_file
+        repo_path = _repo_cache_dir(repo_id, cache_dir)
+        selected_snapshot = _snapshot_dir_for_plan(repo_path, plan)
+        identities = {value for key in ('snapshot_commit', 'revision')
+                      if isinstance(plan, dict) and isinstance(value := plan.get(key), str)
+                      and re.fullmatch(r'[0-9a-f]{40}', value)}
+        if selected_snapshot is None or (identities and identities != {selected_snapshot.name}):
+            file_issues.append('The selected snapshot does not match the requested immutable revision.')
+        else:
+            for entry in expected_files:
+                name = entry.get('name') if isinstance(entry, dict) else None
+                relative = PurePosixPath(name) if isinstance(name, str) else None
+                if (relative is None or not name or len(name) > 1024 or '\x00' in name
+                        or '\\' in name or ':' in name or relative.is_absolute()
+                        or relative.as_posix() != name or any(part in ('', '.', '..') for part in relative.parts)):
+                    file_issues.append('The selected snapshot contains an invalid relative file name.')
+                    continue
+                try:
+                    resolved = resolve_snapshot_cache_file(
+                        selected_snapshot / name, snapshot=selected_snapshot,
+                        cache_root=repo_path.parent, repository=repo_id,
+                    )
+                    expected_size = entry.get('size')
+                    # Unknown sizes stay unknown; presence/containment still apply.
+                    if type(expected_size) is int and expected_size >= 0 and resolved.stat().st_size != expected_size:
+                        file_issues.append(f'{name} does not have its exact expected byte size.')
+                except (OSError, RuntimeError, ValueError):
+                    file_issues.append(f'{name} is missing or outside its managed snapshot/blob cache.')
+    return file_issues
+
+
 def _repair_validation_summary(repo_id: str, cache_dir: str | None, plan: dict | None):
-    snapshot = _download_progress_snapshot(repo_id, cache_dir, plan)
     total_bytes = plan.get('total_bytes') if isinstance(plan, dict) else None
     total_file_count = plan.get('total_file_count') if isinstance(plan, dict) else None
-    completed_file_count = snapshot.get('completed_file_count')
-    active_files = snapshot.get('active_files') or []
     complete = True
     reasons = []
+    file_issues = _selected_snapshot_file_issues(repo_id, cache_dir, plan)
+    if file_issues:
+        # Invalid selected paths must not reach telemetry's directory/config scan.
+        # Keep the same keys, with conservative counts instead of borrowed bytes.
+        snapshot = {'path': str(_repo_cache_dir(repo_id, cache_dir)),
+                    'cache_dir': str(Path(cache_dir or CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()),
+                    'downloaded_bytes': 0, 'file_count': 0, 'completed_file_count': 0,
+                    'completed_bytes': 0, 'active_files': [], 'current_file': None}
+    else:
+        snapshot = _download_progress_snapshot(repo_id, cache_dir, plan)
+    completed_file_count = snapshot.get('completed_file_count')
+    active_files = snapshot.get('active_files') or []
     if active_files:
         complete = False
         reasons.append(f"Active partial download files remain: {', '.join(active_files[:3])}.")
@@ -1207,7 +1256,13 @@ def _repair_validation_summary(repo_id: str, cache_dir: str | None, plan: dict |
     if isinstance(total_bytes, int) and total_bytes > 0 and (snapshot.get('completed_bytes') or 0) < total_bytes:
         complete = False
         reasons.append("Requested snapshot byte count is lower than Hugging Face metadata.")
-    loader_smoke = _loader_config_smoke_summary(repo_id, cache_dir, plan)
+    if file_issues:
+        complete = False
+        reasons.extend(file_issues[:3])
+        loader_smoke = {'attempted': False, 'complete': False,
+                        'reason': 'Loader config parsing waits for exact selected-file validation.'}
+    else:
+        loader_smoke = _loader_config_smoke_summary(repo_id, cache_dir, plan)
     if not loader_smoke.get('complete'):
         complete = False
         reasons.append(loader_smoke.get('reason') or 'The Diffusers loader configuration smoke test failed.')

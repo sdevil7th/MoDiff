@@ -48,6 +48,7 @@ from modiff.modular_workflow_contracts import (
     PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES,
     PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES,
     PINNED_MODULAR_REPOSITORY_COMPONENT_SOURCES,
+    PINNED_MODULAR_REPOSITORY_COMPONENT_SUBFOLDERS,
     PINNED_MODULAR_REPOSITORY_VARIANTS,
     PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS,
     reviewed_modular_weight_variant,
@@ -796,7 +797,8 @@ def _validate_reviewed_pipeline_index(model_type, repository, revision):
                 or fields.get("type_hint") != list(component_type)
                 or set(fields) != loading_keys
                 or fields["pretrained_model_name_or_path"] != repository
-                or fields["subfolder"] != name
+                or fields["subfolder"] != PINNED_MODULAR_REPOSITORY_COMPONENT_SUBFOLDERS.get(
+                    repository, {}).get(name, name)
                 or fields["revision"] not in (None, revision)
                 or fields["variant"] is not None
             ):
@@ -952,6 +954,20 @@ def _instantiate_reviewed_builtin_pipeline(
     return pipeline
 
 
+def _register_default_created_scheduler(pipeline, manager, node_id):
+    """Publish an upstream-created scheduler without pretrained acquisition."""
+    spec = pipeline._component_specs.get('scheduler')
+    if spec is None or spec.default_creation_method != 'from_config':
+        return False
+    from diffusers import SchedulerMixin
+    scheduler = getattr(pipeline, 'scheduler', None)
+    if (not isinstance(spec.type_hint, type) or not issubclass(spec.type_hint, SchedulerMixin)
+            or type(scheduler) is not spec.type_hint):
+        raise ValueError('The declared default scheduler was not constructed with its exact reviewed class.')
+    manager.add('scheduler', scheduler, collection=node_id)
+    return True
+
+
 def node_get_component_info(node_id=None, manager=None, name=None):
     comp_ids = manager._lookup_ids(name=name, collection=node_id)
     if len(comp_ids) != 1:
@@ -1045,6 +1061,20 @@ class RequiredComponentLoadError(RuntimeError):
         )
 
 
+def reviewed_component_dtypes(model_type, dtype):
+    """Resolve only the selected built-in schema's explicit precision map."""
+    metadata = get_model_type_metadata(model_type)
+    overrides = metadata.get("component_dtype_overrides", {}) if isinstance(metadata, dict) else {}
+    if not overrides:
+        return dtype
+    from .pipeline_schema import normalize_component_dtype_overrides
+
+    if type(overrides) is not dict:
+        raise ValueError("Registered component dtype overrides are malformed.")
+    normalized = normalize_component_dtype_overrides(list(overrides.items()))
+    return {"default": dtype, **{name: str_to_dtype(value) for name, value in normalized}}
+
+
 def component_load_kwargs_for(name, kwargs):
     component_load_kwargs = {}
     for key, value in kwargs.items():
@@ -1081,36 +1111,33 @@ def place_pipeline_components(pipeline, device, progress_callback=None):
     return [name for name, _component in resident_components]
 
 
-def modular_runtime_policy(attention_backend='inherit', vae_slicing=None, vae_tiling=None, inpaint_compatibility='native'):
+def modular_runtime_policy(attention_backend='inherit', vae_slicing=None, vae_tiling=None, inpaint_compatibility='native',
+                           weight_loading_mode='cpu'):
     """Normalize explicit native policies; missing controls preserve old nodes."""
-    if attention_backend is None or attention_backend == '':
-        attention_backend = 'inherit'
-    if not isinstance(attention_backend, str):
-        raise TypeError('Native Modular attention must be a declared backend string.')
-    if attention_backend not in {'inherit', 'auto', 'native', '_native_math'}:
-        raise ValueError('Native Modular attention must be inherit, auto, native, or _native_math.')
-    for name, value in (('vae_slicing', vae_slicing), ('vae_tiling', vae_tiling)):
-        if value is not None and type(value) is not bool:
-            raise TypeError(f'{name} must be an explicit boolean or unset.')
-    from .qwen_inpaint_compatibility import validate_compatibility
+    from modiff.modular_runtime_policy import normalize_modular_runtime_policy
 
-    policy = {'attention_backend': attention_backend, 'vae_slicing': vae_slicing, 'vae_tiling': vae_tiling}
-    if validate_compatibility(inpaint_compatibility) == 'whole_v1':
-        policy['inpaint_compatibility'] = 'whole_v1'
-    return policy
+    return normalize_modular_runtime_policy(attention_backend, vae_slicing, vae_tiling, inpaint_compatibility,
+                                            weight_loading_mode)
 
 
 def _component_runtime_policy(name, policy):
     policy = policy or {}
+    result = {}
     if name in {'unet', 'transformer', 'transformer_2', 'controlnet', 'prior'}:
         backend = policy.get('attention_backend', 'inherit')
-        return {'attention_backend': backend} if backend != 'inherit' else {}
-    if name == 'vae':
-        return {field: policy[field] for field in ('vae_slicing', 'vae_tiling', 'inpaint_compatibility')
-                if policy.get(field) is not None}
-    if name in {'text_encoder', 'text_encoder_2', 'text_encoder_3'} and policy.get('inpaint_compatibility') == 'whole_v1':
-        return {'inpaint_compatibility': 'whole_v1'}
-    return {}
+        result = {'attention_backend': backend} if backend != 'inherit' else {}
+    elif name == 'vae':
+        result = {field: policy[field] for field in ('vae_slicing', 'vae_tiling', 'inpaint_compatibility')
+                  if policy.get(field) is not None}
+    elif name in {'text_encoder', 'text_encoder_2', 'text_encoder_3'} and policy.get('inpaint_compatibility') == 'whole_v1':
+        result = {'inpaint_compatibility': 'whole_v1'}
+    from modiff.native_weight_loading import CUDA_WEIGHT_LOADING_COMPONENTS
+
+    if policy.get('weight_loading_mode') == 'cuda' and name in CUDA_WEIGHT_LOADING_COMPONENTS:
+        result['weight_loading_mode'] = 'cuda'
+    if name == 'transformer' and 'weight_format_identity' in policy:
+        result['weight_format_identity'] = policy['weight_format_identity']
+    return result
 
 
 def assert_explicit_component_runtime_policy(name, component, policy):
@@ -1198,6 +1225,9 @@ def component_reuse_compatible(
 ):
     """Return whether a shared component matches the complete runtime policy."""
 
+    from modiff.native_component_lora import is_component_policy
+    if is_component_policy(getattr(component, '_modiff_disk_lora_policy', None)):
+        return False  # Selected/partial mutable targets never become ordinary vanilla sources.
     if not isinstance(component, torch.nn.Module):
         return True
     from modules.DiffusersRuntime.main import rocm_vision_attention_requires_configuration
@@ -1278,7 +1308,7 @@ def reusable_component_ids(
         component = manager.get_one(component_id=component_id)
         if component_reuse_compatible(
             component,
-            dtype=dtype,
+            dtype=component_load_kwargs_for(name, {"torch_dtype": dtype})["torch_dtype"],
             requested_quantization=requested_quantization,
             offload_mode=offload_mode,
             device=device,
@@ -1409,6 +1439,161 @@ def _processor_model_config_binding(spec, component_specs, loaded_components, *,
     return (candidates[0][0], deepcopy(candidates[0][1])) if len(candidates) == 1 else None
 
 
+def _cuda_weight_loading_controls(*, model_type, offload_mode, device, dtype, lora_list, quant_config,
+                                  unet, vae, controlnet, weight_variant):
+    """Reject unsupported staging before manager mutation or component allocation."""
+    if (model_type == CUSTOM_PIPELINE_MODEL_TYPE or offload_mode != OFFLOAD_MODE_GROUP_DISK
+            or str(device) not in {'cuda', 'cuda:0'} or str(dtype).removeprefix('torch.') != 'bfloat16'
+            or any(value is not None for value in (lora_list, quant_config, unet, vae, controlnet, weight_variant))):
+        raise ValueError('CUDA weight loading requires built-in dense BF16 group_disk on cuda:0, without adapters, quantization, variants or component overrides.')
+
+
+def _cuda_weight_loading_census(snapshot, repository, revision):
+    from modiff.auto_resource import artifact_revision_cache_status
+    from modiff.artifact_weight_memory import artifact_parameter_conversion_reserve, artifact_parameter_lower_bound
+    from utils.huggingface import get_local_models
+
+    # Use the ordinary installed-artifact validator, constrained to the SAME
+    # managed cache as the reviewed pipeline index. Another complete cache
+    # cannot bless an incomplete primary snapshot.
+    cache_root = str(snapshot.parent.parent.parent)
+    records = [dict(record, cache_dir=cache_root, cache_dirs=[cache_root]) for record in get_local_models()
+               if record.get('id', '').casefold() == repository.casefold()]
+    status = artifact_revision_cache_status(repository, revision, records)
+    if not status.get('exactRevisionComplete') or not any(
+        record.get('complete') is True and Path(record.get('path', '')).absolute() == snapshot
+        for record in status.get('snapshots', ())
+    ):
+        raise ValueError('CUDA weight loading requires the complete exact cached primary snapshot.')
+    bound = artifact_parameter_lower_bound(status, revision, 'bfloat16')
+    reserve = artifact_parameter_conversion_reserve(status, revision, 'bfloat16')
+    from modiff.native_weight_loading import declared_cuda_weight_loaders
+
+    if not declared_cuda_weight_loaders(reserve, bound):
+        raise ValueError('CUDA weight loading requires reviewed uniform component classes and validated Safetensors headers.')
+    return bound, reserve
+
+
+def _prepare_cuda_weight_loading(*, model_type, repository, revision, index_filename):
+    from modiff.diffusers_profiles import resolve_execution_profiles_for_loader
+    from modiff.native_image_auto_placement import declared_image_owner
+    from modiff.runtime_environment import diffusers_parallel_loading_enabled
+
+    profiles, reason = resolve_execution_profiles_for_loader('modules.ModularDiffusers', 'ModelsLoader',
+                                                            {'model_type': model_type, 'repo_id': repository})
+    if (reason or len(profiles) != 1 or profiles[0].execution_path != 'modular-diffusers'
+            or OFFLOAD_MODE_GROUP_DISK not in profiles[0].supported_offload_modes
+            or not profiles[0].modes
+            or not all(declared_image_owner(profiles[0], repository, mode) for mode in profiles[0].modes)):
+        raise ValueError('CUDA weight loading requires an exact declared built-in native image profile.')
+    snapshot = exact_cached_snapshot_path(repository, revision, index_filename).absolute()
+    bound, reserve = _cuda_weight_loading_census(snapshot, repository, revision)
+    context = {'repository': repository, 'revision': revision, 'snapshot': snapshot,
+               'bound': bound, 'reserve': reserve, 'parallel': diffusers_parallel_loading_enabled(), 'configs': {}}
+    _assert_cuda_weight_loading_capacity(context)
+    return context
+
+
+def _cuda_weight_loading_config(context, name):
+    path = resolve_snapshot_cache_file(context['snapshot'] / name / 'config.json', snapshot=context['snapshot'],
+                                       cache_root=_containing_hf_cache_root(context['snapshot']),
+                                       repository=context['repository'])
+    with path.open('rb') as reader:
+        raw = reader.read(MAX_REVIEWED_PIPELINE_INDEX_BYTES + 1)
+    if len(raw) > MAX_REVIEWED_PIPELINE_INDEX_BYTES:
+        raise ValueError('CUDA weight loading component config exceeds its bounded JSON limit.')
+    document = json.loads(raw.decode('utf-8'), object_pairs_hook=_reject_duplicate_pipeline_index_keys,
+                          parse_constant=_reject_nonfinite_pipeline_index_number)
+    if not isinstance(document, dict):
+        raise ValueError('CUDA weight loading requires an object component config.')
+    _validate_reviewed_json_shape(document, description='CUDA weight loading component config')
+    # These initial reviewed classes have uniform checkpoint parameters. Remote
+    # mappings, checkpoint quantizers and dtype overrides need a separate
+    # declaration; the requested-BF16 census cannot price them.
+    forbidden = {'quantization_config', 'auto_map', 'dtype_plan', '_dtype_plan', 'keep_in_fp32_modules',
+                 '_keep_in_fp32_modules', '_keep_in_fp32_modules_strict'}
+    def has_override(value):
+        if isinstance(value, dict):
+            return any(key in forbidden and item not in (None, {}, [], ()) or has_override(item)
+                       for key, item in value.items())
+        return isinstance(value, list) and any(has_override(item) for item in value)
+    if has_override(document):
+        raise ValueError('CUDA weight loading does not admit component quantizers, remote mappings or dtype overrides.')
+    declaration = context['reserve']['components'][name]
+    if declaration['loaderLibrary'] == 'transformers':
+        if document.get('model_type') != 'qwen3':
+            raise ValueError('CUDA weight loading component config does not match its reviewed class.')
+    elif document.get('_class_name') != declaration['loaderClass']:
+        raise ValueError('CUDA weight loading component config does not match its reviewed class.')
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _validate_cuda_weight_loading_specs(pipeline, context):
+    """Check ALL weighted specs before the first official weight load."""
+    weighted = set(context['bound']['components'])
+    actual = {name for name, spec in pipeline._component_specs.items()
+              if isinstance(getattr(spec, 'type_hint', None), type) and issubclass(spec.type_hint, torch.nn.Module)}
+    if actual != weighted:
+        raise ValueError('CUDA weight loading component inventory differs from its validated header census.')
+    for name in sorted(weighted):
+        spec = pipeline._component_specs[name]
+        declaration = context['reserve']['components'][name]
+        official_class = getattr(importlib.import_module(declaration['loaderLibrary']), declaration['loaderClass'])
+        if (spec.type_hint is not official_class or spec.name != name
+                or spec.default_creation_method != 'from_pretrained'
+                or spec.pretrained_model_name_or_path != context['repository']
+                or spec.revision != context['revision'] or spec.subfolder != name
+                or spec.variant is not None or spec.config is not None
+                or any(getattr(official_class, field, None) for field in
+                       ('_keep_in_fp32_modules', '_keep_in_fp32_modules_strict', '_dtype_plan'))):
+            raise ValueError(f'CUDA weight loading has an unreviewed class or loading contract for {name}.')
+        context['configs'][name] = _cuda_weight_loading_config(context, name)
+
+
+def _assert_cuda_weight_loading_capacity(context, name=None):
+    """Actual free capacity is authoritative, including zero; no allocator credit."""
+    from modiff.artifact_weight_memory import native_parameter_conversion_reserve
+    from modiff.hardware import get_hardware_snapshot
+    from modiff.runtime_environment import diffusers_parallel_loading_enabled
+
+    if diffusers_parallel_loading_enabled() is not context['parallel']:
+        raise ValueError('The captured library loading policy changed; retry CUDA weight loading.')
+    bound, reserve = context['bound'], context['reserve']
+    if name is not None:
+        current_bound, current_reserve = _cuda_weight_loading_census(
+            context['snapshot'], context['repository'], context['revision'],
+        )
+        if current_bound != bound or current_reserve != reserve:
+            raise ValueError('The reviewed Safetensors header census changed before CUDA weight loading.')
+        size = bound['components'][name]
+        bound = {**bound, 'components': {name: size}, 'totalBytes': size, 'largestComponentBytes': size}
+        reserve = {**reserve, 'components': {name: reserve['components'][name]}}
+        if _cuda_weight_loading_config(context, name) != context['configs'][name]:
+            raise ValueError('The reviewed component config changed before CUDA weight loading.')
+    minimum = native_parameter_conversion_reserve(
+        reserve, lower_bound=bound, execution_path='modular-diffusers', offload_mode='group_disk',
+        device='cuda:0', dtype='bfloat16', weight_loading_mode='cuda', parallel_loading=context['parallel'],
+    )
+    hardware = get_hardware_snapshot(refresh=True, torch_module=torch)
+    devices = [device for device in hardware.get('devices', ()) if device.get('device') == 'cuda:0'
+               and device.get('backend') == 'cuda' and device.get('memory_kind') == 'dedicated']
+    system = hardware.get('system', {})
+    device = devices[0] if len(devices) == 1 else {}
+    capacities = (system.get('ram_total'), system.get('ram_available'),
+                  device.get('planning_memory_total'), device.get('planning_memory_free'))
+    if (not minimum or not all(type(value) is int and value >= 0 for value in capacities)
+            or not capacities[0] or not capacities[2]):
+        raise ValueError('CUDA weight loading requires fresh dedicated primary CUDA and RAM capacity observations.')
+    ram_total, ram_free, gpu_total, gpu_free = capacities
+    if ram_free > ram_total or gpu_free > gpu_total:
+        raise ValueError('CUDA weight loading capacity observations exceed their physical totals.')
+    ram_required = minimum['systemRamBytes'] + max(4 * 1024**3, ram_total // 10)
+    gpu_required = bound['largestComponentBytes'] + max(2 * 1024**3, gpu_total // 10)
+    if ram_free < ram_required or gpu_free < gpu_required:
+        raise ValueError(f'CUDA weight loading capacity refused: RAM needs {ram_required} bytes, {ram_free} available; '
+                         f'VRAM needs {gpu_required} bytes, {gpu_free} available.')
+
+
 def load_components_strict(
     pipeline,
     names,
@@ -1422,6 +1607,9 @@ def load_components_strict(
     component_load_kwargs,
     incremental_group_offload=None,
     selected_components=None,
+    deferred_group_offload_components=(),
+    cuda_weight_loading=None,
+    weight_format_binding=None,
 ):
     if names is None:
         names = [
@@ -1442,6 +1630,16 @@ def load_components_strict(
     # declared model type and complete artifact load id before copying a config.
     loaded_components = dict(selected_components or {})
     components_to_load = [name for name in names if name in pipeline._component_specs]
+    deferred = set(deferred_group_offload_components)
+    if cuda_weight_loading is not None:
+        if (not incremental_group_offload or incremental_group_offload['mode'] != OFFLOAD_MODE_GROUP_DISK or deferred
+                or quant_config is not None
+                or set(selected_components or {}) & set(cuda_weight_loading['bound']['components'])
+                or not set(cuda_weight_loading['bound']['components']) <= set(components_to_load)):
+            raise ValueError('CUDA weight loading requires fresh unmodified components and immediate disk hooks.')
+        _validate_cuda_weight_loading_specs(pipeline, cuda_weight_loading)
+    components_to_load = ([name for name in components_to_load if name not in deferred]
+                          + [name for name in components_to_load if name in deferred])
     unknown_names = [name for name in names if name not in pipeline._component_specs]
     if unknown_names:
         diagnostics.setdefault("components_unknown", []).extend(unknown_names)
@@ -1461,6 +1659,11 @@ def load_components_strict(
     ):
         spec = pipeline._component_specs[name]
         load_kwargs = component_load_kwargs_for(name, component_load_kwargs)
+        staged = cuda_weight_loading is not None and name in cuda_weight_loading['bound']['components']
+        if staged:
+            _assert_cuda_weight_loading_capacity(cuda_weight_loading, name)
+            load_kwargs.update(device_map='cuda:0', low_cpu_mem_usage=True, local_files_only=True, use_safetensors=True,
+                               cache_dir=str(cuda_weight_loading['snapshot'].parent.parent.parent))
         if (
             "trust_remote_code" in load_kwargs
             and getattr(pipeline, "_pretrained_model_name_or_path", None) is not None
@@ -1475,6 +1678,8 @@ def load_components_strict(
             continue
 
         try:
+            if weight_format_binding is not None and name == "transformer":
+                weight_format_binding.assert_current()
             config_cache_state = None
             if "config" not in load_kwargs:
                 config_cache_state = _processor_model_config_cache_state(spec, model_id=model_id, load_kwargs=load_kwargs)
@@ -1496,7 +1701,7 @@ def load_components_strict(
                 # its own config. Retry once only when that attempt establishes
                 # a NEW exact-pin Hub negative marker; transport/access/parse
                 # failures with unknown or present config retain normal errors.
-                if "config" in load_kwargs or config_cache_state != "unknown":
+                if staged or "config" in load_kwargs or config_cache_state != "unknown":
                     raise
                 cache_state_after = _processor_model_config_cache_state(spec, model_id=model_id, load_kwargs=load_kwargs)
                 if cache_state_after != "absent":
@@ -1518,6 +1723,14 @@ def load_components_strict(
                     "traceback": traceback.format_exc(),
                 }
                 component = spec.load(**load_kwargs)
+            if weight_format_binding is not None and name == "transformer":
+                weight_format_binding.assert_current()
+            if staged:
+                if (type(component) is not spec.type_hint or getattr(component, 'hf_quantizer', None) is not None
+                        or any(getattr(module, '_hf_hook', None) is not None for module in component.modules())
+                        or any(parameter.dtype != dtype or str(parameter.device) != 'cuda:0'
+                               for parameter in component.parameters())):
+                    raise ValueError(f'Official CUDA loading did not materialize uniform BF16 primary-GPU parameters for {name}.')
         except Exception as exc:
             traceback_text = traceback.format_exc()
             failure = {
@@ -1528,11 +1741,11 @@ def load_components_strict(
                 "load_kwargs": safe_diagnostic_value(load_kwargs),
             }
             diagnostics.setdefault("components_failed", []).append(failure)
-            if name in required_names:
+            if staged or name in required_names:
                 raise RequiredComponentLoadError(
                     name,
                     model_id,
-                    dtype,
+                    load_kwargs.get("torch_dtype", dtype),
                     offload_mode,
                     component_quant_config_summary(quant_config),
                     exc,
@@ -1542,10 +1755,14 @@ def load_components_strict(
             continue
 
         pipeline.register_components(**{name: component})
+        if staged:
+            # A failed hook installation cannot leave a component eligible for
+            # default-policy reuse. Successful publication replaces this marker.
+            component._modiff_modular_runtime_policy = {'configuration_failed': True}
         loaded_components[name] = component
         diagnostics.setdefault("components_loaded", []).append(name)
 
-        if incremental_group_offload and name in GROUP_OFFLOAD_COMPONENTS:
+        if incremental_group_offload and name in GROUP_OFFLOAD_COMPONENTS and name not in deferred:
             result = apply_component_group_offload(
                 pipeline,
                 component_names=[name],
@@ -1553,6 +1770,8 @@ def load_components_strict(
                 mode=incremental_group_offload["mode"],
                 node_id=incremental_group_offload["node_id"],
                 scope=incremental_group_offload["scope"],
+                **({"offload_root": incremental_group_offload["offload_root"]}
+                   if incremental_group_offload.get("offload_root") is not None else {}),
             )
             if result.applied:
                 offload_diag = diagnostics.setdefault("offload", {})
@@ -1564,6 +1783,8 @@ def load_components_strict(
                     offload_diag["disk_path"] = result.disk_path
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
+            elif staged:
+                raise RuntimeError(f'CUDA weight loading requires immediate official disk hooks for {name}.')
 
 
 def normalize_quant_config_input(config):
@@ -1593,14 +1814,33 @@ class _PreparedLoraAdapters:
     scheduler: object | None
 
 
-def update_lora_adapters(lora_node, lora_list):
+def update_lora_adapters(lora_node, lora_list, *, component_adapter=None):
     """Replace Modular LoRAs only after every identity and file header is revalidated.
 
     Diffusers still owns model/component key compatibility. A later upstream
     compatibility failure cannot be made transactional by this lifecycle API.
     """
 
+    from modiff.flux3_lora_contract import require_selected_flux3_lifecycle
+    require_selected_flux3_lifecycle(lora_node, component_adapter)
     resolved = resolve_lora_descriptors(lora_list)
+    if component_adapter is not None:
+        from modiff.native_component_lora import SelectedComponentLifecycle
+        if type(component_adapter) is not SelectedComponentLifecycle:
+            raise ValueError('Unreviewed selected component lifecycle adapter.')
+        if component_adapter.assert_runtime_binding()[1] is not lora_node:
+            raise ValueError('Selected lifecycle belongs to a different actual pipeline.')
+        component_adapter.preflight(resolved)
+        scheduler = _prepare_lora_scheduler_override(lora_node, resolved)
+        for item in resolved:
+            if resolve_lora_descriptors(lora_list) != resolved:
+                raise ValueError('Component adapter artifacts changed before injection.')
+            component_adapter.load(item)
+        component_adapter.activate([item.adapter_name for item in resolved], [item.scale for item in resolved])
+        if resolve_lora_descriptors(lora_list) != resolved:
+            raise ValueError('Component adapter artifacts changed during injection.')
+        lora_node._modiff_lora_identities = {item.adapter_name: item.descriptor_sha256 for item in resolved}
+        return _PreparedLoraAdapters(lora_node, tuple(resolved), scheduler)
     get_adapters = getattr(lora_node, "get_list_adapters", None)
     load = getattr(lora_node, "load_lora_weights", None)
     activate = getattr(lora_node, "set_adapters", None)
@@ -2363,6 +2603,16 @@ class ModelsLoader(NodeBase):
         "offload_mode": offload_mode_param(
             modes=[OFFLOAD_MODE_NONE, OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]
         ),
+        "weight_loading_mode": {
+            "label": "Weight Loading", "type": "string", "default": "cpu", "options": ["cpu", "cuda"],
+            "fieldOptions": {"controlTier": "advanced"},
+            "description": "Load weights on CPU or CUDA before disk offload. CUDA loading needs room for a complete component and is available only for supported models.",
+        },
+        "weight_format": {
+            "label": "Weight Format", "type": "string", "default": "native", "options": ["native"],
+            "hidden": True, "fieldOptions": {"controlTier": "advanced"},
+            "description": "Select a backend-declared immutable component format. Missing reviewed files must be installed through Model Manager.",
+        },
         "unet": {"label": "Denoise Model", "display": "input", "type": "diffusers_auto_model"},
         "vae": {"label": "VAE", "display": "input", "type": "diffusers_auto_model"},
         "controlnet": {"label": "ControlNet", "display": "input", "type": "diffusers_auto_model"},
@@ -2422,6 +2672,9 @@ class ModelsLoader(NodeBase):
     def __call__(self, **kwargs):
         """Enforce custom identity and remote-code policy before cache reuse."""
 
+        from modiff.native_weight_loading import normalize_weight_loading_mode
+
+        normalize_weight_loading_mode(kwargs.get('weight_loading_mode', 'cpu'))
         model_type = kwargs.get("model_type")
         from modiff.cosmos_safety_contract import COSMOS_SAFETY_MODEL_TYPES
         if model_type in COSMOS_SAFETY_MODEL_TYPES:
@@ -2441,6 +2694,8 @@ class ModelsLoader(NodeBase):
                 "reviewed, task-scoped authorization and isolated content-addressed execution path."
             )
         if model_type == CUSTOM_PIPELINE_MODEL_TYPE:
+            if kwargs.get('weight_format', 'native') != 'native':
+                raise ValueError('Custom pipelines have no reviewed single-file weight format.')
             identity_value = kwargs.get(CUSTOM_PIPELINE_IDENTITY_FIELD)
             if not isinstance(identity_value, Mapping):
                 raise ValueError(
@@ -2486,7 +2741,43 @@ class ModelsLoader(NodeBase):
             index_filename,
             _reviewed_json_fingerprint(index_document),
         )
-        return super().__call__(**kwargs)
+        from modiff.modular_weight_formats import resolve_weight_format
+        from modiff.artifact_verification import artifact_verification_for_loader
+        verification = artifact_verification_for_loader(self, kwargs.get('weight_format', 'native'))
+        if verification is not None:
+            verification.check()
+        weight_binding = resolve_weight_format(
+            model_type=model_type, metadata=get_model_type_metadata(model_type), repository=repository,
+            revision=reviewed_revision, weight_format=kwargs.get('weight_format', 'native'),
+            **{field: kwargs.get(field, default) for field, default in (
+                ('offload_mode', OFFLOAD_MODE_MODEL_CPU), ('auto_offload', True), ('weight_loading_mode', 'cpu'),
+                ('quant_config', None), ('lora_list', None), ('unet', None), ('vae', None), ('controlnet', None))},
+            component_lora_context=getattr(self, '_selected_component_lora_context', None),
+            execution_device=kwargs.get('device'),
+            _verification_callback=verification)
+        if weight_binding is not None:
+            kwargs['_reviewed_weight_format_identity'] = weight_binding.signature
+        elif kwargs.get('_reviewed_weight_format_identity') is not None:
+            raise ValueError('Private weight-format identity has no selected artifact authority.')
+        context = getattr(self, '_selected_component_lora_context', None)
+        identity = kwargs.get('_reviewed_component_lora_identity')
+        if context is not None:
+            from modiff.native_component_lora import ComponentLoraContext
+            if type(context) is not ComponentLoraContext or identity != context.signature:
+                raise ValueError('Selected component source authority is missing or stale.')
+            context.validate_resolved(kwargs)
+        elif identity is not None:
+            raise ValueError('Private component tuple has no current source authority.')
+        if verification is None:
+            return super().__call__(**kwargs)
+        self._active_artifact_verification = verification
+        try:
+            verification.check()
+            result = super().__call__(**kwargs)
+            verification.check()
+            return result
+        finally:
+            self._active_artifact_verification = None
 
     def prepare_for_workflow_reuse(self):
         """Invalidate stale in-flight field-action publications on node reuse."""
@@ -2865,6 +3156,21 @@ class ModelsLoader(NodeBase):
             },
         )
         self.set_field_params("dtype", {"value": default_dtype})
+        if 'weight_format' in values:
+            from modiff.modular_weight_formats import declared_weight_formats
+            formats = declared_weight_formats(model_type, metadata)
+            selected_format = values.get('weight_format', 'native')
+            unsupported = type(selected_format) is str and selected_format not in formats
+            unresolved = selected_format is not None and type(selected_format) is not str
+            description = ModelsLoader.params['weight_format']['description']
+            if metadata is None:
+                description = 'Weight format support is pending model metadata; the stored selection is unchanged.'
+            elif unsupported:
+                description = 'The saved weight format is unsupported by this model. Choose a supported format explicitly; execution refuses it before loading or mutation.'
+            elif unresolved:
+                description = 'The connected weight format is validated before loading; its connection is unchanged.'
+            self.set_field_params('weight_format', {'options': list(formats), 'description': description})
+            self.set_field_visibility({'weight_format': len(formats) > 1 or unsupported or unresolved})
         return self.refresh_pipeline_identity(values, ref)
 
     def execute(
@@ -2892,7 +3198,17 @@ class ModelsLoader(NodeBase):
         vae_slicing=None,
         vae_tiling=None,
         inpaint_compatibility='native',
+        weight_loading_mode='cpu',
+        _reviewed_component_lora_identity=None,
+        weight_format='native',
+        _reviewed_weight_format_identity=None,
     ):
+        from modiff.artifact_verification import artifact_verification_for_loader
+        verification = getattr(self, '_active_artifact_verification', None)
+        if verification is None:
+            verification = artifact_verification_for_loader(self, weight_format)
+        if verification is not None:
+            verification.check()
         from .qwen_inpaint_compatibility import validate_owner_compatibility
 
         validate_owner_compatibility(inpaint_compatibility, model_type=model_type, workflow_id=workflow_id)
@@ -2900,7 +3216,8 @@ class ModelsLoader(NodeBase):
         from .cosmos_safety import require_cosmos_safety_runtime
         if model_type in COSMOS_SAFETY_MODEL_TYPES:
             require_cosmos_safety_runtime()
-        runtime_policy = modular_runtime_policy(attention_backend, vae_slicing, vae_tiling, inpaint_compatibility)
+        runtime_policy = modular_runtime_policy(attention_backend, vae_slicing, vae_tiling, inpaint_compatibility,
+                                                weight_loading_mode)
         if type(trust_remote_code) is not bool:
             raise TypeError("ModelsLoader trust_remote_code must be a JSON boolean.")
         if trust_remote_code:
@@ -2959,18 +3276,54 @@ class ModelsLoader(NodeBase):
             loader_component_outputs = _reviewed_loader_component_outputs(model_type)
             weight_variant = reviewed_modular_weight_variant(model_type, real_repo_id)
 
+        from modiff.modular_weight_formats import resolve_weight_format
+        weight_binding = resolve_weight_format(
+            model_type=model_type, metadata=get_model_type_metadata(model_type), repository=real_repo_id,
+            revision=revision, weight_format=weight_format, offload_mode=offload_mode, auto_offload=auto_offload,
+            weight_loading_mode=weight_loading_mode, quant_config=quant_config, lora_list=lora_list,
+            unet=unet, vae=vae, controlnet=controlnet,
+            component_lora_context=getattr(self, '_selected_component_lora_context', None),
+            execution_device=device, _verification_callback=verification)
+        if verification is not None:
+            verification.check()
+        if _reviewed_weight_format_identity is not None and (
+            weight_binding is None or _reviewed_weight_format_identity != weight_binding.signature
+        ):
+            raise ValueError('Selected weight-format bytes changed after cache validation; repair and retry.')
+        if weight_binding is not None:
+            runtime_policy['weight_format_identity'] = weight_binding.receipt['sha256']
         requested_offload_mode = offload_mode
         offload_mode = normalize_offload_mode(
             offload_mode,
             auto_offload=auto_offload,
             device=device,
         )
+        if weight_loading_mode == 'cuda':
+            _cuda_weight_loading_controls(model_type=model_type, offload_mode=offload_mode, device=device, dtype=dtype,
+                                          lora_list=lora_list, quant_config=quant_config, unet=unet, vae=vae,
+                                          controlnet=controlnet, weight_variant=weight_variant)
+        component_dtypes = reviewed_component_dtypes(model_type, dtype)
         generation_inputs = {
             "model_type": model_type, "repo_id": real_repo_id, "revision": revision,
             "dtype": dtype, "device": device, "auto_offload": auto_offload,
             "offload_mode": offload_mode, "quant_config": quant_config,
+            "weight_loading_mode": weight_loading_mode,
             **runtime_policy,
         }
+        if (get_model_type_metadata(model_type) or {}).get('weight_formats'):
+            generation_inputs['weight_format'] = weight_format
+        from modiff.native_disk_lora import (
+            publish_disk_lora_binding, requested_disk_lora_policy, validate_disk_lora_targets,
+        )
+        component_context = getattr(self, '_selected_component_lora_context', None)
+        if component_context is not None and _reviewed_component_lora_identity != component_context.signature:
+            raise ValueError('Selected component callback authority is stale.')
+        disk_lora_policy = requested_disk_lora_policy({**generation_inputs, 'lora_list': lora_list},
+            component_context=component_context)
+        # Failed/partial construction or mutation must never retain a successful
+        # marker from an earlier incarnation of this loader.
+        self._weight_format_binding = weight_binding
+        self._native_disk_lora_state = None
         self._loader_diagnostics = {
             "node_id": self.node_id,
             "loader": "ModelsLoader",
@@ -2997,6 +3350,8 @@ class ModelsLoader(NodeBase):
                 "components": [],
             },
         }
+        if weight_binding is not None:
+            self._loader_diagnostics['weight_format'] = weight_binding.receipt
         if offload_mode not in [
             OFFLOAD_MODE_NONE,
             OFFLOAD_MODE_MODEL_CPU,
@@ -3056,6 +3411,9 @@ class ModelsLoader(NodeBase):
         # before global offload setup, pipeline creation, or any policy hook.
         for name, component in components_to_update.items():
             assert_explicit_component_runtime_policy(name, component, runtime_policy)
+            if isinstance(component_dtypes, dict) and name in component_dtypes:
+                if getattr(component, "dtype", None) != component_dtypes[name]:
+                    raise ValueError(f"Connected component {name!r} violates the selected precision contract.")
 
         if real_repo_id == "":
             self.notify(
@@ -3101,6 +3459,17 @@ class ModelsLoader(NodeBase):
 
         use_group_offload = offload_mode in [OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK]
 
+        cuda_weight_loading = _prepare_cuda_weight_loading(
+            model_type=model_type, repository=real_repo_id, revision=revision, index_filename=reviewed_index_filename,
+        ) if weight_loading_mode == 'cuda' else None
+        if cuda_weight_loading is not None:
+            self._loader_diagnostics['weight_loading'] = {
+                'mode': 'cuda', 'parallel_loading': cuda_weight_loading['parallel'],
+                'parameter_conversion_reserve': cuda_weight_loading['reserve'],
+            }
+        if component_context is not None and getattr(component_context.placement, 'mode', None) == 'model_cpu':
+            from modiff.flux3_lora_placement import assert_manager_placement_scope
+            assert_manager_placement_scope(components, self.node_id)
         configure_components_manager_offload(components, mode=offload_mode, device=device)
 
         if custom_binding is not None:
@@ -3133,7 +3502,21 @@ class ModelsLoader(NodeBase):
                 if component_spec.default_creation_method != "from_config":
                     component_spec.variant = weight_variant
 
+        weight_load_kwargs = {}
+        if weight_binding is not None:
+            quant_config, weight_load_kwargs = weight_binding.configure(self.loader, dtype)
+            generation_inputs['quant_config'] = quant_config
+            self._loader_diagnostics['quantized_components'] = ['transformer']
+            self._loader_diagnostics['quantization'] = safe_diagnostic_value(component_quant_config_summary(quant_config))
         ALL_COMPONENTS = self.loader.pretrained_component_names
+        disk_lora_targets = validate_disk_lora_targets(
+            self.loader, disk_lora_policy, components_to_update, components, self.node_id,
+        )
+        selected_group_placement = (component_context is not None
+                                    and getattr(component_context.placement, 'mode', None) in {'group_cpu', 'group_disk'})
+        deferred_disk_targets = disk_lora_targets if selected_group_placement or (
+            component_context is None and disk_lora_policy and disk_lora_policy[1]
+        ) else ()
 
         # The already-reviewed installed block contract is authoritative. Passing
         # the repository here would make upstream parse its index a second time.
@@ -3159,6 +3542,9 @@ class ModelsLoader(NodeBase):
 
         for comp_name in components_to_load:
             comp_spec = self.loader.get_component_spec(comp_name)
+            if component_context is not None and comp_name in disk_lora_targets:
+                components_to_reload.append(comp_name)
+                continue
             if comp_spec.load_id != "null":
                 # Reuse requires the same model identity, dtype, quantization,
                 # execution device, and offload policy. In particular, never
@@ -3167,7 +3553,7 @@ class ModelsLoader(NodeBase):
                     components,
                     name=comp_name,
                     load_id=comp_spec.load_id,
-                    dtype=dtype,
+                    dtype=component_dtypes,
                     requested_quantization=quant_config.get(comp_name) if quant_config else None,
                     offload_mode=offload_mode,
                     device=device,
@@ -3183,6 +3569,9 @@ class ModelsLoader(NodeBase):
                     components_to_update.update(
                         components.get_components_by_ids(ids=comp_ids_to_reuse, return_dict_with_names=True)
                     )
+        validate_disk_lora_targets(self.loader, disk_lora_policy, components_to_update, components, self.node_id)
+        if deferred_disk_targets and any(name in components_to_update for name in deferred_disk_targets):
+            raise ValueError('Retained disk LoRA targets must be recreated before native loader execution.')
 
         required_components = (
             set(ALL_COMPONENTS)
@@ -3207,6 +3596,8 @@ class ModelsLoader(NodeBase):
             cosmos_safety_checker = build_cosmos_safety_checker(
                 owner_node_id=self.node_id, model_type=model_type,
             )
+        if verification is not None:
+            verification.check()
         with self.diffusers_loading_progress():
             load_components_strict(
                 self.loader,
@@ -3218,23 +3609,29 @@ class ModelsLoader(NodeBase):
                 quant_config=quant_config,
                 diagnostics=self._loader_diagnostics,
                 component_load_kwargs={
-                    "torch_dtype": dtype,
+                    "torch_dtype": component_dtypes,
                     **({"cache_dir": _primary_component_cache_dirs(
                         self.loader, real_repo_id, revision, reviewed_index_filename,
                     )} if custom_binding is None else {}),
                     **({"variant": weight_variant} if weight_variant is not None else {}),
                     "trust_remote_code": trust_remote_code,
                     "quantization_config": quant_config,
+                    **weight_load_kwargs,
                 },
                 incremental_group_offload={
                     "device": device,
                     "mode": offload_mode,
                     "node_id": self.node_id,
                     "scope": "modular-diffusers",
+                    **({"offload_root": component_context.placement.disk_root}
+                       if selected_group_placement and component_context.placement.disk_root is not None else {}),
                 }
                 if incremental_group_offload
                 else None,
                 selected_components=components_to_update,
+                deferred_group_offload_components=deferred_disk_targets,
+                cuda_weight_loading=cuda_weight_loading,
+                weight_format_binding=weight_binding,
             )
         self.loader.update_components(**components_to_update)
 
@@ -3261,13 +3658,15 @@ class ModelsLoader(NodeBase):
             try:
                 offload_result = apply_component_group_offload(
                     self.loader,
-                    component_names=DEFAULT_GROUP_COMPONENTS,
+                    component_names=[name for name in DEFAULT_GROUP_COMPONENTS if name not in deferred_disk_targets],
                     device=device,
                     mode=offload_mode,
                     node_id=self.node_id,
                     scope="modular-diffusers",
+                    **({"offload_root": component_context.placement.disk_root}
+                       if selected_group_placement and component_context.placement.disk_root is not None else {}),
                 )
-                if not offload_result.applied:
+                if not offload_result.applied and not deferred_disk_targets:
                     raise RuntimeError("No compatible Modular Diffusers component was available to offload.")
                 self._loader_diagnostics["offload"].update(
                     {
@@ -3334,11 +3733,31 @@ class ModelsLoader(NodeBase):
         print(f" ModelsLoader: reloaded components: {components_to_reload}")
         print(f" ModelsLoader: updated components: {components_to_update.keys()}")
 
-        if lora_list is not None:
-            prepared_loras = update_lora_adapters(self.loader, lora_list)
+        if component_context is not None:
+            from modiff.native_component_lora import begin_component_mutation
+            begin_component_mutation(self, disk_lora_policy, components, component_context)
+        if lora_list is not None and (lora_list != [] or disk_lora_policy is None) and (
+            weight_binding is None or component_context is not None
+        ):
+            from modiff.native_component_lora import SelectedComponentLifecycle
+            adapter = SelectedComponentLifecycle(self, component_context, components) if component_context is not None else None
+            prepared_loras = update_lora_adapters(self.loader, lora_list, component_adapter=adapter)
             apply_lora_scheduler_override(self.loader, prepared=prepared_loras)
         elif hasattr(self.loader, "unload_lora_weights"):
             self.loader.unload_lora_weights()
+
+        if deferred_disk_targets:
+            result = apply_component_group_offload(
+                self.loader, component_names=deferred_disk_targets, device=device,
+                mode=offload_mode, node_id=self.node_id, scope='modular-diffusers',
+                allow_streaming=not selected_group_placement,
+                offload_root=component_context.placement.disk_root if selected_group_placement else None,
+            )
+            if not result.applied:
+                raise RuntimeError('Selected LoRA target components could not install their final offload hooks.')
+            self._loader_diagnostics['offload']['components'] = sorted(set(
+                self._loader_diagnostics['offload'].get('components', []) + result.components,
+            ))
 
         # Construct loaded_components at the end after all modifications
         try:
@@ -3360,7 +3779,9 @@ class ModelsLoader(NodeBase):
                     name: node_get_component_info(node_id=self.node_id, manager=components, name=name)
                     for name in text_encoder_names
                 }
-            if "scheduler" in ALL_COMPONENTS:
+            if "scheduler" in ALL_COMPONENTS or _register_default_created_scheduler(
+                self.loader, components, self.node_id,
+            ):
                 loaded_components["scheduler"] = node_get_component_info(
                     node_id=self.node_id,
                     manager=components,
@@ -3439,5 +3860,9 @@ class ModelsLoader(NodeBase):
             raise
 
         logger.debug(f" ModelsLoader: Final component_manager state: {components}")
+
+        if requested_disk_lora_policy({**generation_inputs, 'lora_list': lora_list}, component_context=component_context) != disk_lora_policy:
+            raise ValueError('Native disk LoRA inputs changed during loading; the partial owner cannot be reused.')
+        publish_disk_lora_binding(self, disk_lora_policy, components)
 
         return loaded_components

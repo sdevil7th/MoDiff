@@ -54,12 +54,20 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
 
     def test_current_snapshot_builds_immutable_first_party_definitions(self):
         self.assertEqual(self.library["schemaVersion"], 6)
-        self.assertEqual(len(self.library["definitions"]), 135)
-        self.assertEqual(len(self.library["blockDefinitions"]), 560)
+        self.assertEqual(len(self.library["definitions"]), 139)
+        self.assertEqual(len(self.library["blockDefinitions"]), 587)
+        stage_blocks = [block for block in self.library["blockDefinitions"]
+                        if block["description"] in {
+                            f"Existing MoDiff node modules.DiffusersImage.{action} used by this reviewed standard Diffusers composite."
+                            for action in ("EncodeInputs", "Denoise", "DecodeLatents")
+                        }]
+        self.assertEqual({block["className"] for block in stage_blocks}, {"EncodeInputs", "Denoise", "DecodeLatents"})
+        self.assertEqual(len(stage_blocks), 3)
+        self.assertEqual(len(self.library["blockDefinitions"]) - len(stage_blocks), 584)
         self.assertEqual(self.library["providers"], ["diffusers", "transformers"])
         diffusers_definitions = [item for item in self.library["definitions"] if item["provider"] == "diffusers"]
         transformers_definitions = [item for item in self.library["definitions"] if item["provider"] == "transformers"]
-        self.assertEqual(len(diffusers_definitions), 127)
+        self.assertEqual(len(diffusers_definitions), 131)
         self.assertEqual(len(transformers_definitions), 8)
         for definition in diffusers_definitions:
             self.assertEqual(definition["schemaVersion"], 6)
@@ -187,8 +195,8 @@ class HuggingFaceNodeLibraryTests(unittest.TestCase):
         adapter_definitions = [item for item in self.library["definitions"] if item["graphAdapterContracts"]]
         adapters = [adapter for definition in adapter_definitions for adapter in definition["graphAdapterContracts"]]
 
-        self.assertEqual(len(adapter_definitions), 135)
-        self.assertEqual(len(adapters), 139)
+        self.assertEqual(len(adapter_definitions), 139)
+        self.assertEqual(len(adapters), 143)
         self.assertTrue(all(definition["executionClaim"] == "discovery_only" for definition in adapter_definitions))
         flux = self.definition("FluxModularPipeline", "text2image")
         self.assertEqual(flux["graphAdapterContracts"][0]["actionSequence"], ["text_encoder", "denoise", "decoder"])

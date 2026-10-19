@@ -56,7 +56,9 @@ EXPECTED_SDXL_RUNNABLE_MODES = [
 
 def _pipeline_blocks(model_type):
     truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
-    pipeline_class = getattr(diffusers, model_type)
+    pipeline_class = getattr(diffusers, model_type, None)
+    if pipeline_class is None:
+        raise unittest.SkipTest(f"Official {model_type} API is unavailable in the installed release.")
     constructor_config = dict(truth.constructor_config)
     pipeline = pipeline_class(config_dict=constructor_config) if constructor_config else pipeline_class()
     return pipeline_class, pipeline.blocks
@@ -101,13 +103,15 @@ class ModularWorkflowTruthTests(unittest.TestCase):
 
     def test_registered_pipelines_have_exact_truth_or_whole_workflow_adapters(self):
         registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
-        self.assertEqual(len(PINNED_MODULAR_WORKFLOW_TRUTH), 23)
+        self.assertEqual(len(PINNED_MODULAR_WORKFLOW_TRUTH), 25)
         whole_workflow_only = registered - set(PINNED_MODULAR_WORKFLOW_TRUTH)
         self.assertEqual(
             whole_workflow_only,
             {"Cosmos3DistilledModularPipeline", "MiniMaxH3ModularPipeline"},
         )
-        self.assertEqual(set(PINNED_MODULAR_WORKFLOW_TRUTH) | whole_workflow_only, registered)
+        available_truth = {name for name in PINNED_MODULAR_WORKFLOW_TRUTH
+                           if getattr(diffusers, name, None) is not None}
+        self.assertEqual(available_truth | whole_workflow_only, registered)
         for model_type in whole_workflow_only:
             candidates = [
                 candidate
@@ -121,7 +125,7 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                     reviewed_whole_workflow_graph_adapter(model_type, candidate["workflowId"]),
                     f"{model_type}:{candidate['workflowId']} lacks its exact reviewed whole-workflow adapter",
                 )
-        self.assertEqual(PINNED_DIFFUSERS_REVISION, "fbf49e7f35857f76bc57b177e26f12b03687c668")
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941")
         dependency_contract = Path("pyproject.toml").read_text(encoding="utf-8")
         self.assertIn(
             "diffusers==0.41.0",
@@ -220,6 +224,12 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         truth_modes = {
             model_type: set(dict(truth.modes)) for model_type, truth in PINNED_MODULAR_WORKFLOW_TRUTH.items()
         }
+        private_truth = {
+            "Flux3ModularPipeline": {"text_to_image", "edit_image"},
+            "Flux3DistilledModularPipeline": {"text_to_image", "edit_image"},
+        }
+        self.assertEqual({name: truth_modes[name] for name in private_truth}, private_truth)
+        self.assertTrue(set(private_truth).isdisjoint(_advertised_modular_modes()))
         self.assertEqual(
             truth_modes["StableDiffusionXLModularPipeline"],
             {"text_to_image", "image_to_image", "control_image", "control_edit_image", "control_inpaint", "inpaint"},
@@ -236,6 +246,8 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                     "ZImageModularPipeline",
                     "QwenImageEditModularPipeline",
                     "Cosmos3OmniModularPipeline",
+                    "Flux3ModularPipeline",
+                    "Flux3DistilledModularPipeline",
                 }
             },
             {
@@ -249,6 +261,8 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                     "ZImageModularPipeline",
                     "QwenImageEditModularPipeline",
                     "Cosmos3OmniModularPipeline",
+                    "Flux3ModularPipeline",
+                    "Flux3DistilledModularPipeline",
                 }
             },
         )

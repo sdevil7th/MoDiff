@@ -21,6 +21,22 @@
       ]
     },
     {
+      "id": "flux-3",
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline",
+        "Flux3ModularPipeline"
+      ],
+      "evidencePath": "data/flux3-catalog-gate-review.v1.json",
+      "evidenceSha256": "0576071cfd6f81205282017fcf2ab0879ec9c0de260387293d2d86b85e1abf3a",
+      "blockers": [
+        "published_runtime",
+        "selected_weight_headers",
+        "pretrained_execution",
+        "adapter_artifacts",
+        "offload_and_resource_qualification"
+      ]
+    },
+    {
       "id": "ideogram-4",
       "pipelineClasses": [
         "Ideogram4ModularPipeline"
@@ -90,5 +106,5 @@
       ]
     }
   ],
-  "contentHash": "sha256:56d5ffd548331733c9df1af5af2e321b51b8f7a949ce2835d6e4217dc3617be1"
+  "contentHash": "sha256:fd8b1e00b23e74e296f9fd6c0c3251da9c6004a8a3038607b0d7d0f85a1ebbc3"
 }

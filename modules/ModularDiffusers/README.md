@@ -33,6 +33,21 @@ Only outputs declared by the exact reviewed block are published; arbitrary
 state fields and components are not exposed. Loop-member descriptors remain
 owned by their loop, not independent once-per-graph tensor producers.
 
+For a reviewed field-name collision with incompatible socket types, the backend
+publishes `fieldOptions.reviewedBlockFieldSchemasV1`. Each alternative binds an
+exact block definition ID and contract hash to backend-authored parameter
+metadata. The client selects that exact pair when projecting a compiled Block
+or inserting a standalone reviewed block; missing, duplicate or mismatched
+identities refuse projection. It does not interpret Python type annotations.
+The alternatives are discovery metadata and are removed from persisted selected
+parameters. Loop aliases retain their iteration transport types.
+
+The backend field review allowlist currently contains only `img_ids`. Other
+preexisting union coercions retain their reviewed projection until separately
+reviewed; this mechanism does not normalize every historical socket. Same-type
+union descriptions and defaults remain unchanged. A socket-schema review does
+not qualify model execution, resource fit or an optional runtime.
+
 Cross-context insertion accepts **exact reviewed block contracts** independently
 of whether their original class appears in the destination hierarchy. It keeps
 the source identity for reconstruction and rebinds execution to the destination;

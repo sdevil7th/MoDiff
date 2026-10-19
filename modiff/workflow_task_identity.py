@@ -189,6 +189,54 @@ def resource_consumers(nodes: dict, loader_id: str, loader_ids: set[str]) -> lis
         found.update(additions)
 
 
+def direct_image_stage_owner(nodes: dict, stage_id: str) -> tuple[str, tuple[str, ...]]:
+    """Resolve one exclusive builtin pipeline/adapter route without execution.
+
+    This proves topology only, never adapter bytes, placement or warm storage.
+    Each intermediate output must feed the next adapter alone; the terminal
+    output must feed exactly the three distinct current image stage actions.
+    """
+    stages = {'EncodeInputs', 'Denoise', 'DecodeLatents'}
+    node = nodes.get(stage_id, {})
+    if node.get('module') != 'modules.DiffusersImage' or node.get('action') not in stages:
+        raise ValueError('A declared direct image stage is required.')
+    pipeline = node.get('params', {}).get('pipeline', {})
+    endpoint = (pipeline.get('sourceId'), pipeline.get('sourceKey'))
+    current, output = endpoint
+    reverse, seen = [], set()
+    while current:
+        if current in seen or len(reverse) > 32:
+            raise ValueError('The direct image adapter route is cyclic or exceeds 32 adapters.')
+        seen.add(current)
+        source = nodes.get(current, {})
+        identity = (source.get('module'), source.get('action'))
+        if identity == ('modules.DiffusersImage', 'LoadPipeline') and output == 'pipeline':
+            loader = current
+            break
+        if identity != ('modules.DiffusersImage', 'LoadAdapter') or output != 'output':
+            raise ValueError('The image stage needs a declared loader or ordered adapter output.')
+        reverse.append(current)
+        upstream = source.get('params', {}).get('pipeline', {})
+        current, output = upstream.get('sourceId'), upstream.get('sourceKey')
+    else:
+        raise ValueError('The image stage has no concrete pipeline owner.')
+    adapters = tuple(reversed(reverse))
+    links = [(loader, 'pipeline'), *((key, 'output') for key in adapters)]
+    for index, (source_id, source_key) in enumerate(links):
+        uses = [(key, field) for key, value in nodes.items()
+                for field, param in value['params'].items()
+                if (param.get('sourceId'), param.get('sourceKey')) == (source_id, source_key)]
+        if index < len(adapters):
+            if uses != [(adapters[index], 'pipeline')]:
+                raise ValueError('An intermediate image adapter output is shared or bypassed.')
+        elif (len(uses) != 3 or {field for _, field in uses} != {'pipeline'}
+              or {nodes[key]['action'] for key, _ in uses} != stages
+              or any(nodes[key]['module'] != 'modules.DiffusersImage' for key, _ in uses)
+              or stage_id not in {key for key, _ in uses}):
+            raise ValueError('The terminal image owner output needs its sole complete stage trio.')
+    return loader, adapters
+
+
 _IMAGE_OWNERS = {
     ('modules.DiffusersImage', 'LoadPipeline'),
     ('modules.HuggingFaceTransformers', 'LoadDepthEstimationModel'),
@@ -205,10 +253,15 @@ def _ordinary_image_tasks(nodes, records, key, loaders, model):
         actions = {action: set(IMAGE_OPERATION_MODES)} if model == 'BuiltinImageOperationV1' else {}
         consumers = [key]
     elif module == 'modules.DiffusersImage':
-        from modules.DiffusersImage.main import IMAGE_ACTION_MODES, IMAGE_PIPELINE_ADAPTERS
+        from modules.DiffusersImage.main import IMAGE_ACTION_MODES, IMAGE_PIPELINE_ADAPTERS, image_pipeline_contract
 
         adapter = IMAGE_PIPELINE_ADAPTERS.get(model)
         actions = {a: set(tasks) & set(adapter.modes) for a, tasks in IMAGE_ACTION_MODES.items()} if adapter else {}
+        stage_actions = {'EncodeInputs', 'Denoise', 'DecodeLatents'}
+        owner_task = records.get(key, {}).get('fields', {}).get('mode', {}).get('value')
+        if adapter and adapter.stage_adapter is not None and isinstance(owner_task, str) and owner_task in adapter.modes:
+            declared = image_pipeline_contract(adapter, owner_task)['actions']
+            actions.update({action: set(declared[action]) for action in stage_actions if action in declared})
         consumers = resource_consumers(nodes, key, loaders)
     else:
         actions = {
@@ -219,7 +272,11 @@ def _ordinary_image_tasks(nodes, records, key, loaders, model):
     tasks = set()
     for consumer in consumers:
         node = nodes[consumer]
-        if node['module'] != module or node['action'] not in actions:
+        if node['module'] != module:
+            continue
+        if module == 'modules.DiffusersImage' and node['action'] in stage_actions and node['action'] not in actions:
+            return set()  # Missing owner capture/undeclared stage is not an image-task guess.
+        if node['action'] not in actions:
             continue
         task = records.get(consumer, {}).get('fields', {}).get('executed_task', {}).get('value')
         if not isinstance(task, str) or task not in actions[node['action']]:

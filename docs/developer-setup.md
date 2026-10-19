@@ -128,9 +128,13 @@ Standalone uv installations support `uv self update`; package-manager installs
 must use their package manager. See [Astral's upgrade instructions](https://docs.astral.sh/uv/getting-started/installation/#upgrading-uv).
 MoDiff accepts the operator's uv; there is no application-specific version pin.
 
-After pulling application changes, run `uv sync` with the same accelerator extra,
-then preflight and restart the backend. For the Instinct SDK, rerun its explicit
-`uv pip install` and `uv pip check` commands above instead. An intentional package upgrade uses
+For native accelerator profiles, after pulling application changes run `uv sync`
+with the same accelerator extra, then preflight and restart the backend.
+Keep specialized Ryzen ROCm environments on their reviewed direct-wheel profile;
+a generic sync can replace their Torch stack. Review dependency changes against
+that profile before updating its environment. For the Instinct SDK, rerun its
+explicit `uv pip install` and `uv pip check` commands above instead.
+An intentional package upgrade uses
 `uv lock --upgrade-package transformers --upgrade-package peft`, then sync and
 validate. `uv lock --upgrade` upgrades all compatible dependencies and needs the
 full contributor gate. Upgrading Diffusers requires an intentional edit to its
@@ -140,8 +144,8 @@ release. Source-audit tests acquire that exact source fixture independently of
 setup, preflight, and runtime smoke. Compiled accelerator wheels also need
 matching ABI versions.
 
-A missing base library is repaired by rerunning the same sync command, without
-optional activation. Additional optional packages retain explicit install and
+A missing base library is repaired through the same native sync or reviewed
+specialized profile, without optional activation. Additional optional packages retain explicit install and
 activation, with progress through verification and worker replacement. Failed
 or stale overlays must be repaired through their own runtime action; deleting
 models, workflows, or output history is unnecessary.
@@ -169,7 +173,32 @@ host RAM for a subsequent Auto plan. Immediate purging can cost allocation
 performance. An explicit `MIMALLOC_PURGE_DELAY` value is preserved, including an
 empty setting; changing it requires a fresh app process. This does not change
 CUDA allocation policy, model offload settings or the host memory admission floor.
-See the [allocator's documented environment options](https://github.com/microsoft/mimalloc/blob/v2.1.7/readme.md#environment-options).
+See the [allocator's documented environment options](https://github.com/microsoft/mimalloc/blob/048d969a1c5ee2fb89c226298f41ea38445546ef/readme.md#environment-options).
+
+Windows startup also defaults `HF_ENABLE_PARALLEL_LOADING=0` for Diffusers and
+`HF_DEACTIVATE_ASYNC_LOAD=1` for Transformers before model-library imports.
+These supported library switches disable the libraries’ parallel and
+asynchronous weight-loading paths. A bounded Windows reproduction retained CPU
+allocations after loader threads exited and another thread freed the tensors,
+even with immediate mimalloc purging. Serial loading can take longer, but
+avoids that reproduced thread-order allocation pattern. Other platforms retain
+MoDiff's parallel Diffusers default and do not change Transformers' async setting.
+
+Each flag preserves an explicit operator value independently, including an empty
+value. For example, to opt into both parallel loaders in PowerShell before launch:
+
+```powershell
+$env:HF_ENABLE_PARALLEL_LOADING = 'YES'
+$env:HF_DEACTIVATE_ASYNC_LOAD = '0'
+uv run --extra cuda python main.py
+```
+
+Changing these flags requires a fresh backend process: Diffusers captures its
+parallel flag during import. MoDiff does not override `HF_PARALLEL_LOADING_WORKERS`
+or change model revisions, precision, graph controls, offload placement or memory
+admission floors. Allocator tests and a successful original-model control do not
+qualify all models or establish repeatability; retain separate actual model,
+cleanup and repeat-run evidence for the chosen environment.
 
 Standard eager image recipes use native SDPA without Triton. Optional
 compilation requires an executed kernel probe. Some advanced model recipes

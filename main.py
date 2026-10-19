@@ -3,13 +3,12 @@
 import os
 import sys
 
-from modiff.runtime_environment import configure_allocator
+from modiff.runtime_environment import configure_allocator, configure_model_loading
 
 configure_allocator()
-# Diffusers reads this once while its modules are imported. Configure it before
-# the worker imports any node packages so large sharded pipelines can load
-# their weight files concurrently. An explicit deployment setting still wins.
-os.environ.setdefault("HF_ENABLE_PARALLEL_LOADING", "YES")
+# Diffusers captures its loader flag during import. Apply both official loader
+# defaults before configuration or worker node imports; operator choices win.
+configure_model_loading()
 
 # Bind source provenance before the replaceable worker imports any executable
 # backend or node module. The same cached claim is emitted with runtime and
@@ -120,7 +119,10 @@ def worker_process_command(worker_env):
         if not executable:
             raise RuntimeError("The Windows virtual environment has no base Python executable.")
         worker_env["__PYVENV_LAUNCHER__"] = sys.executable
-    return [executable, os.path.abspath(__file__), "--worker"]
+    # -B is an interpreter flag, not an environment setting inherited by Popen.
+    # Preserve it for source evaluation and other immutable package runtimes.
+    flags = ["-B"] if sys.dont_write_bytecode else []
+    return [executable, *flags, os.path.abspath(__file__), "--worker"]
 
 
 def run_supervisor():

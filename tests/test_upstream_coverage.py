@@ -15,6 +15,7 @@ from modiff.optional_runtimes import (
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
 )
 from modiff.studio_execution_specs import STUDIO_EXECUTION_SPEC_DEFINITIONS
+from modiff.source_text import canonical_python_source
 from modiff.upstream_coverage import (
     TRANSFORMERS_REVIEWED_MAIN_REVISION,
     TRANSFORMERS_REVIEWED_MAIN_VERSION,
@@ -23,6 +24,7 @@ from modiff.upstream_coverage import (
     UpstreamCoverageError,
     _load_reviewed_gallery_manifest,
     _load_public_templates,
+    _node_action_evidence,
     _template_execution_coverage,
     _transformers_coverage_scope,
     _transformers_reference_contract,
@@ -86,17 +88,17 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 202,
+                "canonicalWorkflowCount": 203,
                 "canonicalWorkflowsWithPublicTemplates": 54,
-                "canonicalWorkflowsWithoutPublicTemplates": 148,
-                "diffusersPipelineSymbolCount": 334,
+                "canonicalWorkflowsWithoutPublicTemplates": 149,
+                "diffusersPipelineSymbolCount": 340,
                 "pipelineStatusCounts": {
                     "contract-only": 5,
-                    "equivalent": 10,
+                    "equivalent": 8,
                     "executable": 144,
                     "intentionally-excluded": 59,
-                    "research-blocked": 116,
-                    "unreviewed": 0,
+                    "research-blocked": 118,
+                    "unreviewed": 6,
                 },
                 "publicTemplateCount": 80,
                 "reviewedGalleryTemplateCount": 70,
@@ -122,7 +124,7 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "workflowStatusCounts": {
                     "contract-only": 0,
                     "equivalent": 0,
-                    "executable": 202,
+                    "executable": 203,
                     "intentionally-excluded": 0,
                     "research-blocked": 0,
                     "unreviewed": 0,
@@ -135,7 +137,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         names = [item["name"] for item in items]
         self.assertEqual(names, sorted(names))
         self.assertEqual(len(names), len(set(names)))
-        self.assertEqual(len(names), 334)
+        self.assertEqual(len(names), 340)
         self.assertTrue({item["status"] for item in items}.issubset(UPSTREAM_COVERAGE_STATUSES))
 
         by_name = {item["name"]: item for item in items}
@@ -151,8 +153,8 @@ class UpstreamCoverageTests(unittest.TestCase):
             by_name["AltDiffusionPipeline"]["reviewDecision"],
             "pinned-diffusers-non-video-source-triage",
         )
-        self.assertEqual(by_name["Lumina2Text2ImgPipeline"]["status"], "equivalent")
-        self.assertEqual(by_name["Lumina2Text2ImgPipeline"]["equivalentTo"], ["Lumina2Pipeline"])
+        self.assertNotIn("Lumina2Text2ImgPipeline", by_name)
+        self.assertNotIn("LuminaText2ImgPipeline", by_name)
         self.assertEqual(by_name["ZImageOmniPipeline"]["status"], "research-blocked")
         self.assertEqual(
             by_name["ZImageOmniPipeline"]["reviewDecision"],
@@ -178,6 +180,8 @@ class UpstreamCoverageTests(unittest.TestCase):
         )
 
         for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values():
+            if definition["profile"].get("public") is False:
+                continue  # Private future definitions do not grant executable coverage.
             pipeline_class = definition["profile"]["pipeline_class"]
             if pipeline_class in by_name:
                 self.assertEqual(by_name[pipeline_class]["status"], "executable", pipeline_class)
@@ -200,7 +204,7 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual([spec["id"] for spec in item["exactExecutionSpecs"]], [spec_id])
             self.assertIsNone(item["reviewDecision"], pipeline_class)
 
-    def test_all_unreviewed_video_exports_have_conservative_decisions(self):
+    def test_existing_video_triage_and_exact_new_export_gaps_are_preserved(self):
         by_name = {item["name"]: item for item in self.ledger["diffusersPipelines"]}
         equivalent = {
             "LTX2ImageToVideoPipeline": ["LTX2ConditionPipeline"],
@@ -255,7 +259,10 @@ class UpstreamCoverageTests(unittest.TestCase):
         self.assertEqual({item["name"] for item in reviewed_video}, intentionally_excluded | research_blocked)
         self.assertEqual(
             {item["name"] for item in by_name.values() if item["status"] == "unreviewed"},
-            set(),
+            {
+                "EchoModularPipeline", "Kandinsky6SRPipeline", "Kandinsky6TI2VAPipeline",
+                "QwenImage21ModularPipeline", "QwenImage21TurboModularPipeline", "SanaWMPipeline",
+            },
         )
 
     def test_diffusers_scope_is_the_exact_dependency_pin(self):
@@ -351,8 +358,30 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(item["referenceWheelEvidence"], item["productionWheelEvidence"])
             self.assertEqual(item["referenceWheelAbsentPaths"], item["productionWheelAbsentPaths"])
             for evidence in item["nodeEvidence"]:
-                actual_hash = hashlib.sha256((ROOT / evidence["path"]).read_bytes()).hexdigest()
+                actual_hash = hashlib.sha256(
+                    canonical_python_source((ROOT / evidence["path"]).read_bytes())
+                ).hexdigest()
                 self.assertEqual(actual_hash, evidence["sha256"], item["id"])
+
+    def test_node_evidence_normalizes_newlines_and_retains_source_and_action_checks(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "modules" / "Example" / "main.py"
+            source.parent.mkdir(parents=True)
+            body = b"class LoadExample:\n    pass\n"
+            source.write_bytes(body)
+            expected = _node_action_evidence(root, ["modules.Example.LoadExample"])
+            for newline_body in (body.replace(b"\n", b"\r\n"), b"class LoadExample:\r\n    pass\n"):
+                source.write_bytes(newline_body)
+                self.assertEqual(_node_action_evidence(root, ["modules.Example.LoadExample"]), expected)
+                self.assertEqual(
+                    hashlib.sha256(canonical_python_source(source.read_bytes())).hexdigest(),
+                    expected[0]["sha256"],
+                )
+            source.write_bytes(body + b"EXTRA = True\n")
+            self.assertNotEqual(_node_action_evidence(root, ["modules.Example.LoadExample"]), expected)
+            with self.assertRaisesRegex(UpstreamCoverageError, "actions are missing"):
+                _node_action_evidence(root, ["modules.Example.MissingExample"])
 
     def test_all_canonical_workflows_and_public_templates_are_inventoried(self):
         manifest = json.loads(WORKFLOW_MANIFEST.read_text(encoding="utf-8"))

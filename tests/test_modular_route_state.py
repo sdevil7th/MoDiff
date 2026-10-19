@@ -5352,6 +5352,10 @@ class PinnedRouteSchemaTests(unittest.TestCase):
         }
         for model_type in PINNED_MODULAR_WORKFLOW_TRUTH:
             metadata = get_model_type_metadata(model_type)
+            if metadata is None:
+                self.assertIn(model_type, {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"})
+                self.assertIsNone(getattr(diffusers, model_type, None))
+                continue  # Exact future source declarations stay unregistered on the released wheel.
             actions = metadata["node_params"]
             for action in ("vae_encoder", "denoise", "decoder"):
                 config = actions.get(action)

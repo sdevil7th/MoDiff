@@ -1,6 +1,6 @@
 {
-  "contentHash": "sha256:7c657a6caa8dfa6ca1468dfa5a06c76b704811db2910c2bc9104f0b27a69e293",
-  "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+  "contentHash": "sha256:375c7eddaa8a262bddc29de9a8cd6f295f3a6dae0626e3d8be38494d955f484a",
+  "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
   "diffusersVersion": "0.41.0.dev0",
   "pipelines": [
     {
@@ -854,6 +854,19 @@
       ]
     },
     {
+      "coverage": "unreviewed",
+      "equivalentTo": [],
+      "pipelineClass": "EchoModularPipeline",
+      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
       "coverage": "executable",
       "equivalentTo": [],
       "pipelineClass": "ErnieImageModularPipeline",
@@ -994,6 +1007,42 @@
           "source": "auto",
           "task": "text_to_image",
           "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "Flux3DistilledModularPipeline",
+      "reason": "Only unpublished source-level execution specifications select this class; installed-runtime admission remains pending.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        },
+        {
+          "source": "modular",
+          "task": "edit_image",
+          "workflowId": "image_conditioned"
+        }
+      ]
+    },
+    {
+      "coverage": "research-blocked",
+      "equivalentTo": [],
+      "pipelineClass": "Flux3ModularPipeline",
+      "reason": "Only unpublished source-level execution specifications select this class; installed-runtime admission remains pending.",
+      "upstreamTasks": [
+        {
+          "source": "modular",
+          "task": "text_to_image",
+          "workflowId": "text2image"
+        },
+        {
+          "source": "modular",
+          "task": "edit_image",
+          "workflowId": "image_conditioned"
         }
       ]
     },
@@ -1709,6 +1758,32 @@
       "equivalentTo": [],
       "pipelineClass": "Kandinsky5T2VPipeline",
       "reason": "Immutable source/artifact research exists, but executable admission remains blocked or pending.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "unreviewed",
+      "equivalentTo": [],
+      "pipelineClass": "Kandinsky6SRPipeline",
+      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "unreviewed",
+      "equivalentTo": [],
+      "pipelineClass": "Kandinsky6TI2VAPipeline",
+      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
       "upstreamTasks": [
         {
           "source": "export",
@@ -2453,21 +2528,6 @@
       ]
     },
     {
-      "coverage": "equivalent",
-      "equivalentTo": [
-        "Lumina2Pipeline"
-      ],
-      "pipelineClass": "Lumina2Text2ImgPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
-      "upstreamTasks": [
-        {
-          "source": "export",
-          "task": "pipeline_call",
-          "workflowId": null
-        }
-      ]
-    },
-    {
       "coverage": "executable",
       "equivalentTo": [],
       "pipelineClass": "LuminaPipeline",
@@ -2476,21 +2536,6 @@
         {
           "source": "auto",
           "task": "text_to_image",
-          "workflowId": null
-        }
-      ]
-    },
-    {
-      "coverage": "equivalent",
-      "equivalentTo": [
-        "LuminaPipeline"
-      ],
-      "pipelineClass": "LuminaText2ImgPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
-      "upstreamTasks": [
-        {
-          "source": "export",
-          "task": "pipeline_call",
           "workflowId": null
         }
       ]
@@ -2831,10 +2876,36 @@
       ]
     },
     {
+      "coverage": "unreviewed",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImage21ModularPipeline",
+      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
       "coverage": "executable",
       "equivalentTo": [],
       "pipelineClass": "QwenImage21Pipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "auto",
+          "task": "text_to_image",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "unreviewed",
+      "equivalentTo": [],
+      "pipelineClass": "QwenImage21TurboModularPipeline",
+      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
       "upstreamTasks": [
         {
           "source": "export",
@@ -3138,6 +3209,19 @@
       "equivalentTo": [],
       "pipelineClass": "SanaVideoPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
+      "upstreamTasks": [
+        {
+          "source": "export",
+          "task": "pipeline_call",
+          "workflowId": null
+        }
+      ]
+    },
+    {
+      "coverage": "unreviewed",
+      "equivalentTo": [],
+      "pipelineClass": "SanaWMPipeline",
+      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
       "upstreamTasks": [
         {
           "source": "export",
@@ -4701,8 +4785,8 @@
   ],
   "schemaVersion": 1,
   "sources": {
-    "autoTasks": "sha256:fc1c531e9dbf7e2fc62791180430eb6b909bb827a0eaa029991da7d8beb2d205",
-    "exports": "sha256:f9536d3cd5f2f5df8992fa4b4b0fb53a407eea15744fcc288760624ce9111251",
-    "modularTasks": "sha256:8dad3f4ef31b456ef9c6e46718be9a17c023ae4306fdba129c72eeeed6573dc3"
+    "autoTasks": "sha256:72f0cf1dbe8ada7b891766db3582d41589fe2b2a0353accfbe3d8f0c726b45ef",
+    "exports": "sha256:c2bc9d6c161fd3d3f4de657ecb6b58ce178fce211fda7f5e3641518d5ba6cd10",
+    "modularTasks": "sha256:dd06d28cde763faf3245580f6ab3ef290715764a58f2b5c9321d9c9e40c8d3c9"
   }
 }

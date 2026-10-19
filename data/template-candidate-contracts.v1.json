@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:af03cbc11954d0db00de7dfbafa8cacfb924cf13b95728af215f2fd997696bbb",
+  "contentHash": "sha256:e9e6a6caa6ba8b0a9c22bb7ccc9cde0ef9f632c64693b824b6f2df96b9650490",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -471,7 +471,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "5b41671f28ed075faf05595ed10540187457e85fffec0a1a6ac8540918a5cb5a",
+      "graphHash": "cc9e3de4082c24e50d74e9e85cf5d7d371389fcb5f8a745cb351424926d9c5fe",
       "graphPath": "studio/audio-ldm2-pipeline/text-to-audio.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "audio",
@@ -545,7 +545,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "a6be35f97da3b7617e2dd0001db5947ad456a9cd776cbcf076debe503ba1a9d7",
+      "graphHash": "fa8adfa1e16c77b79342e884bd51a612df80b914b5e505716eee97159cec9abc",
       "graphPath": "studio/builtin-audio-operation/audio-join.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "audio",
@@ -588,7 +588,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "65e26126ba57bd17add8001a60e0bc8bcfbee8bdf2112c200be73569becf9f49",
+      "graphHash": "952fdb83b52479710b5ebfe9f8f143a45ab3d4b5fe113f7637baf900340f469d",
       "graphPath": "studio/builtin-audio-operation/audio-loudness-match.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "audio",
@@ -631,7 +631,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "e82ae3ce5c33e45acf5356483144d98d180ebc419e810b78eaf440a0cb1d932a",
+      "graphHash": "ae4928754d54e7c77fc81accd5bf3310830ed02c83052e835d9354c3bc627cc1",
       "graphPath": "studio/builtin-audio-operation/audio-trim.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "audio",
@@ -2611,6 +2611,48 @@
         "prompt": "required_if_applicable",
         "status": "authoring_required"
       },
+      "canonicalWorkflowId": "HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "a3706e4676b9035d3d5168999028c1e356a01113eefc6203970bfa047751f3b7",
+      "graphPath": "studio/hugging-face-ctc-speech-recognition-model/speech-to-text.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "json",
+      "mode": "speech_to_text",
+      "modelType": "HuggingFaceCTCSpeechRecognitionModel",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "AutoModelForCTC"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "facebook/wav2vec2-base-960h"
+      ],
+      "requiredInputs": {
+        "note": "Requires one bounded local audio source and returns an English CTC transcript.",
+        "requiredAudio": [
+          "sourceAudio"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
       "canonicalWorkflowId": "HuggingFaceImageTextToTextModel:image_to_text",
       "comfyResearchRecords": [],
       "evidenceState": {
@@ -2661,7 +2703,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "c5f3371c28f0940789b095c748803cb7c308757bb2273e5e16ac9c20a3d6ccce",
+      "graphHash": "ffad2aedbc329a71d4455d90f40078501f13f56645e1dc077bbc9e7d28dbafaf",
       "graphPath": "studio/hugging-face-speech-recognition-model/speech-to-text.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "json",
@@ -2703,7 +2745,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "b78d645c5ff9d4f5fb6b38227ae6512b4c28c1ba8e803facb223e2a7d525f0e4",
+      "graphHash": "ceeda76f1c6b3e964676293ca3754adfade221b8cd5b832e1215c94b944d37a9",
       "graphPath": "studio/hugging-face-speech-recognition-model/speech-translation.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "json",
@@ -3637,7 +3679,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "5567eadc3dba7a50b9411ca2b91764d6edea102a49f8a98cd9fff2e7e6b4ab54",
+      "graphHash": "68e36a48139e32570f4ae111650c1ef8f170ae16ad0954cbbc46d42c7fb5cb13",
       "graphPath": "studio/long-cat-audio-di-t-pipeline/text-to-audio.json",
       "graphQualificationStatus": "graph-qualified-execution-pending",
       "mediaKind": "audio",
@@ -4921,7 +4963,7 @@
         "quality": "not_claimed",
         "runtime": "not_claimed"
       },
-      "graphHash": "6eac2cf6e052f16039824a0511e3aa659e90f9300300b0500be392d7283c9fd0",
+      "graphHash": "9077ee369a0039de9e98d860117fe2be2774348b9f794baf2e41ca54c80b18b2",
       "graphPath": "studio/stable-audio-pipeline/text-to-audio.json",
       "graphQualificationStatus": "graph-qualified",
       "mediaKind": "audio",
@@ -6691,29 +6733,29 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:22b105b428ab48566e0714a3c0d5eccec5410de7a98f37dd183e128a3391c9bc",
+      "contentHash": "sha256:3fc9f15566f602d62f8f51739da6899b9008569d3b60654b6afd97aca452668b",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:85c76bd1c0fc1d7adab2f1c677039f27fa5d20deaf1657a54b1472c8fa3fe815"
+      "sha256": "sha256:3d320d827221cfde1d80c946a04a39f05899480e6859369113337671632c8eee"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:d61e716fa5664f5e2238a5ff4ba67966efac3c880a0cae736e3a44a690b94945"
+      "sha256": "sha256:6d0f52c5bddb8c0ea547a5dcf833415b1aefe31028c0acfdbddeca6247f9f8d0"
     }
   },
   "summary": {
-    "candidateContractCount": 148,
-    "canonicalWorkflowCount": 202,
+    "candidateContractCount": 149,
+    "canonicalWorkflowCount": 203,
     "canonicalWorkflowsWithPublicTemplates": 54,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
     "comfyResearchRecordCount": 14,
-    "contractsRequiringInputExamples": 93,
+    "contractsRequiringInputExamples": 94,
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
       "audio": 6,
       "image": 100,
-      "json": 9,
+      "json": 10,
       "video": 33
     },
     "publicTemplateCount": 80

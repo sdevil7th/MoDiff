@@ -189,6 +189,9 @@ def _standard_schema(contract, modules):
 
             fields, values = image_text_operation_schema(pipeline, task, action)
     params = deepcopy(modules[module][action]["params"])
+    if (module, action) == ('modules.DiffusersImage', 'EncodeInputs'):
+        from modules.DiffusersImage.main import image_stage_encode_params
+        params = image_stage_encode_params(params, pipeline)
     if action == "LoadPipeline":
         from modiff.model_artifact_catalog import catalog_revision
 
@@ -421,9 +424,12 @@ def resolve_operation(modules, contracts, selection):
                 CUSTOM_PIPELINE_IDENTITY_FIELD,
             )
             from modiff.model_artifact_catalog import require_catalog_revision
+            from modiff.modular_weight_formats import declared_weight_formats
 
             metadata = get_model_type_metadata(contract["binding"]["pipelineClass"])
             definition["params"]["model_type"]["options"] = get_all_model_types(include_contract_only=True)
+            formats = declared_weight_formats(contract["binding"]["pipelineClass"], metadata)
+            definition["params"]["weight_format"].update(options=list(formats), hidden=len(formats) < 2)
             repository = metadata["default_repo"]
             values["dtype"] = metadata["default_dtype"]
             if repository:

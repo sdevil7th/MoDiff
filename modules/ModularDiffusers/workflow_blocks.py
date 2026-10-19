@@ -21,7 +21,7 @@ from modiff.ltx25_execution_contract import (
     configure_ltx25_distilled_denoise_components,
     ltx25_distilled_denoise_kwargs,
 )
-from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
+from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_action_adapter
 from modiff.NodeBase import NodeBase
 
 from . import components
@@ -180,7 +180,7 @@ def _reviewed_action_stage(pipeline_class, workflow_id, action_key):
         raise ValueError("Pipeline class must be an exact reviewed string.")
     if type(workflow_id) is not str or not workflow_id:
         raise ValueError("Workflow must be an exact reviewed string.")
-    contract = reviewed_whole_workflow_graph_adapter(pipeline_class, workflow_id)
+    contract = reviewed_whole_workflow_action_adapter(pipeline_class, workflow_id, action_key)
     if contract is None:
         raise ValueError(f"{pipeline_class}/{workflow_id} has no reviewed official whole-workflow execution adapter.")
     try:

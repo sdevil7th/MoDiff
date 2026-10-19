@@ -4,7 +4,12 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 
-def plan_owner_lifetimes(graph, loaders, adapters):
+class _RetainedPromptProposal(SimpleNamespace):
+    """Exact server-minted detached native string holder; no neural ownership."""
+    __slots__ = ('__weakref__',)
+
+
+def plan_owner_lifetimes(graph, loaders, adapters, *, parameter_headroom=None):
     # Match the executor's once-per-attempt outer DAG traversal. Shared path
     # prefixes do not extend model lifetimes or reinitialize mutable outputs.
     order = list(dict.fromkeys(node_id for path in graph['paths'] for node_id in path))
@@ -37,6 +42,14 @@ def plan_owner_lifetimes(graph, loaders, adapters):
                           'last': max(positions), 'requirements': budget,
                           'capacityRequirements': loader.get('capacityRequirements') or {},
                           'workingMemoryPolicy': loader.get('workingMemoryPolicy', 'explicit_working_demand'),
+                          **({'parameterResidencyRequirements': dict(loader['parameterResidencyRequirements'])}
+                             if loader.get('parameterResidencyRequirements') else {}),
+                          **({'parameterResidencyPhase': loader['parameterResidencyPhase']}
+                             if loader.get('parameterResidencyPhase') else {}),
+                          **({'parameterLoadingRequirements': dict(loader['parameterLoadingRequirements'])}
+                             if loader.get('parameterLoadingRequirements') else {}),
+                          **({'parameterLoadingAdditionalBytes': loader['parameterLoadingAdditionalBytes']}
+                             if 'parameterLoadingAdditionalBytes' in loader else {}),
                           'device': loader.get('settings', {}).get('device'),
                           'offloadMode': loader.get('settings', {}).get('offloadMode', 'none')})
     # Loop steps execute atomically through the existing loop executor. Until a
@@ -50,6 +63,11 @@ def plan_owner_lifetimes(graph, loaders, adapters):
     for index in range(len(order)):
         live = [item for item in intervals if item['first'] <= index <= item['last']]
         current = {key: sum(item['requirements'][key] for item in live) for key in peak}
+        for key in current:
+            if any((item.get('parameterResidencyRequirements', {}).get(key)
+                    or item.get('parameterLoadingRequirements', {}).get(key))
+                   and item['workingMemoryPolicy'] == 'runtime_headroom_policy' for item in live):
+                current[key] += (parameter_headroom or {}).get(key, 0)
         for key in peak:
             peak[key] = max(peak[key], current[key])
         shared_peak = max(shared_peak, sum(current.values()))
@@ -92,7 +110,40 @@ def _material(value, depth=0):
         return value.copy()  # Detach custom attributes possibly holding models.
     if isinstance(value, np.ndarray) and not value.dtype.hasobject:
         return np.array(value, copy=True, subok=False)
-    raise ValueError('Auto cannot release this model yet: a downstream connection retains an opaque or device-backed output.')
+    raise ValueError('Cannot release this model yet: a downstream connection retains an opaque or device-backed output.')
+
+
+def _retained_proposal_identity(server, cached, output):
+    """Scope cache servability to a verified, already-loaded native action."""
+    import sys
+    native_module, native_action = 'modules.HuggingFaceTransformers', 'GenerateImageVideoText'
+    value = output.get('proposal_summary')
+    if value is None:
+        return {}
+    loaded = sys.modules.get(native_module + '.main')
+    action = vars(loaded).get(native_action) if loaded is not None else None
+    # Static lookup does not invoke a custom node's properties or __getattr__.
+    from inspect import getattr_static
+    names = (getattr_static(cached, 'module_name', None), getattr_static(cached, 'class_name', None))
+    identity = names if all(type(name) is str for name in names) else None
+    is_native = isinstance(action, type) and type(cached) is action
+    if identity != (native_module, native_action) and not is_native:
+        return {}  # Historical/custom material remains unchanged and unservable.
+    if type(value) is str and not value:
+        return {}
+    modules = server.modules
+    module = dict.get(modules, native_module) if type(modules) is dict else None
+    definition = dict.get(module, native_action) if type(module) is dict else None
+    params = dict.get(definition, 'params') if type(definition) is dict else None
+    field = dict.get(params, 'proposal_summary') if type(params) is dict else None
+    static = vars(action).get('params') if isinstance(action, type) else None
+    expected = dict.get(static, 'proposal_summary') if type(static) is dict else None
+    if (not is_native or identity != (native_module, native_action)
+            or type(value) is not str or len(value.encode('utf-8')) > 2 * 1024**2
+            or type(field) is not dict or field != expected
+            or field.get('type') != 'string' or field.get('display') != 'output'):
+        raise ValueError('Cannot retain a prompt proposal without its exact preloaded native string output contract.')
+    return {'module_name': native_module, 'class_name': native_action}
 
 
 def release_owner_caches(server, event, memory_manager):
@@ -111,16 +162,48 @@ def release_owner_caches(server, event, memory_manager):
     for node_id, fields in event['retainOutputs'].items():
         cached = server.node_cache.get(node_id)
         if cached is None or not isinstance(cached.output, dict) or any(field not in cached.output for field in fields):
-            raise ValueError('Auto cannot release an owner with a missing downstream output.')
+            raise ValueError('Cannot release an owner with a missing downstream output.')
         preserved[node_id] = {field: _material(cached.output[field]) for field in fields}
+    if event.get('retainMaterialOutputs'):
+        # Replacement invalidates opaque execution state, but completed media
+        # may still be displayed or saved. Retain only detached data from the
+        # affected consumers; model owners themselves must be destroyed.
+        for node_id in targets - set(event['ownerIds']):
+            cached = server.node_cache.get(node_id)
+            output = getattr(cached, 'output', None)
+            if not isinstance(output, dict):
+                continue
+            for field, value in output.items():
+                try:
+                    material = _material(value)
+                except ValueError:
+                    continue
+                preserved.setdefault(node_id, {})[field] = material
+        value = None
+        output = None
+    identities = {node_id: _retained_proposal_identity(server, server.node_cache[node_id], output)
+                  for node_id, output in preserved.items()}
     survivors = [node for node_id, node in server.node_cache.items() if node_id not in targets]
     shared_ids = {model_id for node in survivors for model_id in getattr(node, '_mm_models', [])}
     released_ids = {model_id for node_id in targets for model_id in getattr(server.node_cache.get(node_id), '_mm_models', [])} - shared_ids
+    # Standard manager owners need the same post-destruction proof as Modular
+    # components. Inspect only existing selected records, never supplier code.
+    model_refs = {}
+    if released_ids:
+        from torch.nn import Module
+        for model_id in released_ids:
+            record = memory_manager.cache.get(model_id)
+            model = record.get('model') if isinstance(record, dict) else None
+            if isinstance(model, Module):
+                model_refs[model_id] = weakref.ref(model)
+        record = model = None
     # Destruction, not CPU offload: remove ownership first, exactly like the
     # established idle turnover path, avoiding a transient full CPU weight copy.
     for model_id in released_ids:
         memory_manager.cache.pop(model_id, None)
     released_components = server._release_node_modular_components(targets)
+    from modiff.prompt_enhancement_summary import prune_cache_observations
+    prune_cache_observations(server, targets)
     for node_id in targets:
         cached_node = server.node_cache.pop(node_id, None)
         if cached_node is not None:
@@ -130,19 +213,25 @@ def release_owner_caches(server, event, memory_manager):
     cached_node = None
     cached = None
     for node_id, output in preserved.items():
-        server.node_cache[node_id] = SimpleNamespace(output=output, params={}, _has_changed=True, _mm_models=[])
+        holder = _RetainedPromptProposal if identities[node_id] else SimpleNamespace
+        server.node_cache[node_id] = holder(output=output, params={}, _has_changed=True, _mm_models=[],
+                                            **identities[node_id])
     import gc
     gc.collect()
     errors = server._best_effort_device_cache_clear()
-    server._best_effort_allocator_trim()
+    trimmed, trim_errors = server._best_effort_allocator_trim()
+    if type(trimmed) is not bool or type(trim_errors) is not list or any(type(error) is not str for error in trim_errors):
+        raise ValueError('Stopped after releasing a model owner: invalid allocator trim result.')
+    errors = [*errors, *trim_errors]
     if errors:
-        raise ValueError('Auto released model references but could not clear the device allocator: ' + '; '.join(errors))
+        raise ValueError('Model references were released but allocators could not be cleared: ' + '; '.join(errors))
     remaining = [key for key, reference in component_refs.items() if reference() is not None]
+    remaining.extend('model:' + key for key, reference in model_refs.items() if reference() is not None)
     after = server._cuda_memory_snapshot() if hasattr(server, '_cuda_memory_snapshot') else None
     import logging
-    logging.getLogger('modiff').info(f'Auto owner release: {released_components} components; remaining references {remaining}; memory {before} -> {after}')
+    logging.getLogger('modiff').info(f'Model owner release: {released_components} components; remaining references {remaining}; memory {before} -> {after}')
     if remaining:
-        raise ValueError('Auto stopped after releasing an owner: model references remain alive: ' + ', '.join(remaining))
+        raise ValueError('Stopped after releasing a model owner: model references remain alive: ' + ', '.join(remaining))
     return {'ownerIds': event['ownerIds'], 'releasedNodeIds': sorted(targets), 'retainedOutputNodes': sorted(preserved),
             'releasedComponentCount': released_components, 'memoryBefore': before, 'memoryAfter': after}
 
@@ -171,14 +260,24 @@ def assert_next_owner_capacity(server, owner, hardware=None):
         # Keep the same runtime headroom policy used by the initial graph plan.
         system_total = snapshot.get('systemMemory', {}).get('totalBytes')
         ram_floor = max(4 * 1024 ** 3, int(system_total * .1) if isinstance(system_total, (int, float)) else 0)
-        requirements['systemRamBytes'] = max(requirements['systemRamBytes'], ram_floor)
+        if ((owner.get('parameterResidencyRequirements', {}).get('systemRamBytes')
+                or owner.get('parameterLoadingRequirements', {}).get('systemRamBytes'))
+                and owner.get('workingMemoryPolicy') == 'runtime_headroom_policy'):
+            requirements['systemRamBytes'] += ram_floor
+        else:
+            requirements['systemRamBytes'] = max(requirements['systemRamBytes'], ram_floor)
         if not str(owner.get('device') or '').startswith('cpu') and (
             str(owner.get('device') or '').startswith(('cuda', 'mps', 'xpu'))
             or accelerator.get('kind') in {'cuda', 'mps', 'xpu'}
         ):
             device_total = accelerator.get('totalBytes')
             vram_floor = max(2 * 1024 ** 3, int(device_total * .1) if isinstance(device_total, (int, float)) else 0)
-            requirements['vramBytes'] = max(requirements['vramBytes'], vram_floor)
+            if ((owner.get('parameterResidencyRequirements', {}).get('vramBytes')
+                    or owner.get('parameterLoadingRequirements', {}).get('vramBytes'))
+                    and owner.get('workingMemoryPolicy') == 'runtime_headroom_policy'):
+                requirements['vramBytes'] += vram_floor
+            else:
+                requirements['vramBytes'] = max(requirements['vramBytes'], vram_floor)
     demand = requirements['systemRamBytes'] + (requirements['vramBytes'] if shared else 0)
     if (demand and (ram is None or demand > ram)) or (requirements['vramBytes'] and (vram is None or requirements['vramBytes'] > vram)):
         raise ValueError(f"Auto stopped before loading {owner['ownerId']}: actual free memory after the release is below its planned requirement.")

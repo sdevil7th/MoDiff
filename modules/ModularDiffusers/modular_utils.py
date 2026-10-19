@@ -127,6 +127,21 @@ def normalize_modular_runtime_params(kwargs, node_config):
             continue
         value = normalized[param_name]
         param_type = param_config.get("type")
+        field_options = param_config.get("fieldOptions")
+        if param_type == "int" and isinstance(field_options, dict) and field_options.get("tupleValue") is True:
+            options = param_config.get("options")
+            length = field_options.get("tupleLength")
+            if (type(value) not in (tuple, list) or not isinstance(options, list)
+                    or type(length) is not int or not 1 <= length <= 64 or len(value) != length):
+                raise ValueError(f"Invalid integer sequence for modular parameter '{param_name}'.")
+            try:
+                sequence = tuple(_normalize_modular_integer(item) for item in value)
+            except ValueError as exc:
+                raise ValueError(f"Invalid integer sequence for modular parameter '{param_name}'.") from exc
+            if len(set(sequence)) != len(sequence) or any(item not in options for item in sequence):
+                raise ValueError(f"Invalid integer sequence for modular parameter '{param_name}'.")
+            normalized[param_name] = sequence
+            continue
         try:
             if param_type == "float":
                 if isinstance(value, bool):
@@ -1826,6 +1841,104 @@ DUMMY_CUSTOM_PIPELINE_CONFIG = PipelineConfig(node_specs={}, label="Custom", def
 
 
 # Minimal modular registry for MoDiff node configs
+# FLUX 3 source-audit candidate: official Diffusers 7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941.
+# Registration still requires the actual exported class; the installed 0.41
+# release cannot execute these candidate schemas.
+def _flux3_node_specs(*, distilled):
+    text_inputs = [
+        PipelineParam.prompt(),
+        PipelineParam(name="max_sequence_length", label="Maximum Sequence Length", type="int",
+                      default=8192, min=1, max=8192, step=1),
+        PipelineParam(name="text_encoder_out_layers", label="Text Encoder Layers", type="int",
+                      display="select", default=(4, 8, 12, 16, 20, 24, 28, 32),
+                      options=list(range(33)), fieldOptions={"multiple": True, "tupleValue": True,
+                                                           "tupleLength": 8}),
+    ]
+    if not distilled:
+        # Standalone upstream encoding has no guider component. An explicit
+        # empty negative prompt produces the unconditional embeddings needed
+        # by the later default CFG denoiser; omission would not do so.
+        text_inputs.insert(1, PipelineParam.negative_prompt())
+    return {
+        "controlnet": None,
+        "text_encoder": {
+            "inputs": text_inputs,
+            "wrapper_inputs": [PipelineParam(
+                name="layout_conditioning", label="Layout Conditioning", type="layout_conditioning",
+                display="layout", default=None, _default_is_explicit=True,
+                fieldOptions={"layoutConditioning": {"schemaVersion": 2, "sourceRegions": False,
+                                                     "supportsBoundSourceRegions": True}},
+            ), PipelineParam(
+                name="reference_binding", label="Reference Binding", type="reference_conditioning",
+                display="input", default=None, _default_is_explicit=True,
+                fieldOptions={"referenceBinding": {"schemaVersion": 1, "maxReferences": 10}},
+            )],
+            "model_inputs": [PipelineParam.text_encoders()],
+            "outputs": [PipelineParam.embeddings(display="output"), PipelineParam.doc()],
+            "required_inputs": ["prompt"], "required_model_inputs": ["text_encoders"],
+            "block_name": "text_encoder",
+        },
+        "vae_encoder": {
+            # Official reference encoding uses latent_dist.mode(), not sampling.
+            "inputs": [PipelineParam.image()],
+            "model_inputs": [PipelineParam.vae()],
+            "outputs": [PipelineParam(name="image_cond_latents", label="Reference Latents",
+                                      type="latents", display="output"),
+                        PipelineParam(name="reference_binding", label="Reference Binding",
+                                      type="reference_conditioning", display="output",
+                                      fieldOptions={"referenceBinding": {"schemaVersion": 1, "maxReferences": 10}}),
+                        PipelineParam.doc()],
+            "required_inputs": ["image"], "required_model_inputs": ["vae"],
+            "block_name": "vae_encoder",
+        },
+        "denoise": {
+            "inputs": [
+                PipelineParam.embeddings(display="input"),
+                PipelineParam.width(step=16), PipelineParam.height(step=16),
+                PipelineParam.seed(), PipelineParam.num_inference_steps(16 if distilled else 50),
+                PipelineParam(name="num_images_per_prompt", label="Images Per Prompt", type="int",
+                              default=1, min=1, max=8, step=1),
+                PipelineParam(name="image_cond_latents", label="Reference Latents", type="latents",
+                              display="input", required_block_params=["image_cond_latents"]),
+            ],
+            "model_inputs": [PipelineParam.unet(), PipelineParam.scheduler()]
+                            # Guidance belongs to its connected Guider stage;
+                            # this denoiser has no local guidance_scale to hide.
+                            + ([] if distilled else [PipelineParam.guider(onChange=None)]),
+            "wrapper_inputs": [PipelineParam(
+                name="reference_binding", label="Reference Binding", type="reference_conditioning",
+                display="input", default=None, _default_is_explicit=True,
+                fieldOptions={"referenceBinding": {"schemaVersion": 1, "maxReferences": 10}},
+            )],
+            "outputs": [PipelineParam.latents(display="output"), PipelineParam.doc()],
+            "required_inputs": ["embeddings"], "required_model_inputs": ["unet", "scheduler"],
+            "block_name": "denoise",
+        },
+        "decoder": {
+            # The upstream Denoise sequence already unpacks its latent grid.
+            "inputs": [PipelineParam.latents(display="input")],
+            "model_inputs": [PipelineParam.vae()],
+            "outputs": [PipelineParam.images(), PipelineParam.doc()],
+            "required_inputs": ["latents"], "required_model_inputs": ["vae"],
+            "block_name": "decode",
+        },
+    }
+
+
+FLUX_3_PIPELINE_CONFIG = PipelineConfig(
+    node_specs=_flux3_node_specs(distilled=False), label="FLUX 3 Image Klein Base",
+    default_repo="black-forest-labs/flux-3-image-klein-base", default_dtype="bfloat16",
+    guider_options=("ClassifierFreeGuidance",), component_dtype_overrides=(("vae", "float32"),),
+    weight_formats=("native", "fp8r", "nvfp4"),
+)
+FLUX_3_DISTILLED_PIPELINE_CONFIG = PipelineConfig(
+    node_specs=_flux3_node_specs(distilled=True), label="FLUX 3 Image Klein",
+    default_repo="black-forest-labs/flux-3-image-klein", default_dtype="bfloat16",
+    component_dtype_overrides=(("vae", "float32"),),
+    weight_formats=("native", "fp8r", "nvfp4"),
+)
+
+
 class ModiffPipelineRegistry:
     """Registry mapping pipeline class to its config, including label, default_repo, default_dtype, and node_params."""
 
@@ -1931,6 +2044,17 @@ def _initialize_registry(registry: ModiffPipelineRegistry):
         registry.register(Flux2KleinBaseModularPipeline, FLUX_2_KLEIN_BASE_PIPELINE_CONFIG)
     except Exception as e:
         logger.warning(f"Failed to register Flux2KleinBaseModularPipeline: {e}")
+
+    for class_name, config in (
+        ("Flux3ModularPipeline", FLUX_3_PIPELINE_CONFIG),
+        ("Flux3DistilledModularPipeline", FLUX_3_DISTILLED_PIPELINE_CONFIG),
+    ):
+        try:
+            import diffusers as diffusers_module
+            pipeline_class = getattr(diffusers_module, class_name)
+            registry.register(pipeline_class, config)
+        except (AttributeError, ImportError) as error:
+            logger.debug("FLUX 3 source candidate is unavailable in this installed runtime: %s", error)
 
     try:
         from diffusers import ZImageModularPipeline
@@ -2116,6 +2240,9 @@ def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:
                 "scheduler_options": list(config.scheduler_options),
                 "denoise_image_latent_dimensions": list(config.denoise_image_latent_dimensions),
                 "node_params": config.node_params,
+                **({"component_dtype_overrides": dict(config.component_dtype_overrides)}
+                   if config.component_dtype_overrides else {}),
+                **({"weight_formats": list(config.weight_formats)} if config.weight_formats else {}),
             }
             if model_type == CUSTOM_PIPELINE_MODEL_TYPE:
                 metadata["execution_status"] = CUSTOM_PIPELINE_EXECUTION_STATUS

@@ -49,7 +49,7 @@ checkout and set its package path. In a POSIX shell:
 ```sh
 git init ../reviewed-upstream-diffusers
 git -C ../reviewed-upstream-diffusers remote add origin https://github.com/huggingface/diffusers.git
-git -C ../reviewed-upstream-diffusers fetch --depth=1 origin fbf49e7f35857f76bc57b177e26f12b03687c668
+git -C ../reviewed-upstream-diffusers fetch --depth=1 origin 7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941
 git -C ../reviewed-upstream-diffusers -c core.autocrlf=false checkout --detach FETCH_HEAD
 export MODIFF_DIFFUSERS_CATALOG_SOURCE="$(cd ../reviewed-upstream-diffusers/src/diffusers && pwd)"
 ```

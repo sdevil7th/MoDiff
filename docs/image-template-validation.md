@@ -158,15 +158,24 @@ loop uses the source latents and mask. Equal source posterior, packed initial
 noise, scheduler/model boundaries and final pixels do not establish equal final
 opaque-call RNG state or identical executed work.
 
-At this Diffusers pin the six remaining Flux templates keep their published
-whole operations. Fill and its outpaint variant need the masked conditioning
-channel layout of `FluxFillPipeline`; Canny/Depth use the concatenated control
-latents of `FluxControlPipeline`, which are not ControlNet residuals. Redux edit
-and multi-reference use the actual prior followed by the base pipeline, including
-ordered reference weights and their distinct distilled guidance values. The
-reviewed `FluxModularPipeline` text/image workflows do not supply those specialty
-contracts. Visible stage labels or an unrelated control route cannot substitute
-for a reviewed, executable decomposition.
+The six Flux Fill, Canny/Depth and Redux image templates now select generic
+**Load Model → Encode Inputs → Denoise → Decode** contracts. Small backend
+adapters preserve their specialty conditioning while the installed official
+pipeline owns denoising. Fill encodes text separately and keeps source/mask VAE
+preparation and its RNG order inside that call; Decode retains the existing PIL
+mask composite. Canny/Depth retain their concatenated control latents, genuine
+VAE encoding, one batch expansion and continued generator state. Redux calls
+the actual prior once in Encode Inputs, preserves ordered references and weights,
+and uses the immutable paired base pipeline for latent generation and VAE decode.
+Their binding checks reject foreign or stale encodings and latent owners.
+
+Historical whole-pipeline routes remain supported separately, preserving their
+explicit settings and pins. The generic Flux modular text/image workflows still
+do not provide these specialty contracts. Tiny actual-library CPU equivalence,
+constructor-trapped authoring and canonical graph checks prove their recorded
+software boundaries; trained output parity and Windows memory qualification
+require the matched live evidence described here. See
+[Image pipeline stages](image-pipeline-stages.md) for the exact stage contracts.
 
 FLUX true CFG and transformer distilled guidance are distinct settings. The
 old image wrapper's primary guidance field sets true CFG; its secondary control

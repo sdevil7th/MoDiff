@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import tempfile
 import types
 import unittest
@@ -23,6 +24,7 @@ from modules.DiffusersRuntime.main import (
     configure_vae_memory,
     estimate_pipeline_memory,
     execution_recipe_summary,
+    enable_parallel_weight_loading,
     loader_runtime_options,
     plan_execution_recipes,
     release_pipeline_memory,
@@ -376,26 +378,28 @@ class DiffusersRuntimeTests(unittest.TestCase):
             )
 
     def test_complete_pipeline_no_offload_streams_directly_to_target_accelerator(self):
-        with patch.dict(os.environ, {}, clear=False):
-            os.environ.pop("HF_ENABLE_PARALLEL_LOADING", None)
-            recipe, device, offload, load = loader_runtime_options(
-                {
-                    "execution_recipe": {
-                        "device": "cuda:0",
-                        "offload_mode": "none",
-                        "device_map": "none",
-                    }
-                },
-                default_device="cuda:0",
-                default_offload_mode="model_cpu",
-                direct_device_load=True,
-            )
-            self.assertEqual(os.environ["HF_ENABLE_PARALLEL_LOADING"], "YES")
-
-        self.assertEqual(recipe["device_map"], "none")
-        self.assertEqual(device, "cuda:0")
-        self.assertEqual(offload, "none")
-        self.assertEqual(load["device_map"], "cuda")
+        for platform_name, parallel in (("win32", "0"), ("linux", "YES"), ("darwin", "YES")):
+            with self.subTest(platform_name=platform_name), patch.dict(os.environ, {}, clear=False), patch.object(sys, "platform", platform_name):
+                os.environ.pop("HF_ENABLE_PARALLEL_LOADING", None)
+                os.environ.pop("HF_DEACTIVATE_ASYNC_LOAD", None)
+                recipe, device, offload, load = loader_runtime_options(
+                    {
+                        "execution_recipe": {
+                            "device": "cuda:0",
+                            "offload_mode": "none",
+                            "device_map": "none",
+                        }
+                    },
+                    default_device="cuda:0",
+                    default_offload_mode="model_cpu",
+                    direct_device_load=True,
+                )
+                self.assertEqual(os.environ["HF_ENABLE_PARALLEL_LOADING"], parallel)
+                self.assertEqual(os.environ.get("HF_DEACTIVATE_ASYNC_LOAD"), "1" if platform_name == "win32" else None)
+                self.assertEqual(recipe["device_map"], "none")
+                self.assertEqual(device, "cuda:0")
+                self.assertEqual(offload, "none")
+                self.assertEqual(load["device_map"], "cuda")
 
     def test_direct_device_loading_respects_explicit_parallel_loading_opt_out(self):
         with patch.dict(os.environ, {"HF_ENABLE_PARALLEL_LOADING": "false"}):
@@ -414,6 +418,32 @@ class DiffusersRuntimeTests(unittest.TestCase):
             self.assertEqual(os.environ["HF_ENABLE_PARALLEL_LOADING"], "false")
         self.assertEqual(offload, "none")
         self.assertEqual(load["device_map"], "cuda")
+
+    def test_windows_direct_device_loading_defaults_to_serial_weight_loading(self):
+        with patch.dict(os.environ, {}, clear=False), patch.object(sys, "platform", "win32"):
+            os.environ.pop("HF_ENABLE_PARALLEL_LOADING", None)
+            os.environ.pop("HF_DEACTIVATE_ASYNC_LOAD", None)
+            _, _, offload, load = loader_runtime_options(
+                {"device": "cuda:0", "offload_mode": "none", "auto_offload": False},
+                default_device="cuda:0",
+                default_offload_mode="model_cpu",
+                direct_device_load=True,
+            )
+            self.assertEqual(os.environ.get("HF_ENABLE_PARALLEL_LOADING"), "0")
+            self.assertEqual(os.environ.get("HF_DEACTIVATE_ASYNC_LOAD"), "1")
+        self.assertEqual(offload, "none")
+        self.assertEqual(load["device_map"], "cuda")
+
+    def test_parallel_loading_flag_preserves_operator_value_and_boolean_result(self):
+        for value, enabled in (("", False), ("0", False), ("false", False), ("1", True), ("YES", True), (" on ", True)):
+            with self.subTest(value=value), patch.dict(os.environ, {
+                "HF_ENABLE_PARALLEL_LOADING": value, "HF_DEACTIVATE_ASYNC_LOAD": "",
+                "HF_PARALLEL_LOADING_WORKERS": "2",
+            }), patch.object(sys, "platform", "win32"):
+                self.assertIs(enable_parallel_weight_loading(), enabled)
+                self.assertEqual(os.environ["HF_ENABLE_PARALLEL_LOADING"], value)
+                self.assertEqual(os.environ["HF_DEACTIVATE_ASYNC_LOAD"], "")
+                self.assertEqual(os.environ["HF_PARALLEL_LOADING_WORKERS"], "2")
 
     def test_direct_device_loading_never_overrides_offload_or_explicit_map(self):
         _, _, offload, load = loader_runtime_options(

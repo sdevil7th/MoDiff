@@ -16,6 +16,7 @@ import json
 import math
 import os
 import re
+import struct
 from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass
@@ -462,13 +463,27 @@ def _exact_scale(value: Any) -> float:
     return scale
 
 
-def _sha256_file(path: Path) -> str:
+def _sha256_file(path: Path, maximum_bytes: int | None = None) -> str:
     try:
         before = path.stat()
         digest = hashlib.sha256()
+        if maximum_bytes is not None and (type(maximum_bytes) is not int
+                or not 0 < before.st_size <= maximum_bytes):
+            raise ValueError('The direct LoRA exceeds its finite Auto inspection limit; use Expert.')
         with path.open("rb") as handle:
-            for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
-                digest.update(chunk)
+            if maximum_bytes is None:
+                for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
+                    digest.update(chunk)
+            else:
+                remaining = before.st_size
+                while remaining:
+                    chunk = handle.read(min(8 * 1024 * 1024, remaining))
+                    if not chunk:
+                        raise ValueError('LoRA weight shrank during bounded inspection.')
+                    digest.update(chunk)
+                    remaining -= len(chunk)
+                if handle.read(1):
+                    raise ValueError('LoRA weight grew during bounded inspection.')
         after = path.stat()
     except OSError as error:
         raise FileNotFoundError(f"LoRA weight could not be read: {path}") from error
@@ -493,6 +508,7 @@ def _preflight_safetensors_file(path: Path) -> None:
 
 
 def _managed_hub_alias(repository: str, revision: str, weight_name: str) -> tuple[Path, Path]:
+    from modiff.hf_cache_layout import resolve_snapshot_cache_file
     from utils import huggingface as huggingface_utils
 
     cached = huggingface_utils.cached_file_path(repository, weight_name, revision=revision)
@@ -543,9 +559,10 @@ def _managed_hub_alias(repository: str, revision: str, weight_name: str) -> tupl
             "Installed Hub LoRA cache lookup did not preserve the exact pinned .safetensors snapshot alias."
         )
 
-    resolved_weight = huggingface_utils.resolve_managed_hf_cache_file(alias)
     try:
-        resolved_weight.relative_to(repo_root)
+        resolved_weight = resolve_snapshot_cache_file(
+            alias, snapshot=snapshot_root, cache_root=cache_root, repository=repository,
+        )
     except (OSError, RuntimeError, ValueError) as error:
         raise ValueError("Installed Hub LoRA resolves outside its managed repository cache.") from error
     return alias, resolved_weight
@@ -619,6 +636,7 @@ def build_lora_descriptor(
     scale: Any,
     scheduler_class: Any = "",
     scheduler_config: Any = None,
+    maximum_weight_bytes: int | None = None,
 ) -> dict[str, Any]:
     """Build a canonical descriptor after resolving and hashing its bytes."""
 
@@ -640,7 +658,7 @@ def build_lora_descriptor(
         normalized_weight = _exact_weight_name(weight_name)
         expected_digest = _exact_sha256(expected_sha256, required=True)
         alias, _ = _managed_hub_alias(repository, normalized_revision, normalized_weight)
-        actual_digest = _sha256_file(alias)
+        actual_digest = _sha256_file(alias, maximum_weight_bytes)
         if actual_digest != expected_digest:
             raise ValueError(
                 f"LoRA {repository}@{normalized_revision}/{normalized_weight} failed its pinned SHA-256 verification."
@@ -658,7 +676,7 @@ def build_lora_descriptor(
             raise ValueError("A local LoRA cannot carry a Hub revision.")
         expected_digest = _exact_sha256(expected_sha256, required=False)
         root, alias, normalized_weight = _local_selection_alias(selection.get("value"), weight_name)
-        actual_digest = _sha256_file(alias)
+        actual_digest = _sha256_file(alias, maximum_weight_bytes)
         if expected_digest is not None and actual_digest != expected_digest:
             raise ValueError("Local LoRA failed its supplied SHA-256 verification.")
         _preflight_safetensors_file(alias)
@@ -739,6 +757,97 @@ def native_lora_chain_ids(graph: Mapping[str, Any], terminal_node_id: str) -> li
     return list(reversed(chain))
 
 
+MAX_DIRECT_LORA_INSPECTION_BYTES = 1024 ** 3
+
+
+def _direct_image_lora_resource_requirement(node_id: str, node: Mapping[str, Any], graph: Mapping[str, Any] | None) -> dict[str, Any]:
+    """A finite canonical dense A/B reserve, never target compatibility or fit."""
+    from modiff.workflow_task_identity import direct_image_stage_owner
+    from modiff.artifact_weight_memory import _loading_shard, _unique_json_pairs
+    if not isinstance(graph, Mapping) or not isinstance(graph.get('nodes'), Mapping) or graph['nodes'].get(node_id) != node:
+        raise ValueError('Direct LoRA resource inspection requires its authoritative executable graph.')
+    nodes = graph['nodes']
+    owners = set()
+    for key, value in nodes.items():
+        if (value.get('module'), value.get('action')) == ('modules.DiffusersImage', 'EncodeInputs'):
+            owner, chain = direct_image_stage_owner(nodes, key)
+            if node_id in chain:
+                owners.add(owner)
+    if len(owners) != 1:
+        raise ValueError('A direct LoRA needs one exclusive declared image stage owner.')
+    loader = nodes[next(iter(owners))]
+    values = {key: _graph_param_value(loader, key) for key in (
+        'pipeline_class', 'mode', 'model_id', 'revision', 'execution_profile_id')}
+    from modules.DiffusersImage.main import selected_image_stage_starter_spec
+    if selected_image_stage_starter_spec(values['pipeline_class'], values['mode'], values) is None:
+        raise ValueError('This direct image adapter target has no exact selected stage resource contract.')
+    if any(isinstance(param, Mapping) and param.get('sourceId') for field, param in node.get('params', {}).items() if field != 'pipeline'):
+        raise ValueError('Auto needs literal exact direct adapter artifacts and controls before loading.')
+    selection = _graph_param_value(node, 'adapter_path')
+    if isinstance(selection, str):
+        selection = {'source': 'hub', 'value': selection}
+    if not isinstance(selection, Mapping):
+        raise ValueError('A populated direct LoRA needs an exact cached or local selection.')
+    weight_name = _graph_param_value(node, 'weight_name')
+    if selection.get('source') == 'hub':
+        alias, _ = _managed_hub_alias(_exact_repository(selection.get('value')),
+            _exact_revision(_graph_param_value(node, 'revision', '')), _exact_weight_name(weight_name))
+    elif selection.get('source') == 'local':
+        _root, alias, _weight = _local_selection_alias(selection.get('value'), weight_name)
+    else:
+        raise ValueError('A direct LoRA source must be exactly hub or local.')
+    if not 0 < alias.stat().st_size <= MAX_DIRECT_LORA_INSPECTION_BYTES:
+        raise ValueError('The direct LoRA exceeds its finite Auto inspection limit; use Expert.')
+    # Reuse the complete bounded source-header/payload validation. It reads no
+    # Tensor bodies; official component/shape compatibility stays at execution.
+    try:
+        shard = _loading_shard(alias, 'float32', None)
+        with alias.open('rb') as handle:
+            header_size = struct.unpack('<Q', handle.read(8))[0]
+            if header_size > 16 * 1024 * 1024:
+                raise ValueError('Oversized direct LoRA header; use Expert.')
+            raw = handle.read(header_size)
+        if hashlib.sha256(raw).hexdigest() != shard['headerSha256']:
+            raise ValueError('Direct LoRA metadata changed during resource inspection.')
+        header = json.loads(raw, object_pairs_hook=_unique_json_pairs)
+        if any(tensor['dtype'] not in {'F16', 'BF16', 'F32'} for key, tensor in header.items() if key != '__metadata__'):
+            raise ValueError('Auto direct LoRA supports only canonical float16/bfloat16/float32 weights; use Expert.')
+    except (TypeError, KeyError, OverflowError, struct.error) as error:
+        raise ValueError('Invalid direct LoRA safetensors header; use a complete safe artifact.') from error
+    receipts = controlled_lora_receipts_from_graph(
+        {'nodes': {node_id: node}, 'paths': [[node_id]]},
+        maximum_weight_bytes=MAX_DIRECT_LORA_INSPECTION_BYTES)
+    if len(receipts) != 1:
+        raise ValueError('A populated direct LoRA needs one exact safe artifact receipt.')
+    # Dimensions come from the same bounded complete source census; never
+    # materialize Tensor bodies or mix independently reopened shape snapshots.
+    pairs, largest_dimension = {}, 0
+    keys = sorted(key for key in header if key != '__metadata__')
+    if len(keys) > 16384:
+        raise ValueError('Too many direct LoRA tensors for reviewed Auto inspection; use Expert.')
+    for key in keys:
+        match = re.fullmatch(r'(transformer|text_encoder)\.([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\.lora_([AB])\.weight', key)
+        shape = header[key]['shape']
+        if match is None or len(shape) != 2 or any(type(size) is not int or size <= 0 for size in shape):
+            raise ValueError('Auto direct LoRA supports only canonical owned-component dense A/B matrices; use Expert.')
+        role, target, side = match.groups()
+        pairs.setdefault((role, target), {})[side] = shape
+        largest_dimension = max(largest_dimension, *shape)
+    for matrices in pairs.values():
+        if set(matrices) != {'A', 'B'} or matrices['A'][0] != matrices['B'][1]:
+            raise ValueError('A direct LoRA target requires one matching complete dense A/B pair.')
+    # Stored F64/integer tensors are not this declared first dense contract.
+    # A target-F32 conversion can be smaller than source; refuse that case.
+    if shard['source'] > shard['requested']:
+        raise ValueError('The direct LoRA source dtype is outside its reviewed float32 conversion envelope; use Expert.')
+    artifact = receipts[0]['artifact']
+    if _sha256_file(alias, MAX_DIRECT_LORA_INSPECTION_BYTES) != artifact['sha256']:
+        raise ValueError('Direct LoRA changed during resource header inspection.')
+    budget = shard['requested'] * 3 + largest_dimension * largest_dimension * 4
+    return {'systemRamBytes': budget, 'vramBytes': budget, 'artifact': artifact,
+            'tensorCount': len(keys), 'adapterName': receipts[0]['adapterName']}
+
+
 def lora_resource_requirement(
     node_id: str, node: Mapping[str, Any], *, graph: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
@@ -747,6 +856,8 @@ def lora_resource_requirement(
     Budget float32 copies for loading/conversion plus the largest dense update.
     Shape compatibility remains the existing Diffusers adapter boundary's job.
     """
+    if (node.get('module'), node.get('action')) == ('modules.DiffusersImage', 'LoadAdapter'):
+        return _direct_image_lora_resource_requirement(node_id, node, graph)
     if (node.get("module"), node.get("action")) != ("modules.ModularDiffusers", "Lora"):
         raise ValueError("This adapter does not declare a workflow Auto memory envelope.")
     params = node.get("params", {})
@@ -781,7 +892,7 @@ def lora_resource_requirement(
             "tensorCount": len(shapes), "adapterName": receipt["adapterName"]}
 
 
-def controlled_lora_receipts_from_graph(graph: Any) -> list[dict[str, Any]]:
+def controlled_lora_receipts_from_graph(graph: Any, *, maximum_weight_bytes: int | None = None) -> list[dict[str, Any]]:
     """Validate executable controlled LoRA nodes and return exact safe receipts.
 
     The API graph is the authority here: caller-supplied runtime receipts are
@@ -871,6 +982,7 @@ def controlled_lora_receipts_from_graph(graph: Any) -> list[dict[str, Any]]:
             adapter_name = _graph_param_value(node, "adapter_name", default_adapter_name)
 
         descriptor = build_lora_descriptor(
+            maximum_weight_bytes=maximum_weight_bytes,
             selection=selection,
             weight_name=weight_name,
             revision=_graph_param_value(node, "revision", ""),
@@ -1023,6 +1135,35 @@ def resolve_lora_descriptors(value: Any) -> list[ResolvedLoraDescriptor]:
     if len(set(names)) != len(names):
         raise ValueError("Connected LoRA descriptors must use unique adapter names.")
     return resolved
+
+
+def validate_finite_lora_payload(item: ResolvedLoraDescriptor, *, maximum_bytes: int) -> None:
+    """Check selected ordinary factors with bounded CPU slices before mutation.
+
+    Descriptor resolution owns path/hash/header validation. This additional
+    inference policy rejects NaN/Inf payloads without retaining the full file.
+    """
+    from safetensors import safe_open
+    import torch
+
+    path = item.load_directory / item.weight_name
+    if type(maximum_bytes) is not int or not 0 < path.stat().st_size <= maximum_bytes:
+        raise ValueError('Selected LoRA exceeds its finite inference payload bound.')
+    with safe_open(path, framework='pt', device='cpu') as handle:
+        for name in handle.keys():
+            tensor = handle.get_slice(name)
+            shape = tensor.get_shape()
+            if len(shape) != 2 or any(type(size) is not int or size <= 0 for size in shape):
+                raise ValueError('Selected LoRA requires ordinary two-dimensional factors.')
+            width = min(shape[1], 65536)
+            rows = max(1, 65536 // max(1, width))
+            for start in range(0, shape[0], rows):
+                for column in range(0, shape[1], width):
+                    chunk = tensor[start:start + rows, column:column + width]
+                    if not torch.isfinite(chunk).all().item():
+                        raise ValueError('Selected LoRA factor payload must be finite.')
+    if _sha256_file(path) != item.content_sha256:
+        raise ValueError('Selected LoRA changed during finite payload validation.')
 
 
 def scheduler_override_contract(

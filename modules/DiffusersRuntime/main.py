@@ -91,18 +91,16 @@ def _normalize_optional_quantization_config(value: Any):
 
 
 def enable_parallel_weight_loading() -> bool:
-    """Enable Hugging Face's supported sharded-loader fast path.
+    """Apply shared loader defaults and report the selected parallel flag.
 
-    Diffusers recommends pairing parallel shard loading with a direct CUDA
-    device map so the allocator can reserve the destination up front. Respect
-    an explicit environment choice; otherwise enable the upstream default
-    worker count for complete pipelines that opt into direct loading.
+    Ordinary launch applies these defaults before Diffusers imports. Direct
+    loader callers use the same Windows serial/non-Windows parallel policy;
+    neither path overwrites an explicit operator choice or worker count.
     """
+    from modiff.runtime_environment import configure_model_loading
 
-    configured = os.environ.get("HF_ENABLE_PARALLEL_LOADING")
-    if configured is None:
-        os.environ["HF_ENABLE_PARALLEL_LOADING"] = "YES"
-        return True
+    configure_model_loading()
+    configured = os.environ["HF_ENABLE_PARALLEL_LOADING"]
     return configured.strip().upper() in {"1", "ON", "TRUE", "YES"}
 
 

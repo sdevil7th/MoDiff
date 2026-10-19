@@ -10,6 +10,10 @@ disconnected for ordinary pipeline loading; graph repair must not supply an
 unrelated value for it. Connected overrides still require the reviewed component
 contract and exact base-pipeline identity.
 
+## Generic image stages
+
+Selected Fill, Control and Redux image tasks use `LoadPipeline → EncodeInputs → Denoise → DecodeLatents`. The frontend groups these as Model Setup, Encode Inputs, Denoise and Image Output; source images and masks stay connected. See [Image pipeline stages](../../docs/image-pipeline-stages.md) for the actual encoding boundaries, saved-workflow compatibility and LoRA loading restrictions.
+
 ## Unconditional image starters
 
 New canonical DDPM, DDIM and Consistency Model loaders use the existing reviewed

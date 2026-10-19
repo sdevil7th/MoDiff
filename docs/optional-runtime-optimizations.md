@@ -120,7 +120,7 @@ releases its completed mutation gate.
 | FlashAttention 2 | `flash-attn 2.8.3.post1` | Unavailable pending artifact/build locks | Exact qualified workload only |
 | TorchAO | `torchao 0.17.0` | Unavailable pending artifact locks | Exact qualified workload only |
 | Optimum Quanto | `optimum-quanto 0.2.7` | Unavailable pending artifact locks | Exact qualified workload only |
-| bitsandbytes | `bitsandbytes 0.50.0` | Unavailable pending artifact locks | Exact qualified workload only |
+| bitsandbytes | `bitsandbytes 0.50.0` | Explicit auxiliary install/activation on Windows x86-64; other auxiliary targets pending | Exact qualified workload only |
 | SageAttention | `sageattention 1.0.6` | Unavailable pending artifact locks | Manual experiment; never Auto |
 | xFormers | `0.0.32.post2` for the Torch 2.8 CUDA profile | Base NVIDIA profile | Exact qualified workload only |
 

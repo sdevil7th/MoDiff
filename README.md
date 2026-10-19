@@ -384,6 +384,8 @@ The Modular Diffusers integration is documented in [modules/ModularDiffusers/REA
 
 For the current task browser, picker behavior and qualification limits, see
 [Workflow authoring and model selection](docs/workflow-authoring-ux.md).
+See [audio workflow stages](docs/audio-workflows.md) for generation, transcription,
+audio processing, selected adapters and playback.
 
 ## Custom nodes
 

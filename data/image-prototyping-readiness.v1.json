@@ -1,5 +1,5 @@
 {
-  "contentHash": "sha256:44422b14a04764f45631fac05704f11c3aa36e1ff385071116907593154e8eed",
+  "contentHash": "sha256:d824b4bca58c9716c38c04f780d821c5a530a00b89a433381476991139bba670",
   "coverageBoundary": {
     "backendArtifactPins": "snapshotted",
     "backendExecutionProfiles": "snapshotted",
@@ -8,7 +8,7 @@
     "customFirstPartyExamples": "requires_paired_custom_e2e",
     "upstreamModularWorkflows": "snapshotted"
   },
-  "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+  "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
   "imageTasks": [
     "control_edit_image",
     "control_image",
@@ -109,7 +109,7 @@
       "task": "image_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "AnimaModularPipeline",
@@ -182,7 +182,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "AnimaModularPipeline",
@@ -227,7 +227,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -260,7 +260,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -326,7 +326,7 @@
       "task": "image_adjustment",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -392,7 +392,7 @@
       "task": "image_channels",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -458,7 +458,7 @@
       "task": "image_crop",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -524,7 +524,7 @@
       "task": "image_filter",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -590,7 +590,7 @@
       "task": "image_stitch",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -656,7 +656,7 @@
       "task": "image_tile",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -722,7 +722,7 @@
       "task": "image_upscale",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -788,7 +788,7 @@
       "task": "mask_composite",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -829,7 +829,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -862,7 +862,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -903,7 +903,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -936,7 +936,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -977,7 +977,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -1010,7 +1010,7 @@
       "task": "outpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -1051,7 +1051,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -1084,7 +1084,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -1125,7 +1125,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -1158,7 +1158,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -1199,7 +1199,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -1232,7 +1232,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -1273,7 +1273,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -1306,7 +1306,7 @@
       "task": "unconditional_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -1376,7 +1376,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Cosmos3OmniModularPipeline",
@@ -1451,7 +1451,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Cosmos3OmniModularPipeline",
@@ -1528,7 +1528,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Cosmos3OmniModularPipeline",
@@ -1603,7 +1603,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Cosmos3OmniModularPipeline",
@@ -1679,7 +1679,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Cosmos3OmniModularPipeline",
@@ -1725,7 +1725,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -1758,7 +1758,7 @@
       "task": "unconditional_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -1799,7 +1799,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -1832,7 +1832,7 @@
       "task": "unconditional_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -1898,7 +1898,7 @@
       "task": "depth_estimation",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -1964,7 +1964,7 @@
       "task": "depth_estimation",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -2005,7 +2005,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -2038,7 +2038,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -2079,7 +2079,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -2112,7 +2112,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -2153,7 +2153,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -2186,7 +2186,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -2227,7 +2227,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -2260,7 +2260,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -2328,7 +2328,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": "ErnieImageModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -2396,7 +2396,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "ErnieImageModularPipeline",
@@ -2429,8 +2429,8 @@
       "artifactVariantOf": null,
       "canonicalTask": "control_image",
       "displayName": "FLUX.1-Canny-dev",
-      "disposition": "documented_whole_pipeline_exception",
-      "dispositionReason": "no_pinned_modular_workflow_for_exact_profile",
+      "disposition": "backend_stages_integrated",
+      "dispositionReason": "complete_backend_image_stage_chain_declared",
       "evidence": {
         "browser": "pending_final_candidate",
         "nativeOutput": "pending",
@@ -2438,18 +2438,10 @@
         "platform": "pending",
         "reuse": "pending",
         "service": "pending",
-        "structural": "not_applicable_or_missing"
+        "structural": "implemented_awaiting_qualification"
       },
       "exactVariantReview": null,
-      "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
-        "limitations": [
-          "no_independent_stage_editing",
-          "no_cross_stage_prompt_or_latent_cache",
-          "component_substitution_limited_to_standard_pipeline_contract"
-        ],
-        "revisitTrigger": "reviewed_diffusers_pin_or_native_profile_change"
-      },
+      "exception": null,
       "implementation": {
         "executionPath": "direct-diffusers-image",
         "loader": "modules.DiffusersImage.LoadPipeline",
@@ -2475,7 +2467,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -2517,7 +2509,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -2550,7 +2542,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -2591,7 +2583,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -2624,7 +2616,7 @@
       "task": "control_edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -2666,7 +2658,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -2699,7 +2691,7 @@
       "task": "control_edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -2740,7 +2732,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -2773,7 +2765,7 @@
       "task": "control_inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -2815,7 +2807,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -2848,7 +2840,7 @@
       "task": "control_inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -2889,7 +2881,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -2922,7 +2914,7 @@
       "task": "control_edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -2963,7 +2955,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -2996,7 +2988,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -3037,7 +3029,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -3070,7 +3062,7 @@
       "task": "control_inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -3098,8 +3090,8 @@
       "artifactVariantOf": null,
       "canonicalTask": "control_image",
       "displayName": "FLUX.1-Depth-dev",
-      "disposition": "documented_whole_pipeline_exception",
-      "dispositionReason": "no_pinned_modular_workflow_for_exact_profile",
+      "disposition": "backend_stages_integrated",
+      "dispositionReason": "complete_backend_image_stage_chain_declared",
       "evidence": {
         "browser": "pending_final_candidate",
         "nativeOutput": "pending",
@@ -3107,18 +3099,10 @@
         "platform": "pending",
         "reuse": "pending",
         "service": "pending",
-        "structural": "not_applicable_or_missing"
+        "structural": "implemented_awaiting_qualification"
       },
       "exactVariantReview": null,
-      "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
-        "limitations": [
-          "no_independent_stage_editing",
-          "no_cross_stage_prompt_or_latent_cache",
-          "component_substitution_limited_to_standard_pipeline_contract"
-        ],
-        "revisitTrigger": "reviewed_diffusers_pin_or_native_profile_change"
-      },
+      "exception": null,
       "implementation": {
         "executionPath": "direct-diffusers-image",
         "loader": "modules.DiffusersImage.LoadPipeline",
@@ -3144,7 +3128,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -3185,7 +3169,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -3218,7 +3202,7 @@
       "task": "control_edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -3259,7 +3243,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -3292,7 +3276,7 @@
       "task": "control_inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -3360,7 +3344,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": "FluxModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -3431,7 +3415,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": "FluxModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -3472,7 +3456,7 @@
       },
       "exactVariantReview": {
         "decision": "native_recipe",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "The standard edit_image task names the native image2image workflow, not Kontext editing."
         ],
@@ -3510,7 +3494,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": "FluxModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -3552,7 +3536,7 @@
       },
       "exactVariantReview": {
         "decision": "artifact_blocked",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "A root FP8/NVFP4 checkpoint is not a Diffusers component repository. No reviewed native conversion or dequantization recipe is declared; do not substitute base weights."
         ],
@@ -3590,7 +3574,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": "FluxModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -3631,7 +3615,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -3664,7 +3648,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -3706,7 +3690,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -3741,7 +3725,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -3809,7 +3793,7 @@
       "task": "image_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "FluxModularPipeline",
@@ -3882,7 +3866,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "FluxModularPipeline",
@@ -3957,7 +3941,7 @@
       "task": "image_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "FluxModularPipeline",
@@ -4033,7 +4017,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "FluxModularPipeline",
@@ -4064,8 +4048,8 @@
       "artifactVariantOf": null,
       "canonicalTask": "inpaint",
       "displayName": "FluxFillPipeline",
-      "disposition": "documented_whole_pipeline_exception",
-      "dispositionReason": "no_pinned_modular_workflow_for_exact_profile",
+      "disposition": "backend_stages_integrated",
+      "dispositionReason": "complete_backend_image_stage_chain_declared",
       "evidence": {
         "browser": "pending_final_candidate",
         "nativeOutput": "pending",
@@ -4073,18 +4057,10 @@
         "platform": "pending",
         "reuse": "pending",
         "service": "pending",
-        "structural": "not_applicable_or_missing"
+        "structural": "implemented_awaiting_qualification"
       },
       "exactVariantReview": null,
-      "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
-        "limitations": [
-          "no_independent_stage_editing",
-          "no_cross_stage_prompt_or_latent_cache",
-          "component_substitution_limited_to_standard_pipeline_contract"
-        ],
-        "revisitTrigger": "reviewed_diffusers_pin_or_native_profile_change"
-      },
+      "exception": null,
       "implementation": {
         "executionPath": "direct-diffusers-image",
         "loader": "modules.DiffusersImage.LoadPipeline",
@@ -4110,7 +4086,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -4137,8 +4113,8 @@
       "artifactVariantOf": null,
       "canonicalTask": "outpaint",
       "displayName": "FluxFillPipeline",
-      "disposition": "documented_whole_pipeline_exception",
-      "dispositionReason": "no_pinned_modular_workflow_for_exact_profile",
+      "disposition": "backend_stages_integrated",
+      "dispositionReason": "complete_backend_image_stage_chain_declared",
       "evidence": {
         "browser": "pending_final_candidate",
         "nativeOutput": "pending",
@@ -4146,18 +4122,10 @@
         "platform": "pending",
         "reuse": "pending",
         "service": "pending",
-        "structural": "not_applicable_or_missing"
+        "structural": "implemented_awaiting_qualification"
       },
       "exactVariantReview": null,
-      "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
-        "limitations": [
-          "no_independent_stage_editing",
-          "no_cross_stage_prompt_or_latent_cache",
-          "component_substitution_limited_to_standard_pipeline_contract"
-        ],
-        "revisitTrigger": "reviewed_diffusers_pin_or_native_profile_change"
-      },
+      "exception": null,
       "implementation": {
         "executionPath": "direct-diffusers-image",
         "loader": "modules.DiffusersImage.LoadPipeline",
@@ -4183,7 +4151,7 @@
       "task": "outpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -4224,7 +4192,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -4257,7 +4225,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -4298,7 +4266,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -4331,7 +4299,7 @@
       "task": "outpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -4373,7 +4341,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -4408,7 +4376,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -4450,7 +4418,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -4485,7 +4453,7 @@
       "task": "outpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -4552,7 +4520,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": "FluxKontextModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -4592,7 +4560,7 @@
       },
       "exactVariantReview": {
         "decision": "native_recipe",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "Visible bounded equal-height horizontal composition precedes the native VAE encoder. Native lists alone represent a batch, not multiple references for one result."
         ],
@@ -4630,7 +4598,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": "FluxKontextModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -4700,7 +4668,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": "FluxKontextModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -4741,7 +4709,7 @@
       },
       "exactVariantReview": {
         "decision": "artifact_blocked",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "A root FP8/NVFP4 checkpoint is not a Diffusers component repository. No reviewed native conversion or dequantization recipe is declared; do not substitute base weights."
         ],
@@ -4779,7 +4747,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": "FluxKontextModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -4847,7 +4815,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "FluxModularPipeline",
@@ -4919,7 +4887,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "FluxModularPipeline",
@@ -4992,7 +4960,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "FluxModularPipeline",
@@ -5067,7 +5035,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "FluxModularPipeline",
@@ -5142,7 +5110,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "FluxModularPipeline",
@@ -5218,7 +5186,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "FluxModularPipeline",
@@ -5263,7 +5231,7 @@
       },
       "exactVariantReview": {
         "decision": "native_recipe",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "Separate Krea artifact; 28 steps and guidance 3.5; no inherited dev output proof."
         ],
@@ -5301,7 +5269,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": "FluxModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -5366,7 +5334,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "FluxModularPipeline",
@@ -5398,8 +5366,8 @@
       "artifactVariantOf": null,
       "canonicalTask": "edit_image",
       "displayName": "FLUX.1-Redux-dev",
-      "disposition": "documented_whole_pipeline_exception",
-      "dispositionReason": "no_pinned_modular_workflow_for_exact_profile",
+      "disposition": "backend_stages_integrated",
+      "dispositionReason": "complete_backend_image_stage_chain_declared",
       "evidence": {
         "browser": "pending_final_candidate",
         "nativeOutput": "pending",
@@ -5407,18 +5375,10 @@
         "platform": "pending",
         "reuse": "pending",
         "service": "pending",
-        "structural": "not_applicable_or_missing"
+        "structural": "implemented_awaiting_qualification"
       },
       "exactVariantReview": null,
-      "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
-        "limitations": [
-          "no_independent_stage_editing",
-          "no_cross_stage_prompt_or_latent_cache",
-          "component_substitution_limited_to_standard_pipeline_contract"
-        ],
-        "revisitTrigger": "reviewed_diffusers_pin_or_native_profile_change"
-      },
+      "exception": null,
       "implementation": {
         "executionPath": "direct-diffusers-image",
         "loader": "modules.DiffusersImage.LoadPipeline",
@@ -5444,7 +5404,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -5472,8 +5432,8 @@
       "artifactVariantOf": null,
       "canonicalTask": "multi_image_reference_edit",
       "displayName": "FLUX.1-Redux-dev",
-      "disposition": "documented_whole_pipeline_exception",
-      "dispositionReason": "no_pinned_modular_workflow_for_exact_profile",
+      "disposition": "backend_stages_integrated",
+      "dispositionReason": "complete_backend_image_stage_chain_declared",
       "evidence": {
         "browser": "pending_final_candidate",
         "nativeOutput": "pending",
@@ -5481,18 +5441,10 @@
         "platform": "pending",
         "reuse": "pending",
         "service": "pending",
-        "structural": "not_applicable_or_missing"
+        "structural": "implemented_awaiting_qualification"
       },
       "exactVariantReview": null,
-      "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
-        "limitations": [
-          "no_independent_stage_editing",
-          "no_cross_stage_prompt_or_latent_cache",
-          "component_substitution_limited_to_standard_pipeline_contract"
-        ],
-        "revisitTrigger": "reviewed_diffusers_pin_or_native_profile_change"
-      },
+      "exception": null,
       "implementation": {
         "executionPath": "direct-diffusers-image",
         "loader": "modules.DiffusersImage.LoadPipeline",
@@ -5518,7 +5470,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -5559,7 +5511,7 @@
       },
       "exactVariantReview": {
         "decision": "native_recipe",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "Four steps, guidance zero, 256-token encoder limit; guidance_embeds comes from the transformer config."
         ],
@@ -5597,7 +5549,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": "FluxModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -5662,7 +5614,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "FluxModularPipeline",
@@ -5707,7 +5659,7 @@
       },
       "exactVariantReview": {
         "decision": "native_recipe",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "One to eight ordered independent references, not an image batch or stitched canvas."
         ],
@@ -5745,7 +5697,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": "Flux2ModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -5813,7 +5765,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": "Flux2ModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -5881,7 +5833,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Flux2KleinModularPipeline",
@@ -5954,7 +5906,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Flux2KleinModularPipeline",
@@ -5999,7 +5951,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -6032,7 +5984,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -6073,7 +6025,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -6106,7 +6058,7 @@
       "task": "outpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -6147,7 +6099,7 @@
       },
       "exactVariantReview": {
         "decision": "upstream_exception",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "The standard KV pipeline extracts reference K/V once and reuses it on later steps. Pinned modular Klein does not implement kv_cache_mode=extract/cached; keep the exact standard KV executor for reference tasks."
         ],
@@ -6157,7 +6109,7 @@
         "status": "reviewed"
       },
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -6190,7 +6142,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": "Flux2KleinModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -6231,7 +6183,7 @@
       },
       "exactVariantReview": {
         "decision": "upstream_exception",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "The standard KV pipeline extracts reference K/V once and reuses it on later steps. Pinned modular Klein does not implement kv_cache_mode=extract/cached; keep the exact standard KV executor for reference tasks."
         ],
@@ -6241,7 +6193,7 @@
         "status": "reviewed"
       },
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -6274,7 +6226,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": "Flux2KleinModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -6315,7 +6267,7 @@
       },
       "exactVariantReview": {
         "decision": "native_recipe",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "Text-only takes the standard-forward branch, with no reference K/V cache. Exact 9B KV index declares Flux2KleinPipeline, is_distilled=true, and the normal Flux2 transformer/VAE; this does not admit its cached-reference tasks or inherit 4B memory qualification."
         ],
@@ -6353,7 +6305,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": "Flux2KleinModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -6418,7 +6370,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Flux2KleinModularPipeline",
@@ -6490,7 +6442,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": "Flux2KleinModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -6531,7 +6483,7 @@
       },
       "exactVariantReview": {
         "decision": "native_recipe",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "Distilled 4B weights; one to eight ordered independent references; no Klein KV equivalence."
         ],
@@ -6569,7 +6521,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": "Flux2KleinModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -6637,7 +6589,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": "Flux2KleinModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -6705,7 +6657,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Flux2KleinModularPipeline",
@@ -6777,7 +6729,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Flux2KleinModularPipeline",
@@ -6850,7 +6802,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Flux2KleinModularPipeline",
@@ -6922,7 +6874,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Flux2ModularPipeline",
@@ -6994,7 +6946,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Flux2ModularPipeline",
@@ -7067,7 +7019,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Flux2ModularPipeline",
@@ -7112,7 +7064,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -7145,7 +7097,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -7186,7 +7138,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -7219,7 +7171,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -7260,7 +7212,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -7293,7 +7245,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -7334,7 +7286,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -7367,7 +7319,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -7433,7 +7385,7 @@
       "task": "image_to_text",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -7499,7 +7451,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -7540,7 +7492,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -7573,7 +7525,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -7614,7 +7566,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -7647,7 +7599,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -7688,7 +7640,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -7721,7 +7673,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -7762,7 +7714,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -7795,7 +7747,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -7836,7 +7788,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -7869,7 +7821,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -7910,7 +7862,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -7943,7 +7895,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -7984,7 +7936,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -8017,7 +7969,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -8058,7 +8010,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -8091,7 +8043,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -8132,7 +8084,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -8165,7 +8117,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -8206,7 +8158,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -8239,7 +8191,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -8280,7 +8232,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -8313,7 +8265,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -8354,7 +8306,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -8387,7 +8339,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -8428,7 +8380,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -8461,7 +8413,7 @@
       "task": "depth_estimation",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -8502,7 +8454,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -8535,7 +8487,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -8576,7 +8528,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -8609,7 +8561,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -8650,7 +8602,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -8683,7 +8635,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -8724,7 +8676,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -8757,7 +8709,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -8798,7 +8750,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -8831,7 +8783,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -8872,7 +8824,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -8905,7 +8857,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -8946,7 +8898,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -8979,7 +8931,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -9020,7 +8972,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -9053,7 +9005,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -9120,7 +9072,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageEditPlusModularPipeline",
@@ -9192,7 +9144,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageEditPlusModularPipeline",
@@ -9264,7 +9216,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageEditModularPipeline",
@@ -9309,7 +9261,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -9342,7 +9294,7 @@
       "task": "outpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -9409,7 +9361,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageEditModularPipeline",
@@ -9481,7 +9433,7 @@
       "task": "modular_inpainting",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageEditModularPipeline",
@@ -9527,7 +9479,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -9560,7 +9512,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -9601,7 +9553,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -9634,7 +9586,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -9675,7 +9627,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -9708,7 +9660,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -9776,7 +9728,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -9844,7 +9796,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": "QwenImageEditPlusModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -9912,7 +9864,7 @@
       "task": "multi_image_reference_edit",
       "upstream": {
         "candidateNativePipelineClass": "QwenImageEditPlusModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -9980,7 +9932,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": "QwenImageEditModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -10048,7 +10000,7 @@
       "task": "layer_decomposition",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -10088,7 +10040,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -10121,7 +10073,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -10188,7 +10140,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -10260,7 +10212,7 @@
       "task": "control_edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -10333,7 +10285,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -10405,7 +10357,7 @@
       "task": "control_inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -10478,7 +10430,7 @@
       "task": "image_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -10550,7 +10502,7 @@
       "task": "inpainting",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -10622,7 +10574,7 @@
       "task": "modular_text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -10694,7 +10646,7 @@
       "task": "control_edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -10768,7 +10720,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -10841,7 +10793,7 @@
       "task": "control_inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -10915,7 +10867,7 @@
       "task": "image_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -10988,7 +10940,7 @@
       "task": "inpainting",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -11061,7 +11013,7 @@
       "task": "modular_text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -11133,7 +11085,7 @@
       "task": "modular_text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -11204,7 +11156,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": "QwenImageModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -11276,7 +11228,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": "QwenImageModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageModularPipeline",
@@ -11347,7 +11299,7 @@
       "task": "layer_decomposition",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "QwenImageLayeredModularPipeline",
@@ -11418,7 +11370,7 @@
       "task": "image_upscale",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -11459,7 +11411,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -11492,7 +11444,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -11533,7 +11485,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -11566,7 +11518,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -11607,7 +11559,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -11640,7 +11592,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -11681,7 +11633,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -11714,7 +11666,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -11755,7 +11707,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -11788,7 +11740,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -11829,7 +11781,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -11862,7 +11814,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -11903,7 +11855,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -11936,7 +11888,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -11977,7 +11929,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -12010,7 +11962,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -12051,7 +12003,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -12084,7 +12036,7 @@
       "task": "control_edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -12125,7 +12077,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -12158,7 +12110,7 @@
       "task": "control_inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -12199,7 +12151,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -12232,7 +12184,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -12273,7 +12225,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -12306,7 +12258,7 @@
       "task": "control_inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -12347,7 +12299,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -12380,7 +12332,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -12421,7 +12373,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -12454,7 +12406,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -12495,7 +12447,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -12528,7 +12480,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -12596,7 +12548,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": "StableDiffusionXLModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -12664,7 +12616,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": "StableDiffusionXLModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -12732,7 +12684,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": "StableDiffusionXLModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -12800,7 +12752,7 @@
       "task": "control_edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -12873,7 +12825,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -12945,7 +12897,7 @@
       "task": "control_inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -13018,7 +12970,7 @@
       "task": "control_union_edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -13091,7 +13043,7 @@
       "task": "control_union_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -13163,7 +13115,7 @@
       "task": "control_union_inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -13236,7 +13188,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -13309,7 +13261,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -13382,7 +13334,7 @@
       "task": "ip_adapter_control_edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -13456,7 +13408,7 @@
       "task": "ip_adapter_control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -13529,7 +13481,7 @@
       "task": "ip_adapter_control_inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -13603,7 +13555,7 @@
       "task": "ip_adapter_control_union_edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -13677,7 +13629,7 @@
       "task": "ip_adapter_control_union_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -13750,7 +13702,7 @@
       "task": "ip_adapter_control_union_inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -13824,7 +13776,7 @@
       "task": "ip_adapter_edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -13898,7 +13850,7 @@
       "task": "ip_adapter_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -13971,7 +13923,7 @@
       "task": "ip_adapter_inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -14045,7 +13997,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -14117,7 +14069,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -14185,7 +14137,7 @@
       "task": "control_edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -14253,7 +14205,7 @@
       "task": "control_inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -14294,7 +14246,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -14327,7 +14279,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -14368,7 +14320,7 @@
       },
       "exactVariantReview": {
         "decision": "native_recipe",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "Native PAG uses the pinned guider's exclusive start boundary: step zero is unperturbed.",
           "Fixed PAG scale only; adaptive PAG scale remains a standard-pipeline feature.",
@@ -14408,7 +14360,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -14449,7 +14401,7 @@
       },
       "exactVariantReview": {
         "decision": "native_recipe",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "Native PAG uses the pinned guider's exclusive start boundary: step zero is unperturbed.",
           "Fixed PAG scale only; adaptive PAG scale remains a standard-pipeline feature.",
@@ -14489,7 +14441,7 @@
       "task": "control_edit_image",
       "upstream": {
         "candidateNativePipelineClass": "StableDiffusionXLModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -14530,7 +14482,7 @@
       },
       "exactVariantReview": {
         "decision": "native_recipe",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "Native PAG uses the pinned guider's exclusive start boundary: step zero is unperturbed.",
           "Fixed PAG scale only; adaptive PAG scale remains a standard-pipeline feature.",
@@ -14570,7 +14522,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": "StableDiffusionXLModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -14611,7 +14563,7 @@
       },
       "exactVariantReview": {
         "decision": "native_recipe",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "Native PAG uses the pinned guider's exclusive start boundary: step zero is unperturbed.",
           "Fixed PAG scale only; adaptive PAG scale remains a standard-pipeline feature.",
@@ -14651,7 +14603,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": "StableDiffusionXLModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -14692,7 +14644,7 @@
       },
       "exactVariantReview": {
         "decision": "native_recipe",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "Native PAG uses the pinned guider's exclusive start boundary: step zero is unperturbed.",
           "Fixed PAG scale only; adaptive PAG scale remains a standard-pipeline feature.",
@@ -14732,7 +14684,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": "StableDiffusionXLModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -14799,7 +14751,7 @@
       "task": "control_edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -14871,7 +14823,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -14940,7 +14892,7 @@
       "task": "image_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -15012,7 +14964,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -15084,7 +15036,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -15156,7 +15108,7 @@
       "task": "control_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -15197,7 +15149,7 @@
       },
       "exactVariantReview": {
         "decision": "native_recipe",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "512px, one step, CFG disabled, repository scheduler and exact fp16 weight variant."
         ],
@@ -15235,7 +15187,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": "StableDiffusionXLModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -15300,7 +15252,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "StableDiffusionXLModularPipeline",
@@ -15370,7 +15322,7 @@
       "task": "image_to_text",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": null,
         "nativePipelineClass": null,
@@ -15411,7 +15363,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -15444,7 +15396,7 @@
       "task": "inpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -15485,7 +15437,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -15518,7 +15470,7 @@
       "task": "outpaint",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -15585,7 +15537,7 @@
       "task": "text_to_image",
       "upstream": {
         "candidateNativePipelineClass": "ZImageModularPipeline",
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "ZImageModularPipeline",
@@ -15629,7 +15581,7 @@
       },
       "exactVariantReview": null,
       "exception": {
-        "checkedDiffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "checkedDiffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "limitations": [
           "no_independent_stage_editing",
           "no_cross_stage_prompt_or_latent_cache",
@@ -15662,7 +15614,7 @@
       "task": "edit_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": false,
         "inventoryCoverage": "executable",
         "nativePipelineClass": null,
@@ -15729,7 +15681,7 @@
       "task": "modular_image_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "ZImageModularPipeline",
@@ -15801,7 +15753,7 @@
       "task": "modular_text_to_image",
       "upstream": {
         "candidateNativePipelineClass": null,
-        "diffusersRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "ZImageModularPipeline",
@@ -15817,17 +15769,18 @@
   ],
   "schemaVersion": 1,
   "sources": {
-    "exactVariantReviews": "sha256:59206575f988315da524f206822ca6186bf713a46325ce130918825008c9a2aa",
-    "modelArtifactCatalog": "sha256:261c2fc46d1a3c27b1b390780984684792acf562ef1465d489b5660b06bff5e5",
-    "modularWorkflowSnapshot": "sha256:8dad3f4ef31b456ef9c6e46718be9a17c023ae4306fdba129c72eeeed6573dc3",
-    "operationInventory": "sha256:b5bb015392d8fec47716842bbf896ef977312039dfef1a987ad75295dc860158",
-    "publicExecutionProfiles": "sha256:0016031bd2048760e7eb55f68af6b9a02bfc97a0b48c8efe72ad589c1156b523"
+    "exactVariantReviews": "sha256:a4fc259889ff19358b1be6411be27d331cf81c9bf3d55291ded695acf9bb2498",
+    "modelArtifactCatalog": "sha256:2721365f6271282a836c248c029f06ae73cebe91e4f11f044668bc15cdf0c844",
+    "modularWorkflowSnapshot": "sha256:dd06d28cde763faf3245580f6ab3ef290715764a58f2b5c9321d9c9e40c8d3c9",
+    "operationInventory": "sha256:e896a05e863964cdbb13475a3c545388a39160acf452a26db1b9165a1bf9e7d8",
+    "publicExecutionProfiles": "sha256:1581864ba6454f2fd986fadf50168ab3a742c9c1e90264c8aa52038b82e4ba2a"
   },
   "summary": {
     "denominatorFrozen": false,
     "dispositions": {
+      "backend_stages_integrated": 6,
       "blocked": 2,
-      "documented_whole_pipeline_exception": 89,
+      "documented_whole_pipeline_exception": 83,
       "native_integrated": 73,
       "non_diffusion_image_task": 14,
       "preserved_standard_alternative": 38

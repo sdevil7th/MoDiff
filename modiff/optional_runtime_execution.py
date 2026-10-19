@@ -25,6 +25,7 @@ from modiff.optimization_packages import public_optional_runtime_catalog
 from modiff.optional_runtimes import (
     GALLERY_MEDIA_RUNTIME_PROFILE_ID,
     OPTIONAL_RUNTIME_PROFILES,
+    TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID,
 )
 
 
@@ -103,6 +104,10 @@ _LTX2_IMAGE_CONDITIONING_EXECUTION_PROFILE = _NodeOptionalRuntimeProfile(
     id="ltx2:image-conditioning-media",
     optional_runtime_profiles=(GALLERY_MEDIA_RUNTIME_PROFILE_ID,),
 )
+_IMAGE_TEXT_NF4_EXECUTION_PROFILE = _NodeOptionalRuntimeProfile(
+    id='transformers:image-text-nf4',
+    optional_runtime_profiles=(TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID,),
+)
 _NODE_OPTIONAL_RUNTIME_PROFILES = {
     ("modules.VideoConditioning", "EdgePreprocessor"): (
         _GALLERY_MEDIA_EXECUTION_PROFILE,
@@ -118,6 +123,11 @@ def _execution_profiles_for_node(
     action: str,
     values: dict[str, Any],
 ) -> tuple[tuple[Any, ...], str | None]:
+    if ((module, action) == ('modules.HuggingFaceTransformers', 'LoadImageTextToTextModel')
+            and values.get('quantization_mode') == 'bnb_4bit'):
+        # Every requested quantized path must satisfy activation first. Exact
+        # artifact/dtype/device policy is independently checked before factories.
+        return (_IMAGE_TEXT_NF4_EXECUTION_PROFILE,), None
     node_profiles = _NODE_OPTIONAL_RUNTIME_PROFILES.get((module, action))
     if node_profiles is not None:
         return node_profiles, None

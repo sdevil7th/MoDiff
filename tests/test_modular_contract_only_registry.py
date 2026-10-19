@@ -1,4 +1,5 @@
 import importlib.util
+from pathlib import Path
 import subprocess
 import sys
 import unittest
@@ -112,11 +113,22 @@ class ContractOnlyModularRegistryTests(unittest.TestCase):
             | set(CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME)
             | set(CURRENT_PIN_EQUIVALENT_MODULAR_TARGETS)
             | set(CURRENT_PIN_PROMOTED_MODULAR_DISCOVERY)
+            | {"EchoModularPipeline", "QwenImage21ModularPipeline", "QwenImage21TurboModularPipeline"}
             | (historical_modular_classes & set(_INTENTIONALLY_EXCLUDED_PIPELINES)),
             historical_modular_classes,
         )
 
-        self.assertEqual(exported_modular_classes, historical_modular_classes | {"EchoModularPipeline"})
+        source_only_exports = {
+            "Flux3ModularPipeline", "Flux3DistilledModularPipeline",
+            "QwenImage21ModularPipeline", "QwenImage21TurboModularPipeline",
+        }
+        imported_source = Path(diffusers.__file__).resolve().parent
+        if imported_source == reviewed_diffusers_source().resolve():
+            self.assertEqual(exported_modular_classes, historical_modular_classes)
+        else:
+            self.assertEqual(diffusers.__version__, "0.41.0")
+            self.assertEqual(exported_modular_classes, historical_modular_classes - source_only_exports)
+            self.assertTrue(all(getattr(diffusers, name, None) is None for name in source_only_exports))
         self.assertNotIn("EchoModularPipeline", get_all_model_types(include_contract_only=True))
 
         for specification in CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES:

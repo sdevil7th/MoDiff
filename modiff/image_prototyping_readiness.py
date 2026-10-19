@@ -24,6 +24,7 @@ from typing import Any, Mapping
 
 from modiff.diffusers_profiles import public_execution_profiles
 from modiff.image_native_variant_reviews import image_native_variant_review
+from modiff.image_stage_contract import declared_backend_image_stages as _declared_backend_image_stages
 from modiff.model_artifact_catalog import catalog_download_inventory, catalog_repository_pin
 from modiff.modular_action_bindings import MODULAR_ACTION_BINDINGS
 from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
@@ -286,9 +287,9 @@ def _display_name(profile: Mapping[str, Any], capability: Mapping[str, Any] | No
     )
 
 
-def _evidence(profile: Mapping[str, Any], *, native_integrated: bool) -> dict[str, str]:
+def _evidence(profile: Mapping[str, Any], *, stages_integrated: bool) -> dict[str, str]:
     return {
-        "structural": "implemented_awaiting_qualification" if native_integrated else "not_applicable_or_missing",
+        "structural": "implemented_awaiting_qualification" if stages_integrated else "not_applicable_or_missing",
         "browser": "pending_final_candidate",
         "nativeOutput": "historical_not_final_revision" if profile.get("live_proof") else "pending",
         "parameterConsumption": "pending",
@@ -423,6 +424,8 @@ def build_image_prototyping_readiness(root: Path) -> dict[str, Any]:
                 or (model_workflow and profile["model_type"].endswith("ModularPipeline"))
             )
             artifact = _artifact_inventory(profile, capability)
+            spec = studio_execution_spec_for_pair(profile["model_type"], mode)
+            backend_stages_integrated = _declared_backend_image_stages(profile, mode, artifact, spec)
 
             if variant_review and variant_review["decision"] in {"artifact_blocked", "upstream_exception"}:
                 disposition = ("blocked" if variant_review["decision"] == "artifact_blocked"
@@ -437,6 +440,9 @@ def build_image_prototyping_readiness(root: Path) -> dict[str, Any]:
             elif native_integrated:
                 disposition = "native_integrated"
                 reason_code = "complete_native_stage_chain_declared"
+            elif backend_stages_integrated:
+                disposition = "backend_stages_integrated"
+                reason_code = "complete_backend_image_stage_chain_declared"
             elif profile["execution_path"] == "modular-diffusers":
                 disposition = "native_integration_missing"
                 reason_code = "public_modular_profile_lacks_complete_stage_chain"
@@ -456,7 +462,6 @@ def build_image_prototyping_readiness(root: Path) -> dict[str, Any]:
                 disposition = "blocked"
                 reason_code = "unclassified_execution_path"
 
-            spec = studio_execution_spec_for_pair(profile["model_type"], mode)
             advertisement_entry_points = [f"execution_profile:{profile['id']}"]
             if profile.get("_artifact_variant"):
                 advertisement_entry_points.append(f"execution_profile_artifact:{profile['_artifact_variant']}")
@@ -526,7 +531,7 @@ def build_image_prototyping_readiness(root: Path) -> dict[str, Any]:
                     }
                     if disposition == "documented_whole_pipeline_exception"
                     else None,
-                    "evidence": _evidence(profile, native_integrated=native_integrated),
+                    "evidence": _evidence(profile, stages_integrated=native_integrated or backend_stages_integrated),
                     "knownDefects": sorted(set(known_defects)),
                 }
             )
@@ -598,6 +603,7 @@ def validate_image_prototyping_readiness(value: Any) -> dict[str, Any]:
         raise ImagePrototypingReadinessError("Image readiness route IDs are invalid or duplicated.")
     allowed = {
         "native_integrated",
+        "backend_stages_integrated",
         "native_integration_missing",
         "preserved_standard_alternative",
         "documented_whole_pipeline_exception",

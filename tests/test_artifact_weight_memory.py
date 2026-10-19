@@ -3,7 +3,9 @@ import struct
 
 import pytest
 
-from modiff.artifact_weight_memory import artifact_parameter_lower_bound, impossible_parameter_residency
+from modiff.artifact_weight_memory import (
+    artifact_parameter_lower_bound, impossible_parameter_residency, native_cpu_parameter_residency,
+)
 
 
 REVISION = "a" * 40
@@ -200,3 +202,89 @@ def test_final_candidate_residency_cannot_be_promoted_past_a_known_parameter_bou
     assert result["candidates"][0]["canAutoRun"] is False
     assert result["candidates"][0]["proof"]["status"] == "skipped"
     assert "parameter storage" in result["candidates"][0]["skipReason"]
+
+
+@pytest.mark.parametrize('quantization', ['none', 'bnb_4bit'])
+def test_dense_candidate_publishes_storage_evidence_without_claiming_host_fit(monkeypatch, tmp_path, quantization):
+    from modiff import auto_resource as planner
+
+    gib = 1024 ** 3
+    candidate = {
+        'id': 'native', 'modelType': 'ZImageModularPipeline', 'mode': 'modular_text_to_image',
+        'artifactFormat': 'native', 'artifact': planner.Z_IMAGE_REPO,
+        'modelRepo': planner.Z_IMAGE_REPO, 'resolvedArtifact': planner.Z_IMAGE_REPO,
+        'dtype': 'bfloat16', 'quantizationMode': quantization, 'loadedQuantization': quantization,
+        'offloadMode': 'model_cpu', 'installed': True, 'artifactValidation': {'complete': True},
+        'artifactResolution': {'resolved': {'repo': planner.Z_IMAGE_REPO, 'revision': REVISION}},
+        'proof': {'status': 'declared_safe'}, 'canAutoRun': True, 'requirementsMissing': [],
+        'qualityTier': 'native', 'qualityScore': 100, 'rank': 1,
+    }
+    bound = {'revision': REVISION, 'dtype': 'bfloat16',
+             'components': {'transformer': 12 * gib, 'text_encoder': 8 * gib},
+             'totalBytes': 20 * gib, 'largestComponentBytes': 12 * gib,
+             'proofScope': 'parameter_storage_lower_bound_only'}
+    calls = []
+    monkeypatch.setattr(planner, '_declared_profile_candidates', lambda *args: [candidate.copy()])
+    monkeypatch.setattr(planner, 'artifact_parameter_lower_bound', lambda *args: calls.append(args) or bound.copy())
+    hardware = {'accelerator': {'kind': 'cuda', 'totalBytes': 16 * gib, 'freeBytes': 15 * gib},
+                'systemMemory': {'totalBytes': 32 * gib, 'availableBytes': 13 * gib},
+                'offloadDisk': {'freeBytes': 100 * gib}}
+    result = planner.build_auto_resource_plan(
+        {'form': {'modelType': 'ZImageModularPipeline', 'mode': 'modular_text_to_image'},
+         'hardwareOverride': hardware}, runtime_fingerprint={}, local_models=[], data_dir=tmp_path,
+        history={'entries': {}},
+    )
+    selected = result['selectedCandidate']
+    assert selected['canAutoRun']  # Actual owner/cache-dependent admission belongs to the graph plan.
+    assert selected['proof']['status'] == 'declared_safe'
+    assert selected.get('workingMemoryRequirements') is None
+    if quantization == 'none':
+        assert selected['parameterStorageLowerBound'] == bound
+        assert len(calls) == 1
+    else:
+        assert 'parameterStorageLowerBound' not in selected
+        assert calls == []
+
+
+@pytest.mark.parametrize('device,mode,expected', [
+    ('cuda:0', 'model_cpu', 36), ('cuda:0', 'auto_cpu', 36),
+    ('cpu', 'none', 36), ('cpu:0', 'model_cpu', 36), ('cpu:0', 'auto_cpu', 36),
+    ('cuda:0', 'none', 36), ('cuda:0', 'group_cpu', 36), ('cuda:0', 'group_disk', 24),
+    ('cuda:0', 'sequential_cpu', 0),
+])
+def test_native_cpu_residency_uses_only_traced_component_placements(snapshot, device, mode, expected):
+    _, status = snapshot
+    bound = artifact_parameter_lower_bound(status, REVISION, 'bfloat16')
+    result = native_cpu_parameter_residency(bound, execution_path='modular-diffusers',
+                                           offload_mode=mode, device=device, dtype='bfloat16')
+    assert result == ({'systemRamBytes': expected, 'vramBytes': 0} if expected else {})
+
+
+@pytest.mark.parametrize('change', [
+    'missing', 'wrong_revision', 'wrong_dtype', 'wrong_scope', 'wrong_sum',
+    'wrong_largest', 'boolean_bytes', 'nonpositive_bytes', 'unsupported_path',
+])
+def test_unknown_or_invalid_storage_cannot_create_a_cpu_floor(snapshot, change):
+    _, status = snapshot
+    bound = artifact_parameter_lower_bound(status, REVISION, 'bfloat16')
+    path = 'modular-diffusers'
+    if change == 'missing':
+        bound = None
+    elif change == 'unsupported_path':
+        path = 'direct-diffusers-video'
+    elif change == 'wrong_revision':
+        bound['revision'] = 'main'
+    elif change == 'wrong_dtype':
+        bound['dtype'] = 'float32'
+    elif change == 'wrong_scope':
+        bound['proofScope'] = 'live_proven'
+    elif change == 'wrong_sum':
+        bound['totalBytes'] = 37
+    elif change == 'wrong_largest':
+        bound['largestComponentBytes'] = 36
+    elif change == 'boolean_bytes':
+        bound['components']['transformer'] = True
+    else:
+        bound['components']['transformer'] = 0
+    assert native_cpu_parameter_residency(bound, execution_path=path, offload_mode='model_cpu',
+                                         device='cuda:0', dtype='bfloat16') == {}

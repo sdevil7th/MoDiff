@@ -107,7 +107,7 @@ def require_compilation(*, device: str, backend: str = "inductor", require_flex:
         return cached
     try:
         process = subprocess.run(
-            [sys.executable, "-c", compilation_probe_script(device=device, backend=backend, require_flex=require_flex)],
+            [sys.executable, "-B", "-c", compilation_probe_script(device=device, backend=backend, require_flex=require_flex)],
             capture_output=True, text=True, check=False, timeout=timeout, env=os.environ.copy(),
         )
         detail = json.loads(process.stdout.strip().splitlines()[-1]) if process.returncode == 0 else {}

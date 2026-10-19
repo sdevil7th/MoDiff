@@ -29,6 +29,41 @@ Qwen-Image 2.1 uses its supported whole-pipeline route with the compatible
 installed Diffusers release. Its historical source review remains separately
 pinned.
 
+Curated fresh image recipes can request an exact backend `authoringRecipeId` on
+the ordinary operation-starter endpoint. Its optional hash-covered `authoring`
+record uses the existing role, edge and semantic form-binding tuples, plus
+primitive `initialValues` triples. The backend binds the recipe to the reviewed
+pipeline, task, execution profile and base specification. It declares retained
+attention/VAE settings, the real Guider's CFG control and FLUX's separate embedded
+scale. Qwen masked recipes explicitly select the owned whole-v1 compatibility
+policy; outpainting declares the canvas utility and image/mask wires directly.
+These are creation defaults, not a second executor or model-loading path. Clients
+materialize ordinary nodes, seed untouched unconnected values and then apply
+the authored form values. Existing authored or connected settings are preserved.
+Requests without a recipe retain the ordinary developer starter defaults and
+response envelope. Opening or running a saved graph never requests these defaults
+or rewrites that graph. Unknown recipe IDs and mismatched pipeline/task/profile
+selections fail closed.
+
+Fresh Model Setup drafts expose the selected model's declared component weight
+formats through the existing loader control. Native remains the default; models
+with only Native keep the control hidden. This read-only schema projection
+constructs no loader, changes no registered or saved node definition and grants
+no runtime, fit or Auto qualification. Execution revalidates the selected format
+and exact model artifacts through the ordinary loader.
+
+Canonical example-library generation publishes ordinary executable leaves using
+the existing projection for MoDiff's declared visual stage groups. Current public
+control values, typed wires, operation ownership and stage roles are preserved;
+user/custom Blocks are retained. This export mode validates the existing Block
+hashes before projection and applies portable-data cleanup afterward. Ordinary
+Save/export and the active canvas retain their grouped Block definitions. The
+generator does not edit or rehash immutable nested definitions to sanitize them.
+Pair-only regeneration also retains the published device fallback defaults on
+unchanged, unambiguously matched executable nodes, rather than substituting the
+generator host's defaults. Authored device values and fresh field schemas remain
+intact; ambiguous matches or incompatible preserved defaults reject regeneration.
+
 ## Group nodes into a reusable Block
 
 Select nodes and choose **Create block**. New definitions use Block V2 and can
@@ -60,6 +95,55 @@ chosen settings without claiming Auto qualification.
 
 ## Change the model
 
+### Image Model Setup adapters
+
+**Add LoRA** requires the selected image model's current backend capability,
+execution profile, exact repository/revision pair and registered adapter sockets
+to agree. Missing, refreshing or unsupported metadata disables the action with a
+reason; opening and applying an adapter draft both recheck it. A LoRA socket alone
+does not declare model support. The profile's optional `repository_revisions`
+metadata contains bounded, unique pairs for its declared repositories; older
+metadata remains readable but does not authorize new adapter edits.
+An optional selected-profile `adapterAuthoring` policy can explicitly permit
+editing adapters for its declared task, exact base-model pair and registered
+adapter node. That permission is separate from aggregate model support and
+runtime qualification. An optional `requiredControls` map constrains the
+actual model owner before Add, Edit or Move. The current conditional Super
+image route requires NONE/Auto Offload disabled/CPU weight staging, no
+quantization or external components, and remote code disabled. Redux editing
+requires effective NONE, no quantization/prequantized component, and declared
+`device_map=none`. A declared pure execution recipe may override placement; a non-`none` raw
+loader device map still wins over the recipe. Unbound `null` inputs qualify
+only through the current registered optional-input schema. Missing,
+malformed, unknown or ambiguous controls disable editing with a reason; no
+field or execution recipe is inserted to obtain permission. Auto can use
+only an already admitted candidate satisfying these controls. These checks
+do not enable model execution or satisfy Cosmos safety/runtime readiness.
+Without it, native aliases retain the canonical
+pipeline's adapter restrictions. Malformed or mismatched policy disables edits.
+Separate policies cover the dense pinned FLUX.1-dev, FLUX.1-schnell and
+FLUX.1-Krea-dev native text-to-image profiles, FLUX.1-Kontext-dev editing, and
+FLUX.2-klein-4B text-to-image and editing. Each permits only its own reviewed
+repository/revision pair; sharing a pipeline class does not transfer permission.
+Multi-reference authoring uses the current backend owner's explicitly declared
+edit execution mode, with the actual task and profile still checked. Saved graph
+hints cannot grant that mapping. Compatible FP8/NVFP4 models, Klein Base/KV and
+unrelated tasks receive no permission from these policies. Existing runtime
+routes and qualification remain unchanged. Add also checks the owned-row limit. Reaching that limit
+leaves permitted existing rows editable and reorderable.
+
+Existing unsupported adapters stay visible with their values and connections.
+Their editors and ordering controls remain disabled; **Remove** can repair the
+graph through the ordinary Undo transaction, subject to shared supplier and
+sealed interface checks. Opening a saved graph never discards adapters or regroups
+its stages. Reviewed whole-image adapters preserve the owner-to-generation scope
+through their actual pipeline sockets rather than becoming operation stages.
+
+Fresh native image recipes group their declared image decoder and connected
+Preview into **Image Output**, including decoders whose backend operation uses
+the generic `diffusion.decode_latents` identity. This changes presentation only;
+the executable decoder, output fields and Preview edge remain intact.
+
 ### Guidance control visibility
 
 Removing a Guidance row through Configure interface hides the row, not the
@@ -85,6 +169,13 @@ against a backend-resolved baseline, and its unique media preview is reconnected
 Edited values, custom wiring or ambiguous outputs use the preservation/review
 planner. Schema or connection differences requiring review are shown before applying.
 Undo/Redo and saved workflow reload use the same graph history and persistence.
+
+Legacy managed Task changes apply the existing fallback for an unavailable
+default/CUDA device using the current backend runtime metadata before building
+the graph. CPU offload settings normalize through the ordinary form policy;
+authored prompts remain intact. Explicit unavailable XPU, MPS or unknown device
+choices remain visible for validation. A newer document or creative edit still
+cancels a pending graph operation.
 
 A raw implementation/component loader has a picker restricted to compatible
 installed artifacts. In a connected workflow, model selection derives the Pipeline
@@ -189,3 +280,18 @@ with a bookkeeping assertion that expected the still-open recovery draft in the
 mocked saved-document list; application execution, output capture and error checks
 had already passed, and only the explicitly saved workflow had correctly been
 written there.
+
+
+## Private ancillary execution selections
+
+An optional backend-authored ancillary operation selects a subset of the current
+ordinary graph. Its exact parent authoring recipe and base execution spec have
+separate content hashes. Explicit Preview targets the declared real leaf and its
+actual dependencies; ordinary Run excludes only its declared Preview-only roles.
+Stale or malformed claimed scopes refuse before preparation. Historical graphs
+without this optional declaration retain their existing behavior.
+
+These private contracts do not publish a model/profile, grant Auto admission,
+authorize owner release or issue a proposal Apply receipt. Parent media sources
+retain their actual order; successful decoding and normalized consumed media must
+still be verified separately. Purpose metadata never authorizes global cleanup.

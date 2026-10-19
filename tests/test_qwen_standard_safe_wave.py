@@ -31,8 +31,8 @@ from modules.DiffusersImage.main import (
 )
 
 
-LAYERED_SOURCE_SHA256 = "d857259e9d1ed65de4a27dfb20f2689f307ae81e792d8976f7394bbb2a2a90d8"
-CONTROLNET_SOURCE_SHA256 = "df355aa553805f5ce87b1717a23b31985dffaaa742cfbc4fa4993663b69c94ba"
+LAYERED_SOURCE_SHA256 = "1acc518f7b0c0d3263996a38164386abe6552af6ce7d4367b0e652c6d275e16f"
+CONTROLNET_SOURCE_SHA256 = "73c5632bad1b4d6305d028541311351d9de1faf3d3591954fcdd113ef2674731"
 QWEN_2512_REVISION = "25468b98e3276ca6700de15c6628e51b7de54a26"
 QWEN_LAYERED_REVISION = "8f0ca708dfff6ba1dd5f2d85d78f8c108a040bcf"
 QWEN_CONTROLNET_REVISION = "b13036f066d6dee7c20513e263d3d673055e9de8"
@@ -124,7 +124,7 @@ class QwenStandardSafeWaveTests(unittest.TestCase):
         import inspect
         from modiff.upstream_coverage import reviewed_diffusers_source
 
-        self.assertEqual(PINNED_DIFFUSERS_REVISION, "fbf49e7f35857f76bc57b177e26f12b03687c668")
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941")
         cases = (
             (
                 "pipeline_qwenimage_layered.py",

@@ -19,6 +19,10 @@ from scripts.stage_huggingface_cluster_promotion_receipt import (
 )
 
 
+QWEN_COMPILER_FIXTURE = json.loads(
+    (Path(__file__).parent / "fixtures/qwen_post_promotion_compiler_identity.v1.json").read_text(encoding="utf-8")
+)
+
 QWEN = "diffusers.cluster-admission:QwenImageModularPipeline:text2image:mode:text_to_image"
 MINIMAX = (
     "diffusers.cluster-admission:MiniMaxMusic3ModularPipeline:default:"
@@ -77,22 +81,22 @@ class HuggingFaceClusterPromotionStagingTests(unittest.TestCase):
             "schemaVersion": 1,
             "format": "modiff.registered-block-v2-route-candidates.v1",
             "postPromotionAdmissionId": QWEN,
-            "counts": {"existing": 90, "candidateSuccesses": 0, "blocked": 0, "total": 90},
+            "counts": QWEN_COMPILER_FIXTURE["compilerCounts"],
             "existingPins": [
                 {
                     "definitionId": self.qwen_definition["id"],
                     "definitionContentHash": (
-                        "sha256:04426a29429af2b7cfbe65adce9d1d67f342fbbbf5e7397a3ce7dc0ec94378ef"
+                        QWEN_COMPILER_FIXTURE["postPromotionManifestContentHash"]
                     ),
                     "admissionId": QWEN,
                     "previousCompiledDefinitionContentHash": current_pin[0],
                     "previousCompiledDefinitionCanonicalSha256": current_pin[1],
-                    "compiledDefinitionContentHash": "block-definition-v2-74cfc64c",
+                    "compiledDefinitionContentHash": QWEN_COMPILER_FIXTURE["postPromotionBlockDefinition"]["contentHash"],
                     "compiledDefinitionCanonicalSha256": (
-                        "sha256:c0661cfc7442e5abb25c960b16773166d716fb9144ea9e99ca11939ebb08bef7"
+                        QWEN_COMPILER_FIXTURE["postPromotionBlockDefinition"]["canonicalSha256"]
                     ),
-                    "executionGraphHash": "block-graph-v2-572aeab6",
-                    "interfaceHash": "block-interface-v2-1e11c498",
+                    "executionGraphHash": QWEN_COMPILER_FIXTURE["executionGraphHash"],
+                    "interfaceHash": QWEN_COMPILER_FIXTURE["interfaceHash"],
                 }
             ],
             "candidateSuccesses": [],
@@ -153,7 +157,7 @@ class HuggingFaceClusterPromotionStagingTests(unittest.TestCase):
         )
         self.assertEqual(
             bundle["postPromotionRoute"]["blockDefinition"]["contentHash"],
-            "block-definition-v2-74cfc64c",
+            QWEN_COMPILER_FIXTURE["postPromotionBlockDefinition"]["contentHash"],
         )
         self.assertEqual(
             bundle["promotionReceipt"]["blockDefinition"],

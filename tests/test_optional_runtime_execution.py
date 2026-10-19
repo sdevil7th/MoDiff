@@ -1686,6 +1686,14 @@ class OptionalRuntimeExecutionServerTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("C:\\private", serialized)
 
     async def test_model_capabilities_enrich_nested_active_state_with_one_catalog_snapshot(self):
+        from modules import MODULE_MAP
+        # Conditional authoring requires genuine registered loader/adapter schemas,
+        # even when this fixture isolates optional-runtime observations.
+        registry = {module: {action: MODULE_MAP[module][action]} for module, action in (
+            ("modules.ModularDiffusers", "ModelsLoader"), ("modules.DiffusersImage", "LoadPipeline"),
+            ("modules.DiffusersAudio", "LoadAdapter"),
+        )}
+        self.server.modules = registry
         active = runtime_catalog(
             "present_unqualified",
             process_status="active",

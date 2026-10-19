@@ -1,66 +1,128 @@
 {
   "edges": [
     {
+      "className": "category-diffusers_modular_pipeline_components",
+      "data": {
+        "connectionType": "diffusers_modular_pipeline_components"
+      },
       "id": "edge-01",
+      "markerEnd": {
+        "color": "hsl(319 78% 64%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
       "source": "node-02",
       "sourceHandle": "pipeline_components",
+      "style": {
+        "stroke": "hsl(319 78% 64%)"
+      },
       "target": "node-03",
       "targetHandle": "pipeline_components",
       "type": "default"
     },
     {
+      "className": "category-diffusers_modular_pipeline_components",
+      "data": {
+        "connectionType": "diffusers_modular_pipeline_components"
+      },
       "id": "edge-02",
+      "markerEnd": {
+        "color": "hsl(319 78% 64%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
       "source": "node-02",
       "sourceHandle": "pipeline_components",
+      "style": {
+        "stroke": "hsl(319 78% 64%)"
+      },
       "target": "node-04",
       "targetHandle": "pipeline_components",
       "type": "default"
     },
     {
+      "className": "category-diffusers_modular_pipeline_components",
+      "data": {
+        "connectionType": "diffusers_modular_pipeline_components"
+      },
       "id": "edge-03",
+      "markerEnd": {
+        "color": "hsl(319 78% 64%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
       "source": "node-02",
       "sourceHandle": "pipeline_components",
+      "style": {
+        "stroke": "hsl(319 78% 64%)"
+      },
       "target": "node-05",
       "targetHandle": "pipeline_components",
       "type": "default"
     },
     {
+      "className": "category-image",
+      "data": {
+        "connectionType": "image"
+      },
       "id": "edge-04",
-      "source": "node-02",
-      "sourceHandle": "pipeline_components",
-      "target": "node-06",
-      "targetHandle": "pipeline_components",
-      "type": "default"
-    },
-    {
-      "id": "edge-05",
-      "source": "node-04",
+      "markerEnd": {
+        "color": "#60A5FA",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
+      "source": "node-03",
       "sourceHandle": "image",
+      "style": {
+        "stroke": "#60A5FA"
+      },
       "target": "node-01",
       "targetHandle": "image",
       "type": "default"
     },
     {
-      "id": "edge-06",
+      "className": "category-modular_workflow_state",
+      "data": {
+        "connectionType": "modular_workflow_state"
+      },
+      "id": "edge-05",
+      "markerEnd": {
+        "color": "hsl(217 77% 66%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
       "source": "node-04",
       "sourceHandle": "state_out",
+      "style": {
+        "stroke": "hsl(217 77% 66%)"
+      },
       "target": "node-03",
       "targetHandle": "state_in",
       "type": "default"
     },
     {
-      "id": "edge-07",
+      "className": "category-modular_workflow_state",
+      "data": {
+        "connectionType": "modular_workflow_state"
+      },
+      "id": "edge-06",
+      "markerEnd": {
+        "color": "hsl(217 77% 66%)",
+        "height": 18,
+        "type": "arrowclosed",
+        "width": 18
+      },
       "source": "node-05",
       "sourceHandle": "state_out",
+      "style": {
+        "stroke": "hsl(217 77% 66%)"
+      },
       "target": "node-04",
-      "targetHandle": "state_in",
-      "type": "default"
-    },
-    {
-      "id": "edge-08",
-      "source": "node-06",
-      "sourceHandle": "state_out",
-      "target": "node-05",
       "targetHandle": "state_in",
       "type": "default"
     }
@@ -68,7 +130,7 @@
   "layout": {
     "algorithm": "modiff-layered-v1",
     "horizontalGap": 140,
-    "positionHash": "af010b9a1c31ed29ab4975464af35d86150ea4b95ae40179dbd0232fcf445fe1",
+    "positionHash": "d2048a36c5dbdb7fb90087aff573d20a374d6c985a5530f0d7afb175d64af5ee",
     "verticalGap": 72
   },
   "nodes": [
@@ -88,6 +150,7 @@
         "params": {
           "device": {
             "default": "cpu:0",
+            "hidden": true,
             "options": {
               "cpu": {
                 "availability": "installed",
@@ -104,6 +167,14 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
               }
             },
             "type": "string"
@@ -115,24 +186,13 @@
           },
           "filtered": {
             "display": "output",
+            "isConnected": false,
             "label": "Selected image",
             "type": "image"
           },
           "image": {
             "display": "input",
-            "onChange": {
-              "action": "show",
-              "condition": {
-                "type": "latent"
-              },
-              "data": {
-                "false": [],
-                "true": [
-                  "vae",
-                  "device"
-                ]
-              }
-            },
+            "isConnected": true,
             "type": [
               "image",
               "latent"
@@ -140,6 +200,7 @@
           },
           "output": {
             "display": "output",
+            "isConnected": false,
             "label": "All images",
             "type": "image"
           },
@@ -150,6 +211,8 @@
           },
           "vae": {
             "display": "input",
+            "hidden": true,
+            "isConnected": false,
             "label": "VAE",
             "type": "pipeline"
           }
@@ -167,7 +230,7 @@
       "id": "node-01",
       "position": {
         "x": 1760,
-        "y": 14
+        "y": 173
       },
       "type": "custom"
     },
@@ -189,8 +252,7 @@
             "dtype",
             "device",
             "auto_offload",
-            "offload_mode",
-            "trust_remote_code"
+            "offload_mode"
           ],
           "defaults": {
             "attention_backend": "inherit",
@@ -785,6 +847,9 @@
           "attention_backend": {
             "default": "inherit",
             "description": "Inherit preserves existing native component defaults; explicit choices use the ordinary Diffusers attention API.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Attention Backend",
             "options": [
               {
@@ -820,20 +885,30 @@
                 "value": "_native_math"
               }
             ],
-            "type": "string"
+            "type": "string",
+            "value": "inherit"
           },
           "auto_offload": {
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Enable Auto Offload",
             "type": "boolean",
             "value": false
           },
           "controlnet": {
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "ControlNet",
             "type": "diffusers_auto_model"
           },
           "device": {
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Device",
             "options": {
               "cpu": {
@@ -851,12 +926,23 @@
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
+              },
+              "cuda:0": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
               }
             },
             "type": "string",
             "value": "cuda:0"
           },
           "dtype": {
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "dtype",
             "options": [
               {
@@ -868,10 +954,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -890,6 +975,9 @@
           "image_encoder": {
             "connectionRole": "image_encoder",
             "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "Image Encoder",
             "signal": {
@@ -902,6 +990,9 @@
           "inpaint_compatibility": {
             "default": "native",
             "description": "Technical compatibility selection for the reviewed Qwen Edit inpainting candidate; existing nodes retain native policy.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "Inpaint Compatibility",
             "options": [
@@ -926,6 +1017,9 @@
           },
           "lora_list": {
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Lora",
             "type": "custom_lora"
           },
@@ -1198,6 +1292,9 @@
             "value": "Cosmos3OmniModularPipeline"
           },
           "modiff_pipeline_identity": {
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "Custom Pipeline Identity",
             "type": "object",
@@ -1205,6 +1302,9 @@
           },
           "offload_mode": {
             "default": "model_cpu",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Offload Mode",
             "options": [
               {
@@ -1254,6 +1354,9 @@
           "pipeline_components": {
             "connectionRole": "pipeline_components",
             "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "Pipeline Components",
             "signal": {
@@ -1265,6 +1368,9 @@
           },
           "quant_config": {
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Quant Config",
             "type": "quant_config"
           },
@@ -1306,7 +1412,8 @@
           "reviewed_variant": {
             "description": "Select an immutable, reviewed checkpoint for this exact Modular Diffusers pipeline family. Changing it does not replace the workflow graph or reset its parameters.",
             "fieldOptions": {
-              "controlTier": "essential"
+              "controlTier": "essential",
+              "suppressInitialFieldAction": true
             },
             "hidden": false,
             "label": "Model",
@@ -1344,6 +1451,9 @@
           "scheduler": {
             "connectionRole": "scheduler",
             "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "Scheduler",
             "signal": {
@@ -1356,6 +1466,9 @@
           "text_encoders": {
             "connectionRole": "text_encoders",
             "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "Text Encoders",
             "signal": {
@@ -1377,6 +1490,9 @@
           },
           "unet": {
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "Denoise Model",
             "type": "diffusers_auto_model"
@@ -1384,6 +1500,9 @@
           "unet_out": {
             "connectionRole": "denoiser",
             "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "Denoise Model",
             "signal": {
@@ -1395,6 +1514,9 @@
           },
           "vae": {
             "display": "input",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "VAE",
             "type": "diffusers_auto_model"
@@ -1402,6 +1524,9 @@
           "vae_out": {
             "connectionRole": "vae",
             "display": "output",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": false,
             "label": "VAE",
             "signal": {
@@ -1414,6 +1539,9 @@
           "vae_slicing": {
             "default": null,
             "description": "An unset policy preserves the native VAE configuration; templates may bind an explicit boolean.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "VAE Slicing",
             "type": "boolean"
@@ -1421,12 +1549,18 @@
           "vae_tiling": {
             "default": null,
             "description": "An unset policy preserves the native VAE configuration; templates may bind an explicit boolean.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "VAE Tiling",
             "type": "boolean"
           },
           "workflow_id": {
             "description": "Exact reviewed component partition selected by a first-party Cluster Node.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "Reviewed Workflow",
             "type": "string",
@@ -1447,237 +1581,6 @@
       "position": {
         "x": 0,
         "y": 0
-      },
-      "type": "custom"
-    },
-    {
-      "data": {
-        "action": "WorkflowCosmos3OmniAfterDecode",
-        "cache": false,
-        "category": "Modular Diffusers",
-        "description": "Run Cosmos 3 Omni's official post-decode action-output block.",
-        "label": "Postprocess Media",
-        "memory": [
-          0,
-          0,
-          0
-        ],
-        "module": "modules.ModularDiffusers",
-        "operationAuthoring": {
-          "authored": [
-            "pipeline_class",
-            "workflow_id",
-            "block_path"
-          ],
-          "defaults": {},
-          "operation": {
-            "binding": {
-              "pipelineClass": "Cosmos3OmniModularPipeline",
-              "values": {
-                "block_path": "after_decode",
-                "pipeline_class": "Cosmos3OmniModularPipeline",
-                "workflow_id": "text2image"
-              }
-            },
-            "blockName": "after_decode",
-            "decomposition": "block",
-            "nodeKey": "modules.ModularDiffusers.WorkflowCosmos3OmniAfterDecode",
-            "nodeType": "after_decode",
-            "operationId": "diffusion.postprocess_media",
-            "pipelineClass": "Cosmos3OmniModularPipeline",
-            "ports": [
-              {
-                "direction": "input",
-                "hidden": false,
-                "name": "pipeline_components",
-                "required": true,
-                "roles": [
-                  "component"
-                ],
-                "semanticName": "pipeline_components",
-                "semantics": {
-                  "kind": "component",
-                  "members": [],
-                  "owner": "same_loader",
-                  "scope": "Cosmos3OmniModularPipeline",
-                  "state": null
-                },
-                "types": [
-                  "diffusers_modular_pipeline_components"
-                ]
-              },
-              {
-                "direction": "input",
-                "hidden": false,
-                "name": "state_in",
-                "required": true,
-                "roles": [
-                  "value"
-                ],
-                "semanticName": "state_in",
-                "semantics": {
-                  "kind": "state",
-                  "members": [
-                    {
-                      "name": "action_latents",
-                      "type": "torch.Tensor"
-                    },
-                    {
-                      "name": "action_mode",
-                      "type": "builtins.str"
-                    },
-                    {
-                      "name": "raw_action_dim_resolved",
-                      "type": "builtins.int"
-                    }
-                  ],
-                  "owner": "same_loader",
-                  "scope": "Cosmos3OmniModularPipeline:text2image",
-                  "state": "decode"
-                },
-                "types": [
-                  "modular_workflow_state"
-                ]
-              },
-              {
-                "direction": "input",
-                "hidden": true,
-                "name": "pipeline_class",
-                "required": false,
-                "roles": [
-                  "value"
-                ],
-                "semanticName": "pipeline_class",
-                "semantics": {
-                  "kind": "value",
-                  "members": [],
-                  "owner": "none",
-                  "scope": null,
-                  "state": null
-                },
-                "types": [
-                  "string"
-                ]
-              },
-              {
-                "direction": "input",
-                "hidden": true,
-                "name": "workflow_id",
-                "required": false,
-                "roles": [
-                  "value"
-                ],
-                "semanticName": "workflow_id",
-                "semantics": {
-                  "kind": "value",
-                  "members": [],
-                  "owner": "none",
-                  "scope": null,
-                  "state": null
-                },
-                "types": [
-                  "string"
-                ]
-              },
-              {
-                "direction": "input",
-                "hidden": true,
-                "name": "block_path",
-                "required": false,
-                "roles": [
-                  "value"
-                ],
-                "semanticName": "block_path",
-                "semantics": {
-                  "kind": "value",
-                  "members": [],
-                  "owner": "none",
-                  "scope": null,
-                  "state": null
-                },
-                "types": [
-                  "string"
-                ]
-              },
-              {
-                "direction": "output",
-                "hidden": false,
-                "name": "action",
-                "required": false,
-                "roles": [
-                  "value"
-                ],
-                "semanticName": "action",
-                "semantics": {
-                  "kind": "opaque",
-                  "members": [],
-                  "owner": "none",
-                  "scope": "Cosmos3OmniModularPipeline",
-                  "state": null
-                },
-                "types": [
-                  "any"
-                ]
-              }
-            ],
-            "support": "declared",
-            "task": "text_to_image",
-            "workflowId": "text2image"
-          },
-          "retained": [],
-          "schemaVersion": 1
-        },
-        "params": {
-          "action": {
-            "display": "output",
-            "label": "Action",
-            "type": "any"
-          },
-          "block_path": {
-            "default": "after_decode",
-            "hidden": true,
-            "type": "string",
-            "value": "after_decode"
-          },
-          "pipeline_class": {
-            "default": "Cosmos3OmniModularPipeline",
-            "hidden": true,
-            "type": "string",
-            "value": "Cosmos3OmniModularPipeline"
-          },
-          "pipeline_components": {
-            "display": "input",
-            "label": "Pipeline Components",
-            "required": true,
-            "type": "diffusers_modular_pipeline_components"
-          },
-          "state_in": {
-            "display": "input",
-            "label": "Workflow State",
-            "required": true,
-            "type": "modular_workflow_state"
-          },
-          "workflow_id": {
-            "default": "text2video",
-            "hidden": true,
-            "type": "string",
-            "value": "text2image"
-          }
-        },
-        "resizable": true,
-        "skipParamsCheck": true,
-        "style": {},
-        "time": [
-          0,
-          0,
-          0
-        ],
-        "type": "custom"
-      },
-      "id": "node-03",
-      "position": {
-        "x": 1760,
-        "y": 360
       },
       "type": "custom"
     },
@@ -1951,6 +1854,7 @@
         "params": {
           "audio": {
             "display": "output",
+            "isConnected": false,
             "label": "Audio",
             "type": "audio"
           },
@@ -1962,6 +1866,7 @@
           },
           "image": {
             "display": "output",
+            "isConnected": true,
             "label": "Image",
             "type": "image"
           },
@@ -1973,28 +1878,36 @@
           },
           "pipeline_components": {
             "display": "input",
+            "isConnected": true,
             "label": "Pipeline Components",
             "required": true,
+            "signal": {
+              "direction": "output"
+            },
             "type": "diffusers_modular_pipeline_components"
           },
           "sample_rate": {
             "display": "output",
+            "isConnected": false,
             "label": "Sample Rate",
             "type": "int"
           },
           "state_in": {
             "display": "input",
+            "isConnected": true,
             "label": "Workflow State",
             "required": true,
             "type": "modular_workflow_state"
           },
           "state_out": {
             "display": "output",
+            "isConnected": false,
             "label": "Workflow State",
             "type": "modular_workflow_state"
           },
           "videos": {
             "display": "output",
+            "isConnected": false,
             "label": "Videos",
             "type": "video"
           },
@@ -2015,7 +1928,7 @@
         ],
         "type": "custom"
       },
-      "id": "node-04",
+      "id": "node-03",
       "position": {
         "x": 1320,
         "y": 131
@@ -2476,8 +2389,12 @@
           },
           "pipeline_components": {
             "display": "input",
+            "isConnected": true,
             "label": "Pipeline Components",
             "required": true,
+            "signal": {
+              "direction": "output"
+            },
             "type": "diffusers_modular_pipeline_components"
           },
           "seed": {
@@ -2494,12 +2411,14 @@
           },
           "state_in": {
             "display": "input",
+            "isConnected": true,
             "label": "Workflow State",
             "required": true,
             "type": "modular_workflow_state"
           },
           "state_out": {
             "display": "output",
+            "isConnected": true,
             "label": "Workflow State",
             "type": "modular_workflow_state"
           },
@@ -2520,7 +2439,7 @@
         ],
         "type": "custom"
       },
-      "id": "node-05",
+      "id": "node-04",
       "position": {
         "x": 880,
         "y": 145
@@ -3312,12 +3231,17 @@
         ],
         "type": "custom"
       },
-      "id": "node-06",
+      "id": "node-05",
       "position": {
         "x": 440,
         "y": 0
       },
       "type": "custom"
     }
-  ]
+  ],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
 }

@@ -413,22 +413,21 @@ class AuxiliaryLoraContractTests(unittest.TestCase):
             blob = repo_root / "blobs" / ("b" * 64)
             alias.parent.mkdir(parents=True)
             blob.parent.mkdir(parents=True)
-            _write_tiny_safetensors(alias)
-            blob.write_bytes(alias.read_bytes())
+            _write_tiny_safetensors(blob)
+            alias.symlink_to(blob)
             digest = hashlib.sha256(alias.read_bytes()).hexdigest()
 
             with patch.dict(CONFIG.hf, {"cache_dir": str(cache_root)}):
                 with patch("utils.huggingface.cached_file_path", return_value=str(alias)) as cached:
-                    with patch("utils.huggingface.resolve_managed_hf_cache_file", return_value=blob):
-                        descriptor = build_lora_descriptor(
-                            selection={"source": "hub", "value": "example/style"},
-                            weight_name="weights/style.safetensors",
-                            revision=REVISION,
-                            expected_sha256=digest,
-                            adapter_name="style",
-                            scale=0.5,
-                        )
-                        resolved = resolve_lora_descriptor(descriptor)
+                    descriptor = build_lora_descriptor(
+                        selection={"source": "hub", "value": "example/style"},
+                        weight_name="weights/style.safetensors",
+                        revision=REVISION,
+                        expected_sha256=digest,
+                        adapter_name="style",
+                        scale=0.5,
+                    )
+                    resolved = resolve_lora_descriptor(descriptor)
 
         self.assertEqual(resolved.load_directory, alias.parent.resolve())
         self.assertEqual(resolved.weight_name, "style.safetensors")
@@ -480,7 +479,7 @@ class AuxiliaryLoraContractTests(unittest.TestCase):
                             scale=1,
                         )
 
-    def test_hub_resolved_blob_must_remain_in_the_selected_repository_cache(self):
+    def test_hub_snapshot_alias_cannot_resolve_outside_its_managed_cache(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             cache_root = root / "hub"
@@ -494,21 +493,20 @@ class AuxiliaryLoraContractTests(unittest.TestCase):
             outside = root / "outside" / "blob"
             alias.parent.mkdir(parents=True)
             outside.parent.mkdir(parents=True)
-            alias.write_bytes(b"same bytes")
-            outside.write_bytes(b"same bytes")
+            _write_tiny_safetensors(outside)
+            alias.symlink_to(outside)
             digest = hashlib.sha256(alias.read_bytes()).hexdigest()
             with patch.dict(CONFIG.hf, {"cache_dir": str(cache_root)}):
                 with patch("utils.huggingface.cached_file_path", return_value=str(alias)):
-                    with patch("utils.huggingface.resolve_managed_hf_cache_file", return_value=outside):
-                        with self.assertRaisesRegex(ValueError, "outside its managed repository cache"):
-                            build_lora_descriptor(
-                                selection={"source": "hub", "value": "example/style"},
-                                weight_name="style.safetensors",
-                                revision=REVISION,
-                                expected_sha256=digest,
-                                adapter_name="style",
-                                scale=1,
-                            )
+                    with self.assertRaisesRegex(ValueError, "outside its managed repository cache"):
+                        build_lora_descriptor(
+                            selection={"source": "hub", "value": "example/style"},
+                            weight_name="style.safetensors",
+                            revision=REVISION,
+                            expected_sha256=digest,
+                            adapter_name="style",
+                            scale=1,
+                        )
 
     def test_consumer_rejects_legacy_partial_extra_and_tampered_descriptors_without_mutation(self):
         with tempfile.TemporaryDirectory() as directory:

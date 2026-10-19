@@ -194,8 +194,13 @@ class ImagePipelineAdapter:
     min_layers: int = 1
     max_layers: int = 1
     layer_resolutions: tuple[int, ...] = ()
+    stage_adapter: str | None = None
 
     def __post_init__(self) -> None:
+        if self.stage_adapter is not None and (type(self.stage_adapter) is not str or self.stage_adapter not in {
+            'flux-redux-prior:v1', 'flux-fill-text:v1', 'flux-control-text-image:v1'
+        }):
+            raise ValueError('Image stages require a declared backend implementation.')
         if self.upstream_pipeline_class is not None and not self.upstream_pipeline_class:
             raise ValueError("An upstream image pipeline class cannot be blank.")
         if not 1 <= self.max_inference_steps <= 100:
@@ -1444,6 +1449,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         FLUX_FILL_REPO,
         safe_serialization_required=True,
         maximum_guidance_scale=30.0,
+        stage_adapter="flux-fill-text:v1",
     ),
     "FluxControlNetPipeline": ImagePipelineAdapter(
         "FluxControlNetPipeline",
@@ -1498,6 +1504,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         compatible_repos=frozenset({FLUX_CANNY_REPO, FLUX_CANNY_REPAIR_REPO}),
         safe_serialization_required=True,
         maximum_guidance_scale=30.0,
+        stage_adapter="flux-control-text-image:v1",
     ),
     "FluxControlImg2ImgPipeline": ImagePipelineAdapter(
         "FluxControlImg2ImgPipeline",
@@ -1558,6 +1565,7 @@ IMAGE_PIPELINE_ADAPTERS = {
         # list and delegate the conditioning math to the upstream pipeline.
         multi_image_strategy="upstream_weighted_sum",
         max_reference_images=8,
+        stage_adapter="flux-redux-prior:v1",
     ),
     "QwenImageEditInpaintPipeline": ImagePipelineAdapter(
         "QwenImageEditInpaintPipeline",
@@ -2544,6 +2552,9 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
         for action, accepted_modes in IMAGE_ACTION_MODES.items()
     }
     connection_actions = None
+    if adapter.stage_adapter is not None:
+        actions.update({key: [mode] for key in ('EncodeInputs', 'Denoise', 'DecodeLatents')})
+        connection_actions = {key: values for key, values in actions.items() if values}
     if adapter.load_pipeline_class in _LATENT_OUTPUT_PIPELINES:
         action = next(action for action, modes in actions.items() if mode in modes)
         connection_actions = {
@@ -2586,12 +2597,49 @@ def image_pipeline_contract(adapter: ImagePipelineAdapter, mode: str) -> dict[st
     return contract
 
 
+def image_stage_encode_params(params: dict[str, Any], pipeline_class: str) -> dict[str, Any]:
+    """Remove only unconsumed encoder scalar controls from selected new schemas.
+
+    Whole-action and imported runtime parameters retain their old contract.
+    Hidden descriptors would still be exported, so selected stage declarations
+    omit absent scalar controls instead of presenting inert authoring values.
+    """
+    adapter = get_image_pipeline_adapter(pipeline_class)
+    if adapter.stage_adapter is None:
+        raise ValueError('Selected image encoder fields require a declared stage adapter.')
+    from modules.DiffusersImage.stage_execution import strategy_for_key
+    fields = strategy_for_key(adapter.stage_adapter).encode_fields
+    scalar_controls = {'width', 'height', 'seed', 'max_sequence_length', 'num_images_per_prompt', 'sigmas'}
+    result = {key: value for key, value in params.items() if key not in scalar_controls or key in fields}
+    if 'num_images_per_prompt' in result:
+        result['num_images_per_prompt'] = {**result['num_images_per_prompt'], 'default': 1}
+    return result
+
+
 def image_action_field_params(contract: dict[str, Any], action: str) -> dict:
     """The same task overlay for dynamic nodes and read-only operation discovery."""
     if action == "UnconditionalGenerate":
         return contract.get("actionFieldParams", {})
     if action == "PredictMap":
         return {}
+    if action == 'DecodeLatents' and get_image_pipeline_adapter(contract['pipelineClass']).stage_adapter is not None:
+        adapter = get_image_pipeline_adapter(contract['pipelineClass'])
+        return {'latent_binding': {'required': adapter.load_pipeline_class not in _LATENT_OUTPUT_PIPELINES},
+                'width': {'display': 'input'}, 'height': {'display': 'input'}}
+    if action == 'Denoise':
+        adapter = get_image_pipeline_adapter(contract['pipelineClass'])
+        return {**{key: {'hidden': True} for key in CALL_INPUT_PARAMS},
+                **contract['fieldParams'], 'latents_out': {'hidden': False},
+                'num_inference_steps': {'min': 1, 'max': adapter.max_inference_steps}}
+    if action == 'EncodeInputs':
+        mode = contract['mode']
+        return {
+            **image_stage_encode_params(contract['fieldParams'], contract['pipelineClass']),
+            **{field: {'required': needed, 'hidden': not needed}
+               for field, needed in (
+                  ('image', mode in {'edit_image', 'multi_image_reference_edit', 'inpaint', 'outpaint'}),
+                  ('mask_image', mode in {'inpaint', 'outpaint'}), ('control_image', mode == 'control_image'))},
+        }
     fields = {
         field: {"hidden": True}
         for field in ("use_guidance_scale_2", "guidance_scale_2", "latents_out", *CALL_INPUT_PARAMS)
@@ -2619,13 +2667,26 @@ def get_image_operation_contracts(modules) -> list[dict]:
                     operation = {
                         "PredictMap": "diffusion.predict_map",
                         "LayerDecompose": "diffusion.decompose_layers",
+                        "EncodeInputs": "diffusion.encode_image",
+                        "Denoise": "diffusion.denoise",
+                        "DecodeLatents": "diffusion.decode_latents",
                     }.get(action, "diffusion.generate_image")
                     actions.append((action, operation, image_action_field_params(contract, action)))
             for action, operation, fields in actions:
+                selected_modules = modules
+                if action == 'EncodeInputs':
+                    declaration = modules.get('modules.DiffusersImage', {}).get(action)
+                    if declaration is None:
+                        continue
+                    selected_modules = {**modules, 'modules.DiffusersImage': {
+                        **modules['modules.DiffusersImage'], action: {**declaration,
+                            'params': image_stage_encode_params(declaration['params'], pipeline_class)}}}
                 record = build_pipeline_operation_contract(
-                    modules, pipeline_class=pipeline_class, task=mode, operation_id=operation,
+                    selected_modules, pipeline_class=pipeline_class, task=mode, operation_id=operation,
                     node_key=f"modules.DiffusersImage.{action}", field_overrides=fields,
                     loader=action == "LoadPipeline",
+                    stage_node_type={"EncodeInputs": "image_encoder", "Denoise": "denoise",
+                        "DecodeLatents": "decoder"}.get(action),
                 )
                 if record is not None:
                     result.append(record)
@@ -2641,6 +2702,20 @@ def _compatible_image_contract(signal: Any, expected: dict[str, Any]) -> bool:
     """
     if signal == expected:
         return True
+    if 'EncodeInputs' in expected['actions']:
+        # Preserve only the exact pre-stage signal. The original whole action,
+        # raw-decode eligibility, task, identity and fields remain unchanged.
+        adapter = get_image_pipeline_adapter(expected['pipelineClass'])
+        if adapter.stage_adapter is not None:
+            previous = {**expected, 'actions': {key: value for key, value in expected['actions'].items()
+                if key not in {'EncodeInputs', 'Denoise', 'DecodeLatents'}}}
+            if adapter.load_pipeline_class in _LATENT_OUTPUT_PIPELINES:
+                previous['connectionActions'] = {key: value for key, value in expected['connectionActions'].items()
+                    if key not in {'EncodeInputs', 'Denoise'}}
+            else:
+                previous.pop('connectionActions', None)
+            if _compatible_image_contract(signal, previous):
+                return True
     if expected["pipelineClass"] in {"FluxControlImg2ImgPipeline", "FluxControlInpaintPipeline"} and expected["fieldParams"]["guidance_scale"].get("max") == 30.0:
         # Earlier saved contracts lacked the model-card guidance bound. Accept
         # that exact presentation (including older optional-field generations)
@@ -3924,6 +3999,23 @@ class FluxReduxPipelineBundle:
     def _execution_device(self):
         return getattr(self.base, "_execution_device", self.device)
 
+    def _prepare_lora_weights(self, source, **kwargs):
+        from modules.DiffusersImage.stage_execution import prepare_split_lora
+        return prepare_split_lora(self, source, **kwargs)
+
+    def load_lora_weights(self, source, *, adapter_name='default', **kwargs):
+        from modules.DiffusersImage.stage_execution import prepare_split_lora, load_split_lora
+        state = prepare_split_lora(self, source, **({} if type(source) is dict else kwargs))
+        load_split_lora(self, state, adapter_name=adapter_name)
+
+    def set_adapters(self, adapter_names, adapter_weights):
+        from modules.DiffusersImage.stage_execution import set_split_adapters
+        set_split_adapters(self, adapter_names, adapter_weights)
+
+    def unload_lora_weights(self):
+        from modules.DiffusersImage.stage_execution import unload_split_lora
+        unload_split_lora(self)
+
     def __call__(
         self,
         *,
@@ -4286,6 +4378,7 @@ class LoadPipeline(NodeBase):
                 ),
                 conditioning_revision=conditioning_revision,
             )
+            _bind_loaded_image_stage(pipeline, adapter, values)
         return result
 
     def update_pipeline_contract(self, values, ref):
@@ -4384,7 +4477,12 @@ class LoadPipeline(NodeBase):
         pipeline = self.output.get("pipeline")
         unload_lora_weights = getattr(pipeline, "unload_lora_weights", None)
         if callable(unload_lora_weights):
-            unload_lora_weights()
+            if (vars(pipeline).get('_modiff_image_stage_owner') is not None
+                    or vars(pipeline).get('_modiff_stage_mutation_failed') is True):
+                from modules.DiffusersImage import stage_execution as stage_core
+                stage_core.reset_adapter_owner(pipeline, unload_lora_weights)
+            else:
+                unload_lora_weights()
 
     def execute(self, **kwargs):
         from modules.DiffusersRuntime.main import (
@@ -4532,6 +4630,8 @@ class LoadPipeline(NodeBase):
                     tokenizer_2=None,
                 )
             pipeline = FluxReduxPipelineBundle(prior, base)
+            pipeline._modiff_loaded_stage_artifacts = ((model_id, revision),
+                (FLUX_DEV_REPO, base_kwargs["revision"]))
         elif kwargs.get('control_components') is not None:
             pipeline_class = pipeline_class_from_name(adapter.load_pipeline_class)
             with self.diffusers_loading_progress():
@@ -4628,7 +4728,48 @@ class LoadPipeline(NodeBase):
                 message=f"Registering pipeline memory ({getattr(offload_result, 'method', 'configured')})",
             )
             self.mm_add(target, priority=2)
+        if adapter.stage_adapter is not None:
+            if not isinstance(pipeline, FluxReduxPipelineBundle):
+                pipeline._modiff_loaded_stage_artifacts = ((model_id, revision),)
+            pipeline._modiff_loaded_stage_offload_mode = offload_mode
+            pipeline._modiff_stage_loading_contract = (offload_mode, device_map, quant_config is not None)
+            _bind_loaded_image_stage(pipeline, adapter, kwargs)
         return {"pipeline": pipeline, "resolved_artifact": model_id}
+
+
+def _bind_loaded_image_stage(pipeline, adapter, loader_values):
+    if adapter.stage_adapter is None:
+        return
+    from modules.DiffusersImage import stage_execution as core
+    requested_profile = loader_values.get('execution_profile_id')
+    if requested_profile in (None, ''):
+        # Old whole-pipeline graphs remain valid; no new stage grant is inferred.
+        pipeline._modiff_image_stage_owner = None
+        pipeline._modiff_stage_loader_values = None
+        return
+    strategy = core.strategy_for_key(adapter.stage_adapter)
+    values = {key: loader_values.get(key) for key in (
+        'execution_profile_id', 'mode', 'pipeline_class', 'model_id', 'revision')}
+    values = core._plain(values)
+    primary = (vars(pipeline).get('_modiff_image_repo'), vars(pipeline).get('_modiff_image_revision'))
+    try:
+        profile = core.require_selected_stage_profile(strategy, values, primary)
+    except ValueError:
+        # Separate-stage permission is additive. A valid old whole-pipeline
+        # local/compatible or advisory selection does not acquire a grant, and
+        # retains its ordinary loader/runtime validation and execution path.
+        pipeline._modiff_image_stage_owner = None
+        pipeline._modiff_stage_loader_values = None
+        return
+    artifacts = vars(pipeline).get('_modiff_loaded_stage_artifacts')
+    selection = core.OwnerSelection(profile.id, values['mode'], profile.pipeline_class,
+        primary[0], primary[1], artifacts)
+    pipeline._modiff_stage_loader_values = values
+    previous = vars(pipeline).get('_modiff_image_stage_owner')
+    if previous is not None and previous.selection == selection:
+        core.require_owner(pipeline, strategy, previous)
+    else:
+        core.install_owner(pipeline, selection, strategy)
 
 
 class UnconditionalGenerate(NodeBase):
@@ -5396,6 +5537,194 @@ class ControlInpaint(Inpaint):
         return result
 
 
+
+
+def _selected_image_stage(pipeline):
+    from modules.DiffusersImage import stage_execution as core
+    adapter = _image_pipeline_adapter(pipeline)
+    strategy = core.strategy_for_key(adapter.stage_adapter)
+    core.require_owner(pipeline, strategy)
+    return adapter, core, strategy
+
+
+def selected_image_stage_starter_spec(pipeline_class, task, values):
+    """An exact metadata selection can select only its already declared stages."""
+    adapter = get_image_pipeline_adapter(pipeline_class)
+    if adapter.stage_adapter is None or not values.get('execution_profile_id'):
+        return None
+    from modules.DiffusersImage import stage_execution as core
+    strategy = core.strategy_for_key(adapter.stage_adapter)
+    selection = values.get('model_id')
+    primary = (selection.get('value'), values.get('revision')) if type(selection) is dict else (None, None)
+    try:
+        profile = core.require_selected_stage_profile(strategy, values, primary)
+    except ValueError:
+        # Legacy compatible/local/advisory whole routes acquire no stage grant.
+        return None
+    from modiff.studio_execution_specs import studio_execution_spec_for_pair
+    spec = studio_execution_spec_for_pair(profile.model_type, task)
+    if (spec is None or spec['executionProfileId'] != profile.id
+            or spec['pipelineClass'] != pipeline_class or spec['mode'] != task):
+        raise ValueError('The selected stage starter has no exact declared execution specification.')
+    return spec
+
+
+def _current_image_stage_action(pipeline):
+    mode = vars(pipeline).get('_modiff_image_mode')
+    choices = [action for action, modes in IMAGE_ACTION_MODES.items()
+               if mode in modes and action not in {'EncodeInputs', 'Denoise', 'DecodeLatents'}]
+    if len(choices) != 1:
+        raise ValueError('One existing actual image task action is required for input validation.')
+    return choices[0]
+
+
+def _stage_encoder_values(kwargs):
+    owner = kwargs.get('pipeline')
+    adapter, core, strategy = _selected_image_stage(owner)
+    _checked_adapter, values = preflight_image_action(owner, _current_image_stage_action(owner), kwargs)
+    if values.get('sigmas') is not None:
+        raise ValueError('EncodeInputs does not consume sigmas. Connect the noise schedule to Denoise instead.')
+    if values.get('generator') is not None or values.get('latents') is not None or values.get('masked_image_latents') is not None:
+        raise ValueError('Separate image stages require the reviewed seed and source encoding path.')
+    return adapter, core, strategy, values
+
+
+def _stage_denoiser_values(kwargs):
+    owner = kwargs.get('pipeline')
+    adapter, core, strategy = _selected_image_stage(owner)
+    values = dict(kwargs)
+    for field in ('width', 'height'):
+        values[field] = _bounded_image_int(values.get(field), field=field, default=1024,
+            minimum=adapter.min_output_side, maximum=adapter.max_output_side, step=adapter.output_side_step)
+    if values['width'] * values['height'] > adapter.max_output_pixels:
+        raise ValueError('Image stages exceed the reviewed output pixel bound.')
+    values['seed'] = _bounded_image_int(values.get('seed'), field='seed', default=0, minimum=0, maximum=4294967295)
+    values['num_inference_steps'] = _bounded_image_int(values.get('num_inference_steps'),
+        field='num_inference_steps', default=4, minimum=1, maximum=adapter.max_inference_steps)
+    values['guidance_scale'] = _bounded_image_float(values.get('guidance_scale'),
+        field='guidance_scale', default=0., minimum=0., maximum=adapter.maximum_guidance_scale)
+    if adapter.fixed_guidance_scale is not None and values['guidance_scale'] != adapter.fixed_guidance_scale:
+        raise ValueError('Image stage guidance differs from its reviewed fixed value.')
+    values['strength'] = _bounded_image_float(values.get('strength'), field='strength', default=.8, minimum=0., maximum=1.)
+    values['max_sequence_length'] = _bounded_image_int(values.get('max_sequence_length'),
+        field='max_sequence_length', default=min(256, adapter.max_sequence_length), minimum=1, maximum=adapter.max_sequence_length)
+    values.update(normalize_call_inputs(adapter.load_pipeline_class, values))
+    if values.get('generator') is not None or values.get('latents') is not None or values.get('masked_image_latents') is not None:
+        raise ValueError('Separate image stages do not silently replace external RNG or latent inputs.')
+    core.require_encoding(owner, strategy, values.get('encoded_inputs'), values)
+    return adapter, core, strategy, values
+
+
+def _record_image_stage_inputs(node, owner, values, consumed, omitted=None):
+    # Each stage records only its actual consumed scalar/text fields. Supplied
+    # material replaces text; no Tensor, model or saved graph hint is traversed.
+    from modiff.execution_input_provenance import FIELD_NAMES
+    effective = {key: None for key in values.keys() & FIELD_NAMES.keys()}
+    for key in omitted or {}:
+        effective.pop(key, None)
+    effective.update(dict(consumed))
+    effective['executed_task'] = vars(owner).get('_modiff_image_mode')
+    node.record_generation_inputs(effective)
+    node._execution_input_record['omittedFields'].update(dict(omitted or {}))
+
+
+ENCODE_IMAGE_STAGE_PARAMS = {key: ({**value, 'required': False} if key in {'image', 'mask_image', 'control_image'} else value) for key, value in {**Edit.params, **Inpaint.params, **ControlGenerate.params}.items()
+           if key in {'pipeline', 'image_contract', 'image', 'mask_image', 'control_image',
+              'prompt', 'negative_prompt', 'width', 'height', 'seed', 'max_sequence_length',
+              'reference_strength'} or key in CALL_INPUT_PARAMS}
+
+
+class EncodeInputs(NodeBase):
+    """Execute the selected owner's actual input encoder once."""
+    label = 'Encode Image Inputs'
+    category = 'Diffusers Image'
+    resizable = True
+    params = {
+        **ENCODE_IMAGE_STAGE_PARAMS,
+        'encoded_inputs': {'label': 'Encoded inputs', 'display': 'output', 'type': 'image_conditioning'},
+    }
+    update_image_contract = Generate.update_image_contract
+
+    def __call__(self, **kwargs):
+        _adapter, core, strategy, values = _stage_encoder_values(kwargs)
+        previous = self.output.get('encoded_inputs')
+        if previous is not None:
+            try:
+                core.require_encoding(values['pipeline'], strategy, previous)
+            except ValueError:
+                self.invalidate_cache()
+        return super().__call__(**values)
+
+    def execute(self, **kwargs):
+        adapter, core, strategy, values = _stage_encoder_values(kwargs)
+        owner = values['pipeline']
+        if _current_image_stage_action(owner) == 'Edit':
+            values['image'] = prepare_reference_images(values['image'], adapter)
+        self.progress(-1, phase='encoding', message='Encoding image inputs and text')
+        if self._interrupt:
+            raise InterruptedError('Execution interrupted before image encoding.')
+        self._active_pipeline = strategy.targets(owner)['encoder']
+        try:
+            encoded = core.encode(owner, strategy, values)
+        finally:
+            self._active_pipeline = None
+        if self._interrupt:
+            raise InterruptedError('Execution interrupted after image encoding.')
+        _record_image_stage_inputs(self, owner, values, encoded.consumed, encoded.omitted)
+        return {'encoded_inputs': encoded}
+
+
+DENOISE_IMAGE_STAGE_PARAMS = {key: value for key, value in {**Generate.params, **Inpaint.params}.items()
+           if key in {'pipeline', 'image_contract', 'width', 'height', 'seed',
+              'num_inference_steps', 'guidance_scale', 'max_sequence_length', 'strength'}
+              or key in {'sigmas', 'joint_attention_kwargs', 'generator', 'latents', 'masked_image_latents'}}
+
+
+class Denoise(NodeBase):
+    """Execute the selected owner's official denoising call with owned inputs."""
+    label = 'Denoise Image'
+    category = 'Diffusers Image'
+    resizable = True
+    params = {
+        **DENOISE_IMAGE_STAGE_PARAMS,
+        'encoded_inputs': {'label': 'Encoded inputs', 'display': 'input', 'type': 'image_conditioning', 'required': True},
+        'latents_out': {'label': 'Latents', 'display': 'output', 'type': 'tensor'},
+        'latent_binding': {'label': 'Latent binding', 'display': 'output', 'type': 'image_latent_binding'},
+        'width_out': {'label': 'Width', 'display': 'output', 'type': 'int'},
+        'height_out': {'label': 'Height', 'display': 'output', 'type': 'int'},
+    }
+    update_image_contract = Generate.update_image_contract
+
+    def __call__(self, **kwargs):
+        _adapter, _core, _strategy, values = _stage_denoiser_values(kwargs)
+        return super().__call__(**values)
+
+    def execute(self, **kwargs):
+        _adapter, core, strategy, values = _stage_denoiser_values(kwargs)
+        owner = values['pipeline']
+        callback_kwargs = {}
+        steps = len(values['sigmas']) if values.get('sigmas') is not None else values['num_inference_steps']
+        target = strategy.targets(owner)['denoiser']
+        add_progress_callback(self, target, callback_kwargs, steps)
+        if self._interrupt:
+            raise InterruptedError('Execution interrupted before image denoising.')
+        self._active_pipeline = target
+        try:
+            latent, binding = core.denoise(owner, strategy, values['encoded_inputs'], values, callback_kwargs)
+        finally:
+            self._active_pipeline = None
+        if self._interrupt:
+            raise InterruptedError('Execution interrupted after image denoising.')
+        _record_image_stage_inputs(self, owner, values, {
+            **{key: values[key] for key in ('width', 'height', 'seed', 'guidance_scale', 'max_sequence_length')},
+            'num_inference_steps': None if values.get('sigmas') is not None else values['num_inference_steps'],
+            'num_images_per_prompt': 1, 'prompt': None, 'negative_prompt': None,
+            'output_type': 'latent',
+            **({'strength': values['strength']} if 'source' in values['encoded_inputs'].output_context else {}),
+        })
+        return {'latents_out': latent, 'latent_binding': binding,
+                'width_out': values['width'], 'height_out': values['height']}
+
 class DecodeLatents(NodeBase):
     """Decode the selected pipeline's explicit latent output, not starting noise."""
 
@@ -5410,6 +5739,7 @@ class DecodeLatents(NodeBase):
             'signalCompatibility': {'required': True, 'action': '$node'},
         },
         'latents': {'label': 'Latents', 'type': 'tensor', 'display': 'input', 'required': True},
+        'latent_binding': {'label': 'Latent binding', 'type': 'image_latent_binding', 'display': 'input'},
         'width': {'label': 'Width', 'type': 'int', 'default': 1024, 'min': 64, 'max': 4096},
         'height': {'label': 'Height', 'type': 'int', 'default': 1024, 'min': 64, 'max': 4096},
         'output_type': {'label': 'Output type', 'type': 'string', 'options': ['pil', 'np', 'pt'], 'default': 'pil'},
@@ -5418,7 +5748,24 @@ class DecodeLatents(NodeBase):
         'height_out': {'label': 'Height', 'type': 'int', 'display': 'output'},
     }
 
-    def execute(self, pipeline, latents, width=1024, height=1024, output_type='pil'):
+    def __call__(self, **kwargs):
+        binding = kwargs.get('latent_binding')
+        if binding is not None:
+            adapter, core, strategy = _selected_image_stage(kwargs.get('pipeline'))
+            width = _bounded_image_int(kwargs.get('width'), field='width', default=1024,
+                minimum=adapter.min_output_side, maximum=adapter.max_output_side, step=adapter.output_side_step)
+            height = _bounded_image_int(kwargs.get('height'), field='height', default=1024,
+                minimum=adapter.min_output_side, maximum=adapter.max_output_side, step=adapter.output_side_step)
+            core.require_latent(kwargs['pipeline'], strategy, kwargs.get('latents'), binding, width, height)
+        elif getattr(kwargs.get('latents'), '_modiff_image_stage_latent_binding', None) is not None:
+            raise ValueError('This executed image-stage latent requires its matching latent binding.')
+        return super().__call__(**kwargs)
+
+    def execute(self, pipeline, latents, width=1024, height=1024, output_type='pil', latent_binding=None):
+        stage_owner, stage_encoding = pipeline, None
+        if latent_binding is not None:
+            _adapter, core, strategy = _selected_image_stage(pipeline)
+            pipeline, stage_encoding = core.decoder_context(pipeline, strategy, latents, latent_binding, width, height)
         import torch
         adapter = _image_pipeline_adapter(pipeline)
         if adapter.load_pipeline_class not in _LATENT_OUTPUT_PIPELINES:
@@ -5462,7 +5809,13 @@ class DecodeLatents(NodeBase):
                 decoded = decoded[:, :, 0]
             images = pipeline.image_processor.postprocess(decoded, output_type=output_type)
         pipeline.maybe_free_model_hooks()
+        if stage_encoding is not None:
+            images = core.postprocess(stage_owner, strategy, stage_encoding, images, output_type)
         actual_width, actual_height = output_image_dimensions(images, output_type)
+        if stage_encoding is not None:
+            _record_image_stage_inputs(self, stage_owner,
+                {'width': width, 'height': height, 'output_type': output_type},
+                {'width': width, 'height': height, 'output_type': output_type})
         return {'images': images, 'width_out': actual_width, 'height_out': actual_height}
 
 
@@ -5731,6 +6084,14 @@ class LoadAdapter(NodeBase):
         adapter_path = str(load_adapter_path)
         replace_existing = values["replace_existing"]
         adapter_scales = dict(getattr(pipeline, "_modiff_adapter_scales", {}) or {})
+        prepare_lora = getattr(pipeline, "_prepare_lora_weights", None)
+        if callable(prepare_lora):
+            adapter_path = prepare_lora(adapter_path, **load_kwargs)
+        stage_transaction = None
+        if (vars(pipeline).get('_modiff_image_stage_owner') is not None
+                or vars(pipeline).get('_modiff_stage_mutation_failed') is True):
+            from modules.DiffusersImage import stage_execution as stage_core
+            stage_transaction = stage_core.begin_adapter_transaction(pipeline)
         unload_lora_weights = getattr(pipeline, "unload_lora_weights", None)
         if replace_existing and callable(unload_lora_weights):
             unload_lora_weights()
@@ -5740,4 +6101,6 @@ class LoadAdapter(NodeBase):
         if callable(getattr(pipeline, "set_adapters", None)):
             pipeline.set_adapters(list(adapter_scales), list(adapter_scales.values()))
         pipeline._modiff_adapter_scales = adapter_scales
+        if stage_transaction is not None:
+            stage_core.finish_adapter_transaction(pipeline, stage_transaction)
         return {"output": pipeline}

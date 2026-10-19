@@ -59,3 +59,39 @@ def configure_allocator(
         environment[variable] = "expandable_segments:True"
         return {"source": "platform_default", "variable": variable, "setting": "expandable_segments:True", "warning": None}
     return {"source": "torch_default", "variable": None, "setting": None, "warning": None}
+
+
+def configure_model_loading(
+    environment: MutableMapping[str, str] | None = None,
+    *,
+    platform_name: str | None = None,
+) -> None:
+    """Set official loader defaults before model-library imports.
+
+    Windows CPU allocations made by short-lived loader threads can remain
+    committed after another thread frees the tensors. Load serially by default
+    there; keep the existing parallel default elsewhere. Each operator setting
+    is independent, including an explicitly empty value.
+    """
+    environment = os.environ if environment is None else environment
+    platform_name = sys.platform if platform_name is None else platform_name
+    if platform_name == "win32":
+        environment.setdefault("HF_ENABLE_PARALLEL_LOADING", "0")
+        environment.setdefault("HF_DEACTIVATE_ASYNC_LOAD", "1")
+    else:
+        environment.setdefault("HF_ENABLE_PARALLEL_LOADING", "YES")
+
+
+def diffusers_parallel_loading_enabled() -> bool:
+    """Read the reviewed loader's captured flag without importing its runtime.
+
+    ModelMixin captures a copy at import. Later environment or constants edits
+    cannot make its active parallel loader serial. Unknown loaded contracts use
+    the conservative parallel reserve; a future import reads the current env.
+    """
+    for name in ("diffusers.models.modeling_utils", "diffusers.utils.constants"):
+        module = sys.modules.get(name)
+        if module is not None:
+            value = vars(module).get("HF_ENABLE_PARALLEL_LOADING")
+            return value if type(value) is bool else True
+    return os.environ.get("HF_ENABLE_PARALLEL_LOADING", "").upper() in {"1", "ON", "YES", "TRUE"}
