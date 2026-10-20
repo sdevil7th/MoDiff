@@ -946,11 +946,19 @@ else:
         managed = self.root / "cancel-managed"
         lock_path = managed / "optimizations" / "install.lock"
         started = self.root / "cancel-started"
+        ready = self.root / "cancel-grandchild-ready"
+        release = self.root / "cancel-grandchild-release"
         escaped = self.root / "cancel-escaped"
-        grandchild = (
-            "import time; from pathlib import Path; "
-            f"time.sleep(1.0); Path({str(escaped)!r}).write_text('escaped')"
-        )
+        grandchild = f"""
+import time
+from pathlib import Path
+Path({str(ready)!r}).write_text('ready')
+deadline = time.monotonic() + 30
+while not Path({str(release)!r}).exists() and time.monotonic() < deadline:
+    time.sleep(0.01)
+if Path({str(release)!r}).exists():
+    Path({str(escaped)!r}).write_text('escaped')
+"""
         child = (
             "import subprocess, sys, time; from pathlib import Path; "
             f"subprocess.Popen([sys.executable, '-c', {grandchild!r}]); "
@@ -978,14 +986,19 @@ else:
             worker = threading.Thread(target=run_tree, daemon=True)
             worker.start()
             deadline = time.monotonic() + 10
-            while not started.exists() and time.monotonic() < deadline:
+            while not (started.exists() and ready.exists()) and time.monotonic() < deadline:
                 time.sleep(0.02)
             self.assertTrue(started.exists(), "benign child did not start")
+            self.assertTrue(ready.exists(), "benign grandchild did not become ready")
+            self.assertFalse(escaped.exists())
             self.assertTrue(runtime_overlays.cancel_install(lease.token))
             worker.join(timeout=10)
             runtime_overlays.release_install(lease)
         self.assertFalse(worker.is_alive())
         self.assertEqual(outcome, ["cancelled"])
+        # Exercise survival after cancellation acknowledgment, independent of
+        # process-tree enumeration latency before cancellation returns.
+        release.write_text("release after cancellation and worker acknowledgment")
         time.sleep(1.25)
         self.assertFalse(escaped.exists())
 
