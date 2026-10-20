@@ -77,6 +77,55 @@ class AuxiliaryLoraContractTests(unittest.TestCase):
         self.assertEqual(params["adapter_name"]["default"], "")
         self.assertEqual(params["previous_loras"]["display"], "input")
         self.assertEqual(params["previous_loras"]["type"], params["lora"]["type"])
+        self.assertIs(params["previous_loras"].get("required"), False)
+
+        # Use the same serializer as /nodes, without constructing a server or
+        # executable node. AST discovery and browser metadata must agree.
+        from modiff.server import WebServer
+
+        with patch.object(Lora, "__init__", side_effect=AssertionError("Constructed executable LoRA")):
+            described = object.__new__(WebServer)._describe_registered_node(
+                "modules.ModularDiffusers", "Lora", MODULE_MAP["modules.ModularDiffusers"]["Lora"],
+            )
+        self.assertEqual(described["params"]["previous_loras"], params["previous_loras"])
+        described["params"]["previous_loras"]["required"] = True
+        self.assertIs(params["previous_loras"]["required"], False, "Publication must not alias registry fields.")
+
+    def test_ordinary_lora_dispatch_allows_absent_predecessor_without_relaxing_artifact_validation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            first, second = Path(directory) / "first.safetensors", Path(directory) / "second.safetensors"
+            _write_tiny_safetensors(first)
+            _write_tiny_safetensors(second, marker=2)
+
+            def inputs(path, name):
+                return {"model": {"source": "local", "value": str(path)}, "scale": 0.75,
+                        "weight_name": path.name, "adapter_name": name}
+
+            # No weights are loaded into a model. Only temporary-file discovery
+            # is suppressed; the real NodeBase, descriptor and byte checks run.
+            with patch("modiff.NodeBase.modelstore.is_local_cached", return_value=True), \
+                    patch("modiff.NodeBase.modelstore.is_hf_cached", return_value=True):
+                first_inputs = inputs(first, "first_style")
+                single = Lora("omitted-predecessor")(**first_inputs)["lora"]
+                explicit_none = Lora("none-predecessor")(**first_inputs, previous_loras=None)["lora"]
+                self.assertIsInstance(single, dict)
+                self.assertEqual(single, explicit_none)
+                self.assertEqual(resolve_lora_descriptor(single).adapter_name, "first_style")
+                preserved = copy.deepcopy(single)
+                chain = Lora("second")(**inputs(second, "second_style"), previous_loras=single)["lora"]
+                self.assertEqual([item["adapter_name"] for item in chain], ["first_style", "second_style"])
+                self.assertEqual(single, preserved)
+
+                cases = (
+                    ({"model": {"source": "hub", "value": ""}}, "A LoRA model is required"),
+                    ({"model": {"source": "hub", "value": "example/style"},
+                      "revision": "main", "expected_sha256": "a" * 64}, "40-character"),
+                    ({"model": {"source": "hub", "value": "example/style"},
+                      "revision": REVISION, "expected_sha256": ""}, "64 lowercase"),
+                )
+                for index, (invalid, message) in enumerate(cases):
+                    with self.subTest(case=index), self.assertRaisesRegex(RuntimeError, message):
+                        Lora(f"invalid-singleton-{index}")(**{**first_inputs, **invalid}, previous_loras=None)
 
     def test_ordinary_node_dispatch_preserves_named_chain_and_invalidates_changed_scale(self):
         with tempfile.TemporaryDirectory() as directory:

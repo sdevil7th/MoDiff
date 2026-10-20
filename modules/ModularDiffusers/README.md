@@ -406,7 +406,8 @@ Quantization can reduce memory but may introduce unsupported kernels, longer loa
 LoRA nodes load a compatible adapter and connect it to loader inputs that declare LoRA support. Base model, adapter architecture, target components, and scale must be compatible. A Hub search result alone does not establish that compatibility.
 
 **Adapter Name** preserves an explicitly authored name. Leave it empty to use
-the existing stable generated identity. Connect one LoRA node's output to the
+the existing stable generated identity. **Previous LoRAs** is optional: leave
+it unconnected on the first or sole adapter. Connect one LoRA node's output to the
 next node's **Previous LoRAs** input to create an ordered adapter chain, then
 connect the final output to the loader. Names, order, scales, exact weight bytes
 and scheduler overrides remain part of the execution contract. The node verifies

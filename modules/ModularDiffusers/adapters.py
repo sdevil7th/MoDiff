@@ -56,7 +56,8 @@ class Lora(NodeBase):
             "label": "Previous LoRAs",
             "display": "input",
             "type": "custom_lora",
-            "description": "Append this adapter to the connected ordered descriptor or descriptor list.",
+            "required": False,
+            "description": "Optional ordered predecessor. Leave unconnected for one adapter; otherwise append this adapter to the connected descriptor or descriptor list.",
         },
         "scheduler_class": {
             "label": "Scheduler Class",
