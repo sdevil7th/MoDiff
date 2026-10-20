@@ -54,8 +54,11 @@ progress. Invalid storage never falls back to the working directory. Existing
 unselected offload callers retain their prior defaults and storage location.
 
 Named adapters preserve chain order and individual scales. Zero scale disables
-their contribution; removing or replacing a descriptor invalidates the owning
-runtime and dependent cached material. The existing executor releases the exact
+their contribution. A single ordinary `Lora` node supplies one descriptor; an
+ordered chain supplies a descriptor list. Both use the same source-selected
+artifact, component and placement checks. Removing or replacing a descriptor
+invalidates the owning runtime and dependent cached material. The existing
+executor releases the exact
 incompatible owner before constructing its replacement. Surviving shared or
 external target references stop replacement. A partial official load or
 activation cannot publish a reusable complete owner; retry requires a clean

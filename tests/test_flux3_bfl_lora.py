@@ -122,6 +122,31 @@ def test_real_selected_bfl_lora_loader_dispatch(runtime, tmp_path, pair, scheme,
 
 @pytest.mark.parametrize('pair', PAIRS, ids=lambda row: row[0])
 @pytest.mark.parametrize('scheme', ['fp8r', 'nvfp4'])
+@pytest.mark.parametrize('task', ['text_to_image', 'edit_image'])
+@pytest.mark.parametrize('submission', ['node', 'literal'])
+def test_real_selected_single_bfl_lora_loader_dispatch(runtime, tmp_path, pair, scheme, task, submission):
+    baseline_node = runtime.run(graph(pair, scheme, task=task))
+    baseline = prediction(runtime)
+    packed = packed_state(baseline_node.loader.transformer)
+    former = weakref.ref(baseline_node.loader.transformer)
+    del baseline_node
+    item = descriptor(tmp_path, original=True)
+    source = graph(pair, scheme, [item], task=task, chain=submission == 'node')
+    if submission == 'literal':
+        source['nodes']['models']['params']['lora_list']['value'] = item
+    node = runtime.run(source)
+    if submission == 'node':
+        assert type(runtime.server.node_cache['adapter-0'].output['lora']) is dict
+    assert former() is None
+    assert node._native_disk_lora_state['componentComplete'] is True
+    assert node.loader.transformer.active_adapters() == ['one']
+    changed = prediction(runtime)
+    assert torch.isfinite(changed).all() and not torch.allclose(changed, baseline)
+    assert_packed_state(node.loader.transformer, packed)
+
+
+@pytest.mark.parametrize('pair', PAIRS, ids=lambda row: row[0])
+@pytest.mark.parametrize('scheme', ['fp8r', 'nvfp4'])
 def test_bfl_order_zero_reenable_removal_replace_and_warm_owner(runtime, tmp_path, pair, scheme):
     runtime.run(graph(pair, scheme))
     baseline = prediction(runtime)
@@ -158,13 +183,32 @@ def test_bfl_order_zero_reenable_removal_replace_and_warm_owner(runtime, tmp_pat
 
 @pytest.mark.parametrize('scheme', ['fp8r', 'nvfp4'])
 @pytest.mark.parametrize('bad', ['shape', 'nan', 'metadata_dora', 'metadata_config'])
-def test_bfl_bad_factors_preserve_working_owner(runtime, tmp_path, scheme, bad):
+@pytest.mark.parametrize('submission', ['list', 'node', 'literal'])
+def test_bfl_bad_factors_preserve_working_owner(runtime, tmp_path, scheme, bad, submission):
     node = runtime.run(graph(PAIRS[0], scheme, [descriptor(tmp_path)]))
     previous = weakref.ref(node.loader)
     del node
+    item = descriptor(tmp_path, bad=bad)
+    source = graph(PAIRS[0], scheme, [item], chain=submission == 'node')
+    if submission == 'literal':
+        source['nodes']['models']['params']['lora_list']['value'] = item
     with pytest.raises(ValueError):
-        runtime.run(graph(PAIRS[0], scheme, [descriptor(tmp_path, bad=bad)]))
+        runtime.run(source)
     assert runtime.server.node_cache['models'].loader is previous()
+
+
+@pytest.mark.parametrize('scheme', ['fp8r', 'nvfp4'])
+def test_bfl_single_descriptor_without_source_context_preserves_working_owner(runtime, tmp_path, monkeypatch, scheme):
+    from diffusers import ComponentSpec
+    item = descriptor(tmp_path)
+    node = runtime.run(graph(PAIRS[0], scheme, [item]))
+    previous = weakref.ref(node.loader)
+    expected = prediction(runtime)
+    monkeypatch.setattr(ComponentSpec, 'load', lambda *_args, **_kwargs: pytest.fail('Unselected dispatch must not allocate.'))
+    with pytest.raises(ValueError, match='source-selected|source authority'):
+        runtime.artifacts.call(PAIRS[0], scheme, node=node, lora_list=item)
+    assert runtime.server.node_cache['models'].loader is previous()
+    torch.testing.assert_close(prediction(runtime), expected, rtol=0, atol=0)
 
 
 @pytest.mark.parametrize('scheme', ['fp8r', 'nvfp4'])

@@ -339,7 +339,7 @@ def resolve_weight_format(*, model_type, metadata, repository, revision, weight_
     if lora_list is not None and not (type(lora_list) is list and not lora_list):
         from modiff.native_component_lora import ComponentLoraContext, current_component_lora_context
         expected = (model_type, repository, revision, weight_format, receipt['sha256'])
-        if (type(lora_list) is not list or type(component_lora_context) is not ComponentLoraContext
+        if (type(lora_list) not in (dict, list) or type(component_lora_context) is not ComponentLoraContext
                 or getattr(component_lora_context, 'weight_format_contract', None) != expected
                 or current_component_lora_context(component_lora_context.owner_id) != component_lora_context):
             raise ValueError('Selected BFL formats with LoRAs require the current source-selected component lifecycle.')
