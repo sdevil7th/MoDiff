@@ -177,11 +177,31 @@ For Resize's stretch, cover, contain, fit and pad methods, compare every offered
 interpolation against Pillow pixels. Named nearest, box, bilinear, hamming and
 lanczos selections must reach the requested filter; bicubic remains the default.
 
-Six FLUX3 Gallery candidates remain a separate deliverable: Distilled T2I,
-Base T2I, Distilled reference edit, Base reference edit, trained LoRA, and optional
-PUP layout. Do not publish a layout template while structured PUP output is
-unfinished. Generate via maintained tooling; keep media outside Git and obtain
-separate publication authority where required.
+Plan eleven FLUX3 showcase candidates through the existing generic nodes and
+selected model contracts. These are qualification targets, not published templates:
+
+| Candidate | Feature |
+| --- | --- |
+| F3-01 | Distilled text-to-image at original settings |
+| F3-02 | Base text-to-image at original settings |
+| F3-03 | Distilled composition from ten ordered reference images |
+| F3-04 | Base composition from ten ordered reference images |
+| F3-05 | Raw coordinate prompt with asymmetric bounding rectangles |
+| F3-06 | Visual target layout, placement/size edits, Undo/Redo and reload |
+| F3-07 | Bound source relocation, resize and removal, including the tenth reference and explicit stale-source rebind |
+| F3-08 | Compatible Distilled Outpaint LoRA with canvas/border quality checks |
+| F3-09 | Compatible Base Tarot LoRA with visible effect, zero scale and removal |
+| F3-10 | Optional plain-text PUP Preview, Regenerate, Apply, image and Undo |
+| F3-11 | Optional structured PUP layout, blocked until its selected contract admits it |
+
+Exercise F3-05 through F3-07 on both variants. Retain actual ordered reference
+identities and the consumed coordinate prompt; ten small input images do not
+qualify ten full-resolution inputs. Test ordinary generic LoRA chains separately
+from any higher-level Model Setup authoring permission. Manual coordinate/layout
+support does not establish structured PUP support: the current ancillary path
+refuses authored layout. Do not bypass that guard or make manual-layout showcases
+depend on unfinished structured enhancement. Generate via maintained tooling;
+keep media outside Git and obtain separate publication authority where required.
 
 ## Prompt enhancement and recovery
 
