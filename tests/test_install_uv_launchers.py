@@ -67,6 +67,31 @@ def _run_fixture(root, command, environment):
                           capture_output=True, text=True, timeout=30)
 
 
+def _assert_diagnostic(result, expected):
+    """Check diagnostic words separately from terminal line wrapping."""
+    assert expected in " ".join(result.stderr.split()), result.stderr
+
+
+@pytest.mark.parametrize("message,expected", [
+    ("native progress\n", "native progress"),
+    ("checkout/install.ps1 : Install uv from the documented source and add it to \nPATH.\n", "add it to PATH"),
+    ("checkout/install.ps1 : Install\r\n  uv from the documented source.\n", "Install uv"),
+    ("The command did not report a uv\nversion.\n", "did not report a uv version"),
+    ("Cannot run\r\nuv.\n", "Cannot run uv"),
+    ("native\nprogress\n", "native progress"),
+])
+def test_diagnostic_assertions_accept_line_wrapping_without_changing_words(message, expected):
+    result = subprocess.CompletedProcess([], 2, stdout="", stderr=message)
+    _assert_diagnostic(result, expected)
+
+
+@pytest.mark.parametrize("message", ["add it to SYSTEM_PATH", "Install something else", ""])
+def test_diagnostic_assertions_still_reject_different_or_missing_guidance(message):
+    result = subprocess.CompletedProcess([], 2, stdout="", stderr=message)
+    with pytest.raises(AssertionError):
+        _assert_diagnostic(result, "add it to PATH")
+
+
 @pytest.mark.parametrize("version", ["uv 0.12.23", "uv 9.0.1 (operator upgrade)"])
 def test_installer_validates_operator_uv_then_preserves_isolated_bootstrap(tmp_path, version):
     root, command, environment = _launcher_fixture(tmp_path, version=version)
@@ -74,7 +99,7 @@ def test_installer_validates_operator_uv_then_preserves_isolated_bootstrap(tmp_p
     assert result.returncode == 0, result.stderr
     assert "UV_BOOTSTRAP run --no-project --python 3.12 python -m modiff.install" in result.stdout
     assert "--backend-only" in result.stdout and "--non-interactive" in result.stdout
-    assert "native progress" in result.stderr
+    _assert_diagnostic(result, "native progress")
     assert "DIRECT_INSTALL" not in result.stdout
 
 
@@ -88,7 +113,7 @@ def test_installer_rejects_malformed_path_uv_before_bootstrap_even_with_valid_le
         shutil.copy2(installed_uv, legacy)
     result = _run_fixture(root, command, environment)
     assert result.returncode != 0
-    assert "did not report a uv version" in result.stderr
+    _assert_diagnostic(result, "did not report a uv version")
     assert "UV_BOOTSTRAP" not in result.stdout
     assert "DIRECT_INSTALL" not in result.stdout
 
@@ -99,7 +124,7 @@ def test_installer_keeps_path_uv_bootstrap_without_python_and_its_exit_code(tmp_
     result = _run_fixture(root, command, environment)
     assert result.returncode == run_code, result.stderr
     assert "UV_BOOTSTRAP run --no-project --python 3.12 python" in result.stdout
-    assert "native progress" in result.stderr
+    _assert_diagnostic(result, "native progress")
 
 
 def test_installer_uses_canonical_legacy_resolution_with_python(tmp_path):
@@ -120,7 +145,7 @@ def test_failed_path_uv_version_probe_does_not_start_bootstrap(tmp_path):
     root, command, environment = _launcher_fixture(tmp_path, probe_code=9)
     result = _run_fixture(root, command, environment)
     assert result.returncode != 0
-    assert "Cannot run uv" in result.stderr
+    _assert_diagnostic(result, "Cannot run uv")
     assert "UV_BOOTSTRAP" not in result.stdout
 
 
@@ -129,7 +154,7 @@ def test_installer_missing_uv_reports_operator_prerequisite(tmp_path, python):
     root, command, environment = _launcher_fixture(tmp_path, python=python, path_uv=False)
     result = _run_fixture(root, command, environment)
     assert result.returncode != 0
-    assert "Install uv" in result.stderr
+    _assert_diagnostic(result, "Install uv")
     assert "UV_BOOTSTRAP" not in result.stdout
 
 
@@ -140,7 +165,7 @@ def test_legacy_uv_without_bootstrap_python_remains_a_clear_path_prerequisite(tm
     legacy.write_bytes(b"must not execute an unchecked legacy binary")
     result = _run_fixture(root, command, environment)
     assert result.returncode == 2
-    assert "add it to PATH" in result.stderr
+    _assert_diagnostic(result, "add it to PATH")
     assert "UV_BOOTSTRAP" not in result.stdout
 
 
