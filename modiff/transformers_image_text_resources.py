@@ -718,11 +718,18 @@ def validate_image_text_t2i_generation(model, batch, controls):
             or 'attention_mask' in batch and not bool((batch['attention_mask'] == 1).all())
             or 'mm_token_type_ids' in batch and not bool((batch['mm_token_type_ids'] == 0).all())):
         raise ValueError('Image/text Auto requires only its actual bounded text-only native batch.')
+    _validate_image_text_t2i_generation_controls(controls)
+
+
+def _validate_image_text_t2i_generation_controls(controls):
+    """Exact generation controls, separate from native model and batch checks."""
     expected = {'max_new_tokens', 'min_new_tokens', 'do_sample', 'num_beams',
-                'repetition_penalty', 'return_dict_in_generate', 'stopping_criteria'}
+                'repetition_penalty', 'return_dict_in_generate', 'stopping_criteria', 'logits_processor'}
     if (set(controls) != expected or controls['return_dict_in_generate'] is not False
             or len(controls['stopping_criteria']) != 1):
         raise ValueError('Image/text Auto generation acquired an undeclared control.')
+    from modiff.prompt_enhancement import _validate_finite_score_processor
+    _validate_finite_score_processor(controls['logits_processor'])
     validate_image_text_t2i_request({'operation': 'enhance_prompt',
         'enhancement_max_new_tokens': controls['max_new_tokens'],
         'min_new_tokens': controls['min_new_tokens'], 'do_sample': controls['do_sample'],

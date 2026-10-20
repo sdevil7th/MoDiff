@@ -4,6 +4,7 @@ Outputs are proposals. This adapter never edits an authored prompt, loads anothe
 model, authorizes remote code, releases owners or grants resource qualification.
 """
 from copy import deepcopy
+from functools import cache
 import hashlib
 import json
 import re
@@ -367,10 +368,54 @@ def preflight_processor_inputs(processor, kwargs, observer):
     return fields, limits
 
 
+@cache
+def _finite_score_processor_type():
+    """Keep the official processor type lazy and stable for exact Auto checks."""
+    import torch
+    from transformers import LogitsProcessor
+
+    class FiniteScores(LogitsProcessor):
+        def __init__(self, observer):
+            self.observer = observer
+
+        def __call__(self, input_ids, scores):
+            self.observer.check()
+            valid = ~(torch.isnan(scores) | torch.isposinf(scores))
+            acceptable = bool((valid.all(dim=-1) & torch.isfinite(scores).any(dim=-1)).all())
+            self.observer.check()
+            if not acceptable:
+                raise RuntimeError('Prompt enhancement produced invalid model scores (NaN, positive infinity or '
+                    'no finite token candidate); no proposal can be applied. Inspect the selected model precision '
+                    'and runtime before retrying.')
+            return scores
+
+    return FiniteScores
+
+
+def _finite_score_processor(observer):
+    return _finite_score_processor_type()(observer)
+
+
+def _validate_finite_score_processor(processors):
+    """Auto admits only this numerical check bound to the current graph/task."""
+    from transformers import LogitsProcessorList
+    from modiff.native_component_lora import _GRAPH_SCOPE
+    message = 'Image/text Auto requires its exact task-owned finite-score processor.'
+    if (type(processors) is not LogitsProcessorList or len(processors) != 1
+            or type(processors[0]) is not _finite_score_processor_type()):
+        raise ValueError(message)
+    observer = getattr(processors[0], 'observer', None)
+    scope = _GRAPH_SCOPE.get()
+    if (type(observer) is not _OwnedGeneration or observer.task is None
+            or scope is None or scope[0] is not observer.graph):
+        raise ValueError(message)
+    observer.check()
+
+
 def generate(node, model, processor, receipt, kwargs):
     """Run the reviewed adapter through official generate, retaining a proposal."""
     import torch
-    from transformers import StoppingCriteria, StoppingCriteriaList
+    from transformers import LogitsProcessorList, StoppingCriteria, StoppingCriteriaList
     from modules.HuggingFaceTransformers import main as nodes
     observer = _OwnedGeneration(node)
     observer.check()
@@ -423,6 +468,7 @@ def generate(node, model, processor, receipt, kwargs):
             observer.progress(max(0, int(input_ids.shape[1]) - input_tokens), limit)
             return False
     controls['stopping_criteria'] = StoppingCriteriaList([OwnedStop()])
+    controls['logits_processor'] = LogitsProcessorList([_finite_score_processor(observer)])
     node.record_generation_inputs({**fields, **{key: value for key, value in kwargs.items() if key not in fields},
                                    'prompt': authored})
     def native_generate():

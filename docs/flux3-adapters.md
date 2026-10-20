@@ -90,6 +90,14 @@ The opt-in tiny CUDA test is a separate root-run lane, not a default CPU gate.
 
 ## Optional no-weight processor test fixture
 
+Reviewed prompt enhancement checks each generation score row through the official
+Transformers logits-processor interface. NaN, positive infinity or a row with no
+finite token candidate stops generation before token selection and publishes no
+proposal. Negative-infinity token masks remain valid alongside finite candidates.
+Scores and generated punctuation are never sanitized or filtered; the error asks
+the operator to inspect the selected precision and runtime before retrying. This
+numerical check does not diagnose an upstream kernel or qualify another precision.
+
 The ordinary backend gate requires no local PUP files. Tests that need its
 reviewed processor metadata explicitly skip when `MODIFF_PUP_PROCESSOR_FIXTURE`
 is unset. A supplied missing, incomplete or changed fixture fails. A skip is
