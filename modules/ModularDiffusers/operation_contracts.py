@@ -242,12 +242,8 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     if helper:
                         helper.update(nodeType="reference_assembly", decomposition="bundle")
                         result.append(with_operation_semantics(helper, workflow_id=workflow_id))
-                if pipeline_class in {
-                    "StableDiffusionXLModularPipeline", "QwenImageModularPipeline",
-                    "QwenImageEditModularPipeline", "QwenImageEditPlusModularPipeline",
-                    "QwenImageLayeredModularPipeline", "ZImageModularPipeline",
-                    "FluxModularPipeline", "FluxKontextModularPipeline",
-                } and "custom_guider" in helper_types:
+                metadata = get_model_type_metadata(pipeline_class) or {}
+                if metadata.get('guider_options') and "custom_guider" in helper_types:
                     helper = build_pipeline_operation_contract(
                         modules, pipeline_class=pipeline_class, task=task,
                         operation_id="diffusion.guidance", node_key="modules.ModularDiffusers.Guider",

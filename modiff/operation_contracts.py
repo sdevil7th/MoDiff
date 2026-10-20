@@ -215,9 +215,10 @@ def build_modular_operation_contracts(configs: Mapping, modules: Mapping) -> lis
                 ("inputs", "input_names", "input", "value", "required_inputs"),
                 ("model_inputs", "model_input_names", "input", "component", "required_model_inputs"),
                 ("outputs", "output_names", "output", "value", None),
+                ("wrapper_inputs", None, "input", "value", None),
             ):
                 params = spec.get(group, [])
-                names = formatted[names_key]
+                names = formatted[names_key] if names_key else [param.name for param in params]
                 required = spec.get(required_key, []) if required_key else []
                 if len(params) != len(names) or not set(required).issubset({p.name for p in params}):
                     raise ValueError("Invalid operation-contract port declaration.")

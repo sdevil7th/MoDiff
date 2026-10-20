@@ -316,6 +316,16 @@ def resolve_operation_starter(modules, contracts, selection):
                 actions[edge["consumerAction"]],
                 edge["consumerInput"],
             )
+        # Native specifications also declare wrapper transports that are not
+        # upstream block values. Preserve exact owned stage edges; external
+        # source/preview suppliers remain ordinary unbound authoring inputs.
+        from modiff.studio_execution_specs import studio_execution_spec_for_pair
+        specification = studio_execution_spec_for_pair(pipeline, task)
+        if specification is not None:
+            roles = {role: by_key[key] for role, key, *_ in specification['roles'] if key in by_key}
+            for source, output, target, field in specification['edges']:
+                if source in roles and target in roles:
+                    connect(roles[source], output, roles[target], field)
         # Publish effective output dimensions instead of duplicating decoder
         # literals. The generic config declares their semantic names explicitly.
         for c in selected:

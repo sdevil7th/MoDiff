@@ -1499,6 +1499,15 @@ and `target`, and real field names as `sourceHandle`/`targetHandle`. The client
 assigns ordinary canvas node/edge IDs at insertion; these authoring references
 are never an alternate executable graph format or an execution receipt.
 
+Stage operation ports include explicitly declared wrapper inputs as well as
+upstream block inputs, model components and outputs. Wrapper transports remain
+outside upstream block argument lists. Native starter drafts preserve exact
+declared stage-to-stage specification edges, including wrapper binding signals;
+they do not infer tensor or conditioning compatibility. A consumed Guider socket
+publishes its ordinary helper only when the selected pipeline config declares
+guider options. Source and preview suppliers remain ordinary authoring inputs,
+and execution still revalidates the complete owned graph before loading weights.
+
 Fresh image templates can additionally select a reviewed `authoringRecipeId`.
 The response then adds `authoring`: schema/canonicalization version 1, exact recipe
 `id`, `baseSpecId`, `baseSpecContentHash`, permitted `executionProfileIds`, and the

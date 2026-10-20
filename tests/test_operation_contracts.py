@@ -41,6 +41,35 @@ MODULES = {"modules.ModularDiffusers": {"Denoise": {}}}
 
 
 class OperationContractTests(unittest.TestCase):
+    def test_every_registered_wrapper_transport_is_in_the_stage_port_census(self):
+        from modules import MODULE_MAP
+        from modules.ModularDiffusers.modular_utils import _get_registry_instance
+        configs = {owner.__name__: value for owner, value in _get_registry_instance().get_all().items()}
+        contracts = build_modular_operation_contracts(configs, MODULE_MAP)
+        by_stage = {(row['pipelineClass'], row['nodeType']): row for row in contracts}
+        checked = 0
+        for pipeline, config_ in configs.items():
+            for stage, spec in (config_.node_specs or {}).items():
+                for param in (spec or {}).get('wrapper_inputs', []):
+                    checked += 1
+                    port = next(port for port in by_stage[pipeline, stage]['ports']
+                                if port['name'] == param.name and port['direction'] == 'input')
+                    self.assertEqual(port['types'], [param.to_dict()['type']])
+                    self.assertNotIn(param.name, config_.node_params[stage]['input_names'])
+        self.assertGreater(checked, 0)
+
+    def test_declared_wrapper_inputs_are_ports_without_becoming_upstream_inputs(self):
+        source = config()
+        source.node_specs['denoise']['wrapper_inputs'] = [Param('binding', 'reference_conditioning')]
+        before = deepcopy(source.node_params)
+        ports = build_modular_operation_contracts({'Pipeline': source}, MODULES)[0]['ports']
+        binding = next(port for port in ports if port['name'] == 'binding')
+        self.assertEqual(binding, {
+            'name': 'binding', 'semanticName': 'binding', 'direction': 'input',
+            'roles': ['value'], 'types': ['reference_conditioning'], 'required': False, 'hidden': False,
+        })
+        self.assertEqual(source.node_params, before)
+
     def test_connected_prompt_has_explicit_execution_semantics(self):
         source = config()
         source.node_specs = {"text_encoder": {
