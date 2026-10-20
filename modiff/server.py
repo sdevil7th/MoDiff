@@ -14592,7 +14592,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
     def _build_model_capabilities_payload(self, query=""):
         from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
         from modiff.operation_contracts import OPERATION_CONTRACT_SCHEMA_VERSION
-        from modiff.operation_catalog import build_operation_catalog
+        from modiff.operation_catalog import build_evaluation_authoring_catalog, build_operation_catalog
         from modiff.optional_runtime_execution import optional_runtime_requirement_for_profiles
         from modiff.model_artifact_catalog import catalog_profile_repository_revisions
 
@@ -14801,6 +14801,20 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         operation_contracts, pipeline_support = build_operation_catalog(
             self.modules, published_execution_profiles, catalog_resolver=request_optional_runtime_catalog,
         )
+        evaluation_authoring = build_evaluation_authoring_catalog(
+            self.modules, catalog_resolver=request_optional_runtime_catalog,
+        )
+        if evaluation_authoring is not None:
+            for profile in evaluation_authoring["executionProfiles"]:
+                owners = [capability for capability in capabilities
+                    if capability["modelType"] == profile["model_type"]
+                    and capability["defaultRepo"] == profile["default_repo"]]
+                if (len(owners) != 1 or any(owners[0].get(key) is not False for key in
+                        ("autoEligible", "templateEligible", "galleryEligible", "liveProof"))
+                        or any(row["pipelineClass"] == profile["pipeline_class"]
+                            and any(task["executionProfileIds"] for task in row["tasks"])
+                            for row in pipeline_support)):
+                    raise ValueError("Evaluation authoring requires separate private model and pipeline metadata.")
         task_template_contracts = build_task_template_contracts(capabilities, execution_specs)
         task_contracts_by_model = {}
         for contract in task_template_contracts:
@@ -14835,6 +14849,22 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             task_template_contracts = [
                 contract for contract in task_template_contracts if contract["modelType"] in returned_models
             ]
+            if evaluation_authoring is not None:
+                evaluation_authoring["executionProfiles"] = [
+                    profile for profile in evaluation_authoring["executionProfiles"]
+                    if profile["model_type"] in returned_models
+                ]
+                evaluation_profile_ids = {profile["id"]
+                    for profile in evaluation_authoring["executionProfiles"]}
+                evaluation_authoring["pipelineSupport"] = [
+                    {**row, "tasks": [{**task, "executionProfileIds": [identity
+                        for identity in task["executionProfileIds"] if identity in evaluation_profile_ids]}
+                        for task in row["tasks"] if evaluation_profile_ids.intersection(task["executionProfileIds"])]}
+                    for row in evaluation_authoring["pipelineSupport"]
+                    if any(evaluation_profile_ids.intersection(task["executionProfileIds"]) for task in row["tasks"])
+                ]
+                if not evaluation_authoring["executionProfiles"]:
+                    evaluation_authoring = None
 
         return {
             "error": False,
@@ -14851,6 +14881,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "studioExecutionSpecs": execution_specs,
             "optionalRuntimeProfiles": public_optional_runtime_profiles(),
             "experimentalCapabilities": experimental_capabilities,
+            **({"evaluationAuthoring": evaluation_authoring} if evaluation_authoring is not None else {}),
             "source": "modiff-backend",
         }
 

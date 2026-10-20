@@ -395,6 +395,56 @@ def build_operation_catalog(modules, profiles, *, catalog_resolver=None):
     return contracts, support
 
 
+def build_evaluation_authoring_catalog(modules, *, catalog_resolver=None):
+    """Project exact operator-selected private profiles for Expert authoring.
+
+    The existing artifact observer verifies the whole installed wheel before
+    returning any identities. Keep this projection separate from public
+    profiles, Studio specifications and qualification/Auto admission.
+    """
+    from modiff.diffusers_evaluation_runtime import selected_diffusers_evaluation_authoring_profile_ids
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+    from modiff.model_artifact_catalog import catalog_profile_repository_revisions
+
+    identities = selected_diffusers_evaluation_authoring_profile_ids()
+    if not identities:
+        return None
+    profiles = []
+    for identity in identities:
+        profile = DIFFUSERS_EXECUTION_PROFILES.get(identity)
+        if (profile is None or profile.id != identity or profile.public is not False
+                or profile.live_proof is not False):
+            raise ValueError("Evaluation authoring requires an exact private unqualified execution profile.")
+        profiles.append(profile.to_public_dict(
+            observe_optional_runtime=True, optional_runtime_catalog_resolver=catalog_resolver,
+        ))
+    revisions = catalog_profile_repository_revisions(profiles)
+    for profile in profiles:
+        if profile["id"] in revisions:
+            profile["repository_revisions"] = deepcopy(revisions[profile["id"]])
+    _, support = build_operation_catalog(modules, profiles, catalog_resolver=catalog_resolver)
+    exact_support = []
+    covered = set()
+    for row in support:
+        tasks = []
+        for task in row["tasks"]:
+            exact_ids = sorted(profile["id"] for profile in profiles
+                if profile["pipeline_class"] == row["pipelineClass"] and task["task"] in profile["modes"]
+                and profile["id"] in task["executionProfileIds"])
+            if exact_ids and task["execution"] == "adapter":
+                tasks.append({**task, "executionProfileIds": exact_ids})
+                covered.update((identity, task["task"]) for identity in exact_ids)
+        if tasks:
+            exact_support.append({**row, "tasks": tasks})
+    if any((profile["id"], task) not in covered for profile in profiles for task in profile["modes"]):
+        raise ValueError("Evaluation authoring requires exact reviewed pipeline/task support.")
+    return {
+        "schemaVersion": 1, "scope": "expert-authoring",
+        "autoEligible": False, "templateEligible": False, "galleryEligible": False,
+        "executionProfiles": profiles, "pipelineSupport": exact_support,
+    }
+
+
 def resolve_operation(modules, contracts, selection):
     """Resolve one canonical operation into an existing ordinary node definition."""
     if not isinstance(selection, dict) or set(selection) != {"pipelineClass", "task", "operationId"}:

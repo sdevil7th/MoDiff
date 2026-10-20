@@ -1251,6 +1251,27 @@ These project the existing generic Modular configs, reviewed workflow adapters,
 standard image/video/audio/rendered-3D adapters and optional-runtime profiles.
 They do not add runtime actions or an alternate graph executor.
 
+An explicitly selected, exact reviewed evaluation installation can additionally
+publish `evaluationAuthoring`. This separate object has `schemaVersion: 1`,
+`scope: "expert-authoring"`, `autoEligible: false`, `templateEligible: false`,
+`galleryEligible: false`, `executionProfiles` and `pipelineSupport`. The arrays
+contain only the evaluation contract's selected private, unqualified profiles
+and their exact registered pipeline/task rows. Profiles retain `public: false`
+and `live_proof: false`; repository revision sidecars use the same immutable
+catalog binding described below. Each profile must match one private capability
+with the same model and default repository, and cannot replace a pipeline with
+public execution profiles. Search filters retain only matching model records
+and their profile/task links; no matching evaluation profiles means no namespace.
+
+The complete selected wheel and installed file census are verified before this
+projection. Invalid runtime, profile or task metadata fails closed. Ordinary
+release setup omits this object. It does not modify public execution profiles,
+runtime aggregates, Studio specifications, Auto, templates or Gallery eligibility.
+Clients may use it for explicit Expert graph authoring only. The ordinary starter
+and executor still revalidate the selected profile, immutable artifacts, runtime
+and resources. Discovery constructs no model/node, installs nothing and downloads
+nothing; this metadata is not live model or hardware proof.
+
 Image-producing execution profiles additionally publish `repository_revisions`
 when their declared `default_repo`, `fallback_repo` or `compatible_repos` have
 reviewed immutable catalog pins. This optional array contains at most 32 exact

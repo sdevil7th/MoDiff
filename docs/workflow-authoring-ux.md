@@ -21,6 +21,13 @@ route qualifies, the connected draft has an empty required model field. Select a
 model there before running. Run independently rechecks inputs and resources.
 Remembered selections are bounded local authoring preferences, not execution approval.
 
+An operator-selected reviewed evaluation installation may expose additional
+private models for explicit Expert authoring through the backend's separate
+`evaluationAuthoring` contract. Its exact private profiles and registered tasks
+remain unqualified and unavailable to Auto, templates and Gallery. Ordinary
+release discovery does not expose this namespace. Graph creation still uses the
+existing starter and nodes, with runtime and artifact checks repeated at execution.
+
 Composable routes expose meaningful independent nodes such as Load Models,
 Encode Prompt, Denoise and Decode Latents. Tasks can need additional image, mask,
 conditioning or audio operations. Whole-pipeline routes expose Generate/Edit
