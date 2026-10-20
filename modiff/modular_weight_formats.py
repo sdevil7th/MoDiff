@@ -227,6 +227,7 @@ class ResolvedWeightFormat:
     config: Path
     signature: tuple
     receipt: dict
+    execution_mode: str | None = None
 
     @property
     def contract(self):
@@ -269,12 +270,34 @@ class ResolvedWeightFormat:
         return {'transformer': quantization}, {'config': {'transformer': str(self.snapshot / 'transformer')},
                                                'local_files_only': True}
 
+    def apply_execution(self, pipeline, component):
+        if self.execution_mode is None:
+            return None
+        import diffusers
+        from diffusers.quantizers.bfl.bfl_quantizer import BFLQuantizer
+        from modiff.bfl_fp8_compatibility import install_owned_fallback
+
+        self.assert_current()
+        spec = pipeline._component_specs.get('transformer')
+        quantizer = getattr(component, 'hf_quantizer', None)
+        if (getattr(pipeline, '_modiff_weight_format_binding', None) is not self
+                or getattr(pipeline, 'transformer', None) is not None
+                or self.recipe['weightFormat'] != 'fp8r'
+                or type(component) is not getattr(diffusers, self.recipe['loaderClass'])
+                or spec is None or spec.pretrained_model_name_or_path != str(self.load_path)
+                or spec.revision != self.recipe['revision'] or spec.subfolder is not None
+                or getattr(component, '_diffusers_load_id', None) != spec.load_id
+                or type(quantizer) is not BFLQuantizer
+                or type(quantizer.quantization_config) is not diffusers.BFLQuantizationConfig):
+            raise ValueError('BFL FP8 compatibility requires its freshly loaded exact component owner.')
+        return install_owned_fallback(component, owner=pipeline, mode=self.execution_mode)
+
 
 def require_weight_format_execution(weight_format, execution_device):
-    """Refuse exact observed official Torch/device FP8r kernel failures.
+    """Select the official fallback for exact observed fused-kernel failures.
 
-    This is execution preflight only. It never changes a selected format or
-    turns absence of this one refusal into a hardware/Auto qualification.
+    This never changes the stored format or qualifies hardware/Auto. Other
+    runtimes keep their existing upstream execution, without a new grant.
     """
     if weight_format != 'fp8r' or execution_device is None:
         return
@@ -292,25 +315,16 @@ def require_weight_format_execution(weight_format, execution_device):
                 and getattr(torch.version, 'git_version', None) == '7e1940d4b11fd6128be4c42ba41567ec5ab87102'
                 and getattr(torch.cuda.get_device_properties(device), 'gcnArchName', None) == 'gfx1151'
                 and torch.cuda.get_device_capability(device) == (11, 5)):
-            raise ValueError(
-                'FP8r execution is unavailable on gfx1151 in this reviewed Linux Torch '
-                '2.9.1+rocm7.2.0.git7e1940d4 / HIP 7.2.26015-fc0010cf6a runtime: '
-                'the official BFL path selects torch._scaled_mm, which requires ROCm MI300+ in this build. '
-                'Keep the saved format or explicitly select another reviewed format/device/runtime; '
-                'no automatic conversion or format fallback was performed.'
-            )
+            from modiff.bfl_fp8_compatibility import FALLBACK_MODE
+            return FALLBACK_MODE
         return
     if (str(torch.__version__) != '2.11.0+cu128'
             or torch.version.cuda != '12.8'
             or getattr(torch.version, 'git_version', None) != '70d99e998b4955e0049d13a98d77ae1b14db1f45'):
         return
     if torch.cuda.get_device_capability(device) >= (8, 9):
-        raise ValueError(
-            'FP8r CUDA execution is unavailable in this reviewed Windows Torch 2.11.0+cu128 runtime: '
-            'the official rowwise FP8 kernel is not built for Windows. '
-            'Keep the saved format or explicitly select another reviewed format/device/runtime; '
-            'no automatic conversion or format fallback was performed.'
-        )
+        from modiff.bfl_fp8_compatibility import FALLBACK_MODE
+        return FALLBACK_MODE
 
 
 def resolve_weight_format(*, model_type, metadata, repository, revision, weight_format='native',
@@ -322,7 +336,7 @@ def resolve_weight_format(*, model_type, metadata, repository, revision, weight_
         raise ValueError('Select a weight format declared by this exact native pipeline.')
     if weight_format == 'native':
         return None
-    require_weight_format_execution(weight_format, execution_device)
+    execution_mode = require_weight_format_execution(weight_format, execution_device)
     if (weight_loading_mode != 'cpu'
             or any(item is not None for item in (quant_config, unet, vae, controlnet))):
         raise ValueError('Selected BFL formats require CPU loading without component overrides or extra quantization.')
@@ -351,4 +365,6 @@ def resolve_weight_format(*, model_type, metadata, repository, revision, weight_
     if _verification_callback is not None:
         _verification_callback.check()
     signature = (receipt['sha256'], str(weight), _stat(weight), str(config), _stat(config))
-    return ResolvedWeightFormat(recipe, snapshot, weight, config, signature, receipt)
+    if execution_mode is not None:
+        signature += (execution_mode,)
+    return ResolvedWeightFormat(recipe, snapshot, weight, config, signature, receipt, execution_mode)

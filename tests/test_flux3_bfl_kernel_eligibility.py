@@ -1,4 +1,4 @@
-"""Execution-only exact Torch/device refusals; hardware metadata is a fixture.
+"""Execution-only exact Torch/device compatibility; hardware metadata is a fixture.
 
 The real kernel counterexamples have separate CUDA/HIP receipts. These CPU
 tests use genuine cached tiny BFL owners and detect allocation/cleanup order.
@@ -25,7 +25,7 @@ def reviewed_torch_source(monkeypatch):
 
 
 @pytest.mark.parametrize('pair', weight_format_tests.PAIRS, ids=lambda row: row[0])
-def test_known_windows_fp8r_failure_refuses_before_weights_or_old_owner_cleanup(runtime, monkeypatch, pair):
+def test_known_windows_fp8r_compatibility_still_checks_bytes_before_weights_or_owner_cleanup(runtime, monkeypatch, pair):
     from diffusers import ComponentSpec
     baseline = bfl_tests.graph(pair, 'nvfp4')
     old = runtime.run(baseline)
@@ -34,6 +34,9 @@ def test_known_windows_fp8r_failure_refuses_before_weights_or_old_owner_cleanup(
     selected = deepcopy(baseline)
     selected['nodes']['models']['params']['weight_format'] = {'value': 'fp8r'}
     selected['nodes']['models']['params']['device'] = {'value': 'cuda:0'}
+    path = runtime.artifacts.snapshots[pair[0]] / 'variants/fp8r/model.safetensors'
+    with path.open('ab') as handle:
+        handle.write(b'changed')
     calls = []
 
     def no_allocation(spec, **kwargs):
@@ -45,7 +48,7 @@ def test_known_windows_fp8r_failure_refuses_before_weights_or_old_owner_cleanup(
     monkeypatch.setattr(torch.version, 'cuda', '12.8')
     monkeypatch.setattr(torch.cuda, 'get_device_capability', lambda device=None: (8, 9))
     monkeypatch.setattr(ComponentSpec, 'load', no_allocation)
-    with pytest.raises((ValueError, RuntimeError), match='Windows.*rowwise|rowwise.*Windows'):
+    with pytest.raises((ValueError, RuntimeError), match='weight-format bytes differ'):
         runtime.run(selected)
     assert calls == []
     assert owner() is not None and runtime.server.node_cache['models'].loader is owner()
@@ -73,14 +76,13 @@ def test_known_refusal_does_not_broaden_to_other_routes(monkeypatch, format, dev
 
 
 @pytest.mark.parametrize('capability', [(8, 9), (9, 0), (10, 0), (12, 0)])
-def test_windows_build_refusal_is_not_an_ada_hardware_claim(monkeypatch, capability):
+def test_windows_build_compatibility_is_not_an_ada_hardware_claim(monkeypatch, capability):
     from modiff.modular_weight_formats import require_weight_format_execution
     monkeypatch.setattr(sys, 'platform', 'win32')
     monkeypatch.setattr(torch, '__version__', '2.11.0+cu128')
     monkeypatch.setattr(torch.version, 'cuda', '12.8')
     monkeypatch.setattr(torch.cuda, 'get_device_capability', lambda value: capability)
-    with pytest.raises(ValueError, match='Windows.*rowwise|rowwise.*Windows'):
-        require_weight_format_execution('fp8r', 'cuda:0')
+    assert require_weight_format_execution('fp8r', 'cuda:0') == 'fp8-storage/per-layer-dequantized-linear'
 
 
 @pytest.mark.parametrize('version,cuda,commit', [
@@ -115,11 +117,10 @@ def _gfx1151_runtime(monkeypatch):
     monkeypatch.setattr(torch.cuda, 'get_device_properties', lambda value: SimpleNamespace(gcnArchName='gfx1151'))
 
 
-def test_known_gfx1151_fp8r_failure_is_actionably_refused(monkeypatch):
+def test_known_gfx1151_fp8r_failure_selects_official_storage_preserving_compatibility(monkeypatch):
     from modiff.modular_weight_formats import require_weight_format_execution
     _gfx1151_runtime(monkeypatch)
-    with pytest.raises(ValueError, match='gfx1151.*scaled_mm|scaled_mm.*gfx1151'):
-        require_weight_format_execution('fp8r', 'cuda:0')
+    assert require_weight_format_execution('fp8r', 'cuda:0') == 'fp8-storage/per-layer-dequantized-linear'
 
 
 @pytest.mark.parametrize('field,value', [
@@ -154,7 +155,7 @@ def test_gfx1151_refusal_does_not_claim_other_builds_devices_or_formats(monkeypa
 
 
 @pytest.mark.parametrize('pair', weight_format_tests.PAIRS, ids=lambda row: row[0])
-def test_known_gfx1151_fp8r_failure_precedes_weights_and_old_owner_cleanup(runtime, monkeypatch, pair):
+def test_known_gfx1151_fp8r_compatibility_still_checks_bytes_before_weights_and_owner_cleanup(runtime, monkeypatch, pair):
     from diffusers import ComponentSpec
     baseline = bfl_tests.graph(pair, 'nvfp4')
     old = runtime.run(baseline)
@@ -163,13 +164,16 @@ def test_known_gfx1151_fp8r_failure_precedes_weights_and_old_owner_cleanup(runti
     selected = deepcopy(baseline)
     selected['nodes']['models']['params']['weight_format'] = {'value': 'fp8r'}
     selected['nodes']['models']['params']['device'] = {'value': 'cuda:0'}
+    path = runtime.artifacts.snapshots[pair[0]] / 'variants/fp8r/model.safetensors'
+    with path.open('ab') as handle:
+        handle.write(b'changed')
     calls = []
     def no_allocation(spec, **kwargs):
         calls.append(spec.name)
         raise AssertionError('Selected weight allocation preceded the known HIP kernel refusal.')
     _gfx1151_runtime(monkeypatch)
     monkeypatch.setattr(ComponentSpec, 'load', no_allocation)
-    with pytest.raises((ValueError, RuntimeError), match='gfx1151.*scaled_mm|scaled_mm.*gfx1151'):
+    with pytest.raises((ValueError, RuntimeError), match='weight-format bytes differ'):
         runtime.run(selected)
     assert calls == []
     assert owner() is not None and runtime.server.node_cache['models'].loader is owner()

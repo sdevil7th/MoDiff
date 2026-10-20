@@ -108,18 +108,24 @@ recomputation. Keep the original 1024-square recipes: Distilled 16 steps and Bas
 50 steps with real CFG 3.5. Resource comparisons must be explicit user-visible
 instance changes; never silently shrink dimensions, steps or precision.
 
-The exact Windows Torch rowwise FP8r restriction is not a blanket FP8 hardware
-restriction and does not transfer to ROCm. A separate observed Linux restriction
-refuses FP8r before weight allocation and old-owner cleanup on the exact
+The preserved Windows Torch rowwise FP8r kernel failure is not a blanket FP8
+hardware restriction and does not transfer to ROCm. A separate genuine tiny
+Linux probe failed on the exact
 Torch `2.9.1+rocm7.2.0.git7e1940d4` source build
 `7e1940d4b11fd6128be4c42ba41567ec5ab87102`, HIP `7.2.26015-fc0010cf6a`,
 `gfx1151` device with capability `(11, 5)`. The official BFL FP8r linear selects
 `torch._scaled_mm`, whose installed implementation requires ROCm MI300+.
-This is a separate genuine tiny-kernel failure, not a blanket AMD refusal or a
-claim about other builds/devices. The same tiny probe produced finite NVFP4
-fallback output; that does not prove trained-model output or memory fit. No
-format fallback or saved-setting rewrite is performed. Test genuine quantized
-kernels before heavy allocation. Fused NVFP4 on Blackwell is a separate lane from fallback.
+This is not a blanket AMD refusal or a claim about other builds/devices. These
+native-kernel failures remain negative evidence. For the two exact reviewed
+runtime rows, MoDiff selects the [official BFL per-layer compatibility path](flux3-adapters.md):
+FP8 weights and row scales remain stored unchanged, while each linear temporarily
+dequantizes through the official helper into its recorded compute dtype. The
+mode `fp8-storage/per-layer-dequantized-linear` participates in execution/reuse
+identity. This is neither native FP8 GEMM nor a saved-format rewrite. The tiny
+FP8 compatibility and NVFP4 fallback probes do not prove trained-model output,
+speed, peak-memory savings, Auto fit or public qualification. Test the actual
+selected execution path before heavy allocation. Fused NVFP4 on Blackwell is a
+separate lane from fallback.
 Shared-memory AMD systems must account for CPU and GPU pressure together; CPU
 offload is not automatically lower-total-memory execution.
 

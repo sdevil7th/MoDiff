@@ -1137,6 +1137,8 @@ def _component_runtime_policy(name, policy):
         result['weight_loading_mode'] = 'cuda'
     if name == 'transformer' and 'weight_format_identity' in policy:
         result['weight_format_identity'] = policy['weight_format_identity']
+    if name == 'transformer' and policy.get('weight_format_execution_mode') is not None:
+        result['weight_format_execution_mode'] = policy['weight_format_execution_mode']
     return result
 
 
@@ -1725,6 +1727,9 @@ def load_components_strict(
                 component = spec.load(**load_kwargs)
             if weight_format_binding is not None and name == "transformer":
                 weight_format_binding.assert_current()
+                execution = weight_format_binding.apply_execution(pipeline, component)
+                if execution is not None:
+                    diagnostics['weight_format_execution'] = execution
             if staged:
                 if (type(component) is not spec.type_hint or getattr(component, 'hf_quantizer', None) is not None
                         or any(getattr(module, '_hf_hook', None) is not None for module in component.modules())
@@ -3292,6 +3297,8 @@ class ModelsLoader(NodeBase):
             raise ValueError('Selected weight-format bytes changed after cache validation; repair and retry.')
         if weight_binding is not None:
             runtime_policy['weight_format_identity'] = weight_binding.receipt['sha256']
+            if weight_binding.execution_mode is not None:
+                runtime_policy['weight_format_execution_mode'] = weight_binding.execution_mode
         requested_offload_mode = offload_mode
         offload_mode = normalize_offload_mode(
             offload_mode,

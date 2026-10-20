@@ -70,11 +70,28 @@ exercise reference dequantization rather than accelerated CUDA kernels. No
 public adapter-authoring, Auto, template, trained model, hardware-fit or
 image-quality qualification is implied.
 
-Weight-format execution preflight also refuses exact observed official kernel
-failures before allocating selected weights or cleaning up an existing owner.
-The reviewed Linux Torch/HIP `gfx1151` FP8r restriction and its narrow scope are
-documented in [cross-platform validation](image-cross-platform-validation.md).
-It leaves NVFP4 and native formats unchanged and never converts an authored format.
+For the exact reproduced Windows Torch `2.11.0+cu128` / CUDA 12.8 build
+`70d99e998b4955e0049d13a98d77ae1b14db1f45` with capability 8.9 or newer, and
+Linux Torch `2.9.1+rocm7.2.0.git7e1940d4` / HIP `7.2.26015-fc0010cf6a` build
+`7e1940d4b11fd6128be4c42ba41567ec5ab87102` on `gfx1151` / capability `(11, 5)`,
+MoDiff selects the documented official BFL per-layer fallback. The execution
+mode is `fp8-storage/per-layer-dequantized-linear`; its actual compute dtype is
+recorded separately. The original FP8 parameter, FP32 row scales, official
+quantizer and exact layer class remain intact. Each forward uses Diffusers'
+`dequantize_fp8r` and ordinary `torch.nn.functional.linear`, before the temporary
+weight is released. Activations are not FP8-quantized on this path. This follows
+the [official BFL compatibility behavior](https://huggingface.co/docs/diffusers/main/en/quantization/bfl),
+not a conversion to another checkpoint or a native FP8 GEMM claim.
+
+The adapter is installed only on a freshly loaded exact owned transformer,
+before offload and PEFT hooks. Existing forward/hook mutations, another owner
+and incompatible schemes are refused. The mode participates in loader and
+component reuse identity; artifact, source, LoRA and placement checks remain
+required. Unknown runtime rows retain their existing upstream execution and
+do not borrow this compatibility selection. Native and NVFP4 storage are
+unchanged. The transient FP32 dequantization and compute-dtype weight can add
+peak memory: this does not establish faster execution, half peak memory, Auto
+fit, public template eligibility or trained output on either host.
 
 `tests/test_flux3_native_lora.py` exercises the ordinary source graph and loader
 with genuine tiny official CPU components. Only component acquisition is
