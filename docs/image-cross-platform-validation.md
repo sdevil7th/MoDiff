@@ -109,8 +109,17 @@ recomputation. Keep the original 1024-square recipes: Distilled 16 steps and Bas
 instance changes; never silently shrink dimensions, steps or precision.
 
 The exact Windows Torch rowwise FP8r restriction is not a blanket FP8 hardware
-restriction and does not transfer to ROCm. Test genuine quantized kernels before
-heavy allocation. Fused NVFP4 on Blackwell is a separate lane from fallback.
+restriction and does not transfer to ROCm. A separate observed Linux restriction
+refuses FP8r before weight allocation and old-owner cleanup on the exact
+Torch `2.9.1+rocm7.2.0.git7e1940d4` source build
+`7e1940d4b11fd6128be4c42ba41567ec5ab87102`, HIP `7.2.26015-fc0010cf6a`,
+`gfx1151` device with capability `(11, 5)`. The official BFL FP8r linear selects
+`torch._scaled_mm`, whose installed implementation requires ROCm MI300+.
+This is a separate genuine tiny-kernel failure, not a blanket AMD refusal or a
+claim about other builds/devices. The same tiny probe produced finite NVFP4
+fallback output; that does not prove trained-model output or memory fit. No
+format fallback or saved-setting rewrite is performed. Test genuine quantized
+kernels before heavy allocation. Fused NVFP4 on Blackwell is a separate lane from fallback.
 Shared-memory AMD systems must account for CPU and GPU pressure together; CPU
 offload is not automatically lower-total-memory execution.
 

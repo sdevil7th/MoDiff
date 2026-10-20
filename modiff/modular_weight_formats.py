@@ -271,7 +271,7 @@ class ResolvedWeightFormat:
 
 
 def require_weight_format_execution(weight_format, execution_device):
-    """Refuse the known official Windows Torch 2.11 rowwise kernel omission.
+    """Refuse exact observed official Torch/device FP8r kernel failures.
 
     This is execution preflight only. It never changes a selected format or
     turns absence of this one refusal into a hardware/Auto qualification.
@@ -279,11 +279,28 @@ def require_weight_format_execution(weight_format, execution_device):
     if weight_format != 'fp8r' or execution_device is None:
         return
     import sys
-    if sys.platform != 'win32':
+    if sys.platform not in {'win32', 'linux'}:
         return
     import torch
     device = torch.device(execution_device)
-    if (device.type != 'cuda' or str(torch.__version__) != '2.11.0+cu128'
+    if device.type != 'cuda':
+        return
+    if sys.platform == 'linux':
+        if (str(torch.__version__) == '2.9.1+rocm7.2.0.git7e1940d4'
+                and torch.version.cuda is None
+                and getattr(torch.version, 'hip', None) == '7.2.26015-fc0010cf6a'
+                and getattr(torch.version, 'git_version', None) == '7e1940d4b11fd6128be4c42ba41567ec5ab87102'
+                and getattr(torch.cuda.get_device_properties(device), 'gcnArchName', None) == 'gfx1151'
+                and torch.cuda.get_device_capability(device) == (11, 5)):
+            raise ValueError(
+                'FP8r execution is unavailable on gfx1151 in this reviewed Linux Torch '
+                '2.9.1+rocm7.2.0.git7e1940d4 / HIP 7.2.26015-fc0010cf6a runtime: '
+                'the official BFL path selects torch._scaled_mm, which requires ROCm MI300+ in this build. '
+                'Keep the saved format or explicitly select another reviewed format/device/runtime; '
+                'no automatic conversion or format fallback was performed.'
+            )
+        return
+    if (str(torch.__version__) != '2.11.0+cu128'
             or torch.version.cuda != '12.8'
             or getattr(torch.version, 'git_version', None) != '70d99e998b4955e0049d13a98d77ae1b14db1f45'):
         return

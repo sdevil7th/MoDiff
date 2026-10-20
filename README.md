@@ -386,6 +386,8 @@ For the current task browser, picker behavior and qualification limits, see
 [Workflow authoring and model selection](docs/workflow-authoring-ux.md).
 Exact reviewed evaluation installations can expose separate private Expert
 authoring metadata; public model and qualification boundaries remain explicit.
+Execution preflight rejects the exact recorded device/kernel failures described
+in [cross-platform validation](docs/image-cross-platform-validation.md).
 See [audio workflow stages](docs/audio-workflows.md) for generation, transcription,
 audio processing, selected adapters and playback.
 

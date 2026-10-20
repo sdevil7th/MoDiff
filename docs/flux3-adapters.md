@@ -67,6 +67,12 @@ exercise reference dequantization rather than accelerated CUDA kernels. No
 public adapter-authoring, Auto, template, trained model, hardware-fit or
 image-quality qualification is implied.
 
+Weight-format execution preflight also refuses exact observed official kernel
+failures before allocating selected weights or cleaning up an existing owner.
+The reviewed Linux Torch/HIP `gfx1151` FP8r restriction and its narrow scope are
+documented in [cross-platform validation](image-cross-platform-validation.md).
+It leaves NVFP4 and native formats unchanged and never converts an authored format.
+
 `tests/test_flux3_native_lora.py` exercises the ordinary source graph and loader
 with genuine tiny official CPU components. Only component acquisition is
 substituted. It deliberately stops before image stages and trained media;
