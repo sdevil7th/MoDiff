@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 
 import torch
 from diffusers import Flux2KleinModularPipeline
-from modiff.component_bundle_contracts import qwen_t2i_bundle_input_param
+from modiff.component_bundle_contracts import qwen_t2i_bundle_input_param, with_qwen_t2i_bundle_contract
 from modiff.model_artifact_catalog import resolve_model_revision
 from modiff.operation_contracts import MODULAR_STAGE_OPERATIONS, build_modular_operation_contracts
 from modiff.modular_contract_only_registry import (
@@ -2332,7 +2332,10 @@ _MODIFF_NODE_ACTION_LABELS = {stage: operation.label for stage, operation in MOD
 def get_modular_operation_contracts(modules):
     """Describe registered generic stages without resolving executable blocks."""
     configs = {pipeline.__name__: config for pipeline, config in _get_registry_instance().get_all().items()}
-    return build_modular_operation_contracts(configs, modules)
+    # A declared wrapper transport can still require reviewed task publication.
+    # Keep the same facade policy for these unscoped records as for task records.
+    return [with_qwen_t2i_bundle_contract(contract)
+            for contract in build_modular_operation_contracts(configs, modules)]
 
 
 def require_modiff_node_contract(pipeline_class, node_type, *, require_blocks=True, resolve_blocks=True):

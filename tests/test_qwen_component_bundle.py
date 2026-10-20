@@ -338,6 +338,20 @@ def test_authoritative_wrapper_transport_round_trip_preserves_block_dependencies
         assert node == prior.node_params[stage]
 
 
+@pytest.mark.parametrize("stage", QWEN_T2I_BUNDLE_INPUTS)
+def test_unscoped_stage_defers_facade_without_mutating_authoritative_schema(stage):
+    from modules.ModularDiffusers.modular_utils import get_model_type_metadata, get_modular_operation_contracts
+
+    before = deepcopy(get_model_type_metadata(PIPELINE)["node_params"][stage])
+    contracts = get_modular_operation_contracts(MODULE_MAP)
+    contract = next(row for row in contracts if row["pipelineClass"] == PIPELINE and row["nodeType"] == stage)
+    assert contract["task"] is None
+    assert not any(port["direction"] == "input" and port["name"] == "pipeline_components"
+                   for port in contract["ports"])
+    assert "pipeline_components" in before["params"]
+    assert get_model_type_metadata(PIPELINE)["node_params"][stage] == before
+
+
 def test_only_reviewed_text_to_image_task_publishes_or_resolves_the_facade_input():
     from modiff.operation_catalog import resolve_operation
 

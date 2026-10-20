@@ -1501,7 +1501,10 @@ are never an alternate executable graph format or an execution receipt.
 
 Stage operation ports include explicitly declared wrapper inputs as well as
 upstream block inputs, model components and outputs. Wrapper transports remain
-outside upstream block argument lists. Native starter drafts preserve exact
+outside upstream block argument lists and retain their existing task publication
+policy. For example, the optional Qwen component facade is published only for its
+reviewed text-to-image task, not unscoped stage discovery or other tasks.
+Native starter drafts preserve exact
 declared stage-to-stage specification edges, including wrapper binding signals;
 they do not infer tensor or conditioning compatibility. A consumed Guider socket
 publishes its ordinary helper only when the selected pipeline config declares
