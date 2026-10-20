@@ -173,6 +173,9 @@ fixtures for EXIF rotation, alpha, grayscale, odd dimensions, batch order,
 invalid/corrupt/oversized files and path containment. Assert exact pixels or
 documented numeric tolerances where deterministic. Learned depth/upscale nodes
 also need real pinned-model output and visual assessment.
+For Resize's stretch, cover, contain, fit and pad methods, compare every offered
+interpolation against Pillow pixels. Named nearest, box, bilinear, hamming and
+lanczos selections must reach the requested filter; bicubic remains the default.
 
 Six FLUX3 Gallery candidates remain a separate deliverable: Distilled T2I,
 Base T2I, Distilled reference edit, Base reference edit, trained LoRA, and optional
