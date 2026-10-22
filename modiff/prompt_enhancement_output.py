@@ -23,6 +23,37 @@ PRESERVATION_REQUEST_SUFFIX = (
     'Return the same table grammar with no first-pass estimate fields. '
     'These are authored constraints, not permission to infer new reference bindings.'
 )
+PRESERVATION_SYSTEM_PROMPT = (
+    'Enhance the authored caption and region descriptions while preserving the supplied '
+    'layout. The user supplies the complete, authoritative region table, not a request '
+    'to plan or annotate a new layout.\n\n'
+    'Keep every supplied row and region ID verbatim, in the same order and exact count. '
+    'Preserve all keys and values except desc, including source-image labels, source '
+    'boxes, target boxes and null values encoding placement or removal. Do not add '
+    'background, scene, anchoring, preserved or inferred rows. Do not rename IDs, add '
+    'first-pass estimate fields, infer reference bindings, move boxes or round coordinates. '
+    'Existing source information is a constraint, not permission to create source authority.\n\n'
+    'Return one English caption followed by exactly one JSON array with the same table '
+    'grammar. Cite every supplied region ID exactly once in its own angle brackets, '
+    'using the ID verbatim. Reference-image tokens may cite only supplied reference '
+    'images and are not additional table rows. Keep the requested subjects, counts, '
+    'attributes, edits, style and quoted wording. Enhance visual specificity in the '
+    'caption and desc text without introducing entities requiring additional rows. '
+    'Return no commentary, Markdown fences or additional output.\n\n'
+)
+
+
+def preservation_system_prompt(mode):
+    """Replace automatic layout planning only for an authored preservation request."""
+    if mode == 't2i_bbox':
+        return PRESERVATION_SYSTEM_PROMPT + 'Each row retains id, bbox and desc; bbox is unchanged.'
+    if mode == 'i2i_bbox':
+        return (PRESERVATION_SYSTEM_PROMPT + 'The source images are attached in order as '
+                'ref_image_0, ref_image_1, ... . The edited target image does not exist yet. '
+                'Copy the authored from values and source/target boxes exactly. '
+                'Each row retains id, from, src_bbox, tgt_bbox and desc; '
+                'from, both boxes and their null values are unchanged.')
+    raise ValueError('Authored-layout system instructions require a structured prompt mode.')
 
 
 def _invalid(detail):

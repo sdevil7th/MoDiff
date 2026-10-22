@@ -21,6 +21,10 @@ for _variant in ('flux3-klein', 'flux3-klein-base'):
             **PRIVATE_PARENTS[f'{_variant}:{_mode}:prompt-preview-authoring:v1'],
             'layoutPolicy': 'preserve-authored-v1',
         }
+PRIVATE_PARENTS['flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1'] = {
+    **PRIVATE_PARENTS['flux3-klein:text-to-image:prompt-preview-authoring:v1'],
+    'providerRecipe': 'fp32-none',
+}
 PARENT_KEYS = ('authoringRecipeId', 'baseSpecId', 'baseSpecContentHash',
                'executionProfileId', 'pipelineClass', 'task')
 ID = re.compile(r'[A-Za-z0-9][A-Za-z0-9._:-]{0,127}')
@@ -202,7 +206,10 @@ def adapter_verification(adapter, binding, runtime_inputs, request_inputs, layou
     if layout_policy is not None:
         if layout_policy != 'preserve-authored-v1':
             raise invalid('unsupported authored-layout preservation policy.')
+        from modiff.prompt_enhancement import request_system_prompt
         result.update(supportedPromptModes=['t2i', 'i2i', 't2i_bbox', 'i2i_bbox'],
+            systemPromptSha256ByMode={mode: hashlib.sha256(request_system_prompt(prompts, mode).encode('utf-8')).hexdigest()
+                                     for mode in prompts},
             layoutRequestSuffixSha256='sha256:' + hashlib.sha256(PRESERVATION_REQUEST_SUFFIX.encode('utf-8')).hexdigest())
     return result
 
@@ -305,10 +312,11 @@ def ancillary_operations_for_parent(modules, payload, selection, role_params):
     if 'layoutPolicy' in expected:
         result['layoutPolicy'] = expected['layoutPolicy']
     if expected['task'] == 'text_to_image':
+        fp32 = expected.get('providerRecipe') == 'fp32-none'
         result['initialValues'].extend([
-            (runtime_inputs['role'], runtime_inputs['dtypeField'], 'bfloat16'),
+            (runtime_inputs['role'], runtime_inputs['dtypeField'], 'float32' if fp32 else 'bfloat16'),
             (runtime_inputs['role'], runtime_inputs['deviceField'], 'cuda:0'),
-            (runtime_inputs['role'], runtime_inputs['quantizationField'], 'bnb_4bit'),
+            (runtime_inputs['role'], runtime_inputs['quantizationField'], 'none' if fp32 else 'bnb_4bit'),
             (request_inputs['role'], request_inputs['maxInputTokensField'], 4096),
         ])
     result['contentHash'] = 'studio-ancillary-v1-' + _hash_string(_stable_json(result))
@@ -676,6 +684,11 @@ def _validate_execution_purpose(graph, modules):
             raise invalid('provider differs from the immutable adapter artifact.')
         if 'pipeline_class' in provider['params'] and literal(provider, 'pipeline_class') != 'AutoModelForImageTextToText':
             raise invalid('wrong official provider factory.')
+        if PRIVATE_PARENTS[claim['authoringRecipeId']].get('providerRecipe') == 'fp32-none':
+            for role, name, expected_value in contract['initialValues']:
+                actual_value = literal(nodes[children[role]], name)
+                if type(actual_value) is not type(expected_value) or actual_value != expected_value:
+                    raise invalid('declared FP32 Preview input selection changed.')
         if literal(proposal, 'operation') != 'enhance_prompt':
             raise invalid('proposal operation is not selected.')
         video = proposal['params'].get('video', {})

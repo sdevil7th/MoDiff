@@ -175,6 +175,14 @@ def validate_cached_selection(selection, revision, task):
     return snapshot
 
 
+def request_system_prompt(prompts, mode):
+    """Keep plain publisher instructions; structured v2 preserves authored rows."""
+    if mode in ('t2i_bbox', 'i2i_bbox'):
+        from modiff.prompt_enhancement_output import preservation_system_prompt
+        return preservation_system_prompt(mode)
+    return prompts[mode]
+
+
 def prepare_request(processor, prompts, authored, images, layout):
     """Render actual ordered media and authored target regions without mutation."""
     from modules.HuggingFaceTransformers import main as nodes
@@ -193,7 +201,7 @@ def prepare_request(processor, prompts, authored, images, layout):
     else:
         user = resolve_layout_prompt(authored, parsed) if parsed is not None else authored
     content = [{'type': 'image'} for _ in images] + [{'type': 'text', 'text': user}]
-    messages = [{'role': 'system', 'content': prompts[mode]}, {'role': 'user', 'content': content}]
+    messages = [{'role': 'system', 'content': request_system_prompt(prompts, mode)}, {'role': 'user', 'content': content}]
     rendered = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True, enable_thinking=False)
     nodes._bounded_string(rendered, field='rendered prompt', maximum_characters=nodes.MAX_RENDERED_PROMPT_CHARACTERS,
                           maximum_bytes=nodes.MAX_PROMPT_UTF8_BYTES * 2)
@@ -300,7 +308,7 @@ def _consumed_projection(contract, prompts, mode, rendered, images, batch, limit
     fields = {
         'operation': 'enhance_prompt', 'enhancement_max_new_tokens': limit,
         'prompt_adapter_id': contract['id'], 'system_prompt_mode': mode,
-        'system_prompt_sha256': hashlib.sha256(prompts[mode].encode()).hexdigest(),
+        'system_prompt_sha256': hashlib.sha256(request_system_prompt(prompts, mode).encode()).hexdigest(),
         'rendered_prompt_sha256': 'sha256:' + hashlib.sha256(rendered.encode()).hexdigest(),
         'rendered_prompt_utf8_bytes': len(rendered.encode()),
         'rendered_input_ids_sha256': _tensor_fingerprint(batch['input_ids'], observer),
@@ -496,7 +504,7 @@ def generate(node, model, processor, receipt, kwargs):
               'semanticFidelityVerified': False,
               'inputTokens': input_tokens, 'generatedTokens': count, 'inputImageCount': len(images),
               'mediaPixels': pixels, 'systemPromptMode': mode,
-              'systemPromptSha256': hashlib.sha256(prompts[mode].encode()).hexdigest(),
+              'systemPromptSha256': hashlib.sha256(request_system_prompt(prompts, mode).encode()).hexdigest(),
               'adapter': contract['id'], 'modelReceipt': receipt, 'consumedInput': consumed,
               'layoutConditioning': deepcopy(layout),
               'layoutOutputValidated': False if mode.endswith('_bbox') else None,

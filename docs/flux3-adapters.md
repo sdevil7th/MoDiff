@@ -126,9 +126,16 @@ source reference binding, source/target box and action, changing only caption an
 description text. Native IDs map by exact authored ID or a unique exact
 source-index/boxes/action signature; additions, omissions, ambiguity, unsupported
 operator fields and non-grid coordinates refuse Apply. No geometry is rounded.
-The pinned publisher system prompts stay unchanged. A separately hash-declared
-preservation request suffix constrains this request without granting reference
-authority. Version-two proposals retain both raw native caption/table and the
+The pinned publisher system-prompt file stays unchanged. Plain requests and v1
+declarations retain its exact prompts and hashes. For v2 authored layouts, a
+separate authoritative system instruction replaces automatic ID/row generation:
+the supplied table is complete, IDs and all geometry/source/action values stay
+fixed, and no scene, anchoring or preserved-background rows may be added. Both
+preallocation and generation fingerprint the actual composed system instruction;
+v2 verification metadata declares those same per-mode hashes. Existing v2 drafts
+must explicitly rebind to the updated declaration rather than silently adopting
+a new hash. The separately hash-declared preservation request suffix grants no
+reference authority. Version-two proposals retain both raw native caption/table and the
 mapped caption so the client and bound summary independently check the mapping.
 The declaration's `sourceRegions: false` continues to prohibit creating source
 regions or issuing reference identities. `layoutPolicy` permits only retaining
@@ -136,6 +143,15 @@ already authored source DTOs; the ordinary downstream encoder still checks their
 current reference binding before diffusion execution.
 Apply remains explicit and atomic under the existing stale/source/scope guards.
 Software fixtures do not establish successful trained structured output.
+
+The separate private Distilled text-only recipe
+`flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1` fixes the existing
+provider to FP32, no quantization, `cuda:0` and 4096 input tokens. It retains the
+ordinary parent graph and Preview executor, with no reference-image route.
+Select this exact current declaration through normal authoring/import; changing
+the fixed NF4/BF16 literals in an older T2I recipe does not select it. Its provider
+and request literals are enforced before Preview; all older v1/v2 declarations
+remain unchanged. This private recipe is not Auto, hardware or native T2I proof.
 
 Reviewed prompt enhancement checks each generation score row through the official
 Transformers logits-processor interface. NaN, positive infinity or a row with no

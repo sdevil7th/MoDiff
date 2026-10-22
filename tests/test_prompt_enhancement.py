@@ -151,7 +151,7 @@ def test_actual_processor_renders_all_four_pinned_modes_and_refuses_drift(actual
                                       (0, layout, 't2i_bbox'), (2, layout, 'i2i_bbox')]:
         images = [Image.new('RGB', (256, 256), 'red')] * count
         mode, rendered, parsed = adapter.prepare_request(processor, prompts, 'Cube <cube_1>.', images, supplied)
-        assert mode == expected and prompts[expected] in rendered
+        assert mode == expected and adapter.request_system_prompt(prompts, expected) in rendered
         assert (parsed is None) == (supplied is None)
         kwargs = {'text': rendered, 'return_tensors': 'pt'}
         if images:

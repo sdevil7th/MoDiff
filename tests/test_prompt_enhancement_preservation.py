@@ -86,3 +86,68 @@ def test_preservation_request_keeps_raw_structured_conflict_and_finite_budget_gu
         preservation_request('x' * 1048550 + '<authored_circle>', LAYOUT, 1)
     with pytest.raises(ValueError, match='actual supplied image'):
         preservation_request('Move <authored_circle>.', LAYOUT, 0)
+
+
+@pytest.mark.parametrize('image_count', [0, 1])
+def test_structured_system_does_not_compete_with_the_authored_region_table(image_count):
+    from modiff import prompt_enhancement as adapter
+
+    class Processor:
+        def apply_chat_template(self, messages, **_kwargs):
+            self.messages = deepcopy(messages)
+            return json.dumps(messages)
+
+    _raw, prompts = adapter._json_file(adapter.SYSTEM_PROMPTS, 32 * 1024)
+    layout = {'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': [{
+        'id': 'fox', 'description': 'A fox.', 'action': 'place', 'targetBox': [.2, .2, .8, .8]}]}
+    before = deepcopy(layout)
+    processor = Processor()
+    mode, _rendered, parsed = adapter.prepare_request(
+        processor, prompts, 'A single <fox> with a blue scarf.', [object()] * image_count, layout)
+    system = processor.messages[0]['content']
+    assert 'class noun plus an index' not in system
+    assert 'one row per' not in system
+    assert 'Keep every supplied row and region ID verbatim' in system
+    assert prompts[mode] not in system
+    if image_count:
+        assert 'attached in order as ref_image_0, ref_image_1, ...' in system
+        assert 'target image does not exist yet' in system
+        assert 'Copy the authored from values and source/target boxes exactly' in system
+    else:
+        assert 'attached in order' not in system
+    assert processor.messages[1]['content'][-1]['text'] == preservation_request(
+        'A single <fox> with a blue scarf.', layout, image_count)
+    assert parsed == layout == before
+
+
+@pytest.mark.parametrize('image_count,structured', [(0, False), (1, False), (0, True), (1, True)])
+def test_rendered_system_and_shared_preallocation_generation_fingerprint_agree(image_count, structured):
+    import hashlib
+    from types import SimpleNamespace
+
+    import torch
+    from PIL import Image
+    from modiff import prompt_enhancement as adapter
+
+    class Processor:
+        def apply_chat_template(self, messages, **_kwargs):
+            self.messages = deepcopy(messages)
+            return json.dumps(messages)
+
+    _raw, prompts = adapter._json_file(adapter.SYSTEM_PROMPTS, 32 * 1024)
+    layout = {'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': [{
+        'id': 'fox', 'description': 'A fox.', 'action': 'place', 'targetBox': [.2, .2, .8, .8]}]} if structured else None
+    images = [Image.new('RGB', (2, 2), 'red')] * image_count
+    processor = Processor()
+    mode, rendered, _parsed = adapter.prepare_request(processor, prompts, 'A single <fox>.', images, layout)
+    batch = {'input_ids': torch.tensor([[1, 2]], dtype=torch.int64)}
+    if image_count:
+        batch.update(image_grid_thw=torch.tensor([[1, 1, 1]], dtype=torch.int64),
+                     pixel_values=torch.zeros((1, 3), dtype=torch.float32))
+    # Both normal preallocation and generation use this exact shared projection.
+    fields, consumed = adapter._consumed_projection(
+        {'id': 'test-adapter'}, prompts, mode, rendered, images, batch, 32, SimpleNamespace(check=lambda: None))
+    actual = processor.messages[0]['content']
+    assert fields['system_prompt_sha256'] == hashlib.sha256(actual.encode('utf-8')).hexdigest()
+    assert consumed['fingerprints'] == fields
+    assert (actual == prompts[mode]) is (not structured)

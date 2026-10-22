@@ -2,6 +2,7 @@
 from copy import deepcopy
 from pathlib import Path
 import asyncio
+import hashlib
 import json
 from types import SimpleNamespace
 import pytest
@@ -394,9 +395,64 @@ def test_legacy_plain_parent_dto_and_both_hashes_stay_exact(modules):
     assert parent_for(modules, 1)['ancillaryOperations'][0]['contentHash'] == 'studio-ancillary-v1-95fc4619'
 
 
+def test_explicit_fp32_t2i_parent_is_available_without_rewriting_the_legacy_recipe(modules):
+    from modiff.ancillary_execution import resolve_parent
+    parent = resolve_parent(modules, 'flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1')
+    child = parent['ancillaryOperations'][0]
+    values = {(role, field): value for role, field, value in child['initialValues']}
+    assert values['provider', 'dtype'] == 'float32'
+    assert values['provider', 'device'] == 'cuda:0'
+    assert values['provider', 'quantization_mode'] == 'none'
+    assert values['proposal', 'max_input_tokens'] == 4096
+    assert child['bindings']['owner']['referenceSource'] is None
+    assert child['verification']['supportedPromptModes'] == ['t2i', 'i2i']
+
+
+def test_explicit_fp32_preview_dispatch_rejects_changed_fixed_inputs(modules):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, validate_execution_purpose
+    index = list(PRIVATE_PARENTS).index('flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1')
+    value, parent = preview_graph(modules, index)
+    declaration = parent['ancillaryOperations'][0]
+    roles = value['runtimeHints']['executionPurpose']['bindings'][0]['roleNodes']
+    for role, field, selected in declaration['initialValues']:
+        value['nodes'][roles[role]]['params'][field] = {'value': deepcopy(selected)}
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    for role, field, wrong in [('provider', 'dtype', 'bfloat16'),
+                                ('provider', 'quantization_mode', 'bnb_4bit'),
+                                ('provider', 'device', 'cpu'),
+                                ('proposal', 'max_input_tokens', 4095),
+                                ('proposal', 'max_input_tokens', 4096.0)]:
+        changed = deepcopy(value)
+        changed['nodes'][roles[role]]['params'][field] = {'value': wrong}
+        before = deepcopy(changed)
+        with pytest.raises(ValueError, match='FP32 Preview input selection changed'):
+            validate_execution_purpose(changed, modules)
+        assert changed == before
+
+
+def test_fp32_variant_preserves_all_eight_prior_full_dtos(modules):
+    from modiff.ancillary_execution import resolve_parent
+    # Captured from the reviewed structured-system source before adding FP32 T2I.
+    expected = {
+        'flux3-klein:text-to-image:prompt-preview-authoring:v1': '32aeb04804192951ed52461ef8b6621971f0f1776b39f322eeeadd5977433f94',
+        'flux3-klein:edit-image:prompt-preview-authoring:v1': 'dd9307b5470dac4d1455edf9c98df788f1b2ced8454e4c38d98de0d4ccb5697c',
+        'flux3-klein-base:text-to-image:prompt-preview-authoring:v1': '29b9708b61b0115653417e7be2869b0073981bce6f67642cd95ea5342a09334c',
+        'flux3-klein-base:edit-image:prompt-preview-authoring:v1': '6e8299402d516df85f342a3ce80b723f22b73dc130f1666e6e72c75176c1d96b',
+        'flux3-klein:text-to-image:prompt-preview-authoring:v2': '40483e6dc13a6b9aaf07584b6e8da06e1adab50fe765b110bfd3ec8dc344df12',
+        'flux3-klein:edit-image:prompt-preview-authoring:v2': '8fae8fa3fbdc874b578356728a2a67451802a3775f67ba82a0c5938231b6ea88',
+        'flux3-klein-base:text-to-image:prompt-preview-authoring:v2': 'f783677c6f19ae45054bd7c19052b387899056851246b21ac91e95e7719b57c0',
+        'flux3-klein-base:edit-image:prompt-preview-authoring:v2': '1bb43007634b0a74f0dbe44868859abe346a6806e6c3364060d2c3ee18c0e665',
+    }
+    for identity, digest in expected.items():
+        dto = resolve_parent(modules, identity)
+        assert hashlib.sha256(json.dumps(dto, sort_keys=True, ensure_ascii=False,
+            separators=(',', ':')).encode('utf-8')).hexdigest() == digest
+
+
 @pytest.mark.parametrize('index', range(4))
 def test_versioned_preservation_is_distinct_and_legacy_preview_still_refuses_layout(modules, index):
     from modiff.ancillary_execution import validate_execution_purpose
+    from modiff import prompt_enhancement as adapter
     legacy, structured = parent_for(modules, index), parent_for(modules, index + 4)
     for key in ('baseSpecId', 'baseSpecContentHash', 'executionProfileIds', 'roles', 'edges', 'bindings', 'initialValues'):
         assert legacy[key] == structured[key]
@@ -406,6 +462,12 @@ def test_versioned_preservation_is_distinct_and_legacy_preview_still_refuses_lay
     assert child['layoutPolicy'] == 'preserve-authored-v1'
     assert child['verification']['supportedPromptModes'] == ['t2i', 'i2i', 't2i_bbox', 'i2i_bbox']
     assert child['verification']['layoutRequestSuffixSha256'].startswith('sha256:')
+    _raw, prompts = adapter._json_file(adapter.SYSTEM_PROMPTS, 32 * 1024)
+    assert legacy['ancillaryOperations'][0]['verification']['systemPromptSha256ByMode'] == {
+        mode: hashlib.sha256(text.encode('utf-8')).hexdigest() for mode, text in prompts.items()}
+    assert child['verification']['systemPromptSha256ByMode'] == {
+        mode: hashlib.sha256(adapter.request_system_prompt(prompts, mode).encode('utf-8')).hexdigest()
+        for mode in prompts}
     value, _ = preview_graph(modules, index)
     value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
         'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': []}
