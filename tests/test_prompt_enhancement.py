@@ -160,14 +160,14 @@ def test_actual_processor_renders_all_four_pinned_modes_and_refuses_drift(actual
         assert batch['input_ids'].shape[0] == 1
         assert ('pixel_values' in batch) == bool(count)
         if supplied:
-            assert '"bbox":[200,100,500,400]' in rendered
+            assert ('"tgt_bbox"' if count else '"bbox"') + ':[200,100,500,400]' in rendered
     assert layout == baseline
     with pytest.raises(ValueError, match='at most ten'):
         adapter.prepare_request(processor, prompts, 'A cube.', [Image.new('RGB', (16, 16))] * 11, None)
     with_source = deepcopy(layout)
     with_source['regions'][0]['source'] = {'referenceIndex': 0, 'box': [.1, .2, .4, .5]}
-    with pytest.raises(ValueError, match='reference-identity'):
-        adapter.prepare_request(processor, prompts, 'Cube <cube_1>.', [Image.new('RGB', (16, 16))], with_source)
+    mode, rendered, parsed = adapter.prepare_request(processor, prompts, 'Cube <cube_1>.', [Image.new('RGB', (16, 16))], with_source)
+    assert mode == 'i2i_bbox' and parsed == with_source and '"src_bbox":[200,100,500,400]' in rendered
     for source in ({'kind': 'hub', 'repository': REPOSITORY, 'revision': '0' * 40},
                    {'kind': 'local', 'path': 'not-authority'}):
         changed = deepcopy(receipt)

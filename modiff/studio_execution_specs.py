@@ -18818,7 +18818,9 @@ def resolve_studio_operation_authoring_recipe(
     # A genuine starter Guider owns CFG. The separate FLUX denoiser scalar is
     # an embedded guidance value and is seeded only by its exact recipe above.
     guiders = [node for node in starter["nodes"] if node["operation"]["operationId"] == "diffusion.guidance"]
-    if guiders:
+    # Private ancillary parents already declare their exact Guider role/binding.
+    # Retain that immutable recipe rather than appending the generic projection.
+    if guiders and definition.get("ancillaryPreview") is not True:
         if len(guiders) != 1:
             raise ValueError("The authoring recipe requires one guidance owner.")
         guidance = guiders[0]

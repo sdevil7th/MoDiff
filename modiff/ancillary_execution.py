@@ -14,6 +14,13 @@ PRIVATE_PARENTS = {
                               ('flux3-klein-base', 'Flux3ModularPipeline'))
     for mode, task in (('text-to-image', 'text_to_image'), ('edit-image', 'edit_image'))
 }
+# A new opt-in identity keeps every legacy plain declaration/hash unchanged.
+for _variant in ('flux3-klein', 'flux3-klein-base'):
+    for _mode in ('text-to-image', 'edit-image'):
+        PRIVATE_PARENTS[f'{_variant}:{_mode}:prompt-preview-authoring:v2'] = {
+            **PRIVATE_PARENTS[f'{_variant}:{_mode}:prompt-preview-authoring:v1'],
+            'layoutPolicy': 'preserve-authored-v1',
+        }
 PARENT_KEYS = ('authoringRecipeId', 'baseSpecId', 'baseSpecContentHash',
                'executionProfileId', 'pipelineClass', 'task')
 ID = re.compile(r'[A-Za-z0-9][A-Za-z0-9._:-]{0,127}')
@@ -152,7 +159,7 @@ def adapter_binding():
     return adapter, {'id': adapter['id'], 'declarationSha256': 'sha256:' + hashlib.sha256(raw).hexdigest()}
 
 
-def adapter_verification(adapter, binding, runtime_inputs, request_inputs):
+def adapter_verification(adapter, binding, runtime_inputs, request_inputs, layout_policy=None):
     """Bounded independent expectations, never copied from proposal output.
 
     Hashes retain their native domains: the file/chat/declaration digests use
@@ -160,6 +167,7 @@ def adapter_verification(adapter, binding, runtime_inputs, request_inputs):
     Device, dtype and quantization are choices of the actual provider literals.
     """
     from modiff.prompt_enhancement import SYSTEM_PROMPTS, _json_file
+    from modiff.prompt_enhancement_output import PRESERVATION_REQUEST_SUFFIX
     from modiff.transformers_image_text_resources import image_text_architecture_policy, image_text_nf4_policy
     raw, prompts = _json_file(SYSTEM_PROMPTS, 32 * 1024)
     if (hashlib.sha256(raw).hexdigest() != adapter['systemPromptsSha256']
@@ -175,7 +183,7 @@ def adapter_verification(adapter, binding, runtime_inputs, request_inputs):
         raise invalid('reviewed architecture verification metadata exceeds its limit.')
     for name in architecture['architectures']:
         text(name, 256, identifier)
-    return {'schemaVersion': 1, 'adapter': deepcopy(binding),
+    result = {'schemaVersion': 1, 'adapter': deepcopy(binding),
         'runtimeInputs': deepcopy(runtime_inputs), 'requestInputs': deepcopy(request_inputs),
         'supportedPromptModes': ['t2i', 'i2i'],
         'systemPromptsSha256': 'sha256:' + adapter['systemPromptsSha256'],
@@ -191,6 +199,12 @@ def adapter_verification(adapter, binding, runtime_inputs, request_inputs):
                 'preprocessorClass': adapter['processorClass'], 'modelClass': adapter['modelClass'], **architecture}},
         'quantizationRecipes': [{'mode': 'none'}, image_text_nf4_policy(
             {'source': 'hub', 'value': adapter['repository']}, adapter['revision'], 'bfloat16', 'cuda:0')]}
+    if layout_policy is not None:
+        if layout_policy != 'preserve-authored-v1':
+            raise invalid('unsupported authored-layout preservation policy.')
+        result.update(supportedPromptModes=['t2i', 'i2i', 't2i_bbox', 'i2i_bbox'],
+            layoutRequestSuffixSha256='sha256:' + hashlib.sha256(PRESERVATION_REQUEST_SUFFIX.encode('utf-8')).hexdigest())
+    return result
 
 
 def params_for(modules, key):
@@ -286,7 +300,10 @@ def ancillary_operations_for_parent(modules, payload, selection, role_params):
             ('provider', runtime_inputs['revisionField'], _adapter['revision']),
             ('proposal', request_inputs['operationField'], 'enhance_prompt')],
         'fieldOverrides': selected_field_overrides(proposal), 'adapter': binding,
-        'verification': adapter_verification(_adapter, binding, runtime_inputs, request_inputs), 'sourceRegions': False}
+        'verification': adapter_verification(_adapter, binding, runtime_inputs, request_inputs, expected.get('layoutPolicy')),
+        'sourceRegions': False}
+    if 'layoutPolicy' in expected:
+        result['layoutPolicy'] = expected['layoutPolicy']
     if expected['task'] == 'text_to_image':
         result['initialValues'].extend([
             (runtime_inputs['role'], runtime_inputs['dtypeField'], 'bfloat16'),
@@ -670,7 +687,11 @@ def _validate_execution_purpose(graph, modules):
         from modiff.layout_conditioning import parse_layout_conditioning
         layout = parse_layout_conditioning(literal(proposal, 'layout_conditioning')) if 'layout_conditioning' in proposal['params'] else None
         if layout is not None:
-            raise invalid('the selected Preview supports plain prompt enhancement only; preserving an authored layout is not supported. Keep the authored layout unchanged or explicitly choose a request without layout.')
+            if contract.get('layoutPolicy') != 'preserve-authored-v1':
+                raise invalid('the selected Preview supports plain prompt enhancement only; preserving an authored layout is not supported. Select the explicit structured authoring recipe.')
+            if layout['regions']:
+                from modiff.prompt_enhancement_output import require_authored_target_layout
+                require_authored_target_layout(layout)
         expected_nodes = set(children.values())
         reference = contract['bindings']['owner']['referenceSource']
         images = proposal['params'].get('images', {})
@@ -687,6 +708,9 @@ def _validate_execution_purpose(graph, modules):
             if not 1 <= len(files) <= 10 or any(type(item) is not str or not item or len(item.encode('utf-8')) > 4096 for item in files):
                 raise invalid('one to ten ordered literal media selections are required.')
             expected_nodes.add(source_id)
+        if layout is not None and any(region.get('source', {}).get('referenceIndex', -1) >= (
+                0 if reference is None else len(files)) for region in layout['regions']):
+            raise invalid('authored source index is outside the declared ordered media context.')
         if set(nodes) != expected_nodes:
             raise invalid('Preview includes an image owner or unrelated executable node.')
     if adapter_binding()[1] != _binding:

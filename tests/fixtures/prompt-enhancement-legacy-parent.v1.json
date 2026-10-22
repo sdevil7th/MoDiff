@@ -1,0 +1,402 @@
+{
+  "schemaVersion": 1,
+  "scope": "Retained ordinary metadata response, not model or hardware qualification.",
+  "sourceCommit": "bc65c380988ea28be51751f3ef5d415e4316973f",
+  "retainedResponseSha256": "97cd283227633ef792de93c36d10792db6143b256b884743c1a724b0ffe020f0",
+  "authoring": {
+    "schemaVersion": 1,
+    "canonicalizationVersion": 1,
+    "id": "flux3-klein:edit-image:prompt-preview-authoring:v1",
+    "baseSpecId": "flux3-klein:modular:edit-image:v1",
+    "baseSpecContentHash": "studio-spec-v1-3eb193af",
+    "executionProfileIds": [
+      "flux3-klein:modular"
+    ],
+    "roles": [
+      [
+        "models",
+        "modules.ModularDiffusers.ModelsLoader",
+        -720,
+        -80
+      ],
+      [
+        "prompt",
+        "modules.ModularDiffusers.EncodePrompt",
+        -360,
+        -240
+      ],
+      [
+        "denoise",
+        "modules.ModularDiffusers.Denoise",
+        80,
+        -80
+      ],
+      [
+        "decode",
+        "modules.ModularDiffusers.DecodeLatents",
+        440,
+        -80
+      ],
+      [
+        "preview",
+        "modules.Image.Preview",
+        800,
+        -80
+      ],
+      [
+        "loadImage",
+        "modules.Image.Load",
+        -720,
+        320
+      ],
+      [
+        "imageEncode",
+        "modules.ModularDiffusers.ImageEncode",
+        -360,
+        320
+      ]
+    ],
+    "edges": [
+      [
+        "models",
+        "text_encoders",
+        "prompt",
+        "text_encoders"
+      ],
+      [
+        "models",
+        "unet_out",
+        "denoise",
+        "unet"
+      ],
+      [
+        "models",
+        "scheduler",
+        "denoise",
+        "scheduler"
+      ],
+      [
+        "models",
+        "vae_out",
+        "decode",
+        "vae"
+      ],
+      [
+        "prompt",
+        "embeddings",
+        "denoise",
+        "embeddings"
+      ],
+      [
+        "denoise",
+        "latents",
+        "decode",
+        "latents"
+      ],
+      [
+        "decode",
+        "images",
+        "preview",
+        "image"
+      ],
+      [
+        "models",
+        "vae_out",
+        "imageEncode",
+        "vae"
+      ],
+      [
+        "loadImage",
+        "image",
+        "imageEncode",
+        "image"
+      ],
+      [
+        "imageEncode",
+        "image_cond_latents",
+        "denoise",
+        "image_cond_latents"
+      ],
+      [
+        "imageEncode",
+        "reference_binding",
+        "prompt",
+        "reference_binding"
+      ],
+      [
+        "imageEncode",
+        "reference_binding",
+        "denoise",
+        "reference_binding"
+      ]
+    ],
+    "bindings": [
+      [
+        "models",
+        "model_type",
+        "pipelineClass"
+      ],
+      [
+        "models",
+        "repo_id",
+        "artifact"
+      ],
+      [
+        "models",
+        "revision",
+        "defaultRevision"
+      ],
+      [
+        "models",
+        "dtype",
+        "dtype"
+      ],
+      [
+        "models",
+        "device",
+        "device"
+      ],
+      [
+        "models",
+        "auto_offload",
+        "autoOffload"
+      ],
+      [
+        "models",
+        "offload_mode",
+        "offloadMode"
+      ],
+      [
+        "models",
+        "trust_remote_code",
+        "false"
+      ],
+      [
+        "prompt",
+        "prompt",
+        "prompt"
+      ],
+      [
+        "denoise",
+        "width",
+        "width"
+      ],
+      [
+        "denoise",
+        "height",
+        "height"
+      ],
+      [
+        "denoise",
+        "seed",
+        "seed"
+      ],
+      [
+        "denoise",
+        "num_inference_steps",
+        "steps"
+      ],
+      [
+        "prompt",
+        "max_sequence_length",
+        "maxSequenceLength"
+      ],
+      [
+        "models",
+        "weight_format",
+        "weightFormat"
+      ],
+      [
+        "loadImage",
+        "file",
+        "referenceImages"
+      ],
+      [
+        "loadImage",
+        "alpha_channel",
+        "alphaMode"
+      ]
+    ],
+    "initialValues": [],
+    "ancillaryOperations": [
+      {
+        "schemaVersion": 1,
+        "id": "flux3-klein:edit-image:prompt-preview-authoring:v1:preview",
+        "parent": {
+          "authoringRecipeId": "flux3-klein:edit-image:prompt-preview-authoring:v1",
+          "baseSpecId": "flux3-klein:modular:edit-image:v1",
+          "baseSpecContentHash": "studio-spec-v1-3eb193af",
+          "executionProfileId": "flux3-klein:modular",
+          "pipelineClass": "Flux3DistilledModularPipeline",
+          "task": "edit_image"
+        },
+        "executionPurpose": "explicit_preview",
+        "roles": [
+          [
+            "provider",
+            "modules.HuggingFaceTransformers.LoadImageTextToTextModel",
+            -720,
+            -400
+          ],
+          [
+            "proposal",
+            "modules.HuggingFaceTransformers.GenerateImageVideoText",
+            -360,
+            -400
+          ]
+        ],
+        "edges": [
+          [
+            "provider",
+            "model",
+            "proposal",
+            "model"
+          ]
+        ],
+        "bindings": {
+          "owner": {
+            "role": "prompt",
+            "promptField": "prompt",
+            "layoutField": "layout_conditioning",
+            "referenceSource": {
+              "role": "loadImage",
+              "field": "image"
+            }
+          },
+          "request": {
+            "role": "proposal",
+            "promptField": "prompt",
+            "layoutField": "layout_conditioning",
+            "imagesField": "images"
+          },
+          "output": {
+            "role": "proposal",
+            "field": "proposal_summary"
+          }
+        },
+        "initialValues": [
+          [
+            "provider",
+            "model_id",
+            {
+              "source": "hub",
+              "value": "black-forest-labs/flux-3-image-klein-pup"
+            }
+          ],
+          [
+            "provider",
+            "revision",
+            "3f3edb52b2c55de0d49feab28598b68f7f8e4830"
+          ],
+          [
+            "proposal",
+            "operation",
+            "enhance_prompt"
+          ]
+        ],
+        "fieldOverrides": [
+          [
+            "proposal",
+            "enhancement_max_new_tokens",
+            {
+              "hidden": false
+            }
+          ],
+          [
+            "proposal",
+            "max_new_tokens",
+            {
+              "hidden": true
+            }
+          ]
+        ],
+        "adapter": {
+          "id": "transformers-prompt-enhancement-v1",
+          "declarationSha256": "sha256:2a3d4685988b418115008bbb95fb3e948097580c0bedd2940ea3fe1e40254dc2"
+        },
+        "verification": {
+          "schemaVersion": 1,
+          "adapter": {
+            "id": "transformers-prompt-enhancement-v1",
+            "declarationSha256": "sha256:2a3d4685988b418115008bbb95fb3e948097580c0bedd2940ea3fe1e40254dc2"
+          },
+          "runtimeInputs": {
+            "role": "provider",
+            "modelField": "model_id",
+            "revisionField": "revision",
+            "dtypeField": "dtype",
+            "deviceField": "device",
+            "quantizationField": "quantization_mode"
+          },
+          "requestInputs": {
+            "role": "proposal",
+            "operationField": "operation",
+            "maxNewTokensField": "enhancement_max_new_tokens",
+            "minNewTokensField": "min_new_tokens",
+            "maxInputTokensField": "max_input_tokens",
+            "maxImagePixelsField": "max_image_pixels"
+          },
+          "supportedPromptModes": [
+            "t2i",
+            "i2i"
+          ],
+          "systemPromptsSha256": "sha256:b5da3ed8bc04ab59dbdb747930f7dbff847e868903fed8028f85ee1a4ac82fb4",
+          "systemPromptSha256ByMode": {
+            "t2i": "8b235a421bce2213d11ada01f5a1244443dd72303ffbb4cc9e5a0d8b0de5ab6f",
+            "i2i": "95cec384d5b6d341caa9fb3f2c7ca45ee80c2364b3a95d4044aebf976f6dd3bf",
+            "t2i_bbox": "5f513d8ce5838732919f9e645507aa20ff373e88bf93132c768e063c9db3151f",
+            "i2i_bbox": "9ad10f947e401337cf155cac0518cc428159ef16f2f029f48aae2aaab8380a5e"
+          },
+          "chatTemplateSha256": "sha256:a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715",
+          "modelReceipt": {
+            "schemaVersion": 1,
+            "library": "transformers",
+            "task": "image-video-to-text",
+            "source": {
+              "kind": "hub",
+              "repository": "black-forest-labs/flux-3-image-klein-pup",
+              "revision": "3f3edb52b2c55de0d49feab28598b68f7f8e4830"
+            },
+            "loader": {
+              "preprocessorAutoClass": "AutoProcessor",
+              "modelAutoClass": "AutoModelForImageTextToText"
+            },
+            "security": {
+              "localFilesOnly": true,
+              "trustRemoteCode": false,
+              "safetensorsOnly": true,
+              "hostedInference": false
+            },
+            "runtime": {
+              "transformersVersion": "5.18.0",
+              "preprocessorClass": "Qwen3VLProcessor",
+              "modelClass": "Qwen3_5ForConditionalGeneration",
+              "modelType": "qwen3_5",
+              "architectures": [
+                "Qwen3_5ForConditionalGeneration"
+              ]
+            }
+          },
+          "quantizationRecipes": [
+            {
+              "mode": "none"
+            },
+            {
+              "mode": "bnb_4bit",
+              "quantType": "nf4",
+              "doubleQuant": true,
+              "computeDtype": "bfloat16",
+              "skipModules": [
+                "lm_head",
+                "model.visual"
+              ]
+            }
+          ]
+        },
+        "sourceRegions": false,
+        "contentHash": "studio-ancillary-v1-95fc4619"
+      }
+    ],
+    "contentHash": "studio-authoring-v1-d43668d0"
+  }
+}

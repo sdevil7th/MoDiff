@@ -395,10 +395,19 @@ def _load_model(
     if quantization_config is not None:
         model_kwargs["quantization_config"] = quantization_config
         model_kwargs["device_map"] = {"": device}
+    vision_attention_policy = None
+    if task == 'image-video-to-text':
+        from modiff.transformers_image_text_resources import (
+            image_text_vision_attention_policy, apply_image_text_vision_attention_policy,
+        )
+        vision_attention_policy = image_text_vision_attention_policy(
+            selection, revision, dtype_name, device, quantization_mode)
     model = auto_model.from_pretrained(
         source,
         **model_kwargs,
     )
+    if task == 'image-video-to-text':
+        apply_image_text_vision_attention_policy(model, vision_attention_policy)
     if quantization_config is None:
         model.to(device)
     elif image_text_quantization is not None:
@@ -717,6 +726,12 @@ def _validated_handle(value: Any, *, task: str) -> tuple[Any, Any, dict[str, Any
             r"sha256:[0-9a-f]{64}", str(source.get("configSha256"))
         ):
             raise ValueError("Transformers model receipt has an invalid local source.")
+    if task == 'image-video-to-text':
+        from modiff.transformers_image_text_resources import validate_image_text_vision_attention_policy
+        runtime = receipt.get('runtime')
+        if not isinstance(runtime, dict):
+            raise ValueError('Transformers model receipt has an invalid runtime.')
+        validate_image_text_vision_attention_policy(model, source, runtime)
     return model, preprocessor, _json_copy(receipt)
 
 

@@ -1,5 +1,6 @@
 """Ancillary-purpose selection through existing entrypoints; no models."""
 from copy import deepcopy
+from pathlib import Path
 import asyncio
 import json
 from types import SimpleNamespace
@@ -130,6 +131,8 @@ def test_four_private_parents_have_exact_hash_covered_optional_declaration(modul
     assert child['contentHash'] == 'studio-ancillary-v1-' + _hash_string(_stable_json({k:v for k,v in child.items() if k != 'contentHash'}))
     assert 'authoringContentHash' not in child['parent']
     assert child['sourceRegions'] is False
+    assert 'layoutPolicy' not in child and 'layoutRequestSuffixSha256' not in child['verification']
+    assert child['verification']['supportedPromptModes'] == ['t2i', 'i2i']
     assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
 
 
@@ -351,22 +354,63 @@ def test_invalid_auto_request_refuses_before_busy_or_lease(modules):
     assert 'ancillary' in json.loads(response.body)['message']
 
 
-def test_authored_target_layout_refuses_unchanged_before_preparation(modules):
+def test_authored_target_layout_preserves_exact_dto_and_refuses_rounding_before_preparation(modules):
     from modiff.ancillary_execution import validate_execution_purpose
-    value, _parent = preview_graph(modules)
+    value, _parent = preview_graph(modules, 4)
     value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
         'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': [
             {'id': 'subject', 'description': ' paper crane ', 'action': 'place',
              'targetBox': [0, 0.125, 0.5, 0.625]}]}
     before = deepcopy(value)
-    with pytest.raises(ValueError, match='plain prompt enhancement|authored layout'):
-        validate_execution_purpose(value, modules)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
     assert value == before
     value['nodes']['proposal']['params']['layout_conditioning']['value']['regions'][0]['targetBox'][0] = 0.0001
     before = deepcopy(value)
-    with pytest.raises(ValueError, match='plain prompt enhancement|authored layout'):
+    with pytest.raises(ValueError, match='never rounded'):
         validate_execution_purpose(value, modules)
     assert value == before
+
+
+def test_authored_source_preview_keeps_binding_and_rejects_missing_actual_media_index(modules):
+    from modiff.ancillary_execution import validate_execution_purpose
+    value, _parent = preview_graph(modules, 5)
+    layout = {'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': [{
+        'id': 'subject', 'description': 'A subject.', 'action': 'remove', 'targetBox': None,
+        'source': {'referenceIndex': 1, 'box': [0, 0, 1, 1], 'expectedReferenceId': 'sha256:' + 'a' * 64}}]}
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = layout
+    before = deepcopy(value)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert value == before
+    layout['regions'][0]['source']['referenceIndex'] = 2
+    with pytest.raises(ValueError, match='ordered media context'):
+        validate_execution_purpose(value, modules)
+
+
+def test_legacy_plain_parent_dto_and_both_hashes_stay_exact(modules):
+    fixture = json.loads((Path(__file__).parent / 'fixtures/prompt-enhancement-legacy-parent.v1.json').read_text(encoding='utf-8'))
+    assert json.loads(json.dumps(parent_for(modules, 1))) == fixture['authoring']
+    assert parent_for(modules, 0)['contentHash'] == 'studio-authoring-v1-c39b36d8'
+    assert parent_for(modules, 1)['contentHash'] == 'studio-authoring-v1-d43668d0'
+    assert parent_for(modules, 1)['ancillaryOperations'][0]['contentHash'] == 'studio-ancillary-v1-95fc4619'
+
+
+@pytest.mark.parametrize('index', range(4))
+def test_versioned_preservation_is_distinct_and_legacy_preview_still_refuses_layout(modules, index):
+    from modiff.ancillary_execution import validate_execution_purpose
+    legacy, structured = parent_for(modules, index), parent_for(modules, index + 4)
+    for key in ('baseSpecId', 'baseSpecContentHash', 'executionProfileIds', 'roles', 'edges', 'bindings', 'initialValues'):
+        assert legacy[key] == structured[key]
+    assert structured['id'] == legacy['id'].replace(':v1', ':v2')
+    assert structured['contentHash'] != legacy['contentHash']
+    child = structured['ancillaryOperations'][0]
+    assert child['layoutPolicy'] == 'preserve-authored-v1'
+    assert child['verification']['supportedPromptModes'] == ['t2i', 'i2i', 't2i_bbox', 'i2i_bbox']
+    assert child['verification']['layoutRequestSuffixSha256'].startswith('sha256:')
+    value, _ = preview_graph(modules, index)
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
+        'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': []}
+    with pytest.raises(ValueError, match='plain prompt enhancement'):
+        validate_execution_purpose(value, modules)
 
 
 @pytest.mark.parametrize('field,value', [('modelWeight', {}), ('transformersVersion', []),

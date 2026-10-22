@@ -68,22 +68,23 @@ def test_malformed_or_authored_geometry_changed_output_must_stay_non_applicable(
         assert result['applicationAllowed'] is False and node.output['text'] is None
 
 
-def test_source_hash_or_reference_count_cannot_replace_encode_image_authority(actual_pup, monkeypatch):
+def test_structured_preview_preserves_but_never_mints_reference_binding(actual_pup, monkeypatch):
     from PIL import Image
     handle, _ = actual_pup
     layout = {'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': [{
         'id': 'cube_1', 'description': 'A red cube.', 'action': 'relocate', 'targetBox': [.1, .2, .4, .5],
         'source': {'referenceIndex': 0, 'expectedReferenceId': 'sha256:' + '0' * 64, 'box': [.1, .2, .4, .5]}}]}
-    generate = Mock(side_effect=AssertionError('Unbound source reached generation'))
-    monkeypatch.setattr(handle['model'], 'generate', generate)
+    row = {'id': 'cube_1', 'from': 'ref_image_0', 'src_bbox': ROW['bbox'], 'tgt_bbox': ROW['bbox'], 'desc': 'A red cube.'}
+    substitute_generated_suffix(monkeypatch, handle, output(row))
     node = nodes.GenerateImageVideoText('pup-source-negative')
-    with pytest.raises(RuntimeError, match='reference-identity'):
-        node(model=handle, prompt='Move <cube_1>.', operation='enhance_prompt',
+    node(model=handle, prompt='Move <cube_1>.', operation='enhance_prompt',
              enhancement_max_new_tokens=256, layout_conditioning=layout,
              images=[Image.new('RGB', (256, 256), 'red')], reference_count=1,
              reference_source_sha256=['sha256:' + '0' * 64],
              reference_binding={'schemaVersion': 1, 'references': [{'referenceId': 'sha256:' + '0' * 64}]})
-    assert not generate.called
+    proposed = node.output['result']['structuredProposal']['layoutConditioning']
+    assert proposed['regions'][0]['source'] == layout['regions'][0]['source']
+    assert node.output['text'] is None  # The downstream encoder still validates the actual binding.
 
 
 from modiff.prompt_enhancement_output import validate_target_layout_output, require_authored_target_layout
@@ -185,7 +186,7 @@ def test_quote_escape_and_brackets_in_caption_and_description_are_not_greedy():
     assert value['rawTable'][0]['desc'] == row['desc']
 
 
-def test_exact_decimal_grid_never_rounds_and_sources_remain_refused():
+def test_exact_decimal_grid_never_rounds_and_source_mutations_remain_refused():
     for coordinate in [.10001, .30000000000000004]:
         layout = deepcopy(LAYOUT)
         layout['regions'][0]['targetBox'][0] = coordinate
@@ -193,10 +194,9 @@ def test_exact_decimal_grid_never_rounds_and_sources_remain_refused():
             require_authored_target_layout(layout)
     source = deepcopy(LAYOUT)
     source['regions'][0]['source'] = {'referenceIndex': 0, 'box': [.1, .2, .4, .5]}
-    with pytest.raises(ValueError, match='source regions'):
-        require_authored_target_layout(source)
+    assert require_authored_target_layout(source)[0] == source
     row = {'id': 'cube_1', 'from': 'ref_image_0', 'src_bbox': ROW['bbox'], 'tgt_bbox': ROW['bbox'], 'desc': 'A cube.'}
-    with pytest.raises(ValueError, match='source mappings'):
+    with pytest.raises(ValueError, match='bijection'):
         validate(output(row), mode='i2i_bbox', image_count=1)
     row['from'], row['src_bbox'], row['tgt_bbox_1stage'] = 'target', None, ROW['bbox']
     with pytest.raises(ValueError, match='first-pass'):

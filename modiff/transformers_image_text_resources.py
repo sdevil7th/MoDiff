@@ -26,6 +26,58 @@ def image_text_architecture_policy(contract):
     return {'modelType': 'qwen3_5', 'architectures': [contract['modelClass']]}
 
 
+def image_text_vision_attention_policy(selection, revision, dtype, device, quantization):
+    """The diagnosed dense BF16/gfx1151 path; no other load changes defaults."""
+    if (dtype != 'bfloat16' or quantization != 'none' or type(device) is not str
+            or not re.fullmatch(r'cuda(?::0)?', device)):
+        return None
+    import torch
+    if not getattr(torch.version, 'hip', None):
+        return None
+    from modiff.prompt_enhancement import _declared_contract
+    contract = _declared_contract()
+    if (selection != {'source': 'hub', 'value': contract['repository']}
+            or revision != contract['revision']):
+        return None
+    architecture = getattr(torch.cuda.get_device_properties(device), 'gcnArchName', '')
+    if not isinstance(architecture, str) or architecture.split(':', 1)[0].casefold() != 'gfx1151':
+        return None
+    return {'id': 'rocm-gfx1151-bf16-vision-eager-v1', 'architecture': 'gfx1151',
+            'root': 'sdpa', 'text': 'sdpa', 'vision': 'eager'}
+
+
+def _image_text_attention_state(model):
+    config = getattr(model, 'config', None)
+    return {name: getattr(value, '_attn_implementation', None) for name, value in (
+        ('root', config), ('text', getattr(config, 'text_config', None)),
+        ('vision', getattr(config, 'vision_config', None)))}
+
+
+def apply_image_text_vision_attention_policy(model, policy):
+    """Use the official model-local API; never replace a kernel or a forward."""
+    if policy is None:
+        return
+    import transformers
+    from modiff.prompt_enhancement import _declared_contract
+    if (type(model) is not getattr(transformers, _declared_contract()['modelClass'], None)
+            or _image_text_attention_state(model) != {'root': 'sdpa', 'text': 'sdpa', 'vision': 'sdpa'}):
+        raise ValueError('Image/text vision attention compatibility requires its native SDPA model. Reload the model.')
+    model.set_attn_implementation({'vision_config': 'eager'})
+    if _image_text_attention_state(model) != {key: policy[key] for key in ('root', 'text', 'vision')}:
+        raise ValueError('Image/text vision attention compatibility was not applied exactly. Reload the model.')
+
+
+def validate_image_text_vision_attention_policy(model, source, runtime):
+    """Derive policy from the existing sealed receipt; verify live cache state."""
+    selection = {'source': 'hub', 'value': source.get('repository')} if source.get('kind') == 'hub' else None
+    quantization = runtime.get('quantization')
+    expected = image_text_vision_attention_policy(selection, source.get('revision'),
+        runtime.get('dtype'), runtime.get('device'), quantization.get('mode') if type(quantization) is dict else None)
+    if (expected is not None
+            and _image_text_attention_state(model) != {key: expected[key] for key in ('root', 'text', 'vision')}):
+        raise ValueError('Image/text vision attention compatibility changed or is missing. Reload the model.')
+
+
 def image_text_nf4_policy(selection, revision, dtype, device):
     """Return the exact reviewed recipe; no model/package import or install."""
     from modiff.prompt_enhancement import _declared_contract

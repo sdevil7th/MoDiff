@@ -17,6 +17,10 @@ _PRIVATE_PROMPT_RECIPES = (
     "flux3-klein:edit-image:prompt-preview-authoring:v1",
     "flux3-klein-base:text-to-image:prompt-preview-authoring:v1",
     "flux3-klein-base:edit-image:prompt-preview-authoring:v1",
+    "flux3-klein:text-to-image:prompt-preview-authoring:v2",
+    "flux3-klein:edit-image:prompt-preview-authoring:v2",
+    "flux3-klein-base:text-to-image:prompt-preview-authoring:v2",
+    "flux3-klein-base:edit-image:prompt-preview-authoring:v2",
 )
 
 
@@ -358,6 +362,7 @@ class CosmosImageStageTests(unittest.TestCase):
 @pytest.mark.parametrize("identity", _PRIVATE_PROMPT_RECIPES)
 def test_private_prompt_recipe_resolves_with_actual_apis_and_explicit_metadata_authority(identity):
     from test_ancillary_execution import require_native_parent_apis
+    from modiff.ancillary_execution import resolve_parent
     from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES, STUDIO_EXECUTION_SPEC_DEFINITIONS
 
     require_native_parent_apis()
@@ -376,6 +381,9 @@ def test_private_prompt_recipe_resolves_with_actual_apis_and_explicit_metadata_a
                                             {**selection, "authoringRecipeId": identity})
         assert authored["authoring"]["id"] == identity
         assert authored["authoring"]["executionProfileIds"] == (definition["profileId"],)
+        # Ordinary creation and the private declaration must expose the same
+        # immutable DTO, including Base's already-declared Guider and both hashes.
+        assert authored["authoring"] == resolve_parent(MODULE_MAP, identity)
         assert resolve_operation_starter(MODULE_MAP, contracts, selection) == ordinary
 
 

@@ -118,6 +118,25 @@ The opt-in tiny CUDA test is a separate root-run lane, not a default CPU gate.
 
 ## Optional no-weight processor test fixture
 
+The existing private `:prompt-preview-authoring:v1` recipes retain their exact
+plain-only declarations and hashes. The explicit Distilled and Base text-to-image
+and edit-image `:prompt-preview-authoring:v2` recipes select the generic
+`preserve-authored-v1` layout policy. They preserve every authored region ID,
+source reference binding, source/target box and action, changing only caption and
+description text. Native IDs map by exact authored ID or a unique exact
+source-index/boxes/action signature; additions, omissions, ambiguity, unsupported
+operator fields and non-grid coordinates refuse Apply. No geometry is rounded.
+The pinned publisher system prompts stay unchanged. A separately hash-declared
+preservation request suffix constrains this request without granting reference
+authority. Version-two proposals retain both raw native caption/table and the
+mapped caption so the client and bound summary independently check the mapping.
+The declaration's `sourceRegions: false` continues to prohibit creating source
+regions or issuing reference identities. `layoutPolicy` permits only retaining
+already authored source DTOs; the ordinary downstream encoder still checks their
+current reference binding before diffusion execution.
+Apply remains explicit and atomic under the existing stale/source/scope guards.
+Software fixtures do not establish successful trained structured output.
+
 Reviewed prompt enhancement checks each generation score row through the official
 Transformers logits-processor interface. NaN, positive infinity or a row with no
 finite token candidate stops generation before token selection and publishes no
@@ -125,6 +144,21 @@ proposal. Negative-infinity token masks remain valid alongside finite candidates
 Scores and generated punctuation are never sanitized or filtered; the error asks
 the operator to inspect the selected precision and runtime before retrying. This
 numerical check does not diagnose an upstream kernel or qualify another precision.
+
+For the exact declared PUP artifact, dense BF16 on the primary ROCm `gfx1151`
+device uses the official model-local `set_attn_implementation` API to select
+`vision_config=eager`; root and text attention remain SDPA. This narrowly scoped
+compatibility policy follows an observed same-weight, same-input comparison:
+default vision SDPA produced nonfinite scores, while vision-only eager produced
+finite scores. It is not a kernel diagnosis or another device qualification.
+FP32, NF4, CUDA and other architectures retain their existing defaults. No
+weights, precision, forward functions or global attention backends are changed.
+The policy is derived from the existing sealed source/revision, precision,
+quantization and device fields plus the actual architecture; the public receipt
+schema stays unchanged. Generation checks the live configuration of that owned
+model. An older cached SDPA handle or changed attention state refuses with a
+request to reload; use normal Release/Load before another Preview. A raw receipt
+alone does not attest the actual attention configuration.
 
 The ordinary backend gate requires no local PUP files. Tests that need its
 reviewed processor metadata explicitly skip when `MODIFF_PUP_PROCESSOR_FIXTURE`

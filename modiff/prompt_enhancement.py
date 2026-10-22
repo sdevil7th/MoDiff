@@ -181,15 +181,17 @@ def prepare_request(processor, prompts, authored, images, layout):
     from modiff.layout_conditioning import parse_layout_conditioning, resolve_layout_prompt
     nodes._bounded_string(authored, field='authored prompt')
     parsed = parse_layout_conditioning(layout)
-    if parsed is not None and any('source' in region for region in parsed['regions']):
-        raise ValueError('Prompt enhancement source regions need a bound reference-identity context; keep the authored layout unchanged.')
     if parsed is not None and parsed['regions']:
         from modiff.prompt_enhancement_output import require_authored_target_layout
         require_authored_target_layout(parsed)
     if len(images) > 10:
         raise ValueError('The selected prompt enhancement adapter accepts at most ten ordered images.')
     mode = ('i2i' if images else 't2i') + ('_bbox' if parsed and parsed['regions'] else '')
-    user = resolve_layout_prompt(authored, parsed) if parsed is not None else authored
+    if parsed and parsed['regions']:
+        from modiff.prompt_enhancement_output import preservation_request
+        user = preservation_request(authored, parsed, len(images))
+    else:
+        user = resolve_layout_prompt(authored, parsed) if parsed is not None else authored
     content = [{'type': 'image'} for _ in images] + [{'type': 'text', 'text': user}]
     messages = [{'role': 'system', 'content': prompts[mode]}, {'role': 'user', 'content': content}]
     rendered = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True, enable_thinking=False)

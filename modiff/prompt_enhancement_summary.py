@@ -310,8 +310,9 @@ class BoundSummary:
                 from modiff.prompt_enhancement_output import validate_target_layout_output
                 if type(structured) is not dict or reason is not None:
                     raise ValueError('Prompt proposal structured observations are inconsistent.')
-                closed(structured, ('schemaVersion', 'caption', 'layoutConditioning', 'rawTable'))
-                rendered = structured['caption'] + '\n' + bounded_json(structured['rawTable'], 256 * 1024)
+                closed(structured, ('schemaVersion', 'caption', 'layoutConditioning', 'rawTable') +
+                       (('rawCaption',) if structured.get('schemaVersion') == 2 else ()))
+                rendered = structured.get('rawCaption', structured['caption']) + '\n' + bounded_json(structured['rawTable'], 256 * 1024)
                 if validate_target_layout_output(rendered, self.layout, mode=mode, image_count=len(consumed['references'])) != structured:
                     raise ValueError('Prompt proposal structured layout changed after validation.')
                 if len(json.dumps(structured, ensure_ascii=True).encode()) > 256 * 1024:
