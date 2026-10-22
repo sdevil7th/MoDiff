@@ -39,6 +39,41 @@ def require_selected_flux3_lifecycle(pipeline, lifecycle) -> None:
         raise ValueError('FLUX 3 LoRA lifecycle belongs to a different actual owner.')
 
 
+def _reference_image_source(nodes, edge):
+    """Resolve only ordinary Load -> built-in Resize media, never model owners.
+
+    This is structural inspection: processors are not imported or executed.
+    Image bytes and resize values remain owned by the reference/cache binding.
+    """
+    visited = []
+    while True:
+        identity, output = edge.get('sourceId'), edge.get('sourceKey')
+        if identity in visited or len(visited) >= 64 or identity not in nodes:
+            raise ValueError('FLUX 3 reference media has a cycle, missing source or excessive depth.')
+        visited.append(identity)
+        node = nodes[identity]
+        key = node.get('module', '') + '.' + node.get('action', '')
+        if key == 'modules.Image.Load' and output == 'image':
+            return identity, tuple(visited)
+        if key != 'modules.ImageOperations.ProcessImage' or output != 'output':
+            raise ValueError('FLUX 3 reference media requires ordinary Load or reviewed built-in Resize.')
+        params = node.get('params', {})
+        for field, expected in (('pipeline_class', 'BuiltinImageOperationV1'), ('operation', 'image_upscale')):
+            value = params.get(field, {})
+            if (not isinstance(value, dict) or value.get('sourceId') is not None
+                    or value.get('sourceKey') is not None or value.get('value', value.get('default')) != expected):
+                raise ValueError('FLUX 3 reference Resize requires its literal built-in operation.')
+        if any(isinstance(value, dict) and (value.get('sourceId') is not None
+               or value.get('sourceKey') is not None) for field, value in params.items() if field != 'image'):
+            raise ValueError('FLUX 3 reference Resize has an unreviewed connected supplier.')
+        mask = params.get('mask', {})
+        if not isinstance(mask, dict) or mask.get('value', mask.get('default')) is not None:
+            raise ValueError('FLUX 3 reference Resize does not consume an additional mask.')
+        edge = params.get('image', {})
+        if not isinstance(edge, dict):
+            raise ValueError('FLUX 3 reference Resize requires an actual image connection.')
+
+
 def selected_flux3_context(graph, source_fingerprint, owner_id, profile, declaration):
     """Join the actual native specification, immutable artifact and owned edges."""
     from modiff.native_component_lora import (
@@ -88,6 +123,8 @@ def selected_flux3_context(graph, source_fingerprint, owner_id, profile, declara
     consumers = set(resource_consumers(nodes, owner_id, owners))
     role_keys = {row[0]: row[1] for row in specification['roles']}
     roles = {'models': owner_id}
+    reference_media = ()
+    reference_edge = None
     # Component consumers select the actual native stages, not labels or positions.
     for role, key in role_keys.items():
         if role == 'models':
@@ -104,7 +141,10 @@ def selected_flux3_context(graph, source_fingerprint, owner_id, profile, declara
                 edge = nodes[roles[target]].get('params', {}).get(field, {})
                 identity = edge.get('sourceId')
                 candidate = nodes.get(identity, {})
-                if edge.get('sourceKey') == output and candidate.get('module', '') + '.' + candidate.get('action', '') == role_keys[source]:
+                if (source, output, target, field) == ('loadImage', 'image', 'imageEncode', 'image'):
+                    roles[source], reference_media = _reference_image_source(nodes, edge)
+                    reference_edge = (identity, edge.get('sourceKey'))
+                elif edge.get('sourceKey') == output and candidate.get('module', '') + '.' + candidate.get('action', '') == role_keys[source]:
                     roles[source] = identity
             if source in roles and target not in roles:
                 found = [identity for identity, candidate in nodes.items()
@@ -119,14 +159,18 @@ def selected_flux3_context(graph, source_fingerprint, owner_id, profile, declara
         raise ValueError('FLUX 3 LoRA requires one complete unambiguous native stage route.')
     for source, output, target, field in specification['edges']:
         edge = nodes[roles[target]].get('params', {}).get(field, {})
-        if (edge.get('sourceId'), edge.get('sourceKey')) != (roles[source], output):
+        expected = (roles[source], output)
+        if (source, output, target, field) == ('loadImage', 'image', 'imageEncode', 'image'):
+            expected = reference_edge
+        if (edge.get('sourceId'), edge.get('sourceKey')) != expected:
             raise ValueError('FLUX 3 LoRA stage material or owner wiring differs from its current specification.')
     if consumers - set(roles.values()):
         raise ValueError('An unknown consumer cannot share the selected FLUX 3 owner.')
     executable = {key for path in graph.get('paths', ()) for key in path}
-    if not set(roles.values()).issubset(executable):
+    selected_nodes = set(roles.values()) | set(reference_media)
+    if not selected_nodes.issubset(executable):
         raise ValueError('FLUX 3 LoRA requires every selected stage in the current executable paths.')
-    if any(set(roles.values()).intersection(loop.get('bodyNodeIds', ())) for loop in graph.get('loops', ())):
+    if any(selected_nodes.intersection(loop.get('bodyNodeIds', ())) for loop in graph.get('loops', ())):
         raise ValueError('FLUX 3 LoRA has no reviewed loop-iteration mutation policy.')
     if 'guider' in roles:
         if _literal(nodes[roles['guider']]['params'], 'model_type') != selected.pipeline_class:
@@ -136,6 +180,9 @@ def selected_flux3_context(graph, source_fingerprint, owner_id, profile, declara
     _source, _repo, _revision, filename, document = ModelsLoader._preflight_reviewed_builtin_selection(
         model_type=selected.pipeline_class, repo_id={'source': 'hub', 'value': repository}, revision=selected.revision)
     selectors = tuple(sorted((role, role_keys[role], roles[role]) for role in roles))
+    selectors += tuple(('reference-media:' + str(index),
+                        nodes[identity]['module'] + '.' + nodes[identity]['action'], identity)
+                       for index, identity in enumerate(reference_media[:-1]))
     from modiff.modular_weight_formats import selected_weight_format_contract
     weight_contract = selected_weight_format_contract(
         model_type=selected.pipeline_class, repository=repository, revision=selected.revision,

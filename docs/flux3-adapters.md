@@ -11,6 +11,17 @@ for the exact Klein and Klein Base immutable artifacts and their declared
 wiring determines task authority. Labels, saved authoring hints and caller-made
 identity tuples cannot grant it. The encoder and VAE are not adapter targets.
 
+For `image_conditioned`, the reference image may pass from ordinary `Load.image`
+through a finite chain of built-in `ProcessImage` Resize outputs before
+`ImageEncode.image`. Each processor must select literal
+`BuiltinImageOperationV1` / `image_upscale`, with no connected scalar or mask
+suppliers. Custom/model image producers and other processing operations require
+separate review. All media nodes must be executable and outside loops. This
+media boundary does not replace the exact model-stage, owner, artifact or
+placement checks. Processor topology participates in route identity; image
+bytes and resize dimensions remain sealed by the existing reference binding
+and input-cache invalidation, so a resize edit need not replace model weights.
+
 Use Safetensors containing ordinary `transformer.*.lora_A.weight` / `lora_B.weight`
 pairs, or the corresponding `diffusion_model.*` names handled by the official
 Flux3 converter. Mixed prefixes, text-encoder keys, DoRA, unmatched ranks and
