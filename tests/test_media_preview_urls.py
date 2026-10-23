@@ -1,3 +1,4 @@
+import hashlib
 import json
 import tempfile
 import unittest
@@ -10,9 +11,14 @@ import numpy as np
 from PIL import Image
 from scipy.io import wavfile
 from unittest.mock import patch
+from urllib.parse import unquote, urlsplit
+
+from aiohttp import web
+from aiohttp.test_utils import TestClient, TestServer
 
 from modiff import media_io, server as server_module
 from modiff.media_io import export_media_file
+from modiff.NodeBase import NodeBase
 from modiff.server import (
     WebServer,
     audio_download_filename,
@@ -24,6 +30,16 @@ from modiff.server import (
 
 
 class MediaPreviewUrlTests(unittest.TestCase):
+    def test_cache_url_preserves_ascii_and_encodes_each_identity_once(self):
+        self.assertEqual(server_module.cache_media_url("preview", "images", 0), "/cache/preview/images/0")
+        node, field = "visual-output/stage-preview %2F?#", "images/output %?#"
+        url = server_module.cache_media_url(node, field, 2)
+        parts = urlsplit(url).path.split("/")
+        self.assertEqual(len(parts), 5)
+        self.assertEqual([unquote(parts[2]), unquote(parts[3]), parts[4]], [node, field, "2"])
+        self.assertEqual(urlsplit(url).query, "")
+        self.assertEqual(urlsplit(url).fragment, "")
+
     def test_file_backed_media_uses_file_route(self):
         url = file_backed_media_preview("audio/source track.wav")
 
@@ -109,6 +125,69 @@ class MediaPreviewUrlTests(unittest.TestCase):
         self.assertEqual(len({result[0] for result in results}), 1)
         self.assertEqual(encode.call_count, 1)
         self.assertEqual(leftovers, [])
+
+
+class GeneratedCacheUrlTests(unittest.IsolatedAsyncioTestCase):
+    def dispatch(self, directory, node_id, field, value, data_type, display, *, task=False):
+        class Preview(NodeBase):
+            def execute(self):
+                return {field: [value]}
+
+        module = ".".join(Preview.__module__.split(".")[:-1])
+        definition = {module: {"Preview": {"params": {
+            field: {"type": data_type, "display": "output"},
+            "preview": {"type": "url", "display": display, "fieldOptions": {"format": "PNG"}},
+        }}}}
+        server = WebServer(modules=definition, work_dir=directory, data_dir=directory)
+        messages = []
+        server.queue_message = lambda message, *_args, **_kwargs: messages.append(message)
+        if task:
+            server.current_task = {"task_id": "cache-url-run", "attempt_index": 0}
+        with patch("modiff.NodeBase._module_map", return_value=definition), patch("modiff.NodeBase._server", return_value=server):
+            server.node_cache[node_id] = Preview(node_id)
+            server.execute_node(node_id, {"module": module, "action": "Preview", "params": {
+                "preview": {"display": display, "sourceKey": field},
+            }}, "test", quiet=True)
+        message = next(message for message in messages if message.get("type") == "update_value")
+        return server, message
+
+    async def test_all_cache_url_branches_preserve_reserved_node_and_field_characters(self):
+        cases = [("image", "ui_image", Image.new("RGB", (2, 3), "navy")),
+                 ("audio", "ui_audio", {"samples": [], "sample_rate": 8000}),
+                 ("string", "ui_text", "text")]
+        with tempfile.TemporaryDirectory() as directory:
+            for data_type, display, value in cases:
+                with self.subTest(display=display):
+                    node, field = "visual-output/stage-preview %?#", "output/field %?#"
+                    _server, message = self.dispatch(directory, node, field, value, data_type, display)
+                    url = message["value"][0]
+                    parts = urlsplit(url).path.split("/")
+                    self.assertEqual(len(parts), 5)
+                    self.assertEqual([unquote(parts[2]), unquote(parts[3])], [node, field])
+
+    async def test_slash_id_image_serves_and_persists_after_cache_is_cleared(self):
+        with tempfile.TemporaryDirectory() as directory:
+            server, message = self.dispatch(directory, "visual-output/stage-preview", "images/output %?#",
+                                            Image.new("RGB", (2, 3), "navy"), "image", "ui_image", task=True)
+            url = message["value"][0]
+            self.assertIn("visual-output%2Fstage-preview", url)
+            self.assertTrue(message["backend_persisted"])
+            output = next(row for row in server._read_studio_output_state()["outputs"] if row["id"] == message["output_id"])
+            item = output["mediaItems"][0]
+            self.assertIn("backendPath", item)
+            app = web.Application()
+            app.router.add_get("/cache/{node}/{field}/{index}", server.cache)
+            app.router.add_get("/file", server.fileGet)
+            async with TestClient(TestServer(app)) as client:
+                async with client.get(url) as response:
+                    self.assertEqual(response.status, 200)
+                    body = await response.read()
+                self.assertEqual(Image.open(BytesIO(body)).size, (2, 3))
+                self.assertEqual("sha256:bytes:" + hashlib.sha256(body).hexdigest(), item["mediaHash"])
+                server.node_cache.clear()
+                async with client.get(item["url"]) as response:
+                    self.assertEqual(response.status, 200)
+                    self.assertEqual(await response.read(), body)
 
 
 class WorkspaceFileRouteTests(unittest.IsolatedAsyncioTestCase):

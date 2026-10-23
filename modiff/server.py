@@ -323,6 +323,11 @@ def image_dimensions(value):
     return None, None
 
 
+def cache_media_url(node_id, field_key, index):
+    """Keep document-local node and field identities in single URL segments."""
+    return f"/cache/{quote(str(node_id), safe='')}/{quote(str(field_key), safe='')}/{index}"
+
+
 def cache_image_artifact(node_id, field_key, index, url, value, image_format):
     mime_type = f"image/{str(image_format or 'WEBP').lower()}"
     width, height = image_dimensions(value)
@@ -11753,10 +11758,10 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                             continue
                         filename = f"modiff-{id}-{data_key}-{i}.{str(image_format).lower()}"
                         url = (
-                            f"/cache/{id}/{data_key}/{i}"
-                            f"?format={quote(str(image_format))}"
+                            cache_media_url(id, data_key, i)
+                            + f"?format={quote(str(image_format))}"
                             f"&quality={quote(str(image_quality))}"
-                            f"&filename={quote(filename)}"
+                            f"&filename={quote(filename, safe='')}"
                             f"&t={time.time()}"
                         )
                         data_value.append(url)
@@ -11775,7 +11780,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                         if item is None:
                             continue
                         file_url = self._generated_file_preview(item, node_id=id, field_key=ui_key, index=i, display=display)
-                        url = file_url or f"/cache/{id}/{data_key}/{i}?t={time.time()}"
+                        url = file_url or f"{cache_media_url(id, data_key, i)}?t={time.time()}"
                         data_value.append(url)
                         if file_url:
                             filename = os.fspath(item)
@@ -11803,7 +11808,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                             )
                 else:
                     data_value = [
-                        f"/cache/{id}/{data_key}/{i}?t={time.time()}"
+                        f"{cache_media_url(id, data_key, i)}?t={time.time()}"
                         for i in range(len(source_value))
                         if source_value[i] is not None
                     ]
