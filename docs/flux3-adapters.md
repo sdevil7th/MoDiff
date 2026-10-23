@@ -134,7 +134,13 @@ fixed, and no scene, anchoring or preserved-background rows may be added. Both
 preallocation and generation fingerprint the actual composed system instruction;
 v2 verification metadata declares those same per-mode hashes. Existing v2 drafts
 must explicitly rebind to the updated declaration rather than silently adopting
-a new hash. The separately hash-declared preservation request suffix grants no
+a new hash. Structured image editing asks for the edit instruction itself and
+the complete five-key table, with a single format example; unauthored scenery and
+lighting remain untagged prose, while authored regions keep their IDs and rows.
+The user request keeps the exact authored table last, in the mode's key order.
+All static labels and formatting belong to the
+hash-declared preservation request template (the legacy-named suffix field);
+only authored text, allowed tags and table values are substituted. It grants no
 reference authority. Version-two proposals retain both raw native caption/table and the
 mapped caption so the client and bound summary independently check the mapping.
 The declaration's `sourceRegions: false` continues to prohibit creating source
@@ -144,6 +150,20 @@ current reference binding before diffusion execution.
 Apply remains explicit and atomic under the existing stale/source/scope guards.
 Software fixtures do not establish successful trained structured output.
 
+Rejected structured Previews expose a hidden `proposal_diagnostic` string for
+inspection through `GET /cache/{node}/proposal_diagnostic?with_metadata=1`.
+It contains the exact decoded suffix, without granting Apply authority. The
+existing native observation binds it to its original task, output incarnation,
+request and worker/source identity; the envelope includes both summary and
+diagnostic UTF-8 hashes. Plain cache access, arbitrary object outputs and stale
+or replaced observations remain refused. Public `text` stays empty, and neither
+the strict parser nor the proposal summary schema changes. A diagnostic exceeding
+262144 characters or 1 MiB of UTF-8, or containing invalid Unicode, is omitted
+instead of truncated. Ordinary/plain and successfully validated proposals omit
+this field's value. Normal Preview self-release retains the already bounded and
+sealed diagnostic beside the summary. Later explicit cache release may remove
+it; no historical output is minted or recovered by a read.
+
 The separate private Distilled text-only recipe
 `flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1` fixes the existing
 provider to FP32, no quantization, `cuda:0` and 4096 input tokens. It retains the
@@ -152,6 +172,16 @@ Select this exact current declaration through normal authoring/import; changing
 the fixed NF4/BF16 literals in an older T2I recipe does not select it. Its provider
 and request literals are enforced before Preview; all older v1/v2 declarations
 remain unchanged. This private recipe is not Auto, hardware or native T2I proof.
+
+The additive private
+`flux3-klein:text-to-image:prompt-preview-fp32-authoring:v2` retains those exact
+FP32/no-quantization provider literals and input limit, while selecting
+`preserve-authored-v1` for structured T2I. It uses the same generic nodes, strict
+parser and atomic Apply/Undo; target IDs, boxes and actions remain authored
+authority. It has no reference-image route. All nine earlier identities keep
+their declarations and hashes, including the plain-only FP32 v1 and existing
+NF4/BF16 recipes. Metadata availability does not establish native structured
+T2I output or another hardware/runtime qualification.
 
 Reviewed prompt enhancement checks each generation score row through the official
 Transformers logits-processor interface. NaN, positive infinity or a row with no
@@ -232,3 +262,47 @@ On PowerShell, use `$env:MODIFF_PUP_PROCESSOR_FIXTURE` and
 `.venv/Scripts/python.exe`. The actual processor and synthetic neural tests in
 `tests/test_prompt_enhancement.py` use the same fixture and remain separate from
 trained PUP output, hardware capacity, Auto and browser qualification.
+
+
+### Append details with an unchanged authored layout
+
+The private Distilled edit-image `prompt-preview-authoring:v3` and explicit
+FP32 text-to-image `prompt-preview-fp32-authoring:v3` select the additive
+`append-details-preserve-layout-v1` policy. Their generic
+`GenerateImageVideoText` operation is `enhance_prompt_append_details`; the hidden
+operation is never substituted into an older recipe. Existing standard, plain
+enhancement and strict `preserve-authored-v1` behavior remain unchanged.
+
+This policy makes one ordinary local PUP call with the immutable publisher's
+plain `t2i` or `i2i` system instructions. Its model request contains the authored
+caption with validated region/reference tag delimiters removed, followed by
+bounded region ID/description wording context. It contains no layout geometry,
+actions, source bindings or table authority. The exact rendered request, actual
+operation, system hash, references, processor inputs, precision and task/source
+observations retain the existing preallocation and native cache seals. Auto/NF4
+request qualification is unchanged; these private recipes do not expand Auto.
+
+The actual decoded native text is retained without trimming. It must be bounded,
+nonempty valid Unicode and contain no angle tags, Markdown fences or genuine
+trailing JSON table. Ordinary punctuation, quoted wording, styles and math are
+not silently sanitized or rejected. The composed caption is exactly the original
+authored UTF-8 caption, two newlines and the accepted native text. The entire raw
+authored layout is deep-copied unchanged, including descriptions, row order,
+schema, finite non-grid coordinates, IDs, source bindings and removal actions.
+The authored tags are independently validated before model work: every region
+ID appears exactly once, unknown/incomplete/nested tags are refused, and reference
+tags must identify actual ordered images.
+
+The opt-in `structuredProposal` has schema version 3 and kind
+`caption-append-preserve-layout-v1`, with only `caption`, `layoutConditioning` and
+`nativeText` beside the schema/kind fields. It has no fabricated `rawCaption` or
+`rawTable`. The backend independently recomposes it from the original authored
+request and actual native text before sealing the summary. The client separately
+checks the selected current recipe, exact prefix, exact layout and new operation
+before one atomic, undoable Apply. `layoutOutputValidated: true` means the local
+composition preserved the authored layout; it is not a claim that the model
+produced or validated geometry. Semantic fidelity remains unverified and needs
+operator review. Rejected native details remain a sealed diagnostic, with no
+automatic text feed or Apply. Both the caption and complete proposal retain their
+existing finite Unicode, UTF-8 and JSON budgets. No native-model acceptance is
+claimed by this source change.

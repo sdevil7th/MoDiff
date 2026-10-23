@@ -154,8 +154,9 @@ def test_standard_and_direct_enhancement_keep_values_without_producer(actual_pup
         if operation == 'standard':
             values['images'] = [Image.new('RGB', (256, 256), 'red')]
         node(**values)
-        assert set(node.output) == {'text', 'result', 'proposal_summary'}
+        assert set(node.output) == {'text', 'result', 'proposal_summary', 'proposal_diagnostic'}
         assert node.output['proposal_summary'] is None
+        assert node.output['proposal_diagnostic'] is None
         assert node.output['text'] == node.output['result']['text']
         direct = node.execute(**values)
         assert direct == node.output and direct['proposal_summary'] is None
@@ -297,7 +298,9 @@ def test_new_output_opt_in_is_exact_role_and_source_direction():
     second = _execution_spec_role_params(public, key, definition, 'second')
     assert first['proposal_summary'] == definition['params']['proposal_summary']
     assert 'proposal_summary' not in second and 'proposal_summary' not in _execution_spec_role_params(public, key, definition)
+    assert 'proposal_diagnostic' not in first and 'proposal_diagnostic' not in second
     assert 'proposal_summary' not in nodes.prompt_enhancement_operation_schema()[0]
+    assert 'proposal_diagnostic' not in nodes.prompt_enhancement_operation_schema()[0]
 
 
 @pytest.mark.parametrize('value', [float('nan'), float('inf'), {'opaque': object()}, {'bad': chr(0xD800)},
@@ -544,6 +547,219 @@ def metadata_response(app, *, node='pup-proposal', field='proposal_summary', que
     request = make_mocked_request('GET', '/cache/' + node + '/' + field + suffix + '?' + query,
         match_info=matches)
     return asyncio.run(app.cache(request))
+
+
+def rejected_diagnostic_pair(actual_pup, monkeypatch):
+    import test_prompt_enhancement_output as outputs
+    app, graph = bound_pair(monkeypatch)
+    handle = app.node_cache['pup-owner'].output['model']
+    # The real node/processor/dispatch remains in use. Only the generated suffix
+    # is substituted to reproduce the pre-ID table-count rejection precisely.
+    suffix = 'A cube <cube_1>. []'
+    outputs.substitute_generated_suffix(monkeypatch, handle, suffix)
+    params = graph['nodes']['pup-proposal']['params']
+    params.update(prompt={'value': 'A cube <cube_1>.'},
+        layout_conditioning={'value': deepcopy(outputs.LAYOUT)},
+        enhancement_max_new_tokens={'value': 256}, min_new_tokens={'value': 0})
+    owner_tests.dispatch(app, graph, 'pup-proposal')
+    return app, suffix
+
+
+def test_rejected_structured_diagnostic_preserves_exact_text_and_observation(actual_pup, monkeypatch):
+    app, suffix = rejected_diagnostic_pair(actual_pup, monkeypatch)
+    node = app.node_cache['pup-proposal']
+    summary = node.output['proposal_summary']
+    parsed = json.loads(summary)
+    assert node.output['text'] is None and node.output['result']['text'] == suffix
+    assert parsed['proposal']['text'] is None and parsed['proposal']['structuredProposal'] is None
+    assert parsed['proposal']['applicationAllowed'] is False
+    assert parsed['proposal']['applicationBlockedReason'].endswith('exactly the authored target IDs.')
+    response = metadata_response(app, field='proposal_diagnostic')
+    assert response.status == 200
+    payload = json.loads(response.body)
+    assert payload['value'] == suffix == node.output['proposal_diagnostic']
+    assert payload['observation']['diagnosticSha256'] == transport.digest_bytes(suffix.encode('utf-8'))
+    assert payload['observation']['summarySha256'] == transport.digest_bytes(summary.encode('utf-8'))
+    assert payload['observation']['producer']['taskId'] == app.current_task['task_id']
+    assert payload['observation']['dispatch']['status'] == 'succeeded'
+    before = dict(app._prompt_summary_observations)
+    assert metadata_response(app, field='proposal_diagnostic').body == response.body
+    assert app._prompt_summary_observations == before and node.output['proposal_summary'] == summary
+    assert cache_response(app, 'proposal_diagnostic').status == 400
+    assert cache_response(app, 'result').status == 400
+
+
+def terminal_diagnostic_preview(actual_pup, tmp_path, monkeypatch, *, tamper=None):
+    """Real Preview lease and terminal release; only generated suffix is data."""
+    import weakref
+    import torch
+    import modules
+    import test_ancillary_execution as ancillary
+    import test_ancillary_owner_lifecycle as lifecycle
+    import test_prompt_enhancement_output as outputs
+    handle, _ = actual_pup
+    suffix = 'A cube <cube_1>. []'
+    encoded = handle['preprocessor'].tokenizer(suffix, return_tensors='pt',
+        add_special_tokens=False)['input_ids']
+    def generated(_model, **kwargs):
+        return torch.cat([kwargs['input_ids'], encoded.to(kwargs['input_ids'].device)], dim=1)
+    # An unbound class method avoids retaining the soon-to-be-released model
+    # through the monkeypatch undo stack or a closure over its handle.
+    monkeypatch.setattr(type(handle['model']), 'generate', generated)
+    memory_manager.remove(handle['model'])
+    del handle
+    graph, _parent = ancillary.preview_graph(modules.MODULE_MAP, index=4)
+    graph['runtimeHints']['resourceMode'] = 'expert'
+    graph['nodes']['provider']['params']['device'] = {'value': stage_one.DEFAULT_DEVICE}
+    graph['nodes']['proposal']['params'].update(prompt={'value': 'A cube <cube_1>.'},
+        layout_conditioning={'value': deepcopy(outputs.LAYOUT)},
+        enhancement_max_new_tokens={'value': 256}, min_new_tokens={'value': 0})
+    app = lifecycle.app_for(tmp_path, monkeypatch, graph)
+    app._prepare_auto_runtime_for_graph = lambda _hints: None
+    app._best_effort_device_cache_clear = lambda: []
+    app._best_effort_allocator_trim = lambda: (False, [])
+    captured = {}
+    def after(node_id):
+        node = app.node_cache[node_id]
+        if node_id == 'provider':
+            captured['model'] = weakref.ref(node.output['model']['model'])
+        elif node_id == 'proposal':
+            captured['proposal'] = weakref.ref(node)
+            captured['summary'] = node.output['proposal_summary']
+            captured['diagnostic'] = node.output['proposal_diagnostic']
+            if tamper is not None:
+                node.output['proposal_diagnostic'] = tamper(suffix)
+    lifecycle.quiet_dispatch(app, after)
+    return app, graph, captured, suffix
+
+
+def test_rejected_diagnostic_survives_actual_preview_terminal_release(actual_pup, tmp_path, monkeypatch):
+    import test_ancillary_owner_lifecycle as lifecycle
+    from modiff.workflow_auto_lifecycle import _RetainedPromptProposal
+    app, graph, captured, suffix = terminal_diagnostic_preview(actual_pup, tmp_path, monkeypatch)
+    lifecycle.leased(app, graph)
+    assert 'provider' not in app.node_cache and not memory_manager.cache
+    assert captured['model']() is None and captured['proposal']() is None
+    holder = app.node_cache['proposal']
+    assert type(holder) is _RetainedPromptProposal
+    assert holder.output['text'] is None and captured['diagnostic'] == suffix
+    summary = json.loads(holder.output['proposal_summary'])
+    assert summary['proposal']['applicationAllowed'] is False
+    assert summary['proposal']['structuredProposal'] is None
+    assert summary['proposal']['applicationBlockedReason'].endswith('exactly the authored target IDs.')
+    response = metadata_response(app, node='proposal', field='proposal_diagnostic')
+    assert response.status == 200
+    payload = json.loads(response.body)
+    assert payload['value'] == suffix == holder.output['proposal_diagnostic']
+    assert payload['observation']['diagnosticSha256'] == transport.digest_bytes(suffix.encode('utf-8'))
+    assert payload['observation']['summarySha256'] == transport.digest_bytes(captured['summary'].encode('utf-8'))
+    assert payload['observation']['producer']['taskId'] == app.current_task['task_id']
+    assert payload['observation']['dispatch']['status'] == 'succeeded'
+    records = dict(app._prompt_summary_observations)
+    assert metadata_response(app, node='proposal', field='proposal_diagnostic').body == response.body
+    assert app._prompt_summary_observations == records
+    assert metadata_response(app, node='proposal').status == 200
+    request = make_mocked_request('GET', '/cache/proposal/result',
+        match_info={'node': 'proposal', 'field': 'result'})
+    assert asyncio.run(app.cache(request)).status == 400
+    holder.output['proposal_diagnostic'] = suffix + ' '
+    assert metadata_response(app, node='proposal', field='proposal_diagnostic').status == 409
+
+
+@pytest.mark.parametrize('omit_legacy_field', [False, True])
+def test_plain_preview_terminal_release_keeps_legacy_outputs_without_diagnostic(
+        actual_pup, tmp_path, monkeypatch, omit_legacy_field):
+    import test_ancillary_owner_lifecycle as lifecycle
+    app, graph = lifecycle.cold_preview(actual_pup, tmp_path, monkeypatch)
+    app._prepare_auto_runtime_for_graph = lambda _hints: None
+    def after(node_id):
+        if node_id == 'proposal':
+            assert app.node_cache[node_id].output['proposal_diagnostic'] is None
+            if omit_legacy_field:
+                app.node_cache[node_id].output.pop('proposal_diagnostic')
+    lifecycle.quiet_dispatch(app, after)
+    lifecycle.leased(app, graph)
+    assert 'provider' not in app.node_cache and not memory_manager.cache
+    assert set(app.node_cache['proposal'].output) == {'proposal_summary', 'text', 'result'}
+    assert metadata_response(app, node='proposal').status == 200
+    assert metadata_response(app, node='proposal', field='proposal_diagnostic').status == 404
+
+
+@pytest.mark.parametrize('mutation', ['changed', 'opaque', 'oversized'])
+def test_preview_terminal_release_rejects_changed_or_unbounded_diagnostic_before_removal(
+        actual_pup, tmp_path, monkeypatch, mutation):
+    import test_ancillary_owner_lifecycle as lifecycle
+    def tamper(suffix):
+        if mutation == 'changed':
+            return suffix + ' '
+        if mutation == 'opaque':
+            return {'text': suffix}
+        return 'x' * (transport.DIAGNOSTIC_MAX_BYTES + 1)
+    app, graph, captured, _suffix = terminal_diagnostic_preview(actual_pup, tmp_path, monkeypatch, tamper=tamper)
+    with pytest.raises(ValueError, match='diagnostic|exact string contract'):
+        lifecycle.leased(app, graph)
+    assert 'provider' in app.node_cache and memory_manager.cache
+    assert captured['model']() is not None and captured['proposal']() is app.node_cache['proposal']
+
+
+@pytest.mark.parametrize('change', ['diagnostic', 'opaque', 'summary', 'output', 'worker', 'input', 'registry', 'alias'])
+def test_rejected_diagnostic_never_bypasses_native_observation_seals(actual_pup, monkeypatch, change):
+    app, suffix = rejected_diagnostic_pair(actual_pup, monkeypatch)
+    node = app.node_cache['pup-proposal']
+    assert metadata_response(app, field='proposal_diagnostic').status == 200
+    if change == 'diagnostic':
+        node.output['proposal_diagnostic'] = suffix + ' '
+    elif change == 'opaque':
+        node.output['proposal_diagnostic'] = {'text': suffix}
+    elif change == 'summary':
+        node.output['proposal_summary'] += ' '
+    elif change == 'output':
+        node.output = dict(node.output)
+    elif change == 'worker':
+        app.instance += '-replacement'
+    elif change == 'input':
+        node._cache_input_snapshot = ('changed',)
+    elif change == 'registry':
+        field = app.modules[transport.NODE_MODULE][transport.NODE_ACTION]['params']['proposal_diagnostic']
+        monkeypatch.setitem(field, 'type', 'object')
+    elif change == 'alias':
+        app.node_cache['renamed'] = node
+        app._prompt_summary_observations['renamed'] = app._prompt_summary_observations['pup-proposal']
+        assert metadata_response(app, node='renamed', field='proposal_diagnostic').status == 409
+        return
+    assert metadata_response(app, field='proposal_diagnostic').status in (400, 409)
+
+
+@pytest.mark.parametrize('value', ['', None, object(), 'x' * 262145, chr(0xD800)])
+def test_diagnostic_omits_unbounded_or_nonunicode_output_without_truncation(value):
+    result = {'systemPromptMode': 't2i_bbox', 'applicationAllowed': False, 'text': value}
+    assert transport.diagnostic_output(result) is None
+    assert result['text'] is value
+
+
+def test_diagnostic_scope_and_exact_unicode_byte_boundary():
+    result = {'systemPromptMode': 'i2i_bbox', 'applicationAllowed': False, 'text': '\U0001f600' * 262144}
+    assert transport.diagnostic_output(result) == result['text']
+    assert len(result['text'].encode('utf-8')) == transport.DIAGNOSTIC_MAX_BYTES
+    result.update(applicationAllowed=True)
+    assert transport.diagnostic_output(result) is None
+    result.update(applicationAllowed=False, systemPromptMode='i2i')
+    assert transport.diagnostic_output(result) is None
+
+
+def test_diagnostic_missing_plain_unobserved_and_deleted_outputs_remain_closed(actual_pup, monkeypatch):
+    app, _ = bound_pair(monkeypatch)
+    assert metadata_response(app, field='proposal_diagnostic').status == 404
+    app, _ = rejected_diagnostic_pair(actual_pup, monkeypatch)
+    for query in ['with_metadata=0', 'with_metadata=1&unknown=1', 'with_metadata=1&with_metadata=1']:
+        assert metadata_response(app, field='proposal_diagnostic', query=query).status == 400
+    assert metadata_response(app, field='proposal_diagnostic', index='0').status == 400
+    records = app._prompt_summary_observations
+    app._prompt_summary_observations = {}
+    assert metadata_response(app, field='proposal_diagnostic').status == 409
+    app._prompt_summary_observations = records
+    assert app._release_cached_nodes(['pup-proposal'])
+    assert metadata_response(app, field='proposal_diagnostic').status == 404
 
 
 def test_native_cache_metadata_is_independent_preoutput_observation(actual_pup, monkeypatch):
@@ -946,3 +1162,62 @@ def test_source_census_retains_plain_control_contract(tmp_path, monkeypatch, sha
     with pytest.raises(AfterCensus, match='census completed'):
         transport._source_snapshot()
     assert reached.call_count == 1
+
+
+
+@pytest.mark.parametrize('tamper', [None, 'nativeText', 'caption', 'description'])
+def test_append_summary_independently_recomposes_from_authored_source(actual_pup, monkeypatch, tamper):
+    import test_prompt_enhancement_output as outputs
+    handle, _ = actual_pup
+    suffix = '  Soft light reveals the fine wood grain.\n'
+    outputs.substitute_generated_suffix(monkeypatch, handle, suffix)
+    node, graph, _task, app, _prompt, _layout = context(monkeypatch)
+    authored = '  Keep the cube <cube_1>.\n'
+    layout = deepcopy(outputs.LAYOUT)
+    original_finish = transport.BoundSummary.finish
+    def finish(bound, result, controls):
+        if tamper == 'nativeText':
+            result['structuredProposal']['nativeText'] += ' forged'
+        elif tamper == 'caption':
+            result['structuredProposal']['caption'] = 'changed prefix'
+        elif tamper == 'description':
+            result['structuredProposal']['layoutConditioning']['regions'][0]['description'] = 'changed'
+        return original_finish(bound, result, controls)
+    monkeypatch.setattr(transport.BoundSummary, 'finish', finish)
+    def generate():
+        with native_component_graph_scope(graph, app.backend_source_identity['fingerprint']):
+            node(model=handle, prompt=authored, layout_conditioning=layout,
+                 operation='enhance_prompt_append_details', enhancement_max_new_tokens=256)
+    if tamper:
+        with pytest.raises(RuntimeError) as caught:
+            generate()
+        assert isinstance(caught.value.__cause__, ValueError)
+        assert 'changed after validation' in str(caught.value.__cause__)
+        assert node.output['proposal_summary'] is None
+    else:
+        generate()
+        summary = json.loads(node.output['proposal_summary'])
+        proposal = summary['proposal']['structuredProposal']
+        assert node.output['text'] is summary['proposal']['text'] is None
+        assert proposal == {'schemaVersion': 3, 'kind': 'caption-append-preserve-layout-v1',
+            'caption': authored + '\n\n' + suffix, 'layoutConditioning': layout, 'nativeText': suffix}
+        assert summary['proposal']['mode'] == 't2i'
+        assert summary['consumedInput']['fingerprints']['operation'] == 'enhance_prompt_append_details'
+        assert summary['proposal']['layoutOutputValidated'] is True
+        assert summary['proposal']['semanticFidelityVerified'] is False
+        assert node.output['proposal_diagnostic'] is None
+
+
+def test_append_rejection_in_plain_native_mode_retains_sealed_diagnostic(actual_pup, monkeypatch):
+    import test_prompt_enhancement_output as outputs
+    handle, _ = actual_pup
+    outputs.substitute_generated_suffix(monkeypatch, handle, 'An extra <unknown> tag.')
+    node, graph, _task, app, _prompt, _layout = context(monkeypatch)
+    with native_component_graph_scope(graph, app.backend_source_identity['fingerprint']):
+        node(model=handle, prompt='A cube <cube_1>.', layout_conditioning=outputs.LAYOUT,
+             operation='enhance_prompt_append_details', enhancement_max_new_tokens=256)
+    summary = json.loads(node.output['proposal_summary'])
+    assert summary['proposal']['mode'] == 't2i' and summary['proposal']['text'] is None
+    assert summary['proposal']['applicationAllowed'] is False
+    assert summary['proposal']['structuredProposal'] is None
+    assert node.output['proposal_diagnostic'] == 'An extra <unknown> tag.'

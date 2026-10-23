@@ -2376,7 +2376,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:ce4cff3184989038ddddeb269bf233197799bb41c932a047685136fd2a550280",
+  "contentHash": "sha256:84356b556aea71469af80ea7e7993134a51523a59c342301d25e4b9b99af037e",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -9754,7 +9754,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "987588c1b530b2eca5663f95c2380ffdc365e1e01a49156ea3f52fd6e5636356",
+    "templateBundleSha256": "f0af402a6c5daf9fbba8cb18e3b1fa74fc63e8a1082fe8744efcd80d3f7177d3",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -9944,7 +9944,7 @@
             "PredictDepth"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "e0314a80aba62cc33e769ca6072e29338680a1b086cbe0a55eb83c3a1134df66"
+          "sha256": "d519db75d06277a6a799ab7c7b5d47b921a4b17da96d072ff56ea549fae9e16a"
         }
       ],
       "nodeKeys": [
@@ -10027,7 +10027,7 @@
             "LoadTextGenerationModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "e0314a80aba62cc33e769ca6072e29338680a1b086cbe0a55eb83c3a1134df66"
+          "sha256": "d519db75d06277a6a799ab7c7b5d47b921a4b17da96d072ff56ea549fae9e16a"
         }
       ],
       "nodeKeys": [
@@ -10108,7 +10108,7 @@
             "LoadImageTextToTextModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "e0314a80aba62cc33e769ca6072e29338680a1b086cbe0a55eb83c3a1134df66"
+          "sha256": "d519db75d06277a6a799ab7c7b5d47b921a4b17da96d072ff56ea549fae9e16a"
         }
       ],
       "nodeKeys": [
@@ -10210,7 +10210,7 @@
             "LoadAnyToAnyModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "e0314a80aba62cc33e769ca6072e29338680a1b086cbe0a55eb83c3a1134df66"
+          "sha256": "d519db75d06277a6a799ab7c7b5d47b921a4b17da96d072ff56ea549fae9e16a"
         }
       ],
       "nodeKeys": [

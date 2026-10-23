@@ -18984,6 +18984,9 @@ def _execution_spec_role_params(
         _omit_unbound_recipe_fields(public, node_key, params, ("quantization_mode",))
     if node_key == "modules.HuggingFaceTransformers.GenerateImageVideoText":
         from modules.HuggingFaceTransformers.main import PROMPT_ENHANCEMENT_RECIPE_FIELDS
+        # This output is an observed-cache diagnostic, never an execution-role
+        # parameter or a new connection in an existing immutable Block.
+        params.pop("proposal_diagnostic", None)
         _omit_unbound_recipe_fields(
             public, node_key, params,
             (*PROMPT_ENHANCEMENT_RECIPE_FIELDS, "max_input_tokens", "max_image_pixels"),

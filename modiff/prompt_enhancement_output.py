@@ -17,14 +17,18 @@ MAX_JSON_CANDIDATES = 32
 MAX_JSON_DEPTH = 8
 MAX_PROPOSAL_BYTES = 256 * 1024
 PRESERVATION_REQUEST_SUFFIX = (
-    '\nPreserve the supplied authored region table exactly: keep every ID, source image, '
-    'source box, target box and removal/placement action. Do not add or omit regions. '
-    'Enhance only the caption and descriptions, citing each region ID exactly once. '
-    'Return the same table grammar with no first-pass estimate fields. '
-    'These are authored constraints, not permission to infer new reference bindings.'
+    'Authored request (text):\n{authored}\n\n'
+    'Allowed region tags (JSON array): {tags}\n'
+    'Return the enhanced output paragraph itself, then the COMPLETE authoritative '
+    'table below, changing only desc. Keep every ID, source image, source box, '
+    'target box, null value and removal/placement action. Do not return an id/desc '
+    'summary. Scenery, lighting or atmosphere not already authored cannot acquire '
+    'new rows or region tags; preserve and cite those explicitly supplied. These are authored '
+    'constraints, not permission to infer reference bindings.\n'
+    'Authoritative region table (JSON array; final input, not an example):\n{table}'
 )
 PRESERVATION_SYSTEM_PROMPT = (
-    'Enhance the authored caption and region descriptions while preserving the supplied '
+    'Enhance the authored wording and region descriptions while preserving the supplied '
     'layout. The user supplies the complete, authoritative region table, not a request '
     'to plan or annotate a new layout.\n\n'
     'Keep every supplied row and region ID verbatim, in the same order and exact count. '
@@ -33,12 +37,15 @@ PRESERVATION_SYSTEM_PROMPT = (
     'background, scene, anchoring, preserved or inferred rows. Do not rename IDs, add '
     'first-pass estimate fields, infer reference bindings, move boxes or round coordinates. '
     'Existing source information is a constraint, not permission to create source authority.\n\n'
-    'Return one English caption followed by exactly one JSON array with the same table '
+    'Return one English output paragraph followed by exactly one JSON array with the same table '
     'grammar. Cite every supplied region ID exactly once in its own angle brackets, '
     'using the ID verbatim. Reference-image tokens may cite only supplied reference '
     'images and are not additional table rows. Keep the requested subjects, counts, '
     'attributes, edits, style and quoted wording. Enhance visual specificity in the '
-    'caption and desc text without introducing entities requiring additional rows. '
+    'paragraph and desc text without introducing entities requiring additional rows. '
+    'Mention scenery, lighting and atmosphere not already supplied as authored rows '
+    'only as untagged prose; they do not acquire new rows or region tags. Preserve '
+    'and cite every such region explicitly supplied in the authoritative table. '
     'Return no commentary, Markdown fences or additional output.\n\n'
 )
 
@@ -46,13 +53,30 @@ PRESERVATION_SYSTEM_PROMPT = (
 def preservation_system_prompt(mode):
     """Replace automatic layout planning only for an authored preservation request."""
     if mode == 't2i_bbox':
-        return PRESERVATION_SYSTEM_PROMPT + 'Each row retains id, bbox and desc; bbox is unchanged.'
+        return (PRESERVATION_SYSTEM_PROMPT +
+                'Write the GENERATIVE CAPTION itself, never instructions to render or quote another caption. '
+                'Every row has exactly these keys in order: id, bbox, desc; bbox is unchanged. '
+                'An id/desc-only summary is not this grammar. The following example illustrates '
+                'format only; never copy its ID or geometry into the actual authored table.\n'
+                'Example authoritative table:\n'
+                '[{"id":"sample","bbox":[200,100,500,400],"desc":"A blue cube."}]\n'
+                'Example output:\n'
+                'A matte blue cube <sample> rests on a stone floor. '
+                '[{"id":"sample","bbox":[200,100,500,400],"desc":"A matte blue cube."}]')
     if mode == 'i2i_bbox':
         return (PRESERVATION_SYSTEM_PROMPT + 'The source images are attached in order as '
                 'ref_image_0, ref_image_1, ... . The edited target image does not exist yet. '
                 'Copy the authored from values and source/target boxes exactly. '
-                'Each row retains id, from, src_bbox, tgt_bbox and desc; '
-                'from, both boxes and their null values are unchanged.')
+                'Write the EDIT INSTRUCTION itself, never instructions to render or quote another caption. '
+                'Every row has exactly these keys in order: id, from, src_bbox, tgt_bbox, desc; '
+                'from, both boxes and their null values are unchanged. An id/desc-only summary '
+                'is not this grammar. The following example illustrates format only; never '
+                'copy its ID or geometry into the actual authored table.\n'
+                'Example authoritative table:\n'
+                '[{"id":"sample","from":"target","src_bbox":null,"tgt_bbox":[200,100,500,400],"desc":"A blue cube."}]\n'
+                'Example output:\n'
+                'Add a matte blue cube <sample> on the existing stone floor; keep everything else unchanged. '
+                '[{"id":"sample","from":"target","src_bbox":null,"tgt_bbox":[200,100,500,400],"desc":"A matte blue cube."}]')
     raise ValueError('Authored-layout system instructions require a structured prompt mode.')
 
 
@@ -113,14 +137,20 @@ def preservation_request(authored, layout, image_count):
         if source is not None and source['referenceIndex'] >= image_count:
             raise _invalid('authored source index is outside the actual supplied image context.')
         target = None if region['targetBox'] is None else _upstream_box(region['targetBox'])
-        row = {'id': region['id'], 'desc': region['description']}
+        row = {'id': region['id']}
         if image_count:
             row.update({'from': 'target' if source is None else f"ref_image_{source['referenceIndex']}",
                         'src_bbox': None if source is None else _upstream_box(source['box']), 'tgt_bbox': target})
         else:
             row['bbox'] = target
+        row['desc'] = region['description']
         rows.append(row)
-    result = authored + '\n' + json.dumps(rows, ensure_ascii=False, allow_nan=False, separators=(',', ':')) + PRESERVATION_REQUEST_SUFFIX
+    # This legacy-named constant covers ALL static request-template bytes in
+    # the existing v2 declaration hash; substitutions are authored data only.
+    result = PRESERVATION_REQUEST_SUFFIX.format(
+        authored=authored,
+        tags=json.dumps([f"<{region['id']}>" for region in parsed['regions']], ensure_ascii=False),
+        table=json.dumps(rows, ensure_ascii=False, allow_nan=False, separators=(',', ':')))
     if len(result.encode('utf-8')) > MAX_STRUCTURED_PROMPT_BYTES:
         raise _invalid('structured prompt exceeds the 1 MiB UTF-8 limit.')
     return result
@@ -139,7 +169,7 @@ def _nonfinite(_value):
     raise _invalid('JSON numbers must be finite.')
 
 
-def _caption_table(text):
+def _caption_table(text, *, require_caption=True):
     _text(text, maximum=MAX_RESPONSE_BYTES, label='output')
     if len(text.encode('utf-8')) > MAX_RESPONSE_BYTES:
         raise _invalid('output exceeds 256 KiB of UTF-8.')
@@ -192,7 +222,8 @@ def _caption_table(text):
         raise _invalid('exactly one trailing JSON array is required.')
     start, _end, rows = decoded[0]
     caption = text[:start].rstrip()
-    _text(caption, maximum=131072, label='caption')
+    if require_caption:
+        _text(caption, maximum=131072, label='caption')
     return caption, rows
 
 
@@ -273,4 +304,100 @@ def validate_target_layout_output(text, authored_layout, *, mode, image_count):
         result.update(schemaVersion=2, rawCaption=caption)
     if len(json.dumps(result, ensure_ascii=True, allow_nan=False).encode('ascii')) > MAX_PROPOSAL_BYTES:
         raise _invalid('the structured proposal exceeds its 256 KiB JSON budget.')
+    return result
+
+
+# New explicit composition policy. Existing strict generated-table parsing above
+# remains unchanged, including its refusal of noncompliant native geometry.
+APPEND_DETAILS_POLICY = 'append-details-preserve-layout-v1'
+APPEND_DETAILS_OPERATION = 'enhance_prompt_append_details'
+APPEND_REQUEST_TEMPLATE = (
+    '{request}\n\nAuthored subject descriptions (wording context only):\n{descriptions}'
+)
+
+
+def _append_layout(layout, image_count):
+    if type(image_count) is not int or not 0 <= image_count <= 10 or type(layout) is not dict:
+        raise _invalid('append details requires an authored layout and actual ordered image count.')
+    parsed = parse_layout_conditioning(layout)
+    if parsed is None or not parsed['regions']:
+        raise _invalid('append details requires a nonempty authored layout.')
+    if any(region.get('source', {}).get('referenceIndex', -1) >= image_count
+           for region in parsed['regions']):
+        raise _invalid('authored source index is outside the actual supplied image context.')
+    return parsed
+
+
+def _append_tag_projection(value, parsed, image_count, *, require_targets):
+    _text(value, maximum=131072, label='authored wording')
+    if len(value.encode('utf-8')) > MAX_RESPONSE_BYTES:
+        raise _invalid('authored wording exceeds its 256 KiB UTF-8 budget.')
+    ids = {region['id'] for region in parsed['regions']}
+    tags = re.findall(r'<([^<>]*)>', value)
+    remainder = re.sub(r'<[^<>]*>', '', value)
+    if '<' in remainder or '>' in remainder:
+        raise _invalid('authored wording contains incomplete or nested tags.')
+    if require_targets and any(tags.count(identity) != 1 for identity in ids):
+        raise _invalid('authored caption must cite every region ID exactly once.')
+    for tag in tags:
+        reference = re.fullmatch(r'ref_image_(0|[1-9][0-9]?)', tag)
+        if tag not in ids and (reference is None or int(reference[1]) >= image_count):
+            raise _invalid('authored tag does not identify an authored region or actual reference.')
+    return re.sub(r'<([^<>]*)>', lambda match: match[1], value)
+
+
+def append_details_request(authored, layout, image_count):
+    """Plain one-call wording context; no geometry or table becomes model input."""
+    parsed = _append_layout(layout, image_count)
+    request = _append_tag_projection(authored, parsed, image_count, require_targets=True)
+    if _contains_trailing_regions(authored):
+        raise _invalid('authored caption already contains a competing region table.')
+    descriptions = '\n'.join(region['id'] + ': ' + _append_tag_projection(
+        region['description'], parsed, image_count, require_targets=False)
+        for region in parsed['regions'])
+    rendered = APPEND_REQUEST_TEMPLATE.format(request=request, descriptions=descriptions)
+    if len(rendered.encode('utf-8')) > MAX_STRUCTURED_PROMPT_BYTES:
+        raise _invalid('append wording context exceeds the 1 MiB UTF-8 request budget.')
+    return rendered
+
+
+def validate_append_native_text(value):
+    """Accept bounded native prose verbatim; never sanitize a model response."""
+    _text(value, maximum=131072, label='native details')
+    if len(value.encode('utf-8')) > MAX_RESPONSE_BYTES:
+        raise _invalid('native details exceed their 256 KiB UTF-8 budget.')
+    if '<' in value or '>' in value or '```' in value or '~~~' in value:
+        raise _invalid('native details must not contain region tags or Markdown fences.')
+    # Reuse the existing finite JSON scanner. Ordinary brackets, quoted wording,
+    # styles and math are not rejected merely for resembling Markdown or JSON.
+    if _contains_trailing_regions(value):
+        raise _invalid('native details must not append a JSON table.')
+    # Ordinary prose can contain an earlier non-JSON bracket or another array.
+    # Check bounded suffix candidates independently instead of treating a failed
+    # whole-response table parse as evidence that no trailing table exists.
+    for attempt, match in enumerate(re.finditer(r'\[', value)):
+        if attempt >= MAX_JSON_CANDIDATES:
+            raise _invalid('native details contain too many JSON candidates.')
+        try:
+            _caption, rows = _caption_table(value[match.start():], require_caption=False)
+        except ValueError:
+            continue
+        if type(rows) is list and (not rows or any(type(row) is dict for row in rows)):
+            raise _invalid('native details must not append a JSON table.')
+    return value
+
+
+def compose_append_details(authored, authored_layout, native_text, *, image_count):
+    """Compose text only; all authored layout bytes/values stay authoritative."""
+    append_details_request(authored, authored_layout, image_count)
+    validate_append_native_text(native_text)
+    caption = authored + '\n\n' + native_text
+    _text(caption, maximum=131072, label='composed caption')
+    if len(caption.encode('utf-8')) > MAX_RESPONSE_BYTES:
+        raise _invalid('composed caption exceeds its 256 KiB UTF-8 budget.')
+    result = {'schemaVersion': 3, 'kind': 'caption-append-preserve-layout-v1',
+              'caption': caption, 'layoutConditioning': deepcopy(authored_layout),
+              'nativeText': native_text}
+    if len(json.dumps(result, ensure_ascii=True, allow_nan=False).encode('ascii')) > MAX_PROPOSAL_BYTES:
+        raise _invalid('the composed proposal exceeds its 256 KiB JSON budget.')
     return result

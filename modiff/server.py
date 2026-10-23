@@ -3256,20 +3256,21 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         if (set(request.query) != {'with_metadata'}
                 or request.query.getall('with_metadata') != ['1']
                 or request.match_info.get('index') is not None
-                or request.match_info.get('field') != 'proposal_summary'):
+                or request.match_info.get('field') not in ('proposal_summary', 'proposal_diagnostic')):
             return web.json_response({'error': 'Unsupported native proposal metadata option.'}, status=400)
         from modiff.prompt_enhancement_summary import (
             MAX_BYTES, OBSERVATION_MAX_BYTES, read_cache_observation, require_native_cache_output,
         )
         node_id = request.match_info.get('node')
+        field = request.match_info.get('field')
         try:
-            require_native_cache_output(self, node_id)
+            require_native_cache_output(self, node_id, field=field)
         except LookupError as error:
             return web.json_response({'error': str(error)}, status=404)
         except ValueError as error:
             return web.json_response({'error': str(error)}, status=400)
         try:
-            value = read_cache_observation(self, node_id)
+            value = read_cache_observation(self, node_id, field=field)
             # Explicit UTF-8 avoids the default ASCII serializer expanding
             # non-ASCII text beyond the bounded raw-string/envelope contract.
             encoded = json.dumps(value, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
@@ -3285,6 +3286,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         node = request.match_info.get("node")
         field = request.match_info.get("field")
         index = request.match_info.get("index", None)
+        if field == 'proposal_diagnostic':
+            return web.HTTPBadRequest(text='Native proposal diagnostics require with_metadata=1.')
 
         if node not in self.node_cache:
             return web.HTTPNotFound(text=f"Node {node} not found in cache.")
@@ -6624,7 +6627,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             "task_id": task_id,
             "sid": sid,
             "node": node_id,
-            "node_name": node_name,
+            **({"node_name": node_name} if node_name is not None else {}),
             "message": message,
             "exception_type": exception_type,
             "traceback": traceback_text,

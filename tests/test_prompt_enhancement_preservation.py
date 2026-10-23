@@ -5,7 +5,7 @@ import json
 import pytest
 
 from modiff.prompt_enhancement_output import validate_target_layout_output
-from modiff.prompt_enhancement_output import preservation_request, PRESERVATION_REQUEST_SUFFIX
+from modiff.prompt_enhancement_output import preservation_request, preservation_system_prompt
 
 
 LAYOUT = {'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': [{
@@ -77,7 +77,7 @@ def test_removal_preserves_null_target_action_and_exact_binding():
 
 def test_preservation_request_keeps_raw_structured_conflict_and_finite_budget_guards():
     request = preservation_request('Move <authored_circle>.', LAYOUT, 1)
-    assert request.endswith(PRESERVATION_REQUEST_SUFFIX)
+    assert json.loads(request.rsplit('\n', 1)[1])[0]['id'] == 'authored_circle'
     assert '"from":"ref_image_0"' in request
     assert LAYOUT['regions'][0]['source']['expectedReferenceId'] not in request
     with pytest.raises(ValueError, match='already contains regions'):
@@ -86,6 +86,76 @@ def test_preservation_request_keeps_raw_structured_conflict_and_finite_budget_gu
         preservation_request('x' * 1048550 + '<authored_circle>', LAYOUT, 1)
     with pytest.raises(ValueError, match='actual supplied image'):
         preservation_request('Move <authored_circle>.', LAYOUT, 0)
+
+
+@pytest.mark.parametrize('image_count', [0, 1])
+def test_request_keeps_complete_authored_table_last_without_scenery_authority(image_count):
+    layout = deepcopy(LAYOUT)
+    if not image_count:
+        layout['regions'][0].pop('source')
+        layout['regions'][0]['action'] = 'place'
+    before = deepcopy(layout)
+    authored = '  Show <authored_circle> with unchanged scenery and warm lighting. {Keep this wording.}\n'
+    request = preservation_request(authored, layout, image_count)
+    assert request.startswith('Authored request (text):\n' + authored + '\n\n')
+    tags = next(line for line in request.splitlines() if line.startswith('Allowed region tags (JSON array): '))
+    assert json.loads(tags.split(': ', 1)[1]) == ['<authored_circle>']
+    # A terminal JSON decode detects any instructions appended after the table.
+    table = json.loads(request.rsplit('\n', 1)[1])
+    assert len(table) == 1 and table[0]['id'] == 'authored_circle'
+    assert table[0]['desc'] == layout['regions'][0]['description']
+    if image_count:
+        assert list(table[0]) == ['id', 'from', 'src_bbox', 'tgt_bbox', 'desc']
+        assert table[0]['from'] == 'ref_image_0'
+        assert table[0]['src_bbox'] == [0, 0, 1000, 1000]
+        assert table[0]['tgt_bbox'] == [200, 200, 800, 800]
+    else:
+        assert list(table[0]) == ['id', 'bbox', 'desc']
+        assert table[0]['bbox'] == [200, 200, 800, 800]
+    assert LAYOUT['regions'][0]['source']['expectedReferenceId'] not in request
+    assert layout == before
+
+
+@pytest.mark.parametrize('mode,image_count', [('t2i_bbox', 0), ('i2i_bbox', 1)])
+def test_mode_specific_worked_example_obeys_the_same_strict_geometry_parser(mode, image_count):
+    system = preservation_system_prompt(mode)
+    assert ('EDIT INSTRUCTION itself' in system) is bool(image_count)
+    assert ('GENERATIVE CAPTION itself' in system) is (not image_count)
+    assert 'untagged prose' in system and 'id/desc-only summary' in system
+    assert system.count('Example output:\n') == 1
+    supplied, output = system.split('Example authoritative table:\n', 1)[1].split('\nExample output:\n')
+    rows = json.loads(supplied)
+    layout = {'schemaVersion': 1, 'coordinateSpace': 'normalized_xyxy', 'regions': [{
+        'id': 'sample', 'description': rows[0]['desc'], 'targetBox': [.1, .2, .4, .5]}]}
+    proposal = validate_target_layout_output(output, layout, mode=mode, image_count=image_count)
+    assert proposal['layoutConditioning']['regions'][0]['targetBox'] == layout['regions'][0]['targetBox']
+    assert proposal['rawTable'][0]['id'] == 'sample'
+    assert len(proposal['rawTable']) == 1  # Mentioned floor never gains a row.
+
+
+def test_explicitly_authored_lighting_retains_its_row_and_allowed_tag():
+    layout = deepcopy(LAYOUT)
+    lighting = {'id': 'authored_lighting', 'description': 'Warm lighting.', 'action': 'place',
+                'targetBox': [0, 0, 1, 1]}
+    layout['regions'].append(lighting)
+    before = deepcopy(layout)
+    request = preservation_request('Move <authored_circle> under <authored_lighting>.', layout, 1)
+    tags = next(line for line in request.splitlines() if line.startswith('Allowed region tags (JSON array): '))
+    assert json.loads(tags.split(': ', 1)[1]) == ['<authored_circle>', '<authored_lighting>']
+    rows = json.loads(request.rsplit('\n', 1)[1])
+    assert rows[1] == {'id': 'authored_lighting', 'from': 'target', 'src_bbox': None,
+                       'tgt_bbox': [0, 0, 1000, 1000], 'desc': lighting['description']}
+    assert len(rows) == 2 and layout == before
+
+
+@pytest.mark.parametrize('extra_rows', [False, True])
+def test_id_description_summaries_with_extra_context_never_become_layout_authority(extra_rows):
+    rows = [{'id': 'authored_circle', 'desc': 'A red circle.'}]
+    if extra_rows:
+        rows.extend({'id': name, 'desc': 'Unchanged context.'} for name in ('floor', 'room', 'lighting'))
+    generated = 'Render the complete caption as: "Move <authored_circle>." ' + json.dumps(rows)
+    with pytest.raises(ValueError, match='authored target IDs|unsupported table keys'):
+        validate_target_layout_output(generated, LAYOUT, mode='i2i_bbox', image_count=1)
 
 
 @pytest.mark.parametrize('image_count', [0, 1])

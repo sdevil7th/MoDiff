@@ -15,6 +15,8 @@ import unicodedata
 from modiff.block_definition_v2 import _stable_json
 
 MAX_BYTES = 2 * 1024**2
+DIAGNOSTIC_MAX_BYTES = 1048576
+DIAGNOSTIC_MAX_CHARACTERS = 262144
 NODE_MODULE = 'modules.HuggingFaceTransformers'
 NODE_ACTION = 'GenerateImageVideoText'
 
@@ -91,6 +93,35 @@ def bounded_json(value, maximum=MAX_BYTES):
 
 def digest_bytes(raw):
     return 'sha256:' + hashlib.sha256(raw).hexdigest()
+
+
+def diagnostic_output(result):
+    """Exact rejected structured suffix only; never an applicable text output.
+
+    An excessive or non-Unicode suffix remains omitted, never truncated. This
+    diagnostic must not turn an otherwise completed rejected Preview into an
+    execution failure.
+    """
+    if ((not result['systemPromptMode'].endswith('_bbox')
+             and result.get('operation') != 'enhance_prompt_append_details')
+            or result['applicationAllowed'] is not False):
+        return None
+    value = result['text']
+    if type(value) is not str or not value or len(value) > DIAGNOSTIC_MAX_CHARACTERS:
+        return None
+    try:
+        return value if len(value.encode('utf-8')) <= DIAGNOSTIC_MAX_BYTES else None
+    except UnicodeEncodeError:
+        return None
+
+
+def _diagnostic_digest(value):
+    if value is None:
+        return None
+    if (type(value) is not str or not value or len(value) > DIAGNOSTIC_MAX_CHARACTERS
+            or len(value.encode('utf-8')) > DIAGNOSTIC_MAX_BYTES):
+        raise ValueError('The native proposal diagnostic exceeds its exact string contract.')
+    return digest_bytes(value.encode('utf-8'))
 
 
 def canonical_digest(value):
@@ -202,7 +233,7 @@ def _model_receipt(value, contract):
     bounded_json(value, 16384)
 
 
-def _consumed(value, controls, contract, mode):
+def _consumed(value, controls, contract, mode, *, operation='enhance_prompt'):
     from modules.HuggingFaceTransformers.main import MAX_MEDIA_SIDE, MAX_MEDIA_PIXELS, MAX_TOTAL_MEDIA_PIXELS
     closed(value, ('schemaVersion', 'renderedPrompt', 'references', 'processedImageGrid', 'fingerprints'))
     if type(value['schemaVersion']) is not int or value['schemaVersion'] != 1:
@@ -219,7 +250,8 @@ def _consumed(value, controls, contract, mode):
     if references:
         keys.update(('processed_pixel_sha256', 'processed_grid_sha256', 'processed_pixel_shape', 'processed_grid_shape'))
     closed(fields, keys)
-    if (fields['operation'] != 'enhance_prompt' or fields['enhancement_max_new_tokens'] != controls['max_new_tokens']
+    if (operation not in ('enhance_prompt', 'enhance_prompt_append_details')
+            or fields['operation'] != operation or fields['enhancement_max_new_tokens'] != controls['max_new_tokens']
             or type(fields['enhancement_max_new_tokens']) is not int or fields['prompt_adapter_id'] != contract['id']
             or fields['system_prompt_mode'] != mode or fields['rendered_prompt_sha256'] != digest_bytes(rendered.encode('utf-8'))
             or type(fields['rendered_prompt_utf8_bytes']) is not int or fields['rendered_prompt_utf8_bytes'] != len(rendered.encode('utf-8'))
@@ -265,11 +297,12 @@ def _consumed(value, controls, contract, mode):
 class BoundSummary:
     """Ephemeral bound context; only detached primitive output is published."""
 
-    def __init__(self, observer, declaration, contract, prompt, layout):
+    def __init__(self, observer, declaration, contract, prompt, layout, *, operation='enhance_prompt'):
         self.observer, self.declaration, self.contract = observer, declaration, contract
         self.producer = _producer(observer)
         self.prompt_hash, self.layout_kind, self.layout_hash = authored_request(prompt, layout)
         self.layout = deepcopy(layout)
+        self.authored_prompt, self.operation = prompt, operation
 
     def check(self):
         if _producer(self.observer) != self.producer:
@@ -295,7 +328,7 @@ class BoundSummary:
         mode = result['systemPromptMode']
         if mode not in ('t2i', 'i2i', 't2i_bbox', 'i2i_bbox'):
             raise ValueError('Prompt proposal mode is unsupported.')
-        _consumed(consumed, actual_controls, self.contract, mode)
+        _consumed(consumed, actual_controls, self.contract, mode, operation=self.operation)
         _model_receipt(result['modelReceipt'], self.contract)
         integer(result['inputTokens'], 1, 32768)
         count = integer(result['generatedTokens'], 1, actual_controls['max_new_tokens'])
@@ -304,7 +337,24 @@ class BoundSummary:
                 or result['semanticFidelityVerified'] is not False):
             raise ValueError('Prompt proposal completion observations are inconsistent.')
         structured, reason = result.get('structuredProposal'), result.get('applicationBlockedReason')
-        if mode.endswith('_bbox'):
+        if self.operation == 'enhance_prompt_append_details':
+            from modiff.prompt_enhancement_output import compose_append_details
+            if mode not in ('t2i', 'i2i') or result.get('operation') != self.operation:
+                raise ValueError('Append-details operation and actual publisher mode changed.')
+            proposal_text = None
+            if result['layoutOutputValidated'] is True and result['applicationAllowed'] is True:
+                if type(structured) is not dict or reason is not None:
+                    raise ValueError('Composed proposal observations are inconsistent.')
+                closed(structured, ('schemaVersion', 'kind', 'caption', 'layoutConditioning', 'nativeText'))
+                expected = compose_append_details(self.authored_prompt, self.layout, result['text'],
+                                                  image_count=len(consumed['references']))
+                if structured != expected:
+                    raise ValueError('Composed native text or exact authored prefix/layout changed after validation.')
+            elif result['layoutOutputValidated'] is False and result['applicationAllowed'] is False and structured is None:
+                text(reason, maximum=16384, characters=4096)
+            else:
+                raise ValueError('Composed proposal flags are inconsistent.')
+        elif mode.endswith('_bbox'):
             proposal_text = None
             if result['layoutOutputValidated'] is True and result['applicationAllowed'] is True:
                 from modiff.prompt_enhancement_output import validate_target_layout_output
@@ -341,7 +391,7 @@ class BoundSummary:
             'producer': self.producer, 'adapter': adapter, 'request': request,
             'modelReceipt': result['modelReceipt'], 'consumedInput': consumed, 'proposal': proposal})
         self.check()
-        finish_pending(self, summary, consumed, request)
+        finish_pending(self, summary, consumed, request, diagnostic_output(result))
         return summary
 
 
@@ -356,6 +406,7 @@ class _PendingObservation:
     consumed_json: str
     summary_sha256: str
     source_json: str
+    diagnostic_sha256: str | None = None
 
 
 @dataclass(frozen=True)
@@ -389,7 +440,7 @@ def observe_inputs(bound_summary, consumed, controls):
         'do_sample', 'num_beams', 'repetition_penalty', 'return_dict_in_generate')}
     actual_controls['use_chat_template'] = True
     _controls(actual_controls)
-    _consumed(consumed, actual_controls, bound_summary.contract, mode)
+    _consumed(consumed, actual_controls, bound_summary.contract, mode, operation=bound_summary.operation)
     if getattr(bound_summary, '_pre_generation_observation', None) is not None:
         raise ValueError('The pre-generation input observation was already consumed.')
     request = {'authoredPromptSha256': bound_summary.prompt_hash,
@@ -403,7 +454,7 @@ def observe_inputs(bound_summary, consumed, controls):
         bounded_json(request, 4096), consumed_observation(consumed), source)
 
 
-def finish_pending(bound_summary, summary, consumed, request):
+def finish_pending(bound_summary, summary, consumed, request, diagnostic=None):
     """End of existing BoundSummary.finish, after its final source check."""
     before = getattr(bound_summary, '_pre_generation_observation', None)
     projected_request = {key: request[key] for key in ('authoredPromptSha256',
@@ -411,7 +462,8 @@ def finish_pending(bound_summary, summary, consumed, request):
     if before != (bounded_json(projected_request, 4096), consumed_observation(consumed), _source_snapshot()):
         raise ValueError('The normalized input changed after pre-generation capture.')
     bound_summary.observer.node._prompt_observation_pending = _PendingObservation(
-        bounded_json(bound_summary.producer, 4096), before[0], before[1], digest_bytes(summary.encode('utf-8')), before[2])
+        bounded_json(bound_summary.producer, 4096), before[0], before[1], digest_bytes(summary.encode('utf-8')), before[2],
+        _diagnostic_digest(diagnostic))
 
 
 class _OutputIncarnation:
@@ -582,7 +634,8 @@ def seal_dispatch_observation(server, node_id):
     pending = vars(node).pop('_prompt_observation_pending', None)
     if node._has_changed is True:
         if (type(pending) is not _PendingObservation or json.loads(pending.producer_json) != context
-                or digest_bytes(value.encode('utf-8')) != pending.summary_sha256):
+                or digest_bytes(value.encode('utf-8')) != pending.summary_sha256
+                or _diagnostic_digest(node.output.get('proposal_diagnostic')) != pending.diagnostic_sha256):
             raise ValueError('A computed proposal lacks its actual pre-output observation.')
         token = _OutputIncarnation(node.output)
         node._prompt_output_incarnation = token
@@ -628,7 +681,7 @@ def bind_terminal_detached_observation(server, node_id, receipt, record):
     prune_cache_observations(server)
 
 
-def read_cache_observation(server, node_id):
+def read_cache_observation(server, node_id, *, field='proposal_summary'):
     """Pure existing-cache response path: no mint/update/model/processor work."""
     lock = getattr(server, '_node_cache_lock', None)
     if lock is not None and lock.locked():
@@ -636,10 +689,18 @@ def read_cache_observation(server, node_id):
     record = getattr(server, '_prompt_summary_observations', {}).get(node_id)
     if type(record) is not _CacheObservation:
         raise ValueError('No actual native cache observation is available; explicitly recompute Preview.')
-    _node, value = _valid_cache(server, node_id, record)
+    node, value = _valid_cache(server, node_id, record)
     observation = {'schemaVersion': 1, 'summarySha256': record.pending.summary_sha256,
         'producer': json.loads(record.pending.producer_json), 'dispatch': json.loads(record.dispatch_json),
         'request': json.loads(record.pending.request_json), 'consumedInput': json.loads(record.pending.consumed_json)}
+    if field == 'proposal_diagnostic':
+        value = require_native_cache_output(server, node_id, field=field)
+        if (record.pending.diagnostic_sha256 is None
+                or _diagnostic_digest(value) != record.pending.diagnostic_sha256):
+            raise ValueError('The exact observed UTF-8 proposal diagnostic changed.')
+        observation['diagnosticSha256'] = record.pending.diagnostic_sha256
+    elif field != 'proposal_summary':
+        raise ValueError('Unsupported native proposal observation field.')
     bounded_json(observation, OBSERVATION_MAX_BYTES)
     return {'value': value, 'observation': observation}
 
@@ -652,7 +713,7 @@ def _native_action():
     return action if type(action) is type else None
 
 
-def require_native_cache_output(server, node_id):
+def require_native_cache_output(server, node_id, *, field='proposal_summary'):
     """Validate exact preloaded native/retained string before value access."""
     from modiff.workflow_auto_lifecycle import _RetainedPromptProposal
     node = server.node_cache.get(node_id)
@@ -668,16 +729,22 @@ def require_native_cache_output(server, node_id):
     module = dict.get(modules, NODE_MODULE) if type(modules) is dict else None
     declaration = dict.get(module, NODE_ACTION) if type(module) is dict else None
     params = dict.get(declaration, 'params') if type(declaration) is dict else None
-    field = dict.get(params, 'proposal_summary') if type(params) is dict else None
+    if field not in ('proposal_summary', 'proposal_diagnostic'):
+        raise ValueError('Unsupported native proposal observation field.')
+    field_name = field
+    field = dict.get(params, field_name) if type(params) is dict else None
     expected = vars(action).get('params')
-    expected = dict.get(expected, 'proposal_summary') if type(expected) is dict else None
+    expected = dict.get(expected, field_name) if type(expected) is dict else None
     if (type(field) is not dict or field != expected or field.get('type') != 'string'
             or field.get('display') != 'output'):
         raise ValueError('The current registered native string output contract changed.')
     output = state.get('output')
-    if type(output) is not dict or 'proposal_summary' not in output or output['proposal_summary'] is None:
+    if type(output) is not dict or field_name not in output or output[field_name] is None:
         raise LookupError('The native proposal output is empty.')
-    value = output['proposal_summary']
+    value = output[field_name]
+    if field_name == 'proposal_diagnostic':
+        _diagnostic_digest(value)
+        return value
     if type(value) is not str or not value or len(value.encode('utf-8')) > MAX_BYTES:
         raise ValueError('The native proposal output exceeds its exact string contract.')
     return value

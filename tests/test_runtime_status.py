@@ -241,6 +241,61 @@ class RuntimeStatusTests(unittest.IsolatedAsyncioTestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
+    async def test_pre_node_failure_serializes_terminal_event_without_null_node_name(self):
+        from modiff.ancillary_owner_lifecycle import AncillaryOwnerError
+
+        messages = []
+
+        def blocked_before_node_dispatch():
+            raise AncillaryOwnerError("Ancillary owner boundary: foreign cached owner.")
+
+        self.server.loop = asyncio.get_running_loop()
+        with (
+            patch.object(self.server, "queue_message", side_effect=messages.append),
+            patch.object(self.server, "_persist_supervisor_queue_state"),
+            patch.object(self.server, "_release_runtime_caches_for_retry", return_value={"errors": []}),
+            patch.object(self.server, "_cuda_memory_snapshot", return_value=None),
+            patch.object(self.server, "_gpu_process_snapshot", return_value=None),
+            patch.object(self.server, "_loader_diagnostics_snapshot", return_value=None),
+        ):
+            task_id = await self.server.queue_task(
+                blocked_before_node_dispatch, (), None, "session", name="Field action",
+            )
+            worker = asyncio.create_task(self.server._main_worker())
+            try:
+                await asyncio.wait_for(self.server.main_queue.join(), timeout=3)
+            finally:
+                self.server._shutdown_event.set()
+                await asyncio.wait_for(worker, timeout=3)
+
+        terminal = json.loads(json.dumps(next(
+            message for message in messages if message.get("type") == "task_failed"
+        )))
+        self.assertEqual(terminal["task_id"], task_id)
+        self.assertEqual(terminal["status"], "failed")
+        self.assertEqual(terminal["exception_type"], "AncillaryOwnerError")
+        self.assertEqual(terminal["error_code"], "ancillary_owner_boundary")
+        self.assertIsNone(terminal["current"])
+        self.assertIsNone(terminal["node"])
+        # The client accepts an absent optional node_name or a string, not null.
+        self.assertNotIn("node_name", terminal)
+
+    def test_exception_payload_preserves_known_node_name(self):
+        with (
+            patch.object(self.server, "_cuda_memory_snapshot", return_value=None),
+            patch.object(self.server, "_gpu_process_snapshot", return_value=None),
+            patch.object(self.server, "_loader_diagnostics_snapshot", return_value=None),
+        ):
+            payload = self.server._exception_payload(
+                ValueError("invalid node input"), task_id="task", node_id="node",
+                node_name="modules.Primitive.String",
+            )
+
+        wire = json.loads(json.dumps({"type": "task_failed", **payload}))
+        self.assertEqual(wire["node"], "node")
+        self.assertEqual(wire["node_name"], "modules.Primitive.String")
+        self.assertEqual(wire["message"], "invalid node input")
+
     def test_worker_control_metadata_rejects_unsupervised_or_untrusted_addresses(self):
         cases = [
             ({}, {"available": False, "address": None}),

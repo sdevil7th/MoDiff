@@ -854,7 +854,7 @@ def _token_prefix_matches(sequences: Any, input_ids: Any, input_tokens: int) -> 
         return False
 
 
-def _decode(preprocessor: Any, token_ids: Any) -> str:
+def _decode(preprocessor: Any, token_ids: Any, *, preserve_whitespace: bool = False) -> str:
     decoder = getattr(preprocessor, "decode", None)
     if callable(decoder):
         text = decoder(token_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
@@ -868,7 +868,8 @@ def _decode(preprocessor: Any, token_ids: Any) -> str:
         text = decoded[0]
     if not isinstance(text, str) or "\x00" in text:
         raise RuntimeError("Transformers generation returned invalid text.")
-    text = text.strip()
+    if not preserve_whitespace:
+        text = text.strip()
     if len(text) > MAX_OUTPUT_CHARACTERS or len(text.encode("utf-8")) > MAX_OUTPUT_UTF8_BYTES:
         raise RuntimeError("Transformers generation exceeded the output text limit.")
     return text
@@ -1465,7 +1466,7 @@ class GenerateImageVideoText(NodeBase):
             'default': MAX_MEDIA_PIXELS, 'min': 65536, 'max': MAX_MEDIA_PIXELS},
         "model": {"label": "Model", "display": "input", "type": "transformers_image_text_to_text"},
         "prompt": {"label": "Prompt", "type": "text", "default": ""},
-        "operation": {"label": "Operation", "type": "string", "options": ["standard", "enhance_prompt"], "default": "standard", "hidden": True},
+        "operation": {"label": "Operation", "type": "string", "options": ["standard", "enhance_prompt", "enhance_prompt_append_details"], "default": "standard", "hidden": True},
         "enhancement_max_new_tokens": {"label": "Enhancement Token Limit", "type": "int", "default": 3584, "min": 1, "max": 3584, "hidden": True,
             "description": "Used only by prompt enhancement; ordinary generation keeps Max New Tokens."},
         "layout_conditioning": {"label": "Enhancement Layout", "type": "layout_conditioning", "display": "layout", "default": None, "hidden": True,
@@ -1490,6 +1491,7 @@ class GenerateImageVideoText(NodeBase):
         "text": {"label": "Generated Text", "display": "output", "type": "string"},
         "result": {"label": "Generation Result", "display": "output", "type": "object"},
         "proposal_summary": {"label": "Prompt Proposal Summary", "display": "output", "type": "string", "hidden": True},
+        "proposal_diagnostic": {"label": "Rejected Proposal Diagnostic", "display": "output", "type": "string", "hidden": True},
     }
 
     def __call__(self, **kwargs):
@@ -1510,7 +1512,7 @@ class GenerateImageVideoText(NodeBase):
         model, processor, receipt = _validated_handle(kwargs.get("model"), task="image-video-to-text")
         _require_current_image_text_owner(model)
         operation = kwargs.get("operation", "standard")
-        if operation == "enhance_prompt":
+        if operation in ("enhance_prompt", "enhance_prompt_append_details"):
             from modiff.prompt_enhancement import generate
             return generate(self, model, processor, receipt, kwargs)
         if operation != "standard":
@@ -1565,7 +1567,7 @@ class GenerateImageVideoText(NodeBase):
             "mediaPixels": total_pixels,
             "modelReceipt": receipt,
         }
-        return {"text": text, "result": result, "proposal_summary": None}
+        return {"text": text, "result": result, "proposal_summary": None, "proposal_diagnostic": None}
 
 
 class LoadAnyToAnyModel(NodeBase):
@@ -1805,7 +1807,7 @@ def get_image_text_operation_contracts(modules):
                 operation_id="model.load" if action == loader else "image.caption" if task == "image_to_text" else "image.generate",
                 node_key=f"modules.HuggingFaceTransformers.{action}",
                 field_overrides=fields, loader=action == loader,
-                excluded_fields=(*PROMPT_ENHANCEMENT_RECIPE_FIELDS, "proposal_summary") if action == "GenerateImageVideoText" else (),
+                excluded_fields=(*PROMPT_ENHANCEMENT_RECIPE_FIELDS, "proposal_summary", "proposal_diagnostic") if action == "GenerateImageVideoText" else (),
             )
             if contract is not None:
                 contracts.append(contract)

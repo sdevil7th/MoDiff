@@ -183,12 +183,26 @@ def request_system_prompt(prompts, mode):
     return prompts[mode]
 
 
-def prepare_request(processor, prompts, authored, images, layout):
+def prepare_request(processor, prompts, authored, images, layout, *, operation='enhance_prompt'):
     """Render actual ordered media and authored target regions without mutation."""
     from modules.HuggingFaceTransformers import main as nodes
     from modiff.layout_conditioning import parse_layout_conditioning, resolve_layout_prompt
     nodes._bounded_string(authored, field='authored prompt')
+    from modiff.prompt_enhancement_output import APPEND_DETAILS_OPERATION, append_details_request
+    if operation not in ('enhance_prompt', APPEND_DETAILS_OPERATION):
+        raise ValueError('Choose an exact reviewed prompt enhancement operation.')
     parsed = parse_layout_conditioning(layout)
+    if operation == APPEND_DETAILS_OPERATION:
+        if len(images) > 10:
+            raise ValueError('The selected prompt enhancement adapter accepts at most ten ordered images.')
+        user = append_details_request(authored, layout, len(images))
+        mode = 'i2i' if images else 't2i'
+        content = [{'type': 'image'} for _ in images] + [{'type': 'text', 'text': user}]
+        messages = [{'role': 'system', 'content': prompts[mode]}, {'role': 'user', 'content': content}]
+        rendered = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True, enable_thinking=False)
+        nodes._bounded_string(rendered, field='rendered prompt', maximum_characters=nodes.MAX_RENDERED_PROMPT_CHARACTERS,
+                              maximum_bytes=nodes.MAX_PROMPT_UTF8_BYTES * 2)
+        return mode, rendered, parsed
     if parsed is not None and parsed['regions']:
         from modiff.prompt_enhancement_output import require_authored_target_layout
         require_authored_target_layout(parsed)
@@ -287,7 +301,7 @@ def _tensor_fingerprint(tensor, observer):
     return _fingerprint(chunks(), observer)
 
 
-def _consumed_projection(contract, prompts, mode, rendered, images, batch, limit, observer):
+def _consumed_projection(contract, prompts, mode, rendered, images, batch, limit, observer, *, operation='enhance_prompt'):
     import torch
     sources = []
     source_hashes = []
@@ -306,7 +320,7 @@ def _consumed_projection(contract, prompts, mode, rendered, images, batch, limit
         sources.append({'index': index, 'mode': image.mode, 'width': image.width,
                         'height': image.height, 'sha256': fingerprint})
     fields = {
-        'operation': 'enhance_prompt', 'enhancement_max_new_tokens': limit,
+        'operation': operation, 'enhancement_max_new_tokens': limit,
         'prompt_adapter_id': contract['id'], 'system_prompt_mode': mode,
         'system_prompt_sha256': hashlib.sha256(request_system_prompt(prompts, mode).encode()).hexdigest(),
         'rendered_prompt_sha256': 'sha256:' + hashlib.sha256(rendered.encode()).hexdigest(),
@@ -358,7 +372,8 @@ def preflight_processor_inputs(processor, kwargs, observer):
     images, _pixels = nodes._normalized_optional_images(kwargs.get('images'))
     limits = enforce_image_text_input_bounds(kwargs, images)
     observer.check()
-    mode, rendered, _layout = prepare_request(processor, prompts, authored, images, kwargs.get('layout_conditioning'))
+    mode, rendered, _layout = prepare_request(processor, prompts, authored, images, kwargs.get('layout_conditioning'),
+        operation=kwargs.get('operation', 'enhance_prompt'))
     limit = nodes._bounded_int(kwargs.get('enhancement_max_new_tokens'), field='enhancement_max_new_tokens',
         default=contract['maxNewTokens'], minimum=1, maximum=contract['maxNewTokens'])
     controls = nodes._generation_controls({**kwargs, 'max_new_tokens': limit}, maximum_new_tokens=contract['maxNewTokens'])
@@ -373,7 +388,8 @@ def preflight_processor_inputs(processor, kwargs, observer):
     batch = nodes._batch_to_device(processed, device='cpu')
     limits = enforce_image_text_input_bounds(kwargs, images, batch,
         patch_size=getattr(processor.image_processor, 'patch_size', None))
-    fields, _consumed = _consumed_projection(contract, prompts, mode, rendered, images, batch, limit, observer)
+    fields, _consumed = _consumed_projection(contract, prompts, mode, rendered, images, batch, limit, observer,
+        operation=kwargs.get('operation', 'enhance_prompt'))
     observer.check()
     return fields, limits
 
@@ -433,7 +449,8 @@ def generate(node, model, processor, receipt, kwargs):
     from modiff.prompt_enhancement_summary import BoundSummary, authored_request
     authored = kwargs.get('prompt')
     authored_request(authored, kwargs.get('layout_conditioning'))
-    summary = (BoundSummary(observer, declaration, contract, authored, kwargs.get('layout_conditioning'))
+    summary = (BoundSummary(observer, declaration, contract, authored, kwargs.get('layout_conditioning'),
+                            operation=kwargs.get('operation', 'enhance_prompt'))
                if observer.task is not None else None)
     if kwargs.get('video') is not None:
         raise ValueError('Prompt enhancement accepts images and text only; video remains on the standard operation.')
@@ -443,7 +460,8 @@ def generate(node, model, processor, receipt, kwargs):
     from modiff.transformers_image_text_resources import enforce_image_text_input_bounds
     enforce_image_text_input_bounds(kwargs, images)
     observer.check()
-    mode, rendered, layout = prepare_request(processor, prompts, authored, images, kwargs.get('layout_conditioning'))
+    mode, rendered, layout = prepare_request(processor, prompts, authored, images, kwargs.get('layout_conditioning'),
+        operation=kwargs.get('operation', 'enhance_prompt'))
     limit = nodes._bounded_int(kwargs.get('enhancement_max_new_tokens'), field='enhancement_max_new_tokens',
                                default=contract['maxNewTokens'], minimum=1, maximum=contract['maxNewTokens'])
     controls = nodes._generation_controls({**kwargs, 'max_new_tokens': limit}, maximum_new_tokens=contract['maxNewTokens'])
@@ -463,7 +481,8 @@ def generate(node, model, processor, receipt, kwargs):
     batch = nodes._batch_to_device(processed, device='cpu')
     input_limits = enforce_image_text_input_bounds(kwargs, images, batch,
         patch_size=getattr(processor.image_processor, 'patch_size', None))
-    fields, consumed = _consumed_projection(contract, prompts, mode, rendered, images, batch, limit, observer)
+    fields, consumed = _consumed_projection(contract, prompts, mode, rendered, images, batch, limit, observer,
+        operation=kwargs.get('operation', 'enhance_prompt'))
     if summary is not None:
         summary.observe_inputs(consumed, controls)
     from modiff.ancillary_owner_lifecycle import check_preallocation_inputs
@@ -495,7 +514,10 @@ def generate(node, model, processor, receipt, kwargs):
     count = output_tokens - input_tokens
     if not 0 < count <= limit:
         raise RuntimeError('Prompt enhancement returned an empty or excessive generated token sequence.')
-    text = nodes._decode(processor, sequences[0, input_tokens:])
+    if kwargs.get('operation') == 'enhance_prompt_append_details':
+        text = nodes._decode(processor, sequences[0, input_tokens:], preserve_whitespace=True)
+    else:
+        text = nodes._decode(processor, sequences[0, input_tokens:])
     if not text:
         raise RuntimeError('Prompt enhancement returned an empty proposal.')
     observer.progress(count, limit, immediate=True)
@@ -509,6 +531,18 @@ def generate(node, model, processor, receipt, kwargs):
               'layoutConditioning': deepcopy(layout),
               'layoutOutputValidated': False if mode.endswith('_bbox') else None,
               'finishReason': 'length' if count == limit else 'stop'}
+    from modiff.prompt_enhancement_output import APPEND_DETAILS_OPERATION, compose_append_details
+    if kwargs.get('operation') == APPEND_DETAILS_OPERATION:
+        result.update(operation=APPEND_DETAILS_OPERATION, layoutOutputValidated=False, applicationAllowed=False)
+        try:
+            proposal = compose_append_details(authored, kwargs.get('layout_conditioning'), text, image_count=len(images))
+        except ValueError as error:
+            result['applicationBlockedReason'] = str(error)
+        else:
+            result.update(layoutOutputValidated=True, applicationAllowed=True, structuredProposal=proposal)
+        from modiff.prompt_enhancement_summary import diagnostic_output
+        return {'text': None, 'result': result, 'proposal_summary': summary.finish(result, controls) if summary else None,
+                'proposal_diagnostic': diagnostic_output(result) if summary else None}
     # Structured generated output stays diagnostic until a separately reviewed
     # parser binds every returned box/id/source to the authored layout.
     if mode.endswith('_bbox'):
@@ -521,5 +555,8 @@ def generate(node, model, processor, receipt, kwargs):
             result.update(layoutOutputValidated=True, applicationAllowed=True, structuredProposal=proposal)
         # Even validated structured content needs a paired atomic UI Apply.
         # Never auto-feed a caption/JSON suffix into Encode Prompt's own layout.
-        return {'text': None, 'result': result, 'proposal_summary': summary.finish(result, controls) if summary else None}
-    return {'text': text, 'result': result, 'proposal_summary': summary.finish(result, controls) if summary else None}
+        from modiff.prompt_enhancement_summary import diagnostic_output
+        return {'text': None, 'result': result, 'proposal_summary': summary.finish(result, controls) if summary else None,
+                'proposal_diagnostic': diagnostic_output(result) if summary else None}
+    return {'text': text, 'result': result, 'proposal_summary': summary.finish(result, controls) if summary else None,
+            'proposal_diagnostic': None}

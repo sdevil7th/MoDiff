@@ -408,15 +408,23 @@ def test_explicit_fp32_t2i_parent_is_available_without_rewriting_the_legacy_reci
     assert child['verification']['supportedPromptModes'] == ['t2i', 'i2i']
 
 
-def test_explicit_fp32_preview_dispatch_rejects_changed_fixed_inputs(modules):
+@pytest.mark.parametrize('version', ['v1', 'v2'])
+def test_explicit_fp32_preview_dispatch_rejects_changed_fixed_inputs(modules, version):
     from modiff.ancillary_execution import PRIVATE_PARENTS, validate_execution_purpose
-    index = list(PRIVATE_PARENTS).index('flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1')
+    index = list(PRIVATE_PARENTS).index(f'flux3-klein:text-to-image:prompt-preview-fp32-authoring:{version}')
     value, parent = preview_graph(modules, index)
     declaration = parent['ancillaryOperations'][0]
     roles = value['runtimeHints']['executionPurpose']['bindings'][0]['roleNodes']
     for role, field, selected in declaration['initialValues']:
         value['nodes'][roles[role]]['params'][field] = {'value': deepcopy(selected)}
+    if version == 'v2':
+        value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
+            'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': [
+                {'id': 'subject', 'description': ' paper crane ', 'action': 'place',
+                 'targetBox': [0, 0.125, 0.5, 0.625]}]}
+    before = deepcopy(value)
     assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert value == before
     for role, field, wrong in [('provider', 'dtype', 'bfloat16'),
                                 ('provider', 'quantization_mode', 'bnb_4bit'),
                                 ('provider', 'device', 'cpu'),
@@ -430,6 +438,49 @@ def test_explicit_fp32_preview_dispatch_rejects_changed_fixed_inputs(modules):
         assert changed == before
 
 
+def test_explicit_fp32_structured_t2i_keeps_the_same_recipe_and_no_reference_route(modules):
+    from modiff.ancillary_execution import resolve_parent
+    prefix = 'flux3-klein:text-to-image:prompt-preview-fp32-authoring:'
+    plain, structured = (resolve_parent(modules, prefix + version) for version in ('v1', 'v2'))
+    for key in ('baseSpecId', 'baseSpecContentHash', 'executionProfileIds', 'roles', 'edges', 'bindings', 'initialValues'):
+        assert structured[key] == plain[key]
+    old_child, child = plain['ancillaryOperations'][0], structured['ancillaryOperations'][0]
+    assert structured['contentHash'] != plain['contentHash']
+    assert child['contentHash'] != old_child['contentHash']
+    assert child['initialValues'] == old_child['initialValues']
+    assert child['bindings'] == old_child['bindings']
+    assert child['bindings']['owner']['referenceSource'] is None
+    assert child['layoutPolicy'] == 'preserve-authored-v1'
+    assert child['verification']['supportedPromptModes'] == ['t2i', 'i2i', 't2i_bbox', 'i2i_bbox']
+    assert child['verification']['layoutRequestSuffixSha256'].startswith('sha256:')
+    assert 'layoutPolicy' not in old_child
+    assert old_child['verification']['supportedPromptModes'] == ['t2i', 'i2i']
+
+
+def test_explicit_fp32_structured_registration_preserves_all_nine_existing_dtos(modules, monkeypatch):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
+    from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
+    identity = 'flux3-klein:text-to-image:prompt-preview-fp32-authoring:v2'
+    assert identity in PRIVATE_PARENTS and identity in _OPERATION_AUTHORING_RECIPES
+    previous = tuple(key for key in PRIVATE_PARENTS if key not in {identity,
+        'flux3-klein:edit-image:prompt-preview-authoring:v3',
+        'flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3'})
+    assert len(previous) == 9
+
+    def encoded_parents():
+        return {key: json.dumps(resolve_parent(modules, key), sort_keys=True, ensure_ascii=False,
+                               separators=(',', ':')).encode('utf-8') for key in previous}
+
+    with_added = encoded_parents()
+    with monkeypatch.context() as scoped:
+        scoped.delitem(PRIVATE_PARENTS, identity)
+        scoped.delitem(_OPERATION_AUTHORING_RECIPES, identity)
+        without_added = encoded_parents()
+    assert with_added == without_added
+    assert {key: hashlib.sha256(raw).hexdigest() for key, raw in with_added.items()} == {
+        key: hashlib.sha256(raw).hexdigest() for key, raw in without_added.items()}
+
+
 def test_fp32_variant_preserves_all_eight_prior_full_dtos(modules):
     from modiff.ancillary_execution import resolve_parent
     # Captured from the reviewed structured-system source before adding FP32 T2I.
@@ -438,10 +489,10 @@ def test_fp32_variant_preserves_all_eight_prior_full_dtos(modules):
         'flux3-klein:edit-image:prompt-preview-authoring:v1': 'dd9307b5470dac4d1455edf9c98df788f1b2ced8454e4c38d98de0d4ccb5697c',
         'flux3-klein-base:text-to-image:prompt-preview-authoring:v1': '29b9708b61b0115653417e7be2869b0073981bce6f67642cd95ea5342a09334c',
         'flux3-klein-base:edit-image:prompt-preview-authoring:v1': '6e8299402d516df85f342a3ce80b723f22b73dc130f1666e6e72c75176c1d96b',
-        'flux3-klein:text-to-image:prompt-preview-authoring:v2': '40483e6dc13a6b9aaf07584b6e8da06e1adab50fe765b110bfd3ec8dc344df12',
-        'flux3-klein:edit-image:prompt-preview-authoring:v2': '8fae8fa3fbdc874b578356728a2a67451802a3775f67ba82a0c5938231b6ea88',
-        'flux3-klein-base:text-to-image:prompt-preview-authoring:v2': 'f783677c6f19ae45054bd7c19052b387899056851246b21ac91e95e7719b57c0',
-        'flux3-klein-base:edit-image:prompt-preview-authoring:v2': '1bb43007634b0a74f0dbe44868859abe346a6806e6c3364060d2c3ee18c0e665',
+        'flux3-klein:text-to-image:prompt-preview-authoring:v2': '02c7dee4d5ff1d32c61e48df346ae62f48e23d0651277cbef19666e5805cc246',
+        'flux3-klein:edit-image:prompt-preview-authoring:v2': '99035db9a961439bee70fc4389afdb4291eee093c5d823e7f99f2e80bb5abc92',
+        'flux3-klein-base:text-to-image:prompt-preview-authoring:v2': '6d7faf3f20cf20d046676b26f61d0dfe11d54a6a2d314dd819082a3ea2cda6dd',
+        'flux3-klein-base:edit-image:prompt-preview-authoring:v2': 'ac6614bbaafc736599572b53ed0d0499f2ad492a8436e7bf0b6983a0bfbeff90',
     }
     for identity, digest in expected.items():
         dto = resolve_parent(modules, identity)
@@ -555,3 +606,60 @@ def test_private_parent_fixture_refuses_foreign_export_identity(modules, monkeyp
     monkeypatch.setattr(diffusers, name, object())
     with pytest.raises(pytest.fail.Exception, match='actual native class identity'):
         parent_for(modules)
+
+
+
+APPEND_IDENTITIES = ('flux3-klein:edit-image:prompt-preview-authoring:v3',
+                     'flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3')
+
+
+def test_append_registration_preserves_all_ten_current_full_dtos(modules, monkeypatch):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
+    from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
+    previous = tuple(key for key in PRIVATE_PARENTS if key not in APPEND_IDENTITIES)
+    assert len(previous) == 10
+    def encoded():
+        return {key: json.dumps(resolve_parent(modules, key), sort_keys=True, ensure_ascii=False,
+                               separators=(',', ':')).encode('utf-8') for key in previous}
+    with_added = encoded()
+    with monkeypatch.context() as scoped:
+        for identity in APPEND_IDENTITIES:
+            scoped.delitem(PRIVATE_PARENTS, identity)
+            scoped.delitem(_OPERATION_AUTHORING_RECIPES, identity)
+        without_added = encoded()
+    assert with_added == without_added
+
+
+@pytest.mark.parametrize('identity', APPEND_IDENTITIES)
+def test_append_policy_has_explicit_plain_publisher_operation_and_keeps_fixed_recipe(modules, identity):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent, validate_execution_purpose
+    from modiff.prompt_enhancement import SYSTEM_PROMPTS, _json_file
+    from modiff.prompt_enhancement_output import APPEND_REQUEST_TEMPLATE
+    parent = resolve_parent(modules, identity)
+    child = parent['ancillaryOperations'][0]
+    assert child['layoutPolicy'] == 'append-details-preserve-layout-v1'
+    assert child['verification']['supportedPromptModes'] == ['t2i', 'i2i']
+    _, prompts = _json_file(SYSTEM_PROMPTS, 32768)
+    assert child['verification']['systemPromptSha256ByMode'] == {
+        mode: hashlib.sha256(text.encode()).hexdigest() for mode, text in prompts.items()}
+    assert child['verification']['layoutRequestSuffixSha256'] == 'sha256:' + hashlib.sha256(APPEND_REQUEST_TEMPLATE.encode()).hexdigest()
+    value, _ = preview_graph(modules, list(PRIVATE_PARENTS).index(identity))
+    for role, name, literal_value in child['initialValues']:
+        value['nodes'][role]['params'][name] = {'value': deepcopy(literal_value)}
+    proposal = value['nodes']['proposal']['params']
+    proposal['prompt']['value'] = 'Keep <subject>.'
+    proposal['layout_conditioning']['value'] = {'schemaVersion': 1,
+        'coordinateSpace': 'normalized_xyxy', 'regions': [
+            {'id': 'subject', 'description': 'An authored subject.', 'targetBox': [.123456, 0, 1, 1]}]}
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    proposal['operation']['value'] = 'enhance_prompt'
+    with pytest.raises(ValueError, match='operation|selection'):
+        validate_execution_purpose(value, modules)
+
+
+def test_old_recipe_cannot_forge_the_new_append_operation(modules):
+    from modiff.ancillary_execution import validate_execution_purpose
+    value, _ = preview_graph(modules, 0)
+    value['nodes']['proposal']['params']['operation']['value'] = 'enhance_prompt_append_details'
+    with pytest.raises(ValueError, match='operation'):
+        validate_execution_purpose(value, modules)

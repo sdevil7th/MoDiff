@@ -22,6 +22,9 @@ _PRIVATE_PROMPT_RECIPES = (
     "flux3-klein-base:text-to-image:prompt-preview-authoring:v2",
     "flux3-klein-base:edit-image:prompt-preview-authoring:v2",
     "flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1",
+    "flux3-klein:text-to-image:prompt-preview-fp32-authoring:v2",
+    "flux3-klein:edit-image:prompt-preview-authoring:v3",
+    "flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3",
 )
 
 

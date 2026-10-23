@@ -25,6 +25,19 @@ PRIVATE_PARENTS['flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1'] = 
     **PRIVATE_PARENTS['flux3-klein:text-to-image:prompt-preview-authoring:v1'],
     'providerRecipe': 'fp32-none',
 }
+PRIVATE_PARENTS['flux3-klein:text-to-image:prompt-preview-fp32-authoring:v2'] = {
+    **PRIVATE_PARENTS['flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1'],
+    'layoutPolicy': 'preserve-authored-v1',
+}
+# Explicit composition identities never change the ten existing declarations.
+PRIVATE_PARENTS['flux3-klein:edit-image:prompt-preview-authoring:v3'] = {
+    **PRIVATE_PARENTS['flux3-klein:edit-image:prompt-preview-authoring:v1'],
+    'layoutPolicy': 'append-details-preserve-layout-v1',
+}
+PRIVATE_PARENTS['flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3'] = {
+    **PRIVATE_PARENTS['flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1'],
+    'layoutPolicy': 'append-details-preserve-layout-v1',
+}
 PARENT_KEYS = ('authoringRecipeId', 'baseSpecId', 'baseSpecContentHash',
                'executionProfileId', 'pipelineClass', 'task')
 ID = re.compile(r'[A-Za-z0-9][A-Za-z0-9._:-]{0,127}')
@@ -171,7 +184,7 @@ def adapter_verification(adapter, binding, runtime_inputs, request_inputs, layou
     Device, dtype and quantization are choices of the actual provider literals.
     """
     from modiff.prompt_enhancement import SYSTEM_PROMPTS, _json_file
-    from modiff.prompt_enhancement_output import PRESERVATION_REQUEST_SUFFIX
+    from modiff.prompt_enhancement_output import PRESERVATION_REQUEST_SUFFIX, APPEND_REQUEST_TEMPLATE
     from modiff.transformers_image_text_resources import image_text_architecture_policy, image_text_nf4_policy
     raw, prompts = _json_file(SYSTEM_PROMPTS, 32 * 1024)
     if (hashlib.sha256(raw).hexdigest() != adapter['systemPromptsSha256']
@@ -203,7 +216,9 @@ def adapter_verification(adapter, binding, runtime_inputs, request_inputs, layou
                 'preprocessorClass': adapter['processorClass'], 'modelClass': adapter['modelClass'], **architecture}},
         'quantizationRecipes': [{'mode': 'none'}, image_text_nf4_policy(
             {'source': 'hub', 'value': adapter['repository']}, adapter['revision'], 'bfloat16', 'cuda:0')]}
-    if layout_policy is not None:
+    if layout_policy == 'append-details-preserve-layout-v1':
+        result['layoutRequestSuffixSha256'] = 'sha256:' + hashlib.sha256(APPEND_REQUEST_TEMPLATE.encode('utf-8')).hexdigest()
+    elif layout_policy is not None:
         if layout_policy != 'preserve-authored-v1':
             raise invalid('unsupported authored-layout preservation policy.')
         from modiff.prompt_enhancement import request_system_prompt
@@ -305,7 +320,8 @@ def ancillary_operations_for_parent(modules, payload, selection, role_params):
             'output': {'role': 'proposal', 'field': 'proposal_summary'}},
         'initialValues': [('provider', runtime_inputs['modelField'], {'source': 'hub', 'value': _adapter['repository']}),
             ('provider', runtime_inputs['revisionField'], _adapter['revision']),
-            ('proposal', request_inputs['operationField'], 'enhance_prompt')],
+            ('proposal', request_inputs['operationField'],
+             'enhance_prompt_append_details' if expected.get('layoutPolicy') == 'append-details-preserve-layout-v1' else 'enhance_prompt')],
         'fieldOverrides': selected_field_overrides(proposal), 'adapter': binding,
         'verification': adapter_verification(_adapter, binding, runtime_inputs, request_inputs, expected.get('layoutPolicy')),
         'sourceRegions': False}
@@ -689,7 +705,9 @@ def _validate_execution_purpose(graph, modules):
                 actual_value = literal(nodes[children[role]], name)
                 if type(actual_value) is not type(expected_value) or actual_value != expected_value:
                     raise invalid('declared FP32 Preview input selection changed.')
-        if literal(proposal, 'operation') != 'enhance_prompt':
+        expected_operation = ('enhance_prompt_append_details'
+            if contract.get('layoutPolicy') == 'append-details-preserve-layout-v1' else 'enhance_prompt')
+        if literal(proposal, 'operation') != expected_operation:
             raise invalid('proposal operation is not selected.')
         video = proposal['params'].get('video', {})
         if video.get('sourceId') is not None or video.get('value') is not None:
@@ -700,9 +718,9 @@ def _validate_execution_purpose(graph, modules):
         from modiff.layout_conditioning import parse_layout_conditioning
         layout = parse_layout_conditioning(literal(proposal, 'layout_conditioning')) if 'layout_conditioning' in proposal['params'] else None
         if layout is not None:
-            if contract.get('layoutPolicy') != 'preserve-authored-v1':
+            if contract.get('layoutPolicy') not in ('preserve-authored-v1', 'append-details-preserve-layout-v1'):
                 raise invalid('the selected Preview supports plain prompt enhancement only; preserving an authored layout is not supported. Select the explicit structured authoring recipe.')
-            if layout['regions']:
+            if layout['regions'] and contract.get('layoutPolicy') == 'preserve-authored-v1':
                 from modiff.prompt_enhancement_output import require_authored_target_layout
                 require_authored_target_layout(layout)
         expected_nodes = set(children.values())
@@ -724,6 +742,10 @@ def _validate_execution_purpose(graph, modules):
         if layout is not None and any(region.get('source', {}).get('referenceIndex', -1) >= (
                 0 if reference is None else len(files)) for region in layout['regions']):
             raise invalid('authored source index is outside the declared ordered media context.')
+        if contract.get('layoutPolicy') == 'append-details-preserve-layout-v1':
+            from modiff.prompt_enhancement_output import append_details_request
+            append_details_request(prompt, literal(proposal, 'layout_conditioning'),
+                                   0 if reference is None else len(files))
         if set(nodes) != expected_nodes:
             raise invalid('Preview includes an image owner or unrelated executable node.')
     if adapter_binding()[1] != _binding:

@@ -569,8 +569,15 @@ class _Scope:
         from modiff.workflow_auto_lifecycle import release_owner_caches
         from modiff.prompt_enhancement_summary import terminal_cache_observation, bind_terminal_detached_observation
         observed = terminal_cache_observation(self.server, self.proposal)
+        retained_outputs = ['proposal_summary', 'text', 'result']
+        if observed is not None and observed.pending.diagnostic_sha256 is not None:
+            from modiff.prompt_enhancement_summary import digest_bytes, require_native_cache_output
+            diagnostic = require_native_cache_output(self.server, self.proposal, field='proposal_diagnostic')
+            if digest_bytes(diagnostic.encode('utf-8')) != observed.pending.diagnostic_sha256:
+                raise _error('the observed terminal proposal diagnostic changed before release.')
+            retained_outputs.append('proposal_diagnostic')
         receipt = release_owner_caches(self.server, {'ownerIds': [self.provider], 'nodeIds': sorted(targets),
-            'retainOutputs': {self.proposal: ['proposal_summary', 'text', 'result']}}, memory_manager)
+            'retainOutputs': {self.proposal: retained_outputs}}, memory_manager)
         if observed is not None:
             bind_terminal_detached_observation(self.server, self.proposal, receipt, observed)
         return receipt
