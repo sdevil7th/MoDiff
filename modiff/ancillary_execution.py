@@ -38,6 +38,16 @@ PRIVATE_PARENTS['flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3'] = 
     **PRIVATE_PARENTS['flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1'],
     'layoutPolicy': 'append-details-preserve-layout-v1',
 }
+# Base opts into the same generic composition without changing older recipes.
+PRIVATE_PARENTS['flux3-klein-base:edit-image:prompt-preview-authoring:v3'] = {
+    **PRIVATE_PARENTS['flux3-klein-base:edit-image:prompt-preview-authoring:v1'],
+    'layoutPolicy': 'append-details-preserve-layout-v1',
+}
+PRIVATE_PARENTS['flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v3'] = {
+    **PRIVATE_PARENTS['flux3-klein-base:text-to-image:prompt-preview-authoring:v1'],
+    'providerRecipe': 'fp32-none',
+    'layoutPolicy': 'append-details-preserve-layout-v1',
+}
 PARENT_KEYS = ('authoringRecipeId', 'baseSpecId', 'baseSpecContentHash',
                'executionProfileId', 'pipelineClass', 'task')
 ID = re.compile(r'[A-Za-z0-9][A-Za-z0-9._:-]{0,127}')

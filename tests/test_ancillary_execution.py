@@ -464,7 +464,8 @@ def test_explicit_fp32_structured_registration_preserves_all_nine_existing_dtos(
     assert identity in PRIVATE_PARENTS and identity in _OPERATION_AUTHORING_RECIPES
     previous = tuple(key for key in PRIVATE_PARENTS if key not in {identity,
         'flux3-klein:edit-image:prompt-preview-authoring:v3',
-        'flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3'})
+        'flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3',
+        *BASE_APPEND_IDENTITIES})
     assert len(previous) == 9
 
     def encoded_parents():
@@ -611,12 +612,14 @@ def test_private_parent_fixture_refuses_foreign_export_identity(modules, monkeyp
 
 APPEND_IDENTITIES = ('flux3-klein:edit-image:prompt-preview-authoring:v3',
                      'flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3')
+BASE_APPEND_IDENTITIES = ('flux3-klein-base:edit-image:prompt-preview-authoring:v3',
+                         'flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v3')
 
 
 def test_append_registration_preserves_all_ten_current_full_dtos(modules, monkeypatch):
     from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
     from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
-    previous = tuple(key for key in PRIVATE_PARENTS if key not in APPEND_IDENTITIES)
+    previous = tuple(key for key in PRIVATE_PARENTS if key not in APPEND_IDENTITIES + BASE_APPEND_IDENTITIES)
     assert len(previous) == 10
     def encoded():
         return {key: json.dumps(resolve_parent(modules, key), sort_keys=True, ensure_ascii=False,
@@ -630,7 +633,7 @@ def test_append_registration_preserves_all_ten_current_full_dtos(modules, monkey
     assert with_added == without_added
 
 
-@pytest.mark.parametrize('identity', APPEND_IDENTITIES)
+@pytest.mark.parametrize('identity', APPEND_IDENTITIES + BASE_APPEND_IDENTITIES)
 def test_append_policy_has_explicit_plain_publisher_operation_and_keeps_fixed_recipe(modules, identity):
     from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent, validate_execution_purpose
     from modiff.prompt_enhancement import SYSTEM_PROMPTS, _json_file
@@ -663,3 +666,109 @@ def test_old_recipe_cannot_forge_the_new_append_operation(modules):
     value['nodes']['proposal']['params']['operation']['value'] = 'enhance_prompt_append_details'
     with pytest.raises(ValueError, match='operation'):
         validate_execution_purpose(value, modules)
+
+
+def test_base_append_registration_preserves_all_twelve_existing_full_dtos(modules, monkeypatch):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
+    from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
+    assert all(identity in PRIVATE_PARENTS and identity in _OPERATION_AUTHORING_RECIPES
+               for identity in BASE_APPEND_IDENTITIES)
+    previous = tuple(key for key in PRIVATE_PARENTS if key not in BASE_APPEND_IDENTITIES)
+    assert len(previous) == 12
+
+    def encoded():
+        return {key: json.dumps(resolve_parent(modules, key), sort_keys=True, ensure_ascii=False,
+                               separators=(',', ':')).encode('utf-8') for key in previous}
+
+    with_added = encoded()
+    with monkeypatch.context() as scoped:
+        for identity in BASE_APPEND_IDENTITIES:
+            scoped.delitem(PRIVATE_PARENTS, identity)
+            scoped.delitem(_OPERATION_AUTHORING_RECIPES, identity)
+        without_added = encoded()
+    # Compare every field and both embedded hashes, not only the digest values.
+    assert with_added == without_added
+
+
+@pytest.mark.parametrize('identity', BASE_APPEND_IDENTITIES)
+def test_base_append_keeps_the_base_graph_and_corresponding_distilled_child_contract(modules, identity):
+    from modiff.ancillary_execution import resolve_parent
+    parent = resolve_parent(modules, identity)
+    task = parent['ancillaryOperations'][0]['parent']['task']
+    mode = 'text-to-image' if task == 'text_to_image' else 'edit-image'
+    legacy = resolve_parent(modules, f'flux3-klein-base:{mode}:prompt-preview-authoring:v1')
+    distilled = resolve_parent(modules, identity.replace('flux3-klein-base:', 'flux3-klein:', 1))
+    for key in ('baseSpecId', 'baseSpecContentHash', 'executionProfileIds', 'roles', 'edges', 'bindings', 'initialValues'):
+        assert parent[key] == legacy[key]
+    assert ('guider', 'modules.ModularDiffusers.Guider', -360, 160) in parent['roles']
+    child, counterpart = parent['ancillaryOperations'][0], distilled['ancillaryOperations'][0]
+    for key in ('roles', 'edges', 'bindings', 'initialValues', 'fieldOverrides', 'adapter',
+                'verification', 'sourceRegions', 'layoutPolicy'):
+        assert child[key] == counterpart[key]
+    assert parent['contentHash'] != legacy['contentHash']
+    assert child['contentHash'] != legacy['ancillaryOperations'][0]['contentHash']
+    assert child['parent']['pipelineClass'] == 'Flux3ModularPipeline'
+    assert child['parent']['executionProfileId'] == 'flux3-klein-base:modular'
+
+
+@pytest.mark.parametrize('identity', BASE_APPEND_IDENTITIES)
+def test_base_append_workflow_scope_keeps_the_existing_compiled_base_binding(modules, identity):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, validate_execution_purpose
+    from modiff.studio_execution_specs import assert_studio_execution_graph
+    value = workflow_graph(modules, list(PRIVATE_PARENTS).index(identity))
+    before = deepcopy(value)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert_studio_execution_graph(value, value['runtimeHints'])
+    assert value == before
+    binding = value['runtimeHints']['executionPurpose']['bindings'][0]
+    assert binding['parent']['pipelineClass'] == 'Flux3ModularPipeline'
+    assert set(binding['roleNodes'].values()).isdisjoint(value['nodes'])
+
+
+@pytest.mark.parametrize('dtype', ['float32', 'bfloat16'])
+def test_base_append_i2i_retains_explicit_dense_precision_choice_and_real_reference_route(modules, dtype):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, validate_execution_purpose
+    identity = BASE_APPEND_IDENTITIES[0]
+    value, parent = preview_graph(modules, list(PRIVATE_PARENTS).index(identity))
+    for role, name, literal_value in parent['ancillaryOperations'][0]['initialValues']:
+        value['nodes'][role]['params'][name] = {'value': deepcopy(literal_value)}
+    value['nodes']['provider']['params'].update(dtype={'value': dtype},
+        device={'value': 'cuda:0'}, quantization_mode={'value': 'none'})
+    value['nodes']['proposal']['params']['prompt']['value'] = 'Keep <subject>.'
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
+        'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': [
+            {'id': 'subject', 'description': 'An authored subject.', 'action': 'place',
+             'targetBox': [.123456, 0, 1, 1]}]}
+    before = deepcopy(value)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert value == before
+    assert value['nodes']['proposal']['params']['images'] == {
+        'sourceId': 'image-loadImage', 'sourceKey': 'image'}
+
+
+def test_base_append_t2i_refuses_changed_fp32_literals_before_model_preparation(modules):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, validate_execution_purpose
+    identity = BASE_APPEND_IDENTITIES[1]
+    value, parent = preview_graph(modules, list(PRIVATE_PARENTS).index(identity))
+    child = parent['ancillaryOperations'][0]
+    for role, name, literal_value in child['initialValues']:
+        value['nodes'][role]['params'][name] = {'value': deepcopy(literal_value)}
+    value['nodes']['proposal']['params']['prompt']['value'] = 'Keep <subject>.'
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
+        'schemaVersion': 2, 'coordinateSpace': 'normalized_xyxy', 'regions': [
+            {'id': 'subject', 'description': 'An authored subject.', 'action': 'place',
+             'targetBox': [.123456, 0, 1, 1]}]}
+    assert child['bindings']['owner']['referenceSource'] is None
+    assert 'images' not in value['nodes']['proposal']['params']
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    for role, name, wrong in [('provider', 'dtype', 'bfloat16'),
+                             ('provider', 'quantization_mode', 'bnb_4bit'),
+                             ('provider', 'device', 'cpu'),
+                             ('proposal', 'max_input_tokens', 4095),
+                             ('proposal', 'max_input_tokens', 4096.0)]:
+        changed = deepcopy(value)
+        changed['nodes'][role]['params'][name] = {'value': wrong}
+        before = deepcopy(changed)
+        with pytest.raises(ValueError, match='FP32 Preview input selection changed'):
+            validate_execution_purpose(changed, modules)
+        assert changed == before

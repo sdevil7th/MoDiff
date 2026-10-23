@@ -273,6 +273,17 @@ FP32 text-to-image `prompt-preview-fp32-authoring:v3` select the additive
 operation is never substituted into an older recipe. Existing standard, plain
 enhancement and strict `preserve-authored-v1` behavior remain unchanged.
 
+The corresponding private Base identities are
+`flux3-klein-base:edit-image:prompt-preview-authoring:v3` and
+`flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v3`. They retain the
+existing Base graph, Guider, execution profile and ordinary parent controls. The
+edit recipe retains explicit provider precision choices; the text-only recipe
+fixes FP32, `cuda:0`, no quantization and 4096 input tokens. All twelve earlier
+declarations and their hashes remain unchanged. Both use the same generic
+wording call, composition, strict summary verification and atomic Apply/Undo;
+they grant no additional Auto/NF4 permission, public visibility, hardware fit or
+trained Base-output qualification.
+
 This policy makes one ordinary local PUP call with the immutable publisher's
 plain `t2i` or `i2i` system instructions. Its model request contains the authored
 caption with validated region/reference tag delimiters removed, followed by
