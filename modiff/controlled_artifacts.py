@@ -159,17 +159,21 @@ def _managed_hub_file(repository: str, revision: str, weight_name: str) -> Path:
     if not cached_path.is_absolute():
         raise ValueError("Installed controlled Hub cache entries must use absolute paths.")
 
-    configured_root = huggingface_utils.CONFIG.hf["cache_dir"] or huggingface_utils.HUGGINGFACE_HUB_CACHE
-    lexical_root = Path(os.path.abspath(Path(configured_root).expanduser()))
     lexical_alias = Path(os.path.abspath(cached_path))
-    expected_alias = (
-        lexical_root
-        / f"models--{repository.replace('/', '--')}"
-        / "snapshots"
-        / revision
-        / Path(*PurePosixPath(weight_name).parts)
-    )
-    if os.path.normcase(str(lexical_alias)) != os.path.normcase(str(expected_alias)):
+    # Match lookup's approved roots without resolving the alias first: an
+    # escaping snapshot link must not select a different authorized cache.
+    for _label, location in huggingface_utils._hf_cache_locations():
+        lexical_root = Path(os.path.abspath(Path(location).expanduser()))
+        expected_alias = (
+            lexical_root
+            / f"models--{repository.replace('/', '--')}"
+            / "snapshots"
+            / revision
+            / Path(*PurePosixPath(weight_name).parts)
+        )
+        if os.path.normcase(str(lexical_alias)) == os.path.normcase(str(expected_alias)):
+            break
+    else:
         raise ValueError("Controlled Hub cache lookup did not preserve the exact repository snapshot alias.")
     try:
         cache_root = lexical_root.resolve(strict=True)

@@ -1860,6 +1860,14 @@ content SHA-256. LoRA files still require a valid Safetensors header, and declar
 upscaler byte sizes remain mandatory when present. Resolution neither downloads
 weights nor changes the cache.
 
+Controlled Hub LoRA and upscaler lookup and validation use the same approved cache
+roots as Model Manager, including explicit discovery roots when new downloads use
+a separate configured cache. The selected alias must still belong to the exact
+pinned repository and snapshot within one matching root; approval of another
+cache does not permit links across cache roots or repositories. The configured
+cache keeps lookup priority, and a failed content pin does not fall back to a
+secondary copy.
+
 Editing an image or video upscaler's Model selector resolves an installed Hub
 file to its exact cached commit and records its SHA-256 and byte size in the
 selection. Local selections receive the same content identity without a Hub
