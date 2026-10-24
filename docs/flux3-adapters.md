@@ -5,6 +5,26 @@ generic LoRA descriptor chain, NodeBase dispatcher and component manager.
 It requires a reviewed runtime containing the official FLUX 3 APIs. A source
 audit does not replace the installed dependency contract or publish a template.
 
+Normal workflow authoring exposes Klein and Klein Base through the explicitly
+verified evaluation runtime and **Custom** memory. Each exact text-to-image or
+image-edit profile declares its existing append-v3 prompt-enhancement parent;
+the ordinary starter request selects that declaration, and **Enable enhancement**
+remains a separate user action. This attaches an editing offer, without creating
+a PUP branch or changing provider precision. Older plain and strict-layout
+recipes keep their existing identities and hashes.
+
+**Add LoRA** uses the existing generic ordered descriptor chain for those two
+immutable model revisions. Its graph-edit policy requires NONE offload, Auto
+Offload disabled, CPU weight loading, no component/quantizer overrides and no
+remote code. The source-selected transformer lifecycle still validates the
+actual graph, adapter artifact, storage format, placement and runtime; authoring
+permission is neither resource fit nor model qualification. Other placements
+remain inspectable/executable only under their existing separate contracts.
+The pinned FLUX 3 workflows declare text-to-image and image-conditioned editing,
+not a ControlNet workflow or reviewed ControlNet component. They therefore do
+not offer a working ControlNet addition; reference-image editing is not ControlNet.
+These private authoring controls do not publish templates or expand Auto.
+
 The current private execution policy admits **unmerged transformer LoRA**
 for the exact Klein and Klein Base immutable artifacts and their declared
 `text2image` and `image_conditioned` workflows. The actual current native stage

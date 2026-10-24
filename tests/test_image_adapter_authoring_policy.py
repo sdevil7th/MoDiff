@@ -228,7 +228,9 @@ class ImageAdapterAuthoringPublicationTests(unittest.TestCase):
                         {"repo": "Runware/acestep-v15-turbo-diffusers", "revision": "be23effe449c5957947f3020fd63bee23c64abe4"},
                     ],
                 })
-            elif identity not in CURRENT_POLICIES:
+            # The two private evaluation policies have separate exact metadata
+            # regressions; no other profile acquires this permission.
+            elif identity not in {*CURRENT_POLICIES, "flux3-klein:modular", "flux3-klein-base:modular"}:
                 with self.subTest(profile=identity):
                     self.assertNotIn("adapterAuthoring", profile.to_public_dict())
 

@@ -422,6 +422,17 @@ def build_evaluation_authoring_catalog(modules, *, catalog_resolver=None):
     for profile in profiles:
         if profile["id"] in revisions:
             profile["repository_revisions"] = deepcopy(revisions[profile["id"]])
+        policy = DIFFUSERS_EXECUTION_PROFILES[profile["id"]].adapter_authoring
+        if policy is not None:
+            owner = modules.get(profile["loader_module"], {}).get(profile["loader_action"])
+            if type(owner) is not dict:
+                raise ValueError("Adapter authoring requires current registered loader metadata.")
+            policy.validate_required_controls(owner.get("params"))
+            if (profile.get("adapterAuthoring") != policy.to_public_dict()
+                    or not set(policy.tasks).issubset(profile["modes"])
+                    or any({"repo": repo, "revision": revision} not in revisions.get(profile["id"], [])
+                           for repo, revision in policy.repository_revisions)):
+                raise ValueError("Evaluation adapter authoring does not match its reviewed task and catalog.")
     _, support = build_operation_catalog(modules, profiles, catalog_resolver=catalog_resolver)
     exact_support = []
     covered = set()
@@ -438,10 +449,13 @@ def build_evaluation_authoring_catalog(modules, *, catalog_resolver=None):
             exact_support.append({**row, "tasks": tasks})
     if any((profile["id"], task) not in covered for profile in profiles for task in profile["modes"]):
         raise ValueError("Evaluation authoring requires exact reviewed pipeline/task support.")
+    from modiff.studio_execution_specs import studio_operation_authoring_selections
+    authoring = studio_operation_authoring_selections(profiles)
     return {
         "schemaVersion": 1, "scope": "expert-authoring",
         "autoEligible": False, "templateEligible": False, "galleryEligible": False,
         "executionProfiles": profiles, "pipelineSupport": exact_support,
+        **({"authoringRecipes": authoring} if authoring else {}),
     }
 
 

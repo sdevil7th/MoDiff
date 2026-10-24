@@ -18440,6 +18440,19 @@ def studio_execution_profile_definitions() -> dict[str, dict[str, Any]]:
             "max_owned_adapters": 32,
             "repository_revisions": ((repository, revision),),
         }
+    # Private graph-edit permission for the existing source-selected LoRA
+    # executor. It neither publishes these profiles nor grants Auto or fit.
+    for identity, _pipeline, _label, repository, revision, _steps, _cfg in _FLUX3_CANDIDATE_VARIANTS:
+        profiles[identity]["adapter_authoring"] = {
+            "schema_version": 1, "media_kind": "image",
+            "adapter_node_key": "modules.ModularDiffusers.Lora",
+            "tasks": ("text_to_image", "edit_image"), "max_owned_adapters": 32,
+            "repository_revisions": ((repository, revision),),
+            "required_controls": (("offload_mode", "none"), ("auto_offload", False),
+                ("weight_loading_mode", "cpu"), ("quant_config", None),
+                ("unet", None), ("vae", None), ("controlnet", None),
+                ("trust_remote_code", False)),
+        }
     # The ordinary audio loader activates one named adapter, not a row blend.
     # Permission is exact task/artifact authoring, separate from fit and Auto.
     profiles["ace-step-audio:direct"]["adapter_authoring"] = {
@@ -18737,6 +18750,41 @@ for _ancillary_id, _ancillary_parent in _ANCILLARY_PRIVATE_PARENTS.items():
         "specId": _ancillary_parent["specId"], "task": _ancillary_parent["task"],
         "profileId": _ancillary_parent["profileId"], "initialValues": (), "ancillaryPreview": True,
     }
+
+
+_NORMAL_OPERATION_AUTHORING_SELECTIONS = (
+    ("flux3-klein:modular", "text_to_image", "flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3"),
+    ("flux3-klein:modular", "edit_image", "flux3-klein:edit-image:prompt-preview-authoring:v3"),
+    ("flux3-klein-base:modular", "text_to_image", "flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v3"),
+    ("flux3-klein-base:modular", "edit_image", "flux3-klein-base:edit-image:prompt-preview-authoring:v3"),
+)
+
+
+def studio_operation_authoring_selections(profiles: list[dict[str, Any]]) -> list[dict[str, str]]:
+    """Declare existing parent offers for exact selected profiles, without enabling them."""
+    selected = {profile["id"]: profile for profile in profiles}
+    result = []
+    for profile_id, task, identity in _NORMAL_OPERATION_AUTHORING_SELECTIONS:
+        if profile_id not in selected:
+            continue
+        profile = selected[profile_id]
+        definition = _OPERATION_AUTHORING_RECIPES.get(identity)
+        parent = _ANCILLARY_PRIVATE_PARENTS.get(identity)
+        specification = STUDIO_EXECUTION_SPEC_DEFINITIONS.get((definition or {}).get("specId"))
+        if (definition is None or parent is None or specification is None
+                or definition.get("ancillaryPreview") is not True
+                or definition.get("profileId") != profile_id or definition.get("task") != task
+                or parent.get("profileId") != profile_id or parent.get("task") != task
+                or parent.get("specId") != definition["specId"]
+                or parent.get("layoutPolicy") != "append-details-preserve-layout-v1"
+                or parent.get("pipelineClass") != profile["pipeline_class"]
+                or specification["profile"]["id"] != profile_id
+                or specification["profile"]["pipeline_class"] != profile["pipeline_class"]
+                or task not in profile["modes"]):
+            raise ValueError("The normal authoring selection is stale or does not match its reviewed parent.")
+        result.append({"executionProfileId": profile_id, "pipelineClass": profile["pipeline_class"],
+                       "task": task, "authoringRecipeId": identity})
+    return deepcopy(result)
 
 
 def resolve_studio_operation_authoring_recipe(

@@ -14871,6 +14871,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     for row in evaluation_authoring["pipelineSupport"]
                     if any(evaluation_profile_ids.intersection(task["executionProfileIds"]) for task in row["tasks"])
                 ]
+                if "authoringRecipes" in evaluation_authoring:
+                    evaluation_authoring["authoringRecipes"] = [row for row in evaluation_authoring["authoringRecipes"]
+                        if row["executionProfileId"] in evaluation_profile_ids]
                 if not evaluation_authoring["executionProfiles"]:
                     evaluation_authoring = None
 

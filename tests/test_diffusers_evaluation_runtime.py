@@ -420,6 +420,8 @@ def test_capabilities_separate_evaluation_authoring_from_all_public_metadata(art
     filtered = server._build_model_capabilities_payload("klein-base")["evaluationAuthoring"]
     assert [profile["id"] for profile in filtered["executionProfiles"]] == ["flux3-klein-base:modular"]
     assert [row["pipelineClass"] for row in filtered["pipelineSupport"]] == ["Flux3ModularPipeline"]
+    assert len(filtered["authoringRecipes"]) == 2
+    assert all(row["executionProfileId"] == "flux3-klein-base:modular" for row in filtered["authoringRecipes"])
     exact = server._build_model_capabilities_payload("flux3modularpipeline")["evaluationAuthoring"]
     assert [profile["id"] for profile in exact["executionProfiles"]] == ["flux3-klein-base:modular"]
     assert "evaluationAuthoring" not in server._build_model_capabilities_payload("no-such-model")
@@ -497,3 +499,79 @@ def test_evaluation_discovery_refuses_missing_registered_task_support(artifact, 
     monkeypatch.setattr(operation_catalog, "build_operation_catalog", lambda *args, **kwargs: ([], []))
     with pytest.raises(ValueError, match="exact reviewed pipeline/task"):
         build()
+
+
+def test_normal_evaluation_selections_resolve_current_parent_without_enabling_pup(artifact, monkeypatch):
+    import modules
+    from modiff.operation_catalog import build_operation_catalog
+    from modiff.operation_starters import resolve_operation_starter
+    from test_flux3_normal_authoring import SELECTIONS, CONTROLS
+
+    build = _authoring_catalog(artifact, monkeypatch, ["flux3-klein:modular", "flux3-klein-base:modular"])
+    metadata = build()
+    assert metadata["authoringRecipes"] == SELECTIONS
+    contracts, _ = build_operation_catalog(modules.MODULE_MAP, [], catalog_resolver=lambda: {})
+    for selection in metadata["authoringRecipes"]:
+        starter = resolve_operation_starter(modules.MODULE_MAP, contracts, selection)
+        assert starter["authoring"]["id"] == selection["authoringRecipeId"]
+        assert len(starter["authoring"]["ancillaryOperations"]) == 1
+        assert starter["authoring"]["ancillaryOperations"][0]["layoutPolicy"] == "append-details-preserve-layout-v1"
+        assert not any(node["module"] == "modules.HuggingFaceTransformers" for node in starter["nodes"])
+        ordinary = resolve_operation_starter(modules.MODULE_MAP, contracts,
+            {key: value for key, value in selection.items() if key != "authoringRecipeId"})
+        assert "authoring" not in ordinary
+        assert ordinary["nodes"] == starter["nodes"] and ordinary["edges"] == starter["edges"]
+    for profile in metadata["executionProfiles"]:
+        assert profile["adapterAuthoring"]["requiredControls"] == CONTROLS
+        assert profile["adapterAuthoring"]["repositoryRevisions"] == profile["repository_revisions"]
+        assert profile["public"] is profile["live_proof"] is False
+
+
+@pytest.mark.parametrize("fault", ["owner", "offload", "quantizer", "repository"])
+def test_evaluation_adapter_policy_requires_actual_registered_controls_and_pins(artifact, monkeypatch, fault):
+    from copy import deepcopy
+    import modules
+    from modiff import operation_catalog, model_artifact_catalog
+
+    _authoring_catalog(artifact, monkeypatch, ["flux3-klein:modular"])
+    registry = dict(modules.MODULE_MAP)
+    registry["modules.ModularDiffusers"] = dict(registry["modules.ModularDiffusers"])
+    owner = deepcopy(registry["modules.ModularDiffusers"]["ModelsLoader"])
+    registry["modules.ModularDiffusers"]["ModelsLoader"] = owner
+    if fault == "owner":
+        registry["modules.ModularDiffusers"]["ModelsLoader"] = None
+    elif fault == "offload":
+        owner["params"]["offload_mode"]["options"] = ["group_cpu"]
+    elif fault == "quantizer":
+        owner["params"]["quant_config"]["required"] = True
+    else:
+        actual = model_artifact_catalog.catalog_profile_repository_revisions
+        monkeypatch.setattr(model_artifact_catalog, "catalog_profile_repository_revisions",
+            lambda profiles: {identity: [{**row, "revision": "a" * 40} for row in rows]
+                              for identity, rows in actual(profiles).items()})
+    with pytest.raises(ValueError, match="[Aa]dapter authoring"):
+        operation_catalog.build_evaluation_authoring_catalog(registry, catalog_resolver=lambda: {})
+
+
+def test_normal_declarations_preserve_all_fourteen_existing_parent_dtos(artifact, monkeypatch):
+    from dataclasses import replace
+    import modules
+    from modiff.ancillary_execution import PRIVATE_PARENTS
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+    from modiff.operation_catalog import build_operation_catalog
+    from modiff.operation_starters import resolve_operation_starter
+
+    _authoring_catalog(artifact, monkeypatch, ["flux3-klein:modular", "flux3-klein-base:modular"])
+    contracts, _ = build_operation_catalog(modules.MODULE_MAP, [], catalog_resolver=lambda: {})
+    def resolve_all():
+        return {identity: resolve_operation_starter(modules.MODULE_MAP, contracts,
+            {"pipelineClass": parent["pipelineClass"], "task": parent["task"],
+             "executionProfileId": parent["profileId"], "authoringRecipeId": identity})
+            for identity, parent in PRIVATE_PARENTS.items()}
+    current = resolve_all()
+    assert len(current) == 14
+    with monkeypatch.context() as previous:
+        for identity in ("flux3-klein:modular", "flux3-klein-base:modular"):
+            previous.setitem(DIFFUSERS_EXECUTION_PROFILES, identity,
+                replace(DIFFUSERS_EXECUTION_PROFILES[identity], adapter_authoring=None))
+        assert resolve_all() == current
