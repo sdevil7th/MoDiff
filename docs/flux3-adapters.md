@@ -7,11 +7,48 @@ audit does not replace the installed dependency contract or publish a template.
 
 Normal workflow authoring exposes Klein and Klein Base through the explicitly
 verified evaluation runtime and **Custom** memory. Each exact text-to-image or
-image-edit profile declares its existing append-v3 prompt-enhancement parent;
-the ordinary starter request selects that declaration, and **Enable enhancement**
-remains a separate user action. This attaches an editing offer, without creating
-a PUP branch or changing provider precision. Older plain and strict-layout
-recipes keep their existing identities and hashes.
+image-edit profile declares its existing append-v3 prompt-enhancement parent and
+an exact `rawAuthoringRecipeId` alternative. The ordinary starter request selects
+the append declaration; **Enable enhancement** remains a separate user action.
+That action selects plain wording for a null layout and append wording for an
+authored layout, after checking that both declared parents have the same graph
+and unchanged base specification. This attaches an editing offer without
+creating a PUP branch or changing provider precision. Older plain, append and
+strict-layout recipes keep their existing identities and hashes.
+
+Raw edit offers use the existing plain `prompt-preview-authoring:v1` parents.
+Raw text-to-image offers use fixed FP32/`cuda:0`/no-quantization/4096-input-token
+parents: the existing Distilled `prompt-preview-fp32-authoring:v1` and the
+additive Base identity `flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v1`.
+The new identity leaves all fourteen earlier full declarations unchanged. A raw
+Preview still refuses an authored layout; an append Preview still requires its
+validated authored regions. Metadata alternatives do not grant Auto, hardware
+fit, native model acceptance or public template eligibility.
+
+Text-to-image offers additionally declare bounded `rawAuthoringRecipeChoices`
+with exact recipe IDs and backend-owned labels. The default remains FP32; the
+operator can explicitly choose the existing raw BF16/NF4 `prompt-preview-authoring:v1`
+parent before Enable. This is an authored recipe choice, never an automatic
+precision or format fallback. Explicit raw choices refuse nonnull layouts;
+authored-region append remains the separate unchanged FP32 declaration. The
+existing Preview input checks retain each selected recipe's declared literals.
+NF4 still requires its separately installed/activated reviewed runtime, NVIDIA
+CUDA compatibility and actual resource fit. No NF4 runtime or model-output
+qualification follows from publishing this authoring metadata.
+
+An explicit dense Image/Text load checks a necessary parameter-storage floor
+before either processor or neural-model factory. For an already verified
+single-file snapshot, the bounded Safetensors header counts floating weights
+at the selected dtype and retains integer/bool buffers. If CPU loading or the
+selected device cannot physically hold even those parameters, loading refuses
+with the required and available total bytes. It never silently chooses NF4,
+another dtype or another device. Shared-memory accelerators use physical system
+RAM; device recommendations and planning caps are not hard capacity proofs.
+Passing this floor is not a free-memory, activation,
+peak or fit guarantee; unsupported metadata or unknown capacity supplies no
+estimate. Quantized loads keep their separate reviewed storage policy. On a
+constrained Windows GPU, choose the explicit BF16/NF4 raw recipe before Enable
+and inspect its runtime readiness rather than assuming the default FP32 fits.
 
 **Add LoRA** uses the existing generic ordered descriptor chain for those two
 immutable model revisions. Its graph-edit policy requires NONE offload, Auto

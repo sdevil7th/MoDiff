@@ -128,6 +128,73 @@ def artifact_parameter_lower_bound(status: dict, revision: str | None, dtype: st
     return None
 
 
+def single_file_parameter_lower_bound(snapshot: Path | None, revision: str | None, dtype: str) -> dict | None:
+    """Count a previously verified single-file Hub model, reading metadata only.
+
+    The caller owns artifact admission; this does not validate arbitrary model
+    provenance or invent a budget for unsupported layouts. Floating tensors use
+    the selected load dtype and integer/bool storage is retained by the shared
+    Safetensors parser. No payload, model factory or tensor is loaded.
+    """
+    if (not isinstance(snapshot, Path) or not isinstance(revision, str)
+            or not re.fullmatch(r"[0-9a-f]{40}", revision) or snapshot.name != revision
+            or dtype not in _DTYPE_BYTES):
+        return None
+    try:
+        path = _snapshot_file(snapshot / "model.safetensors", snapshot)
+        before = path.stat()
+        amount = _loading_shard(path, dtype, None)["requested"]
+        after = path.stat()
+        identity = lambda item: (item.st_dev, item.st_ino, item.st_size, item.st_mtime_ns)
+        if identity(before) != identity(after) or not 0 < amount <= 2**63:
+            return None
+        return {"revision": revision, "dtype": dtype, "components": {"model": amount},
+                "totalBytes": amount, "largestComponentBytes": amount,
+                "proofScope": "parameter_storage_lower_bound_only"}
+    except (OSError, RuntimeError, ValueError, KeyError, TypeError, struct.error):
+        return None
+
+
+def full_residency_capacity_missing(hardware: dict, lower_bound: dict, device: str) -> list[str]:
+    """Reject only a proven physical impossibility for CPU load then placement.
+
+    These are necessary parameter floors, never free-memory, activation, peak,
+    Auto or fit evidence. Unknown device/capacity facts establish no bound.
+    ROCm uses its actual cuda device identity; unified devices use shared RAM
+    rather than being mistaken for a small dedicated VRAM allocation.
+    """
+    if lower_bound.get("proofScope") != "parameter_storage_lower_bound_only":
+        return []
+    amount = lower_bound.get("totalBytes")
+    if type(amount) is not int or not 0 < amount <= 2**63:
+        return []
+    ram = hardware.get("system", {}).get("ram_total")
+    missing = []
+    if type(ram) is int and 0 < ram < amount:
+        missing.append(f"CPU loading requires at least {amount} parameter bytes; total system RAM is {ram} bytes")
+    match = re.fullmatch(r"(cpu|cuda|xpu|mps)(?::([0-9]+))?", device)
+    if match is None or match[1] == "cpu":
+        return missing
+    kind, index = match[1], int(match[2] or 0)
+    devices = [row for row in hardware.get("devices", [])
+               if row.get("type") == kind and row.get("index") == index]
+    if len(devices) != 1:
+        return missing
+    row = devices[0]
+    positive = lambda value: type(value) is int and value > 0
+    if row.get("memory_kind") in {"shared", "unified", "system_shared", "shared_system"}:
+        # XPU shared_memory_total and MPS torch_vram_total can be planning
+        # limits/recommendations, not hard physical capacities. Only the
+        # physical system pool establishes an impossibility for these rows.
+        total = ram if positive(ram) else None
+    else:
+        total = next((value for value in (row.get("dedicated_memory_total"), row.get("torch_vram_total"),
+                                         row.get("vram_total")) if positive(value)), None)
+    if impossible_parameter_residency({"accelerator": {"kind": kind, "totalBytes": total}}, lower_bound, "none"):
+        missing.append(f"{device} requires at least {amount} parameter bytes; total selected-device memory is {total} bytes")
+    return missing
+
+
 def _unique_json_pairs(pairs):
     result = {}
     for name, value in pairs:

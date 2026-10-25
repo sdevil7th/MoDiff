@@ -512,15 +512,28 @@ def test_normal_evaluation_selections_resolve_current_parent_without_enabling_pu
     assert metadata["authoringRecipes"] == SELECTIONS
     contracts, _ = build_operation_catalog(modules.MODULE_MAP, [], catalog_resolver=lambda: {})
     for selection in metadata["authoringRecipes"]:
-        starter = resolve_operation_starter(modules.MODULE_MAP, contracts, selection)
+        request = {key: value for key, value in selection.items()
+                   if key not in {"rawAuthoringRecipeId", "rawAuthoringRecipeChoices"}}
+        starter = resolve_operation_starter(modules.MODULE_MAP, contracts, request)
         assert starter["authoring"]["id"] == selection["authoringRecipeId"]
         assert len(starter["authoring"]["ancillaryOperations"]) == 1
         assert starter["authoring"]["ancillaryOperations"][0]["layoutPolicy"] == "append-details-preserve-layout-v1"
         assert not any(node["module"] == "modules.HuggingFaceTransformers" for node in starter["nodes"])
         ordinary = resolve_operation_starter(modules.MODULE_MAP, contracts,
-            {key: value for key, value in selection.items() if key != "authoringRecipeId"})
+            {key: value for key, value in request.items() if key != "authoringRecipeId"})
         assert "authoring" not in ordinary
         assert ordinary["nodes"] == starter["nodes"] and ordinary["edges"] == starter["edges"]
+        raw = resolve_operation_starter(modules.MODULE_MAP, contracts,
+            {**request, "authoringRecipeId": selection["rawAuthoringRecipeId"]})
+        assert raw["authoring"]["id"] == selection["rawAuthoringRecipeId"]
+        assert "layoutPolicy" not in raw["authoring"]["ancillaryOperations"][0]
+        assert raw["nodes"] == starter["nodes"] and raw["edges"] == starter["edges"]
+        for choice in selection.get("rawAuthoringRecipeChoices", []):
+            alternative = resolve_operation_starter(modules.MODULE_MAP, contracts,
+                {**request, "authoringRecipeId": choice["authoringRecipeId"]})
+            assert alternative["authoring"]["id"] == choice["authoringRecipeId"]
+            assert "layoutPolicy" not in alternative["authoring"]["ancillaryOperations"][0]
+            assert alternative["nodes"] == starter["nodes"] and alternative["edges"] == starter["edges"]
     for profile in metadata["executionProfiles"]:
         assert profile["adapterAuthoring"]["requiredControls"] == CONTROLS
         assert profile["adapterAuthoring"]["repositoryRevisions"] == profile["repository_revisions"]
@@ -567,7 +580,8 @@ def test_normal_declarations_preserve_all_fourteen_existing_parent_dtos(artifact
         return {identity: resolve_operation_starter(modules.MODULE_MAP, contracts,
             {"pipelineClass": parent["pipelineClass"], "task": parent["task"],
              "executionProfileId": parent["profileId"], "authoringRecipeId": identity})
-            for identity, parent in PRIVATE_PARENTS.items()}
+            for identity, parent in PRIVATE_PARENTS.items()
+            if identity != "flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v1"}
     current = resolve_all()
     assert len(current) == 14
     with monkeypatch.context() as previous:

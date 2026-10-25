@@ -19,6 +19,28 @@ _LANGUAGE_LINEAR_WEIGHT = re.compile(
 _SKIP_MODULES = ('lm_head', 'model.visual')
 
 
+def require_image_text_dense_capacity(snapshot, revision, dtype, device):
+    """Refuse a verified dense model's impossible full residency before factories.
+
+    The selected snapshot has already crossed the normal immutable admission
+    boundary. Unsupported metadata/hardware supplies no estimate, not a fit
+    grant. Quantized callers keep their separate reviewed storage contract.
+    """
+    from modiff.artifact_weight_memory import (
+        full_residency_capacity_missing, single_file_parameter_lower_bound,
+    )
+    lower_bound = single_file_parameter_lower_bound(snapshot, revision, dtype)
+    if lower_bound is None:
+        return None
+    from modiff.hardware import get_hardware_snapshot
+    missing = full_residency_capacity_missing(get_hardware_snapshot(), lower_bound, device)
+    if missing:
+        raise ValueError('Image/text model cannot fit the selected full-residency recipe before loading: '
+            + '; '.join(missing) + '. Select an explicit reviewed lower-residency recipe or another device; '
+            'no precision or device was changed.')
+    return lower_bound  # Necessary storage only; never a free-memory/fit receipt.
+
+
 def image_text_architecture_policy(contract):
     """Static reviewed adapter metadata, independent of any returned receipt."""
     if contract['modelClass'] != 'Qwen3_5ForConditionalGeneration':

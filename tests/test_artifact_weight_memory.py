@@ -5,6 +5,7 @@ import pytest
 
 from modiff.artifact_weight_memory import (
     artifact_parameter_lower_bound, impossible_parameter_residency, native_cpu_parameter_residency,
+    full_residency_capacity_missing, single_file_parameter_lower_bound,
 )
 
 
@@ -42,6 +43,57 @@ def test_dense_storage_counts_requested_dtype_and_components_without_importing_m
     assert result["largestComponentBytes"] == 24
     assert result["proofScope"] == "parameter_storage_lower_bound_only"
     assert artifact_parameter_lower_bound(status, REVISION, "float32")["totalBytes"] == 72
+
+
+def test_single_file_dense_floor_promotes_float_storage_but_retains_nonfloat_buffers(snapshot):
+    root, _status = snapshot
+    write_weights(root / 'model.safetensors', {
+        'weight': ('BF16', [4, 4], 32), 'counter': ('I64', [2], 16),
+        'mask': ('BOOL', [3], 3),
+    })
+    bound = single_file_parameter_lower_bound(root, REVISION, 'float32')
+    assert bound['totalBytes'] == bound['largestComponentBytes'] == 64 + 16 + 3
+    assert bound['proofScope'] == 'parameter_storage_lower_bound_only'
+    assert single_file_parameter_lower_bound(root, REVISION, 'bfloat16')['totalBytes'] == 32 + 16 + 3
+    assert single_file_parameter_lower_bound(root, 'main', 'float32') is None
+    assert single_file_parameter_lower_bound(root, REVISION, 'unknown') is None
+
+
+@pytest.mark.parametrize('malformed', ['duplicate', 'overlap'])
+def test_single_file_dense_floor_rejects_ambiguous_tensor_metadata(snapshot, malformed):
+    root, _status = snapshot
+    tensor = '{"dtype":"BF16","shape":[2],"data_offsets":[0,4]}'
+    # Equal-sized overlapping intervals and duplicate object keys must not
+    # become a proven lower bound, even if payload size is plausible.
+    key = 'weight' if malformed == 'duplicate' else 'other'
+    raw = ('{"weight":' + tensor + ',"' + key + '":' + tensor + '}').encode()
+    (root / 'model.safetensors').write_bytes(struct.pack('<Q', len(raw)) + raw + bytes(8))
+    assert single_file_parameter_lower_bound(root, REVISION, 'float32') is None
+
+
+@pytest.mark.parametrize('kind', ['cuda', 'xpu', 'mps'])
+def test_dense_physical_capacity_uses_exact_selected_device_and_unified_pool(kind):
+    bound = {'proofScope': 'parameter_storage_lower_bound_only', 'totalBytes': 100}
+    hardware = {'system': {'ram_total': 1000}, 'devices': [
+        {'type': kind, 'index': 0, 'memory_kind': 'dedicated', 'dedicated_memory_total': 1000},
+        {'type': kind, 'index': 1, 'memory_kind': 'dedicated', 'dedicated_memory_total': 50},
+    ]}
+    assert full_residency_capacity_missing(hardware, bound, kind + ':0') == []
+    assert 'selected-device' in full_residency_capacity_missing(hardware, bound, kind + ':1')[0]
+    hardware['devices'][1].update(memory_kind='shared', shared_memory_total=50, torch_vram_total=50)
+    # ROCm APUs/MPS/XPU recommendations and planning caps are not physical
+    # bounds: only system RAM can establish impossibility for a shared pool.
+    assert full_residency_capacity_missing(hardware, bound, kind + ':1') == []
+    hardware['system']['ram_total'] = 50
+    assert full_residency_capacity_missing(hardware, bound, kind + ':1')
+
+
+def test_dense_physical_capacity_refuses_impossible_cpu_loading_without_claiming_fit():
+    bound = {'proofScope': 'parameter_storage_lower_bound_only', 'totalBytes': 100}
+    assert full_residency_capacity_missing({'system': {'ram_total': 50}}, bound, 'cpu:0')
+    # Total capacity, not free working memory: passing this floor is not fit.
+    assert full_residency_capacity_missing({'system': {'ram_total': 100, 'ram_available': 1}}, bound, 'cpu:0') == []
+    assert full_residency_capacity_missing({'system': {}}, bound, 'cuda:0') == []
 
 
 def test_sharded_indexes_count_each_selected_tensor_once(snapshot):

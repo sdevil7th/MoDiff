@@ -15,13 +15,23 @@ CONTROLS = {
 }
 SELECTIONS = [
     {"executionProfileId": "flux3-klein:modular", "pipelineClass": "Flux3DistilledModularPipeline",
-     "task": "text_to_image", "authoringRecipeId": "flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3"},
+     "task": "text_to_image", "authoringRecipeId": "flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3",
+     "rawAuthoringRecipeId": "flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1",
+     "rawAuthoringRecipeChoices": [
+         {"authoringRecipeId": "flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1", "label": "Raw wording: FP32"},
+         {"authoringRecipeId": "flux3-klein:text-to-image:prompt-preview-authoring:v1", "label": "Raw wording: BF16 + NF4"}]},
     {"executionProfileId": "flux3-klein:modular", "pipelineClass": "Flux3DistilledModularPipeline",
-     "task": "edit_image", "authoringRecipeId": "flux3-klein:edit-image:prompt-preview-authoring:v3"},
+     "task": "edit_image", "authoringRecipeId": "flux3-klein:edit-image:prompt-preview-authoring:v3",
+     "rawAuthoringRecipeId": "flux3-klein:edit-image:prompt-preview-authoring:v1"},
     {"executionProfileId": "flux3-klein-base:modular", "pipelineClass": "Flux3ModularPipeline",
-     "task": "text_to_image", "authoringRecipeId": "flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v3"},
+     "task": "text_to_image", "authoringRecipeId": "flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v3",
+     "rawAuthoringRecipeId": "flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v1",
+     "rawAuthoringRecipeChoices": [
+         {"authoringRecipeId": "flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v1", "label": "Raw wording: FP32"},
+         {"authoringRecipeId": "flux3-klein-base:text-to-image:prompt-preview-authoring:v1", "label": "Raw wording: BF16 + NF4"}]},
     {"executionProfileId": "flux3-klein-base:modular", "pipelineClass": "Flux3ModularPipeline",
-     "task": "edit_image", "authoringRecipeId": "flux3-klein-base:edit-image:prompt-preview-authoring:v3"},
+     "task": "edit_image", "authoringRecipeId": "flux3-klein-base:edit-image:prompt-preview-authoring:v3",
+     "rawAuthoringRecipeId": "flux3-klein-base:edit-image:prompt-preview-authoring:v1"},
 ]
 
 
@@ -45,13 +55,67 @@ class Flux3NormalAuthoringTests(unittest.TestCase):
                 self.assertFalse(profile.public)
                 self.assertFalse(profile.live_proof)
 
-    def test_normal_authoring_selection_uses_four_existing_append_parents(self):
+    def test_normal_authoring_selection_declares_raw_alternatives_for_all_four_append_parents(self):
         select = getattr(specifications, "studio_operation_authoring_selections", None)
         self.assertTrue(callable(select), "Normal workflow metadata has no declared PUP parent selections")
         profiles = [DIFFUSERS_EXECUTION_PROFILES[identity].to_public_dict() for identity in PROFILES]
         self.assertEqual(select(profiles), SELECTIONS)
         self.assertEqual(select(profiles[:1]), SELECTIONS[:2])
         self.assertEqual(select([DIFFUSERS_EXECUTION_PROFILES["flux2-klein:modular"].to_public_dict()]), [])
+
+    def test_normal_raw_alternative_refuses_missing_cross_profile_or_layout_parent(self):
+        profile = DIFFUSERS_EXECUTION_PROFILES[PROFILES[0]].to_public_dict()
+        identity = SELECTIONS[0]["rawAuthoringRecipeId"]
+        definition = specifications._OPERATION_AUTHORING_RECIPES[identity]
+        for value in (None, {**definition, "task": "edit_image"},
+                      {**definition, "profileId": PROFILES[1]}):
+            with self.subTest(definition=value), patch.dict(
+                specifications._OPERATION_AUTHORING_RECIPES, {identity: value},
+            ):
+                with self.assertRaisesRegex(ValueError, "stale"):
+                    specifications.studio_operation_authoring_selections([profile])
+        parent = specifications._ANCILLARY_PRIVATE_PARENTS[identity]
+        for changes in ({"layoutPolicy": "append-details-preserve-layout-v1"},
+                        {"providerRecipe": "other"}, {"pipelineClass": "Flux3ModularPipeline"},
+                        {"specId": "foreign"}):
+            with self.subTest(changes=changes), patch.dict(specifications._ANCILLARY_PRIVATE_PARENTS,
+                            {identity: {**parent, **changes}}):
+                with self.assertRaisesRegex(ValueError, "stale"):
+                    specifications.studio_operation_authoring_selections([profile])
+
+    def test_raw_choices_refuse_ambiguous_excessive_or_malformed_declarations(self):
+        profile = DIFFUSERS_EXECUTION_PROFILES[PROFILES[0]].to_public_dict()
+        default = SELECTIONS[0]["rawAuthoringRecipeId"]
+        append = SELECTIONS[0]["authoringRecipeId"]
+        choices = specifications._NORMAL_OPERATION_RAW_AUTHORING_CHOICES[default]
+        for invalid in ([*choices], ((default, "FP32"),) * 2, choices * 3,
+                        ((append, "append"),), choices[1:], ((default, ""),),
+                        ((default, " value"),), ((default, "x" * 129),),
+                        ((default, "line\nbreak"),), ((default, True),)):
+            with self.subTest(choices=invalid), patch.dict(
+                specifications._NORMAL_OPERATION_RAW_AUTHORING_CHOICES, {default: invalid},
+            ):
+                with self.assertRaisesRegex(ValueError, "stale"):
+                    specifications.studio_operation_authoring_selections([profile])
+
+    def test_raw_choice_refuses_stale_cross_task_profile_and_layout_parent(self):
+        profile = DIFFUSERS_EXECUTION_PROFILES[PROFILES[0]].to_public_dict()
+        identity = SELECTIONS[0]["rawAuthoringRecipeChoices"][1]["authoringRecipeId"]
+        definition = specifications._OPERATION_AUTHORING_RECIPES[identity]
+        for changed in (None, {**definition, "task": "edit_image"},
+                        {**definition, "profileId": PROFILES[1]}):
+            with self.subTest(definition=changed), patch.dict(
+                specifications._OPERATION_AUTHORING_RECIPES, {identity: changed},
+            ):
+                with self.assertRaisesRegex(ValueError, "stale"):
+                    specifications.studio_operation_authoring_selections([profile])
+        parent = specifications._ANCILLARY_PRIVATE_PARENTS[identity]
+        for changes in ({"layoutPolicy": "append-details-preserve-layout-v1"},
+                        {"providerRecipe": "fp32-none"}, {"pipelineClass": "Flux3ModularPipeline"}):
+            with self.subTest(changes=changes), patch.dict(specifications._ANCILLARY_PRIVATE_PARENTS,
+                            {identity: {**parent, **changes}}):
+                with self.assertRaisesRegex(ValueError, "stale"):
+                    specifications.studio_operation_authoring_selections([profile])
 
     def test_normal_parent_selection_refuses_missing_or_stale_reviewed_definitions(self):
         profile = DIFFUSERS_EXECUTION_PROFILES[PROFILES[0]].to_public_dict()

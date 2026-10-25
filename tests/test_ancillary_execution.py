@@ -465,7 +465,7 @@ def test_explicit_fp32_structured_registration_preserves_all_nine_existing_dtos(
     previous = tuple(key for key in PRIVATE_PARENTS if key not in {identity,
         'flux3-klein:edit-image:prompt-preview-authoring:v3',
         'flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3',
-        *BASE_APPEND_IDENTITIES})
+        *BASE_APPEND_IDENTITIES, BASE_RAW_FP32_ID})
     assert len(previous) == 9
 
     def encoded_parents():
@@ -614,12 +614,14 @@ APPEND_IDENTITIES = ('flux3-klein:edit-image:prompt-preview-authoring:v3',
                      'flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3')
 BASE_APPEND_IDENTITIES = ('flux3-klein-base:edit-image:prompt-preview-authoring:v3',
                          'flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v3')
+BASE_RAW_FP32_ID = 'flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v1'
 
 
 def test_append_registration_preserves_all_ten_current_full_dtos(modules, monkeypatch):
     from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
     from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
-    previous = tuple(key for key in PRIVATE_PARENTS if key not in APPEND_IDENTITIES + BASE_APPEND_IDENTITIES)
+    previous = tuple(key for key in PRIVATE_PARENTS
+                     if key not in APPEND_IDENTITIES + BASE_APPEND_IDENTITIES + (BASE_RAW_FP32_ID,))
     assert len(previous) == 10
     def encoded():
         return {key: json.dumps(resolve_parent(modules, key), sort_keys=True, ensure_ascii=False,
@@ -673,7 +675,8 @@ def test_base_append_registration_preserves_all_twelve_existing_full_dtos(module
     from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
     assert all(identity in PRIVATE_PARENTS and identity in _OPERATION_AUTHORING_RECIPES
                for identity in BASE_APPEND_IDENTITIES)
-    previous = tuple(key for key in PRIVATE_PARENTS if key not in BASE_APPEND_IDENTITIES)
+    previous = tuple(key for key in PRIVATE_PARENTS
+                     if key not in BASE_APPEND_IDENTITIES + (BASE_RAW_FP32_ID,))
     assert len(previous) == 12
 
     def encoded():
@@ -688,6 +691,112 @@ def test_base_append_registration_preserves_all_twelve_existing_full_dtos(module
         without_added = encoded()
     # Compare every field and both embedded hashes, not only the digest values.
     assert with_added == without_added
+
+
+def test_base_raw_fp32_registration_preserves_all_fourteen_existing_full_dtos(modules, monkeypatch):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
+    from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
+    previous = tuple(key for key in PRIVATE_PARENTS if key != BASE_RAW_FP32_ID)
+    assert len(previous) == 14
+
+    def encoded():
+        return {key: json.dumps(resolve_parent(modules, key), sort_keys=True, ensure_ascii=False,
+                               separators=(',', ':')).encode('utf-8') for key in previous}
+
+    with_added = encoded()
+    with monkeypatch.context() as scoped:
+        scoped.delitem(PRIVATE_PARENTS, BASE_RAW_FP32_ID)
+        scoped.delitem(_OPERATION_AUTHORING_RECIPES, BASE_RAW_FP32_ID)
+        without_added = encoded()
+    assert with_added == without_added
+
+
+@pytest.mark.parametrize('index', range(4))
+def test_normal_raw_and_append_offers_share_parent_graph_but_require_their_exact_layout_mode(modules, index):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent, validate_execution_purpose
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+    from modiff.studio_execution_specs import studio_operation_authoring_selections
+    profiles = [DIFFUSERS_EXECUTION_PROFILES[key].to_public_dict()
+                for key in ('flux3-klein:modular', 'flux3-klein-base:modular')]
+    offer = studio_operation_authoring_selections(profiles)[index]
+    raw = resolve_parent(modules, offer['rawAuthoringRecipeId'])
+    append = resolve_parent(modules, offer['authoringRecipeId'])
+    for key in ('schemaVersion', 'canonicalizationVersion', 'baseSpecId', 'baseSpecContentHash',
+                'executionProfileIds', 'roles', 'edges', 'bindings', 'initialValues'):
+        assert raw[key] == append[key]
+    child = raw['ancillaryOperations'][0]
+    appended = append['ancillaryOperations'][0]
+    assert 'layoutPolicy' not in child
+    for key in ('roles', 'edges', 'bindings', 'fieldOverrides', 'adapter', 'sourceRegions'):
+        assert child[key] == appended[key]
+    assert {(role, name): value for role, name, value in child['initialValues']} == {
+        **{(role, name): value for role, name, value in appended['initialValues']},
+        ('proposal', 'operation'): 'enhance_prompt'}
+    value, _parent = preview_graph(modules, list(PRIVATE_PARENTS).index(offer['rawAuthoringRecipeId']))
+    for role, name, selected in child['initialValues']:
+        value['nodes'][role]['params'][name] = {'value': deepcopy(selected)}
+    before = deepcopy(value)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert value == before
+    layout = {'schemaVersion': 1, 'coordinateSpace': 'normalized_xyxy', 'regions': [
+        {'id': 'subject', 'description': 'An authored subject.', 'targetBox': [0, 0, 1, 1]}]}
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = layout
+    before = deepcopy(value)
+    with pytest.raises(ValueError, match='plain prompt enhancement only'):
+        validate_execution_purpose(value, modules)
+    assert value == before
+    if offer['task'] == 'text_to_image':
+        assert child['bindings']['owner']['referenceSource'] is None
+        fixed = {(role, name): selected for role, name, selected in child['initialValues']}
+        assert fixed['provider', 'dtype'] == 'float32'
+        assert fixed['provider', 'device'] == 'cuda:0'
+        assert fixed['provider', 'quantization_mode'] == 'none'
+        assert fixed['proposal', 'max_input_tokens'] == 4096
+        value['nodes']['proposal']['params']['layout_conditioning']['value'] = None
+        value['nodes']['provider']['params']['dtype']['value'] = 'bfloat16'
+        before = deepcopy(value)
+        with pytest.raises(ValueError, match='FP32 Preview input selection changed'):
+            validate_execution_purpose(value, modules)
+        assert value == before
+
+
+@pytest.mark.parametrize('profile_id', ('flux3-klein:modular', 'flux3-klein-base:modular'))
+def test_explicit_nf4_raw_choice_reuses_legacy_t2i_dto_without_changing_fp32_or_append(modules, profile_id):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent, validate_execution_purpose
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+    from modiff.studio_execution_specs import studio_operation_authoring_selections
+    offer = next(row for row in studio_operation_authoring_selections([
+        DIFFUSERS_EXECUTION_PROFILES[profile_id].to_public_dict()]) if row['task'] == 'text_to_image')
+    choices = offer['rawAuthoringRecipeChoices']
+    assert len(choices) == 2 and choices[0]['authoringRecipeId'] == offer['rawAuthoringRecipeId']
+    selected = choices[1]['authoringRecipeId']
+    assert selected != offer['rawAuthoringRecipeId'] and selected != offer['authoringRecipeId']
+    assert PRIVATE_PARENTS[selected].get('providerRecipe') is None
+    parents = [resolve_parent(modules, identity) for identity in (
+        offer['authoringRecipeId'], offer['rawAuthoringRecipeId'], selected)]
+    for key in ('baseSpecId', 'baseSpecContentHash', 'executionProfileIds', 'roles', 'edges', 'bindings', 'initialValues'):
+        assert parents[0][key] == parents[1][key] == parents[2][key]
+    child = parents[2]['ancillaryOperations'][0]
+    assert 'layoutPolicy' not in child and child['bindings']['owner']['referenceSource'] is None
+    fixed = {(role, name): value for role, name, value in child['initialValues']}
+    assert fixed['provider', 'dtype'] == 'bfloat16'
+    assert fixed['provider', 'device'] == 'cuda:0'
+    assert fixed['provider', 'quantization_mode'] == 'bnb_4bit'
+    assert fixed['proposal', 'max_input_tokens'] == 4096
+    assert fixed['proposal', 'operation'] == 'enhance_prompt'
+    value, _parent = preview_graph(modules, list(PRIVATE_PARENTS).index(selected))
+    for role, name, selected_value in child['initialValues']:
+        value['nodes'][role]['params'][name] = {'value': deepcopy(selected_value)}
+    before = deepcopy(value)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert value == before
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
+        'schemaVersion': 1, 'coordinateSpace': 'normalized_xyxy', 'regions': [
+            {'id': 'subject', 'description': 'Authored subject.', 'targetBox': [0, 0, 1, 1]}]}
+    before = deepcopy(value)
+    with pytest.raises(ValueError, match='plain prompt enhancement only'):
+        validate_execution_purpose(value, modules)
+    assert value == before
 
 
 @pytest.mark.parametrize('identity', BASE_APPEND_IDENTITIES)

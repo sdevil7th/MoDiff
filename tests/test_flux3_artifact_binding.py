@@ -50,7 +50,18 @@ def test_exact_catalog_pin_and_dense_selection_add_no_qualification(model):
     matches = [profile for profile in DIFFUSERS_EXECUTION_PROFILES.values()
                if profile.model_type == model['modelType']]
     assert len(matches) == 1 and matches[0].public is False and matches[0].live_proof is False
-    assert matches[0].adapter_authoring is None
+    assert matches[0].adapter_authoring is not None
+    assert matches[0].adapter_authoring.to_public_dict() == {
+        'schemaVersion': 1, 'mediaKind': 'image',
+        'adapterNodeKey': 'modules.ModularDiffusers.Lora',
+        'tasks': ['text_to_image', 'edit_image'], 'maxOwnedAdapters': 32,
+        'repositoryRevisions': [{'repo': model['repository'], 'revision': model['revision']}],
+        'requiredControls': {
+            'offload_mode': 'none', 'auto_offload': False, 'weight_loading_mode': 'cpu',
+            'quant_config': None, 'unet': None, 'vae': None, 'controlnet': None,
+            'trust_remote_code': False,
+        },
+    }
     assert not any(REVIEW['admission'][key] for key in ('public', 'autoEligible', 'templateEligible', 'liveProof'))
 
 

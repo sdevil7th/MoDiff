@@ -352,6 +352,9 @@ def _load_model(
             **({'llm_int8_skip_modules': image_text_quantization['skipModules']}
                if image_text_quantization is not None else {}),
         )
+    if task == 'image-video-to-text' and quantization_mode == 'none':
+        from modiff.transformers_image_text_resources import require_image_text_dense_capacity
+        require_image_text_dense_capacity(selected_snapshot, revision, dtype_name, device)
     common = {
         "local_files_only": True,
         "trust_remote_code": False,

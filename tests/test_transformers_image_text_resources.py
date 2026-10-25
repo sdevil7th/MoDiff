@@ -9,6 +9,41 @@ import test_prompt_enhancement as pup
 actual_pup = pup.actual_pup
 
 
+def test_impossible_dense_image_text_refuses_before_any_processor_or_neural_factory(tmp_path, monkeypatch):
+    """Causal synthetic capacity refusal; no pretrained model or real device."""
+    import json
+    import struct
+    import transformers
+    from modiff import hardware, prompt_enhancement
+    from modules.HuggingFaceTransformers import main as nodes
+    revision = 'a' * 40
+    snapshot = tmp_path / 'hub' / 'models--unit--image-text' / 'snapshots' / revision
+    snapshot.mkdir(parents=True)
+    header = json.dumps({'weight': {'dtype': 'BF16', 'shape': [64], 'data_offsets': [0, 128]}}).encode()
+    (snapshot / 'model.safetensors').write_bytes(struct.pack('<Q', len(header)) + header + bytes(128))
+    monkeypatch.setattr(nodes, '_model_source_receipt', lambda *_args: {})
+    monkeypatch.setattr(nodes, '_normalized_device', lambda _value: 'cuda:0')
+    monkeypatch.setattr(prompt_enhancement, 'validate_cached_selection', lambda *_args: snapshot)
+    monkeypatch.setattr(hardware, 'get_hardware_snapshot', lambda: {
+        'system': {'ram_total': 1024}, 'devices': [
+            {'type': 'cuda', 'index': 0, 'memory_kind': 'dedicated', 'dedicated_memory_total': 128}]})
+    def forbidden(*_args, **_kwargs):
+        pytest.fail('Impossible dense capacity reached a factory')
+    monkeypatch.setattr(transformers.AutoProcessor, 'from_pretrained', forbidden)
+    monkeypatch.setattr(transformers.AutoModelForImageTextToText, 'from_pretrained', forbidden)
+    with pytest.raises(ValueError, match='cannot fit.*before loading'):
+        nodes._load_model(selection_value={'source': 'hub', 'value': 'unit/image-text'},
+            revision_value=revision, dtype_value='float32', device_value='cuda:0',
+            task='image-video-to-text', quantization_value='none')
+
+
+def test_dense_capacity_metadata_unknown_does_not_invent_a_budget_or_probe_hardware(monkeypatch):
+    from modiff import hardware
+    from modiff.transformers_image_text_resources import require_image_text_dense_capacity
+    monkeypatch.setattr(hardware, 'get_hardware_snapshot', lambda: pytest.fail('No storage floor exists'))
+    assert require_image_text_dense_capacity(None, None, 'float32', 'cuda:0') is None
+
+
 def test_existing_enhancement_runtime_minimum_uses_selected_token_limit():
     """Execution contract only: ordinary UI min-token metadata remains 2048."""
     from modules.HuggingFaceTransformers import main as nodes
@@ -28,6 +63,8 @@ def test_pinned_image_text_nf4_reaches_existing_official_factory_contract(actual
     import transformers
     from modules.HuggingFaceTransformers import main as nodes
     from modiff import transformers_image_text_resources as resources
+    monkeypatch.setattr(resources, 'require_image_text_dense_capacity',
+        lambda *_args: pytest.fail('NF4 must retain its separate quantized storage policy'))
     handle, _calls = actual_pup
     captured = {}
     monkeypatch.setattr(nodes, '_normalized_device', lambda _value: 'cuda:0')

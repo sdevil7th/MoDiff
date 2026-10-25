@@ -93,7 +93,18 @@ def test_exact_image_specs_bind_material_and_format_without_granting_public_supp
         assert profile.component_lora_declaration.pipeline_class == pipeline
         assert profile.lora_loadable_components == ('transformer',)
         assert profile.public is False and profile.live_proof is False
-        assert profile.adapter_authoring is None
+        assert profile.adapter_authoring is not None
+        assert profile.adapter_authoring.to_public_dict() == {
+            'schemaVersion': 1, 'mediaKind': 'image',
+            'adapterNodeKey': 'modules.ModularDiffusers.Lora',
+            'tasks': ['text_to_image', 'edit_image'], 'maxOwnedAdapters': 32,
+            'repositoryRevisions': [{'repo': selected['repository'], 'revision': selected['revision']}],
+            'requiredControls': {
+                'offload_mode': 'none', 'auto_offload': False, 'weight_loading_mode': 'cpu',
+                'quant_config': None, 'unet': None, 'vae': None, 'controlnet': None,
+                'trust_remote_code': False,
+            },
+        }
         capability = definition['capability']
         assert capability['revisionCandidates'] == [selected['revision']]
         assert capability['downloadFiles'] == expected_files
