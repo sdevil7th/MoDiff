@@ -51,6 +51,8 @@ from modiff.runtime_overlays import (
     binding_matches,
     cache_locked_artifacts,
     current_base_binding,
+    declared_diffusers_provider,
+    register_verified_diffusers_provider,
     ensure_managed_directory,
     flush_managed_directory,
     normalize_locked_wheel_install,
@@ -682,6 +684,7 @@ def _expected_contracts_for_specs(
                 base_contracts,
                 list(record["spec"].get("basePackages") or []),
             )
+    declared_diffusers_provider(package_contracts, specs)
     return package_contracts, base_contracts
 
 
@@ -1000,11 +1003,28 @@ def activate_runtime_overlay() -> str | None:
         # Never use site.addsitedir: wheel-supplied .pth files can execute
         # code. Hold the cross-process lease through the final plain-path
         # insertion so state cannot race validation.
+        try:
+            recorded = _environment_inspection(environment_id, verify_integrity=False)
+            if recorded.get("status") != "recorded" or recorded.get("sitePackages") != site_packages:
+                raise RuntimeError("The selected runtime metadata changed before import-path selection.")
+            manifest = recorded["manifest"]
+            provider = declared_diffusers_provider(manifest["packageContracts"], manifest["specs"])
+        except (OSError, RuntimeError, TypeError, ValueError, KeyError):
+            os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "repair_required"
+            return None
         sys.dont_write_bytecode = True
         normalized = str(site_packages)
         if normalized in sys.path:
             sys.path.remove(normalized)
         sys.path.insert(0, normalized)
+        if provider is not None:
+            try:
+                register_verified_diffusers_provider(site_packages, manifest["packageContracts"], manifest["specs"],
+                                                     recorded["validation"]["binding"]["diffusers"])
+            except (OSError, RuntimeError, TypeError, ValueError, KeyError):
+                sys.path.remove(normalized)
+                os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "repair_required"
+                return None
         os.environ["MODIFF_OPTIMIZATION_ENVIRONMENT"] = str(environment_id)
         os.environ["MODIFF_RUNTIME_OVERLAY_STATUS"] = "active"
         return str(environment_id)
@@ -1896,6 +1916,7 @@ def _install_reviewed_overlay(
         ]
         specs.append(deepcopy(spec))
         packages = _merge_contracts(existing_packages, package_contracts)
+        declared_diffusers_provider(packages, specs)
         base_packages = _merge_contracts(existing_base, base_contracts)
         binding = current_base_binding(base_packages)
         selected_artifacts = [dict(item) for item in (artifact_locks or [])]

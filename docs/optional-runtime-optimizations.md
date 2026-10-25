@@ -73,6 +73,34 @@ requires explicit consent for install, activation, and rollback. Runtime-only op
 features may still be explicitly selected or qualified when their existing
 capability contract permits it.
 
+## Declared optional Diffusers provider
+
+The candidate `huggingface-diffusers-flux3-7ecb1e1` contract assembles the exact
+reviewed official Hugging Face Diffusers source through the existing bounded,
+no-code wheel recipe. It does not execute `setup.py`, resolve new dependencies,
+or replace the base installation. The ordinary `diffusers==0.41.0` setup pin
+remains unchanged. Its package actions stay unavailable until each target's
+installation, activation and rollback checks qualify that exact delivery.
+Source and wheel verification alone are not model or hardware qualification.
+
+An explicit `providesDiffusers` declaration selects one sealed runtime root.
+Other overlays cannot shadow Diffusers, and the provider may not stage Torch,
+TorchVision, Transformers or PEFT. Multiple or conflicting provider declarations
+refuse before changing the import path. Activation uses the normal explicit
+consent, job, worker restart and rollback lifecycle. No browsing or Run action
+installs a runtime. Older optional runtime specifications omit this declaration
+and keep their original digests and behavior.
+
+The underlying base Diffusers installation and active provider have separate
+identities. The original metadata, record and actual base-only import spec are
+rechecked without importing base code over the provider or modifying the process
+path to inspect it. An existing explicit evaluation base retains its exact old
+wheel/census identity; it is not described as the ordinary base release. The
+replacement worker validates the selected provider's complete artifact seal,
+version, real classes and import origin before reporting ready. Preflight/status
+report both identities, while Auto, public workflow and Gallery admission remain
+separate. A provider update invalidates its own runtime fingerprint.
+
 ## First-use execution boundary
 
 Current core model-library requirements use `delivery: base` on every target.

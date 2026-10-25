@@ -36,6 +36,19 @@ NF4 still requires its separately installed/activated reviewed runtime, NVIDIA
 CUDA compatibility and actual resource fit. No NF4 runtime or model-output
 qualification follows from publishing this authoring metadata.
 
+Raw image-edit offers also expose the same bounded choice menu. Their default
+remains the existing editable provider (FP32/no quantization by default), not a
+new fixed-precision policy. The separate
+`flux3-klein:edit-image:prompt-preview-nf4-authoring:v1` and
+`flux3-klein-base:edit-image:prompt-preview-nf4-authoring:v1` identities pin
+BF16, `cuda:0`, NF4 and 4096 input tokens before Preview. They retain the actual
+ordered parent `Load.image` binding and the one-to-ten reference limit. Choose
+the explicit option before Enable; it never changes an enabled provider or
+selects itself because dense loading would not fit. These raw choices refuse
+nonnull layouts, while the unchanged append recipes preserve authored regions.
+All fifteen earlier full declarations and hashes remain unchanged. Runtime
+activation, resource fit, native output and Auto qualification remain separate.
+
 An explicit dense Image/Text load checks a necessary parameter-storage floor
 before either processor or neural-model factory. For an already verified
 single-file snapshot, the bounded Safetensors header counts floating weights

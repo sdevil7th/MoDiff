@@ -22,6 +22,7 @@ from types import MappingProxyType
 
 
 OPTIONAL_RUNTIME_SCHEMA_VERSION = 1
+DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID = "huggingface-diffusers-flux3-7ecb1e1"
 TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-peft-5.14.1-0.20.0"
 TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-main-96fe6dce-peft-0.20.0"
 GALLERY_MEDIA_RUNTIME_PROFILE_ID = "gallery-media-opencv-5.0.0.93-pyav-18.1.0"
@@ -481,8 +482,21 @@ class OptionalRuntimeProfile:
     target_contracts: tuple[OptionalRuntimeTargetContract, ...] = ()
     satisfies_profiles: tuple[tuple[str, str], ...] = ()
     incompatible_distributions: tuple[str, ...] = ()
+    provides_diffusers: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.provides_diffusers) is not bool:
+            raise ValueError("Diffusers provider selection must be an explicit boolean.")
+        if self.provides_diffusers:
+            staged = [package for package in self.packages if package.distribution == "diffusers"]
+            if (len(staged) != 1 or staged[0].role != "runtime_root"
+                    or staged[0].import_name != "diffusers"
+                    or any(package.distribution in {"torch", "torchvision", "transformers", "peft"}
+                           for package in self.packages)
+                    or any(package.distribution == "diffusers" for package in self.base_packages)):
+                raise ValueError("A Diffusers provider requires one exact root and preserves all other base model libraries.")
+        elif any(package.distribution == "diffusers" for package in self.packages):
+            raise ValueError("Staging Diffusers requires an explicit provider declaration.")
         targets = tuple((contract.platform, contract.machine) for contract in self.target_contracts)
         if len(set(targets)) != len(targets):
             raise ValueError("Optional-runtime target contracts must be unique.")
@@ -550,6 +564,8 @@ class OptionalRuntimeProfile:
                 for method, parameters in self.pipeline_adapter_methods
             ],
         }
+        if self.provides_diffusers:
+            spec["providesDiffusers"] = True
         if self.satisfies_profiles:
             spec["satisfiesProfiles"] = [
                 {"id": profile_id, "specDigest": spec_digest} for profile_id, spec_digest in self.satisfies_profiles
@@ -1683,6 +1699,53 @@ def assert_optional_runtime_distribution_compatibility(profile, *, version_resol
         )
 
 
+_flux3_source_build = json.loads(
+    (Path(__file__).resolve().parent.parent / "data/diffusers-flux3-source-build.v1.json").read_text(encoding="utf-8")
+)
+_FLUX3_DIFFUSERS_CLASSES = (
+    "Flux3ModularPipeline", "Flux3DistilledModularPipeline", "Flux3Transformer2DModel",
+    "AutoencoderKLFlux2", "FlowMatchEulerDiscreteScheduler", "ClassifierFreeGuidance",
+    "ModularPipeline", "ComponentsManager", "ComponentSpec",
+)
+_FLUX3_BASE_REQUIREMENTS = {
+    package.distribution: replace(package, specifier=">=1.32.0,<2.0")
+    if package.distribution == "huggingface-hub" else package
+    for package in _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.base_packages
+}
+for _distribution, _import_name in (
+    ("urllib3", "urllib3"), ("charset-normalizer", "charset_normalizer"),
+    ("importlib-metadata", "importlib_metadata"),
+):
+    _FLUX3_BASE_REQUIREMENTS.setdefault(
+        _distribution, OptionalRuntimeBaseContract(_distribution, _import_name),
+    )
+_DIFFUSERS_FLUX3_PROFILE = OptionalRuntimeProfile(
+    id=DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID,
+    label="Official Diffusers FLUX 3 source runtime",
+    packages=(OptionalRuntimePackageContract(
+        distribution="diffusers", import_name="diffusers", version=_flux3_source_build["version"],
+        publisher="Hugging Face", project_url="https://github.com/huggingface/diffusers",
+        distribution_url=_flux3_source_build["sourceArtifact"]["url"], license="Apache-2.0",
+        role="runtime_root", required_symbols=(*_FLUX3_DIFFUSERS_CLASSES,
+            "diffusers.loaders.lora_conversion_utils:_convert_non_diffusers_flux3_lora_to_diffusers"),
+        required_class_symbols=_FLUX3_DIFFUSERS_CLASSES,
+    ),),
+    base_packages=tuple(_FLUX3_BASE_REQUIREMENTS.values()),
+    required_diffusers_symbols=_FLUX3_DIFFUSERS_CLASSES,
+    require_peft_backend=True,
+    pipeline_adapter_symbols=("Flux3ModularPipeline", "Flux3DistilledModularPipeline"),
+    pipeline_adapter_methods=(("load_components", ("names", "workflow")), ("__call__", ("state", "output"))),
+    source_builds=(_flux3_source_build,),
+    excluded_qualification_symbols=("add_weighted_adapter",),
+    provides_diffusers=True,
+    # Pure-Python packaging is not target installation or model qualification.
+    target_contracts=tuple(OptionalRuntimeTargetContract(
+        platform=platform_name, machine=machine, contract_state="candidate_unqualified",
+        cutover_ready=False, install_action_available=False, activation_available=False,
+    ) for platform_name, _python_tag, machine in _OPTIONAL_RUNTIME_TARGETS),
+)
+
+
 OPTIONAL_RUNTIME_PROFILES: Mapping[str, OptionalRuntimeProfile] = MappingProxyType(
     {
         _TRANSFORMERS_517_PEFT_PROFILE.id: _TRANSFORMERS_517_PEFT_PROFILE,
@@ -1693,6 +1756,7 @@ OPTIONAL_RUNTIME_PROFILES: Mapping[str, OptionalRuntimeProfile] = MappingProxyTy
         _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.id: _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE,
         _GALLERY_MEDIA_PROFILE.id: _GALLERY_MEDIA_PROFILE,
         _COSMOS_SAFETY_PROFILE.id: _COSMOS_SAFETY_PROFILE,
+        _DIFFUSERS_FLUX3_PROFILE.id: _DIFFUSERS_FLUX3_PROFILE,
     }
 )
 

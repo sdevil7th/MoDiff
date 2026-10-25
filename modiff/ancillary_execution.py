@@ -54,6 +54,12 @@ PRIVATE_PARENTS['flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v1
     **PRIVATE_PARENTS['flux3-klein-base:text-to-image:prompt-preview-authoring:v1'],
     'providerRecipe': 'fp32-none',
 }
+# Explicit raw reference-edit choices do not alter the fifteen older parents.
+for _variant in ('flux3-klein', 'flux3-klein-base'):
+    PRIVATE_PARENTS[f'{_variant}:edit-image:prompt-preview-nf4-authoring:v1'] = {
+        **PRIVATE_PARENTS[f'{_variant}:edit-image:prompt-preview-authoring:v1'],
+        'providerRecipe': 'bf16-nf4',
+    }
 PARENT_KEYS = ('authoringRecipeId', 'baseSpecId', 'baseSpecContentHash',
                'executionProfileId', 'pipelineClass', 'task')
 ID = re.compile(r'[A-Za-z0-9][A-Za-z0-9._:-]{0,127}')
@@ -343,7 +349,7 @@ def ancillary_operations_for_parent(modules, payload, selection, role_params):
         'sourceRegions': False}
     if 'layoutPolicy' in expected:
         result['layoutPolicy'] = expected['layoutPolicy']
-    if expected['task'] == 'text_to_image':
+    if expected['task'] == 'text_to_image' or expected.get('providerRecipe') == 'bf16-nf4':
         fp32 = expected.get('providerRecipe') == 'fp32-none'
         result['initialValues'].extend([
             (runtime_inputs['role'], runtime_inputs['dtypeField'], 'float32' if fp32 else 'bfloat16'),
@@ -716,11 +722,13 @@ def _validate_execution_purpose(graph, modules):
             raise invalid('provider differs from the immutable adapter artifact.')
         if 'pipeline_class' in provider['params'] and literal(provider, 'pipeline_class') != 'AutoModelForImageTextToText':
             raise invalid('wrong official provider factory.')
-        if PRIVATE_PARENTS[claim['authoringRecipeId']].get('providerRecipe') == 'fp32-none':
+        fixed_provider = PRIVATE_PARENTS[claim['authoringRecipeId']].get('providerRecipe')
+        if fixed_provider in ('fp32-none', 'bf16-nf4'):
             for role, name, expected_value in contract['initialValues']:
                 actual_value = literal(nodes[children[role]], name)
                 if type(actual_value) is not type(expected_value) or actual_value != expected_value:
-                    raise invalid('declared FP32 Preview input selection changed.')
+                    label = 'FP32' if fixed_provider == 'fp32-none' else 'BF16 + NF4'
+                    raise invalid('declared ' + label + ' Preview input selection changed.')
         expected_operation = ('enhance_prompt_append_details'
             if contract.get('layoutPolicy') == 'append-details-preserve-layout-v1' else 'enhance_prompt')
         if literal(proposal, 'operation') != expected_operation:

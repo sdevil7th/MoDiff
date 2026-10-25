@@ -18764,6 +18764,14 @@ _NORMAL_OPERATION_AUTHORING_SELECTIONS = (
 )
 
 _NORMAL_OPERATION_RAW_AUTHORING_CHOICES = {
+    "flux3-klein:edit-image:prompt-preview-authoring:v1": (
+        ("flux3-klein:edit-image:prompt-preview-authoring:v1", "Raw wording: editable provider (FP32 default)"),
+        ("flux3-klein:edit-image:prompt-preview-nf4-authoring:v1", "Raw wording: BF16 + NF4"),
+    ),
+    "flux3-klein-base:edit-image:prompt-preview-authoring:v1": (
+        ("flux3-klein-base:edit-image:prompt-preview-authoring:v1", "Raw wording: editable provider (FP32 default)"),
+        ("flux3-klein-base:edit-image:prompt-preview-nf4-authoring:v1", "Raw wording: BF16 + NF4"),
+    ),
     "flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1": (
         ("flux3-klein:text-to-image:prompt-preview-fp32-authoring:v1", "Raw wording: FP32"),
         ("flux3-klein:text-to-image:prompt-preview-authoring:v1", "Raw wording: BF16 + NF4"),
@@ -18810,7 +18818,9 @@ def studio_operation_authoring_selections(profiles: list[dict[str, Any]]) -> lis
                     or definition != append_definition
                     or parent.get("layoutPolicy") != layout_policy
                     or parent.get("providerRecipe") != (
-                        "fp32-none" if task == "text_to_image" and selected_identity in (identity, raw_identity) else None)
+                        "fp32-none" if task == "text_to_image" and selected_identity in (identity, raw_identity)
+                        else "bf16-nf4" if task == "edit_image" and selected_identity not in (identity, raw_identity)
+                        else None)
                     or parent.get("pipelineClass") != profile["pipeline_class"]
                     or specification["profile"]["id"] != profile_id
                     or specification["profile"]["pipeline_class"] != profile["pipeline_class"]

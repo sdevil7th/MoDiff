@@ -17,6 +17,7 @@ from email.parser import BytesParser
 from email.policy import default as email_policy
 import hashlib
 import importlib
+import importlib.machinery
 import importlib.util
 from importlib import metadata
 import json
@@ -52,6 +53,7 @@ MAX_LOCKED_ARCHIVE_TOTAL_BYTES = 2 * 1024**3
 MAX_LOCKED_WHEEL_ENTRIES = 100_000
 MAX_LOCKED_WHEEL_MEMBER_BYTES = 512 * 1024**2
 MAX_LOCKED_WHEEL_TOTAL_BYTES = 2 * 1024**3
+_VERIFIED_DIFFUSERS_PROVIDER: dict[str, Any] | None = None
 
 
 class OverlayCancelled(RuntimeError):
@@ -1770,8 +1772,8 @@ def _resolved_distribution_origin(distribution: metadata.Distribution) -> str:
     return str(Path(raw_path).resolve(strict=True))
 
 
-def _import_identity(import_name: str, metadata_origin: str) -> dict[str, Any]:
-    spec = importlib.util.find_spec(import_name)
+def _import_identity(import_name: str, metadata_origin: str, *, specification=None) -> dict[str, Any]:
+    spec = specification if specification is not None else importlib.util.find_spec(import_name)
     if spec is None:
         raise RuntimeError(f"Required base module {import_name!r} is unavailable.")
     metadata_root = Path(metadata_origin).resolve(strict=True).parent
@@ -1797,8 +1799,133 @@ def _import_identity(import_name: str, metadata_origin: str) -> dict[str, Any]:
     return {"origin": resolved_origin, "searchLocations": sorted(locations)}
 
 
+def declared_diffusers_provider(packages: Iterable[dict[str, Any]], specs: Iterable[dict[str, Any]]) -> dict | None:
+    """Select one exact source-controlled provider; package names/ENV grant nothing."""
+    from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES
+
+    packages, specs = list(packages), list(specs)
+    declarations = []
+    for record in specs:
+        specification = record.get("spec", {})
+        if "providesDiffusers" not in specification:
+            continue
+        profile = OPTIONAL_RUNTIME_PROFILES.get(record.get("id"))
+        if (record.get("kind") != "optional_runtime" or profile is None
+                or profile.provides_diffusers is not True or specification.get("providesDiffusers") is not True
+                or record.get("specDigest") != profile.spec_digest or specification != profile.to_spec_dict()):
+            raise RuntimeError("The Diffusers provider declaration is not an exact reviewed runtime spec.")
+        declarations.append(record)
+    staged = [package for package in packages if package.get("distribution") == "diffusers"]
+    if not declarations and not staged:
+        return None
+    if len(declarations) != 1 or len(staged) != 1:
+        raise RuntimeError("Select exactly one declared Diffusers provider; conflicting or undeclared providers refuse.")
+    record, package = declarations[0], staged[0]
+    expected = [item for item in record["spec"]["stagedPackages"] if item["distribution"] == "diffusers"]
+    if (len(expected) != 1 or package != expected[0] or package.get("role") != "runtime_root"
+            or package.get("importName") != "diffusers"
+            or any(item.get("distribution") in {"torch", "torchvision", "transformers", "peft"} for item in packages)
+            or any(item.get("distribution") == "diffusers" for selected in specs
+                   for item in selected.get("spec", {}).get("baseRequirements", []))):
+        raise RuntimeError("A declared Diffusers provider must preserve the other base model libraries.")
+    return {"profileId": record["id"], "specDigest": record["specDigest"],
+            "distribution": "diffusers", "version": package["requiredVersion"]}
+
+
+def _diffusers_identity_at(expected: dict[str, Any]) -> dict[str, Any]:
+    """Reobserve the original installation, without importing it over a provider."""
+    from packaging.requirements import Requirement
+    from modiff.base_runtime import base_model_runtime_contract
+    from modiff.diffusers_evaluation_runtime import selected_diffusers_evaluation_contract
+
+    origin = Path(expected["metadataOrigin"])
+    if not origin.is_absolute() or origin.resolve(strict=True) != origin:
+        raise RuntimeError("The original Diffusers metadata origin changed.")
+    distribution = metadata.Distribution.at(origin)
+    specification = importlib.machinery.PathFinder.find_spec("diffusers", [str(origin.parent)])
+    if specification is None:
+        raise RuntimeError("The original Diffusers package is unavailable at its verified base origin.")
+    evaluation = selected_diffusers_evaluation_contract(
+        distribution_resolver=lambda _name: distribution, specification_resolver=lambda _name: specification)
+    declarations = [Requirement(item) for item in base_model_runtime_contract()["dependencies"]
+                    if Requirement(item).name.lower().replace("_", "-") == "diffusers"]
+    if len(declarations) != 1 or declarations[0].url is not None or not declarations[0].specifier:
+        raise RuntimeError("Diffusers must retain one ordinary compatible-version declaration.")
+    requirement = Requirement(evaluation["dependency"]) if evaluation else declarations[0]
+    record = distribution.read_text("RECORD")
+    direct_body = distribution.read_text("direct_url.json")
+    direct = json.loads(direct_body) if direct_body else None
+    if (not requirement.specifier.contains(str(distribution.version), prereleases=bool(evaluation))
+            or not isinstance(record, str) or not record
+            or direct is not None and (not isinstance(direct, dict) or "dir_info" in direct)):
+        raise RuntimeError("The original Diffusers installation is incompatible or changed.")
+    actual = {"distribution": "diffusers", "version": str(distribution.version), "declaration": str(requirement),
+        **({"evaluationRuntime": evaluation} if evaluation else {}), "directUrl": direct,
+        "recordDigest": "sha256:" + hashlib.sha256(record.encode("utf-8")).hexdigest(),
+        "metadataOrigin": _resolved_distribution_origin(distribution),
+        "importIdentity": _import_identity("diffusers", str(origin), specification=specification)}
+    if actual != expected:
+        raise RuntimeError("The original Diffusers installation identity drifted.")
+    return actual
+
+
+def _provider_identity(declaration: dict[str, Any], site_packages: Path) -> dict[str, Any]:
+    site = site_packages.resolve(strict=True)
+    distribution = metadata.distribution("diffusers")
+    origin = _resolved_distribution_origin(distribution)
+    identity = _import_identity("diffusers", origin)
+    record = distribution.read_text("RECORD")
+    if (str(distribution.version) != declaration["version"]
+            or Path(origin).parent != site
+            or identity != {"origin": str(site / "diffusers/__init__.py"),
+                            "searchLocations": [str(site / "diffusers")]}
+            or not isinstance(record, str) or not record or len(record) > 2 * 1024 * 1024):
+        raise RuntimeError("The active Diffusers provider has an unexpected version or import origin.")
+    return {**declaration, "metadataOrigin": origin, "importIdentity": identity,
+            "recordDigest": "sha256:" + hashlib.sha256(record.encode("utf-8")).hexdigest()}
+
+
+def register_verified_diffusers_provider(site_packages: Path, packages, specs, base_identity: dict[str, Any]) -> dict | None:
+    """Called only by sealed startup after fresh validation, never a hot switch."""
+    global _VERIFIED_DIFFUSERS_PROVIDER
+    declaration = declared_diffusers_provider(packages, specs)
+    if declaration is None:
+        if _VERIFIED_DIFFUSERS_PROVIDER is not None:
+            raise RuntimeError("Changing the active Diffusers provider requires a worker restart.")
+        return None
+    if _VERIFIED_DIFFUSERS_PROVIDER is not None:
+        raise RuntimeError("A Diffusers provider is already selected; restart before another selection.")
+    _diffusers_identity_at(base_identity)
+    identity = _provider_identity(declaration, site_packages)
+    _VERIFIED_DIFFUSERS_PROVIDER = {"declaration": declaration, "sitePackages": str(site_packages.resolve(strict=True)),
+                                  "baseIdentity": json.loads(json.dumps(base_identity)), "identity": identity}
+    return json.loads(json.dumps(identity))
+
+
+def active_diffusers_provider() -> dict | None:
+    """Read-only process identity; no loose environment or caller selection."""
+    if _VERIFIED_DIFFUSERS_PROVIDER is None:
+        return None
+    selected = _VERIFIED_DIFFUSERS_PROVIDER
+    actual = _provider_identity(selected["declaration"], Path(selected["sitePackages"]))
+    if actual != selected["identity"]:
+        raise RuntimeError("The active Diffusers provider installation identity drifted.")
+    return json.loads(json.dumps(actual))
+
+
+def base_diffusers_identity() -> dict | None:
+    """An active overlay never replaces the underlying base installation witness."""
+    if _VERIFIED_DIFFUSERS_PROVIDER is None:
+        return None
+    active_diffusers_provider()
+    return _diffusers_identity_at(_VERIFIED_DIFFUSERS_PROVIDER["baseIdentity"])
+
+
 def _diffusers_identity() -> dict[str, Any]:
     """Bind the compatible installed package, separately from catalog source provenance."""
+    original = base_diffusers_identity()
+    if original is not None:
+        return original
     from packaging.requirements import Requirement
     from modiff.base_runtime import base_model_runtime_contract
     from modiff.diffusers_evaluation_runtime import selected_diffusers_evaluation_contract
@@ -1884,7 +2011,7 @@ def _accelerator_identity() -> dict[str, str]:
             body = path.read_bytes()
             contract_files.append({"path": str(path.resolve(strict=True)), "size": len(body),
                                    "sha256": hashlib.sha256(body).hexdigest()})
-        return {"profileId": profile_id, "lockDigest": native["current_digest"],
+        return {"profileId": profile_id, "lockDigest": native.get("underlying_base_digest", native["current_digest"]),
                 "manifestRevision": str(load_manifest().get("revision") or ""), "contractFiles": contract_files}
     if (
         not isinstance(saved, dict)
@@ -2184,6 +2311,7 @@ def overlay_file_seal_matches(
 
 _VALIDATION_SCRIPT = r'''
 import importlib
+import importlib.machinery
 import importlib.util
 from importlib import metadata
 import hashlib
@@ -2333,6 +2461,22 @@ expected_distributions = {contract["distribution"] for contract in payload["pack
 if set(overlay_distributions) != expected_distributions:
     raise RuntimeError("the overlay distribution set does not match the reviewed staged closure")
 
+provider = payload.get("diffusersProvider")
+providers = [record for record in payload["specs"] if record["spec"].get("providesDiffusers") is True]
+if provider is not None:
+    if (len(providers) != 1 or providers[0].get("kind") != "optional_runtime"
+            or provider != {"profileId": providers[0]["id"], "specDigest": providers[0]["specDigest"],
+                            "distribution": "diffusers", "version": next((item["requiredVersion"]
+                                for item in payload["packages"] if item["distribution"] == "diffusers"), None)}
+            or any(name in expected_distributions for name in ("torch", "torchvision", "transformers", "peft"))
+            or [item for item in providers[0]["spec"].get("stagedPackages", []) if item["distribution"] == "diffusers"]
+               != [item for item in payload["packages"] if item["distribution"] == "diffusers"]
+            or any(item.get("distribution") == "diffusers" for record in payload["specs"]
+                   for item in record["spec"].get("baseRequirements", []))):
+        raise RuntimeError("the isolated Diffusers provider declaration is invalid")
+elif providers or "diffusers" in expected_distributions:
+    raise RuntimeError("an undeclared Diffusers provider cannot shadow the base package")
+
 observed = []
 for contract in payload["packages"]:
     name = contract["distribution"]
@@ -2404,7 +2548,8 @@ for base in payload["binding"]["basePackages"]:
     if base.get("specifier") and base["version"] not in SpecifierSet(base["specifier"]):
         raise RuntimeError(f"base-owned distribution {base['distribution']!r} violates its reviewed constraint")
 
-diffusers = metadata.distribution("diffusers")
+diffusers = (metadata.Distribution.at(payload["binding"]["diffusers"]["metadataOrigin"])
+             if provider is not None else metadata.distribution("diffusers"))
 raw_direct = diffusers.read_text("direct_url.json")
 direct = json.loads(raw_direct) if raw_direct else None
 diffusers_identity = payload["binding"]["diffusers"]
@@ -2501,19 +2646,37 @@ evaluation = diffusers_identity.get("evaluationRuntime")
 if evaluation is not None:
     verify_evaluation_installation(evaluation, diffusers_identity, requirement)
 
-assert_import_origin(
-    "diffusers",
-    diffusers_identity["metadataOrigin"],
-    must_be_overlay=False,
-    expected_identity=diffusers_identity["importIdentity"],
-)
+if provider is not None:
+    # Reobserve the original package's actual base-only spec without changing
+    # sys.path or importing it over the explicitly selected provider.
+    original_root = Path(diffusers_identity["metadataOrigin"]).resolve(strict=True).parent
+    original_spec = importlib.machinery.PathFinder.find_spec("diffusers", [str(original_root)])
+    if original_spec is None:
+        raise RuntimeError("the original base Diffusers package is missing")
+    original_import = {"origin": str(Path(original_spec.origin).resolve(strict=True)),
+        "searchLocations": sorted(str(Path(item).resolve(strict=True)) for item in original_spec.submodule_search_locations or [])}
+    if original_import != diffusers_identity["importIdentity"]:
+        raise RuntimeError("the original base Diffusers import identity drifted")
+    selected = metadata.distribution("diffusers")
+    selected_origin = str(Path(selected._path).resolve(strict=True))
+    expected_import = {"origin": str(site / "diffusers/__init__.py"), "searchLocations": [str(site / "diffusers")]}
+    assert_import_origin("diffusers", selected_origin, must_be_overlay=True, expected_identity=expected_import)
+    selected_record = selected.read_text("RECORD")
+    if str(selected.version) != provider["version"] or not isinstance(selected_record, str) or not selected_record:
+        raise RuntimeError("the selected Diffusers provider identity drifted")
+    provider_observed = {**provider, "recordDigest": "sha256:" + hashlib.sha256(selected_record.encode("utf-8")).hexdigest()}
+    diffusers_root = str(Path(selected_origin).parent)
+else:
+    assert_import_origin("diffusers", diffusers_identity["metadataOrigin"], must_be_overlay=False,
+                         expected_identity=diffusers_identity["importIdentity"])
+    expected_import = diffusers_identity["importIdentity"]
+    diffusers_root = str(Path(diffusers_identity["metadataOrigin"]).resolve(strict=True).parent)
 diffusers_module = importlib.import_module("diffusers")
-if str(Path(diffusers_module.__file__).resolve(strict=True)) != diffusers_identity["importIdentity"]["origin"]:
+if str(Path(diffusers_module.__file__).resolve(strict=True)) != expected_import["origin"]:
     raise RuntimeError("Diffusers loaded from an unexpected origin")
-if sorted(str(Path(value).resolve(strict=True)) for value in list(diffusers_module.__path__)) != diffusers_identity["importIdentity"]["searchLocations"]:
+if sorted(str(Path(value).resolve(strict=True)) for value in list(diffusers_module.__path__)) != expected_import["searchLocations"]:
     raise RuntimeError("Diffusers loaded with an unexpected package path")
 dummy_type = importlib.import_module("diffusers.utils.import_utils").DummyObject
-diffusers_root = str(Path(diffusers_identity["metadataOrigin"]).resolve(strict=True).parent)
 for spec_record in payload["specs"]:
     for symbol in spec_record["spec"].get("requiredDiffusersSymbols", []):
         value = diffusers_module
@@ -2561,7 +2724,8 @@ if (
 ):
     raise RuntimeError("Python identity drifted during validation")
 
-print(json.dumps({"status": "passed", "packages": observed}, sort_keys=True))
+print(json.dumps({"status": "passed", "packages": observed,
+                  **({"diffusersProvider": provider_observed} if provider is not None else {})}, sort_keys=True))
 '''
 
 
@@ -2577,7 +2741,8 @@ def run_fresh_validation(
 ) -> dict[str, Any]:
     """Validate exact versions, origins, symbols, and host binding in ``-I``."""
 
-    package_list = list(packages)
+    package_list, spec_list = list(packages), list(specs)
+    provider = declared_diffusers_provider(package_list, spec_list)
     expected_names = [str(package["distribution"]) for package in package_list]
     before_seal = (
         observed_overlay_file_seal(site_packages)
@@ -2591,7 +2756,8 @@ def run_fresh_validation(
         "packages": package_list,
         "binding": binding,
         "bindingDigest": binding_digest(binding),
-        "specs": list(specs),
+        "specs": spec_list,
+        **({"diffusersProvider": provider} if provider is not None else {}),
         "trustedFileSeal": before_seal,
     }
     validation_environment = {

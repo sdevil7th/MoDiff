@@ -22,7 +22,10 @@ SELECTIONS = [
          {"authoringRecipeId": "flux3-klein:text-to-image:prompt-preview-authoring:v1", "label": "Raw wording: BF16 + NF4"}]},
     {"executionProfileId": "flux3-klein:modular", "pipelineClass": "Flux3DistilledModularPipeline",
      "task": "edit_image", "authoringRecipeId": "flux3-klein:edit-image:prompt-preview-authoring:v3",
-     "rawAuthoringRecipeId": "flux3-klein:edit-image:prompt-preview-authoring:v1"},
+     "rawAuthoringRecipeId": "flux3-klein:edit-image:prompt-preview-authoring:v1",
+     "rawAuthoringRecipeChoices": [
+         {"authoringRecipeId": "flux3-klein:edit-image:prompt-preview-authoring:v1", "label": "Raw wording: editable provider (FP32 default)"},
+         {"authoringRecipeId": "flux3-klein:edit-image:prompt-preview-nf4-authoring:v1", "label": "Raw wording: BF16 + NF4"}]},
     {"executionProfileId": "flux3-klein-base:modular", "pipelineClass": "Flux3ModularPipeline",
      "task": "text_to_image", "authoringRecipeId": "flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v3",
      "rawAuthoringRecipeId": "flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v1",
@@ -31,7 +34,10 @@ SELECTIONS = [
          {"authoringRecipeId": "flux3-klein-base:text-to-image:prompt-preview-authoring:v1", "label": "Raw wording: BF16 + NF4"}]},
     {"executionProfileId": "flux3-klein-base:modular", "pipelineClass": "Flux3ModularPipeline",
      "task": "edit_image", "authoringRecipeId": "flux3-klein-base:edit-image:prompt-preview-authoring:v3",
-     "rawAuthoringRecipeId": "flux3-klein-base:edit-image:prompt-preview-authoring:v1"},
+     "rawAuthoringRecipeId": "flux3-klein-base:edit-image:prompt-preview-authoring:v1",
+     "rawAuthoringRecipeChoices": [
+         {"authoringRecipeId": "flux3-klein-base:edit-image:prompt-preview-authoring:v1", "label": "Raw wording: editable provider (FP32 default)"},
+         {"authoringRecipeId": "flux3-klein-base:edit-image:prompt-preview-nf4-authoring:v1", "label": "Raw wording: BF16 + NF4"}]},
 ]
 
 

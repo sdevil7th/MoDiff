@@ -1,4 +1,5 @@
 """No-download exact-artifact admission; never trained or accelerator proof."""
+import ast
 import hashlib
 import json
 import os
@@ -153,6 +154,29 @@ def test_invalid_selected_profile_returns_incompatible_status(artifact, monkeypa
     assert not status["verified"] and any("evaluation contract is invalid" in issue for issue in status["issues"])
 
 
+def emitted_base_diffusers_validation():
+    # Select the actual emitted statements by their AST boundaries. The base
+    # census is shared by ordinary/E installs and a declared overlay provider;
+    # the later provider-origin branch is independently tested in full scripts.
+    tree = ast.parse(runtime_overlays._VALIDATION_SCRIPT)
+    starts = [index for index, node in enumerate(tree.body)
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == "diffusers" for target in node.targets)]
+    assert len(starts) == 1
+    start = starts[0]
+    stops = [index for index, node in enumerate(tree.body) if index > start
+        and isinstance(node, ast.If) and isinstance(node.test, ast.Compare)
+        and isinstance(node.test.left, ast.Name) and node.test.left.id == "provider"
+        and len(node.test.ops) == 1 and isinstance(node.test.ops[0], ast.IsNot)
+        and len(node.test.comparators) == 1 and isinstance(node.test.comparators[0], ast.Constant)
+        and node.test.comparators[0].value is None]
+    assert len(stops) == 1
+    statements = tree.body[start:stops[0]]
+    assert any(isinstance(node, ast.FunctionDef) and node.name == "verify_evaluation_installation"
+               for node in statements)
+    return compile(ast.Module(body=statements, type_ignores=[]), "<actual-emitted-base-validation>", "exec")
+
+
 def test_emitted_validator_rechecks_selected_installed_file_census(artifact, tmp_path, monkeypatch):
     selected = observed(artifact)
     record = artifact.distribution.read_text("RECORD")
@@ -161,11 +185,10 @@ def test_emitted_validator_rechecks_selected_installed_file_census(artifact, tmp
         "recordDigest": "sha256:" + hashlib.sha256(record.encode()).hexdigest(),
         "metadataOrigin": str(artifact.distribution._path)}
     monkeypatch.setattr(runtime_overlays.metadata, "distribution", lambda _name: artifact.distribution)
-    script = runtime_overlays._VALIDATION_SCRIPT
-    section = script[script.index('diffusers = metadata.distribution("diffusers")'):script.index('\nassert_import_origin(', script.index('diffusers = metadata.distribution("diffusers")'))]
+    section = emitted_base_diffusers_validation()
     import importlib
     namespace = {"metadata": runtime_overlays.metadata, "json": json, "hashlib": hashlib,
-                 "Path": Path, "importlib": importlib, "os": os, "stat": stat, "sys": sys, "payload": {"binding": {"diffusers": identity}}}
+                 "Path": Path, "importlib": importlib, "os": os, "stat": stat, "sys": sys, "provider": None, "payload": {"binding": {"diffusers": identity}}}
     emitted_packages = [{"distribution": "bitsandbytes", "version": "fixture"}]
     namespace["observed"] = emitted_packages
     exec(section, namespace)
@@ -187,12 +210,11 @@ def test_emitted_validator_refuses_late_census_or_ancestor_drift(artifact, monke
         "recordDigest": "sha256:" + hashlib.sha256(record.encode()).hexdigest(),
         "metadataOrigin": str(artifact.distribution._path)}
     monkeypatch.setattr(runtime_overlays.metadata, "distribution", lambda _name: artifact.distribution)
-    script = runtime_overlays._VALIDATION_SCRIPT
-    section = script[script.index('diffusers = metadata.distribution("diffusers")'):script.index('\nassert_import_origin(', script.index('diffusers = metadata.distribution("diffusers")'))]
+    section = emitted_base_diffusers_validation()
     import importlib
     namespace = {"metadata": runtime_overlays.metadata, "json": json, "hashlib": hashlib,
         "Path": Path, "importlib": importlib, "os": os, "stat": stat, "sys": sys,
-        "payload": {"binding": {"diffusers": identity}}}
+        "provider": None, "payload": {"binding": {"diffusers": identity}}}
     exec(section, namespace)
     if fault == "late_extra_module":
         (artifact.package / "unreviewed_late.py").write_bytes(b"unreviewed = True\n")
@@ -581,7 +603,11 @@ def test_normal_declarations_preserve_all_fourteen_existing_parent_dtos(artifact
             {"pipelineClass": parent["pipelineClass"], "task": parent["task"],
              "executionProfileId": parent["profileId"], "authoringRecipeId": identity})
             for identity, parent in PRIVATE_PARENTS.items()
-            if identity != "flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v1"}
+            if identity not in {
+                "flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v1",
+                "flux3-klein:edit-image:prompt-preview-nf4-authoring:v1",
+                "flux3-klein-base:edit-image:prompt-preview-nf4-authoring:v1",
+            }}
     current = resolve_all()
     assert len(current) == 14
     with monkeypatch.context() as previous:
@@ -589,3 +615,28 @@ def test_normal_declarations_preserve_all_fourteen_existing_parent_dtos(artifact
             previous.setitem(DIFFUSERS_EXECUTION_PROFILES, identity,
                 replace(DIFFUSERS_EXECUTION_PROFILES[identity], adapter_authoring=None))
         assert resolve_all() == current
+
+
+def test_sealed_provider_reobserves_original_evaluation_via_real_base_pathfinder(artifact, monkeypatch):
+    from modiff import base_runtime, runtime_overlays
+    selected = observed(artifact)
+    identity = {'distribution': 'diffusers', 'version': artifact.distribution.version,
+        'declaration': selected['dependency'], 'evaluationRuntime': selected, 'directUrl': artifact.direct,
+        'recordDigest': 'sha256:' + hashlib.sha256(artifact.distribution.read_text('RECORD').encode()).hexdigest(),
+        'metadataOrigin': str(artifact.distribution._path),
+        'importIdentity': {'origin': str(artifact.package / '__init__.py'), 'searchLocations': [str(artifact.package)]}}
+    monkeypatch.setattr(base_runtime, 'base_model_runtime_contract', lambda: {'dependencies': ['diffusers==0.41.0']})
+    monkeypatch.setattr(runtime_overlays.metadata.Distribution, 'at', lambda _origin: artifact.distribution)
+    monkeypatch.setattr(evaluation, 'find_spec', lambda _name: pytest.fail('must use actual base-only PathFinder'))
+    assert runtime_overlays._diffusers_identity_at(identity) == identity
+    (artifact.package / 'component.py').write_bytes(b'changed source\n')
+    with pytest.raises(RuntimeError, match='Installed Diffusers files differ'):
+        runtime_overlays._diffusers_identity_at(identity)
+
+
+def test_selected_provider_does_not_inherit_old_evaluation_authoring_permission(monkeypatch):
+    from modiff import runtime_overlays
+    monkeypatch.setattr(runtime_overlays, 'active_diffusers_provider', lambda: {'profileId': 'reviewed-provider'})
+    monkeypatch.setattr(evaluation, 'selected_diffusers_evaluation_contract',
+                        lambda **_kwargs: pytest.fail('must not reinterpret the old evaluation selector'))
+    assert evaluation.selected_diffusers_evaluation_authoring_profile_ids() == ()

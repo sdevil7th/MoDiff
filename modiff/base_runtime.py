@@ -50,10 +50,17 @@ def base_runtime_status(*, version_resolver=None, distribution_resolver=None) ->
     if not SpecifierSet(python_requirement).contains(python_version):
         issues.append(f"Python {python_version} does not satisfy {python_requirement}.")
     source_revisions = {}
-    evaluation = None
+    evaluation, provider, underlying = None, None, None
+    try:
+        from modiff.runtime_overlays import active_diffusers_provider, base_diffusers_identity
+        provider = active_diffusers_provider()
+        underlying = base_diffusers_identity() if provider is not None else None
+    except (OSError, RuntimeError, ValueError, TypeError, KeyError, metadata.PackageNotFoundError) as error:
+        issues.append(f"Diffusers provider contract is invalid: {error}")
     try:
         from modiff.diffusers_evaluation_runtime import selected_diffusers_evaluation_contract
-        evaluation = selected_diffusers_evaluation_contract(distribution_resolver=distribution_resolver)
+        evaluation = underlying.get("evaluationRuntime") if underlying is not None else selected_diffusers_evaluation_contract(
+            distribution_resolver=distribution_resolver)
     except (OSError, RuntimeError, ValueError, TypeError, KeyError, metadata.PackageNotFoundError) as error:
         issues.append(f"Diffusers evaluation contract is invalid: {error}")
     for declaration in document["project"]["dependencies"]:
@@ -68,8 +75,11 @@ def base_runtime_status(*, version_resolver=None, distribution_resolver=None) ->
             issues.append(f"Missing required package: {requirement.name}.")
             continue
         packages[requirement.name] = version
-        if requirement.specifier and not requirement.specifier.contains(version, prereleases=bool(evaluation and requirement.name.lower() == "diffusers")):
-            issues.append(f"{requirement.name} {version} does not satisfy {requirement.specifier}.")
+        checked_version = underlying["version"] if underlying is not None and requirement.name.lower() == "diffusers" else version
+        if provider is not None and requirement.name.lower() == "diffusers" and version != provider["version"]:
+            issues.append("The selected Diffusers provider version changed.")
+        if requirement.specifier and not requirement.specifier.contains(checked_version, prereleases=bool(evaluation and requirement.name.lower() == "diffusers")):
+            issues.append(f"{requirement.name} {checked_version} does not satisfy {requirement.specifier}.")
         if requirement.url and requirement.url.startswith("git+"):
             repository, commit = requirement.url.removeprefix("git+").rsplit("@", 1)
             try:
@@ -90,21 +100,36 @@ def base_runtime_status(*, version_resolver=None, distribution_resolver=None) ->
                 issues.append(f"{requirement.name} must use the declared source revision {commit}.")
             source_revisions[requirement.name] = vcs_info.get("commit_id")
     evaluation_identity = {key: value for key, value in evaluation.items() if key not in {"installedFiles", "wheelPath"}} if evaluation else None
+    provider_identity = ({key: provider[key] for key in ("profileId", "specDigest", "distribution", "version", "recordDigest")}
+                         if provider is not None else None)
+    underlying_identity = ({key: underlying[key] for key in ("version", "declaration", "recordDigest")}
+                           if underlying is not None else None)
     identity = {
         "python": list(sys.version_info[:2]),
         "packages": packages,
         "sourceRevisions": source_revisions,
         "dependencies": document["project"]["dependencies"],
         **({"evaluationRuntime": evaluation_identity} if evaluation_identity else {}),
+        **({"diffusersProvider": provider_identity, "underlyingDiffusers": underlying_identity} if provider_identity else {}),
     }
     digest = hashlib.sha256(json.dumps(identity, sort_keys=True).encode("utf-8")).hexdigest()
+    # Overlay validation remains bound to the original base, while public
+    # runtime identity also records the separately selected provider.
+    base_digest = None
+    if underlying is not None:
+        original_identity = {key: value for key, value in identity.items()
+                             if key not in {"diffusersProvider", "underlyingDiffusers"}}
+        original_identity["packages"] = {**packages, "diffusers": underlying["version"]}
+        base_digest = hashlib.sha256(json.dumps(original_identity, sort_keys=True).encode("utf-8")).hexdigest()
     return {
         "status": "verified" if not issues else "incompatible",
         "verified": not issues,
         "matches": not issues,
         "installationMode": "uv",
         **({"evaluationRuntime": evaluation_identity} if evaluation_identity else {}),
+        **({"diffusersProvider": provider_identity, "underlyingDiffusers": underlying_identity} if provider_identity else {}),
         "packages": packages,
         "issues": issues,
         "current_digest": digest,
+        **({"underlying_base_digest": base_digest} if base_digest is not None else {}),
     }

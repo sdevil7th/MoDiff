@@ -10,6 +10,12 @@ from modiff.server import WebServer
 from modiff import native_component_lora
 
 
+RAW_I2I_NF4_IDENTITIES = (
+    'flux3-klein:edit-image:prompt-preview-nf4-authoring:v1',
+    'flux3-klein-base:edit-image:prompt-preview-nf4-authoring:v1',
+)
+
+
 class ReachedPreflight(RuntimeError):
     pass
 
@@ -465,7 +471,7 @@ def test_explicit_fp32_structured_registration_preserves_all_nine_existing_dtos(
     previous = tuple(key for key in PRIVATE_PARENTS if key not in {identity,
         'flux3-klein:edit-image:prompt-preview-authoring:v3',
         'flux3-klein:text-to-image:prompt-preview-fp32-authoring:v3',
-        *BASE_APPEND_IDENTITIES, BASE_RAW_FP32_ID})
+        *BASE_APPEND_IDENTITIES, BASE_RAW_FP32_ID, *RAW_I2I_NF4_IDENTITIES})
     assert len(previous) == 9
 
     def encoded_parents():
@@ -621,7 +627,7 @@ def test_append_registration_preserves_all_ten_current_full_dtos(modules, monkey
     from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
     from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
     previous = tuple(key for key in PRIVATE_PARENTS
-                     if key not in APPEND_IDENTITIES + BASE_APPEND_IDENTITIES + (BASE_RAW_FP32_ID,))
+                     if key not in APPEND_IDENTITIES + BASE_APPEND_IDENTITIES + (BASE_RAW_FP32_ID,) + RAW_I2I_NF4_IDENTITIES)
     assert len(previous) == 10
     def encoded():
         return {key: json.dumps(resolve_parent(modules, key), sort_keys=True, ensure_ascii=False,
@@ -676,7 +682,7 @@ def test_base_append_registration_preserves_all_twelve_existing_full_dtos(module
     assert all(identity in PRIVATE_PARENTS and identity in _OPERATION_AUTHORING_RECIPES
                for identity in BASE_APPEND_IDENTITIES)
     previous = tuple(key for key in PRIVATE_PARENTS
-                     if key not in BASE_APPEND_IDENTITIES + (BASE_RAW_FP32_ID,))
+                     if key not in BASE_APPEND_IDENTITIES + (BASE_RAW_FP32_ID,) + RAW_I2I_NF4_IDENTITIES)
     assert len(previous) == 12
 
     def encoded():
@@ -696,7 +702,7 @@ def test_base_append_registration_preserves_all_twelve_existing_full_dtos(module
 def test_base_raw_fp32_registration_preserves_all_fourteen_existing_full_dtos(modules, monkeypatch):
     from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
     from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
-    previous = tuple(key for key in PRIVATE_PARENTS if key != BASE_RAW_FP32_ID)
+    previous = tuple(key for key in PRIVATE_PARENTS if key not in (BASE_RAW_FP32_ID,) + RAW_I2I_NF4_IDENTITIES)
     assert len(previous) == 14
 
     def encoded():
@@ -881,3 +887,115 @@ def test_base_append_t2i_refuses_changed_fp32_literals_before_model_preparation(
         with pytest.raises(ValueError, match='FP32 Preview input selection changed'):
             validate_execution_purpose(changed, modules)
         assert changed == before
+
+
+@pytest.mark.parametrize('profile_id', ('flux3-klein:modular', 'flux3-klein-base:modular'))
+def test_raw_i2i_nf4_is_an_explicit_choice_with_the_same_parent_and_real_references(modules, profile_id):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent, validate_execution_purpose
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+    from modiff.studio_execution_specs import studio_operation_authoring_selections
+    offer = next(row for row in studio_operation_authoring_selections([
+        DIFFUSERS_EXECUTION_PROFILES[profile_id].to_public_dict()]) if row['task'] == 'edit_image')
+    choices = offer['rawAuthoringRecipeChoices']
+    assert len(choices) == 2 and choices[0]['authoringRecipeId'] == offer['rawAuthoringRecipeId']
+    assert choices[0]['label'] == 'Raw wording: editable provider (FP32 default)'
+    selected = profile_id.removesuffix(':modular') + ':edit-image:prompt-preview-nf4-authoring:v1'
+    assert choices[1] == {'authoringRecipeId': selected, 'label': 'Raw wording: BF16 + NF4'}
+    assert PRIVATE_PARENTS[selected]['providerRecipe'] == 'bf16-nf4'
+    parents = [resolve_parent(modules, identity) for identity in (
+        offer['authoringRecipeId'], offer['rawAuthoringRecipeId'], selected)]
+    for key in ('schemaVersion', 'canonicalizationVersion', 'baseSpecId', 'baseSpecContentHash',
+                'executionProfileIds', 'roles', 'edges', 'bindings', 'initialValues'):
+        assert parents[0][key] == parents[1][key] == parents[2][key]
+    default_child, child = (parent['ancillaryOperations'][0] for parent in parents[1:])
+    assert 'layoutPolicy' not in child
+    assert child['bindings'] == default_child['bindings']
+    assert child['bindings']['owner']['referenceSource'] == {'role': 'loadImage', 'field': 'image'}
+    default_values = {(role, name): value for role, name, value in default_child['initialValues']}
+    assert not any(('provider', field) in default_values for field in ('dtype', 'device', 'quantization_mode'))
+    fixed = {(role, name): value for role, name, value in child['initialValues']}
+    assert fixed['provider', 'dtype'] == 'bfloat16'
+    assert fixed['provider', 'device'] == 'cuda:0'
+    assert fixed['provider', 'quantization_mode'] == 'bnb_4bit'
+    assert fixed['proposal', 'max_input_tokens'] == 4096
+    assert fixed['proposal', 'operation'] == 'enhance_prompt'
+    value, _parent = preview_graph(modules, list(PRIVATE_PARENTS).index(selected))
+    for role, name, selected_value in child['initialValues']:
+        value['nodes'][role]['params'][name] = {'value': deepcopy(selected_value)}
+    before = deepcopy(value)
+    assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    assert value == before
+    assert value['nodes']['proposal']['params']['images'] == {
+        'sourceId': 'image-loadImage', 'sourceKey': 'image'}
+    value['nodes']['proposal']['params']['layout_conditioning']['value'] = {
+        'schemaVersion': 1, 'coordinateSpace': 'normalized_xyxy', 'regions': [
+            {'id': 'subject', 'description': 'Authored subject.', 'targetBox': [0, 0, 1, 1]}]}
+    before = deepcopy(value)
+    with pytest.raises(ValueError, match='plain prompt enhancement only'):
+        validate_execution_purpose(value, modules)
+    assert value == before
+    default, _ = preview_graph(modules, list(PRIVATE_PARENTS).index(offer['rawAuthoringRecipeId']))
+    # The legacy default still accepts its existing editable dense provider.
+    assert validate_execution_purpose(default, modules) == default['runtimeHints']['executionPurpose']
+
+
+def test_raw_i2i_nf4_registration_preserves_all_fifteen_existing_full_dtos(modules, monkeypatch):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
+    from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES
+    previous = tuple(key for key in PRIVATE_PARENTS if key not in RAW_I2I_NF4_IDENTITIES)
+    assert len(previous) == 15 and len(PRIVATE_PARENTS) == 17
+
+    def encoded():
+        return {key: json.dumps(resolve_parent(modules, key), sort_keys=True, ensure_ascii=False,
+                               separators=(',', ':')).encode('utf-8') for key in previous}
+
+    with_added = encoded()
+    with monkeypatch.context() as scoped:
+        for identity in RAW_I2I_NF4_IDENTITIES:
+            scoped.delitem(PRIVATE_PARENTS, identity)
+            scoped.delitem(_OPERATION_AUTHORING_RECIPES, identity)
+        without_added = encoded()
+    # Full data, including both nested hash identities, remains exact.
+    assert with_added == without_added
+
+
+@pytest.mark.parametrize('identity', RAW_I2I_NF4_IDENTITIES)
+@pytest.mark.parametrize('role,field,wrong', [
+    ('provider', 'dtype', 'float32'), ('provider', 'device', 'cpu'),
+    ('provider', 'quantization_mode', 'none'), ('proposal', 'max_input_tokens', 4095),
+    ('proposal', 'max_input_tokens', 4096.0), ('proposal', 'operation', 'enhance_prompt_append_details'),
+])
+def test_explicit_i2i_nf4_literals_refuse_changes_before_preparation(modules, identity, role, field, wrong):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, validate_execution_purpose
+    value, parent = preview_graph(modules, list(PRIVATE_PARENTS).index(identity))
+    for child_role, name, selected in parent['ancillaryOperations'][0]['initialValues']:
+        value['nodes'][child_role]['params'][name] = {'value': deepcopy(selected)}
+    value['nodes'][role]['params'][field] = {'value': wrong}
+    before = deepcopy(value)
+    with pytest.raises(ValueError, match=r'BF16 \+ NF4 Preview input selection changed'):
+        validate_execution_purpose(value, modules)
+    assert value == before
+
+
+@pytest.mark.parametrize('identity', RAW_I2I_NF4_IDENTITIES)
+@pytest.mark.parametrize('count', [0, 1, 10, 11])
+def test_explicit_i2i_nf4_keeps_ordered_reference_count_and_endpoint_bounds(modules, identity, count):
+    from modiff.ancillary_execution import PRIVATE_PARENTS, validate_execution_purpose
+    value, parent = preview_graph(modules, list(PRIVATE_PARENTS).index(identity))
+    for role, name, selected in parent['ancillaryOperations'][0]['initialValues']:
+        value['nodes'][role]['params'][name] = {'value': deepcopy(selected)}
+    files = [f'reference-{index}.png' for index in range(count)]
+    value['nodes']['image-loadImage']['params']['file']['value'] = files
+    before = deepcopy(value)
+    if count in (1, 10):
+        assert validate_execution_purpose(value, modules) == value['runtimeHints']['executionPurpose']
+    else:
+        with pytest.raises(ValueError, match='one to ten ordered'):
+            validate_execution_purpose(value, modules)
+    assert value == before
+    if count in (1, 10):
+        value['nodes']['proposal']['params']['images'] = {'sourceId': 'provider', 'sourceKey': 'image'}
+        before = deepcopy(value)
+        with pytest.raises(ValueError, match='real parent media endpoint'):
+            validate_execution_purpose(value, modules)
+        assert value == before

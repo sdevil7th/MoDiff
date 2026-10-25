@@ -1,5 +1,6 @@
 """Ordinary Diffusers readiness and immutable overlay installation identity."""
 
+import ast
 import hashlib
 import json
 from pathlib import Path
@@ -78,15 +79,28 @@ def test_overlay_rejects_absent_distribution_record(ordinary_project, tmp_path, 
 
 def test_fresh_validator_rechecks_record_version_and_direct_source(ordinary_project, tmp_path, monkeypatch):
     # Exercise the exact emitted child-validator section, including its real Requirement parsing.
-    script = runtime_overlays._VALIDATION_SCRIPT
-    start = script.index('diffusers = metadata.distribution("diffusers")')
-    end = script.index('\nassert_import_origin(', start)
-    section = script[start:end]
+    tree = ast.parse(runtime_overlays._VALIDATION_SCRIPT)
+    starts = [index for index, node in enumerate(tree.body)
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == "diffusers" for target in node.targets)]
+    assert len(starts) == 1
+    start = starts[0]
+    stops = [index for index, node in enumerate(tree.body) if index > start
+        and isinstance(node, ast.If) and isinstance(node.test, ast.Compare)
+        and isinstance(node.test.left, ast.Name) and node.test.left.id == "provider"
+        and len(node.test.ops) == 1 and isinstance(node.test.ops[0], ast.IsNot)
+        and len(node.test.comparators) == 1 and isinstance(node.test.comparators[0], ast.Constant)
+        and node.test.comparators[0].value is None]
+    assert len(stops) == 1
+    statements = tree.body[start:stops[0]]
+    assert any(isinstance(node, ast.FunctionDef) and node.name == "verify_evaluation_installation"
+               for node in statements)
+    section = compile(ast.Module(body=statements, type_ignores=[]), "<actual-emitted-base-validation>", "exec")
     distribution = fake_distribution(tmp_path)
     binding = identity_with(tmp_path, monkeypatch, distribution)
     import importlib
     namespace = {"metadata": runtime_overlays.metadata, "json": json, "hashlib": hashlib,
-                 "Path": Path, "importlib": importlib, "payload": {"binding": {"diffusers": binding}}}
+                 "Path": Path, "importlib": importlib, "provider": None, "payload": {"binding": {"diffusers": binding}}}
     exec(section, namespace)
     for changed in [fake_distribution(tmp_path, version="0.41.1"),
                     fake_distribution(tmp_path, record="modified\n"),

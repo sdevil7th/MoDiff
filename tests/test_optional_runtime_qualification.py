@@ -211,5 +211,41 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
             self.assertFalse(oversized.exists())
 
 
+    def test_only_declared_diffusers_provider_permits_its_verified_original_base(self):
+        from modiff.optional_runtimes import DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID
+        original = {"version": "0.41.0", "metadataOrigin": "/controlled/base/diffusers.dist-info",
+            "recordDigest": "sha256:" + "a" * 64, "importIdentity": {}, "identityDigest": "sha256:" + "b" * 64}
+        for extra, expected in (([], "ready"), ([{"distribution": "unrelated", "version": "1"}], "not_ready")):
+            with (
+                self.subTest(extra=extra),
+                mock.patch.object(qualification, "_platform_name", return_value="linux"),
+                mock.patch.object(qualification, "_machine_name", return_value="x86_64"),
+                mock.patch.object(qualification, "_json_process", return_value={
+                    "plan": [{"byteSize": 1}], "present": [{"distribution": "diffusers", "version": "0.41.0"}, *extra],
+                    "nativeBaseVerified": True, "declaredDiffusersProvider": True, "baseDiffusers": original}),
+                mock.patch.object(qualification, "copy_verified_uv"),
+                mock.patch.object(qualification, "_source_revision", return_value={"commit": "a" * 40, "dirty": False, "available": True}),
+            ):
+                value = qualification.qualification_preflight(DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID)
+            self.assertEqual(value["status"], expected)
+            if expected == "ready":
+                self.assertEqual(value["permittedBaseDiffusers"], original)
+                self.assertTrue(value["sourceFlagsDormant"])
+
+    def test_provider_preflight_rejects_missing_base_identity_or_unverified_base(self):
+        from modiff.optional_runtimes import DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID
+        for probe in ({"nativeBaseVerified": False}, {"nativeBaseVerified": True, "baseDiffusers": {}}):
+            with (
+                self.subTest(probe=probe),
+                mock.patch.object(qualification, "_json_process", return_value={
+                    "plan": [{"byteSize": 1}], "present": [{"distribution": "diffusers", "version": "0.41.0"}],
+                    "declaredDiffusersProvider": True, **probe}),
+                mock.patch.object(qualification, "copy_verified_uv"),
+                mock.patch.object(qualification, "_source_revision", return_value={"commit": "a" * 40, "dirty": False, "available": True}),
+            ):
+                value = qualification.qualification_preflight(DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID)
+            self.assertEqual(value["status"], "not_ready")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -60,7 +60,15 @@ for package in candidate.packages:
     except metadata.PackageNotFoundError:
         continue
     present.append({"distribution": package.distribution, "version": str(version)[:128]})
-print(json.dumps({"plan": plan, "present": present, "nativeBaseVerified": base_verified}, sort_keys=True))
+provider_base = None
+if candidate.provides_diffusers:
+    import hashlib
+    from modiff.runtime_overlays import _diffusers_identity
+    original = _diffusers_identity()
+    provider_base = {key: original[key] for key in ("version", "metadataOrigin", "recordDigest", "importIdentity")}
+    provider_base["identityDigest"] = "sha256:" + hashlib.sha256(json.dumps(original, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+print(json.dumps({"plan": plan, "present": present, "nativeBaseVerified": base_verified,
+                  **({"declaredDiffusersProvider": True, "baseDiffusers": provider_base} if candidate.provides_diffusers else {})}, sort_keys=True))
 """
 
 _WORKLOAD_SCRIPT = r"""
@@ -92,6 +100,38 @@ optimization_packages.OPTIONAL_RUNTIME_PROFILES = {profile_id: qualified}
 environment_id = optimization_packages.activate_runtime_overlay()
 if not environment_id or os.environ.get("MODIFF_RUNTIME_OVERLAY_STATUS") != "active":
     raise RuntimeError("the qualified child did not activate the reviewed overlay")
+
+provider_qualification = None
+if candidate.provides_diffusers:
+    import hashlib
+    import inspect
+    from modiff.runtime_overlays import active_diffusers_provider, base_diffusers_identity
+    selected = active_diffusers_provider()
+    original = base_diffusers_identity()
+    if (selected is None or selected["profileId"] != profile_id or selected["specDigest"] != qualified.spec_digest
+            or original is None or not base_runtime_status()["verified"]):
+        raise RuntimeError("the declared Diffusers provider did not preserve its original base")
+    def deny_provider_network(event, _args):
+        if event in {"socket.connect", "socket.getaddrinfo", "socket.gethostbyname"}:
+            raise RuntimeError("network is forbidden during provider package qualification")
+    sys.addaudithook(deny_provider_network)
+    import diffusers
+    classes = []
+    for symbol in candidate.required_diffusers_symbols:
+        value = getattr(diffusers, symbol)
+        if not inspect.isclass(value) or not Path(inspect.getfile(value)).resolve().is_relative_to(Path(selected["metadataOrigin"]).parent):
+            raise RuntimeError("a declared Diffusers class has an unexpected identity")
+        classes.append(symbol)
+    for symbol in candidate.pipeline_adapter_symbols:
+        cls = getattr(diffusers, symbol)
+        for method, parameters in candidate.pipeline_adapter_methods:
+            if not set(parameters).issubset(inspect.signature(getattr(cls, method)).parameters):
+                raise RuntimeError("the declared Diffusers pipeline API differs")
+    original_compact = {key: original[key] for key in ("version", "metadataOrigin", "recordDigest", "importIdentity")}
+    original_compact["identityDigest"] = "sha256:" + hashlib.sha256(json.dumps(original, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    provider_qualification = {"selected": {key: selected[key] for key in ("profileId", "specDigest", "version", "recordDigest")},
+        "underlying": original_compact, "realClasses": classes, "pipelineApi": "passed",
+        "scope": "Package, no-download API and tiny CLIP/PEFT CPU compatibility only; no FLUX3 pretrained/model/GPU/Auto qualification."}
 
 import torch
 from diffusers.utils import USE_PEFT_BACKEND
@@ -219,6 +259,7 @@ print(json.dumps({
     "gguf": gguf,
     "galleryMedia": media,
     "cosmosSafety": cosmos_safety,
+    **({"diffusersProvider": provider_qualification} if provider_qualification is not None else {}),
 }, sort_keys=True))
 """
 
@@ -234,13 +275,15 @@ sys.path.insert(0, str(root))
 import modiff.optimization_packages as optimization_packages
 
 active = optimization_packages.activate_runtime_overlay()
+expected_base_provider = json.loads(sys.argv[3]) if len(sys.argv) > 3 else None
 present = []
 for name in json.loads(sys.argv[2]):
     try:
         metadata.version(name)
     except metadata.PackageNotFoundError:
         continue
-    present.append(name)
+    if name != "diffusers" or expected_base_provider is None:
+        present.append(name)
 names = json.loads(sys.argv[2])
 if not {"transformers", "peft"}.intersection(names):
     from modiff.base_runtime import base_runtime_status
@@ -258,7 +301,16 @@ if active is not None or os.environ.get("MODIFF_RUNTIME_OVERLAY_STATUS") != "bas
             sort_keys=True,
         )
     )
-print(json.dumps({"status": "passed", "activeEnvironment": None, "stagedPackagesPresent": present}))
+if expected_base_provider is not None:
+    import hashlib
+    from modiff.runtime_overlays import _diffusers_identity, active_diffusers_provider
+    original = _diffusers_identity()
+    observed_base = {key: original[key] for key in ("version", "metadataOrigin", "recordDigest", "importIdentity")}
+    observed_base["identityDigest"] = "sha256:" + hashlib.sha256(json.dumps(original, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    if active_diffusers_provider() is not None or observed_base != expected_base_provider:
+        raise RuntimeError("rollback changed the original Diffusers installation")
+print(json.dumps({"status": "passed", "activeEnvironment": None, "stagedPackagesPresent": present,
+                  **({"underlyingDiffusers": observed_base} if expected_base_provider is not None else {})}))
 """
 
 
@@ -378,6 +430,13 @@ def qualification_preflight(profile_id: str = PROFILE_ID) -> dict[str, Any]:
     native_base_verified = probe.get("nativeBaseVerified") is True
     requires_native_base = not any(package.distribution in {"transformers", "peft"} for package in candidate.packages)
     workload_supported = not any(package.distribution == "bitsandbytes" for package in candidate.packages)
+    provider_base = probe.get("baseDiffusers") if candidate.provides_diffusers else None
+    permitted_base_provider = bool(candidate.provides_diffusers and probe.get("declaredDiffusersProvider") is True
+        and isinstance(provider_base, dict) and set(provider_base) == {"version", "metadataOrigin", "recordDigest", "importIdentity", "identityDigest"}
+        and re.fullmatch(r"sha256:[0-9a-f]{64}", str(provider_base.get("identityDigest")))
+        and present == [{"distribution": "diffusers", "version": provider_base.get("version")}]
+        and native_base_verified)
+    unexpected_present = [] if permitted_base_provider else present
     uv_ready = False
     try:
         with tempfile.TemporaryDirectory(prefix="modiff-uv-preflight-") as temporary:
@@ -395,7 +454,7 @@ def qualification_preflight(profile_id: str = PROFILE_ID) -> dict[str, Any]:
         "schemaVersion": 1,
         "status": (
             "ready"
-            if not present
+            if not unexpected_present
             and (not requires_native_base or native_base_verified)
             and workload_supported
             and uv_ready
@@ -413,7 +472,8 @@ def qualification_preflight(profile_id: str = PROFILE_ID) -> dict[str, Any]:
         "qualificationSpecDigest": qualified.spec_digest,
         "sourceFlagsDormant": not source_target.cutover_ready,
         "sourceTargetQualified": source_target.cutover_ready,
-        "cleanBase": not present,
+        "cleanBase": not unexpected_present,
+        **({"permittedBaseDiffusers": provider_base} if permitted_base_provider else {}),
         "requiresNativeBase": requires_native_base,
         "nativeBaseVerified": native_base_verified if requires_native_base else None,
         "workloadSupported": workload_supported,
@@ -528,6 +588,7 @@ def run_qualification(*, consent: bool, profile_id: str = PROFILE_ID) -> dict[st
                 _BASE_SCRIPT,
                 str(ROOT),
                 json.dumps([package.distribution for package in candidate.packages]),
+                *([json.dumps(preflight["permittedBaseDiffusers"])] if candidate.provides_diffusers else []),
             )
     finally:
         if previous_managed_root is None:

@@ -55,7 +55,7 @@ def _body(path: Path, limit: int, *, checked_parents: dict | None = None) -> byt
     return body
 
 
-def selected_diffusers_evaluation_contract(*, distribution_resolver=None,
+def selected_diffusers_evaluation_contract(*, distribution_resolver=None, specification_resolver=None,
         _authoring_profile_ids: list[str] | None = None) -> dict | None:
     """Validate the explicitly selected exact wheel and its installed file census.
 
@@ -104,7 +104,7 @@ def selected_diffusers_evaluation_contract(*, distribution_resolver=None,
     _plain(site, directory=True)
     if Path(distribution._path).absolute() != site / f"diffusers-{contract['version']}.dist-info":
         raise RuntimeError("The evaluation distribution metadata has an unexpected origin.")
-    specification = find_spec("diffusers")
+    specification = (specification_resolver or find_spec)("diffusers")
     if (specification is None or specification.origin is None
             or Path(specification.origin).absolute() != site / "diffusers/__init__.py"
             or {Path(value).absolute() for value in specification.submodule_search_locations or []} != {site / "diffusers"}):
@@ -183,6 +183,11 @@ def selected_diffusers_evaluation_authoring_profile_ids(*, distribution_resolver
     public discovery, model execution, resource eligibility nor qualification.
     No HTTP request or caller-supplied allowlist can select them.
     """
+    from modiff.runtime_overlays import active_diffusers_provider
+    if active_diffusers_provider() is not None:
+        # A separately installed source provider does not inherit the old
+        # evaluation wheel's private authoring or publication authority.
+        return ()
     profiles: list[str] = []
     selected_diffusers_evaluation_contract(distribution_resolver=distribution_resolver,
         _authoring_profile_ids=profiles)
