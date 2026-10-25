@@ -333,22 +333,24 @@ def test_real_private_profile_binding_stays_refused_without_exact_evaluation_aut
     assert profile.public is False
     monkeypatch.delenv(evaluation.PROFILE_ENV)
     monkeypatch.delenv(evaluation.WHEEL_ENV)
-    with pytest.raises(ValueError, match="does not belong"):
+    with pytest.raises(ValueError, match="Rebind explicitly"):
         _bind_execution_profile(loader, "text_to_image", profile.id)
     assert loader["params"]["repo_id"] == {}
 
 
 @pytest.mark.parametrize("identity", ["flux3-klein:modular", "flux3-klein-base:modular"])
 @pytest.mark.parametrize("workflow,task", [("text2image", "text_to_image"), ("image_conditioned", "edit_image")])
-def test_declared_private_metadata_uses_existing_profile_artifact_workflow_checks(artifact, monkeypatch, identity, workflow, task):
+def test_public_replacement_uses_existing_profile_artifact_workflow_checks(artifact, monkeypatch, identity, workflow, task):
     from modiff.operation_starters import _bind_execution_profile
     _metadata_profiles(artifact, [identity])
     monkeypatch.setattr(evaluation.metadata, "distribution", lambda _name: artifact.distribution)
+    from modiff.studio_execution_specs import studio_public_authoring_replacements
+    identity = studio_public_authoring_replacements()[identity]
     profile, loader = _private_metadata_loader(identity, workflow)
     _bind_execution_profile(loader, task, identity)
     assert loader["params"]["repo_id"]["value"] == {"source": "hub", "value": profile.default_repo}
     assert loader["params"]["execution_profile_id"]["value"] == identity
-    assert profile.public is False and profile.live_proof is False
+    assert profile.public is True and profile.live_proof is False
     with pytest.raises(ValueError, match="exact reviewed artifact"):
         _bind_execution_profile(_private_metadata_loader(identity, workflow)[1], task, identity, "unrelated/model")
 
@@ -358,7 +360,7 @@ def test_valid_evaluation_does_not_unhide_unlisted_private_profiles(artifact, mo
     _metadata_profiles(artifact, ["flux3-klein:modular"])
     monkeypatch.setattr(evaluation.metadata, "distribution", lambda _name: artifact.distribution)
     profile, loader = _private_metadata_loader("flux3-klein-base:modular")
-    with pytest.raises(ValueError, match="does not belong"):
+    with pytest.raises(ValueError, match="Rebind explicitly"):
         _bind_execution_profile(loader, "text_to_image", profile.id)
 
 
@@ -379,33 +381,23 @@ def test_public_profile_metadata_never_calls_evaluation_authorizer(monkeypatch):
     assert loader["params"]["repo_id"]["value"] == {"source": "hub", "value": profile.default_repo}
 
 
-def test_private_metadata_invalid_artifact_refuses_before_value_projection(artifact, monkeypatch):
+def test_retired_private_authoring_refuses_before_value_projection_or_artifact_reinterpretation(artifact, monkeypatch):
     from modiff.operation_starters import _bind_execution_profile
     _metadata_profiles(artifact, ["flux3-klein:modular"])
     monkeypatch.setattr(evaluation.metadata, "distribution", lambda _name: artifact.distribution)
     profile, loader = _private_metadata_loader()
     with artifact.wheel.open("ab") as stream:
         stream.write(b"changed")
-    with pytest.raises(ValueError, match="authoring metadata is unavailable"):
+    with pytest.raises(ValueError, match="Rebind explicitly"):
         _bind_execution_profile(loader, "text_to_image", profile.id)
     assert loader["params"]["repo_id"] == {}
 
 
 def _authoring_catalog(artifact, monkeypatch, identities):
     import modules
-    from modules.ModularDiffusers import modular_utils
 
     _metadata_profiles(artifact, identities)
-    # DTO-only fixture: supply the actual reviewed schemas on base releases
-    # without these future exports. These empty identity classes cannot execute.
-    registry = modular_utils._get_registry_instance()
-    configs = dict(registry.get_all())
-    names = {owner.__name__ for owner in configs}
-    for name, config in (("Flux3ModularPipeline", modular_utils.FLUX_3_PIPELINE_CONFIG),
-                         ("Flux3DistilledModularPipeline", modular_utils.FLUX_3_DISTILLED_PIPELINE_CONFIG)):
-        if name not in names:
-            configs[type(name, (), {})] = config
-    monkeypatch.setattr(registry, "get_all", lambda: configs)
+    # Current source declarations supply complete metadata without fake classes.
     observer = evaluation.selected_diffusers_evaluation_authoring_profile_ids
     monkeypatch.setattr(evaluation, "selected_diffusers_evaluation_authoring_profile_ids",
         lambda: observer(distribution_resolver=lambda _name: artifact.distribution))
@@ -415,10 +407,11 @@ def _authoring_catalog(artifact, monkeypatch, identities):
     return build
 
 
-def test_capabilities_separate_evaluation_authoring_from_all_public_metadata(artifact, monkeypatch, tmp_path):
+def test_public_replacement_discovery_is_unchanged_by_the_legacy_e_authoring_selector(artifact, monkeypatch, tmp_path):
     import modules
     from modiff.config import CONFIG
     from modiff.server import WebServer
+    from modiff.studio_execution_specs import studio_public_authoring_replacements
 
     _authoring_catalog(artifact, monkeypatch, ["flux3-klein:modular", "flux3-klein-base:modular"])
     paths = {key: str(tmp_path / key) for key in CONFIG.paths if key != "app_root"}
@@ -431,52 +424,41 @@ def test_capabilities_separate_evaluation_authoring_from_all_public_metadata(art
         ordinary.setattr(evaluation, "selected_diffusers_evaluation_authoring_profile_ids", lambda: ())
         baseline = server._build_model_capabilities_payload()
     payload = server._build_model_capabilities_payload()
-    namespace = payload.pop("evaluationAuthoring")
+    assert "evaluationAuthoring" not in payload
     assert payload == baseline
-    assert len(namespace["executionProfiles"]) == 2
-    for capability in payload["capabilities"]:
-        if capability["modelType"].startswith("Flux3"):
-            assert capability["executionProfiles"] == capability["runnableModes"] == []
-            assert all(capability[key] is False for key in
-                ("autoEligible", "templateEligible", "galleryEligible", "liveProof"))
-    filtered = server._build_model_capabilities_payload("klein-base")["evaluationAuthoring"]
-    assert [profile["id"] for profile in filtered["executionProfiles"]] == ["flux3-klein-base:modular"]
-    assert [row["pipelineClass"] for row in filtered["pipelineSupport"]] == ["Flux3ModularPipeline"]
-    assert len(filtered["authoringRecipes"]) == 2
-    assert all(row["executionProfileId"] == "flux3-klein-base:modular" for row in filtered["authoringRecipes"])
-    exact = server._build_model_capabilities_payload("flux3modularpipeline")["evaluationAuthoring"]
-    assert [profile["id"] for profile in exact["executionProfiles"]] == ["flux3-klein-base:modular"]
-    assert "evaluationAuthoring" not in server._build_model_capabilities_payload("no-such-model")
-    assert "evaluationAuthoring" not in server._build_model_capabilities_payload("flux3-klein:modular")
+    replacements = set(studio_public_authoring_replacements().values())
+    public = [capability for capability in payload["capabilities"] if capability["modelType"].startswith("Flux3")]
+    assert len(public) == 2
+    for capability in public:
+        assert len(capability["executionProfiles"]) == 1
+        assert capability["executionProfiles"][0]["id"] in replacements
+        assert set(capability["runnableModes"]) == {"text_to_image", "edit_image"}
+        assert len(capability["executionProfiles"][0]["authoringRecipes"]) == 2
+        assert capability["optionalRuntimeRequirement"]["requiredNow"] is True
+        assert all(capability[key] is False for key in
+            ("autoEligible", "templateEligible", "galleryEligible", "liveProof"))
+    for query in ("klein-base", "flux3modularpipeline", "no-such-model", "flux3-klein:modular"):
+        assert "evaluationAuthoring" not in server._build_model_capabilities_payload(query)
 
 
-def test_evaluation_discovery_projects_only_exact_selected_private_profiles_and_tasks(artifact, monkeypatch):
-    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
-    from modiff.model_artifact_catalog import catalog_revision
+def test_evaluation_observer_retains_exact_old_ids_but_replaced_new_authoring_is_public(artifact, monkeypatch):
+    from modiff.diffusers_profiles import public_execution_profiles
+    from modiff.studio_execution_specs import studio_public_authoring_replacements
     identities = ["flux3-klein:modular", "flux3-klein-base:modular"]
     build = _authoring_catalog(artifact, monkeypatch, identities)
-    result = build()
-    assert result["schemaVersion"] == 1 and result["scope"] == "expert-authoring"
-    assert all(result[key] is False for key in ("autoEligible", "templateEligible", "galleryEligible"))
-    profiles = result["executionProfiles"]
-    assert [profile["id"] for profile in profiles] == identities
-    assert all(profile["public"] is False and profile["live_proof"] is False for profile in profiles)
-    assert {row["pipelineClass"] for row in result["pipelineSupport"]} == {
-        DIFFUSERS_EXECUTION_PROFILES[identity].pipeline_class for identity in identities}
-    for row in result["pipelineSupport"]:
-        expected = [identity for identity in identities
-                    if DIFFUSERS_EXECUTION_PROFILES[identity].pipeline_class == row["pipelineClass"]]
-        assert {task["task"] for task in row["tasks"]} == {"text_to_image", "edit_image"}
-        assert all(task["executionProfileIds"] == expected and task["execution"] == "adapter"
-                   for task in row["tasks"])
-    for profile in profiles:
-        assert profile["repository_revisions"] == [{"repo": profile["default_repo"],
-            "revision": catalog_revision(profile["default_repo"])}]
+    assert evaluation.selected_diffusers_evaluation_authoring_profile_ids() == tuple(identities)
+    assert build() is None
+    replacements = studio_public_authoring_replacements()
+    public = [profile for profile in public_execution_profiles() if profile['id'] in replacements.values()]
+    assert len(public) == 2
+    assert all(profile['public'] is True and profile['live_proof'] is False for profile in public)
+    assert all(set(profile['modes']) == {'text_to_image', 'edit_image'} for profile in public)
+    assert all(len(profile['authoringRecipes']) == 2 for profile in public)
 
 
 def test_evaluation_discovery_absent_without_selection_and_invalid_runtime_refuses(artifact, monkeypatch):
     build = _authoring_catalog(artifact, monkeypatch, ["flux3-klein:modular"])
-    assert build()["executionProfiles"]
+    assert build() is None
     artifact.distribution.version = "0.41.0"
     with pytest.raises(RuntimeError, match="version"):
         build()
@@ -512,30 +494,37 @@ def test_evaluation_discovery_never_imports_model_libraries_constructs_nodes_or_
     monkeypatch.setattr(subprocess, "Popen", forbidden)
     monkeypatch.setattr(huggingface_hub, "hf_hub_download", forbidden)
     monkeypatch.setattr(huggingface_hub, "snapshot_download", forbidden)
-    assert len(build()["executionProfiles"]) == 1
+    assert build() is None
 
 
-def test_evaluation_discovery_refuses_missing_registered_task_support(artifact, monkeypatch):
-    from modiff import operation_catalog
-    build = _authoring_catalog(artifact, monkeypatch, ["flux3-klein:modular"])
-    monkeypatch.setattr(operation_catalog, "build_operation_catalog", lambda *args, **kwargs: ([], []))
-    with pytest.raises(ValueError, match="exact reviewed pipeline/task"):
-        build()
+def test_public_declared_specs_refuse_missing_registered_task_support(artifact, monkeypatch):
+    import modules
+    from copy import deepcopy
+    from modiff.studio_execution_specs import validate_studio_execution_specs
+    registry = deepcopy(modules.MODULE_MAP)
+    registry['modules.ModularDiffusers'].pop('ImageEncode')
+    with pytest.raises(ValueError, match='unknown node'):
+        validate_studio_execution_specs(registry)
 
 
-def test_normal_evaluation_selections_resolve_current_parent_without_enabling_pup(artifact, monkeypatch):
+def test_normal_public_selections_resolve_current_parent_without_enabling_pup(artifact, monkeypatch):
     import modules
     from modiff.operation_catalog import build_operation_catalog
     from modiff.operation_starters import resolve_operation_starter
-    from test_flux3_normal_authoring import SELECTIONS, CONTROLS
+    from test_flux3_normal_authoring import CONTROLS
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+    from modiff.studio_execution_specs import studio_operation_authoring_selections, studio_public_authoring_replacements
 
     build = _authoring_catalog(artifact, monkeypatch, ["flux3-klein:modular", "flux3-klein-base:modular"])
-    metadata = build()
-    assert metadata["authoringRecipes"] == SELECTIONS
+    assert build() is None
+    profiles = [DIFFUSERS_EXECUTION_PROFILES[identity].to_public_dict()
+                for identity in studio_public_authoring_replacements().values()]
+    metadata = {'executionProfiles': profiles, 'authoringRecipes': studio_operation_authoring_selections(profiles)}
     contracts, _ = build_operation_catalog(modules.MODULE_MAP, [], catalog_resolver=lambda: {})
     for selection in metadata["authoringRecipes"]:
         request = {key: value for key, value in selection.items()
-                   if key not in {"rawAuthoringRecipeId", "rawAuthoringRecipeChoices"}}
+                   if key not in {"rawAuthoringRecipeId", "rawAuthoringRecipeChoices",
+                                  "layoutAuthoringRecipeChoices"}}
         starter = resolve_operation_starter(modules.MODULE_MAP, contracts, request)
         assert starter["authoring"]["id"] == selection["authoringRecipeId"]
         assert len(starter["authoring"]["ancillaryOperations"]) == 1
@@ -558,15 +547,16 @@ def test_normal_evaluation_selections_resolve_current_parent_without_enabling_pu
             assert alternative["nodes"] == starter["nodes"] and alternative["edges"] == starter["edges"]
     for profile in metadata["executionProfiles"]:
         assert profile["adapterAuthoring"]["requiredControls"] == CONTROLS
-        assert profile["adapterAuthoring"]["repositoryRevisions"] == profile["repository_revisions"]
-        assert profile["public"] is profile["live_proof"] is False
+        from modiff.model_artifact_catalog import catalog_profile_repository_revisions
+        assert profile['adapterAuthoring']['repositoryRevisions'] == catalog_profile_repository_revisions([profile])[profile['id']]
+        assert profile["public"] is True and profile["live_proof"] is False
 
 
 @pytest.mark.parametrize("fault", ["owner", "offload", "quantizer", "repository"])
-def test_evaluation_adapter_policy_requires_actual_registered_controls_and_pins(artifact, monkeypatch, fault):
+def test_public_replacement_adapter_policy_requires_actual_registered_controls_and_pins(artifact, monkeypatch, fault, tmp_path):
     from copy import deepcopy
     import modules
-    from modiff import operation_catalog, model_artifact_catalog
+    from modiff import model_artifact_catalog
 
     _authoring_catalog(artifact, monkeypatch, ["flux3-klein:modular"])
     registry = dict(modules.MODULE_MAP)
@@ -584,32 +574,29 @@ def test_evaluation_adapter_policy_requires_actual_registered_controls_and_pins(
         monkeypatch.setattr(model_artifact_catalog, "catalog_profile_repository_revisions",
             lambda profiles: {identity: [{**row, "revision": "a" * 40} for row in rows]
                               for identity, rows in actual(profiles).items()})
-    with pytest.raises(ValueError, match="[Aa]dapter authoring"):
-        operation_catalog.build_evaluation_authoring_catalog(registry, catalog_resolver=lambda: {})
+    from modiff.config import CONFIG
+    from modiff.server import WebServer
+    paths = {key: str(tmp_path / key) for key in CONFIG.paths if key != "app_root"}
+    for path in paths.values():
+        Path(path).mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(CONFIG, "paths", {**CONFIG.paths, **paths})
+    monkeypatch.setattr(WebServer, "_optimization_runtime_context", lambda self: (None, {}, {}))
+    with pytest.raises(ValueError, match="unknown node" if fault == "owner" else "[Aa]dapter authoring"):
+        WebServer(registry)._build_model_capabilities_payload()
 
 
-def test_normal_declarations_preserve_all_fourteen_existing_parent_dtos(artifact, monkeypatch):
+def test_retained_all_seventeen_private_parent_dtos_do_not_rebind_or_gain_public_profile(artifact, monkeypatch):
     from dataclasses import replace
     import modules
-    from modiff.ancillary_execution import PRIVATE_PARENTS
+    from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
     from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
-    from modiff.operation_catalog import build_operation_catalog
-    from modiff.operation_starters import resolve_operation_starter
 
-    _authoring_catalog(artifact, monkeypatch, ["flux3-klein:modular", "flux3-klein-base:modular"])
-    contracts, _ = build_operation_catalog(modules.MODULE_MAP, [], catalog_resolver=lambda: {})
     def resolve_all():
-        return {identity: resolve_operation_starter(modules.MODULE_MAP, contracts,
-            {"pipelineClass": parent["pipelineClass"], "task": parent["task"],
-             "executionProfileId": parent["profileId"], "authoringRecipeId": identity})
-            for identity, parent in PRIVATE_PARENTS.items()
-            if identity not in {
-                "flux3-klein-base:text-to-image:prompt-preview-fp32-authoring:v1",
-                "flux3-klein:edit-image:prompt-preview-nf4-authoring:v1",
-                "flux3-klein-base:edit-image:prompt-preview-nf4-authoring:v1",
-            }}
+        return {identity: resolve_parent(modules.MODULE_MAP, identity) for identity in PRIVATE_PARENTS}
     current = resolve_all()
-    assert len(current) == 14
+    assert len(current) == 17
+    assert all(parent['executionProfileIds'] == (PRIVATE_PARENTS[identity]['profileId'],)
+               for identity, parent in current.items())
     with monkeypatch.context() as previous:
         for identity in ("flux3-klein:modular", "flux3-klein-base:modular"):
             previous.setitem(DIFFUSERS_EXECUTION_PROFILES, identity,

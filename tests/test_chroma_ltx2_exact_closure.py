@@ -345,7 +345,26 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
         )
 
     def test_exact_hidden_candidate_specs_reuse_artifacts_and_generic_contracts(self):
-        self.assertEqual(len(validate_studio_execution_specs(module_registry.MODULE_MAP)), 278)
+        specifications = validate_studio_execution_specs(module_registry.MODULE_MAP)
+        public_flux3_spec_ids = {
+            "flux3-klein-base:official-provider:v1:edit-image:v1",
+            "flux3-klein-base:official-provider:v1:text-to-image:v1",
+            "flux3-klein:official-provider:v1:edit-image:v1",
+            "flux3-klein:official-provider:v1:text-to-image:v1",
+        }
+        self.assertEqual(len(specifications), 282)
+        self.assertEqual(
+            {specification["id"] for specification in specifications
+             if specification["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
+            public_flux3_spec_ids,
+        )
+        # The four explicit source contracts extend the existing 278;
+        # every pre-existing contract assertion below is retained.
+        self.assertEqual(
+            sum(specification["id"] not in public_flux3_spec_ids
+                for specification in specifications),
+            278,
+        )
         capabilities = studio_capability_definitions()
         cases = {
             ("ChromaImg2ImgPipeline", "edit_image"): (

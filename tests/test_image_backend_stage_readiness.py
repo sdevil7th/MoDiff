@@ -89,7 +89,7 @@ def test_all_other_routes_and_upstream_pending_evidence_are_exactly_preserved(mo
     monkeypatch.setattr(readiness, "_declared_backend_image_stages", lambda *_args: False)
     original = guarded_build()
     assert ledger["sources"] == original["sources"]
-    assert len(ledger["routes"]) == len(original["routes"]) == 216
+    assert len(ledger["routes"]) == len(original["routes"]) == 220
     rows = {row["routeId"]: row for row in ledger["routes"]}
     baseline = {row["routeId"]: row for row in original["routes"]}
     changed = []
@@ -108,7 +108,7 @@ def test_all_other_routes_and_upstream_pending_evidence_are_exactly_preserved(mo
         assert left == right
         changed.append(identity)
     assert set(changed) == set(PRIMARY_ROUTES)
-    assert len(rows) - len(changed) == 210
+    assert len(rows) - len(changed) == 214
     # The declared compatible Canny repair and unconverted sibling modes are
     # among these unchanged whole routes, not generalized from their family.
     assert rows["flux-canny:direct/control_image@fuliucansheng/FLUX.1-Canny-dev-diffusers"]["disposition"] == "documented_whole_pipeline_exception"

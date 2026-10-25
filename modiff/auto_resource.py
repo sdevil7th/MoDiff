@@ -3397,7 +3397,7 @@ def build_auto_resource_plan(
         if exact_profile is not None else optional_runtime_requirement_for_execution(
             model_type, mode, catalog_resolver=optional_runtime_catalog_resolver)
     )
-    studio_execution_spec = studio_execution_spec_for_pair(model_type, mode)
+    studio_execution_spec = studio_execution_spec_for_pair(model_type, mode, execution_profile_id=exact_profile.id if exact_profile else None)
     if exact_profile is not None and studio_execution_spec is not None and (
         studio_execution_spec["executionProfileId"] != exact_profile.id
     ):

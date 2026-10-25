@@ -158,7 +158,9 @@ class ModularOperationDiscoveryTests(unittest.TestCase):
     def test_registered_stage_contracts_are_offline_and_do_not_construct_pipelines(self):
         from modules import MODULE_MAP
         from modules.ModularDiffusers import MODULAR_REGISTRY
-        from modules.ModularDiffusers.modular_utils import get_modular_operation_contracts
+        from modules.ModularDiffusers.modular_utils import (
+            declared_optional_pipeline_configs, get_modular_operation_contracts,
+        )
 
         configs = MODULAR_REGISTRY.get_all()
         with ExitStack() as stack:
@@ -170,11 +172,38 @@ class ModularOperationDiscoveryTests(unittest.TestCase):
             contracts = get_modular_operation_contracts(MODULE_MAP)
         self.assertGreater(len(contracts), 0)
         by_class = {pipeline.__name__: config for pipeline, config in configs.items()}
+        declared = declared_optional_pipeline_configs()
+        self.assertEqual(set(declared), {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"})
+        by_class.update(declared)
         for contract in contracts:
             with self.subTest(pipeline=contract["pipelineClass"], stage=contract["nodeType"]):
-                params = by_class[contract["pipelineClass"]].node_params[contract["nodeType"]]
+                config = by_class[contract["pipelineClass"]]
+                params = config.node_params[contract["nodeType"]]
                 self.assertEqual(contract["blockName"], params["block_name"])
                 wrapper_ports = set()
+                if contract["pipelineClass"] in declared:
+                    # These source-authored transports belong to the wrapper,
+                    # not the upstream block input/dependency lists.
+                    wrappers = config.node_specs[contract["nodeType"]].get("wrapper_inputs", [])
+                    self.assertEqual({param.name for param in wrappers}, {
+                        "text_encoder": {"layout_conditioning", "reference_binding"},
+                        "denoise": {"reference_binding"},
+                    }.get(contract["nodeType"], set()))
+                    for wrapper in wrappers:
+                        declaration = wrapper.to_dict()
+                        self.assertNotIn(wrapper.name, params["input_names"]
+                                         + params["model_input_names"] + params["output_names"])
+                        self.assertEqual(params["params"][wrapper.name], declaration)
+                        raw_types = declaration["type"]
+                        types = [raw_types] if isinstance(raw_types, str) else raw_types
+                        port = next((port for port in contract["ports"]
+                                     if port["direction"] == "input" and port["name"] == wrapper.name), None)
+                        self.assertEqual(port, {
+                            "name": wrapper.name, "semanticName": wrapper.name, "direction": "input",
+                            "roles": ["value"], "types": sorted(set(types)), "required": False,
+                            "hidden": declaration.get("hidden") is True,
+                        })
+                        wrapper_ports.add(("input", wrapper.name))
                 if contract["nodeKey"] == "modules.ModularDiffusers.EncodePrompt":
                     connected = next((p for p in contract["ports"] if p["name"] == "prompt_input"), None)
                     if connected:

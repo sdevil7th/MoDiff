@@ -387,3 +387,59 @@ operator review. Rejected native details remain a sealed diagnostic, with no
 automatic text feed or Apply. Both the caption and complete proposal retain their
 existing finite Unicode, UTF-8 and JSON budgets. No native-model acceptance is
 claimed by this source change.
+
+
+### Discoverable Expert authoring and an optional official provider
+
+The ordinary model chooser declares FLUX 3 Klein and Base for text-to-image and
+reference-image editing before the optional Diffusers provider is installed.
+The graph can be authored and saved while Setup reports that the runtime is
+required. Selection, template browsing and node refresh do not install or
+activate packages. Run remains blocked until the exact sealed provider and its
+source-qualified platform target are active. A passing runtime check does not
+prove model fit, Auto eligibility or every precision/storage combination.
+
+The public source profiles use `flux3-klein:official-provider:v1` and
+`flux3-klein-base:official-provider:v1`. Their full split-node schemas reuse the
+reviewed PipelineConfig. A schema identity is a string, never a fabricated
+Diffusers class; execution still resolves the real official class and blocks.
+The profile's `required_diffusers_provider` and the hash-covered specification
+field `requiredDiffusersProvider` bind the same exact optional runtime. Static
+inventories do not change with installed packages or environment selectors.
+
+The old private profiles, parent receipts and hashes are retained. A declared
+public replacement retires the corresponding private ID from new authoring,
+without rewriting an existing saved workflow. The operator must explicitly
+choose the current public model/parent before running that graph through the
+new provider. The normal rebind must revalidate media and invalidate stale PUP
+proposals/reference bindings; an old E selector is not a provider activation.
+Undeclared overlapping private/public authoring metadata still refuses.
+
+New public PUP parents have separate identities. Null layout offers raw wording
+with an explicit FP32/none default or BF16/NF4 choice. Authored layout defaults
+to append-details with FP32/none and preserves the complete authored geometry.
+The choice is made before Preview and never silently falls back to another
+precision. NF4 also needs its existing optional-runtime and device/resource
+checks. Generated layout tables, native output, Auto, public template media and
+broader hardware qualification remain separate from this authoring contract.
+
+
+The maintained optional-runtime qualification passed on Linux and Windows x86_64 with Python
+3.12, source commit `627843d5a97cef4ed2cf7ab06d089f0f900af471`, official Diffusers
+source revision `7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941` and deterministic wheel
+SHA-256 `59c8eb8aaaa25fe5f912e09c48bf66f7e41655c468a7ec47f56da93d8ca40dbd`.
+It exercised the normal install/validation/activation/restart/rollback protocol,
+nine real official API classes and a finite tiny CLIP/PEFT CPU workload
+(`1 x 4 x 16`). The original base installation identity was unchanged during the
+selected-provider workload and after rollback. The independently checked Windows
+run used the same candidate contract and artifact plan and completed in 136.047
+seconds. Only those two package and API targets are enabled; the other four
+OS/architecture targets remain unqualified. These bare-provider results contain
+no FLUX 3 pretrained weights, image generation, GPU memory, native quantization,
+general Auto or model/template qualification. The separate combined
+Diffusers/bitsandbytes Windows x86_64 package delivery also passed its explicit
+tiny CUDA NF4 compatibility workload on clean source
+`ada881395bb4e51a6c2337919b6936defa8996fe`; its five other targets remain
+unqualified. That result covers exact combined installation, ten API classes,
+finite BF16/NF4 Linear4bit output with independent oracles, base preservation and
+rollback. It supplies no FLUX 3 pretrained/image, model-fit or Auto evidence.

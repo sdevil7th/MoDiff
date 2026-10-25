@@ -3006,8 +3006,9 @@ class ModelsLoader(NodeBase):
         if model_type != CUSTOM_PIPELINE_MODEL_TYPE:
             metadata = get_model_type_metadata(model_type)
             contract_only = isinstance(metadata, Mapping) and metadata.get("execution_status") == "contract_only"
-            if not contract_only:
-                # Do not publish an unknown class name as a runnable capability.
+            if not contract_only and not (isinstance(metadata, Mapping) and metadata.get('required_diffusers_provider')):
+                # Ordinary classes must exist; declared optional schemas are
+                # authorable before their separate execution provider is active.
                 pipeline_class_from_model_type(model_type)
             trust_remote_code = values.get("trust_remote_code", False)
             selected_repo = values.get("repo_id")

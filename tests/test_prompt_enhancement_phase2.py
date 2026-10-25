@@ -216,7 +216,18 @@ def test_old_role_schemas_are_exact_and_opt_in_fields_require_actual_recipe_use(
                 else:
                     explicit['edges'] = (*explicit['edges'], ('hypotheticalSupplier', 'value', role, field))
                 projected = _execution_spec_role_params(explicit, key, definition)
-                assert projected[field] == definition['params'][field]
+                expected = deepcopy(definition['params'][field])
+                if field == 'operation':
+                    assert expected['options'] == [
+                        'standard', 'enhance_prompt', 'enhance_prompt_append_details',
+                        'enhance_prompt_constrained_authored_v1',
+                    ]
+                    # The new ancillary-only mode never expands historical
+                    # compiled-role enums, even with an explicit old field.
+                    expected['options'] = [
+                        'standard', 'enhance_prompt', 'enhance_prompt_append_details',
+                    ]
+                assert projected[field] == expected
     assert checked and definition == original
 
 

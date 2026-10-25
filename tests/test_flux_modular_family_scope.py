@@ -85,10 +85,23 @@ def test_future_flux3_discovery_is_separate_from_published_native_matrix():
     assert all(not item["executionAdmissions"] and item["executionClaim"] == "discovery_only" for item in future)
     assert not future_names & {item["pipelineClass"] for item in loop_admissions()}
     public = public_execution_profiles()
-    assert not future_names & {item["model_type"] for item in public}
-    profiles = [item for item in DIFFUSERS_EXECUTION_PROFILES.values() if item.model_type in future_names]
-    assert len(profiles) == 2
-    assert all(item.public is False and item.live_proof is False and item.expert_quantization_modes == () for item in profiles)
+    legacy_ids = {'flux3-klein:modular', 'flux3-klein-base:modular'}
+    public_ids = {'flux3-klein:official-provider:v1', 'flux3-klein-base:official-provider:v1'}
+    declared_public = {item['id']: item for item in public if item['model_type'] in future_names}
+    assert set(declared_public) == public_ids
+    assert not legacy_ids & {item['id'] for item in public}
+    profiles = {item.id: item for item in DIFFUSERS_EXECUTION_PROFILES.values() if item.model_type in future_names}
+    assert set(profiles) == legacy_ids | public_ids
+    for identity, profile in profiles.items():
+        assert profile.public is (identity in public_ids)
+        assert profile.live_proof is False and profile.expert_quantization_modes == ()
+        if identity in legacy_ids:
+            assert profile.required_diffusers_provider is None
+        else:
+            assert profile.required_diffusers_provider == 'huggingface-diffusers-flux3-7ecb1e1'
+            assert profile.replaces_private_authoring_profile == identity.replace(':official-provider:v1', ':modular')
+            requirement = declared_public[identity]['optionalRuntimeRequirement']
+            assert requirement['requiredNow'] is True and requirement['state'] != 'active'
     catalog = json.loads(gzip.decompress((Path(__file__).resolve().parents[1] /
                                        "modiff/registered_block_v2_catalog.v1.json.gz").read_bytes()))
     assert not {item["id"] for item in future} & {

@@ -732,7 +732,7 @@ def qualify_huggingface_cluster_expert_runtime(
         if profile.id == sealed_profile_id
     ]
     profile = _single(profiles, "the exact backend execution profile is unavailable.")
-    public_spec = studio_execution_spec_for_pair(model_type, mode)
+    public_spec = studio_execution_spec_for_pair(model_type, mode, execution_profile_id=profile.id)
     if (
         not isinstance(spec, Mapping)
         or spec.get("executionProfileId") != profile.id

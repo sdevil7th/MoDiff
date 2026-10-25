@@ -424,7 +424,7 @@ def build_image_prototyping_readiness(root: Path) -> dict[str, Any]:
                 or (model_workflow and profile["model_type"].endswith("ModularPipeline"))
             )
             artifact = _artifact_inventory(profile, capability)
-            spec = studio_execution_spec_for_pair(profile["model_type"], mode)
+            spec = studio_execution_spec_for_pair(profile["model_type"], mode, execution_profile_id=profile["id"])
             backend_stages_integrated = _declared_backend_image_stages(profile, mode, artifact, spec)
 
             if variant_review and variant_review["decision"] in {"artifact_blocked", "upstream_exception"}:

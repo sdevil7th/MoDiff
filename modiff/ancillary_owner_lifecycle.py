@@ -187,6 +187,11 @@ def _no_modular_owners():
     return not any(getattr(manager, name, None) for name in ('components', 'collections', 'model_hooks'))
 
 
+def _constrained_preview(scope):
+    return (scope.preview and scope.graph['nodes'][scope.proposal]['params'].get('operation', {}).get('value')
+            == 'enhance_prompt_constrained_authored_v1')
+
+
 class _Scope:
     def __init__(self, server, graph, selection):
         from copy import deepcopy
@@ -217,6 +222,8 @@ class _Scope:
             self.binding = selection['bindings'][0]
             self.provider = self.binding['roleNodes']['provider']
             self.proposal = self.binding['roleNodes']['proposal']
+            if self.auto and _constrained_preview(self):
+                raise _error('the explicit constrained Preview has no Auto qualification; select Expert memory.')
             self.pending_turnover = self._turnover_event()
             if self.pending_turnover is None:
                 self._empty_start()
@@ -408,12 +415,16 @@ class _Scope:
         self.check()
         if not self.preview:
             return
-        if self.auto and node_id == self.provider:
-            if self.auto_owner is None:
+        constrained = _constrained_preview(self)
+        if (self.auto or constrained) and node_id == self.provider:
+            if self.auto and self.auto_owner is None:
                 raise _error('Preview has no server-computed processor preparation RAM reservation.')
             from modiff.workflow_auto_lifecycle import assert_next_owner_capacity
             from modiff.transformers_image_text_resources import image_text_cpu_preparation_requirements
             preparation = image_text_cpu_preparation_requirements()
+            if constrained:
+                from modiff.prompt_enhancement_constraints import PREPARATION_RAM_BYTES
+                preparation = {**preparation, 'systemRamBytes': preparation['systemRamBytes'] + PREPARATION_RAM_BYTES}
             try:
                 assert_next_owner_capacity(self.server, {
                     'ownerId': self.provider, 'requirements': preparation,
@@ -644,6 +655,26 @@ def check_preallocation_inputs(node, processor, fields, limits):
     scope = _SCOPE.get()
     if scope is not None and scope.preview:
         return scope.check_inputs(node, processor, fields, limits)
+
+
+def constrained_preallocation_context(node, processor):
+    """Carry one source-owned Expert deadline across actual processor preparation."""
+    import math
+    import time
+    from modiff.prompt_enhancement_constraints import DEADLINE_SECONDS
+    scope = _SCOPE.get()
+    if type(scope) is not _Scope or not scope.preview or scope.auto or not _constrained_preview(scope):
+        raise _error('constrained generation is outside its exact Expert Preview scope.')
+    witness = scope.preallocation_witness
+    if witness is None:
+        raise _error('constrained generation has no completed processor preallocation witness.')
+    scope.check_inputs(node, processor, witness[1], witness[2])
+    deadline = getattr(scope, '_authored_constraint_deadline', None)
+    now = time.monotonic()
+    if (type(deadline) is not float or not math.isfinite(deadline)
+            or deadline <= now or deadline > now + DEADLINE_SECONDS):
+        raise _error('constrained generation has no current source-owned finite preallocation deadline.')
+    return deadline
 
 
 def before_node(server, node_id):

@@ -1,5 +1,5 @@
 {
-  "contentHash": "sha256:375c7eddaa8a262bddc29de9a8cd6f295f3a6dae0626e3d8be38494d955f484a",
+  "contentHash": "sha256:1e499995564a039a1b9011b1b9ab95812f967022775bf21fab3216a7a34602d5",
   "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
   "diffusersVersion": "0.41.0.dev0",
   "pipelines": [
@@ -1011,10 +1011,10 @@
       ]
     },
     {
-      "coverage": "research-blocked",
+      "coverage": "executable",
       "equivalentTo": [],
       "pipelineClass": "Flux3DistilledModularPipeline",
-      "reason": "Only unpublished source-level execution specifications select this class; installed-runtime admission remains pending.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "upstreamTasks": [
         {
           "source": "modular",
@@ -1029,10 +1029,10 @@
       ]
     },
     {
-      "coverage": "research-blocked",
+      "coverage": "executable",
       "equivalentTo": [],
       "pipelineClass": "Flux3ModularPipeline",
-      "reason": "Only unpublished source-level execution specifications select this class; installed-runtime admission remains pending.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "upstreamTasks": [
         {
           "source": "modular",

@@ -122,6 +122,24 @@ def modular_graph_tasks(nodes, loader_id, consumer_ids, pipeline_class):
         actual = {
             edge for edge in actual if not (edge[1], edge[3]) in {("out_width", "width"), ("out_height", "height")}
         }
+        if actual != expected:
+            # Starters also wire complete source-declared wrapper transports.
+            # Accept that exact bundle, never an arbitrary extra stage link.
+            from modiff.studio_execution_specs import studio_execution_spec_for_pair
+
+            profile = nodes.get(loader_id, {}).get('params', {}).get('execution_profile_id', {}).get('value')
+            specification = studio_execution_spec_for_pair(
+                pipeline_class, task, execution_profile_id=profile,
+            )
+            if specification is not None:
+                by_key = {f"{node['module']}.{node['action']}": key for key, node in stages.items()}
+                roles = {role: by_key[key] for role, key, *_ in specification['roles'] if key in by_key}
+                expected |= {
+                    (roles[source], output, roles[target], field)
+                    for source, output, target, field in specification['edges']
+                    if source in roles and target in roles
+                    and (output, field) not in {('out_width', 'width'), ('out_height', 'height')}
+                }
         if actual == expected:
             candidates.append((task, route))
     # Some tasks share actions/wires but differ in optional conditioning inputs.

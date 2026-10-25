@@ -215,12 +215,16 @@ class FullSelectedContextTests(unittest.TestCase):
         from modiff.native_component_lora import reviewed_flux3_component_declaration
         from modiff.studio_execution_specs import studio_execution_spec_for_pair
         declaration = reviewed_flux3_component_declaration(model_type, 'edit_image')
-        specification = studio_execution_spec_for_pair(model_type, 'edit_image')
+        specification = studio_execution_spec_for_pair(
+            model_type, 'edit_image', execution_profile_id=declaration.profile_id)
+        self.assertNotIn('requiredDiffusersProvider', specification)
+        self.assertEqual(specification['executionProfileId'], declaration.profile_id)
         nodes = {role: {'module': key.rsplit('.', 1)[0], 'action': key.rsplit('.', 1)[1], 'params': {}}
                  for role, key, *_ in specification['roles']}
         for source, output, target, field in specification['edges']:
             nodes[target]['params'][field] = {'sourceId': source, 'sourceKey': output}
-        values = dict(model_type=model_type, repo_id={'source': 'hub', 'value': declaration.repository},
+        values = dict(model_type=model_type, execution_profile_id=declaration.profile_id,
+                      repo_id={'source': 'hub', 'value': declaration.repository},
                       reviewed_variant=declaration.repository, revision=declaration.revision,
                       workflow_id='image_conditioned', dtype='bfloat16', device='cuda:0',
                       offload_mode='none', auto_offload=False, weight_loading_mode='cpu',

@@ -1469,7 +1469,7 @@ class GenerateImageVideoText(NodeBase):
             'default': MAX_MEDIA_PIXELS, 'min': 65536, 'max': MAX_MEDIA_PIXELS},
         "model": {"label": "Model", "display": "input", "type": "transformers_image_text_to_text"},
         "prompt": {"label": "Prompt", "type": "text", "default": ""},
-        "operation": {"label": "Operation", "type": "string", "options": ["standard", "enhance_prompt", "enhance_prompt_append_details"], "default": "standard", "hidden": True},
+        "operation": {"label": "Operation", "type": "string", "options": ["standard", "enhance_prompt", "enhance_prompt_append_details", "enhance_prompt_constrained_authored_v1"], "default": "standard", "hidden": True},
         "enhancement_max_new_tokens": {"label": "Enhancement Token Limit", "type": "int", "default": 3584, "min": 1, "max": 3584, "hidden": True,
             "description": "Used only by prompt enhancement; ordinary generation keeps Max New Tokens."},
         "layout_conditioning": {"label": "Enhancement Layout", "type": "layout_conditioning", "display": "layout", "default": None, "hidden": True,
@@ -1515,7 +1515,7 @@ class GenerateImageVideoText(NodeBase):
         model, processor, receipt = _validated_handle(kwargs.get("model"), task="image-video-to-text")
         _require_current_image_text_owner(model)
         operation = kwargs.get("operation", "standard")
-        if operation in ("enhance_prompt", "enhance_prompt_append_details"):
+        if operation in ("enhance_prompt", "enhance_prompt_append_details", "enhance_prompt_constrained_authored_v1"):
             from modiff.prompt_enhancement import generate
             return generate(self, model, processor, receipt, kwargs)
         if operation != "standard":

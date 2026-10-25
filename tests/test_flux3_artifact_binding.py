@@ -47,11 +47,17 @@ def test_exact_catalog_pin_and_dense_selection_add_no_qualification(model):
     assert catalog_download_inventory(model['repository'], '0' * 40, selected) is None
     assert catalog_download_inventory(model['repository'], model['revision'], selected[:-1]) is None
     from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
-    matches = [profile for profile in DIFFUSERS_EXECUTION_PROFILES.values()
-               if profile.model_type == model['modelType']]
-    assert len(matches) == 1 and matches[0].public is False and matches[0].live_proof is False
-    assert matches[0].adapter_authoring is not None
-    assert matches[0].adapter_authoring.to_public_dict() == {
+    variant = model['repository'].rsplit('/', 1)[1].replace('flux-3-image-', 'flux3-')
+    legacy_id, public_id = variant + ':modular', variant + ':official-provider:v1'
+    matches = {profile.id: profile for profile in DIFFUSERS_EXECUTION_PROFILES.values()
+               if profile.model_type == model['modelType']}
+    assert set(matches) == {legacy_id, public_id}
+    assert matches[legacy_id].public is False
+    assert matches[legacy_id].required_diffusers_provider is None
+    assert matches[public_id].public is True
+    assert matches[public_id].required_diffusers_provider == 'huggingface-diffusers-flux3-7ecb1e1'
+    assert matches[public_id].replaces_private_authoring_profile == legacy_id
+    expected_policy = {
         'schemaVersion': 1, 'mediaKind': 'image',
         'adapterNodeKey': 'modules.ModularDiffusers.Lora',
         'tasks': ['text_to_image', 'edit_image'], 'maxOwnedAdapters': 32,
@@ -62,6 +68,11 @@ def test_exact_catalog_pin_and_dense_selection_add_no_qualification(model):
             'trust_remote_code': False,
         },
     }
+    for profile in matches.values():
+        assert profile.live_proof is False
+        assert profile.adapter_authoring is not None
+        assert profile.adapter_authoring.to_public_dict() == expected_policy
+        assert profile.component_lora_declaration.profile_id == profile.id
     assert not any(REVIEW['admission'][key] for key in ('public', 'autoEligible', 'templateEligible', 'liveProof'))
 
 

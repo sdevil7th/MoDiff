@@ -80,12 +80,25 @@ candidate declares one locked Diffusers and bitsandbytes closure for workflows
 requiring both. It preserves the base Transformers and PEFT installation and
 pins the exact current requirements it can satisfy. Setup exposes this as an
 explicit runtime choice; selecting or opening a workflow never installs or
-switches it. All targets remain unavailable until the combined delivery is
-qualified. Qualification of either separate runtime does not qualify the pair.
+switches it. The combined Windows x86_64 delivery is qualified; the other
+five targets remain unavailable. Qualification of either separate runtime does
+not qualify the pair.
 Execution also requires the sealed active provider, its current target, the
 exact declared Diffusers source and wheel, and the unchanged base identity.
 Its declared `cuda-nf4-v1` qualification workload is separate from ordinary
 package consent and requires a reviewed, explicit native-workload admission.
+The maintained run on clean source `ada881395bb4e51a6c2337919b6936defa8996fe`
+completed in 133.687 seconds. It exercised install, validation, activation and
+rollback, ten real official APIs, the tiny CLIP/PEFT CPU workload and a 64 by 64
+BF16-compute NF4 Linear4bit CUDA workload on an RTX 4080. Independent codebook and
+one-hot oracles passed; additional Torch allocation peaked at 43,008 bytes. The
+original base identity remained exact through rollback and no active overlay or
+staged packages remained. The pending source contract
+`sha256:50bd9406cc8b443f2e49255752312a56b6132ede91173ebed6e3d4f0085571ab`
+was projected to the qualified Windows contract
+`sha256:7f3fd36d78b104121e3f4253c2233a91f479a04814e994fb7b08034a7358eb1f`.
+This qualifies combined package delivery and tiny native NF4 compatibility, not
+FLUX 3 pretrained weights, image output, fused GEMM, model fit, Auto or templates.
 
 The candidate `huggingface-diffusers-flux3-7ecb1e1` contract assembles the exact
 reviewed official Hugging Face Diffusers source through the existing bounded,

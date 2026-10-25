@@ -65,7 +65,7 @@ def test_new_storage_field_only_enters_explicit_recipe_blocks():
     assert node['params']['weight_format'] == field
 
 
-def test_unpublished_specs_never_grant_executable_source_coverage():
+def test_unpublished_specs_never_grant_executable_source_coverage(monkeypatch):
     from modiff import upstream_coverage as coverage
 
     _version, rows = coverage._pipeline_coverage(
@@ -82,18 +82,30 @@ def test_unpublished_specs_never_grant_executable_source_coverage():
         for row in rows for item in row['exactExecutionSpecs']
     }
     assert actual == expected
-    public_classes = {
-        definition['profile']['pipeline_class']
-        for definition in specs.STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
-        if definition['profile'].get('public') is not False
-    }
-    private_only = {
+    private_classes = {
         definition['profile']['pipeline_class']
         for definition in specs.STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
         if definition['profile'].get('public') is False
-    } - public_classes
-    assert private_only
-    by_name = {row['name']: row for row in rows}
+    }
+    assert private_classes
+    # The current public replacements legitimately share these exact classes.
+    # Isolate the retained private declarations without changing their authority.
+    isolated = {
+        identifier: definition
+        for identifier, definition in coverage.STUDIO_EXECUTION_SPEC_DEFINITIONS.items()
+        if definition['profile'].get('public') is False
+        or definition['profile']['pipeline_class'] not in private_classes
+    }
+    monkeypatch.setattr(coverage, 'STUDIO_EXECUTION_SPEC_DEFINITIONS', isolated)
+    public_classes = {
+        definition['profile']['pipeline_class'] for definition in isolated.values()
+        if definition['profile'].get('public') is not False
+    }
+    private_only = private_classes - public_classes
+    assert private_only == private_classes
+    _version, private_rows = coverage._pipeline_coverage(
+        Path(__file__).resolve().parents[1], coverage.reviewed_diffusers_source())
+    by_name = {row['name']: row for row in private_rows}
     for name in private_only:
         assert by_name[name]['status'] in {'research-blocked', 'contract-only', 'intentionally-excluded'}
         assert by_name[name]['exactExecutionSpecs'] == []
@@ -105,6 +117,19 @@ def test_unpublished_spec_cannot_qualify_an_equivalent_target(monkeypatch):
     private = next(definition for definition in specs.STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
                    if definition['profile'].get('public') is False)
     target = private['profile']['pipeline_class']
+    # This counterfactual contains the genuine private source entries only for
+    # the target, so its public replacements cannot satisfy the equivalent route.
+    isolated = {
+        identifier: definition
+        for identifier, definition in coverage.STUDIO_EXECUTION_SPEC_DEFINITIONS.items()
+        if definition['profile'].get('public') is False
+        or definition['profile']['pipeline_class'] != target
+    }
+    assert any(definition['profile'].get('public') is False
+               and definition['profile']['pipeline_class'] == target for definition in isolated.values())
+    assert not any(definition['profile'].get('public') is not False
+                   and definition['profile']['pipeline_class'] == target for definition in isolated.values())
+    monkeypatch.setattr(coverage, 'STUDIO_EXECUTION_SPEC_DEFINITIONS', isolated)
     monkeypatch.setattr(coverage, '_EQUIVALENT_PIPELINE_TARGETS', {'FluxPriorReduxPipeline': (target,)})
     with pytest.raises(coverage.UpstreamCoverageError, match='not executable'):
         coverage._pipeline_coverage(Path(__file__).resolve().parents[1], coverage.reviewed_diffusers_source())

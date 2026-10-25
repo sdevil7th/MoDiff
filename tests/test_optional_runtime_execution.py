@@ -250,6 +250,19 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
                         self.assertEqual(targeted, requirement)
                     continue
                 self.assertEqual(profile.optional_runtime_delivery, OPTIONAL_RUNTIME_DELIVERY_OVERLAY)
+                if profile.required_diffusers_provider is not None:
+                    self.assertEqual(len(profile.optional_runtime_platform_deliveries), 6)
+                    for platform_name, machine, _delivery in OPTIONAL_RUNTIME_PLATFORM_DELIVERIES:
+                        targeted = declarative_requirement(
+                            (profile,), platform_name=platform_name, machine=machine)
+                        self.assertEqual(set(targeted), expected_keys)
+                        self.assertEqual(targeted["delivery"], "optional_overlay")
+                        self.assertTrue(targeted["requiredNow"])
+                        self.assertEqual(targeted["profileIds"], [profile.required_diffusers_provider])
+                        self.assertEqual(targeted["executionProfileIds"], [profile.id])
+                        self.assertEqual(targeted["state"], "unavailable")
+                        self.assertEqual(targeted["reason"], "optional_runtime_status_required")
+                    continue
                 if profile.optional_runtime_profiles == (COSMOS_SAFETY_RUNTIME_PROFILE_ID,):
                     self.assertEqual(len(profile.optional_runtime_platform_deliveries), 6)
                     for platform_name, machine in (
@@ -374,8 +387,20 @@ class OptionalRuntimeRequirementTests(unittest.TestCase):
         resolver.assert_not_called()
 
     def test_exact_pair_registry_has_atomic_optional_delivery(self):
+        from modiff.studio_execution_specs import studio_public_authoring_replacements
+        replaced = studio_public_authoring_replacements()
         pairs = {}
         for profile in DIFFUSERS_EXECUTION_PROFILES.values():
+            if profile.id in replaced:
+                # Explicit persisted identities keep their original contract;
+                # implicit pair selection uses the declared public replacement.
+                selected, reason = resolve_execution_profiles_for_loader(
+                    profile.loader_module, profile.loader_action,
+                    {"execution_profile_id": profile.id, "model_type": profile.model_type,
+                     "repo_id": {"source": "hub", "value": profile.default_repo}})
+                self.assertIsNone(reason)
+                self.assertEqual(selected, (profile,))
+                continue
             if profile.operation_recipe:
                 # Recipes carry their own atomic dependency declaration, but
                 # are not additional legacy Auto model/task owners.

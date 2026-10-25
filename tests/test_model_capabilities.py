@@ -456,7 +456,25 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(capability["qualifiedModes"], [])
                 self.assertNotIn(model_type, experimental)
 
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 278)
+        public_flux3_spec_ids = {
+            "flux3-klein-base:official-provider:v1:edit-image:v1",
+            "flux3-klein-base:official-provider:v1:text-to-image:v1",
+            "flux3-klein:official-provider:v1:edit-image:v1",
+            "flux3-klein:official-provider:v1:text-to-image:v1",
+        }
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 282)
+        self.assertEqual(
+            {specification["id"] for specification in payload["studioExecutionSpecs"]
+             if specification["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
+            public_flux3_spec_ids,
+        )
+        # The four explicit source contracts extend the existing 278;
+        # every pre-existing contract assertion below is retained.
+        self.assertEqual(
+            sum(specification["id"] not in public_flux3_spec_ids
+                for specification in payload["studioExecutionSpecs"]),
+            278,
+        )
         for model_type in (
             "FluxSchnellPipeline",
             "FluxDevPipeline",

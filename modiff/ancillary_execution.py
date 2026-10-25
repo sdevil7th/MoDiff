@@ -60,6 +60,28 @@ for _variant in ('flux3-klein', 'flux3-klein-base'):
         **PRIVATE_PARENTS[f'{_variant}:edit-image:prompt-preview-authoring:v1'],
         'providerRecipe': 'bf16-nf4',
     }
+# Separate source declarations never alter the seventeen private receipts.
+PUBLIC_PARENTS = {}
+for _variant, _pipeline in (('flux3-klein', 'Flux3DistilledModularPipeline'),
+                            ('flux3-klein-base', 'Flux3ModularPipeline')):
+    for _mode, _task in (('text-to-image', 'text_to_image'), ('edit-image', 'edit_image')):
+        for _choice, _recipe, _layout in (
+            ('fp32', 'fp32-none', None), ('nf4', 'bf16-nf4', None),
+            ('append-fp32', 'fp32-none', 'append-details-preserve-layout-v1'),
+            ('constrained-fp32', 'fp32-none', 'constrained-authored-table-v1'),
+        ):
+            PUBLIC_PARENTS[f'{_variant}:official:{_mode}:prompt-preview-{_choice}:v1'] = {
+                'specId': f'{_variant}:official-provider:v1:{_mode}:v1', 'task': _task,
+                'profileId': f'{_variant}:official-provider:v1', 'pipelineClass': _pipeline,
+                'providerRecipe': _recipe, **({'layoutPolicy': _layout} if _layout else {}),
+            }
+
+
+def parent_definition(identity):
+    """Resolve an exact source identity; never infer public/evaluation authority."""
+    return PRIVATE_PARENTS.get(identity) or PUBLIC_PARENTS.get(identity)
+
+
 PARENT_KEYS = ('authoringRecipeId', 'baseSpecId', 'baseSpecContentHash',
                'executionProfileId', 'pipelineClass', 'task')
 ID = re.compile(r'[A-Za-z0-9][A-Za-z0-9._:-]{0,127}')
@@ -241,7 +263,7 @@ def adapter_verification(adapter, binding, runtime_inputs, request_inputs, layou
     if layout_policy == 'append-details-preserve-layout-v1':
         result['layoutRequestSuffixSha256'] = 'sha256:' + hashlib.sha256(APPEND_REQUEST_TEMPLATE.encode('utf-8')).hexdigest()
     elif layout_policy is not None:
-        if layout_policy != 'preserve-authored-v1':
+        if layout_policy not in ('preserve-authored-v1', 'constrained-authored-table-v1'):
             raise invalid('unsupported authored-layout preservation policy.')
         from modiff.prompt_enhancement import request_system_prompt
         result.update(supportedPromptModes=['t2i', 'i2i', 't2i_bbox', 'i2i_bbox'],
@@ -300,12 +322,12 @@ def selected_field_overrides(proposal):
 
 
 def ancillary_operations_for_parent(modules, payload, selection, role_params):
-    """Build one optional, hash-covered declaration on an exact private parent."""
+    """Build one optional, hash-covered declaration on an exact source parent."""
     from modiff.studio_execution_specs import _hash_string, _stable_json
-    expected = PRIVATE_PARENTS.get(payload.get('id'))
+    expected = parent_definition(payload.get('id'))
     if expected is None or (payload['baseSpecId'], selection['pipelineClass'], selection['task'], selection['executionProfileId']) != (
             expected['specId'], expected['pipelineClass'], expected['task'], expected['profileId']):
-        raise invalid('wrong selected private parent.')
+        raise invalid('wrong selected source parent.')
     field(role_params['prompt'], 'prompt')
     field(role_params['prompt'], 'layout_conditioning')
     provider = params_for(modules, 'modules.HuggingFaceTransformers.LoadImageTextToTextModel')
@@ -343,13 +365,17 @@ def ancillary_operations_for_parent(modules, payload, selection, role_params):
         'initialValues': [('provider', runtime_inputs['modelField'], {'source': 'hub', 'value': _adapter['repository']}),
             ('provider', runtime_inputs['revisionField'], _adapter['revision']),
             ('proposal', request_inputs['operationField'],
+             'enhance_prompt_constrained_authored_v1' if expected.get('layoutPolicy') == 'constrained-authored-table-v1' else
              'enhance_prompt_append_details' if expected.get('layoutPolicy') == 'append-details-preserve-layout-v1' else 'enhance_prompt')],
         'fieldOverrides': selected_field_overrides(proposal), 'adapter': binding,
         'verification': adapter_verification(_adapter, binding, runtime_inputs, request_inputs, expected.get('layoutPolicy')),
         'sourceRegions': False}
     if 'layoutPolicy' in expected:
         result['layoutPolicy'] = expected['layoutPolicy']
-    if expected['task'] == 'text_to_image' or expected.get('providerRecipe') == 'bf16-nf4':
+    if expected.get('layoutPolicy') == 'constrained-authored-table-v1':
+        from modiff.prompt_enhancement_constraints import constraint_contract
+        result['authoredLayoutConstraint'] = constraint_contract()
+    if expected['task'] == 'text_to_image' or expected.get('providerRecipe') in ('fp32-none', 'bf16-nf4'):
         fp32 = expected.get('providerRecipe') == 'fp32-none'
         result['initialValues'].extend([
             (runtime_inputs['role'], runtime_inputs['dtypeField'], 'float32' if fp32 else 'bfloat16'),
@@ -365,9 +391,9 @@ def ancillary_operations_for_parent(modules, payload, selection, role_params):
 
 def resolve_parent(modules, identity):
     from modiff.studio_execution_specs import resolve_studio_operation_authoring_recipe
-    definition = PRIVATE_PARENTS.get(identity)
+    definition = parent_definition(identity)
     if definition is None:
-        raise invalid('parent authoring recipe is not privately declared.')
+        raise invalid('parent authoring recipe is not declared.')
     return resolve_studio_operation_authoring_recipe(modules, {
         'pipelineClass': definition['pipelineClass'], 'task': definition['task'],
         'executionProfileId': definition['profileId'], 'authoringRecipeId': identity}, {'nodes': [], 'edges': []})
@@ -722,15 +748,16 @@ def _validate_execution_purpose(graph, modules):
             raise invalid('provider differs from the immutable adapter artifact.')
         if 'pipeline_class' in provider['params'] and literal(provider, 'pipeline_class') != 'AutoModelForImageTextToText':
             raise invalid('wrong official provider factory.')
-        fixed_provider = PRIVATE_PARENTS[claim['authoringRecipeId']].get('providerRecipe')
+        fixed_provider = parent_definition(claim['authoringRecipeId']).get('providerRecipe')
         if fixed_provider in ('fp32-none', 'bf16-nf4'):
             for role, name, expected_value in contract['initialValues']:
                 actual_value = literal(nodes[children[role]], name)
                 if type(actual_value) is not type(expected_value) or actual_value != expected_value:
                     label = 'FP32' if fixed_provider == 'fp32-none' else 'BF16 + NF4'
                     raise invalid('declared ' + label + ' Preview input selection changed.')
-        expected_operation = ('enhance_prompt_append_details'
-            if contract.get('layoutPolicy') == 'append-details-preserve-layout-v1' else 'enhance_prompt')
+        expected_operation = ('enhance_prompt_constrained_authored_v1'
+            if contract.get('layoutPolicy') == 'constrained-authored-table-v1' else
+            'enhance_prompt_append_details' if contract.get('layoutPolicy') == 'append-details-preserve-layout-v1' else 'enhance_prompt')
         if literal(proposal, 'operation') != expected_operation:
             raise invalid('proposal operation is not selected.')
         video = proposal['params'].get('video', {})
@@ -742,11 +769,14 @@ def _validate_execution_purpose(graph, modules):
         from modiff.layout_conditioning import parse_layout_conditioning
         layout = parse_layout_conditioning(literal(proposal, 'layout_conditioning')) if 'layout_conditioning' in proposal['params'] else None
         if layout is not None:
-            if contract.get('layoutPolicy') not in ('preserve-authored-v1', 'append-details-preserve-layout-v1'):
+            if contract.get('layoutPolicy') not in ('preserve-authored-v1', 'append-details-preserve-layout-v1', 'constrained-authored-table-v1'):
                 raise invalid('the selected Preview supports plain prompt enhancement only; preserving an authored layout is not supported. Select the explicit structured authoring recipe.')
-            if layout['regions'] and contract.get('layoutPolicy') == 'preserve-authored-v1':
+            if contract.get('layoutPolicy') == 'constrained-authored-table-v1' or (
+                    layout['regions'] and contract.get('layoutPolicy') == 'preserve-authored-v1'):
                 from modiff.prompt_enhancement_output import require_authored_target_layout
                 require_authored_target_layout(layout)
+        if contract.get('layoutPolicy') == 'constrained-authored-table-v1' and layout is None:
+            raise invalid('the explicit constrained Preview requires an authored target layout.')
         expected_nodes = set(children.values())
         reference = contract['bindings']['owner']['referenceSource']
         images = proposal['params'].get('images', {})

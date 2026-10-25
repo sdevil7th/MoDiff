@@ -53,6 +53,7 @@ data/*
 !data/modular-weight-formats.v1.json
 !data/prompt-enhancement-adapters.v1.json
 !data/prompt-enhancement-system-prompts.v1.json
+!data/prompt-enhancement-constraints.v1.json
 !data/cosmos-safety-artifacts.v1.json
 !data/cosmos-safety-runtime-artifacts.v1.json
 !data/cosmos3-super-t2i-files.v1.json

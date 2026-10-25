@@ -30,6 +30,9 @@ def _bind_execution_profile(loader, task, identity, repository=None):
     if not isinstance(identity, str) or identity != identity.strip():
         raise ValueError("Select an exact execution profile.")
     profile = DIFFUSERS_EXECUTION_PROFILES.get(identity)
+    from modiff.studio_execution_specs import studio_public_authoring_replacements
+    if identity in studio_public_authoring_replacements():
+        raise ValueError('The execution profile has a current public authoring replacement. Rebind explicitly before editing or running it with the new provider.')
     evaluation_authoring = False
     if profile is not None and not profile.public:
         from modiff.diffusers_evaluation_runtime import selected_diffusers_evaluation_authoring_profile_ids
@@ -44,6 +47,7 @@ def _bind_execution_profile(loader, task, identity, repository=None):
         or profile.backend_path != f"{loader['module']}.{loader['action']}"
         or (task not in profile.modes and (
             profile.execution_path != "modular-diffusers" or profile.model_type != profile.pipeline_class
+            or profile.required_diffusers_provider is not None
         ))
     ):
         raise ValueError("The execution profile does not belong to this pipeline/task.")
@@ -320,7 +324,7 @@ def resolve_operation_starter(modules, contracts, selection):
         # upstream block values. Preserve exact owned stage edges; external
         # source/preview suppliers remain ordinary unbound authoring inputs.
         from modiff.studio_execution_specs import studio_execution_spec_for_pair
-        specification = studio_execution_spec_for_pair(pipeline, task)
+        specification = studio_execution_spec_for_pair(pipeline, task, execution_profile_id=selection.get('executionProfileId'))
         if specification is not None:
             roles = {role: by_key[key] for role, key, *_ in specification['roles'] if key in by_key}
             for source, output, target, field in specification['edges']:

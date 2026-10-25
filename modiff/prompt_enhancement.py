@@ -189,9 +189,13 @@ def prepare_request(processor, prompts, authored, images, layout, *, operation='
     from modiff.layout_conditioning import parse_layout_conditioning, resolve_layout_prompt
     nodes._bounded_string(authored, field='authored prompt')
     from modiff.prompt_enhancement_output import APPEND_DETAILS_OPERATION, append_details_request
-    if operation not in ('enhance_prompt', APPEND_DETAILS_OPERATION):
+    from modiff.prompt_enhancement_constraints import OPERATION as CONSTRAINED_OPERATION
+    if operation not in ('enhance_prompt', APPEND_DETAILS_OPERATION, CONSTRAINED_OPERATION):
         raise ValueError('Choose an exact reviewed prompt enhancement operation.')
     parsed = parse_layout_conditioning(layout)
+    if operation == CONSTRAINED_OPERATION:
+        from modiff.prompt_enhancement_output import require_authored_target_layout
+        require_authored_target_layout(parsed)
     if operation == APPEND_DETAILS_OPERATION:
         if len(images) > 10:
             raise ValueError('The selected prompt enhancement adapter accepts at most ten ordered images.')
@@ -247,6 +251,9 @@ class _OwnedGeneration:
             self.identity = (task.get('task_id'), task.get('attempt_index'), node._sid, source)
 
     def check(self):
+        deadline = getattr(self, '_constraint_deadline', None)
+        if deadline is not None and self.clock() >= deadline:
+            raise InterruptedError('The owned constrained-generation cooperative deadline expired.')
         if self.task is None:
             return
         task_id, attempt, sid, source = self.identity
@@ -355,6 +362,9 @@ def preflight_processor_inputs(processor, kwargs, observer):
     from modules.HuggingFaceTransformers import main as nodes
     from modiff.prompt_enhancement_summary import authored_request
     from modiff.transformers_image_text_resources import enforce_image_text_input_bounds
+    from modiff import prompt_enhancement_constraints as constrained
+    constrained_deadline = (constrained.begin_preallocation(observer)
+        if kwargs.get('operation') == constrained.OPERATION else None)
     contract = _declared_contract()
     processor_class = getattr(transformers, contract['processorClass'], None)
     if (str(transformers.__version__) != contract['transformersVersion']
@@ -379,6 +389,8 @@ def preflight_processor_inputs(processor, kwargs, observer):
     controls = nodes._generation_controls({**kwargs, 'max_new_tokens': limit}, maximum_new_tokens=contract['maxNewTokens'])
     if controls['do_sample'] is not False or controls['num_beams'] != 1 or controls['repetition_penalty'] != 1.0:
         raise ValueError('Prompt enhancement preallocation requires its exact greedy recipe.')
+    if constrained_deadline is not None and controls['min_new_tokens'] != 0:
+        raise ValueError('Constrained preallocation requires zero minimum generated tokens.')
     processor_kwargs = {'text': rendered, 'return_tensors': 'pt', **({'images': images} if images else {})}
     processed = processor(**processor_kwargs)
     observer.check()
@@ -390,6 +402,13 @@ def preflight_processor_inputs(processor, kwargs, observer):
         patch_size=getattr(processor.image_processor, 'patch_size', None))
     fields, _consumed = _consumed_projection(contract, prompts, mode, rendered, images, batch, limit, observer,
         operation=kwargs.get('operation', 'enhance_prompt'))
+    if constrained_deadline is not None:
+        prepared = constrained.prepare(processor, batch, _layout, mode, len(images), limit,
+            constrained_deadline, observer, fields['rendered_input_ids_sha256'])
+        try:
+            fields['authored_layout_constraint'] = deepcopy(prepared.metadata)
+        finally:
+            prepared.close()
     observer.check()
     return fields, limits
 
@@ -439,12 +458,30 @@ def _validate_finite_score_processor(processors):
 
 
 def generate(node, model, processor, receipt, kwargs):
+    """Keep any new request-local tokenizer/callback lifetime inside this call."""
+    prepared = []
+    try:
+        return _generate(node, model, processor, receipt, kwargs, prepared)
+    finally:
+        for constraint in prepared:
+            constraint.close()
+
+
+def _generate(node, model, processor, receipt, kwargs, prepared_constraints):
     """Run the reviewed adapter through official generate, retaining a proposal."""
     import torch
     from transformers import LogitsProcessorList, StoppingCriteria, StoppingCriteriaList
     from modules.HuggingFaceTransformers import main as nodes
     observer = _OwnedGeneration(node)
     observer.check()
+    from modiff import prompt_enhancement_constraints as constrained
+    is_constrained = kwargs.get('operation') == constrained.OPERATION
+    if is_constrained:
+        from modiff.ancillary_owner_lifecycle import constrained_preallocation_context
+        if observer.task is None:
+            raise ValueError('Constrained generation requires its actual owned Expert preview task.')
+        observer._constraint_deadline = constrained_preallocation_context(node, processor)
+        observer.check()
     contract, prompts, declaration = _selected_contract(model, processor, receipt)
     from modiff.prompt_enhancement_summary import BoundSummary, authored_request
     authored = kwargs.get('prompt')
@@ -467,6 +504,8 @@ def generate(node, model, processor, receipt, kwargs):
     controls = nodes._generation_controls({**kwargs, 'max_new_tokens': limit}, maximum_new_tokens=contract['maxNewTokens'])
     if controls['do_sample'] is not False or controls['num_beams'] != 1 or controls['repetition_penalty'] != 1.0:
         raise ValueError('The reviewed prompt enhancement recipe requires greedy decoding, one beam and no repetition penalty.')
+    if is_constrained:
+        constrained.validate_generation(model, receipt, controls, kwargs)
     observer.check()
     observer.progress(0, limit, immediate=True)
     processor_kwargs = {'text': rendered, 'return_tensors': 'pt'}
@@ -483,6 +522,13 @@ def generate(node, model, processor, receipt, kwargs):
         patch_size=getattr(processor.image_processor, 'patch_size', None))
     fields, consumed = _consumed_projection(contract, prompts, mode, rendered, images, batch, limit, observer,
         operation=kwargs.get('operation', 'enhance_prompt'))
+    prepared_constraint = None
+    if is_constrained:
+        prepared_constraint = constrained.prepare(processor, batch, layout, mode, len(images), limit,
+            observer._constraint_deadline, observer, fields['rendered_input_ids_sha256'])
+        prepared_constraints.append(prepared_constraint)
+        fields['authored_layout_constraint'] = deepcopy(prepared_constraint.metadata)
+        consumed['fingerprints']['authored_layout_constraint'] = deepcopy(prepared_constraint.metadata)
     if summary is not None:
         summary.observe_inputs(consumed, controls)
     from modiff.ancillary_owner_lifecycle import check_preallocation_inputs
@@ -498,6 +544,8 @@ def generate(node, model, processor, receipt, kwargs):
             return False
     controls['stopping_criteria'] = StoppingCriteriaList([OwnedStop()])
     controls['logits_processor'] = LogitsProcessorList([_finite_score_processor(observer)])
+    if prepared_constraint is not None:
+        controls['prefix_allowed_tokens_fn'] = prepared_constraint.callback
     node.record_generation_inputs({**fields, **{key: value for key, value in kwargs.items() if key not in fields},
                                    'prompt': authored})
     def native_generate():
@@ -514,7 +562,10 @@ def generate(node, model, processor, receipt, kwargs):
     count = output_tokens - input_tokens
     if not 0 < count <= limit:
         raise RuntimeError('Prompt enhancement returned an empty or excessive generated token sequence.')
-    if kwargs.get('operation') == 'enhance_prompt_append_details':
+    completion = None
+    if prepared_constraint is not None:
+        text, completion = prepared_constraint.finish(sequences[0, input_tokens:])
+    elif kwargs.get('operation') == 'enhance_prompt_append_details':
         text = nodes._decode(processor, sequences[0, input_tokens:], preserve_whitespace=True)
     else:
         text = nodes._decode(processor, sequences[0, input_tokens:])
@@ -531,6 +582,8 @@ def generate(node, model, processor, receipt, kwargs):
               'layoutConditioning': deepcopy(layout),
               'layoutOutputValidated': False if mode.endswith('_bbox') else None,
               'finishReason': 'length' if count == limit else 'stop'}
+    if completion is not None:
+        result.update(operation=constrained.OPERATION, constraintCompletion=completion, finishReason='stop')
     from modiff.prompt_enhancement_output import APPEND_DETAILS_OPERATION, compose_append_details
     if kwargs.get('operation') == APPEND_DETAILS_OPERATION:
         result.update(operation=APPEND_DETAILS_OPERATION, layoutOutputValidated=False, applicationAllowed=False)

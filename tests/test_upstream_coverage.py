@@ -95,9 +95,9 @@ class UpstreamCoverageTests(unittest.TestCase):
                 "pipelineStatusCounts": {
                     "contract-only": 5,
                     "equivalent": 8,
-                    "executable": 144,
+                    "executable": 146,
                     "intentionally-excluded": 59,
-                    "research-blocked": 118,
+                    "research-blocked": 116,
                     "unreviewed": 6,
                 },
                 "publicTemplateCount": 80,

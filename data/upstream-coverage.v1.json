@@ -2376,7 +2376,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:b2a52d0cff0e48b6f0ad55aade6b6a48cab3c6e0692fb5e56089c64ff6e36258",
+  "contentHash": "sha256:d75c008f4ce836c4f565d618104b1aa1381b622887a2688c9a70b027c3ef8530",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -3486,28 +3486,50 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux3-klein:official-provider:v1:edit-image:v1",
+          "mode": "edit_image",
+          "modelType": "Flux3DistilledModularPipeline"
+        },
+        {
+          "id": "flux3-klein:official-provider:v1:text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "Flux3DistilledModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "edit_image",
         "text_to_image"
       ],
       "name": "Flux3DistilledModularPipeline",
-      "reason": "Only unpublished source-level execution specifications select this class; installed-runtime admission remains pending.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "research-blocked"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
       "equivalentTo": [],
-      "exactExecutionSpecs": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux3-klein-base:official-provider:v1:edit-image:v1",
+          "mode": "edit_image",
+          "modelType": "Flux3ModularPipeline"
+        },
+        {
+          "id": "flux3-klein-base:official-provider:v1:text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "Flux3ModularPipeline"
+        }
+      ],
       "modularWorkflowIds": [
         "edit_image",
         "text_to_image"
       ],
       "name": "Flux3ModularPipeline",
-      "reason": "Only unpublished source-level execution specifications select this class; installed-runtime admission remains pending.",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
-      "status": "research-blocked"
+      "status": "executable"
     },
     {
       "artifactReviews": [],
@@ -9754,7 +9776,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "631caa1dacb696a71aacbf22c48199af2656f2aa488651265453282710386827",
+    "templateBundleSha256": "f646bd6d8e0d8b981021a7ae22ee3aae1f741d3fc86c4f229b5d5ccf2980b9fc",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -9808,9 +9830,9 @@
     "pipelineStatusCounts": {
       "contract-only": 5,
       "equivalent": 8,
-      "executable": 144,
+      "executable": 146,
       "intentionally-excluded": 59,
-      "research-blocked": 118,
+      "research-blocked": 116,
       "unreviewed": 6
     },
     "publicTemplateCount": 80,
@@ -9944,7 +9966,7 @@
             "PredictDepth"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "66a209abb56424b27926cfa57ec7a6ad5ea25c36cc291006c4d2b1a1c1691112"
+          "sha256": "5217dd3f8c18cb2a9348e449dd6223a65a2a8f3d009ba0f6a2f1e7d0918b7ad0"
         }
       ],
       "nodeKeys": [
@@ -10027,7 +10049,7 @@
             "LoadTextGenerationModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "66a209abb56424b27926cfa57ec7a6ad5ea25c36cc291006c4d2b1a1c1691112"
+          "sha256": "5217dd3f8c18cb2a9348e449dd6223a65a2a8f3d009ba0f6a2f1e7d0918b7ad0"
         }
       ],
       "nodeKeys": [
@@ -10108,7 +10130,7 @@
             "LoadImageTextToTextModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "66a209abb56424b27926cfa57ec7a6ad5ea25c36cc291006c4d2b1a1c1691112"
+          "sha256": "5217dd3f8c18cb2a9348e449dd6223a65a2a8f3d009ba0f6a2f1e7d0918b7ad0"
         }
       ],
       "nodeKeys": [
@@ -10210,7 +10232,7 @@
             "LoadAnyToAnyModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "66a209abb56424b27926cfa57ec7a6ad5ea25c36cc291006c4d2b1a1c1691112"
+          "sha256": "5217dd3f8c18cb2a9348e449dd6223a65a2a8f3d009ba0f6a2f1e7d0918b7ad0"
         }
       ],
       "nodeKeys": [

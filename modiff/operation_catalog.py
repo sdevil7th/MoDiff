@@ -343,6 +343,7 @@ def build_operation_catalog(modules, profiles, *, catalog_resolver=None):
                     # artifact's declared workflow limits still restrict its profile.
                     and (task in p["modes"] or (
                         p["execution_path"] == "modular-diffusers" and p["model_type"] == p["pipeline_class"]
+                        and not p.get("required_diffusers_provider")
                     ))
                     and (
                         p["execution_path"] != "modular-diffusers"
@@ -406,7 +407,10 @@ def build_evaluation_authoring_catalog(modules, *, catalog_resolver=None):
     from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
     from modiff.model_artifact_catalog import catalog_profile_repository_revisions
 
-    identities = selected_diffusers_evaluation_authoring_profile_ids()
+    from modiff.studio_execution_specs import studio_public_authoring_replacements
+    replaced = studio_public_authoring_replacements()
+    identities = tuple(identity for identity in selected_diffusers_evaluation_authoring_profile_ids()
+                       if identity not in replaced)
     if not identities:
         return None
     profiles = []

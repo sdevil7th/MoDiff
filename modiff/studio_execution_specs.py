@@ -18328,6 +18328,58 @@ for _definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values():
         _definition["profile"]["expert_quantization_modes"] = _EXPERT_IMAGE_QUANTIZATION_MODES
 
 
+# These are discoverable Expert declarations, not runtime/Auto/template proof.
+# They retain the private IDs as exact compatibility variants and require an
+# explicitly installed, target-qualified official provider before execution.
+from modiff.optional_runtimes import DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID
+for _old_id, _pipeline, _label, _repository, _revision, _steps, _cfg in _FLUX3_CANDIDATE_VARIANTS:
+    _public_id = _old_id.removesuffix(':modular') + ':official-provider:v1'
+    for _task in ('text_to_image', 'edit_image'):
+        _old_spec = f"{_old_id}:{_task.replace('_', '-')}:v1"
+        _source = deepcopy(STUDIO_EXECUTION_SPEC_DEFINITIONS[_old_spec])
+        _source['profile'].update(
+            id=_public_id, public=True, required_diffusers_provider=DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID,
+            replaces_private_authoring_profile=_old_id,
+            optional_runtime_profiles=(DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID,),
+            optional_runtime_delivery='optional_overlay',
+            component_lora_declaration=reviewed_flux3_component_declaration(_pipeline, profile_id=_public_id),
+        )
+        _source['capability'].update(
+            executionStatus='expert_only', supportTier='experimental',
+            qualificationStatus='runtime-required', supportsLora=True,
+            notes=['Explicit Expert authoring requires the reviewed optional Diffusers provider.',
+                   'Runtime readiness, model fit, native output and Auto/template qualification are separate.'],
+        )
+        STUDIO_EXECUTION_SPEC_DEFINITIONS[f"{_public_id}:{_task.replace('_', '-')}:v1"] = _source
+
+
+def studio_public_authoring_replacements() -> dict[str, str]:
+    """Validate deterministic source precedence; never observe the process."""
+    profiles = {row['profile']['id']: row['profile'] for row in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()}
+    result = {}
+    for identity, profile in profiles.items():
+        previous = profile.get('replaces_private_authoring_profile')
+        if previous is None:
+            continue
+        old = profiles.get(previous)
+        if (type(previous) is not str or previous == identity or previous in result
+                or profile.get('public') is not True or not profile.get('required_diffusers_provider')
+                or old is None or old.get('public') is not False
+                or old.get('required_diffusers_provider') is not None
+                or any(profile.get(key) != old.get(key) for key in (
+                    'model_type', 'pipeline_class', 'default_repo', 'modes',
+                    'loader_module', 'loader_action', 'execution_path'))):
+            raise ValueError('Public authoring replacement must match one exact private source profile.')
+        result[previous] = identity
+    return result
+
+
+def _source_default_spec_definitions():
+    replaced = studio_public_authoring_replacements()
+    return {identity: definition for identity, definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.items()
+            if definition['profile']['id'] not in replaced}
+
+
 def _ordered_value(value: Any) -> Any:
     if isinstance(value, dict):
         return {key: _ordered_value(value[key]) for key in sorted(value)}
@@ -18369,6 +18421,8 @@ def _public_spec(spec_id: str, definition: dict[str, Any]) -> dict[str, Any]:
         "autoFields": _AUTO_FIELDS,
         "actions": (),
     }
+    if profile.get('required_diffusers_provider') is not None:
+        payload['requiredDiffusersProvider'] = profile['required_diffusers_provider']
     if "auxiliaryTerminalRoles" in definition:
         payload["auxiliaryTerminalRoles"] = tuple(definition["auxiliaryTerminalRoles"])
     payload["contentHash"] = f"studio-spec-v1-{_hash_string(_stable_json(payload))}"
@@ -18453,6 +18507,8 @@ def studio_execution_profile_definitions() -> dict[str, dict[str, Any]]:
                 ("unet", None), ("vae", None), ("controlnet", None),
                 ("trust_remote_code", False)),
         }
+    for previous, identity in studio_public_authoring_replacements().items():
+        profiles[identity]['adapter_authoring'] = deepcopy(profiles[previous]['adapter_authoring'])
     # The ordinary audio loader activates one named adapter, not a row blend.
     # Permission is exact task/artifact authoring, separate from fit and Auto.
     profiles["ace-step-audio:direct"]["adapter_authoring"] = {
@@ -18567,7 +18623,7 @@ def studio_capability_definition(model_type: str, *, repository: str | None = No
     """Copy only one model's defaults, with the same precedence as the catalog."""
     if model_type == "Cosmos3OmniModularPipeline" and repository == COSMOS3_SUPER_T2I_REPO:
         return deepcopy(_COSMOS3_SUPER_T2I_MODULAR_CAPABILITY)
-    for definition in reversed(STUDIO_EXECUTION_SPEC_DEFINITIONS.values()):
+    for definition in reversed(_source_default_spec_definitions().values()):
         if definition["modelType"] == model_type and "capability" in definition:
             return deepcopy(definition["capability"])
     return {}
@@ -18576,7 +18632,7 @@ def studio_capability_definition(model_type: str, *, repository: str | None = No
 def studio_capability_definitions() -> dict[str, dict[str, Any]]:
     return {
         definition["modelType"]: deepcopy(definition["capability"])
-        for definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
+        for definition in _source_default_spec_definitions().values()
         if "capability" in definition
     }
 
@@ -18635,19 +18691,24 @@ def _historical_studio_execution_spec(spec_id: str, content_hash: str) -> dict[s
 
 def studio_execution_spec_for_pair(
     model_type: str, mode: str, *, content_hash: str | None = None,
+    execution_profile_id: str | None = None,
 ) -> dict[str, Any] | None:
-    matches = [
-        _public_spec(spec_id, definition)
-        for spec_id, definition in STUDIO_EXECUTION_SPEC_DEFINITIONS.items()
-        if definition["modelType"] == model_type and definition["mode"] == mode
-    ]
+    definitions = STUDIO_EXECUTION_SPEC_DEFINITIONS if (
+        execution_profile_id is not None or content_hash is not None) else _source_default_spec_definitions()
+    matches = [_public_spec(identity, definition) for identity, definition in definitions.items()
+        if definition['modelType'] == model_type and definition['mode'] == mode
+        and (execution_profile_id is None or definition['profile']['id'] == execution_profile_id)]
+    if content_hash is not None:
+        exact = [spec for spec in matches if spec['contentHash'] == content_hash]
+        if len(exact) == 1:
+            return exact[0]
     if len(matches) != 1:
         return None
     spec = matches[0]
-    if content_hash is None or content_hash == spec["contentHash"]:
+    if content_hash is None:
         return spec
-    historical = _historical_studio_execution_spec(spec["id"], content_hash)
-    return historical if historical and (historical["modelType"], historical["mode"]) == (model_type, mode) else None
+    historical = _historical_studio_execution_spec(spec['id'], content_hash)
+    return historical if historical and (historical['modelType'], historical['mode']) == (model_type, mode) else None
 
 
 _RETAINED_COMPONENT_INITIAL_VALUES = (
@@ -18745,7 +18806,8 @@ for _authoring_mode, _authoring_task in (
 
 # Private source-audit authoring selections, never public discovery/profile grants.
 from modiff.ancillary_execution import PRIVATE_PARENTS as _ANCILLARY_PRIVATE_PARENTS
-for _ancillary_id, _ancillary_parent in _ANCILLARY_PRIVATE_PARENTS.items():
+from modiff.ancillary_execution import PUBLIC_PARENTS as _ANCILLARY_PUBLIC_PARENTS
+for _ancillary_id, _ancillary_parent in {**_ANCILLARY_PRIVATE_PARENTS, **_ANCILLARY_PUBLIC_PARENTS}.items():
     _OPERATION_AUTHORING_RECIPES[_ancillary_id] = {
         "specId": _ancillary_parent["specId"], "task": _ancillary_parent["task"],
         "profileId": _ancillary_parent["profileId"], "initialValues": (), "ancillaryPreview": True,
@@ -18783,6 +18845,29 @@ _NORMAL_OPERATION_RAW_AUTHORING_CHOICES = {
 }
 
 
+_NORMAL_OPERATION_LAYOUT_AUTHORING_CHOICES = {}
+_NORMAL_OPERATION_FIXED_PROVIDER_RECIPES = {}
+for _variant in ('flux3-klein', 'flux3-klein-base'):
+    for _mode, _task in (('text-to-image', 'text_to_image'), ('edit-image', 'edit_image')):
+        _prefix = f'{_variant}:official:{_mode}:prompt-preview-'
+        _append, _raw, _nf4 = (_prefix + choice + ':v1' for choice in ('append-fp32', 'fp32', 'nf4'))
+        _NORMAL_OPERATION_AUTHORING_SELECTIONS += ((
+            f'{_variant}:official-provider:v1', _task, _append, _raw),)
+        _NORMAL_OPERATION_RAW_AUTHORING_CHOICES[_raw] = (
+            (_raw, 'Raw wording: FP32'), (_nf4, 'Raw wording: BF16 + NF4'))
+        _constrained = _prefix + 'constrained-fp32:v1'
+        _NORMAL_OPERATION_LAYOUT_AUTHORING_CHOICES[_append] = (
+            (_append, 'Append wording: preserve authored layout'),
+            (_constrained, 'Generate constrained table: FP32 (Expert)'),
+        )
+        _NORMAL_OPERATION_FIXED_PROVIDER_RECIPES.update({
+            _append: 'fp32-none', _raw: 'fp32-none', _nf4: 'bf16-nf4', _constrained: 'fp32-none'})
+
+
+def _ancillary_parent(identity):
+    return _ANCILLARY_PRIVATE_PARENTS.get(identity) or _ANCILLARY_PUBLIC_PARENTS.get(identity)
+
+
 def studio_operation_authoring_selections(profiles: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Declare existing parent offers for exact selected profiles, without enabling them."""
     selected = {profile["id"]: profile for profile in profiles}
@@ -18803,12 +18888,27 @@ def studio_operation_authoring_selections(profiles: list[dict[str, Any]]) -> lis
         if choices and (len(set(choice_ids)) != len(choice_ids)
                         or choice_ids.count(raw_identity) != 1 or identity in choice_ids):
             raise ValueError("The normal raw authoring choices are stale or ambiguous.")
+        layout_choices = _NORMAL_OPERATION_LAYOUT_AUTHORING_CHOICES.get(identity, ())
+        if (type(layout_choices) is not tuple or len(layout_choices) > 4
+                or any(type(choice) is not tuple or len(choice) != 2
+                       or type(choice[0]) is not str or type(choice[1]) is not str
+                       or not choice[1] or choice[1] != choice[1].strip()
+                       or len(choice[1]) > 128 or any(ord(char) < 32 for char in choice[1])
+                       for choice in layout_choices)):
+            raise ValueError("The normal layout authoring choices are stale or malformed.")
+        layout_choice_ids = [choice[0] for choice in layout_choices]
+        if layout_choices and (len(set(layout_choice_ids)) != len(layout_choice_ids)
+                               or layout_choice_ids.count(identity) != 1
+                               or set(layout_choice_ids) & {raw_identity, *choice_ids}):
+            raise ValueError("The normal layout authoring choices are stale or ambiguous.")
         append_definition = _OPERATION_AUTHORING_RECIPES.get(identity)
         variants = [(identity, "append-details-preserve-layout-v1"), (raw_identity, None)]
         variants.extend((choice, None) for choice in choice_ids if choice != raw_identity)
+        variants.extend((choice, "constrained-authored-table-v1")
+                        for choice in layout_choice_ids if choice != identity)
         for selected_identity, layout_policy in variants:
             definition = _OPERATION_AUTHORING_RECIPES.get(selected_identity)
-            parent = _ANCILLARY_PRIVATE_PARENTS.get(selected_identity)
+            parent = _ancillary_parent(selected_identity)
             specification = STUDIO_EXECUTION_SPEC_DEFINITIONS.get((definition or {}).get("specId"))
             if (definition is None or parent is None or specification is None
                     or definition.get("ancillaryPreview") is not True
@@ -18818,6 +18918,8 @@ def studio_operation_authoring_selections(profiles: list[dict[str, Any]]) -> lis
                     or definition != append_definition
                     or parent.get("layoutPolicy") != layout_policy
                     or parent.get("providerRecipe") != (
+                        _NORMAL_OPERATION_FIXED_PROVIDER_RECIPES[selected_identity]
+                        if selected_identity in _NORMAL_OPERATION_FIXED_PROVIDER_RECIPES else
                         "fp32-none" if task == "text_to_image" and selected_identity in (identity, raw_identity)
                         else "bf16-nf4" if task == "edit_image" and selected_identity not in (identity, raw_identity)
                         else None)
@@ -18830,7 +18932,10 @@ def studio_operation_authoring_selections(profiles: list[dict[str, Any]]) -> lis
                        "task": task, "authoringRecipeId": identity, "rawAuthoringRecipeId": raw_identity,
                        **({"rawAuthoringRecipeChoices": [
                            {"authoringRecipeId": choice, "label": label} for choice, label in choices]
-                          } if choices else {})})
+                          } if choices else {}),
+                       **({"layoutAuthoringRecipeChoices": [
+                           {"authoringRecipeId": choice, "label": label} for choice, label in layout_choices]
+                          } if layout_choices else {})})
     return deepcopy(result)
 
 
@@ -19086,6 +19191,10 @@ def _execution_spec_role_params(
             public, node_key, params,
             (*PROMPT_ENHANCEMENT_RECIPE_FIELDS, "max_input_tokens", "max_image_pixels"),
         )
+        operation = params.get("operation")
+        if isinstance(operation, dict) and isinstance(operation.get("options"), list):
+            operation["options"] = [choice for choice in operation["options"]
+                                    if choice != "enhance_prompt_constrained_authored_v1"]
         # Output opt-in is directional and belongs to this exact role. An
         # input binding or another same-class role cannot expose the transport.
         if role is None or not any(source == role and port == "proposal_summary"
@@ -19170,6 +19279,14 @@ def _execution_spec_role_params(
         require_modiff_node_contract,
     )
 
+    from modules.ModularDiffusers.modular_utils import declared_optional_pipeline_configs
+    declared = declared_optional_pipeline_configs().get(public['pipelineClass'])
+    if declared is not None:
+        config = declared.node_params.get(node_type)
+        if config is None:
+            raise ValueError('The declared optional pipeline does not support this role.')
+        params.update(deepcopy(config['params']))
+        return params
     pipeline_class = pipeline_class_from_model_type(public["pipelineClass"])
     _blocks, config = require_modiff_node_contract(
         pipeline_class,
@@ -19201,6 +19318,8 @@ def validate_studio_execution_specs(
             continue
         public = _public_spec(spec_id, definition)
         pair = (public["modelType"], public["mode"])
+        if public['executionProfileId'] in studio_public_authoring_replacements():
+            pair += (public['executionProfileId'],)
         profile_id = public["executionProfileId"]
         profile = definition["profile"]
         if pair in pairs or (profile_id in profiles and profiles[profile_id] != profile):

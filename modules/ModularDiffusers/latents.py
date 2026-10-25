@@ -20,6 +20,7 @@ from .modular_utils import (
     normalize_modular_runtime_params,
     normalize_modular_seed,
     pipeline_class_from_model_type,
+    pipeline_authoring_identity,
     pipeline_class_from_runtime_inputs,
     reject_undeclared_modular_generator,
     require_modiff_node_contract,
@@ -296,7 +297,7 @@ class DecodeLatents(NodeBase):
             self.send_node_definition(node_params)
             return None
         try:
-            self._pipeline_class = pipeline_class_from_model_type(model_type)
+            self._pipeline_class = pipeline_authoring_identity(model_type, class_resolver=pipeline_class_from_model_type)
             _, node_config = require_modiff_node_contract(
                 self._pipeline_class,
                 self.node_type,
@@ -773,7 +774,7 @@ class ImageEncode(NodeBase):
             self.send_node_definition(node_params)
             return None
         try:
-            self._pipeline_class = pipeline_class_from_model_type(model_type)
+            self._pipeline_class = pipeline_authoring_identity(model_type, class_resolver=pipeline_class_from_model_type)
             _, node_config = require_modiff_node_contract(
                 self._pipeline_class,
                 self.node_type,

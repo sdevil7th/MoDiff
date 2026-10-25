@@ -369,7 +369,7 @@ class CosmosImageStageTests(unittest.TestCase):
 
 
 @pytest.mark.parametrize("identity", _PRIVATE_PROMPT_RECIPES)
-def test_private_prompt_recipe_resolves_with_actual_apis_and_explicit_metadata_authority(identity):
+def test_retained_private_prompt_receipt_requires_genuine_apis_but_new_creation_requires_explicit_rebind(identity):
     from test_ancillary_execution import require_native_parent_apis
     from modiff.ancillary_execution import resolve_parent
     from modiff.studio_execution_specs import _OPERATION_AUTHORING_RECIPES, STUDIO_EXECUTION_SPEC_DEFINITIONS
@@ -380,20 +380,26 @@ def test_private_prompt_recipe_resolves_with_actual_apis_and_explicit_metadata_a
     selection = {"pipelineClass": spec["profile"]["pipeline_class"], "task": definition["task"],
                  "executionProfileId": definition["profileId"]}
     contracts, _ = build_operation_catalog(MODULE_MAP, [], catalog_resolver=lambda: {})
-    # This is a metadata contract test. It substitutes the observer's exact
-    # profile grant, never an absent class, execution, or installed-runtime proof.
+    # Genuine source APIs remain required for this receipt lane. An exact old
+    # observer grant must not override a source-declared new-authoring rebind.
     with patch("modiff.diffusers_evaluation_runtime.selected_diffusers_evaluation_authoring_profile_ids",
                return_value=(definition["profileId"],)), patch(
                    "modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("constructed")):
-        ordinary = deepcopy(resolve_operation_starter(MODULE_MAP, contracts, selection))
-        authored = resolve_operation_starter(MODULE_MAP, contracts,
-                                            {**selection, "authoringRecipeId": identity})
-        assert authored["authoring"]["id"] == identity
-        assert authored["authoring"]["executionProfileIds"] == (definition["profileId"],)
-        # Ordinary creation and the private declaration must expose the same
-        # immutable DTO, including Base's already-declared Guider and both hashes.
-        assert authored["authoring"] == resolve_parent(MODULE_MAP, identity)
-        assert resolve_operation_starter(MODULE_MAP, contracts, selection) == ordinary
+        receipt = deepcopy(resolve_parent(MODULE_MAP, identity))
+        assert receipt["id"] == identity
+        assert receipt["executionProfileIds"] == (definition["profileId"],)
+        legacy = studio_execution_spec_for_pair(selection['pipelineClass'], definition['task'],
+                                                execution_profile_id=definition['profileId'])
+        assert receipt['baseSpecId'] == legacy['id']
+        assert receipt['baseSpecContentHash'] == legacy['contentHash']
+        before = deepcopy(selection)
+        for request in (selection, {**selection, "authoringRecipeId": identity}):
+            with pytest.raises(ValueError, match='Rebind explicitly'):
+                resolve_operation_starter(MODULE_MAP, contracts, request)
+        assert selection == before
+        # Refused new creation cannot rewrite the complete retained DTO. The
+        # separate source-capture lane compares this body to the old baseline.
+        assert resolve_parent(MODULE_MAP, identity) == receipt
 
 
 if __name__ == "__main__":

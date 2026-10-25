@@ -787,6 +787,10 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("Flux2KleinKVPipeline", "text_to_image"),
                 ("Flux2KleinKVPipeline", "edit_image"),
                 ("Flux2KleinKVPipeline", "multi_image_reference_edit"),
+                ("Flux3ModularPipeline", "text_to_image"),
+                ("Flux3ModularPipeline", "edit_image"),
+                ("Flux3DistilledModularPipeline", "text_to_image"),
+                ("Flux3DistilledModularPipeline", "edit_image"),
             ],
         )
         by_id = {item["id"]: item for item in specs}

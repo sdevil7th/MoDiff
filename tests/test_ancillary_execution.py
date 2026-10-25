@@ -581,12 +581,13 @@ def test_selected_t2i_nf4_recipe_is_visible_and_keeps_registered_generation_defa
 
 
 def test_private_parent_fixture_matches_actual_api_availability_without_activation(monkeypatch):
-    """Installed refusal and reviewed-source metadata are separate live controls."""
+    """Declarative receipts and genuine executable API availability stay distinct."""
     import diffusers
     import transformers
     import modules as registry
     from modiff import optimization_packages
     from modiff.ancillary_execution import PRIVATE_PARENTS, resolve_parent
+    from modules.ModularDiffusers.modular_utils import require_modiff_node_contract
     def factory_forbidden(*_args, **_kwargs):
         pytest.fail('Private parent metadata must not activate or construct a model')
     monkeypatch.setattr(optimization_packages, 'activate_runtime_overlay', factory_forbidden)
@@ -594,17 +595,20 @@ def test_private_parent_fixture_matches_actual_api_availability_without_activati
     monkeypatch.setattr(transformers.AutoProcessor, 'from_pretrained', factory_forbidden)
     monkeypatch.setattr(diffusers.DiffusionPipeline, 'from_pretrained', factory_forbidden)
     identity = next(iter(PRIVATE_PARENTS))
+    declared = resolve_parent(registry.MODULE_MAP, identity)
+    assert declared['id'] == identity
+    assert declared['executionProfileIds'] == (PRIVATE_PARENTS[identity]['profileId'],)
+    assert declared['ancillaryOperations'][0]['parent']['pipelineClass'] == 'Flux3DistilledModularPipeline'
     if getattr(diffusers, 'Flux3DistilledModularPipeline', None) is None:
-        # The real production resolver stays closed on the ordinary installed
-        # wheel. The shared test producer must classify its own missing API.
+        # Source metadata may be authored without importing optional classes.
+        # Executable blocks and the genuine-source fixture must remain closed.
         with pytest.raises(ValueError, match='Unknown Diffusers modular pipeline class'):
-            resolve_parent(registry.MODULE_MAP, identity)
+            require_modiff_node_contract('Flux3DistilledModularPipeline', 'text_encoder')
         with pytest.raises(pytest.skip.Exception, match='source APIs are absent'):
             parent_for(registry.MODULE_MAP)
     else:
         parent = parent_for(registry.MODULE_MAP)
-        assert parent == resolve_parent(registry.MODULE_MAP, identity)
-        assert parent['ancillaryOperations'] and parent['ancillaryOperations'][0]['parent']['pipelineClass'] == 'Flux3DistilledModularPipeline'
+        assert parent == declared == resolve_parent(registry.MODULE_MAP, identity)
 
 
 @pytest.mark.parametrize('name', ['Flux3ModularPipeline', 'Flux3DistilledModularPipeline', 'Flux3Transformer2DModel'])

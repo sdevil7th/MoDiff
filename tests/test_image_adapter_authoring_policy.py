@@ -91,6 +91,29 @@ CONDITIONAL_POLICIES = {'cosmos3-super-text-to-image:official-modular-workflow':
 CURRENT_POLICIES = {**REVIEWED_POLICIES, **CONDITIONAL_POLICIES}
 
 
+# These two source-declared public offers preserve the exact private policy;
+# visibility grants neither installed-runtime readiness nor native qualification.
+FLUX3_PUBLIC_POLICIES = {
+    identity: {
+        'schemaVersion': 1, 'mediaKind': 'image',
+        'adapterNodeKey': 'modules.ModularDiffusers.Lora',
+        'tasks': ['text_to_image', 'edit_image'], 'maxOwnedAdapters': 32,
+        'repositoryRevisions': [{'repo': repository, 'revision': revision}],
+        'requiredControls': {
+            'offload_mode': 'none', 'auto_offload': False, 'weight_loading_mode': 'cpu',
+            'quant_config': None, 'unet': None, 'vae': None, 'controlnet': None,
+            'trust_remote_code': False,
+        },
+    }
+    for identity, repository, revision in (
+        ('flux3-klein:official-provider:v1', 'black-forest-labs/flux-3-image-klein',
+         '8454017f9ebaada30c998fccd9f67a80c7580f68'),
+        ('flux3-klein-base:official-provider:v1', 'black-forest-labs/flux-3-image-klein-base',
+         '1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4'),
+    )
+}
+
+
 class ImageAdapterAuthoringPublicationTests(unittest.TestCase):
     def setUp(self):
         directory = self.enterContext(tempfile.TemporaryDirectory(prefix="modiff-image-adapter-policy-"))
@@ -215,6 +238,36 @@ class ImageAdapterAuthoringPublicationTests(unittest.TestCase):
                          and contract["decomposition"] == "loader")
             self.assertNotIn("executionMode", owner["binding"])
 
+    def test_public_flux3_offers_preserve_exact_private_controls_and_closed_qualification(self):
+        payload = WebServer(module_registry.MODULE_MAP)._build_model_capabilities_payload()
+        for identity, expected in FLUX3_PUBLIC_POLICIES.items():
+            with self.subTest(profile=identity):
+                selected = DIFFUSERS_EXECUTION_PROFILES[identity]
+                legacy_id = identity.replace(':official-provider:v1', ':modular')
+                self.assertEqual(selected.adapter_authoring.to_public_dict(), expected)
+                self.assertEqual(DIFFUSERS_EXECUTION_PROFILES[legacy_id].adapter_authoring.to_public_dict(), expected)
+                self.assertFalse(DIFFUSERS_EXECUTION_PROFILES[legacy_id].public)
+                self.assertTrue(selected.public)
+                self.assertFalse(selected.live_proof)
+                self.assertEqual(selected.required_diffusers_provider, 'huggingface-diffusers-flux3-7ecb1e1')
+                self.assertEqual(selected.replaces_private_authoring_profile, legacy_id)
+                copies = [row for rows in [payload['diffusersExecutionProfiles'], *[
+                    capability['executionProfiles']
+                    for capability in payload['capabilities'] + payload['experimentalCapabilities']
+                ]] for row in rows if row['id'] == identity]
+                self.assertGreaterEqual(len(copies), 2)
+                for row in copies:
+                    self.assertEqual(row['adapterAuthoring'], expected)
+                    self.assertEqual(row['repository_revisions'], expected['repositoryRevisions'])
+                    self.assertTrue(row['optionalRuntimeRequirement']['requiredNow'])
+                    self.assertNotEqual(row['optionalRuntimeRequirement']['state'], 'active')
+                for capability in payload['capabilities']:
+                    if any(row['id'] == identity for row in capability['executionProfiles']):
+                        self.assertTrue(capability['supportsLora'])  # Authoring offer only.
+                        for flag in ('autoEligible', 'templateEligible', 'galleryEligible', 'liveProof'):
+                            self.assertFalse(capability[flag])
+                        self.assertEqual(capability['qualifiedModes'], [])
+
     def test_other_profiles_have_no_new_permission_key(self):
         for identity, profile in DIFFUSERS_EXECUTION_PROFILES.items():
             if identity == "ace-step-audio:direct":
@@ -228,8 +281,10 @@ class ImageAdapterAuthoringPublicationTests(unittest.TestCase):
                         {"repo": "Runware/acestep-v15-turbo-diffusers", "revision": "be23effe449c5957947f3020fd63bee23c64abe4"},
                     ],
                 })
-            # The two private evaluation policies have separate exact metadata
-            # regressions; no other profile acquires this permission.
+            elif identity in FLUX3_PUBLIC_POLICIES:
+                self.assertEqual(profile.to_public_dict()['adapterAuthoring'], FLUX3_PUBLIC_POLICIES[identity])
+            # The private policies remain separately bound; every unrelated
+            # profile must still lack this permission.
             elif identity not in {*CURRENT_POLICIES, "flux3-klein:modular", "flux3-klein-base:modular"}:
                 with self.subTest(profile=identity):
                     self.assertNotIn("adapterAuthoring", profile.to_public_dict())

@@ -22,6 +22,12 @@ FLUX3_LORA_DECLARATIONS = tuple(
     )
     for task, workflow in (('text_to_image', 'text2image'), ('edit_image', 'image_conditioned'))
 )
+# Public source profiles bind new identities; old saved declarations stay exact.
+FLUX3_LORA_DECLARATIONS += tuple(
+    (row[0], row[1].removesuffix(':modular') + ':official-provider:v1', *row[2:])
+    for row in FLUX3_LORA_DECLARATIONS
+)
+
 
 
 def is_flux3_declaration(declaration) -> bool:
@@ -111,7 +117,7 @@ def selected_flux3_context(graph, source_fingerprint, owner_id, profile, declara
             or any(_literal(params, name) is not None for name in
                    ('unet', 'vae', 'controlnet', 'quant_config', 'modiff_pipeline_identity'))):
         raise ValueError('FLUX 3 selected LoRA requires CPU loading without component overrides.')
-    specification = studio_execution_spec_for_pair(selected.pipeline_class, selected.task)
+    specification = studio_execution_spec_for_pair(selected.pipeline_class, selected.task, execution_profile_id=profile.id)
     if (specification is None or specification['executionProfileId'] != profile.id
             or specification['pipelineClass'] != selected.pipeline_class
             or profile.backend_path != 'modules.ModularDiffusers.ModelsLoader'

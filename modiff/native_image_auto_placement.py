@@ -12,7 +12,7 @@ def declared_image_owner(profile, repository, mode, *, capability=None):
         return (capability.get('modeOutputKinds') or {}).get(
             mode, capability.get('outputKind') or 'image',
         ) == 'image'
-    spec = studio_execution_spec_for_pair(profile.model_type, mode)
+    spec = studio_execution_spec_for_pair(profile.model_type, mode, execution_profile_id=profile.id)
     repositories = {getattr(profile, 'default_repo', None), getattr(profile, 'fallback_repo', None),
                     *getattr(profile, 'compatible_repos', ())}
     if (not spec or spec['executionProfileId'] != profile.id or repository not in repositories

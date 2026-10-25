@@ -29,7 +29,8 @@ class OperationStarterTests(unittest.TestCase):
             if name not in names:
                 configs[type(name, (), {})] = config
         def resolve(pipeline, task):
-            profile = 'flux3-klein-base:modular' if pipeline == 'Flux3ModularPipeline' else 'flux3-klein:modular'
+            profile = ('flux3-klein-base:official-provider:v1' if pipeline == 'Flux3ModularPipeline'
+                       else 'flux3-klein:official-provider:v1')
             return resolve_operation_starter(MODULE_MAP, contracts, {
                 'pipelineClass': pipeline, 'task': task, 'executionProfileId': profile,
             })
@@ -38,6 +39,15 @@ class OperationStarterTests(unittest.TestCase):
             return_value=('flux3-klein-base:modular', 'flux3-klein:modular'),
         ):
             contracts, _ = build_operation_catalog(MODULE_MAP, [], catalog_resolver=lambda: {})
+            # A stale E authoring selector cannot revive a retired ID for a new graph.
+            for pipeline, retired in (
+                ('Flux3ModularPipeline', 'flux3-klein-base:modular'),
+                ('Flux3DistilledModularPipeline', 'flux3-klein:modular'),
+            ):
+                with self.subTest(retired=retired), self.assertRaisesRegex(ValueError, 'public authoring replacement'):
+                    resolve_operation_starter(MODULE_MAP, contracts, {
+                        'pipelineClass': pipeline, 'task': 'edit_image', 'executionProfileId': retired,
+                    })
             self._assert_reference_edit_starter_bindings(resolve)
 
     def _assert_reference_edit_starter_bindings(self, resolve):

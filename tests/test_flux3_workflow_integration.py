@@ -87,12 +87,23 @@ def test_exact_image_specs_bind_material_and_format_without_granting_public_supp
     selected = next(row for row in review['models'] if row['modelType'] == pipeline)
     expected_files = [row['path'] for row in selected['selectedFiles']]
     definitions = [row for row in STUDIO_EXECUTION_SPEC_DEFINITIONS.values() if row['modelType'] == pipeline]
-    assert len(definitions) == 2
+    variant = selected['repository'].rsplit('/', 1)[1].replace('flux-3-image-', 'flux3-')
+    legacy_id, public_id = variant + ':modular', variant + ':official-provider:v1'
+    assert len(definitions) == 4
+    assert {(row['profile']['id'], row['mode']) for row in definitions} == {
+        (identity, mode) for identity in (legacy_id, public_id) for mode in ('text_to_image', 'edit_image')}
     for definition in definitions:
         profile = DIFFUSERS_EXECUTION_PROFILES[definition['profile']['id']]
         assert profile.component_lora_declaration.pipeline_class == pipeline
         assert profile.lora_loadable_components == ('transformer',)
-        assert profile.public is False and profile.live_proof is False
+        assert profile.live_proof is False
+        assert profile.public is (profile.id == public_id)
+        if profile.id == legacy_id:
+            assert profile.required_diffusers_provider is None
+        else:
+            assert profile.required_diffusers_provider == 'huggingface-diffusers-flux3-7ecb1e1'
+            assert profile.replaces_private_authoring_profile == legacy_id
+        assert profile.component_lora_declaration.profile_id == profile.id
         assert profile.adapter_authoring is not None
         assert profile.adapter_authoring.to_public_dict() == {
             'schemaVersion': 1, 'mediaKind': 'image',
@@ -120,8 +131,11 @@ def test_exact_image_specs_bind_material_and_format_without_granting_public_supp
                 f"variants/{item['weightFormat']}/model.safetensors",
             }
             assert catalog_download_inventory(item['repo'], item['revision'], item['downloadFiles']) is not None
-        for name in ('autoEligible', 'templateEligible', 'galleryEligible', 'liveProof', 'supportsLora'):
+        for name in ('autoEligible', 'templateEligible', 'galleryEligible', 'liveProof'):
             assert capability[name] is False
+        assert capability['supportsLora'] is (profile.id == public_id)
+        assert capability['qualifiedModes'] == []
+        assert capability['qualificationStatus'] == ('runtime-required' if profile.id == public_id else 'contract_only')
         assert ('models', 'weight_format', 'weightFormat') in definition['bindings']
         binding_edges = {edge for edge in definition['edges'] if edge[1] == 'reference_binding'}
         if definition['mode'] == 'edit_image':

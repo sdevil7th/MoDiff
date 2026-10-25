@@ -308,7 +308,8 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
             self.assertIs(value["workloadSupported"], explicit)
             self.assertIs(value["nativeCudaNf4Consent"], explicit)
             self.assertEqual(value["qualificationWorkload"], QUALIFICATION_WORKLOAD_CUDA_NF4)
-            self.assertTrue(value["sourceFlagsDormant"])
+            self.assertFalse(value["sourceFlagsDormant"])
+            self.assertTrue(value["sourceTargetQualified"])
 
     def test_only_explicit_native_child_lifts_cuda_mask(self):
         for explicit in (False, True):

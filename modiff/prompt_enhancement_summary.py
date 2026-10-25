@@ -233,7 +233,7 @@ def _model_receipt(value, contract):
     bounded_json(value, 16384)
 
 
-def _consumed(value, controls, contract, mode, *, operation='enhance_prompt'):
+def _consumed(value, controls, contract, mode, *, operation='enhance_prompt', layout=None):
     from modules.HuggingFaceTransformers.main import MAX_MEDIA_SIDE, MAX_MEDIA_PIXELS, MAX_TOTAL_MEDIA_PIXELS
     closed(value, ('schemaVersion', 'renderedPrompt', 'references', 'processedImageGrid', 'fingerprints'))
     if type(value['schemaVersion']) is not int or value['schemaVersion'] != 1:
@@ -249,8 +249,11 @@ def _consumed(value, controls, contract, mode, *, operation='enhance_prompt'):
             'rendered_input_ids_sha256', 'reference_source_sha256'}
     if references:
         keys.update(('processed_pixel_sha256', 'processed_grid_sha256', 'processed_pixel_shape', 'processed_grid_shape'))
+    from modiff.prompt_enhancement_constraints import OPERATION as CONSTRAINED_OPERATION, validate_consumed
+    if operation == CONSTRAINED_OPERATION:
+        keys.add('authored_layout_constraint')
     closed(fields, keys)
-    if (operation not in ('enhance_prompt', 'enhance_prompt_append_details')
+    if (operation not in ('enhance_prompt', 'enhance_prompt_append_details', CONSTRAINED_OPERATION)
             or fields['operation'] != operation or fields['enhancement_max_new_tokens'] != controls['max_new_tokens']
             or type(fields['enhancement_max_new_tokens']) is not int or fields['prompt_adapter_id'] != contract['id']
             or fields['system_prompt_mode'] != mode or fields['rendered_prompt_sha256'] != digest_bytes(rendered.encode('utf-8'))
@@ -263,6 +266,9 @@ def _consumed(value, controls, contract, mode, *, operation='enhance_prompt'):
     for key in ('rendered_input_ids_sha256', *(['processed_pixel_sha256', 'processed_grid_sha256'] if references else [])):
         if type(fields[key]) is not str or not re.fullmatch(r'sha256:[0-9a-f]{64}', fields[key]):
             raise ValueError('Prompt proposal tensor fingerprint is malformed.')
+    if operation == CONSTRAINED_OPERATION:
+        validate_consumed(fields['authored_layout_constraint'], layout=layout, mode=mode,
+            image_count=len(references), controls=controls, input_hash=fields['rendered_input_ids_sha256'])
     total = 0
     for index, reference in enumerate(references):
         closed(reference, ('index', 'mode', 'width', 'height', 'sha256'))
@@ -303,6 +309,9 @@ class BoundSummary:
         self.prompt_hash, self.layout_kind, self.layout_hash = authored_request(prompt, layout)
         self.layout = deepcopy(layout)
         self.authored_prompt, self.operation = prompt, operation
+        if operation == 'enhance_prompt_constrained_authored_v1':
+            from modiff.prompt_enhancement_constraints import constraint_contract
+            self.constraint_contract = constraint_contract()
 
     def check(self):
         if _producer(self.observer) != self.producer:
@@ -314,6 +323,10 @@ class BoundSummary:
             raise ValueError('Prompt proposal declaration changed before publication.') from error
         if raw != self.declaration:
             raise ValueError('Prompt proposal declaration changed before publication.')
+        if self.operation == 'enhance_prompt_constrained_authored_v1':
+            from modiff.prompt_enhancement_constraints import constraint_contract
+            if constraint_contract() != self.constraint_contract:
+                raise ValueError('The constrained declaration changed before publication.')
 
     def observe_inputs(self, consumed, controls):
         observe_inputs(self, consumed, controls)
@@ -328,11 +341,25 @@ class BoundSummary:
         mode = result['systemPromptMode']
         if mode not in ('t2i', 'i2i', 't2i_bbox', 'i2i_bbox'):
             raise ValueError('Prompt proposal mode is unsupported.')
-        _consumed(consumed, actual_controls, self.contract, mode, operation=self.operation)
+        _consumed(consumed, actual_controls, self.contract, mode, operation=self.operation, layout=self.layout)
         _model_receipt(result['modelReceipt'], self.contract)
         integer(result['inputTokens'], 1, 32768)
         count = integer(result['generatedTokens'], 1, actual_controls['max_new_tokens'])
         expected_finish = 'length' if count == actual_controls['max_new_tokens'] else 'stop'
+        completion = None
+        if self.operation == 'enhance_prompt_constrained_authored_v1':
+            from modiff.prompt_enhancement_constraints import validate_completion
+            native_text = text(result['text'], maximum=262144, characters=262144)
+            completion = result.get('constraintCompletion')
+            validate_completion(completion, consumed['fingerprints']['authored_layout_constraint'],
+                text=native_text, generated_tokens=count, input_tokens=result['inputTokens'])
+            runtime = result['modelReceipt']['runtime']
+            if (mode not in ('t2i_bbox', 'i2i_bbox') or result.get('operation') != self.operation
+                    or runtime['dtype'] != 'float32' or runtime['device'] != 'cuda:0'
+                    or runtime['quantization'] != {'mode': 'none'}
+                    or result['layoutOutputValidated'] is not True or result['applicationAllowed'] is not True):
+                raise ValueError('Constrained completion requires its exact Expert provider and independent strict parser.')
+            expected_finish = 'stop'  # Genuine verified EOS, including exactly at the finite token bound.
         if (result['finishReason'] != expected_finish or result['applyRequired'] is not True
                 or result['semanticFidelityVerified'] is not False):
             raise ValueError('Prompt proposal completion observations are inconsistent.')
@@ -385,6 +412,8 @@ class BoundSummary:
             'applyRequired': True, 'applicationAllowed': result['applicationAllowed'],
             'layoutOutputValidated': result['layoutOutputValidated'], 'semanticFidelityVerified': False,
             'applicationBlockedReason': reason}
+        if completion is not None:
+            proposal['constraintCompletion'] = deepcopy(completion)
         bounded_json(request, 4096)
         bounded_json(adapter, 1024)
         summary = bounded_json({'schemaVersion': 1, 'kind': 'prompt-enhancement-proposal',
@@ -440,7 +469,8 @@ def observe_inputs(bound_summary, consumed, controls):
         'do_sample', 'num_beams', 'repetition_penalty', 'return_dict_in_generate')}
     actual_controls['use_chat_template'] = True
     _controls(actual_controls)
-    _consumed(consumed, actual_controls, bound_summary.contract, mode, operation=bound_summary.operation)
+    _consumed(consumed, actual_controls, bound_summary.contract, mode,
+              operation=bound_summary.operation, layout=bound_summary.layout)
     if getattr(bound_summary, '_pre_generation_observation', None) is not None:
         raise ValueError('The pre-generation input observation was already consumed.')
     request = {'authoredPromptSha256': bound_summary.prompt_hash,

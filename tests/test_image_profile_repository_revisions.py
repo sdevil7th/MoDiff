@@ -66,6 +66,7 @@ class ImageProfileRepositoryRevisionTests(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual(published["repository_revisions"], profiles[identity]["repository_revisions"])
 
     def test_only_adds_image_profile_pairs_and_preserves_all_existing_metadata_and_registries(self):
+        from test_image_adapter_authoring_policy import FLUX3_PUBLIC_POLICIES
         from test_audio_adapter_authoring_policy import EXPECTED as ACE_POLICY, IDENTITY as ACE
         profiles_before = deepcopy(DIFFUSERS_EXECUTION_PROFILES)
         capabilities_before = deepcopy(STUDIO_MODEL_CAPABILITIES)
@@ -101,6 +102,7 @@ class ImageProfileRepositoryRevisionTests(unittest.IsolatedAsyncioTestCase):
                 policy = profile.pop("adapterAuthoring", None)
                 if policy is not None:
                     conditional_controls = {
+                        **{identity: policy['requiredControls'] for identity, policy in FLUX3_PUBLIC_POLICIES.items()},
                         "cosmos3-super-text-to-image:official-modular-workflow": {
                             "offload_mode": "none", "auto_offload": False, "weight_loading_mode": "cpu",
                             "quant_config": None, "unet": None, "vae": None, "controlnet": None, "trust_remote_code": False,
@@ -112,6 +114,10 @@ class ImageProfileRepositoryRevisionTests(unittest.IsolatedAsyncioTestCase):
                     }
                     self.assertIn(profile["id"], {"flux-dev:modular", "flux-schnell:modular", "flux-krea:modular",
                                                 "flux-kontext:modular", "flux2-klein:modular", *conditional_controls, ACE})
+                    if profile['id'] in FLUX3_PUBLIC_POLICIES:
+                        self.assertEqual(policy, FLUX3_PUBLIC_POLICIES[profile['id']])
+                        self.assertTrue(profile['public'])
+                        self.assertEqual(profile['required_diffusers_provider'], 'huggingface-diffusers-flux3-7ecb1e1')
                     if profile["id"] == ACE:
                         self.assertEqual(policy, ACE_POLICY)
                     if profile["id"] in conditional_controls:

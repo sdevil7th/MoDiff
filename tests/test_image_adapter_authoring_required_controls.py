@@ -149,7 +149,7 @@ def test_unknown_control_is_not_synthetic_permission():
 
 
 def test_existing_six_key_policies_and_single_catalog_read_are_preserved(publication):
-    from test_image_adapter_authoring_policy import FLUX_POLICIES, EDIT_POLICIES
+    from test_image_adapter_authoring_policy import FLUX_POLICIES, EDIT_POLICIES, FLUX3_PUBLIC_POLICIES
     from test_audio_adapter_authoring_policy import EXPECTED as ACE_POLICY, IDENTITY as ACE
     with patch('modiff.model_artifact_catalog.catalog_profile_repository_revisions',
                wraps=catalog_profile_repository_revisions) as catalogue:
@@ -163,6 +163,13 @@ def test_existing_six_key_policies_and_single_catalog_read_are_preserved(publica
             'schemaVersion', 'mediaKind', 'adapterNodeKey', 'tasks', 'maxOwnedAdapters', 'repositoryRevisions'}
     assert profiles[ACE]['adapterAuthoring'] == ACE_POLICY
     assert profiles[ACE]['repository_revisions'] == ACE_POLICY['repositoryRevisions']
+    for identity, expected in FLUX3_PUBLIC_POLICIES.items():
+        assert profiles[identity]['adapterAuthoring'] == expected
+        assert set(profiles[identity]['adapterAuthoring']) == {
+            'schemaVersion', 'mediaKind', 'adapterNodeKey', 'tasks', 'maxOwnedAdapters',
+            'repositoryRevisions', 'requiredControls'}
+        assert profiles[identity]['repository_revisions'] == expected['repositoryRevisions']
+        assert profiles[identity]['live_proof'] is False
     for identity, row in profiles.items():
-        if identity not in {*existing, SUPER, REDUX, ACE}:
+        if identity not in {*existing, *FLUX3_PUBLIC_POLICIES, SUPER, REDUX, ACE}:
             assert 'adapterAuthoring' not in row

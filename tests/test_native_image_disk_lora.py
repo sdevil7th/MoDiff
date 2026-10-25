@@ -193,9 +193,22 @@ def test_reviewed_native_image_lora_targets_equal_pinned_official_classes():
         pipeline_class = getattr(diffusers, profile.pipeline_class, None)
         if pipeline_class is None:
             assert profile.pipeline_class in {'Flux3ModularPipeline', 'Flux3DistilledModularPipeline'}
-            assert profile.public is False
+            legacy_ids = {'flux3-klein:modular', 'flux3-klein-base:modular'}
+            public_ids = {'flux3-klein:official-provider:v1', 'flux3-klein-base:official-provider:v1'}
+            assert profile.id in legacy_ids | public_ids
+            assert profile.public is (profile.id in public_ids)
+            assert profile.live_proof is False
+            if profile.id in legacy_ids:
+                assert profile.required_diffusers_provider is None
+            else:
+                assert profile.required_diffusers_provider == 'huggingface-diffusers-flux3-7ecb1e1'
+                assert profile.replaces_private_authoring_profile == profile.id.replace(':official-provider:v1', ':modular')
+                requirement = profile.to_public_dict()['optionalRuntimeRequirement']
+                assert requirement['requiredNow'] is True and requirement['state'] != 'active'
             assert profile.component_lora_declaration is not None
-            continue  # The pinned source audit checks these exact future classes.
+            assert profile.component_lora_declaration.profile_id == profile.id
+            assert profile.lora_loadable_components == ('transformer',)
+            continue  # A declaration does not supply the absent official class or qualify execution.
         actual = tuple(getattr(pipeline_class, '_lora_loadable_modules', ()))
         assert profile.lora_loadable_components == actual, profile.id
         assert 'lora_loadable_components' not in profile.to_public_dict()

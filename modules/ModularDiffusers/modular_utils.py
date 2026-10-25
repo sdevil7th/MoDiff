@@ -2201,12 +2201,65 @@ def get_all_model_types(*, include_contract_only: bool = False) -> Dict[str, str
     return all_labels
 
 
+def declared_optional_pipeline_configs():
+    """Source schemas only; no class replacement or process/runtime grant."""
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+    configured = {'Flux3ModularPipeline': FLUX_3_PIPELINE_CONFIG,
+                  'Flux3DistilledModularPipeline': FLUX_3_DISTILLED_PIPELINE_CONFIG}
+    result = {}
+    for profile in DIFFUSERS_EXECUTION_PROFILES.values():
+        if not profile.public or profile.required_diffusers_provider is None:
+            continue
+        config = configured.get(profile.pipeline_class)
+        if (profile.model_type != profile.pipeline_class or config is None
+                or profile.default_repo != config.default_repo):
+            raise ValueError('An optional pipeline requires its exact reviewed declarative config.')
+        if profile.pipeline_class in result:
+            raise ValueError('An optional pipeline has ambiguous public config authority.')
+        result[profile.pipeline_class] = config
+    return result
+
+
+def _declarative_pipeline_configs():
+    configs = {pipeline.__name__: config for pipeline, config in _get_registry_instance().get_all().items()}
+    configs.update(declared_optional_pipeline_configs())
+    return configs
+
+
+def pipeline_authoring_identity(model_type, *, class_resolver=None):
+    """Keep schema refresh independent of installed optional pipeline classes."""
+    if type(model_type) is str and model_type in declared_optional_pipeline_configs():
+        return model_type
+    return (class_resolver or pipeline_class_from_model_type)(model_type)
+
+
+def _pipeline_config_metadata(model_type, config):
+    return {'model_type': model_type, 'label': config.label,
+        'default_repo': config.default_repo, 'default_dtype': config.default_dtype,
+        'loader_component_outputs': list(config.loader_component_outputs),
+        'layer_block_options': list(config.layer_block_options),
+        'guider_options': list(config.guider_options), 'scheduler_options': list(config.scheduler_options),
+        'denoise_image_latent_dimensions': list(config.denoise_image_latent_dimensions),
+        'node_params': deepcopy(config.node_params),
+        **({'component_dtype_overrides': dict(config.component_dtype_overrides)} if config.component_dtype_overrides else {}),
+        **({'weight_formats': list(config.weight_formats)} if config.weight_formats else {})}
+
+
 def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:
     """Get metadata for a model type.
 
     Returns model_type, label, default_repo, default_dtype, and node_params.
     The custom preview marker also declares ``execution_status=contract_only``.
     """
+    declared = declared_optional_pipeline_configs().get(model_type)
+    if declared is not None:
+        from modiff.diffusers_profiles import execution_profiles_for_execution
+        profiles = execution_profiles_for_execution(model_type)
+        providers = {profile.required_diffusers_provider for profile in profiles}
+        if len(providers) != 1 or None in providers:
+            raise ValueError('The optional model has no exact declared provider.')
+        return {**_pipeline_config_metadata(model_type, declared),
+                'execution_status': 'expert_only', 'required_diffusers_provider': providers.pop()}
     specification = CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME.get(model_type)
     if specification is not None:
         return {
@@ -2229,21 +2282,7 @@ def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:
 
     for pipeline_cls, config in _get_registry_instance().get_all().items():
         if pipeline_cls.__name__ == model_type:
-            metadata = {
-                "model_type": model_type,
-                "label": config.label,
-                "default_repo": config.default_repo,
-                "default_dtype": config.default_dtype,
-                "loader_component_outputs": list(config.loader_component_outputs),
-                "layer_block_options": list(config.layer_block_options),
-                "guider_options": list(config.guider_options),
-                "scheduler_options": list(config.scheduler_options),
-                "denoise_image_latent_dimensions": list(config.denoise_image_latent_dimensions),
-                "node_params": config.node_params,
-                **({"component_dtype_overrides": dict(config.component_dtype_overrides)}
-                   if config.component_dtype_overrides else {}),
-                **({"weight_formats": list(config.weight_formats)} if config.weight_formats else {}),
-            }
+            metadata = _pipeline_config_metadata(model_type, config)
             if model_type == CUSTOM_PIPELINE_MODEL_TYPE:
                 metadata["execution_status"] = CUSTOM_PIPELINE_EXECUTION_STATUS
             return metadata
@@ -2254,8 +2293,8 @@ def get_modular_layer_block_options() -> Dict[str, list[str]]:
     """Return exact model-type-to-transformer-block choices from reviewed configs."""
 
     return {
-        pipeline_cls.__name__: list(config.layer_block_options)
-        for pipeline_cls, config in _get_registry_instance().get_all().items()
+        model_type: list(config.layer_block_options)
+        for model_type, config in _declarative_pipeline_configs().items()
         if config.layer_block_options
     }
 
@@ -2264,8 +2303,8 @@ def get_modular_guider_options() -> Dict[str, list[str]]:
     """Return exact model-type-to-guider choices from reviewed configs."""
 
     return {
-        pipeline_cls.__name__: list(config.guider_options)
-        for pipeline_cls, config in _get_registry_instance().get_all().items()
+        model_type: list(config.guider_options)
+        for model_type, config in _declarative_pipeline_configs().items()
         if config.guider_options
     }
 
@@ -2274,8 +2313,8 @@ def get_modular_scheduler_options() -> Dict[str, list[str]]:
     """Return exact model-type-to-scheduler replacements from reviewed configs."""
 
     return {
-        pipeline_cls.__name__: list(config.scheduler_options)
-        for pipeline_cls, config in _get_registry_instance().get_all().items()
+        model_type: list(config.scheduler_options)
+        for model_type, config in _declarative_pipeline_configs().items()
         if config.scheduler_options
     }
 
@@ -2291,16 +2330,23 @@ def get_modular_node_action_options() -> Dict[str, Dict[str, list[str]]]:
     """
 
     result: Dict[str, Dict[str, list[str]]] = {}
-    for pipeline_cls, config in _get_registry_instance().get_all().items():
+    for model_type, config in _declarative_pipeline_configs().items():
         for action, action_config in config.node_params.items():
             if not isinstance(action, str) or not isinstance(action_config, dict):
                 continue
-            result.setdefault(action, {})[pipeline_cls.__name__] = [action]
+            result.setdefault(action, {})[model_type] = [action]
     return result
 
 
 def pipeline_class_to_modiff_node_config(pipeline_class, node_type=None, *, resolve_blocks=True):
     """Get the block and MoDiff node parameters for a pipeline class and node type."""
+    if type(pipeline_class) is str:
+        config = declared_optional_pipeline_configs().get(pipeline_class)
+        if config is None:
+            raise ValueError('Unknown declarative Modular pipeline identity.')
+        if not resolve_blocks:
+            return None, deepcopy(config.node_params.get(node_type))
+        pipeline_class = pipeline_class_from_model_type(pipeline_class)
     if isinstance(pipeline_class, CustomPipelineBinding):
         config = pipeline_class.pipeline_config()
     else:
@@ -2331,7 +2377,7 @@ _MODIFF_NODE_ACTION_LABELS = {stage: operation.label for stage, operation in MOD
 
 def get_modular_operation_contracts(modules):
     """Describe registered generic stages without resolving executable blocks."""
-    configs = {pipeline.__name__: config for pipeline, config in _get_registry_instance().get_all().items()}
+    configs = _declarative_pipeline_configs()
     # A declared wrapper transport can still require reviewed task publication.
     # Keep the same facade policy for these unscoped records as for task records.
     return [with_qwen_t2i_bundle_contract(contract)
@@ -2362,7 +2408,7 @@ def require_modiff_node_contract(pipeline_class, node_type, *, require_blocks=Tr
         node_type,
         resolve_blocks=resolve_blocks,
     )
-    pipeline_name = getattr(pipeline_class, "__name__", type(pipeline_class).__name__)
+    pipeline_name = pipeline_class if type(pipeline_class) is str else getattr(pipeline_class, "__name__", type(pipeline_class).__name__)
     if node_config is None:
         raise ValueError(
             f"Modular Diffusers pipeline '{pipeline_name}' does not support the generic {action_label} node "

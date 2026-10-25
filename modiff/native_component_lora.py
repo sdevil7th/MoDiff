@@ -64,10 +64,11 @@ REVIEWED_SUPER_IMAGE_COMPONENT = ComponentLoraDeclaration(
 )
 
 
-def reviewed_flux3_component_declaration(pipeline_class, task='text_to_image'):
+def reviewed_flux3_component_declaration(pipeline_class, task='text_to_image', *, profile_id=None):
     """Private reviewed execution declaration, never a workflow-supplied grant."""
     from modiff.flux3_lora_contract import FLUX3_LORA_DECLARATIONS
-    rows = [row for row in FLUX3_LORA_DECLARATIONS if row[2:4] == (pipeline_class, task)]
+    rows = [row for row in FLUX3_LORA_DECLARATIONS if row[2:4] == (pipeline_class, task)
+            and (row[1] == profile_id if profile_id is not None else row[1].endswith(':modular'))]
     if len(rows) != 1:
         raise ValueError('Unreviewed FLUX 3 component LoRA task.')
     return ComponentLoraDeclaration(*rows[0])
@@ -290,6 +291,7 @@ def current_component_lora_context(owner_id):
     profiles, reason = resolve_execution_profiles_for_loader(
         node['module'], node['action'],
         {'model_type': model_type,
+         'execution_profile_id': _literal(params, 'execution_profile_id', None),
          'repo_id': {'source': 'hub', 'value': effective_repository}},
     )
     profiles = tuple(profile for profile in profiles
@@ -308,6 +310,12 @@ def current_component_lora_context(owner_id):
     from modiff.flux3_lora_contract import is_flux3_declaration, selected_flux3_context
     if is_flux3_declaration(declaration):
         return selected_flux3_context(graph, source_fingerprint, owner_id, profile, declaration)
+    # Super owns its exact artifact/lifecycle while retaining the declared
+    # Nano graph contract. Never infer an alias from a missing pair spec.
+    graph_profile_id = profile.id
+    if (profile.id == REVIEWED_SUPER_IMAGE_COMPONENT.profile_id
+            and declaration == REVIEWED_SUPER_IMAGE_COMPONENT):
+        graph_profile_id = 'cosmos3-nano:official-modular-workflow'
     if not eligible_none:
         raise ValueError('The selected component LoRA route requires literal NONE placement and Auto Offload disabled.')
     effective_revision = require_catalog_revision(effective_repository, model_type=model_type)
@@ -327,10 +335,10 @@ def current_component_lora_context(owner_id):
         # path. Historical receipts never grant component adapter authority.
         hints = graph.get('runtimeHints')
         receipt = hints.get('studioExecutionSpec') if isinstance(hints, dict) else None
-        current = studio_execution_spec_for_pair(model_type, declaration.task)
+        current = studio_execution_spec_for_pair(model_type, declaration.task, execution_profile_id=graph_profile_id)
         if isinstance(receipt, dict) and current is not None and receipt.get('contentHash') != current['contentHash']:
             historical = studio_execution_spec_for_pair(
-                model_type, declaration.task, content_hash=receipt.get('contentHash'),
+                model_type, declaration.task, content_hash=receipt.get('contentHash'), execution_profile_id=graph_profile_id,
             )
             if historical is not None:
                 from modiff.studio_execution_specs import assert_studio_execution_graph
@@ -347,7 +355,7 @@ def current_component_lora_context(owner_id):
     tasks = modular_graph_tasks(graph['nodes'], owner_id, consumers, model_type)
     if tasks != {declaration.task}:
         raise ValueError('Component LoRA requires the exact current executable image task.')
-    specification = studio_execution_spec_for_pair(model_type, declaration.task)
+    specification = studio_execution_spec_for_pair(model_type, declaration.task, execution_profile_id=graph_profile_id)
     if specification is None or (
         declaration.profile_id != profile.id
         or declaration.repository != effective_repository

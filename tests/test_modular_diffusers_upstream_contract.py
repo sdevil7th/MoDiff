@@ -1432,7 +1432,9 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
 
     def test_every_split_node_publishes_its_registry_derived_signal_compatibility(self):
         expected = {}
-        for model_type in set(get_all_model_types()) - {"", "DummyCustomPipeline"}:
+        from modules.ModularDiffusers.modular_utils import declared_optional_pipeline_configs
+        model_types = (set(get_all_model_types()) | set(declared_optional_pipeline_configs())) - {"", "DummyCustomPipeline"}
+        for model_type in model_types:
             metadata = get_model_type_metadata(model_type)
             for action, action_config in metadata["node_params"].items():
                 if isinstance(action_config, dict):
@@ -1485,6 +1487,7 @@ class ModularDiffusersUpstreamContractTests(unittest.TestCase):
             "FluxModularPipeline": ["ClassifierFreeGuidance"],
             "FluxKontextModularPipeline": ["ClassifierFreeGuidance"],
             "Flux2KleinBaseModularPipeline": ["ClassifierFreeGuidance"],
+            "Flux3ModularPipeline": ["ClassifierFreeGuidance"],
         }
 
         self.assertEqual(get_modular_guider_options(), expected)

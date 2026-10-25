@@ -478,3 +478,34 @@ def test_explicit_upstream_composition_uses_validated_placements_and_rejects_par
     first = next(k for k in nodes if k != 'loader')
     nodes[first]['params']['block_contract_hash']['value'] = 'sha256:' + '0' * 64
     assert modular_graph_tasks(nodes, 'loader', list(nodes)[1:], 'QwenImageModularPipeline') == set()
+
+
+@pytest.mark.parametrize('pipeline', ['Flux3ModularPipeline', 'Flux3DistilledModularPipeline'])
+def test_source_wrapper_transports_match_only_the_complete_declared_bundle(pipeline):
+    from modiff.workflow_task_identity import modular_graph_tasks
+
+    nodes = modular_graph(pipeline, 'edit_image')['nodes']
+    nodes['loader']['params']['workflow_id'] = {'value': 'image_conditioned'}
+    consumers = list(nodes)[1:]
+    # Existing upstream-only topology stays recognizable; this grants no
+    # runtime/provider authority and does not mutate or repair saved graphs.
+    assert modular_graph_tasks(nodes, 'loader', consumers, pipeline) == {'edit_image'}
+    for target in ('text_encoder', 'denoise'):
+        nodes[target]['params']['reference_binding'] = {
+            'sourceId': 'vae_encoder', 'sourceKey': 'reference_binding',
+        }
+    before = deepcopy(nodes)
+    assert modular_graph_tasks(nodes, 'loader', consumers, pipeline) == {'edit_image'}
+    assert nodes == before
+    for target in ('text_encoder', 'denoise'):
+        partial = deepcopy(nodes)
+        del partial[target]['params']['reference_binding']
+        assert modular_graph_tasks(partial, 'loader', consumers, pipeline) == set()
+    forged = deepcopy(nodes)
+    forged['denoise']['params']['reference_binding']['sourceKey'] = 'unreviewed_binding'
+    assert modular_graph_tasks(forged, 'loader', consumers, pipeline) == set()
+    extra = deepcopy(nodes)
+    extra['denoise']['params']['unreviewed_transport'] = {
+        'sourceId': 'vae_encoder', 'sourceKey': 'reference_binding',
+    }
+    assert modular_graph_tasks(extra, 'loader', consumers, pipeline) == set()

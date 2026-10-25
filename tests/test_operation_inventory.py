@@ -26,8 +26,17 @@ class OperationInventoryTests(unittest.TestCase):
                 "EchoModularPipeline", "Kandinsky6SRPipeline", "Kandinsky6TI2VAPipeline",
                 "QwenImage21ModularPipeline", "QwenImage21TurboModularPipeline", "SanaWMPipeline",
             })
+        # Executable is the exact source-adapter taxonomy, not installed
+        # provider readiness, native model output, Auto or Gallery qualification.
         for name in ("Flux3ModularPipeline", "Flux3DistilledModularPipeline"):
-            self.assertEqual(by_name[name]["coverage"], "research-blocked")
+            self.assertEqual(by_name[name], {
+                "pipelineClass": name, "coverage": "executable", "equivalentTo": [],
+                "reason": "At least one exact backend execution specification selects this upstream class.",
+                "upstreamTasks": [
+                    {"task": "text_to_image", "source": "modular", "workflowId": "text2image"},
+                    {"task": "edit_image", "source": "modular", "workflowId": "image_conditioned"},
+                ],
+            })
         self.assertNotIn("Lumina2Text2ImgPipeline", by_name)
         self.assertNotIn("LuminaText2ImgPipeline", by_name)
 

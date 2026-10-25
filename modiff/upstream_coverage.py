@@ -1264,7 +1264,7 @@ def _template_execution_coverage(selection: Any, *, artifact: Any = None) -> dic
             "id", "model_type", "pipeline_class", "execution_path", "loader_module", "loader_action",
             "default_repo", "modes",
         )}
-        spec = studio_execution_spec_for_pair(binding.get("modelType"), binding.get("mode"))
+        spec = studio_execution_spec_for_pair(binding.get("modelType"), binding.get("mode"), execution_profile_id=selected_profile["id"])
         if (type(selection.get("schemaVersion")) is not int or set(binding) != {"modelType", "mode"}
                 or not declared_backend_image_stages(selected_profile, selection.get("task"), selected_artifact, spec)):
             raise UpstreamCoverageError("Public staged template has no exact backend image-stage specification.")

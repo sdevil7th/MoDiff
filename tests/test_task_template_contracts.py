@@ -35,7 +35,25 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_every_execution_spec_has_one_exact_stable_task_contract(self):
         self.assertEqual(self.payload["taskTemplateContractSchemaVersion"], 1)
-        self.assertEqual(len(self.contracts), 278)
+        public_flux3_spec_ids = {
+            "flux3-klein-base:official-provider:v1:edit-image:v1",
+            "flux3-klein-base:official-provider:v1:text-to-image:v1",
+            "flux3-klein:official-provider:v1:edit-image:v1",
+            "flux3-klein:official-provider:v1:text-to-image:v1",
+        }
+        self.assertEqual(len(self.contracts), 282)
+        self.assertEqual(
+            {contract["id"] for contract in self.contracts
+             if contract["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
+            {f"task-template:{identity}" for identity in public_flux3_spec_ids},
+        )
+        # The four explicit source contracts extend the existing 278;
+        # every pre-existing contract assertion below is retained.
+        self.assertEqual(
+            sum(contract["id"].removeprefix("task-template:") not in public_flux3_spec_ids
+                for contract in self.contracts),
+            278,
+        )
         self.assertEqual(set(self.contract_by_pair), set(self.spec_by_pair))
         self.assertEqual(self.contracts, sorted(self.contracts, key=lambda item: item["id"]))
         self.assertEqual(self.contracts, json.loads(json.dumps(self.contracts)))

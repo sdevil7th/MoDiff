@@ -1,5 +1,5 @@
 {
-  "contentHash": "sha256:d824b4bca58c9716c38c04f780d821c5a530a00b89a433381476991139bba670",
+  "contentHash": "sha256:42e6542a96dbebb4a3690e516de6280ddb4554a04bf04d87bba743505f0b2025",
   "coverageBoundary": {
     "backendArtifactPins": "snapshotted",
     "backendExecutionProfiles": "snapshotted",
@@ -7023,6 +7023,304 @@
         "fullStageChain": true,
         "inventoryCoverage": "executable",
         "nativePipelineClass": "Flux2ModularPipeline",
+        "nativeWorkflowId": "text2image",
+        "requiredCoreRolesPresent": true,
+        "stageRoles": [
+          "decode_latents",
+          "denoise",
+          "encode_prompt"
+        ]
+      }
+    },
+    {
+      "advertisementEntryPoints": [
+        "execution_profile:flux3-klein-base:official-provider:v1",
+        "model_capability:Flux3ModularPipeline",
+        "node_model_dropdown:modules.ModularDiffusers.ModelsLoader",
+        "studio_execution_spec:flux3-klein-base:official-provider:v1:edit-image:v1"
+      ],
+      "artifact": {
+        "declaredFileCount": 22,
+        "exactBytes": 20300529278,
+        "gated": null,
+        "inventoryState": "exact_bytes",
+        "license": "other",
+        "repository": "black-forest-labs/flux-3-image-klein-base",
+        "revision": "1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4"
+      },
+      "artifactVariantOf": null,
+      "canonicalTask": "edit_image",
+      "displayName": "FLUX 3 Image Klein Base",
+      "disposition": "native_integrated",
+      "dispositionReason": "complete_native_stage_chain_declared",
+      "evidence": {
+        "browser": "pending_final_candidate",
+        "nativeOutput": "pending",
+        "parameterConsumption": "pending",
+        "platform": "pending",
+        "reuse": "pending",
+        "service": "pending",
+        "structural": "implemented_awaiting_qualification"
+      },
+      "exactVariantReview": null,
+      "exception": null,
+      "implementation": {
+        "executionPath": "modular-diffusers",
+        "loader": "modules.ModularDiffusers.ModelsLoader",
+        "pipelineClass": "Flux3ModularPipeline",
+        "profileId": "flux3-klein-base:official-provider:v1"
+      },
+      "integratedNativeAlternativeProfileIds": [
+        "flux3-klein-base:official-provider:v1"
+      ],
+      "knownDefects": [],
+      "modelType": "Flux3ModularPipeline",
+      "optionalRuntime": {
+        "delivery": "optional_overlay",
+        "executionProfileIds": [
+          "flux3-klein-base:official-provider:v1"
+        ],
+        "profileIds": [
+          "huggingface-diffusers-flux3-7ecb1e1"
+        ],
+        "reason": "optional_runtime_status_required",
+        "requiredNow": true,
+        "schemaVersion": 1,
+        "state": "unavailable"
+      },
+      "routeId": "flux3-klein-base:official-provider:v1/edit_image",
+      "standardAndNativeAlternativesCoexist": false,
+      "task": "edit_image",
+      "upstream": {
+        "candidateNativePipelineClass": null,
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+        "fullStageChain": true,
+        "inventoryCoverage": "executable",
+        "nativePipelineClass": "Flux3ModularPipeline",
+        "nativeWorkflowId": "image_conditioned",
+        "requiredCoreRolesPresent": true,
+        "stageRoles": [
+          "decode_latents",
+          "denoise",
+          "encode_image",
+          "encode_prompt"
+        ]
+      }
+    },
+    {
+      "advertisementEntryPoints": [
+        "execution_profile:flux3-klein-base:official-provider:v1",
+        "model_capability:Flux3ModularPipeline",
+        "node_model_dropdown:modules.ModularDiffusers.ModelsLoader",
+        "studio_execution_spec:flux3-klein-base:official-provider:v1:text-to-image:v1"
+      ],
+      "artifact": {
+        "declaredFileCount": 22,
+        "exactBytes": 20300529278,
+        "gated": null,
+        "inventoryState": "exact_bytes",
+        "license": "other",
+        "repository": "black-forest-labs/flux-3-image-klein-base",
+        "revision": "1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4"
+      },
+      "artifactVariantOf": null,
+      "canonicalTask": "text_to_image",
+      "displayName": "FLUX 3 Image Klein Base",
+      "disposition": "native_integrated",
+      "dispositionReason": "complete_native_stage_chain_declared",
+      "evidence": {
+        "browser": "pending_final_candidate",
+        "nativeOutput": "pending",
+        "parameterConsumption": "pending",
+        "platform": "pending",
+        "reuse": "pending",
+        "service": "pending",
+        "structural": "implemented_awaiting_qualification"
+      },
+      "exactVariantReview": null,
+      "exception": null,
+      "implementation": {
+        "executionPath": "modular-diffusers",
+        "loader": "modules.ModularDiffusers.ModelsLoader",
+        "pipelineClass": "Flux3ModularPipeline",
+        "profileId": "flux3-klein-base:official-provider:v1"
+      },
+      "integratedNativeAlternativeProfileIds": [
+        "flux3-klein-base:official-provider:v1"
+      ],
+      "knownDefects": [],
+      "modelType": "Flux3ModularPipeline",
+      "optionalRuntime": {
+        "delivery": "optional_overlay",
+        "executionProfileIds": [
+          "flux3-klein-base:official-provider:v1"
+        ],
+        "profileIds": [
+          "huggingface-diffusers-flux3-7ecb1e1"
+        ],
+        "reason": "optional_runtime_status_required",
+        "requiredNow": true,
+        "schemaVersion": 1,
+        "state": "unavailable"
+      },
+      "routeId": "flux3-klein-base:official-provider:v1/text_to_image",
+      "standardAndNativeAlternativesCoexist": false,
+      "task": "text_to_image",
+      "upstream": {
+        "candidateNativePipelineClass": null,
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+        "fullStageChain": true,
+        "inventoryCoverage": "executable",
+        "nativePipelineClass": "Flux3ModularPipeline",
+        "nativeWorkflowId": "text2image",
+        "requiredCoreRolesPresent": true,
+        "stageRoles": [
+          "decode_latents",
+          "denoise",
+          "encode_prompt"
+        ]
+      }
+    },
+    {
+      "advertisementEntryPoints": [
+        "execution_profile:flux3-klein:official-provider:v1",
+        "model_capability:Flux3DistilledModularPipeline",
+        "node_model_dropdown:modules.ModularDiffusers.ModelsLoader",
+        "studio_execution_spec:flux3-klein:official-provider:v1:edit-image:v1"
+      ],
+      "artifact": {
+        "declaredFileCount": 22,
+        "exactBytes": 20320976972,
+        "gated": null,
+        "inventoryState": "exact_bytes",
+        "license": "other",
+        "repository": "black-forest-labs/flux-3-image-klein",
+        "revision": "8454017f9ebaada30c998fccd9f67a80c7580f68"
+      },
+      "artifactVariantOf": null,
+      "canonicalTask": "edit_image",
+      "displayName": "FLUX 3 Image Klein",
+      "disposition": "native_integrated",
+      "dispositionReason": "complete_native_stage_chain_declared",
+      "evidence": {
+        "browser": "pending_final_candidate",
+        "nativeOutput": "pending",
+        "parameterConsumption": "pending",
+        "platform": "pending",
+        "reuse": "pending",
+        "service": "pending",
+        "structural": "implemented_awaiting_qualification"
+      },
+      "exactVariantReview": null,
+      "exception": null,
+      "implementation": {
+        "executionPath": "modular-diffusers",
+        "loader": "modules.ModularDiffusers.ModelsLoader",
+        "pipelineClass": "Flux3DistilledModularPipeline",
+        "profileId": "flux3-klein:official-provider:v1"
+      },
+      "integratedNativeAlternativeProfileIds": [
+        "flux3-klein:official-provider:v1"
+      ],
+      "knownDefects": [],
+      "modelType": "Flux3DistilledModularPipeline",
+      "optionalRuntime": {
+        "delivery": "optional_overlay",
+        "executionProfileIds": [
+          "flux3-klein:official-provider:v1"
+        ],
+        "profileIds": [
+          "huggingface-diffusers-flux3-7ecb1e1"
+        ],
+        "reason": "optional_runtime_status_required",
+        "requiredNow": true,
+        "schemaVersion": 1,
+        "state": "unavailable"
+      },
+      "routeId": "flux3-klein:official-provider:v1/edit_image",
+      "standardAndNativeAlternativesCoexist": false,
+      "task": "edit_image",
+      "upstream": {
+        "candidateNativePipelineClass": null,
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+        "fullStageChain": true,
+        "inventoryCoverage": "executable",
+        "nativePipelineClass": "Flux3DistilledModularPipeline",
+        "nativeWorkflowId": "image_conditioned",
+        "requiredCoreRolesPresent": true,
+        "stageRoles": [
+          "decode_latents",
+          "denoise",
+          "encode_image",
+          "encode_prompt"
+        ]
+      }
+    },
+    {
+      "advertisementEntryPoints": [
+        "execution_profile:flux3-klein:official-provider:v1",
+        "model_capability:Flux3DistilledModularPipeline",
+        "node_model_dropdown:modules.ModularDiffusers.ModelsLoader",
+        "studio_execution_spec:flux3-klein:official-provider:v1:text-to-image:v1"
+      ],
+      "artifact": {
+        "declaredFileCount": 22,
+        "exactBytes": 20320976972,
+        "gated": null,
+        "inventoryState": "exact_bytes",
+        "license": "other",
+        "repository": "black-forest-labs/flux-3-image-klein",
+        "revision": "8454017f9ebaada30c998fccd9f67a80c7580f68"
+      },
+      "artifactVariantOf": null,
+      "canonicalTask": "text_to_image",
+      "displayName": "FLUX 3 Image Klein",
+      "disposition": "native_integrated",
+      "dispositionReason": "complete_native_stage_chain_declared",
+      "evidence": {
+        "browser": "pending_final_candidate",
+        "nativeOutput": "pending",
+        "parameterConsumption": "pending",
+        "platform": "pending",
+        "reuse": "pending",
+        "service": "pending",
+        "structural": "implemented_awaiting_qualification"
+      },
+      "exactVariantReview": null,
+      "exception": null,
+      "implementation": {
+        "executionPath": "modular-diffusers",
+        "loader": "modules.ModularDiffusers.ModelsLoader",
+        "pipelineClass": "Flux3DistilledModularPipeline",
+        "profileId": "flux3-klein:official-provider:v1"
+      },
+      "integratedNativeAlternativeProfileIds": [
+        "flux3-klein:official-provider:v1"
+      ],
+      "knownDefects": [],
+      "modelType": "Flux3DistilledModularPipeline",
+      "optionalRuntime": {
+        "delivery": "optional_overlay",
+        "executionProfileIds": [
+          "flux3-klein:official-provider:v1"
+        ],
+        "profileIds": [
+          "huggingface-diffusers-flux3-7ecb1e1"
+        ],
+        "reason": "optional_runtime_status_required",
+        "requiredNow": true,
+        "schemaVersion": 1,
+        "state": "unavailable"
+      },
+      "routeId": "flux3-klein:official-provider:v1/text_to_image",
+      "standardAndNativeAlternativesCoexist": false,
+      "task": "text_to_image",
+      "upstream": {
+        "candidateNativePipelineClass": null,
+        "diffusersRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+        "fullStageChain": true,
+        "inventoryCoverage": "executable",
+        "nativePipelineClass": "Flux3DistilledModularPipeline",
         "nativeWorkflowId": "text2image",
         "requiredCoreRolesPresent": true,
         "stageRoles": [
@@ -15772,8 +16070,8 @@
     "exactVariantReviews": "sha256:a4fc259889ff19358b1be6411be27d331cf81c9bf3d55291ded695acf9bb2498",
     "modelArtifactCatalog": "sha256:2721365f6271282a836c248c029f06ae73cebe91e4f11f044668bc15cdf0c844",
     "modularWorkflowSnapshot": "sha256:dd06d28cde763faf3245580f6ab3ef290715764a58f2b5c9321d9c9e40c8d3c9",
-    "operationInventory": "sha256:e896a05e863964cdbb13475a3c545388a39160acf452a26db1b9165a1bf9e7d8",
-    "publicExecutionProfiles": "sha256:1581864ba6454f2fd986fadf50168ab3a742c9c1e90264c8aa52038b82e4ba2a"
+    "operationInventory": "sha256:5252bd41e013aeebb1252ab1b9435ada2c88012fc63653c9979c31fda5062e72",
+    "publicExecutionProfiles": "sha256:fd84ac19d116daa413c0864b1e64bf2aa8a44bb1feb4a5a4557eac3905fdde3d"
   },
   "summary": {
     "denominatorFrozen": false,
@@ -15781,7 +16079,7 @@
       "backend_stages_integrated": 6,
       "blocked": 2,
       "documented_whole_pipeline_exception": 83,
-      "native_integrated": 73,
+      "native_integrated": 77,
       "non_diffusion_image_task": 14,
       "preserved_standard_alternative": 38
     },
@@ -15791,7 +16089,7 @@
     ],
     "knownDefectRouteCount": 12,
     "nativeIntegrationMissingCount": 0,
-    "profileCount": 125,
-    "routeCount": 216
+    "profileCount": 127,
+    "routeCount": 220
   }
 }

@@ -77,11 +77,27 @@ def test_explicit_composite_declares_only_exact_provider_and_auxiliary_packages(
     assert (composite.cutover_ready, composite.install_action_available, composite.activation_available) == (
         False, False, False,
     )
+    qualified_targets = []
     for target in composite.target_contracts:
-        assert target.contract_state == "candidate_unqualified"
+        qualified = (target.platform, target.machine) == ("windows", "x86_64")
+        assert target.contract_state == ("qualified" if qualified else "candidate_unqualified")
         assert (target.cutover_ready, target.install_action_available, target.activation_available) == (
-            False, False, False,
+            qualified, qualified, qualified,
         )
+        if qualified:
+            qualified_targets.append((target.platform, target.machine))
+    assert qualified_targets == [("windows", "x86_64")]
+    assert composite.spec_digest == (
+        "sha256:7f3fd36d78b104121e3f4253c2233a91f479a04814e994fb7b08034a7358eb1f"
+    )
+    pending = replace(composite, target_contracts=tuple(
+        replace(target, contract_state="candidate_unqualified", cutover_ready=False,
+                install_action_available=False, activation_available=False)
+        for target in composite.target_contracts
+    ))
+    assert pending.spec_digest == (
+        "sha256:50bd9406cc8b443f2e49255752312a56b6132ede91173ebed6e3d4f0085571ab"
+    )
 
 
 def test_qualification_workload_is_closed_and_omitted_from_existing_profiles():

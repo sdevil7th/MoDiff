@@ -56,10 +56,10 @@ class UpstreamCoverageExactClosureTests(unittest.TestCase):
         self.assertEqual(
             Counter(item["status"] for item in items),
             {
-                "executable": 144,
+                "executable": 146,
                 "equivalent": 8,
                 "intentionally-excluded": 59,
-                "research-blocked": 118,
+                "research-blocked": 116,
                 "contract-only": 5,
                 "unreviewed": 6,
             },
@@ -71,9 +71,20 @@ class UpstreamCoverageExactClosureTests(unittest.TestCase):
                 "EchoModularPipeline", "Kandinsky6SRPipeline", "Kandinsky6TI2VAPipeline",
                 "QwenImage21ModularPipeline", "QwenImage21TurboModularPipeline", "SanaWMPipeline",
             })
-        for name in ("Flux3ModularPipeline", "Flux3DistilledModularPipeline"):
-            self.assertEqual(by_name[name]["status"], "research-blocked")
-            self.assertEqual(by_name[name]["exactExecutionSpecs"], [])
+        # Executable here means an exact source adapter contract, not a
+        # provider installation, model output, Auto or Gallery qualification.
+        for name, variant in (
+            ("Flux3ModularPipeline", "flux3-klein-base"),
+            ("Flux3DistilledModularPipeline", "flux3-klein"),
+        ):
+            self.assertEqual(by_name[name]["status"], "executable")
+            self.assertEqual(by_name[name]["exactExecutionSpecs"], [
+                {"id": f"{variant}:official-provider:v1:edit-image:v1",
+                 "modelType": name, "mode": "edit_image"},
+                {"id": f"{variant}:official-provider:v1:text-to-image:v1",
+                 "modelType": name, "mode": "text_to_image"},
+            ])
+            self.assertIsNone(by_name[name]["reviewDecision"])
         self.assertNotIn("Lumina2Text2ImgPipeline", by_name)
         self.assertNotIn("LuminaText2ImgPipeline", by_name)
         stable_audio_contracts = {

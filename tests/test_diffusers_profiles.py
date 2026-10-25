@@ -403,7 +403,10 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
         for profile_id, profile in DIFFUSERS_EXECUTION_PROFILES.items():
             expected = (
                 ()
-                if profile_id in {"flux3-klein-base:modular", "flux3-klein:modular"}
+                if profile_id in {
+                    "flux3-klein-base:modular", "flux3-klein:modular",
+                    "flux3-klein-base:official-provider:v1", "flux3-klein:official-provider:v1",
+                }
                 else ("bnb_4bit",)
                 if profile_id in qwen_ids
                 else flux_modes

@@ -351,8 +351,25 @@ class DiffusersExecutionProfile:
     # Explicit authoring scope; upstream loading targets alone do not grant edits.
     adapter_authoring: AdapterAuthoringPolicy | None = None
     component_lora_declaration: ComponentLoraDeclaration | None = None
+    required_diffusers_provider: str | None = None
+    replaces_private_authoring_profile: str | None = None
 
     def __post_init__(self) -> None:
+        if self.required_diffusers_provider is not None:
+            from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES
+            selected = (OPTIONAL_RUNTIME_PROFILES.get(self.required_diffusers_provider)
+                        if type(self.required_diffusers_provider) is str else None)
+            if (selected is None or not selected.provides_diffusers
+                    or self.required_diffusers_provider not in self.optional_runtime_profiles
+                    or self.optional_runtime_delivery != OPTIONAL_RUNTIME_DELIVERY_OVERLAY
+                    or any(delivery != OPTIONAL_RUNTIME_DELIVERY_OVERLAY
+                           for _platform, _machine, delivery in self.optional_runtime_platform_deliveries)):
+                raise ValueError('A required Diffusers provider must be an exact declared overlay dependency.')
+        if self.replaces_private_authoring_profile is not None and (
+                type(self.replaces_private_authoring_profile) is not str
+                or self.replaces_private_authoring_profile == self.id
+                or not self.public or self.required_diffusers_provider is None):
+            raise ValueError('A public authoring replacement requires an exact provider-bound profile.')
         declaration = self.component_lora_declaration
         if declaration is not None and (type(declaration) is not ComponentLoraDeclaration
                 or declaration.profile_id != self.id or declaration.pipeline_class != self.pipeline_class
@@ -541,7 +558,16 @@ class DiffusersExecutionProfile:
         data.pop('lora_loadable_components')
         data.pop("adapter_authoring")
         data.pop("component_lora_declaration")
+        if self.required_diffusers_provider is None:
+            data.pop("required_diffusers_provider")
+        if self.replaces_private_authoring_profile is None:
+            data.pop('replaces_private_authoring_profile')
         public = {key: list(value) if isinstance(value, tuple) else value for key, value in data.items()}
+        if self.required_diffusers_provider is not None:
+            from modiff.studio_execution_specs import studio_operation_authoring_selections
+            recipes = studio_operation_authoring_selections([public])
+            if recipes:
+                public['authoringRecipes'] = recipes
         if self.adapter_authoring is not None:
             public["adapterAuthoring"] = self.adapter_authoring.to_public_dict()
         public["optional_runtime_delivery"] = self.optional_runtime_delivery_for_target(
@@ -920,9 +946,10 @@ for profile_id, profile in tuple(DIFFUSERS_EXECUTION_PROFILES.items()):
             optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_BASE,
             optional_runtime_platform_deliveries=(),
         )
-    elif profile.optional_runtime_profiles == (COSMOS_SAFETY_RUNTIME_PROFILE_ID,):
-        # Mandatory safety is never supplied by the native base. Unsupported
-        # package targets remain blocked until their own overlay is qualified.
+    elif (profile.required_diffusers_provider is not None
+          or profile.optional_runtime_profiles == (COSMOS_SAFETY_RUNTIME_PROFILE_ID,)):
+        # Mandatory providers and safety are never supplied by the native base.
+        # Unsupported targets remain blocked by their overlay qualification.
         DIFFUSERS_EXECUTION_PROFILES[profile_id] = replace(
             profile,
             optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
@@ -1142,10 +1169,12 @@ def execution_profiles_for_execution(
 
     normalized_model_type = str(model_type or "").strip()
     normalized_mode = str(mode or "").strip()
+    from modiff.studio_execution_specs import studio_public_authoring_replacements
+    replaced = studio_public_authoring_replacements()
     return tuple(
         profile
         for profile in DIFFUSERS_EXECUTION_PROFILES.values()
-        if not profile.operation_recipe
+        if profile.id not in replaced and not profile.operation_recipe
         and profile.model_type == normalized_model_type and (not normalized_mode or normalized_mode in profile.modes)
     )
 

@@ -375,12 +375,24 @@ def test_private_authority_tuple_cannot_be_injected_by_graph(runtime):
     assert not runtime.events
 
 
-def test_actual_reviewed_variant_uses_super_artifact_and_separate_nano_graph_profile(runtime, tmp_path):
+@pytest.mark.parametrize('artifact_repository', [REPO, 'nvidia/Cosmos3-Nano'])
+def test_actual_reviewed_variant_uses_super_artifact_and_separate_nano_graph_profile(
+        runtime, tmp_path, artifact_repository):
     source = graph([descriptor(tmp_path)])
     owner = source['nodes']['models']['params']
-    owner['repo_id']['value'] = {'source': 'hub', 'value': 'nvidia/Cosmos3-Nano'}
-    owner['revision']['value'] = require_catalog_revision('nvidia/Cosmos3-Nano', model_type=MODEL)
-    owner['reviewed_variant']['value'] = REPO
+    # Use the actual declared loader arguments; profile authority is resolved
+    # from the immutable artifact, never a fictional executable node field.
+    from inspect import signature
+    assert 'execution_profile_id' not in runtime.loaders.ModelsLoader.params
+    assert 'execution_profile_id' not in owner
+    assert set(owner) <= set(signature(runtime.loaders.ModelsLoader.execute).parameters)
+    owner['repo_id']['value'] = {'source': 'hub', 'value': artifact_repository}
+    owner['revision']['value'] = require_catalog_revision(artifact_repository, model_type=MODEL)
+    owner['reviewed_variant']['value'] = REPO if artifact_repository != REPO else None
+    # The component issuer selects the declared graph alias; the pair
+    # resolver must not grant an arbitrary fallback for the Super ID.
+    assert studio_execution_spec_for_pair(MODEL, 'text_to_image',
+        execution_profile_id='cosmos3-super-text-to-image:official-modular-workflow') is None
     node = runtime.run(source)
     signature = node._native_disk_lora_state['componentContext']
     assert signature[2] == 'cosmos3-super-text-to-image:official-modular-workflow'

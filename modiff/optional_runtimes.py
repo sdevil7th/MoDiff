@@ -1863,6 +1863,12 @@ _DIFFUSERS_FLUX3_BITSANDBYTES_PROFILE = replace(
         for contract in _DIFFUSERS_FLUX3_PROFILE.target_contracts
     ),
 )
+# Recorded maintained qualification on clean source ada881395bb4e51a6c2337919b6936defa8996fe:
+# exact combined delivery, official APIs and tiny CUDA NF4 compatibility, with
+# original-base preservation and rollback. This grants no pretrained/fit/Auto proof.
+_DIFFUSERS_FLUX3_BITSANDBYTES_PROFILE = project_optional_runtime_qualification(
+    _DIFFUSERS_FLUX3_BITSANDBYTES_PROFILE, platform_name="windows", machine="x86_64",
+)
 OPTIONAL_RUNTIME_PROFILES = MappingProxyType({
     **OPTIONAL_RUNTIME_PROFILES,
     _DIFFUSERS_FLUX3_BITSANDBYTES_PROFILE.id: _DIFFUSERS_FLUX3_BITSANDBYTES_PROFILE,
