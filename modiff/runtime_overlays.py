@@ -1913,6 +1913,66 @@ def active_diffusers_provider() -> dict | None:
     return json.loads(json.dumps(actual))
 
 
+
+def _diffusers_provider_root_contract(profile) -> dict[str, Any]:
+    """Compare the reviewed root without treating auxiliary wheels as Diffusers."""
+    return {
+        "packages": [package.to_spec_dict() for package in profile.packages
+                     if package.distribution == "diffusers"],
+        "artifacts": [dict(row) for row in profile.artifact_locks
+                      if row.get("distribution") == "diffusers"],
+        "sources": [dict(row) for row in profile.source_builds
+                    if row.get("distribution") == "diffusers"],
+    }
+
+
+def _declared_diffusers_provider_satisfies(provider, expected) -> bool:
+    """A current source declaration cannot substitute a same-version root."""
+    declared = provider.id == expected.id or (
+        expected.id, expected.spec_digest
+    ) in provider.satisfies_profiles
+    return bool(
+        provider.provides_diffusers is True
+        and declared
+        and _diffusers_provider_root_contract(provider) == _diffusers_provider_root_contract(expected)
+    )
+
+
+def required_diffusers_provider_available(profile_id: str | None) -> bool:
+    """Observe sealed execution authority; declarations remain visible without it."""
+    if profile_id is None:
+        return True
+    if type(profile_id) is not str:
+        return False
+    from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES
+    expected = OPTIONAL_RUNTIME_PROFILES.get(profile_id)
+    if expected is None or expected.provides_diffusers is not True:
+        return False
+    target = expected.contract_for_target()
+    if not target.cutover_ready or not target.activation_available:
+        return False
+    try:
+        selected = active_diffusers_provider()
+        if selected is None:
+            return False
+        provider = OPTIONAL_RUNTIME_PROFILES.get(selected["profileId"])
+        if provider is None or selected["specDigest"] != provider.spec_digest:
+            return False
+        provider_target = provider.contract_for_target()
+        if not provider_target.cutover_ready or not provider_target.activation_available:
+            return False
+        return bool(
+            _declared_diffusers_provider_satisfies(provider, expected)
+            and selected["distribution"] == "diffusers"
+            and selected["version"] == next(
+                package.version for package in expected.packages if package.distribution == "diffusers"
+            )
+            and base_diffusers_identity() is not None
+        )
+    except (OSError, RuntimeError, ValueError, TypeError, KeyError, metadata.PackageNotFoundError):
+        return False
+
+
 def base_diffusers_identity() -> dict | None:
     """An active overlay never replaces the underlying base installation witness."""
     if _VERIFIED_DIFFUSERS_PROVIDER is None:

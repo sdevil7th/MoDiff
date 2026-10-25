@@ -119,7 +119,7 @@ def records(profile):
         {'kind': 'optional_runtime', 'id': profile.id, 'specDigest': profile.spec_digest, 'spec': profile.to_spec_dict()}]
 
 
-def test_candidate_provider_has_actual_source_locks_and_no_action_or_public_grant():
+def test_provider_has_actual_source_locks_and_only_recorded_x86_64_package_targets():
     profile = exact_profile()
     assert profile.provides_diffusers is True
     assert profile.source_builds[0]['sourceArtifact']['sha256'] == '84ee014d4acc0c7633d2778f2ac0125fa77a87e736c86a8092edb1d47a55a744'
@@ -135,10 +135,19 @@ def test_candidate_provider_has_actual_source_locks_and_no_action_or_public_gran
     assert base_by_name['transformers'].specifier == '>=5.18.0'
     assert base_by_name['peft'].specifier == '>=0.21.2'
     assert base_by_name['huggingface-hub'].specifier == '>=1.32.0,<2.0'
-    assert all(not target.install_action_available and not target.activation_available and not target.cutover_ready
-               for target in profile.target_contracts)
+    assert len(profile.target_contracts) == 6
+    for target in profile.target_contracts:
+        qualified = (target.platform, target.machine) in {('linux', 'x86_64'), ('windows', 'x86_64')}
+        assert target.cutover_ready is qualified
+        assert target.install_action_available is qualified
+        assert target.activation_available is qualified
+        assert target.contract_state == ('qualified' if qualified else 'candidate_unqualified')
+    assert profile.spec_digest == 'sha256:82017c1615d807c1808c13929f0ee10b180058b2f976e51209a80e41939a40fe'
+    provider_ids = {profile.id, optional_runtimes.DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID}
+    assert {item.id for item in optional_runtimes.OPTIONAL_RUNTIME_PROFILES.values()
+            if item.provides_diffusers} == provider_ids
     for old in optional_runtimes.OPTIONAL_RUNTIME_PROFILES.values():
-        if old.id != profile.id:
+        if old.id not in provider_ids:
             assert old.provides_diffusers is False and 'providesDiffusers' not in old.to_spec_dict()
     with pytest.raises(ValueError, match='explicit boolean'):
         replace(profile, provides_diffusers=1)

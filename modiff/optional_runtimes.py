@@ -22,7 +22,9 @@ from types import MappingProxyType
 
 
 OPTIONAL_RUNTIME_SCHEMA_VERSION = 1
+QUALIFICATION_WORKLOAD_CUDA_NF4 = "cuda-nf4-v1"
 DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID = "huggingface-diffusers-flux3-7ecb1e1"
+DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID = "huggingface-diffusers-flux3-7ecb1e1-bitsandbytes-0.50.0"
 TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-peft-5.14.1-0.20.0"
 TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-main-96fe6dce-peft-0.20.0"
 GALLERY_MEDIA_RUNTIME_PROFILE_ID = "gallery-media-opencv-5.0.0.93-pyav-18.1.0"
@@ -483,6 +485,7 @@ class OptionalRuntimeProfile:
     satisfies_profiles: tuple[tuple[str, str], ...] = ()
     incompatible_distributions: tuple[str, ...] = ()
     provides_diffusers: bool = False
+    qualification_workload: str | None = None
 
     def __post_init__(self) -> None:
         if type(self.provides_diffusers) is not bool:
@@ -497,6 +500,13 @@ class OptionalRuntimeProfile:
                 raise ValueError("A Diffusers provider requires one exact root and preserves all other base model libraries.")
         elif any(package.distribution == "diffusers" for package in self.packages):
             raise ValueError("Staging Diffusers requires an explicit provider declaration.")
+        if self.qualification_workload is not None:
+            if (type(self.qualification_workload) is not str
+                    or self.qualification_workload != QUALIFICATION_WORKLOAD_CUDA_NF4):
+                raise ValueError("Optional-runtime qualification requires a supported declared workload.")
+            auxiliary = tuple(package for package in self.packages if package.distribution == "bitsandbytes")
+            if (not self.provides_diffusers or len(auxiliary) != 1 or auxiliary[0].version != "0.50.0"):
+                raise ValueError("CUDA NF4 qualification requires an explicit Diffusers/bitsandbytes 0.50.0 closure.")
         targets = tuple((contract.platform, contract.machine) for contract in self.target_contracts)
         if len(set(targets)) != len(targets):
             raise ValueError("Optional-runtime target contracts must be unique.")
@@ -566,6 +576,8 @@ class OptionalRuntimeProfile:
         }
         if self.provides_diffusers:
             spec["providesDiffusers"] = True
+        if self.qualification_workload is not None:
+            spec["qualificationWorkload"] = self.qualification_workload
         if self.satisfies_profiles:
             spec["satisfiesProfiles"] = [
                 {"id": profile_id, "specDigest": spec_digest} for profile_id, spec_digest in self.satisfies_profiles
@@ -1798,6 +1810,63 @@ def project_optional_runtime_qualification(
             for contract in profile.target_contracts
         ),
     )
+
+
+# Recorded maintained qualification on clean source 627843d5a97cef4ed2cf7ab06d089f0f900af471:
+# exact source/wheel, official APIs and tiny CLIP/PEFT CPU workload, including
+# base identity preservation and rollback. This grants no model/GPU/Auto proof.
+_DIFFUSERS_FLUX3_PROFILE = project_optional_runtime_qualification(
+    _DIFFUSERS_FLUX3_PROFILE, platform_name='linux', machine='x86_64',
+)
+_DIFFUSERS_FLUX3_PROFILE = project_optional_runtime_qualification(
+    _DIFFUSERS_FLUX3_PROFILE, platform_name='windows', machine='x86_64',
+)
+OPTIONAL_RUNTIME_PROFILES = MappingProxyType({
+    **OPTIONAL_RUNTIME_PROFILES, _DIFFUSERS_FLUX3_PROFILE.id: _DIFFUSERS_FLUX3_PROFILE,
+})
+
+
+# This explicitly selected closure never copies an earlier active overlay.
+# The auxiliary profile stages only bitsandbytes; TF/PEFT remain base-owned.
+# Qualification of either separate package does not qualify their combination.
+_DIFFUSERS_FLUX3_BITSANDBYTES_PROFILE = replace(
+    _DIFFUSERS_FLUX3_PROFILE,
+    id=DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID,
+    label="Official Diffusers FLUX 3 + bitsandbytes 0.50.0",
+    qualification_workload=QUALIFICATION_WORKLOAD_CUDA_NF4,
+    packages=(
+        *_DIFFUSERS_FLUX3_PROFILE.packages,
+        *_TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.packages,
+    ),
+    artifact_locks=(
+        *_DIFFUSERS_FLUX3_PROFILE.artifact_locks,
+        *_TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.artifact_locks,
+    ),
+    required_diffusers_symbols=tuple(dict.fromkeys((
+        *_DIFFUSERS_FLUX3_PROFILE.required_diffusers_symbols,
+        *_TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.required_diffusers_symbols,
+    ))),
+    satisfies_profiles=(
+        (_DIFFUSERS_FLUX3_PROFILE.id, _DIFFUSERS_FLUX3_PROFILE.spec_digest),
+        (
+            _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.id,
+            _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.spec_digest,
+        ),
+    ),
+    contract_state="candidate_unqualified",
+    cutover_ready=False,
+    install_action_available=False,
+    activation_available=False,
+    target_contracts=tuple(
+        replace(contract, contract_state="candidate_unqualified", cutover_ready=False,
+                install_action_available=False, activation_available=False)
+        for contract in _DIFFUSERS_FLUX3_PROFILE.target_contracts
+    ),
+)
+OPTIONAL_RUNTIME_PROFILES = MappingProxyType({
+    **OPTIONAL_RUNTIME_PROFILES,
+    _DIFFUSERS_FLUX3_BITSANDBYTES_PROFILE.id: _DIFFUSERS_FLUX3_BITSANDBYTES_PROFILE,
+})
 
 
 def _selected_profiles(profile_ids: Iterable[str] | None) -> tuple[OptionalRuntimeProfile, ...]:

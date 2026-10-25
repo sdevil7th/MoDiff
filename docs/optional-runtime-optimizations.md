@@ -75,6 +75,18 @@ capability contract permits it.
 
 ## Declared optional Diffusers provider
 
+The separately named `huggingface-diffusers-flux3-7ecb1e1-bitsandbytes-0.50.0`
+candidate declares one locked Diffusers and bitsandbytes closure for workflows
+requiring both. It preserves the base Transformers and PEFT installation and
+pins the exact current requirements it can satisfy. Setup exposes this as an
+explicit runtime choice; selecting or opening a workflow never installs or
+switches it. All targets remain unavailable until the combined delivery is
+qualified. Qualification of either separate runtime does not qualify the pair.
+Execution also requires the sealed active provider, its current target, the
+exact declared Diffusers source and wheel, and the unchanged base identity.
+Its declared `cuda-nf4-v1` qualification workload is separate from ordinary
+package consent and requires a reviewed, explicit native-workload admission.
+
 The candidate `huggingface-diffusers-flux3-7ecb1e1` contract assembles the exact
 reviewed official Hugging Face Diffusers source through the existing bounded,
 no-code wheel recipe. It does not execute `setup.py`, resolve new dependencies,
