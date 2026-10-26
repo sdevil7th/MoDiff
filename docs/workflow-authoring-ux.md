@@ -53,8 +53,11 @@ or rewrites that graph. Unknown recipe IDs and mismatched pipeline/task/profile
 selections fail closed.
 
 Fresh Model Setup drafts expose the selected model's declared component weight
-formats through the existing loader control. Native remains the default; models
-with only Native keep the control hidden. This read-only schema projection
+formats through the existing loader control. Native remains the fallback default;
+an optional `defaultWeightFormat` may select another format only when it matches
+one unique exact default repository/revision download selection. Public FLUX 3
+fresh drafts recommend FP8r/BF16 and 512-square; existing authored workflows are
+unchanged. Models with only Native keep the control hidden. This read-only schema projection
 constructs no loader, changes no registered or saved node definition and grants
 no runtime, fit or Auto qualification. Execution revalidates the selected format
 and exact model artifacts through the ordinary loader.

@@ -11400,7 +11400,8 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             args.update(param_overrides)
 
         for field, expected in getattr(self, "_workflow_auto_resolved_fields", {}).get(id, {}).items():
-            if field in args and args[field] != expected:
+            from modiff.workflow_auto_values import resource_value_matches
+            if field in args and not resource_value_matches(expected, args[field], module=module, action=action, field=field):
                 raise self._auto_resource_contract_error(f"{id}.{field} changed after resource planning. Auto stopped before allocating its resources.")
 
         # Re-resolve the exact loader from authoritative node arguments at the

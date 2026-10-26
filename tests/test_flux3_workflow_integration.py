@@ -131,7 +131,8 @@ def test_exact_image_specs_bind_material_and_format_without_granting_public_supp
                 f"variants/{item['weightFormat']}/model.safetensors",
             }
             assert catalog_download_inventory(item['repo'], item['revision'], item['downloadFiles']) is not None
-        for name in ('autoEligible', 'templateEligible', 'galleryEligible', 'liveProof'):
+        assert capability['autoEligible'] is (profile.id == public_id)
+        for name in ('templateEligible', 'galleryEligible', 'liveProof'):
             assert capability[name] is False
         assert capability['supportsLora'] is (profile.id == public_id)
         assert capability['qualifiedModes'] == []

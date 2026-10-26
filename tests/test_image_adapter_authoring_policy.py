@@ -264,7 +264,8 @@ class ImageAdapterAuthoringPublicationTests(unittest.TestCase):
                 for capability in payload['capabilities']:
                     if any(row['id'] == identity for row in capability['executionProfiles']):
                         self.assertTrue(capability['supportsLora'])  # Authoring offer only.
-                        for flag in ('autoEligible', 'templateEligible', 'galleryEligible', 'liveProof'):
+                        self.assertTrue(capability['autoEligible'])  # Bounded parent recipe only.
+                        for flag in ('templateEligible', 'galleryEligible', 'liveProof'):
                             self.assertFalse(capability[flag])
                         self.assertEqual(capability['qualifiedModes'], [])
 

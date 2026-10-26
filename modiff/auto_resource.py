@@ -402,6 +402,8 @@ def _auto_requirements_for_pair(
     if len(profiles) != 1:
         return None
     profile = profiles[0]
+    if requirements.get('declaredExecutionProfileIds') is not None and profile.id not in requirements['declaredExecutionProfileIds']:
+        return None
     effective = {
         **requirements,
         "supportedTasks": [normalized_mode],
@@ -988,6 +990,8 @@ def _candidate_history_signature(
         "artifact": str(candidate.get("resolvedArtifact") or candidate.get("artifact") or candidate.get("modelRepo") or ""),
         "artifactRevision": str(resolved.get("revision") or candidate.get("artifactRevision") or "unversioned"),
         "dtype": str(candidate.get("dtype") or ""),
+        **({'weightFormat': str(candidate['weightFormat'])}
+           if candidate.get('weightFormat') not in (None, '', 'native') else {}),
         "quantizationMode": str(candidate.get("quantizationMode") or "none"),
         "quantizedComponents": [str(item) for item in candidate.get("quantizedComponents") or []],
         "offloadMode": str(candidate.get("offloadMode") or ""),
@@ -1297,7 +1301,11 @@ def _candidate_workload_signature(candidate: dict[str, Any]) -> dict[str, Any]:
         keys = ("width", "height", "numFrames", "batchSize", "steps")
     else:
         keys = ("width", "height", "batchSize", "steps")
-    return {key: generation.get(key) for key in keys if generation.get(key) is not None}
+    result = {key: generation.get(key) for key in keys if generation.get(key) is not None}
+    if candidate.get('weightFormat') == 'fp8r':
+        result.update(referenceWorkload=generation.get('referenceWorkload', []),
+                      maxSequenceLength=generation.get('maxSequenceLength'))
+    return result
 
 
 def auto_resource_history_key(
@@ -1331,6 +1339,7 @@ def _runtime_candidate_from_hints(runtime_hints: dict[str, Any] | None) -> dict[
         "modelRepo": runtime_hints.get("modelRepo"),
         "resolvedArtifact": runtime_hints.get("resolvedArtifact") or runtime_hints.get("resolvedModelRepo"),
         "dtype": runtime_hints.get("dtype"),
+        "weightFormat": runtime_hints.get('weightFormat', 'native'),
         "quantizationMode": runtime_hints.get("quantizationMode"),
         "quantizedComponents": runtime_hints.get("quantizedComponents") if isinstance(runtime_hints.get("quantizedComponents"), list) else [],
         "offloadMode": runtime_hints.get("offloadMode"),
@@ -1363,6 +1372,7 @@ def _history_candidate_summary(candidate: dict[str, Any]) -> dict[str, Any]:
         "artifact": candidate.get("resolvedArtifact") or candidate.get("artifact") or candidate.get("modelRepo"),
         "artifactRevision": resolved.get("revision") or candidate.get("artifactRevision"),
         "dtype": candidate.get("dtype"),
+        "weightFormat": candidate.get('weightFormat', 'native'),
         "quantizationMode": candidate.get("quantizationMode"),
         "quantizedComponents": candidate.get("quantizedComponents") if isinstance(candidate.get("quantizedComponents"), list) else [],
         "offloadMode": candidate.get("offloadMode"),
@@ -2669,6 +2679,8 @@ def _declared_profile_candidates(
     requirements = _auto_requirements_for_pair(model_type, mode, form.get("executionProfileId"))
     if requirements is None:
         return _undeclared_pair_candidates(form)
+    if requirements.get('boundedWeightFormatRecipe') == 'flux3-fp8r-windows-model-cpu:v1':
+        return _bounded_fp8r_candidates(form, hardware, requirements)
     declared_default_repo = str(requirements.get("defaultRepo") or form.get("defaultRepo") or "")
     requested_repo = str(form.get("modelRepo") or "").strip()
     admitted_repositories = {
@@ -2907,6 +2919,37 @@ def _declared_profile_candidates(
     return candidates
 
 
+def _bounded_fp8r_candidates(form, hardware, requirements):
+    from modiff.flux3_auto_resource import selected_artifacts, workload_missing
+    model_type, mode = form['modelType'], form['mode']
+    repository = requirements['defaultRepo']
+    revision = catalog_revision(repository, model_type=model_type)
+    missing = workload_missing(form, hardware, requirements['executionProfileId'])
+    if form.get('modelRepo', repository) != repository or form.get('revision', revision) != revision:
+        missing.append('The FP8r Auto recipe requires its exact declared model and immutable revision.')
+    try:
+        status = selected_artifacts(model_type, repository, revision)
+    except (OSError, RuntimeError, ValueError, TypeError) as error:
+        status = {'installed': False, 'complete': False, 'reason': str(error)}
+    if not status.get('complete'):
+        missing.append(status['reason'])
+    generation = _generation_for_requirements(model_type, form, requirements['qualityDefaults'])
+    generation.update(batchSize=1, referenceWorkload=deepcopy(form.get('referenceWorkload', [])))
+    candidate = _candidate(
+        candidate_id=f"{requirements['executionProfileId']}:{mode}:fp8r-model-cpu-512", rank=5,
+        model_type=model_type, mode=mode, loader_module=requirements['loaderModule'],
+        loader_action=requirements['loaderAction'], execution_path=requirements['executionPath'],
+        pipeline_class=requirements['pipelineClass'], artifact=repository,
+        dtype=str(form.get('dtype') or ''), quantization_mode='none', quantized_components=[],
+        offload_mode='model_cpu', quality_tier='bounded-fp8r-512',
+        reason='Exact FP8r parameter/loading declarations and ordinary headroom policy; native output qualification is separate.',
+        generation=generation, installed=status.get('complete') is True,
+        requirements_missing=missing, artifact_status=status, requirements=requirements,
+    )
+    candidate.update(weightFormat=form.get('weightFormat'), boundedWeightFormatRecipe=requirements['boundedWeightFormatRecipe'])
+    return [candidate]
+
+
 def _clone_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
     return json.loads(json.dumps(candidate))
 
@@ -2925,6 +2968,7 @@ def _normalized_history_entry_signature(entry: dict[str, Any]) -> dict[str, Any]
         "artifact",
         "artifactRevision",
         "dtype",
+        "weightFormat",
         "quantizationMode",
         "quantizedComponents",
         "offloadMode",
@@ -3446,6 +3490,10 @@ def build_auto_resource_plan(
     for candidate in candidates:
         if candidate.get("exactPairDeclared") is False or candidate["id"] in catalog_blocked:
             continue
+        if candidate.get('boundedWeightFormatRecipe') == 'flux3-fp8r-windows-model-cpu:v1':
+            # This initial recipe declares one placement and ordinary execution.
+            # An optimization receipt cannot widen its source-selected boundary.
+            continue
         artifact = str(
             candidate.get("resolvedArtifact")
             or candidate.get("artifact")
@@ -3484,6 +3532,32 @@ def build_auto_resource_plan(
     for candidate in candidates:
         candidate.pop("parameterStorageLowerBound", None)
         candidate.pop("parameterConversionReserve", None)
+        if candidate.get('boundedWeightFormatRecipe') == 'flux3-fp8r-windows-model-cpu:v1':
+            from modiff.flux3_auto_resource import parameter_census as fp8r_census, workload_missing
+            missing = workload_missing(form, hardware, candidate.get('executionProfileId'))
+            if candidate.get('offloadMode') != 'model_cpu' or candidate.get('autoOffload') is not True:
+                missing.append('The bounded FP8r Auto recipe requires its declared model CPU placement.')
+            if optional_runtime_requirement.get('state') not in {'active', 'base_satisfied'}:
+                missing.append('Activate the exact reviewed optional Diffusers provider before FP8r Automatic execution.')
+            resolved = (candidate.get('artifactResolution') or {}).get('resolved') or {}
+            try:
+                bound, conversion, dequantization = fp8r_census(
+                    candidate.get('artifactValidation') or {}, candidate['modelType'], candidate['modelRepo'],
+                    resolved.get('revision'), candidate['dtype'])
+                if not bound or not conversion:
+                    missing.append('Complete exact FP8r parameter and cold-loading census is required before Auto admission.')
+                else:
+                    candidate.update(parameterStorageLowerBound=bound, parameterConversionReserve=conversion,
+                                     parameterDequantizationRequirements=dequantization)
+                    missing += impossible_parameter_residency(hardware, bound, 'model_cpu')
+            except (OSError, RuntimeError, ValueError, KeyError, TypeError) as error:
+                missing.append(str(error))
+            if missing:
+                candidate['requirementsMissing'] = list(dict.fromkeys([*(candidate.get('requirementsMissing') or []), *missing]))
+                reason = '; '.join(candidate['requirementsMissing'])
+                candidate.update(canAutoRun=False, readiness='skipped', skipReason=reason)
+                candidate['proof'] = {**candidate['proof'], 'status': 'skipped', 'message': reason}
+            continue
         if (candidate.get("artifactFormat") != "native"
                 or candidate.get("quantizationMode", "none") != "none"
                 or candidate.get("loadedQuantization", "none") != "none"):

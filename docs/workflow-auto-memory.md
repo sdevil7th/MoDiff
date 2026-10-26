@@ -6,6 +6,38 @@ independent model owners, even when they select the same repository. Planning
 never loads models, installs packages, changes prompts or reduces creative
 settings to make a workflow fit.
 
+## Bounded public FLUX 3 recipe
+
+The exact public Distilled and Base profiles declare a Windows x86_64 recipe
+for primary dedicated NVIDIA CUDA: 512×512 output, batch one, explicit FP8r
+storage with BF16 compute, CPU weight loading and model CPU offload. Distilled
+retains 16 steps; Base requires 50 steps, ordinary classifier-free guidance 3.5
+and rescale zero. The declared text window is at most 8192 tokens. Native,
+NVFP4, additional quantization, other placements and larger workloads receive
+no permission from this declaration. Connected LoRAs retain their independent
+resource and placement restrictions.
+
+Reference editing requires one or two actual prepared PIL images, each at most
+1024 pixels per side, with at most 512² + 1024² total pixels after the pinned
+16-pixel center crop. Planning inspects the exact direct local Load Image source
+inside configured work/data roots, with at most two 32 MiB files. It never
+executes a supplier or downloads media. Unknown/computed/remote source geometry
+refuses before submission. A bounded RGB/order/geometry witness is checked
+again against the actual Image Encode argument before its resources allocate.
+Changing or replacing a reference invalidates that witness. The encoder's
+ordinary opaque binding still validates its actual processed conditioning.
+
+Admission observes every file in the exact FP8r selection, including the variant
+checkpoint. It requires the reviewed active provider, packed tensor/scales and
+FP32 norm census, dense text/VAE census, conservative whole-file source/target
+loading overlap and per-layer FP32 dequantization reserve. Existing actual free
+RAM/VRAM, allocator headroom and owner-lifetime checks remain mandatory. This
+can refuse a cold run that completed in Expert mode; logical storage and
+conservative overlap are not measured physical commitment or peak inference
+demand. A cached file, prior Expert output and a source declaration do not
+establish native qualification. Actual Automatic output and visual acceptance
+remain separate proof obligations.
+
 ## Machine capacity and working demand
 
 A recipe with `memorySemantics: machine_capacity` describes the machine class

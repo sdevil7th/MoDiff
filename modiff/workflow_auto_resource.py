@@ -763,6 +763,18 @@ def _build_workflow_auto_plan(
         values = _values(nodes, loader_id)
         consumers = _consumers(nodes, loader_id, set(loaders))
         try:
+            from modiff.flux3_auto_resource import PUBLIC_PROFILES
+            if getattr(profile, 'id', None) in PUBLIC_PROFILES:
+                for field in ('quant_config', 'unet', 'vae', 'controlnet', 'lora_list'):
+                    param = nodes[loader_id]['params'].get(field) or {}
+                    if param.get('sourceId') or param.get('value') not in (None, []):
+                        raise ValueError('The bounded FP8r Auto recipe does not admit additional quantization, component overrides or LoRAs.')
+                for field in ('weight_format', 'weight_loading_mode'):
+                    if field in nodes[loader_id]['params']:
+                        try:
+                            _literal(nodes, loader_id, field)
+                        except DeferredResourceValue as error:
+                            raise ValueError('The FP8r weight format and loading mode must be inspectable before submission.') from error
             for field in ("repo_id", "model_id", "model_type", "pipeline_class", "execution_profile_id", "revision", *_SETTINGS):
                 if field in nodes[loader_id]["params"]:
                     values[field] = _literal(nodes, loader_id, field)
@@ -802,6 +814,11 @@ def _build_workflow_auto_plan(
             mode = next(iter(modes)) if len(modes) == 1 else profile.modes[0] if not modes and len(profile.modes) == 1 else None
             if mode not in profile.modes:
                 raise ValueError("The model's task is ambiguous; select an explicit mode on its loader or consumer.")
+            from modiff.flux3_auto_resource import PUBLIC_PROFILES
+            if profile.id in PUBLIC_PROFILES:
+                from modiff.workflow_task_identity import modular_graph_tasks
+                if modular_graph_tasks(nodes, loader_id, consumers, profile.model_type) != {mode}:
+                    raise ValueError('The bounded FLUX 3 Auto recipe requires its exact unambiguous T2I or reference-edit graph.')
             repo = _repository(values.get("repo_id") or values.get("model_id"))
             if not repo:
                 raise ValueError("Auto requires an exact installed Hub model repository.")
@@ -810,6 +827,11 @@ def _build_workflow_auto_plan(
                     "device": values.get("device", "cpu"), "dtype": values.get("dtype", "float32"),
                     "offloadMode": values.get("offload_mode", "none"), "autoOffload": values.get("auto_offload", False),
                     "quantizationMode": values.get("quantization_mode", "none")}
+            if 'weight_format' in nodes[loader_id]['params']:
+                values['weight_format'] = _literal(nodes, loader_id, 'weight_format')
+                form['weightFormat'] = values['weight_format']
+            if values.get('revision'):
+                form['revision'] = values['revision']
             if "weight_loading_mode" in nodes[loader_id]["params"]:
                 form["weight_loading_mode"] = normalize_weight_loading_mode(values["weight_loading_mode"])
             device = str(form["device"])
@@ -825,6 +847,35 @@ def _build_workflow_auto_plan(
                     if value is None:
                         raise ValueError(f"{id}.{field} is not a finite resource value.")
                     form[target] = max(form.get(target, 0), value)
+            from modiff.flux3_auto_resource import PUBLIC_PROFILES
+            if profile.id in PUBLIC_PROFILES:
+                guiders = [key for key in consumers if (nodes[key]['module'], nodes[key]['action']) == ('modules.ModularDiffusers', 'Guider')]
+                if profile.id.startswith('flux3-klein-base:'):
+                    if len(guiders) != 1:
+                        raise ValueError('Base Auto requires its exact classifier-free guidance owner.')
+                    guider = guiders[0]
+                    for field, expected in {'guider': 'ClassifierFreeGuidance', 'enabled': True,
+                                           'use_original_formulation': False, 'start': 0.0, 'stop': 1.0}.items():
+                        actual = _literal(nodes, guider, field) if field in nodes[guider]['params'] else expected
+                        if actual != expected or isinstance(expected, bool) and type(actual) is not bool:
+                            raise ValueError('Base Auto requires the unchanged reviewed classifier-free guidance policy.')
+                    form['guidanceScale'] = _literal(nodes, guider, 'guidance_scale')
+                    form['guidanceRescale'] = (_literal(nodes, guider, 'guidance_rescale')
+                                              if 'guidance_rescale' in nodes[guider]['params'] else 0.0)
+                elif guiders:
+                    raise ValueError('Distilled Auto does not substitute an additional guidance policy.')
+            if profile.id in PUBLIC_PROFILES and mode == 'edit_image':
+                from modiff.workflow_auto_values import inspect_reference_image_workload
+                encoders = [key for key in consumers if (nodes[key]['module'], nodes[key]['action']) == ('modules.ModularDiffusers', 'ImageEncode')]
+                if len(encoders) != 1:
+                    raise ValueError('The bounded edit recipe requires one exact reference encoder.')
+                encoder = encoders[0]
+                witness = inspect_reference_image_workload(nodes, encoder)
+                captured = _RESOLVED_FIELDS.get()
+                if captured is not None:
+                    captured.setdefault(encoder, {})['image'] = witness
+                form['referenceWorkload'] = [{key: row[key] for key in ('sourceSize', 'processedSize')}
+                                             for row in witness['references']]
             form_key = json.dumps(form, sort_keys=True)
             if form_key not in recipe_cache:
                 recipe_cache[form_key] = plan_recipe({"form": form}, runtime_fingerprint=runtime_fingerprint, local_models=local_models, data_dir=data_dir)
@@ -836,6 +887,8 @@ def _build_workflow_auto_plan(
                           and candidate.get("executionProfileId") == profile.id
                           and candidate.get("loaderAction") == profile.loader_action and candidate.get("executionPath") == profile.execution_path
                           and candidate.get("dtype") == form["dtype"] and candidate.get("quantizationMode", "none") == form["quantizationMode"]]
+            candidates = [candidate for candidate in candidates
+                          if candidate.get('weightFormat', 'native') == form.get('weightFormat', 'native')]
             revision = values.get("revision")
             if revision:
                 candidates = [candidate for candidate in candidates if (candidate.get("artifactResolution", {}).get("resolved", {}).get("revision") or candidate.get("artifactRevision")) == revision]
@@ -942,6 +995,13 @@ def _build_workflow_auto_plan(
                     offload_mode=candidate.get('offloadMode', 'none'), device=form['device'],
                     dtype=form['dtype'], hardware=hardware,
                 )}
+                dequantization = candidate.get('parameterDequantizationRequirements')
+                if candidate.get('weightFormat') == 'fp8r':
+                    if (type(dequantization) is not dict or dequantization.get('proofScope') != 'largest_fp8r_linear_dequantization_only'
+                            or type(dequantization.get('vramBytes')) is not int or not 0 < dequantization['vramBytes'] <= 2**63
+                            or not parameter_residency.get('vramBytes')):
+                        raise ValueError('The FP8r recipe has no exact per-layer dequantization reserve.')
+                    parameter_residency['vramBytes'] += dequantization['vramBytes']
             native_loras = nodes[loader_id].get('params', {}).get('lora_list', {})
             has_native_loras = bool(native_loras.get('sourceId')) or native_loras.get('value') not in (None, [])
             if (profile.execution_path == 'modular-diffusers' and native_image

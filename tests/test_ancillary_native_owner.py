@@ -212,12 +212,15 @@ def test_ordinary_current_public_starter_capture(tmp_path, monkeypatch):
     selection = {'pipelineClass': parent['pipelineClass'], 'task': parent['task'],
                  'executionProfileId': parent['profileId'], 'authoringRecipeId': identity}
     monkeypatch.setattr(NodeBase, '__init__', lambda *_args, **_kwargs: pytest.fail('metadata constructed a node'))
-    # Current Expert authoring visibility does not imply Auto or template qualification.
+    # The parent's bounded Auto recipe does not qualify this Preview or native output.
     capability_app = WebServer(modules.MODULE_MAP, work_dir=str(tmp_path), data_dir=str(tmp_path))
     public_payload = capability_app._build_model_capabilities_payload('flux3')
     selected_capability = next(item for item in public_payload['capabilities']
         if item['modelType'] == parent['pipelineClass'])
-    assert selected_capability['autoEligible'] is False and selected_capability['templateEligible'] is False
+    assert selected_capability['autoEligible'] is True
+    assert selected_capability['qualifiedModes'] == []
+    for field in ('templateEligible', 'galleryEligible', 'liveProof'):
+        assert selected_capability[field] is False
     payload = resolve_operation_starter(modules.MODULE_MAP, contracts, selection)
     app = object.__new__(WebServer)
     payload['nodes'] = [{'operation': node['operation'],
@@ -238,7 +241,7 @@ def test_ordinary_current_public_starter_capture(tmp_path, monkeypatch):
         'ancillaryNodeRegistry': {key: app._describe_registered_node(*key.rsplit('.', 1),
             modules.MODULE_MAP[key.rsplit('.', 1)[0]][key.rsplit('.', 1)[1]])
             for _role, key, _x, _y in child['roles']},
-        'selectedModelCapabilityProvenance': 'Actual ordinary _build_model_capabilities_payload; Auto and template eligibility remain false.'}, indent=2) + '\n', encoding='utf-8')
+        'selectedModelCapabilityProvenance': 'Actual ordinary _build_model_capabilities_payload; bounded parent Auto recipe declared, native and template qualification unproven.'}, indent=2) + '\n', encoding='utf-8')
     assert path.is_file()
 
 

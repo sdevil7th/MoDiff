@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextvars import ContextVar
 import json
 import math
+import hashlib
 
 RUNTIME_VALUES = ContextVar('workflow_auto_values', default={})
 DATA_MODULES = {'modules.Primitive', 'modules.Text', 'modules.Image', 'modules.ImageOperations', 'modules.Audio', 'modules.Video'}
@@ -12,6 +13,94 @@ DATA_ACTIONS = {
     ('modules.DiffusersRuntime', 'DiffusersExecutionRecipe'),
     ('modules.DiffusersImage', 'OutpaintCanvas'),
 }
+
+
+def reference_image_resource_witness(value):
+    """Read the actual prepared PIL sources for the pinned FLUX 3 crop route.
+
+    Data suppliers execute only through ordinary Run preparation. This bounded
+    witness contains no pixels and grants no native model/output qualification.
+    Source geometry is capped before RGB conversion, with no resize or truncation.
+    """
+    from PIL import Image
+    images = value if type(value) is list else [value]
+    if len(images) not in {1, 2}:
+        raise ValueError('The bounded FLUX 3 edit Auto recipe requires one or two prepared reference images.')
+    references = []
+    for image in images:
+        if not isinstance(image, Image.Image) or any(not 16 <= side <= 1024 for side in image.size):
+            raise ValueError('FLUX 3 edit Auto requires prepared PIL references within 1024 pixels per side.')
+        digest = hashlib.sha256()
+        for top in range(0, image.height, 64):
+            digest.update(image.crop((0, top, image.width, min(top + 64, image.height))).convert('RGB').tobytes())
+        references.append({'sourceSize': list(image.size), 'processedSize': [side // 16 * 16 for side in image.size],
+                           'sourceRgbSha256': digest.hexdigest()})
+    if sum(math.prod(row['processedSize']) for row in references) > 512**2 + 1024**2:
+        raise ValueError('FLUX 3 edit Auto references exceed the reviewed combined processed pixel boundary.')
+    return {'_modiffAutoReferenceWorkload': 1, 'references': references}
+
+
+def resource_value_matches(expected, actual, *, module, action, field):
+    """Recheck a server-produced source witness at the ordinary dispatch boundary."""
+    if (module, action, field) == ('modules.ModularDiffusers', 'ImageEncode', 'image') and type(expected) is dict and set(expected) == {'_modiffAutoReferenceWorkload', 'references'}:
+        if expected.get('_modiffAutoReferenceWorkload') != 1:
+            return False
+        try:
+            return reference_image_resource_witness(actual) == expected
+        except (ValueError, TypeError, OSError):
+            return False
+    return actual == expected
+
+
+def inspect_reference_image_workload(nodes, encoder_id):
+    """Observe an actual prepared value or the exact bounded local Load source.
+
+    This is a finite read-only file inspection, not node dispatch. Unknown
+    processing, remote sources and custom suppliers refuse before submission.
+    The normal Load still executes and its actual RGB result must match later.
+    """
+    try:
+        return reference_image_resource_witness(inspect_resource_value(nodes, encoder_id, 'image'))
+    except DeferredResourceValue:
+        pass
+    from PIL import Image, ImageOps
+    from modiff.config import CONFIG
+    from modiff.path_identifiers import resolve_managed_path_identifier
+    param = nodes[encoder_id]['params'].get('image') or {}
+    source = nodes.get(param.get('sourceId'), {})
+    if (source.get('module'), source.get('action'), param.get('sourceKey')) != ('modules.Image', 'Load', 'image'):
+        raise ValueError('Reference Auto needs an inspectable direct local Load Image source; computed or unknown geometry requires Expert.')
+    try:
+        selection = inspect_resource_value(nodes, param['sourceId'], 'file')
+    except DeferredResourceValue as error:
+        raise ValueError('Reference Auto requires known ordered local files before graph submission.') from error
+    files = selection if type(selection) is list else [selection]
+    if len(files) not in {1, 2}:
+        raise ValueError('Reference Auto requires one or two ordered local files before graph submission.')
+    images = []
+    try:
+        for name in files:
+            if type(name) is not str or name.startswith(('http://', 'https://')):
+                raise ValueError('Reference Auto inspection requires existing local files; it never downloads media.')
+            if '..' in name.replace('\\', '/').split('/'):
+                raise ValueError('Reference Auto inspection rejects path traversal.')
+            path = resolve_managed_path_identifier(name, work_root=CONFIG.paths['work_dir'], data_root=CONFIG.paths['data'])
+            if path is None or not path.is_file() or not 0 < path.stat().st_size <= 32 * 1024**2:
+                raise ValueError('Reference Auto files must exist inside configured work/data roots and be at most 32 MiB each.')
+            with Image.open(path) as original:
+                if any(not 16 <= side <= 1024 for side in original.size):
+                    raise ValueError('Reference Auto images must fit 1024 pixels per side before decoding.')
+                if getattr(original, 'n_frames', 1) != 1:
+                    raise ValueError('Reference Auto inspection requires one static frame per file.')
+                image = ImageOps.exif_transpose(original)
+                image.load()
+                images.append(image.copy())
+        return reference_image_resource_witness(images)
+    except (OSError, EOFError, Image.DecompressionBombError, Image.DecompressionBombWarning) as error:
+        raise ValueError('Reference Auto could not safely inspect the selected local image; repair or replace it before Run.') from error
+    finally:
+        for image in images:
+            image.close()
 
 
 class DeferredResourceValue(ValueError):

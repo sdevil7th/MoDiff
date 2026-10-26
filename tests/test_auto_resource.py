@@ -2013,6 +2013,10 @@ class AutoResourcePlanTests(unittest.TestCase):
             "FluxCannyPipeline",
             "FluxReduxPipeline",
             "StableDiffusionXLModularPipeline",
+            "Flux3ModularPipeline:text_to_image",
+            "Flux3ModularPipeline:edit_image",
+            "Flux3DistilledModularPipeline:text_to_image",
+            "Flux3DistilledModularPipeline:edit_image",
         }
         self.assertEqual(expected, set(AUTO_MODEL_REQUIREMENTS))
         for key in expected:
@@ -2047,6 +2051,8 @@ class AutoResourcePlanTests(unittest.TestCase):
                         for profile in DIFFUSERS_EXECUTION_PROFILES.values()
                         if not profile.operation_recipe
                         and profile.model_type == model_type and mode in profile.modes
+                        and (requirements.get('declaredExecutionProfileIds') is None
+                             or profile.id in requirements['declaredExecutionProfileIds'])
                     ]
                     self.assertEqual(len(profiles), 1)
                     profile = profiles[0]

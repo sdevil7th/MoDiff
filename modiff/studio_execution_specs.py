@@ -18347,9 +18347,25 @@ for _old_id, _pipeline, _label, _repository, _revision, _steps, _cfg in _FLUX3_C
         _source['capability'].update(
             executionStatus='expert_only', supportTier='experimental',
             qualificationStatus='runtime-required', supportsLora=True,
+            defaultWeightFormat='fp8r',
+            defaultSize={'width': 512, 'height': 512, 'aspectRatio': '1:1'},
+            autoEligible=True,
             notes=['Explicit Expert authoring requires the reviewed optional Diffusers provider.',
                    'Runtime readiness, model fit, native output and Auto/template qualification are separate.'],
         )
+        _source['autoRequirementKey'] = f'{_pipeline}:{_task}'
+        _source['autoRequirements'] = {
+            'supportedTasks': [_task], 'defaultRepo': _repository,
+            'executionPath': 'modular-diffusers', 'pipelineClass': _pipeline,
+            'declaredExecutionProfileIds': [_public_id],
+            'boundedWeightFormatRecipe': 'flux3-fp8r-windows-model-cpu:v1',
+            'qualityDefaults': {'width': 512, 'height': 512, 'steps': _steps,
+                                'guidanceScale': 3.5 if _cfg else 1.0, 'maxSequenceLength': 8192},
+            # No invented machine tier or measured inference budget. Exact
+            # parameter/loading bounds plus the ordinary headroom remain mandatory.
+            'minimum': {'accelerator': 'cuda', 'vramBytes': 0, 'systemRamBytes': 0, 'diskFreeBytes': 0},
+            'supportedOffloadModes': [OFFLOAD_MODE_MODEL_CPU],
+        }
         STUDIO_EXECUTION_SPEC_DEFINITIONS[f"{_public_id}:{_task.replace('_', '-')}:v1"] = _source
 
 
@@ -18625,11 +18641,17 @@ def studio_capability_definition(model_type: str, *, repository: str | None = No
         return deepcopy(_COSMOS3_SUPER_T2I_MODULAR_CAPABILITY)
     for definition in reversed(_source_default_spec_definitions().values()):
         if definition["modelType"] == model_type and "capability" in definition:
+            from modiff.modular_weight_formats import capability_default_weight_format
+            capability_default_weight_format(definition['capability'])
             return deepcopy(definition["capability"])
     return {}
 
 
 def studio_capability_definitions() -> dict[str, dict[str, Any]]:
+    from modiff.modular_weight_formats import capability_default_weight_format
+    for definition in _source_default_spec_definitions().values():
+        if 'capability' in definition:
+            capability_default_weight_format(definition['capability'])
     return {
         definition["modelType"]: deepcopy(definition["capability"])
         for definition in _source_default_spec_definitions().values()

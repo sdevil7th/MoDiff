@@ -302,7 +302,9 @@ def test_ordinary_image_receipts_use_validated_consumer_task(module, loader, con
 
 
 
-def test_conflicting_explicit_modes_remain_unresolved_even_for_a_single_mode_profile(monkeypatch, tmp_path):
+@pytest.mark.parametrize('profile_identity', [{}, {'id': 'generic-single-mode-profile'}],
+                         ids=['missing-identity', 'unrelated-identity'])
+def test_conflicting_explicit_modes_remain_unresolved_even_for_a_single_mode_profile(monkeypatch, tmp_path, profile_identity):
     from types import SimpleNamespace
     from modiff import workflow_auto_resource as planner
 
@@ -312,6 +314,7 @@ def test_conflicting_explicit_modes_remain_unresolved_even_for_a_single_mode_pro
         loader_module="modules.ModularDiffusers",
         loader_action="ModelsLoader",
         execution_path="modular-diffusers",
+        **profile_identity,
     )
     monkeypatch.setattr(
         planner,

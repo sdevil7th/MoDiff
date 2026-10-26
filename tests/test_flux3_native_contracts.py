@@ -375,5 +375,7 @@ def test_current_public_four_specs_validate_registered_ports_without_optional_ru
         assert row['requiredDiffusersProvider'] == DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID
         assert capability['executionStatus'] == 'expert_only'
         assert capability['qualificationStatus'] == 'runtime-required'
+        assert capability['autoEligible'] is True
+        assert capability['qualifiedModes'] == []
         assert all(capability[key] is False for key in (
-            'autoEligible', 'templateEligible', 'galleryEligible', 'liveProof'))
+            'templateEligible', 'galleryEligible', 'liveProof'))

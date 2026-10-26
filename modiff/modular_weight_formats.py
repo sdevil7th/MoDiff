@@ -2,7 +2,8 @@
 
 Discovery reads data only. Execution revalidates installed managed-cache bytes;
 no URL, download, optional installation, conversion implementation or fit grant
-is provided here. Native is the unchanged default for every existing model.
+is provided here. Native registry and saved defaults remain unchanged; a fresh
+authoring capability may recommend one exact declared alternative.
 """
 from dataclasses import dataclass
 import hashlib
@@ -114,6 +115,27 @@ def weight_format_download_selections(model_type, repository, revision):
              'downloadFiles': list(row['downloadFiles'])} for row in rows]
 
 
+def capability_default_weight_format(capability):
+    """Validate an optional fresh-authoring default against its exact selection.
+
+    This is a creation recommendation, never a saved-value migration or an
+    artifact/runtime/resource admission. Omission retains the native default.
+    """
+    value = capability.get('defaultWeightFormat', 'native')
+    if type(value) is not str or value not in {'native', 'fp8r', 'nvfp4'}:
+        raise ValueError('Malformed default component weight format.')
+    if value != 'native':
+        revisions = capability.get('revisionCandidates')
+        selections = capability.get('weightFormatSelections')
+        if type(revisions) is not list or len(revisions) != 1 or type(selections) is not list:
+            raise ValueError('A non-native default requires one exact declared artifact revision.')
+        matches = [row for row in selections if type(row) is dict and row.get('weightFormat') == value]
+        expected = weight_format_download_selections(capability.get('modelType'), capability.get('defaultRepo'), revisions[0])
+        if len(matches) != 1 or matches[0] not in expected or matches[0].get('repo') != capability.get('defaultRepo') or matches[0].get('revision') != revisions[0]:
+            raise ValueError('The default weight format has no unique exact download selection.')
+    return value
+
+
 def declared_weight_formats(model_type, metadata):
     value = metadata.get('weight_formats', ('native',)) if isinstance(metadata, dict) else ('native',)
     if (type(value) not in (list, tuple) or not value or len(value) > 3 or value[0] != 'native'
@@ -212,6 +234,7 @@ def _header(path, scheme):
                       if item['dtype'] in {'F8_E4M3', 'U8'} and name.endswith('.weight')}
     if packed_weights != scales:
         raise ValueError('The selected BFL checkpoint contains unpaired packed weights.')
+    return tensors
 
 
 def _stat(path):

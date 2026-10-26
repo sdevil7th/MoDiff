@@ -435,8 +435,10 @@ def test_public_replacement_discovery_is_unchanged_by_the_legacy_e_authoring_sel
         assert set(capability["runnableModes"]) == {"text_to_image", "edit_image"}
         assert len(capability["executionProfiles"][0]["authoringRecipes"]) == 2
         assert capability["optionalRuntimeRequirement"]["requiredNow"] is True
+        assert capability["autoEligible"] is True
+        assert capability["qualifiedModes"] == []
         assert all(capability[key] is False for key in
-            ("autoEligible", "templateEligible", "galleryEligible", "liveProof"))
+            ("templateEligible", "galleryEligible", "liveProof"))
     for query in ("klein-base", "flux3modularpipeline", "no-such-model", "flux3-klein:modular"):
         assert "evaluationAuthoring" not in server._build_model_capabilities_payload(query)
 

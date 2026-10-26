@@ -61,7 +61,8 @@ def _weight_bytes(path: Path, dtype_bytes: int, tensor_names: set[str] | None):
     return total
 
 
-def artifact_parameter_lower_bound(status: dict, revision: str | None, dtype: str) -> dict | None:
+def artifact_parameter_lower_bound(status: dict, revision: str | None, dtype: str, *,
+                                   _index_file='model_index.json', _components=None) -> dict | None:
     """Inspect only an already validated, exact local Diffusers snapshot.
 
     Indexed tensors are counted once. Unknown/unsupported layouts yield no
@@ -78,11 +79,17 @@ def artifact_parameter_lower_bound(status: dict, revision: str | None, dtype: st
         if path.name.lower() != revision.lower():
             continue
         try:
-            index = _json_file(_snapshot_file(path / "model_index.json", path))
+            if _index_file not in {'model_index.json', 'modular_model_index.json'}:
+                return None
+            index = _json_file(_snapshot_file(path / _index_file, path))
             if not isinstance(index, dict) or len(index) > 128:
                 continue
             components = {}
             for component, definition in index.items():
+                if _components is not None and component not in _components:
+                    continue
+                if _index_file == 'modular_model_index.json' and isinstance(definition, list) and len(definition) == 3:
+                    definition = definition[:2]
                 if component.startswith("_") or not isinstance(definition, list) or len(definition) != 2 or not all(definition):
                     continue
                 if Path(component).name != component or component in {".", ".."} or any(char in component for char in "\\/:"):
@@ -267,7 +274,8 @@ def _loading_shard(path: Path, dtype: str, selected: set[str] | None) -> dict:
             "fileBytes": payload_size + header_size + 8}
 
 
-def artifact_parameter_conversion_reserve(status: dict, revision: str | None, dtype: str) -> dict | None:
+def artifact_parameter_conversion_reserve(status: dict, revision: str | None, dtype: str, *,
+                                         _index_file='model_index.json', _components=None) -> dict | None:
     """Companion cold-loading evidence; addressable overlap is not resident RAM.
 
     The parameter lower-bound record remains unchanged. Official Diffusers sorts
@@ -293,11 +301,17 @@ def artifact_parameter_conversion_reserve(status: dict, revision: str | None, dt
             path = Path(snapshot["path"]).absolute()
             if path.name != revision:
                 continue
-            index = _loading_json_file(_snapshot_file(path / "model_index.json", path))
+            if _index_file not in {'model_index.json', 'modular_model_index.json'}:
+                return None
+            index = _loading_json_file(_snapshot_file(path / _index_file, path))
             if not isinstance(index, dict) or len(index) > 128:
                 continue
             components = {}
             for component, definition in index.items():
+                if _components is not None and component not in _components:
+                    continue
+                if _index_file == 'modular_model_index.json' and isinstance(definition, list) and len(definition) == 3:
+                    definition = definition[:2]
                 if component.startswith("_") or not isinstance(definition, list) or len(definition) != 2 or not all(definition):
                     continue
                 if (Path(component).name != component or component in {".", ".."}

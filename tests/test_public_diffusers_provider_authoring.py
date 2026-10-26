@@ -47,8 +47,10 @@ def test_normal_model_is_declared_before_optional_provider_and_has_complete_pup_
         capability = specs.studio_capability_definition(profile.model_type)
         assert capability["executionStatus"] == "expert_only"
         assert capability["qualificationStatus"] == "runtime-required"
+        assert capability["autoEligible"] is True
+        assert capability["qualifiedModes"] == []
         assert all(capability[key] is False for key in (
-            "autoEligible", "templateEligible", "galleryEligible", "liveProof"))
+            "templateEligible", "galleryEligible", "liveProof"))
         snapshots.append((declaration, capability, [
             specs.studio_execution_spec_for_pair(profile.model_type, mode) for mode in profile.modes]))
     assert all(snapshot == snapshots[0] for snapshot in snapshots)

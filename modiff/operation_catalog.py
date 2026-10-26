@@ -33,6 +33,9 @@ def seed_standard_operation_defaults(node, profile):
     capability = studio_capability_definition(profile.model_type, repository=profile.default_repo)
     if node["action"] == profile.loader_action:
         defaults = {"dtype": capability.get("defaultDtype")}
+        if 'defaultWeightFormat' in capability:
+            from modiff.modular_weight_formats import capability_default_weight_format
+            defaults['weight_format'] = capability_default_weight_format(capability)
         if profile.id == "cosmos3-super-text-to-image:official-modular-workflow":
             defaults.update(auto_offload=False, offload_mode="none")
     elif node["module"] == "modules.DiffusersAudio":
