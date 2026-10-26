@@ -484,6 +484,27 @@ class ServerSecurityTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(self.server.model_discovery_task)
         self.assertEqual(self.server.model_discovery_snapshot_tasks, {})
 
+    async def test_hf_cache_full_and_compact_preserve_observed_selection_and_legacy_receipt(self):
+        observed = [{"revision": "a" * 40, "files": ["model.safetensors"], "complete": True}]
+        record = {"id": "owner/model", "class_names": ["TestPipeline"]}
+        status = {"installed": True, "complete": False, "repairRequired": True,
+                  "plannedRevision": "a" * 40, "plannedFiles": ["native.safetensors"],
+                  "observedSelections": observed}
+        with patch("modiff.server.modelstore.get_hf_models", return_value=[record]), patch(
+            "modiff.server.artifact_cache_status", return_value=status,
+        ):
+            inventory = self.server._build_hf_cache_inventory()
+        for compact in (False, True):
+            request = JsonRequest({})
+            request.query = {"compact": "1"} if compact else {}
+            with patch.object(self.server, "_settled_model_discovery_generation", AsyncMock(return_value=0)), patch.object(
+                self.server, "_model_discovery_snapshot", AsyncMock(return_value=inventory),
+            ):
+                payload = json.loads((await self.server.hf_cache(request)).text)[0]
+            self.assertEqual(payload["observed_selections"], observed)
+            self.assertEqual(payload["planned_files"], ["native.safetensors"])
+            self.assertFalse(payload["complete"])
+
     async def test_hf_cache_validation_is_coalesced_off_loop_and_never_serves_stale_status_after_refresh(self):
         actualizations = 0
         inventory_scans = 0

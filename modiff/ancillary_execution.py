@@ -68,6 +68,7 @@ for _variant, _pipeline in (('flux3-klein', 'Flux3DistilledModularPipeline'),
         for _choice, _recipe, _layout in (
             ('fp32', 'fp32-none', None), ('nf4', 'bf16-nf4', None),
             ('append-fp32', 'fp32-none', 'append-details-preserve-layout-v1'),
+            ('append-nf4', 'bf16-nf4', 'append-details-preserve-layout-v1'),
             ('constrained-fp32', 'fp32-none', 'constrained-authored-table-v1'),
         ):
             PUBLIC_PARENTS[f'{_variant}:official:{_mode}:prompt-preview-{_choice}:v1'] = {

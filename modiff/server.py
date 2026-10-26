@@ -11940,6 +11940,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                     "corrupt_files": status.get("corruptFiles") or [],
                     "planned_revision": status.get("plannedRevision"),
                     "planned_files": status.get("plannedFiles") or [],
+                    **({"observed_selections": status["observedSelections"]} if "observedSelections" in status else {}),
                 }
             )
             annotated.append(entry)
@@ -12014,7 +12015,9 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                         "corrupt_files",
                         "planned_revision",
                         "planned_files",
+                        "observed_selections",
                     )
+                    if key in entry
                 }
             annotated.append(entry)
 

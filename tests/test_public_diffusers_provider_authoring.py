@@ -120,7 +120,7 @@ def test_ordinary_loader_and_stage_refresh_use_declarations_without_optional_cla
 
 def test_explicit_private_spec_receipts_remain_distinct_and_unknown_collisions_refuse(monkeypatch):
     before = deepcopy(ancillary.PRIVATE_PARENTS)
-    assert len(before) == 17 and len(ancillary.PUBLIC_PARENTS) == 16
+    assert len(before) == 17 and len(ancillary.PUBLIC_PARENTS) == 20
     for old, new in zip(LEGACY, PUBLIC):
         public = profiles.DIFFUSERS_EXECUTION_PROFILES[new]
         for mode in public.modes:

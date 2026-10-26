@@ -1935,6 +1935,48 @@ def exact_cached_snapshot_path(repo_id: str, revision: str, marker_file: str = '
         raise ValueError('Installed Hugging Face snapshot resolves outside its managed repository cache.') from error
     return snapshot
 
+def observed_catalog_cache_selections(repo_id: str):
+    """Observe reviewed pipeline selections without trusting a download receipt.
+
+    Resolve the same marker and cache precedence as pipeline loaders, then stat
+    only the catalog's finite file list in that one snapshot. This is not content
+    verification, runtime qualification, or permission to download/repair files.
+    Other artifact layouts retain the existing inventory compatibility contract.
+    """
+    from modiff.model_artifact_catalog import catalog_download_inventory, read_model_artifact_catalog
+
+    observations = []
+    for declared in read_model_artifact_catalog().get('downloadInventories', []):
+        if str(declared.get('repo', '')).lower() != repo_id.lower():
+            continue
+        files = [entry.get('path') for entry in declared.get('files', []) if isinstance(entry, dict)]
+        marker = next((name for name in ('modular_model_index.json', 'model_index.json') if name in files), None)
+        if marker is None:
+            continue
+        revision = declared.get('revision')
+        if (not isinstance(revision, str) or re.fullmatch(r'[0-9a-f]{40}', revision) is None
+                or not 1 <= len(files) <= 256 or any(not isinstance(name, str) for name in files)):
+            raise ValueError('Invalid bounded catalog cache selection.')
+        inventory = catalog_download_inventory(repo_id, revision, files)
+        if inventory is None:
+            raise ValueError('The exact catalog cache selection is unavailable.')
+        repository = inventory['repo']
+        complete = False
+        try:
+            snapshot = exact_cached_snapshot_path(repository, revision, marker)
+            plan = {'revision': revision, 'snapshot_commit': revision, 'snapshot_path': str(snapshot),
+                    'files': [{'name': row['path'], 'size': row['byteSize']} for row in inventory['files']]}
+            complete = not _selected_snapshot_file_issues(repository, str(snapshot.parent.parent.parent), plan)
+        except (OSError, RuntimeError, ValueError):
+            # Missing, inaccessible, or escaped snapshots are explicit negative
+            # observations; an old receipt must not override this result.
+            pass
+        observations.append({'revision': revision, 'files': sorted(files), 'complete': complete})
+    if len(observations) > 32:
+        raise ValueError('Catalog cache selections exceed their bound.')
+    return observations or None
+
+
 def is_file_cached(repo_id: str, file: str | list[str] | tuple[str, ...]) -> bool:
     if isinstance(file, str):
         file = [file]

@@ -264,13 +264,16 @@ def test_layout_source_region_has_no_invented_reference_authority(monkeypatch, f
     assert calls == []
 
 
-def test_selected_specs_use_actual_registered_ports_and_stay_unpublished(monkeypatch, flux3_api):
+def test_retained_private_specs_use_actual_registered_ports_and_stay_unpublished(monkeypatch, flux3_api):
     import modules
     from modiff import studio_execution_specs as specs
     from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+    private_ids = {f'{variant}:modular:{mode}:v1'
+                   for variant in ('flux3-klein', 'flux3-klein-base')
+                   for mode in ('text-to-image', 'edit-image')}
     selected = {key: value for key, value in specs.STUDIO_EXECUTION_SPEC_DEFINITIONS.items()
-                if value['modelType'] in {'Flux3ModularPipeline', 'Flux3DistilledModularPipeline'}}
-    assert len(selected) == 4
+                if value['profile']['id'] in {'flux3-klein:modular', 'flux3-klein-base:modular'}}
+    assert set(selected) == private_ids
     monkeypatch.setattr(specs, 'STUDIO_EXECUTION_SPEC_DEFINITIONS', selected)
     validated = specs.validate_studio_execution_specs(modules.MODULE_MAP, include_private=True)
     assert len(validated) == 4
@@ -337,3 +340,40 @@ def test_component_reuse_respects_selected_precision_without_mutating_tensors(fl
     component.to(dtype=torch.bfloat16)
     assert loaders.reusable_component_ids(dtype=policy, **common) == []
     assert loaders.reusable_component_ids(dtype=torch.bfloat16, **common)
+
+
+def test_current_public_four_specs_validate_registered_ports_without_optional_runtime(monkeypatch):
+    """Current discoverable declarations use real ports; authoring grants no fit/output proof."""
+    import modules
+    from modiff import studio_execution_specs as specs
+    from modiff.NodeBase import NodeBase
+    from modiff.optional_runtimes import DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID
+    from modules.ModularDiffusers import modular_utils
+
+    public_profiles = {'flux3-klein:official-provider:v1', 'flux3-klein-base:official-provider:v1'}
+    private_profiles = {'flux3-klein:modular', 'flux3-klein-base:modular'}
+    expected = {f'{profile}:{mode}:v1' for profile in public_profiles
+                for mode in ('text-to-image', 'edit-image')}
+    # Keep exact legacy definitions for the maintained replacement validator;
+    # ordinary validation must select only the four current public definitions.
+    selected = {key: value for key, value in specs.STUDIO_EXECUTION_SPEC_DEFINITIONS.items()
+                if value['profile']['id'] in public_profiles | private_profiles}
+    assert len(selected) == 8
+    monkeypatch.setattr(specs, 'STUDIO_EXECUTION_SPEC_DEFINITIONS', selected)
+    def forbidden(*_args, **_kwargs):
+        pytest.fail('Public spec validation attempted node construction or installed pipeline resolution')
+    monkeypatch.setattr(NodeBase, '__init__', forbidden)
+    monkeypatch.setattr(modular_utils, 'pipeline_class_from_model_type', forbidden)
+    validated = specs.validate_studio_execution_specs(modules.MODULE_MAP)
+    assert {row['id'] for row in validated} == expected
+    assert len(validated) == 4
+    for row in validated:
+        definition = selected[row['id']]
+        profile, capability = definition['profile'], definition['capability']
+        assert profile['public'] is True and profile['live_proof'] is False
+        assert row['executionProfileId'] in public_profiles
+        assert row['requiredDiffusersProvider'] == DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID
+        assert capability['executionStatus'] == 'expert_only'
+        assert capability['qualificationStatus'] == 'runtime-required'
+        assert all(capability[key] is False for key in (
+            'autoEligible', 'templateEligible', 'galleryEligible', 'liveProof'))

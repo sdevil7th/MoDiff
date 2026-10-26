@@ -76,7 +76,11 @@ def test_native_prose_punctuation_math_quoted_styles_and_whitespace_are_not_sani
     assert validate_append_native_text(value) == value
 
 
-@pytest.mark.parametrize('native', ['x' * 131073, '\U0001f98a' * 65537, '\u00e9' * 50000])
+@pytest.mark.parametrize(
+    'native',
+    ['x' * 131073, '\U0001f98a' * 65537, '\u00e9' * 50000],
+    ids=['ascii-131073', 'fox-65537', 'accented-e-50000'],
+)
 def test_native_caption_and_ascii_proposal_budgets_are_independent(native):
     with pytest.raises(ValueError):
         compose_append_details(AUTHORED, LAYOUT, native, image_count=1)

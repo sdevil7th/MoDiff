@@ -879,7 +879,13 @@ def artifact_cache_status(repo_id: str, local_models: list[dict[str, Any]] | Non
     endpoints must use the same shard/plan validation as Auto readiness instead
     of treating every scanned revision as installed.
     """
-    return _artifact_cache_status(repo_id, local_models)
+    status = _artifact_cache_status(repo_id, local_models)
+    if isinstance(_local_model_record(local_models, repo_id), dict):
+        from utils.huggingface import observed_catalog_cache_selections
+        observations = observed_catalog_cache_selections(repo_id)
+        if observations is not None:
+            status["observedSelections"] = observations
+    return status
 
 
 def artifact_revision_cache_status(

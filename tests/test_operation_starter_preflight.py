@@ -6,9 +6,26 @@ from types import SimpleNamespace
 import pytest
 
 
+@pytest.mark.parametrize('pipeline,profile', [
+    ('Flux3ModularPipeline', 'flux3-klein-base:modular'),
+    ('Flux3DistilledModularPipeline', 'flux3-klein:modular'),
+])
+@pytest.mark.parametrize('task', ['text_to_image', 'edit_image'])
+def test_retired_selected_starter_requires_explicit_public_rebind(pipeline, profile, task):
+    from modules import MODULE_MAP
+    from modiff.operation_catalog import build_operation_catalog
+    from modiff.operation_starters import resolve_operation_starter
+    contracts, _ = build_operation_catalog(MODULE_MAP, [], catalog_resolver=lambda: {})
+    selection = {'pipelineClass': pipeline, 'task': task, 'executionProfileId': profile}
+    before = deepcopy(selection)
+    with pytest.raises(ValueError, match='Rebind explicitly'):
+        resolve_operation_starter(MODULE_MAP, contracts, selection)
+    assert selection == before
+
+
 @pytest.mark.parametrize('pipeline,profile,repo', [
-    ('Flux3ModularPipeline', 'flux3-klein-base:modular', 'black-forest-labs/flux-3-image-klein-base'),
-    ('Flux3DistilledModularPipeline', 'flux3-klein:modular', 'black-forest-labs/flux-3-image-klein'),
+    ('Flux3ModularPipeline', 'flux3-klein-base:official-provider:v1', 'black-forest-labs/flux-3-image-klein-base'),
+    ('Flux3DistilledModularPipeline', 'flux3-klein:official-provider:v1', 'black-forest-labs/flux-3-image-klein'),
 ])
 @pytest.mark.parametrize('task', ['text_to_image', 'edit_image'])
 def test_fresh_selected_starter_passes_component_preflight_without_weight_loading(

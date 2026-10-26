@@ -2391,6 +2391,19 @@ Uploads are written under configured data subdirectories and share the configure
   fails instead of reporting a previously installed model as ready. App-owned
   Hub downloads, cache deletions, and incomplete-download cleanup advance the
   same generation after their mutation completes.
+  Full and compact `/hf_cache` records may additionally include
+  `observed_selections`: `{revision, files, complete}` entries for reviewed
+  catalog pipeline selections with a `modular_model_index.json` or
+  `model_index.json` marker. Each entry checks exact file sizes and managed
+  snapshot/blob containment in the one snapshot selected by normal loader
+  cache precedence. Separate roots are never combined. These bounded metadata
+  checks do not read/hash model payloads, install files, or qualify execution.
+  `planned_revision` and `planned_files` remain historical download-receipt
+  fields. A current exact observation takes precedence over that receipt,
+  including when an unrelated native selection is incomplete. Missing or
+  invalid selected files remain unready; ordinary loaders still verify their
+  required content. Artifact layouts without this additive observation retain
+  their existing inventory contract.
 - Studio requests `GET /health`, `GET /runtime/optional-runtimes`, and
   `GET /model_capabilities` alongside model discovery. Hardware/package probes,
   optional-runtime inspection, capability construction, and JSON encoding for

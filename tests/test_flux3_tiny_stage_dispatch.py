@@ -15,10 +15,6 @@ import pytest
 import torch
 
 
-if find_spec("diffusers.modular_pipelines.flux3") is None:
-    pytest.skip("Flux3 tiny stages require the separately reviewed pinned Diffusers source.", allow_module_level=True)
-
-
 class FixedTextProcessor:
     """Bounded deterministic text IDs; deliberately not an AutoProcessor proof."""
 
@@ -35,6 +31,8 @@ class FixedTextProcessor:
 
 @pytest.fixture
 def tiny_stage_owner(monkeypatch, tmp_path):
+    if find_spec("diffusers.modular_pipelines.flux3") is None:
+        pytest.skip("Flux3 tiny stages require the separately reviewed pinned Diffusers source.", allow_module_level=True)
     from diffusers import AutoencoderKLFlux2, ComponentsManager, Flux3Transformer2DModel
     from transformers import Qwen3VLConfig, Qwen3VLForConditionalGeneration
     import modules.ModularDiffusers as modular

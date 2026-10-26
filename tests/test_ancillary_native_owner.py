@@ -175,31 +175,49 @@ def native_document(graph, modules, root='image-block', *, lora_siblings=False):
     return value
 
 
-def test_ordinary_private_starter_capture(tmp_path, monkeypatch):
-    """Real DTO producer with constructor traps; public refusal stays intact."""
+def test_retired_private_starter_refuses_even_with_visibility_override(monkeypatch):
+    """Visibility cannot bypass the exact retired-profile authoring guard."""
     import modules
+    from modiff.ancillary_execution import PRIVATE_PARENTS
     from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+    from modiff.operation_catalog import build_operation_catalog
+    from modiff.operation_starters import resolve_operation_starter
+    from modiff.NodeBase import NodeBase
+    contracts, _ = build_operation_catalog(modules.MODULE_MAP, [], catalog_resolver=lambda: {})
+    identity, parent = next(iter(PRIVATE_PARENTS.items()))
+    selection = {'pipelineClass': parent['pipelineClass'], 'task': parent['task'],
+                 'executionProfileId': parent['profileId'], 'authoringRecipeId': identity}
+    before = deepcopy(selection)
+    monkeypatch.setattr(NodeBase, '__init__', lambda *_args, **_kwargs: pytest.fail('metadata constructed a node'))
+    with pytest.raises(ValueError, match='Rebind explicitly'):
+        resolve_operation_starter(modules.MODULE_MAP, contracts, selection)
+    profile = DIFFUSERS_EXECUTION_PROFILES[parent['profileId']]
+    monkeypatch.setitem(DIFFUSERS_EXECUTION_PROFILES, profile.id, replace(profile, public=True))
+    with pytest.raises(ValueError, match='Rebind explicitly'):
+        resolve_operation_starter(modules.MODULE_MAP, contracts, selection)
+    assert selection == before
+
+
+def test_ordinary_current_public_starter_capture(tmp_path, monkeypatch):
+    """Current public DTO producer; no node construction or execution grant."""
+    import modules
     from modiff.operation_catalog import build_operation_catalog
     from modiff.operation_starters import resolve_operation_starter
     from modiff.server import WebServer
     from modiff.NodeBase import NodeBase
     contracts, _ = build_operation_catalog(modules.MODULE_MAP, [], catalog_resolver=lambda: {})
-    from modiff.ancillary_execution import PRIVATE_PARENTS
-    identity, parent = next(iter(PRIVATE_PARENTS.items()))
+    from modiff.ancillary_execution import PUBLIC_PARENTS
+    identity = 'flux3-klein:official:text-to-image:prompt-preview-fp32:v1'
+    parent = PUBLIC_PARENTS[identity]
     selection = {'pipelineClass': parent['pipelineClass'], 'task': parent['task'],
                  'executionProfileId': parent['profileId'], 'authoringRecipeId': identity}
     monkeypatch.setattr(NodeBase, '__init__', lambda *_args, **_kwargs: pytest.fail('metadata constructed a node'))
-    with pytest.raises(ValueError, match='execution profile'):
-        resolve_operation_starter(modules.MODULE_MAP, contracts, selection)
-    # Capture the actual ordinary capability producer before the private
-    # starter-only fixture override. Its contract-only eligibility stays closed.
+    # Current Expert authoring visibility does not imply Auto or template qualification.
     capability_app = WebServer(modules.MODULE_MAP, work_dir=str(tmp_path), data_dir=str(tmp_path))
     public_payload = capability_app._build_model_capabilities_payload('flux3')
     selected_capability = next(item for item in public_payload['capabilities']
         if item['modelType'] == parent['pipelineClass'])
     assert selected_capability['autoEligible'] is False and selected_capability['templateEligible'] is False
-    profile = DIFFUSERS_EXECUTION_PROFILES[parent['profileId']]
-    monkeypatch.setitem(DIFFUSERS_EXECUTION_PROFILES, profile.id, replace(profile, public=True))
     payload = resolve_operation_starter(modules.MODULE_MAP, contracts, selection)
     app = object.__new__(WebServer)
     payload['nodes'] = [{'operation': node['operation'],
@@ -213,14 +231,14 @@ def test_ordinary_private_starter_capture(tmp_path, monkeypatch):
     assert verification['systemPromptsSha256'].startswith('sha256:')
     assert verification['chatTemplateSha256'].startswith('sha256:')
     assert not {'device', 'dtype', 'quantization'} & set(verification['modelReceipt']['runtime'])
-    path = Path(__import__('os').environ['TEMP']).parent / 'ordinary-private-starter-capture.json'
-    path.write_text(json.dumps({'proofScope': 'Constructor-trapped ordinary metadata producer; private profile selection override only; no publication/admission.',
+    path = tmp_path / 'ordinary-current-public-starter-capture.json'
+    path.write_text(json.dumps({'proofScope': 'Constructor-trapped ordinary current public metadata producer; no execution, qualification or publication grant.',
         'selection': selection, 'response': payload, 'operationContracts': contracts,
         'selectedModelCapability': selected_capability,
         'ancillaryNodeRegistry': {key: app._describe_registered_node(*key.rsplit('.', 1),
             modules.MODULE_MAP[key.rsplit('.', 1)[0]][key.rsplit('.', 1)[1]])
             for _role, key, _x, _y in child['roles']},
-        'selectedModelCapabilityProvenance': 'Actual ordinary _build_model_capabilities_payload before the private starter fixture override; eligibility remains contract-only.'}, indent=2) + '\n', encoding='utf-8')
+        'selectedModelCapabilityProvenance': 'Actual ordinary _build_model_capabilities_payload; Auto and template eligibility remain false.'}, indent=2) + '\n', encoding='utf-8')
     assert path.is_file()
 
 
@@ -240,9 +258,11 @@ def test_actual_client_split_stage_metadata_has_native_association(fault):
     """Real factory/group/export context only; not dispatcher or model proof."""
     import modules
     from modiff.ancillary_execution import native_parent_association
-    witness = json.loads((Path(__file__).parent / 'fixtures/flux3-split-stages-client.v1.json').read_text())
+    witness = json.loads((Path(__file__).parent / 'fixtures/flux3-public-split-stages-client.v1.json').read_text(encoding='utf-8'))
     graph = deepcopy(witness['apiGraph'])
-    parent = ancillary.parent_for(modules.MODULE_MAP)
+    from modiff.ancillary_execution import resolve_parent
+    parent = resolve_parent(modules.MODULE_MAP,
+        'flux3-klein:official:text-to-image:prompt-preview-fp32:v1')
     child = parent['ancillaryOperations'][0]
     binding = graph['runtimeHints']['executionPurpose']['bindings'][0]
     # This fixture is a fresh real client export of the current producer.
@@ -719,8 +739,10 @@ def test_private_preview_never_coerces_malformed_layout_to_none(layout):
 def test_actual_i2i_factory_stages_bind_only_declared_media_branch(fault):
     import modules
     from modiff.ancillary_execution import native_parent_association, validate_execution_purpose
-    witness = json.loads((Path(__file__).parent / 'fixtures/flux3-i2i-split-stages-client.v1.json').read_text())
-    parent = ancillary.parent_for(modules.MODULE_MAP, 1)
+    witness = json.loads((Path(__file__).parent / 'fixtures/flux3-public-i2i-split-stages-client.v1.json').read_text(encoding='utf-8'))
+    from modiff.ancillary_execution import resolve_parent
+    parent = resolve_parent(modules.MODULE_MAP,
+        'flux3-klein:official:edit-image:prompt-preview-fp32:v1')
     declaration = parent['ancillaryOperations'][0]
     assert witness['binding']['parent'] == {**declaration['parent'], 'authoringContentHash': parent['contentHash']}
     assert witness['binding']['contentHash'] == declaration['contentHash']

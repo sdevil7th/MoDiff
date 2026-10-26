@@ -730,7 +730,11 @@ def test_rejected_diagnostic_never_bypasses_native_observation_seals(actual_pup,
     assert metadata_response(app, field='proposal_diagnostic').status in (400, 409)
 
 
-@pytest.mark.parametrize('value', ['', None, object(), 'x' * 262145, chr(0xD800)])
+@pytest.mark.parametrize(
+    'value',
+    ['', None, object(), 'x' * 262145, chr(0xD800)],
+    ids=['empty', 'none', 'object', 'ascii-262145', 'unpaired-surrogate'],
+)
 def test_diagnostic_omits_unbounded_or_nonunicode_output_without_truncation(value):
     result = {'systemPromptMode': 't2i_bbox', 'applicationAllowed': False, 'text': value}
     assert transport.diagnostic_output(result) is None

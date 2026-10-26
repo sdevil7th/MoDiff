@@ -18856,12 +18856,15 @@ for _variant in ('flux3-klein', 'flux3-klein-base'):
         _NORMAL_OPERATION_RAW_AUTHORING_CHOICES[_raw] = (
             (_raw, 'Raw wording: FP32'), (_nf4, 'Raw wording: BF16 + NF4'))
         _constrained = _prefix + 'constrained-fp32:v1'
+        _append_nf4 = _prefix + 'append-nf4:v1'
         _NORMAL_OPERATION_LAYOUT_AUTHORING_CHOICES[_append] = (
             (_append, 'Append wording: preserve authored layout'),
             (_constrained, 'Generate constrained table: FP32 (Expert)'),
+            (_append_nf4, 'Append wording: BF16 + NF4, preserve authored layout'),
         )
         _NORMAL_OPERATION_FIXED_PROVIDER_RECIPES.update({
-            _append: 'fp32-none', _raw: 'fp32-none', _nf4: 'bf16-nf4', _constrained: 'fp32-none'})
+            _append: 'fp32-none', _raw: 'fp32-none', _nf4: 'bf16-nf4', _constrained: 'fp32-none',
+            _append_nf4: 'bf16-nf4'})
 
 
 def _ancillary_parent(identity):
@@ -18904,8 +18907,13 @@ def studio_operation_authoring_selections(profiles: list[dict[str, Any]]) -> lis
         append_definition = _OPERATION_AUTHORING_RECIPES.get(identity)
         variants = [(identity, "append-details-preserve-layout-v1"), (raw_identity, None)]
         variants.extend((choice, None) for choice in choice_ids if choice != raw_identity)
-        variants.extend((choice, "constrained-authored-table-v1")
-                        for choice in layout_choice_ids if choice != identity)
+        for choice in layout_choice_ids:
+            if choice == identity:
+                continue
+            layout_policy = (_ancillary_parent(choice) or {}).get("layoutPolicy")
+            if layout_policy not in ("append-details-preserve-layout-v1", "constrained-authored-table-v1"):
+                raise ValueError("The normal layout authoring choice has no reviewed layout policy.")
+            variants.append((choice, layout_policy))
         for selected_identity, layout_policy in variants:
             definition = _OPERATION_AUTHORING_RECIPES.get(selected_identity)
             parent = _ancillary_parent(selected_identity)

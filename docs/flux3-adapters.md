@@ -388,6 +388,22 @@ automatic text feed or Apply. Both the caption and complete proposal retain thei
 existing finite Unicode, UTF-8 and JSON budgets. No native-model acceptance is
 claimed by this source change.
 
+Current public authoring additionally offers an explicit **Append wording:
+BF16 + NF4, preserve authored layout** identity for each parent and task. It uses
+the same immutable PUP revision and reviewed bitsandbytes NF4 policy as the raw
+NF4 recipe, with fixed BF16/CUDA/NF4 controls and a 4096-token input limit. The
+existing FP32 append default and earlier declarations remain unchanged. This is
+an explicit precision selection, never a fallback; both modes use the exact
+caption-prefix and unchanged-layout composition above, not model-generated
+geometry. The ordinary runtime and resource checks still decide admission.
+
+An enabled historical client binding may name a retired private profile. Normal
+Disable may remove only its exclusively owned built-in enhancement leaves after
+bounded persisted ownership and complete-edge validation, preserving the current
+authored pair and reference source. This removal grants no retired execution.
+The operator must then select the current public model through the ordinary model
+change review before choosing and enabling a current enhancement mode.
+
 
 ### Discoverable Expert authoring and an optional official provider
 

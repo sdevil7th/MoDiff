@@ -114,7 +114,8 @@ def test_new_choices_are_explicit_bounded_disjoint_and_append_remains_default(mo
 
 def test_existing_seventeen_private_and_twelve_public_parent_dtos_do_not_depend_on_new_aliases(monkeypatch):
     import modules
-    identities = [*ancillary.PRIVATE_PARENTS, *(identity for identity in ancillary.PUBLIC_PARENTS if identity not in CONSTRAINED)]
+    identities = [*ancillary.PRIVATE_PARENTS, *(identity for identity in ancillary.PUBLIC_PARENTS
+                 if identity not in CONSTRAINED and ':prompt-preview-append-nf4:' not in identity)]
     assert len(identities) == 29
     actual = {identity: ancillary.resolve_parent(modules.MODULE_MAP, identity) for identity in identities}
     with monkeypatch.context() as old:
