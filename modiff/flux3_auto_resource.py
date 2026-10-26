@@ -14,6 +14,7 @@ from modiff.artifact_weight_memory import (
     artifact_parameter_conversion_reserve,
 )
 from modiff.modular_weight_formats import _header, _selected_recipe
+from modiff.runtime_profile import normalized_arch
 
 
 RECIPE_ID = 'flux3-fp8r-windows-model-cpu:v1'
@@ -113,7 +114,8 @@ def workload_missing(form, hardware, profile_id):
     """Validate the admitted boundary without rewriting any authored value."""
     accelerator = hardware.get('accelerator') or {}
     if (profile_id not in PUBLIC_PROFILES or hardware.get('platform') != 'windows'
-            or hardware.get('architecture') != 'x86_64' or accelerator.get('kind') != 'cuda'
+            or normalized_arch(str(hardware.get('architecture') or 'unknown')) != 'x86_64'
+            or accelerator.get('kind') != 'cuda'
             or accelerator.get('backend', 'cuda') != 'cuda'
             or accelerator.get('memoryKind') != 'dedicated'
             or hardware.get('runtimeBackend') == 'rocm' or accelerator.get('sharedMemory') is True

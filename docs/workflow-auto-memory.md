@@ -17,6 +17,10 @@ NVFP4, additional quantization, other placements and larger workloads receive
 no permission from this declaration. Connected LoRAs retain their independent
 resource and placement restrictions.
 
+Architecture uses the existing runtime normalization, including Windows' AMD64
+spelling for x86_64. Missing or unknown architecture remains unsupported rather
+than borrowing the planning process's host architecture.
+
 Reference editing requires one or two actual prepared PIL images, each at most
 1024 pixels per side, with at most 512² + 1024² total pixels after the pinned
 16-pixel center crop. Planning inspects the exact direct local Load Image source

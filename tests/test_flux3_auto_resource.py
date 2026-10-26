@@ -143,6 +143,60 @@ def test_actual_parent_task_planner_preserves_authored_graph(actual_plan, identi
     assert g == before
 
 
+def windows_reported_hardware(tmp_path, **system_changes):
+    """Use the ordinary hardware report's Windows spelling, not an Auto fixture alias."""
+    report = {'schema_version': 2,
+        'system': {'platform': 'win32', 'architecture': 'AMD64',
+                   'ram_total': 32 * 1024**3, 'ram_available': 28 * 1024**3, **system_changes},
+        'devices': [{'type': 'cuda', 'index': 0, 'device': 'cuda:0', 'backend': 'cuda',
+                     'vendor': 'nvidia', 'memory_kind': 'dedicated',
+                     'planning_memory_total': 16 * 1024**3, 'planning_memory_free': 14 * 1024**3}]}
+    return auto_resource._hardware_snapshot({'hardware': report}, tmp_path)
+
+
+@pytest.mark.parametrize('identity', PROFILES)
+@pytest.mark.parametrize('task', ('text_to_image', 'edit_image'))
+def test_windows_amd64_hardware_snapshot_admits_both_public_parent_tasks(actual_plan, tmp_path, identity, task):
+    from PIL import Image
+    plan, hardware, _ = actual_plan
+    hardware.clear()
+    hardware.update(windows_reported_hardware(tmp_path))
+    assert hardware['platform'] == 'windows' and hardware['architecture'] == 'amd64'
+    assert hardware['accelerator']['kind'] == hardware['accelerator']['backend'] == 'cuda'
+    assert hardware['accelerator']['memoryKind'] == 'dedicated'
+    g = flux_graph(identity, task)
+    before = deepcopy(g)
+    images = [Image.new('RGB', (512, 512))] if task == 'edit_image' else None
+    result = plan(g, images)
+    assert result['canAutoRun'], result['issues']
+    assert result['patches'] == [] and g == before
+
+
+@pytest.mark.parametrize('identity', PROFILES)
+@pytest.mark.parametrize('field,value', [
+    ('architecture', 'ARM64'), ('architecture', 'aarch64'), ('architecture', 'unknown'),
+    ('architecture', None), ('architecture', ''), ('platform', 'linux'),
+    ('backend', 'rocm'), ('memoryKind', 'shared'), ('memoryKind', 'unified'),
+    ('runtimeBackend', 'rocm'), ('sharedMemory', True), ('device', 'cuda:1'),
+])
+def test_windows_alias_keeps_other_hardware_outside_bounded_recipe(actual_plan, tmp_path, identity, field, value):
+    plan, hardware, _ = actual_plan
+    system_changes = {field: value} if field in ('architecture', 'platform') else {}
+    hardware.clear()
+    hardware.update(windows_reported_hardware(tmp_path, **system_changes))
+    g = flux_graph(identity, 'text_to_image')
+    if field == 'device':
+        g['nodes']['models']['params']['device']['value'] = value
+    elif field == 'runtimeBackend':
+        hardware[field] = value
+    elif field not in system_changes:
+        hardware['accelerator'][field] = value
+    before = deepcopy(g)
+    result = plan(g)
+    assert not result['canAutoRun'] and result['patches'] == []
+    assert g == before
+
+
 def test_unknown_reference_file_refuses_before_submission(actual_plan):
     plan, _, _ = actual_plan
     result = plan(flux_graph(PROFILES[0], 'edit_image'))
