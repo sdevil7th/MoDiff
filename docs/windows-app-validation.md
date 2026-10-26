@@ -263,7 +263,7 @@ scheduler, dtype/quantization/offload, attention/VAE/adapters, ordered input/mas
 bytes, crop/strength/canvas/stitch. No shorter recipe or hidden policy substitution.
 Select exact supported profiles; this matrix gives priority examples, not full
 coverage of all templates or all admitted models. Use the matching client
-[current template inventory](https://github.com/sdevil7th/MoDiff-client/blob/main/docs/image-template-workflows.md#current-template-inventory)
+[current template inventory](https://github.com/sdevil7th/MoDiff-client/blob/fix-ui-ux-issues/docs/image-template-workflows.md#current-template-inventory)
 and live capability/task contracts to enumerate every intended test, including
 other admitted SDXL/SD3 or media routes. Each untested row stays explicitly unrun:
 

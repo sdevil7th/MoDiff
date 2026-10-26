@@ -84,7 +84,7 @@ PIPELINE_CLASS = "MiniMaxMusic3ModularPipeline"
 WORKFLOW_ID = "default"
 
 
-@unittest.skipUnless(importlib.util.find_spec("transformers"), "requires the staged optional Transformers runtime")
+@unittest.skipUnless(importlib.util.find_spec("transformers"), "requires the base Transformers installation")
 def test_official_stage_resolves_flattened_selected_denoise_without_other_branches():
     from diffusers.modular_pipelines import SequentialPipelineBlocks
     from diffusers.modular_pipelines.ernie_image.modular_blocks_ernie_image import ErnieImageAutoBlocks

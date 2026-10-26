@@ -16,6 +16,7 @@ from modiff.diffusers_offload import (
     OFFLOAD_MODE_SEQUENTIAL_CPU,
     apply_component_group_offload,
     apply_model_offload,
+    assert_components_manager_offload_ownership,
     apply_pipeline_offload,
     configure_components_manager_offload,
     normalize_execution_device,
@@ -394,6 +395,235 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertEqual(result.method, "components_manager_no_offload")
         self.assertFalse(manager._auto_offload_enabled)
 
+    def test_resident_request_preserves_another_owners_real_offload_hook(self):
+        from diffusers import ComponentsManager
+        from diffusers.modular_pipelines import components_manager as upstream_manager
+
+        manager = ComponentsManager()
+        component = torch.nn.Linear(2, 2)
+        component._modiff_offload_mode = OFFLOAD_MODE_MODEL_CPU
+        component._modiff_execution_device = "cpu:0"
+        manager.add("transformer", component, collection="surviving-owner")
+        # Genuine installed manager and Accelerate hooks, with the accelerator
+        # telemetry query isolated so this ownership regression runs on CPU.
+        with patch.object(upstream_manager.TorchDeviceBackend, "mem_get_info", return_value=(1024, 2048)):
+            manager.enable_auto_cpu_offload(device="cpu")
+        wrapper = manager.model_hooks[0]
+        hook = component._hf_hook
+        with self.assertRaisesRegex(ValueError, "live model owner"):
+            configure_components_manager_offload(manager, mode=OFFLOAD_MODE_NONE, device="cpu")
+        self.assertTrue(manager._auto_offload_enabled)
+        self.assertEqual(manager.model_hooks, [wrapper])
+        self.assertIs(component._hf_hook, hook)
+        self.assertEqual(manager.collections["surviving-owner"], {wrapper.model_id})
+        wrapper.remove()
+
+    def test_shared_owner_cannot_disable_hooks_but_exclusive_owner_can(self):
+        from diffusers import ComponentsManager
+        from diffusers.modular_pipelines import components_manager as upstream_manager
+
+        for shared in (False, True):
+            with self.subTest(shared=shared):
+                manager = ComponentsManager()
+                component = torch.nn.Linear(2, 2)
+                component._modiff_offload_mode = OFFLOAD_MODE_MODEL_CPU
+                component._modiff_execution_device = "cpu:0"
+                component_id = manager.add("transformer", component, collection="changing-owner")
+                if shared:
+                    manager.add("transformer", component, collection="surviving-owner")
+                with patch.object(upstream_manager.TorchDeviceBackend, "mem_get_info", return_value=(1024, 2048)):
+                    manager.enable_auto_cpu_offload(device="cpu")
+                hook = component._hf_hook
+                if shared:
+                    with self.assertRaisesRegex(ValueError, "live model owner"):
+                        configure_components_manager_offload(
+                            manager, mode=OFFLOAD_MODE_NONE, device="cpu", node_id="changing-owner",
+                        )
+                    self.assertIs(component._hf_hook, hook)
+                    self.assertEqual(manager.collections["surviving-owner"], {component_id})
+                    manager.model_hooks[0].remove()
+                else:
+                    configure_components_manager_offload(
+                        manager, mode=OFFLOAD_MODE_NONE, device="cpu", node_id="changing-owner",
+                    )
+                    self.assertFalse(manager._auto_offload_enabled)
+                    self.assertFalse(hasattr(component, "_hf_hook"))
+                    self.assertEqual(manager.collections["changing-owner"], {component_id})
+
+    def test_matching_live_owner_policy_preserves_hooks_without_reconfiguration(self):
+        from diffusers import ComponentsManager
+        from diffusers.modular_pipelines import components_manager as upstream_manager
+
+        manager = ComponentsManager()
+        component = torch.nn.Linear(2, 2)
+        component._modiff_offload_mode = OFFLOAD_MODE_MODEL_CPU
+        component._modiff_execution_device = "cuda:0"
+        manager.add("transformer", component, collection="surviving-owner")
+        # Installing an actual CUDA-target hook leaves these tiny weights on
+        # CPU. No forward or CUDA allocation occurs in this contract test.
+        with patch.object(upstream_manager.TorchDeviceBackend, "mem_get_info", return_value=(1024, 2048)):
+            manager.enable_auto_cpu_offload(device="cuda:0")
+        wrapper, hook = manager.model_hooks[0], component._hf_hook
+        with patch.object(manager, "enable_auto_cpu_offload", side_effect=AssertionError("must preserve hooks")):
+            result = configure_components_manager_offload(
+                manager, mode=OFFLOAD_MODE_MODEL_CPU, device="cuda", node_id="new-owner",
+            )
+        self.assertTrue(result.applied)
+        self.assertIs(component._hf_hook, hook)
+        self.assertEqual(manager.model_hooks, [wrapper])
+        wrapper.remove()
+
+    def test_enabling_global_hooks_does_not_reconfigure_resident_or_stale_peers(self):
+        from diffusers import ComponentsManager
+
+        for mode, enabled in ((OFFLOAD_MODE_NONE, False), (OFFLOAD_MODE_GROUP_CPU, False),
+                              (OFFLOAD_MODE_MODEL_CPU, True)):
+            with self.subTest(mode=mode, enabled=enabled):
+                manager = ComponentsManager()
+                component = torch.nn.Linear(2, 2)
+                component._modiff_offload_mode = mode
+                component._modiff_execution_device = "cuda:0"
+                component_id = manager.add("transformer", component, collection="surviving-owner")
+                manager._auto_offload_enabled = enabled
+                manager._auto_offload_device = torch.device("cuda:0") if enabled else None
+                with (patch.object(manager, "enable_auto_cpu_offload", side_effect=AssertionError("peer must not move")),
+                      self.assertRaisesRegex(ValueError, "live model owner")):
+                    configure_components_manager_offload(
+                        manager, mode=OFFLOAD_MODE_MODEL_CPU, device="cuda:0", node_id="new-owner",
+                    )
+                self.assertEqual(manager.collections["surviving-owner"], {component_id})
+                self.assertIs(manager.components[component_id], component)
+                self.assertFalse(hasattr(component, "_hf_hook"))
+
+    def test_real_standalone_group_hooks_coexist_with_matching_global_hooks(self):
+        from diffusers import ComponentsManager
+        from diffusers.hooks.group_offloading import apply_group_offloading, _get_top_level_group_offload_hook
+        from diffusers.modular_pipelines import components_manager as upstream_manager
+
+        for recorded_mode in (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_SEQUENTIAL_CPU):
+            with self.subTest(recorded_mode=recorded_mode):
+                manager = ComponentsManager()
+                component = torch.nn.Linear(2, 2)
+                apply_group_offloading(component, onload_device=torch.device("cuda:0"), offload_type="leaf_level")
+                group_hook = _get_top_level_group_offload_hook(component)
+                component._modiff_offload_mode = recorded_mode
+                component._modiff_execution_device = "cuda"  # Accepted device alias.
+                component_id = manager.add("controlnet", component, collection="standalone-owner")
+                with patch.object(upstream_manager.TorchDeviceBackend, "mem_get_info", return_value=(1024, 2048)):
+                    configure_components_manager_offload(
+                        manager, mode=OFFLOAD_MODE_MODEL_CPU, device="cuda:0", node_id="connected-owner",
+                    )
+                self.assertTrue(manager._auto_offload_enabled)
+                self.assertIs(_get_top_level_group_offload_hook(component), group_hook)
+                self.assertEqual(manager.collections["standalone-owner"], {component_id})
+                wrapper, global_hook = manager.model_hooks[0], component._hf_hook
+                result = configure_components_manager_offload(
+                    manager, mode=OFFLOAD_MODE_GROUP_CPU, device="cuda", node_id="next-group-owner",
+                )
+                self.assertEqual(result.method, "components_manager_preserved_cpu_offload")
+                self.assertIs(component._hf_hook, global_hook)
+                with self.assertRaisesRegex(ValueError, "live model owner"):
+                    configure_components_manager_offload(
+                        manager, mode=OFFLOAD_MODE_GROUP_CPU, device="cuda:1", node_id="wrong-device",
+                    )
+                self.assertIs(component._hf_hook, global_hook)
+                self.assertIs(_get_top_level_group_offload_hook(component), group_hook)
+                wrapper.remove()
+
+    def test_exclusive_owner_group_device_change_disables_old_global_target(self):
+        from diffusers import ComponentsManager
+        from diffusers.modular_pipelines import components_manager as upstream_manager
+
+        manager = ComponentsManager()
+        component = torch.nn.Linear(2, 2)
+        component._modiff_offload_mode = OFFLOAD_MODE_MODEL_CPU
+        component._modiff_execution_device = "cuda:0"
+        component_id = manager.add("transformer", component, collection="changing-owner")
+        with patch.object(upstream_manager.TorchDeviceBackend, "mem_get_info", return_value=(1024, 2048)):
+            manager.enable_auto_cpu_offload(device="cuda:0")
+        original_hook = component._hf_hook
+        for mode, device in ((OFFLOAD_MODE_SEQUENTIAL_CPU, "cuda:1"), (OFFLOAD_MODE_NONE, "cuda:0")):
+            with self.subTest(standalone_mode=mode, standalone_device=device):
+                with self.assertRaisesRegex(ValueError, "live model owner"):
+                    assert_components_manager_offload_ownership(
+                        manager, mode=mode, device=device, node_id="changing-owner", configure_global=False,
+                    )
+                self.assertIs(component._hf_hook, original_hook)
+        assert_components_manager_offload_ownership(
+            manager, mode=OFFLOAD_MODE_SEQUENTIAL_CPU, device="cuda", node_id="changing-owner", configure_global=False,
+        )
+        configure_components_manager_offload(
+            manager, mode=OFFLOAD_MODE_GROUP_CPU, device="cuda:1", node_id="changing-owner",
+        )
+        self.assertFalse(manager._auto_offload_enabled)
+        self.assertFalse(hasattr(component, "_hf_hook"))
+        self.assertEqual(manager.collections["changing-owner"], {component_id})
+
+    def test_connected_source_placement_is_checked_before_new_owner_allocation(self):
+        from diffusers import ComponentsManager
+        from diffusers.hooks.group_offloading import apply_group_offloading, _get_top_level_group_offload_hook
+        from diffusers.modular_pipelines import components_manager as upstream_manager
+
+        class StopBeforeAllocation(RuntimeError):
+            pass
+
+        for source_mode, requested_mode, rejected, name in (
+            (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_GROUP_CPU, True, "unet"),
+            (OFFLOAD_MODE_GROUP_DISK, OFFLOAD_MODE_GROUP_DISK, True, "unet"),
+            (OFFLOAD_MODE_MODEL_CPU, OFFLOAD_MODE_MODEL_CPU, False, "unet"),
+            (OFFLOAD_MODE_NONE, OFFLOAD_MODE_NONE, False, "unet"),
+            (OFFLOAD_MODE_NONE, OFFLOAD_MODE_GROUP_CPU, False, "controlnet"),
+        ):
+            with self.subTest(source_mode=source_mode, requested_mode=requested_mode):
+                manager = ComponentsManager()
+                component = torch.nn.Linear(2, 2)
+                device = "cpu" if source_mode == requested_mode == OFFLOAD_MODE_NONE else "cuda:0"
+                component._modiff_offload_mode = source_mode
+                component._modiff_execution_device = device
+                component._modiff_offload_node_id = "source-owner" if source_mode == OFFLOAD_MODE_GROUP_DISK else None
+                component_id = manager.add(name, component, collection="source-owner")
+                if source_mode == OFFLOAD_MODE_MODEL_CPU:
+                    with patch.object(upstream_manager.TorchDeviceBackend, "mem_get_info", return_value=(1024, 2048)):
+                        manager.enable_auto_cpu_offload(device=device)
+                elif source_mode == OFFLOAD_MODE_GROUP_DISK:
+                    apply_group_offloading(component, onload_device=device, offload_type="leaf_level")
+                original_hf_hook = getattr(component, "_hf_hook", None)
+                original_group_hook = _get_top_level_group_offload_hook(component)
+                node = ModelsLoader("connected-owner")
+                with (patch("modules.ModularDiffusers.loaders.components", manager),
+                      patch.object(node, "_effective_builtin_selector", return_value=({"source": "hub", "value": "test/model"}, "a" * 40)),
+                      patch.object(node, "_preflight_reviewed_builtin_selection", return_value=("hub", "test/model", "a" * 40, "model_index.json", {})),
+                      patch("modules.ModularDiffusers.loaders._reviewed_loader_component_outputs", return_value=("unet", "vae")),
+                      patch("modules.ModularDiffusers.loaders.configure_components_manager_offload", side_effect=StopBeforeAllocation("allocation boundary"))):
+                    expected = ValueError if rejected else StopBeforeAllocation
+                    message = "connected unet.*placement" if rejected else "allocation boundary"
+                    with self.assertRaisesRegex(expected, message):
+                        node.execute("StableDiffusionModularPipeline", {"source": "hub", "value": "test/model"},
+                                     device, torch.float32, **{name: {"model_id": component_id}},
+                                     offload_mode=requested_mode, auto_offload=requested_mode != OFFLOAD_MODE_NONE)
+                self.assertEqual(component._modiff_offload_mode, source_mode)
+                self.assertIs(getattr(component, "_hf_hook", None), original_hf_hook)
+                self.assertIs(_get_top_level_group_offload_hook(component), original_group_hook)
+                self.assertEqual(manager.collections["source-owner"], {component_id})
+                if manager.model_hooks:
+                    manager.model_hooks[0].remove()
+
+    def test_borrowed_component_metadata_retains_source_policy(self):
+        source = torch.nn.Linear(2, 2)
+        source._modiff_offload_mode = OFFLOAD_MODE_NONE
+        source._modiff_execution_device = "cpu"
+        source._modiff_offload_node_id = None
+        source._modiff_modular_runtime_policy = {"source": "unchanged"}
+        owner = type("Pipeline", (), {"components": {"controlnet": source}})()
+        record_pipeline_component_runtime_policy(
+            owner, offload_mode=OFFLOAD_MODE_GROUP_CPU, device="cuda:0", node_id="borrower",
+            excluded_component_names={"controlnet"}, runtime_policy={"attention_backend": "auto"},
+        )
+        self.assertEqual(source._modiff_offload_mode, OFFLOAD_MODE_NONE)
+        self.assertEqual(source._modiff_execution_device, "cpu")
+        self.assertIsNone(source._modiff_offload_node_id)
+        self.assertEqual(source._modiff_modular_runtime_policy, {"source": "unchanged"})
+
     def test_models_loader_cpu_contract_reaches_model_load_without_enabling_auto_offload(self):
         class StopAtModelLoad(RuntimeError):
             pass
@@ -756,7 +986,7 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         )
         self.assertEqual(list(transformer_only.quant_mapping.keys()), ["transformer"])
         if find_spec("transformers") is None:
-            with self.assertRaisesRegex(RuntimeError, "reviewed Transformers.*optional runtime"):
+            with self.assertRaisesRegex(RuntimeError, "Transformers.*required base installation"):
                 build_qwen_pipeline_quantization_config(
                     components=["transformer", "text_encoder"],
                     quantization_mode="bnb_4bit",

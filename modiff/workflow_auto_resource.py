@@ -1180,6 +1180,7 @@ def _build_workflow_auto_plan(
         candidate_graph["nodes"][patch["nodeId"]]["params"][patch["field"]]["value"] = patch["value"]
     captured = _RESOLVED_FIELDS.get() or {}
     resident_credit = {"systemRamBytes": 0, "vramBytes": 0}
+    credited_weight_storage = {}
     reused = []
     for owner in planned:
         owner["cacheKey"] = workflow_owner_cache_key(candidate_graph, owner["nodeId"], captured)
@@ -1208,6 +1209,7 @@ def _build_workflow_auto_plan(
         reused.append(owner["nodeId"])
         if cached.get('loadingPhaseReusable') is True:
             total['diskFreeBytes'] -= owner.get('parameterDiskAdditionalBytes', 0)
+        budgets = {}
         for key in resident_credit:
             if (key == 'vramBytes' and owner.get('parameterResidencyRequirements', {}).get(key)
                     and cached.get('loadingPhaseReusable') is not True):
@@ -1224,7 +1226,23 @@ def _build_workflow_auto_plan(
                     continue
             else:
                 budget -= gpu_loading_additional
-            resident_credit[key] += min(budget, int(_number(cached.get(key)) or 0))
+            budgets[key] = max(0, budget)
+        if isinstance(cached.get("weightStorage"), list):
+            for storage in cached["weightStorage"]:
+                if not isinstance(storage, dict):
+                    continue
+                identity, pool, size = storage.get("id"), storage.get("pool"), _number(storage.get("bytes"))
+                if not isinstance(identity, str) or pool not in budgets or size is None:
+                    continue
+                unused = max(0, int(size) - credited_weight_storage.get(identity, 0))
+                credit = min(budgets[pool], unused)
+                resident_credit[pool] += credit
+                budgets[pool] -= credit
+                credited_weight_storage[identity] = credited_weight_storage.get(identity, 0) + credit
+        else:
+            # Preserve callers with older aggregate-only private snapshots.
+            for key, budget in budgets.items():
+                resident_credit[key] += min(budget, int(_number(cached.get(key)) or 0))
     # Explicit budgets and verified parameter floors receive only actual live
     # storage credit. A machine tier alone contributes no cold-load bytes;
     # GPU-resident weights never receive credit against a CPU storage floor.
@@ -1265,6 +1283,27 @@ def _build_workflow_auto_plan(
             "Use separate sequential image stages, a reviewed working-memory recipe, "
             "or Custom memory to keep this workflow."
         )
+    # Model CPU offload belongs to the shared native ComponentsManager. A new
+    # resident owner would otherwise disable surviving CPU hooks, while
+    # enabling CPU offload would move/re-hook resident owners. Group hooks
+    # preserve their own placement alongside CPU hooks in installed Diffusers.
+    # Ample memory cannot make a resident-policy mutation safe.
+    managed_ids = {owner['nodeId'] for owner in planned
+                   if nodes[owner['nodeId']]['module'] == 'modules.ModularDiffusers'
+                   and nodes[owner['nodeId']]['action'] in {'ModelsLoader', 'AutoModelLoader'}}
+    managed_intervals = [owner for owner in schedule['owners'] if owner['ownerId'] in managed_ids]
+    mixed_pairs = [(first, second) for first in managed_intervals for second in managed_intervals
+                   if nodes[first['ownerId']]['action'] == 'ModelsLoader'
+                   and first['offloadMode'] == 'model_cpu' and second['offloadMode'] == 'none']
+    mixed_overlap = any(first['first'] <= second['last'] and second['first'] <= first['last']
+                        for first, second in mixed_pairs)
+    mixed_release_required = bool(mixed_pairs) and not mixed_overlap and not custom_nodes and bool(schedule['releases'])
+    if mixed_pairs and not mixed_release_required:
+        issues.append(
+            "Native model owners with incompatible global CPU offload policies must finish and release "
+            "before the next owner loads. Their lifetimes overlap or cannot be safely released. "
+            "Use separate sequential image stages or the same compatible offload policy."
+        )
     # Retain independent owners only when their complete combined working
     # envelope fits. Under pressure use the existing release/recheck schedule.
     # Unknown primary demands always need safe release, even when headroom fits.
@@ -1275,7 +1314,7 @@ def _build_workflow_auto_plan(
     )
     # Custom Python can retain references outside the graph. Its approval grants
     # execution, not a proof that early model eviction is safe.
-    use_schedule = unknown_release_required or (
+    use_schedule = unknown_release_required or mixed_release_required or (
         not custom_nodes and not retention_fits and len(planned) > 1 and bool(schedule["releases"]) and any(
             schedule["peak"][key] < total[key] for key in ("systemRamBytes", "vramBytes")
         )
