@@ -11,16 +11,21 @@ serves its bundled client and does not require a separate Vite development serve
 
 ## Native setup and launch
 
-For a fresh checkout, select the paired setup/workflow branch:
+For a fresh checkout, select the interim Windows candidate in both repositories:
 
 ```text
-git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
-git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+git clone --branch codex/windows-delivery-20261026 https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone --branch codex/windows-delivery-20261026 https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
 cd MoDiff
 ```
 
-These updates have not yet been released on `main`. Keep the backend and client
-on the same branch, or use the exact paired commits in the validation handoff.
+These updates have not yet been released on `main`. The reviewed application pair
+is backend `ae09c2014f01198d359a1310d63a1d8d619796be` and client
+`fd3d3dacbcda0b4f44ff23497276658f0233eea8`, reviewed on 27 October 2026. This is a
+candidate with model/hardware qualification limits, not an all-platform release.
+Record `git rev-parse HEAD` in both checkouts. A matching branch name alone does
+not establish compatibility after further updates: use the newly reviewed paired
+handoff, or check out these exact commits in separate checkouts to reproduce them.
 
 From the backend checkout, these commands work in Linux shells and Windows
 PowerShell without invoking repository installer scripts:

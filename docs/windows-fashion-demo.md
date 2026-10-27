@@ -7,11 +7,14 @@ with the handoff, not a mixture of old and new contracts.
 
 ## Update and launch
 
-In your existing MoDiff checkout, preserve uncommitted local work before switching:
+Use the interim Windows candidate and exact pair in the
+[developer setup guide](developer-setup.md#native-setup-and-launch). In an existing
+MoDiff checkout, preserve uncommitted work and stop its owned app at an idle
+boundary before switching source:
 
 ```powershell
 git fetch origin
-git switch fix-ui-ux-issues
+git switch codex/windows-delivery-20261026
 git pull --ff-only
 uv sync --extra cuda
 uv run --extra cuda python -m modiff.preflight --json --check-port 8088 --fail-on-error

@@ -23,15 +23,26 @@ Install Git, [uv](https://docs.astral.sh/uv/getting-started/installation/),
 Node.js `24.12.0`, and npm `11.6.2`. uv can provision Python 3.12.
 Use two terminals for the backend and the editable frontend.
 
-The setup and workflow updates described here are on `fix-ui-ux-issues` in both
-repositories. Select that branch until these changes are released on `main`.
+The interim Windows candidate is on `codex/windows-delivery-20261026` in both
+repositories. These updates are not released on `main`. The reviewed application
+pair is:
+
+| Repository    | Reviewed commit                            |
+| ------------- | ------------------------------------------ |
+| MoDiff        | `ae09c2014f01198d359a1310d63a1d8d619796be` |
+| MoDiff-client | `fd3d3dacbcda0b4f44ff23497276658f0233eea8` |
+
+These are the exact application revisions reviewed on 27 October 2026, not a claim
+that every model or hardware combination is qualified. Record `git rev-parse HEAD`
+in each checkout; if the branch advances, use its newly reviewed paired handoff.
+For an exact reproduction, check out the two commits above in separate checkouts.
 
 **Terminal 1 — backend:** clone both repositories into the same parent directory,
 then start the backend. These commands work in Linux shells and Windows PowerShell.
 
 ```text
-git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
-git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+git clone --branch codex/windows-delivery-20261026 https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone --branch codex/windows-delivery-20261026 https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
 cd MoDiff
 uv sync --extra cpu
 uv run --extra cpu python -m modiff.preflight --json --check-port 8088 --fail-on-error
@@ -95,8 +106,8 @@ client automatically.
 Linux or macOS:
 
 ```bash
-git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
-git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+git clone --branch codex/windows-delivery-20261026 https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone --branch codex/windows-delivery-20261026 https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
 cd MoDiff
 ./install.sh --accelerator auto --system-check
 ./install.sh --accelerator auto
@@ -106,8 +117,8 @@ cd MoDiff
 Windows PowerShell:
 
 ```powershell
-git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
-git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+git clone --branch codex/windows-delivery-20261026 https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone --branch codex/windows-delivery-20261026 https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
 cd MoDiff
 .\install.ps1 -Accelerator auto -SystemCheck
 .\install.ps1 -Accelerator auto
@@ -178,7 +189,7 @@ machine, or fast enough for practical use.
 7. Open **Gallery** after completion to inspect, download, restore, or reuse the
    output. Export important workflows instead of relying only on browser state.
 
-The client [Studio user guide](https://github.com/sdevil7th/MoDiff-client/blob/fix-ui-ux-issues/docs/studio-user-flow.md)
+The client [Studio user guide](https://github.com/sdevil7th/MoDiff-client/blob/codex/windows-delivery-20261026/docs/studio-user-flow.md)
 explains the complete guided workflow, Auto/Expert controls, Queue, Gallery,
 and recovery behavior.
 
