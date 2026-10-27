@@ -102,6 +102,9 @@ references and immutable revisions, and enabled custom-node code/dependency
 identities. Cataloged repositories reuse the reviewed pin. Unknown repositories
 require an explicit 40-character revision. Model selectors connected to other
 nodes require a literal pinned selection before this version can be exported.
+Custom component suppliers retain each component's own selected revision;
+every component needs a literal immutable pin, even for cataloged repositories.
+Component weight variants remain fixed package identity fields.
 
 This is a strict observed-environment snapshot, not an automatic environment
 installer or a claim of bit-identical images across devices. Recreate the same

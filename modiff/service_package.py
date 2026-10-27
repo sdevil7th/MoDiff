@@ -31,7 +31,8 @@ SECRET_KEY = re.compile(
     r"(?:^token$|password|secret|api[_-]?key|access[_-]?token|hf[_-]?token|authorization|credential)", re.I
 )
 AUTHORITY = re.compile(
-    r"revision|repo|model|pipeline|class|identity|code|token|secret|password|adapter|lora|reviewed_variant|execution_profile|workflow_id|block_path|subfolder|^variant$",
+    r"revision|repo|model|pipeline|class|identity|code|token|secret|password|adapter|lora|reviewed_variant|execution_profile|workflow_id|block_path|subfolder|^variant$"
+    r"|^source__[A-Za-z_][A-Za-z0-9_]{0,127}__variant\Z",
     re.I,
 )
 MODEL_KEY = re.compile(r"(?:repo_id|model_id|model_name|model_path|pretrained_model_name_or_path)\Z")
@@ -272,6 +273,26 @@ def model_pins(graph, registry):
                     pins.append({"location": f"{node_id}.{field}", **portable_upscaler_selection(param.get("value"))})
                     continue
                 display = fields.get(field, {}).get("display")
+                if (node["module"].startswith("custom.") and node["action"] == "LoadModels"
+                        and display == "modelselect"
+                        and re.fullmatch(r"source__[A-Za-z_][A-Za-z0-9_]{0,127}__repo", field)):
+                    # The approved supplier loads each component using its
+                    # sibling revision, never a base/catalog/selector revision.
+                    revision_field = field.removesuffix("repo") + "revision"
+                    revision_param = node["params"].get(revision_field)
+                    component_revision = revision_param.get("value") if isinstance(revision_param, dict) else None
+                    if (revision_field not in fields or not isinstance(revision_param, dict)
+                            or revision_param.get("sourceId") or not isinstance(component_revision, str)
+                            or not SHA.fullmatch(component_revision)):
+                        raise ValueError(
+                            f"{node_id}.{revision_field}: select a literal immutable 40-character component revision."
+                        )
+                    source = param.get("value")
+                    if (not isinstance(source, dict) or source.get("source") != "hub"
+                            or not isinstance(source.get("value"), str) or not source["value"]):
+                        raise ValueError(f"{node_id}.{field}: select an explicit Hub component repository.")
+                    walk(source["value"], "repo_id", f"{node_id}.{field}", component_revision)
+                    continue
                 key = "repo_id" if display in ("model", "hf_model", "model_select", "modelselect") else field
                 walk(param.get("value"), key, f"{node_id}.{field}", revision if MODEL_KEY.fullmatch(key) else None)
     return pins
