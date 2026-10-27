@@ -4782,7 +4782,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ================================================================================
-vite@8.1.4
+vite@8.1.6
 Declared license: MIT
 ================================================================================
 
