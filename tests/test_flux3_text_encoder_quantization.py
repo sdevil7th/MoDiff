@@ -125,6 +125,14 @@ def test_descriptor_cannot_be_modified_or_extended(field, value):
         policy.validate_text_encoder_nf4_descriptor(descriptor)
 
 
+def test_previous_loading_schedule_cannot_reuse_lower_cold_budget_identity():
+    descriptor = policy.inspect_text_encoder_nf4(graph(), 'models')
+    assert descriptor['loadingSchedule'] == policy.TEXT_ENCODER_NF4_LOADING_SCHEDULE
+    previous = {key: value for key, value in descriptor.items() if key != 'loadingSchedule'}
+    with pytest.raises(ValueError):
+        policy.validate_text_encoder_nf4_descriptor(previous)
+
+
 @pytest.mark.parametrize('value', ['a..b', '__private.value', 'model.__dict__', 'a,a', 'a,', 'a[0]', 'a/b', 1])
 def test_generic_explicit_module_paths_have_a_finite_literal_grammar(value):
     with pytest.raises(ValueError):
@@ -215,43 +223,199 @@ def test_component_reuse_policy_preserves_full_nf4_identity_without_aliasing():
     assert stored['text_encoder_quantization']['skipModules'] == ['model.visual', 'lm_head']
 
 
-def test_strict_loader_verifies_cuda_then_registers_then_verifies_cpu(monkeypatch):
-    from modules.ModularDiffusers import loaders
-    from transformers import Qwen3VLForConditionalGeneration
+def fresh_loader_boundary(monkeypatch, *, failure=None, error_type=RuntimeError):
+    """Small CPU owners exercise lifetime/manager contracts, not native fit."""
     import torch
-    events = []
+    import weakref
+    from transformers import Qwen3VLForConditionalGeneration
+    from modules.ModularDiffusers import loaders
+    events, references = [], []
     descriptor = policy.inspect_text_encoder_nf4(graph(), 'models')
     repository, revision = policy.PARENTS['Flux3DistilledModularPipeline']
-    component = SimpleNamespace(device='cuda:0')
-    def load(**kwargs):
-        events.append(('load', kwargs['device_map']))
-        return component
-    spec = SimpleNamespace(type_hint=Qwen3VLForConditionalGeneration,
-        pretrained_model_name_or_path=repository, revision=revision, subfolder='text_encoder', variant=None, load=load)
+    names = ['vae', 'transformer', 'tokenizer', 'text_encoder']
+    class Component(torch.nn.Module):
+        def __init__(self, name):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.ones(1))
+            # Exercise native-style parameter/module/state cycles as well as
+            # tensor aliases in a retained loader exception's local frame.
+            self.weight.quant_state = SimpleNamespace(absmax=torch.ones(1))
+            self.weight.module = self
+            self.quant_state = self.weight.quant_state
+            self.device = 'cuda:0' if name == 'text_encoder' else 'cpu'
+    def fail(where):
+        if failure == where:
+            raise error_type('synthetic ' + where)
+    def loader(name):
+        def load(**kwargs):
+            events.append(('load', name))
+            component = Component(name)
+            references.extend(weakref.ref(value) for value in
+                              (component, component.weight, component.quant_state.absmax))
+            fail('load-' + name)
+            return component
+        return load
+    specs = {name: SimpleNamespace(type_hint=Qwen3VLForConditionalGeneration if name == 'text_encoder' else Component,
+        pretrained_model_name_or_path=repository, revision=revision, subfolder=name, variant=None,
+        load=loader(name)) for name in names}
+    manager = SimpleNamespace(_auto_offload_enabled=True, _auto_offload_device='cuda:0', components={}, model_hooks=[])
+    manager.enable_auto_cpu_offload = lambda device: setattr(manager, '_auto_offload_enabled', True)
+    pipeline = SimpleNamespace(_component_specs=specs, _components_manager=manager)
     def register(**kwargs):
-        assert kwargs == {'text_encoder': component}
-        events.append(('register', component.device))
-        component.device = 'cpu'
-    pipeline = SimpleNamespace(_component_specs={'text_encoder': spec},
-        _components_manager=SimpleNamespace(_auto_offload_enabled=True), register_components=register)
+        for name, component in kwargs.items():
+            events.append(('register', name))
+            setattr(pipeline, name, component)
+            manager.components[name + '_' + str(id(component))] = component
+            if name == 'text_encoder':
+                if failure == 'register':
+                    manager._auto_offload_enabled = False
+                fail('register')
+                component.device = 'cpu'
+    def unload(names):
+        for name in names:
+            component = getattr(pipeline, name)
+            assert list(component.parameters()) == []  # no retrying a CPU destination allocation
+            manager.components.pop(name + '_' + str(id(component)))
+            setattr(pipeline, name, None)
+    pipeline.register_components, pipeline.unload_components = register, unload
     def validate(actual, selected, *, device):
-        assert actual is component and selected == descriptor and actual.device == device
+        assert selected == descriptor and actual.device == device
         events.append(('validate', device))
+        fail('validate-' + device)
         return {'currentDevice': device}
-    monkeypatch.setattr(policy, 'validate_text_encoder_nf4_model', validate)
     def capacity(binding, component, *, context=None, registering=False):
         events.append(('capacity', component, registering))
+        if registering:
+            assert all(getattr(pipeline, name, None) is not None for name in ('tokenizer', 'transformer', 'vae'))
+            assert getattr(pipeline, 'text_encoder', None) is None
+            fail('capacity-final')
         return {'checks': []}
+    monkeypatch.setattr(policy, 'validate_text_encoder_nf4_model', validate)
     monkeypatch.setattr(policy, 'assert_text_encoder_nf4_loading_capacity', capacity)
-    diagnostics = {}
-    loaders.load_components_strict(pipeline, ['text_encoder'], required_names={'text_encoder'}, model_id=repository,
-        dtype=torch.bfloat16, offload_mode='model_cpu', quant_config={}, diagnostics=diagnostics,
-        component_load_kwargs={'config': {'text_encoder': object()}, 'device_map': {'text_encoder': {'': 'cuda:0'}}},
-        weight_format_binding=SimpleNamespace(text_encoder_quantization=descriptor,
-                                              recipe={'repository': repository, 'revision': revision}))
-    assert events == [('capacity', 'text_encoder', False), ('load', {'': 'cuda:0'}), ('validate', 'cuda:0'),
-                      ('capacity', 'text_encoder', True), ('register', 'cuda:0'), ('validate', 'cpu')]
-    assert diagnostics['text_encoder_quantization'] == {'currentDevice': 'cpu'}
+    binding = SimpleNamespace(text_encoder_quantization=descriptor, recipe={'repository': repository, 'revision': revision},
+        assert_current=lambda: None, apply_execution=lambda *args: None)
+    kwargs = dict(required_names=set(names), model_id=repository, dtype=torch.bfloat16, offload_mode='model_cpu',
+        quant_config={}, diagnostics={}, component_load_kwargs={'config': {name: object() for name in names},
+        'device_map': {'text_encoder': {'': 'cuda:0'}}}, weight_format_binding=binding)
+    return SimpleNamespace(pipeline=pipeline, names=names, kwargs=kwargs, events=events, references=references,
+        invoke=lambda: loaders.load_components_strict(pipeline, names, **kwargs))
+
+
+def test_strict_loader_holds_cuda_until_cpu_sources_finish_then_registers(monkeypatch):
+    boundary = fresh_loader_boundary(monkeypatch)
+    boundary.invoke()
+    events = boundary.events
+    assert [row[1] for row in events if row[0] == 'load'] == ['text_encoder', 'tokenizer', 'transformer', 'vae']
+    assert [row[1] for row in events if row[0] == 'register'] == ['tokenizer', 'transformer', 'vae', 'text_encoder']
+    assert events.index(('capacity', 'text_encoder', True)) > events.index(('register', 'vae'))
+    assert events[-2:] == [('register', 'text_encoder'), ('validate', 'cpu')]
+    assert boundary.kwargs['diagnostics']['text_encoder_loading_schedule'] == policy.TEXT_ENCODER_NF4_LOADING_SCHEDULE
+
+
+@pytest.mark.parametrize('failure', ['load-text_encoder', 'validate-cuda:0', 'load-transformer',
+    'load-vae', 'capacity-final', 'register', 'validate-cpu'])
+@pytest.mark.parametrize('error_type', [RuntimeError, InterruptedError, KeyboardInterrupt])
+def test_failed_fresh_load_drops_pending_and_registered_owners_even_when_error_retained(monkeypatch, failure, error_type):
+    import gc
+    boundary = fresh_loader_boundary(monkeypatch, failure=failure, error_type=error_type)
+    caught = None
+    try:
+        boundary.invoke()
+    except BaseException as error:
+        caught = error
+    assert caught is not None
+    gc.collect()
+    assert all(reference() is None for reference in boundary.references)
+    assert boundary.pipeline._components_manager.components == {}
+    assert boundary.pipeline._components_manager._auto_offload_enabled is True
+    assert all(getattr(boundary.pipeline, name, None) is None for name in boundary.names)
+    assert boundary.kwargs['diagnostics']['text_encoder_loading_aborted'] is True
+    assert 'synthetic ' + failure in boundary.kwargs['diagnostics']['text_encoder_loading_failure']
+
+
+@pytest.mark.parametrize('change', ['partial', 'selected', 'offload', 'resident', 'manager-peer', 'hooks', 'missing-source'])
+def test_deferred_schedule_never_admits_partial_reuse_or_other_owner(monkeypatch, change):
+    import torch
+    boundary = fresh_loader_boundary(monkeypatch)
+    if change == 'partial':
+        boundary.names.pop()
+    elif change == 'selected':
+        boundary.kwargs['selected_components'] = {'text_encoder': object()}
+    elif change == 'offload':
+        boundary.kwargs['offload_mode'] = 'none'
+    elif change == 'resident':
+        boundary.pipeline.vae = torch.nn.Linear(1, 1)
+    elif change == 'manager-peer':
+        boundary.pipeline._components_manager.components['other'] = torch.nn.Linear(1, 1)
+    elif change == 'missing-source':
+        boundary.pipeline._component_specs['vae'].pretrained_model_name_or_path = None
+    else:
+        boundary.pipeline._components_manager.model_hooks = [object()]
+    with pytest.raises(ValueError, match='four fresh components'):
+        boundary.invoke()
+    assert boundary.events == []
+
+
+def test_unquantized_loader_keeps_existing_single_component_contract(monkeypatch):
+    from modules.ModularDiffusers import loaders
+    boundary = fresh_loader_boundary(monkeypatch)
+    boundary.kwargs['weight_format_binding'] = None
+    boundary.kwargs['required_names'] = {'vae'}
+    loaders.load_components_strict(boundary.pipeline, ['vae'], **boundary.kwargs)
+    assert boundary.events == [('load', 'vae'), ('register', 'vae')]
+
+
+def test_actual_manager_partial_add_failure_cleans_owned_entries_without_cpu_retry(monkeypatch):
+    """Real installed registration/hooks/unload, tiny CPU models, no fit proof."""
+    import gc
+    from diffusers import ComponentSpec, ComponentsManager, ModularPipeline
+    from diffusers.modular_pipelines.modular_pipeline import ModularPipelineBlocks
+    from diffusers.modular_pipelines import components_manager as upstream_manager
+    from modules.ModularDiffusers import loaders
+    boundary = fresh_loader_boundary(monkeypatch)
+    original_specs = boundary.pipeline._component_specs
+    component_class = original_specs['vae'].type_hint
+    original_to = component_class.to
+    cpu_copy_attempts = []
+    def to(component, device, *args, **kwargs):
+        if component.device == 'cuda:0' and str(device) == 'cpu' and list(component.parameters()):
+            cpu_copy_attempts.append('text_destination')
+            raise RuntimeError('synthetic actual manager CPU copy failure')
+        return original_to(component, device, *args, **kwargs)
+    monkeypatch.setattr(component_class, 'to', to)
+    specs = [ComponentSpec(name=name, type_hint=spec.type_hint, default_creation_method='from_pretrained',
+        pretrained_model_name_or_path=spec.pretrained_model_name_or_path, revision=spec.revision,
+        subfolder=spec.subfolder) for name, spec in original_specs.items()]
+    class Blocks(ModularPipelineBlocks):
+        @property
+        def expected_components(self):
+            return specs
+    manager = ComponentsManager()
+    peer = object()
+    peer_id = manager.add('non_neural_peer', peer, collection='unrelated')
+    before_time = manager.added_time[peer_id]
+    monkeypatch.setattr(upstream_manager.TorchDeviceBackend, 'mem_get_info', lambda self: (1024**3, 2 * 1024**3))
+    manager.enable_auto_cpu_offload(device='cpu')
+    pipeline = ModularPipeline(blocks=Blocks(), components_manager=manager, collection='owned')
+    for name, spec in pipeline._component_specs.items():
+        monkeypatch.setattr(spec, 'load', original_specs[name].load)
+    monkeypatch.setattr(policy, 'assert_text_encoder_nf4_loading_capacity',
+                        lambda *args, **kwargs: {'checks': []})
+    caught = None
+    try:
+        loaders.load_components_strict(pipeline, boundary.names, **boundary.kwargs)
+    except RuntimeError as error:
+        caught = error
+    assert caught is not None and 'actual manager CPU copy failure' in str(caught)
+    gc.collect()
+    assert cpu_copy_attempts == ['text_destination']
+    assert all(reference() is None for reference in boundary.references)
+    assert manager.components == {peer_id: peer}
+    assert manager.added_time == {peer_id: before_time}
+    assert manager.collections['unrelated'] == {peer_id}
+    assert manager.collections.get('owned', set()) == set()
+    assert manager._auto_offload_enabled is True and manager.model_hooks == []
+    assert all(getattr(pipeline, name) is None for name in boundary.names)
 
 
 @pytest.mark.parametrize('identity', ['flux3-klein:official-provider:v1', 'flux3-klein-base:official-provider:v1'])
@@ -305,7 +469,7 @@ def test_public_source_context_binds_literal_quantization_before_dispatch(monkey
 def capacity_context():
     return {'bound': {}, 'reserve': {'components': {'transformer': {'conservativeCpuOverlapBytes': 20},
             'vae': {'conservativeCpuOverlapBytes': 8}}},
-        'phases': {'textSourceBytes': 30, 'textTargetBytes': 10, 'cudaQuantizationBytes': 40}, 'checks': []}
+        'phases': {'loadingSchedule': policy.TEXT_ENCODER_NF4_LOADING_SCHEDULE, 'textSourceBytes': 30, 'textTargetBytes': 10, 'cudaQuantizationBytes': 40}, 'checks': []}
 
 
 def capacity_hardware():
@@ -352,6 +516,63 @@ def test_fresh_registration_rechecks_target_copy_instead_of_crediting_closed_sou
     with pytest.raises(ValueError, match='cpu_registration capacity refused'):
         policy.assert_text_encoder_nf4_loading_capacity(None, 'text_encoder', context=context, registering=True)
     assert context['checks'][-1]['ramRequiredBytes'] == 4 * 1024**3 + 10
+
+
+def test_native_capacity_refuses_unscheduled_phase_before_observing_hardware(monkeypatch):
+    from modiff import hardware
+    context = capacity_context()
+    context['phases'].pop('loadingSchedule')
+    monkeypatch.setattr(hardware, 'get_hardware_snapshot', lambda **kwargs: pytest.fail('stale phase reached hardware'))
+    with pytest.raises(ValueError, match='deferred-registration schedule'):
+        policy.assert_text_encoder_nf4_loading_capacity(None, 'text_encoder', context=context)
+
+
+def test_header_census_counts_full_sources_without_packed_cpu_overlap(monkeypatch, tmp_path):
+    """Real bounded header/NF4 arithmetic with synthetic other-component census."""
+    import json
+    import math
+    import struct
+    from modiff import flux3_auto_resource as resources
+    from modiff.transformers_image_text_resources import nf4_parameter_storage
+    tensors = {name + '.weight': {'shape': list(shape), 'dtype': 'BF16', 'data_offsets': [0, 0]}
+               for name, shape in policy.expected_language_linear_shapes().items()}
+    tensors['model.visual.synthetic.weight'] = {'shape': [100, 10], 'dtype': 'BF16', 'data_offsets': [0, 0]}
+    text_source = sum(math.prod(item['shape']) * 2 for item in tensors.values())
+    snapshot = tmp_path / 'hub/models--black-forest-labs--flux-3-image-klein/snapshots' / ('a' * 40)
+    folder = snapshot / 'text_encoder'
+    folder.mkdir(parents=True)
+    header = json.dumps(tensors).encode()
+    (folder / 'model.safetensors').write_bytes(struct.pack('<Q', len(header)) + header)
+    (folder / 'model.safetensors.index.json').write_text(json.dumps({
+        'weight_map': {name: 'model.safetensors' for name in tensors}}))
+    transformer_target, transformer_source, vae_target, vae_source = 5 * 1024**3, 5 * 1024**3, 160_000_000, 320_000_000
+    bound = {'components': {'text_encoder': text_source, 'transformer': transformer_target, 'vae': vae_target}}
+    reserve = {'components': {'text_encoder': {'sourcePayloadBytes': text_source},
+        'transformer': {'conservativeCpuOverlapBytes': transformer_source + transformer_target},
+        'vae': {'conservativeCpuOverlapBytes': vae_source + vae_target}}}
+    monkeypatch.setattr(resources, 'parameter_census', lambda *args, **kwargs:
+                        (deepcopy(bound), deepcopy(reserve), {'vramBytes': 900_000_000}))
+    # Payload bytes are deliberately absent; the real bounded JSON/header and
+    # storage arithmetic run, while native source-file completeness is a
+    # separately covered artifact gate.
+    monkeypatch.setattr(resources, '_loading_shard', lambda *args: None)
+    actual, _, _, phases = resources.nf4_parameter_census({'snapshots': [{'path': str(snapshot)}]},
+        'Flux3DistilledModularPipeline', *policy.PARENTS['Flux3DistilledModularPipeline'], 'bfloat16')
+    text_target = nf4_parameter_storage(tensors)['parameterStorageBytes']
+    assert actual['components']['text_encoder'] == text_target
+    assert phases['textPhaseCpuBytes'] == text_source
+    assert phases['transformerPhaseCpuBytes'] == transformer_source + transformer_target
+    assert phases['vaePhaseCpuBytes'] == transformer_target + vae_source + vae_target
+    assert phases['registrationPhaseCpuBytes'] == text_target + transformer_target + vae_target
+    assert phases['systemRamBytes'] == max(text_source, transformer_source + transformer_target,
+        transformer_target + vae_source + vae_target, text_target + transformer_target + vae_target)
+    assert phases['systemRamBytes'] < text_target + transformer_source + transformer_target + vae_target
+    largest = max(math.prod(item['shape']) for name, item in tensors.items()
+                  if name.startswith('model.language_model.layers.'))
+    assert phases['cudaQuantizationBytes'] == text_source + text_target + largest * 8
+    assert phases['loadingSchedule'] == policy.TEXT_ENCODER_NF4_LOADING_SCHEDULE
+    assert resources.nf4_loading_requirements({'boundedWeightFormatRecipe': resources.NF4_RECIPE_ID,
+        'parameterLoadingPhases': phases})['systemRamBytes'] == phases['systemRamBytes']
 
 
 def test_census_is_once_per_load_but_capacity_observations_are_fresh(monkeypatch):

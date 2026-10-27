@@ -27,6 +27,19 @@ def nf4_graph(profile, task='text_to_image'):
     return graph
 
 
+def loading_phases():
+    gib = 1024**3
+    return {'proofScope': 'flux3_nvfp4_nf4_sequential_cuda_load_only',
+        'loadingSchedule': quantization.TEXT_ENCODER_NF4_LOADING_SCHEDULE,
+        'systemRamBytes': 13 * gib, 'vramBytes': 11 * gib,
+        'textSourceBytes': 6 * gib, 'textTargetBytes': 2 * gib,
+        'textPhaseCpuBytes': 6 * gib, 'transformerPhaseCpuBytes': 13 * gib,
+        'vaePhaseCpuBytes': 8 * gib, 'registrationPhaseCpuBytes': 9 * gib,
+        'cudaQuantizationBytes': 11 * gib,
+        'quantizedLinearCount': 252, 'requiresRuntimeHeadroomPolicy': True,
+        'inferencePeakMeasured': False}
+
+
 @pytest.fixture
 def nf4_plan(actual_plan, monkeypatch):  # noqa: F811
     plan, hardware, runtime = actual_plan
@@ -36,11 +49,7 @@ def nf4_plan(actual_plan, monkeypatch):  # noqa: F811
     def census(status, model, repository, revision, dtype):
         bound, reserve, dequant = resources.parameter_census(status, model, repository, revision, dtype)
         dequant['proofScope'] = 'largest_nvfp4_linear_dequantization_only'
-        phases = {'proofScope': 'flux3_nvfp4_nf4_sequential_cuda_load_only',
-            'systemRamBytes': 13 * 1024**3, 'vramBytes': 11 * 1024**3,
-            'quantizedLinearCount': 252, 'requiresRuntimeHeadroomPolicy': True,
-            'inferencePeakMeasured': False}
-        return bound, reserve, dequant, phases
+        return bound, reserve, dequant, loading_phases()
 
     monkeypatch.setattr(resources, 'nf4_parameter_census', census)
     return plan, hardware, runtime
@@ -124,6 +133,40 @@ def test_loading_phase_record_cannot_be_absent_or_borrow_other_recipe():
                        'parameterLoadingPhases': {'systemRamBytes': 1, 'vramBytes': 1}}):
         with pytest.raises(ValueError, match='phase record'):
             resources.nf4_loading_requirements(candidate)
+
+
+@pytest.mark.parametrize('schedule', (None, '', 'immediate_text_cpu', False))
+def test_smaller_phase_budget_requires_the_implemented_loading_schedule(schedule):
+    phases = loading_phases()
+    if schedule is None:
+        phases.pop('loadingSchedule')
+    else:
+        phases['loadingSchedule'] = schedule
+    with pytest.raises(ValueError, match='phase record'):
+        resources.nf4_loading_requirements({'boundedWeightFormatRecipe': resources.NF4_RECIPE_ID,
+            'parameterLoadingPhases': phases})
+
+
+def test_loading_schedule_changes_descriptor_and_history_identity():
+    descriptor = quantization.inspect_text_encoder_nf4(nf4_graph(PROFILES[0])['nodes'], 'models')
+    assert descriptor['loadingSchedule'] == quantization.TEXT_ENCODER_NF4_LOADING_SCHEDULE
+    old = deepcopy(descriptor)
+    old.pop('loadingSchedule')
+    with pytest.raises(ValueError, match='descriptor'):
+        quantization.validate_text_encoder_nf4_descriptor(old)
+    assert auto_resource_history_key({'textEncoderQuantization': descriptor}) != auto_resource_history_key(
+        {'textEncoderQuantization': old})
+
+
+@pytest.mark.parametrize('field,value', [('systemRamBytes', 1), ('textPhaseCpuBytes', 1),
+    ('registrationPhaseCpuBytes', 1), ('cudaQuantizationBytes', 1), ('vramBytes', 1),
+    ('textTargetBytes', False), ('transformerPhaseCpuBytes', float('nan'))])
+def test_inconsistent_loading_phase_cannot_reduce_admission_budget(field, value):
+    phases = loading_phases()
+    phases[field] = value
+    with pytest.raises(ValueError, match='phase record'):
+        resources.nf4_loading_requirements({'boundedWeightFormatRecipe': resources.NF4_RECIPE_ID,
+            'parameterLoadingPhases': phases})
 
 
 @pytest.mark.parametrize('capability', (None, '8.6', float('nan'), 'invalid'))

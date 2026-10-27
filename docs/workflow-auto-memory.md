@@ -80,6 +80,16 @@ head remain dense. The official BFL transformer configuration remains separate.
 
 The reviewed component loader explicitly stages the NF4 text encoder on primary
 CUDA before model CPU offload; the BFL transformer retains CPU cold loading.
+For a fresh complete owner, the validated packed text encoder stays on CUDA
+while the official transformer and VAE loaders finish on CPU. Only then does
+the existing manager register the text encoder and install its CPU offload
+hooks. This removes the packed text owner's CPU storage from the transformer's
+whole-file source/destination conversion overlap. No model forward or cache
+publication occurs before final registration and CPU packed-state validation.
+The internal loading schedule is bound to the descriptor, history/cache
+identity and phase record; it does not change any authored workflow control.
+Partial/reused component sets and preexisting neural owners cannot borrow the
+smaller fresh-loading phase budget.
 The parent `weight_loading_mode=cpu` therefore does not claim that all component
 conversion occurs on CPU. Admission counts the exact dense and packed component
 storage, quantization state, source/conversion overlap, CUDA staging and
@@ -87,6 +97,17 @@ per-layer dequantization reserves under the existing RAM/VRAM headroom and owner
 lifetime rules. Missing evidence or insufficient actual free memory refuses
 without replacing the authored format or reducing the workload. The existing
 reviewed provider and activated bitsandbytes runtime are mandatory.
+
+The host phase census retains the complete text source, complete BFL source
+and destination, VAE conversion overlap and final combined CPU parameters.
+It takes their maximum under this enforced loading order, then adds the same
+max(4 GiB,10% system RAM) floor. GPU staging and its max(2 GiB,10%) floor remain
+unchanged. Fresh actual capacity is checked before every allocation and before
+final text CPU registration; no mmap sharing or projected allocator reclamation
+counts as free memory. A loading failure or cancellation destroys only this
+attempt's fresh, exclusively owned staged components and clears retaining
+exception frames. It does not register a fallback owner or publish a successful
+cache. These allocation-lifetime checks are not measured inference qualification.
 
 This declaration does not qualify legacy/private profiles, other precisions,
 hardware targets, native output, Gallery or templates. A successful cold normal

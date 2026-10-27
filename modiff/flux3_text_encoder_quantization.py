@@ -10,13 +10,15 @@ import json
 import re
 
 TEXT_ENCODER_NF4_RECIPE_ID = 'flux3-qwen3vl-language-nf4:v1'
+TEXT_ENCODER_NF4_LOADING_SCHEDULE = 'text_cuda_hold_then_cpu_components_then_text_cpu:v1'
 SKIP_MODULES = ('model.visual', 'lm_head')
 PARENTS = {
     'Flux3DistilledModularPipeline': ('black-forest-labs/flux-3-image-klein', '8454017f9ebaada30c998fccd9f67a80c7580f68'),
     'Flux3ModularPipeline': ('black-forest-labs/flux-3-image-klein-base', '1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4'),
 }
 _POLICY = {'recipeId': TEXT_ENCODER_NF4_RECIPE_ID, 'mode': 'bnb_4bit', 'quantType': 'nf4',
-           'computeDtype': 'bfloat16', 'doubleQuant': True, 'skipModules': list(SKIP_MODULES), 'loadDevice': 'cuda:0'}
+           'computeDtype': 'bfloat16', 'doubleQuant': True, 'skipModules': list(SKIP_MODULES), 'loadDevice': 'cuda:0',
+           'loadingSchedule': TEXT_ENCODER_NF4_LOADING_SCHEDULE}
 
 
 def parse_module_skip_names(value):
@@ -162,6 +164,8 @@ def assert_text_encoder_nf4_loading_capacity(binding, component, *, context=None
             raise ValueError('Parent NF4 loading requires its complete exact native parameter and phase census.')
         context = {'bound': bound, 'reserve': reserve, 'phases': phases, 'checks': []}
     phases, reserves = context['phases'], context['reserve']['components']
+    if phases.get('loadingSchedule') != TEXT_ENCODER_NF4_LOADING_SCHEDULE:
+        raise ValueError('Parent NF4 loading requires the current exact deferred-registration schedule.')
     if registering:
         if component != 'text_encoder':
             raise ValueError('Only the reviewed packed text owner has a CUDA-to-CPU registration phase.')

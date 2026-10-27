@@ -1621,6 +1621,52 @@ def _assert_cuda_weight_loading_capacity(context, name=None):
                          f'VRAM needs {gpu_required} bytes, {gpu_free} available.')
 
 
+def _clear_nf4_failure_tracebacks(error):
+    """Keep diagnostic text, not failed official-loader tensor-owning frames."""
+    pending, seen = [error], set()
+    while pending and len(seen) < 64:
+        current = pending.pop()
+        if not isinstance(current, BaseException) or id(current) in seen:
+            continue
+        seen.add(id(current))
+        pending.extend((current.__cause__, current.__context__, getattr(current, 'original_error', None)))
+        if current.__traceback__ is not None:
+            traceback.clear_frames(current.__traceback__)
+            current.__traceback__ = None
+
+
+def _discard_fresh_nf4_components(pipeline, created):
+    """Dispose only failed fresh owners, without retrying a CPU allocation.
+
+    A failed manager.add can have published the component before its CPU hook
+    raises. Empty its doomed tensor owners first; official unload can then
+    remove that partial registration without another device copy.
+    """
+    from accelerate.hooks import remove_hook_from_module
+    for component in created.values():
+        if isinstance(component, torch.nn.Module):
+            remove_hook_from_module(component, recurse=True)
+            for module in component.modules():
+                for parameter in module._parameters.values():
+                    if parameter is not None and hasattr(parameter, 'quant_state'):
+                        parameter.quant_state = None
+                        if hasattr(parameter, 'module'):
+                            parameter.module = None
+                if hasattr(module, 'quant_state'):
+                    module.quant_state = None
+                module._parameters.clear()
+                module._buffers.clear()
+    # Include a name even if register_components raised midway through add().
+    pipeline.unload_components(names=[name for name, component in created.items()
+                                     if getattr(pipeline, name, None) is component])
+    manager = pipeline._components_manager
+    if manager._auto_offload_enabled is not True:
+        # The exact entry contract excluded other neural owners. A failed hook
+        # rebuild can leave the official manager disabled; restore its policy
+        # only after the now-empty owned registrations have been removed.
+        manager.enable_auto_cpu_offload(manager._auto_offload_device)
+
+
 def load_components_strict(
     pipeline,
     names,
@@ -1658,6 +1704,22 @@ def load_components_strict(
     loaded_components = dict(selected_components or {})
     components_to_load = [name for name in names if name in pipeline._component_specs]
     deferred = set(deferred_group_offload_components)
+    text_nf4 = getattr(weight_format_binding, 'text_encoder_quantization', None)
+    if text_nf4 is not None:
+        from modiff.flux3_text_encoder_quantization import validate_text_encoder_nf4_descriptor
+        validate_text_encoder_nf4_descriptor(text_nf4)
+        fresh_names = {'text_encoder', 'tokenizer', 'transformer', 'vae'}
+        manager = pipeline._components_manager
+        if (set(names) != fresh_names or len(names) != len(fresh_names)
+                or set(components_to_load) != fresh_names or not fresh_names <= required_names
+                or selected_components or deferred or incremental_group_offload or cuda_weight_loading is not None
+                or offload_mode != OFFLOAD_MODE_MODEL_CPU or manager._auto_offload_enabled is not True
+                or any(getattr(pipeline, name, None) is not None for name in fresh_names)
+                or any(not pipeline._component_specs[name].pretrained_model_name_or_path for name in fresh_names)
+                or any(isinstance(value, torch.nn.Module) for value in manager.components.values())
+                or manager.model_hooks):
+            raise ValueError('Deferred parent NF4 loading requires all four fresh components, no reuse or overrides, and an empty neural Model CPU manager.')
+        components_to_load = ['text_encoder', 'tokenizer', 'transformer', 'vae']
     if cuda_weight_loading is not None:
         if (not incremental_group_offload or incremental_group_offload['mode'] != OFFLOAD_MODE_GROUP_DISK or deferred
                 or quant_config is not None
@@ -1679,164 +1741,204 @@ def load_components_strict(
     # components. Nested Diffusers/Transformers shard and weight bars then
     # inherit the component rank, while a component with a silent placement
     # phase still leaves a truthful "which component" status in the queue.
-    text_nf4_capacity = None
-    for name in diffusers_logging.tqdm(
-        components_to_load,
-        desc="Loading model components",
-        disable=True,
-    ):
-        spec = pipeline._component_specs[name]
-        load_kwargs = component_load_kwargs_for(name, component_load_kwargs)
-        text_nf4 = getattr(weight_format_binding, 'text_encoder_quantization', None)
-        if text_nf4 is not None:
-            from modiff.flux3_text_encoder_quantization import assert_text_encoder_nf4_loading_capacity
-            text_nf4_capacity = assert_text_encoder_nf4_loading_capacity(
-                weight_format_binding, name, context=text_nf4_capacity)
-            diagnostics['text_encoder_loading_capacity'] = text_nf4_capacity['checks']
-        if text_nf4 is not None and name == 'text_encoder':
-            from transformers import Qwen3VLForConditionalGeneration
-            if (spec.type_hint is not Qwen3VLForConditionalGeneration
-                    or spec.pretrained_model_name_or_path != weight_format_binding.recipe['repository']
-                    or spec.revision != weight_format_binding.recipe['revision'] or spec.subfolder != 'text_encoder'
-                    or spec.variant is not None or load_kwargs.get('device_map') != {'': 'cuda:0'}
-                    or getattr(pipeline._components_manager, '_auto_offload_enabled', False) is not True):
-                raise ValueError('Parent text encoder NF4 requires its exact native source and explicit CUDA load followed by manager CPU hooks.')
-        staged = cuda_weight_loading is not None and name in cuda_weight_loading['bound']['components']
-        if staged:
-            _assert_cuda_weight_loading_capacity(cuda_weight_loading, name)
-            load_kwargs.update(device_map='cuda:0', low_cpu_mem_usage=True, local_files_only=True, use_safetensors=True,
-                               cache_dir=str(cuda_weight_loading['snapshot'].parent.parent.parent))
-        if (
-            "trust_remote_code" in load_kwargs
-            and getattr(pipeline, "_pretrained_model_name_or_path", None) is not None
-            and spec.pretrained_model_name_or_path != pipeline._pretrained_model_name_or_path
+    created, pending_text, component = {}, None, None
+    succeeded = False
+    try:
+        text_nf4_capacity = None
+        for name in diffusers_logging.tqdm(
+            components_to_load,
+            desc="Loading model components",
+            disable=True,
         ):
-            load_kwargs.pop("trust_remote_code", None)
+            spec = pipeline._component_specs[name]
+            load_kwargs = component_load_kwargs_for(name, component_load_kwargs)
+            if text_nf4 is not None:
+                from modiff.flux3_text_encoder_quantization import assert_text_encoder_nf4_loading_capacity
+                text_nf4_capacity = assert_text_encoder_nf4_loading_capacity(
+                    weight_format_binding, name, context=text_nf4_capacity)
+                diagnostics['text_encoder_loading_capacity'] = text_nf4_capacity['checks']
+            if text_nf4 is not None and name == 'text_encoder':
+                from transformers import Qwen3VLForConditionalGeneration
+                if (spec.type_hint is not Qwen3VLForConditionalGeneration
+                        or spec.pretrained_model_name_or_path != weight_format_binding.recipe['repository']
+                        or spec.revision != weight_format_binding.recipe['revision'] or spec.subfolder != 'text_encoder'
+                        or spec.variant is not None or load_kwargs.get('device_map') != {'': 'cuda:0'}
+                        or getattr(pipeline._components_manager, '_auto_offload_enabled', False) is not True):
+                    raise ValueError('Parent text encoder NF4 requires its exact native source and explicit CUDA load followed by manager CPU hooks.')
+            staged = cuda_weight_loading is not None and name in cuda_weight_loading['bound']['components']
+            if staged:
+                _assert_cuda_weight_loading_capacity(cuda_weight_loading, name)
+                load_kwargs.update(device_map='cuda:0', low_cpu_mem_usage=True, local_files_only=True, use_safetensors=True,
+                                   cache_dir=str(cuda_weight_loading['snapshot'].parent.parent.parent))
+            if (
+                "trust_remote_code" in load_kwargs
+                and getattr(pipeline, "_pretrained_model_name_or_path", None) is not None
+                and spec.pretrained_model_name_or_path != pipeline._pretrained_model_name_or_path
+            ):
+                load_kwargs.pop("trust_remote_code", None)
 
-        if not spec.pretrained_model_name_or_path:
-            diagnostics.setdefault("components_skipped", []).append(
-                {"name": name, "reason": "no pretrained model path"}
-            )
-            continue
-
-        try:
-            if weight_format_binding is not None and name == "transformer":
-                weight_format_binding.assert_current()
-            config_cache_state = None
-            if "config" not in load_kwargs:
-                config_cache_state = _processor_model_config_cache_state(spec, model_id=model_id, load_kwargs=load_kwargs)
-                binding = _processor_model_config_binding(
-                    spec, pipeline._component_specs, loaded_components, load_kwargs=load_kwargs,
-                    cache_state=config_cache_state,
+            if not spec.pretrained_model_name_or_path:
+                diagnostics.setdefault("components_skipped", []).append(
+                    {"name": name, "reason": "no pretrained model path"}
                 )
-                if binding is not None:
+                continue
+
+            try:
+                if weight_format_binding is not None and name == "transformer":
+                    weight_format_binding.assert_current()
+                config_cache_state = None
+                if "config" not in load_kwargs:
+                    config_cache_state = _processor_model_config_cache_state(spec, model_id=model_id, load_kwargs=load_kwargs)
+                    binding = _processor_model_config_binding(
+                        spec, pipeline._component_specs, loaded_components, load_kwargs=load_kwargs,
+                        cache_state=config_cache_state,
+                    )
+                    if binding is not None:
+                        source_name, config = binding
+                        load_kwargs["config"] = config
+                        diagnostics.setdefault("processor_config_bindings", {})[name] = {
+                            "component": source_name,
+                            "load_id": pipeline._component_specs[source_name].load_id,
+                        }
+                try:
+                    component = spec.load(**load_kwargs)
+                except Exception as initial_error:
+                    # An ordinary online load gets the first opportunity to fetch
+                    # its own config. Retry once only when that attempt establishes
+                    # a NEW exact-pin Hub negative marker; transport/access/parse
+                    # failures with unknown or present config retain normal errors.
+                    if staged or "config" in load_kwargs or config_cache_state != "unknown":
+                        raise
+                    cache_state_after = _processor_model_config_cache_state(spec, model_id=model_id, load_kwargs=load_kwargs)
+                    if cache_state_after != "absent":
+                        raise
+                    binding = _processor_model_config_binding(
+                        spec, pipeline._component_specs, loaded_components, load_kwargs=load_kwargs,
+                        cache_state=cache_state_after,
+                    )
+                    if binding is None:
+                        raise
                     source_name, config = binding
                     load_kwargs["config"] = config
                     diagnostics.setdefault("processor_config_bindings", {})[name] = {
                         "component": source_name,
                         "load_id": pipeline._component_specs[source_name].load_id,
                     }
-            try:
-                component = spec.load(**load_kwargs)
-            except Exception as initial_error:
-                # An ordinary online load gets the first opportunity to fetch
-                # its own config. Retry once only when that attempt establishes
-                # a NEW exact-pin Hub negative marker; transport/access/parse
-                # failures with unknown or present config retain normal errors.
-                if staged or "config" in load_kwargs or config_cache_state != "unknown":
-                    raise
-                cache_state_after = _processor_model_config_cache_state(spec, model_id=model_id, load_kwargs=load_kwargs)
-                if cache_state_after != "absent":
-                    raise
-                binding = _processor_model_config_binding(
-                    spec, pipeline._component_specs, loaded_components, load_kwargs=load_kwargs,
-                    cache_state=cache_state_after,
-                )
-                if binding is None:
-                    raise
-                source_name, config = binding
-                load_kwargs["config"] = config
-                diagnostics.setdefault("processor_config_bindings", {})[name] = {
-                    "component": source_name,
-                    "load_id": pipeline._component_specs[source_name].load_id,
+                    diagnostics.setdefault("processor_config_retries", {})[name] = {
+                        "error": str(initial_error) or type(initial_error).__name__,
+                        "traceback": traceback.format_exc(),
+                    }
+                    component = spec.load(**load_kwargs)
+                if text_nf4 is not None:
+                    created[name] = component
+                if weight_format_binding is not None and name == "transformer":
+                    weight_format_binding.assert_current()
+                    execution = weight_format_binding.apply_execution(pipeline, component)
+                    if execution is not None:
+                        diagnostics['weight_format_execution'] = execution
+                if text_nf4 is not None and name == 'text_encoder':
+                    from modiff.flux3_text_encoder_quantization import validate_text_encoder_nf4_model
+                    validate_text_encoder_nf4_model(component, text_nf4, device='cuda:0')
+                if staged:
+                    if (type(component) is not spec.type_hint or getattr(component, 'hf_quantizer', None) is not None
+                            or any(getattr(module, '_hf_hook', None) is not None for module in component.modules())
+                            or any(parameter.dtype != dtype or str(parameter.device) != 'cuda:0'
+                                   for parameter in component.parameters())):
+                        raise ValueError(f'Official CUDA loading did not materialize uniform BF16 primary-GPU parameters for {name}.')
+            except Exception as exc:
+                traceback_text = traceback.format_exc()
+                failure = {
+                    "name": name,
+                    "required": name in required_names,
+                    "error": str(exc) or type(exc).__name__,
+                    "traceback": traceback_text,
+                    "load_kwargs": safe_diagnostic_value(load_kwargs),
                 }
-                diagnostics.setdefault("processor_config_retries", {})[name] = {
-                    "error": str(initial_error) or type(initial_error).__name__,
-                    "traceback": traceback.format_exc(),
-                }
-                component = spec.load(**load_kwargs)
-            if weight_format_binding is not None and name == "transformer":
-                weight_format_binding.assert_current()
-                execution = weight_format_binding.apply_execution(pipeline, component)
-                if execution is not None:
-                    diagnostics['weight_format_execution'] = execution
-            if text_nf4 is not None and name == 'text_encoder':
-                from modiff.flux3_text_encoder_quantization import validate_text_encoder_nf4_model
-                validate_text_encoder_nf4_model(component, text_nf4, device='cuda:0')
-                assert_text_encoder_nf4_loading_capacity(
-                    weight_format_binding, name, context=text_nf4_capacity, registering=True)
+                diagnostics.setdefault("components_failed", []).append(failure)
+                if staged or name in required_names:
+                    raise RequiredComponentLoadError(
+                        name,
+                        model_id,
+                        load_kwargs.get("torch_dtype", dtype),
+                        offload_mode,
+                        component_quant_config_summary(quant_config),
+                        exc,
+                        traceback_text,
+                    ) from exc
+                logger.warning("Optional Diffusers component %s failed to load: %s", name, exc)
+                continue
+
+            if text_nf4 is not None:
+                if name == 'text_encoder':
+                    # Keep the packed owner on CUDA until both CPU loaders return.
+                    pending_text = component
+                    loaded_components[name] = component
+                    component = None
+                    continue
+            pipeline.register_components(**{name: component})
             if staged:
-                if (type(component) is not spec.type_hint or getattr(component, 'hf_quantizer', None) is not None
-                        or any(getattr(module, '_hf_hook', None) is not None for module in component.modules())
-                        or any(parameter.dtype != dtype or str(parameter.device) != 'cuda:0'
-                               for parameter in component.parameters())):
-                    raise ValueError(f'Official CUDA loading did not materialize uniform BF16 primary-GPU parameters for {name}.')
-        except Exception as exc:
-            traceback_text = traceback.format_exc()
-            failure = {
-                "name": name,
-                "required": name in required_names,
-                "error": str(exc) or type(exc).__name__,
-                "traceback": traceback_text,
-                "load_kwargs": safe_diagnostic_value(load_kwargs),
-            }
-            diagnostics.setdefault("components_failed", []).append(failure)
-            if staged or name in required_names:
-                raise RequiredComponentLoadError(
-                    name,
-                    model_id,
-                    load_kwargs.get("torch_dtype", dtype),
-                    offload_mode,
-                    component_quant_config_summary(quant_config),
-                    exc,
-                    traceback_text,
-                ) from exc
-            logger.warning("Optional Diffusers component %s failed to load: %s", name, exc)
-            continue
+                # A failed hook installation cannot leave a component eligible for
+                # default-policy reuse. Successful publication replaces this marker.
+                component._modiff_modular_runtime_policy = {'configuration_failed': True}
+            loaded_components[name] = component
+            diagnostics.setdefault("components_loaded", []).append(name)
 
-        pipeline.register_components(**{name: component})
-        if text_nf4 is not None and name == 'text_encoder':
-            diagnostics['text_encoder_quantization'] = validate_text_encoder_nf4_model(component, text_nf4, device='cpu')
-        if staged:
-            # A failed hook installation cannot leave a component eligible for
-            # default-policy reuse. Successful publication replaces this marker.
-            component._modiff_modular_runtime_policy = {'configuration_failed': True}
-        loaded_components[name] = component
-        diagnostics.setdefault("components_loaded", []).append(name)
+            if incremental_group_offload and name in GROUP_OFFLOAD_COMPONENTS and name not in deferred:
+                result = apply_component_group_offload(
+                    pipeline,
+                    component_names=[name],
+                    device=incremental_group_offload["device"],
+                    mode=incremental_group_offload["mode"],
+                    node_id=incremental_group_offload["node_id"],
+                    scope=incremental_group_offload["scope"],
+                    **({"offload_root": incremental_group_offload["offload_root"]}
+                       if incremental_group_offload.get("offload_root") is not None else {}),
+                )
+                if result.applied:
+                    offload_diag = diagnostics.setdefault("offload", {})
+                    offload_diag["incremental"] = True
+                    offload_diag["method"] = result.method
+                    offload_diag["mode"] = result.mode
+                    offload_diag["components"] = sorted(set(offload_diag.get("components", []) + result.components))
+                    if result.disk_path:
+                        offload_diag["disk_path"] = result.disk_path
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+                elif staged:
+                    raise RuntimeError(f'CUDA weight loading requires immediate official disk hooks for {name}.')
 
-        if incremental_group_offload and name in GROUP_OFFLOAD_COMPONENTS and name not in deferred:
-            result = apply_component_group_offload(
-                pipeline,
-                component_names=[name],
-                device=incremental_group_offload["device"],
-                mode=incremental_group_offload["mode"],
-                node_id=incremental_group_offload["node_id"],
-                scope=incremental_group_offload["scope"],
-                **({"offload_root": incremental_group_offload["offload_root"]}
-                   if incremental_group_offload.get("offload_root") is not None else {}),
-            )
-            if result.applied:
-                offload_diag = diagnostics.setdefault("offload", {})
-                offload_diag["incremental"] = True
-                offload_diag["method"] = result.method
-                offload_diag["mode"] = result.mode
-                offload_diag["components"] = sorted(set(offload_diag.get("components", []) + result.components))
-                if result.disk_path:
-                    offload_diag["disk_path"] = result.disk_path
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
-            elif staged:
-                raise RuntimeError(f'CUDA weight loading requires immediate official disk hooks for {name}.')
+        if text_nf4 is not None:
+            assert_text_encoder_nf4_loading_capacity(
+                weight_format_binding, 'text_encoder', context=text_nf4_capacity, registering=True)
+            validate_text_encoder_nf4_model(pending_text, text_nf4, device='cuda:0')
+            pipeline.register_components(text_encoder=pending_text)
+            diagnostics['text_encoder_quantization'] = validate_text_encoder_nf4_model(
+                pending_text, text_nf4, device='cpu')
+            diagnostics.setdefault('components_loaded', []).append('text_encoder')
+            diagnostics['text_encoder_loading_schedule'] = text_nf4['loadingSchedule']
+        succeeded = True
+    except BaseException as error:
+        if text_nf4 is not None:
+            diagnostics['text_encoder_loading_failure'] = traceback.format_exc()
+            _clear_nf4_failure_tracebacks(error)
+            try:
+                _discard_fresh_nf4_components(pipeline, created)
+            except Exception as cleanup_error:
+                diagnostics['text_encoder_cleanup_failure'] = str(cleanup_error)
+                _clear_nf4_failure_tracebacks(cleanup_error)
+                logger.exception('Failed fresh parent NF4 owner cleanup')
+        raise
+    finally:
+        if text_nf4 is not None:
+            # Even a caller retaining RequiredComponentLoadError must not keep
+            # the pending CUDA owner through this still-visible frame.
+            pending_text = component = None
+            loaded_components.clear()
+            created.clear()
+            if not succeeded:
+                diagnostics['text_encoder_loading_aborted'] = True
+                import gc
+                gc.collect()
 
 
 def normalize_quant_config_input(config):

@@ -123,13 +123,13 @@ def nf4_parameter_census(status, model_type, repository, revision, dtype):
     """Exact language NF4 storage and sequential official CUDA-load phases.
 
     Full source files remain reserved. Only the reviewed text encoder is
-    quantized on CUDA, then registered with the existing CPU offload manager
-    after its native loader returns. The text phase reserves both its complete
+    quantized on CUDA, held there while native CPU components load, then
+    registered with the existing CPU offload manager. The text phase reserves both its complete
     source and destination on CUDA as well as quantization workspace. These
     declarations are conservative storage/phase bounds, not measured fit.
     """
     from pathlib import Path
-    from modiff.flux3_text_encoder_quantization import expected_language_linear_shapes
+    from modiff.flux3_text_encoder_quantization import expected_language_linear_shapes, TEXT_ENCODER_NF4_LOADING_SCHEDULE
     from modiff.transformers_image_text_resources import nf4_parameter_storage
 
     bound, reserve, dequant = parameter_census(status, model_type, repository, revision, dtype,
@@ -171,21 +171,24 @@ def nf4_parameter_census(status, model_type, repository, revision, dtype):
     bound.update(totalBytes=sum(bound['components'].values()), largestComponentBytes=max(bound['components'].values()))
     transformer = reserve['components']['transformer']
     vae = reserve['components']['vae']
-    # The manager registers each loaded component immediately. Model CPU
-    # offload then retains packed text weights while the BFL file converts.
-    text_phase = (text_source + bound['components']['transformer'] + bound['components']['vae'])
-    transformer_phase = text_target + transformer['conservativeCpuOverlapBytes'] + bound['components']['vae']
-    vae_phase = text_target + bound['components']['transformer'] + vae['conservativeCpuOverlapBytes']
+    # Exact fresh loading keeps the packed text owner unregistered on CUDA.
+    # No source-residency/allocator credit: each CPU source is reserved fully.
+    text_phase = text_source
+    transformer_phase = transformer['conservativeCpuOverlapBytes']
+    vae_phase = bound['components']['transformer'] + vae['conservativeCpuOverlapBytes']
+    registration_phase = bound['totalBytes']
     # Reserve two full FP32 language matrices in addition to the complete
     # source+packed destination. CPU quantization fallback is never admitted.
     cuda_quantization = text_source + text_target + largest_quantized * 8
     phases = {'proofScope': 'flux3_nvfp4_nf4_sequential_cuda_load_only',
-        'systemRamBytes': max(text_phase, transformer_phase, vae_phase),
+        'loadingSchedule': TEXT_ENCODER_NF4_LOADING_SCHEDULE,
+        'systemRamBytes': max(text_phase, transformer_phase, vae_phase, registration_phase),
         'vramBytes': max(cuda_quantization,
             bound['components']['transformer'] + dequant['vramBytes']),
         'textSourceBytes': text_source, 'textTargetBytes': text_target,
         'textPhaseCpuBytes': text_phase, 'transformerPhaseCpuBytes': transformer_phase,
-        'vaePhaseCpuBytes': vae_phase, 'cudaQuantizationBytes': cuda_quantization,
+        'vaePhaseCpuBytes': vae_phase, 'registrationPhaseCpuBytes': registration_phase,
+        'cudaQuantizationBytes': cuda_quantization,
         'quantizedLinearCount': storage['quantizedLinearCount'],
         'requiresRuntimeHeadroomPolicy': True, 'inferencePeakMeasured': False}
     return bound, reserve, dequant, phases
@@ -193,15 +196,25 @@ def nf4_parameter_census(status, model_type, repository, revision, dtype):
 
 def nf4_loading_requirements(candidate):
     """Validate the separately issued phase record before owner accounting."""
+    from modiff.flux3_text_encoder_quantization import TEXT_ENCODER_NF4_LOADING_SCHEDULE
     phases = candidate.get('parameterLoadingPhases')
     if (candidate.get('boundedWeightFormatRecipe') != NF4_RECIPE_ID
             or type(phases) is not dict
             or phases.get('proofScope') != 'flux3_nvfp4_nf4_sequential_cuda_load_only'
+            or phases.get('loadingSchedule') != TEXT_ENCODER_NF4_LOADING_SCHEDULE
             or phases.get('requiresRuntimeHeadroomPolicy') is not True
             or phases.get('inferencePeakMeasured') is not False
             or phases.get('quantizedLinearCount') != 252
             or any(type(phases.get(key)) is not int or not 0 < phases[key] <= 2**63
-                   for key in ('systemRamBytes', 'vramBytes'))):
+                   for key in ('systemRamBytes', 'vramBytes', 'textSourceBytes', 'textTargetBytes',
+                               'textPhaseCpuBytes', 'transformerPhaseCpuBytes', 'vaePhaseCpuBytes',
+                               'registrationPhaseCpuBytes', 'cudaQuantizationBytes'))
+            or phases['textPhaseCpuBytes'] != phases['textSourceBytes']
+            or phases['systemRamBytes'] != max(phases[key] for key in
+                ('textPhaseCpuBytes', 'transformerPhaseCpuBytes', 'vaePhaseCpuBytes', 'registrationPhaseCpuBytes'))
+            or phases['registrationPhaseCpuBytes'] < phases['textTargetBytes']
+            or phases['cudaQuantizationBytes'] < phases['textSourceBytes'] + phases['textTargetBytes']
+            or phases['vramBytes'] < phases['cudaQuantizationBytes']):
         raise ValueError('The NVFP4/NF4 recipe has no complete exact loading phase record.')
     return {key: phases[key] for key in ('systemRamBytes', 'vramBytes')}
 
