@@ -121,10 +121,23 @@ class GuidedInstallerTests(unittest.TestCase):
         stream.flush()
 
     def test_readme_documents_native_uv_setup_and_matching_launch_extras(self):
-        readme = (Path(__file__).parents[1] / "README.md").read_text(encoding="utf-8")
+        root = Path(__file__).parents[1]
+        readme = (root / "README.md").read_text(encoding="utf-8")
         for command in ("--extra cuda", "uv sync --extra cpu", "uv run --extra cpu python main.py"):
             with self.subTest(command=command):
                 self.assertIn(command, readme)
+        for guide in ("README.md", "docs/developer-setup.md"):
+            text = (root / guide).read_text(encoding="utf-8")
+            with self.subTest(guide=guide):
+                self.assertIn("codex/windows-delivery-20261026", text)
+                self.assertTrue(
+                    "9fc204dcf8abb0329ce5365b0d6c0f478982969f" in text,
+                    "Backend application source is missing",
+                )
+                self.assertTrue(
+                    "5e8be27cc937d3f99a36cf7a5c7672f5cb21abe8" in text,
+                    "Client application source is missing",
+                )
 
     def test_archive_member_destination_rejects_escaping_paths(self):
         unsafe_names = (

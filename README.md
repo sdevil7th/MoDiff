@@ -24,18 +24,21 @@ Node.js `24.12.0`, and npm `11.6.2`. uv can provision Python 3.12.
 Use two terminals for the backend and the editable frontend.
 
 The interim Windows candidate is on `codex/windows-delivery-20261026` in both
-repositories. These updates are not released on `main`. The reviewed application
-pair is:
+repositories. These updates are not released on `main`. The reviewed Windows
+application source pair is:
 
-| Repository    | Reviewed commit                            |
+| Repository    | Application source before final packaging  |
 | ------------- | ------------------------------------------ |
-| MoDiff        | `ae09c2014f01198d359a1310d63a1d8d619796be` |
-| MoDiff-client | `fd3d3dacbcda0b4f44ff23497276658f0233eea8` |
+| MoDiff        | `9fc204dcf8abb0329ce5365b0d6c0f478982969f` |
+| MoDiff-client | `5e8be27cc937d3f99a36cf7a5c7672f5cb21abe8` |
 
-These are the exact application revisions reviewed on 27 October 2026, not a claim
-that every model or hardware combination is qualified. Record `git rev-parse HEAD`
-in each checkout; if the branch advances, use its newly reviewed paired handoff.
-For an exact reproduction, check out the two commits above in separate checkouts.
+These application source revisions were reviewed on 28 October 2026. Final
+documentation, CI pairing and bundled-client packaging commits can be later
+descendants; they do not expand model or hardware qualification. Record
+`git rev-parse HEAD` in each checkout and use the final paired handoff when the
+branch advances. To reproduce the application source before packaging, check out
+the two commits above in separate checkouts. This candidate is not an all-platform
+release.
 
 **Terminal 1 — backend:** clone both repositories into the same parent directory,
 then start the backend. These commands work in Linux shells and Windows PowerShell.

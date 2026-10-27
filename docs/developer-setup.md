@@ -19,13 +19,16 @@ git clone --branch codex/windows-delivery-20261026 https://github.com/sdevil7th/
 cd MoDiff
 ```
 
-These updates have not yet been released on `main`. The reviewed application pair
-is backend `ae09c2014f01198d359a1310d63a1d8d619796be` and client
-`fd3d3dacbcda0b4f44ff23497276658f0233eea8`, reviewed on 27 October 2026. This is a
-candidate with model/hardware qualification limits, not an all-platform release.
-Record `git rev-parse HEAD` in both checkouts. A matching branch name alone does
-not establish compatibility after further updates: use the newly reviewed paired
-handoff, or check out these exact commits in separate checkouts to reproduce them.
+These updates have not yet been released on `main`. The reviewed Windows
+application source pair before final packaging is backend
+`9fc204dcf8abb0329ce5365b0d6c0f478982969f` and client
+`5e8be27cc937d3f99a36cf7a5c7672f5cb21abe8`, reviewed on 28 October 2026. Final
+documentation, CI pairing and bundled-client packaging commits can be later
+descendants; they do not expand model or hardware qualification. This candidate
+is not an all-platform release. Record `git rev-parse HEAD` in both checkouts. A
+matching branch name alone does not establish compatibility after further
+updates: use the final paired handoff, or check out these exact commits in
+separate checkouts to reproduce the application source before packaging.
 
 From the backend checkout, these commands work in Linux shells and Windows
 PowerShell without invoking repository installer scripts:
