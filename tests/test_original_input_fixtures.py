@@ -122,11 +122,15 @@ class OriginalInputFixtureLiveLedgerTests(unittest.TestCase):
             ledger = write_original_input_fixtures(ROOT, destination=Path(directory))
         after = hashlib.sha256(path.read_bytes()).hexdigest()
         self.assertEqual(before, after)
-        self.assertEqual(ledger["summary"]["workflowCount"], 94)
+        self.assertEqual(ledger["summary"]["workflowCount"], 96)
         self.assertTrue(ledger["policy"]["doesNotMutateAuthoringLedger"])
         self.assertTrue(ledger["policy"]["doesNotSelectInputs"])
         mapped = {item["canonicalWorkflowId"] for item in ledger["workflows"]}
         self.assertIn("AnimateDiffControlNetPipeline:control_to_video", mapped)
+        self.assertTrue({
+            "Flux3DistilledModularPipeline:edit_image",
+            "Flux3ModularPipeline:edit_image",
+        }.issubset(mapped))
         self.assertEqual(ledger["boundary"]["authoringSpecMutated"], False)
         ctc = next(
             item for item in ledger["workflows"]

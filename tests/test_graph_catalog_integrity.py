@@ -267,6 +267,8 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
     def test_hub_modular_lora_graphs_pin_the_generic_auxiliary_identity(self):
         expected_revisions = {
             "lightx2v/Qwen-Image-Edit-2511-Lightning": "d74eba145674fd7e31b949324e148e21e7118abd",
+            "kocabiyik/nsc7-style-lora": "9b998d3bdc3b4aeb2113ab4e8cbd9fe2ebfa1cae",
+            "pjecuacion/flux3-klein-mnt-oil-monet-lora": "0d94b6a4601892499defd8c5d89c24f78e78043b",
         }
         manifest = json.loads(WORKFLOW_MANIFEST.read_text(encoding="utf-8"))
         manifest_workflows = {
@@ -304,7 +306,7 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                     manifest_workflows[manifest_label].get("requiredArtifacts", []),
                     f"{label}: workflow manifest omits its mandatory Hub LoRA",
                 )
-        self.assertEqual(checked, 2)
+        self.assertEqual(checked, 4)
 
     def test_hub_modular_component_graphs_pin_and_manifest_their_artifact(self):
         manifest = json.loads(WORKFLOW_MANIFEST.read_text(encoding="utf-8"))

@@ -670,6 +670,72 @@
       "status": "executable"
     },
     {
+      "graphHash": "6caddb42548fc90517824b4fe5c4bd52cdaf18288930d9965a3ecfefff0c6a1b",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/edit-image.json",
+      "id": "Flux3DistilledModularPipeline:edit_image",
+      "mode": "edit_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "721b942535f54b5561742d14581b1c1ef05b7fe3933442100fe43fea13fbee7a",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image.json",
+      "id": "Flux3DistilledModularPipeline:text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "27636a699bfc7ecd672e6a7cc351050b91b0f075d7786b4160c63b7d8429f5b3",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image--flux3-klein-fp8r512-lora-style.json",
+      "id": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_lora_style",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "f89d49ce7200e92860d3d34ba2186a3dee13fe4ebaa0295d1f3844acb411e557",
+      "graphPath": "experimental/flux3-modular-pipeline/edit-image.json",
+      "id": "Flux3ModularPipeline:edit_image",
+      "mode": "edit_image",
+      "modelType": "Flux3ModularPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "e87317043b0451cf1510acf8184ac43ae207e0f36e617f7ac236e48e1f4807f7",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image.json",
+      "id": "Flux3ModularPipeline:text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "cd1664d47d78625d96540266dddec9b6b2ec27a486ed73989ff601abc61d04ef",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image--flux3-klein-base-fp8r512-lora-style.json",
+      "id": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
       "graphHash": "4aa3de024ee9b3fd6ea66f358ecb18be009edf437cb186b9c0402a8ff12f3028",
       "graphPath": "studio/flux-canny-pipeline/control-edit-image.json",
       "id": "FluxCannyPipeline:control_edit_image",
@@ -2376,7 +2442,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:b2e256a4c8157a67fe5a91c334db299608da72534eb2d48a70be0cb246edcc32",
+  "contentHash": "sha256:8feb0343bc6a6dbda42d2b9b2659fc7b4f3bf146908b94b115d8d193262c6d0a",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -9776,7 +9842,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "2f837923ea9998374edcfd51e9746375301713900eb064d3de462cc43d085572",
+    "templateBundleSha256": "1279c8224dd04f35ee3e674023f2e7cbfcdffa570c17b52beed1f966bf254dfe",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -9823,9 +9889,9 @@
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 203,
+    "canonicalWorkflowCount": 209,
     "canonicalWorkflowsWithPublicTemplates": 54,
-    "canonicalWorkflowsWithoutPublicTemplates": 149,
+    "canonicalWorkflowsWithoutPublicTemplates": 155,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
@@ -9857,7 +9923,7 @@
       "unreviewed": 0
     },
     "workflowStatusCounts": {
-      "contract-only": 0,
+      "contract-only": 6,
       "equivalent": 0,
       "executable": 203,
       "intentionally-excluded": 0,

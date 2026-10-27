@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-15T08:49:38.906Z",
+  "generatedAt": "2026-10-27T10:42:00.294Z",
   "capabilitySchemaVersion": 2,
   "capabilitySource": "modiff-backend",
-  "supportedCanonicalPairCount": 279,
+  "supportedCanonicalPairCount": 283,
   "supportedPairCount": 203,
   "workflows": [
     {
@@ -6763,6 +6763,175 @@
       "graphHash": "7ee01e2afe78fce2875e8e83df6e805f116ca64c4f5529775b4a0a36cb72705b"
     }
   ],
-  "experimentalWorkflowCount": 0,
-  "experimentalWorkflows": []
+  "experimentalWorkflowCount": 6,
+  "experimentalWorkflows": [
+    {
+      "id": "Flux3DistilledModularPipeline:text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "modelFamily": "FLUX Image",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "experimental",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline"
+      ],
+      "sourceTemplateId": "flux3_klein_fp8r512_text_to_image",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image.json",
+      "graphHash": "721b942535f54b5561742d14581b1c1ef05b7fe3933442100fe43fea13fbee7a"
+    },
+    {
+      "id": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_lora_style",
+      "modelType": "Flux3DistilledModularPipeline",
+      "modelFamily": "FLUX Image",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "experimental",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "variant": "lora-theme",
+      "requiredArtifacts": [
+        "kocabiyik/nsc7-style-lora",
+        "black-forest-labs/flux-3-image-klein"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline"
+      ],
+      "sourceTemplateId": "flux3_klein_fp8r512_lora_style",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image--flux3-klein-fp8r512-lora-style.json",
+      "graphHash": "27636a699bfc7ecd672e6a7cc351050b91b0f075d7786b4160c63b7d8429f5b3"
+    },
+    {
+      "id": "Flux3DistilledModularPipeline:edit_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "modelFamily": "FLUX Image",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "experimental",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline"
+      ],
+      "sourceTemplateId": "flux3_klein_fp8r512_single_reference_edit",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/edit-image.json",
+      "graphHash": "6caddb42548fc90517824b4fe5c4bd52cdaf18288930d9965a3ecfefff0c6a1b"
+    },
+    {
+      "id": "Flux3ModularPipeline:text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "modelFamily": "FLUX Image",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "experimental",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein-base"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "Flux3ModularPipeline"
+      ],
+      "sourceTemplateId": "flux3_klein_base_fp8r512_text_to_image",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image.json",
+      "graphHash": "e87317043b0451cf1510acf8184ac43ae207e0f36e617f7ac236e48e1f4807f7"
+    },
+    {
+      "id": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style",
+      "modelType": "Flux3ModularPipeline",
+      "modelFamily": "FLUX Image",
+      "mode": "text_to_image",
+      "mediaKind": "image",
+      "supportTier": "experimental",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "variant": "lora-theme",
+      "requiredArtifacts": [
+        "pjecuacion/flux3-klein-mnt-oil-monet-lora",
+        "black-forest-labs/flux-3-image-klein-base"
+      ],
+      "requiredInputs": [],
+      "pipelineClasses": [
+        "Flux3ModularPipeline"
+      ],
+      "sourceTemplateId": "flux3_klein_base_fp8r512_lora_style",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image--flux3-klein-base-fp8r512-lora-style.json",
+      "graphHash": "cd1664d47d78625d96540266dddec9b6b2ec27a486ed73989ff601abc61d04ef"
+    },
+    {
+      "id": "Flux3ModularPipeline:edit_image",
+      "modelType": "Flux3ModularPipeline",
+      "modelFamily": "FLUX Image",
+      "mode": "edit_image",
+      "mediaKind": "image",
+      "supportTier": "experimental",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "runtimeQualificationStatus": "unqualified",
+      "optimizationQualificationStatus": "unqualified",
+      "qualifiedRuntimeProfiles": [],
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein-base"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "pipelineClasses": [
+        "Flux3ModularPipeline"
+      ],
+      "sourceTemplateId": "flux3_klein_base_fp8r512_single_reference_edit",
+      "minimumAppVersion": "0.2.0",
+      "minimumBackendVersion": "0.2.0",
+      "graphPath": "experimental/flux3-modular-pipeline/edit-image.json",
+      "graphHash": "f89d49ce7200e92860d3d34ba2186a3dee13fe4ebaa0295d1f3844acb411e557"
+    }
+  ]
 }

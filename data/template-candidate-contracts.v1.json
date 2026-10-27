@@ -11,7 +11,7 @@
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:36cebba4f54f93c57d66c05dfac7e365315b40b5bc814c90d7578341b5ba9cc3",
+  "contentHash": "sha256:6ec3af441ebfd05979d5064ec073438e9ebe9d0f4f48ca7e74a68e4bbf2f3c1a",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -2087,6 +2087,238 @@
           "referenceImages"
         ]
       },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "6caddb42548fc90517824b4fe5c4bd52cdaf18288930d9965a3ecfefff0c6a1b",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "721b942535f54b5561742d14581b1c1ef05b7fe3933442100fe43fea13fbee7a",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_lora_style",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "27636a699bfc7ecd672e6a7cc351050b91b0f075d7786b4160c63b7d8429f5b3",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image--flux3-klein-fp8r512-lora-style.json",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3DistilledModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "kocabiyik/nsc7-style-lora",
+        "black-forest-labs/flux-3-image-klein"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "required",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3ModularPipeline:edit_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "f89d49ce7200e92860d3d34ba2186a3dee13fe4ebaa0295d1f3844acb411e557",
+      "graphPath": "experimental/flux3-modular-pipeline/edit-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "edit_image",
+      "modelType": "Flux3ModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3ModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein-base"
+      ],
+      "requiredInputs": {
+        "requiredImages": [
+          "referenceImages"
+        ]
+      },
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "e87317043b0451cf1510acf8184ac43ae207e0f36e617f7ac236e48e1f4807f7",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image.json",
+      "graphQualificationStatus": "graph-qualified-execution-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3ModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "black-forest-labs/flux-3-image-klein-base"
+      ],
+      "requiredInputs": [],
+      "runtimeQualificationStatus": "unqualified"
+    },
+    {
+      "assetState": "not_generated",
+      "assets": [],
+      "authoringState": {
+        "defaults": "required",
+        "inputExamples": "not_applicable",
+        "prompt": "required_if_applicable",
+        "status": "authoring_required"
+      },
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style",
+      "comfyResearchRecords": [],
+      "evidenceState": {
+        "execution": "not_claimed",
+        "maximumClaim": "canonical_graph_binding_only",
+        "quality": "not_claimed",
+        "runtime": "not_claimed"
+      },
+      "graphHash": "cd1664d47d78625d96540266dddec9b6b2ec27a486ed73989ff601abc61d04ef",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image--flux3-klein-base-fp8r512-lora-style.json",
+      "graphQualificationStatus": "graph-qualified-gallery-review-pending",
+      "mediaKind": "image",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "optimizationQualificationStatus": "unqualified",
+      "pipelineClasses": [
+        "Flux3ModularPipeline"
+      ],
+      "publicationState": "hidden_candidate",
+      "qualificationScope": "exact-model-recipe-runtime-hardware",
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "qualifiedRuntimeProfiles": [],
+      "requiredArtifacts": [
+        "pjecuacion/flux3-klein-mnt-oil-monet-lora",
+        "black-forest-labs/flux-3-image-klein-base"
+      ],
+      "requiredInputs": [],
       "runtimeQualificationStatus": "unqualified"
     },
     {
@@ -6733,28 +6965,28 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:b2e256a4c8157a67fe5a91c334db299608da72534eb2d48a70be0cb246edcc32",
+      "contentHash": "sha256:8feb0343bc6a6dbda42d2b9b2659fc7b4f3bf146908b94b115d8d193262c6d0a",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:67d1f9f5dd9c9f329d443b135a217205f96fa369500124bf6c2c1019ea3e137d"
+      "sha256": "sha256:4aa05a6afc1d2537328ea1949d92fcab9dbefb4e24a8feea24a64c3088dcb058"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
-      "sha256": "sha256:6d0f52c5bddb8c0ea547a5dcf833415b1aefe31028c0acfdbddeca6247f9f8d0"
+      "sha256": "sha256:f70acb9c2fa51ad4476c63058dfdd8f14664f4470610603cb7b30aa7b2231ff6"
     }
   },
   "summary": {
-    "candidateContractCount": 149,
-    "canonicalWorkflowCount": 203,
+    "candidateContractCount": 155,
+    "canonicalWorkflowCount": 209,
     "canonicalWorkflowsWithPublicTemplates": 54,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
     "comfyResearchRecordCount": 14,
-    "contractsRequiringInputExamples": 94,
+    "contractsRequiringInputExamples": 96,
     "contractsWithComfyResearchRecords": 11,
     "mediaKindCounts": {
       "audio": 6,
-      "image": 100,
+      "image": 106,
       "json": 10,
       "video": 33
     },

@@ -417,7 +417,11 @@ def build_template_authoring_spec_ledger(root: Path) -> dict[str, Any]:
     if candidate != validated_candidate:
         raise TemplateAuthoringSpecError("The template candidate ledger failed exact validation.")
     manifest, manifest_sha = _read_json(root, _WORKFLOW_MANIFEST_PATH, label="workflow manifest")
-    manifest_rows = _records(manifest.get("workflows"), label="workflow manifest records")
+    # Both sections supply hidden authoring drafts; neither grants runtime or publication evidence.
+    manifest_rows = [
+        *_records(manifest.get("workflows"), label="workflow manifest records"),
+        *_records(manifest.get("experimentalWorkflows", []), label="experimental workflow manifest records"),
+    ]
     manifest_by_id = {row.get("id"): row for row in manifest_rows}
     if len(manifest_by_id) != len(manifest_rows) or any(not isinstance(key, str) for key in manifest_by_id):
         raise TemplateAuthoringSpecError("Workflow manifest ids must be unique strings.")

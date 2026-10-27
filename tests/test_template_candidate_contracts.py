@@ -70,12 +70,12 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 203,
+                "canonicalWorkflowCount": 209,
                 "publicTemplateCount": 80,
                 "canonicalWorkflowsWithPublicTemplates": 54,
-                "candidateContractCount": 149,
-                "mediaKindCounts": {"audio": 6, "image": 100, "json": 10, "video": 33},
-                "contractsRequiringInputExamples": 94,
+                "candidateContractCount": 155,
+                "mediaKindCounts": {"audio": 6, "image": 106, "json": 10, "video": 33},
+                "contractsRequiringInputExamples": 96,
                 "contractsWithComfyResearchRecords": 11,
                 "comfyResearchRecordCount": 14,
                 "comfyMappingStatusCounts": {"existing_contract_candidate": 14},
@@ -113,7 +113,10 @@ class TemplateCandidateContractTests(unittest.TestCase):
             self.assertEqual(contract["evidenceState"]["maximumClaim"], "canonical_graph_binding_only")
 
     def test_candidates_are_the_exact_complement_of_public_template_workflows(self):
-        manifest_by_id = {row["id"]: row for row in self.manifest["workflows"]}
+        manifest_by_id = {
+            row["id"]: row
+            for row in [*self.manifest["workflows"], *self.manifest["experimentalWorkflows"]]
+        }
         public_templates = self.coverage["publicTemplates"]
         public_workflow_ids = {row["canonicalWorkflowId"] for row in public_templates}
         coverage_public_workflow_ids = {
@@ -127,7 +130,7 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(len(contracts_by_id), len(self.ledger["contracts"]))
         self.assertEqual(set(contracts_by_id), set(manifest_by_id) - public_workflow_ids)
         self.assertFalse(set(contracts_by_id) & public_workflow_ids)
-        self.assertEqual(len(contracts_by_id), 149)
+        self.assertEqual(len(contracts_by_id), 155)
         experimental_public_pairs = {
             "flux2_dev_text_to_image": "Flux2ModularPipeline:text_to_image",
             "cosmos3_super_text_to_image": "Cosmos3OmniModularPipeline:text_to_image",
@@ -190,7 +193,10 @@ class TemplateCandidateContractTests(unittest.TestCase):
             "qualityEvidence",
             "publicTemplateIds",
         }
-        manifest_by_id = {row["id"]: row for row in self.manifest["workflows"]}
+        manifest_by_id = {
+            row["id"]: row
+            for row in [*self.manifest["workflows"], *self.manifest["experimentalWorkflows"]]
+        }
         for contract in self.ledger["contracts"]:
             self.assertTrue(forbidden_claim_fields.isdisjoint(contract))
             self.assertEqual(contract["publicationState"], "hidden_candidate")
