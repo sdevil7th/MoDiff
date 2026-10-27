@@ -747,6 +747,19 @@ def _build_workflow_auto_plan(
             issues.append(f"{node_id}: {node['module']}.{node['action']} has no workflow Auto resource contract.")
 
     owned = set(loaders)
+    text_encoder_quantization = {}
+    from modiff.flux3_auto_resource import PUBLIC_PROFILES, NF4_RECIPE_ID, nf4_loading_requirements
+    for loader_id, profile in loaders.items():
+        if getattr(profile, 'id', None) not in PUBLIC_PROFILES:
+            continue
+        try:
+            from modiff.flux3_text_encoder_quantization import inspect_text_encoder_nf4
+            selected = inspect_text_encoder_nf4(nodes, loader_id)
+            if selected is not None:
+                text_encoder_quantization[loader_id] = selected
+                owned.add(selected['producerId'])
+        except (ValueError, TypeError) as error:
+            issues.append(f'{loader_id}: {error}')
     for loader_id in loaders:
         owned.update(_consumers(nodes, loader_id, set(loaders)))
     for node_id, node in nodes.items():
@@ -767,6 +780,8 @@ def _build_workflow_auto_plan(
             if getattr(profile, 'id', None) in PUBLIC_PROFILES:
                 for field in ('quant_config', 'unet', 'vae', 'controlnet', 'lora_list'):
                     param = nodes[loader_id]['params'].get(field) or {}
+                    if field == 'quant_config' and loader_id in text_encoder_quantization:
+                        continue
                     if param.get('sourceId') or param.get('value') not in (None, []):
                         raise ValueError('The bounded FP8r Auto recipe does not admit additional quantization, component overrides or LoRAs.')
                 for field in ('weight_format', 'weight_loading_mode'):
@@ -827,6 +842,8 @@ def _build_workflow_auto_plan(
                     "device": values.get("device", "cpu"), "dtype": values.get("dtype", "float32"),
                     "offloadMode": values.get("offload_mode", "none"), "autoOffload": values.get("auto_offload", False),
                     "quantizationMode": values.get("quantization_mode", "none")}
+            if loader_id in text_encoder_quantization:
+                form['textEncoderQuantization'] = deepcopy(text_encoder_quantization[loader_id])
             if 'weight_format' in nodes[loader_id]['params']:
                 values['weight_format'] = _literal(nodes, loader_id, 'weight_format')
                 form['weightFormat'] = values['weight_format']
@@ -889,6 +906,8 @@ def _build_workflow_auto_plan(
                           and candidate.get("dtype") == form["dtype"] and candidate.get("quantizationMode", "none") == form["quantizationMode"]]
             candidates = [candidate for candidate in candidates
                           if candidate.get('weightFormat', 'native') == form.get('weightFormat', 'native')]
+            candidates = [candidate for candidate in candidates
+                          if candidate.get('textEncoderQuantization') == form.get('textEncoderQuantization')]
             revision = values.get("revision")
             if revision:
                 candidates = [candidate for candidate in candidates if (candidate.get("artifactResolution", {}).get("resolved", {}).get("revision") or candidate.get("artifactRevision")) == revision]
@@ -996,8 +1015,8 @@ def _build_workflow_auto_plan(
                     dtype=form['dtype'], hardware=hardware,
                 )}
                 dequantization = candidate.get('parameterDequantizationRequirements')
-                if candidate.get('weightFormat') == 'fp8r':
-                    if (type(dequantization) is not dict or dequantization.get('proofScope') != 'largest_fp8r_linear_dequantization_only'
+                if candidate.get('weightFormat') in {'fp8r', 'nvfp4'}:
+                    if (type(dequantization) is not dict or dequantization.get('proofScope') != f"largest_{candidate['weightFormat']}_linear_dequantization_only"
                             or type(dequantization.get('vramBytes')) is not int or not 0 < dequantization['vramBytes'] <= 2**63
                             or not parameter_residency.get('vramBytes')):
                         raise ValueError('The FP8r recipe has no exact per-layer dequantization reserve.')
@@ -1022,7 +1041,10 @@ def _build_workflow_auto_plan(
                     'dtype': form['dtype'], 'device': form['device'],
                     'parallel_loading': diffusers_parallel_loading_enabled(),
                 }
-                if has_native_loras and candidate.get('offloadMode') == 'group_disk' and not device.startswith('cpu'):
+                if candidate.get('boundedWeightFormatRecipe') == NF4_RECIPE_ID:
+                    phases = nf4_loading_requirements(candidate)
+                    conversion = {'systemRamBytes': phases['systemRamBytes'], 'vramBytes': 0}
+                elif has_native_loras and candidate.get('offloadMode') == 'group_disk' and not device.startswith('cpu'):
                     conversion = native_disk_lora_conversion_reserve(
                         candidate.get('parameterConversionReserve'),
                         targets=getattr(profile, 'lora_loadable_components', ()), **conversion_args,
@@ -1047,7 +1069,11 @@ def _build_workflow_auto_plan(
                         parameter_residency['systemRamBytes'], int(_number(requirements.get('systemRamBytes')) or 0),
                     ))
             gpu_loading = {}
-            if candidate.get('weight_loading_mode') == 'cuda':
+            if candidate.get('boundedWeightFormatRecipe') == NF4_RECIPE_ID:
+                gpu_loading = {'vramBytes': nf4_loading_requirements(candidate)['vramBytes']}
+                gpu_loading_additional = max(0, gpu_loading['vramBytes'] - max(
+                    parameter_residency.get('vramBytes', 0), int(_number(requirements.get('vramBytes')) or 0)))
+            elif candidate.get('weight_loading_mode') == 'cuda':
                 gpu_loading = {'vramBytes': candidate['parameterStorageLowerBound']['largestComponentBytes']}
                 gpu_loading_additional = max(0, gpu_loading['vramBytes'] - int(_number(requirements.get('vramBytes')) or 0))
             loading_additional = (max(0, parameter_residency['systemRamBytes']

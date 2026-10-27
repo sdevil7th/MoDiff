@@ -992,6 +992,8 @@ def _candidate_history_signature(
         "dtype": str(candidate.get("dtype") or ""),
         **({'weightFormat': str(candidate['weightFormat'])}
            if candidate.get('weightFormat') not in (None, '', 'native') else {}),
+        **({'textEncoderQuantization': deepcopy(candidate['textEncoderQuantization'])}
+           if candidate.get('textEncoderQuantization') is not None else {}),
         "quantizationMode": str(candidate.get("quantizationMode") or "none"),
         "quantizedComponents": [str(item) for item in candidate.get("quantizedComponents") or []],
         "offloadMode": str(candidate.get("offloadMode") or ""),
@@ -1302,7 +1304,7 @@ def _candidate_workload_signature(candidate: dict[str, Any]) -> dict[str, Any]:
     else:
         keys = ("width", "height", "batchSize", "steps")
     result = {key: generation.get(key) for key in keys if generation.get(key) is not None}
-    if candidate.get('weightFormat') == 'fp8r':
+    if candidate.get('weightFormat') in {'fp8r', 'nvfp4'}:
         result.update(referenceWorkload=generation.get('referenceWorkload', []),
                       maxSequenceLength=generation.get('maxSequenceLength'))
     return result
@@ -1340,6 +1342,8 @@ def _runtime_candidate_from_hints(runtime_hints: dict[str, Any] | None) -> dict[
         "resolvedArtifact": runtime_hints.get("resolvedArtifact") or runtime_hints.get("resolvedModelRepo"),
         "dtype": runtime_hints.get("dtype"),
         "weightFormat": runtime_hints.get('weightFormat', 'native'),
+        **({'textEncoderQuantization': deepcopy(runtime_hints['textEncoderQuantization'])}
+           if runtime_hints.get('textEncoderQuantization') is not None else {}),
         "quantizationMode": runtime_hints.get("quantizationMode"),
         "quantizedComponents": runtime_hints.get("quantizedComponents") if isinstance(runtime_hints.get("quantizedComponents"), list) else [],
         "offloadMode": runtime_hints.get("offloadMode"),
@@ -1373,6 +1377,8 @@ def _history_candidate_summary(candidate: dict[str, Any]) -> dict[str, Any]:
         "artifactRevision": resolved.get("revision") or candidate.get("artifactRevision"),
         "dtype": candidate.get("dtype"),
         "weightFormat": candidate.get('weightFormat', 'native'),
+        **({'textEncoderQuantization': deepcopy(candidate['textEncoderQuantization'])}
+           if candidate.get('textEncoderQuantization') is not None else {}),
         "quantizationMode": candidate.get("quantizationMode"),
         "quantizedComponents": candidate.get("quantizedComponents") if isinstance(candidate.get("quantizedComponents"), list) else [],
         "offloadMode": candidate.get("offloadMode"),
@@ -2920,15 +2926,20 @@ def _declared_profile_candidates(
 
 
 def _bounded_fp8r_candidates(form, hardware, requirements):
-    from modiff.flux3_auto_resource import selected_artifacts, workload_missing
+    from modiff.flux3_auto_resource import NF4_RECIPE_ID, selected_artifacts, workload_missing
     model_type, mode = form['modelType'], form['mode']
     repository = requirements['defaultRepo']
     revision = catalog_revision(repository, model_type=model_type)
     missing = workload_missing(form, hardware, requirements['executionProfileId'])
+    if (form.get('textEncoderQuantization') is not None
+            and requirements.get('explicitComponentQuantizationRecipe') != NF4_RECIPE_ID):
+        missing.append('No exact component quantization recipe is declared.')
     if form.get('modelRepo', repository) != repository or form.get('revision', revision) != revision:
         missing.append('The FP8r Auto recipe requires its exact declared model and immutable revision.')
     try:
-        status = selected_artifacts(model_type, repository, revision)
+        status = (selected_artifacts(model_type, repository, revision, 'nvfp4')
+                  if form.get('textEncoderQuantization') is not None
+                  else selected_artifacts(model_type, repository, revision))
     except (OSError, RuntimeError, ValueError, TypeError) as error:
         status = {'installed': False, 'complete': False, 'reason': str(error)}
     if not status.get('complete'):
@@ -2936,7 +2947,9 @@ def _bounded_fp8r_candidates(form, hardware, requirements):
     generation = _generation_for_requirements(model_type, form, requirements['qualityDefaults'])
     generation.update(batchSize=1, referenceWorkload=deepcopy(form.get('referenceWorkload', [])))
     candidate = _candidate(
-        candidate_id=f"{requirements['executionProfileId']}:{mode}:fp8r-model-cpu-512", rank=5,
+        candidate_id=f"{requirements['executionProfileId']}:{mode}:"
+                     + ('nvfp4-text-nf4-model-cpu-512' if form.get('textEncoderQuantization') is not None
+                        else 'fp8r-model-cpu-512'), rank=5,
         model_type=model_type, mode=mode, loader_module=requirements['loaderModule'],
         loader_action=requirements['loaderAction'], execution_path=requirements['executionPath'],
         pipeline_class=requirements['pipelineClass'], artifact=repository,
@@ -2947,6 +2960,10 @@ def _bounded_fp8r_candidates(form, hardware, requirements):
         requirements_missing=missing, artifact_status=status, requirements=requirements,
     )
     candidate.update(weightFormat=form.get('weightFormat'), boundedWeightFormatRecipe=requirements['boundedWeightFormatRecipe'])
+    if form.get('textEncoderQuantization') is not None:
+        candidate.update(boundedWeightFormatRecipe=NF4_RECIPE_ID,
+                         textEncoderQuantization=deepcopy(form['textEncoderQuantization']),
+                         quantizedComponents=['transformer', 'text_encoder'])
     return [candidate]
 
 
@@ -2969,6 +2986,7 @@ def _normalized_history_entry_signature(entry: dict[str, Any]) -> dict[str, Any]
         "artifactRevision",
         "dtype",
         "weightFormat",
+        "textEncoderQuantization",
         "quantizationMode",
         "quantizedComponents",
         "offloadMode",
@@ -3490,7 +3508,8 @@ def build_auto_resource_plan(
     for candidate in candidates:
         if candidate.get("exactPairDeclared") is False or candidate["id"] in catalog_blocked:
             continue
-        if candidate.get('boundedWeightFormatRecipe') == 'flux3-fp8r-windows-model-cpu:v1':
+        if candidate.get('boundedWeightFormatRecipe') in {
+                'flux3-fp8r-windows-model-cpu:v1', 'flux3-nvfp4-text-nf4-windows-model-cpu:v1'}:
             # This initial recipe declares one placement and ordinary execution.
             # An optimization receipt cannot widen its source-selected boundary.
             continue
@@ -3532,8 +3551,9 @@ def build_auto_resource_plan(
     for candidate in candidates:
         candidate.pop("parameterStorageLowerBound", None)
         candidate.pop("parameterConversionReserve", None)
-        if candidate.get('boundedWeightFormatRecipe') == 'flux3-fp8r-windows-model-cpu:v1':
-            from modiff.flux3_auto_resource import parameter_census as fp8r_census, workload_missing
+        if candidate.get('boundedWeightFormatRecipe') in {
+                'flux3-fp8r-windows-model-cpu:v1', 'flux3-nvfp4-text-nf4-windows-model-cpu:v1'}:
+            from modiff.flux3_auto_resource import NF4_RECIPE_ID, nf4_parameter_census, parameter_census as fp8r_census, workload_missing
             missing = workload_missing(form, hardware, candidate.get('executionProfileId'))
             if candidate.get('offloadMode') != 'model_cpu' or candidate.get('autoOffload') is not True:
                 missing.append('The bounded FP8r Auto recipe requires its declared model CPU placement.')
@@ -3541,9 +3561,13 @@ def build_auto_resource_plan(
                 missing.append('Activate the exact reviewed optional Diffusers provider before FP8r Automatic execution.')
             resolved = (candidate.get('artifactResolution') or {}).get('resolved') or {}
             try:
-                bound, conversion, dequantization = fp8r_census(
-                    candidate.get('artifactValidation') or {}, candidate['modelType'], candidate['modelRepo'],
-                    resolved.get('revision'), candidate['dtype'])
+                arguments = (candidate.get('artifactValidation') or {}, candidate['modelType'], candidate['modelRepo'],
+                             resolved.get('revision'), candidate['dtype'])
+                if candidate.get('boundedWeightFormatRecipe') == NF4_RECIPE_ID:
+                    bound, conversion, dequantization, phases = nf4_parameter_census(*arguments)
+                    candidate['parameterLoadingPhases'] = phases
+                else:
+                    bound, conversion, dequantization = fp8r_census(*arguments)
                 if not bound or not conversion:
                     missing.append('Complete exact FP8r parameter and cold-loading census is required before Auto admission.')
                 else:

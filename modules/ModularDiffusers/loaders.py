@@ -1140,6 +1140,9 @@ def _component_runtime_policy(name, policy):
         result['weight_format_identity'] = policy['weight_format_identity']
     if name == 'transformer' and policy.get('weight_format_execution_mode') is not None:
         result['weight_format_execution_mode'] = policy['weight_format_execution_mode']
+    if name == 'text_encoder' and policy.get('text_encoder_quantization') is not None:
+        result['text_encoder_quantization'] = deepcopy(policy['text_encoder_quantization'])
+        result['weight_loading_device'] = 'cuda:0'
     return result
 
 
@@ -1676,6 +1679,7 @@ def load_components_strict(
     # components. Nested Diffusers/Transformers shard and weight bars then
     # inherit the component rank, while a component with a silent placement
     # phase still leaves a truthful "which component" status in the queue.
+    text_nf4_capacity = None
     for name in diffusers_logging.tqdm(
         components_to_load,
         desc="Loading model components",
@@ -1683,6 +1687,20 @@ def load_components_strict(
     ):
         spec = pipeline._component_specs[name]
         load_kwargs = component_load_kwargs_for(name, component_load_kwargs)
+        text_nf4 = getattr(weight_format_binding, 'text_encoder_quantization', None)
+        if text_nf4 is not None:
+            from modiff.flux3_text_encoder_quantization import assert_text_encoder_nf4_loading_capacity
+            text_nf4_capacity = assert_text_encoder_nf4_loading_capacity(
+                weight_format_binding, name, context=text_nf4_capacity)
+            diagnostics['text_encoder_loading_capacity'] = text_nf4_capacity['checks']
+        if text_nf4 is not None and name == 'text_encoder':
+            from transformers import Qwen3VLForConditionalGeneration
+            if (spec.type_hint is not Qwen3VLForConditionalGeneration
+                    or spec.pretrained_model_name_or_path != weight_format_binding.recipe['repository']
+                    or spec.revision != weight_format_binding.recipe['revision'] or spec.subfolder != 'text_encoder'
+                    or spec.variant is not None or load_kwargs.get('device_map') != {'': 'cuda:0'}
+                    or getattr(pipeline._components_manager, '_auto_offload_enabled', False) is not True):
+                raise ValueError('Parent text encoder NF4 requires its exact native source and explicit CUDA load followed by manager CPU hooks.')
         staged = cuda_weight_loading is not None and name in cuda_weight_loading['bound']['components']
         if staged:
             _assert_cuda_weight_loading_capacity(cuda_weight_loading, name)
@@ -1752,6 +1770,11 @@ def load_components_strict(
                 execution = weight_format_binding.apply_execution(pipeline, component)
                 if execution is not None:
                     diagnostics['weight_format_execution'] = execution
+            if text_nf4 is not None and name == 'text_encoder':
+                from modiff.flux3_text_encoder_quantization import validate_text_encoder_nf4_model
+                validate_text_encoder_nf4_model(component, text_nf4, device='cuda:0')
+                assert_text_encoder_nf4_loading_capacity(
+                    weight_format_binding, name, context=text_nf4_capacity, registering=True)
             if staged:
                 if (type(component) is not spec.type_hint or getattr(component, 'hf_quantizer', None) is not None
                         or any(getattr(module, '_hf_hook', None) is not None for module in component.modules())
@@ -1782,6 +1805,8 @@ def load_components_strict(
             continue
 
         pipeline.register_components(**{name: component})
+        if text_nf4 is not None and name == 'text_encoder':
+            diagnostics['text_encoder_quantization'] = validate_text_encoder_nf4_model(component, text_nf4, device='cpu')
         if staged:
             # A failed hook installation cannot leave a component eligible for
             # default-policy reuse. Successful publication replaces this marker.
@@ -2039,6 +2064,12 @@ class QuantizationConfigNode(NodeBase):
             "fieldOptions": {"multiple": True},
             "value": [],
         },
+        "skip_module_names": {
+            "label": "Skip Module Names",
+            "type": "string",
+            "value": "",
+            "description": "Comma-separated module paths. Leave layer selections empty when using explicit names.",
+        },
         "quantization_config": {
             "label": "Quantization Config",
             "type": "quant_config",
@@ -2159,6 +2190,7 @@ class QuantizationConfigNode(NodeBase):
         llm_int8_threshold,
         llm_int8_has_fp16_weight,
         llm_int8_skip_modules,
+        skip_module_names="",
         **kwargs,
     ):
         import torch
@@ -2192,9 +2224,13 @@ class QuantizationConfigNode(NodeBase):
                 )
             raise ValueError(f"Unsupported quantization type: {quant_type}")
 
-        skip_modules = llm_int8_skip_modules if llm_int8_skip_modules else None
+        from modiff.flux3_text_encoder_quantization import parse_module_skip_names
+        explicit_skips = parse_module_skip_names(skip_module_names)
+        if explicit_skips and llm_int8_skip_modules:
+            raise ValueError("Use explicit skip module names or layer selections, not both.")
+        skip_modules = explicit_skips or (llm_int8_skip_modules if llm_int8_skip_modules else None)
 
-        if skip_modules:
+        if skip_modules and not explicit_skips:
             if isinstance(model_id, dict):
                 model_id = model_id.get("value", "")
             cache_key = f"{model_id}|{subfolder}"
@@ -2787,6 +2823,16 @@ class ModelsLoader(NodeBase):
             _verification_callback=verification)
         if weight_binding is not None:
             kwargs['_reviewed_weight_format_identity'] = weight_binding.signature
+            descriptor = weight_binding.text_encoder_quantization
+            retained_pipeline = getattr(self, 'loader', None)
+            if descriptor is not None and getattr(retained_pipeline, '_modiff_text_encoder_quantization', None) == descriptor:
+                from modiff.flux3_text_encoder_quantization import validate_text_encoder_nf4_model
+                encoder = getattr(retained_pipeline, 'text_encoder', None)
+                if encoder is not None:
+                    retained_device = next(encoder.parameters()).device
+                    if str(retained_device) not in {'cpu', 'cuda:0'}:
+                        raise ValueError('Cached parent NF4 owner left its source-selected devices.')
+                    validate_text_encoder_nf4_model(encoder, descriptor, device=str(retained_device))
         elif kwargs.get('_reviewed_weight_format_identity') is not None:
             raise ValueError('Private weight-format identity has no selected artifact authority.')
         context = getattr(self, '_selected_component_lora_context', None)
@@ -3323,6 +3369,9 @@ class ModelsLoader(NodeBase):
             raise ValueError('Selected weight-format bytes changed after cache validation; repair and retry.')
         if weight_binding is not None:
             runtime_policy['weight_format_identity'] = weight_binding.receipt['sha256']
+            if weight_binding.text_encoder_quantization is not None:
+                runtime_policy['text_encoder_quantization_identity'] = weight_binding.text_encoder_quantization['signature']
+                runtime_policy['text_encoder_quantization'] = deepcopy(weight_binding.text_encoder_quantization)
             if weight_binding.execution_mode is not None:
                 runtime_policy['weight_format_execution_mode'] = weight_binding.execution_mode
         requested_offload_mode = offload_mode
@@ -3546,10 +3595,14 @@ class ModelsLoader(NodeBase):
 
         weight_load_kwargs = {}
         if weight_binding is not None:
-            quant_config, weight_load_kwargs = weight_binding.configure(self.loader, dtype)
+            quant_config, weight_load_kwargs = weight_binding.configure(self.loader, dtype, quant_config)
             generation_inputs['quant_config'] = quant_config
-            self._loader_diagnostics['quantized_components'] = ['transformer']
+            self._loader_diagnostics['quantized_components'] = sorted(quant_config)
             self._loader_diagnostics['quantization'] = safe_diagnostic_value(component_quant_config_summary(quant_config))
+            if weight_binding.text_encoder_quantization is not None:
+                self._loader_diagnostics['weight_loading'] = {'mode': 'mixed',
+                    'component_devices': {'text_encoder': 'cuda:0', 'transformer': 'cpu', 'vae': 'cpu'},
+                    'text_encoder_recipe': weight_binding.text_encoder_quantization['recipeId']}
         ALL_COMPONENTS = self.loader.pretrained_component_names
         disk_lora_targets = validate_disk_lora_targets(
             self.loader, disk_lora_policy, components_to_update, components, self.node_id,
@@ -3906,6 +3959,10 @@ class ModelsLoader(NodeBase):
 
         if requested_disk_lora_policy({**generation_inputs, 'lora_list': lora_list}, component_context=component_context) != disk_lora_policy:
             raise ValueError('Native disk LoRA inputs changed during loading; the partial owner cannot be reused.')
+        if weight_binding is not None and weight_binding.text_encoder_quantization is not None:
+            from modiff.flux3_text_encoder_quantization import text_encoder_nf4_consumed_quantization
+            consumed_quantization = text_encoder_nf4_consumed_quantization(self.loader, weight_binding, quant_config)
+            self.record_generation_inputs({**generation_inputs, **applied_policy, 'quant_config': consumed_quantization})
         publish_disk_lora_binding(self, disk_lora_policy, components)
 
         return loaded_components

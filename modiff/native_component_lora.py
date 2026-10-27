@@ -88,6 +88,7 @@ class ComponentLoraContext:
     index_stamp: tuple
     weight_format_contract: tuple | None = None
     placement: object | None = None
+    text_encoder_quantization: dict | None = None
 
     @property
     def signature(self):
@@ -106,6 +107,8 @@ class ComponentLoraContext:
         )
         if self.weight_format_contract is not None:
             signature = (*signature, ('weight-format-v1', self.weight_format_contract))
+        if self.text_encoder_quantization is not None:
+            signature = (*signature, ('text-encoder-quantization-v1', self.text_encoder_quantization['signature']))
         return signature if self.placement is None else (*signature, self.placement.signature)
 
     def validate_placement(self, values):
@@ -137,9 +140,10 @@ class ComponentLoraContext:
             or values.get('trust_remote_code', False) is not False
             or values.get('weight_loading_mode', 'cpu') != 'cpu'
             or any(values.get(name) is not None for name in
-                   ('unet', 'vae', 'controlnet', 'quant_config', 'modiff_pipeline_identity'))
+                   ('unet', 'vae', 'controlnet', 'modiff_pipeline_identity'))
         ):
             raise ValueError('Resolved component LoRA controls differ from the source-selected context.')
+        self.validate_quantization(values)
         from modiff.flux3_lora_contract import is_flux3_declaration
         if is_flux3_declaration(declaration):
             self.validate_weight_format(values)
@@ -158,6 +162,8 @@ class ComponentLoraContext:
                     'quant_config': None, 'modiff_pipeline_identity': None}
         for field in ('model_type', 'repo_id', 'revision', 'reviewed_variant', 'workflow_id', 'dtype', 'device',
                       'offload_mode', 'auto_offload', *defaults):
+            if field == 'quant_config' and self.text_encoder_quantization is not None:
+                continue
             expected = _literal(params, field, defaults.get(field))
             actual = values.get(field, defaults.get(field))
             if field in ('dtype', 'device'):
@@ -165,6 +171,7 @@ class ComponentLoraContext:
                 actual = str(actual).removeprefix('torch.')
             if actual != expected:
                 raise ValueError('Resolved component dispatch overrides its current source control: ' + field)
+        self.validate_quantization(values)
         from modiff.flux3_lora_contract import is_flux3_declaration
         if is_flux3_declaration(self.declaration):
             if _literal(params, 'weight_format', 'native') != values.get('weight_format', 'native'):
@@ -173,7 +180,7 @@ class ComponentLoraContext:
         if (values.get('trust_remote_code', False) is not False
                 or values.get('weight_loading_mode', 'cpu') != 'cpu'
                 or any(values.get(field) is not None for field in
-                       ('unet', 'vae', 'controlnet', 'quant_config', 'modiff_pipeline_identity'))):
+                       ('unet', 'vae', 'controlnet', 'modiff_pipeline_identity'))):
             raise ValueError('The selected component source has unreviewed execution controls.')
         from modiff.auxiliary_lora import resolve_lora_descriptors
         submitted = values.get('lora_list')
@@ -183,6 +190,22 @@ class ComponentLoraContext:
             raise ValueError('Resolved component adapter artifacts differ from the current source graph.')
         if _verification_callback is not None:
             _verification_callback.check()
+
+    def validate_quantization(self, values):
+        if self.text_encoder_quantization is None:
+            if values.get('quant_config') is not None:
+                raise ValueError('Extra component quantization has no current source authority.')
+            return
+        scope = _GRAPH_SCOPE.get()
+        from modiff.flux3_text_encoder_quantization import (
+            inspect_text_encoder_nf4, validate_text_encoder_nf4_config, text_encoder_nf4_runtime_ready,
+        )
+        if (scope is None or inspect_text_encoder_nf4(scope[0]['nodes'], self.owner_id) != self.text_encoder_quantization
+                or values.get('lora_list') not in (None, [])):
+            raise ValueError('Parent text encoder NF4 source or adapter controls changed before dispatch.')
+        if not text_encoder_nf4_runtime_ready():
+            raise ValueError('Parent text encoder NF4 requires its active exact combined provider before owner preparation.')
+        validate_text_encoder_nf4_config(values.get('quant_config'), self.text_encoder_quantization)
 
     def validate_weight_format(self, values, *, installed=False, _verification_callback=None):
         """Bind storage authority without repeating large hashes in callbacks."""
@@ -754,7 +777,8 @@ def _component_method_identity(pipeline, component):
     adapter_methods = tuple(codes(getattr(SelectedComponentLifecycle, name)) for name in
                             ('assert_runtime_binding', 'preflight', 'loaded', 'load', 'activate', 'delete', 'unload'))
     authority_methods = (ComponentLoraContext.validate_source_submission.__code__,
-                         ComponentLoraContext.validate_resolved.__code__, current_component_lora_context.__code__)
+                         ComponentLoraContext.validate_resolved.__code__,
+                         ComponentLoraContext.validate_quantization.__code__, current_component_lora_context.__code__)
     from modiff.flux3_lora_contract import FLUX3_LORA_DECLARATIONS
     if type(pipeline).__name__ in {row[2] for row in FLUX3_LORA_DECLARATIONS}:
         from modiff.flux3_lora_contract import assert_selected_flux3_target, flux3_target_shapes
@@ -1044,6 +1068,10 @@ def preflight_component_graph(server, graph):
         context = current_component_lora_context(owner_id)
         if context is None:
             continue
+        if context.text_encoder_quantization is not None:
+            from modiff.flux3_text_encoder_quantization import text_encoder_nf4_runtime_ready
+            if not text_encoder_nf4_runtime_ready():
+                raise ValueError('Parent text encoder NF4 requires its active exact combined provider before owner preparation.')
         verification = None
         if context.weight_format_contract is not None:
             from modiff.artifact_verification import artifact_verification_for_task

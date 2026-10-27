@@ -82,6 +82,42 @@ a pipeline repository substitution: upstream loads a quantized component from
 a single file and assembles it with the remaining pipeline components. Treating
 either case as a generic repository swap is unsafe.
 
+### Explicit public FLUX 3 parent text-encoder NF4
+
+The two immutable public FLUX 3 official-provider profiles have a separate
+source-bounded Windows NVIDIA Auto declaration for an explicitly authored NVFP4
+transformer plus parent text-encoder NF4 graph. It is not an Auto-qualified model
+receipt. Fresh workflows and canonical templates retain their authored FP8r
+format and unquantized parent text encoder; no new mode is silently selected.
+The prompt-enhancer NF4 provider is a different model owner and does not satisfy
+this parent component contract.
+
+Use the existing **Quantization Config** node with the exact parent Hub model,
+`subfolder=text_encoder`, `component=text_encoder`, `quant_type=bnb_4bit`,
+`bnb_4bit_quant_type=nf4`, `bnb_4bit_compute_dtype=bfloat16`, double quantization
+enabled and `skip_module_names=model.visual,lm_head`. Keep the legacy indexed
+skip list empty, connect `quantization_config` to the parent loader's
+`quant_config` input, and explicitly select the parent's `nvfp4` weight format.
+Only the reviewed language Linear layers are quantized; the vision encoder and
+output head stay dense. This per-component Transformers configuration is merged
+with the official BFL transformer configuration rather than quantizing the
+transformer a second time.
+
+The bounded Auto recipe requires the reviewed activated provider and
+bitsandbytes runtime, primary `cuda:0`, BF16 compute, model CPU offload, 512×512
+output, batch one and no LoRAs or external components. Text-encoder NF4 cold
+loading uses an explicit CUDA component placement while BFL cold loading remains
+on CPU. Exact tensor/configuration census, conversion/staging reserves and actual
+free RAM/VRAM checks remain mandatory. Existing one/two-reference edit limits,
+prompts, layout, reference order, steps and seed are preserved. Arbitrary configs,
+other component maps or private/legacy profiles receive no new admission.
+
+The generic node remains explicit authoring; **Load Model Layers** is not needed
+for this fixed recipe. The Studio Expert Quantization selector does not select
+this ordinary graph Auto variant. See [Workflow Auto memory contracts](workflow-auto-memory.md)
+for its dispatch/currentness and resource boundaries. Native cold Auto output
+and visual acceptance remain separate from source and unit/transport checks.
+
 ### Installing and running the reviewed GGUF path
 
 1. In **Setup > Optional runtimes**, install and activate **GGUF 0.19.0**.

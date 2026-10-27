@@ -251,6 +251,7 @@ class ResolvedWeightFormat:
     signature: tuple
     receipt: dict
     execution_mode: str | None = None
+    text_encoder_quantization: dict | None = None
 
     @property
     def contract(self):
@@ -274,8 +275,19 @@ class ResolvedWeightFormat:
             if current != expected or _stat(current) != self.signature[offset]:
                 raise ValueError('Selected weight-format bytes changed during loading; retry after repair.')
 
-    def configure(self, pipeline, dtype):
+    def configure(self, pipeline, dtype, quant_config=None):
         import diffusers
+        text_kwargs = {}
+        if self.text_encoder_quantization is not None:
+            from modiff.flux3_text_encoder_quantization import (
+                validate_text_encoder_nf4_config, text_encoder_nf4_loader_kwargs,
+            )
+            validate_text_encoder_nf4_config(quant_config, self.text_encoder_quantization)
+            if str(dtype).removeprefix('torch.') != 'bfloat16':
+                raise ValueError('Parent NF4 requires BF16 compute for both quantized components.')
+            text_kwargs = text_encoder_nf4_loader_kwargs(self.text_encoder_quantization)
+        elif quant_config is not None:
+            raise ValueError('Extra quantization has no source-selected parent NF4 authority.')
         expected = getattr(diffusers, self.recipe['loaderClass'])
         spec = pipeline._component_specs.get('transformer')
         if (spec is None or spec.type_hint is not expected
@@ -290,8 +302,13 @@ class ResolvedWeightFormat:
         # file. Remaining components keep their native Hub specifications.
         quantization = diffusers.BFLQuantizationConfig(compute_dtype=dtype)
         pipeline._modiff_weight_format_binding = self
-        return {'transformer': quantization}, {'config': {'transformer': str(self.snapshot / 'transformer')},
-                                               'local_files_only': True}
+        components = {'transformer': quantization}
+        kwargs = {'config': {'transformer': str(self.snapshot / 'transformer')}, 'local_files_only': True}
+        if self.text_encoder_quantization is not None:
+            components.update(quant_config)
+            kwargs.update(text_kwargs)
+            pipeline._modiff_text_encoder_quantization = self.text_encoder_quantization
+        return components, kwargs
 
     def apply_execution(self, pipeline, component):
         if self.execution_mode is None:
@@ -360,8 +377,19 @@ def resolve_weight_format(*, model_type, metadata, repository, revision, weight_
     if weight_format == 'native':
         return None
     execution_mode = require_weight_format_execution(weight_format, execution_device)
+    text_quantization = None
+    if quant_config is not None:
+        from modiff.flux3_text_encoder_quantization import validate_text_encoder_nf4_config
+        from modiff.native_component_lora import ComponentLoraContext, current_component_lora_context
+        text_quantization = getattr(component_lora_context, 'text_encoder_quantization', None)
+        if (weight_format != 'nvfp4' or offload_mode != 'model_cpu' or auto_offload is not True
+                or type(component_lora_context) is not ComponentLoraContext or text_quantization is None
+                or current_component_lora_context(component_lora_context.owner_id) != component_lora_context
+                or lora_list not in (None, [])):
+            raise ValueError('Selected BFL formats with extra quantization require the exact source-selected parent text encoder NF4 recipe.')
+        validate_text_encoder_nf4_config(quant_config, text_quantization)
     if (weight_loading_mode != 'cpu'
-            or any(item is not None for item in (quant_config, unet, vae, controlnet))):
+            or any(item is not None for item in (unet, vae, controlnet))):
         raise ValueError('Selected BFL formats require CPU loading without component overrides or extra quantization.')
     if offload_mode != 'none' or auto_offload is not False:
         from modiff.native_component_lora import ComponentLoraContext, current_component_lora_context
@@ -390,4 +418,6 @@ def resolve_weight_format(*, model_type, metadata, repository, revision, weight_
     signature = (receipt['sha256'], str(weight), _stat(weight), str(config), _stat(config))
     if execution_mode is not None:
         signature += (execution_mode,)
-    return ResolvedWeightFormat(recipe, snapshot, weight, config, signature, receipt, execution_mode)
+    if text_quantization is not None:
+        signature += (('text-encoder-quantization-v1', text_quantization['signature']),)
+    return ResolvedWeightFormat(recipe, snapshot, weight, config, signature, receipt, execution_mode, text_quantization)

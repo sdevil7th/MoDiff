@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / 'modiff/flux3_lora_contract.py'
 
 
-def resolve(graph, specification, *, with_selectors=False):
+def resolve(graph, specification, *, with_selectors=False, text_quantization=None):
     tree = ast.parse(CONTRACT.read_text(encoding='utf-8'))
     selected = next(node for node in tree.body
                     if isinstance(node, ast.FunctionDef) and node.name == 'selected_flux3_context')
@@ -37,7 +37,7 @@ def resolve(graph, specification, *, with_selectors=False):
     body = deepcopy(selected.body[start:end]) + selectors + [ast.Return(
         ast.Tuple([ast.Name('roles', ast.Load()), ast.Name('selectors', ast.Load())], ast.Load()))]
     function = ast.FunctionDef(name='route', args=ast.arguments(
-        posonlyargs=[], args=[ast.arg(arg=name) for name in ('graph', 'owner_id', 'specification')],
+        posonlyargs=[], args=[ast.arg(arg=name) for name in ('graph', 'owner_id', 'specification', 'text_quantization')],
         kwonlyargs=[], kw_defaults=[], defaults=[]), body=body, decorator_list=[])
     helpers = [deepcopy(node) for node in tree.body if isinstance(node, ast.FunctionDef)
                and node.name == '_reference_image_source']
@@ -49,7 +49,7 @@ def resolve(graph, specification, *, with_selectors=False):
     namespace = {'re': re}
     module = ast.fix_missing_locations(ast.Module(body=resource_nodes + helpers + [function], type_ignores=[]))
     exec(compile(module, '<actual-pure-flux3-route>', 'exec'), namespace)
-    result = namespace['route'](graph, 'models', specification)
+    result = namespace['route'](graph, 'models', specification, text_quantization)
     return result if with_selectors else result[0]
 
 
@@ -206,6 +206,30 @@ class ReferenceMediaRouteTests(unittest.TestCase):
                     graph['loops'] = [{'bodyNodeIds': ['denoise']}]
                 with self.assertRaises(ValueError):
                     resolve(graph, spec)
+
+    def test_issued_quantization_producer_must_be_executable_and_outside_loops(self):
+        # Source inspection/recipe validation happens before this extracted
+        # route excerpt and is covered by the complete NF4 context tests.
+        descriptor = {'producerId': 'quantization'}
+        graph, spec = source_graph()
+        graph['nodes']['quantization'] = {'module': 'modules.ModularDiffusers',
+            'action': 'QuantizationConfigNode', 'params': {}}
+        graph['nodes']['models']['params']['quant_config'] = {
+            'sourceId': 'quantization', 'sourceKey': 'quantization_config'}
+        graph['paths'][0].insert(0, 'quantization')
+        before = deepcopy(graph)
+        self.assertEqual(resolve(graph, spec, text_quantization=descriptor),
+                         {role: role for role, _key in spec['roles']})
+        self.assertEqual(graph, before)
+        for fault in ('missing_path', 'loop'):
+            with self.subTest(fault=fault):
+                changed = deepcopy(graph)
+                if fault == 'missing_path':
+                    changed['paths'][0].remove('quantization')
+                else:
+                    changed['loops'] = [{'bodyNodeIds': ['quantization']}]
+                with self.assertRaises(ValueError):
+                    resolve(changed, spec, text_quantization=descriptor)
 
 
 class FullSelectedContextTests(unittest.TestCase):

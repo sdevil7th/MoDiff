@@ -18351,7 +18351,8 @@ for _old_id, _pipeline, _label, _repository, _revision, _steps, _cfg in _FLUX3_C
             defaultSize={'width': 512, 'height': 512, 'aspectRatio': '1:1'},
             autoEligible=True,
             notes=['Explicit Expert authoring requires the reviewed optional Diffusers provider.',
-                   'Runtime readiness, model fit, native output and Auto/template qualification are separate.'],
+                   'Runtime readiness, model fit, native output and Auto/template qualification are separate.',
+                   'An explicit connected text-encoder NF4 configuration has a separate bounded NVFP4 Auto recipe; it is never a default.'],
         )
         _source['autoRequirementKey'] = f'{_pipeline}:{_task}'
         _source['autoRequirements'] = {
@@ -18359,6 +18360,7 @@ for _old_id, _pipeline, _label, _repository, _revision, _steps, _cfg in _FLUX3_C
             'executionPath': 'modular-diffusers', 'pipelineClass': _pipeline,
             'declaredExecutionProfileIds': [_public_id],
             'boundedWeightFormatRecipe': 'flux3-fp8r-windows-model-cpu:v1',
+            'explicitComponentQuantizationRecipe': 'flux3-nvfp4-text-nf4-windows-model-cpu:v1',
             'qualityDefaults': {'width': 512, 'height': 512, 'steps': _steps,
                                 'guidanceScale': 3.5 if _cfg else 1.0, 'maxSequenceLength': 8192},
             # No invented machine tier or measured inference budget. Exact

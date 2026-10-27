@@ -112,10 +112,14 @@ def selected_flux3_context(graph, source_fingerprint, owner_id, profile, declara
     from modiff.flux3_lora_placement import selected_flux3_placement
     placement = selected_flux3_placement(_literal(params, 'offload_mode'),
         _literal(params, 'auto_offload'), _literal(params, 'device'))
+    from modiff.flux3_text_encoder_quantization import inspect_text_encoder_nf4
+    text_quantization = inspect_text_encoder_nf4(graph['nodes'], owner_id)
+    if text_quantization is not None and not profile.id.endswith(':official-provider:v1'):
+        raise ValueError('Parent text encoder NF4 is declared only for the public immutable parent profiles.')
     if (_literal(params, 'weight_loading_mode', 'cpu') != 'cpu'
             or _literal(params, 'trust_remote_code', False) is not False
             or any(_literal(params, name) is not None for name in
-                   ('unet', 'vae', 'controlnet', 'quant_config', 'modiff_pipeline_identity'))):
+                   ('unet', 'vae', 'controlnet', 'modiff_pipeline_identity'))):
         raise ValueError('FLUX 3 selected LoRA requires CPU loading without component overrides.')
     specification = studio_execution_spec_for_pair(selected.pipeline_class, selected.task, execution_profile_id=profile.id)
     if (specification is None or specification['executionProfileId'] != profile.id
@@ -174,6 +178,8 @@ def selected_flux3_context(graph, source_fingerprint, owner_id, profile, declara
         raise ValueError('An unknown consumer cannot share the selected FLUX 3 owner.')
     executable = {key for path in graph.get('paths', ()) for key in path}
     selected_nodes = set(roles.values()) | set(reference_media)
+    if text_quantization is not None:
+        selected_nodes.add(text_quantization['producerId'])
     if not selected_nodes.issubset(executable):
         raise ValueError('FLUX 3 LoRA requires every selected stage in the current executable paths.')
     if any(selected_nodes.intersection(loop.get('bodyNodeIds', ())) for loop in graph.get('loops', ())):
@@ -197,7 +203,7 @@ def selected_flux3_context(graph, source_fingerprint, owner_id, profile, declara
     return ComponentLoraContext(selected, owner_id, specification['id'], specification['contentHash'],
                                 profile.id, selectors, source_fingerprint, str(_literal(params, 'dtype')),
                                 str(_literal(params, 'device')), (filename, _reviewed_json_fingerprint(document)),
-                                weight_contract, placement)
+                                weight_contract, placement, text_quantization)
 
 
 def _validate_flux3_peft_metadata(raw, pairs):

@@ -14,7 +14,8 @@ storage with BF16 compute, CPU weight loading and model CPU offload. Distilled
 retains 16 steps; Base requires 50 steps, ordinary classifier-free guidance 3.5
 and rescale zero. The declared text window is at most 8192 tokens. Native,
 NVFP4, additional quantization, other placements and larger workloads receive
-no permission from this declaration. Connected LoRAs retain their independent
+no permission from this FP8r declaration. The separately selected NVFP4/text
+NF4 recipe below has its own contract. Connected LoRAs retain their independent
 resource and placement restrictions.
 
 Architecture uses the existing runtime normalization, including Windows' AMD64
@@ -41,6 +42,55 @@ conservative overlap are not measured physical commitment or peak inference
 demand. A cached file, prior Expert output and a source declaration do not
 establish native qualification. Actual Automatic output and visual acceptance
 remain separate proof obligations.
+
+### Explicit NVFP4 and parent text-encoder NF4
+
+The public Distilled and Base profiles also name
+`flux3-nvfp4-text-nf4-windows-model-cpu:v1`. This is an explicit ordinary graph
+variant, never an automatic precision substitution or a changed starter default.
+It keeps the same immutable parent repository/revision and bounded T2I or
+one/two-reference edit workload above, with BF16 compute, `cuda:0`, model CPU
+offload, batch one, 512×512 output and no LoRAs or component replacements.
+
+Add the existing **Quantization Config** node and select the exact parent Hub
+repository, **Subfolder** and **Component** `text_encoder`, **Quant Type**
+`bnb_4bit`, **4-bit Quant Type** `nf4`, **Compute Dtype** `bfloat16`, and
+**Double Quant** enabled. Set **Skip Module Names** to `model.visual,lm_head`
+and leave the legacy **Skip Modules** list empty. Connect its
+`quantization_config` output to the parent **Quant Config** input and explicitly
+choose transformer **Weight Format** `nvfp4`. Save this as a separate authored
+variant before normal Automatic Run. The parent prompt, layout, reference order,
+seed and step count are unchanged. The Studio Expert quantization menu is not
+the selection path for this Auto recipe.
+
+Planning inspects only that exact built-in producer and literal controls; it
+does not run a configuration supplier, load layers, instantiate a model or
+install packages. The component map is separately identified from the
+transformer's scalar quantization mode. Source graph, producer controls, exact
+resolved Transformers NF4 config, parent identity and loading policy are bound
+again at dispatch and in cache/history identity. Arbitrary producers, changed
+exclusions, extra component mappings and unreviewed connected controls refuse.
+After successful loading, the existing consumed `quantConfig` receipt records a
+bounded string list describing both actual component configurations, loading
+devices, validated packed encoder state, recipe and source signature. This
+snapshot preserves the connected producer origin through output history; it
+does not serialize executable configuration objects.
+The text encoder's language Linear layers use NF4; its vision module and output
+head remain dense. The official BFL transformer configuration remains separate.
+
+The reviewed component loader explicitly stages the NF4 text encoder on primary
+CUDA before model CPU offload; the BFL transformer retains CPU cold loading.
+The parent `weight_loading_mode=cpu` therefore does not claim that all component
+conversion occurs on CPU. Admission counts the exact dense and packed component
+storage, quantization state, source/conversion overlap, CUDA staging and
+per-layer dequantization reserves under the existing RAM/VRAM headroom and owner
+lifetime rules. Missing evidence or insufficient actual free memory refuses
+without replacing the authored format or reducing the workload. The existing
+reviewed provider and activated bitsandbytes runtime are mandatory.
+
+This declaration does not qualify legacy/private profiles, other precisions,
+hardware targets, native output, Gallery or templates. A successful cold normal
+Automatic run and visual acceptance remain required independent evidence.
 
 ## Machine capacity and working demand
 
