@@ -271,6 +271,98 @@ def test_unknown_model_requires_immutable_revision_and_never_downloads(monkeypat
     ]
 
 
+def custom_supplier_graph():
+    registry = deepcopy(REGISTRY)
+    params = {"revision": {"type": "string"}}
+    values = {"revision": {"value": "c" * 40}}
+    for name, revision in (("vae", "a" * 40), ("text_encoder", "b" * 40)):
+        prefix = f"source__{name}__"
+        params[prefix + "repo"] = {"type": "string", "display": "modelselect"}
+        params[prefix + "revision"] = {"type": "string"}
+        params[prefix + "variant"] = {"type": "string"}
+        values[prefix + "repo"] = {"value": {"source": "hub", "value": f"example/{name}"}}
+        values[prefix + "revision"] = {"value": revision}
+        values[prefix + "variant"] = {"value": "fp16" if name == "vae" else ""}
+    registry["custom.Example"] = {"LoadModels": {"params": params}}
+    graph = deepcopy(GRAPH)
+    graph["nodes"]["prompt"] = {"module": "custom.Example", "action": "LoadModels", "params": values}
+    return graph, registry
+
+
+@pytest.mark.parametrize("catalog_revision", [None, "d" * 40])
+@pytest.mark.parametrize("selector_revision", [None, "e" * 40])
+@pytest.mark.parametrize("base_revision", [None, "c" * 40])
+def test_custom_component_service_manifest_uses_each_selected_source_revision(
+    monkeypatch, catalog_revision, selector_revision, base_revision
+):
+    from modiff import model_artifact_catalog
+
+    graph, registry = custom_supplier_graph()
+    if base_revision is None:
+        graph["nodes"]["prompt"]["params"].pop("revision")
+    if selector_revision:
+        graph["nodes"]["prompt"]["params"]["source__vae__repo"]["value"]["revision"] = selector_revision
+    original_pin = model_artifact_catalog.catalog_repository_pin
+
+    def repository_pin(repo, **kwargs):
+        if repo.startswith("example/"):
+            return {"revision": catalog_revision} if catalog_revision else None
+        return original_pin(repo, **kwargs)
+
+    monkeypatch.setattr(model_artifact_catalog, "catalog_repository_pin", repository_pin)
+    interface = {"inputs": {}, "outputs": INTERFACE["outputs"]}
+    package = service.build_package(graph, interface, registry=registry, contract=CONTRACT)
+    assert package["requirements"]["models"] == [
+        {"location": "prompt.source__vae__repo", "repository": "example/vae", "revision": "a" * 40},
+        {"location": "prompt.source__text_encoder__repo", "repository": "example/text_encoder", "revision": "b" * 40},
+    ]
+    prepared = service.prepare_package(package, {}, registry=registry, contract=CONTRACT, sid="custom_service")
+    assert prepared["nodes"]["prompt"]["params"] == graph["nodes"]["prompt"]["params"]
+
+
+@pytest.mark.parametrize("revision", [None, {"value": ""}, {"value": "main"}, {"value": "A" * 40},
+                                      {"value": "a" * 39}, {"value": "a" * 40, "sourceId": "supplier"}])
+def test_custom_component_service_requires_its_literal_revision_without_catalog_fallback(monkeypatch, revision):
+    graph, registry = custom_supplier_graph()
+    if revision is None:
+        graph["nodes"]["prompt"]["params"].pop("source__vae__revision")
+    else:
+        graph["nodes"]["prompt"]["params"]["source__vae__revision"] = revision
+    monkeypatch.setattr("modiff.model_artifact_catalog.catalog_repository_pin", lambda _: {"revision": "d" * 40})
+    with pytest.raises(ValueError, match="source__vae__revision.*immutable"):
+        service.model_pins(graph, registry)
+
+
+@pytest.mark.parametrize("component", ["vae", "text_encoder"])
+def test_custom_component_variants_are_internal_while_ordinary_service_values_remain_callable(component):
+    graph, registry = custom_supplier_graph()
+    registry["modules.Primitive"]["TextValue"]["params"].update({
+        "amount": {"type": "float"}, "file": {"type": "str", "display": "filebrowser"},
+    })
+    graph["nodes"]["controls"] = deepcopy(GRAPH["nodes"]["prompt"])
+    graph["nodes"]["controls"]["params"].update({"amount": {"value": 0.5}, "file": {"value": "@data/input.png"}})
+    graph["paths"].append(["controls"])
+    original = deepcopy(graph)
+    candidates = service.inspect_graph(graph, registry)["inputs"]
+    assert not any(candidate["field"].endswith("__variant") for candidate in candidates)
+    assert {candidate["field"] for candidate in candidates if candidate["nodeId"] == "controls"} == {
+        "text", "amount", "file",
+    }
+    interface = {"inputs": {field: [{"nodeId": "controls", "field": field}] for field in ("text", "amount", "file")},
+                 "outputs": INTERFACE["outputs"]}
+    package = service.build_package(graph, interface, registry=registry, contract=CONTRACT)
+    values = {"text": "new input", "amount": 0.75, "file": "@data/next.png"}
+    prepared = service.prepare_package(package, values,
+                                       registry=registry, contract=CONTRACT, sid="custom_values")
+    assert {field: prepared["nodes"]["controls"]["params"][field]["value"] for field in values} == values
+    assert graph == original
+    assert prepared["nodes"]["prompt"] == original["nodes"]["prompt"]
+    assert package["graph"]["nodes"]["prompt"] == original["nodes"]["prompt"]
+    interface["inputs"]["weightVariant"] = [{"nodeId": "prompt", "field": f"source__{component}__variant"}]
+    with pytest.raises(ValueError, match="binding"):
+        service.build_package(graph, interface, registry=registry, contract=CONTRACT)
+
+
 def test_spandrel_service_preserves_exact_single_file_pin_without_loading_or_resolving(monkeypatch):
     from modiff import controlled_artifacts
     from modiff.upscaler_contracts import real_esrgan_x2_model_selection
