@@ -1355,8 +1355,8 @@ def _bitsandbytes_overlay_current(package_root, profile, catalog, state) -> bool
             and Path(inspection["sitePackages"]).resolve(strict=True) == expected_root
             and manifest.get("trustClass") == "artifact_locked_optional"
             and inspection.get("validation", {}).get("status") == "passed"
-            and any(item.get("kind") == "optional_runtime" and item.get("id") == declared.id
-                    and item.get("specDigest") == declared.spec_digest for item in manifest.get("specs", ()))
+            and any(_environment_spec_satisfies_optional_profile(item, profile)
+                    for item in manifest.get("specs", ()))
         )
     except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError):
         return False

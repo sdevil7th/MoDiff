@@ -4,12 +4,14 @@ import subprocess
 import tempfile
 import threading
 import unittest
+from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
 from modiff import optimization_packages as optimizations
 from modiff import runtime_overlays
+from modiff.optional_runtimes import DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID
 
 
 class OptimizationPackageTests(unittest.TestCase):
@@ -132,6 +134,110 @@ class OptimizationPackageTests(unittest.TestCase):
         self.assertTrue(quanto["availableForExecution"])
         self.assertEqual(quanto["optionalRuntimeProfileId"], profile_id)
         self.assertIsNone(quanto["disabledReason"])
+
+    def bitsandbytes_overlay_catalog(self, provider_id, mutate=None):
+        declared = optimizations.OPTIONAL_RUNTIME_PROFILES[
+            optimizations.TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID
+        ]
+        provider = optimizations.OPTIONAL_RUNTIME_PROFILES[provider_id]
+        site = optimizations.ENVIRONMENTS_DIR / self.ACTIVE_ENVIRONMENT_ID / "site-packages"
+        site.mkdir(parents=True, exist_ok=True)
+        fixture = {
+            "packageRoot": site,
+            "state": {
+                "_storageStatus": "ok",
+                "activeEnvironmentId": self.ACTIVE_ENVIRONMENT_ID,
+                "activeTrustClass": "artifact_locked_optional",
+            },
+            "catalog": {
+                "schemaVersion": 1,
+                "profiles": [{
+                    "id": declared.id, "specDigest": declared.spec_digest,
+                    "status": "present_unqualified", "contractState": "qualified",
+                    "cutoverReady": True, "installActionAvailable": True,
+                    "activationAvailable": True, "platform": "windows",
+                    "machine": "x86_64", "overlayStatus": "active",
+                }],
+                "overlay": {
+                    "processLoadStatus": "active",
+                    "state": {"activeEnvironmentId": self.ACTIVE_ENVIRONMENT_ID,
+                              "activeStatus": "active"},
+                },
+            },
+            "inspection": {
+                "status": "recorded", "sitePackages": str(site),
+                "validation": {"status": "passed"},
+                "manifest": {
+                    "trustClass": "artifact_locked_optional",
+                    "specs": [{"kind": "optional_runtime", "id": provider.id,
+                               "specDigest": provider.spec_digest}],
+                },
+            },
+            "environment": {
+                "MODIFF_RUNTIME_OVERLAY_STATUS": "active",
+                "MODIFF_OPTIMIZATION_ENVIRONMENT": self.ACTIVE_ENVIRONMENT_ID,
+            },
+        }
+        if mutate is not None:
+            mutate(fixture)
+        with (
+            mock.patch.dict(os.environ, fixture["environment"]),
+            mock.patch("modiff.optional_runtimes.optional_runtime_target", return_value=("windows", "x86_64")),
+            mock.patch.object(optimizations, "read_state", return_value=fixture["state"]),
+            mock.patch.object(optimizations, "_normalized_platform", return_value="windows"),
+            mock.patch.object(optimizations, "_package_version", return_value="0.50.0"),
+            mock.patch.object(optimizations, "_bitsandbytes_package_root", return_value=fixture["packageRoot"]),
+            mock.patch.object(optimizations, "_environment_inspection", return_value=fixture["inspection"]),
+        ):
+            catalog = optimizations.public_catalog(
+                runtime_profile={"installed": "nvidia-cuda"},
+                optional_runtime_catalog=deepcopy(fixture["catalog"]),
+            )
+        return next(item for item in catalog["capabilities"] if item["id"] == "bitsandbytes")
+
+    def test_current_bitsandbytes_overlay_accepts_exact_standalone_and_composite(self):
+        for provider_id in (
+            optimizations.TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID,
+            DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID,
+        ):
+            with self.subTest(provider=provider_id):
+                item = self.bitsandbytes_overlay_catalog(provider_id)
+                self.assertTrue(item["deliveryQualified"])
+                self.assertTrue(item["availableForExecution"])
+                self.assertEqual(item["delivery"], "optional_overlay")
+                self.assertFalse(item["enabled"])
+                self.assertIsNone(item["disabledReason"])
+
+    def test_bitsandbytes_composite_does_not_bypass_current_delivery_guards(self):
+        def set_path(path, value):
+            def mutate(fixture):
+                target = fixture
+                for key in path[:-1]:
+                    target = target[key]
+                target[path[-1]] = value
+            return mutate
+
+        cases = {
+            "wrong provider digest": (("inspection", "manifest", "specs", 0, "specDigest"), "sha256:" + "0" * 64),
+            "wrong required digest": (("catalog", "profiles", 0, "specDigest"), "sha256:" + "0" * 64),
+            "undeclared provider": (("inspection", "manifest", "specs", 0, "id"), "unreviewed-provider"),
+            "inactive worker": (("environment", "MODIFF_RUNTIME_OVERLAY_STATUS"), "base"),
+            "different worker selection": (("environment", "MODIFF_OPTIMIZATION_ENVIRONMENT"), "runtime-8-deadbeef"),
+            "inactive catalog": (("catalog", "overlay", "state", "activeStatus"), "staged"),
+            "unqualified target": (("catalog", "profiles", 0, "contractState"), "candidate_unqualified"),
+            "foreign package root": (("packageRoot",), optimizations.OPTIMIZATION_ROOT / "foreign-site"),
+            "unverified environment": (("inspection", "status"), "repair_required"),
+            "failed validation": (("inspection", "validation", "status"), "failed"),
+            "unlocked manifest": (("inspection", "manifest", "trustClass"), "legacy_optimization"),
+        }
+        for label, (path, value) in cases.items():
+            with self.subTest(case=label):
+                item = self.bitsandbytes_overlay_catalog(
+                    DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID, set_path(path, value),
+                )
+                self.assertFalse(item["deliveryQualified"])
+                self.assertFalse(item["availableForExecution"])
+                self.assertFalse(item["enabled"])
 
     def test_obsolete_aiter_attention_is_not_advertised_or_recorded(self):
         catalog = optimizations.public_catalog(
