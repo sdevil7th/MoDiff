@@ -4603,6 +4603,19 @@ class LoadPipeline(NodeBase):
         if isinstance(max_memory, dict) and max_memory:
             load_kwargs["max_memory"] = max_memory
 
+        # Snapshot only reviewed plain controls before library loading can
+        # mutate runtime objects. This does not change the older v1 summary.
+        from modiff.execution_input_provenance import execution_recipe_projection
+        input_recipe_projection = execution_recipe_projection(execution_recipe)
+        effective_load_inputs = {
+            'model_id': model_id, 'revision': revision, 'pipeline_class': pipeline_class_name,
+            'mode': requested_mode, 'dtype': str(dtype).removeprefix('torch.'),
+            'low_cpu_mem_usage': load_kwargs['low_cpu_mem_usage'], 'device': device,
+            'device_map': load_kwargs.get('device_map', 'none'), 'auto_offload': auto_offload,
+            'offload_mode': offload_mode, 'quantization_mode': quantization_mode,
+            'quantized_components': quantized_components, 'conditioning_kind': adapter.conditioning_kind or 'none',
+        }
+
         self.progress(-1, phase="loading", message=f"Loading {pipeline_class_name}")
         if pipeline_class_name == "FluxReduxPipeline":
             from diffusers import FluxPipeline, FluxPriorReduxPipeline
@@ -4735,6 +4748,26 @@ class LoadPipeline(NodeBase):
             pipeline._modiff_loaded_stage_offload_mode = offload_mode
             pipeline._modiff_stage_loading_contract = (offload_mode, device_map, quant_config is not None)
             _bind_loaded_image_stage(pipeline, adapter, kwargs)
+        accounting_inactive = {}
+        if conditioning_selection is None:
+            accounting_inactive.update(conditioning_model_id='adapter-inactive', conditioning_revision='adapter-inactive')
+        else:
+            effective_load_inputs.update(conditioning_model_id=repo_value(conditioning_selection),
+                                         conditioning_revision=conditioning_revision)
+        superseded = {}
+        for field, recipe_key in (('device', 'device'), ('offload_mode', 'offload_mode'),
+                                   ('auto_offload', 'offload_mode')):
+            if execution_recipe.get(recipe_key) is not None:
+                superseded[field] = (effective_load_inputs.pop(field), 'connected-recipe')
+        if effective_load_inputs['device_map'] != kwargs.get('device_map'):
+            superseded['device_map'] = (effective_load_inputs.pop('device_map'), 'loader-normalization')
+        for field, recipe_key in (('enable_vae_slicing', 'vae_slicing'), ('enable_vae_tiling', 'vae_tiling')):
+            if recipe_key in execution_recipe:
+                superseded[field] = (runtime_recipe[recipe_key], 'connected-recipe')
+            else:
+                effective_load_inputs[field] = runtime_recipe[recipe_key]
+        self.record_field_accounting(kwargs, consumed=effective_load_inputs, inactive=accounting_inactive,
+            superseded=superseded, input_projections={'execution_recipe': input_recipe_projection})
         return {"pipeline": pipeline, "resolved_artifact": model_id}
 
 

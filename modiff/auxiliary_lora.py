@@ -102,6 +102,9 @@ class ResolvedLoraDescriptor:
     scale: float
     scheduler_class_name: str | None
     scheduler_config: dict[str, Any]
+    # Exact validated repository-relative alias, distinct from the basename
+    # passed to Diffusers with load_directory. Never a local filesystem root.
+    artifact_weight_name: str | None = None
 
 
 def _reject_duplicate_json_keys(pairs):
@@ -1125,6 +1128,7 @@ def resolve_lora_descriptor(value: Any) -> ResolvedLoraDescriptor:
         scale=scale,
         scheduler_class_name=(scheduler or {}).get("class_name"),
         scheduler_config=deepcopy((scheduler or {}).get("config") or {}),
+        artifact_weight_name=normalized_weight,
     )
 
 

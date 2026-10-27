@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+import sys
 import weakref
 
 from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
@@ -183,15 +184,26 @@ def disk_lora_binding_matches(node, policy, manager) -> bool:
 
 def record_disk_lora_output(node, args):
     """Bind successful ordinary dispatch, after NodeBase has published output."""
-    from modiff.node_cache_identity import implementation_identity
-
-    state = getattr(node, '_native_disk_lora_state', None)
-    if state:
-        state['dispatchInputs'] = dispatch_inputs(args)
-        state['outputIdentity'] = id(node.output)
-        state['implementation'] = implementation_identity(node)
-        from modiff.native_component_lora import complete_component_binding
-        complete_component_binding(node, state)
+    loader_module = sys.modules.get('modules.ModularDiffusers.loaders')
+    observed_owner = loader_module is not None and type(node) is vars(loader_module).get('ModelsLoader')
+    try:
+        state = getattr(node, '_native_disk_lora_state', None)
+        if state:
+            from modiff.node_cache_identity import implementation_identity
+            state['dispatchInputs'] = dispatch_inputs(args)
+            state['outputIdentity'] = id(node.output)
+            state['implementation'] = implementation_identity(node)
+            from modiff.native_component_lora import complete_component_binding
+            complete_component_binding(node, state)
+        if observed_owner:
+            from modiff.applied_adapter_provenance import seal_adapter_observation
+            from modules.ModularDiffusers.loaders import components
+            seal_adapter_observation(node, components)
+    except BaseException:
+        if observed_owner:
+            from modiff.applied_adapter_provenance import abort_adapter_observation
+            abort_adapter_observation(node)
+        raise
 
 
 def dispatch_inputs(args):

@@ -2348,6 +2348,106 @@ for restoration. Legacy outputs without receipts remain readable but must not
 be labelled as captured runtime inputs. Form-only prompt/settings hashes and
 exact-template claims are cleared when a resolved receipt is attached.
 
+An upstream node record may additionally contain `fieldAccounting` with its own
+`schemaVersion: 1`. This additive evidence does not widen or replace the existing
+v1 `fields`, `summary`, or display semantics. The initial scopes are the ordinary
+image loader, quantization and execution-recipe builders, unconditional image
+generation, and image Preview. Other nodes do not acquire an implicit grant.
+
+`fields` accounts for explicitly allowlisted inputs as `consumed`, `inactive`,
+`superseded`, or `metadata`. Scalar entries retain the normalized `inputValue`;
+`value` is the actual call/configuration argument, or the inactive input. Thus a
+resident loader can record authored device placement `none` and effective `cuda`,
+and a connected recipe can supersede its authored VAE switches. Inactive settings
+are not claimed to affect inference. Metadata records only the SHA-256 of an
+exact adapter-owned image contract, without serializing arbitrary nested inputs.
+Its mismatch holds evidence, without changing ordinary execution. Each bound
+entry retains its current literal/connected/override origin, independently of
+its disposition. Cache reuse retains the actual successful call evidence.
+
+`inputProjections` and `outputProjections` contain fixed plain configuration
+projections with `kind`, `values`, and `sha256`. Their digest is SHA-256 of the kind,
+a newline, and sorted compact ASCII JSON of the values. Input projections retain
+the exact connected node/port or literal/override origin. Initially only the
+existing disabled quantization marker and the scalar execution-recipe projection
+are supported; enabled quantizers, nonempty mapping options, opaque values and
+unknown configuration keys remain unsupported evidence. Consumers must join
+producer and consumer identities/digests; a graph wire alone is not that proof.
+Configuration arguments do not assert that an optional library feature was
+implemented or applied by a model that lacks it.
+
+`unaccountedFields`, `omittedFields`, and `complete` disclose coverage. Missing or
+unknown submitted literals make the bound section incomplete, including values
+filtered out before dispatch. Unknown values and runtime objects are never copied.
+The section is capped at 32 KiB; if the combined bound node would exceed 64 KiB,
+the full section is replaced with an explicit incomplete marker and legacy fields
+remain unchanged. Whole-receipt sizing reserves legacy node records first, then
+uses remaining space for optional accounting. `fieldAccountingStatus` (schema
+version 1) reports `truncated: true` if any accounting section could not fit;
+this never sets legacy `truncated`, evicts a legacy ancestor, or clears the v1
+summary/task proof. Consumers requiring accounting must reject that status.
+Existing ancestry and task/attempt identity limits still apply. Completeness is
+field accounting only: it grants no canonical execution, Auto, hardware, quality,
+rights, publication or release qualification. A paired client/recorder must
+explicitly implement and verify this new section before using it as proof.
+
+The built-in `modules.ModularDiffusers.ModelsLoader` may additionally publish
+`appliedAdapters` (schema version 1). This observes the genuine resolved adapter
+tuple after official activation and scheduler application; ordinary dispatch
+seals it only after loader/output completion and any native/selected-component
+owner seal. It is separate from submitted graph controls and artifact preflight.
+Custom owners and arbitrary suppliers cannot produce this evidence.
+
+A complete section has `status: "complete"`,
+`source: "backend-adapter-application"`, a 32-character lowercase-hex
+`applicationId`, `observation: "activated" | "reused"`, ordered `adapters`, and
+`stateSha256`. Each adapter contains `adapterName`, numeric `scale` (including
+zero), opaque historical `descriptorSha256`, safe `artifact`, and `scheduler`.
+Hub artifacts contain exactly `source: "hub"`, `repository`, immutable
+40-character lowercase-hex `revision`, `weightName`, and content `sha256`;
+local artifacts contain only `source: "local"`, `weightName`, and `sha256`.
+`weightName` is the validated artifact-relative alias, including a repository
+subdirectory when declared. It is distinct from the basename passed with the
+private load directory; no filesystem root or resolved local path is exposed.
+`scheduler` is null or `{className, configSha256}`. Its digest authenticates the
+explicit descriptor override config, not unspecified upstream scheduler defaults.
+
+The projection allows at most 32 adapters, 128-character identifier-like adapter
+names (`[A-Za-z0-9_-][A-Za-z0-9_.-]*`), 128-character scheduler class identifiers,
+256-character repository/relative weight names, finite scales in `[-20, 20]`,
+and lowercase 64-character descriptor/content hashes. Existing stricter artifact
+validators still apply. These evidence-only restrictions do not change accepted
+loader inputs. Unsupported metadata reports unavailable instead of serializing
+paths, URLs, credential-like names, arbitrary objects, or supplier results.
+The canonical adapters payload is capped at 32 KiB.
+
+`stateSha256` is `sha256:applied-adapters-v1:` followed by SHA-256 of the UTF-8
+existing Block-v2 canonical JSON for `{"adapters": [...]}`. That contract uses
+ECMAScript number spelling and UTF-16 key ordering; scales `0.0`/`1.0` and `0`/`1`
+produce identical state digests. Scheduler `configSha256` uses the same canonical
+JSON with prefix `sha256:`. Historical descriptor hashing remains unchanged and
+must not be reconstructed with a different number serializer.
+
+A fresh successful application/removal receives a new application identity.
+An unchanged cache hit retains that identity and reports `reused`, only when the
+existing native/selected-component seal verifies the same valid owner. Fresh
+observations outside that reusable owner scope do not grant later reuse proof.
+Failed, partial, replaced or invalidated owners cannot retain a complete current
+projection. A complete empty array means an observed successful empty application
+or removal; absence never means that no adapters were applied.
+
+Noncomplete sections have only `schemaVersion`, `status`, and `reason`.
+`status: "unavailable"` uses `unobserved-application`, `owner-invalidated`,
+`unsupported-owner`, or `unsupported-projection`. `status: "truncated"` uses
+`record-size-limit`. Existing v1 and field-accounting evidence reserve their
+budgets first; this optional section cannot evict their records or change their
+summary/task semantics. Top-level `appliedAdaptersStatus` (schema version 1)
+reports `truncated: true` if any new section could not fit the record or receipt.
+Consumers requiring applied evidence must reject unavailable/truncated/absent
+sections and join the actual owning node, task/attempt/ancestry, ordered graph
+descriptors and artifact identities. The section proves an adapter application
+observation only, not native media quality, resource fit, rights or publication.
+
 Ordinary image actions replace the preliminary capture after adapter aliases and
 optional call inputs are applied. Guidance aliases retain their original graph
 wire's provenance. Prompts consumed by the adapter's internal embedding bridge

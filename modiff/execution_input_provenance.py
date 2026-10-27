@@ -7,6 +7,7 @@ receipt contains only records in its actual submitted graph ancestry.
 
 import math
 import json
+import hashlib
 from copy import deepcopy
 
 
@@ -96,6 +97,180 @@ MAX_RECEIPT_BYTES = 262_144
 # values remain available in the receipt without inventing new form semantics.
 OUTPUT_FIELDS = {"prompt", "negativePrompt", "seed", "width", "height", "steps", "guidanceScale", "repo", "modelType"}
 
+# Additional evidence only. Do not widen the v1 summary or imply that every
+# authored control reached the library. Each supported adapter accounts for its
+# own bounded literals at the actual call/configuration boundary.
+ACCOUNTING_FIELDS = {
+    ('DiffusersImage', 'LoadPipeline'): frozenset('''model_id pipeline_class mode revision
+        conditioning_kind conditioning_model_id conditioning_revision dtype device quantization_mode
+        quantized_components device_map auto_offload offload_mode enable_vae_slicing
+        enable_vae_tiling low_cpu_mem_usage'''.split()),
+    ('DiffusersRuntime', 'PipelineQuantizationConfigV2'): frozenset(
+        'backend components dtype excluded_modules component_overrides'.split()),
+    ('DiffusersRuntime', 'DiffusersExecutionRecipe'): frozenset('''device_map max_memory
+        device_map_overrides offload_mode device attention_backend attention_components vae_slicing
+        vae_tiling layerwise_casting layerwise_casting_components layerwise_storage_dtype
+        layerwise_compute_dtype channels_last channels_last_components regional_compile
+        compile_components compile_backend compile_mode compile_fullgraph compile_dynamic
+        denoiser_cache cache_threshold cache_options'''.split()),
+    ('DiffusersImage', 'UnconditionalGenerate'): frozenset(
+        'image_contract batch_size seed num_inference_steps eta class_label output_type'.split()),
+    ('Image', 'Preview'): frozenset({'device', 'export'}),
+}
+ACCOUNTING_PORTS = {
+    ('DiffusersImage', 'LoadPipeline'): ({'execution_recipe': 'execution-recipe-v1'}, {}),
+    ('DiffusersRuntime', 'PipelineQuantizationConfigV2'): ({}, {'quantization_config': 'disabled-quantization-v1'}),
+    ('DiffusersRuntime', 'DiffusersExecutionRecipe'): (
+        {'quantization_config': 'disabled-quantization-v1'}, {'execution_recipe': 'execution-recipe-v1'}),
+    ('DiffusersImage', 'UnconditionalGenerate'): ({}, {}),
+    ('Image', 'Preview'): ({}, {}),
+}
+ACCOUNTING_OBJECT_INPUTS = {
+    ('DiffusersImage', 'LoadPipeline'): frozenset({'execution_recipe'}),
+    ('DiffusersRuntime', 'PipelineQuantizationConfigV2'): frozenset(),
+    ('DiffusersRuntime', 'DiffusersExecutionRecipe'): frozenset({'quantization_config'}),
+    ('DiffusersImage', 'UnconditionalGenerate'): frozenset({'pipeline'}),
+    ('Image', 'Preview'): frozenset({'image', 'vae'}),
+}
+ACCOUNTING_REASONS = frozenset({'adapter-inactive', 'feature-disabled', 'connected-recipe',
+    'loader-normalization', 'presentation-contract', 'already-decoded-image', 'unsupported-contract'})
+
+
+def _accounting_scope(node):
+    return str(node.get('module', '')).removeprefix('modules.'), node.get('action')
+
+
+def _accounting_digest(kind, value):
+    return hashlib.sha256((kind + '\n' + json.dumps(value, sort_keys=True, separators=(',', ':'),
+                                                   ensure_ascii=True, allow_nan=False)).encode('ascii')).hexdigest()
+
+
+def _valid_projection(projection, kind):
+    if type(projection) is not dict or set(projection) != {'kind', 'values', 'sha256'} or projection['kind'] != kind:
+        return False
+    values = projection['values']
+    if kind == 'disabled-quantization-v1':
+        if type(values) is not dict or values != {'backend': 'none', 'disabled': True}:
+            return False
+    elif kind == 'execution-recipe-v1':
+        names = ACCOUNTING_FIELDS[('DiffusersRuntime', 'DiffusersExecutionRecipe')]
+        expected = names - {'device_map_overrides'} | {'schema_version', 'device_map_strategy', 'quantization'}
+        if type(values) is not dict or set(values) != expected or values.get('quantization') != 'none':
+            return False
+        if any(_bounded_value(value)[1] for value in values.values()):
+            return False
+    else:
+        return False
+    return projection['sha256'] == _accounting_digest(kind, values)
+
+
+def disabled_quantization_projection(value):
+    """Only the existing concrete disabled marker/normalized absence is known."""
+    if value is not None and (type(value) is not dict or value != {
+        'schema_version': 1, 'backend': 'none', 'disabled': True,
+    }):
+        return None
+    values = {'backend': 'none', 'disabled': True}
+    return {'kind': 'disabled-quantization-v1', 'values': values,
+            'sha256': _accounting_digest('disabled-quantization-v1', values)}
+
+
+def execution_recipe_projection(recipe):
+    """Fixed plain projection, never a traversal of a quantizer/model object.
+
+    Nonempty mapping configurations and enabled quantizers remain unsupported
+    evidence in this first bounded contract; ordinary execution is unchanged.
+    """
+    fields = ACCOUNTING_FIELDS[('DiffusersRuntime', 'DiffusersExecutionRecipe')]
+    expected = fields - {'device_map_overrides'} | {'schema_version', 'quantization_config', 'device_map_strategy'}
+    if type(recipe) is not dict or set(recipe) != expected or recipe.get('schema_version') != 1:
+        return None
+    if disabled_quantization_projection(recipe['quantization_config']) is None:
+        return None
+    values = {'quantization': 'none'}
+    for key in sorted(expected - {'quantization_config'}):
+        value = recipe[key]
+        if key in {'max_memory', 'cache_options'}:
+            if type(value) is not dict or value:
+                return None
+            value = '{}'
+        safe, reason = _bounded_value(value)
+        if reason:
+            return None
+        values[key] = safe
+    return {'kind': 'execution-recipe-v1', 'values': values,
+            'sha256': _accounting_digest('execution-recipe-v1', values)}
+
+
+def capture_field_accounting(node, inputs, *, consumed=None, inactive=None, superseded=None,
+                             metadata=None, input_projections=None, output_projections=None):
+    """Account explicitly for known inputs without altering v1 consumed fields.
+
+    ``value`` is the argument actually consumed, or the inactive input;
+    ``inputValue`` retains its normalized authored value for a supersession.
+    Metadata accepts only an exact adapter-owned expected contract and stores
+    its digest, never arbitrary nested input. Unknowns cannot become evidence.
+    """
+    scope = _accounting_scope(node)
+    allowed = ACCOUNTING_FIELDS.get(scope)
+    if allowed is None:
+        return None
+    consumed, inactive = consumed or {}, inactive or {}
+    superseded, metadata = superseded or {}, metadata or {}
+    fields, omitted, unaccounted = {}, {}, []
+    for key in sorted(set(inputs) & allowed):
+        choices = sum(key in group for group in (consumed, inactive, superseded, metadata))
+        if choices != 1:
+            unaccounted.append(key)
+            continue
+        original = inputs[key]
+        if key in metadata:
+            expected = metadata[key]
+            if key != 'image_contract' or type(original) is not dict or original != expected:
+                omitted[key] = 'metadata-contract-mismatch'
+                continue
+            fields[key] = {'disposition': 'metadata', 'reason': 'presentation-contract',
+                           'sha256': _accounting_digest('image-contract-v1', expected)}
+            continue
+        if key in {'model_id', 'conditioning_model_id'} and type(original) is dict:
+            original = original.get('value') if original.get('source') in {'hf', 'hub', 'local'} else original
+        original, reason = _bounded_value(original)
+        if reason:
+            omitted[key] = reason
+            continue
+        disposition = 'consumed' if key in consumed else 'inactive' if key in inactive else 'superseded'
+        value = consumed[key] if key in consumed else original if key in inactive else superseded[key][0]
+        if key in {'model_id', 'conditioning_model_id'} and type(value) is dict:
+            value = value.get('value') if value.get('source') in {'hf', 'hub', 'local'} else value
+        value, reason = _bounded_value(value)
+        if reason:
+            omitted[key] = reason
+            continue
+        entry = {'disposition': disposition, 'inputValue': original, 'value': value}
+        if disposition != 'consumed':
+            reason = inactive[key] if key in inactive else superseded[key][1]
+            if reason not in ACCOUNTING_REASONS:
+                omitted[key] = 'unsupported-disposition'
+                continue
+            entry['reason'] = reason
+        fields[key] = entry
+    result = {'schemaVersion': 1, 'fields': fields, 'inputProjections': {}, 'outputProjections': {},
+              'unaccountedFields': unaccounted, 'omittedFields': omitted}
+    for label, supplied, expected in zip(('inputProjections', 'outputProjections'),
+            (input_projections or {}, output_projections or {}), ACCOUNTING_PORTS[scope]):
+        for key in expected.keys() - supplied.keys():
+            omitted[key] = 'missing-projection'
+        for key, projection in supplied.items():
+            if key not in expected or not _valid_projection(projection, expected[key]):
+                omitted[key] = 'unsupported-projection'
+                continue
+            result[label][key] = deepcopy(projection)
+    result['complete'] = not omitted and not unaccounted
+    if len(json.dumps(result, ensure_ascii=True).encode('ascii')) > MAX_RECORD_BYTES // 2:
+        return {'schemaVersion': 1, 'fields': {}, 'inputProjections': {}, 'outputProjections': {},
+                'unaccountedFields': [], 'omittedFields': {'accounting': 'record-size-limit'}, 'complete': False}
+    return result
+
 
 def _bounded_value(value):
     if value is None or type(value) is bool:
@@ -172,6 +347,8 @@ def bind_generation_input_origins(node_id, node, record, overrides=None, *, sour
     if not isinstance(record, dict):
         return None
     result = deepcopy(record)
+    # Budget existing v1/accounting evidence before the newer optional section.
+    applied_adapters = result.pop('appliedAdapters', None)
     result.update(nodeId=str(node_id), module=node["module"], action=node["action"])
     params = node.get("params") or {}
     for key, field in result["fields"].items():
@@ -186,6 +363,42 @@ def bind_generation_input_origins(node_id, node, record, overrides=None, *, sour
             origin = {"source": "connected", "sourceNodeId": str(param["sourceId"]),
                       "sourcePortId": str(param["sourceKey"])}
         result["fields"][key] = {"value": field["value"], **origin}
+    accounting = result.get('fieldAccounting')
+    if accounting is not None:
+        # Inspect only parameter names/wires. Never copy an unknown value into
+        # the record, even if execution filtered that parameter out.
+        literals = {key for key, param in params.items() if isinstance(param, dict)
+                    and 'value' in param and not param.get('sourceId')}
+        scope = _accounting_scope(node)
+        allowed = ACCOUNTING_FIELDS.get(scope, frozenset()) | ACCOUNTING_OBJECT_INPUTS.get(scope, frozenset())
+        unknown = {key for key, param in params.items() if isinstance(param, dict)
+                   and (param.get('sourceId') or 'value' in param) and key not in allowed}
+        accounting['unaccountedFields'] = sorted(set(accounting['unaccountedFields']) |
+                                                 (literals - accounting['fields'].keys()) | unknown)
+        for key, field in accounting['fields'].items():
+            param = params.get(key) or {}
+            field.pop('sourceNodeId', None)
+            field.pop('sourcePortId', None)
+            field['source'] = 'override' if overrides and key in overrides else 'literal'
+            if field['source'] != 'override' and param.get('sourceId') and param.get('sourceKey'):
+                field.update(source='connected', sourceNodeId=str(param['sourceId']), sourcePortId=str(param['sourceKey']))
+        for key, projection in accounting['inputProjections'].items():
+            param = params.get(key) or {}
+            projection.pop('sourceNodeId', None)
+            projection.pop('sourcePortId', None)
+            if overrides and key in overrides:
+                projection['source'] = 'override'
+            elif param.get('sourceId') and param.get('sourceKey'):
+                projection.update(source='connected', sourceNodeId=str(param['sourceId']), sourcePortId=str(param['sourceKey']))
+            else:
+                projection['source'] = 'literal'
+        accounting['complete'] = not accounting['omittedFields'] and not accounting['unaccountedFields']
+        if len(json.dumps(result, ensure_ascii=True).encode('ascii')) > MAX_RECORD_BYTES:
+            result['fieldAccounting'] = {'schemaVersion': 1, 'fields': {}, 'inputProjections': {},
+                'outputProjections': {}, 'unaccountedFields': [],
+                'omittedFields': {'accounting': 'record-size-limit'}, 'complete': False}
+    if applied_adapters is not None:
+        result['appliedAdapters'] = applied_adapters
     return result
 
 
@@ -206,16 +419,50 @@ def build_resolved_execution_inputs(graph, records, *, task_id, attempt_index, n
     if not captured:
         return None
     incomplete = len(captured) > MAX_NODES
-    bounded = []
+    bounded, accounting_records, applied_records = [], [], []
     remaining_bytes = MAX_RECEIPT_BYTES
     for record in captured[:MAX_NODES]:
+        # Reserve the legacy ancestry first. Optional accounting must never
+        # evict a previously fitting v1 record or clear its summary/task proof.
+        accounting = record.pop('fieldAccounting', None)
+        applied = record.pop('appliedAdapters', None)
         size = len(json.dumps(record, ensure_ascii=True).encode("ascii"))
         if size > remaining_bytes:
             incomplete = True
             break
         bounded.append(record)
+        accounting_records.append(accounting)
+        applied_records.append(applied)
         remaining_bytes -= size
     captured = bounded
+    accounting_truncated = False
+    for record, accounting in zip(captured, accounting_records):
+        if accounting is None:
+            continue
+        base_size = len(json.dumps(record, ensure_ascii=True).encode('ascii'))
+        size = len(json.dumps({**record, 'fieldAccounting': accounting}, ensure_ascii=True).encode('ascii')) - base_size
+        if size > remaining_bytes:
+            accounting_truncated = True
+            continue
+        record['fieldAccounting'] = accounting
+        remaining_bytes -= size
+    applied_truncated = False
+    for record, applied in zip(captured, applied_records):
+        if applied is None:
+            continue
+        applied_truncated = applied_truncated or applied.get('status') == 'truncated'
+        base_size = len(json.dumps(record, ensure_ascii=True).encode('ascii'))
+        total_size = len(json.dumps({**record, 'appliedAdapters': applied}, ensure_ascii=True).encode('ascii'))
+        if total_size > MAX_RECORD_BYTES:
+            applied = {'schemaVersion': 1, 'status': 'truncated', 'reason': 'record-size-limit'}
+            applied_truncated = True
+            total_size = len(json.dumps({**record, 'appliedAdapters': applied}, ensure_ascii=True).encode('ascii'))
+        size = total_size - base_size
+        if total_size > MAX_RECORD_BYTES or size > remaining_bytes:
+            applied_truncated = True
+            continue
+        record['appliedAdapters'] = applied
+        remaining_bytes -= size
     candidates, unavailable = {}, set()
     for record in captured:
         field_names = _field_names(record)
@@ -240,6 +487,10 @@ def build_resolved_execution_inputs(graph, records, *, task_id, attempt_index, n
     )
     return {
         **({"graphTasks": graph_tasks} if graph_tasks else {}),
+        **({'fieldAccountingStatus': {'schemaVersion': 1, 'truncated': accounting_truncated}}
+           if any(item is not None for item in accounting_records) else {}),
+        **({'appliedAdaptersStatus': {'schemaVersion': 1, 'truncated': applied_truncated}}
+           if any(item is not None for item in applied_records) else {}),
         "schemaVersion": 1, "source": "backend-execution", "taskId": str(task_id),
         "attemptIndex": int(attempt_index or 0), "nodeId": str(node_id),
         "nodes": captured, "summary": summary, "ambiguousFields": ambiguous,

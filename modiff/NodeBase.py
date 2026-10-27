@@ -4,7 +4,7 @@ logger = logging.getLogger('modiff')
 from contextlib import contextmanager
 from contextvars import ContextVar
 from modiff.modelstore import modelstore
-from modiff.execution_input_provenance import capture_generation_inputs
+from modiff.execution_input_provenance import capture_generation_inputs, capture_field_accounting
 from modiff.node_cache_identity import implementation_identity, input_snapshot
 from utils.memory_menager import memory_manager
 import numpy as np
@@ -381,6 +381,16 @@ class NodeBase:
         self._execution_input_record = capture_generation_inputs(
             self.node_id, {"module": self.module_name, "action": self.class_name}, values,
         )
+
+    def record_field_accounting(self, inputs, **evidence):
+        """Attach optional bounded adapter evidence; do not recapture v1 fields."""
+        if not isinstance(self._execution_input_record, dict):
+            return
+        accounting = capture_field_accounting(
+            {"module": self.module_name, "action": self.class_name}, inputs, **evidence,
+        )
+        if accounting is not None:
+            self._execution_input_record['fieldAccounting'] = accounting
 
     def __call__(self, **kwargs):
         self._interrupt = False

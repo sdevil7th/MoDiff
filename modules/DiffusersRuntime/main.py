@@ -1743,11 +1743,17 @@ class PipelineQuantizationConfigV2(NodeBase):
             excluded_modules=kwargs.get("excluded_modules"),
             component_overrides=kwargs.get("component_overrides"),
         )
+        from modiff.execution_input_provenance import disabled_quantization_projection
+        result_config = config if config is not None else dict(NO_QUANTIZATION_CONFIG)
+        inactive = {'dtype': 'feature-disabled', 'excluded_modules': 'feature-disabled'} if config is None else {}
+        self.record_field_accounting(kwargs, consumed={key: value for key, value in kwargs.items() if key not in inactive},
+            inactive=inactive,
+            output_projections={'quantization_config': disabled_quantization_projection(result_config)})
         return {
             # Connected output sockets must carry a concrete value. A disabled
             # marker keeps the quantization flow visible and executable while
             # build_execution_recipe normalizes it back to no quantization.
-            "quantization_config": config if config is not None else dict(NO_QUANTIZATION_CONFIG),
+            "quantization_config": result_config,
             "summary": json.dumps(summary, sort_keys=True),
         }
 
@@ -2079,6 +2085,21 @@ class DiffusersExecutionRecipe(NodeBase):
             cache_threshold=float(kwargs.get("cache_threshold", 0.05)),
             cache_options=kwargs.get("cache_options"),
         )
+        from modiff.execution_input_provenance import disabled_quantization_projection, execution_recipe_projection
+        inactive = {}
+        for enabled, fields in (
+            (recipe['layerwise_casting'], ('layerwise_casting_components', 'layerwise_storage_dtype', 'layerwise_compute_dtype')),
+            (recipe['channels_last'], ('channels_last_components',)),
+            (recipe['regional_compile'], ('compile_components', 'compile_backend', 'compile_mode', 'compile_fullgraph', 'compile_dynamic')),
+            (recipe['denoiser_cache'] != 'none', ('cache_threshold', 'cache_options')),
+            (recipe['device_map_strategy'] == 'manual', ('device_map_overrides',)),
+        ):
+            if not enabled:
+                inactive.update({key: 'feature-disabled' for key in fields})
+        self.record_field_accounting(kwargs, consumed={key: value for key, value in kwargs.items() if key not in inactive},
+            inactive=inactive,
+            input_projections={'quantization_config': disabled_quantization_projection(kwargs.get('quantization_config'))},
+            output_projections={'execution_recipe': execution_recipe_projection(recipe)})
         return {
             "execution_recipe": recipe,
             "summary": json.dumps(execution_recipe_summary(recipe), sort_keys=True),

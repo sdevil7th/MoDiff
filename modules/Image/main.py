@@ -362,6 +362,9 @@ class Preview(NodeBase):
             except Exception:
                 pass
 
+        self.record_field_accounting(kwargs,
+            consumed={'export': export, **({'device': kwargs['device']} if decoded_images is None else {})},
+            inactive={'device': 'already-decoded-image'} if decoded_images is not None else {})
         return {"output": output, "filtered": filtered}
 
 class Resize(NodeBase):

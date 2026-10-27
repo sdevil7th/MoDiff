@@ -2838,6 +2838,19 @@ class ModelsLoader(NodeBase):
         self._pipeline_identity_lock = threading.Lock()
 
     def __call__(self, **kwargs):
+        from modiff.applied_adapter_provenance import begin_adapter_observation, abort_adapter_observation
+
+        self._applied_adapter_builtin = kwargs.get('model_type') != CUSTOM_PIPELINE_MODEL_TYPE
+        begin_adapter_observation(self, components)
+        try:
+            result = self._call_checked(**kwargs)
+        except BaseException:
+            abort_adapter_observation(self)
+            raise
+        self._applied_adapter_call_complete = True
+        return result
+
+    def _call_checked(self, **kwargs):
         """Enforce custom identity and remote-code policy before cache reuse."""
 
         from modiff.native_weight_loading import normalize_weight_loading_mode
@@ -3934,6 +3947,7 @@ class ModelsLoader(NodeBase):
         if component_context is not None:
             from modiff.native_component_lora import begin_component_mutation
             begin_component_mutation(self, disk_lora_policy, components, component_context)
+        applied_loras = None
         if lora_list is not None and (lora_list != [] or disk_lora_policy is None) and (
             weight_binding is None or component_context is not None
         ):
@@ -3941,8 +3955,10 @@ class ModelsLoader(NodeBase):
             adapter = SelectedComponentLifecycle(self, component_context, components) if component_context is not None else None
             prepared_loras = update_lora_adapters(self.loader, lora_list, component_adapter=adapter)
             apply_lora_scheduler_override(self.loader, prepared=prepared_loras)
+            applied_loras = prepared_loras.resolved
         elif hasattr(self.loader, "unload_lora_weights"):
             self.loader.unload_lora_weights()
+            applied_loras = ()
 
         if deferred_disk_targets:
             result = apply_component_group_offload(
@@ -4066,5 +4082,8 @@ class ModelsLoader(NodeBase):
             consumed_quantization = text_encoder_nf4_consumed_quantization(self.loader, weight_binding, quant_config)
             self.record_generation_inputs({**generation_inputs, **applied_policy, 'quant_config': consumed_quantization})
         publish_disk_lora_binding(self, disk_lora_policy, components)
+        if applied_loras is not None:
+            from modiff.applied_adapter_provenance import stage_adapter_observation
+            stage_adapter_observation(self, applied_loras)
 
         return loaded_components

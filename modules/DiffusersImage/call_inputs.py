@@ -235,3 +235,21 @@ def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=
         effective.setdefault(key, None)
     node.record_generation_inputs(effective)
     node._execution_input_source_fields = source_fields
+    if node.class_name == 'UnconditionalGenerate':
+        # Account for the generic controls at this actual pipeline call. A
+        # class label is not consumed by DDIM; its saved sentinel is evidence
+        # of inactivity, never a claim that class_labels was passed.
+        from .main import image_pipeline_contract
+        consumed = {key: call_kwargs[key] for key in ('batch_size', 'num_inference_steps', 'output_type', 'eta')
+                    if key in call_kwargs}
+        consumed['seed'] = effective['seed']
+        inactive = {}
+        for field in ('eta', 'class_label'):
+            call_field = 'class_labels' if field == 'class_label' else field
+            if call_field in call_kwargs:
+                consumed[field] = call_kwargs[call_field]
+            else:
+                inactive[field] = 'adapter-inactive'
+        expected = image_pipeline_contract(adapter, effective['executed_task'])
+        node.record_field_accounting(values, consumed=consumed, inactive=inactive,
+                                     metadata={'image_contract': expected})
