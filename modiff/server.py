@@ -1461,6 +1461,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
                 web.post("/operations/task-starter", self.resolve_task_starter),
                 web.get("/cache/{node}/{field}", self.cache),
                 web.get("/cache/{node}/{field}/{index}", self.cache),
+                web.get("/cache", self.cache_status),
                 web.delete("/cache", self.delete_cache),
                 web.get("/listdir", self.listdir),
                 web.get("/listgraphs", self.listgraphs),
@@ -3514,6 +3515,14 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
             self._best_effort_allocator_trim()
         logger.debug(f"Removed {len(targets)} nodes from cache.")
         return targets
+
+    async def cache_status(self, request):
+        # Match welcome's process-local membership without inspecting model
+        # objects or waiting for inference/teardown ownership. This is a view,
+        # not evidence that a cached output is reusable for another graph.
+        return web.json_response({
+            "error": False, "instance": self.instance, "cachedNodes": list(self.node_cache),
+        })
 
     async def delete_cache(self, request):
         data = await request.json()
