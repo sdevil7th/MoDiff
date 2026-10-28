@@ -29,8 +29,8 @@ application source pair is:
 
 | Repository    | Application source before final packaging  |
 | ------------- | ------------------------------------------ |
-| MoDiff        | `84b79f3c83a7d5ab2e904e8231bc4f56f53b1999` |
-| MoDiff-client | `e50617208a444fbe203c0e296de431ea22161ebe` |
+| MoDiff        | `8f8c40bab9a389a0199c96c1add0a26a967928bd` |
+| MoDiff-client | `8f0a95e2c7267b04f9e9195e7de30a3eeb01d1b7` |
 
 These application source revisions were reviewed on 28 October 2026. Final
 documentation, CI pairing and bundled-client packaging commits can be later
