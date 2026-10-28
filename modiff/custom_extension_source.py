@@ -45,7 +45,7 @@ def resolve_git_extension(source, revision=None):
 
 
 def resolve_hub_extension(source, revision=None):
-    from huggingface_hub import HfApi
+    from huggingface_hub import HfApi, constants
     from huggingface_hub.utils import validate_repo_id
 
     if not isinstance(source, str) or not source.strip() or len(source) > 2048:
@@ -72,6 +72,12 @@ def resolve_hub_extension(source, revision=None):
     requested = revision or url_revision or "main"
     if len(requested) > 256 or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", requested) or ".." in requested:
         raise ExtensionError("The revision must be a branch, tag or exact commit.")
+    if constants.HF_HUB_OFFLINE:
+        if not re.fullmatch(r"[a-f0-9]{40}", requested):
+            raise ExtensionError("Hub is offline. Enter an exact lowercase 40-character commit for a cached source.")
+        # Resolution grants no execution authority. Staging still checks that the
+        # exact snapshot and its bounded source files are available in the cache.
+        return {"kind": "hub", "source": source, "requestedRevision": requested, "revision": requested}
     try:
         info = HfApi(endpoint="https://huggingface.co").model_info(source, revision=requested, timeout=20)
     except Exception as error:

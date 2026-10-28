@@ -165,6 +165,72 @@ def test_add_source_failure_keeps_canvas_registry_and_queue_isolation(backend, s
     asyncio.run(scenario())
 
 
+def test_offline_hub_add_still_requires_the_exact_cached_snapshot(backend, store, monkeypatch):
+    import asyncio
+    from huggingface_hub.errors import LocalEntryNotFoundError
+
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_OFFLINE", True)
+    monkeypatch.setattr("huggingface_hub.HfApi.model_info", lambda *a, **k: pytest.fail("No metadata request"))
+    calls = []
+
+    def missing_snapshot(repository, **kwargs):
+        calls.append((repository, kwargs))
+        raise LocalEntryNotFoundError("Exact source snapshot is not cached")
+
+    monkeypatch.setattr("huggingface_hub.snapshot_download", missing_snapshot)
+
+    async def scenario():
+        result = await backend.custom_modules_add(request({
+            "kind": "hub", "source": "owner/repo", "revision": "a" * 40,
+            "name": "Example", "consent": True,
+        }))
+        assert result.status == 400, result.text
+        assert calls == [("owner/repo", {
+            "revision": "a" * 40, "allow_patterns": ["*.py", "*.json", "*.toml", "*.txt", "*.md"],
+        })]
+        assert not store.path("Example").exists()
+        assert "custom.Example" not in backend.modules
+        assert "custom.Example.main" not in sys.modules
+
+    asyncio.run(scenario())
+
+
+def test_offline_one_action_hub_add_preserves_source_pin_and_content_approval(backend, store, tmp_path, monkeypatch):
+    import asyncio
+
+    revision = "a" * 40
+    snapshot = source_node(tmp_path / "models--owner--repo" / "snapshots" / revision)
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_OFFLINE", True)
+    monkeypatch.setattr("huggingface_hub.HfApi.model_info", lambda *a, **k: pytest.fail("No metadata request"))
+    calls = []
+
+    def cached_snapshot(repository, **kwargs):
+        calls.append((repository, kwargs))
+        return str(snapshot)
+
+    monkeypatch.setattr("huggingface_hub.snapshot_download", cached_snapshot)
+
+    async def scenario():
+        body = {"kind": "hub", "source": "owner/repo", "revision": revision,
+                "name": "Example", "consent": False}
+        denied = await backend.custom_modules_add(request(body))
+        assert denied.status == 400 and not calls
+        body["consent"] = True
+        added = await backend.custom_modules_add(request(body))
+        assert added.status == 200, added.text
+        item = json.loads(added.text)["module"]
+        assert item["enabled"] and item["revision"] == revision
+        assert item["codeHash"] == store.inspect("Example")["codeHash"]
+        assert calls == [("owner/repo", {
+            "revision": revision, "allow_patterns": ["*.py", "*.json", "*.toml", "*.txt", "*.md"],
+        })]
+        backend.execute_node("offline-hub", {"module": "custom.Example", "action": "Echo",
+                             "params": {"text": {"value": "cached"}}}, "test", quiet=True)
+        assert backend.node_cache["offline-hub"].output == {"out": "CACHED"}
+
+    asyncio.run(scenario())
+
+
 def test_file_add_allows_real_node_size_without_relaxing_other_control_limits(backend, store, tmp_path):
     import asyncio
     from types import SimpleNamespace
