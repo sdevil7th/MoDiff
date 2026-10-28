@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -126,18 +127,29 @@ class GuidedInstallerTests(unittest.TestCase):
         for command in ("--extra cuda", "uv sync --extra cpu", "uv run --extra cpu python main.py"):
             with self.subTest(command=command):
                 self.assertIn(command, readme)
+        # Reviewed source pairs advance independently of this test. Require exact
+        # immutable references and agreement between both setup guides; paired
+        # client checks separately verify the reviewed application/CI contract.
+        source_rows = re.findall(
+            r"(?m)^\|\s*(MoDiff(?:-client)?)\s*\|\s*`([0-9a-f]{40})`\s*\|$",
+            readme,
+        )
+        self.assertEqual(len(source_rows), 2, "README needs exactly one immutable source pair")
+        source_pair = dict(source_rows)
+        self.assertEqual(set(source_pair), {"MoDiff", "MoDiff-client"})
+        setup = (root / "docs/developer-setup.md").read_text(encoding="utf-8")
+        setup_pairs = re.findall(
+            r"application source pair before final packaging is backend\s+"
+            r"`([0-9a-f]{40})` and client\s+`([0-9a-f]{40})`",
+            setup,
+        )
+        self.assertEqual(setup_pairs, [(source_pair["MoDiff"], source_pair["MoDiff-client"])])
         for guide in ("README.md", "docs/developer-setup.md"):
             text = (root / guide).read_text(encoding="utf-8")
             with self.subTest(guide=guide):
                 self.assertIn("codex/windows-delivery-20261026", text)
-                self.assertTrue(
-                    "84b79f3c83a7d5ab2e904e8231bc4f56f53b1999" in text,
-                    "Backend application source is missing",
-                )
-                self.assertTrue(
-                    "e50617208a444fbe203c0e296de431ea22161ebe" in text,
-                    "Client application source is missing",
-                )
+                for reference in source_pair.values():
+                    self.assertIn(reference, text)
 
     def test_archive_member_destination_rejects_escaping_paths(self):
         unsafe_names = (
