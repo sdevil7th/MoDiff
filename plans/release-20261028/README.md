@@ -1,10 +1,16 @@
 # Release preparation for 28 October 2026
 
 This plan was requested for execution in separate Windows and Linux chats. The
-deadline is **28 October 2026, 18:00 IST (12:30 UTC)** for a deployed, testable
-candidate. **18:00–21:00 IST belongs to the maintainer's manual testing.** Do not
-consume that window with unfinished integration, builds or unattended model jobs.
-The review started around 01:00 IST, leaving about 17 hours, not two working days.
+original deadline was **28 October 2026, 18:00 IST (12:30 UTC)** for a deployed,
+testable candidate, with 18:00–21:00 IST reserved for manual testing. On 28 October,
+the maintainer explicitly approved continuing unfinished work past 18:00 and
+delaying manual testing. The schedule and cutoff references below retain the
+original planning checkpoints; that manual-testing window is now superseded.
+Provide a freshly verified deployment and handoff before beginning the maintainer's
+2–3 hours of manual testing. This extension does not close unavailable-hardware,
+catalog-evidence or publication-approval requirements.
+The review started around 01:00 IST, leaving about 17 hours under the original
+cutoff, not two working days.
 
 This is a plan, not a statement that its acceptance checks have passed. The
 canonical copy is in the backend repository; the client carries an identical copy
