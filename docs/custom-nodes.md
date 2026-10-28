@@ -18,6 +18,11 @@ Remote branches/tags resolve to exact commits internally. Revision and package
 name overrides live under Advanced. Imports copy bounded source/metadata, not
 model weights. Dependencies are checked but never installed automatically.
 Errors show **Node import failed** and a reason; failed imports are not enabled.
+With Hub offline mode enabled, select an exact lowercase 40-character commit
+under Advanced. Resolution uses that pin without a metadata request; Add still
+requires the exact source snapshot in the local Hub cache and validates its files
+before enabling code. A missing cached snapshot fails the import. Branches and
+tags require online resolution and are never guessed from cached references.
 
 Only add code you trust: Python runs with backend permissions, not in a sandbox.
 Add/Load/Reload is the explicit authorization—there is no separate approval
