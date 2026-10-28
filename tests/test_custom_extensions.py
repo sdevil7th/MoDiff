@@ -186,7 +186,8 @@ def test_offline_hub_add_still_requires_the_exact_cached_snapshot(backend, store
         }))
         assert result.status == 400, result.text
         assert calls == [("owner/repo", {
-            "revision": "a" * 40, "allow_patterns": ["*.py", "*.json", "*.toml", "*.txt", "*.md"],
+            "revision": "a" * 40, "local_files_only": True,
+            "allow_patterns": ["*.py", "*.json", "*.toml", "*.txt", "*.md"],
         })]
         assert not store.path("Example").exists()
         assert "custom.Example" not in backend.modules
@@ -222,13 +223,74 @@ def test_offline_one_action_hub_add_preserves_source_pin_and_content_approval(ba
         assert item["enabled"] and item["revision"] == revision
         assert item["codeHash"] == store.inspect("Example")["codeHash"]
         assert calls == [("owner/repo", {
-            "revision": revision, "allow_patterns": ["*.py", "*.json", "*.toml", "*.txt", "*.md"],
+            "revision": revision, "local_files_only": True,
+            "allow_patterns": ["*.py", "*.json", "*.toml", "*.txt", "*.md"],
         })]
         backend.execute_node("offline-hub", {"module": "custom.Example", "action": "Echo",
                              "params": {"text": {"value": "cached"}}}, "test", quiet=True)
         assert backend.node_cache["offline-hub"].output == {"out": "CACHED"}
 
     asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("cached_revision", ["a" * 40, "b" * 40])
+def test_offline_hub_add_uses_the_official_cached_snapshot_without_tree_requests(backend, store, tmp_path, monkeypatch, cached_revision):
+    import asyncio
+
+    revision = "a" * 40
+    cache = tmp_path / "hub"
+    source_node(cache / "models--owner--repo" / "snapshots" / cached_revision)
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_CACHE", str(cache))
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_OFFLINE", True)
+
+    def no_remote_metadata(*args, **kwargs):
+        pytest.fail("An exact offline cached source must not request remote metadata or a file tree")
+
+    # Exercise the installed official snapshot_download implementation. A stub
+    # returning the cached directory would hide its exact-commit tree lookup.
+    for method in ("model_info", "repo_info", "list_repo_tree"):
+        monkeypatch.setattr(f"huggingface_hub.HfApi.{method}", no_remote_metadata)
+
+    async def scenario():
+        added = await backend.custom_modules_add(request({
+            "kind": "hub", "source": "owner/repo", "revision": revision,
+            "name": "Example", "consent": True,
+        }))
+        if cached_revision != revision:
+            assert added.status == 400, added.text
+            assert not store.path("Example").exists()
+            assert "custom.Example" not in backend.modules
+            return
+        assert added.status == 200, added.text
+        item = json.loads(added.text)["module"]
+        assert item["enabled"] and item["revision"] == revision
+        assert item["codeHash"] == store.inspect("Example")["codeHash"]
+        backend.execute_node("offline-cached-hub", {
+            "module": "custom.Example", "action": "Echo", "params": {"text": {"value": "cached"}},
+        }, "test", quiet=True)
+        assert backend.node_cache["offline-cached-hub"].output == {"out": "CACHED"}
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("offline", [False, True])
+def test_hub_staging_preserves_the_current_online_or_cache_only_mode(store, tmp_path, monkeypatch, offline):
+    revision = "a" * 40
+    snapshot = source_node(tmp_path / "models--owner--repo" / "snapshots" / revision)
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_OFFLINE", offline)
+    calls = []
+
+    def downloaded(repository, **kwargs):
+        calls.append((repository, kwargs))
+        return str(snapshot)
+
+    monkeypatch.setattr("huggingface_hub.snapshot_download", downloaded)
+    item = store.stage(kind="hub", source="owner/repo", name="Example", revision=revision)
+    assert calls == [("owner/repo", {
+        "revision": revision, "local_files_only": offline,
+        "allow_patterns": ["*.py", "*.json", "*.toml", "*.txt", "*.md"],
+    })]
+    assert item["revision"] == revision and not item["enabled"]
 
 
 def test_file_add_allows_real_node_size_without_relaxing_other_control_limits(backend, store, tmp_path):
