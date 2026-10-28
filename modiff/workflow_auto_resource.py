@@ -183,6 +183,26 @@ def _values(nodes: dict, node_id: str) -> dict:
     return {key: param.get("value") for key, param in nodes[node_id]["params"].items() if not param.get("sourceId")}
 
 
+def _effective_loader_variant_values(nodes, node_id, values, profile):
+    """Inspect the same checkpoint as ModelsLoader without importing its runtime."""
+    node = nodes[node_id]
+    if ((node['module'], node['action']) != ('modules.ModularDiffusers', 'ModelsLoader')
+            or 'reviewed_variant' not in node['params']):
+        return values
+    from modiff.modular_workflow_contracts import effective_reviewed_modular_selector
+
+    values = dict(values)
+    for field in ('reviewed_variant', 'workflow_id', 'revision'):
+        if field in node['params']:
+            values[field] = _literal(nodes, node_id, field)
+    values['repo_id'], values['revision'] = effective_reviewed_modular_selector(
+        model_type=values.get('model_type'), repo_id=values.get('repo_id'),
+        revision=values.get('revision'), workflow_id=values.get('workflow_id'),
+        reviewed_variant=values.get('reviewed_variant'), default_repository=profile.default_repo,
+    )
+    return values
+
+
 def _repository(value: Any) -> str:
     if isinstance(value, dict):
         return value.get("value", "") if value.get("source") == "hub" else ""
@@ -731,6 +751,18 @@ def _build_workflow_auto_plan(
             issues.append(f"{node_id}: {error}")
             continue
         profiles, reason = resolve_execution_profiles_for_loader(node["module"], node["action"], values)
+        if len(profiles) == 1 and reason is None:
+            try:
+                values = _effective_loader_variant_values(nodes, node_id, values, profiles[0])
+                profiles, reason = resolve_execution_profiles_for_loader(node["module"], node["action"], values)
+            except DeferredResourceValue as error:
+                preparation_nodes.update(error.node_ids)
+                deferred_fields.append(error.target)
+                loaders[node_id] = None
+                continue
+            except (ValueError, TypeError) as error:
+                issues.append(f"{node_id}: {error}")
+                continue
         if profiles and all(profile.execution_path.startswith("builtin-") for profile in profiles):
             data_nodes.add(node_id)
             continue  # Reviewed deterministic operations do not own model weights.
@@ -793,6 +825,7 @@ def _build_workflow_auto_plan(
             for field in ("repo_id", "model_id", "model_type", "pipeline_class", "execution_profile_id", "revision", *_SETTINGS):
                 if field in nodes[loader_id]["params"]:
                     values[field] = _literal(nodes, loader_id, field)
+            values = _effective_loader_variant_values(nodes, loader_id, values, profile)
             native_runtime_controls = inspect_native_runtime_controls(nodes, loader_id, _literal)
             values.update(native_runtime_controls)
             recipe_controls, recipe_bindings = inspect_execution_recipe_controls(nodes, loader_id, _literal)

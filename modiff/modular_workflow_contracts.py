@@ -12,6 +12,7 @@ actions can carry every required user input and intermediate state edge.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 
@@ -105,6 +106,60 @@ PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS = {
         QWEN_IMAGE_2512_PREQUANTIZED_REPOSITORY,
     ),
 }
+
+def reviewed_modular_workflow_variants(*, model_type, workflow_id, default_repository):
+    """Inspect same-workflow checkpoint choices without importing model code."""
+    selected_workflow = str(workflow_id or "").strip()
+    return tuple(
+        repository
+        for repository in PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS.get(
+            (model_type, selected_workflow),
+            (default_repository,) if default_repository else (),
+        )
+        if repository
+    )
+
+
+def effective_reviewed_modular_selector(
+    *, model_type, repo_id, revision, workflow_id="", reviewed_variant=None,
+    default_repository=None,
+):
+    """Share immutable checkpoint selection with model-free planning.
+
+    Sealed workflow fields stay unchanged. A variant changes both effective
+    values using existing workflow choices and catalog pins, without granting
+    platform or Auto eligibility.
+    """
+    if reviewed_variant in (None, ""):
+        if isinstance(repo_id, Mapping):
+            source, repository = repo_id.get("source"), repo_id.get("value")
+            if not isinstance(source, str) or source not in {"hub", "local"}:
+                raise ValueError("The repository source must be exactly 'hub' or 'local'.")
+            if not isinstance(repository, str):
+                raise ValueError("The selected Modular Diffusers repository must be a string.")
+            repository = repository.strip()
+        else:
+            source, repository = "hub", str(repo_id or "").strip()
+        if source == "hub":
+            require_reviewed_modular_repository_workflow(model_type, repository, revision, workflow_id)
+        return repo_id, revision
+    if not isinstance(reviewed_variant, str):
+        raise TypeError("A reviewed Modular Diffusers model selection must be a repository string.")
+    selected_repository = reviewed_variant.strip()
+    if not selected_repository:
+        return repo_id, revision
+    if selected_repository not in reviewed_modular_workflow_variants(
+        model_type=model_type, workflow_id=workflow_id, default_repository=default_repository,
+    ):
+        raise ValueError(
+            f"Modular pipeline {model_type!r} does not admit model variant {selected_repository!r}."
+        )
+    from modiff.model_artifact_catalog import require_catalog_revision
+
+    selected_revision = require_catalog_revision(selected_repository, model_type=model_type)
+    require_reviewed_modular_repository_workflow(model_type, selected_repository, selected_revision, workflow_id)
+    return {"source": "hub", "value": selected_repository}, selected_revision
+
 
 # A same-class artifact may implement only a subset of the class's workflows.
 # This exact checkpoint is reviewed for T2I only; neither raw kwargs nor a

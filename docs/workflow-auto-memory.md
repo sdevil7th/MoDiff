@@ -6,6 +6,15 @@ independent model owners, even when they select the same repository. Planning
 never loads models, installs packages, changes prompts or reduces creative
 settings to make a workflow fit.
 
+For a built-in Modular loader, planning and execution share the same read-only
+checkpoint selector. An explicitly selected reviewed variant supplies its own
+repository and immutable catalog revision together; the workflow's sealed base
+fields remain unchanged. Choices stay scoped to the selected upstream workflow.
+Connected choices use the existing data-only inspection/preparation boundary,
+without executing their suppliers during inspection. A selected checkpoint still
+needs its own artifact, platform, runtime and resource admission; a variant choice
+cannot borrow the base checkpoint's eligibility or grant Auto qualification.
+
 ## Bounded public FLUX 3 recipe
 
 The exact public Distilled and Base profiles declare a Windows x86_64 recipe

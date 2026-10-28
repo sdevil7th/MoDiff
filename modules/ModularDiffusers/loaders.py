@@ -51,7 +51,8 @@ from modiff.modular_workflow_contracts import (
     PINNED_MODULAR_REPOSITORY_COMPONENT_SOURCES,
     PINNED_MODULAR_REPOSITORY_COMPONENT_SUBFOLDERS,
     PINNED_MODULAR_REPOSITORY_VARIANTS,
-    PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS,
+    effective_reviewed_modular_selector,
+    reviewed_modular_workflow_variants,
     reviewed_modular_weight_variant,
 )
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
@@ -3070,14 +3071,8 @@ class ModelsLoader(NodeBase):
     def _reviewed_workflow_variants(cls, *, model_type, workflow_id, default_repository):
         """Return repositories safe to switch without changing workflow shape."""
 
-        selected_workflow = str(workflow_id or "").strip()
-        return tuple(
-            repository
-            for repository in PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS.get(
-                (model_type, selected_workflow),
-                (default_repository,) if default_repository else (),
-            )
-            if repository
+        return reviewed_modular_workflow_variants(
+            model_type=model_type, workflow_id=workflow_id, default_repository=default_repository,
         )
 
     @classmethod
@@ -3098,32 +3093,13 @@ class ModelsLoader(NodeBase):
         exact pipeline's reviewed variant set and has an immutable catalog pin.
         """
 
-        if reviewed_variant in (None, ""):
-            from modiff.modular_workflow_contracts import require_reviewed_modular_repository_workflow
-            source, repository = cls._selected_repository(repo_id, custom=False)
-            if source == "hub":
-                require_reviewed_modular_repository_workflow(model_type, repository, revision, workflow_id)
-            return repo_id, revision
-        if not isinstance(reviewed_variant, str):
-            raise TypeError("A reviewed Modular Diffusers model selection must be a repository string.")
-        selected_repository = reviewed_variant.strip()
-        if not selected_repository:
-            return repo_id, revision
-        metadata = get_model_type_metadata(model_type)
+        metadata = (get_model_type_metadata(model_type)
+                    if isinstance(reviewed_variant, str) and reviewed_variant.strip() else None)
         default_repository = metadata.get("default_repo") if isinstance(metadata, Mapping) else None
-        reviewed_repositories = cls._reviewed_workflow_variants(
-            model_type=model_type,
-            workflow_id=workflow_id,
-            default_repository=default_repository,
+        return effective_reviewed_modular_selector(
+            model_type=model_type, repo_id=repo_id, revision=revision, workflow_id=workflow_id,
+            reviewed_variant=reviewed_variant, default_repository=default_repository,
         )
-        if selected_repository not in reviewed_repositories:
-            raise ValueError(
-                f"Modular pipeline {model_type!r} does not admit model variant {selected_repository!r}."
-            )
-        selected_revision = require_catalog_revision(selected_repository, model_type=model_type)
-        from modiff.modular_workflow_contracts import require_reviewed_modular_repository_workflow
-        require_reviewed_modular_repository_workflow(model_type, selected_repository, selected_revision, workflow_id)
-        return {"source": "hub", "value": selected_repository}, selected_revision
 
     @classmethod
     def _reviewed_builtin_selection(cls, *, model_type, repo_id, revision):
