@@ -27,6 +27,7 @@ from modiff.server import (
     parse_audio_download_sample_rate,
     resample_wav_bytes,
 )
+from modules.Image.main import Save
 
 
 class MediaPreviewUrlTests(unittest.TestCase):
@@ -128,6 +129,45 @@ class MediaPreviewUrlTests(unittest.TestCase):
 
 
 class GeneratedCacheUrlTests(unittest.IsolatedAsyncioTestCase):
+    async def test_saved_image_gallery_copy_preserves_exact_pixels_after_release(self):
+        # High-frequency, non-gray pixels expose WebP's loss even at quality 100.
+        pixels = np.random.default_rng(14).integers(0, 256, (19, 23, 3), dtype=np.uint8)
+        image = Image.fromarray(pixels)
+        definition = {"modules.Image": {"Save": {"params": Save.params}}}
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "saved.png"
+            server = WebServer(modules=definition, work_dir=directory, data_dir=directory)
+            server.current_task = {"task_id": "save-png-run", "attempt_index": 0}
+            messages = []
+            server.queue_message = lambda message, *_args, **_kwargs: messages.append(message)
+            with patch("modiff.NodeBase._module_map", return_value=definition), patch("modiff.NodeBase._server", return_value=server):
+                server.node_cache["save-png"] = Save("save-png")
+                server.execute_node("save-png", {"module": "modules.Image", "action": "Save", "params": {
+                    "image": {"value": image}, "filename": {"value": str(target)},
+                    "saved_images": {"display": "ui_image", "sourceKey": "saved_image_data"},
+                }}, "test", quiet=True)
+            message = next(m for m in messages if m.get("type") == "update_value")
+            self.assertTrue(message["backend_persisted"])
+            output = next(row for row in server._read_studio_output_state()["outputs"] if row["id"] == message["output_id"])
+            item = output["mediaItems"][0]
+            app = web.Application()
+            app.router.add_get("/cache/{node}/{field}/{index}", server.cache)
+            app.router.add_get("/file", server.fileGet)
+            async with TestClient(TestServer(app)) as client:
+                async with client.get(message["value"][0]) as response:
+                    self.assertEqual(response.status, 200)
+                    body = await response.read()
+                with Image.open(BytesIO(body)) as preview:
+                    self.assertEqual(preview.format, "PNG")
+                    np.testing.assert_array_equal(np.array(preview), pixels)
+                self.assertEqual(item["mediaHash"], "sha256:bytes:" + hashlib.sha256(body).hexdigest())
+                server.node_cache.clear()
+                async with client.get(item["url"]) as response:
+                    self.assertEqual(response.status, 200)
+                    self.assertEqual(await response.read(), body)
+            with Image.open(target) as saved:
+                np.testing.assert_array_equal(np.array(saved), pixels)
+
     def dispatch(self, directory, node_id, field, value, data_type, display, *, task=False):
         class Preview(NodeBase):
             def execute(self):

@@ -227,6 +227,7 @@ class Save(NodeBase):
             "display": "ui_image",
             "type": "url",
             "dataSource": "saved_image_data",
+            "fieldOptions": {"format": "PNG"},
         },
     }
 

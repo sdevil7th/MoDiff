@@ -18,14 +18,14 @@ See [workbench acceptance](workbench-acceptance.md) for the broader release gate
 Migration, output comparison and platform qualification answer different
 questions. Record each independently:
 
-| Claim | Required evidence |
-| --- | --- |
-| A fresh template uses the current nodes | Exported visible graph and API graph, exact operation selection and application source identity |
-| Its output matches the previous recipe | Completed old/new tasks, consumed recipes and runtime identities, complete ordered raw outputs and passing image comparison |
-| A previously broken recipe now runs | The original failure plus successful current tasks; without an old image this is functional repair, not old/new image parity |
-| Auto works in a memory mode | Cold and resident runs on the actual hardware, unchanged recipe, plans, reuse/reclaim observations and memory captures |
-| Windows is qualified | Actual Windows installation and execution receipts; Linux and mocked platform tests are insufficient |
-| A model is ready for public admission | The route's complete runtime, access, lifecycle, resource and output requirements in addition to graph construction |
+| Claim                                   | Required evidence                                                                                                            |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| A fresh template uses the current nodes | Exported visible graph and API graph, exact operation selection and application source identity                              |
+| Its output matches the previous recipe  | Completed old/new tasks, consumed recipes and runtime identities, complete ordered raw outputs and passing image comparison  |
+| A previously broken recipe now runs     | The original failure plus successful current tasks; without an old image this is functional repair, not old/new image parity |
+| Auto works in a memory mode             | Cold and resident runs on the actual hardware, unchanged recipe, plans, reuse/reclaim observations and memory captures       |
+| Windows is qualified                    | Actual Windows installation and execution receipts; Linux and mocked platform tests are insufficient                         |
+| A model is ready for public admission   | The route's complete runtime, access, lifecycle, resource and output requirements in addition to graph construction          |
 
 A later source change does not erase earlier results or reassign their source
 identity. Retain the original receipt and add the new checks with their own
@@ -264,6 +264,15 @@ fidelity. Numerical similarity and attractive output answer different questions.
 An improved-output claim needs retained comparison evidence and visual review;
 it cannot be inferred from a graph, hash or successful queue task. This tool
 neither qualifies Auto nor publishes Gallery assets.
+
+For a graph that protects exact source pixels through masked compositing, use
+Save Image's lossless PNG preview as the accepted Gallery output. Its retained
+preview uses PNG so history, export and cache release do not introduce lossy
+WebP changes to otherwise untouched pixels. A separate ordinary Preview Image
+can still emit WebP; do not substitute that preview's byte identity for the PNG.
+The Save Image filename independently selects the file written to disk. A PNG
+preview preserves its in-memory input; it does not establish equality with a
+separately encoded JPEG or WebP file. Verify each claimed artifact explicitly.
 
 ## Exercise the complete user journey
 
