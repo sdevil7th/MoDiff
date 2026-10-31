@@ -14,15 +14,15 @@ serves its bundled client and does not require a separate Vite development serve
 For a fresh checkout, select the interim Windows candidate in both repositories:
 
 ```text
-git clone --branch codex/windows-delivery-20261026 https://github.com/sdevil7th/MoDiff.git MoDiff
-git clone --branch codex/windows-delivery-20261026 https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff.git MoDiff
+git clone --branch fix-ui-ux-issues https://github.com/sdevil7th/MoDiff-client.git MoDiff-client
 cd MoDiff
 ```
 
 These updates have not yet been released on `main`. The reviewed Windows
 application source pair before final packaging is backend
-`fe84ed1ad6eeb77d904742780ec511fce441e4e4` and client
-`109da623e65747ae09e18cf699cf12f1485e7644`, reviewed on 28 October 2026. Final
+`2bd56fca4b712bfde22c0f2012b5bcc597efb2f1` and client
+`69370265f4291ffe4757277401df07ef9ea9198a`, reviewed on 31 October 2026. Final
 documentation, CI pairing and bundled-client packaging commits can be later
 descendants; they do not expand model or hardware qualification. This candidate
 is not an all-platform release. Record `git rev-parse HEAD` in both checkouts. A
