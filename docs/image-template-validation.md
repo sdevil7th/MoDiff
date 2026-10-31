@@ -274,6 +274,16 @@ The Save Image filename independently selects the file written to disk. A PNG
 preview preserves its in-memory input; it does not establish equality with a
 separately encoded JPEG or WebP file. Verify each claimed artifact explicitly.
 
+Load Image decodes the same byte snapshot that produces its source hash. Its
+bounded execution record retains the successful images' hashes, dimensions and
+modes in output order, plus the alpha-channel choice. A cache hit retains that
+original record; it does not claim that a changed source file was read again.
+Crop position, resize method/interpolation, mask channel/inversion and Save Image
+filename/quality are captured only for their declared image utility actions.
+These are call-argument observations, not blanket accounting of every field or
+proof that an omitted source was consumed. Existing string, list and receipt
+limits still apply; omitted evidence cannot qualify a required input.
+
 ## Exercise the complete user journey
 
 Run the actual template from the Gallery using the visible graph and ordinary

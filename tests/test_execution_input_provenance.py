@@ -1,4 +1,5 @@
 import json
+import pytest
 
 from modiff.execution_input_provenance import (
     apply_resolved_execution_inputs,
@@ -9,6 +10,36 @@ from modiff.execution_input_provenance import (
 
 def node(params=None):
     return {"module": "modules.Diffusers", "action": "Encode", "params": params or {}}
+
+
+@pytest.mark.parametrize('module,action,values', [
+    ('Image', 'Resize', {'method': 'pad', 'interpolation': 'lanczos', 'multiple_of': 1}),
+    ('ImageOperations', 'ResizeImage', {'fit_mode': 'contain', 'resampling': 'bicubic'}),
+    ('ImageOperations', 'CropImage', {'x': 0, 'y': 165}),
+    ('ImageOperations', 'MaskComposite', {'mask_channel': 'luminance', 'invert_mask': False}),
+    ('Image', 'Save', {'filename': 'studio/outputs/accepted.png', 'quality': 100}),
+])
+def test_image_utility_receipts_capture_only_the_scoped_actual_controls(module, action, values):
+    record = capture_generation_inputs('utility', {'module': 'modules.'+module, 'action': action}, {
+        **values, 'token': 'not-evidence', 'image': object(), 'other_objects': object(),
+    })
+    assert {k: f['value'] for k, f in record['fields'].items()} == values
+    assert record['omittedFields'] == {}
+    assert 'not-evidence' not in json.dumps(record)
+    unrelated = capture_generation_inputs('other', node(), values)
+    assert unrelated['fields'] == {}
+
+
+def test_image_utility_evidence_keeps_existing_bounds_and_never_walks_media():
+    record = capture_generation_inputs('load', {'module': 'modules.Image', 'action': 'Load'}, {
+        'source_hashes': ['a' * 64] * 17, 'source_modes': [['RGB']],
+        'image': object(), 'alpha_channel': 'x' * 16385,
+    })
+    assert record['fields'] == {}
+    assert record['omittedFields'] == {
+        'source_hashes': 'oversize-list', 'source_modes': 'unsupported-value',
+        'alpha_channel': 'oversize-string',
+    }
 
 
 def test_native_and_connected_recipe_memory_policies_have_comparable_consumed_fields():

@@ -3,6 +3,7 @@ from modiff.NodeBase import NodeBase
 from PIL import Image, ImageColor, ImageOps
 from modiff.config import CONFIG
 from modiff.path_identifiers import resolve_runtime_input_path
+from io import BytesIO
 import logging
 from utils.torch_utils import DEVICE_LIST, DEFAULT_DEVICE
 from utils.paths import parse_filename
@@ -136,17 +137,18 @@ class Load(NodeBase):
 
                     imported = import_web_media(f)
                     content = imported.read_bytes()
-                    image = ImageOps.exif_transpose(Image.open(imported))
-                    source_hash = hashlib.sha256(content).hexdigest()
                 else:
                     f = resolve_runtime_input_path(f)
                     if not f.exists():
                         continue
                     content = f.read_bytes()
-                    image = ImageOps.exif_transpose(Image.open(f))
-                    source_hash = hashlib.sha256(content).hexdigest()
 
-                image.load()
+                # Decode the exact snapshot whose bytes were hashed. Opening the
+                # path again can read a replacement file after the hash read.
+                source_hash = hashlib.sha256(content).hexdigest()
+                with Image.open(BytesIO(content)) as decoded:
+                    image = ImageOps.exif_transpose(decoded)
+                    image.load()
                 mask = alpha_to_mask(image)
                 image = image.copy()
 
@@ -167,6 +169,14 @@ class Load(NodeBase):
 
         if len(images) == 0:
             raise ValueError("Load Image could not load any selected image. Check that the file or URL exists and is a supported image.")
+
+        self.record_generation_inputs({
+            "alpha_channel": kwargs.get("alpha_channel", "ignore"),
+            "source_hashes": source_hashes,
+            "source_widths": widths,
+            "source_heights": heights,
+            "source_modes": [image.mode for image in images],
+        })
 
         return {
             "image": collapse_single(images),

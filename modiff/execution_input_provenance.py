@@ -38,6 +38,23 @@ FIELD_NAMES = {
     "use_kv_cache": "attentionContextReuse",
 }
 NODE_FIELD_NAMES = {
+    ('Image', 'Load'): {
+        **FIELD_NAMES, 'alpha_channel': 'imageAlphaChannel',
+        'source_hashes': 'imageSourceHashes', 'source_widths': 'imageSourceWidths',
+        'source_heights': 'imageSourceHeights', 'source_modes': 'imageSourceModes',
+    },
+    ('Image', 'Resize'): {
+        **FIELD_NAMES, 'method': 'imageResizeMethod', 'interpolation': 'imageInterpolation',
+        'multiple_of': 'imageSizeMultiple',
+    },
+    ('ImageOperations', 'ResizeImage'): {
+        **FIELD_NAMES, 'fit_mode': 'imageFitMode', 'resampling': 'imageResampling',
+    },
+    ('ImageOperations', 'CropImage'): {**FIELD_NAMES, 'x': 'imageCropLeft', 'y': 'imageCropTop'},
+    ('ImageOperations', 'MaskComposite'): {
+        **FIELD_NAMES, 'mask_channel': 'imageMaskChannel', 'invert_mask': 'imageMaskInverted',
+    },
+    ('Image', 'Save'): {**FIELD_NAMES, 'filename': 'imageSaveFilename', 'quality': 'imageSaveQuality'},
     ('ModularDiffusers', 'ModelsLoader'): {**FIELD_NAMES, 'weight_format': 'weightFormat'},
     ('DiffusersImage', 'LoadPipeline'): {**FIELD_NAMES, 'mode': 'executionMode'},
     **{('DiffusersImage', action): {**FIELD_NAMES, 'executed_task': 'executedTask'}
