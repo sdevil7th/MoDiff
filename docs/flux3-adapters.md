@@ -333,7 +333,6 @@ On PowerShell, use `$env:MODIFF_PUP_PROCESSOR_FIXTURE` and
 `tests/test_prompt_enhancement.py` use the same fixture and remain separate from
 trained PUP output, hardware capacity, Auto and browser qualification.
 
-
 ### Append details with an unchanged authored layout
 
 The private Distilled edit-image `prompt-preview-authoring:v3` and explicit
@@ -404,7 +403,6 @@ authored pair and reference source. This removal grants no retired execution.
 The operator must then select the current public model through the ordinary model
 change review before choosing and enabling a current enhancement mode.
 
-
 ### Discoverable Expert authoring and an optional official provider
 
 The ordinary model chooser declares FLUX 3 Klein and Base for text-to-image and
@@ -439,7 +437,6 @@ precision. NF4 also needs its existing optional-runtime and device/resource
 checks. Generated layout tables, native output, Auto, public template media and
 broader hardware qualification remain separate from this authoring contract.
 
-
 The maintained optional-runtime qualification passed on Linux and Windows x86_64 with Python
 3.12, source commit `627843d5a97cef4ed2cf7ab06d089f0f900af471`, official Diffusers
 source revision `7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941` and deterministic wheel
@@ -459,3 +456,52 @@ tiny CUDA NF4 compatibility workload on clean source
 unqualified. That result covers exact combined installation, ten API classes,
 finite BF16/NF4 Linear4bit output with independent oracles, base preservation and
 rollback. It supplies no FLUX 3 pretrained/image, model-fit or Auto evidence.
+
+### Separate bounded Linux shared-memory Auto recipe
+
+`flux3-fp8r-linux-gfx1151-shared:v1` is a separate source declaration for Linux
+x86_64, one primary ROCm `cuda:0` device with observed `gfx1151` architecture and
+shared memory. It requires consistent finite Torch/shared-pool observations and
+the ordinary verified optional-provider/runtime boundary. It does not change the
+Windows/NVIDIA recipe, reinterpret dedicated VRAM as shared RAM, or qualify other
+AMD families or operating systems.
+
+The initial workload preserves the public Distilled/Base parent revisions,
+explicit FP8r storage, BF16 compute, CPU loading, 512×512 output, batch one and
+the existing 16/50-step policy. Base retains CFG 3.5/rescale zero. Text is capped
+at the authored maximum of 8192 tokens. Reference editing admits one or two
+actual prepared references within the existing 16-pixel crop and combined
+512-square plus 1024-square pixel bound. No value is silently reduced. Native
+ControlNet/Fill and NVFP4/text-encoder NF4 are outside this Linux recipe.
+
+The planner compares model-CPU offload with a separate resident candidate. The
+CPU/device copies are distinct allocations backed by one physical pool; offload
+is not assumed to reduce total UMA usage. Exact packed parameter and cold-loading
+headers, whole-file conversion overlap and FP8r layer dequantization remain
+mandatory. Three pinned configuration digests per parent bind the reviewed
+transformer, Qwen3-VL encoder and VAE shapes before source-derived working
+reservations are added. Those reservations include three FP32 attention
+score-sized buffers, retained encoder hidden states/logits/embedding packing,
+denoiser projections/modulation/MLP buffers, VAE feature/attention buffers and host
+image copies. They grant no Flash/Triton saving. They are engineering
+reservations, not a measured inference peak or a universal fit guarantee.
+
+The ordinary graph planner adds OS/allocator headroom, checks the accelerator
+aperture and the sum of CPU/device demand against physical host memory, grants
+only existing attested owned-storage credit, and rechecks at dispatch. This
+recipe initially covers one primary model owner; extra model owners, component
+overrides and arbitrary suppliers need their own reviewed contracts.
+
+Auto LoRA permission is restricted to one connected builtin descriptor for the
+pinned NASA adapter on Distilled or pinned Monet adapter on Base, with exact
+revision/file/SHA-256, scale 0–1 and the unchanged scheduler. It does not admit
+literal descriptor injection, adapter chains, local artifacts or other adapters.
+The existing adapter-authoring policy still selects resident placement for
+these adapters. The generic LoRA inspector rehashes installed bytes and adds its
+FP32 factor/conversion/dense-update reservations per owner, including scale zero.
+Existing execution, invalidation and scoped cleanup paths remain authoritative.
+
+Source/unit checks do not establish native acceptance. Hardware fit, repeated
+execution, reference and adapter changes, release and durable-output checks must
+be recorded on the actual Linux runtime before claiming those tested routes.
+Earlier Linux Custom and Windows model outputs retain their original proof scope.

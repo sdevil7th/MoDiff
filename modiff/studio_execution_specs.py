@@ -18360,6 +18360,7 @@ for _old_id, _pipeline, _label, _repository, _revision, _steps, _cfg in _FLUX3_C
             'executionPath': 'modular-diffusers', 'pipelineClass': _pipeline,
             'declaredExecutionProfileIds': [_public_id],
             'boundedWeightFormatRecipe': 'flux3-fp8r-windows-model-cpu:v1',
+            'additionalBoundedWeightFormatRecipes': ['flux3-fp8r-linux-gfx1151-shared:v1'],
             'explicitComponentQuantizationRecipe': 'flux3-nvfp4-text-nf4-windows-model-cpu:v1',
             'qualityDefaults': {'width': 512, 'height': 512, 'steps': _steps,
                                 'guidanceScale': 3.5 if _cfg else 1.0, 'maxSequenceLength': 8192},

@@ -780,7 +780,10 @@ def _build_workflow_auto_plan(
 
     owned = set(loaders)
     text_encoder_quantization = {}
-    from modiff.flux3_auto_resource import PUBLIC_PROFILES, NF4_RECIPE_ID, nf4_loading_requirements
+    from modiff.flux3_auto_resource import PUBLIC_PROFILES, NF4_RECIPE_ID, LINUX_RECIPE_ID, nf4_loading_requirements, linux_parameter_residency, linux_shared_hardware, linux_lora_controls
+    linux_flux3 = linux_shared_hardware(hardware)
+    if linux_flux3 and any(getattr(profile, 'id', None) in PUBLIC_PROFILES for profile in loaders.values()) and len(loaders) != 1:
+        issues.append('Linux FP8r Auto covers one primary model owner; additional model owners need a separate reviewed recipe.')
     for loader_id, profile in loaders.items():
         if getattr(profile, 'id', None) not in PUBLIC_PROFILES:
             continue
@@ -812,6 +815,9 @@ def _build_workflow_auto_plan(
             if getattr(profile, 'id', None) in PUBLIC_PROFILES:
                 for field in ('quant_config', 'unet', 'vae', 'controlnet', 'lora_list'):
                     param = nodes[loader_id]['params'].get(field) or {}
+                    if field == 'lora_list' and linux_flux3:
+                        linux_lora_controls(nodes, loader_id, profile.id, _literal)
+                        continue
                     if field == 'quant_config' and loader_id in text_encoder_quantization:
                         continue
                     if param.get('sourceId') or param.get('value') not in (None, []):
@@ -1047,6 +1053,11 @@ def _build_workflow_auto_plan(
                     offload_mode=candidate.get('offloadMode', 'none'), device=form['device'],
                     dtype=form['dtype'], hardware=hardware,
                 )}
+                if candidate.get('boundedWeightFormatRecipe') == LINUX_RECIPE_ID:
+                    parameter_residency.update(linux_parameter_residency(
+                        candidate.get('parameterStorageLowerBound'), execution_path=profile.execution_path,
+                        offload_mode=candidate.get('offloadMode'), device=form['device'],
+                        dtype=form['dtype'], hardware=hardware))
                 dequantization = candidate.get('parameterDequantizationRequirements')
                 if candidate.get('weightFormat') in {'fp8r', 'nvfp4'}:
                     if (type(dequantization) is not dict or dequantization.get('proofScope') != f"largest_{candidate['weightFormat']}_linear_dequantization_only"
@@ -1123,6 +1134,16 @@ def _build_workflow_auto_plan(
                 )}
             if gpu_loading:
                 requirements = {**requirements, 'vramBytes': max(requirements['vramBytes'], gpu_loading['vramBytes'])}
+            working_additional = {}
+            if candidate.get('boundedWeightFormatRecipe') == LINUX_RECIPE_ID:
+                working_additional = candidate.get('workingMemoryAdditionalRequirements')
+                if (type(working_additional) is not dict
+                        or working_additional.get('proofScope') != 'flux3_linux_source_working_reserve_v1'
+                        or any(type(working_additional.get(key)) is not int or not 0 < working_additional[key] <= 2**63
+                               for key in ('systemRamBytes', 'vramBytes'))):
+                    raise ValueError('Linux FP8r requires its exact source-derived working reservations.')
+                requirements = {**requirements, **{key: int(requirements[key]) + working_additional[key]
+                    for key in ('systemRamBytes', 'vramBytes')}}
             parameter_disk = {}
             disk_additional = 0
             if parameter_residency and candidate.get("offloadMode") == "group_disk" and not device.startswith("cpu"):
@@ -1161,6 +1182,7 @@ def _build_workflow_auto_plan(
                                if parameter_phase == 'cpu_loading' else {}),
                             **({'parameterConversionRequirements': conversion,
                                 'parameterConversionAdditionalBytes': conversion_additional} if conversion else {}),
+                            **({'workingMemoryAdditionalRequirements': working_additional} if working_additional else {}),
                             **({'parameterLoadingRequirements': gpu_loading,
                                 'parameterGpuLoadingAdditionalBytes': gpu_loading_additional} if gpu_loading else {}),
                             **({"parameterDiskRequirements": parameter_disk,

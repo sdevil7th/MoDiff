@@ -13,6 +13,7 @@ from typing import Any, Callable
 from modiff.optimization_packages import qualified_auto_overrides, workload_key_for_form
 from modiff.artifact_weight_memory import artifact_parameter_lower_bound, artifact_parameter_conversion_reserve, impossible_parameter_residency, native_cpu_parameter_residency
 from modiff.native_image_auto_placement import declared_image_owner
+from modiff.flux3_auto_resource import BOUNDED_RECIPE_IDS
 
 from modiff.diffusers_offload_modes import (
     OFFLOAD_MODE_GROUP_CPU,
@@ -2926,11 +2927,15 @@ def _declared_profile_candidates(
 
 
 def _bounded_fp8r_candidates(form, hardware, requirements):
-    from modiff.flux3_auto_resource import NF4_RECIPE_ID, selected_artifacts, workload_missing
+    from modiff.flux3_auto_resource import LINUX_RECIPE_ID, NF4_RECIPE_ID, linux_shared_hardware, selected_artifacts, workload_missing
+    linux = (LINUX_RECIPE_ID in requirements.get('additionalBoundedWeightFormatRecipes', [])
+             and linux_shared_hardware(hardware) and form.get('textEncoderQuantization') is None)
     model_type, mode = form['modelType'], form['mode']
     repository = requirements['defaultRepo']
     revision = catalog_revision(repository, model_type=model_type)
     missing = workload_missing(form, hardware, requirements['executionProfileId'])
+    if linux_shared_hardware(hardware) and not linux:
+        missing.append('No exact Linux shared-memory recipe is declared for this selection.')
     if (form.get('textEncoderQuantization') is not None
             and requirements.get('explicitComponentQuantizationRecipe') != NF4_RECIPE_ID):
         missing.append('No exact component quantization recipe is declared.')
@@ -2960,11 +2965,25 @@ def _bounded_fp8r_candidates(form, hardware, requirements):
         requirements_missing=missing, artifact_status=status, requirements=requirements,
     )
     candidate.update(weightFormat=form.get('weightFormat'), boundedWeightFormatRecipe=requirements['boundedWeightFormatRecipe'])
+    if linux:
+        candidate['id'] += '-linux-gfx1151'
+        candidate['boundedWeightFormatRecipe'] = LINUX_RECIPE_ID
+        candidate['requirements'] = {**candidate['requirements'],
+            'boundedWeightFormatRecipe': LINUX_RECIPE_ID,
+            'supportedOffloadModes': ['model_cpu', 'none']}
+        candidate['reason'] = 'Separate gfx1151 shared-memory FP8r recipe with exact architecture, parameter/loading and working reservations; native qualification remains separate.'
     if form.get('textEncoderQuantization') is not None:
         candidate.update(boundedWeightFormatRecipe=NF4_RECIPE_ID,
                          textEncoderQuantization=deepcopy(form['textEncoderQuantization']),
                          quantizedComponents=['transformer', 'text_encoder'])
-    return [candidate]
+    if not linux:
+        return [candidate]
+    # Shared CPU/device copies occupy the same physical pool. Resident is an
+    # explicit alternative, not a claim that offload makes the UMA model smaller.
+    resident = deepcopy(candidate)
+    resident.update(id=candidate['id']+'-resident', offloadMode='none', autoOffload=False,
+                    placementAlternativeOf=candidate['id'])
+    return [candidate, resident]
 
 
 def _clone_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
@@ -3508,9 +3527,8 @@ def build_auto_resource_plan(
     for candidate in candidates:
         if candidate.get("exactPairDeclared") is False or candidate["id"] in catalog_blocked:
             continue
-        if candidate.get('boundedWeightFormatRecipe') in {
-                'flux3-fp8r-windows-model-cpu:v1', 'flux3-nvfp4-text-nf4-windows-model-cpu:v1'}:
-            # This initial recipe declares one placement and ordinary execution.
+        if candidate.get('boundedWeightFormatRecipe') in BOUNDED_RECIPE_IDS:
+            # Bounded recipes permit only their source-declared placements.
             # An optimization receipt cannot widen its source-selected boundary.
             continue
         artifact = str(
@@ -3551,12 +3569,14 @@ def build_auto_resource_plan(
     for candidate in candidates:
         candidate.pop("parameterStorageLowerBound", None)
         candidate.pop("parameterConversionReserve", None)
-        if candidate.get('boundedWeightFormatRecipe') in {
-                'flux3-fp8r-windows-model-cpu:v1', 'flux3-nvfp4-text-nf4-windows-model-cpu:v1'}:
-            from modiff.flux3_auto_resource import NF4_RECIPE_ID, nf4_parameter_census, parameter_census as fp8r_census, workload_missing
+        if candidate.get('boundedWeightFormatRecipe') in BOUNDED_RECIPE_IDS:
+            from modiff.flux3_auto_resource import LINUX_RECIPE_ID, NF4_RECIPE_ID, linux_shared_hardware, linux_working_reserve, nf4_parameter_census, parameter_census as fp8r_census, workload_missing
+            linux = candidate.get('boundedWeightFormatRecipe') == LINUX_RECIPE_ID
             missing = workload_missing(form, hardware, candidate.get('executionProfileId'))
-            if candidate.get('offloadMode') != 'model_cpu' or candidate.get('autoOffload') is not True:
-                missing.append('The bounded FP8r Auto recipe requires its declared model CPU placement.')
+            placement = candidate.get('offloadMode')
+            if (placement not in ({'model_cpu', 'none'} if linux else {'model_cpu'})
+                    or candidate.get('autoOffload') is not (placement != 'none')):
+                missing.append('The bounded FP8r Auto recipe requires its source-declared placement and matching Auto offload control.')
             if optional_runtime_requirement.get('state') not in {'active', 'base_satisfied'}:
                 missing.append('Activate the exact reviewed optional Diffusers provider before FP8r Automatic execution.')
             resolved = (candidate.get('artifactResolution') or {}).get('resolved') or {}
@@ -3573,7 +3593,17 @@ def build_auto_resource_plan(
                 else:
                     candidate.update(parameterStorageLowerBound=bound, parameterConversionReserve=conversion,
                                      parameterDequantizationRequirements=dequantization)
-                    missing += impossible_parameter_residency(hardware, bound, 'model_cpu')
+                    capacity_hardware = hardware
+                    if linux:
+                        if not linux_shared_hardware(hardware):
+                            raise ValueError('Linux shared-memory candidate no longer matches its observed hardware.')
+                        candidate['workingMemoryAdditionalRequirements'] = linux_working_reserve(arguments[0], arguments[3], form)
+                        device = next(d for d in hardware['runtime']['hardware']['devices'] if d.get('type') == 'cuda')
+                        # This copy belongs to this recipe only. Preserve the
+                        # ordinary report's 2 GiB dedicated total unchanged.
+                        capacity = min(device['torch_vram_total'], device['shared_memory_total'], hardware['systemMemory']['totalBytes'])
+                        capacity_hardware = {**hardware, 'accelerator': {**hardware['accelerator'], 'totalBytes': capacity}}
+                    missing += impossible_parameter_residency(capacity_hardware, bound, placement)
             except (OSError, RuntimeError, ValueError, KeyError, TypeError) as error:
                 missing.append(str(error))
             if missing:
