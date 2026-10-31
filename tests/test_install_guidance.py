@@ -147,7 +147,8 @@ class GuidedInstallerTests(unittest.TestCase):
         for guide in ("README.md", "docs/developer-setup.md"):
             text = (root / guide).read_text(encoding="utf-8")
             with self.subTest(guide=guide):
-                self.assertIn("codex/windows-delivery-20261026", text)
+                self.assertIn("fix-ui-ux-issues", text)
+                self.assertNotIn("codex/windows-delivery-20261026", text)
                 for reference in source_pair.values():
                     self.assertIn(reference, text)
 

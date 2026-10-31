@@ -675,7 +675,10 @@
       "id": "Flux3DistilledModularPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "Flux3DistilledModularPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux3_klein_fp8r512_multi_reference_edit",
+        "flux3_klein_fp8r512_single_reference_edit"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The graph is explicitly experimental and is not a supported execution claim.",
       "status": "contract-only"
@@ -686,7 +689,10 @@
       "id": "Flux3DistilledModularPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "Flux3DistilledModularPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux3_klein_fp8r512_raw_coordinate_prompt",
+        "flux3_klein_fp8r512_text_to_image"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The graph is explicitly experimental and is not a supported execution claim.",
       "status": "contract-only"
@@ -697,7 +703,9 @@
       "id": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_lora_style",
       "mode": "text_to_image",
       "modelType": "Flux3DistilledModularPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux3_klein_fp8r512_lora_style"
+      ],
       "qualificationStatus": "graph-qualified-gallery-review-pending",
       "reason": "The graph is explicitly experimental and is not a supported execution claim.",
       "status": "contract-only"
@@ -708,7 +716,10 @@
       "id": "Flux3ModularPipeline:edit_image",
       "mode": "edit_image",
       "modelType": "Flux3ModularPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux3_klein_base_fp8r512_multi_reference_edit",
+        "flux3_klein_base_fp8r512_single_reference_edit"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The graph is explicitly experimental and is not a supported execution claim.",
       "status": "contract-only"
@@ -719,7 +730,10 @@
       "id": "Flux3ModularPipeline:text_to_image",
       "mode": "text_to_image",
       "modelType": "Flux3ModularPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux3_klein_base_fp8r512_raw_coordinate_prompt",
+        "flux3_klein_base_fp8r512_text_to_image"
+      ],
       "qualificationStatus": "graph-qualified-execution-pending",
       "reason": "The graph is explicitly experimental and is not a supported execution claim.",
       "status": "contract-only"
@@ -730,7 +744,9 @@
       "id": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style",
       "mode": "text_to_image",
       "modelType": "Flux3ModularPipeline",
-      "publicTemplateIds": [],
+      "publicTemplateIds": [
+        "flux3_klein_base_fp8r512_lora_style"
+      ],
       "qualificationStatus": "graph-qualified-gallery-review-pending",
       "reason": "The graph is explicitly experimental and is not a supported execution claim.",
       "status": "contract-only"
@@ -2442,7 +2458,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:77c5a450c78045c06125411e3a57a53091befdf35df4020c3cc416c967254161",
+  "contentHash": "sha256:74aa3748027c73afd604e8a547fc7bd7addbf07bf94b0f744f408e32a9a38c32",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -8084,6 +8100,322 @@
       "verificationStatus": "unverified"
     },
     {
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein-base:official:text-to-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux3ModularPipeline"
+        },
+        "executionProfileId": "flux3-klein-base:official-provider:v1",
+        "implementation": "native_stages",
+        "loraPolicy": {
+          "defaultAdapterName": "mnt_oil"
+        },
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3ModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_base_fp8r512_lora_style",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3ModularPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein-base:official:edit-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "Flux3ModularPipeline"
+        },
+        "executionProfileId": "flux3-klein-base:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3ModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_base_fp8r512_multi_reference_edit",
+      "mode": "edit_image",
+      "modelType": "Flux3ModularPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein-base:official:text-to-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux3ModularPipeline"
+        },
+        "executionProfileId": "flux3-klein-base:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3ModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_base_fp8r512_raw_coordinate_prompt",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3ModularPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein-base:official:edit-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "Flux3ModularPipeline"
+        },
+        "executionProfileId": "flux3-klein-base:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3ModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_base_fp8r512_single_reference_edit",
+      "mode": "edit_image",
+      "modelType": "Flux3ModularPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein-base:official:text-to-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux3ModularPipeline"
+        },
+        "executionProfileId": "flux3-klein-base:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3ModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_base_fp8r512_text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_lora_style",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein:official:text-to-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux3DistilledModularPipeline"
+        },
+        "executionProfileId": "flux3-klein:official-provider:v1",
+        "implementation": "native_stages",
+        "loraPolicy": {
+          "defaultAdapterName": "nsc7"
+        },
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3DistilledModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_fp8r512_lora_style",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein:official:edit-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "Flux3DistilledModularPipeline"
+        },
+        "executionProfileId": "flux3-klein:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3DistilledModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_fp8r512_multi_reference_edit",
+      "mode": "edit_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein:official:text-to-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux3DistilledModularPipeline"
+        },
+        "executionProfileId": "flux3-klein:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3DistilledModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_fp8r512_raw_coordinate_prompt",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein:official:edit-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "Flux3DistilledModularPipeline"
+        },
+        "executionProfileId": "flux3-klein:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3DistilledModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_fp8r512_single_reference_edit",
+      "mode": "edit_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein:official:text-to-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux3DistilledModularPipeline"
+        },
+        "executionProfileId": "flux3-klein:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3DistilledModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_fp8r512_text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
       "canonicalWorkflowId": "FluxCannyPipeline:control_image",
       "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
@@ -9842,7 +10174,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "061f5d67152175937a0f812a956eb486206f7876eaad1188589fe927b8f7fe03",
+    "templateBundleSha256": "3288f741885e47b46411aca4ba166320ebc0a83b5879976df16264458b30db91",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
@@ -9890,8 +10222,8 @@
   },
   "summary": {
     "canonicalWorkflowCount": 209,
-    "canonicalWorkflowsWithPublicTemplates": 54,
-    "canonicalWorkflowsWithoutPublicTemplates": 155,
+    "canonicalWorkflowsWithPublicTemplates": 60,
+    "canonicalWorkflowsWithoutPublicTemplates": 149,
     "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
@@ -9901,10 +10233,10 @@
       "research-blocked": 116,
       "unreviewed": 6
     },
-    "publicTemplateCount": 80,
-    "reviewedGalleryTemplateCount": 70,
+    "publicTemplateCount": 90,
+    "reviewedGalleryTemplateCount": 80,
     "templateStatusCounts": {
-      "contract-only": 0,
+      "contract-only": 10,
       "equivalent": 0,
       "executable": 80,
       "intentionally-excluded": 0,

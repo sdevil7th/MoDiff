@@ -7,11 +7,12 @@
     "generatesMedia": false,
     "importsComfyGraphs": false,
     "maximumEvidenceClaim": "canonical_graph_binding_only",
+    "publicPreviewsQualifyCanonicalGraphs": false,
     "publicTemplate": false,
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "studioVisible": false
   },
-  "contentHash": "sha256:a90e8019d375bd8fa17600237fdf174abd98445477ce9acb5660881bc830e21a",
+  "contentHash": "sha256:384e6a340f9d2fc88e5c9c367d00ef4599d7b16482b687529ab7ebea84637b5d",
   "contractKind": "non_public_template_candidate_contract_ledger",
   "contracts": [
     {
@@ -6965,9 +6966,9 @@
       "sha256": "sha256:f278e24ed314a1ab997b5521cc4c8b9576c67cdbbe76e19ffa3ce58a4593dc0e"
     },
     "upstreamCoverage": {
-      "contentHash": "sha256:77c5a450c78045c06125411e3a57a53091befdf35df4020c3cc416c967254161",
+      "contentHash": "sha256:74aa3748027c73afd604e8a547fc7bd7addbf07bf94b0f744f408e32a9a38c32",
       "path": "data/upstream-coverage.v1.json",
-      "sha256": "sha256:bc84351a799a29c6f773d00d014ebb12a5d449d76bcfabb7347d8a9abc2a99a0"
+      "sha256": "sha256:d80e18187f62d68f7d419dec046fabd4f491ef780aa3aa6a28648b57c7fc23ef"
     },
     "workflowManifest": {
       "path": "data/workflow-library-manifest.json",
@@ -6977,7 +6978,8 @@
   "summary": {
     "candidateContractCount": 155,
     "canonicalWorkflowCount": 209,
-    "canonicalWorkflowsWithPublicTemplates": 54,
+    "canonicalWorkflowsWithExecutablePublicTemplates": 54,
+    "canonicalWorkflowsWithPublicTemplates": 60,
     "comfyMappingStatusCounts": {
       "existing_contract_candidate": 14
     },
@@ -6990,6 +6992,6 @@
       "json": 10,
       "video": 33
     },
-    "publicTemplateCount": 80
+    "publicTemplateCount": 90
   }
 }

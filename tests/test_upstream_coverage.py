@@ -26,6 +26,7 @@ from modiff.upstream_coverage import (
     _load_public_templates,
     _node_action_evidence,
     _template_execution_coverage,
+    _workflow_and_template_coverage,
     _transformers_coverage_scope,
     _transformers_reference_contract,
     build_upstream_coverage,
@@ -64,6 +65,16 @@ class UpstreamCoverageTests(unittest.TestCase):
             with self.assertRaisesRegex(UpstreamCoverageError, "must not perform network"):
                 _load_public_templates(bundle)
 
+    def test_template_inventory_retains_the_actual_primary_artifact(self):
+        artifact = {"source": "hub", "value": "reviewed/model", "revision": "a" * 40}
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "catalog.mjs"
+            source.write_text("export const templates = " + json.dumps([{
+                "id": "example", "modelType": "ImagePipeline", "mode": "text_to_image",
+                "verificationStatus": "unverified", "modelArtifact": artifact,
+            }]) + ";", encoding="utf-8")
+            self.assertEqual(_load_public_templates(source)[0]["modelArtifact"], artifact)
+
     def test_selected_native_template_binds_backend_recipe_without_promoting_historical_proof(self):
         selection = {"schemaVersion": 1, "pipelineClass": "FluxModularPipeline", "task": "text_to_image",
                      "executionProfileId": "flux-schnell:modular", "implementation": "native_stages",
@@ -84,13 +95,53 @@ class UpstreamCoverageTests(unittest.TestCase):
         with self.assertRaises(UpstreamCoverageError):
             _template_execution_coverage(wrong_binding)
 
+    def test_published_experimental_template_keeps_contract_only_canonical_scope(self):
+        template = {
+            "id": "reviewed-experimental-example",
+            "modelType": "Flux3DistilledModularPipeline", "mode": "text_to_image",
+            "verificationStatus": "unverified", "readinessPolicy": "runnable", "evidencePolicy": "strict",
+            "modelArtifact": {"source": "hub", "value": "black-forest-labs/flux-3-image-klein",
+                              "revision": "8454017f9ebaada30c998fccd9f67a80c7580f68"},
+            "executionSelection": {
+                "schemaVersion": 1, "pipelineClass": "Flux3DistilledModularPipeline", "task": "text_to_image",
+                "executionProfileId": "flux3-klein:official-provider:v1", "implementation": "native_stages",
+                "memoryPolicy": "custom_experimental",
+                "bindingSpec": {"modelType": "Flux3DistilledModularPipeline", "mode": "text_to_image"},
+            },
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            gallery = Path(directory) / "manifest.json"
+            gallery.write_text(json.dumps({"examples": [{"templateId": template["id"],
+                                "verificationStatus": "reviewed", "qualityReviewStatus": "approved_reviewed"}]}))
+            with patch("modiff.upstream_coverage._load_public_templates", return_value=[template]):
+                workflows, templates, _ = _workflow_and_template_coverage(ROOT, gallery_manifest=gallery)
+            self.assertEqual(templates[0]["status"], "contract-only")
+            self.assertTrue(templates[0]["reviewedGalleryExample"])
+            workflow = next(item for item in workflows if item["id"] == templates[0]["canonicalWorkflowId"])
+            self.assertEqual(workflow["status"], "contract-only")
+            self.assertEqual(sum(item["status"] == "executable" for item in workflows), 203)
+            for field, value in (("memoryPolicy", "auto"), ("executionProfileId", "private-fixture"),
+                                 ("schemaVersion", True), ("task", "edit_image"),
+                                 ("bindingSpec", {"modelType": template["modelType"], "mode": "edit_image"})):
+                changed = deepcopy(template)
+                changed["executionSelection"][field] = value
+                with self.subTest(field=field), patch("modiff.upstream_coverage._load_public_templates", return_value=[changed]):
+                    with self.assertRaises(UpstreamCoverageError):
+                        _workflow_and_template_coverage(ROOT, gallery_manifest=gallery)
+            for field, value in (("revision", "main"), ("value", "private/unreviewed-model")):
+                changed = deepcopy(template)
+                changed["modelArtifact"][field] = value
+                with self.subTest(field=field), patch("modiff.upstream_coverage._load_public_templates", return_value=[changed]):
+                    with self.assertRaises(UpstreamCoverageError):
+                        _workflow_and_template_coverage(ROOT, gallery_manifest=gallery)
+
     def test_checked_in_ledger_has_exact_reviewed_counts(self):
         self.assertEqual(
             self.ledger["summary"],
             {
                 "canonicalWorkflowCount": 209,
-                "canonicalWorkflowsWithPublicTemplates": 54,
-                "canonicalWorkflowsWithoutPublicTemplates": 155,
+                "canonicalWorkflowsWithPublicTemplates": 60,
+                "canonicalWorkflowsWithoutPublicTemplates": 149,
                 "diffusersPipelineSymbolCount": 340,
                 "pipelineStatusCounts": {
                     "contract-only": 5,
@@ -100,10 +151,10 @@ class UpstreamCoverageTests(unittest.TestCase):
                     "research-blocked": 116,
                     "unreviewed": 6,
                 },
-                "publicTemplateCount": 80,
-                "reviewedGalleryTemplateCount": 70,
+                "publicTemplateCount": 90,
+                "reviewedGalleryTemplateCount": 80,
                 "templateStatusCounts": {
-                    "contract-only": 0,
+                    "contract-only": 10,
                     "equivalent": 0,
                     "executable": 80,
                     "intentionally-excluded": 0,
@@ -396,11 +447,18 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(_canonical_json_sha256(graph_path), item["graphHash"], workflow_id)
 
         templates = self.ledger["publicTemplates"]
-        self.assertEqual(len({item["id"] for item in templates}), 80)
+        self.assertEqual(len({item["id"] for item in templates}), 90)
         self.assertTrue(all(item["canonicalWorkflowId"] in ledger_workflows for item in templates))
-        self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 70)
-        self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 70)
-        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 54)
+        self.assertEqual(sum(item["galleryExamplePresent"] for item in templates), 80)
+        self.assertEqual(sum(item["reviewedGalleryExample"] for item in templates), 80)
+        self.assertEqual(sum(bool(item["publicTemplateIds"]) for item in ledger_workflows.values()), 60)
+        contract_only = [item for item in templates if item["status"] == "contract-only"]
+        self.assertEqual(len(contract_only), 10)
+        for item in contract_only:
+            self.assertIn(item["canonicalWorkflowId"], experimental)
+            self.assertEqual(item["verificationStatus"], "unverified")
+            self.assertEqual(item["executionSelection"]["memoryPolicy"], "custom_experimental")
+            self.assertTrue(item["reviewedGalleryExample"])
 
         experimental_public_pairs = {
             "flux2_dev_text_to_image": (
@@ -413,7 +471,7 @@ class UpstreamCoverageTests(unittest.TestCase):
         }
         public_by_id = {item["id"]: item for item in templates}
         historical_templates = [
-            item for item in templates if item["id"] not in experimental_public_pairs
+            item for item in templates if item["id"] not in experimental_public_pairs and item["status"] != "contract-only"
         ]
         self.assertEqual(len(historical_templates), 78)
         self.assertEqual(
@@ -422,9 +480,9 @@ class UpstreamCoverageTests(unittest.TestCase):
             54,
         )
         self.assertEqual(
-            sum(supported[item["canonicalWorkflowId"]]["mediaKind"] == "image"
+            sum({**supported, **experimental}[item["canonicalWorkflowId"]]["mediaKind"] == "image"
                 for item in templates),
-            56,
+            66,
         )
         for template_id, (workflow_id, profile_id) in experimental_public_pairs.items():
             item = public_by_id[template_id]
@@ -457,7 +515,7 @@ class UpstreamCoverageTests(unittest.TestCase):
             self.assertEqual(source["mode"], "huggingface")
             self.assertRegex(source["revision"], r"^[0-9a-f]{40}$")
             self.assertRegex(source["assetSetId"], r"^sha256:canonical-json:[0-9a-f]{64}$")
-            self.assertEqual(len(ledger_gallery_ids), 70)
+            self.assertEqual(len(ledger_gallery_ids), 80)
 
     def test_remote_asset_build_requires_an_explicit_reviewed_gallery_manifest(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

@@ -72,6 +72,7 @@ _BOUNDARY = {
     "comfyMappingMeaning": "semantic_comparison_candidate_only",
     "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
     "maximumEvidenceClaim": "canonical_graph_binding_only",
+    "publicPreviewsQualifyCanonicalGraphs": False,
 }
 
 
@@ -235,7 +236,8 @@ def _workflow_records(root: Path, manifest: Mapping[str, Any]) -> tuple[dict[str
 def _coverage_partition(
     coverage: Mapping[str, Any],
     workflow_records: Mapping[str, Mapping[str, Any]],
-) -> tuple[set[str], set[str], int]:
+    supported_workflow_ids: set[str],
+) -> tuple[set[str], set[str], int, int]:
     if coverage.get("schemaVersion") != 1:
         raise TemplateCandidateContractError("The upstream coverage schema is unsupported.")
     if coverage.get("contentHash") != _content_hash(coverage):
@@ -251,6 +253,9 @@ def _coverage_partition(
         manifest_row = workflow_records.get(workflow_id)
         if manifest_row is None:
             raise TemplateCandidateContractError(f"Coverage names unknown canonical workflow {workflow_id}.")
+        expected_status = "executable" if workflow_id in supported_workflow_ids else "contract-only"
+        if row.get("status") != expected_status:
+            raise TemplateCandidateContractError(f"Coverage status drifted for canonical workflow {workflow_id}.")
         for field in ("modelType", "mode", "graphPath", "graphHash", "qualificationStatus"):
             if row.get(field) != manifest_row.get(field):
                 raise TemplateCandidateContractError(
@@ -278,6 +283,8 @@ def _coverage_partition(
         manifest_row = workflow_records.get(workflow_id)
         if manifest_row is None:
             raise TemplateCandidateContractError(f"Public template {template_id} names an unknown workflow.")
+        if template.get("status") != coverage_by_id[workflow_id].get("status"):
+            raise TemplateCandidateContractError(f"Public template {template_id} promotes its canonical coverage status.")
         if template.get("modelType") != manifest_row.get("modelType") or template.get("mode") != manifest_row.get(
             "mode"
         ):
@@ -303,7 +310,12 @@ def _coverage_partition(
     for field, expected in expected_summary.items():
         if summary.get(field) != expected:
             raise TemplateCandidateContractError(f"Upstream coverage summary field {field!r} is stale.")
-    return public_workflows, missing_workflows, len(templates)
+    # A published example for an experimental creator cannot close the pending
+    # canonical candidate or remove its hidden authoring specification.
+    executable_public_workflows = {
+        item["canonicalWorkflowId"] for item in templates if item["status"] == "executable"
+    }
+    return executable_public_workflows, set(workflow_records) - executable_public_workflows, len(templates), len(public_workflows)
 
 
 def _input_examples_required(required_inputs: list[Any] | Mapping[str, Any]) -> bool:
@@ -353,9 +365,10 @@ def build_template_candidate_contract_ledger(root: Path) -> dict[str, Any]:
     coverage, coverage_file_hash = _read_json(root, _UPSTREAM_COVERAGE_PATH, label="upstream coverage")
     comfy, comfy_hash = _read_json(root, _COMFY_RESEARCH_PATH, label="Comfy research catalog")
     workflow_records, supported_workflow_ids = _workflow_records(root, manifest)
-    public_workflows, missing_workflows, public_template_count = _coverage_partition(
+    public_workflows, missing_workflows, public_template_count, all_public_workflow_count = _coverage_partition(
         coverage,
         workflow_records,
+        supported_workflow_ids,
     )
     if public_workflows & missing_workflows or public_workflows | missing_workflows != set(workflow_records):
         raise TemplateCandidateContractError("Canonical workflows do not form an exact public/candidate partition.")
@@ -410,7 +423,8 @@ def build_template_candidate_contract_ledger(root: Path) -> dict[str, Any]:
         "summary": {
             "canonicalWorkflowCount": len(workflow_records),
             "publicTemplateCount": public_template_count,
-            "canonicalWorkflowsWithPublicTemplates": len(public_workflows),
+            "canonicalWorkflowsWithPublicTemplates": all_public_workflow_count,
+            "canonicalWorkflowsWithExecutablePublicTemplates": len(public_workflows),
             "candidateContractCount": len(contracts),
             "mediaKindCounts": {key: media_counts[key] for key in sorted(media_counts)},
             "contractsRequiringInputExamples": sum(

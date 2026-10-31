@@ -8,6 +8,8 @@ import unittest
 
 from modiff.template_candidate_contracts import (
     TemplateCandidateContractError,
+    _coverage_partition,
+    _workflow_records,
     build_template_candidate_contract_ledger,
     render_template_candidate_contract_ledger,
     validate_template_candidate_contract_ledger,
@@ -71,8 +73,9 @@ class TemplateCandidateContractTests(unittest.TestCase):
             self.ledger["summary"],
             {
                 "canonicalWorkflowCount": 209,
-                "publicTemplateCount": 80,
-                "canonicalWorkflowsWithPublicTemplates": 54,
+                "publicTemplateCount": 90,
+                "canonicalWorkflowsWithPublicTemplates": 60,
+                "canonicalWorkflowsWithExecutablePublicTemplates": 54,
                 "candidateContractCount": 155,
                 "mediaKindCounts": {"audio": 6, "image": 106, "json": 10, "video": 33},
                 "contractsRequiringInputExamples": 96,
@@ -112,19 +115,32 @@ class TemplateCandidateContractTests(unittest.TestCase):
             self.assertEqual(contract["assets"], [])
             self.assertEqual(contract["evidenceState"]["maximumClaim"], "canonical_graph_binding_only")
 
-    def test_candidates_are_the_exact_complement_of_public_template_workflows(self):
+    def test_experimental_public_media_cannot_reseal_an_executable_coverage_claim(self):
+        records, supported = _workflow_records(ROOT, self.manifest)
+        for field in ("publicTemplates", "canonicalWorkflows"):
+            changed = copy.deepcopy(self.coverage)
+            target = next(row for row in changed[field] if row["status"] == "contract-only")
+            target["status"] = "executable"
+            _reseal(changed)
+            with self.subTest(field=field), self.assertRaises(TemplateCandidateContractError):
+                _coverage_partition(changed, records, supported)
+
+    def test_candidates_are_the_exact_complement_of_executable_public_template_workflows(self):
         manifest_by_id = {
             row["id"]: row
             for row in [*self.manifest["workflows"], *self.manifest["experimentalWorkflows"]]
         }
         public_templates = self.coverage["publicTemplates"]
-        public_workflow_ids = {row["canonicalWorkflowId"] for row in public_templates}
+        public_workflow_ids = {row["canonicalWorkflowId"] for row in public_templates if row["status"] == "executable"}
         coverage_public_workflow_ids = {
-            row["id"] for row in self.coverage["canonicalWorkflows"] if row["publicTemplateIds"]
+            row["id"] for row in self.coverage["canonicalWorkflows"] if row["publicTemplateIds"] and row["status"] == "executable"
         }
         contracts_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["contracts"]}
 
-        self.assertEqual(len(public_templates), 80)
+        self.assertEqual(len(public_templates), 90)
+        experimental_public_ids = {row["canonicalWorkflowId"] for row in public_templates if row["status"] == "contract-only"}
+        self.assertEqual(len(experimental_public_ids), 6)
+        self.assertTrue(experimental_public_ids <= set(contracts_by_id))
         self.assertEqual(len(public_workflow_ids), 54)
         self.assertEqual(public_workflow_ids, coverage_public_workflow_ids)
         self.assertEqual(len(contracts_by_id), len(self.ledger["contracts"]))
@@ -182,6 +198,7 @@ class TemplateCandidateContractTests(unittest.TestCase):
                 "comfyMappingMeaning": "semantic_comparison_candidate_only",
                 "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
                 "maximumEvidenceClaim": "canonical_graph_binding_only",
+                "publicPreviewsQualifyCanonicalGraphs": False,
             },
         )
         forbidden_claim_fields = {

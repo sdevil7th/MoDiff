@@ -535,6 +535,7 @@ const templates = candidates[0].map((item) => ({
   readinessPolicy: item.readinessPolicy ?? null,
   evidencePolicy: item.evidencePolicy ?? 'generated',
   executionSelection: item.executionSelection ?? null,
+  modelArtifact: item.modelArtifact ?? null,
 }));
 process.stdout.write(JSON.stringify(templates));
 """
@@ -1333,19 +1334,39 @@ def _workflow_and_template_coverage(
                 f"Public template {template['id']} has no exact canonical workflow for {base_id}."
             )
         _, workflow_status = workflow_records[workflow_id]
+        selection = template.get("executionSelection")
+        artifact = template.get("modelArtifact")
+        selected_execution = _template_execution_coverage(
+            selection, artifact=artifact,
+        )
         if workflow_status != "executable":
-            raise UpstreamCoverageError(f"Public template {template['id']} resolves only to an experimental workflow.")
+            profile = DIFFUSERS_EXECUTION_PROFILES.get(selection.get("executionProfileId")) if isinstance(selection, dict) else None
+            pin = catalog_repository_pin(profile.default_repo, model_type=profile.model_type) if profile else None
+            # Inventory an explicitly declared, pinned experimental creator without
+            # promoting its canonical graph, runtime, hardware or Gallery evidence.
+            declared_experimental = bool(
+                selected_execution and profile and profile.execution_path == "modular-diffusers"
+                and type(selection.get("schemaVersion")) is int
+                and selection.get("memoryPolicy") == "custom_experimental"
+                and selection.get("task") == template["mode"]
+                and selection.get("bindingSpec") == {"modelType": template["modelType"], "mode": template["mode"]}
+                and isinstance(artifact, dict) and artifact.get("source") == "hub"
+                and artifact.get("value") == profile.default_repo and pin
+                and re.fullmatch(r"[0-9a-f]{40}", str(artifact.get("revision", "")))
+                and artifact.get("revision") == pin.get("revision")
+            )
+            if not declared_experimental:
+                raise UpstreamCoverageError(f"Public template {template['id']} resolves only to an experimental workflow.")
         template_ids_by_workflow[workflow_id].append(template["id"])
         gallery_record = gallery_records.get(template["id"])
         quality_review_status = gallery_record.get("qualityReviewStatus") if gallery_record else None
-        selected_execution = _template_execution_coverage(
-            template.get("executionSelection"), artifact=template.get("modelArtifact"),
-        )
         template_items.append(
             {
                 "id": template["id"],
-                "status": "executable",
+                "status": workflow_status,
                 "reason": (
+                    "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware."
+                    if workflow_status != "executable" else
                     "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe."
                     if selected_execution else "The public template resolves to an exact checked-in canonical workflow."
                 ),
