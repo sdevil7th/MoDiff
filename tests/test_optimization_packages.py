@@ -4,12 +4,14 @@ import subprocess
 import tempfile
 import threading
 import unittest
+from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
 from modiff import optimization_packages as optimizations
 from modiff import runtime_overlays
+from modiff.optional_runtimes import DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID
 
 
 class OptimizationPackageTests(unittest.TestCase):
@@ -17,7 +19,9 @@ class OptimizationPackageTests(unittest.TestCase):
 
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
-        root = Path(self.temporary.name)
+        # macOS /var and Windows short-name TEMP paths can be aliases. The
+        # mocked package root must match the canonical paths used in production.
+        root = Path(self.temporary.name).resolve(strict=True)
         self.path_patchers = [
             mock.patch.object(optimizations, "OPTIMIZATION_ROOT", root),
             mock.patch.object(optimizations, "ENVIRONMENTS_DIR", root / "environments"),
@@ -77,9 +81,21 @@ class OptimizationPackageTests(unittest.TestCase):
         self.assertIn("immutable artifact lock", by_id["torchao"]["disabledReason"])
 
     def test_reviewed_nvidia_base_bitsandbytes_is_execution_available(self):
+        native = optimizations.OPTIMIZATION_ROOT / "native-site"
+        package = native / "bitsandbytes"
+        metadata = native / "bitsandbytes-0.50.0.dist-info"
+        package.mkdir(parents=True)
+        metadata.mkdir()
+        (package / "__init__.py").write_text("# Origin fixture; not imported", encoding="utf-8")
+        distribution = SimpleNamespace(version="0.50.0", _path=metadata)
+        module_spec = SimpleNamespace(origin=str(package / "__init__.py"),
+                                      submodule_search_locations=[str(package)])
         with (
             mock.patch.object(optimizations, "_package_version", return_value="0.50.0"),
             mock.patch.object(optimizations, "_normalized_platform", return_value="linux"),
+            mock.patch.object(optimizations.importlib.metadata, "distribution", return_value=distribution),
+            mock.patch.object(optimizations.importlib.util, "find_spec", return_value=module_spec),
+            mock.patch.object(optimizations.sysconfig, "get_paths", return_value={"purelib": str(native), "platlib": str(native)}),
         ):
             catalog = optimizations.public_catalog(
                 runtime_profile={"installed": "nvidia-cuda"},
@@ -120,6 +136,129 @@ class OptimizationPackageTests(unittest.TestCase):
         self.assertTrue(quanto["availableForExecution"])
         self.assertEqual(quanto["optionalRuntimeProfileId"], profile_id)
         self.assertIsNone(quanto["disabledReason"])
+
+    def bitsandbytes_overlay_catalog(self, provider_id, mutate=None):
+        declared = optimizations.OPTIONAL_RUNTIME_PROFILES[
+            optimizations.TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID
+        ]
+        provider = optimizations.OPTIONAL_RUNTIME_PROFILES[provider_id]
+        site = optimizations.ENVIRONMENTS_DIR / self.ACTIVE_ENVIRONMENT_ID / "site-packages"
+        site.mkdir(parents=True, exist_ok=True)
+        fixture = {
+            "packageRoot": site,
+            "state": {
+                "_storageStatus": "ok",
+                "activeEnvironmentId": self.ACTIVE_ENVIRONMENT_ID,
+                "activeTrustClass": "artifact_locked_optional",
+            },
+            "catalog": {
+                "schemaVersion": 1,
+                "profiles": [{
+                    "id": declared.id, "specDigest": declared.spec_digest,
+                    "status": "present_unqualified", "contractState": "qualified",
+                    "cutoverReady": True, "installActionAvailable": True,
+                    "activationAvailable": True, "platform": "windows",
+                    "machine": "x86_64", "overlayStatus": "active",
+                }],
+                "overlay": {
+                    "processLoadStatus": "active",
+                    "state": {"activeEnvironmentId": self.ACTIVE_ENVIRONMENT_ID,
+                              "activeStatus": "active"},
+                },
+            },
+            "inspection": {
+                "status": "recorded", "sitePackages": str(site),
+                "validation": {"status": "passed"},
+                "manifest": {
+                    "trustClass": "artifact_locked_optional",
+                    "specs": [{"kind": "optional_runtime", "id": provider.id,
+                               "specDigest": provider.spec_digest}],
+                },
+            },
+            "environment": {
+                "MODIFF_RUNTIME_OVERLAY_STATUS": "active",
+                "MODIFF_OPTIMIZATION_ENVIRONMENT": self.ACTIVE_ENVIRONMENT_ID,
+            },
+        }
+        if mutate is not None:
+            mutate(fixture)
+        with (
+            mock.patch.dict(os.environ, fixture["environment"]),
+            mock.patch("modiff.optional_runtimes.optional_runtime_target", return_value=("windows", "x86_64")),
+            mock.patch.object(optimizations, "read_state", return_value=fixture["state"]),
+            mock.patch.object(optimizations, "_normalized_platform", return_value="windows"),
+            mock.patch.object(optimizations, "_package_version", return_value="0.50.0"),
+            mock.patch.object(optimizations, "_bitsandbytes_package_root", return_value=fixture["packageRoot"]),
+            mock.patch.object(optimizations, "_environment_inspection", return_value=fixture["inspection"]),
+        ):
+            catalog = optimizations.public_catalog(
+                runtime_profile={"installed": "nvidia-cuda"},
+                optional_runtime_catalog=deepcopy(fixture["catalog"]),
+            )
+        return next(item for item in catalog["capabilities"] if item["id"] == "bitsandbytes")
+
+    def test_current_bitsandbytes_overlay_accepts_exact_standalone_and_composite(self):
+        for provider_id in (
+            optimizations.TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID,
+            DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID,
+        ):
+            with self.subTest(provider=provider_id):
+                item = self.bitsandbytes_overlay_catalog(provider_id)
+                self.assertTrue(item["deliveryQualified"])
+                self.assertTrue(item["availableForExecution"])
+                self.assertEqual(item["delivery"], "optional_overlay")
+                self.assertFalse(item["enabled"])
+                self.assertIsNone(item["disabledReason"])
+
+    def test_bitsandbytes_fixture_canonicalizes_aliased_temporary_roots(self):
+        target = optimizations.OPTIMIZATION_ROOT / "canonical-temp"
+        target.mkdir()
+        alias = optimizations.OPTIMIZATION_ROOT / "temporary-alias"
+        try:
+            alias.symlink_to(target, target_is_directory=True)
+        except (OSError, NotImplementedError) as error:
+            self.skipTest(f"Directory links are unavailable: {error}")
+        temporary_directory = tempfile.TemporaryDirectory
+        nested = OptimizationPackageTests()
+        with mock.patch.object(tempfile, "TemporaryDirectory", side_effect=lambda: temporary_directory(dir=alias)):
+            nested.setUp()
+        try:
+            self.assertEqual(optimizations.MANAGED_ROOT, optimizations.MANAGED_ROOT.resolve(strict=True))
+            item = nested.bitsandbytes_overlay_catalog(DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID)
+            self.assertTrue(item["deliveryQualified"])
+        finally:
+            nested.tearDown()
+
+    def test_bitsandbytes_composite_does_not_bypass_current_delivery_guards(self):
+        def set_path(path, value):
+            def mutate(fixture):
+                target = fixture
+                for key in path[:-1]:
+                    target = target[key]
+                target[path[-1]] = value
+            return mutate
+
+        cases = {
+            "wrong provider digest": (("inspection", "manifest", "specs", 0, "specDigest"), "sha256:" + "0" * 64),
+            "wrong required digest": (("catalog", "profiles", 0, "specDigest"), "sha256:" + "0" * 64),
+            "undeclared provider": (("inspection", "manifest", "specs", 0, "id"), "unreviewed-provider"),
+            "inactive worker": (("environment", "MODIFF_RUNTIME_OVERLAY_STATUS"), "base"),
+            "different worker selection": (("environment", "MODIFF_OPTIMIZATION_ENVIRONMENT"), "runtime-8-deadbeef"),
+            "inactive catalog": (("catalog", "overlay", "state", "activeStatus"), "staged"),
+            "unqualified target": (("catalog", "profiles", 0, "contractState"), "candidate_unqualified"),
+            "foreign package root": (("packageRoot",), optimizations.OPTIMIZATION_ROOT / "foreign-site"),
+            "unverified environment": (("inspection", "status"), "repair_required"),
+            "failed validation": (("inspection", "validation", "status"), "failed"),
+            "unlocked manifest": (("inspection", "manifest", "trustClass"), "legacy_optimization"),
+        }
+        for label, (path, value) in cases.items():
+            with self.subTest(case=label):
+                item = self.bitsandbytes_overlay_catalog(
+                    DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID, set_path(path, value),
+                )
+                self.assertFalse(item["deliveryQualified"])
+                self.assertFalse(item["availableForExecution"])
+                self.assertFalse(item["enabled"])
 
     def test_obsolete_aiter_attention_is_not_advertised_or_recorded(self):
         catalog = optimizations.public_catalog(
@@ -379,6 +518,97 @@ class OptimizationPackageTests(unittest.TestCase):
             )
         safe_path.assert_not_called()
         self.assertEqual(optimizations.sys.path, original_path)
+
+    def test_startup_archives_obsolete_core_only_overlay_without_importing_it(self):
+        environment_id = 'runtime-1-deadbeef'
+        state = optimizations._default_state()
+        state.update(activeEnvironmentId=environment_id, activeTrustClass='artifact_locked_optional')
+        optimizations._write_state(state)
+        from modiff.optional_runtimes import TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID
+        recorded = {'status': 'recorded', 'manifest': {
+            'packageContracts': [{'distribution': 'transformers'}, {'distribution': 'peft'}],
+            'specs': [{'kind': 'optional_runtime', 'id': TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID}],
+        }}
+        original_path = list(optimizations.sys.path)
+        with (
+            mock.patch('modiff.base_runtime.base_runtime_status', return_value={'verified': True}),
+            mock.patch.object(optimizations, 'reserve_install', side_effect=lambda *_args: self.lease()),
+            mock.patch.object(optimizations, 'release_install'),
+            mock.patch.object(optimizations, '_environment_inspection', return_value=recorded) as inspect,
+            mock.patch.object(optimizations, '_safe_environment_path', side_effect=AssertionError('core overlay must not import')),
+            mock.patch.dict(os.environ, {}, clear=False),
+        ):
+            self.assertIsNone(optimizations.activate_runtime_overlay())
+            self.assertEqual(os.environ['MODIFF_RUNTIME_OVERLAY_STATUS'], 'base')
+        inspect.assert_called_once_with(environment_id, verify_integrity=False)
+        archived = optimizations.read_state()
+        self.assertIsNone(archived['activeEnvironmentId'])
+        self.assertEqual(archived['previousEnvironmentId'], environment_id)
+        self.assertEqual(archived['previousTrustClass'], 'artifact_locked_optional')
+        self.assertEqual(optimizations.sys.path, original_path)
+
+    def test_startup_keeps_additional_optional_package_overlay_recovery_gate(self):
+        environment_id = 'runtime-1-deadbeef'
+        state = optimizations._default_state()
+        state.update(activeEnvironmentId=environment_id, activeTrustClass='artifact_locked_optional')
+        optimizations._write_state(state)
+        recorded = {'status': 'recorded', 'manifest': {
+            'packageContracts': [{'distribution': 'transformers'}, {'distribution': 'optimum-quanto'}],
+            'specs': [{'kind': 'optional_runtime', 'id': optimizations.TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID}],
+        }}
+        original_path = list(optimizations.sys.path)
+        with (
+            mock.patch('modiff.base_runtime.base_runtime_status', return_value={'verified': True}),
+            mock.patch.object(optimizations, 'reserve_install', side_effect=lambda *_args: self.lease()),
+            mock.patch.object(optimizations, 'release_install'),
+            mock.patch.object(optimizations, '_environment_inspection', return_value=recorded),
+            mock.patch.object(optimizations, '_safe_environment_path', side_effect=AssertionError('obsolete mixed overlay must not import')),
+            mock.patch.dict(os.environ, {}, clear=False),
+        ):
+            self.assertIsNone(optimizations.activate_runtime_overlay())
+            self.assertEqual(os.environ['MODIFF_RUNTIME_OVERLAY_STATUS'], 'repair_required')
+        self.assertEqual(optimizations.read_state()['activeEnvironmentId'], environment_id)
+        self.assertEqual(optimizations.sys.path, original_path)
+
+    def test_public_catalog_marks_only_mandatory_core_profiles_as_base_included(self):
+        from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES
+        with (
+            mock.patch('modiff.base_runtime.base_runtime_status', return_value={'verified': True}),
+            mock.patch('modiff.optional_runtimes.optional_runtime_target', return_value=('linux', 'x86_64')),
+        ):
+            profiles = optimizations.public_optional_runtime_catalog()['profiles']
+        for profile in profiles:
+            roots = [package.distribution for package in OPTIONAL_RUNTIME_PROFILES[profile['id']].packages
+                     if package.role == 'runtime_root']
+            core_only = bool(roots) and set(roots) <= {'transformers', 'peft'}
+            with self.subTest(profile=profile['id']):
+                self.assertEqual(profile['baseIncluded'], core_only)
+                if core_only:
+                    self.assertFalse(profile['installActionAvailable'])
+                    self.assertFalse(profile['activationAvailable'])
+        quanto = next(profile for profile in profiles if profile['id'] == optimizations.TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID)
+        self.assertFalse(quanto['baseIncluded'])
+
+    def test_missing_peft_does_not_offer_obsolete_core_overlay_installation(self):
+        from modiff.optional_runtimes import (
+            TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID, TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+            TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,
+        )
+        with mock.patch('modiff.base_runtime.base_runtime_status', return_value={
+            'verified': False, 'issues': ['Missing required package: peft.'],
+        }):
+            profiles = optimizations.public_optional_runtime_catalog()['profiles']
+        core_ids = {
+            TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+            TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+            TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,
+        }
+        for profile in profiles:
+            if profile['id'] in core_ids:
+                with self.subTest(profile=profile['id']):
+                    self.assertTrue(profile['baseIncluded'])
+                    self.assertFalse(profile['installActionAvailable'])
+                    self.assertFalse(profile['activationAvailable'])
 
     def test_schema_one_environment_requires_repair(self):
         self.create_environment("legacy-v1")
@@ -706,6 +936,9 @@ class OptimizationPackageTests(unittest.TestCase):
             stdout=json.dumps(
                 {
                     "supported": True,
+                    "executed": True,
+                    "device": "cpu",
+                    "backend": "inductor",
                     "compileAvailable": True,
                     "cudaAvailable": False,
                     "deviceCount": 0,
@@ -735,6 +968,20 @@ class OptimizationPackageTests(unittest.TestCase):
         ):
             optimizations.probe_capability("torchao", runtime_fingerprint={})
         run.assert_not_called()
+
+    def test_builtin_probe_disables_bytecode_without_an_inherited_environment_flag(self):
+        result = SimpleNamespace(returncode=0, stdout='{"supported":true}', stderr="")
+        with (
+            mock.patch.dict(os.environ, {}, clear=False),
+            mock.patch.object(optimizations.sys, "dont_write_bytecode", True),
+            mock.patch.object(optimizations.subprocess, "run", return_value=result) as run,
+        ):
+            os.environ.pop("PYTHONDONTWRITEBYTECODE", None)
+            optimizations.probe_capability("channels_last", runtime_fingerprint={})
+        command = run.call_args.args[0]
+        self.assertEqual(command[:3], [optimizations.sys.executable, "-B", "-c"])
+        self.assertIn("from diffusers.hooks import", command[-1])
+        self.assertNotIn("PYTHONDONTWRITEBYTECODE", run.call_args.kwargs["env"])
 
     def test_auto_combines_independently_qualified_capabilities(self):
         self.set_active_environment(self.ACTIVE_ENVIRONMENT_ID)

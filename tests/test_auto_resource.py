@@ -2,6 +2,7 @@ import sys
 import tempfile
 import unittest
 import json
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 
@@ -43,6 +44,7 @@ from modiff.diffusers_profiles import (  # noqa: E402
     WAN_T2V_1_3B_REPO,
 )
 from modiff.auto_resource import FLUX_DEV_FP8_REPO  # noqa: E402
+from modiff.optional_runtimes import TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID  # noqa: E402
 
 
 GIB = 1024**3
@@ -51,9 +53,16 @@ GIB = 1024**3
 class AutoResourcePlanTests(unittest.TestCase):
     def test_batch_optional_runtime_inspection_is_shared_but_not_cached_across_requests(self):
         payload = {"forms": [self._qwen_payload()["form"]] * 3, "hardwareOverride": self._hardware()}
+        auxiliary_profile = replace(
+            DIFFUSERS_EXECUTION_PROFILES["qwen-image:modular"],
+            optional_runtime_profiles=(TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,),
+            optional_runtime_delivery="optional_overlay",
+            optional_runtime_platform_deliveries=(),
+        )
         with (
             tempfile.TemporaryDirectory() as directory,
             patch("modiff.diffusers_profiles.optional_runtime_target", return_value=("linux", "x86_64")),
+            patch("modiff.optional_runtime_execution.execution_profiles_for_execution", return_value=(auxiliary_profile,)),
             patch("modiff.optional_runtime_execution.public_optional_runtime_catalog", return_value={}) as catalog,
         ):
             first = build_auto_resource_plans(payload, runtime_fingerprint=self._runtime(), local_models=[], data_dir=directory)
@@ -63,6 +72,16 @@ class AutoResourcePlanTests(unittest.TestCase):
             self.assertTrue(all(item["state"] == "unavailable" for item in requirements))
             build_auto_resource_plans(payload, runtime_fingerprint=self._runtime(), local_models=[], data_dir=directory)
             self.assertEqual(catalog.call_count, 2)
+
+    def test_base_workflow_does_not_inspect_optional_runtime_catalog(self):
+        payload = {"forms": [self._qwen_payload()["form"]] * 3, "hardwareOverride": self._hardware()}
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch("modiff.optional_runtime_execution.public_optional_runtime_catalog") as catalog,
+        ):
+            result = build_auto_resource_plans(payload, runtime_fingerprint=self._runtime(), local_models=[], data_dir=directory)
+        catalog.assert_not_called()
+        self.assertTrue(all(plan["optionalRuntimeRequirement"]["state"] == "base_satisfied" for plan in result["plans"]))
 
     def test_resource_history_uses_stable_resource_fingerprint(self):
         self.assertEqual(
@@ -724,7 +743,7 @@ class AutoResourcePlanTests(unittest.TestCase):
                 {
                     "schemaVersion": 1,
                     "id": "qwen-image-edit:edit-image:v1",
-                    "contentHash": "studio-spec-v1-3bb31293",
+                    "contentHash": "studio-spec-v1-816ef0a1",
                     "executionProfileId": "qwen-edit:modular",
                 },
             )
@@ -955,6 +974,96 @@ class AutoResourcePlanTests(unittest.TestCase):
             self.assertEqual(selected["offloadMode"], "none")
             self.assertEqual(selected["deviceMap"], "cuda")
             self.assertEqual(selected["studioExecutionSpecContract"]["executionProfileId"], "qwen-edit-plus:modular")
+
+    def test_cached_full_residency_does_not_require_unselected_offload_disk_space(self):
+        cases = (
+            ("QwenImageEditPlusModularPipeline", "edit_image"),
+            ("QwenImageEditPlusModularPipeline", "multi_image_reference_edit"),
+            ("QwenImageLayeredModularPipeline", "layer_decomposition"),
+        )
+        for model_type, mode in cases:
+            with self.subTest(model_type=model_type, mode=mode):
+                requirements = AUTO_MODEL_REQUIREMENTS[model_type]
+                self.assertGreater(requirements["minimum"]["diskFreeBytes"], GIB)
+                self.assertNotIn("diskFreeBytes", requirements["fullResidency"])
+                plan = self._plan(
+                    {"form": {"modelType": model_type, "mode": mode}},
+                    runtime=self._runtime(vram_gib=192, free_gib=180),
+                    repos=[requirements["defaultRepo"]],
+                    hardware=self._hardware(
+                        vram_gib=192, free_gib=180, system_ram_gib=240, disk_free_gib=1,
+                    ),
+                )
+
+                self.assertEqual(plan["status"], "ready")
+                selected = plan["selectedCandidate"]
+                self.assertEqual(selected["offloadMode"], "none")
+                self.assertEqual(selected["requirementsMissing"], [])
+                self.assertTrue(selected["artifactStatus"]["complete"])
+
+    def test_full_residency_keeps_explicit_none_offload_disk_requirement(self):
+        model_type = "QwenImageEditPlusModularPipeline"
+        requirements = AUTO_MODEL_REQUIREMENTS[model_type]
+        declared = {
+            **requirements,
+            "offloadRequirements": {
+                "none": {**requirements["fullResidency"], "diskFreeBytes": 2 * GIB},
+            },
+        }
+        with patch.dict(AUTO_MODEL_REQUIREMENTS, {model_type: declared}):
+            plan = self._plan(
+                {"form": {"modelType": model_type, "mode": "edit_image"}},
+                runtime=self._runtime(vram_gib=192, free_gib=180),
+                repos=[requirements["defaultRepo"]],
+                hardware=self._hardware(
+                    vram_gib=192, free_gib=180, system_ram_gib=240, disk_free_gib=1,
+                ),
+            )
+
+        self.assertNotEqual(plan["status"], "ready")
+        candidate = plan["candidates"][0]
+        self.assertEqual(candidate["offloadMode"], "none")
+        self.assertIn("Offload disk requires at least 2 GiB free", candidate["requirementsMissing"])
+
+    def test_disk_offload_still_requires_free_space_for_installed_weights(self):
+        model_type = "QwenImageEditPlusModularPipeline"
+        requirements = AUTO_MODEL_REQUIREMENTS[model_type]
+        declared = {**requirements, "supportedOffloadModes": ["none", "group_disk"]}
+        with patch.dict(AUTO_MODEL_REQUIREMENTS, {model_type: declared}):
+            plan = self._plan(
+                {"form": {"modelType": model_type, "mode": "edit_image"}},
+                runtime=self._runtime(vram_gib=24, free_gib=22),
+                repos=[requirements["defaultRepo"]],
+                hardware=self._hardware(
+                    vram_gib=24, free_gib=22, system_ram_gib=96, disk_free_gib=1,
+                ),
+            )
+
+        self.assertNotEqual(plan["status"], "ready")
+        candidate = plan["candidates"][0]
+        self.assertEqual(candidate["offloadMode"], "group_disk")
+        self.assertIn("Offload disk requires at least 35 GiB free", candidate["requirementsMissing"])
+
+    def test_full_residency_with_low_disk_does_not_make_missing_artifacts_runnable(self):
+        model_type = "QwenImageEditPlusModularPipeline"
+        repo = AUTO_MODEL_REQUIREMENTS[model_type]["defaultRepo"]
+        for incomplete in (False, True):
+            with self.subTest(incomplete_cached_snapshot=incomplete):
+                plan = self._plan(
+                    {"form": {"modelType": model_type, "mode": "edit_image"}},
+                    runtime=self._runtime(vram_gib=192, free_gib=180),
+                    repos=[repo] if incomplete else [],
+                    incomplete_repos=[repo] if incomplete else [],
+                    hardware=self._hardware(
+                        vram_gib=192, free_gib=180, system_ram_gib=240, disk_free_gib=1,
+                    ),
+                )
+
+                self.assertNotEqual(plan["status"], "ready")
+                self.assertIsNone(plan["selectedCandidate"])
+                candidate = plan["candidates"][0]
+                self.assertEqual(candidate["offloadMode"], "none")
+                self.assertFalse(candidate["artifactStatus"]["complete"])
 
     def test_qwen_control_uses_native_residency_on_98_gib(self):
         plan = self._plan(
@@ -1904,6 +2013,10 @@ class AutoResourcePlanTests(unittest.TestCase):
             "FluxCannyPipeline",
             "FluxReduxPipeline",
             "StableDiffusionXLModularPipeline",
+            "Flux3ModularPipeline:text_to_image",
+            "Flux3ModularPipeline:edit_image",
+            "Flux3DistilledModularPipeline:text_to_image",
+            "Flux3DistilledModularPipeline:edit_image",
         }
         self.assertEqual(expected, set(AUTO_MODEL_REQUIREMENTS))
         for key in expected:
@@ -1938,6 +2051,8 @@ class AutoResourcePlanTests(unittest.TestCase):
                         for profile in DIFFUSERS_EXECUTION_PROFILES.values()
                         if not profile.operation_recipe
                         and profile.model_type == model_type and mode in profile.modes
+                        and (requirements.get('declaredExecutionProfileIds') is None
+                             or profile.id in requirements['declaredExecutionProfileIds'])
                     ]
                     self.assertEqual(len(profiles), 1)
                     profile = profiles[0]
@@ -2127,6 +2242,120 @@ class AutoResourcePlanTests(unittest.TestCase):
                         self.assertTrue(plan["candidates"])
                         self.assertEqual(plan["hardware"]["platform"], platform_name)
                         self.assertTrue(all(candidate["quantizationMode"] == "none" for candidate in plan["candidates"]))
+
+    def test_windows_bq4_auto_refuses_all_placements_despite_installed_runtime(self):
+        runtime = self._runtime(vram_gib=16, free_gib=15)
+        runtime["packages"]["bitsandbytes"] = "0.50.0"
+        runtime["capabilities"] = {"bitsandbytes": {"availableForExecution": True}}
+        hardware = self._hardware(vram_gib=16, free_gib=15, system_ram_gib=32, platform="windows")
+        plan = self._plan(self._qwen_payload(), runtime=runtime,
+                          repos=[QWEN_IMAGE_2512_PREQUANTIZED_REPO], hardware=hardware)
+        candidates = [item for item in plan["candidates"]
+                      if item["resolvedArtifact"] == QWEN_IMAGE_2512_PREQUANTIZED_REPO]
+        self.assertEqual(len(candidates), 3)
+        self.assertEqual({item["offloadMode"] for item in candidates},
+                         {"model_cpu", "sequential_cpu", "group_disk"})
+        self.assertIsNone(plan["selectedCandidate"])
+        for item in candidates:
+            with self.subTest(candidate=item["id"]):
+                self.assertFalse(item["canAutoRun"])
+                self.assertEqual(item["proof"]["status"], "known_bad")
+                self.assertIn("Artifact does not support windows", item["requirementsMissing"])
+
+    def test_windows_bq4_platform_refusal_survives_history_and_placement_override(self):
+        runtime = self._runtime(vram_gib=16, free_gib=15)
+        runtime["packages"]["bitsandbytes"] = "0.50.0"
+        hardware = self._hardware(vram_gib=16, free_gib=15, system_ram_gib=32, platform="windows")
+        with tempfile.TemporaryDirectory() as directory:
+            first = self._plan(self._qwen_payload(), runtime=runtime,
+                               repos=[QWEN_IMAGE_2512_PREQUANTIZED_REPO],
+                               hardware=hardware, data_dir=directory)
+            for item in first["candidates"]:
+                if item["resolvedArtifact"] == QWEN_IMAGE_2512_PREQUANTIZED_REPO:
+                    self.assertIsNotNone(record_auto_resource_success(
+                        directory, runtime_fingerprint={"resourceFingerprint": hardware["runtimeFingerprint"]},
+                        runtime_hints={"resourceMode": "auto", "autoResourcePlan": item},
+                        measurement={"peakAllocatedBytes": GIB, "processRssBytes": GIB}))
+            with patch("modiff.auto_resource.qualified_auto_overrides",
+                       return_value={"offloadMode": "model_cpu", "attentionBackend": "sdpa"}):
+                replay = self._plan(self._qwen_payload(), runtime=runtime,
+                                    repos=[QWEN_IMAGE_2512_PREQUANTIZED_REPO],
+                                    hardware=hardware, data_dir=directory)
+        for item in replay["candidates"]:
+            if item["resolvedArtifact"] == QWEN_IMAGE_2512_PREQUANTIZED_REPO:
+                with self.subTest(candidate=item["id"]):
+                    self.assertIsNotNone(item["successHistory"])
+                    self.assertFalse(item["canAutoRun"])
+                    self.assertEqual(item["proof"]["status"], "known_bad")
+                    self.assertIn("Artifact does not support windows", item["requirementsMissing"])
+
+    def test_bq4_linux_reference_behavior_and_expert_pin_are_preserved(self):
+        from modiff.model_artifact_catalog import catalog_repository_pin
+        plan = self._plan(self._qwen_payload(),
+                          repos=[QWEN_IMAGE_2512_PREQUANTIZED_REPO],
+                          hardware=self._hardware(vram_gib=16, free_gib=15, platform="linux"))
+        candidates = [item for item in plan["candidates"]
+                      if item["resolvedArtifact"] == QWEN_IMAGE_2512_PREQUANTIZED_REPO]
+        self.assertEqual(len(candidates), 3)
+        self.assertTrue(all(item["canAutoRun"] for item in candidates))
+        self.assertEqual(plan["selectedCandidate"]["resolvedArtifact"], QWEN_IMAGE_2512_PREQUANTIZED_REPO)
+        pin = catalog_repository_pin(QWEN_IMAGE_2512_PREQUANTIZED_REPO)
+        self.assertEqual(pin["revision"], "f50b8c24fe21e9265509b15113b7cca82d0a4443")
+        self.assertEqual(pin["format"], "diffusers-bnb")
+
+    def test_windows_bq4_stored_optimization_cannot_overwrite_platform_governance(self):
+        with patch("modiff.auto_resource.qualified_auto_overrides", return_value={
+                "offloadMode": "group_disk", "requirementsMissing": [],
+                "canAutoRun": True, "readiness": "ready", "healthBadge": "Ran here",
+                "proof": {"status": "live_proven", "source": "stored-selection"},
+                "artifact": Z_IMAGE_REPO, "modelType": "ZImageModularPipeline"}):
+            plan = self._plan(self._qwen_payload(),
+                              repos=[QWEN_IMAGE_2512_PREQUANTIZED_REPO],
+                              hardware=self._hardware(vram_gib=16, free_gib=15, platform="windows"))
+        for item in plan["candidates"]:
+            if item["resolvedArtifact"] == QWEN_IMAGE_2512_PREQUANTIZED_REPO:
+                with self.subTest(candidate=item["id"]):
+                    self.assertFalse(item["canAutoRun"])
+                    self.assertEqual(item["proof"]["status"], "known_bad")
+                    self.assertIn("Artifact does not support windows", item["requirementsMissing"])
+
+    def test_windows_platform_declaration_does_not_change_native_z_admission(self):
+        from copy import deepcopy
+        from modiff.auto_resource import _apply_catalog_hardware_support
+        candidate = {"modelType": "ZImageModularPipeline", "artifact": Z_IMAGE_REPO,
+                     "exactPairDeclared": True, "canAutoRun": True,
+                     "proof": {"status": "declared_safe"}, "requirementsMissing": []}
+        self.assertEqual(_apply_catalog_hardware_support([deepcopy(candidate)],
+                         self._hardware(platform="windows")), [candidate])
+
+    def test_windows_bq4_other_bnb_routes_are_not_new_auto_grants(self):
+        runtime = self._runtime(vram_gib=16, free_gib=15)
+        runtime["packages"]["bitsandbytes"] = "0.50.0"
+        hardware = self._hardware(vram_gib=16, free_gib=15, system_ram_gib=32, platform="windows")
+        plan = self._plan(self._qwen_payload(), runtime=runtime,
+                          repos=[QWEN_IMAGE_2512_REPO], hardware=hardware)
+        manual = next(item for item in plan["candidates"]
+                      if item["id"] == "qwen-t2i-official-transformer-bnb4-manual")
+        self.assertFalse(manual["canAutoRun"])
+        self.assertEqual(manual["proof"]["status"], "manual_only")
+        edit = self._plan({"form": {"modelType": "QwenImageEditModularPipeline",
+                                   "mode": "edit_image",
+                                   "confirmedCommunityArtifact": QWEN_IMAGE_EDIT_PREQUANTIZED_REPO}},
+                          runtime=runtime, repos=[QWEN_IMAGE_EDIT_PREQUANTIZED_REPO], hardware=hardware)
+        community = next(item for item in edit["candidates"]
+                         if item["resolvedArtifact"] == QWEN_IMAGE_EDIT_PREQUANTIZED_REPO)
+        self.assertFalse(community["profileArtifactCompatible"])
+        self.assertFalse(community["canAutoRun"])
+        self.assertEqual(community["proof"]["status"], "manual_only")
+
+    def test_windows_bq4_existing_admitted_tuning_is_preserved(self):
+        with patch("modiff.auto_resource.qualified_auto_overrides",
+                   return_value={"attentionBackend": "sdpa", "regionalCompile": True}):
+            plan = self._plan(self._qwen_payload(), repos=[QWEN_IMAGE_2512_PREQUANTIZED_REPO],
+                              hardware=self._hardware(vram_gib=16, free_gib=15, platform="linux"))
+        self.assertEqual(plan["selectedCandidate"]["attentionBackend"], "sdpa")
+        self.assertIs(plan["selectedCandidate"]["regionalCompile"], True)
+        self.assertTrue(plan["selectedCandidate"]["canAutoRun"])
 
 
 if __name__ == "__main__":

@@ -271,7 +271,7 @@
             "default": "",
             "label": "Prompt",
             "type": "text",
-            "value": ""
+            "value": "Describe the image."
           },
           "repetition_penalty": {
             "default": 1,

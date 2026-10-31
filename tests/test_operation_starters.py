@@ -17,6 +17,73 @@ class OperationStarterTests(unittest.TestCase):
 
         return resolve_operation_starter(MODULE_MAP, self.contracts, {"pipelineClass": pipeline, "task": task})
 
+    def test_reference_edit_starters_retain_both_declared_wrapper_binding_edges(self):
+        from modiff.operation_starters import resolve_operation_starter
+        from modules.ModularDiffusers import modular_utils
+        registry = modular_utils._get_registry_instance()
+        configs = registry.get_all()
+        names = {owner.__name__ for owner in configs}
+        # Schema-only identity fixtures on the ordinary release; never model classes.
+        for name, config in (('Flux3ModularPipeline', modular_utils.FLUX_3_PIPELINE_CONFIG),
+                             ('Flux3DistilledModularPipeline', modular_utils.FLUX_3_DISTILLED_PIPELINE_CONFIG)):
+            if name not in names:
+                configs[type(name, (), {})] = config
+        def resolve(pipeline, task):
+            profile = ('flux3-klein-base:official-provider:v1' if pipeline == 'Flux3ModularPipeline'
+                       else 'flux3-klein:official-provider:v1')
+            return resolve_operation_starter(MODULE_MAP, contracts, {
+                'pipelineClass': pipeline, 'task': task, 'executionProfileId': profile,
+            })
+        with patch.object(registry, 'get_all', return_value=configs), patch(
+            'modiff.diffusers_evaluation_runtime.selected_diffusers_evaluation_authoring_profile_ids',
+            return_value=('flux3-klein-base:modular', 'flux3-klein:modular'),
+        ):
+            contracts, _ = build_operation_catalog(MODULE_MAP, [], catalog_resolver=lambda: {})
+            # A stale E authoring selector cannot revive a retired ID for a new graph.
+            for pipeline, retired in (
+                ('Flux3ModularPipeline', 'flux3-klein-base:modular'),
+                ('Flux3DistilledModularPipeline', 'flux3-klein:modular'),
+            ):
+                with self.subTest(retired=retired), self.assertRaisesRegex(ValueError, 'public authoring replacement'):
+                    resolve_operation_starter(MODULE_MAP, contracts, {
+                        'pipelineClass': pipeline, 'task': 'edit_image', 'executionProfileId': retired,
+                    })
+            self._assert_reference_edit_starter_bindings(resolve)
+
+    def _assert_reference_edit_starter_bindings(self, resolve):
+        from modiff.operation_catalog import operation_port_compatibility
+        for pipeline in ('Flux3ModularPipeline', 'Flux3DistilledModularPipeline'):
+            with self.subTest(pipeline=pipeline), patch(
+                'modiff.NodeBase.NodeBase.__init__', side_effect=AssertionError('constructed')
+            ), patch('socket.socket.connect', side_effect=AssertionError('network')):
+                starter = resolve(pipeline, 'edit_image')
+                nodes = {node['operation']['operationId']: node for node in starter['nodes']}
+                self.assertEqual(starter['workflowId'], 'image_conditioned')
+                for target in ('diffusion.encode_prompt', 'diffusion.denoise'):
+                    expected = {'source': 'diffusion.encode_image', 'sourceHandle': 'reference_binding',
+                                'target': target, 'targetHandle': 'reference_binding'}
+                    self.assertIn(expected, starter['edges'])
+                    output = next(port for port in nodes['diffusion.encode_image']['operation']['ports']
+                                  if port['name'] == 'reference_binding')
+                    input_ = next(port for port in nodes[target]['operation']['ports']
+                                  if port['name'] == 'reference_binding')
+                    self.assertEqual(operation_port_compatibility(output, input_), 'runtime_validation')
+                    self.assertEqual(input_['semantics']['scope'], pipeline)
+                    self.assertEqual(input_['types'], ['reference_conditioning'])
+                text = resolve(pipeline, 'text_to_image')
+                self.assertFalse(any(edge['sourceHandle'] == 'reference_binding' for edge in text['edges']))
+                for selected in (starter, text):
+                    guiders = [node for node in selected['nodes'] if node['action'] == 'Guider']
+                    if pipeline == 'Flux3ModularPipeline':
+                        self.assertEqual(len(guiders), 1)
+                        self.assertEqual(guiders[0]['values']['model_type'], pipeline)
+                        self.assertEqual(guiders[0]['values']['guidance_scale'], 3.5)
+                        self.assertEqual(guiders[0]['params']['guider']['value'], 'ClassifierFreeGuidance')
+                        self.assertIn({'source': 'diffusion.guidance', 'sourceHandle': 'guider_out',
+                                       'target': 'diffusion.denoise', 'targetHandle': 'guider'}, selected['edges'])
+                    else:
+                        self.assertEqual(guiders, [])
+
     def test_exact_profile_selects_shared_pipeline_model_without_constructing_nodes(self):
         from modiff.operation_starters import resolve_operation_starter
         from modiff.diffusers_profiles import resolve_execution_profiles_for_loader
@@ -122,6 +189,26 @@ class OperationStarterTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "exact reviewed artifact"):
             resolve_operation_starter(MODULE_MAP, self.contracts, {**selection, "task": "image_to_image"})
 
+    def test_existing_direct_alias_uses_its_resolved_loader_class_without_a_stage_grant(self):
+        from modiff.operation_starters import resolve_operation_starter
+        from modiff.diffusers_profiles import public_execution_profiles
+        with patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("constructed")):
+            contracts, _ = build_operation_catalog(
+                MODULE_MAP, public_execution_profiles(), catalog_resolver=lambda: {}
+            )
+            result = resolve_operation_starter(MODULE_MAP, contracts, {
+                "pipelineClass": "ZImageModularPipeline", "task": "edit_image",
+                "executionProfileId": "z-image:img2img-direct",
+            })
+        self.assertEqual(len(result["nodes"]), 2)
+        self.assertEqual(result["nodes"][0]["values"]["pipeline_class"], "ZImageImg2ImgPipeline")
+        self.assertEqual(result["nodes"][0]["values"]["execution_profile_id"], "z-image:img2img-direct")
+        self.assertEqual([row["operation"]["decomposition"] for row in result["nodes"]], ["loader", "pipeline"])
+        self.assertEqual(result["nodes"][1]["action"], "Edit")
+        self.assertEqual(len(result["edges"]), 1)
+        self.assertEqual(result["edges"][0]["sourceHandle"], "pipeline")
+        self.assertEqual(result["edges"][0]["targetHandle"], "pipeline")
+
     def test_every_advertised_profile_task_binds_without_constructing_models(self):
         from modiff.operation_starters import resolve_operation_starter
         from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES, public_execution_profiles
@@ -179,8 +266,10 @@ class OperationStarterTests(unittest.TestCase):
         text = self.resolve("FluxModularPipeline", "text_to_image")
         image = self.resolve("FluxModularPipeline", "image_to_image")
         edit = self.resolve("FluxKontextModularPipeline", "edit_image")
-        self.assertEqual(len(text["nodes"]), 4)
-        self.assertEqual(len(image["nodes"]), 5)
+        self.assertEqual(len(text["nodes"]), 5)
+        self.assertEqual(len(image["nodes"]), 6)
+        for starter in (text, image, edit):
+            self.assertTrue(any(n["operation"]["operationId"] == "diffusion.guidance" for n in starter["nodes"]))
         self.assertEqual(image["workflowId"], "image2image")
         self.assertEqual(edit["workflowId"], "image_conditioned")
         self.assertTrue(any(i["field"] == "image" for i in image["requiredInputs"]))

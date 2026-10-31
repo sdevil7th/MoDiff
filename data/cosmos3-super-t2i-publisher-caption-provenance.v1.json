@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "publisher": "NVIDIA",
+  "repository": "nvidia/Cosmos3-Super-Text2Image",
+  "revision": "daf3d374804be4c512c2135568a7cb95d4341d79",
+  "sourcePath": "assets/example_caption.json",
+  "sourceUrl": "https://huggingface.co/nvidia/Cosmos3-Super-Text2Image/resolve/daf3d374804be4c512c2135568a7cb95d4341d79/assets/example_caption.json",
+  "sourceGitBlob": "01db693d45c8d2f17e0d4190978bfc857a0d104e",
+  "localPath": "data/cosmos3-super-t2i-publisher-caption.v1.json",
+  "localSha256": "c068a8d430c87bc752c775567113463c8fa3c9370ac7047318852bdc124bd5e3",
+  "byteSize": 7382,
+  "publisherDeclaredLicense": "OpenMDW-1.1",
+  "publisherLicenseMetadataName": "openmdw1.1-license",
+  "publisherLicenseUrl": "https://openmdw.ai/license/1-1/",
+  "licenseMetadataSourceUrl": "https://huggingface.co/nvidia/Cosmos3-Super-Text2Image/blob/daf3d374804be4c512c2135568a7cb95d4341d79/README.md",
+  "modified": false,
+  "licenseFile": "licenses/OpenMDW-1.1.txt",
+  "licenseFileSha256": "be21b29b1c69af5b4a4e60a6bd7bc933eec374e52be29d1ebb9e6a17a6588491",
+  "licenseFileSourceUrl": "https://openmdw.ai/license/1-1/"
+}

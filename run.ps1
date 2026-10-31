@@ -2,8 +2,8 @@ $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 $python = Join-Path $PSScriptRoot ".venv\Scripts\python.exe"
 $state = Join-Path $PSScriptRoot ".venv\modiff-profile.json"
-if (!(Test-Path $python) -or !(Test-Path $state)) { throw "Managed environment missing. Run .\install.ps1 -Accelerator auto first." }
-$profile = Get-Content $state -Raw | ConvertFrom-Json
+if (!(Test-Path $python)) { throw "Environment missing. Run uv sync --extra cuda (NVIDIA) or uv sync --extra cpu first." }
+$profile = if (Test-Path $state) { Get-Content $state -Raw | ConvertFrom-Json } else { $null }
 if ($profile.profile -eq "amd-rocm-linux") {
   if (!$env:TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL) { $env:TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL = "1" }
   if (!$env:ROCM_PATH) { $env:ROCM_PATH = "/opt/rocm" }
@@ -15,7 +15,7 @@ $ErrorActionPreference = "Continue"
 & $python -c $preflightCode
 $preflightExitCode = $LASTEXITCODE
 $ErrorActionPreference = "Stop"
-if ($preflightExitCode -ne 0) { throw "Managed runtime profile is not execution-ready. Run .\install.ps1 -Accelerator auto -Repair -SystemCheck -Json." }
+if ($preflightExitCode -ne 0) { throw "Runtime is not execution-ready. Run uv sync with your accelerator extra, then .\.venv\Scripts\python.exe -m modiff.preflight --json --fail-on-error." }
 $ErrorActionPreference = "Continue"
 & $python main.py @args
 exit $LASTEXITCODE

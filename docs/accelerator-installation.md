@@ -1,15 +1,104 @@
 # Accelerator installation
 
-MoDiff owns Python/Torch profile selection. The browser shows the same setup checklist but never installs drivers or mutates Python.
+Developers can install with native `uv sync --extra cpu`, `--extra cuda`, or `--extra xpu`; Apple Silicon uses `uv sync` without an extra. Use the same extra on `uv run python main.py`. Users who prefer guided setup can use the installation scripts below. Both paths install Transformers and PEFT as mandatory base dependencies. See [developer setup](developer-setup.md) for direct commands, repair, and upgrades. The browser never installs drivers or mutates Python during discovery or planning.
 
-Run `./install.sh` on Linux/macOS or `.\install.ps1` on Windows. The guided installer explains every action before it runs, installs hash-verified app-local uv/Python 3.12, stages the backend, validates a real device tensor, and preserves the previous environment for rollback. When a sibling client is present and the build is not skipped, it downloads the verified Node 24 toolchain, downloads and SHA-256 verifies the complete pinned Template Gallery, and bundles those assets into the local client build. Hybrid NVIDIA/AMD machines must explicitly choose a profile.
+Run `./install.sh` on Linux/macOS or `.\install.ps1` on Windows. The guided installer explains every action before it runs, uses the operator's uv and provisions Python 3.12, stages the backend, validates a real device tensor, and preserves the previous environment for rollback. When a sibling client is present and the build is not skipped, it downloads the verified Node 24 toolchain, downloads and SHA-256 verifies the complete pinned Template Gallery, and bundles those assets into the local client build. Hybrid NVIDIA/AMD machines must explicitly choose a profile.
 
-The staged installer builds the exact Diffusers Git revision declared in
-`pyproject.toml` with canonical LF source bytes. It overrides Git line-ending
-conversion only in the installer subprocess and bypasses uv's cache for this
-dependency, preventing reuse of an older CRLF-translated wheel. Other packages,
-including Torch, retain their ordinary cache behavior; reviewed source hashes
-and the pinned upstream revision remain unchanged.
+Ordinary setup pins `diffusers==0.41.0`; the committed `uv.lock` records the
+reviewed stable release and its official PyPI wheel hash. The staged installer
+reinstalls only Diffusers from that verified locked wheel, without resolving its
+dependencies again. Other packages, including Torch, retain their ordinary
+cache behavior. Runtime readiness checks the actual installed release and APIs.
+Historical catalog audits separately verify their immutable upstream source
+revision; that checkout is not required to install or run the application.
+
+### Explicit Diffusers source evaluation
+
+Source evaluation is separate from ordinary setup. The reviewed profile in
+[`data/diffusers-evaluation-runtime.v1.json`](../data/diffusers-evaluation-runtime.v1.json)
+currently admits only the locally built `diffusers==0.41.0.dev0` wheel from the
+official Hugging Face Diffusers commit
+`7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941` (source tree
+`f0974e02139382cb0c8a72dd29b15b53041e5d56`). This is a private evaluation
+artifact, not a published stable release. Keep the ordinary `0.41.0` installation
+and lock unchanged; stage evaluation in its own reviewed environment with its
+complete dependency lock. A development version string alone is insufficient.
+
+The exact wheel must be named `diffusers-0.41.0.dev0-py3-none-any.whl`, be
+6,306,536 bytes, and have SHA-256
+`c19c4721a952fd373d0cab705f582eb81675cad0fb844b88fb449c40de8c74a3`.
+The wheel is a separate reviewed artifact; pulling this repository does not
+provide it. Transfer the exact wheel to the other machine and verify its size
+and hash before installation. Rebuilding the same source revision does not
+establish the admitted wheel's byte identity. Its `py3-none-any` tag permits
+transfer between Windows and Linux, but does not establish compatible model
+dependencies or accelerator kernels. Prepare and review the target machine's
+complete dependency environment first, using its own ROCm/CUDA/CPU profile;
+do not copy another machine's virtual environment, CUDA lock or optional overlay.
+
+Install the verified artifact into that separate environment without replacing
+its dependencies or compiling bytecode. With pip, use `--no-deps --no-compile`.
+With uv, set `UV_COMPILE_BYTECODE=false` and use `--no-config --no-deps` as below.
+Keep the wheel at the same absolute path used for installation: validation
+compares the installed `direct_url.json` to that selected file. A previous
+installation containing bytecode requires a clean evaluation installation.
+The selectors only validate; they do not download, install or activate packages.
+
+After verifying the transferred wheel, substitute its absolute path and the
+evaluation interpreter in these Windows commands:
+
+```powershell
+$env:MODIFF_DIFFUSERS_EVALUATION_PROFILE = 'flux3-7ecb1e1'
+$env:MODIFF_DIFFUSERS_EVALUATION_WHEEL = 'D:\reviewed-artifacts\diffusers-0.41.0.dev0-py3-none-any.whl'
+$env:UV_COMPILE_BYTECODE = 'false'
+$env:PYTHONDONTWRITEBYTECODE = '1'
+uv --no-config pip install --python .\.venv-evaluation\Scripts\python.exe --no-index --no-deps --reinstall --link-mode copy $env:MODIFF_DIFFUSERS_EVALUATION_WHEEL
+if ($LASTEXITCODE -ne 0) { throw 'Evaluation wheel installation failed.' }
+& .\.venv-evaluation\Scripts\python.exe -B main.py
+```
+
+On Linux, including an SSH session with the reviewed ROCm environment:
+
+```bash
+export MODIFF_DIFFUSERS_EVALUATION_PROFILE='flux3-7ecb1e1'
+export MODIFF_DIFFUSERS_EVALUATION_WHEEL='/absolute/reviewed-artifacts/diffusers-0.41.0.dev0-py3-none-any.whl'
+export UV_COMPILE_BYTECODE=false
+export PYTHONDONTWRITEBYTECODE=1
+uv --no-config pip install --python .venv-evaluation/bin/python --no-index --no-deps --reinstall --link-mode copy "$MODIFF_DIFFUSERS_EVALUATION_WHEEL" &&
+  .venv-evaluation/bin/python -B main.py
+```
+
+Every evaluation process must disable bytecode writes (`-B`, including workers
+and compatibility probes). The supervisor preserves `-B` in its worker command,
+and compatibility probes launch with `-B`; the environment flag also protects
+other Python children. Validation checks the selected wheel, installed
+distribution and import origin, the complete installed package body census, and
+the absence of links, reparse points and bytecode files. Unknown profiles,
+changed artifacts or files, editable/source-path imports and mismatched origins
+fail closed. Fresh optional-runtime validation rechecks the same identity;
+install and activate any optional profile normally against this exact base.
+Do not borrow another environment's overlay or inject its `site-packages`.
+
+Successful runtime validation establishes exact installed-library identity. It
+does not qualify model output, hardware fit, quantization kernels, Auto routes,
+templates or LoRA behavior. Record those proof levels separately. To return to
+ordinary setup, close the evaluation process, remove both evaluation selectors
+from the launch environment, and launch the ordinary stable environment.
+
+Streamed group CPU offload needs host memory for retained CPU tensors and
+pinned transfer copies. MoDiff now reserves two complete component copies,
+using the larger of unique native storage and registered logical tensor bytes,
+and keeps the existing 8 GiB available-RAM floor after that reservation. Unknown
+storage, tensor subclasses and unmaterialized tensors select the existing
+synchronous group hooks. The bounded census reads registered native state;
+it does not call model traversal overrides or custom resource suppliers.
+
+This changes transfer scheduling only. Precision, generation settings and the
+requested group placement remain unchanged. It is a conservative execution-time
+staging check, not a full Auto capacity budget or proof of physical fit. Runtime
+measurements still distinguish physical available RAM, process commit and CUDA
+allocator counters, especially under Windows WDDM. The upstream behavior is
+documented in [Diffusers group offloading](https://huggingface.co/docs/diffusers/en/optimization/memory#group-offloading).
 
 Useful modes:
 
@@ -48,12 +137,17 @@ unrelated I/O errors are not retried. See
 After copying a checkout between operating systems, rerun the destination's
 installer. Virtual environments and app-local tool binaries are platform-specific:
 a Linux `.venv/bin/python` cannot satisfy Windows' `.venv/Scripts/python.exe`.
-Setup selects uv by the current platform's exact reviewed path and downloads
-the pinned archive when that executable is absent. It also selects Windows
-Node/npm launchers without falling back to Linux executables. Archive and uv
-executable hashes remain mandatory; a modified current-platform uv still fails
-integrity verification. Failed setup reports the current platform's installer
-resume command even if the copied journal contains an old launch command.
+Setup selects uv from the operator's PATH, or a usable legacy app-local copy.
+There is no exact uv version requirement; use `uv self update` for standalone uv
+or your package manager's upgrade command. Platform-specific Node/npm archives
+retain their reviewed hashes. Failed guided setup reports the current platform's
+resume command even if a copied journal contains an old launch command.
+
+Install uv using its [official installation instructions](https://docs.astral.sh/uv/getting-started/installation/)
+and make it available on PATH before starting a fresh guided setup. The scripts
+do not download uv automatically. If uv is missing or cannot run, resolve that
+prerequisite and retry the same setup command; a staged installation can continue
+with the printed resume command.
 
 Executable profiles are `nvidia-cuda`, `amd-rocm-linux`, `amd-instinct-rocm-linux` (preview), `intel-xpu`, `apple-mps`, and `cpu`. Choose Intel explicitly with `--accelerator intel`; Auto selects it when a supported Intel GPU is detected and no higher-priority NVIDIA/AMD profile applies. The XPU profile is preview-only and requires a successful `xpu:0` tensor before launch. The manifest retains `amd-pytorch-windows` as a conditional target, but installation remains blocked until MoDiff pins the complete official Windows SDK wheel set instead of guessing dependencies. Strix Halo on Ubuntu 24.04.3 uses the AMD ROCm 7.2/PyTorch 2.9.1 profile. The separate Instinct preview below targets MI300X/gfx942, not Ryzen. Ubuntu 26.04 is experimental and requires `--allow-experimental`; non-interactive Auto otherwise selects CPU. WSL and unqualified accelerators fall back to CPU.
 
@@ -68,9 +162,23 @@ The installer never changes firmware/BIOS or memory settings. It never executes 
 ## Instinct MI300X cloud preview
 
 The separate `amd-instinct-rocm-linux` profile targets `gfx942` on a
-provider-prepared Ubuntu 24.04 host. Start with AMD's PyTorch 2.10.0 / ROCm
-7.14 Quick Start image and use Python 3.12. This is a preview runtime contract,
-not a claim of completed MI300X model qualification.
+provider-prepared Ubuntu 24.04 host. Use Python 3.12 and the reviewed app-local
+PyTorch 2.10.0 / ROCm 7.14 SDK. Validate the actual host driver/kernel against
+[AMD's driver/runtime compatibility matrix](https://instinct.docs.amd.com/projects/amdgpu-docs/en/latest/compatibility/compatibility-matrix.html);
+an advertised provider ROCm version alone is insufficient. This is a preview
+runtime contract, not a claim of completed MI300X model qualification.
+
+For script-free setup, use the exact
+[direct uv commands](developer-setup.md#instinct-sdk-setup-on-linux): create the
+venv, install the reviewed requirements with their adjacent `.uv.toml`, run
+`uv pip check`, and invoke that environment's Python for preflight and `main.py`.
+No managed-install receipt is required. Runtime detection uses the actual single
+dedicated device and installed package metadata; it does not read
+`MODIFF_RUNTIME_PROFILE` as a profile-selection override. Torch/HIP and every
+reviewed SDK package pin must match, and required/prohibited package policy and
+a real `cuda:0` tensor must pass. No model is downloaded by those checks.
+
+The guided installer remains an alternative:
 
 ```bash
 ./install.sh --accelerator amd-instinct --backend-only --system-check --json
@@ -97,13 +205,28 @@ source snapshot. Provisioning, downloads and idle time are billable. Back up
 outputs before destroying the instance; powering it off does not stop billing.
 See [the cloud qualification checklist](amd-cloud-qualification.md).
 
-The selected file under `requirements/profiles/`, `pyproject.toml`, and the
-accelerator compatibility manifest jointly form the saved runtime contract.
-Preflight recomputes that contract on every launch. If any input changed, is
-missing, or the saved profile predates the contract digest, the runtime status
-is `repair-required` and startup remains blocked even when the currently
-installed packages still import. Run the reported managed `--repair` command;
-do not bypass the check with a generic dependency sync.
+Native installs verify installed core packages and the pinned reviewed Diffusers
+release and runtime APIs without requiring a Git or installer receipt. The committed uv lock records their
+resolution. Guided/vendor-wheel profiles retain their manifest and observed
+package checks. Repair native core packages with the same `uv sync` extra;
+repair the Instinct stack with its explicit reviewed `uv pip install` command
+or guided installer. Do not replace
+a reviewed ROCm stack using a generic CPU/CUDA sync.
+
+On Windows, macOS and Linux ROCm, the shared pre-Torch process policy uses
+PyTorch's default allocator. This includes both reviewed Ryzen and Instinct
+profiles; Linux CUDA retains expandable segments. All explicit modern and legacy
+operator allocator settings are preserved. HIP virtual-memory allocation can
+exhaust file descriptors before physical memory, so MoDiff does not enable
+expandable segments on ROCm or raise process limits automatically. Record any
+explicit allocator experiment separately from ordinary generation and prior
+hardware qualification.
+
+Normal image generation uses eager/native SDPA
+without Triton. Optional compilation requires an executed kernel probe;
+compiled-FlexAttention workflows check it before loading weights. Windows
+compiler setup needs a PyTorch-compatible `triton-windows` distribution and
+separate live GPU verification.
 
 ## Maintaining direct-wheel profiles
 
@@ -122,7 +245,9 @@ Changing a wheel URL or digest is a runtime-contract change. Rebuild that
 managed profile and rerun the accelerator manifest, installer, preflight, and
 physical-device qualification checks before release.
 
-On Linux, invoke developer preflight and test commands through
+For `/opt/rocm`-based Linux profiles, invoke developer preflight and test commands through
 `./scripts/with-runtime-env.sh`. The wrapper reads the installed profile and
 applies the same native runtime-library environment used by `run.sh`; this is
 required for ROCm wheels whose shared libraries live below `/opt/rocm`.
+The app-local Instinct Python SDK uses the direct Python commands above and must
+not receive Ryzen library-path injection.

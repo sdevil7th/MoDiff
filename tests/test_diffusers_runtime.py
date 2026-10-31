@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import tempfile
 import types
 import unittest
@@ -12,6 +13,7 @@ from modules.DiffusersRuntime.main import (
     LoadPrequantizedDiffusersComponent,
     PipelineQuantizationConfigV2,
     apply_attention_backend,
+    apply_execution_recipe_to_pipeline,
     build_quantization_config_v2,
     build_execution_recipe,
     build_runtime_capabilities,
@@ -22,6 +24,7 @@ from modules.DiffusersRuntime.main import (
     configure_vae_memory,
     estimate_pipeline_memory,
     execution_recipe_summary,
+    enable_parallel_weight_loading,
     loader_runtime_options,
     plan_execution_recipes,
     release_pipeline_memory,
@@ -292,7 +295,8 @@ class DiffusersRuntimeTests(unittest.TestCase):
         pipeline.transformer.set_attention_backend = set_backend_and_mutate_registry
         original_backend, _original_fn = _AttentionBackendRegistry.get_active_backend()
         try:
-            result = apply_attention_backend(pipeline, "_native_flash")
+            with patch("modules.DiffusersRuntime.main.native_flash_attention_available", return_value=True):
+                result = apply_attention_backend(pipeline, "_native_flash")
             active_backend, _active_fn = _AttentionBackendRegistry.get_active_backend()
         finally:
             _AttentionBackendRegistry.set_active_backend(original_backend)
@@ -374,26 +378,28 @@ class DiffusersRuntimeTests(unittest.TestCase):
             )
 
     def test_complete_pipeline_no_offload_streams_directly_to_target_accelerator(self):
-        with patch.dict(os.environ, {}, clear=False):
-            os.environ.pop("HF_ENABLE_PARALLEL_LOADING", None)
-            recipe, device, offload, load = loader_runtime_options(
-                {
-                    "execution_recipe": {
-                        "device": "cuda:0",
-                        "offload_mode": "none",
-                        "device_map": "none",
-                    }
-                },
-                default_device="cuda:0",
-                default_offload_mode="model_cpu",
-                direct_device_load=True,
-            )
-            self.assertEqual(os.environ["HF_ENABLE_PARALLEL_LOADING"], "YES")
-
-        self.assertEqual(recipe["device_map"], "none")
-        self.assertEqual(device, "cuda:0")
-        self.assertEqual(offload, "none")
-        self.assertEqual(load["device_map"], "cuda")
+        for platform_name, parallel in (("win32", "0"), ("linux", "YES"), ("darwin", "YES")):
+            with self.subTest(platform_name=platform_name), patch.dict(os.environ, {}, clear=False), patch.object(sys, "platform", platform_name):
+                os.environ.pop("HF_ENABLE_PARALLEL_LOADING", None)
+                os.environ.pop("HF_DEACTIVATE_ASYNC_LOAD", None)
+                recipe, device, offload, load = loader_runtime_options(
+                    {
+                        "execution_recipe": {
+                            "device": "cuda:0",
+                            "offload_mode": "none",
+                            "device_map": "none",
+                        }
+                    },
+                    default_device="cuda:0",
+                    default_offload_mode="model_cpu",
+                    direct_device_load=True,
+                )
+                self.assertEqual(os.environ["HF_ENABLE_PARALLEL_LOADING"], parallel)
+                self.assertEqual(os.environ.get("HF_DEACTIVATE_ASYNC_LOAD"), "1" if platform_name == "win32" else None)
+                self.assertEqual(recipe["device_map"], "none")
+                self.assertEqual(device, "cuda:0")
+                self.assertEqual(offload, "none")
+                self.assertEqual(load["device_map"], "cuda")
 
     def test_direct_device_loading_respects_explicit_parallel_loading_opt_out(self):
         with patch.dict(os.environ, {"HF_ENABLE_PARALLEL_LOADING": "false"}):
@@ -412,6 +418,32 @@ class DiffusersRuntimeTests(unittest.TestCase):
             self.assertEqual(os.environ["HF_ENABLE_PARALLEL_LOADING"], "false")
         self.assertEqual(offload, "none")
         self.assertEqual(load["device_map"], "cuda")
+
+    def test_windows_direct_device_loading_defaults_to_serial_weight_loading(self):
+        with patch.dict(os.environ, {}, clear=False), patch.object(sys, "platform", "win32"):
+            os.environ.pop("HF_ENABLE_PARALLEL_LOADING", None)
+            os.environ.pop("HF_DEACTIVATE_ASYNC_LOAD", None)
+            _, _, offload, load = loader_runtime_options(
+                {"device": "cuda:0", "offload_mode": "none", "auto_offload": False},
+                default_device="cuda:0",
+                default_offload_mode="model_cpu",
+                direct_device_load=True,
+            )
+            self.assertEqual(os.environ.get("HF_ENABLE_PARALLEL_LOADING"), "0")
+            self.assertEqual(os.environ.get("HF_DEACTIVATE_ASYNC_LOAD"), "1")
+        self.assertEqual(offload, "none")
+        self.assertEqual(load["device_map"], "cuda")
+
+    def test_parallel_loading_flag_preserves_operator_value_and_boolean_result(self):
+        for value, enabled in (("", False), ("0", False), ("false", False), ("1", True), ("YES", True), (" on ", True)):
+            with self.subTest(value=value), patch.dict(os.environ, {
+                "HF_ENABLE_PARALLEL_LOADING": value, "HF_DEACTIVATE_ASYNC_LOAD": "",
+                "HF_PARALLEL_LOADING_WORKERS": "2",
+            }), patch.object(sys, "platform", "win32"):
+                self.assertIs(enable_parallel_weight_loading(), enabled)
+                self.assertEqual(os.environ["HF_ENABLE_PARALLEL_LOADING"], value)
+                self.assertEqual(os.environ["HF_DEACTIVATE_ASYNC_LOAD"], "")
+                self.assertEqual(os.environ["HF_PARALLEL_LOADING_WORKERS"], "2")
 
     def test_direct_device_loading_never_overrides_offload_or_explicit_map(self):
         _, _, offload, load = loader_runtime_options(
@@ -489,6 +521,46 @@ class DiffusersRuntimeTests(unittest.TestCase):
         self.assertFalse(result["attention_backends"]["flash"]["available"])
         self.assertFalse(result["quantization_backends"]["torchao_float8"]["available"])
 
+    def test_native_flash_requires_actual_torch_build_support(self):
+        for support in (False, True, None, "raises"):
+            with self.subTest(support=support):
+                def probe():
+                    if support == "raises":
+                        raise RuntimeError("Unavailable capability probe")
+                    return support
+
+                cuda_backend = types.SimpleNamespace()
+                if support is not None:
+                    cuda_backend.is_flash_attention_available = probe
+                fake_torch = types.SimpleNamespace(
+                    __version__="test-cuda-build",
+                    version=types.SimpleNamespace(hip=None, cuda="12.8"),
+                    cuda=types.SimpleNamespace(
+                        get_device_capability=lambda _index: (8, 9),
+                        is_bf16_supported=lambda: True,
+                    ),
+                    backends=types.SimpleNamespace(cuda=cuda_backend),
+                )
+                result = build_runtime_capabilities(
+                    {"devices": [{"type": "cuda", "device": "cuda:0"}]},
+                    torch_module=fake_torch,
+                    package_available=lambda _name: False,
+                )
+                self.assertEqual(result["attention_backends"]["_native_flash"]["available"], support is True)
+                self.assertTrue(result["attention_backends"]["native"]["available"])
+
+    def test_unavailable_native_flash_recipe_is_rejected_before_loader_materialization(self):
+        with patch("torch.backends.cuda.is_flash_attention_available", return_value=False):
+            with self.assertRaisesRegex(RuntimeError, "Native flash SDPA.*Select auto"):
+                loader_runtime_options(
+                    {"execution_recipe": {"device": "cuda:0", "attention_backend": "_native_flash"}},
+                    default_device="cuda:0", default_offload_mode="model_cpu",
+                )
+            pipeline = FakePipeline()
+            with self.assertRaisesRegex(RuntimeError, "Native flash SDPA.*Select auto"):
+                apply_attention_backend(pipeline, "_native_flash")
+            self.assertEqual(pipeline.transformer.backends, [])
+
     def test_capability_probe_excludes_obsolete_rocm_attention_backend(self):
         class FakeCuda:
             @staticmethod
@@ -562,7 +634,9 @@ class DiffusersRuntimeTests(unittest.TestCase):
 
         self.assertEqual(result["vendor"], "nvidia")
         self.assertTrue(result["quantization_backends"]["torchao_float8"]["available"])
-        self.assertTrue(result["compile"]["available"])
+        self.assertFalse(result["compile"]["available"])
+        self.assertTrue(result["compile"]["api_available"])
+        self.assertTrue(result["compile"]["probe_required"])
 
     def test_capability_probe_reports_xpu_without_claiming_cuda_kernels(self):
         fake_torch = types.SimpleNamespace(
@@ -714,15 +788,17 @@ class DiffusersRuntimeTests(unittest.TestCase):
 
     def test_regional_compile_uses_diffusers_repeated_block_api(self):
         pipeline = FakePipeline()
-        result = configure_regional_compile(
-            pipeline,
-            enabled=True,
-            components="transformer",
-            backend="inductor",
-            mode="reduce-overhead",
-            fullgraph=False,
-            dynamic=True,
-        )
+        with patch("modules.DiffusersRuntime.main.require_compilation") as probe:
+            result = configure_regional_compile(
+                pipeline,
+                enabled=True,
+                components="transformer",
+                backend="inductor",
+                mode="reduce-overhead",
+                fullgraph=False,
+                dynamic=True,
+            )
+        probe.assert_called_once()
 
         self.assertEqual(result["applied"], ["transformer"])
         self.assertEqual(
@@ -736,6 +812,34 @@ class DiffusersRuntimeTests(unittest.TestCase):
                 }
             ],
         )
+
+    def test_loader_recipe_probes_target_before_cpu_pipeline_placement(self):
+        pipeline = FakePipeline()
+        pipeline._execution_device = "cpu"
+        with patch("modules.DiffusersRuntime.main.require_compilation") as probe:
+            result = apply_execution_recipe_to_pipeline(pipeline, {
+                "device": "cuda:1", "regional_compile": True,
+                "compile_components": "transformer", "compile_backend": "inductor",
+            })
+
+        probe.assert_called_once_with(device="cuda:1", backend="inductor")
+        self.assertEqual(result["compile"]["applied"], ["transformer"])
+        self.assertEqual(pipeline.moves, [])
+
+    def test_failed_target_probe_prevents_regional_compilation(self):
+        pipeline = FakePipeline()
+        pipeline._execution_device = "cpu"
+        with (
+            patch("modules.DiffusersRuntime.main.require_compilation", side_effect=RuntimeError("GPU compiler unavailable")) as probe,
+            self.assertRaisesRegex(RuntimeError, "GPU compiler unavailable"),
+        ):
+            apply_execution_recipe_to_pipeline(pipeline, {
+                "device": "cuda:0", "regional_compile": True,
+                "compile_components": "transformer",
+            })
+
+        probe.assert_called_once_with(device="cuda:0", backend="inductor")
+        self.assertEqual(pipeline.transformer.compile_calls, [])
 
     def test_layerwise_casting_is_explicit_and_idempotent(self):
         pipeline = FakePipeline()

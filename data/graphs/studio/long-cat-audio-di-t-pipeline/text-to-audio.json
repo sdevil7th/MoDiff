@@ -239,6 +239,20 @@
           },
           "audio_contract": {
             "default": {
+              "actions": {
+                "FuseAdapters": [
+                  "text_to_audio"
+                ],
+                "Generate": [
+                  "text_to_audio"
+                ],
+                "LoadAdapter": [
+                  "text_to_audio"
+                ],
+                "SetAdapters": [
+                  "text_to_audio"
+                ]
+              },
               "fieldParams": {
                 "audio_cover_strength": {
                   "hidden": true
@@ -330,6 +344,11 @@
             "label": "Audio Contract",
             "type": "object",
             "value": {
+              "actions": {
+                "Generate": [
+                  "text_to_audio"
+                ]
+              },
               "fieldParams": {
                 "audio_cover_strength": {
                   "hidden": true
@@ -548,6 +567,10 @@
             "signal": {
               "direction": "input"
             },
+            "signalCompatibility": {
+              "action": "$node",
+              "required": true
+            },
             "type": "audio_diffusion_pipeline"
           },
           "prompt": {
@@ -751,8 +774,7 @@
           0,
           0
         ],
-        "type": "custom",
-        "uiState": {}
+        "type": "custom"
       },
       "id": "node-02",
       "position": {
@@ -777,6 +799,20 @@
         "params": {
           "audio_contract": {
             "default": {
+              "actions": {
+                "FuseAdapters": [
+                  "text_to_audio"
+                ],
+                "Generate": [
+                  "text_to_audio"
+                ],
+                "LoadAdapter": [
+                  "text_to_audio"
+                ],
+                "SetAdapters": [
+                  "text_to_audio"
+                ]
+              },
               "fieldParams": {
                 "audio_cover_strength": {
                   "hidden": true
@@ -868,6 +904,11 @@
             "label": "Audio Contract",
             "type": "object",
             "value": {
+              "actions": {
+                "Generate": [
+                  "text_to_audio"
+                ]
+              },
               "fieldParams": {
                 "audio_cover_strength": {
                   "hidden": true
@@ -970,6 +1011,14 @@
                 "availability": "installed",
                 "compatibility": "compatible",
                 "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "cpu:0",
                 "schemaVersion": 1,
                 "value": "cpu:0"
@@ -999,10 +1048,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -1238,7 +1286,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "disabledReason": "bitsandbytes detected on NVIDIA CUDA",
                 "installationState": "unavailable",
                 "label": "bnb_4bit",
                 "schemaVersion": 1,
@@ -1247,7 +1295,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "disabledReason": "bitsandbytes detected on NVIDIA CUDA",
                 "installationState": "unavailable",
                 "label": "bnb_8bit",
                 "schemaVersion": 1,
@@ -1274,7 +1322,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires TorchAO and a qualified NVIDIA compute capability of at least 8.9",
+                "disabledReason": "TorchAO detected on an FP8-capable NVIDIA device",
                 "installationState": "unavailable",
                 "label": "torchao_float8",
                 "schemaVersion": 1,
@@ -1368,10 +1416,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -1464,17 +1511,16 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "disabledReason": "Native flash SDPA is unavailable in this Torch build. Select auto attention.",
                 "installationState": "unavailable",
                 "label": "_native_flash",
                 "schemaVersion": 1,
                 "value": "_native_flash"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_native_efficient",
                 "schemaVersion": 1,
                 "value": "_native_efficient"
@@ -1488,10 +1534,9 @@
                 "value": "_native_math"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires NVIDIA CUDA",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_native_cudnn",
                 "schemaVersion": 1,
                 "value": "_native_cudnn"
@@ -1499,7 +1544,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a PyTorch accelerator build with FlexAttention",
+                "disabledReason": "Requires a successful compiled FlexAttention probe on this accelerator",
                 "installationState": "unavailable",
                 "label": "flex",
                 "schemaVersion": 1,
@@ -1508,7 +1553,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "disabledReason": "flash-attn package is not installed",
                 "installationState": "unavailable",
                 "label": "flash",
                 "schemaVersion": 1,
@@ -1589,7 +1634,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "disabledReason": "SageAttention package is not installed",
                 "installationState": "unavailable",
                 "label": "sage",
                 "schemaVersion": 1,
@@ -1616,7 +1661,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "MoDiff only enables xFormers on NVIDIA CUDA",
+                "disabledReason": "xFormers package is not installed",
                 "installationState": "unavailable",
                 "label": "xformers",
                 "schemaVersion": 1,
@@ -1624,7 +1669,7 @@
               }
             ],
             "type": "string",
-            "value": "auto"
+            "value": "_native_math"
           },
           "attention_components": {
             "default": "",

@@ -5,6 +5,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from modiff.model_artifact_catalog import catalog_repository_pin, catalog_revision
+from modiff.studio_execution_specs import studio_execution_spec_for_pair
 
 
 GRAPH_ROOT = Path(__file__).resolve().parents[1] / "data" / "graphs"
@@ -58,6 +59,32 @@ def _is_curated_loader(node):
 def _node_key(node):
     data = (node or {}).get("data", {})
     return data.get("module"), data.get("action")
+
+
+def _declared_sdk_terminal_node_ids(graph, specification):
+    """Recognize side-output terminals only in the exact declared SDK graph."""
+    if not specification or not specification.get("auxiliaryTerminalRoles"):
+        return set()
+    nodes = graph.get("nodes", [])
+    roles = specification["roles"]
+    if len(nodes) != len(roles):
+        return set()
+    role_ids = {}
+    for role, node_key, _x, _y in roles:
+        matching = [node for node in nodes if _node_key(node) == tuple(node_key.rsplit(".", 1))]
+        if len(matching) != 1 or matching[0].get("data", {}).get("uiState", {}).get("disabled") is True:
+            return set()
+        role_ids[role] = matching[0]["id"]
+    if len(set(role_ids.values())) != len(roles):
+        return set()
+    declared = {(role_ids[source], output, role_ids[target], input_) for source, output, target, input_ in specification["edges"]}
+    actual = [(edge.get("source"), edge.get("sourceHandle"), edge.get("target"), edge.get("targetHandle")) for edge in graph.get("edges", [])]
+    if len(actual) != len(declared) or set(actual) != declared:
+        return set()
+    terminals = specification["auxiliaryTerminalRoles"]
+    if any(role not in role_ids or any(edge[0] == role for edge in specification["edges"]) for role in terminals):
+        return set()
+    return {role_ids[role] for role in terminals}
 
 
 def _intentional_disabled_managed_fallback_node_ids(graph):
@@ -240,6 +267,8 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
     def test_hub_modular_lora_graphs_pin_the_generic_auxiliary_identity(self):
         expected_revisions = {
             "lightx2v/Qwen-Image-Edit-2511-Lightning": "d74eba145674fd7e31b949324e148e21e7118abd",
+            "kocabiyik/nsc7-style-lora": "9b998d3bdc3b4aeb2113ab4e8cbd9fe2ebfa1cae",
+            "pjecuacion/flux3-klein-mnt-oil-monet-lora": "0d94b6a4601892499defd8c5d89c24f78e78043b",
         }
         manifest = json.loads(WORKFLOW_MANIFEST.read_text(encoding="utf-8"))
         manifest_workflows = {
@@ -277,7 +306,7 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                     manifest_workflows[manifest_label].get("requiredArtifacts", []),
                     f"{label}: workflow manifest omits its mandatory Hub LoRA",
                 )
-        self.assertEqual(checked, 2)
+        self.assertEqual(checked, 4)
 
     def test_hub_modular_component_graphs_pin_and_manifest_their_artifact(self):
         manifest = json.loads(WORKFLOW_MANIFEST.read_text(encoding="utf-8"))
@@ -561,9 +590,48 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
             set(),
         )
 
+    def test_declared_sdk_terminals_require_the_exact_connected_graph(self):
+        # Saved image graphs retain the exact reviewed historical declaration.
+        # Reconstruct its structural witness without relying on a fresh catalog
+        # graph that intentionally no longer contains the action-only terminal.
+        spec = studio_execution_spec_for_pair(
+            "Cosmos3OmniModularPipeline", "text_to_image", content_hash="studio-spec-v1-91ed105d",
+        )
+        graph = {
+            "nodes": [
+                {"id": role, "data": {"module": key.rsplit(".", 1)[0], "action": key.rsplit(".", 1)[1]}}
+                for role, key, _x, _y in spec["roles"]
+            ],
+            "edges": [
+                {"source": source, "sourceHandle": output, "target": target, "targetHandle": input_}
+                for source, output, target, input_ in spec["edges"]
+            ],
+        }
+        terminal = next(node for node in graph["nodes"] if node["data"]["action"] == "WorkflowCosmos3OmniAfterDecode")
+        self.assertEqual(_declared_sdk_terminal_node_ids(graph, spec), {terminal["id"]})
+        mutations = (
+            lambda candidate: candidate["edges"].pop(),
+            lambda candidate: candidate["edges"][0].update(source="foreign-owner"),
+            lambda candidate: candidate["edges"].append(candidate["edges"][0].copy()),
+            lambda candidate: next(node for node in candidate["nodes"] if node["id"] == terminal["id"])["data"].update(action="UnreviewedTerminal"),
+            lambda candidate: next(node for node in candidate["nodes"] if node["id"] == terminal["id"])["data"].update(uiState={"disabled": True}),
+        )
+        for index, mutate in enumerate(mutations):
+            with self.subTest(mutation=index):
+                candidate = json.loads(json.dumps(graph))
+                mutate(candidate)
+                self.assertEqual(_declared_sdk_terminal_node_ids(candidate, spec), set())
+        self.assertEqual(_declared_sdk_terminal_node_ids(graph, None), set())
+        self.assertEqual(_declared_sdk_terminal_node_ids(
+            graph, studio_execution_spec_for_pair("Cosmos3OmniModularPipeline", "text_to_image"),
+        ), set())
+        self.assertEqual(_declared_sdk_terminal_node_ids(graph, studio_execution_spec_for_pair("Flux2ModularPipeline", "text_to_image")), set())
+
     def test_every_catalog_node_contributes_to_a_visible_or_exported_output(self):
         graph_paths = sorted(GRAPH_ROOT.rglob("*.json"))
         self.assertGreater(len(graph_paths), 0)
+        manifest = json.loads(WORKFLOW_MANIFEST.read_text())
+        workflows = {row["graphPath"]: row for row in [*manifest["workflows"], *manifest["experimentalWorkflows"]]}
 
         for graph_path in graph_paths:
             with self.subTest(graph=graph_path.relative_to(GRAPH_ROOT)):
@@ -590,8 +658,11 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                 ]
                 self.assertTrue(outputs, "graph has no preview, export, or data output")
 
-                used = set(outputs)
-                pending = list(outputs)
+                workflow = workflows.get(graph_path.relative_to(GRAPH_ROOT).as_posix())
+                specification = studio_execution_spec_for_pair(workflow["modelType"], workflow["mode"]) if workflow else None
+                terminals = _declared_sdk_terminal_node_ids(graph, specification)
+                used = set(outputs) | terminals
+                pending = list(used)
                 while pending:
                     node_id = pending.pop()
                     for source_id in incoming[node_id]:
@@ -614,7 +685,7 @@ class GraphCatalogIntegrityTests(unittest.TestCase):
                 ]
                 self.assertEqual(disabled, [], f"disabled execution nodes: {disabled}")
                 self.assertEqual(isolated, [], f"isolated nodes: {isolated}")
-                self.assertEqual(unreachable, [], f"nodes outside every output path: {unreachable}")
+                self.assertEqual(unreachable, [], f"nodes outside every output or declared SDK terminal path: {unreachable}")
 
 
 if __name__ == "__main__":

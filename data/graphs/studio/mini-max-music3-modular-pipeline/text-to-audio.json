@@ -5,7 +5,6 @@
       "data": {
         "connectionType": "audio"
       },
-      "edgeType": "default",
       "id": "edge-01",
       "markerEnd": {
         "color": "#F472B6",
@@ -19,15 +18,13 @@
         "stroke": "#F472B6"
       },
       "target": "node-01",
-      "targetHandle": "audio",
-      "type": "default"
+      "targetHandle": "audio"
     },
     {
       "className": "category-modular_workflow_state",
       "data": {
         "connectionType": "modular_workflow_state"
       },
-      "edgeType": "default",
       "id": "edge-02",
       "markerEnd": {
         "color": "hsl(217 77% 66%)",
@@ -49,7 +46,6 @@
       "data": {
         "connectionType": "diffusers_modular_pipeline_components"
       },
-      "edgeType": "default",
       "id": "edge-03",
       "markerEnd": {
         "color": "hsl(319 78% 64%)",
@@ -71,7 +67,6 @@
       "data": {
         "connectionType": "diffusers_modular_pipeline_components"
       },
-      "edgeType": "default",
       "id": "edge-04",
       "markerEnd": {
         "color": "hsl(319 78% 64%)",
@@ -93,7 +88,6 @@
       "data": {
         "connectionType": "diffusers_modular_pipeline_components"
       },
-      "edgeType": "default",
       "id": "edge-05",
       "markerEnd": {
         "color": "hsl(319 78% 64%)",
@@ -115,7 +109,6 @@
       "data": {
         "connectionType": "modular_workflow_state"
       },
-      "edgeType": "default",
       "id": "edge-06",
       "markerEnd": {
         "color": "hsl(217 77% 66%)",
@@ -156,7 +149,9 @@
         "params": {
           "audio": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Audio",
             "type": [
               "audio",
@@ -165,28 +160,42 @@
           },
           "duration_seconds": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Duration",
             "type": "float"
           },
           "file": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "File",
             "type": "audio"
           },
           "filename": {
             "default": "{PATH:audio}/MoDiff_{HASH:6}.wav",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "File",
-            "type": "str"
+            "type": "str",
+            "value": "{PATH:audio}/MoDiff_{HASH:6}.wav"
           },
           "preview": {
             "dataSource": "file",
             "display": "ui_audio",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "type": "url"
           },
           "sample_rate": {
             "default": 48000,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Export Sample Rate",
             "options": {
               "16000": {
@@ -244,7 +253,6 @@
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "audioExport",
         "style": {},
         "time": [
@@ -267,60 +275,284 @@
         "cache": false,
         "category": "Modular Diffusers",
         "description": "Run the official decoder and convert its waveform to MoDiff audio.",
-        "label": "Modular Workflow Decode Audio",
+        "label": "Decode Latents",
         "memory": [
           0,
           0,
           0
         ],
         "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "authored": [
+            "pipeline_class",
+            "workflow_id",
+            "block_path"
+          ],
+          "defaults": {},
+          "operation": {
+            "binding": {
+              "pipelineClass": "MiniMaxMusic3ModularPipeline",
+              "values": {
+                "block_path": "decode",
+                "pipeline_class": "MiniMaxMusic3ModularPipeline",
+                "workflow_id": "default"
+              }
+            },
+            "blockName": "decode",
+            "decomposition": "block",
+            "nodeKey": "modules.ModularDiffusers.WorkflowDecodeAudio",
+            "nodeType": "decode",
+            "operationId": "diffusion.decode_latents",
+            "pipelineClass": "MiniMaxMusic3ModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline_components",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline_components",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "vocoder",
+                      "type": "diffusers.models.autoencoders.minimax_music3_vocoder.MiniMaxMusic3Vocoder"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_modular_pipeline_components"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "state_in",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "state_in",
+                "semantics": {
+                  "kind": "state",
+                  "members": [
+                    {
+                      "name": "latent_chunks",
+                      "type": "builtins.list"
+                    },
+                    {
+                      "name": "output_type",
+                      "type": "builtins.str"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline:default",
+                  "state": "denoise"
+                },
+                "types": [
+                  "modular_workflow_state"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "pipeline_class",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pipeline_class",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "workflow_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "workflow_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "block_path",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "block_path",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "audio",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "audio",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "audio"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "sample_rate",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "sample_rate",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "duration_seconds",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "duration_seconds",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "text_to_audio",
+            "workflowId": "default"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
         "params": {
           "audio": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Audio",
             "type": "audio"
           },
           "block_path": {
             "default": "decode",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "type": "string",
             "value": "decode"
           },
           "duration_seconds": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Duration",
             "type": "float"
           },
           "pipeline_class": {
             "default": "MiniMaxMusic3ModularPipeline",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "type": "string",
             "value": "MiniMaxMusic3ModularPipeline"
           },
           "pipeline_components": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Pipeline Components",
             "required": true,
             "type": "diffusers_modular_pipeline_components"
           },
           "sample_rate": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Sample Rate",
             "type": "int"
           },
           "state_in": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Workflow State",
             "required": true,
             "type": "modular_workflow_state"
           },
           "workflow_id": {
             "default": "default",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "type": "string",
             "value": "default"
@@ -328,7 +560,6 @@
         },
         "resizable": true,
         "skipParamsCheck": true,
-        "studioOwned": true,
         "studioRole": "decode",
         "style": {},
         "time": [
@@ -351,13 +582,226 @@
         "cache": false,
         "category": "Modular Diffusers",
         "description": "Run the official denoise block using a sealed preceding state.",
-        "label": "Modular Workflow Denoise",
+        "label": "Denoise",
         "memory": [
           0,
           0,
           0
         ],
         "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "authored": [
+            "pipeline_class",
+            "workflow_id",
+            "block_path",
+            "num_inference_steps"
+          ],
+          "defaults": {
+            "num_inference_steps": 30
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "MiniMaxMusic3ModularPipeline",
+              "values": {
+                "block_path": "denoise",
+                "pipeline_class": "MiniMaxMusic3ModularPipeline",
+                "workflow_id": "default"
+              }
+            },
+            "blockName": "denoise",
+            "decomposition": "block",
+            "nodeKey": "modules.ModularDiffusers.WorkflowDenoise",
+            "nodeType": "denoise",
+            "operationId": "diffusion.denoise",
+            "pipelineClass": "MiniMaxMusic3ModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline_components",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline_components",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "condition_encoder",
+                      "type": "diffusers.models.condition_embedders.condition_embedder_minimax_music3.MiniMaxMusic3ConditionEncoder"
+                    },
+                    {
+                      "name": "guider",
+                      "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+                    },
+                    {
+                      "name": "scheduler",
+                      "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+                    },
+                    {
+                      "name": "transformer",
+                      "type": "diffusers.models.transformers.transformer_minimax_music3.MiniMaxMusic3Transformer1DModel"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_modular_pipeline_components"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "state_in",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "state_in",
+                "semantics": {
+                  "kind": "state",
+                  "members": [
+                    {
+                      "name": "chunk_starts",
+                      "type": "builtins.list"
+                    },
+                    {
+                      "name": "frame_hiddens",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "generator",
+                      "type": "torch._C.Generator"
+                    },
+                    {
+                      "name": "num_inference_steps",
+                      "type": "builtins.int"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline:default",
+                  "state": "semantic_generator"
+                },
+                "types": [
+                  "modular_workflow_state"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "pipeline_class",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pipeline_class",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "workflow_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "workflow_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "block_path",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "block_path",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "num_inference_steps",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "num_inference_steps",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "state_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "state_out",
+                "semantics": {
+                  "kind": "state",
+                  "members": [
+                    {
+                      "name": "chunk_starts",
+                      "type": "builtins.list"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline:default",
+                  "state": "denoise"
+                },
+                "types": [
+                  "modular_workflow_state"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "text_to_audio",
+            "workflowId": "default"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
         "params": {
           "block_path": {
             "default": "denoise",
@@ -385,6 +829,9 @@
             "isConnected": true,
             "label": "Pipeline Components",
             "required": true,
+            "signal": {
+              "direction": "output"
+            },
             "type": "diffusers_modular_pipeline_components"
           },
           "state_in": {
@@ -409,7 +856,6 @@
         },
         "resizable": true,
         "skipParamsCheck": true,
-        "studioOwned": true,
         "studioRole": "denoise",
         "style": {},
         "time": [
@@ -432,14 +878,667 @@
         "cache": false,
         "category": "loader",
         "description": "",
-        "label": "Diffusers.LoadPipeline",
+        "label": "Load Models",
         "memory": [
           0,
           0,
           0
         ],
         "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "authored": [
+            "dtype",
+            "device",
+            "auto_offload",
+            "offload_mode"
+          ],
+          "defaults": {
+            "attention_backend": "inherit",
+            "auto_offload": true,
+            "device": "cuda:0",
+            "dtype": "bfloat16",
+            "model_type": "MiniMaxMusic3ModularPipeline",
+            "offload_mode": "model_cpu",
+            "repo_id": {
+              "source": "hub",
+              "value": "MiniMaxAI/MiniMax-Music3"
+            },
+            "revision": "fbdf52fbaaca799592917417eb05f1899f1255ec",
+            "trust_remote_code": false,
+            "weight_loading_mode": "cpu"
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "MiniMaxMusic3ModularPipeline",
+              "values": {
+                "model_type": "MiniMaxMusic3ModularPipeline",
+                "workflow_id": "default"
+              }
+            },
+            "blockName": null,
+            "decomposition": "loader",
+            "nodeKey": "modules.ModularDiffusers.ModelsLoader",
+            "nodeType": "loader",
+            "operationId": "diffusion.load_models",
+            "pipelineClass": "MiniMaxMusic3ModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "model_type",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "model_type",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "repo_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "repo_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "reviewed_variant",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "reviewed_variant",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "device",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "device",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "attention_backend",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "attention_backend",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "vae_slicing",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "vae_slicing",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "vae_tiling",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "vae_tiling",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "inpaint_compatibility",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "inpaint_compatibility",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "trust_remote_code",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "trust_remote_code",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "revision",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "revision",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "workflow_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "workflow_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "modiff_pipeline_identity",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "modiff_pipeline_identity",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "object"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "auto_offload",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "auto_offload",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "boolean"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "offload_mode",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "offload_mode",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "weight_loading_mode",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "weight_loading_mode",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "unet",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "unet",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "transformer",
+                      "type": "diffusers.models.transformers.transformer_minimax_music3.MiniMaxMusic3Transformer1DModel"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "vae",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "vae",
+                "semantics": {
+                  "kind": "component",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "controlnet",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "controlnet",
+                "semantics": {
+                  "kind": "component",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "lora_list",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "lora_list",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "custom_lora"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": true,
+                "name": "text_encoders",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "text_encoders",
+                "semantics": {
+                  "kind": "component",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_models"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "unet_out",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "unet_out",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "transformer",
+                      "type": "diffusers.models.transformers.transformer_minimax_music3.MiniMaxMusic3Transformer1DModel"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": true,
+                "name": "vae_out",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "vae_out",
+                "semantics": {
+                  "kind": "component",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "scheduler",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "scheduler",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "scheduler",
+                      "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": true,
+                "name": "image_encoder",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "image_encoder",
+                "semantics": {
+                  "kind": "component",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_auto_model"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "pipeline_components",
+                "required": false,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline_components",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "condition_encoder",
+                      "type": "diffusers.models.condition_embedders.condition_embedder_minimax_music3.MiniMaxMusic3ConditionEncoder"
+                    },
+                    {
+                      "name": "guider",
+                      "type": "diffusers.guiders.classifier_free_guidance.ClassifierFreeGuidance"
+                    },
+                    {
+                      "name": "language_model",
+                      "type": "transformers.models.qwen3.modeling_qwen3.Qwen3ForCausalLM"
+                    },
+                    {
+                      "name": "rvq_depth_decoder",
+                      "type": "diffusers.models.transformers.minimax_music3_rvq_depth_decoder.MiniMaxMusic3RVQDepthDecoder"
+                    },
+                    {
+                      "name": "scheduler",
+                      "type": "diffusers.schedulers.scheduling_flow_match_euler_discrete.FlowMatchEulerDiscreteScheduler"
+                    },
+                    {
+                      "name": "tokenizer",
+                      "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+                    },
+                    {
+                      "name": "transformer",
+                      "type": "diffusers.models.transformers.transformer_minimax_music3.MiniMaxMusic3Transformer1DModel"
+                    },
+                    {
+                      "name": "vocoder",
+                      "type": "diffusers.models.autoencoders.minimax_music3_vocoder.MiniMaxMusic3Vocoder"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_modular_pipeline_components"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "quant_config",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "quant_config",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "quant_config"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "text_to_audio",
+            "workflowId": "default"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
         "params": {
+          "attention_backend": {
+            "default": "inherit",
+            "description": "Inherit preserves existing native component defaults; explicit choices use the ordinary Diffusers attention API.",
+            "label": "Attention Backend",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "inherit",
+                "schemaVersion": 1,
+                "value": "inherit"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "auto",
+                "schemaVersion": 1,
+                "value": "auto"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "native",
+                "schemaVersion": 1,
+                "value": "native"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "_native_math",
+                "schemaVersion": 1,
+                "value": "_native_math"
+              }
+            ],
+            "type": "string"
+          },
           "auto_offload": {
             "label": "Enable Auto Offload",
             "type": "boolean",
@@ -447,6 +1546,7 @@
           },
           "controlnet": {
             "display": "input",
+            "hidden": true,
             "isConnected": false,
             "label": "ControlNet",
             "type": "diffusers_auto_model"
@@ -513,10 +1613,41 @@
             "value": "bfloat16"
           },
           "image_encoder": {
+            "connectionRole": "image_encoder",
             "display": "output",
+            "hidden": true,
             "isConnected": false,
             "label": "Image Encoder",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity"
+            },
             "type": "diffusers_auto_model"
+          },
+          "inpaint_compatibility": {
+            "default": "native",
+            "description": "Technical compatibility selection for the reviewed Qwen Edit inpainting candidate; existing nodes retain native policy.",
+            "hidden": true,
+            "label": "Inpaint Compatibility",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "native",
+                "schemaVersion": 1,
+                "value": "native"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "whole_v1",
+                "schemaVersion": 1,
+                "value": "whole_v1"
+              }
+            ],
+            "type": "string"
           },
           "lora_list": {
             "display": "input",
@@ -525,8 +1656,11 @@
             "type": "custom_lora"
           },
           "model_type": {
-            "disabled": true,
-            "label": "Model Type",
+            "description": "Selects the Modular Diffusers pipeline class. This filters compatible checkpoints and publishes the component contract used by connected nodes; it is not the model checkpoint itself.",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
+            "label": "Pipeline Type",
             "options": {
               "": {
                 "availability": "installed",
@@ -535,6 +1669,254 @@
                 "label": "",
                 "schemaVersion": 1,
                 "value": ""
+              },
+              "AnimaModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Anima",
+                "schemaVersion": 1,
+                "value": "AnimaModularPipeline"
+              },
+              "Cosmos3DistilledModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Cosmos 3 Distilled",
+                "schemaVersion": 1,
+                "value": "Cosmos3DistilledModularPipeline"
+              },
+              "Cosmos3OmniModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Cosmos 3 Nano",
+                "schemaVersion": 1,
+                "value": "Cosmos3OmniModularPipeline"
+              },
+              "DummyCustomPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Custom",
+                "schemaVersion": 1,
+                "value": "DummyCustomPipeline"
+              },
+              "ErnieImageModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "ERNIE Image Turbo",
+                "schemaVersion": 1,
+                "value": "ErnieImageModularPipeline"
+              },
+              "Flux2KleinBaseModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux 2 Klein Base",
+                "schemaVersion": 1,
+                "value": "Flux2KleinBaseModularPipeline"
+              },
+              "Flux2KleinModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux 2 Klein Distilled",
+                "schemaVersion": 1,
+                "value": "Flux2KleinModularPipeline"
+              },
+              "Flux2ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux 2",
+                "schemaVersion": 1,
+                "value": "Flux2ModularPipeline"
+              },
+              "FluxKontextModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux Kontext",
+                "schemaVersion": 1,
+                "value": "FluxKontextModularPipeline"
+              },
+              "FluxModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Flux",
+                "schemaVersion": 1,
+                "value": "FluxModularPipeline"
+              },
+              "HeliosModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Helios",
+                "schemaVersion": 1,
+                "value": "HeliosModularPipeline"
+              },
+              "HeliosPyramidDistilledModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Helios Pyramid Distilled",
+                "schemaVersion": 1,
+                "value": "HeliosPyramidDistilledModularPipeline"
+              },
+              "HeliosPyramidModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Helios Pyramid",
+                "schemaVersion": 1,
+                "value": "HeliosPyramidModularPipeline"
+              },
+              "HunyuanVideo15ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "HunyuanVideo 1.5",
+                "schemaVersion": 1,
+                "value": "HunyuanVideo15ModularPipeline"
+              },
+              "Ideogram4ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Ideogram 4 (Contract only)",
+                "schemaVersion": 1,
+                "value": "Ideogram4ModularPipeline"
+              },
+              "Krea2ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Krea 2 (Contract only)",
+                "schemaVersion": 1,
+                "value": "Krea2ModularPipeline"
+              },
+              "Krea2TurboModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Krea 2 Turbo (Contract only)",
+                "schemaVersion": 1,
+                "value": "Krea2TurboModularPipeline"
+              },
+              "LTX25ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "LTX-2.5 (Contract only)",
+                "schemaVersion": 1,
+                "value": "LTX25ModularPipeline"
+              },
+              "MiniMaxH3ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MiniMax H3",
+                "schemaVersion": 1,
+                "value": "MiniMaxH3ModularPipeline"
+              },
+              "MiniMaxMusic3ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MiniMax Music 3",
+                "schemaVersion": 1,
+                "value": "MiniMaxMusic3ModularPipeline"
+              },
+              "QwenImageEditModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Qwen-Image-Edit",
+                "schemaVersion": 1,
+                "value": "QwenImageEditModularPipeline"
+              },
+              "QwenImageEditPlusModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Qwen-Image-Edit-2511",
+                "schemaVersion": 1,
+                "value": "QwenImageEditPlusModularPipeline"
+              },
+              "QwenImageLayeredModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Qwen-Image-Layered",
+                "schemaVersion": 1,
+                "value": "QwenImageLayeredModularPipeline"
+              },
+              "QwenImageModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Qwen-Image-2512",
+                "schemaVersion": 1,
+                "value": "QwenImageModularPipeline"
+              },
+              "StableDiffusion3ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Stable Diffusion 3 (Contract only)",
+                "schemaVersion": 1,
+                "value": "StableDiffusion3ModularPipeline"
+              },
+              "StableDiffusionXLModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Stable Diffusion XL",
+                "schemaVersion": 1,
+                "value": "StableDiffusionXLModularPipeline"
+              },
+              "WanAnimate2DistilledModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Wan Animate 2 Distilled",
+                "schemaVersion": 1,
+                "value": "WanAnimate2DistilledModularPipeline"
+              },
+              "WanAnimate2ModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Wan Animate 2",
+                "schemaVersion": 1,
+                "value": "WanAnimate2ModularPipeline"
+              },
+              "WanImage2VideoModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "WAN2 I2V",
+                "schemaVersion": 1,
+                "value": "WanImage2VideoModularPipeline"
+              },
+              "WanModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "WAN2 T2V",
+                "schemaVersion": 1,
+                "value": "WanModularPipeline"
+              },
+              "ZImageModularPipeline": {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "Z-Image",
+                "schemaVersion": 1,
+                "value": "ZImageModularPipeline"
               }
             },
             "type": "string",
@@ -595,9 +1977,15 @@
             "value": "model_cpu"
           },
           "pipeline_components": {
+            "connectionRole": "pipeline_components",
             "display": "output",
+            "hidden": false,
             "isConnected": true,
             "label": "Pipeline Components",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity"
+            },
             "type": "diffusers_modular_pipeline_components"
           },
           "quant_config": {
@@ -608,23 +1996,20 @@
           },
           "refresh_pipeline_identity_button": {
             "display": "ui_button",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "Review and Refresh Custom Contract",
             "value": false
           },
           "repo_id": {
-            "disabled": true,
             "display": "modelselect",
             "fieldOptions": {
               "filter": {
                 "hub": {
                   "className": [
-                    ""
-                  ]
-                },
-                "local": {
-                  "className": [
-                    ""
+                    "MiniMaxMusic3ModularPipeline"
                   ]
                 }
               },
@@ -632,7 +2017,8 @@
               "sources": [
                 "hub",
                 "local"
-              ]
+              ],
+              "suppressInitialFieldAction": true
             },
             "label": "Repository ID",
             "type": "string",
@@ -648,71 +2034,150 @@
             },
             "hidden": true,
             "label": "Model",
-            "options": [],
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "MiniMaxAI/MiniMax-Music3",
+                "schemaVersion": 1,
+                "value": "MiniMaxAI/MiniMax-Music3"
+              }
+            ],
             "type": "string",
-            "value": ""
+            "value": "MiniMaxAI/MiniMax-Music3"
           },
           "revision": {
             "description": "Required exact 40-character commit hash for Hub custom contracts.",
-            "disabled": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Revision",
             "type": "string",
             "value": "fbdf52fbaaca799592917417eb05f1899f1255ec"
           },
           "scheduler": {
+            "connectionRole": "scheduler",
             "display": "output",
+            "hidden": false,
             "isConnected": false,
             "label": "Scheduler",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity"
+            },
             "type": "diffusers_auto_model"
           },
           "text_encoders": {
+            "connectionRole": "text_encoders",
             "display": "output",
+            "hidden": true,
             "isConnected": false,
             "label": "Text Encoders",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity"
+            },
             "type": "diffusers_auto_models"
           },
           "trust_remote_code": {
             "description": "Repository code execution is disabled; keep this off for contract preview.",
-            "disabled": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Trust Remote Code",
             "type": "boolean",
             "value": false
           },
           "unet": {
             "display": "input",
+            "hidden": false,
             "isConnected": false,
             "label": "Denoise Model",
             "type": "diffusers_auto_model"
           },
           "unet_out": {
+            "connectionRole": "denoiser",
             "display": "output",
+            "hidden": false,
             "isConnected": false,
             "label": "Denoise Model",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity"
+            },
             "type": "diffusers_auto_model"
           },
           "vae": {
             "display": "input",
+            "hidden": true,
             "isConnected": false,
             "label": "VAE",
             "type": "diffusers_auto_model"
           },
           "vae_out": {
+            "connectionRole": "vae",
             "display": "output",
+            "hidden": true,
             "isConnected": false,
             "label": "VAE",
+            "signal": {
+              "direction": "output",
+              "origin": "modiff_pipeline_identity"
+            },
             "type": "diffusers_auto_model"
+          },
+          "vae_slicing": {
+            "default": null,
+            "description": "An unset policy preserves the native VAE configuration; templates may bind an explicit boolean.",
+            "hidden": true,
+            "label": "VAE Slicing",
+            "type": "boolean"
+          },
+          "vae_tiling": {
+            "default": null,
+            "description": "An unset policy preserves the native VAE configuration; templates may bind an explicit boolean.",
+            "hidden": true,
+            "label": "VAE Tiling",
+            "type": "boolean"
+          },
+          "weight_loading_mode": {
+            "default": "cpu",
+            "description": "Load weights on CPU or CUDA before disk offload. CUDA loading needs room for a complete component and is available only for supported models.",
+            "fieldOptions": {
+              "controlTier": "advanced"
+            },
+            "label": "Weight Loading",
+            "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cpu",
+                "schemaVersion": 1,
+                "value": "cpu"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda",
+                "schemaVersion": 1,
+                "value": "cuda"
+              }
+            ],
+            "type": "string"
           },
           "workflow_id": {
             "description": "Exact reviewed component partition selected by a first-party Cluster Node.",
             "hidden": true,
             "label": "Reviewed Workflow",
             "type": "string",
-            "value": ""
+            "value": "default"
           }
         },
         "resizable": true,
         "skipParamsCheck": true,
-        "studioOwned": true,
         "studioRole": "models",
         "style": {},
         "time": [
@@ -736,13 +2201,255 @@
         "cache": false,
         "category": "Modular Diffusers",
         "description": "Run MiniMax Music 3's official semantic-generation block.",
-        "label": "Modular Semantic Generation",
+        "label": "Generate Semantics",
         "memory": [
           0,
           0,
           0
         ],
         "module": "modules.ModularDiffusers",
+        "operationAuthoring": {
+          "authored": [
+            "pipeline_class",
+            "workflow_id",
+            "block_path",
+            "prompt",
+            "lyrics",
+            "audio_duration",
+            "seed"
+          ],
+          "defaults": {
+            "audio_duration": 60,
+            "lyrics": "",
+            "prompt": "Gentle rain falling on leaves, distant thunder, a quiet natural atmosphere without speech or music.",
+            "seed": 0
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "MiniMaxMusic3ModularPipeline",
+              "values": {
+                "block_path": "semantic_generator",
+                "pipeline_class": "MiniMaxMusic3ModularPipeline",
+                "workflow_id": "default"
+              }
+            },
+            "blockName": "semantic_generator",
+            "decomposition": "block",
+            "nodeKey": "modules.ModularDiffusers.WorkflowSemanticGeneration",
+            "nodeType": "semantic_generator",
+            "operationId": "diffusion.generate_semantics",
+            "pipelineClass": "MiniMaxMusic3ModularPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline_components",
+                "required": true,
+                "roles": [
+                  "component"
+                ],
+                "semanticName": "pipeline_components",
+                "semantics": {
+                  "kind": "component",
+                  "members": [
+                    {
+                      "name": "language_model",
+                      "type": "transformers.models.qwen3.modeling_qwen3.Qwen3ForCausalLM"
+                    },
+                    {
+                      "name": "rvq_depth_decoder",
+                      "type": "diffusers.models.transformers.minimax_music3_rvq_depth_decoder.MiniMaxMusic3RVQDepthDecoder"
+                    },
+                    {
+                      "name": "tokenizer",
+                      "type": "transformers.models.qwen2.tokenization_qwen2.Qwen2Tokenizer"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_modular_pipeline_components"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "pipeline_class",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pipeline_class",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "workflow_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "workflow_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "block_path",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "block_path",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "lyrics",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "lyrics",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "audio_duration",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "audio_duration",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "seed",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "seed",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "state_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "state_out",
+                "semantics": {
+                  "kind": "state",
+                  "members": [
+                    {
+                      "name": "frame_hiddens",
+                      "type": "torch.Tensor"
+                    },
+                    {
+                      "name": "text_ids",
+                      "type": "torch.Tensor"
+                    }
+                  ],
+                  "owner": "same_loader",
+                  "scope": "MiniMaxMusic3ModularPipeline:default",
+                  "state": "semantic_generator"
+                },
+                "types": [
+                  "modular_workflow_state"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "text_to_audio",
+            "workflowId": "default"
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
         "params": {
           "audio_duration": {
             "default": 60,
@@ -776,11 +2483,17 @@
             "isConnected": true,
             "label": "Pipeline Components",
             "required": true,
+            "signal": {
+              "direction": "output"
+            },
             "type": "diffusers_modular_pipeline_components"
           },
           "prompt": {
             "default": "",
             "display": "textarea",
+            "fieldOptions": {
+              "exampleAttribution": "MoDiff task example"
+            },
             "label": "Music Description",
             "type": "text",
             "value": "An original English chamber-pop song, 96 BPM in D major, intimate clear female lead vocal. Begin with fingerpicked acoustic guitar and soft felt piano; add warm upright bass and brushed drums during the verse. The chorus opens into close three-part vocal harmonies, a lyrical cello countermelody and restrained tambourine. A brief instrumental answer follows the chorus, then the final line resolves gently with piano and cello. Hopeful late-night train journey atmosphere, natural breathing, intelligible lyrics, spacious stereo acoustic production, balanced dynamics, no audience or spoken introduction."
@@ -812,7 +2525,6 @@
         },
         "resizable": true,
         "skipParamsCheck": true,
-        "studioOwned": true,
         "studioRole": "prompt",
         "style": {},
         "time": [

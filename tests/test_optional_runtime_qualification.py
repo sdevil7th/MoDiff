@@ -4,6 +4,7 @@ import io
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest import mock
 
@@ -120,6 +121,44 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
             self.assertFalse(result["sourceRevisionReady"])
             self.assertEqual(result["source"], source)
 
+    def test_auxiliary_qualification_requires_verified_native_base(self):
+        from modiff.optional_runtimes import TRANSFORMERS_MAIN_PEFT_GGUF_RUNTIME_PROFILE_ID
+        with (
+            mock.patch.object(qualification, "_platform_name", return_value="linux"),
+            mock.patch.object(qualification, "_machine_name", return_value="x86_64"),
+            mock.patch.object(qualification, "_json_process", return_value={
+                "plan": [{"byteSize": 1}], "present": [], "nativeBaseVerified": False,
+            }),
+            mock.patch.object(qualification, "copy_verified_uv"),
+            mock.patch.object(qualification, "_source_revision", return_value={
+                "commit": "a" * 40, "dirty": False, "available": True,
+            }),
+        ):
+            result = qualification.qualification_preflight(TRANSFORMERS_MAIN_PEFT_GGUF_RUNTIME_PROFILE_ID)
+        self.assertEqual(result["status"], "not_ready")
+        self.assertTrue(result["requiresNativeBase"])
+        self.assertFalse(result["nativeBaseVerified"])
+        self.assertTrue(result["cleanBase"])
+        self.assertTrue(result["workloadSupported"])
+
+    def test_no_weight_tool_cannot_qualify_bitsandbytes_without_gpu_binary_workload(self):
+        from modiff.optional_runtimes import TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID
+        with (
+            mock.patch.object(qualification, "_platform_name", return_value="linux"),
+            mock.patch.object(qualification, "_machine_name", return_value="x86_64"),
+            mock.patch.object(qualification, "_json_process", return_value={
+                "plan": [{"byteSize": 1}], "present": [], "nativeBaseVerified": True,
+            }),
+            mock.patch.object(qualification, "copy_verified_uv"),
+            mock.patch.object(qualification, "_source_revision", return_value={
+                "commit": "a" * 40, "dirty": False, "available": True,
+            }),
+        ):
+            result = qualification.qualification_preflight(TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID)
+        self.assertEqual(result["status"], "not_ready")
+        self.assertTrue(result["nativeBaseVerified"])
+        self.assertFalse(result["workloadSupported"])
+
     def test_source_revision_rejects_noncommit_output(self):
         completed = mock.Mock(stdout="main\n")
         with mock.patch.object(
@@ -142,31 +181,18 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
             status = qualification.main(["--preflight-only"])
         self.assertEqual(status, 1)
 
-    def test_verified_uv_copy_rejects_a_forged_executable(self):
-        from modiff.tool_locks import UV_TOOL_LOCKS
-
-        lock = UV_TOOL_LOCKS[(qualification._platform_name(), qualification._machine_name())]
+    def test_verified_uv_copy_rejects_an_invalid_executable(self):
+        from modiff import tool_locks
         executable_name = "uv.exe" if qualification._platform_name() == "windows" else "uv"
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             source = root / "source" / "tools" / "uv"
             source.mkdir(parents=True)
             (source / executable_name).write_bytes(b"forged")
-            (source / "receipt.json").write_text(
-                json.dumps(
-                    {
-                        "schemaVersion": 1,
-                        "archiveSha256": lock["archiveSha256"],
-                        "executableSha256": lock["executableSha256"],
-                        "executable": executable_name,
-                    }
-                ),
-                encoding="utf-8",
-            )
-
             target = root / "target"
-            with self.assertRaisesRegex(RuntimeError, "reviewed identity"):
-                qualification.copy_verified_uv(root / "source", target)
+            with mock.patch.object(tool_locks.shutil, "which", return_value=None):
+                with self.assertRaisesRegex(RuntimeError, "Cannot run uv"):
+                    qualification.copy_verified_uv(root / "source", target)
             self.assertFalse(target.exists())
 
     def test_evidence_is_bounded_and_never_overwrites(self):
@@ -184,6 +210,145 @@ class OptionalRuntimeQualificationTests(unittest.TestCase):
                     {"value": "x" * qualification.MAX_EVIDENCE_BYTES},
                 )
             self.assertFalse(oversized.exists())
+
+
+    def test_only_declared_diffusers_provider_permits_its_verified_original_base(self):
+        from modiff.optional_runtimes import DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID
+        original = {"version": "0.41.0", "metadataOrigin": "/controlled/base/diffusers.dist-info",
+            "recordDigest": "sha256:" + "a" * 64, "importIdentity": {}, "identityDigest": "sha256:" + "b" * 64}
+        for extra, expected in (([], "ready"), ([{"distribution": "unrelated", "version": "1"}], "not_ready")):
+            with (
+                self.subTest(extra=extra),
+                mock.patch.object(qualification, "_platform_name", return_value="linux"),
+                mock.patch.object(qualification, "_machine_name", return_value="x86_64"),
+                mock.patch.object(qualification, "_json_process", return_value={
+                    "plan": [{"byteSize": 1}], "present": [{"distribution": "diffusers", "version": "0.41.0"}, *extra],
+                    "nativeBaseVerified": True, "declaredDiffusersProvider": True, "baseDiffusers": original}),
+                mock.patch.object(qualification, "copy_verified_uv"),
+                mock.patch.object(qualification, "_source_revision", return_value={"commit": "a" * 40, "dirty": False, "available": True}),
+            ):
+                value = qualification.qualification_preflight(DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID)
+            self.assertEqual(value["status"], expected)
+            if expected == "ready":
+                self.assertEqual(value["permittedBaseDiffusers"], original)
+                self.assertFalse(value["sourceFlagsDormant"])
+                self.assertTrue(value["sourceTargetQualified"])
+
+    def test_provider_preflight_rejects_missing_base_identity_or_unverified_base(self):
+        from modiff.optional_runtimes import DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID
+        for probe in ({"nativeBaseVerified": False}, {"nativeBaseVerified": True, "baseDiffusers": {}}):
+            with (
+                self.subTest(probe=probe),
+                mock.patch.object(qualification, "_json_process", return_value={
+                    "plan": [{"byteSize": 1}], "present": [{"distribution": "diffusers", "version": "0.41.0"}],
+                    "declaredDiffusersProvider": True, **probe}),
+                mock.patch.object(qualification, "copy_verified_uv"),
+                mock.patch.object(qualification, "_source_revision", return_value={"commit": "a" * 40, "dirty": False, "available": True}),
+            ):
+                value = qualification.qualification_preflight(DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID)
+            self.assertEqual(value["status"], "not_ready")
+
+    def test_native_nf4_requires_source_declaration_explicit_choice_and_exact_target(self):
+        from modiff.optional_runtimes import QUALIFICATION_WORKLOAD_CUDA_NF4
+
+        def candidate(**changes):
+            values = {"qualification_workload": QUALIFICATION_WORKLOAD_CUDA_NF4,
+                "provides_diffusers": True, "packages": (
+                    SimpleNamespace(distribution="diffusers", version="0.41.0.dev0"),
+                    SimpleNamespace(distribution="bitsandbytes", version="0.50.0"))}
+            return SimpleNamespace(**{**values, **changes})
+
+        with (mock.patch.object(qualification, "_platform_name", return_value="windows"),
+              mock.patch.object(qualification, "_machine_name", return_value="x86_64")):
+            self.assertTrue(qualification._native_cuda_nf4_selection(candidate(), True))
+            self.assertFalse(qualification._native_cuda_nf4_selection(candidate(), False))
+            self.assertFalse(qualification._native_cuda_nf4_selection(candidate(provides_diffusers=False), True))
+            self.assertFalse(qualification._native_cuda_nf4_selection(candidate(packages=(
+                SimpleNamespace(distribution="diffusers", version="0.41.0.dev0"),
+                SimpleNamespace(distribution="bitsandbytes", version="0.49.0"))), True))
+            self.assertFalse(qualification._native_cuda_nf4_selection(candidate(packages=(
+                SimpleNamespace(distribution="diffusers", version="0.41.0.dev0"),
+                SimpleNamespace(distribution="bitsandbytes", version="0.50.0"),
+                SimpleNamespace(distribution="unrelated", version="1"))), True))
+            self.assertFalse(qualification._native_cuda_nf4_selection(candidate(packages=(
+                SimpleNamespace(distribution="diffusers", version="0.41.0.dev0"),
+                SimpleNamespace(distribution="bitsandbytes", version="0.50.0"),
+                SimpleNamespace(distribution="bitsandbytes", version="0.50.0"))), True))
+            with self.assertRaisesRegex(RuntimeError, "does not declare"):
+                qualification._native_cuda_nf4_selection(candidate(qualification_workload=None), True)
+            with self.assertRaisesRegex(ValueError, "explicit"):
+                qualification._native_cuda_nf4_selection(candidate(), 1)
+        for platform, machine in (("linux", "x86_64"), ("windows", "arm64")):
+            with (self.subTest(platform=platform, machine=machine),
+                  mock.patch.object(qualification, "_platform_name", return_value=platform),
+                  mock.patch.object(qualification, "_machine_name", return_value=machine)):
+                self.assertFalse(qualification._native_cuda_nf4_selection(candidate(), True))
+
+    def test_composite_preflight_is_not_ready_until_native_workload_is_explicit(self):
+        from modiff.optional_runtimes import (
+            DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID, QUALIFICATION_WORKLOAD_CUDA_NF4,
+        )
+        original = {"version": "0.41.0", "metadataOrigin": "/controlled/base/diffusers.dist-info",
+            "recordDigest": "sha256:" + "a" * 64, "importIdentity": {}, "identityDigest": "sha256:" + "b" * 64}
+        for explicit in (False, True):
+            with (self.subTest(explicit=explicit),
+                  mock.patch.object(qualification, "_platform_name", return_value="windows"),
+                  mock.patch.object(qualification, "_machine_name", return_value="x86_64"),
+                  mock.patch.object(qualification.sys, "version_info", (3, 12)),
+                  mock.patch.object(qualification, "_json_process", return_value={
+                      "plan": [{"byteSize": 1}], "present": [{"distribution": "diffusers", "version": "0.41.0"}],
+                      "nativeBaseVerified": True, "declaredDiffusersProvider": True, "baseDiffusers": original}),
+                  mock.patch.object(qualification, "copy_verified_uv"),
+                  mock.patch.object(qualification, "_source_revision", return_value={
+                      "commit": "a" * 40, "dirty": False, "available": True})):
+                value = qualification.qualification_preflight(
+                    DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID, native_cuda_nf4=explicit,
+                )
+            self.assertEqual(value["status"], "ready" if explicit else "not_ready")
+            self.assertIs(value["workloadSupported"], explicit)
+            self.assertIs(value["nativeCudaNf4Consent"], explicit)
+            self.assertEqual(value["qualificationWorkload"], QUALIFICATION_WORKLOAD_CUDA_NF4)
+            self.assertFalse(value["sourceFlagsDormant"])
+            self.assertTrue(value["sourceTargetQualified"])
+
+    def test_only_explicit_native_child_lifts_cuda_mask(self):
+        for explicit in (False, True):
+            with (self.subTest(explicit=explicit),
+                  mock.patch.object(qualification, "_platform_name", return_value="windows"),
+                  mock.patch.object(qualification, "_machine_name", return_value="x86_64"),
+                  mock.patch.dict(qualification.os.environ, {"CUDA_VISIBLE_DEVICES": "3",
+                      "HIP_VISIBLE_DEVICES": "-1", "ROCR_VISIBLE_DEVICES": "-1", "PYTHONPATH": "untrusted"}),
+                  mock.patch.object(qualification.subprocess, "run", return_value=SimpleNamespace(
+                      returncode=0, stdout='{"status":"passed"}\n', stderr="")) as run):
+                self.assertEqual(qualification._json_process(
+                    "print('no actual child')", native_cuda_nf4=explicit,
+                ), {"status": "passed"})
+            environment = run.call_args.kwargs["env"]
+            self.assertEqual(environment["CUDA_VISIBLE_DEVICES"], "0" if explicit else "-1")
+            self.assertEqual(environment["HIP_VISIBLE_DEVICES"], "-1")
+            self.assertEqual(environment["ROCR_VISIBLE_DEVICES"], "-1")
+            self.assertNotIn("PYTHONPATH", environment)
+        with (mock.patch.object(qualification, "_platform_name", return_value="linux"),
+              mock.patch.object(qualification.subprocess, "run") as run):
+            with self.assertRaisesRegex(RuntimeError, "selection is invalid"):
+                qualification._json_process("", native_cuda_nf4=True)
+        run.assert_not_called()
+        for override in ("BNB_CUDA_VERSION", "BNB_ROCM_VERSION"):
+            with (self.subTest(override=override),
+                  mock.patch.object(qualification, "_platform_name", return_value="windows"),
+                  mock.patch.object(qualification, "_machine_name", return_value="x86_64"),
+                  mock.patch.dict(qualification.os.environ, {override: "123"}),
+                  mock.patch.object(qualification.subprocess, "run") as run):
+                with self.assertRaisesRegex(RuntimeError, "binary-version override"):
+                    qualification._json_process("", native_cuda_nf4=True)
+            run.assert_not_called()
+
+    def test_native_option_is_forwarded_only_as_explicit_qualification_consent(self):
+        with (mock.patch.object(qualification, "run_qualification", return_value={"status": "passed"}) as run,
+              redirect_stdout(io.StringIO())):
+            status = qualification.main(["--consent", "--native-cuda-nf4", "--profile-id", "declared"])
+        self.assertEqual(status, 0)
+        run.assert_called_once_with(consent=True, profile_id="declared", native_cuda_nf4=True)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,11 @@
 from PIL import Image
 
+
+def has_transparency(image: Image.Image) -> bool:
+    """Recognize stored alpha, including PNG palette and color-key transparency."""
+    return "A" in image.getbands() or "transparency" in image.info
+
+
 def resize(image: Image.Image | str | list[Image.Image | str], width: int, height: int, resample: int | str = Image.Resampling.BICUBIC) -> Image.Image | list[Image.Image]:
     """
     Resize an image or a list of images to the given width and height.
@@ -13,7 +19,7 @@ def resize(image: Image.Image | str | list[Image.Image | str], width: int, heigh
 
     if isinstance(resample, str):
         resample = resample.upper()
-        resample = Image.Resampling[resample] if resample in Image.Resampling else Image.Resampling.BICUBIC
+        resample = Image.Resampling.__members__.get(resample, Image.Resampling.BICUBIC)
 
     return image.resize((max(width, 1), max(height, 1)), resample=resample)
 
@@ -33,7 +39,7 @@ def cover(image: Image.Image | str | list[Image.Image | str], width: int, height
 
     if isinstance(resample, str):
         resample = resample.upper()
-        resample = Image.Resampling[resample] if resample in Image.Resampling else Image.Resampling.BICUBIC
+        resample = Image.Resampling.__members__.get(resample, Image.Resampling.BICUBIC)
 
     return PILCover(image, (max(width, 1), max(height, 1)), method=resample)
 
@@ -53,7 +59,7 @@ def fit(image: Image.Image | str | list[Image.Image | str], width: int, height: 
 
     if isinstance(resample, str):
         resample = resample.upper()
-        resample = Image.Resampling[resample] if resample in Image.Resampling else Image.Resampling.BICUBIC
+        resample = Image.Resampling.__members__.get(resample, Image.Resampling.BICUBIC)
 
     return PILFit(image, (max(width, 1), max(height, 1)), method=resample)
 
@@ -74,7 +80,7 @@ def contain(image: Image.Image | str | list[Image.Image | str], width: int, heig
 
     if isinstance(resample, str):
         resample = resample.upper()
-        resample = Image.Resampling[resample] if resample in Image.Resampling else Image.Resampling.BICUBIC
+        resample = Image.Resampling.__members__.get(resample, Image.Resampling.BICUBIC)
 
     return PILContain(image, (max(width, 1), max(height, 1)), method=resample)
 
@@ -95,6 +101,6 @@ def pad(image: Image.Image | str | list[Image.Image | str], width: int, height: 
 
     if isinstance(resample, str):
         resample = resample.upper()
-        resample = Image.Resampling[resample] if resample in Image.Resampling else Image.Resampling.BICUBIC
+        resample = Image.Resampling.__members__.get(resample, Image.Resampling.BICUBIC)
 
     return PILPad(image, (max(width, 1), max(height, 1)), method=resample, color=color)

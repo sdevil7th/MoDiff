@@ -1,5 +1,3 @@
-from source_contract_helpers import source_sha256
-
 import hashlib
 import json
 from pathlib import Path
@@ -197,14 +195,17 @@ class WanAnimate2ArtifactReviewTests(unittest.TestCase):
         self.assertEqual(reviewed["distilled"]["defaultGuidanceScale"], 1.0)
 
     def test_pinned_source_receipt_is_exact_while_live_qualification_stays_closed(self):
-        diffusers_root = Path(diffusers.__file__).resolve().parent
-        current_hashes = []
-        reviewed_hashes = []
-        for source in self.review["sourceReview"]["files"]:
-            relative = Path(source["path"]).relative_to("src/diffusers")
-            current_hashes.append(source_sha256(diffusers_root / relative))
-            reviewed_hashes.append(source["sha256"])
-        self.assertEqual(current_hashes, reviewed_hashes)
+        historical = json.loads((ROOT / "tests/fixtures/wan_animate_2_historical_source_review.v1.json").read_text(encoding="utf-8"))
+        self.assertEqual(historical["schemaVersion"], 1)
+        self.assertEqual(historical["source"], {
+            "repository": "https://github.com/huggingface/diffusers.git",
+            "revision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+            "comparisonDomain": "LF-normalized Git source bytes",
+        })
+        self.assertEqual(len(historical["files"]), 9)
+        self.assertEqual(self.review["sourceReview"]["files"], historical["files"])
+        # This independently pinned historical review is not rebound to the
+        # newer image catalog source and makes no video qualification renewal.
         self.assertEqual(self.review["admission"]["status"], "graph_qualified")
 
         source_review = self.review["sourceReview"]

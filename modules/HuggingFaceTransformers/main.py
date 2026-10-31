@@ -319,12 +319,22 @@ def _load_model(
     device = _normalized_device(device_value)
     source_receipt = _model_source_receipt(selection, revision)
     source = selection["value"]
+    from modiff.prompt_enhancement import validate_cached_selection
+    selected_snapshot = validate_cached_selection(selection, revision, task)
+    if selected_snapshot is not None:
+        # Both official factories consume the exact cache closure we checked;
+        # the sealed source receipt above retains the immutable Hub identity.
+        source = str(selected_snapshot)
     quantization_mode = str(quantization_value or "none").strip().casefold()
     if quantization_mode not in {"none", "bnb_4bit"}:
         raise ValueError("Transformers quantization must be exactly none or bnb_4bit.")
     quantization_config = None
+    image_text_quantization = None
     if quantization_mode == "bnb_4bit":
-        if (
+        if task == 'image-video-to-text':
+            from modiff.transformers_image_text_resources import image_text_nf4_policy
+            image_text_quantization = image_text_nf4_policy(selection, revision, dtype_name, device)
+        elif (
             task != "text-generation"
             or selection != {"source": "hub", "value": SMOLLM2_135M_INSTRUCT_REPO}
             or revision != SMOLLM2_135M_INSTRUCT_REVISION
@@ -339,11 +349,20 @@ def _load_model(
             bnb_4bit_quant_type="nf4",
             bnb_4bit_use_double_quant=True,
             bnb_4bit_compute_dtype=dtype,
+            **({'llm_int8_skip_modules': image_text_quantization['skipModules']}
+               if image_text_quantization is not None else {}),
         )
+    if task == 'image-video-to-text' and quantization_mode == 'none':
+        from modiff.transformers_image_text_resources import require_image_text_dense_capacity
+        require_image_text_dense_capacity(selected_snapshot, revision, dtype_name, device)
     common = {
         "local_files_only": True,
         "trust_remote_code": False,
     }
+    auto_loader_policy = {}
+    if task == 'image-video-to-text':
+        from modiff.ancillary_owner_lifecycle import image_text_auto_loader_policy
+        auto_loader_policy = image_text_auto_loader_policy()
     if revision is not None:
         common["revision"] = revision
     if task == "text-generation":
@@ -356,6 +375,8 @@ def _load_model(
         preprocessor_auto_class = "AutoProcessor"
         model_auto_class = "AutoModelForImageTextToText"
         preprocessor = transformers.AutoProcessor.from_pretrained(source, **common)
+        from modiff.ancillary_owner_lifecycle import before_image_text_factory
+        before_image_text_factory(preprocessor, selection=selection, revision=revision)
         auto_model = transformers.AutoModelForImageTextToText
         handle_kind = "transformers-image-text-to-text"
     elif task == "depth-estimation":
@@ -372,16 +393,29 @@ def _load_model(
         "weights_only": True,
         "low_cpu_mem_usage": True,
         **common,
+        **auto_loader_policy,
     }
     if quantization_config is not None:
         model_kwargs["quantization_config"] = quantization_config
         model_kwargs["device_map"] = {"": device}
+    vision_attention_policy = None
+    if task == 'image-video-to-text':
+        from modiff.transformers_image_text_resources import (
+            image_text_vision_attention_policy, apply_image_text_vision_attention_policy,
+        )
+        vision_attention_policy = image_text_vision_attention_policy(
+            selection, revision, dtype_name, device, quantization_mode)
     model = auto_model.from_pretrained(
         source,
         **model_kwargs,
     )
+    if task == 'image-video-to-text':
+        apply_image_text_vision_attention_policy(model, vision_attention_policy)
     if quantization_config is None:
         model.to(device)
+    elif image_text_quantization is not None:
+        from modiff.transformers_image_text_resources import validate_image_text_nf4_model
+        validate_image_text_nf4_model(model, image_text_quantization)
     model.eval()
     model_type, architectures = _config_metadata(model)
     receipt = _sealed_receipt(
@@ -409,6 +443,8 @@ def _load_model(
                         "quantType": "nf4",
                         "doubleQuant": True,
                         "computeDtype": dtype_name,
+                        **({'skipModules': image_text_quantization['skipModules']}
+                           if image_text_quantization is not None else {}),
                     }
                     if quantization_config is not None
                     else {"mode": "none"}
@@ -693,12 +729,30 @@ def _validated_handle(value: Any, *, task: str) -> tuple[Any, Any, dict[str, Any
             r"sha256:[0-9a-f]{64}", str(source.get("configSha256"))
         ):
             raise ValueError("Transformers model receipt has an invalid local source.")
+    if task == 'image-video-to-text':
+        from modiff.transformers_image_text_resources import validate_image_text_vision_attention_policy
+        runtime = receipt.get('runtime')
+        if not isinstance(runtime, dict):
+            raise ValueError('Transformers model receipt has an invalid runtime.')
+        validate_image_text_vision_attention_policy(model, source, runtime)
     return model, preprocessor, _json_copy(receipt)
 
 
-def _generation_controls(kwargs: dict[str, Any]) -> dict[str, Any]:
+def _require_current_image_text_owner(model):
+    # Lower-level/direct factory handles are intentionally unregistered. Once
+    # registered, the exact live manager record must remain authoritative.
+    model_id = vars(model).get('_mm_id') if hasattr(model, '__dict__') else None
+    if model_id is None:
+        return
+    from modiff.NodeBase import memory_manager
+    if not isinstance(model_id, str) or memory_manager.get_model(model_id) is not model:
+        raise ValueError('The image/text model is no longer registered with its owner. Reload the model.')
+    return model_id
+
+
+def _generation_controls(kwargs: dict[str, Any], *, maximum_new_tokens: int = MAX_NEW_TOKENS) -> dict[str, Any]:
     maximum = _bounded_int(
-        kwargs.get("max_new_tokens"), field="max_new_tokens", default=256, minimum=1, maximum=MAX_NEW_TOKENS
+        kwargs.get("max_new_tokens"), field="max_new_tokens", default=256, minimum=1, maximum=maximum_new_tokens
     )
     minimum = _bounded_int(kwargs.get("min_new_tokens"), field="min_new_tokens", default=0, minimum=0, maximum=maximum)
     sample = _bounded_bool(kwargs.get("do_sample"), field="do_sample", default=False)
@@ -803,7 +857,7 @@ def _token_prefix_matches(sequences: Any, input_ids: Any, input_tokens: int) -> 
         return False
 
 
-def _decode(preprocessor: Any, token_ids: Any) -> str:
+def _decode(preprocessor: Any, token_ids: Any, *, preserve_whitespace: bool = False) -> str:
     decoder = getattr(preprocessor, "decode", None)
     if callable(decoder):
         text = decoder(token_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)
@@ -817,7 +871,8 @@ def _decode(preprocessor: Any, token_ids: Any) -> str:
         text = decoded[0]
     if not isinstance(text, str) or "\x00" in text:
         raise RuntimeError("Transformers generation returned invalid text.")
-    text = text.strip()
+    if not preserve_whitespace:
+        text = text.strip()
     if len(text) > MAX_OUTPUT_CHARACTERS or len(text.encode("utf-8")) > MAX_OUTPUT_UTF8_BYTES:
         raise RuntimeError("Transformers generation exceeded the output text limit.")
     return text
@@ -1346,8 +1401,46 @@ class LoadImageTextToTextModel(NodeBase):
             "default": "float32",
         },
         "device": {"label": "Device", "type": "string", "options": DEVICE_LIST, "default": DEFAULT_DEVICE},
+        "quantization_mode": {
+            "label": "Quantization", "type": "string", "options": ["none", "bnb_4bit"], "default": "none",
+        },
         "receipt": {"label": "Model Receipt", "display": "output", "type": "object"},
     }
+
+    def __call__(self, **kwargs):
+        output = super().__call__(**kwargs)
+        if self.node_id is None:
+            return output
+        # Only normal cached dispatch owns the module. Direct execute()/factory
+        # callers keep their established unregistered handle semantics.
+        fresh = not self._mm_models
+        model = None
+        previous_id = None
+        try:
+            model, _processor, _receipt = _validated_handle(output['model'], task='image-video-to-text')
+            previous_id = vars(model).get('_mm_id') if hasattr(model, '__dict__') else None
+            if fresh:
+                self.mm_add(model)
+            model_id = _require_current_image_text_owner(model)
+            if model_id is None or self._mm_models != [model_id]:
+                raise ValueError('The cached image/text handle differs from its exact registered owner. Reload the model.')
+        except Exception:
+            # A failed registration must not leave NodeBase's raw successful
+            # output reusable. Remove only a newly inserted exact model record;
+            # borrowed/pre-existing records remain under their other owners.
+            if fresh:
+                from modiff.NodeBase import memory_manager
+                model_id = vars(model).get('_mm_id') if hasattr(model, '__dict__') else None
+                if (isinstance(model_id, str) and model_id != previous_id
+                        and memory_manager.get_model(model_id) is model):
+                    memory_manager.remove(model_id)
+                self._mm_models = []
+            self._cache_valid = False
+            self._cache_invalidated = True
+            self.params = {}
+            self.output = {key: None for key in self.output}
+            raise
+        return output
 
     def execute(self, **kwargs):
         if kwargs.get("pipeline_class", "AutoModelForImageTextToText") != "AutoModelForImageTextToText":
@@ -1358,6 +1451,7 @@ class LoadImageTextToTextModel(NodeBase):
             dtype_value=kwargs.get("dtype"),
             device_value=kwargs.get("device"),
             task="image-video-to-text",
+            quantization_value=kwargs.get("quantization_mode"),
         )
         return {"model": model, "receipt": receipt}
 
@@ -1369,8 +1463,17 @@ class GenerateImageVideoText(NodeBase):
     category = "Hugging Face Transformers"
     resizable = True
     params = {
+        'max_input_tokens': {'label': 'Input Token Limit', 'type': 'int',
+            'default': MAX_INPUT_TOKENS, 'min': 1, 'max': MAX_INPUT_TOKENS},
+        'max_image_pixels': {'label': 'Reference Pixel Limit', 'type': 'int',
+            'default': MAX_MEDIA_PIXELS, 'min': 65536, 'max': MAX_MEDIA_PIXELS},
         "model": {"label": "Model", "display": "input", "type": "transformers_image_text_to_text"},
         "prompt": {"label": "Prompt", "type": "text", "default": ""},
+        "operation": {"label": "Operation", "type": "string", "options": ["standard", "enhance_prompt", "enhance_prompt_append_details", "enhance_prompt_constrained_authored_v1"], "default": "standard", "hidden": True},
+        "enhancement_max_new_tokens": {"label": "Enhancement Token Limit", "type": "int", "default": 3584, "min": 1, "max": 3584, "hidden": True,
+            "description": "Used only by prompt enhancement; ordinary generation keeps Max New Tokens."},
+        "layout_conditioning": {"label": "Enhancement Layout", "type": "layout_conditioning", "display": "layout", "default": None, "hidden": True,
+            "fieldOptions": {"layoutConditioning": {"schemaVersion": 1, "sourceRegions": False}}},
         "images": {"label": "Images", "display": "input", "type": "image", "required": False},
         "video": {"label": "Video", "display": "input", "type": "video", "required": False},
         "use_chat_template": {"label": "Use Chat Template", "type": "boolean", "default": True},
@@ -1390,16 +1493,41 @@ class GenerateImageVideoText(NodeBase):
         },
         "text": {"label": "Generated Text", "display": "output", "type": "string"},
         "result": {"label": "Generation Result", "display": "output", "type": "object"},
+        "proposal_summary": {"label": "Prompt Proposal Summary", "display": "output", "type": "string", "hidden": True},
+        "proposal_diagnostic": {"label": "Rejected Proposal Diagnostic", "display": "output", "type": "string", "hidden": True},
     }
+
+    def __call__(self, **kwargs):
+        supplied = kwargs.get('model')
+        retained = self.params.get('model')
+        # A warm result still owns its retained input handle. Check it before
+        # NodeBase can return cached output; a new replacement may execute.
+        if self._cache_valid and ('model' not in kwargs or supplied is retained):
+            if isinstance(retained, dict):
+                _require_current_image_text_owner(retained.get('model'))
+        if isinstance(supplied, dict):
+            _require_current_image_text_owner(supplied.get('model'))
+        return super().__call__(**kwargs)
 
     def execute(self, **kwargs):
         import torch
 
         model, processor, receipt = _validated_handle(kwargs.get("model"), task="image-video-to-text")
+        _require_current_image_text_owner(model)
+        operation = kwargs.get("operation", "standard")
+        if operation in ("enhance_prompt", "enhance_prompt_append_details", "enhance_prompt_constrained_authored_v1"):
+            from modiff.prompt_enhancement import generate
+            return generate(self, model, processor, receipt, kwargs)
+        if operation != "standard":
+            raise ValueError("Choose the standard or reviewed prompt enhancement operation.")
+        if kwargs.get("layout_conditioning") is not None:
+            raise ValueError("Enhancement layout requires the explicit prompt enhancement operation.")
         prompt = _bounded_string(kwargs.get("prompt"), field="prompt")
         use_chat_template = _bounded_bool(kwargs.get("use_chat_template"), field="use_chat_template", default=True)
         controls = _generation_controls(kwargs)
         images, video, total_pixels = _normalized_media(kwargs.get("images"), kwargs.get("video"))
+        from modiff.transformers_image_text_resources import enforce_image_text_input_bounds
+        enforce_image_text_input_bounds(kwargs, images)
         rendered = _multimodal_prompt(
             processor,
             prompt=prompt,
@@ -1412,11 +1540,17 @@ class GenerateImageVideoText(NodeBase):
             processor_kwargs["images"] = images
         if video:
             processor_kwargs["videos"] = [video]
-        batch = _batch_to_device(processor(**processor_kwargs), device=receipt["runtime"]["device"])
+        batch = _batch_to_device(processor(**processor_kwargs), device='cpu')
+        enforce_image_text_input_bounds(kwargs, images, batch)
+        batch = _batch_to_device(batch, device=receipt["runtime"]["device"])
         input_ids = batch["input_ids"]
         input_tokens = _shape(input_ids)[1]
+        consumed = {key: value for key, value in kwargs.items()
+                    if key not in {'enhancement_max_new_tokens', 'layout_conditioning'}}
+        self.record_generation_inputs({**consumed, 'executed_task': 'image_to_text' if images and not video else None})
         with torch.inference_mode():
-            sequences = _output_sequences(model.generate(**batch, **controls))
+            sequences = _output_sequences(self.mm_exec(
+                lambda: model.generate(**batch, **controls), receipt['runtime']['device'], models=[model]))
         output_tokens = _shape(sequences)[1]
         prefix = output_tokens >= input_tokens and _token_prefix_matches(sequences, input_ids, input_tokens)
         generated = sequences[0, input_tokens:] if prefix else sequences[0]
@@ -1436,7 +1570,7 @@ class GenerateImageVideoText(NodeBase):
             "mediaPixels": total_pixels,
             "modelReceipt": receipt,
         }
-        return {"text": text, "result": result}
+        return {"text": text, "result": result, "proposal_summary": None, "proposal_diagnostic": None}
 
 
 class LoadAnyToAnyModel(NodeBase):
@@ -1597,6 +1731,7 @@ class PredictDepth(NodeBase):
         image, _pixels = _normalized_media_item(images[0], field="image")
         resolution = _bounded_int(kwargs.get("processing_resolution"), field="processing_resolution", default=0, minimum=0, maximum=2048)
         match_input = _bounded_bool(kwargs.get("match_input_resolution"), field="match_input_resolution", default=True)
+        self.record_generation_inputs({**kwargs, 'executed_task': 'depth_estimation'})
         return predict_depth(
             model, processor, image, receipt=receipt, resolution=resolution, match_input=match_input,
             convention=kwargs.get("depth_convention", "model_default"),
@@ -1621,6 +1756,15 @@ def get_depth_operation_contracts(modules):
     return contracts
 
 
+PROMPT_ENHANCEMENT_RECIPE_FIELDS = ('operation', 'enhancement_max_new_tokens', 'layout_conditioning')
+
+
+def prompt_enhancement_operation_schema():
+    """Explicit recipe presentation only; execution still verifies its selected adapter."""
+    return ({name: {'hidden': False} for name in PROMPT_ENHANCEMENT_RECIPE_FIELDS},
+            {'operation': 'enhance_prompt'})
+
+
 def image_text_operation_schema(pipeline, task, action):
     """Authoring-only projection of the existing finite image/text actions."""
     routes = {
@@ -1634,7 +1778,9 @@ def image_text_operation_schema(pipeline, task, action):
     if action != generator:
         raise ValueError("No reviewed image/text operation binding.")
     fields = {"images": {"required": task == "image_to_text", "hidden": task != "image_to_text"}}
-    values = {}
+    # Fresh caption drafts need a visible instruction accepted by the runtime.
+    # Execution still validates the supplied prompt; saved graphs keep theirs.
+    values = {"prompt": "Describe the image."} if task == "image_to_text" else {}
     if generator == "GenerateImageVideoText":
         fields["video"] = {"hidden": True, "required": False}
     else:
@@ -1664,6 +1810,7 @@ def get_image_text_operation_contracts(modules):
                 operation_id="model.load" if action == loader else "image.caption" if task == "image_to_text" else "image.generate",
                 node_key=f"modules.HuggingFaceTransformers.{action}",
                 field_overrides=fields, loader=action == loader,
+                excluded_fields=(*PROMPT_ENHANCEMENT_RECIPE_FIELDS, "proposal_summary", "proposal_diagnostic") if action == "GenerateImageVideoText" else (),
             )
             if contract is not None:
                 contracts.append(contract)

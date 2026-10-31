@@ -3,6 +3,7 @@ import logging
 logger = logging.getLogger('modiff')
 from huggingface_hub import scan_cache_dir, logging as hf_logging, repo_exists as hf_repo_exists, HfApi, try_to_load_from_cache
 from huggingface_hub.utils import validate_repo_id
+from huggingface_hub.errors import CacheNotFound
 hf_logging.set_verbosity_error()
 from modiff.config import CONFIG
 from modiff.model_artifact_catalog import resolve_model_revision
@@ -1189,14 +1190,63 @@ def _write_repo_download_plan(repo_id: str, cache_dir: str | None, plan: dict):
         logger.debug(f"Could not write download plan for {repo_id}: {e}")
 
 
+def _selected_snapshot_file_issues(repo_id: str, cache_dir: str | None, plan: dict | None):
+    """Validate selected paths, immutable identity and known sizes without scans.
+
+    This does not parse configs, hash payloads, inspect unselected files, or
+    establish runtime/model-content qualification.
+    """
+    file_issues = []
+    expected_files = _plan_validation_files(plan)
+    if expected_files:
+        from modiff.hf_cache_layout import resolve_snapshot_cache_file
+        repo_path = _repo_cache_dir(repo_id, cache_dir)
+        selected_snapshot = _snapshot_dir_for_plan(repo_path, plan)
+        identities = {value for key in ('snapshot_commit', 'revision')
+                      if isinstance(plan, dict) and isinstance(value := plan.get(key), str)
+                      and re.fullmatch(r'[0-9a-f]{40}', value)}
+        if selected_snapshot is None or (identities and identities != {selected_snapshot.name}):
+            file_issues.append('The selected snapshot does not match the requested immutable revision.')
+        else:
+            for entry in expected_files:
+                name = entry.get('name') if isinstance(entry, dict) else None
+                relative = PurePosixPath(name) if isinstance(name, str) else None
+                if (relative is None or not name or len(name) > 1024 or '\x00' in name
+                        or '\\' in name or ':' in name or relative.is_absolute()
+                        or relative.as_posix() != name or any(part in ('', '.', '..') for part in relative.parts)):
+                    file_issues.append('The selected snapshot contains an invalid relative file name.')
+                    continue
+                try:
+                    resolved = resolve_snapshot_cache_file(
+                        selected_snapshot / name, snapshot=selected_snapshot,
+                        cache_root=repo_path.parent, repository=repo_id,
+                    )
+                    expected_size = entry.get('size')
+                    # Unknown sizes stay unknown; presence/containment still apply.
+                    if type(expected_size) is int and expected_size >= 0 and resolved.stat().st_size != expected_size:
+                        file_issues.append(f'{name} does not have its exact expected byte size.')
+                except (OSError, RuntimeError, ValueError):
+                    file_issues.append(f'{name} is missing or outside its managed snapshot/blob cache.')
+    return file_issues
+
+
 def _repair_validation_summary(repo_id: str, cache_dir: str | None, plan: dict | None):
-    snapshot = _download_progress_snapshot(repo_id, cache_dir, plan)
     total_bytes = plan.get('total_bytes') if isinstance(plan, dict) else None
     total_file_count = plan.get('total_file_count') if isinstance(plan, dict) else None
-    completed_file_count = snapshot.get('completed_file_count')
-    active_files = snapshot.get('active_files') or []
     complete = True
     reasons = []
+    file_issues = _selected_snapshot_file_issues(repo_id, cache_dir, plan)
+    if file_issues:
+        # Invalid selected paths must not reach telemetry's directory/config scan.
+        # Keep the same keys, with conservative counts instead of borrowed bytes.
+        snapshot = {'path': str(_repo_cache_dir(repo_id, cache_dir)),
+                    'cache_dir': str(Path(cache_dir or CONFIG.hf['cache_dir'] or str(HUGGINGFACE_HUB_CACHE)).expanduser()),
+                    'downloaded_bytes': 0, 'file_count': 0, 'completed_file_count': 0,
+                    'completed_bytes': 0, 'active_files': [], 'current_file': None}
+    else:
+        snapshot = _download_progress_snapshot(repo_id, cache_dir, plan)
+    completed_file_count = snapshot.get('completed_file_count')
+    active_files = snapshot.get('active_files') or []
     if active_files:
         complete = False
         reasons.append(f"Active partial download files remain: {', '.join(active_files[:3])}.")
@@ -1206,7 +1256,13 @@ def _repair_validation_summary(repo_id: str, cache_dir: str | None, plan: dict |
     if isinstance(total_bytes, int) and total_bytes > 0 and (snapshot.get('completed_bytes') or 0) < total_bytes:
         complete = False
         reasons.append("Requested snapshot byte count is lower than Hugging Face metadata.")
-    loader_smoke = _loader_config_smoke_summary(repo_id, cache_dir, plan)
+    if file_issues:
+        complete = False
+        reasons.extend(file_issues[:3])
+        loader_smoke = {'attempted': False, 'complete': False,
+                        'reason': 'Loader config parsing waits for exact selected-file validation.'}
+    else:
+        loader_smoke = _loader_config_smoke_summary(repo_id, cache_dir, plan)
     if not loader_smoke.get('complete'):
         complete = False
         reasons.append(loader_smoke.get('reason') or 'The Diffusers loader configuration smoke test failed.')
@@ -1598,7 +1654,18 @@ def get_local_models(compact: bool = False):
     local_models = {}
     for _, cache_dir in _hf_cache_locations():
         try:
+            cache_path = Path(cache_dir if cache_dir is not None else HUGGINGFACE_HUB_CACHE).expanduser()
+            try:
+                # Optional default roots need not exist. stat() distinguishes
+                # that absence from permission errors, unlike exists().
+                cache_path.stat()
+            except FileNotFoundError:
+                logger.debug('Skipping absent Hugging Face cache directory %s', cache_path)
+                continue
             cache = scan_cache_dir(cache_dir)
+        except CacheNotFound:
+            # Cache folders are created on the first download, not discovery.
+            continue
         except Exception as e:
             logger.error(f'Error scanning cache directory {cache_dir or "default"}: {e}')
             continue
@@ -1855,15 +1922,60 @@ def exact_cached_snapshot_path(repo_id: str, revision: str, marker_file: str = '
     if alias != expected_alias:
         raise ValueError('Installed Hugging Face cache lookup did not preserve the requested snapshot marker.')
 
-    resolved_marker = resolve_managed_hf_cache_file(alias)
+    resolve_managed_hf_cache_file(alias)
     try:
         snapshot.resolve(strict=True).relative_to(
             _containing_hf_cache_root(snapshot)
         )
-        resolved_marker.relative_to(repository_cache.resolve(strict=True))
+        from modiff.hf_cache_layout import resolve_snapshot_cache_file
+        resolve_snapshot_cache_file(
+            alias, snapshot=snapshot, cache_root=_containing_hf_cache_root(snapshot), repository=repo_id,
+        )
     except (OSError, RuntimeError, ValueError) as error:
         raise ValueError('Installed Hugging Face snapshot resolves outside its managed repository cache.') from error
     return snapshot
+
+def observed_catalog_cache_selections(repo_id: str):
+    """Observe reviewed pipeline selections without trusting a download receipt.
+
+    Resolve the same marker and cache precedence as pipeline loaders, then stat
+    only the catalog's finite file list in that one snapshot. This is not content
+    verification, runtime qualification, or permission to download/repair files.
+    Other artifact layouts retain the existing inventory compatibility contract.
+    """
+    from modiff.model_artifact_catalog import catalog_download_inventory, read_model_artifact_catalog
+
+    observations = []
+    for declared in read_model_artifact_catalog().get('downloadInventories', []):
+        if str(declared.get('repo', '')).lower() != repo_id.lower():
+            continue
+        files = [entry.get('path') for entry in declared.get('files', []) if isinstance(entry, dict)]
+        marker = next((name for name in ('modular_model_index.json', 'model_index.json') if name in files), None)
+        if marker is None:
+            continue
+        revision = declared.get('revision')
+        if (not isinstance(revision, str) or re.fullmatch(r'[0-9a-f]{40}', revision) is None
+                or not 1 <= len(files) <= 256 or any(not isinstance(name, str) for name in files)):
+            raise ValueError('Invalid bounded catalog cache selection.')
+        inventory = catalog_download_inventory(repo_id, revision, files)
+        if inventory is None:
+            raise ValueError('The exact catalog cache selection is unavailable.')
+        repository = inventory['repo']
+        complete = False
+        try:
+            snapshot = exact_cached_snapshot_path(repository, revision, marker)
+            plan = {'revision': revision, 'snapshot_commit': revision, 'snapshot_path': str(snapshot),
+                    'files': [{'name': row['path'], 'size': row['byteSize']} for row in inventory['files']]}
+            complete = not _selected_snapshot_file_issues(repository, str(snapshot.parent.parent.parent), plan)
+        except (OSError, RuntimeError, ValueError):
+            # Missing, inaccessible, or escaped snapshots are explicit negative
+            # observations; an old receipt must not override this result.
+            pass
+        observations.append({'revision': revision, 'files': sorted(files), 'complete': complete})
+    if len(observations) > 32:
+        raise ValueError('Catalog cache selections exceed their bound.')
+    return observations or None
+
 
 def is_file_cached(repo_id: str, file: str | list[str] | tuple[str, ...]) -> bool:
     if isinstance(file, str):

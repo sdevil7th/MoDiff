@@ -2,8 +2,8 @@
 
 These definitions wrap MoDiff's existing task-generic loader/action/preview
 graphs.  They are deliberately derived from reviewed Studio execution specs,
-exact artifact revisions, and the app-managed Transformers optional-runtime
-contract.  Building the catalog is read-only and does not import Transformers,
+exact artifact revisions, and the declared base model-library requirements.
+Building the catalog is read-only and does not import Transformers,
 Torch, node modules, or model weights.
 """
 
@@ -16,7 +16,8 @@ import hashlib
 import json
 from typing import Any
 
-from modiff.diffusers_profiles import execution_profiles_for_execution
+from modiff.diffusers_profiles import OPTIONAL_RUNTIME_DELIVERY_BASE, execution_profiles_for_execution
+from modiff.base_runtime import base_model_runtime_contract
 from modiff.model_artifact_catalog import require_catalog_revision
 from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES
 from modiff.studio_execution_specs import STUDIO_EXECUTION_SPEC_DEFINITIONS, studio_execution_spec_for_pair
@@ -138,10 +139,25 @@ def _definition_and_blocks(spec_id: str) -> tuple[dict[str, Any], list[dict[str,
         raise ValueError(f"Transformers Cluster spec {spec_id!r} has no unique execution profile.")
     execution_profile = execution_profiles[0]
     runtime_profile_ids = execution_profile.optional_runtime_profile_ids_for_target()
-    if len(runtime_profile_ids) != 1 or runtime_profile_ids[0] not in OPTIONAL_RUNTIME_PROFILES:
+    if not runtime_profile_ids and execution_profile.optional_runtime_delivery == OPTIONAL_RUNTIME_DELIVERY_BASE:
+        base_contract = base_model_runtime_contract()
+        runtime_component = {
+            "name": "model_runtime",
+            "type": f"{base_contract['id']}@{base_contract['digest']}",
+            "creationMethod": "base_installation",
+            "reuseKey": ["model_runtime"],
+        }
+    elif len(runtime_profile_ids) == 1 and runtime_profile_ids[0] in OPTIONAL_RUNTIME_PROFILES:
+        runtime_profile_id = runtime_profile_ids[0]
+        runtime_profile = OPTIONAL_RUNTIME_PROFILES[runtime_profile_id]
+        runtime_component = {
+            "name": "optional_runtime",
+            "type": f"{runtime_profile_id}@{runtime_profile.spec_digest}",
+            "creationMethod": "explicit_app_setup",
+            "reuseKey": ["optional_runtime"],
+        }
+    else:
         raise ValueError(f"Transformers Cluster spec {spec_id!r} has no exact target runtime profile.")
-    runtime_profile_id = runtime_profile_ids[0]
-    runtime_profile = OPTIONAL_RUNTIME_PROFILES[runtime_profile_id]
     repository = str(profile["default_repo"])
     revision = require_catalog_revision(repository, model_type=model_type)
     binding_sources = sorted({str(source) for _role, _field_name, source in public_spec["bindings"]})
@@ -254,7 +270,7 @@ def _definition_and_blocks(spec_id: str) -> tuple[dict[str, Any], list[dict[str,
             "reasons": [
                 {
                     "code": "runtime_resource_admission_required",
-                    "message": "The materialized Cluster graph must pass exact optional-runtime, artifact, and resource checks before Run is enabled.",
+                    "message": "The materialized Cluster graph must pass runtime, artifact, and resource checks before Run is enabled.",
                 },
                 *(
                     []
@@ -310,12 +326,7 @@ def _definition_and_blocks(spec_id: str) -> tuple[dict[str, Any], list[dict[str,
         "requiredInputAlternatives": [],
         "stateKeys": [],
         "components": [
-            {
-                "name": "optional_runtime",
-                "type": f"{runtime_profile_id}@{runtime_profile.spec_digest}",
-                "creationMethod": "explicit_app_setup",
-                "reuseKey": ["optional_runtime"],
-            },
+            runtime_component,
             {
                 "name": "model",
                 "type": str(profile["pipeline_class"]),

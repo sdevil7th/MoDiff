@@ -332,8 +332,15 @@ def _handler(controller: SupervisorController):
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
             self.send_header("Access-Control-Allow-Headers", "Content-Type")
             self.send_header("Cache-Control", "no-store")
-            self.end_headers()
-            self.wfile.write(body)
+            try:
+                self.end_headers()
+                self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                # Navigation and request cancellation can close the client after
+                # this response was built. The control operation already finished;
+                # do not turn an undeliverable reply into a server failure.
+                self.close_connection = True
+                logger.debug("Supervisor client disconnected before its response finished.")
 
         def do_OPTIONS(self) -> None:
             if self._reject_untrusted_boundary():

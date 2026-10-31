@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from modiff.native_component_lora import ComponentLoraDeclaration
 from dataclasses import asdict, dataclass, replace
 import re
 
@@ -13,10 +14,12 @@ from modiff.diffusers_offload_modes import (
 from modiff.modular_contract_only_registry import CURRENT_PIN_CONTRACT_ONLY_MODULAR_PIPELINES
 from modiff.modular_workflow_discovery import reviewed_modular_workflow_contract
 from modiff.model_artifact_catalog import require_catalog_revision
+from modiff.cosmos_safety_contract import COSMOS_SAFETY_RUNTIME_PROFILE_ID
 from modiff.optional_runtimes import (
     TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
     TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,
     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,
     optional_runtime_target,
     public_optional_runtime_profiles,
 )
@@ -211,6 +214,108 @@ MPS_EXPERIMENTAL_POLICY = ExpertMpsPolicy(1, "experimental", "open_setup")
 
 
 @dataclass(frozen=True)
+class AdapterAuthoringPolicy:
+    """Reviewed graph-edit permission, separate from model/runtime qualification."""
+
+    schema_version: int
+    media_kind: str
+    adapter_node_key: str
+    tasks: tuple[str, ...]
+    max_owned_adapters: int
+    repository_revisions: tuple[tuple[str, str], ...]
+    required_controls: tuple[tuple[str, bool | str | None], ...] = ()
+
+    def __post_init__(self) -> None:
+        repository = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,95}/[A-Za-z0-9_][A-Za-z0-9_.-]{0,95}")
+        task = re.compile(r"[a-z][a-z0-9_]{0,63}")
+        if (
+            type(self.schema_version) is not int or self.schema_version != 1
+            or type(self.media_kind) is not str or type(self.adapter_node_key) is not str
+            or (self.media_kind, self.adapter_node_key) not in {
+                ("image", "modules.ModularDiffusers.Lora"),
+                ("image", "modules.DiffusersImage.LoadAdapter"),
+                ("audio", "modules.DiffusersAudio.LoadAdapter"),
+            }
+            or not isinstance(self.tasks, tuple) or not 1 <= len(self.tasks) <= 32
+            or any(not isinstance(value, str) or task.fullmatch(value) is None for value in self.tasks)
+            or len(set(self.tasks)) != len(self.tasks)
+            or type(self.max_owned_adapters) is not int or not 1 <= self.max_owned_adapters <= 32
+            or (self.media_kind == "audio" and self.max_owned_adapters != 1)
+            or not isinstance(self.repository_revisions, tuple) or not 1 <= len(self.repository_revisions) <= 32
+            or any(
+                not isinstance(pair, tuple) or len(pair) != 2
+                or not isinstance(pair[0], str) or repository.fullmatch(pair[0]) is None
+                or not isinstance(pair[1], str) or re.fullmatch(r"[0-9a-f]{40}", pair[1]) is None
+                for pair in self.repository_revisions
+            )
+            or len({pair[0].lower() for pair in self.repository_revisions}) != len(self.repository_revisions)
+        ):
+            raise ValueError("Invalid reviewed adapter authoring policy.")
+        if (
+            type(self.required_controls) is not tuple or len(self.required_controls) > 32
+            or any(
+                type(pair) is not tuple or len(pair) != 2
+                or type(pair[0]) is not str or re.fullmatch(r"[a-z][a-z0-9_]{0,63}", pair[0]) is None
+                or pair[0] in {"constructor", "prototype", "__proto__"}
+                or not (
+                    pair[1] is None or type(pair[1]) is bool
+                    or (type(pair[1]) is str and 1 <= len(pair[1].encode("utf-16-le", errors="surrogatepass")) // 2 <= 128
+                        and pair[1] == pair[1].strip()
+                        and not any(ord(char) < 32 or 127 <= ord(char) <= 159 or ord(char) in (0x2028, 0x2029) for char in pair[1]))
+                )
+                for pair in self.required_controls
+            )
+            or len({pair[0] for pair in self.required_controls}) != len(self.required_controls)
+        ):
+            raise ValueError("Invalid reviewed adapter authoring controls.")
+
+    def validate_required_controls(self, params) -> None:
+        """Validate declarations against registered metadata without construction."""
+        if not self.required_controls:
+            return
+        if not isinstance(params, dict):
+            raise ValueError("Adapter authoring requires current registered loader controls.")
+        for name, expected in self.required_controls:
+            definition = params.get(name)
+            if not isinstance(definition, dict) or definition.get("display") == "output":
+                raise ValueError("Adapter authoring control is not a registered loader input: " + name)
+            declared = definition.get("type")
+            types = declared if isinstance(declared, list) else [declared]
+            if (not 1 <= len(types) <= 16 or any(
+                    type(value) is not str or not 1 <= len(value) <= 128 or value != value.strip()
+                    or any(ord(char) < 32 or 127 <= ord(char) <= 159 or ord(char) in (0x2028, 0x2029) for char in value)
+                    for value in types)):
+                raise ValueError("Adapter authoring control has malformed declared types: " + name)
+            if expected is None:
+                valid = (definition.get("display") == "input"
+                         and definition.get("required", False) is False
+                         and definition.get("value") is None and definition.get("default") is None
+                         and all(isinstance(value, str) and value for value in types))
+            elif type(expected) is bool:
+                valid = any(value in {"bool", "boolean"} for value in types)
+            else:
+                valid = any(value in {"str", "string", "text"} for value in types)
+                options = definition.get("options")
+                if options is not None:
+                    valid = valid and isinstance(options, (list, dict)) and expected in options
+            if not valid:
+                raise ValueError("Adapter authoring control is incompatible with registered metadata: " + name)
+
+    def to_public_dict(self) -> dict:
+        public = {
+            "schemaVersion": self.schema_version,
+            "mediaKind": self.media_kind,
+            "adapterNodeKey": self.adapter_node_key,
+            "tasks": list(self.tasks),
+            "maxOwnedAdapters": self.max_owned_adapters,
+            "repositoryRevisions": [{"repo": repo, "revision": revision} for repo, revision in self.repository_revisions],
+        }
+        if self.required_controls:
+            public["requiredControls"] = dict(self.required_controls)
+        return public
+
+
+@dataclass(frozen=True)
 class DiffusersExecutionProfile:
     id: str
     model_type: str
@@ -228,23 +333,54 @@ class DiffusersExecutionProfile:
     max_low_memory_side: int | None
     max_low_memory_steps: int | None
     live_proof: bool
-    # All current profiles load Transformers-backed components and use the PEFT
-    # integration surface.  A future pure-Diffusers profile must opt out with
-    # ``optional_runtime_profiles=()`` rather than inheriting this composite.
-    optional_runtime_profiles: tuple[str, ...] = (TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,)
+    # Standard Transformers and PEFT components belong to the base runtime.
+    # A specialized profile declares only its additional optional contract.
+    optional_runtime_profiles: tuple[str, ...] = ()
     # Keep optional-runtime discovery metadata separate from executable
-    # delivery. Linux/Windows x86-64 use the qualified overlay; unqualified
-    # architectures remain explicitly base-delivered.
-    optional_runtime_delivery: str = OPTIONAL_RUNTIME_DELIVERY_OVERLAY
-    optional_runtime_platform_deliveries: tuple[tuple[str, str, str], ...] = OPTIONAL_RUNTIME_PLATFORM_DELIVERIES
+    # delivery. Explicit optimization overlays retain their qualified targets.
+    optional_runtime_delivery: str = OPTIONAL_RUNTIME_DELIVERY_BASE
+    optional_runtime_platform_deliveries: tuple[tuple[str, str, str], ...] = ()
     compatible_repos: tuple[str, ...] = ()
     expert_quantization_modes: tuple[str, ...] = ()
     expert_cuda_policy: ExpertCudaPolicy | None = None
     expert_quantization_policy: ExpertQuantizationPolicy | None = None
     expert_mps_policy: ExpertMpsPolicy | None = None
     public: bool = True
+    # Private reviewed loading targets; discovery never imports model classes.
+    lora_loadable_components: tuple[str, ...] = ()
+    # Explicit authoring scope; upstream loading targets alone do not grant edits.
+    adapter_authoring: AdapterAuthoringPolicy | None = None
+    component_lora_declaration: ComponentLoraDeclaration | None = None
+    required_diffusers_provider: str | None = None
+    replaces_private_authoring_profile: str | None = None
 
     def __post_init__(self) -> None:
+        if self.required_diffusers_provider is not None:
+            from modiff.optional_runtimes import OPTIONAL_RUNTIME_PROFILES
+            selected = (OPTIONAL_RUNTIME_PROFILES.get(self.required_diffusers_provider)
+                        if type(self.required_diffusers_provider) is str else None)
+            if (selected is None or not selected.provides_diffusers
+                    or self.required_diffusers_provider not in self.optional_runtime_profiles
+                    or self.optional_runtime_delivery != OPTIONAL_RUNTIME_DELIVERY_OVERLAY
+                    or any(delivery != OPTIONAL_RUNTIME_DELIVERY_OVERLAY
+                           for _platform, _machine, delivery in self.optional_runtime_platform_deliveries)):
+                raise ValueError('A required Diffusers provider must be an exact declared overlay dependency.')
+        if self.replaces_private_authoring_profile is not None and (
+                type(self.replaces_private_authoring_profile) is not str
+                or self.replaces_private_authoring_profile == self.id
+                or not self.public or self.required_diffusers_provider is None):
+            raise ValueError('A public authoring replacement requires an exact provider-bound profile.')
+        declaration = self.component_lora_declaration
+        if declaration is not None and (type(declaration) is not ComponentLoraDeclaration
+                or declaration.profile_id != self.id or declaration.pipeline_class != self.pipeline_class
+                or declaration.repository != self.default_repo or declaration.task not in self.modes
+                or self.backend_path != 'modules.ModularDiffusers.ModelsLoader'):
+            raise ValueError('Invalid selected component LoRA profile contract.')
+        if (not isinstance(self.lora_loadable_components, tuple) or len(self.lora_loadable_components) > 32
+                or any(not isinstance(name, str) or not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]{0,127}', name)
+                       for name in self.lora_loadable_components)
+                or len(set(self.lora_loadable_components)) != len(self.lora_loadable_components)):
+            raise ValueError('Invalid reviewed LoRA loading components.')
         expected_loader = {
             "modular-diffusers": ("modules.ModularDiffusers", "ModelsLoader"),
             "dynamic-modular": ("modules.ModularDiffusers", "DynamicBlockNode"),
@@ -312,6 +448,21 @@ class DiffusersExecutionProfile:
                 f"{self.loader_module}.{self.loader_action} does not match execution path "
                 f"{self.execution_path!r}."
             )
+        if self.adapter_authoring is not None:
+            policy = self.adapter_authoring
+            if (
+                type(policy) is not AdapterAuthoringPolicy
+                or (self.execution_path, self.loader_module, self.loader_action) != {
+                    "modules.ModularDiffusers.Lora": ("modular-diffusers", "modules.ModularDiffusers", "ModelsLoader"),
+                    "modules.DiffusersImage.LoadAdapter": ("direct-diffusers-image", "modules.DiffusersImage", "LoadPipeline"),
+                    "modules.DiffusersAudio.LoadAdapter": ("direct-diffusers-audio", "modules.DiffusersAudio", "LoadPipeline"),
+                }.get(policy.adapter_node_key)
+                or not set(policy.tasks).issubset(self.modes)
+                or not set(repo for repo, _revision in policy.repository_revisions).issubset(
+                    {self.default_repo, self.fallback_repo, *self.compatible_repos}
+                )
+            ):
+                raise ValueError(f"Execution profile {self.id!r} has an incompatible adapter authoring policy.")
         reviewed_quantization_modes = {
             "bnb_4bit",
             "bnb_8bit",
@@ -404,7 +555,21 @@ class DiffusersExecutionProfile:
         if observe_optional_runtime and (platform_name is not None or machine is not None):
             raise ValueError("Runtime observations cannot use an explicit target")
         data = asdict(self)
+        data.pop('lora_loadable_components')
+        data.pop("adapter_authoring")
+        data.pop("component_lora_declaration")
+        if self.required_diffusers_provider is None:
+            data.pop("required_diffusers_provider")
+        if self.replaces_private_authoring_profile is None:
+            data.pop('replaces_private_authoring_profile')
         public = {key: list(value) if isinstance(value, tuple) else value for key, value in data.items()}
+        if self.required_diffusers_provider is not None:
+            from modiff.studio_execution_specs import studio_operation_authoring_selections
+            recipes = studio_operation_authoring_selections([public])
+            if recipes:
+                public['authoringRecipes'] = recipes
+        if self.adapter_authoring is not None:
+            public["adapterAuthoring"] = self.adapter_authoring.to_public_dict()
         public["optional_runtime_delivery"] = self.optional_runtime_delivery_for_target(
             platform_name=platform_name, machine=machine,
         )
@@ -557,6 +722,7 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         loader_action="ModelsLoader",
         execution_path="modular-diffusers",
         pipeline_class="QwenImageModularPipeline",
+        lora_loadable_components=("transformer",),
         default_repo=QWEN_IMAGE_2512_REPO,
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
@@ -604,6 +770,7 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         loader_action="ModelsLoader",
         execution_path="modular-diffusers",
         pipeline_class="QwenImageEditModularPipeline",
+        lora_loadable_components=("transformer",),
         default_repo="Qwen/Qwen-Image-Edit",
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
@@ -627,6 +794,7 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         loader_action="ModelsLoader",
         execution_path="modular-diffusers",
         pipeline_class="QwenImageEditPlusModularPipeline",
+        lora_loadable_components=("transformer",),
         default_repo="Qwen/Qwen-Image-Edit-2511",
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
@@ -650,6 +818,7 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
         loader_action="ModelsLoader",
         execution_path="modular-diffusers",
         pipeline_class="QwenImageLayeredModularPipeline",
+        lora_loadable_components=("transformer",),
         default_repo="Qwen/Qwen-Image-Layered",
         fallback_repo=None,
         quantizable_components=("transformer", "text_encoder"),
@@ -696,9 +865,22 @@ DIFFUSERS_EXECUTION_PROFILES: dict[str, DiffusersExecutionProfile] = {
     ),
 }
 
+def _execution_profile_from_definition(definition: dict) -> DiffusersExecutionProfile:
+    values = dict(definition)
+    if "adapter_authoring" in values:
+        declaration = values["adapter_authoring"]
+        if not isinstance(declaration, dict):
+            raise ValueError("Adapter authoring declarations must be explicit policy records.")
+        try:
+            values["adapter_authoring"] = AdapterAuthoringPolicy(**declaration)
+        except TypeError as exc:
+            raise ValueError("Invalid reviewed adapter authoring policy fields.") from exc
+    return DiffusersExecutionProfile(**values)
+
+
 DIFFUSERS_EXECUTION_PROFILES.update(
     {
-        profile_id: DiffusersExecutionProfile(**definition)
+        profile_id: _execution_profile_from_definition(definition)
         for profile_id, definition in studio_execution_profile_definitions().items()
     }
 )
@@ -747,6 +929,41 @@ DIFFUSERS_EXECUTION_PROFILES["z-image:auto"] = replace(
     DIFFUSERS_EXECUTION_PROFILES["z-image:auto"],
     expert_mps_policy=MPS_EXPERIMENTAL_POLICY,
 )
+
+# Historical execution IDs remain valid, but ordinary model libraries now ship
+# with the application. Only profiles with additional optional packages retain
+# an overlay requirement; old saved workflow identities need no rewrite.
+BASE_MODEL_RUNTIME_PROFILE_IDS = frozenset({
+    TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID,
+    TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,
+})
+for profile_id, profile in tuple(DIFFUSERS_EXECUTION_PROFILES.items()):
+    if profile.optional_runtime_profiles and set(profile.optional_runtime_profiles).issubset(BASE_MODEL_RUNTIME_PROFILE_IDS):
+        DIFFUSERS_EXECUTION_PROFILES[profile_id] = replace(
+            profile,
+            optional_runtime_profiles=(),
+            optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_BASE,
+            optional_runtime_platform_deliveries=(),
+        )
+    elif (profile.required_diffusers_provider is not None
+          or profile.optional_runtime_profiles == (COSMOS_SAFETY_RUNTIME_PROFILE_ID,)):
+        # Mandatory providers and safety are never supplied by the native base.
+        # Unsupported targets remain blocked by their overlay qualification.
+        DIFFUSERS_EXECUTION_PROFILES[profile_id] = replace(
+            profile,
+            optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
+            optional_runtime_platform_deliveries=tuple(
+                (platform_name, machine, OPTIONAL_RUNTIME_DELIVERY_OVERLAY)
+                for platform_name, machine, _delivery in OPTIONAL_RUNTIME_PLATFORM_DELIVERIES
+            ),
+        )
+    elif profile.optional_runtime_profiles:
+        DIFFUSERS_EXECUTION_PROFILES[profile_id] = replace(
+            profile,
+            optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
+            optional_runtime_platform_deliveries=OPTIONAL_RUNTIME_PLATFORM_DELIVERIES,
+        )
 
 SDXL_BASE_REPO = "stabilityai/stable-diffusion-xl-base-1.0"
 
@@ -952,10 +1169,12 @@ def execution_profiles_for_execution(
 
     normalized_model_type = str(model_type or "").strip()
     normalized_mode = str(mode or "").strip()
+    from modiff.studio_execution_specs import studio_public_authoring_replacements
+    replaced = studio_public_authoring_replacements()
     return tuple(
         profile
         for profile in DIFFUSERS_EXECUTION_PROFILES.values()
-        if not profile.operation_recipe
+        if profile.id not in replaced and not profile.operation_recipe
         and profile.model_type == normalized_model_type and (not normalized_mode or normalized_mode in profile.modes)
     )
 
@@ -1000,9 +1219,10 @@ def resolve_execution_profiles_for_loader(
             replace(
                 profile,
                 optional_runtime_profiles=(TRANSFORMERS_MAIN_PEFT_QUANTO_RUNTIME_PROFILE_ID,),
+                optional_runtime_delivery=OPTIONAL_RUNTIME_DELIVERY_OVERLAY,
+                optional_runtime_platform_deliveries=(),
             )
             if quantization_mode in profile.expert_quantization_modes
-            and profile.optional_runtime_delivery_for_target() == OPTIONAL_RUNTIME_DELIVERY_OVERLAY
             else profile
             for profile in profiles
         )
@@ -1186,7 +1406,7 @@ def public_experimental_pipelines(
                 for profile_id in profile.get("optional_runtime_profiles", [])
             )
         )
-        if not optional_runtime_profile_ids:
+        if not optional_runtime_profile_ids and not execution_profiles:
             optional_runtime_profile_ids = list(
                 pipeline["optionalRuntimeProfileIds"]
                 if "optionalRuntimeProfileIds" in pipeline

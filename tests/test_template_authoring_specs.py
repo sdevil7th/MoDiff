@@ -5,7 +5,9 @@ from pathlib import Path
 import subprocess
 import sys
 import unittest
+from unittest.mock import patch
 
+from modiff import template_authoring_specs
 from modiff.template_authoring_specs import (
     TemplateAuthoringSpecError,
     build_template_authoring_spec_ledger,
@@ -51,20 +53,39 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "authoringSpecCount": 148,
-                "promptDraftedCount": 123,
-                "promptNotApplicableCount": 25,
-                "canonicalDefaultsCapturedCount": 148,
-                "inputSelectionPendingCount": 93,
-                "rightsReviewPendingCount": 148,
-                "generationPendingCount": 148,
+                "authoringSpecCount": 155,
+                "promptDraftedCount": 129,
+                "promptNotApplicableCount": 26,
+                "canonicalDefaultsCapturedCount": 155,
+                "inputSelectionPendingCount": 96,
+                "rightsReviewPendingCount": 155,
+                "generationPendingCount": 155,
                 "assetCount": 0,
                 "authoringStateCounts": {
-                    "draft_complete_execution_pending": 55,
-                    "draft_complete_input_selection_pending": 93,
+                    "draft_complete_execution_pending": 59,
+                    "draft_complete_input_selection_pending": 96,
                 },
             },
         )
+
+    def test_ctc_authoring_keeps_audio_input_rights_and_execution_pending(self):
+        specification = next(
+            row for row in self.ledger["specifications"]
+            if row["canonicalWorkflowId"] == "HuggingFaceCTCSpeechRecognitionModel:speech_to_text"
+        )
+        self.assertEqual(specification["mediaKind"], "json")
+        self.assertEqual(specification["authoringState"], "draft_complete_input_selection_pending")
+        self.assertEqual(specification["promptPlan"]["status"], "not_applicable")
+        self.assertIsNone(specification["promptPlan"]["prompt"])
+        self.assertEqual(
+            [(item["field"], item["mediaKind"], item["minimumCount"])
+             for item in specification["inputPlan"]["items"]],
+            [("sourceAudio", "audio", 1)],
+        )
+        self.assertEqual(specification["artifactPlan"]["requiredArtifacts"], ["facebook/wav2vec2-base-960h"])
+        self.assertEqual(specification["generationPlan"]["status"], "blocked_pending_external_evidence")
+        self.assertEqual(specification["assets"], [])
+        self.assertTrue(all(value is False for value in specification["claims"].values()))
 
     def test_every_hidden_candidate_has_one_original_authoring_spec(self):
         candidate_by_id = {row["canonicalWorkflowId"]: row for row in self.candidates["contracts"]}
@@ -85,6 +106,63 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
                 self.assertEqual(specification["publicationState"], "hidden_candidate")
                 self.assertEqual(specification["assetState"], "not_generated")
                 self.assertEqual(specification["assets"], [])
+
+    def test_experimental_canonical_candidates_have_hidden_authoring_specs(self):
+        experimental = {row["id"]: row for row in self.manifest["experimentalWorkflows"]}
+        self.assertEqual(
+            set(experimental),
+            {
+                "Flux3DistilledModularPipeline:text_to_image",
+                "Flux3DistilledModularPipeline:edit_image",
+                "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_lora_style",
+                "Flux3ModularPipeline:text_to_image",
+                "Flux3ModularPipeline:edit_image",
+                "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style",
+            },
+        )
+        ledger = build_template_authoring_spec_ledger(ROOT)
+        specifications = {row["canonicalWorkflowId"]: row for row in ledger["specifications"]}
+        ordinary_ids = {row["id"] for row in self.manifest["workflows"]}
+        self.assertTrue(ordinary_ids.isdisjoint(experimental))
+        for workflow_id, workflow in experimental.items():
+            with self.subTest(workflow=workflow_id):
+                specification = specifications[workflow_id]
+                self.assertEqual(
+                    specification["canonicalGraph"],
+                    {"path": workflow["graphPath"], "sha256": workflow["graphHash"]},
+                )
+                self.assertEqual(specification["artifactPlan"]["requiredArtifacts"], workflow["requiredArtifacts"])
+                self.assertEqual(specification["publicationState"], "hidden_candidate")
+                self.assertEqual(specification["assetState"], "not_generated")
+                self.assertEqual(specification["assets"], [])
+                self.assertTrue(all(value is False for value in specification["claims"].values()))
+                self.assertEqual(specification["rightsPlan"]["status"], "review_required")
+                self.assertEqual(specification["generationPlan"]["status"], "blocked_pending_external_evidence")
+                self.assertIn("exact_runtime_execution_receipt_required", specification["generationPlan"]["blockers"])
+                self.assertEqual(workflow["runtimeQualificationStatus"], "unqualified")
+                self.assertEqual(workflow["optimizationQualificationStatus"], "unqualified")
+                self.assertEqual(workflow["qualifiedRuntimeProfiles"], [])
+
+    def test_experimental_manifest_lookup_rejects_missing_and_duplicate_identities(self):
+        missing = copy.deepcopy(self.manifest)
+        missing["experimentalWorkflows"].pop()
+        duplicate = copy.deepcopy(self.manifest)
+        duplicate["experimentalWorkflows"].append(copy.deepcopy(duplicate["workflows"][0]))
+        read_json = template_authoring_specs._read_json
+
+        for manifest, message in (
+            (missing, "no exact workflow manifest record"),
+            (duplicate, "ids must be unique strings"),
+        ):
+            def read_with_manifest(root, relative_path, *, label):
+                value, sha = read_json(root, relative_path, label=label)
+                return (manifest, sha) if relative_path == "data/workflow-library-manifest.json" else (value, sha)
+
+            with self.subTest(message=message), patch.object(
+                template_authoring_specs, "_read_json", side_effect=read_with_manifest
+            ):
+                with self.assertRaisesRegex(TemplateAuthoringSpecError, message):
+                    build_template_authoring_spec_ledger(ROOT)
 
     def test_prompt_drafts_are_original_bounded_and_mode_complete(self):
         no_prompt_modes = {
@@ -293,6 +371,14 @@ class TemplateAuthoringSpecTests(unittest.TestCase):
         graph = copy.deepcopy(self.ledger)
         graph["specifications"][0]["canonicalGraph"]["sha256"] = "0" * 64
         mutations.append(graph)
+
+        experimental_graph = copy.deepcopy(self.ledger)
+        experimental_specification = next(
+            row for row in experimental_graph["specifications"]
+            if row["canonicalWorkflowId"] == "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style"
+        )
+        experimental_specification["canonicalGraph"]["sha256"] = "0" * 64
+        mutations.append(experimental_graph)
 
         for mutated in mutations:
             _reseal(mutated)

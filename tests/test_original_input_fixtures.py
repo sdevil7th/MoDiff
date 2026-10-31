@@ -122,12 +122,28 @@ class OriginalInputFixtureLiveLedgerTests(unittest.TestCase):
             ledger = write_original_input_fixtures(ROOT, destination=Path(directory))
         after = hashlib.sha256(path.read_bytes()).hexdigest()
         self.assertEqual(before, after)
-        self.assertEqual(ledger["summary"]["workflowCount"], 93)
+        self.assertEqual(ledger["summary"]["workflowCount"], 96)
         self.assertTrue(ledger["policy"]["doesNotMutateAuthoringLedger"])
         self.assertTrue(ledger["policy"]["doesNotSelectInputs"])
         mapped = {item["canonicalWorkflowId"] for item in ledger["workflows"]}
         self.assertIn("AnimateDiffControlNetPipeline:control_to_video", mapped)
+        self.assertTrue({
+            "Flux3DistilledModularPipeline:edit_image",
+            "Flux3ModularPipeline:edit_image",
+        }.issubset(mapped))
         self.assertEqual(ledger["boundary"]["authoringSpecMutated"], False)
+        ctc = next(
+            item for item in ledger["workflows"]
+            if item["canonicalWorkflowId"] == "HuggingFaceCTCSpeechRecognitionModel:speech_to_text"
+        )
+        self.assertEqual((ctc["mode"], ctc["mediaKind"]), ("speech_to_text", "json"))
+        self.assertEqual(len(ctc["items"]), 1)
+        item = ctc["items"][0]
+        self.assertEqual((item["field"], item["mediaKind"], item["minimumCount"]), ("sourceAudio", "audio", 1))
+        self.assertEqual([fixture["fileName"] for fixture in item["fixtures"]], ["tone_a.wav"])
+        self.assertEqual(item["rightsState"], "review_required")
+        self.assertFalse(item["authoringLedgerSelected"])
+        self.assertTrue(all(value is False for value in ctc["claims"].values()))
 
 
 if __name__ == "__main__":

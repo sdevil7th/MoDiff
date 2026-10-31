@@ -1,0 +1,481 @@
+"""Bounded source declarations for the existing native FLUX 3 Auto path.
+
+These are parameter/loading minima, bounded source-derived working reservations
+and ordinary headroom policy, not measured peak inference budgets or native
+output qualification. No model is imported.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+import struct
+
+from modiff.artifact_weight_memory import (
+    _loading_json_file, _snapshot_file, artifact_parameter_lower_bound,
+    artifact_parameter_conversion_reserve,
+    _loading_shard,
+)
+from modiff.modular_weight_formats import _header, _selected_recipe
+from modiff.runtime_profile import normalized_arch
+
+
+RECIPE_ID = 'flux3-fp8r-windows-model-cpu:v1'
+NF4_RECIPE_ID = 'flux3-nvfp4-text-nf4-windows-model-cpu:v1'
+LINUX_RECIPE_ID = 'flux3-fp8r-linux-gfx1151-shared:v1'
+BOUNDED_RECIPE_IDS = frozenset({RECIPE_ID, NF4_RECIPE_ID, LINUX_RECIPE_ID})
+PUBLIC_PROFILES = frozenset({'flux3-klein:official-provider:v1', 'flux3-klein-base:official-provider:v1'})
+
+
+def linux_shared_hardware(hardware):
+    """Identify one observed ROCm gfx1151 primary shared-memory accelerator.
+
+    Dedicated VRAM stays dedicated VRAM. This only admits the separate recipe;
+    the graph planner still checks both the accelerator aperture and the sum of
+    distinct CPU/device allocations against the single physical host pool.
+    """
+    if not isinstance(hardware, dict):
+        return False
+    accelerator = hardware.get('accelerator')
+    runtime = hardware.get('runtime')
+    if not isinstance(accelerator, dict) or not isinstance(runtime, dict):
+        return False
+    observed = runtime.get('hardware')
+    if not isinstance(observed, dict) or not isinstance(observed.get('torch'), dict) or not isinstance(observed.get('devices'), list):
+        return False
+    torch = observed['torch']
+    devices = [d for d in observed.get('devices', []) if isinstance(d, dict) and d.get('type') == 'cuda']
+    if (hardware.get('platform') != 'linux'
+            or normalized_arch(str(hardware.get('architecture') or 'unknown')) != 'x86_64'
+            or hardware.get('runtimeBackend') not in (None, 'rocm')
+            or hardware.get('backend') not in (None, 'rocm')
+            or accelerator.get('kind') != 'cuda' or accelerator.get('backend') != 'rocm'
+            or accelerator.get('vendor') != 'amd'
+            or accelerator.get('architecture') != 'gfx1151'
+            or accelerator.get('memoryKind') != 'shared'
+            or type(torch.get('hip_version')) is not str or not torch['hip_version']
+            or type(torch.get('cuda_device_count')) is not int or torch['cuda_device_count'] != 1
+            or len(devices) != 1):
+        return False
+    device = devices[0]
+    if type(device.get('index')) is not int:
+        return False
+    if any(device.get(k) != v for k, v in {
+            'device': 'cuda:0', 'index': 0, 'backend': 'rocm', 'vendor': 'amd',
+            'architecture': 'gfx1151', 'memory_kind': 'shared'}.items()):
+        return False
+    return (all(type(device.get(key)) is int and 0 < device[key] <= 2**63 for key in
+                ('torch_vram_total', 'torch_vram_free', 'shared_memory_total', 'shared_memory_free'))
+            and device['torch_vram_free'] <= device['torch_vram_total']
+            and device['shared_memory_free'] <= device['shared_memory_total'])
+
+
+# Configuration bytes from the already reviewed immutable parent selections.
+# A new architecture/configuration needs a separate review, not larger numbers.
+_LINUX_CONFIG_SHA256 = {
+    '8454017f9ebaada30c998fccd9f67a80c7580f68': {
+        'transformer/config.json': 'e748b382508f3171d1f4039688b23d1f809aebe4507b3ed5a29bca01b4b58877',
+        'text_encoder/config.json': 'edac7703329133edfc53e46ac0081835144c99d7eebf28b71c732694d435224d',
+        'vae/config.json': '66564b3cd3f3f3ce5ce3cd4df72f1de883b242c7f338e27d420fe5ddcb0a6ed9',
+    },
+    '1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4': {
+        'transformer/config.json': 'bdebcf6b591b456742fe579f65978fd7bcffa459ef003ad668edac393d37e7b5',
+        'text_encoder/config.json': 'edac7703329133edfc53e46ac0081835144c99d7eebf28b71c732694d435224d',
+        'vae/config.json': '66564b3cd3f3f3ce5ce3cd4df72f1de883b242c7f338e27d420fe5ddcb0a6ed9',
+    },
+}
+
+
+def linux_working_reserve(status, revision, form):
+    """Reserve source-derived attention/encoder/VAE buffers, never measured fit.
+
+    The pinned encoder retains all 37 hidden states, stacks eight of them and
+    calls the conditional-generation head with cache disabled. Base guidance
+    calls conditional/unconditional denoising separately, not as batch two.
+    Reserve three FP32 attention score-sized buffers even when SDPA uses a
+    smaller implementation. Do not grant Flash/Triton/kernel savings.
+
+    Weights, packed-linear dequantization, loading overlaps, adapters and the
+    ordinary allocator/OS headroom are accounted separately by the graph owner.
+    These reservations cannot qualify arbitrary lengths, architectures or hooks.
+    """
+    from pathlib import Path
+
+    if (type(status) is not dict or status.get('complete') is not True
+            or revision not in _LINUX_CONFIG_SHA256):
+        raise ValueError('Linux FP8r working memory needs its complete immutable parent selection.')
+    snapshots = status.get('snapshots')
+    if (type(snapshots) is not list or len(snapshots) != 1 or type(snapshots[0]) is not dict
+            or snapshots[0].get('complete') is not True or type(snapshots[0].get('path')) is not str):
+        raise ValueError('Linux FP8r working memory needs one exact complete snapshot.')
+    snapshot = Path(snapshots[0]['path'])
+    if snapshot.name != revision:
+        raise ValueError('Linux FP8r working memory snapshot differs from the immutable parent.')
+    for relative, expected in _LINUX_CONFIG_SHA256[revision].items():
+        path = _snapshot_file(snapshot/relative, snapshot)
+        with path.open('rb') as stream:
+            body = stream.read(64*1024+1)
+        if len(body) > 64*1024 or hashlib.sha256(body).hexdigest() != expected:
+            raise ValueError('Linux FP8r architecture configuration differs from its reviewed bytes.')
+    return linux_activation_reserve(form)
+
+
+def linux_activation_reserve(form):
+    """Integer-only reservation for the already byte-verified architecture."""
+    sequence = _number(form.get('maxSequenceLength', 8192))
+    references = form.get('referenceWorkload', [])
+    if (sequence not in range(1, 8193) or type(references) is not list
+            or len(references) > 2 or _number(form.get('width', 512)) != 512
+            or _number(form.get('height', 512)) != 512 or _number(form.get('batchSize', 1)) != 1):
+        raise ValueError('Linux FP8r working memory requires the bounded 512-square batch-one workload.')
+    reference_pixels = 0
+    for row in references:
+        if (type(row) is not dict or set(row) != {'sourceSize', 'processedSize'}
+                or type(row['sourceSize']) is not list or len(row['sourceSize']) != 2
+                or any(type(v) is not int or not 16 <= v <= 1024 for v in row['sourceSize'])
+                or row['processedSize'] != [v//16*16 for v in row['sourceSize']]):
+            raise ValueError('Linux FP8r working memory requires actual bounded reference geometry.')
+        reference_pixels += math.prod(row['processedSize'])
+    if reference_pixels > 512**2 + 1024**2:
+        raise ValueError('Linux FP8r reference pixels exceed the bounded recipe.')
+    sequence = int(sequence)
+    # Spatial VAE reduction 8 followed by 2x2 packing gives 16x16 pixels/token.
+    spatial = 512**2//256 + reference_pixels//256
+    joint = sequence + spatial
+    # Both guidance embeddings and transient stack/contiguous packing copies.
+    retained_embeddings = 4*sequence*20480*2
+    encoder = (3*32*sequence**2*4 + 37*sequence*2560*2
+               + 6*sequence*151936 + 8*sequence*4096*4
+               + 4*sequence*9728*4 + retained_embeddings)
+    # Q/K FP32 normalization, projections, modulation, MLP and residual buffers
+    # are reserved beside three dense FP32 score/probability-sized allocations.
+    denoiser = 3*24*joint**2*4 + 16*joint*3072*4 + retained_embeddings
+    side = 1024 if references else 512
+    # Preserve ample live feature-map slots plus the mid-block attention maps;
+    # no inference autograd or cross-layer KV cache is admitted by this recipe.
+    vae = 32*side**2*128*4 + 3*(side//8)**4*4 + retained_embeddings
+    host = 8*(512**2 + reference_pixels)*3*4 + 16*sequence*8
+    return {'proofScope': 'flux3_linux_source_working_reserve_v1',
+            'systemRamBytes': host, 'vramBytes': max(encoder, denoiser, vae),
+            'encoderBytes': encoder, 'denoiserBytes': denoiser, 'vaeBytes': vae,
+            'maxPromptTokens': sequence, 'jointTokens': joint, 'inferencePeakMeasured': False}
+
+
+def linux_parameter_residency(lower_bound, *, execution_path, offload_mode, device, dtype, hardware):
+    """Known device copies for the separate reviewed shared-memory recipe."""
+    from modiff.artifact_weight_memory import native_cpu_parameter_residency
+
+    if (not linux_shared_hardware(hardware) or device not in {'cuda', 'cuda:0'}
+            or offload_mode not in {'none', 'model_cpu'}
+            or not native_cpu_parameter_residency(lower_bound, execution_path=execution_path,
+                offload_mode=offload_mode, device=device, dtype=dtype)):
+        return {}
+    return {'vramBytes': lower_bound['totalBytes'] if offload_mode == 'none' else lower_bound['largestComponentBytes']}
+
+
+_LINUX_LORA_PINS = {
+    'flux3-klein:official-provider:v1': (
+        'kocabiyik/nsc7-style-lora', '9b998d3bdc3b4aeb2113ab4e8cbd9fe2ebfa1cae',
+        'nsc7-style-lora.safetensors', 'ae6c417cb3bb8ee6f5272a8115d7720587319c6099fffa80f8d39bbbf307daf7'),
+    'flux3-klein-base:official-provider:v1': (
+        'pjecuacion/flux3-klein-mnt-oil-monet-lora', '0d94b6a4601892499defd8c5d89c24f78e78043b',
+        'mnt_oil_klein3.safetensors', 'a25e926d8e5fd0069ed5ee3db67be8ac191df4d713bc807e2abfe61a8f885047'),
+}
+
+
+def linux_lora_controls(nodes, loader_id, profile_id, literal):
+    """Admit only one pinned builtin NASA/Monet descriptor, including scale zero.
+
+    This structural guard never imports/executes a supplier or reads tensors.
+    The ordinary adapter pass subsequently rehashes the exact cached file and
+    reserves factor/conversion/dense-update bytes per owner. No scheduler,
+    arbitrary literal descriptor, adapter chain or other artifact is admitted.
+    """
+    parameter = nodes[loader_id]['params'].get('lora_list') or {}
+    if not parameter.get('sourceId'):
+        if parameter.get('value') not in (None, []):
+            raise ValueError('Linux FP8r Auto requires a connected reviewed builtin LoRA descriptor.')
+        return None
+    identity = parameter['sourceId']
+    node = nodes.get(identity) or {}
+    if (parameter.get('sourceKey') != 'lora'
+            or (node.get('module'), node.get('action')) != ('modules.ModularDiffusers', 'Lora')
+            or profile_id not in _LINUX_LORA_PINS
+            or any(not isinstance(p, dict) or p.get('sourceId') or p.get('sourceKey') for p in node.get('params', {}).values())):
+        raise ValueError('Linux FP8r Auto admits one literal pinned builtin LoRA, without a chain or custom supplier.')
+    values = {key: literal(nodes, identity, key) for key in
+              ('model', 'revision', 'weight_name', 'expected_sha256', 'scale', 'scheduler_class', 'scheduler_config', 'previous_loras')}
+    selection = values['model']
+    repo, revision, weight, digest = _LINUX_LORA_PINS[profile_id]
+    if (not isinstance(selection, dict) or selection.get('source') != 'hub' or selection.get('value') != repo
+            or (values['revision'], values['weight_name'], values['expected_sha256']) != (revision, weight, digest)
+            or values['previous_loras'] not in (None, [])
+            or values['scheduler_class'] not in (None, '')
+            or values['scheduler_config'] not in (None, '', '{}')
+            or type(values['scale']) not in (int, float) or not math.isfinite(values['scale'])
+            or not 0 <= values['scale'] <= 1):
+        raise ValueError('Linux FP8r Auto requires its exact family-specific immutable adapter, scale 0–1 and unchanged scheduler.')
+    return identity
+
+
+def selected_artifacts(model_type, repository, revision, weight_format='fp8r'):
+    """Observe the complete exact selected manifest using execution precedence."""
+    from utils.huggingface import exact_cached_snapshot_path, observed_catalog_cache_selections
+
+    recipe = _selected_recipe(model_type, repository, revision, weight_format)
+    files = sorted(recipe['downloadFiles'])
+    observations = observed_catalog_cache_selections(repository) or []
+    complete = any(row == {'revision': revision, 'files': files, 'complete': True} for row in observations)
+    if not complete:
+        return {'installed': False, 'complete': False,
+                'reason': f'Install or repair the complete exact {weight_format} model selection, including its variant file.'}
+    snapshot = exact_cached_snapshot_path(repository, revision, 'modular_model_index.json')
+    return {'installed': True, 'complete': True, 'snapshots': [{'path': str(snapshot), 'complete': True}],
+            'plannedRevision': revision, 'plannedFiles': files}
+
+
+def parameter_census(status, model_type, repository, revision, dtype, *, weight_format='fp8r'):
+    """Count pinned packed storage and a conservative whole-file loading overlap.
+
+    The official BFL loader retains FP8 weights and FP32 row scales. Norm Q/K
+    weights stay FP32. Single-file conversion retains a whole source checkpoint;
+    reserve a complete destination as well, including its scale/shift remapping.
+    This conservative reserve cannot claim mmap sharing or physical residency.
+    """
+    if type(status) is not dict or not status.get('complete') or dtype != 'bfloat16':
+        return None, None, None
+    snapshots = status.get('snapshots')
+    if (type(snapshots) is not list or len(snapshots) != 1 or type(snapshots[0]) is not dict
+            or snapshots[0].get('complete') is not True or type(snapshots[0].get('path')) is not str
+            or not snapshots[0]['path']):
+        raise ValueError('The FP8r census requires one exact complete snapshot observation.')
+    if weight_format not in {'fp8r', 'nvfp4'}:
+        raise ValueError('The bounded census requires an exact declared BFL format.')
+    recipe = _selected_recipe(model_type, repository, revision, weight_format)
+    from pathlib import Path
+    snapshot = Path(snapshots[0]['path'])
+    if snapshot.name != revision:
+        raise ValueError('The FP8r census snapshot does not match the immutable revision.')
+    index = _loading_json_file(_snapshot_file(snapshot / 'modular_model_index.json', snapshot))
+    if type(index) is not dict or not 0 < len(index) <= 128:
+        raise ValueError('The installed Modular component index must be a bounded object.')
+    expected = {'text_encoder': ['transformers', 'Qwen3VLForConditionalGeneration'],
+                'vae': ['diffusers', 'AutoencoderKLFlux2'],
+                'transformer': ['diffusers', recipe['loaderClass']]}
+    if (index.get('_class_name') != model_type or any(type(index.get(name)) is not list
+            or len(index[name]) != 3 or index[name][:2] != pair for name, pair in expected.items())):
+        raise ValueError('The installed Modular component index differs from the reviewed FP8r route.')
+    selected = frozenset({'text_encoder', 'vae'})
+    bound = artifact_parameter_lower_bound(status, revision, dtype,
+        _index_file='modular_model_index.json', _components=selected)
+    reserve = artifact_parameter_conversion_reserve(status, revision, dtype,
+        _index_file='modular_model_index.json', _components=selected)
+    if not bound or not reserve or set(bound['components']) != selected or set(reserve['components']) != selected:
+        raise ValueError('The exact FP8r recipe needs complete text encoder and VAE parameter/loading headers.')
+    weight = _snapshot_file(snapshot / recipe['weight']['path'], snapshot)
+    if weight.stat().st_size != recipe['weight']['byteSize']:
+        raise ValueError('The FP8r variant file differs from its reviewed size.')
+    tensors = _header(weight, weight_format)
+    sizes = {'BF16': 2, 'F16': 2, 'F32': 4, 'F8_E4M3': 1, 'U8': 1}
+    target = source = largest_matrix = 0
+    for name, item in tensors.items():
+        count = math.prod(item['shape'])
+        if item['dtype'] not in sizes:
+            raise ValueError('Unreviewed FP8r parameter dtype.')
+        source += count * sizes[item['dtype']]
+        if item['dtype'] in {'F8_E4M3', 'U8'}:
+            target += count
+            if name.endswith('.weight'):
+                largest_matrix = max(largest_matrix, count * (2 if item['dtype'] == 'U8' else 1))
+        elif (name.endswith(('.weight_scale', '.weight_scale_2', '.input_scale'))
+              or '.norm.query_norm.' in name or '.norm.key_norm.' in name):
+            target += count * 4
+        else:
+            target += count * 2
+    if not 0 < source <= 2**63 or not 0 < target <= 2**63 or not largest_matrix:
+        raise ValueError('Invalid bounded FP8r parameter census.')
+    bound['components']['transformer'] = target
+    bound.update(totalBytes=sum(bound['components'].values()), largestComponentBytes=max(bound['components'].values()))
+    reserve['components']['transformer'] = {
+        'loaderLibrary': 'diffusers', 'loaderClass': recipe['loaderClass'],
+        'layoutSha256': hashlib.sha256(json.dumps(tensors, sort_keys=True, separators=(',', ':')).encode()).hexdigest(),
+        'sourcePayloadBytes': source, 'requestedPayloadBytes': target,
+        'convertedTargetBytes': target, 'largestSourceShardBytes': source,
+        'largestConvertedTensorBytes': max(math.prod(item['shape']) * (4 if item['dtype'] == 'F32' else 2)
+                                         for item in tensors.values()),
+        'serialCpuOverlapBytes': source + target, 'conservativeCpuOverlapBytes': source + target,
+        'serialCudaOverlapBytes': source + target, 'conservativeCudaOverlapBytes': source + target,
+    }
+    # The official fallback multiplies two FP32 full matrices before BF16 cast.
+    # Runtime allocator/vendor headroom is still added independently by Auto.
+    return bound, reserve, {'vramBytes': largest_matrix * (16 if weight_format == 'nvfp4' else 8),
+        'proofScope': f'largest_{weight_format}_linear_dequantization_only'}
+
+
+def nf4_parameter_census(status, model_type, repository, revision, dtype):
+    """Exact language NF4 storage and sequential official CUDA-load phases.
+
+    Full source files remain reserved. Only the reviewed text encoder is
+    quantized on CUDA, held there while native CPU components load, then
+    registered with the existing CPU offload manager. The text phase reserves both its complete
+    source and destination on CUDA as well as quantization workspace. These
+    declarations are conservative storage/phase bounds, not measured fit.
+    """
+    from pathlib import Path
+    from modiff.flux3_text_encoder_quantization import expected_language_linear_shapes, TEXT_ENCODER_NF4_LOADING_SCHEDULE
+    from modiff.transformers_image_text_resources import nf4_parameter_storage
+
+    bound, reserve, dequant = parameter_census(status, model_type, repository, revision, dtype,
+                                              weight_format='nvfp4')
+    if not bound or not reserve:
+        return None, None, None, None
+    snapshot = Path(status['snapshots'][0]['path'])
+    index = _loading_json_file(_snapshot_file(snapshot / 'text_encoder/model.safetensors.index.json', snapshot))
+    mapping = index.get('weight_map') if type(index) is dict else None
+    if (type(mapping) is not dict or not 0 < len(mapping) <= 100_000
+            or any(type(name) is not str or type(file) is not str or Path(file).name != file
+                   or any(char in file for char in '\\/:') for name, file in mapping.items())):
+        raise ValueError('NF4 needs the exact bounded text encoder shard index.')
+    tensors = {}
+    for filename in sorted(set(mapping.values())):
+        path = _snapshot_file(snapshot / 'text_encoder' / filename, snapshot)
+        selected = {name for name, file in mapping.items() if file == filename}
+        _loading_shard(path, dtype, selected)
+        with path.open('rb') as stream:
+            size = struct.unpack('<Q', stream.read(8))[0]
+            if not 0 < size <= 16 * 1024**2:
+                raise ValueError('NF4 source metadata exceeds its finite bound.')
+            header = json.loads(stream.read(size))
+        for name in selected:
+            if name in tensors:
+                raise ValueError('NF4 source tensor appears in multiple shards.')
+            tensors[name] = header[name]
+    expected = {name + '.weight': tuple(shape) for name, shape in expected_language_linear_shapes().items()}
+    actual = {name: tuple(item['shape']) for name, item in tensors.items()
+              if name.startswith('model.language_model.layers.') and name.endswith('.weight')
+              and len(item['shape']) == 2}
+    if actual != expected:
+        raise ValueError('NF4 language Linear targets differ from the exact reviewed parent architecture.')
+    storage = nf4_parameter_storage(tensors)
+    text_source = reserve['components']['text_encoder']['sourcePayloadBytes']
+    text_target = storage['parameterStorageBytes']
+    largest_quantized = max(math.prod(tensors[name]['shape']) for name in expected)
+    bound['components']['text_encoder'] = text_target
+    bound.update(totalBytes=sum(bound['components'].values()), largestComponentBytes=max(bound['components'].values()))
+    transformer = reserve['components']['transformer']
+    vae = reserve['components']['vae']
+    # Exact fresh loading keeps the packed text owner unregistered on CUDA.
+    # No source-residency/allocator credit: each CPU source is reserved fully.
+    text_phase = text_source
+    transformer_phase = transformer['conservativeCpuOverlapBytes']
+    vae_phase = bound['components']['transformer'] + vae['conservativeCpuOverlapBytes']
+    registration_phase = bound['totalBytes']
+    # Reserve two full FP32 language matrices in addition to the complete
+    # source+packed destination. CPU quantization fallback is never admitted.
+    cuda_quantization = text_source + text_target + largest_quantized * 8
+    phases = {'proofScope': 'flux3_nvfp4_nf4_sequential_cuda_load_only',
+        'loadingSchedule': TEXT_ENCODER_NF4_LOADING_SCHEDULE,
+        'systemRamBytes': max(text_phase, transformer_phase, vae_phase, registration_phase),
+        'vramBytes': max(cuda_quantization,
+            bound['components']['transformer'] + dequant['vramBytes']),
+        'textSourceBytes': text_source, 'textTargetBytes': text_target,
+        'textPhaseCpuBytes': text_phase, 'transformerPhaseCpuBytes': transformer_phase,
+        'vaePhaseCpuBytes': vae_phase, 'registrationPhaseCpuBytes': registration_phase,
+        'cudaQuantizationBytes': cuda_quantization,
+        'quantizedLinearCount': storage['quantizedLinearCount'],
+        'requiresRuntimeHeadroomPolicy': True, 'inferencePeakMeasured': False}
+    return bound, reserve, dequant, phases
+
+
+def nf4_loading_requirements(candidate):
+    """Validate the separately issued phase record before owner accounting."""
+    from modiff.flux3_text_encoder_quantization import TEXT_ENCODER_NF4_LOADING_SCHEDULE
+    phases = candidate.get('parameterLoadingPhases')
+    if (candidate.get('boundedWeightFormatRecipe') != NF4_RECIPE_ID
+            or type(phases) is not dict
+            or phases.get('proofScope') != 'flux3_nvfp4_nf4_sequential_cuda_load_only'
+            or phases.get('loadingSchedule') != TEXT_ENCODER_NF4_LOADING_SCHEDULE
+            or phases.get('requiresRuntimeHeadroomPolicy') is not True
+            or phases.get('inferencePeakMeasured') is not False
+            or phases.get('quantizedLinearCount') != 252
+            or any(type(phases.get(key)) is not int or not 0 < phases[key] <= 2**63
+                   for key in ('systemRamBytes', 'vramBytes', 'textSourceBytes', 'textTargetBytes',
+                               'textPhaseCpuBytes', 'transformerPhaseCpuBytes', 'vaePhaseCpuBytes',
+                               'registrationPhaseCpuBytes', 'cudaQuantizationBytes'))
+            or phases['textPhaseCpuBytes'] != phases['textSourceBytes']
+            or phases['systemRamBytes'] != max(phases[key] for key in
+                ('textPhaseCpuBytes', 'transformerPhaseCpuBytes', 'vaePhaseCpuBytes', 'registrationPhaseCpuBytes'))
+            or phases['registrationPhaseCpuBytes'] < phases['textTargetBytes']
+            or phases['cudaQuantizationBytes'] < phases['textSourceBytes'] + phases['textTargetBytes']
+            or phases['vramBytes'] < phases['cudaQuantizationBytes']):
+        raise ValueError('The NVFP4/NF4 recipe has no complete exact loading phase record.')
+    return {key: phases[key] for key in ('systemRamBytes', 'vramBytes')}
+
+
+def workload_missing(form, hardware, profile_id):
+    """Validate the admitted boundary without rewriting any authored value."""
+    accelerator = hardware.get('accelerator') or {}
+    linux = linux_shared_hardware(hardware)
+    windows = not (hardware.get('platform') != 'windows'
+            or normalized_arch(str(hardware.get('architecture') or 'unknown')) != 'x86_64'
+            or accelerator.get('kind') != 'cuda'
+            or accelerator.get('backend', 'cuda') != 'cuda'
+            or accelerator.get('memoryKind') != 'dedicated'
+            or hardware.get('runtimeBackend') == 'rocm' or accelerator.get('sharedMemory') is True)
+    if profile_id not in PUBLIC_PROFILES or not (windows or linux) or form.get('device') not in {'cuda', 'cuda:0'}:
+        return ['FP8r Auto requires reviewed Windows x86_64 dedicated NVIDIA CUDA or the separate Linux x86_64 ROCm gfx1151 shared-memory recipe.']
+    checks = {'width': 512, 'height': 512, 'batchSize': 1}
+    if any(_number(form.get(key, expected)) != expected for key, expected in checks.items()):
+        return ['This FP8r Auto recipe covers only 512×512 output and batch one; authored settings are preserved.']
+    text_nf4 = form.get('textEncoderQuantization')
+    if linux and text_nf4 is not None:
+        return ['Linux shared-memory Auto admits FP8r with the unquantized parent text encoder; NVFP4/NF4 remains Windows-only.']
+    if text_nf4 is not None:
+        from modiff.flux3_text_encoder_quantization import validate_text_encoder_nf4_descriptor, text_encoder_nf4_runtime_ready
+        from modiff.auto_resource import _hardware_identity
+        try:
+            validate_text_encoder_nf4_descriptor(text_nf4)
+        except (ValueError, TypeError) as error:
+            return [str(error)]
+        if not text_encoder_nf4_runtime_ready():
+            return ['Activate the exact reviewed combined FLUX 3 and bitsandbytes0.50.0 provider for text encoder NF4.']
+        capability = _hardware_identity(hardware)[3]
+        if capability is None or not math.isfinite(capability) or capability < 8.9:
+            return ['The text encoder NF4 recipe requires observed NVIDIA CUDA compute capability8.9 or newer.']
+    if (form.get('weightFormat') != ('nvfp4' if text_nf4 is not None else 'fp8r') or form.get('dtype') != 'bfloat16'
+            or form.get('quantizationMode', 'none') != 'none'
+            or form.get('weight_loading_mode', 'cpu') != 'cpu'):
+        return [('This Auto recipe requires explicit NVFP4 storage, exact text encoder NF4, BF16 compute and CPU source loading.'
+                 if text_nf4 is not None else
+                 'This Auto recipe requires explicit FP8r storage, BF16 compute, CPU weight loading and no additional quantization.')]
+    steps = 50 if profile_id.startswith('flux3-klein-base:') else 16
+    if _number(form.get('steps', steps)) != steps or _number(form.get('maxSequenceLength', 8192)) not in range(1, 8193):
+        return ['This FP8r Auto recipe requires the reviewed step count and at most 8192 prompt tokens.']
+    if profile_id.startswith('flux3-klein-base:') and (
+            _number(form.get('guidanceScale', 3.5)) != 3.5 or _number(form.get('guidanceRescale', 0)) != 0):
+        return ['Base Auto preserves the reviewed 50 steps, CFG 3.5 and rescale zero recipe.']
+    references = form.get('referenceWorkload', [])
+    if form.get('mode') == 'text_to_image':
+        return [] if references == [] else ['Text-to-image Auto cannot consume reference images.']
+    if form.get('mode') != 'edit_image' or type(references) is not list or len(references) not in {1, 2}:
+        return ['Edit Auto requires one or two references with actual prepared geometry.']
+    pixels = 0
+    for row in references:
+        if type(row) is not dict or set(row) != {'sourceSize', 'processedSize'}:
+            return ['Edit Auto needs actual source and processed reference geometry.']
+        source, processed = row['sourceSize'], row['processedSize']
+        if (type(source) is not list or len(source) != 2 or any(type(v) is not int or not 16 <= v <= 1024 for v in source)
+                or processed != [v // 16 * 16 for v in source]):
+            return ['Edit Auto references must fit the reviewed 16-pixel crop within 1024 pixels per side.']
+        pixels += math.prod(processed)
+    return [] if pixels <= 512**2 + 1024**2 else ['Edit Auto processed references exceed the reviewed combined pixel boundary.']
+
+
+def _number(value):
+    if isinstance(value, bool):
+        return None
+    try:
+        result = float(value)
+        return result if math.isfinite(result) else None
+    except (ValueError, TypeError):
+        return None

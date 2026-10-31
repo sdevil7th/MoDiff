@@ -542,7 +542,7 @@ type BlockInstanceV2 = {
     size: { width: number; height: number };
     internalLayout: Record<
       string,
-      { x: number; y: number; width?: number; height?: number }
+      { x: number; y: number; width?: number; height?: number; sizeMode?: "compact" }
     >;
   };
 
@@ -771,6 +771,12 @@ connector, and edge padding. `presentation.size` remains the collapsed,
 user-resized size; expanding, measuring, or moving one child MUST NOT rewrite
 that size, values, effective interface, definition identity, preview state, or
 any sibling instance. Collapse MUST restore the exact prior collapsed size.
+An explicit internal-card resize records `sizeMode: "compact"` on its layout
+entry. Moves and automatic minimum-size measurements preserve an existing
+marker; measurements MUST NOT create it. Absent markers retain legacy expanded
+footprint migration. Both strict validators reject any other present value,
+including null. This presentation-only marker is retained in inactive route
+drafts and does not change semantic hashes, values, or execution authority.
 Any browser lifecycle that claims expansion support MUST assert containment
 before and after a child move and again after workflow Save plus browser
 refresh; execution/export parity alone is insufficient.

@@ -153,3 +153,35 @@ def test_disconnected_metadata_always_clears_previous_dynamic_schema(action, sig
     fn.__self__.send_node_definition.assert_called_once()
     params = fn.__self__.send_node_definition.call_args.args[0]
     assert set(params) == ({"model_type", "controlnet_bundle"} if action == "Controlnet" else set())
+
+
+@pytest.mark.parametrize("action", ["EncodeInputs", "Denoise"])
+def test_declared_image_stage_callbacks_use_the_exact_metadata_boundary(action):
+    request = {"module": "modules.DiffusersImage", "action": action, "fn": "update_image_contract"}
+    assert is_metadata_field_action(request)
+    assert is_metadata_field_action({**request, "queue": False})
+    assert not is_metadata_field_action({**request, "queue": True})
+    assert not is_metadata_field_action({**request, "queue": 0})
+    assert not is_metadata_field_action({**request, "fn": "execute"})
+    assert not is_metadata_field_action({**request, "module": "modules.CustomImage"})
+
+
+@pytest.mark.parametrize("action", ["EncodeInputs", "Denoise"])
+def test_declared_image_stage_metadata_retains_an_isolated_nonexecuting_context(action):
+    from modules.DiffusersImage.main import IMAGE_PIPELINE_ADAPTERS, image_pipeline_contract
+    signal = image_pipeline_contract(IMAGE_PIPELINE_ADAPTERS["FluxFillPipeline"], "inpaint")
+    with (
+        patch("modiff.NodeBase.NodeBase.__init__", side_effect=AssertionError("metadata constructed node")),
+        patch("socket.socket.connect", side_effect=AssertionError("metadata used network")),
+        patch("subprocess.Popen", side_effect=AssertionError("metadata spawned process")),
+    ):
+        context = callback("modules.DiffusersImage", action, "update_image_contract", {"image_contract": signal})
+    original = getattr(import_module("modules.DiffusersImage.main"), action)
+    assert isinstance(context, FieldMessageContext)
+    assert not isinstance(context, original)
+    assert not hasattr(context, "execute")
+    assert not hasattr(context, "__del__")
+    assert context.__class__.params == original.params
+    assert context.__class__.params is not original.params
+    assert context.set_field_params.call_count > 0
+    assert signal["pipelineClass"] == "FluxFillPipeline"

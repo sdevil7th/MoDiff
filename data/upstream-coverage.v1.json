@@ -9,7 +9,7 @@
   ],
   "canonicalWorkflows": [
     {
-      "graphHash": "1eb14851568eca312bd55ed91db7ee62393a3903711c2e12494676d252149c86",
+      "graphHash": "4d3b01905fa77657443a04ac441d2f82c695b4fa84120f1c8e4f0a71f73acff0",
       "graphPath": "studio/ace-step-audio-pipeline/audio-continuation.json",
       "id": "AceStepAudioPipeline:audio_continuation",
       "mode": "audio_continuation",
@@ -22,7 +22,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "97492e39122ed9626854e7aa421ebc52747c1ed9d5847824e5b15b061cd7f3aa",
+      "graphHash": "5bb3ebdec7ccd6f402f97f0093a1cf0f116a148a9283a2fb1406a267665ea3b4",
       "graphPath": "studio/ace-step-audio-pipeline/audio-repaint.json",
       "id": "AceStepAudioPipeline:audio_repaint",
       "mode": "audio_repaint",
@@ -35,7 +35,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "e886340bea3007684f2dd40a5b1abb31c13899d28a74d5a0204b6eabe74825b1",
+      "graphHash": "460449268f5a53c5cd1e235f568053791108f24208a7f9054866f49fb2240b8d",
       "graphPath": "studio/ace-step-audio-pipeline/audio-variation.json",
       "id": "AceStepAudioPipeline:audio_variation",
       "mode": "audio_variation",
@@ -48,7 +48,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "779237d7b0aa389679a44bd9034dedab87bd13a0511ca1fa23206175b92f7388",
+      "graphHash": "94c0b8932bfa91fa831d457bfdaabe73f24d7e195e65f3164543d6bc2d42a810",
       "graphPath": "studio/ace-step-audio-pipeline/text-to-audio.json",
       "id": "AceStepAudioPipeline:text_to_audio",
       "mode": "text_to_audio",
@@ -62,7 +62,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "cb3602ee33819e3fdf262a4638d8072fb3afbf56e7a9a7614970efce436322b5",
+      "graphHash": "de99a9b5808b8b33fe525f91790fd305a2f103794f7a90999fedc5ba090bc066",
       "graphPath": "studio/ace-step-audio-pipeline/text-to-audio--ace-step-chinese-new-year-lora.json",
       "id": "AceStepAudioPipeline:text_to_audio:ace_step_chinese_new_year_lora",
       "mode": "text_to_audio",
@@ -75,7 +75,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "e8378a69bccf761d9fd347f37267e9717ddc8ef3f14eb81f5a0c82e944c357cf",
+      "graphHash": "eeb52c80e746abc5784265660a69066dd105f8815d0e5f844f622a9530d201ce",
       "graphPath": "studio/ace-step-audio-pipeline/text-to-audio--ace-step-custom-lora.json",
       "id": "AceStepAudioPipeline:text_to_audio:ace_step_custom_lora",
       "mode": "text_to_audio",
@@ -88,7 +88,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "cdfc32ad3b048e8d31f9f8b521fa4c4ce5ccaffc4a8344b28f1a5c974bc51ec8",
+      "graphHash": "acc05da225bf77e85d83e08dc07869ba6f0be3765ba3db69112f80279cb6d2d5",
       "graphPath": "studio/allegro-pipeline/text-to-video.json",
       "id": "AllegroPipeline:text_to_video",
       "mode": "text_to_video",
@@ -99,7 +99,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "c40e7cfc5cf39f435903714fb69e7edbf5bec9a76f26707ad8492a4981b6fbd8",
+      "graphHash": "6a28c8772ec7ddc6b46371415601fef5fb5e539288a108d7dee322cd6faecc5b",
       "graphPath": "studio/animate-diff-control-net-pipeline/control-to-video.json",
       "id": "AnimateDiffControlNetPipeline:control_to_video",
       "mode": "control_to_video",
@@ -110,7 +110,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "9805d228316d45a5ca880ce668ec2d4214a3e96d23036edef83ce6f78b2ae0c3",
+      "graphHash": "3dedf345bd395ec117fc62509dfcb495e7511caf4a7548eeee5fd54164d4d71b",
       "graphPath": "studio/animate-diff-pag-pipeline/text-to-video.json",
       "id": "AnimateDiffPAGPipeline:text_to_video",
       "mode": "text_to_video",
@@ -121,7 +121,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "831c3df4b164bfb7d639386ac03061739c062d1c4c14c5bc8374bba0027574f4",
+      "graphHash": "edb7d98df3e6d04d7322b0ca6a472e7c25f0483cf4596e54459f513b8b1118df",
       "graphPath": "studio/animate-diff-pipeline/text-to-video.json",
       "id": "AnimateDiffPipeline:text_to_video",
       "mode": "text_to_video",
@@ -132,7 +132,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "8b6e7e0237c39de482c80cae6aaa2b2be0b2c9ea01ca4eb111c865a7d0b49e8d",
+      "graphHash": "5f1bee4be4569336f16c38aa23ac92d6b5d6be013e478bb7453de8a5373e0f5f",
       "graphPath": "studio/animate-diff-video-to-video-control-net-pipeline/control-video-to-video.json",
       "id": "AnimateDiffVideoToVideoControlNetPipeline:control_video_to_video",
       "mode": "control_video_to_video",
@@ -143,7 +143,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "43bb3eb29e332feac0bf86590da49757d7df9a03c2a80b57d019feb268710f25",
+      "graphHash": "80ddf4fb49b6b0ff44503ca19d0dd55bf4c97217948c702dbad596b915f5664f",
       "graphPath": "studio/animate-diff-video-to-video-pipeline/video-to-video.json",
       "id": "AnimateDiffVideoToVideoPipeline:video_to_video",
       "mode": "video_to_video",
@@ -154,7 +154,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "6ea55a2398afb88c617d489d433d6dcc88d574b9b1c252f5e23f4f27ed5392b2",
+      "graphHash": "586e3e3b69a8c04316d5ec271b984884f7300bc3490bf00118caedda6d55ce80",
       "graphPath": "studio/animate-lcm-pipeline/text-to-video.json",
       "id": "AnimateLCMPipeline:text_to_video",
       "mode": "text_to_video",
@@ -165,7 +165,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "5b41671f28ed075faf05595ed10540187457e85fffec0a1a6ac8540918a5cb5a",
+      "graphHash": "cc9e3de4082c24e50d74e9e85cf5d7d371389fcb5f8a745cb351424926d9c5fe",
       "graphPath": "studio/audio-ldm2-pipeline/text-to-audio.json",
       "id": "AudioLDM2Pipeline:text_to_audio",
       "mode": "text_to_audio",
@@ -187,7 +187,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "a6be35f97da3b7617e2dd0001db5947ad456a9cd776cbcf076debe503ba1a9d7",
+      "graphHash": "fa8adfa1e16c77b79342e884bd51a612df80b914b5e505716eee97159cec9abc",
       "graphPath": "studio/builtin-audio-operation/audio-join.json",
       "id": "BuiltinAudioOperation:audio_join",
       "mode": "audio_join",
@@ -198,7 +198,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "65e26126ba57bd17add8001a60e0bc8bcfbee8bdf2112c200be73569becf9f49",
+      "graphHash": "952fdb83b52479710b5ebfe9f8f143a45ab3d4b5fe113f7637baf900340f469d",
       "graphPath": "studio/builtin-audio-operation/audio-loudness-match.json",
       "id": "BuiltinAudioOperation:audio_loudness_match",
       "mode": "audio_loudness_match",
@@ -209,7 +209,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "e82ae3ce5c33e45acf5356483144d98d180ebc419e810b78eaf440a0cb1d932a",
+      "graphHash": "ae4928754d54e7c77fc81accd5bf3310830ed02c83052e835d9354c3bc627cc1",
       "graphPath": "studio/builtin-audio-operation/audio-trim.json",
       "id": "BuiltinAudioOperation:audio_trim",
       "mode": "audio_trim",
@@ -451,7 +451,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "8d7f75409e9cdcc215d19f8cbaa95a2f1a38f1d48f9cf13eb0ca4d9a4defda75",
+      "graphHash": "06d741c8e687d2a305222d32e04e42307021a4e6dedbea2323f43e851f9f2677",
       "graphPath": "studio/cog-video-x-pipeline/text-to-video.json",
       "id": "CogVideoXPipeline:text_to_video",
       "mode": "text_to_video",
@@ -462,7 +462,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "c28875202a2106122d5beb9cdb7d6374f5f0f3f83397f26d9a1223096a2f0194",
+      "graphHash": "1c7ecbbc85f354360673bc56f7cf59fa18cf53dea470477901ed6bced448b985",
       "graphPath": "studio/cog-video-x-video-to-video-pipeline/video-to-video.json",
       "id": "CogVideoXVideoToVideoPipeline:video_to_video",
       "mode": "video_to_video",
@@ -495,7 +495,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "908ea0ae4985dcfb36841e262ef7d6bed37d7c3667690d01f6e7cf7b384ef029",
+      "graphHash": "d3a63e94386c6e833fedd2b2ac2c96911bccac7c415ff44b747375bf969d6280",
       "graphPath": "studio/consistency-model-pipeline/unconditional-image.json",
       "id": "ConsistencyModelPipeline:unconditional_image",
       "mode": "unconditional_image",
@@ -506,7 +506,20 @@
       "status": "executable"
     },
     {
-      "graphHash": "4245498fbf0418f391842d4e6c3a608bebf796a9c7846848f4e4af3d32ac9c5d",
+      "graphHash": "1a624746561f2fdd3d52ec522bb96b3203a0de1e390b9f1ffbbdcaccfa1909c9",
+      "graphPath": "studio/cosmos3-omni-modular-pipeline/text-to-image.json",
+      "id": "Cosmos3OmniModularPipeline:text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Cosmos3OmniModularPipeline",
+      "publicTemplateIds": [
+        "cosmos3_super_text_to_image"
+      ],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "01cc6213daa98b045bcc448f12ed5eb6fef2f658cc1801135671ee31eb77ae31",
       "graphPath": "studio/ddim-pipeline/unconditional-image.json",
       "id": "DDIMPipeline:unconditional_image",
       "mode": "unconditional_image",
@@ -517,7 +530,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "5ddd44044fe27763f8bf23e9a1b00d1aedcac6ee61965e218771b60f4cbf2267",
+      "graphHash": "9e7f94fc98bfefe14c82d08f263c40820c40c832cd6960ff97543b4509a7d1b8",
       "graphPath": "studio/ddpm-pipeline/unconditional-image.json",
       "id": "DDPMPipeline:unconditional_image",
       "mode": "unconditional_image",
@@ -644,6 +657,101 @@
       "status": "executable"
     },
     {
+      "graphHash": "43652152408b2248039c0fe5769ba0fd57d9f91b54e4349d81616eb17ebeb542",
+      "graphPath": "studio/flux2-modular-pipeline/text-to-image.json",
+      "id": "Flux2ModularPipeline:text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Flux2ModularPipeline",
+      "publicTemplateIds": [
+        "flux2_dev_text_to_image"
+      ],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "6caddb42548fc90517824b4fe5c4bd52cdaf18288930d9965a3ecfefff0c6a1b",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/edit-image.json",
+      "id": "Flux3DistilledModularPipeline:edit_image",
+      "mode": "edit_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "publicTemplateIds": [
+        "flux3_klein_fp8r512_multi_reference_edit",
+        "flux3_klein_fp8r512_single_reference_edit"
+      ],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "721b942535f54b5561742d14581b1c1ef05b7fe3933442100fe43fea13fbee7a",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image.json",
+      "id": "Flux3DistilledModularPipeline:text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "publicTemplateIds": [
+        "flux3_klein_fp8r512_raw_coordinate_prompt",
+        "flux3_klein_fp8r512_text_to_image"
+      ],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "27636a699bfc7ecd672e6a7cc351050b91b0f075d7786b4160c63b7d8429f5b3",
+      "graphPath": "experimental/flux3-distilled-modular-pipeline/text-to-image--flux3-klein-fp8r512-lora-style.json",
+      "id": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_lora_style",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "publicTemplateIds": [
+        "flux3_klein_fp8r512_lora_style"
+      ],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "f89d49ce7200e92860d3d34ba2186a3dee13fe4ebaa0295d1f3844acb411e557",
+      "graphPath": "experimental/flux3-modular-pipeline/edit-image.json",
+      "id": "Flux3ModularPipeline:edit_image",
+      "mode": "edit_image",
+      "modelType": "Flux3ModularPipeline",
+      "publicTemplateIds": [
+        "flux3_klein_base_fp8r512_multi_reference_edit",
+        "flux3_klein_base_fp8r512_single_reference_edit"
+      ],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "e87317043b0451cf1510acf8184ac43ae207e0f36e617f7ac236e48e1f4807f7",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image.json",
+      "id": "Flux3ModularPipeline:text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "publicTemplateIds": [
+        "flux3_klein_base_fp8r512_raw_coordinate_prompt",
+        "flux3_klein_base_fp8r512_text_to_image"
+      ],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
+      "graphHash": "cd1664d47d78625d96540266dddec9b6b2ec27a486ed73989ff601abc61d04ef",
+      "graphPath": "experimental/flux3-modular-pipeline/text-to-image--flux3-klein-base-fp8r512-lora-style.json",
+      "id": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "publicTemplateIds": [
+        "flux3_klein_base_fp8r512_lora_style"
+      ],
+      "qualificationStatus": "graph-qualified-gallery-review-pending",
+      "reason": "The graph is explicitly experimental and is not a supported execution claim.",
+      "status": "contract-only"
+    },
+    {
       "graphHash": "4aa3de024ee9b3fd6ea66f358ecb18be009edf437cb186b9c0402a8ff12f3028",
       "graphPath": "studio/flux-canny-pipeline/control-edit-image.json",
       "id": "FluxCannyPipeline:control_edit_image",
@@ -655,7 +763,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "aa7a7c4d4a20d937a100f05997ffd7bb779a3a6db3b2c6c39871e1d86164aba9",
+      "graphHash": "932406161bede54f441595b58be51d52f828468e7c56ca896486cbb8de4f7420",
       "graphPath": "studio/flux-canny-pipeline/control-image.json",
       "id": "FluxCannyPipeline:control_image",
       "mode": "control_image",
@@ -690,7 +798,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "70a5b82096c1de039bbe9173da55060da1d588b72327c2ec8190cb21be73dc92",
+      "graphHash": "6bce7f3b71f77b21b259cae200e851ed84f6b180777bf2c26019b90b71d55012",
       "graphPath": "studio/flux-depth-pipeline/control-image.json",
       "id": "FluxDepthPipeline:control_image",
       "mode": "control_image",
@@ -853,7 +961,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "cc7df8dfaa8268b581df0e7d2af27e269a5958941c18130a43a1f4e8622b4cfe",
+      "graphHash": "c16db181498fc65031fd04a67d8b89c05986bcbb694bf1fed65c4171ecc84488",
       "graphPath": "studio/flux-fill-pipeline/inpaint.json",
       "id": "FluxFillPipeline:inpaint",
       "mode": "inpaint",
@@ -866,7 +974,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "d30e0b684b7e035c2b23c383812228f56c0cda74485522cdc5c2a7ce889f3e7a",
+      "graphHash": "a6431f367e163244190d7d3adc6f08c8dea8426e29aa991e857387db936b81fd",
       "graphPath": "studio/flux-fill-pipeline/outpaint.json",
       "id": "FluxFillPipeline:outpaint",
       "mode": "outpaint",
@@ -940,7 +1048,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "5b2ba5b59e130ad0c2cfadbadc16e5d010bb061c28eca3fe962323023cf9129a",
+      "graphHash": "4e1878660270774973c30b877a084e5a7c9bc35f545e33813619890ac4f54779",
       "graphPath": "studio/flux-redux-pipeline/edit-image.json",
       "id": "FluxReduxPipeline:edit_image",
       "mode": "edit_image",
@@ -953,7 +1061,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "263256ddcd89d18112c1588c9f462fca1bb0604fc0511c5fbb92f24615c7f19a",
+      "graphHash": "ea5cd03da3c4830e84642d73f4597e5b0ffe11a93f78d8001cb314f4e2d901f9",
       "graphPath": "studio/flux-redux-pipeline/multi-image-reference-edit.json",
       "id": "FluxReduxPipeline:multi_image_reference_edit",
       "mode": "multi_image_reference_edit",
@@ -990,7 +1098,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "dfbbb92d9c11f7da5ec40f2588caa817d470bdfada4a5fb9ca3b65a6b1b20add",
+      "graphHash": "a23a0c447f0e5f31303db4aa11c576db58d01f260baaff9fceb04b6941c4f43c",
       "graphPath": "studio/hugging-face-any-to-any-model/image-to-text.json",
       "id": "HuggingFaceAnyToAnyModel:image_to_text",
       "mode": "image_to_text",
@@ -1023,7 +1131,18 @@
       "status": "executable"
     },
     {
-      "graphHash": "7eaed2db89f809328a6da1ffc2171c21abbf946b878b31a4bfa5c8a1c7ae3cf0",
+      "graphHash": "a3706e4676b9035d3d5168999028c1e356a01113eefc6203970bfa047751f3b7",
+      "graphPath": "studio/hugging-face-ctc-speech-recognition-model/speech-to-text.json",
+      "id": "HuggingFaceCTCSpeechRecognitionModel:speech_to_text",
+      "mode": "speech_to_text",
+      "modelType": "HuggingFaceCTCSpeechRecognitionModel",
+      "publicTemplateIds": [],
+      "qualificationStatus": "graph-qualified-execution-pending",
+      "reason": "The supported manifest contains an exact checked-in graph and backend execution pair.",
+      "status": "executable"
+    },
+    {
+      "graphHash": "32fe79b7a89ec72f4d92b85f4bf4390d5e1c92208ee5b2e1fec5bedbd0fb4410",
       "graphPath": "studio/hugging-face-image-text-to-text-model/image-to-text.json",
       "id": "HuggingFaceImageTextToTextModel:image_to_text",
       "mode": "image_to_text",
@@ -1034,7 +1153,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "c5f3371c28f0940789b095c748803cb7c308757bb2273e5e16ac9c20a3d6ccce",
+      "graphHash": "ffad2aedbc329a71d4455d90f40078501f13f56645e1dc077bbc9e7d28dbafaf",
       "graphPath": "studio/hugging-face-speech-recognition-model/speech-to-text.json",
       "id": "HuggingFaceSpeechRecognitionModel:speech_to_text",
       "mode": "speech_to_text",
@@ -1045,7 +1164,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "b78d645c5ff9d4f5fb6b38227ae6512b4c28c1ba8e803facb223e2a7d525f0e4",
+      "graphHash": "ceeda76f1c6b3e964676293ca3754adfade221b8cd5b832e1215c94b944d37a9",
       "graphPath": "studio/hugging-face-speech-recognition-model/speech-translation.json",
       "id": "HuggingFaceSpeechRecognitionModel:speech_translation",
       "mode": "speech_translation",
@@ -1319,7 +1438,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "f7ccecdc033c0469bdd98853c937b487373fd88c0f36ed5a02e64e55bc07bd87",
+      "graphHash": "e6d9dc9edddd4efe5186cf152749c17a37e7d668b05ad7aedd9cd9f7e3438cd3",
       "graphPath": "studio/latte-pipeline/text-to-video.json",
       "id": "LattePipeline:text_to_video",
       "mode": "text_to_video",
@@ -1330,7 +1449,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "5567eadc3dba7a50b9411ca2b91764d6edea102a49f8a98cd9fff2e7e6b4ab54",
+      "graphHash": "68e36a48139e32570f4ae111650c1ef8f170ae16ad0954cbbc46d42c7fb5cb13",
       "graphPath": "studio/long-cat-audio-di-t-pipeline/text-to-audio.json",
       "id": "LongCatAudioDiTPipeline:text_to_audio",
       "mode": "text_to_audio",
@@ -1396,7 +1515,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "0f481695e525099c8ca281baa422e9442171d196988562605823f36f6acca41c",
+      "graphHash": "357b868b4b00010f91d2345f1790bd4b1fa9fe68fa8bfcc2d962a69df869c4cf",
       "graphPath": "studio/mini-max-music3-modular-pipeline/text-to-audio.json",
       "id": "MiniMaxMusic3ModularPipeline:text_to_audio",
       "mode": "text_to_audio",
@@ -1409,7 +1528,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "87aefb0a156179b01c43d042dbdb7bd0f6caa5ef41a88ee5671f016ececf0008",
+      "graphHash": "840a2cf21e3489c69bebdc2fdccab1e8a71848a491467f31e78c070f0ba56f1d",
       "graphPath": "studio/mochi-pipeline/text-to-video.json",
       "id": "MochiPipeline:text_to_video",
       "mode": "text_to_video",
@@ -1706,7 +1825,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "3eebc15a62f325ec1449c74e14bb7e4721f67b58fc08acda9149ae564ab1214e",
+      "graphHash": "027ade4a9594743485b4176bc1a018871cd69ee69cf9ed029a00baee21c3ee46",
       "graphPath": "studio/sana-image-to-video-pipeline/image-to-video.json",
       "id": "SanaImageToVideoPipeline:image_to_video",
       "mode": "image_to_video",
@@ -1761,7 +1880,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "ef446576e85b5d6d65a3055b120dd25fe369300e124ebaae147c2aea5586efaf",
+      "graphHash": "776a41955b7d3a12298f3edb9e2a198a596fa0cd36ab91c53f020c0d09ab0bf8",
       "graphPath": "studio/sana-video-pipeline/text-to-video.json",
       "id": "SanaVideoPipeline:text_to_video",
       "mode": "text_to_video",
@@ -1772,7 +1891,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "931b9b7b9c15512bd2b8cc7ad9f7fe2bdf60c6634d93c29f3d66de5e43e5014b",
+      "graphHash": "9e7414d85a616a30f1a91e7b69b8a8a6e56ea6c27783f4419eaa499ae5e33db1",
       "graphPath": "studio/shap-e-pipeline/text-to-3d.json",
       "id": "ShapEPipeline:text_to_3d",
       "mode": "text_to_3d",
@@ -1805,7 +1924,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "6eac2cf6e052f16039824a0511e3aa659e90f9300300b0500be392d7283c9fd0",
+      "graphHash": "9077ee369a0039de9e98d860117fe2be2774348b9f794baf2e41ca54c80b18b2",
       "graphPath": "studio/stable-audio-pipeline/text-to-audio.json",
       "id": "StableAudioPipeline:text_to_audio",
       "mode": "text_to_audio",
@@ -2091,7 +2210,7 @@
       "status": "executable"
     },
     {
-      "graphHash": "996846e2afd38677bd72d7b063760925674c5c87fbfebc27308388e8e1283d34",
+      "graphHash": "9d7dcff585e2d46f200a5654331643b2f0447546242f14ce397d80366b6001b0",
       "graphPath": "studio/stable-video-diffusion-pipeline/image-to-video.json",
       "id": "StableVideoDiffusionPipeline:image_to_video",
       "mode": "image_to_video",
@@ -2339,7 +2458,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:ed25c084c7fb0be603cc00e79e49d3b6dc53b053c88cd2bcd97711811eb239d1",
+  "contentHash": "sha256:74aa3748027c73afd604e8a547fc7bd7addbf07bf94b0f744f408e32a9a38c32",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -3231,6 +3350,16 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
+      "exactExecutionSpecs": [],
+      "modularWorkflowIds": [],
+      "name": "EchoModularPipeline",
+      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
+      "reviewDecision": null,
+      "status": "unreviewed"
+    },
+    {
+      "artifactReviews": [],
+      "equivalentTo": [],
       "exactExecutionSpecs": [
         {
           "id": "ernie-image-turbo:modular-text-to-image:v1",
@@ -3432,6 +3561,54 @@
       ],
       "modularWorkflowIds": [],
       "name": "Flux2Pipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
+    },
+    {
+      "artifactReviews": [],
+      "equivalentTo": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux3-klein:official-provider:v1:edit-image:v1",
+          "mode": "edit_image",
+          "modelType": "Flux3DistilledModularPipeline"
+        },
+        {
+          "id": "flux3-klein:official-provider:v1:text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "Flux3DistilledModularPipeline"
+        }
+      ],
+      "modularWorkflowIds": [
+        "edit_image",
+        "text_to_image"
+      ],
+      "name": "Flux3DistilledModularPipeline",
+      "reason": "At least one exact backend execution specification selects this upstream class.",
+      "reviewDecision": null,
+      "status": "executable"
+    },
+    {
+      "artifactReviews": [],
+      "equivalentTo": [],
+      "exactExecutionSpecs": [
+        {
+          "id": "flux3-klein-base:official-provider:v1:edit-image:v1",
+          "mode": "edit_image",
+          "modelType": "Flux3ModularPipeline"
+        },
+        {
+          "id": "flux3-klein-base:official-provider:v1:text-to-image:v1",
+          "mode": "text_to_image",
+          "modelType": "Flux3ModularPipeline"
+        }
+      ],
+      "modularWorkflowIds": [
+        "edit_image",
+        "text_to_image"
+      ],
+      "name": "Flux3ModularPipeline",
       "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
       "status": "executable"
@@ -4291,6 +4468,26 @@
       "status": "research-blocked"
     },
     {
+      "artifactReviews": [],
+      "equivalentTo": [],
+      "exactExecutionSpecs": [],
+      "modularWorkflowIds": [],
+      "name": "Kandinsky6SRPipeline",
+      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
+      "reviewDecision": null,
+      "status": "unreviewed"
+    },
+    {
+      "artifactReviews": [],
+      "equivalentTo": [],
+      "exactExecutionSpecs": [],
+      "modularWorkflowIds": [],
+      "name": "Kandinsky6TI2VAPipeline",
+      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
+      "reviewDecision": null,
+      "status": "unreviewed"
+    },
+    {
       "artifactReviews": [
         "data/kandinsky-2-1-artifact-review.json"
       ],
@@ -5041,18 +5238,6 @@
       "status": "executable"
     },
     {
-      "artifactReviews": [],
-      "equivalentTo": [
-        "Lumina2Pipeline"
-      ],
-      "exactExecutionSpecs": [],
-      "modularWorkflowIds": [],
-      "name": "Lumina2Text2ImgPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
-      "reviewDecision": null,
-      "status": "equivalent"
-    },
-    {
       "artifactReviews": [
         "data/lumina-image-artifact-review.json"
       ],
@@ -5069,20 +5254,6 @@
       "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
       "status": "executable"
-    },
-    {
-      "artifactReviews": [
-        "data/lumina-image-artifact-review.json"
-      ],
-      "equivalentTo": [
-        "LuminaPipeline"
-      ],
-      "exactExecutionSpecs": [],
-      "modularWorkflowIds": [],
-      "name": "LuminaText2ImgPipeline",
-      "reason": "The public task surface is routed through the listed exact adapter class or classes; this is not a claim of byte-identical outputs or parity with class-specific optional features.",
-      "reviewDecision": null,
-      "status": "equivalent"
     },
     {
       "artifactReviews": [],
@@ -5439,6 +5610,16 @@
     {
       "artifactReviews": [],
       "equivalentTo": [],
+      "exactExecutionSpecs": [],
+      "modularWorkflowIds": [],
+      "name": "QwenImage21ModularPipeline",
+      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
+      "reviewDecision": null,
+      "status": "unreviewed"
+    },
+    {
+      "artifactReviews": [],
+      "equivalentTo": [],
       "exactExecutionSpecs": [
         {
           "id": "qwen-image-21:edit-image:v1",
@@ -5461,6 +5642,16 @@
       "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
       "status": "executable"
+    },
+    {
+      "artifactReviews": [],
+      "equivalentTo": [],
+      "exactExecutionSpecs": [],
+      "modularWorkflowIds": [],
+      "name": "QwenImage21TurboModularPipeline",
+      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
+      "reviewDecision": null,
+      "status": "unreviewed"
     },
     {
       "artifactReviews": [],
@@ -5842,6 +6033,16 @@
       "reason": "At least one exact backend execution specification selects this upstream class.",
       "reviewDecision": null,
       "status": "executable"
+    },
+    {
+      "artifactReviews": [],
+      "equivalentTo": [],
+      "exactExecutionSpecs": [],
+      "modularWorkflowIds": [],
+      "name": "SanaWMPipeline",
+      "reason": "No exact adapter, equivalence decision, contract-only record, exclusion, or artifact review is recorded.",
+      "reviewDecision": null,
+      "status": "unreviewed"
     },
     {
       "artifactReviews": [],
@@ -7487,75 +7688,150 @@
   "publicTemplates": [
     {
       "canonicalWorkflowId": "AceStepAudioPipeline:audio_continuation",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "bindingSpec": {
+          "mode": "audio_continuation",
+          "modelType": "AceStepAudioPipeline"
+        },
+        "executionProfileId": "ace-step-audio:direct",
+        "implementation": "whole_pipeline",
+        "note": "Model Setup owns configuration and the reviewed adapter; Generate Audio remains the real integrated pipeline action.",
+        "pipelineClass": "AceStepPipeline",
+        "schemaVersion": 1,
+        "task": "audio_continuation"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "ace_step_audio_continuation",
       "mode": "audio_continuation",
       "modelType": "AceStepAudioPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "AceStepAudioPipeline:audio_repaint",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "bindingSpec": {
+          "mode": "audio_repaint",
+          "modelType": "AceStepAudioPipeline"
+        },
+        "executionProfileId": "ace-step-audio:direct",
+        "implementation": "whole_pipeline",
+        "note": "Model Setup owns configuration and the reviewed adapter; Generate Audio remains the real integrated pipeline action.",
+        "pipelineClass": "AceStepPipeline",
+        "schemaVersion": 1,
+        "task": "audio_repaint"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "ace_step_audio_repaint",
       "mode": "audio_repaint",
       "modelType": "AceStepAudioPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "AceStepAudioPipeline:audio_variation",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "bindingSpec": {
+          "mode": "audio_variation",
+          "modelType": "AceStepAudioPipeline"
+        },
+        "executionProfileId": "ace-step-audio:direct",
+        "implementation": "whole_pipeline",
+        "note": "Model Setup owns configuration and the reviewed adapter; Generate Audio remains the real integrated pipeline action.",
+        "pipelineClass": "AceStepPipeline",
+        "schemaVersion": 1,
+        "task": "audio_variation"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "ace_step_audio_variation",
       "mode": "audio_variation",
       "modelType": "AceStepAudioPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "AceStepAudioPipeline:text_to_audio:ace_step_chinese_new_year_lora",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "bindingSpec": {
+          "mode": "text_to_audio",
+          "modelType": "AceStepAudioPipeline"
+        },
+        "executionProfileId": "ace-step-audio:direct",
+        "implementation": "whole_pipeline",
+        "note": "Model Setup owns configuration and the reviewed adapter; Generate Audio remains the real integrated pipeline action.",
+        "pipelineClass": "AceStepPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_audio"
+      },
       "galleryExamplePresent": false,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": null,
       "galleryVerificationStatus": null,
       "id": "ace_step_chinese_new_year_lora",
       "mode": "text_to_audio",
       "modelType": "AceStepAudioPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": false,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "AceStepAudioPipeline:text_to_audio:ace_step_custom_lora",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "user_supplied",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "bindingSpec": {
+          "mode": "text_to_audio",
+          "modelType": "AceStepAudioPipeline"
+        },
+        "executionProfileId": "ace-step-audio:direct",
+        "implementation": "whole_pipeline",
+        "note": "Model Setup owns configuration and the reviewed adapter; Generate Audio remains the real integrated pipeline action.",
+        "pipelineClass": "AceStepPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_audio"
+      },
       "galleryExamplePresent": false,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": null,
       "galleryVerificationStatus": null,
       "id": "ace_step_custom_lora",
       "mode": "text_to_audio",
       "modelType": "AceStepAudioPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": false,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -7577,405 +7853,1194 @@
     },
     {
       "canonicalWorkflowId": "AceStepAudioPipeline:text_to_audio",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "bindingSpec": {
+          "mode": "text_to_audio",
+          "modelType": "AceStepAudioPipeline"
+        },
+        "executionProfileId": "ace-step-audio:direct",
+        "implementation": "whole_pipeline",
+        "note": "Model Setup owns configuration and the reviewed adapter; Generate Audio remains the real integrated pipeline action.",
+        "pipelineClass": "AceStepPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_audio"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "ace_step_text_to_audio",
       "mode": "text_to_audio",
       "modelType": "AceStepAudioPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageEditPlusModularPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "QwenImageEditPlusModularPipeline"
+        },
+        "executionProfileId": "qwen-edit-plus:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageEditPlusModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "character_edit",
       "mode": "edit_image",
       "modelType": "QwenImageEditPlusModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "ZImageModularPipeline:text_to_image:fast_lora",
+      "canonicalWorkflowId": "Cosmos3OmniModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "backendDefaultInputs": [
+          "prompt"
+        ],
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Cosmos3OmniModularPipeline"
+        },
+        "executionProfileId": "cosmos3-super-text-to-image:official-modular-workflow",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Cosmos3OmniModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": false,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": null,
+      "galleryVerificationStatus": null,
+      "id": "cosmos3_super_text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Cosmos3OmniModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": false,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "ZImageModularPipeline:text_to_image:fast_lora",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-z-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "ZImageModularPipeline"
+        },
+        "executionProfileId": "z-image:modular",
+        "implementation": "native_stages",
+        "loraPolicy": {
+          "defaultAdapterName": "default"
+        },
+        "pipelineClass": "ZImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "fast_lora",
       "mode": "text_to_image",
       "modelType": "ZImageModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "Flux2KleinPipeline:edit_image",
+      "canonicalWorkflowId": "Flux2ModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux2ModularPipeline"
+        },
+        "executionProfileId": "flux2:modular",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux2ModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": false,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": null,
+      "galleryVerificationStatus": null,
+      "id": "flux2_dev_text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Flux2ModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
+      "reviewedGalleryExample": false,
+      "status": "executable",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux2KleinPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux2-klein-edit:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "Flux2KleinModularPipeline"
+        },
+        "executionProfileId": "flux2-klein:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "Flux2KleinModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_exact",
       "galleryVerificationStatus": "exact",
       "id": "flux2_klein_edit",
       "mode": "edit_image",
       "modelType": "Flux2KleinPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "Flux2KleinPipeline:multi_image_reference_edit",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux2-klein-multi-reference:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "Flux2KleinModularPipeline"
+        },
+        "executionProfileId": "flux2-klein:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "Flux2KleinModularPipeline",
+        "schemaVersion": 1,
+        "task": "multi_image_reference_edit"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux2_klein_multi_reference",
       "mode": "multi_image_reference_edit",
       "modelType": "Flux2KleinPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "Flux2KleinPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux2-klein-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux2KleinModularPipeline"
+        },
+        "executionProfileId": "flux2-klein:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "Flux2KleinModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux2_klein_text_to_image",
       "mode": "text_to_image",
       "modelType": "Flux2KleinPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
-      "canonicalWorkflowId": "FluxCannyPipeline:control_image",
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image:flux3_klein_base_fp8r512_lora_style",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein-base:official:text-to-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux3ModularPipeline"
+        },
+        "executionProfileId": "flux3-klein-base:official-provider:v1",
+        "implementation": "native_stages",
+        "loraPolicy": {
+          "defaultAdapterName": "mnt_oil"
+        },
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3ModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_base_fp8r512_lora_style",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3ModularPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein-base:official:edit-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "Flux3ModularPipeline"
+        },
+        "executionProfileId": "flux3-klein-base:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3ModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_base_fp8r512_multi_reference_edit",
+      "mode": "edit_image",
+      "modelType": "Flux3ModularPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein-base:official:text-to-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux3ModularPipeline"
+        },
+        "executionProfileId": "flux3-klein-base:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3ModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_base_fp8r512_raw_coordinate_prompt",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3ModularPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein-base:official:edit-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "Flux3ModularPipeline"
+        },
+        "executionProfileId": "flux3-klein-base:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3ModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_base_fp8r512_single_reference_edit",
+      "mode": "edit_image",
+      "modelType": "Flux3ModularPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3ModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein-base:official:text-to-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux3ModularPipeline"
+        },
+        "executionProfileId": "flux3-klein-base:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3ModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_base_fp8r512_text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Flux3ModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image:flux3_klein_fp8r512_lora_style",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein:official:text-to-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux3DistilledModularPipeline"
+        },
+        "executionProfileId": "flux3-klein:official-provider:v1",
+        "implementation": "native_stages",
+        "loraPolicy": {
+          "defaultAdapterName": "nsc7"
+        },
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3DistilledModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_fp8r512_lora_style",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein:official:edit-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "Flux3DistilledModularPipeline"
+        },
+        "executionProfileId": "flux3-klein:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3DistilledModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_fp8r512_multi_reference_edit",
+      "mode": "edit_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein:official:text-to-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux3DistilledModularPipeline"
+        },
+        "executionProfileId": "flux3-klein:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3DistilledModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_fp8r512_raw_coordinate_prompt",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein:official:edit-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "Flux3DistilledModularPipeline"
+        },
+        "executionProfileId": "flux3-klein:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3DistilledModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_fp8r512_single_reference_edit",
+      "mode": "edit_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "readinessPolicy": "requires_input",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "Flux3DistilledModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "flux3-klein:official:text-to-image:prompt-preview-append-fp32:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "Flux3DistilledModularPipeline"
+        },
+        "executionProfileId": "flux3-klein:official-provider:v1",
+        "implementation": "native_stages",
+        "memoryPolicy": "custom_experimental",
+        "pipelineClass": "Flux3DistilledModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
+      "galleryQualityReviewStatus": "approved_reviewed",
+      "galleryVerificationStatus": "reviewed",
+      "id": "flux3_klein_fp8r512_text_to_image",
+      "mode": "text_to_image",
+      "modelType": "Flux3DistilledModularPipeline",
+      "readinessPolicy": "runnable",
+      "reason": "An explicit pinned experimental creator retains its contract-only canonical reference; published media does not qualify the graph or hardware.",
+      "reviewedGalleryExample": true,
+      "status": "contract-only",
+      "verificationStatus": "unverified"
+    },
+    {
+      "canonicalWorkflowId": "FluxCannyPipeline:control_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
+      "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "bindingSpec": {
+          "mode": "control_image",
+          "modelType": "FluxCannyPipeline"
+        },
+        "executionProfileId": "flux-canny:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs prepares text and VAE control conditioning; Denoise uses the official latent sampler and Image Output decodes latents.",
+        "pipelineClass": "FluxControlPipeline",
+        "schemaVersion": 1,
+        "task": "control_image"
+      },
+      "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_control_canny",
       "mode": "control_image",
       "modelType": "FluxCannyPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxDepthPipeline:control_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "bindingSpec": {
+          "mode": "control_image",
+          "modelType": "FluxDepthPipeline"
+        },
+        "executionProfileId": "flux-depth:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs prepares text and VAE control conditioning; Denoise uses the official latent sampler and Image Output decodes latents.",
+        "pipelineClass": "FluxControlPipeline",
+        "schemaVersion": 1,
+        "task": "control_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_depth_control",
       "mode": "control_image",
       "modelType": "FluxDepthPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxDevPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux-dev-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "FluxModularPipeline"
+        },
+        "executionProfileId": "flux-dev:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "FluxModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_dev_expert_text_to_image",
       "mode": "text_to_image",
       "modelType": "FluxDevPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxFillPipeline:inpaint",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "bindingSpec": {
+          "mode": "inpaint",
+          "modelType": "FluxFillPipeline"
+        },
+        "executionProfileId": "flux-fill:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs encodes text only; official Fill Denoise retains source, mask and seed preparation, and Image Output decodes and composites.",
+        "pipelineClass": "FluxFillPipeline",
+        "schemaVersion": 1,
+        "task": "inpaint"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_fill_inpaint",
       "mode": "inpaint",
       "modelType": "FluxFillPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxFillPipeline:outpaint",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "bindingSpec": {
+          "mode": "outpaint",
+          "modelType": "FluxFillPipeline"
+        },
+        "executionProfileId": "flux-fill:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs encodes text only; official Fill Denoise retains source, mask and seed preparation, and Image Output decodes and composites.",
+        "pipelineClass": "FluxFillPipeline",
+        "schemaVersion": 1,
+        "task": "outpaint"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_fill_outpaint",
       "mode": "outpaint",
       "modelType": "FluxFillPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxKontextPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux-kontext-edit:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "FluxKontextModularPipeline"
+        },
+        "executionProfileId": "flux-kontext:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "FluxKontextModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_kontext_edit",
       "mode": "edit_image",
       "modelType": "FluxKontextPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxKontextPipeline:multi_image_reference_edit",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux-kontext-multi-reference:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "FluxKontextModularPipeline"
+        },
+        "executionProfileId": "flux-kontext:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "FluxKontextModularPipeline",
+        "schemaVersion": 1,
+        "task": "multi_image_reference_edit"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_kontext_multi_reference",
       "mode": "multi_image_reference_edit",
       "modelType": "FluxKontextPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxKreaPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux-krea-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "FluxModularPipeline"
+        },
+        "executionProfileId": "flux-krea:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "FluxModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_krea_text_to_image",
       "mode": "text_to_image",
       "modelType": "FluxKreaPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxDevPipeline:text_to_image:flux_lora_cinematic_octane_3d",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux-dev-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "FluxModularPipeline"
+        },
+        "executionProfileId": "flux-dev:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "FluxModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": false,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": null,
       "galleryVerificationStatus": null,
       "id": "flux_lora_cinematic_octane_3d",
       "mode": "text_to_image",
       "modelType": "FluxDevPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": false,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxDevPipeline:text_to_image:flux_lora_film_noir",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux-dev-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "FluxModularPipeline"
+        },
+        "executionProfileId": "flux-dev:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "FluxModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_lora_film_noir",
       "mode": "text_to_image",
       "modelType": "FluxDevPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxDevPipeline:text_to_image:flux_lora_ghibli_story",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux-dev-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "FluxModularPipeline"
+        },
+        "executionProfileId": "flux-dev:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "FluxModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_lora_ghibli_story",
       "mode": "text_to_image",
       "modelType": "FluxDevPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxDevPipeline:text_to_image:flux_lora_oil_painting",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux-dev-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "FluxModularPipeline"
+        },
+        "executionProfileId": "flux-dev:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "FluxModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_lora_oil_painting",
       "mode": "text_to_image",
       "modelType": "FluxDevPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxDevPipeline:text_to_image:flux_lora_paper_cutout",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux-dev-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "FluxModularPipeline"
+        },
+        "executionProfileId": "flux-dev:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "FluxModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_lora_paper_cutout",
       "mode": "text_to_image",
       "modelType": "FluxDevPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxDevPipeline:text_to_image:flux_lora_photoreal_documentary",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux-dev-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "FluxModularPipeline"
+        },
+        "executionProfileId": "flux-dev:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "FluxModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_lora_photoreal_documentary",
       "mode": "text_to_image",
       "modelType": "FluxDevPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxDevPipeline:text_to_image:flux_lora_retro_comic",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux-dev-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "FluxModularPipeline"
+        },
+        "executionProfileId": "flux-dev:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "FluxModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_lora_retro_comic",
       "mode": "text_to_image",
       "modelType": "FluxDevPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxDevPipeline:text_to_image:flux_lora_watercolor",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux-dev-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "FluxModularPipeline"
+        },
+        "executionProfileId": "flux-dev:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "FluxModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_lora_watercolor",
       "mode": "text_to_image",
       "modelType": "FluxDevPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxReduxPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "FluxReduxPipeline"
+        },
+        "executionProfileId": "flux-redux:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs runs the retained pinned Redux prior; Denoise uses the official base latent sampler and Image Output uses the matching VAE.",
+        "pipelineClass": "FluxReduxPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_redux_edit",
       "mode": "edit_image",
       "modelType": "FluxReduxPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "FluxReduxPipeline:multi_image_reference_edit",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "bindingSpec": {
+          "mode": "multi_image_reference_edit",
+          "modelType": "FluxReduxPipeline"
+        },
+        "executionProfileId": "flux-redux:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs runs the retained pinned Redux prior in reference order; Denoise uses the official base latent sampler and Image Output uses the matching VAE.",
+        "pipelineClass": "FluxReduxPipeline",
+        "schemaVersion": 1,
+        "task": "multi_image_reference_edit"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_redux_multi_reference",
       "mode": "multi_image_reference_edit",
       "modelType": "FluxReduxPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "reviewed"
     },
     {
       "canonicalWorkflowId": "FluxSchnellPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-flux-schnell-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "text_to_image",
+          "modelType": "FluxModularPipeline"
+        },
+        "executionProfileId": "flux-schnell:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "FluxModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "flux_schnell_text_to_image",
       "mode": "text_to_image",
       "modelType": "FluxSchnellPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-qwen-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "QwenImageModularPipeline"
+        },
+        "executionProfileId": "qwen-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "high_quality",
       "mode": "text_to_image",
       "modelType": "QwenImageModularPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "ZImageModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-z-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "ZImageModularPipeline"
+        },
+        "executionProfileId": "z-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "ZImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "low_vram",
       "mode": "text_to_image",
       "modelType": "ZImageModularPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -8072,360 +9137,724 @@
     },
     {
       "canonicalWorkflowId": "MiniMaxMusic3ModularPipeline:text_to_audio",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "bindingSpec": {
+          "mode": "text_to_audio",
+          "modelType": "MiniMaxMusic3ModularPipeline"
+        },
+        "executionProfileId": "minimax-music3:official-modular-workflow",
+        "implementation": "native_stages",
+        "note": "The real semantic generation and denoising stages feed Audio Output; no prompt encoder or Guider is invented.",
+        "pipelineClass": "MiniMaxMusic3ModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_audio"
+      },
       "galleryExamplePresent": false,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": null,
       "galleryVerificationStatus": null,
       "id": "minimax_music3_chamber_pop",
       "mode": "text_to_audio",
       "modelType": "MiniMaxMusic3ModularPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": false,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageEditModularPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "QwenImageEditModularPipeline"
+        },
+        "executionProfileId": "qwen-edit:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageEditModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_character_angles",
       "mode": "edit_image",
       "modelType": "QwenImageEditModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageModularPipeline:control_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "control_image",
+          "modelType": "QwenImageModularPipeline"
+        },
+        "executionProfileId": "qwen-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "control_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_exact",
       "galleryVerificationStatus": "exact",
       "id": "qwen_control_image_layout",
       "mode": "control_image",
       "modelType": "QwenImageModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageEditPlusModularPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "QwenImageEditPlusModularPipeline"
+        },
+        "executionProfileId": "qwen-edit-plus:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageEditPlusModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_exact",
       "galleryVerificationStatus": "exact",
       "id": "qwen_edit_plus_single_image",
       "mode": "edit_image",
       "modelType": "QwenImageEditPlusModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageEditModularPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "QwenImageEditModularPipeline"
+        },
+        "executionProfileId": "qwen-edit:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageEditModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_edit_strength_sweep",
       "mode": "edit_image",
       "modelType": "QwenImageEditModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageEditModularPipeline:inpaint",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-qwen-edit-inpaint:v1",
+        "bindingSpec": {
+          "mode": "modular_inpainting",
+          "modelType": "QwenImageEditModularPipeline"
+        },
+        "executionProfileId": "qwen-edit:modular",
+        "implementation": "native_stages",
+        "note": "Native masked stages preserve the reviewed whole-template preprocessing and composite through an owned compatibility adapter.",
+        "pipelineClass": "QwenImageEditModularPipeline",
+        "schemaVersion": 1,
+        "task": "inpaint"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_inpaint_mask_draft",
       "mode": "inpaint",
       "modelType": "QwenImageEditModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "non_exact"
     },
     {
       "canonicalWorkflowId": "QwenImageEditModularPipeline:inpaint",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-qwen-edit-inpaint:v1",
+        "bindingSpec": {
+          "mode": "modular_inpainting",
+          "modelType": "QwenImageEditModularPipeline"
+        },
+        "executionProfileId": "qwen-edit:modular",
+        "implementation": "native_stages",
+        "note": "Native masked stages preserve the reviewed whole-template preprocessing and composite through an owned compatibility adapter.",
+        "pipelineClass": "QwenImageEditModularPipeline",
+        "schemaVersion": 1,
+        "task": "inpaint"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_inpaint_object_replace",
       "mode": "inpaint",
       "modelType": "QwenImageEditModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "non_exact"
     },
     {
       "canonicalWorkflowId": "QwenImageLayeredModularPipeline:layer_decomposition",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "layer_decomposition",
+          "modelType": "QwenImageLayeredModularPipeline"
+        },
+        "executionProfileId": "qwen-layered:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageLayeredModularPipeline",
+        "schemaVersion": 1,
+        "task": "layer_decomposition"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_layered_portrait",
       "mode": "layer_decomposition",
       "modelType": "QwenImageLayeredModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageEditPlusModularPipeline:multi_image_reference_edit",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "multi_image_reference_edit",
+          "modelType": "QwenImageEditPlusModularPipeline"
+        },
+        "executionProfileId": "qwen-edit-plus:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageEditPlusModularPipeline",
+        "schemaVersion": 1,
+        "task": "multi_image_reference_edit"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_logo_texture",
       "mode": "multi_image_reference_edit",
       "modelType": "QwenImageEditPlusModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-qwen-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "QwenImageModularPipeline"
+        },
+        "executionProfileId": "qwen-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_low_vram_poster_layout",
       "mode": "text_to_image",
       "modelType": "QwenImageModularPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-qwen-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "QwenImageModularPipeline"
+        },
+        "executionProfileId": "qwen-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_exact",
       "galleryVerificationStatus": null,
       "id": "qwen_low_vram_product_concept",
       "mode": "text_to_image",
       "modelType": "QwenImageModularPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-qwen-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "QwenImageModularPipeline"
+        },
+        "executionProfileId": "qwen-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_exact",
       "galleryVerificationStatus": null,
       "id": "qwen_low_vram_text_rendering",
       "mode": "text_to_image",
       "modelType": "QwenImageModularPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageEditPlusModularPipeline:multi_image_reference_edit",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "multi_image_reference_edit",
+          "modelType": "QwenImageEditPlusModularPipeline"
+        },
+        "executionProfileId": "qwen-edit-plus:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageEditPlusModularPipeline",
+        "schemaVersion": 1,
+        "task": "multi_image_reference_edit"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_multi_reference_product",
       "mode": "multi_image_reference_edit",
       "modelType": "QwenImageEditPlusModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageEditModularPipeline:outpaint",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-qwen-edit-outpaint:v1",
+        "bindingSpec": {
+          "mode": "modular_inpainting",
+          "modelType": "QwenImageEditModularPipeline"
+        },
+        "executionProfileId": "qwen-edit:modular",
+        "implementation": "native_stages",
+        "note": "Native masked stages preserve the reviewed whole-template preprocessing and composite through an owned compatibility adapter.",
+        "pipelineClass": "QwenImageEditModularPipeline",
+        "schemaVersion": 1,
+        "task": "inpaint"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_outpaint_aspect_template",
       "mode": "outpaint",
       "modelType": "QwenImageEditModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "non_exact"
     },
     {
       "canonicalWorkflowId": "QwenImageEditModularPipeline:outpaint",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-qwen-edit-outpaint:v1",
+        "bindingSpec": {
+          "mode": "modular_inpainting",
+          "modelType": "QwenImageEditModularPipeline"
+        },
+        "executionProfileId": "qwen-edit:modular",
+        "implementation": "native_stages",
+        "note": "Native masked stages preserve the reviewed whole-template preprocessing and composite through an owned compatibility adapter.",
+        "pipelineClass": "QwenImageEditModularPipeline",
+        "schemaVersion": 1,
+        "task": "inpaint"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_outpaint_draft",
       "mode": "outpaint",
       "modelType": "QwenImageEditModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "non_exact"
     },
     {
       "canonicalWorkflowId": "QwenImageModularPipeline:control_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "control_image",
+          "modelType": "QwenImageModularPipeline"
+        },
+        "executionProfileId": "qwen-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "control_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_exact",
       "galleryVerificationStatus": "exact",
       "id": "qwen_packaging_dieline",
       "mode": "control_image",
       "modelType": "QwenImageModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-qwen-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "QwenImageModularPipeline"
+        },
+        "executionProfileId": "qwen-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_poster_logo_text",
       "mode": "text_to_image",
       "modelType": "QwenImageModularPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageEditPlusModularPipeline:multi_image_reference_edit",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "multi_image_reference_edit",
+          "modelType": "QwenImageEditPlusModularPipeline"
+        },
+        "executionProfileId": "qwen-edit-plus:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageEditPlusModularPipeline",
+        "schemaVersion": 1,
+        "task": "multi_image_reference_edit"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_product_ad_composite",
       "mode": "multi_image_reference_edit",
       "modelType": "QwenImageEditPlusModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-qwen-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "QwenImageModularPipeline"
+        },
+        "executionProfileId": "qwen-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_exact",
       "galleryVerificationStatus": null,
       "id": "qwen_product_mockup",
       "mode": "text_to_image",
       "modelType": "QwenImageModularPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageEditPlusModularPipeline:multi_image_reference_edit",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "multi_image_reference_edit",
+          "modelType": "QwenImageEditPlusModularPipeline"
+        },
+        "executionProfileId": "qwen-edit-plus:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageEditPlusModularPipeline",
+        "schemaVersion": 1,
+        "task": "multi_image_reference_edit"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_product_relight",
       "mode": "multi_image_reference_edit",
       "modelType": "QwenImageEditPlusModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-qwen-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "QwenImageModularPipeline"
+        },
+        "executionProfileId": "qwen-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_exact",
       "galleryVerificationStatus": null,
       "id": "qwen_text_rendering",
       "mode": "text_to_image",
       "modelType": "QwenImageModularPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageEditModularPipeline:edit_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "edit_image",
+          "modelType": "QwenImageEditModularPipeline"
+        },
+        "executionProfileId": "qwen-edit:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageEditModularPipeline",
+        "schemaVersion": 1,
+        "task": "edit_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_tile_extract",
       "mode": "edit_image",
       "modelType": "QwenImageEditModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "QwenImageModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-qwen-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "QwenImageModularPipeline"
+        },
+        "executionProfileId": "qwen-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "qwen_upscale_finish",
       "mode": "text_to_image",
       "modelType": "QwenImageModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "non_exact"
     },
     {
       "canonicalWorkflowId": "QwenImageEditPlusModularPipeline:multi_image_reference_edit",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-native-image:v1",
+        "bindingSpec": {
+          "mode": "multi_image_reference_edit",
+          "modelType": "QwenImageEditPlusModularPipeline"
+        },
+        "executionProfileId": "qwen-edit-plus:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "QwenImageEditPlusModularPipeline",
+        "schemaVersion": 1,
+        "task": "multi_image_reference_edit"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "reference_fusion",
       "mode": "multi_image_reference_edit",
       "modelType": "QwenImageEditPlusModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -8582,75 +10011,153 @@
     },
     {
       "canonicalWorkflowId": "ZImageModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-z-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "ZImageModularPipeline"
+        },
+        "executionProfileId": "z-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "ZImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_exact",
       "galleryVerificationStatus": null,
       "id": "z_image_cinematic_contact_sheet",
       "mode": "text_to_image",
       "modelType": "ZImageModularPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "ZImageModularPipeline:text_to_image:z_image_lora_style",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-z-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "ZImageModularPipeline"
+        },
+        "executionProfileId": "z-image:modular",
+        "implementation": "native_stages",
+        "loraPolicy": {
+          "defaultAdapterName": "default"
+        },
+        "pipelineClass": "ZImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "z_image_lora_style",
       "mode": "text_to_image",
       "modelType": "ZImageModularPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "non_exact"
     },
     {
       "canonicalWorkflowId": "ZImageModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-z-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "ZImageModularPipeline"
+        },
+        "executionProfileId": "z-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "ZImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_exact",
       "galleryVerificationStatus": "exact",
       "id": "z_image_poster",
       "mode": "text_to_image",
       "modelType": "ZImageModularPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "ZImageModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-z-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "ZImageModularPipeline"
+        },
+        "executionProfileId": "z-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "ZImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_exact",
       "galleryVerificationStatus": "exact",
       "id": "z_image_product_mockup",
       "mode": "text_to_image",
       "modelType": "ZImageModularPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "ZImageModularPipeline:text_to_image",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "retained-z-image-text-to-image:v1",
+        "bindingSpec": {
+          "mode": "modular_text_to_image",
+          "modelType": "ZImageModularPipeline"
+        },
+        "executionProfileId": "z-image:modular",
+        "implementation": "native_stages",
+        "pipelineClass": "ZImageModularPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_image"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_exact",
       "galleryVerificationStatus": "exact",
       "id": "z_image_quick_concept",
       "mode": "text_to_image",
       "modelType": "ZImageModularPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -8659,18 +10166,36 @@
   "schemaVersion": 1,
   "scope": {
     "diffusers": {
-      "exportModuleSha256": "f9536d3cd5f2f5df8992fa4b4b0fb53a407eea15744fcc288760624ce9111251",
+      "exportModuleSha256": "c2bc9d6c161fd3d3f4de657ecb6b58ce178fce211fda7f5e3641518d5ba6cd10",
       "inventoryRule": "Every static top-level Diffusers export ending in Pipeline is classified once.",
-      "revision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
-      "verifiedSourceRevision": "fbf49e7f35857f76bc57b177e26f12b03687c668",
+      "revision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+      "verifiedSourceRevision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
       "version": "0.41.0.dev0"
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "015acbe27676173560cb135be77e5681f9cef766ab8f29fc0f0494840ad0275b",
+    "templateBundleSha256": "3288f741885e47b46411aca4ba166320ebc0a83b5879976df16264458b30db91",
     "transformers": {
+      "currentBaseCoverageVerified": false,
+      "currentBaseRuntime": {
+        "delivery": "base",
+        "dependencies": [
+          "accelerate>=1.4.0",
+          "diffusers==0.41.0",
+          "huggingface-hub>=1.31.0,<2.0",
+          "peft>=0.21.2",
+          "torch>=2.6.0,<2.12; sys_platform == 'darwin'",
+          "torch>=2.6.0; sys_platform != 'darwin'",
+          "transformers>=5.18.0"
+        ],
+        "digest": "sha256:cc7a00bd6942e5d4e95f6cc8a80efab42b1e26c9c4df9862568cd7b6af15f32c",
+        "id": "modiff.base-model-runtime"
+      },
+      "legacyProductionFieldScope": "historical_reference_wheel_only",
       "productionRuntime": {
         "byteSize": 11625234,
+        "currentSetupDependency": false,
+        "evidenceScope": "historical_reference_wheel",
         "filename": "transformers-5.14.1-py3-none-any.whl",
         "runtimeProfileId": "huggingface-transformers-peft-5.14.1-0.20.0",
         "runtimeProfileSpecDigest": "sha256:b8a09a45113dd14c56688e4cae7592174b61683846f4b03da1117920125af5ee",
@@ -8680,35 +10205,46 @@
       "reviewedMainDeliveredInProduction": false,
       "reviewedMainRevision": "96fe6dce36cc929a5ffd3e34296554c4cb6b669e",
       "reviewedMainVersion": "5.16.0.dev0",
+      "reviewedReferenceRuntime": {
+        "byteSize": 11625234,
+        "currentSetupDependency": false,
+        "evidenceScope": "historical_reference_wheel",
+        "filename": "transformers-5.14.1-py3-none-any.whl",
+        "runtimeProfileId": "huggingface-transformers-peft-5.14.1-0.20.0",
+        "runtimeProfileSpecDigest": "sha256:b8a09a45113dd14c56688e4cae7592174b61683846f4b03da1117920125af5ee",
+        "sha256": "9db974c4079ede2d1a3ea7ca5a240df33f2cc26fc2b36ba64c5f2a4f43b6e725",
+        "version": "5.14.1"
+      },
       "semanticInventoryRule": "Finite reviewed inference semantics are classified; AutoModel aliases are not counted as product features."
     },
     "unreviewedBoundary": "An unreviewed export is an inventory gap, not a claim that the symbol is useful, safe, or eligible.",
     "workflowManifest": "data/workflow-library-manifest.json"
   },
   "summary": {
-    "canonicalWorkflowCount": 200,
-    "canonicalWorkflowsWithPublicTemplates": 52,
-    "canonicalWorkflowsWithoutPublicTemplates": 148,
-    "diffusersPipelineSymbolCount": 334,
+    "canonicalWorkflowCount": 209,
+    "canonicalWorkflowsWithPublicTemplates": 60,
+    "canonicalWorkflowsWithoutPublicTemplates": 149,
+    "diffusersPipelineSymbolCount": 340,
     "pipelineStatusCounts": {
       "contract-only": 5,
-      "equivalent": 10,
-      "executable": 144,
+      "equivalent": 8,
+      "executable": 146,
       "intentionally-excluded": 59,
       "research-blocked": 116,
-      "unreviewed": 0
+      "unreviewed": 6
     },
-    "publicTemplateCount": 78,
-    "reviewedGalleryTemplateCount": 70,
+    "publicTemplateCount": 90,
+    "reviewedGalleryTemplateCount": 80,
     "templateStatusCounts": {
-      "contract-only": 0,
+      "contract-only": 10,
       "equivalent": 0,
-      "executable": 78,
+      "executable": 80,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0
     },
     "transformersProductionSupportedSemanticCount": 6,
+    "transformersReferenceSupportedSemanticCount": 6,
     "transformersSemanticCount": 7,
     "transformersSemanticStatusCounts": {
       "contract-only": 0,
@@ -8719,9 +10255,9 @@
       "unreviewed": 0
     },
     "workflowStatusCounts": {
-      "contract-only": 0,
+      "contract-only": 6,
       "equivalent": 0,
-      "executable": 200,
+      "executable": 203,
       "intentionally-excluded": 0,
       "research-blocked": 0,
       "unreviewed": 0
@@ -8733,6 +10269,8 @@
         "HuggingFaceSpeechRecognitionModel:speech_to_text",
         "HuggingFaceSpeechRecognitionModel:speech_translation"
       ],
+      "currentBaseCoverageVerified": false,
+      "evidenceScope": "historical_reference_wheel",
       "id": "speech-recognition",
       "label": "Speech recognition and speech translation",
       "modes": [
@@ -8774,6 +10312,24 @@
       "publicTemplateEligible": false,
       "qualification": "source-and-live-smoke-only",
       "reason": "Generic bounded speech nodes exist; remote output-quality qualification remains separate.",
+      "referenceWheelAbsentPaths": [],
+      "referenceWheelEvidence": [
+        {
+          "path": "models/auto/modeling_auto.py",
+          "sha256": "bb9ae5973f29cdf8cf71e6a14dd0f0bec9efb4fb1d7ac0f58262fd8f28a4b8b6",
+          "symbols": [
+            "AutoModelForSpeechSeq2Seq"
+          ]
+        },
+        {
+          "path": "pipelines/automatic_speech_recognition.py",
+          "sha256": "ab3029c0c305044873ec07f36221a92d91dc5f4e64d1068a1cd504bc828389f3",
+          "symbols": [
+            "AutomaticSpeechRecognitionPipeline"
+          ]
+        }
+      ],
+      "referenceWheelSupport": true,
       "reviewedMainEvidence": [
         {
           "path": "models/auto/modeling_auto.py",
@@ -8794,6 +10350,8 @@
     },
     {
       "canonicalWorkflowIds": [],
+      "currentBaseCoverageVerified": false,
+      "evidenceScope": "historical_reference_wheel",
       "id": "bounded-depth-estimation",
       "label": "Bounded image depth estimation",
       "modes": [
@@ -8806,7 +10364,7 @@
             "PredictDepth"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "81544771429fac13e5e407699eb0602a91485c0be2de4709a8954218eca09e0c"
+          "sha256": "5217dd3f8c18cb2a9348e449dd6223a65a2a8f3d009ba0f6a2f1e7d0918b7ad0"
         }
       ],
       "nodeKeys": [
@@ -8835,6 +10393,25 @@
       "publicTemplateEligible": false,
       "qualification": "source-implemented-mocked-contract-qualified",
       "reason": "Generic AutoModel nodes use bounded DPT preprocessing and separate native depth from normalized previews.",
+      "referenceWheelAbsentPaths": [],
+      "referenceWheelEvidence": [
+        {
+          "path": "models/auto/modeling_auto.py",
+          "sha256": "bb9ae5973f29cdf8cf71e6a14dd0f0bec9efb4fb1d7ac0f58262fd8f28a4b8b6",
+          "symbols": [
+            "AutoModelForDepthEstimation"
+          ]
+        },
+        {
+          "path": "models/dpt/image_processing_dpt.py",
+          "sha256": "646937f80e26520fa9b0b2ba86aeb30d9a7f673b99ed6bcbdf3f082685d1cd1a",
+          "symbols": [
+            "DPTImageProcessor",
+            "post_process_depth_estimation"
+          ]
+        }
+      ],
+      "referenceWheelSupport": true,
       "reviewedMainEvidence": [
         {
           "path": "models/auto/modeling_auto.py",
@@ -8856,6 +10433,8 @@
     },
     {
       "canonicalWorkflowIds": [],
+      "currentBaseCoverageVerified": false,
+      "evidenceScope": "historical_reference_wheel",
       "id": "bounded-causal-text-generation",
       "label": "Bounded causal text generation",
       "modes": [
@@ -8868,7 +10447,7 @@
             "LoadTextGenerationModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "81544771429fac13e5e407699eb0602a91485c0be2de4709a8954218eca09e0c"
+          "sha256": "5217dd3f8c18cb2a9348e449dd6223a65a2a8f3d009ba0f6a2f1e7d0918b7ad0"
         }
       ],
       "nodeKeys": [
@@ -8896,6 +10475,24 @@
       "publicTemplateEligible": false,
       "qualification": "source-implemented-mocked-contract-qualified",
       "reason": "Task-generic exact-revision/local loading and bounded generation nodes exist.",
+      "referenceWheelAbsentPaths": [],
+      "referenceWheelEvidence": [
+        {
+          "path": "models/auto/modeling_auto.py",
+          "sha256": "bb9ae5973f29cdf8cf71e6a14dd0f0bec9efb4fb1d7ac0f58262fd8f28a4b8b6",
+          "symbols": [
+            "AutoModelForCausalLM"
+          ]
+        },
+        {
+          "path": "pipelines/text_generation.py",
+          "sha256": "503738cd78960c5f6e01c42f3b17e8da36bc7e6db8bca9733d647b88bdf46be8",
+          "symbols": [
+            "TextGenerationPipeline"
+          ]
+        }
+      ],
+      "referenceWheelSupport": true,
       "reviewedMainEvidence": [
         {
           "path": "models/auto/modeling_auto.py",
@@ -8916,6 +10513,8 @@
     },
     {
       "canonicalWorkflowIds": [],
+      "currentBaseCoverageVerified": false,
+      "evidenceScope": "historical_reference_wheel",
       "id": "bounded-image-video-to-text",
       "label": "Bounded image/video-to-text generation",
       "modes": [
@@ -8929,7 +10528,7 @@
             "LoadImageTextToTextModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "81544771429fac13e5e407699eb0602a91485c0be2de4709a8954218eca09e0c"
+          "sha256": "5217dd3f8c18cb2a9348e449dd6223a65a2a8f3d009ba0f6a2f1e7d0918b7ad0"
         }
       ],
       "nodeKeys": [
@@ -8964,6 +10563,31 @@
       "publicTemplateEligible": false,
       "qualification": "source-implemented-mocked-contract-qualified",
       "reason": "Task-generic processor/model nodes accept bounded in-memory image or video inputs.",
+      "referenceWheelAbsentPaths": [],
+      "referenceWheelEvidence": [
+        {
+          "path": "models/auto/modeling_auto.py",
+          "sha256": "bb9ae5973f29cdf8cf71e6a14dd0f0bec9efb4fb1d7ac0f58262fd8f28a4b8b6",
+          "symbols": [
+            "AutoModelForImageTextToText"
+          ]
+        },
+        {
+          "path": "pipelines/image_text_to_text.py",
+          "sha256": "18ad41774db8c59b5187e383e809804d2ef303c864b5a45e5b8ae6648a5894bb",
+          "symbols": [
+            "ImageTextToTextPipeline"
+          ]
+        },
+        {
+          "path": "video_processing_utils.py",
+          "sha256": "76bc98883545c1ef7a3a90f7d1e53a593a41742f2b5244de16555de1c63d151a",
+          "symbols": [
+            "BaseVideoProcessor"
+          ]
+        }
+      ],
+      "referenceWheelSupport": true,
       "reviewedMainEvidence": [
         {
           "path": "models/auto/modeling_auto.py",
@@ -8991,6 +10615,8 @@
     },
     {
       "canonicalWorkflowIds": [],
+      "currentBaseCoverageVerified": false,
+      "evidenceScope": "historical_reference_wheel",
       "id": "any-to-any-generation",
       "label": "Any-to-any generation",
       "modes": [
@@ -9004,7 +10630,7 @@
             "LoadAnyToAnyModel"
           ],
           "path": "modules/HuggingFaceTransformers/main.py",
-          "sha256": "81544771429fac13e5e407699eb0602a91485c0be2de4709a8954218eca09e0c"
+          "sha256": "5217dd3f8c18cb2a9348e449dd6223a65a2a8f3d009ba0f6a2f1e7d0918b7ad0"
         }
       ],
       "nodeKeys": [
@@ -9032,6 +10658,24 @@
       "publicTemplateEligible": false,
       "qualification": "source-implemented-mocked-adapter-qualified",
       "reason": "Task-generic nodes use a finite adapter registry; Janus text/image is bounded and executable while Qwen2.5-Omni remains contract-only because its official loader requires a non-safetensors speaker file.",
+      "referenceWheelAbsentPaths": [],
+      "referenceWheelEvidence": [
+        {
+          "path": "models/auto/modeling_auto.py",
+          "sha256": "bb9ae5973f29cdf8cf71e6a14dd0f0bec9efb4fb1d7ac0f58262fd8f28a4b8b6",
+          "symbols": [
+            "AutoModelForMultimodalLM"
+          ]
+        },
+        {
+          "path": "pipelines/any_to_any.py",
+          "sha256": "1aa51779c654b6901f1ea5b8631e1138c687ec9ffb6f4b99e11c4ea71603d41c",
+          "symbols": [
+            "AnyToAnyPipeline"
+          ]
+        }
+      ],
+      "referenceWheelSupport": true,
       "reviewedMainEvidence": [
         {
           "path": "models/auto/modeling_auto.py",
@@ -9052,6 +10696,8 @@
     },
     {
       "canonicalWorkflowIds": [],
+      "currentBaseCoverageVerified": false,
+      "evidenceScope": "historical_reference_wheel",
       "id": "emu3-native-image-generation",
       "label": "Native Emu3 image generation",
       "modes": [
@@ -9081,7 +10727,27 @@
       "productionWheelSupport": true,
       "publicTemplateEligible": false,
       "qualification": "no-modiff-action-contract",
-      "reason": "The production wheel has native token-to-image primitives, but MoDiff lacks a bounded decoder action.",
+      "reason": "The reviewed reference wheel has native token-to-image primitives, but MoDiff lacks a bounded decoder action.",
+      "referenceWheelAbsentPaths": [],
+      "referenceWheelEvidence": [
+        {
+          "path": "models/emu3/modeling_emu3.py",
+          "sha256": "efd5f359a352a50047328a80713338f4d1d0f5662b39dbbcb43206c475b556d8",
+          "symbols": [
+            "Emu3ForConditionalGeneration",
+            "decode_image_tokens"
+          ]
+        },
+        {
+          "path": "models/emu3/processing_emu3.py",
+          "sha256": "178dce13de9ca4f4fc48c7ae9e2d2834d96a3a9a525198aa21660f45f5a6e7c5",
+          "symbols": [
+            "return_for_image_generation",
+            "generation_mode"
+          ]
+        }
+      ],
+      "referenceWheelSupport": true,
       "reviewedMainEvidence": [
         {
           "path": "models/emu3/modeling_emu3.py",
@@ -9104,6 +10770,8 @@
     },
     {
       "canonicalWorkflowIds": [],
+      "currentBaseCoverageVerified": false,
+      "evidenceScope": "historical_reference_wheel",
       "id": "cosmos3-edge-reasoner-orchestration",
       "label": "Cosmos3 Edge reasoner orchestration",
       "modes": [
@@ -9119,7 +10787,13 @@
       "productionWheelSupport": false,
       "publicTemplateEligible": false,
       "qualification": "reviewed-main-only-no-production-or-action-contract",
-      "reason": "Reviewed main contains the reasoner, but production 5.14.1 and MoDiff orchestration do not.",
+      "reason": "Reviewed main contains the reasoner, but the historical reference wheel 5.14.1 does not; MoDiff lacks an orchestration action contract. Current base-version coverage is not inferred.",
+      "referenceWheelAbsentPaths": [
+        "models/cosmos3_edge/modeling_cosmos3_edge.py",
+        "models/cosmos3_edge/processing_cosmos3_edge.py"
+      ],
+      "referenceWheelEvidence": [],
+      "referenceWheelSupport": false,
       "reviewedMainEvidence": [
         {
           "path": "models/cosmos3_edge/modeling_cosmos3_edge.py",

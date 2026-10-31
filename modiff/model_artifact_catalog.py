@@ -87,8 +87,18 @@ def catalog_repository_pin(repo: str, *, model_type: str | None = None) -> dict[
     repository = str(repo or "").strip()
     if not repository:
         return None
+    return _catalog_repository_pin(read_model_artifact_catalog(), repository, model_type=model_type)
+
+
+def _catalog_repository_pin(
+    catalog: dict[str, Any], repo: str, *, model_type: str | None = None,
+) -> dict[str, Any] | None:
+    """Keep batch publication and individual loaders on the same lookup rules."""
+
+    repository = str(repo or "").strip()
+    if not repository:
+        return None
     repository_lower = repository.lower()
-    catalog = read_model_artifact_catalog()
     models = catalog["models"]
     if model_type:
         scoped = [model for model in models if model.get("modelType") == model_type]
@@ -156,20 +166,24 @@ def catalog_download_inventory(repo: str, revision: str | None, files: list[str]
                if str(item.get("repo", "")).lower() == repo.lower() and item.get("revision") == revision]
     if not matches:
         return None
-    if len(matches) != 1:
-        raise ValueError(f"Duplicate download inventories for {repo!r} at {revision!r}.")
-    inventory = matches[0]
-    entries = inventory.get("files")
-    if not isinstance(entries, list) or not entries:
-        raise ValueError(f"Invalid download inventory for {repo!r}.")
-    names = [entry.get("path") for entry in entries]
-    if (any(not isinstance(name, str) or not name for name in names)
-            or len(set(names)) != len(names)
-            or any(type(entry.get("byteSize")) is not int or entry["byteSize"] < 0 for entry in entries)):
-        raise ValueError(f"Invalid download file metadata for {repo!r}.")
-    if set(names) != set(files):
+    selected = []
+    for inventory in matches:
+        entries = inventory.get("files")
+        if not isinstance(entries, list) or not entries:
+            raise ValueError(f"Invalid download inventory for {repo!r}.")
+        names = [entry.get("path") if isinstance(entry, dict) else None for entry in entries]
+        if (any(not isinstance(name, str) or not name for name in names)
+                or len(set(names)) != len(names)
+                or any(type(entry.get("byteSize")) is not int or entry["byteSize"] < 0 for entry in entries)):
+            raise ValueError(f"Invalid download file metadata for {repo!r}.")
+        if set(names) == set(files):
+            selected.append(inventory)
+    if len(selected) > 1:
+        raise ValueError(f"Duplicate exact download selections for {repo!r} at {revision!r}.")
+    if not selected:
         return None
-    return {**inventory, "exactBytes": sum(entry["byteSize"] for entry in entries)}
+    inventory = selected[0]
+    return {**inventory, "exactBytes": sum(entry["byteSize"] for entry in inventory['files'])}
 
 
 def catalog_revision(repo: str, *, model_type: str | None = None) -> str | None:
@@ -178,10 +192,46 @@ def catalog_revision(repo: str, *, model_type: str | None = None) -> str | None:
     pin = catalog_repository_pin(repo, model_type=model_type)
     if pin is None:
         return None
+    return _catalog_pin_revision(repo, pin)
+
+
+def _catalog_pin_revision(repo: str, pin: dict[str, Any]) -> str:
     revision = str(pin.get("revision") or "").strip()
     if not IMMUTABLE_HUB_REVISION.fullmatch(revision):
         raise ValueError(f"Cataloged Hugging Face repository {repo!r} is missing a 40-character commit revision.")
     return revision.lower()
+
+
+def catalog_profile_repository_revisions(profiles: list[dict[str, Any]]) -> dict[str, list[dict[str, str]]]:
+    """Bind declared profile repositories to reviewed commits with one catalog read.
+
+    The caller selects the profiles eligible for this additive public metadata.
+    Unrelated catalog artifacts and unknown repositories are never inferred.
+    These pins describe authoring inputs, not runtime or artifact qualification.
+    """
+
+    if not profiles:
+        return {}
+    catalog = read_model_artifact_catalog()
+    result = {}
+    for profile in profiles:
+        pairs = []
+        seen = set()
+        for repo in (
+            profile.get("default_repo"), profile.get("fallback_repo"), *profile.get("compatible_repos", []),
+        ):
+            repository = str(repo or "").strip()
+            if not repository or repository.lower() in seen:
+                continue
+            seen.add(repository.lower())
+            pin = _catalog_repository_pin(catalog, repository, model_type=profile.get("model_type"))
+            if pin is not None:
+                pairs.append({"repo": repository, "revision": _catalog_pin_revision(repository, pin)})
+        if len(pairs) > 32:
+            raise ValueError(f"Execution profile {profile['id']!r} has more than 32 reviewed repository revisions.")
+        if pairs:
+            result[profile["id"]] = pairs
+    return result
 
 
 def resolve_model_revision(

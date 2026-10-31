@@ -463,10 +463,19 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
                             "kind": "safety_checker",
                             "repo": "nvidia/Cosmos-Guardrail1",
                             "revision": "d6d4bfa899a71454a700907664f3e88f503950cf",
+                        },
+                        {
+                            "id": "cosmos3-mandatory-text-safety-classifier",
+                            "kind": "safety_checker",
+                            "repo": "Qwen/Qwen3Guard-Gen-0.6B",
+                            "revision": "fada3b2f655b89601929198343c94cd2f64d93cc",
                         }
                     ],
                 )
-                self.assertEqual(result["sealedBindingValues"]["workflowAfterDecodeBlock"], "after_decode")
+                if workflow_id == "text2image":
+                    self.assertNotIn("workflowAfterDecodeBlock", result["sealedBindingValues"])
+                else:
+                    self.assertEqual(result["sealedBindingValues"]["workflowAfterDecodeBlock"], "after_decode")
                 self.assertIs(result["publication"]["insertable"], True)
                 self.assertIs(result["publication"]["executable"], False)
                 self.assertIs(result["publication"]["autoEligible"], False)
@@ -477,7 +486,10 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
                 roles.append("prompt")
                 if load_role:
                     roles.append("imageEncode")
-                roles.extend(["denoise", "decode", "afterDecode", sink_role])
+                roles.extend(["denoise", "decode"])
+                if workflow_id != "text2image":
+                    roles.append("afterDecode")
+                roles.append(sink_role)
                 self.assertEqual(
                     [role for role, _node_key, _x, _y in specification["roles"]],
                     roles,
@@ -495,7 +507,11 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
                 else:
                     self.assertIn(("prompt", "state_out", "denoise", "state_in"), specification["edges"])
                 self.assertIn(("denoise", "state_out", "decode", "state_in"), specification["edges"])
-                self.assertIn(("decode", "state_out", "afterDecode", "state_in"), specification["edges"])
+                if workflow_id == "text2image":
+                    self.assertNotIn(("decode", "state_out", "afterDecode", "state_in"), specification["edges"])
+                    self.assertEqual(specification["auxiliaryTerminalRoles"], ())
+                else:
+                    self.assertIn(("decode", "state_out", "afterDecode", "state_in"), specification["edges"])
                 if with_audio:
                     self.assertIn(("decode", "audio", "videoExport", "audio"), specification["edges"])
                 self.assertIn(("prompt", "num_frames", frame_source), specification["bindings"])
@@ -1115,7 +1131,10 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
         self.assertIn(("imageEncode", "width", "optionalWidth"), image_spec["bindings"])
         self.assertIn(("imageEncode", "height", "optionalHeight"), image_spec["bindings"])
         self.assertFalse(any("route_state" in handle for edge in image_spec["edges"] for handle in edge[1::2]))
-        self.assertNotIn(("prompt", "negative_prompt", "negativePrompt"), text_spec["bindings"])
+        # An enabled native guider consumes authored negative conditioning in
+        # both Z-Image tasks; admission must retain the public prompt binding.
+        self.assertIn(("prompt", "negative_prompt", "negativePrompt"), text_spec["bindings"])
+        self.assertIn(("prompt", "negative_prompt", "negativePrompt"), image_spec["bindings"])
         self.assertIs(result["executable"], False)
         self.assertIs(image["executable"], False)
 
@@ -1186,9 +1205,13 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
                 }
             )
         )
-        self.assertTrue(
-            all(optional_runtime_profile_ids_for_execution(model_type, mode) for model_type, mode in pairs)
-        )
+        for model_type, mode in pairs:
+            self.assertEqual(
+                optional_runtime_profile_ids_for_execution(model_type, mode),
+                ("cosmos-guardrail-0.3.1",) if model_type in {
+                    "Cosmos3OmniModularPipeline", "Cosmos3DistilledModularPipeline",
+                } else (),
+            )
         self.assertTrue(all(result["executable"] is False for result in admitted))
 
     def test_sdxl_union_ip_adapter_admission_seals_artifacts_and_persists_tuning(self):

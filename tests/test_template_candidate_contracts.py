@@ -8,6 +8,8 @@ import unittest
 
 from modiff.template_candidate_contracts import (
     TemplateCandidateContractError,
+    _coverage_partition,
+    _workflow_records,
     build_template_candidate_contract_ledger,
     render_template_candidate_contract_ledger,
     validate_template_candidate_contract_ledger,
@@ -70,12 +72,13 @@ class TemplateCandidateContractTests(unittest.TestCase):
         self.assertEqual(
             self.ledger["summary"],
             {
-                "canonicalWorkflowCount": 200,
-                "publicTemplateCount": 78,
-                "canonicalWorkflowsWithPublicTemplates": 52,
-                "candidateContractCount": 148,
-                "mediaKindCounts": {"audio": 6, "image": 100, "json": 9, "video": 33},
-                "contractsRequiringInputExamples": 93,
+                "canonicalWorkflowCount": 209,
+                "publicTemplateCount": 90,
+                "canonicalWorkflowsWithPublicTemplates": 60,
+                "canonicalWorkflowsWithExecutablePublicTemplates": 54,
+                "candidateContractCount": 155,
+                "mediaKindCounts": {"audio": 6, "image": 106, "json": 10, "video": 33},
+                "contractsRequiringInputExamples": 96,
                 "contractsWithComfyResearchRecords": 11,
                 "comfyResearchRecordCount": 14,
                 "comfyMappingStatusCounts": {"existing_contract_candidate": 14},
@@ -112,26 +115,74 @@ class TemplateCandidateContractTests(unittest.TestCase):
             self.assertEqual(contract["assets"], [])
             self.assertEqual(contract["evidenceState"]["maximumClaim"], "canonical_graph_binding_only")
 
-    def test_candidates_are_the_exact_complement_of_public_template_workflows(self):
-        manifest_by_id = {row["id"]: row for row in self.manifest["workflows"]}
+    def test_experimental_public_media_cannot_reseal_an_executable_coverage_claim(self):
+        records, supported = _workflow_records(ROOT, self.manifest)
+        for field in ("publicTemplates", "canonicalWorkflows"):
+            changed = copy.deepcopy(self.coverage)
+            target = next(row for row in changed[field] if row["status"] == "contract-only")
+            target["status"] = "executable"
+            _reseal(changed)
+            with self.subTest(field=field), self.assertRaises(TemplateCandidateContractError):
+                _coverage_partition(changed, records, supported)
+
+    def test_candidates_are_the_exact_complement_of_executable_public_template_workflows(self):
+        manifest_by_id = {
+            row["id"]: row
+            for row in [*self.manifest["workflows"], *self.manifest["experimentalWorkflows"]]
+        }
         public_templates = self.coverage["publicTemplates"]
-        public_workflow_ids = {row["canonicalWorkflowId"] for row in public_templates}
+        public_workflow_ids = {row["canonicalWorkflowId"] for row in public_templates if row["status"] == "executable"}
         coverage_public_workflow_ids = {
-            row["id"] for row in self.coverage["canonicalWorkflows"] if row["publicTemplateIds"]
+            row["id"] for row in self.coverage["canonicalWorkflows"] if row["publicTemplateIds"] and row["status"] == "executable"
         }
         contracts_by_id = {row["canonicalWorkflowId"]: row for row in self.ledger["contracts"]}
 
-        self.assertEqual(len(public_templates), 78)
-        self.assertEqual(len(public_workflow_ids), 52)
+        self.assertEqual(len(public_templates), 90)
+        experimental_public_ids = {row["canonicalWorkflowId"] for row in public_templates if row["status"] == "contract-only"}
+        self.assertEqual(len(experimental_public_ids), 6)
+        self.assertTrue(experimental_public_ids <= set(contracts_by_id))
+        self.assertEqual(len(public_workflow_ids), 54)
         self.assertEqual(public_workflow_ids, coverage_public_workflow_ids)
         self.assertEqual(len(contracts_by_id), len(self.ledger["contracts"]))
         self.assertEqual(set(contracts_by_id), set(manifest_by_id) - public_workflow_ids)
         self.assertFalse(set(contracts_by_id) & public_workflow_ids)
+        self.assertEqual(len(contracts_by_id), 155)
+        experimental_public_pairs = {
+            "flux2_dev_text_to_image": "Flux2ModularPipeline:text_to_image",
+            "cosmos3_super_text_to_image": "Cosmos3OmniModularPipeline:text_to_image",
+        }
+        public_by_id = {row["id"]: row for row in public_templates}
+        for template_id, workflow_id in experimental_public_pairs.items():
+            self.assertEqual(public_by_id[template_id]["canonicalWorkflowId"], workflow_id)
+            self.assertNotIn(workflow_id, contracts_by_id)
+
 
         for workflow_id, contract in contracts_by_id.items():
             manifest = manifest_by_id[workflow_id]
             for field in ("modelType", "mode", "mediaKind", "graphPath", "graphHash", *MANIFEST_BINDING_FIELDS):
                 self.assertEqual(contract[field], manifest[field], f"{workflow_id} field {field}")
+
+    def test_ctc_candidate_is_exact_json_binding_without_runtime_qualification(self):
+        workflow_id = "HuggingFaceCTCSpeechRecognitionModel:speech_to_text"
+        contract = next(row for row in self.ledger["contracts"] if row["canonicalWorkflowId"] == workflow_id)
+        manifest = next(row for row in self.manifest["workflows"] if row["id"] == workflow_id)
+        self.assertEqual(contract["modelType"], "HuggingFaceCTCSpeechRecognitionModel")
+        self.assertEqual((contract["mode"], contract["mediaKind"]), ("speech_to_text", "json"))
+        self.assertEqual(contract["pipelineClasses"], ["AutoModelForCTC"])
+        self.assertEqual(contract["requiredArtifacts"], ["facebook/wav2vec2-base-960h"])
+        self.assertEqual(contract["requiredInputs"]["requiredAudio"], ["sourceAudio"])
+        self.assertEqual(contract["publicationState"], "hidden_candidate")
+        self.assertEqual(contract["assetState"], "not_generated")
+        self.assertEqual(contract["assets"], [])
+        self.assertEqual(contract["graphQualificationStatus"], "graph-qualified-execution-pending")
+        for field in ("runtimeQualificationStatus", "optimizationQualificationStatus"):
+            self.assertEqual(contract[field], "unqualified")
+            self.assertEqual(contract[field], manifest[field])
+        self.assertEqual(contract["qualifiedRuntimeProfiles"], [])
+        self.assertEqual(contract["evidenceState"], {
+            "maximumClaim": "canonical_graph_binding_only", "execution": "not_claimed",
+            "runtime": "not_claimed", "quality": "not_claimed",
+        })
 
     def test_authoring_assets_publication_and_evidence_remain_pending(self):
         self.assertEqual(
@@ -147,6 +198,7 @@ class TemplateCandidateContractTests(unittest.TestCase):
                 "comfyMappingMeaning": "semantic_comparison_candidate_only",
                 "qualificationMetadataMeaning": "exact_manifest_binding_not_candidate_evidence",
                 "maximumEvidenceClaim": "canonical_graph_binding_only",
+                "publicPreviewsQualifyCanonicalGraphs": False,
             },
         )
         forbidden_claim_fields = {
@@ -158,7 +210,10 @@ class TemplateCandidateContractTests(unittest.TestCase):
             "qualityEvidence",
             "publicTemplateIds",
         }
-        manifest_by_id = {row["id"]: row for row in self.manifest["workflows"]}
+        manifest_by_id = {
+            row["id"]: row
+            for row in [*self.manifest["workflows"], *self.manifest["experimentalWorkflows"]]
+        }
         for contract in self.ledger["contracts"]:
             self.assertTrue(forbidden_claim_fields.isdisjoint(contract))
             self.assertEqual(contract["publicationState"], "hidden_candidate")

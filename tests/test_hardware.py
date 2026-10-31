@@ -304,6 +304,7 @@ class HardwareSnapshotTests(unittest.TestCase):
                 "ram_total",
                 "ram_free",
                 "ram_available",
+                "pytorch_alloc_conf",
                 "pytorch_cuda_alloc_conf",
                 "environment",
             },

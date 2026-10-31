@@ -200,8 +200,14 @@ def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=
     schedules do not establish the saved seed or number of executed steps.
     """
     from modiff.execution_input_provenance import FIELD_NAMES
+    from .main import IMAGE_ACTION_MODES
 
     effective = {**call_kwargs, **(encoded_inputs or {})}
+    # Called after action validation: capture the selected runtime mode, never
+    # an advisory graph/form label. Legacy shared-mode pipelines stay unknown.
+    mode = getattr(values.get('pipeline'), '_modiff_image_mode', None)
+    allowed = set(adapter.modes) & set(IMAGE_ACTION_MODES[node.class_name])
+    effective['executed_task'] = mode if mode in allowed else (next(iter(allowed)) if len(allowed) == 1 else None)
     source_fields = {}
     for source, destination in (
         ('guidance_scale', adapter.guidance_parameter),
@@ -229,3 +235,21 @@ def record_image_call_inputs(node, values, call_kwargs, adapter, encoded_inputs=
         effective.setdefault(key, None)
     node.record_generation_inputs(effective)
     node._execution_input_source_fields = source_fields
+    if node.class_name == 'UnconditionalGenerate':
+        # Account for the generic controls at this actual pipeline call. A
+        # class label is not consumed by DDIM; its saved sentinel is evidence
+        # of inactivity, never a claim that class_labels was passed.
+        from .main import image_pipeline_contract
+        consumed = {key: call_kwargs[key] for key in ('batch_size', 'num_inference_steps', 'output_type', 'eta')
+                    if key in call_kwargs}
+        consumed['seed'] = effective['seed']
+        inactive = {}
+        for field in ('eta', 'class_label'):
+            call_field = 'class_labels' if field == 'class_label' else field
+            if call_field in call_kwargs:
+                consumed[field] = call_kwargs[call_field]
+            else:
+                inactive[field] = 'adapter-inactive'
+        expected = image_pipeline_contract(adapter, effective['executed_task'])
+        node.record_field_accounting(values, consumed=consumed, inactive=inactive,
+                                     metadata={'image_contract': expected})

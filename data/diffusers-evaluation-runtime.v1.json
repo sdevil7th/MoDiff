@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "profiles": {
+    "flux3-7ecb1e1": {
+      "kind": "official-source-evaluation",
+      "distribution": "diffusers",
+      "version": "0.41.0.dev0",
+      "repository": "https://github.com/huggingface/diffusers.git",
+      "revision": "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941",
+      "sourceTree": "f0974e02139382cb0c8a72dd29b15b53041e5d56",
+      "wheelFilename": "diffusers-0.41.0.dev0-py3-none-any.whl",
+      "wheelByteSize": 6306536,
+      "wheelSha256": "c19c4721a952fd373d0cab705f582eb81675cad0fb844b88fb449c40de8c74a3",
+      "authoringExecutionProfileIds": [
+        "flux3-klein:modular",
+        "flux3-klein-base:modular"
+      ]
+    }
+  }
+}

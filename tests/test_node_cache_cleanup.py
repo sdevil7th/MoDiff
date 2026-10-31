@@ -19,6 +19,97 @@ class NodeCacheCleanupTests(unittest.IsolatedAsyncioTestCase):
     def request(self, nodes):
         return SimpleNamespace(json=AsyncMock(return_value={"nodes": nodes}))
 
+    def cache_status_handler(self, server):
+        routes = [route for route in server.app.router.routes()
+                  if route.method == "GET" and route.resource.canonical == "/cache"]
+        self.assertEqual(len(routes), 1, "GET /cache must expose the current worker's cache roster")
+        return routes[0].handler
+
+    def test_cache_status_get_route_preserves_cache_delete_route(self):
+        server = self.server()
+        get_handler = self.cache_status_handler(server)
+        delete_routes = [route for route in server.app.router.routes()
+                         if route.method == "DELETE" and route.resource.canonical == "/cache"]
+        self.assertEqual(len(delete_routes), 1)
+        self.assertEqual(delete_routes[0].handler, server.delete_cache)
+        self.assertNotEqual(get_handler, delete_routes[0].handler)
+
+    async def test_cache_status_returns_exact_roster_without_inspecting_cached_objects(self):
+        server = self.server()
+
+        class OpaqueCachedNode:
+            def __init__(self):
+                raise AssertionError("Cache status must not construct cached nodes")
+
+            def __getattribute__(self, name):
+                raise AssertionError(f"Cache status must not inspect cached node attribute {name}")
+
+            def __bool__(self):
+                raise AssertionError("Cache status must not evaluate cached nodes")
+
+            def __call__(self, *args, **kwargs):
+                raise AssertionError("Cache status must not construct or execute nodes")
+
+            def __str__(self):
+                raise AssertionError("Cache status must not serialize cached nodes")
+
+            def __repr__(self):
+                raise AssertionError("Cache status must not represent cached nodes")
+
+        expected_nodes = ["loader", "block-v2-node:5:block:6:encode", "preview"]
+        server.node_cache = {node_id: object.__new__(OpaqueCachedNode) for node_id in expected_nodes}
+        request = SimpleNamespace(json=AsyncMock(side_effect=AssertionError("GET must not read a body")))
+        forbidden = AssertionError("Cache status must not acquire model ownership or release cache")
+        with (
+            patch.object(server, "_with_node_cache_lease", AsyncMock(side_effect=forbidden)),
+            patch.object(server, "_run_executor_callback", AsyncMock(side_effect=forbidden)),
+            patch.object(server, "_release_cached_nodes", side_effect=forbidden),
+            patch("modiff.server.import_module", side_effect=forbidden),
+        ):
+            response = await self.cache_status_handler(server)(request)
+
+        self.assertEqual(response.status, 200)
+        self.assertEqual(json.loads(response.text), {
+            "error": False, "instance": server.instance, "cachedNodes": expected_nodes,
+        })
+        self.assertEqual(list(server.node_cache), expected_nodes)
+        request.json.assert_not_awaited()
+
+    async def test_cache_status_does_not_wait_for_active_cache_ownership(self):
+        server = self.server()
+        server.node_cache["active-loader"] = object()
+        server.current_task = {"task_id": "active-service-task", "status": "running"}
+        handler = self.cache_status_handler(server)
+        async with server._node_cache_lock:
+            response = await asyncio.wait_for(handler(SimpleNamespace()), timeout=0.25)
+            self.assertTrue(server._node_cache_lock.locked())
+        self.assertEqual(json.loads(response.text), {
+            "error": False, "instance": server.instance, "cachedNodes": ["active-loader"],
+        })
+
+    async def test_cache_status_response_is_independent_of_later_cache_mutation(self):
+        server = self.server()
+        server.node_cache = {"first": object(), "retained": object()}
+        handler = self.cache_status_handler(server)
+        response = await handler(SimpleNamespace())
+        server.node_cache.pop("first")
+        server.node_cache["new"] = object()
+        self.assertEqual(json.loads(response.text), {
+            "error": False, "instance": server.instance, "cachedNodes": ["first", "retained"],
+        })
+        current = await handler(SimpleNamespace())
+        self.assertEqual(json.loads(current.text)["cachedNodes"], ["retained", "new"])
+
+    async def test_cache_status_empty_roster_reports_its_own_worker_instance(self):
+        for instance in ("original-worker", "replacement-worker"):
+            with self.subTest(instance=instance):
+                server = self.server()
+                server.instance = instance
+                response = await self.cache_status_handler(server)(SimpleNamespace())
+                self.assertEqual(json.loads(response.text), {
+                    "error": False, "instance": instance, "cachedNodes": [],
+                })
+
     async def test_failed_worker_releases_exception_tensor_references_before_next_task(self):
         import gc
         import weakref

@@ -30,9 +30,14 @@ def seed_standard_operation_defaults(node, profile):
         return
     from modiff.studio_execution_specs import studio_capability_definition
 
-    capability = studio_capability_definition(profile.model_type)
+    capability = studio_capability_definition(profile.model_type, repository=profile.default_repo)
     if node["action"] == profile.loader_action:
         defaults = {"dtype": capability.get("defaultDtype")}
+        if 'defaultWeightFormat' in capability:
+            from modiff.modular_weight_formats import capability_default_weight_format
+            defaults['weight_format'] = capability_default_weight_format(capability)
+        if profile.id == "cosmos3-super-text-to-image:official-modular-workflow":
+            defaults.update(auto_offload=False, offload_mode="none")
     elif node["module"] == "modules.DiffusersAudio":
         # The owner overlay identifies the controls used by this task. Seed only
         # visible fields below; the ordinary generator also holds inactive
@@ -52,7 +57,14 @@ def seed_standard_operation_defaults(node, profile):
             "guidance_scale": capability.get("recommendedGuidance"),
             "width": size.get("width"),
             "height": size.get("height"),
+            "seed": capability.get("recommendedSeed"),
+            "num_frames": capability.get("recommendedFrames") if profile.id == "cosmos3-super-text-to-image:official-modular-workflow" else None,
         }
+        if profile.id == "cosmos3-super-text-to-image:official-modular-workflow" and "prompt" in node["params"]:
+            from pathlib import Path
+            caption = (Path(__file__).resolve().parents[1] / "data/cosmos3-super-t2i-publisher-caption.v1.json").read_text(encoding="utf-8")
+            json.loads(caption)  # Validate the artifact without changing its tokenizer input bytes.
+            defaults.update(prompt=caption, negative_prompt="")
         if node["module"] == "modules.DiffusersVideo":
             defaults.update(
                 num_frames=capability.get("recommendedFrames"),
@@ -75,6 +87,12 @@ def seed_standard_operation_defaults(node, profile):
                 guidance_scale_2=capability.get("recommendedGuidance", adapter.secondary_guidance_default),
                 use_guidance_scale_2=True,
             )
+    if (node["module"] == "modules.ModularDiffusers" and node["action"] == "Guider"
+            and profile.pipeline_class in {"FluxModularPipeline", "FluxKontextModularPipeline"}):
+        # Ordinary native FLUX uses transformer embedded guidance. A connected
+        # true-CFG owner is an explicit opt-in, separate from that control.
+        defaults.update(enabled=False, guidance_scale=1.0)
+        node["params"]["guidance_scale"]["min"] = 0.0
     for key, value in defaults.items():
         field = node["params"].get(key)
         if value is None or field is None or field.get("hidden") or field.get("display") == "output":
@@ -174,6 +192,9 @@ def _standard_schema(contract, modules):
 
             fields, values = image_text_operation_schema(pipeline, task, action)
     params = deepcopy(modules[module][action]["params"])
+    if (module, action) == ('modules.DiffusersImage', 'EncodeInputs'):
+        from modules.DiffusersImage.main import image_stage_encode_params
+        params = image_stage_encode_params(params, pipeline)
     if action == "LoadPipeline":
         from modiff.model_artifact_catalog import catalog_revision
 
@@ -232,6 +253,7 @@ def _standard_schema(contract, modules):
 def build_operation_catalog(modules, profiles, *, catalog_resolver=None):
     from modules.ModularDiffusers.modular_utils import get_modular_operation_contracts
     from modules.ModularDiffusers.operation_contracts import get_modular_task_operation_contracts
+    from modiff.modular_workflow_contracts import PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS
     from modiff.optional_runtime_execution import (
         loader_optional_runtime_requirement,
         optional_runtime_requirement_blocks_execution,
@@ -320,10 +342,19 @@ def build_operation_catalog(modules, profiles, *, catalog_resolver=None):
                     p["pipeline_class"] == c["binding"]["pipelineClass"]
                     and c["nodeKey"] == p["loader_module"] + "." + p["loader_action"]
                     # Modular workflow owners establish stage task support. Studio's
-                    # curated profile modes are not the ordinary graph allowlist.
+                    # curated modes do not replace that allowlist, but an exact
+                    # artifact's declared workflow limits still restrict its profile.
                     and (task in p["modes"] or (
                         p["execution_path"] == "modular-diffusers" and p["model_type"] == p["pipeline_class"]
+                        and not p.get("required_diffusers_provider")
                     ))
+                    and (
+                        p["execution_path"] != "modular-diffusers"
+                        or (p["pipeline_class"], p["default_repo"]) not in PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS
+                        or c.get("workflowId") in PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS[
+                            (p["pipeline_class"], p["default_repo"])
+                        ]
+                    )
                     for c in loaders
                 )
             ]
@@ -368,6 +399,73 @@ def build_operation_catalog(modules, profiles, *, catalog_resolver=None):
     return contracts, support
 
 
+def build_evaluation_authoring_catalog(modules, *, catalog_resolver=None):
+    """Project exact operator-selected private profiles for Expert authoring.
+
+    The existing artifact observer verifies the whole installed wheel before
+    returning any identities. Keep this projection separate from public
+    profiles, Studio specifications and qualification/Auto admission.
+    """
+    from modiff.diffusers_evaluation_runtime import selected_diffusers_evaluation_authoring_profile_ids
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+    from modiff.model_artifact_catalog import catalog_profile_repository_revisions
+
+    from modiff.studio_execution_specs import studio_public_authoring_replacements
+    replaced = studio_public_authoring_replacements()
+    identities = tuple(identity for identity in selected_diffusers_evaluation_authoring_profile_ids()
+                       if identity not in replaced)
+    if not identities:
+        return None
+    profiles = []
+    for identity in identities:
+        profile = DIFFUSERS_EXECUTION_PROFILES.get(identity)
+        if (profile is None or profile.id != identity or profile.public is not False
+                or profile.live_proof is not False):
+            raise ValueError("Evaluation authoring requires an exact private unqualified execution profile.")
+        profiles.append(profile.to_public_dict(
+            observe_optional_runtime=True, optional_runtime_catalog_resolver=catalog_resolver,
+        ))
+    revisions = catalog_profile_repository_revisions(profiles)
+    for profile in profiles:
+        if profile["id"] in revisions:
+            profile["repository_revisions"] = deepcopy(revisions[profile["id"]])
+        policy = DIFFUSERS_EXECUTION_PROFILES[profile["id"]].adapter_authoring
+        if policy is not None:
+            owner = modules.get(profile["loader_module"], {}).get(profile["loader_action"])
+            if type(owner) is not dict:
+                raise ValueError("Adapter authoring requires current registered loader metadata.")
+            policy.validate_required_controls(owner.get("params"))
+            if (profile.get("adapterAuthoring") != policy.to_public_dict()
+                    or not set(policy.tasks).issubset(profile["modes"])
+                    or any({"repo": repo, "revision": revision} not in revisions.get(profile["id"], [])
+                           for repo, revision in policy.repository_revisions)):
+                raise ValueError("Evaluation adapter authoring does not match its reviewed task and catalog.")
+    _, support = build_operation_catalog(modules, profiles, catalog_resolver=catalog_resolver)
+    exact_support = []
+    covered = set()
+    for row in support:
+        tasks = []
+        for task in row["tasks"]:
+            exact_ids = sorted(profile["id"] for profile in profiles
+                if profile["pipeline_class"] == row["pipelineClass"] and task["task"] in profile["modes"]
+                and profile["id"] in task["executionProfileIds"])
+            if exact_ids and task["execution"] == "adapter":
+                tasks.append({**task, "executionProfileIds": exact_ids})
+                covered.update((identity, task["task"]) for identity in exact_ids)
+        if tasks:
+            exact_support.append({**row, "tasks": tasks})
+    if any((profile["id"], task) not in covered for profile in profiles for task in profile["modes"]):
+        raise ValueError("Evaluation authoring requires exact reviewed pipeline/task support.")
+    from modiff.studio_execution_specs import studio_operation_authoring_selections
+    authoring = studio_operation_authoring_selections(profiles)
+    return {
+        "schemaVersion": 1, "scope": "expert-authoring",
+        "autoEligible": False, "templateEligible": False, "galleryEligible": False,
+        "executionProfiles": profiles, "pipelineSupport": exact_support,
+        **({"authoringRecipes": authoring} if authoring else {}),
+    }
+
+
 def resolve_operation(modules, contracts, selection):
     """Resolve one canonical operation into an existing ordinary node definition."""
     if not isinstance(selection, dict) or set(selection) != {"pipelineClass", "task", "operationId"}:
@@ -397,9 +495,12 @@ def resolve_operation(modules, contracts, selection):
                 CUSTOM_PIPELINE_IDENTITY_FIELD,
             )
             from modiff.model_artifact_catalog import require_catalog_revision
+            from modiff.modular_weight_formats import declared_weight_formats
 
             metadata = get_model_type_metadata(contract["binding"]["pipelineClass"])
             definition["params"]["model_type"]["options"] = get_all_model_types(include_contract_only=True)
+            formats = declared_weight_formats(contract["binding"]["pipelineClass"], metadata)
+            definition["params"]["weight_format"].update(options=list(formats), hidden=len(formats) < 2)
             repository = metadata["default_repo"]
             values["dtype"] = metadata["default_dtype"]
             if repository:
@@ -435,6 +536,26 @@ def resolve_operation(modules, contracts, selection):
             metadata = get_model_type_metadata(contract["binding"]["pipelineClass"])
             if action == "Guider":
                 definition["params"]["guider"]["options"] = list(metadata["guider_options"])
+                # Match the pinned upstream encoder's ClassifierFreeGuidance
+                # configuration; Z-Image Turbo must keep CFG disabled.
+                if contract["pipelineClass"] in {
+                    "QwenImageModularPipeline", "QwenImageEditModularPipeline",
+                    "QwenImageEditPlusModularPipeline", "QwenImageLayeredModularPipeline",
+                    "ZImageModularPipeline",
+                }:
+                    values.update(
+                        guider="ClassifierFreeGuidance",
+                        guidance_scale=5.0 if contract["pipelineClass"] == "ZImageModularPipeline" else 4.0,
+                        enabled=contract["pipelineClass"] != "ZImageModularPipeline",
+                        guidance_rescale=0.0, use_original_formulation=False, start=0.0, stop=1.0,
+                    )
+                    definition["params"]["guidance_scale"]["min"] = 0.0
+                elif contract["pipelineClass"] in {"FluxModularPipeline", "FluxKontextModularPipeline"}:
+                    values.update(
+                        guider="ClassifierFreeGuidance", guidance_scale=1.0, enabled=False,
+                        guidance_rescale=0.0, use_original_formulation=False, start=0.0, stop=1.0,
+                    )
+                    definition["params"]["guidance_scale"]["min"] = 0.0
             else:
                 definition["params"]["blocks_select"]["options"] = list(metadata["layer_block_options"])
                 values["blocks_select"] = []
@@ -445,6 +566,11 @@ def resolve_operation(modules, contracts, selection):
             config = metadata["node_params"][contract["nodeType"]]
             for name, overlay in config["params"].items():
                 definition["params"].setdefault(name, {}).update(deepcopy(overlay))
+            if action in {"EncodePrompt", "Denoise", "DecodeLatents"} and not any(
+                port["direction"] == "input" and port["name"] == "pipeline_components"
+                for port in contract["ports"]
+            ):
+                definition["params"].pop("pipeline_components", None)
             if action == "Controlnet":
                 # A standalone ControlNet has no ModelsLoader payload from
                 # which to recover this identity after instance recreation.

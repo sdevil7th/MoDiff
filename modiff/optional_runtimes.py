@@ -17,10 +17,14 @@ from collections.abc import Callable, Iterable, Mapping
 from copy import deepcopy
 from dataclasses import dataclass, replace
 from importlib import metadata
+from pathlib import Path
 from types import MappingProxyType
 
 
 OPTIONAL_RUNTIME_SCHEMA_VERSION = 1
+QUALIFICATION_WORKLOAD_CUDA_NF4 = "cuda-nf4-v1"
+DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID = "huggingface-diffusers-flux3-7ecb1e1"
+DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID = "huggingface-diffusers-flux3-7ecb1e1-bitsandbytes-0.50.0"
 TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-peft-5.14.1-0.20.0"
 TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-main-96fe6dce-peft-0.20.0"
 GALLERY_MEDIA_RUNTIME_PROFILE_ID = "gallery-media-opencv-5.0.0.93-pyav-18.1.0"
@@ -479,8 +483,30 @@ class OptionalRuntimeProfile:
     activation_available: bool = False
     target_contracts: tuple[OptionalRuntimeTargetContract, ...] = ()
     satisfies_profiles: tuple[tuple[str, str], ...] = ()
+    incompatible_distributions: tuple[str, ...] = ()
+    provides_diffusers: bool = False
+    qualification_workload: str | None = None
 
     def __post_init__(self) -> None:
+        if type(self.provides_diffusers) is not bool:
+            raise ValueError("Diffusers provider selection must be an explicit boolean.")
+        if self.provides_diffusers:
+            staged = [package for package in self.packages if package.distribution == "diffusers"]
+            if (len(staged) != 1 or staged[0].role != "runtime_root"
+                    or staged[0].import_name != "diffusers"
+                    or any(package.distribution in {"torch", "torchvision", "transformers", "peft"}
+                           for package in self.packages)
+                    or any(package.distribution == "diffusers" for package in self.base_packages)):
+                raise ValueError("A Diffusers provider requires one exact root and preserves all other base model libraries.")
+        elif any(package.distribution == "diffusers" for package in self.packages):
+            raise ValueError("Staging Diffusers requires an explicit provider declaration.")
+        if self.qualification_workload is not None:
+            if (type(self.qualification_workload) is not str
+                    or self.qualification_workload != QUALIFICATION_WORKLOAD_CUDA_NF4):
+                raise ValueError("Optional-runtime qualification requires a supported declared workload.")
+            auxiliary = tuple(package for package in self.packages if package.distribution == "bitsandbytes")
+            if (not self.provides_diffusers or len(auxiliary) != 1 or auxiliary[0].version != "0.50.0"):
+                raise ValueError("CUDA NF4 qualification requires an explicit Diffusers/bitsandbytes 0.50.0 closure.")
         targets = tuple((contract.platform, contract.machine) for contract in self.target_contracts)
         if len(set(targets)) != len(targets):
             raise ValueError("Optional-runtime target contracts must be unique.")
@@ -548,12 +574,18 @@ class OptionalRuntimeProfile:
                 for method, parameters in self.pipeline_adapter_methods
             ],
         }
+        if self.provides_diffusers:
+            spec["providesDiffusers"] = True
+        if self.qualification_workload is not None:
+            spec["qualificationWorkload"] = self.qualification_workload
         if self.satisfies_profiles:
             spec["satisfiesProfiles"] = [
                 {"id": profile_id, "specDigest": spec_digest} for profile_id, spec_digest in self.satisfies_profiles
             ]
         if self.source_builds:
             spec["sourceBuilds"] = [deepcopy(source_build) for source_build in self.source_builds]
+        if self.incompatible_distributions:
+            spec["incompatibleDistributions"] = list(self.incompatible_distributions)
         return spec
 
     @property
@@ -1515,6 +1547,217 @@ _TRANSFORMERS_517_PEFT_PROFILE = replace(
 )
 
 
+def _native_base_auxiliary_profile(
+    profile: OptionalRuntimeProfile,
+    *,
+    label: str,
+    diffusers_symbols: tuple[str, ...],
+    linux_installation_qualified: bool = False,
+) -> OptionalRuntimeProfile:
+    """Keep auxiliary wheel delivery separate from the required model libraries.
+
+    Historical profile IDs remain workflow references; the changed spec digest
+    rejects their previous composite-overlay receipts. An enabled target has
+    passed fresh native-base installation and bounded CPU package checks; it
+    does not imply model, accelerator, Auto-route, or performance qualification.
+    """
+    core = {package.distribution: package for package in _TRANSFORMERS_MAIN_PEFT_PROFILE.packages}
+    extra = tuple(package for package in profile.packages if package.distribution not in core)
+    extra_names = {package.distribution for package in extra}
+    # These direct constraints match the ordinary project dependency floors.
+    # Other former scaffold dependencies are resolved by Transformers/PEFT in
+    # the base and bound to their actual version and import origin at install.
+    minimums = {
+        "transformers": ">=5.18.0",
+        "peft": ">=0.21.2",
+        "huggingface-hub": ">=1.31.0,<2.0",
+        "accelerate": ">=1.4.0",
+    }
+    base = {
+        package.distribution: replace(
+            package, specifier=minimums.get(package.distribution, package.specifier)
+        )
+        for package in profile.base_packages
+    }
+    for name, package in core.items():
+        base[name] = OptionalRuntimeBaseContract(name, package.import_name, minimums.get(name, ""))
+    # GGUF's authenticated METADATA requires Requests; keep it in the existing
+    # application environment with the other shared numerical/I/O libraries.
+    base["requests"] = OptionalRuntimeBaseContract("requests", "requests", ">=2.25")
+    targets = []
+    for contract in profile.target_contracts:
+        qualified = linux_installation_qualified and (contract.platform, contract.machine) == ("linux", "x86_64")
+        targets.append(replace(
+            contract,
+            contract_state="qualified" if qualified else "candidate_unqualified",
+            cutover_ready=qualified,
+            install_action_available=qualified,
+            activation_available=qualified,
+        ))
+    return replace(
+        profile,
+        label=label,
+        packages=extra,
+        base_packages=tuple(base.values()),
+        artifact_locks=tuple(lock for lock in profile.artifact_locks if lock["distribution"] in extra_names),
+        source_builds=(),
+        satisfies_profiles=(),
+        required_diffusers_symbols=diffusers_symbols,
+        pipeline_adapter_symbols=(),
+        pipeline_adapter_methods=(),
+        require_peft_backend=bool(diffusers_symbols),
+        contract_state="candidate_unqualified",
+        cutover_ready=False,
+        install_action_available=False,
+        activation_available=False,
+        target_contracts=tuple(targets),
+    )
+
+
+_TRANSFORMERS_MAIN_PEFT_QUANTO_PROFILE = _native_base_auxiliary_profile(
+    _TRANSFORMERS_MAIN_PEFT_QUANTO_PROFILE,
+    label="Optimum Quanto 0.2.7",
+    diffusers_symbols=("QuantoConfig",),
+    linux_installation_qualified=True,
+)
+_TRANSFORMERS_MAIN_PEFT_GGUF_PROFILE = _native_base_auxiliary_profile(
+    _TRANSFORMERS_MAIN_PEFT_GGUF_PROFILE,
+    label="GGUF 0.19.0",
+    diffusers_symbols=("GGUFQuantizationConfig", "FluxTransformer2DModel"),
+    linux_installation_qualified=True,
+)
+_TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE = _native_base_auxiliary_profile(
+    _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE,
+    label="bitsandbytes 0.50.0",
+    diffusers_symbols=("BitsAndBytesConfig",),
+)
+_TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE = replace(
+    _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE,
+    artifact_locks=(
+        *_TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.artifact_locks,
+        {
+            "distribution": "bitsandbytes", "version": "0.50.0",
+            "filename": "bitsandbytes-0.50.0-py3-none-win_amd64.whl",
+            "url": "https://files.pythonhosted.org/packages/78/40/7b2253f94ec8c6235606aa393f315d941d02c44f141b7bccae14202b3fea/bitsandbytes-0.50.0-py3-none-win_amd64.whl",
+            "sha256": "7f9ebf51d76a00341711cdd557af97555274b5aad3444975ff9927866a18bc11",
+            "byteSize": 37_961_095, "platform": "windows", "pythonTag": "cp312", "machine": "x86_64",
+        },
+    ),
+    target_contracts=tuple(
+        replace(contract, contract_state="qualified", cutover_ready=True,
+                install_action_available=True, activation_available=True)
+        if (contract.platform, contract.machine) == ("windows", "x86_64") else contract
+        for contract in _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.target_contracts
+    ),
+)
+_GALLERY_MEDIA_PROFILE = _native_base_auxiliary_profile(
+    _GALLERY_MEDIA_PROFILE,
+    label="Media codecs: OpenCV 5.0.0.93 + PyAV 18.1.0",
+    diffusers_symbols=(),
+    linux_installation_qualified=True,
+)
+_GALLERY_MEDIA_PROFILE = replace(
+    _GALLERY_MEDIA_PROFILE,
+    incompatible_distributions=("opencv-python", "opencv-contrib-python", "opencv-contrib-python-headless"),
+)
+
+
+_cosmos_runtime_artifacts = json.loads(
+    (Path(__file__).resolve().parent.parent / "data/cosmos-safety-runtime-artifacts.v1.json").read_text(encoding="utf-8")
+)
+_COSMOS_SAFETY_PROFILE = OptionalRuntimeProfile(
+    id="cosmos-guardrail-0.3.1",
+    label="Cosmos Guardrail 0.3.1",
+    packages=tuple(OptionalRuntimePackageContract(
+        **{**value, "required_symbols": tuple(value["required_symbols"])}
+    ) for value in _cosmos_runtime_artifacts["packages"]),
+    base_packages=tuple(OptionalRuntimeBaseContract(*value) for value in (
+        ("packaging", "packaging", ">=21"), ("torch", "torch", ">=2.6"),
+        ("torchvision", "torchvision", ">=0.21"), ("transformers", "transformers", ">=5.18"),
+        ("peft", "peft", ">=0.14"), ("huggingface-hub", "huggingface_hub", ">=1.31,<2"),
+        ("attrs", "attrs", ">=25.1"), ("numpy", "numpy", ">=2,<3"),
+        ("scipy", "scipy", ">=1.11.4"), ("networkx", "networkx", ">=3"),
+        ("pillow", "PIL", ">=11.1"), ("protobuf", "google.protobuf", ""),
+        ("safetensors", "safetensors", ">=0.5.3"), ("sentencepiece", "sentencepiece", ">=0.2"),
+        ("requests", "requests", ">=2.28"), ("tqdm", "tqdm", ""),
+        ("imageio", "imageio", ""), ("imageio-ffmpeg", "imageio_ffmpeg", ""),
+        ("click", "click", ""), ("regex", "regex", ""),
+    )),
+    required_diffusers_symbols=("Cosmos3OmniModularPipeline", "Cosmos3DistilledModularPipeline"),
+    excluded_qualification_symbols=("add_weighted_adapter",),
+    artifact_locks=tuple(_cosmos_runtime_artifacts["artifactLocks"]),
+    incompatible_distributions=("opencv-python-headless", "opencv-contrib-python", "opencv-contrib-python-headless"),
+    target_contracts=tuple(OptionalRuntimeTargetContract(
+        platform=platform_name, machine=machine,
+        contract_state="qualified" if (platform_name, machine) == ("linux", "x86_64") else "candidate_unqualified",
+        cutover_ready=(platform_name, machine) == ("linux", "x86_64"),
+        install_action_available=(platform_name, machine) == ("linux", "x86_64"),
+        activation_available=(platform_name, machine) == ("linux", "x86_64"),
+    ) for platform_name, _python_tag, machine in _OPTIONAL_RUNTIME_TARGETS),
+)
+
+
+def assert_optional_runtime_distribution_compatibility(profile, *, version_resolver=None):
+    """An optional package must not silently replace another provider's import namespace."""
+    resolve_version = version_resolver or metadata.version
+    for distribution in profile.incompatible_distributions:
+        try:
+            resolve_version(distribution)
+        except metadata.PackageNotFoundError:
+            continue
+        raise RuntimeError(
+            f"Optional runtime {profile.id!r} requires {distribution!r} to be absent; "
+            "prepare a reviewed environment with a single provider before installing or activating it."
+        )
+
+
+_flux3_source_build = json.loads(
+    (Path(__file__).resolve().parent.parent / "data/diffusers-flux3-source-build.v1.json").read_text(encoding="utf-8")
+)
+_FLUX3_DIFFUSERS_CLASSES = (
+    "Flux3ModularPipeline", "Flux3DistilledModularPipeline", "Flux3Transformer2DModel",
+    "AutoencoderKLFlux2", "FlowMatchEulerDiscreteScheduler", "ClassifierFreeGuidance",
+    "ModularPipeline", "ComponentsManager", "ComponentSpec",
+)
+_FLUX3_BASE_REQUIREMENTS = {
+    package.distribution: replace(package, specifier=">=1.32.0,<2.0")
+    if package.distribution == "huggingface-hub" else package
+    for package in _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.base_packages
+}
+for _distribution, _import_name in (
+    ("urllib3", "urllib3"), ("charset-normalizer", "charset_normalizer"),
+    ("importlib-metadata", "importlib_metadata"),
+):
+    _FLUX3_BASE_REQUIREMENTS.setdefault(
+        _distribution, OptionalRuntimeBaseContract(_distribution, _import_name),
+    )
+_DIFFUSERS_FLUX3_PROFILE = OptionalRuntimeProfile(
+    id=DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID,
+    label="Official Diffusers FLUX 3 source runtime",
+    packages=(OptionalRuntimePackageContract(
+        distribution="diffusers", import_name="diffusers", version=_flux3_source_build["version"],
+        publisher="Hugging Face", project_url="https://github.com/huggingface/diffusers",
+        distribution_url=_flux3_source_build["sourceArtifact"]["url"], license="Apache-2.0",
+        role="runtime_root", required_symbols=(*_FLUX3_DIFFUSERS_CLASSES,
+            "diffusers.loaders.lora_conversion_utils:_convert_non_diffusers_flux3_lora_to_diffusers"),
+        required_class_symbols=_FLUX3_DIFFUSERS_CLASSES,
+    ),),
+    base_packages=tuple(_FLUX3_BASE_REQUIREMENTS.values()),
+    required_diffusers_symbols=_FLUX3_DIFFUSERS_CLASSES,
+    require_peft_backend=True,
+    pipeline_adapter_symbols=("Flux3ModularPipeline", "Flux3DistilledModularPipeline"),
+    pipeline_adapter_methods=(("load_components", ("names", "workflow")), ("__call__", ("state", "output"))),
+    source_builds=(_flux3_source_build,),
+    excluded_qualification_symbols=("add_weighted_adapter",),
+    provides_diffusers=True,
+    # Pure-Python packaging is not target installation or model qualification.
+    target_contracts=tuple(OptionalRuntimeTargetContract(
+        platform=platform_name, machine=machine, contract_state="candidate_unqualified",
+        cutover_ready=False, install_action_available=False, activation_available=False,
+    ) for platform_name, _python_tag, machine in _OPTIONAL_RUNTIME_TARGETS),
+)
+
+
 OPTIONAL_RUNTIME_PROFILES: Mapping[str, OptionalRuntimeProfile] = MappingProxyType(
     {
         _TRANSFORMERS_517_PEFT_PROFILE.id: _TRANSFORMERS_517_PEFT_PROFILE,
@@ -1524,6 +1767,8 @@ OPTIONAL_RUNTIME_PROFILES: Mapping[str, OptionalRuntimeProfile] = MappingProxyTy
         _TRANSFORMERS_MAIN_PEFT_GGUF_PROFILE.id: _TRANSFORMERS_MAIN_PEFT_GGUF_PROFILE,
         _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.id: _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE,
         _GALLERY_MEDIA_PROFILE.id: _GALLERY_MEDIA_PROFILE,
+        _COSMOS_SAFETY_PROFILE.id: _COSMOS_SAFETY_PROFILE,
+        _DIFFUSERS_FLUX3_PROFILE.id: _DIFFUSERS_FLUX3_PROFILE,
     }
 )
 
@@ -1565,6 +1810,69 @@ def project_optional_runtime_qualification(
             for contract in profile.target_contracts
         ),
     )
+
+
+# Recorded maintained qualification on clean source 627843d5a97cef4ed2cf7ab06d089f0f900af471:
+# exact source/wheel, official APIs and tiny CLIP/PEFT CPU workload, including
+# base identity preservation and rollback. This grants no model/GPU/Auto proof.
+_DIFFUSERS_FLUX3_PROFILE = project_optional_runtime_qualification(
+    _DIFFUSERS_FLUX3_PROFILE, platform_name='linux', machine='x86_64',
+)
+_DIFFUSERS_FLUX3_PROFILE = project_optional_runtime_qualification(
+    _DIFFUSERS_FLUX3_PROFILE, platform_name='windows', machine='x86_64',
+)
+OPTIONAL_RUNTIME_PROFILES = MappingProxyType({
+    **OPTIONAL_RUNTIME_PROFILES, _DIFFUSERS_FLUX3_PROFILE.id: _DIFFUSERS_FLUX3_PROFILE,
+})
+
+
+# This explicitly selected closure never copies an earlier active overlay.
+# The auxiliary profile stages only bitsandbytes; TF/PEFT remain base-owned.
+# Qualification of either separate package does not qualify their combination.
+_DIFFUSERS_FLUX3_BITSANDBYTES_PROFILE = replace(
+    _DIFFUSERS_FLUX3_PROFILE,
+    id=DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID,
+    label="Official Diffusers FLUX 3 + bitsandbytes 0.50.0",
+    qualification_workload=QUALIFICATION_WORKLOAD_CUDA_NF4,
+    packages=(
+        *_DIFFUSERS_FLUX3_PROFILE.packages,
+        *_TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.packages,
+    ),
+    artifact_locks=(
+        *_DIFFUSERS_FLUX3_PROFILE.artifact_locks,
+        *_TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.artifact_locks,
+    ),
+    required_diffusers_symbols=tuple(dict.fromkeys((
+        *_DIFFUSERS_FLUX3_PROFILE.required_diffusers_symbols,
+        *_TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.required_diffusers_symbols,
+    ))),
+    satisfies_profiles=(
+        (_DIFFUSERS_FLUX3_PROFILE.id, _DIFFUSERS_FLUX3_PROFILE.spec_digest),
+        (
+            _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.id,
+            _TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_PROFILE.spec_digest,
+        ),
+    ),
+    contract_state="candidate_unqualified",
+    cutover_ready=False,
+    install_action_available=False,
+    activation_available=False,
+    target_contracts=tuple(
+        replace(contract, contract_state="candidate_unqualified", cutover_ready=False,
+                install_action_available=False, activation_available=False)
+        for contract in _DIFFUSERS_FLUX3_PROFILE.target_contracts
+    ),
+)
+# Recorded maintained qualification on clean source ada881395bb4e51a6c2337919b6936defa8996fe:
+# exact combined delivery, official APIs and tiny CUDA NF4 compatibility, with
+# original-base preservation and rollback. This grants no pretrained/fit/Auto proof.
+_DIFFUSERS_FLUX3_BITSANDBYTES_PROFILE = project_optional_runtime_qualification(
+    _DIFFUSERS_FLUX3_BITSANDBYTES_PROFILE, platform_name="windows", machine="x86_64",
+)
+OPTIONAL_RUNTIME_PROFILES = MappingProxyType({
+    **OPTIONAL_RUNTIME_PROFILES,
+    _DIFFUSERS_FLUX3_BITSANDBYTES_PROFILE.id: _DIFFUSERS_FLUX3_BITSANDBYTES_PROFILE,
+})
 
 
 def _selected_profiles(profile_ids: Iterable[str] | None) -> tuple[OptionalRuntimeProfile, ...]:

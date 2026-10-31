@@ -21,7 +21,7 @@ from modiff.ltx25_execution_contract import (
     configure_ltx25_distilled_denoise_components,
     ltx25_distilled_denoise_kwargs,
 )
-from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
+from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_action_adapter
 from modiff.NodeBase import NodeBase
 
 from . import components
@@ -180,7 +180,7 @@ def _reviewed_action_stage(pipeline_class, workflow_id, action_key):
         raise ValueError("Pipeline class must be an exact reviewed string.")
     if type(workflow_id) is not str or not workflow_id:
         raise ValueError("Workflow must be an exact reviewed string.")
-    contract = reviewed_whole_workflow_graph_adapter(pipeline_class, workflow_id)
+    contract = reviewed_whole_workflow_action_adapter(pipeline_class, workflow_id, action_key)
     if contract is None:
         raise ValueError(f"{pipeline_class}/{workflow_id} has no reviewed official whole-workflow execution adapter.")
     try:
@@ -271,6 +271,10 @@ class _OfficialWorkflowBlockMixin:
             expected_model_type=pipeline_class,
             expected_role="pipeline_components",
         )
+        from modiff.modular_workflow_contracts import require_reviewed_modular_repository_workflow
+        require_reviewed_modular_repository_workflow(
+            pipeline_class, token._repo_id, token._revision, workflow_id,
+        )
         pipeline_type = pipeline_class_from_model_type(pipeline_class)
         definition = pipeline_type()
         blocks = definition.blocks
@@ -302,6 +306,8 @@ class _OfficialWorkflowBlockMixin:
             )
         if installed:
             pipeline.update_components(**installed)
+        from .cosmos_safety import attach_cosmos_safety_checker
+        attach_cosmos_safety_checker(pipeline, pipeline_components, model_type=pipeline_class)
         return token, pipeline
 
 
@@ -4438,8 +4444,9 @@ def _ltx25_condition_classes():
         from diffusers.pipelines.ltx2.pipeline_ltx2_ic_lora import LTX2ReferenceCondition
     except (ImportError, ModuleNotFoundError) as error:
         raise RuntimeError(
-            "LTX-2.5 condition execution requires MoDiff's reviewed Transformers optional runtime. "
-            "Install and activate it through Setup before running this workflow."
+            "LTX-2.5 condition classes could not be imported from Diffusers. "
+            "Repair or update the base Diffusers, Transformers, and PEFT installation using the uv command "
+            "for your accelerator in docs/developer-setup.md, then restart MoDiff."
         ) from error
     return LTX2VideoCondition, LTX2ReferenceCondition
 

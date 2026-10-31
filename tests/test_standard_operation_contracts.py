@@ -33,10 +33,37 @@ class StandardOperationDiscoveryTests(unittest.TestCase):
             with self.subTest(pipeline=contract['pipelineClass'], task=contract['task']):
                 self.assertIsNone(contract['blockName'])
                 self.assertEqual(contract['support'], 'declared')
-                self.assertIn(contract['decomposition'], ('loader', 'pipeline'))
-                handles = [port for port in contract['ports'] if port['roles'] == ['pipeline']]
-                self.assertEqual(len(handles), 1)
-                self.assertEqual(handles[0]['direction'], 'output' if contract['decomposition'] == 'loader' else 'input')
+                if contract['decomposition'] == 'bundle':
+                    action = contract['nodeKey'].rsplit('.', 1)[-1]
+                    self.assertEqual(contract['nodeKey'], f'modules.DiffusersImage.{action}')
+                    self.assertEqual(contract['nodeType'], {
+                        'EncodeInputs': 'image_encoder', 'Denoise': 'denoise', 'DecodeLatents': 'decoder',
+                    }[action])
+                    self.assertIsNotNone(image.IMAGE_PIPELINE_ADAPTERS[contract['pipelineClass']].stage_adapter)
+                    handles = [port for port in contract['ports'] if port['roles'] == ['component']]
+                    self.assertEqual(len(handles), 1)
+                    self.assertEqual((handles[0]['name'], handles[0]['types'], handles[0]['direction']),
+                                     ('pipeline', ['image_diffusion_pipeline'], 'input'))
+                    self.assertTrue(handles[0]['required'])
+                else:
+                    self.assertIn(contract['decomposition'], ('loader', 'pipeline'))
+                    handles = [port for port in contract['ports'] if port['roles'] == ['pipeline']]
+                    self.assertEqual(len(handles), 1)
+                    self.assertEqual(handles[0]['direction'], 'output' if contract['decomposition'] == 'loader' else 'input')
+
+    def test_missing_stage_declaration_is_omitted_without_constructing_a_replacement(self):
+        registry = {**MODULE_MAP, 'modules.DiffusersImage': {**MODULE_MAP['modules.DiffusersImage']}}
+        del registry['modules.DiffusersImage']['EncodeInputs']
+        with (
+            patch('modiff.NodeBase.NodeBase.__init__', side_effect=AssertionError('constructed')),
+            patch('socket.socket.connect', side_effect=AssertionError('network')),
+            patch('subprocess.Popen', side_effect=AssertionError('process')),
+        ):
+            actual = image.get_image_operation_contracts(registry)
+        self.assertFalse(any(row['nodeKey'] == 'modules.DiffusersImage.EncodeInputs' for row in actual))
+        expected = [row for row in image.get_image_operation_contracts(MODULE_MAP)
+                    if row['nodeKey'] != 'modules.DiffusersImage.EncodeInputs']
+        self.assertEqual(actual, expected)
 
     def test_task_fields_match_the_existing_dynamic_actions(self):
         # Exercise real field actions on uninitialized nodes: no model or node
@@ -54,7 +81,11 @@ class StandardOperationDiscoveryTests(unittest.TestCase):
                 pipeline, mode = contract['pipelineClass'], contract['task']
                 if owner is image:
                     signal = image.image_pipeline_contract(image.IMAGE_PIPELINE_ADAPTERS[pipeline], mode)
-                    node.update_image_contract({'image_contract': signal}, None)
+                    if action == 'DecodeLatents':
+                        self.assertFalse(hasattr(node, 'update_image_contract'))
+                        fields = image.image_action_field_params(signal, action)
+                    else:
+                        node.update_image_contract({'image_contract': signal}, None)
                 elif owner is video:
                     signal = video._adapter_signal(video.VIDEO_PIPELINE_ADAPTERS[pipeline])
                     node.update_adapter_modes({'video_contract': signal, 'mode': mode}, None)

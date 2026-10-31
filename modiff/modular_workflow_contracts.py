@@ -12,10 +12,11 @@ actions can carry every required user input and intermediate state edge.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 
-PINNED_DIFFUSERS_REVISION = "fbf49e7f35857f76bc57b177e26f12b03687c668"
+PINNED_DIFFUSERS_REVISION = "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941"
 WAN_T2V_REPOSITORY = "Wan-AI/Wan2.1-T2V-1.3B-Diffusers"
 WAN_T2V_14B_REPOSITORY = "Wan-AI/Wan2.1-T2V-14B-Diffusers"
 WAN_I2V_REPOSITORY = "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"
@@ -38,6 +39,8 @@ HUNYUAN_VIDEO_15_I2V_REPOSITORY = (
 )
 COSMOS3_DISTILLED_T2I_REPOSITORY = "nvidia/Cosmos3-Super-Text2Image-4Step"
 COSMOS3_DISTILLED_I2V_REPOSITORY = "nvidia/Cosmos3-Super-Image2Video-4Step"
+COSMOS3_NANO_REPOSITORY = "nvidia/Cosmos3-Nano"
+COSMOS3_SUPER_T2I_REPOSITORY = "nvidia/Cosmos3-Super-Text2Image"
 MINIMAX_H3_REPOSITORY = "MiniMaxAI/MiniMax-H3"
 HELIOS_BASE_REPOSITORY = "BestWishYsh/Helios-Base"
 HELIOS_MID_REPOSITORY = "BestWishYsh/Helios-Mid"
@@ -70,6 +73,7 @@ PINNED_MODULAR_REPOSITORY_VARIANTS = {
         COSMOS3_DISTILLED_T2I_REPOSITORY,
         COSMOS3_DISTILLED_I2V_REPOSITORY,
     ),
+    "Cosmos3OmniModularPipeline": (COSMOS3_NANO_REPOSITORY, COSMOS3_SUPER_T2I_REPOSITORY),
     "HunyuanVideo15ModularPipeline": (
         HUNYUAN_VIDEO_15_T2V_REPOSITORY,
         HUNYUAN_VIDEO_15_I2V_REPOSITORY,
@@ -94,6 +98,7 @@ PINNED_MODULAR_REPOSITORY_VARIANTS = {
 # the BlockDefinitionV2 graph. A missing entry means the registered artifact
 # remains the sole choice for that workflow.
 PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS = {
+    ("Cosmos3OmniModularPipeline", "text2image"): (COSMOS3_NANO_REPOSITORY, COSMOS3_SUPER_T2I_REPOSITORY),
     ("ErnieImageModularPipeline", "text2image"): (ERNIE_IMAGE_TURBO_REPOSITORY,),
     ("QwenImageModularPipeline", "text2image"): (
         QWEN_IMAGE_REPOSITORY,
@@ -101,6 +106,116 @@ PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS = {
         QWEN_IMAGE_2512_PREQUANTIZED_REPOSITORY,
     ),
 }
+
+def reviewed_modular_workflow_variants(*, model_type, workflow_id, default_repository):
+    """Inspect same-workflow checkpoint choices without importing model code."""
+    selected_workflow = str(workflow_id or "").strip()
+    return tuple(
+        repository
+        for repository in PINNED_MODULAR_WORKFLOW_REPOSITORY_VARIANTS.get(
+            (model_type, selected_workflow),
+            (default_repository,) if default_repository else (),
+        )
+        if repository
+    )
+
+
+def effective_reviewed_modular_selector(
+    *, model_type, repo_id, revision, workflow_id="", reviewed_variant=None,
+    default_repository=None,
+):
+    """Share immutable checkpoint selection with model-free planning.
+
+    Sealed workflow fields stay unchanged. A variant changes both effective
+    values using existing workflow choices and catalog pins, without granting
+    platform or Auto eligibility.
+    """
+    if reviewed_variant in (None, ""):
+        if isinstance(repo_id, Mapping):
+            source, repository = repo_id.get("source"), repo_id.get("value")
+            if not isinstance(source, str) or source not in {"hub", "local"}:
+                raise ValueError("The repository source must be exactly 'hub' or 'local'.")
+            if not isinstance(repository, str):
+                raise ValueError("The selected Modular Diffusers repository must be a string.")
+            repository = repository.strip()
+        else:
+            source, repository = "hub", str(repo_id or "").strip()
+        if source == "hub":
+            require_reviewed_modular_repository_workflow(model_type, repository, revision, workflow_id)
+        return repo_id, revision
+    if not isinstance(reviewed_variant, str):
+        raise TypeError("A reviewed Modular Diffusers model selection must be a repository string.")
+    selected_repository = reviewed_variant.strip()
+    if not selected_repository:
+        return repo_id, revision
+    if selected_repository not in reviewed_modular_workflow_variants(
+        model_type=model_type, workflow_id=workflow_id, default_repository=default_repository,
+    ):
+        raise ValueError(
+            f"Modular pipeline {model_type!r} does not admit model variant {selected_repository!r}."
+        )
+    from modiff.model_artifact_catalog import require_catalog_revision
+
+    selected_revision = require_catalog_revision(selected_repository, model_type=model_type)
+    require_reviewed_modular_repository_workflow(model_type, selected_repository, selected_revision, workflow_id)
+    return {"source": "hub", "value": selected_repository}, selected_revision
+
+
+# A same-class artifact may implement only a subset of the class's workflows.
+# This exact checkpoint is reviewed for T2I only; neither raw kwargs nor a
+# connected sealed bundle may turn it into a Nano video/action checkpoint.
+PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS = {
+    ("Cosmos3OmniModularPipeline", COSMOS3_SUPER_T2I_REPOSITORY): frozenset({"text2image"}),
+}
+
+# The publisher's Super index points every executable component at this same
+# immutable checkpoint. Its outer classes and loading descriptors are part of
+# the artifact contract, rather than permission to fetch another Omni model.
+PINNED_MODULAR_REPOSITORY_COMPONENT_SOURCES = {
+    'black-forest-labs/flux-3-image-klein': {
+        'text_encoder': ('transformers', 'Qwen3VLForConditionalGeneration'),
+        'tokenizer': ('transformers', 'Qwen3VLProcessor'),
+        'transformer': ('diffusers', 'Flux3Transformer2DModel'),
+        'vae': ('diffusers', 'AutoencoderKLFlux2'),
+    },
+    'black-forest-labs/flux-3-image-klein-base': {
+        'text_encoder': ('transformers', 'Qwen3VLForConditionalGeneration'),
+        'tokenizer': ('transformers', 'Qwen3VLProcessor'),
+        'transformer': ('diffusers', 'Flux3Transformer2DModel'),
+        'vae': ('diffusers', 'AutoencoderKLFlux2'),
+    },
+    COSMOS3_SUPER_T2I_REPOSITORY: {
+        "text_tokenizer": ("transformers", "Qwen2TokenizerFast"),
+        "vae": ("diffusers", "AutoencoderKLWan"),
+        "transformer": ("diffusers", "Cosmos3OmniTransformer"),
+        "scheduler": ("diffusers", "UniPCMultistepScheduler"),
+        "sound_tokenizer": ("diffusers", "Cosmos3AVAEAudioTokenizer"),
+    },
+}
+
+
+# Exact captured FLUX 3 indexes reuse the text encoder folder for the
+# official processor. Other components retain the name-based default.
+PINNED_MODULAR_REPOSITORY_COMPONENT_SUBFOLDERS = {
+    'black-forest-labs/flux-3-image-klein': {
+        'tokenizer': 'text_encoder',
+    },
+    'black-forest-labs/flux-3-image-klein-base': {
+        'tokenizer': 'text_encoder',
+    },
+}
+
+
+def require_reviewed_modular_repository_workflow(model_type, repository, revision, workflow_id):
+    workflows = PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS.get((model_type, repository))
+    if workflows is None:
+        return
+    from modiff.model_artifact_catalog import require_catalog_revision
+
+    if workflow_id not in workflows or revision != require_catalog_revision(repository, model_type=model_type):
+        raise ValueError("The selected exact Modular artifact does not support this reviewed workflow/revision.")
+
+
 # Weight filename variants are a separate contract from the repository choices
 # above.  ModularPipeline.load_components() accepts ``variant`` as a loading
 # override for every component.  Keep the reviewed override repository-scoped
@@ -125,6 +240,12 @@ def reviewed_modular_weight_variant(model_type: str, repository: str) -> str | N
 # while the installed Modular blocks declare their reviewed base/factory types.
 # These are exact repository-scoped aliases, not general subclass admission.
 PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES = {
+    'black-forest-labs/flux-3-image-klein': {
+        'tokenizer': ('transformers', 'Qwen3VLProcessor'),
+    },
+    'black-forest-labs/flux-3-image-klein-base': {
+        'tokenizer': ('transformers', 'Qwen3VLProcessor'),
+    },
     # Turbo's pinned standard index explicitly omits the optional IP-Adapter
     # image encoder and uses the ancestral scheduler for its distilled recipe.
     "stabilityai/sdxl-turbo": {
@@ -166,6 +287,9 @@ PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES = {
         "text_tokenizer": ("transformers", "Qwen2TokenizerFast"),
     },
     COSMOS3_DISTILLED_I2V_REPOSITORY: {
+        "text_tokenizer": ("transformers", "Qwen2TokenizerFast"),
+    },
+    COSMOS3_SUPER_T2I_REPOSITORY: {
         "text_tokenizer": ("transformers", "Qwen2TokenizerFast"),
     },
     # Transformers 5 consolidates legacy ``*TokenizerFast`` exports into the
@@ -904,9 +1028,12 @@ def _cosmos3_omni_workflow_truth() -> PinnedModularPipelineTruth:
                 ModularModeTruth(
                     workflow,
                     frozenset({"num_inference_steps", "prompt"}),
-                    actions,
-                    edges,
-                    block_sequence,
+                    # The image adapter ends after moderated Decode. The
+                    # package's action-output block has no image effect;
+                    # preserve it in every video route and upstream snapshot.
+                    actions[:-1] if workflow == "text2image" else actions,
+                    edges[:-1] if workflow == "text2image" else edges,
+                    block_sequence[:-1] if workflow == "text2image" else block_sequence,
                 ),
             )
             for mode, workflow in (
@@ -1597,6 +1724,38 @@ PINNED_MODULAR_WORKFLOW_TRUTH: dict[str, PinnedModularPipelineTruth] = {
                     _IMAGE_TO_OUTPUT_EDGES,
                 ),
             ),
+        ),
+    ),
+    "Flux3ModularPipeline": PinnedModularPipelineTruth(
+        blocks_class="Flux3AutoBlocks",
+        workflows=(_workflow("text2image", "prompt"), _workflow("image_conditioned", "prompt", "image")),
+        modes=(
+            ("text_to_image", ModularModeTruth(
+                "text2image", frozenset({"prompt"}),
+                ("text_encoder", "denoise", "decoder"), _TEXT_TO_OUTPUT_EDGES,
+                ("text_encoder", "denoise", "decode"))),
+            ("edit_image", ModularModeTruth(
+                "image_conditioned", frozenset({"prompt", "image"}),
+                ("text_encoder", "vae_encoder", "denoise", "decoder"),
+                _TEXT_TO_OUTPUT_EDGES + (StateEdgeTruth("vae_encoder", "image_cond_latents",
+                                                      "denoise", "image_cond_latents"),),
+                ("text_encoder", "vae_encoder", "denoise", "decode"))),
+        ),
+    ),
+    "Flux3DistilledModularPipeline": PinnedModularPipelineTruth(
+        blocks_class="Flux3DistilledAutoBlocks",
+        workflows=(_workflow("text2image", "prompt"), _workflow("image_conditioned", "prompt", "image")),
+        modes=(
+            ("text_to_image", ModularModeTruth(
+                "text2image", frozenset({"prompt"}),
+                ("text_encoder", "denoise", "decoder"), _TEXT_TO_OUTPUT_EDGES,
+                ("text_encoder", "denoise", "decode"))),
+            ("edit_image", ModularModeTruth(
+                "image_conditioned", frozenset({"prompt", "image"}),
+                ("text_encoder", "vae_encoder", "denoise", "decoder"),
+                _TEXT_TO_OUTPUT_EDGES + (StateEdgeTruth("vae_encoder", "image_cond_latents",
+                                                      "denoise", "image_cond_latents"),),
+                ("text_encoder", "vae_encoder", "denoise", "decode"))),
         ),
     ),
     "ZImageModularPipeline": PinnedModularPipelineTruth(

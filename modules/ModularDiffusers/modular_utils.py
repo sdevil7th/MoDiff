@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 
 import torch
 from diffusers import Flux2KleinModularPipeline
+from modiff.component_bundle_contracts import qwen_t2i_bundle_input_param, with_qwen_t2i_bundle_contract
 from modiff.model_artifact_catalog import resolve_model_revision
 from modiff.operation_contracts import MODULAR_STAGE_OPERATIONS, build_modular_operation_contracts
 from modiff.modular_contract_only_registry import (
@@ -126,6 +127,21 @@ def normalize_modular_runtime_params(kwargs, node_config):
             continue
         value = normalized[param_name]
         param_type = param_config.get("type")
+        field_options = param_config.get("fieldOptions")
+        if param_type == "int" and isinstance(field_options, dict) and field_options.get("tupleValue") is True:
+            options = param_config.get("options")
+            length = field_options.get("tupleLength")
+            if (type(value) not in (tuple, list) or not isinstance(options, list)
+                    or type(length) is not int or not 1 <= length <= 64 or len(value) != length):
+                raise ValueError(f"Invalid integer sequence for modular parameter '{param_name}'.")
+            try:
+                sequence = tuple(_normalize_modular_integer(item) for item in value)
+            except ValueError as exc:
+                raise ValueError(f"Invalid integer sequence for modular parameter '{param_name}'.") from exc
+            if len(set(sequence)) != len(sequence) or any(item not in options for item in sequence):
+                raise ValueError(f"Invalid integer sequence for modular parameter '{param_name}'.")
+            normalized[param_name] = sequence
+            continue
         try:
             if param_type == "float":
                 if isinstance(value, bool):
@@ -465,11 +481,23 @@ def _qwen_image_max_sequence_length_param():
     )
 
 
+def _qwen_t2i_bundle_wrapper_input(node_type):
+    """Declare the wrapper's optional transport in the authoritative Qwen spec."""
+    field = qwen_t2i_bundle_input_param(node_type, hidden=False)
+    return PipelineParam(
+        name="pipeline_components",
+        **{name: field[name] for name in ("label", "type", "display", "hidden", "onSignal", "signalCompatibility")},
+    )
+
+
 QWEN_IMAGE_NODE_SPECS = {
     "controlnet": {
         "inputs": [
             PipelineParam.control_image(),
-            PipelineParam.controlnet_conditioning_scale(),
+            # Qwen's ControlNet strength multiplies the residuals; it is not
+            # a fraction of the denoising window. Match the existing reviewed
+            # whole-image range without changing the other families' schemas.
+            PipelineParam.controlnet_conditioning_scale(max=2.0),
             PipelineParam.control_guidance_start(),
             PipelineParam.control_guidance_end(),
             PipelineParam.height(step=16),
@@ -509,6 +537,7 @@ QWEN_IMAGE_NODE_SPECS = {
             PipelineParam.scheduler(),
             PipelineParam.controlnet_bundle(display="input"),
         ],
+        "wrapper_inputs": [_qwen_t2i_bundle_wrapper_input("denoise")],
         "outputs": [
             PipelineParam.latents(display="output"),
             PipelineParam.route_state_out(),
@@ -547,7 +576,9 @@ QWEN_IMAGE_NODE_SPECS = {
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
+        "wrapper_inputs": [_qwen_t2i_bundle_wrapper_input("text_encoder")],
         "outputs": [
             PipelineParam.embeddings(display="output"),
             PipelineParam.doc(),
@@ -564,6 +595,7 @@ QWEN_IMAGE_NODE_SPECS = {
         "model_inputs": [
             PipelineParam.vae(),
         ],
+        "wrapper_inputs": [_qwen_t2i_bundle_wrapper_input("decoder")],
         "outputs": [
             PipelineParam.images(),
             PipelineParam.doc(),
@@ -622,6 +654,11 @@ QWEN_IMAGE_EDIT_NODE_SPECS = {
             PipelineParam.mask_image(),
             PipelineParam.padding_mask_crop(),
             PipelineParam.seed(),
+            PipelineParam(
+                name="inpaint_compatibility", label="Inpaint compatibility", type="string",
+                options=["native", "whole_v1"], default="native", hidden=True,
+                required_block_params=["inpaint_compatibility"],
+            ),
         ],
         "model_inputs": [
             PipelineParam.vae(),
@@ -643,6 +680,7 @@ QWEN_IMAGE_EDIT_NODE_SPECS = {
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.embeddings(display="output"),
@@ -735,6 +773,7 @@ QWEN_IMAGE_EDIT_PLUS_NODE_SPECS = {
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.embeddings(display="output"),
@@ -864,6 +903,7 @@ QWEN_IMAGE_LAYERED_NODE_SPECS = {
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.embeddings(display="output"),
@@ -918,6 +958,7 @@ FLUX_NODE_SPECS = {
         "model_inputs": [
             PipelineParam.unet(),
             PipelineParam.scheduler(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.latents(display="output"),
@@ -957,7 +998,7 @@ FLUX_NODE_SPECS = {
     "text_encoder": {
         "inputs": [
             PipelineParam.prompt(),
-            # No negative_prompt - pipeline does not support this
+            PipelineParam.negative_prompt(),
             PipelineParam(
                 name="max_sequence_length", label="Maximum Sequence Length", type="int",
                 default=512, min=1, max=512, step=1,
@@ -966,6 +1007,7 @@ FLUX_NODE_SPECS = {
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.embeddings(display="output"),
@@ -1003,6 +1045,7 @@ FLUX_PIPELINE_CONFIG = PipelineConfig(
     default_repo="black-forest-labs/FLUX.1-dev",
     default_dtype="bfloat16",
     layer_block_options=FLUX_LAYER_BLOCK_OPTIONS,
+    guider_options=("ClassifierFreeGuidance",),
 )
 
 
@@ -1025,6 +1068,7 @@ FLUX_KONTEXT_NODE_SPECS = {
         "model_inputs": [
             PipelineParam.unet(),
             PipelineParam.scheduler(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.latents(display="output"),
@@ -1062,10 +1106,16 @@ FLUX_KONTEXT_NODE_SPECS = {
     "text_encoder": {
         "inputs": [
             PipelineParam.prompt(),
-            # No negative_prompt
+            PipelineParam.negative_prompt(),
+            PipelineParam(
+                name="max_sequence_length", label="Maximum Sequence Length", type="int",
+                default=512, min=1, max=512, step=1,
+                fieldOptions={"controlTier": "advanced"},
+            ),
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.embeddings(display="output"),
@@ -1103,6 +1153,7 @@ FLUX_KONTEXT_PIPELINE_CONFIG = PipelineConfig(
     default_dtype="bfloat16",
     layer_block_options=FLUX_LAYER_BLOCK_OPTIONS,
     denoise_image_latent_dimensions=IMAGE_LATENT_DIMENSIONS,
+    guider_options=("ClassifierFreeGuidance",),
 )
 
 # =============================================================================
@@ -1292,10 +1343,11 @@ Z_IMAGE_NODE_SPECS = {
     "text_encoder": {
         "inputs": [
             PipelineParam.prompt(),
-            # No negative_prompt - pipeline does not support this
+            PipelineParam.negative_prompt(),
         ],
         "model_inputs": [
             PipelineParam.text_encoders(),
+            PipelineParam.guider(onChange=None, hidden=False),
         ],
         "outputs": [
             PipelineParam.embeddings(display="output"),
@@ -1789,6 +1841,104 @@ DUMMY_CUSTOM_PIPELINE_CONFIG = PipelineConfig(node_specs={}, label="Custom", def
 
 
 # Minimal modular registry for MoDiff node configs
+# FLUX 3 source-audit candidate: official Diffusers 7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941.
+# Registration still requires the actual exported class; the installed 0.41
+# release cannot execute these candidate schemas.
+def _flux3_node_specs(*, distilled):
+    text_inputs = [
+        PipelineParam.prompt(),
+        PipelineParam(name="max_sequence_length", label="Maximum Sequence Length", type="int",
+                      default=8192, min=1, max=8192, step=1),
+        PipelineParam(name="text_encoder_out_layers", label="Text Encoder Layers", type="int",
+                      display="select", default=(4, 8, 12, 16, 20, 24, 28, 32),
+                      options=list(range(33)), fieldOptions={"multiple": True, "tupleValue": True,
+                                                           "tupleLength": 8}),
+    ]
+    if not distilled:
+        # Standalone upstream encoding has no guider component. An explicit
+        # empty negative prompt produces the unconditional embeddings needed
+        # by the later default CFG denoiser; omission would not do so.
+        text_inputs.insert(1, PipelineParam.negative_prompt())
+    return {
+        "controlnet": None,
+        "text_encoder": {
+            "inputs": text_inputs,
+            "wrapper_inputs": [PipelineParam(
+                name="layout_conditioning", label="Layout Conditioning", type="layout_conditioning",
+                display="layout", default=None, _default_is_explicit=True,
+                fieldOptions={"layoutConditioning": {"schemaVersion": 2, "sourceRegions": False,
+                                                     "supportsBoundSourceRegions": True}},
+            ), PipelineParam(
+                name="reference_binding", label="Reference Binding", type="reference_conditioning",
+                display="input", default=None, _default_is_explicit=True,
+                fieldOptions={"referenceBinding": {"schemaVersion": 1, "maxReferences": 10}},
+            )],
+            "model_inputs": [PipelineParam.text_encoders()],
+            "outputs": [PipelineParam.embeddings(display="output"), PipelineParam.doc()],
+            "required_inputs": ["prompt"], "required_model_inputs": ["text_encoders"],
+            "block_name": "text_encoder",
+        },
+        "vae_encoder": {
+            # Official reference encoding uses latent_dist.mode(), not sampling.
+            "inputs": [PipelineParam.image()],
+            "model_inputs": [PipelineParam.vae()],
+            "outputs": [PipelineParam(name="image_cond_latents", label="Reference Latents",
+                                      type="latents", display="output"),
+                        PipelineParam(name="reference_binding", label="Reference Binding",
+                                      type="reference_conditioning", display="output",
+                                      fieldOptions={"referenceBinding": {"schemaVersion": 1, "maxReferences": 10}}),
+                        PipelineParam.doc()],
+            "required_inputs": ["image"], "required_model_inputs": ["vae"],
+            "block_name": "vae_encoder",
+        },
+        "denoise": {
+            "inputs": [
+                PipelineParam.embeddings(display="input"),
+                PipelineParam.width(step=16), PipelineParam.height(step=16),
+                PipelineParam.seed(), PipelineParam.num_inference_steps(16 if distilled else 50),
+                PipelineParam(name="num_images_per_prompt", label="Images Per Prompt", type="int",
+                              default=1, min=1, max=8, step=1),
+                PipelineParam(name="image_cond_latents", label="Reference Latents", type="latents",
+                              display="input", required_block_params=["image_cond_latents"]),
+            ],
+            "model_inputs": [PipelineParam.unet(), PipelineParam.scheduler()]
+                            # Guidance belongs to its connected Guider stage;
+                            # this denoiser has no local guidance_scale to hide.
+                            + ([] if distilled else [PipelineParam.guider(onChange=None)]),
+            "wrapper_inputs": [PipelineParam(
+                name="reference_binding", label="Reference Binding", type="reference_conditioning",
+                display="input", default=None, _default_is_explicit=True,
+                fieldOptions={"referenceBinding": {"schemaVersion": 1, "maxReferences": 10}},
+            )],
+            "outputs": [PipelineParam.latents(display="output"), PipelineParam.doc()],
+            "required_inputs": ["embeddings"], "required_model_inputs": ["unet", "scheduler"],
+            "block_name": "denoise",
+        },
+        "decoder": {
+            # The upstream Denoise sequence already unpacks its latent grid.
+            "inputs": [PipelineParam.latents(display="input")],
+            "model_inputs": [PipelineParam.vae()],
+            "outputs": [PipelineParam.images(), PipelineParam.doc()],
+            "required_inputs": ["latents"], "required_model_inputs": ["vae"],
+            "block_name": "decode",
+        },
+    }
+
+
+FLUX_3_PIPELINE_CONFIG = PipelineConfig(
+    node_specs=_flux3_node_specs(distilled=False), label="FLUX 3 Image Klein Base",
+    default_repo="black-forest-labs/flux-3-image-klein-base", default_dtype="bfloat16",
+    guider_options=("ClassifierFreeGuidance",), component_dtype_overrides=(("vae", "float32"),),
+    weight_formats=("native", "fp8r", "nvfp4"),
+)
+FLUX_3_DISTILLED_PIPELINE_CONFIG = PipelineConfig(
+    node_specs=_flux3_node_specs(distilled=True), label="FLUX 3 Image Klein",
+    default_repo="black-forest-labs/flux-3-image-klein", default_dtype="bfloat16",
+    component_dtype_overrides=(("vae", "float32"),),
+    weight_formats=("native", "fp8r", "nvfp4"),
+)
+
+
 class ModiffPipelineRegistry:
     """Registry mapping pipeline class to its config, including label, default_repo, default_dtype, and node_params."""
 
@@ -1894,6 +2044,17 @@ def _initialize_registry(registry: ModiffPipelineRegistry):
         registry.register(Flux2KleinBaseModularPipeline, FLUX_2_KLEIN_BASE_PIPELINE_CONFIG)
     except Exception as e:
         logger.warning(f"Failed to register Flux2KleinBaseModularPipeline: {e}")
+
+    for class_name, config in (
+        ("Flux3ModularPipeline", FLUX_3_PIPELINE_CONFIG),
+        ("Flux3DistilledModularPipeline", FLUX_3_DISTILLED_PIPELINE_CONFIG),
+    ):
+        try:
+            import diffusers as diffusers_module
+            pipeline_class = getattr(diffusers_module, class_name)
+            registry.register(pipeline_class, config)
+        except (AttributeError, ImportError) as error:
+            logger.debug("FLUX 3 source candidate is unavailable in this installed runtime: %s", error)
 
     try:
         from diffusers import ZImageModularPipeline
@@ -2040,12 +2201,65 @@ def get_all_model_types(*, include_contract_only: bool = False) -> Dict[str, str
     return all_labels
 
 
+def declared_optional_pipeline_configs():
+    """Source schemas only; no class replacement or process/runtime grant."""
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+    configured = {'Flux3ModularPipeline': FLUX_3_PIPELINE_CONFIG,
+                  'Flux3DistilledModularPipeline': FLUX_3_DISTILLED_PIPELINE_CONFIG}
+    result = {}
+    for profile in DIFFUSERS_EXECUTION_PROFILES.values():
+        if not profile.public or profile.required_diffusers_provider is None:
+            continue
+        config = configured.get(profile.pipeline_class)
+        if (profile.model_type != profile.pipeline_class or config is None
+                or profile.default_repo != config.default_repo):
+            raise ValueError('An optional pipeline requires its exact reviewed declarative config.')
+        if profile.pipeline_class in result:
+            raise ValueError('An optional pipeline has ambiguous public config authority.')
+        result[profile.pipeline_class] = config
+    return result
+
+
+def _declarative_pipeline_configs():
+    configs = {pipeline.__name__: config for pipeline, config in _get_registry_instance().get_all().items()}
+    configs.update(declared_optional_pipeline_configs())
+    return configs
+
+
+def pipeline_authoring_identity(model_type, *, class_resolver=None):
+    """Keep schema refresh independent of installed optional pipeline classes."""
+    if type(model_type) is str and model_type in declared_optional_pipeline_configs():
+        return model_type
+    return (class_resolver or pipeline_class_from_model_type)(model_type)
+
+
+def _pipeline_config_metadata(model_type, config):
+    return {'model_type': model_type, 'label': config.label,
+        'default_repo': config.default_repo, 'default_dtype': config.default_dtype,
+        'loader_component_outputs': list(config.loader_component_outputs),
+        'layer_block_options': list(config.layer_block_options),
+        'guider_options': list(config.guider_options), 'scheduler_options': list(config.scheduler_options),
+        'denoise_image_latent_dimensions': list(config.denoise_image_latent_dimensions),
+        'node_params': deepcopy(config.node_params),
+        **({'component_dtype_overrides': dict(config.component_dtype_overrides)} if config.component_dtype_overrides else {}),
+        **({'weight_formats': list(config.weight_formats)} if config.weight_formats else {})}
+
+
 def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:
     """Get metadata for a model type.
 
     Returns model_type, label, default_repo, default_dtype, and node_params.
     The custom preview marker also declares ``execution_status=contract_only``.
     """
+    declared = declared_optional_pipeline_configs().get(model_type)
+    if declared is not None:
+        from modiff.diffusers_profiles import execution_profiles_for_execution
+        profiles = execution_profiles_for_execution(model_type)
+        providers = {profile.required_diffusers_provider for profile in profiles}
+        if len(providers) != 1 or None in providers:
+            raise ValueError('The optional model has no exact declared provider.')
+        return {**_pipeline_config_metadata(model_type, declared),
+                'execution_status': 'expert_only', 'required_diffusers_provider': providers.pop()}
     specification = CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME.get(model_type)
     if specification is not None:
         return {
@@ -2068,18 +2282,7 @@ def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:
 
     for pipeline_cls, config in _get_registry_instance().get_all().items():
         if pipeline_cls.__name__ == model_type:
-            metadata = {
-                "model_type": model_type,
-                "label": config.label,
-                "default_repo": config.default_repo,
-                "default_dtype": config.default_dtype,
-                "loader_component_outputs": list(config.loader_component_outputs),
-                "layer_block_options": list(config.layer_block_options),
-                "guider_options": list(config.guider_options),
-                "scheduler_options": list(config.scheduler_options),
-                "denoise_image_latent_dimensions": list(config.denoise_image_latent_dimensions),
-                "node_params": config.node_params,
-            }
+            metadata = _pipeline_config_metadata(model_type, config)
             if model_type == CUSTOM_PIPELINE_MODEL_TYPE:
                 metadata["execution_status"] = CUSTOM_PIPELINE_EXECUTION_STATUS
             return metadata
@@ -2090,8 +2293,8 @@ def get_modular_layer_block_options() -> Dict[str, list[str]]:
     """Return exact model-type-to-transformer-block choices from reviewed configs."""
 
     return {
-        pipeline_cls.__name__: list(config.layer_block_options)
-        for pipeline_cls, config in _get_registry_instance().get_all().items()
+        model_type: list(config.layer_block_options)
+        for model_type, config in _declarative_pipeline_configs().items()
         if config.layer_block_options
     }
 
@@ -2100,8 +2303,8 @@ def get_modular_guider_options() -> Dict[str, list[str]]:
     """Return exact model-type-to-guider choices from reviewed configs."""
 
     return {
-        pipeline_cls.__name__: list(config.guider_options)
-        for pipeline_cls, config in _get_registry_instance().get_all().items()
+        model_type: list(config.guider_options)
+        for model_type, config in _declarative_pipeline_configs().items()
         if config.guider_options
     }
 
@@ -2110,8 +2313,8 @@ def get_modular_scheduler_options() -> Dict[str, list[str]]:
     """Return exact model-type-to-scheduler replacements from reviewed configs."""
 
     return {
-        pipeline_cls.__name__: list(config.scheduler_options)
-        for pipeline_cls, config in _get_registry_instance().get_all().items()
+        model_type: list(config.scheduler_options)
+        for model_type, config in _declarative_pipeline_configs().items()
         if config.scheduler_options
     }
 
@@ -2127,16 +2330,23 @@ def get_modular_node_action_options() -> Dict[str, Dict[str, list[str]]]:
     """
 
     result: Dict[str, Dict[str, list[str]]] = {}
-    for pipeline_cls, config in _get_registry_instance().get_all().items():
+    for model_type, config in _declarative_pipeline_configs().items():
         for action, action_config in config.node_params.items():
             if not isinstance(action, str) or not isinstance(action_config, dict):
                 continue
-            result.setdefault(action, {})[pipeline_cls.__name__] = [action]
+            result.setdefault(action, {})[model_type] = [action]
     return result
 
 
 def pipeline_class_to_modiff_node_config(pipeline_class, node_type=None, *, resolve_blocks=True):
     """Get the block and MoDiff node parameters for a pipeline class and node type."""
+    if type(pipeline_class) is str:
+        config = declared_optional_pipeline_configs().get(pipeline_class)
+        if config is None:
+            raise ValueError('Unknown declarative Modular pipeline identity.')
+        if not resolve_blocks:
+            return None, deepcopy(config.node_params.get(node_type))
+        pipeline_class = pipeline_class_from_model_type(pipeline_class)
     if isinstance(pipeline_class, CustomPipelineBinding):
         config = pipeline_class.pipeline_config()
     else:
@@ -2155,7 +2365,9 @@ def pipeline_class_to_modiff_node_config(pipeline_class, node_type=None, *, reso
         else:
             pipeline = pipeline_class()
 
-        node_type_blocks = pipeline.blocks.sub_blocks[node_params["block_name"]]
+        from .native_blocks import prepare_native_pipeline_blocks
+        native_blocks = prepare_native_pipeline_blocks(pipeline_class, pipeline.blocks)
+        node_type_blocks = native_blocks.sub_blocks[node_params["block_name"]]
 
     return node_type_blocks, node_params
 
@@ -2165,8 +2377,11 @@ _MODIFF_NODE_ACTION_LABELS = {stage: operation.label for stage, operation in MOD
 
 def get_modular_operation_contracts(modules):
     """Describe registered generic stages without resolving executable blocks."""
-    configs = {pipeline.__name__: config for pipeline, config in _get_registry_instance().get_all().items()}
-    return build_modular_operation_contracts(configs, modules)
+    configs = _declarative_pipeline_configs()
+    # A declared wrapper transport can still require reviewed task publication.
+    # Keep the same facade policy for these unscoped records as for task records.
+    return [with_qwen_t2i_bundle_contract(contract)
+            for contract in build_modular_operation_contracts(configs, modules)]
 
 
 def require_modiff_node_contract(pipeline_class, node_type, *, require_blocks=True, resolve_blocks=True):
@@ -2193,7 +2408,7 @@ def require_modiff_node_contract(pipeline_class, node_type, *, require_blocks=Tr
         node_type,
         resolve_blocks=resolve_blocks,
     )
-    pipeline_name = getattr(pipeline_class, "__name__", type(pipeline_class).__name__)
+    pipeline_name = pipeline_class if type(pipeline_class) is str else getattr(pipeline_class, "__name__", type(pipeline_class).__name__)
     if node_config is None:
         raise ValueError(
             f"Modular Diffusers pipeline '{pipeline_name}' does not support the generic {action_label} node "

@@ -93,18 +93,18 @@ First change `teal metal` to `cobalt blue metal` in the generator prompt. After
 each switch, show that this edit survives without retyping it. Keep custom
 Palette strength `0.80` and the refiner at 20 steps/CFG 5 throughout.
 
-| Chapter | Model | Rehearsed execution |
-| --- | --- | --- |
-| Main | Z-Image Turbo | Editable native stages; 8 steps, guidance 1 |
-| Main | SDXL Base | Editable native stages; 25 steps, CFG 5 |
-| Main | FLUX.2 Klein 4B distilled | Editable native stages; 4 steps, guidance 1 |
-| Extended | FLUX.1 dev | Editable native stages; 28 steps, guidance 3.5 |
-| Extended | Qwen-Image-2512 | Editable native stages; 28 steps, CFG 4 |
-| Variants | SDXL PAG | 25 steps/CFG 5, native Guider + explicit Layers, same SDXL checkpoint |
-| Variants | SDXL Turbo | Native stages; 512px, one step, CFG 0 |
-| Variants | FLUX.1 Schnell | Native stages; four steps, unused guidance hidden/fixed at 0 |
-| Variants | FLUX.1 Krea dev | Native stages; 28 steps, guidance 3.5 |
-| Compatibility | Qwen-Image 2.1 | Whole pipeline; 40 steps, guidance 1, same custom image boundary |
+| Chapter       | Model                     | Rehearsed execution                                                   |
+| ------------- | ------------------------- | --------------------------------------------------------------------- |
+| Main          | Z-Image Turbo             | Editable native stages; 8 steps, guidance 1                           |
+| Main          | SDXL Base                 | Editable native stages; 25 steps, CFG 5                               |
+| Main          | FLUX.2 Klein 4B distilled | Editable native stages; 4 steps, guidance 1                           |
+| Extended      | FLUX.1 dev                | Editable native stages; 28 steps, guidance 3.5                        |
+| Extended      | Qwen-Image-2512           | Editable native stages; 28 steps, CFG 4                               |
+| Variants      | SDXL PAG                  | 25 steps/CFG 5, native Guider + explicit Layers, same SDXL checkpoint |
+| Variants      | SDXL Turbo                | Native stages; 512px, one step, CFG 0                                 |
+| Variants      | FLUX.1 Schnell            | Native stages; four steps, unused guidance hidden/fixed at 0          |
+| Variants      | FLUX.1 Krea dev           | Native stages; 28 steps, guidance 3.5                                 |
+| Compatibility | Qwen-Image 2.1            | Whole pipeline; 40 steps, guidance 1, same custom image boundary      |
 
 For PAG, expand **Other implementations** and select `sdxl-pag:modular`.
 The repository is shared with SDXL Base, but the Guider must read
@@ -128,12 +128,16 @@ Qwen 2.1 replaces the generator's internal stages with its supported whole-pipel
 operation. Its decoded image still feeds the same custom node. This demonstrates
 portability at the image boundary, not native Modular Diffusers support for Qwen 2.1.
 
-The reviewed Transformers 5.17 + PEFT runtime explicitly satisfies the earlier
-5.14.1 and exact-main runtime contracts. On a host with that validated environment
-already active, these model changes do not need a Python restart. This does not
-imply compatibility with optional quantization/media packages or arbitrary versions.
+Transformers and PEFT are required base dependencies. A verified current base
+environment supports these ordinary model changes without an optional Install,
+Activate, or Python restart. The current dependency declarations are in
+`pyproject.toml`, and runtime receipts capture the versions actually used.
+Historical 5.14.1/5.17 and exact-main overlay records remain review and migration
+references; they do not prescribe the current setup or qualify newer versions.
+This base readiness does not imply compatibility with optional quantization or
+media packages.
 
-If Setup says another runtime is required, save the workflow, finish or stop active
+If Setup says an additional optional runtime is required, save the workflow, finish or stop active
 and queued runs, explicitly install/activate the reviewed environment, and wait for
 reconnection. The supervised backend restarts its worker; the UI polls readiness.
 An unsupervised launch requires a manual restart. Installation is never implicit,

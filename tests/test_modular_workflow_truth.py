@@ -56,7 +56,9 @@ EXPECTED_SDXL_RUNNABLE_MODES = [
 
 def _pipeline_blocks(model_type):
     truth = PINNED_MODULAR_WORKFLOW_TRUTH[model_type]
-    pipeline_class = getattr(diffusers, model_type)
+    pipeline_class = getattr(diffusers, model_type, None)
+    if pipeline_class is None:
+        raise unittest.SkipTest(f"Official {model_type} API is unavailable in the installed release.")
     constructor_config = dict(truth.constructor_config)
     pipeline = pipeline_class(config_dict=constructor_config) if constructor_config else pipeline_class()
     return pipeline_class, pipeline.blocks
@@ -101,13 +103,15 @@ class ModularWorkflowTruthTests(unittest.TestCase):
 
     def test_registered_pipelines_have_exact_truth_or_whole_workflow_adapters(self):
         registered = set(get_all_model_types()) - {"", "DummyCustomPipeline"}
-        self.assertEqual(len(PINNED_MODULAR_WORKFLOW_TRUTH), 23)
+        self.assertEqual(len(PINNED_MODULAR_WORKFLOW_TRUTH), 25)
         whole_workflow_only = registered - set(PINNED_MODULAR_WORKFLOW_TRUTH)
         self.assertEqual(
             whole_workflow_only,
             {"Cosmos3DistilledModularPipeline", "MiniMaxH3ModularPipeline"},
         )
-        self.assertEqual(set(PINNED_MODULAR_WORKFLOW_TRUTH) | whole_workflow_only, registered)
+        available_truth = {name for name in PINNED_MODULAR_WORKFLOW_TRUTH
+                           if getattr(diffusers, name, None) is not None}
+        self.assertEqual(available_truth | whole_workflow_only, registered)
         for model_type in whole_workflow_only:
             candidates = [
                 candidate
@@ -121,12 +125,12 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                     reviewed_whole_workflow_graph_adapter(model_type, candidate["workflowId"]),
                     f"{model_type}:{candidate['workflowId']} lacks its exact reviewed whole-workflow adapter",
                 )
-        self.assertEqual(PINNED_DIFFUSERS_REVISION, "fbf49e7f35857f76bc57b177e26f12b03687c668")
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941")
         dependency_contract = Path("pyproject.toml").read_text(encoding="utf-8")
         self.assertIn(
-            f"diffusers.git@{PINNED_DIFFUSERS_REVISION}",
+            "diffusers==0.41.0",
             dependency_contract,
-            "A Diffusers pin update requires an explicit review of the Modular workflow truth matrix.",
+            "Runtime readiness uses the reviewed release pin independently of historical workflow provenance.",
         )
 
     @requires_transformers
@@ -216,10 +220,23 @@ class ModularWorkflowTruthTests(unittest.TestCase):
             },
         }
         expected["Flux2ModularPipeline"] = {"text_to_image", "edit_image"}
+        expected["Flux3ModularPipeline"] = {"text_to_image", "edit_image"}
+        expected["Flux3DistilledModularPipeline"] = {"text_to_image", "edit_image"}
         self.assertEqual(_advertised_modular_modes(), expected)
         truth_modes = {
             model_type: set(dict(truth.modes)) for model_type, truth in PINNED_MODULAR_WORKFLOW_TRUTH.items()
         }
+        private_truth = {
+            "Flux3ModularPipeline": {"text_to_image", "edit_image"},
+            "Flux3DistilledModularPipeline": {"text_to_image", "edit_image"},
+        }
+        self.assertEqual({name: truth_modes[name] for name in private_truth}, private_truth)
+        optional = {profile["model_type"]: profile for profile in public_execution_profiles()
+                    if profile.get("required_diffusers_provider")}
+        self.assertEqual(set(optional), set(private_truth))
+        for profile in optional.values():
+            self.assertFalse(profile["live_proof"])
+            self.assertTrue(profile["optionalRuntimeRequirement"]["requiredNow"])
         self.assertEqual(
             truth_modes["StableDiffusionXLModularPipeline"],
             {"text_to_image", "image_to_image", "control_image", "control_edit_image", "control_inpaint", "inpaint"},
@@ -236,6 +253,8 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                     "ZImageModularPipeline",
                     "QwenImageEditModularPipeline",
                     "Cosmos3OmniModularPipeline",
+                    "Flux3ModularPipeline",
+                    "Flux3DistilledModularPipeline",
                 }
             },
             {
@@ -249,6 +268,8 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                     "ZImageModularPipeline",
                     "QwenImageEditModularPipeline",
                     "Cosmos3OmniModularPipeline",
+                    "Flux3ModularPipeline",
+                    "Flux3DistilledModularPipeline",
                 }
             },
         )
@@ -271,8 +292,33 @@ class ModularWorkflowTruthTests(unittest.TestCase):
 
     @requires_transformers
     def test_every_advertised_mode_has_a_constructible_action_and_state_contract(self):
+        from modiff.studio_execution_specs import studio_execution_spec_for_pair
+        from modules.ModularDiffusers.modular_utils import declared_optional_pipeline_configs
+        optional = declared_optional_pipeline_configs()
         for model_type, modes in _advertised_modular_modes().items():
             truth = PINNED_MODULAR_WORKFLOW_TRUTH.get(model_type)
+            if model_type in optional:
+                # Discovery declares the optional stages without importing or
+                # constructing a class missing from the base Diffusers pin.
+                profiles = [profile for profile in public_execution_profiles()
+                            if profile["model_type"] == model_type]
+                self.assertEqual(len(profiles), 1)
+                profile = profiles[0]
+                metadata = get_model_type_metadata(model_type)
+                self.assertEqual(metadata["required_diffusers_provider"], profile["required_diffusers_provider"])
+                self.assertTrue(profile["optionalRuntimeRequirement"]["requiredNow"])
+                self.assertIsNotNone(truth)
+                for mode in sorted(modes):
+                    self.assertIsNotNone(truth.mode(mode))
+                    specification = studio_execution_spec_for_pair(
+                        model_type, mode, execution_profile_id=profile["id"])
+                    self.assertIsNotNone(specification)
+                    self.assertEqual(specification["requiredDiffusersProvider"], profile["required_diffusers_provider"])
+                for action, node_config in optional[model_type].node_params.items():
+                    if isinstance(node_config, dict):
+                        _blocks, actual = require_modiff_node_contract(model_type, action, require_blocks=False, resolve_blocks=False)
+                        self.assertEqual(actual, node_config)
+                continue
             pipeline_class = getattr(diffusers, model_type)
             if truth is not None:
                 pipeline_class, _blocks = _pipeline_blocks(model_type)

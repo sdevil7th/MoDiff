@@ -1,10 +1,106 @@
 """Bounded inspection of built-in data controls; runtime preparation markers."""
 from __future__ import annotations
 from contextvars import ContextVar
+import json
 import math
+import hashlib
 
 RUNTIME_VALUES = ContextVar('workflow_auto_values', default={})
 DATA_MODULES = {'modules.Primitive', 'modules.Text', 'modules.Image', 'modules.ImageOperations', 'modules.Audio', 'modules.Video'}
+DATA_ACTIONS = {
+    ('modules.Tensor', 'SeededGenerator'), ('modules.Tensor', 'AttentionArguments'),
+    ('modules.DiffusersRuntime', 'PipelineQuantizationConfigV2'),
+    ('modules.DiffusersRuntime', 'DiffusersExecutionRecipe'),
+    ('modules.DiffusersImage', 'OutpaintCanvas'),
+}
+
+
+def reference_image_resource_witness(value):
+    """Read the actual prepared PIL sources for the pinned FLUX 3 crop route.
+
+    Data suppliers execute only through ordinary Run preparation. This bounded
+    witness contains no pixels and grants no native model/output qualification.
+    Source geometry is capped before RGB conversion, with no resize or truncation.
+    """
+    from PIL import Image
+    images = value if type(value) is list else [value]
+    if len(images) not in {1, 2}:
+        raise ValueError('The bounded FLUX 3 edit Auto recipe requires one or two prepared reference images.')
+    references = []
+    for image in images:
+        if not isinstance(image, Image.Image) or any(not 16 <= side <= 1024 for side in image.size):
+            raise ValueError('FLUX 3 edit Auto requires prepared PIL references within 1024 pixels per side.')
+        digest = hashlib.sha256()
+        for top in range(0, image.height, 64):
+            digest.update(image.crop((0, top, image.width, min(top + 64, image.height))).convert('RGB').tobytes())
+        references.append({'sourceSize': list(image.size), 'processedSize': [side // 16 * 16 for side in image.size],
+                           'sourceRgbSha256': digest.hexdigest()})
+    if sum(math.prod(row['processedSize']) for row in references) > 512**2 + 1024**2:
+        raise ValueError('FLUX 3 edit Auto references exceed the reviewed combined processed pixel boundary.')
+    return {'_modiffAutoReferenceWorkload': 1, 'references': references}
+
+
+def resource_value_matches(expected, actual, *, module, action, field):
+    """Recheck a server-produced source witness at the ordinary dispatch boundary."""
+    if (module, action, field) == ('modules.ModularDiffusers', 'ImageEncode', 'image') and type(expected) is dict and set(expected) == {'_modiffAutoReferenceWorkload', 'references'}:
+        if expected.get('_modiffAutoReferenceWorkload') != 1:
+            return False
+        try:
+            return reference_image_resource_witness(actual) == expected
+        except (ValueError, TypeError, OSError):
+            return False
+    return actual == expected
+
+
+def inspect_reference_image_workload(nodes, encoder_id):
+    """Observe an actual prepared value or the exact bounded local Load source.
+
+    This is a finite read-only file inspection, not node dispatch. Unknown
+    processing, remote sources and custom suppliers refuse before submission.
+    The normal Load still executes and its actual RGB result must match later.
+    """
+    try:
+        return reference_image_resource_witness(inspect_resource_value(nodes, encoder_id, 'image'))
+    except DeferredResourceValue:
+        pass
+    from PIL import Image, ImageOps
+    from modiff.config import CONFIG
+    from modiff.path_identifiers import resolve_managed_path_identifier
+    param = nodes[encoder_id]['params'].get('image') or {}
+    source = nodes.get(param.get('sourceId'), {})
+    if (source.get('module'), source.get('action'), param.get('sourceKey')) != ('modules.Image', 'Load', 'image'):
+        raise ValueError('Reference Auto needs an inspectable direct local Load Image source; computed or unknown geometry requires Expert.')
+    try:
+        selection = inspect_resource_value(nodes, param['sourceId'], 'file')
+    except DeferredResourceValue as error:
+        raise ValueError('Reference Auto requires known ordered local files before graph submission.') from error
+    files = selection if type(selection) is list else [selection]
+    if len(files) not in {1, 2}:
+        raise ValueError('Reference Auto requires one or two ordered local files before graph submission.')
+    images = []
+    try:
+        for name in files:
+            if type(name) is not str or name.startswith(('http://', 'https://')):
+                raise ValueError('Reference Auto inspection requires existing local files; it never downloads media.')
+            if '..' in name.replace('\\', '/').split('/'):
+                raise ValueError('Reference Auto inspection rejects path traversal.')
+            path = resolve_managed_path_identifier(name, work_root=CONFIG.paths['work_dir'], data_root=CONFIG.paths['data'])
+            if path is None or not path.is_file() or not 0 < path.stat().st_size <= 32 * 1024**2:
+                raise ValueError('Reference Auto files must exist inside configured work/data roots and be at most 32 MiB each.')
+            with Image.open(path) as original:
+                if any(not 16 <= side <= 1024 for side in original.size):
+                    raise ValueError('Reference Auto images must fit 1024 pixels per side before decoding.')
+                if getattr(original, 'n_frames', 1) != 1:
+                    raise ValueError('Reference Auto inspection requires one static frame per file.')
+                image = ImageOps.exif_transpose(original)
+                image.load()
+                images.append(image.copy())
+        return reference_image_resource_witness(images)
+    except (OSError, EOFError, Image.DecompressionBombError, Image.DecompressionBombWarning) as error:
+        raise ValueError('Reference Auto could not safely inspect the selected local image; repair or replace it before Run.') from error
+    finally:
+        for image in images:
+            image.close()
 
 
 class DeferredResourceValue(ValueError):
@@ -15,13 +111,97 @@ class DeferredResourceValue(ValueError):
             if key in required:
                 continue
             source = nodes[key]
-            if source['module'] not in DATA_MODULES:
+            if source['module'] not in DATA_MODULES and (source['module'], source['action']) not in DATA_ACTIONS:
                 raise ValueError(f'{node_id}.{field} is computed by {source_id}; its supplier needs a reviewed data-only preparation contract.')
             required.add(key)
             pending.extend(p['sourceId'] for p in source['params'].values() if p.get('sourceId'))
         self.node_ids = required
         self.target = {'nodeId': node_id, 'field': field, 'sourceId': source_id, 'sourceKey': source_key}
         super().__init__(f'{node_id}.{field} will be resolved by data preparation when Run is pressed.')
+
+
+def inspect_execution_recipe_controls(nodes, loader_id, literal):
+    """Inspect only declared controls, never construct a recipe or quantizer."""
+    param = nodes[loader_id]['params'].get('execution_recipe') or {}
+    recipe_id = param.get('sourceId')
+    if not recipe_id:
+        if param.get('value') not in (None, {}):
+            raise ValueError('Auto needs a reviewed Diffusers Execution Recipe connection; inline recipe overrides require Custom memory.')
+        return {}, {}
+    recipe = nodes[recipe_id]
+    if (recipe['module'], recipe['action'], param.get('sourceKey')) != (
+        'modules.DiffusersRuntime', 'DiffusersExecutionRecipe', 'execution_recipe'
+    ):
+        raise ValueError('Auto cannot inspect this execution recipe supplier; use the reviewed Diffusers Execution Recipe node or Custom memory.')
+
+    def control(field, default):
+        if field not in recipe['params']:
+            return default
+        return literal(nodes, recipe_id, field)
+
+    # The eager native/math paths retain ordinary SDPA behavior. Other kernels,
+    # placement, compilation and caches need their separate accepted recipes.
+    attention_backend = str(control('attention_backend', 'auto') or 'auto')
+    if attention_backend not in {'auto', 'native', '_native_math'}:
+        raise ValueError('The connected attention backend has no accepted workflow Auto recipe; select Custom memory to preserve it.')
+    for field in ('regional_compile', 'layerwise_casting', 'channels_last'):
+        if bool(control(field, False)):
+            raise ValueError(f'The connected {field} setting needs a separately accepted Auto recipe; select Custom memory to preserve it.')
+    for field, default in (('device_map', 'none'), ('denoiser_cache', 'none')):
+        if str(control(field, default) or default) != default:
+            raise ValueError(f'The connected {field} override has no accepted workflow Auto recipe; select Custom memory.')
+    for field in ('max_memory', 'device_map_overrides'):
+        value = control(field, {})
+        if isinstance(value, str):
+            try:
+                value = json.loads(value or '{}')
+            except json.JSONDecodeError as error:
+                raise ValueError(f'{recipe_id}.{field} must contain a JSON object.') from error
+        if value not in (None, {}):
+            raise ValueError(f'The connected {field} limit needs Custom memory; Auto cannot replace it.')
+    for field in ('vae_slicing', 'vae_tiling'):
+        if not bool(control(field, True)):
+            raise ValueError(f'Disabling connected {field} has no accepted workflow Auto memory recipe; select Custom memory.')
+
+    quant_param = recipe['params'].get('quantization_config') or {}
+    quant_id = quant_param.get('sourceId')
+    if quant_id:
+        quant = nodes[quant_id]
+        if (quant['module'], quant['action'], quant_param.get('sourceKey')) != (
+            'modules.DiffusersRuntime', 'PipelineQuantizationConfigV2', 'quantization_config'
+        ):
+            raise ValueError('Auto needs the reviewed Pipeline Quantization Config V2 supplier or Custom memory.')
+        backend = literal(nodes, quant_id, 'backend') or 'none'
+        overrides = literal(nodes, quant_id, 'component_overrides') if 'component_overrides' in quant['params'] else {}
+        if isinstance(overrides, str):
+            try:
+                overrides = json.loads(overrides or '{}')
+            except json.JSONDecodeError as error:
+                raise ValueError(f'{quant_id}.component_overrides must contain a JSON object.') from error
+        if backend != 'none' or overrides not in (None, {}):
+            raise ValueError('The connected per-component quantization needs its own accepted Auto recipe; select Custom memory to preserve it.')
+    elif quant_param.get('value') is not None:
+        raise ValueError('Inline quantization configuration requires Custom memory.')
+    offload = str(control('offload_mode', 'none') or 'none')
+    device = str(control('device', 'cuda:0') or 'cuda:0')
+    return {'offload_mode': offload, 'auto_offload': offload != 'none', 'device': device,
+            'attention_backend': attention_backend}, {
+        'offload_mode': (recipe_id, 'offload_mode'), 'device': (recipe_id, 'device'),
+    }
+
+
+def inspect_native_runtime_controls(nodes, loader_id, literal):
+    """Capture the exact bounded native policies without importing model code."""
+    loader = nodes[loader_id]
+    if (loader['module'], loader['action']) != ('modules.ModularDiffusers', 'ModelsLoader'):
+        return {}
+    from modiff.modular_runtime_policy import RUNTIME_POLICY_FIELDS, normalize_modular_runtime_policy
+
+    controls = {field: literal(nodes, loader_id, field) for field in RUNTIME_POLICY_FIELDS
+                if field in loader['params']}
+    normalized = normalize_modular_runtime_policy(**controls)
+    # Keep legacy plans sparse while preserving explicitly authored defaults.
+    return {field: normalized.get(field, controls[field]) for field in controls}
 
 
 def inspect_resource_value(nodes, node_id, field, visited=frozenset()):
@@ -60,6 +240,37 @@ def inspect_resource_value(nodes, node_id, field, visited=frozenset()):
         if not math.isfinite(number) or number <= 0 or not number.is_integer():
             raise ValueError(f'{source_id}.{field} must declare a positive integer dimension.')
         return int(number)
+    if (
+        (nodes[node_id]['module'], nodes[node_id]['action']) == ('modules.DiffusersImage', 'DecodeLatents')
+        and (source['module'], source['action']) == ('modules.DiffusersImage', 'Denoise')
+        and source_field in {'width_out', 'height_out'}
+        and field == source_field.removesuffix('_out')
+    ):
+        target = nodes[node_id]['params']
+        if (target.get('latents', {}).get('sourceId') != source_id
+                or target.get('latents', {}).get('sourceKey') != 'latents_out'
+                or target.get('latent_binding', {}).get('sourceId') != source_id
+                or target.get('latent_binding', {}).get('sourceKey') != 'latent_binding'
+                or target.get('pipeline', {}).get('sourceId') != source['params'].get('pipeline', {}).get('sourceId')
+                or target.get('pipeline', {}).get('sourceKey') != source['params'].get('pipeline', {}).get('sourceKey')
+                or not target.get('pipeline', {}).get('sourceId')):
+            raise ValueError(f'{node_id}.{field} has no matching image latent, binding and pipeline owner.')
+        from modiff.workflow_task_identity import direct_image_stage_owner
+        if direct_image_stage_owner(nodes, node_id) != direct_image_stage_owner(nodes, source_id):
+            raise ValueError('The image decoder geometry has a different concrete owner.')
+        # Forecast the declared sampler control only. Runtime dispatch compares
+        # its actual output to this capture before decoder allocation; no model
+        # output, Tensor shape or user supplier is evaluated during inspection.
+        dimension = value(field)
+        if isinstance(dimension, bool):
+            raise ValueError(f'{source_id}.{field} must declare a positive integer dimension.')
+        try:
+            number = float(dimension)
+        except (TypeError, ValueError) as error:
+            raise ValueError(f'{source_id}.{field} must declare a positive integer dimension.') from error
+        if not math.isfinite(number) or number <= 0 or not number.is_integer():
+            raise ValueError(f'{source_id}.{field} must declare a positive integer dimension.')
+        return int(number)
     if source['module'] == 'modules.Primitive':
         if source['action'] in {'String', 'Integer', 'Float', 'Boolean'}:
             return value('value')
@@ -78,3 +289,89 @@ def inspect_resource_value(nodes, node_id, field, visited=frozenset()):
             raise ValueError(f'{source_id} has no data output {source_field}.')
         return outputs[source_field]
     raise DeferredResourceValue(node_id, field, source_id, source_field, nodes)
+
+
+def filter_adapter_authoring_candidates(candidates, *, nodes, loader_id, consumers,
+                                        profile, mode, repository, literal, recipe_controls, candidate_fields):
+    """Keep populated image adapter routes inside their declared controls.
+
+    Inspect existing API parameters and already-reviewed pure recipe controls;
+    never execute a supplier, insert a field or invent an admitted placement.
+    Profiles without conditional permission and vanilla graphs keep their plan.
+    """
+    policy = getattr(profile, 'adapter_authoring', None)
+    required = getattr(policy, 'required_controls', ())
+    if not required:
+        return candidates
+    loader = nodes[loader_id]
+    native = (loader['module'], loader['action']) == ('modules.ModularDiffusers', 'ModelsLoader')
+    if native:
+        lora = loader['params'].get('lora_list', {})
+        requested = (lora.get('sourceId') is not None or lora.get('sourceKey') is not None
+                     or lora.get('value') not in (None, []) or lora.get('default') not in (None, []))
+    else:
+        requested = False
+        for key in consumers:
+            if nodes[key]['module'] + '.' + nodes[key]['action'] != policy.adapter_node_key:
+                continue
+            artifact = nodes[key]['params'].get('adapter_path', {})
+            if artifact.get('sourceId') is not None or artifact.get('sourceKey') is not None:
+                requested = True
+                continue
+            selection = artifact.get('value', artifact.get('default'))
+            empty = (selection is None or isinstance(selection, str) and not selection.strip()
+                     or type(selection) is dict and set(selection) == {'source', 'value'}
+                     and selection['source'] in {'hub', 'local'} and type(selection['value']) is str
+                     and not selection['value'].strip())
+            requested |= not empty
+    if not requested:
+        return candidates
+    expected_owner = {
+        'modules.ModularDiffusers.Lora': ('modules.ModularDiffusers', 'ModelsLoader', 'modular-diffusers'),
+        'modules.DiffusersImage.LoadAdapter': ('modules.DiffusersImage', 'LoadPipeline', 'direct-diffusers-image'),
+    }.get(policy.adapter_node_key)
+    if ((loader['module'], loader['action'], profile.execution_path) != expected_owner
+            or mode not in policy.tasks or mode not in profile.modes):
+        raise ValueError('The populated image adapter route has no matching selected task and loader permission.')
+    values = {}
+    for field, _expected in required:
+        param = loader['params'].get(field)
+        if (not isinstance(param, dict) or param.get('display') == 'output'
+                or param.get('sourceId') is not None or param.get('sourceKey') is not None):
+            raise ValueError('The selected image adapter route requires an explicit literal loader control: ' + field)
+        values[field] = literal(nodes, loader_id, field)
+    if not native:
+        recipe = loader['params'].get('execution_recipe', {})
+        if recipe.get('sourceId'):
+            source = nodes[recipe['sourceId']]
+            if (source['module'], source['action'], recipe.get('sourceKey')) != (
+                    'modules.DiffusersRuntime', 'DiffusersExecutionRecipe', 'execution_recipe'):
+                raise ValueError('Conditional adapter controls require the registered pure execution recipe.')
+            for field in ('offload_mode', 'device_map'):
+                control = source['params'].get(field, {})
+                if control.get('sourceId') is not None or control.get('sourceKey') is not None:
+                    raise ValueError('Conditional adapter recipe controls must be literal: ' + field)
+            # The existing inspector proves recipe/quantizer controls without
+            # execution. Offload overrides raw placement and derives Auto;
+            # a non-none raw device_map still wins in LoadPipeline.
+            for field in ('offload_mode', 'auto_offload'):
+                if field in recipe_controls:
+                    values[field] = recipe_controls[field]
+            if values.get('device_map') in (None, '', 'none'):
+                values['device_map'] = literal(nodes, recipe['sourceId'], 'device_map') or 'none'
+        elif recipe.get('value') is not None:
+            raise ValueError('Inline execution recipes cannot establish conditional adapter controls.')
+    result = []
+    for candidate in candidates:
+        revision = (candidate.get('artifactResolution', {}).get('resolved', {}).get('revision')
+                    or candidate.get('artifactRevision'))
+        if (repository, revision) not in policy.repository_revisions:
+            continue
+        effective = {**values, **{field: candidate[key] for field, key in candidate_fields.items() if field in values and key in candidate}}
+        if all(type(effective[field]) is type(expected) and effective[field] == expected
+               for field, expected in required):
+            result.append(candidate)
+    if not result:
+        raise ValueError('Auto has no admitted recipe satisfying the selected image adapter route controls. '
+                         'Select Expert and preserve the declared controls; memory and readiness checks still apply.')
+    return result

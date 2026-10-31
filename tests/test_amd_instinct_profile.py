@@ -3,6 +3,7 @@
 import contextlib
 import io
 import json
+from importlib import metadata
 import tempfile
 import tomllib
 import types
@@ -35,7 +36,176 @@ def hardware(**overrides):
     }}
 
 
+def native_hardware(**overrides):
+    observed = hardware(cuda_device_count=1, **overrides)
+    observed["devices"] = [{
+        "type": "cuda", "device": "cuda:0", "architecture": "gfx942:sramecc+:xnack-",
+        "memory_kind": "dedicated",
+    }, {"type": "cpu", "device": "cpu:0"}]
+    return observed
+
+
+def reviewed_package_versions():
+    from packaging.requirements import Requirement
+
+    specification = runtime.load_manifest()["profiles"][PROFILE]
+    versions = {}
+    for line in (runtime.PROJECT_ROOT / specification["requirements"]).read_text().splitlines():
+        if line and not line.startswith(("#", "-e ")):
+            requirement = Requirement(line)
+            versions[requirement.name] = next(iter(requirement.specifier)).version
+    return versions
+
+
 class InstinctProfileTests(unittest.TestCase):
+    def setUp(self):
+        self.base_runtime = patch.object(runtime, "base_runtime_status", return_value={
+            "status": "verified", "verified": True, "matches": True,
+            "issues": [], "current_digest": "f" * 64,
+        })
+        self.base_runtime.start()
+        self.addCleanup(self.base_runtime.stop)
+        self.package_versions = reviewed_package_versions()
+
+        def installed_version(name):
+            try:
+                return self.package_versions[name]
+            except KeyError:
+                raise metadata.PackageNotFoundError(name) from None
+
+        packages = patch.object(metadata, "version", side_effect=installed_version)
+        packages.start()
+        self.addCleanup(packages.stop)
+
+    def test_receipt_free_instinct_uses_observed_device_and_reviewed_packages(self):
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            patch.object(runtime, "normalized_os", return_value="linux"),
+            patch.object(runtime, "normalized_arch", return_value="x86_64"),
+            patch.object(runtime, "_device_tensor_probe", return_value={"ready": True, "device": "cuda:0"}) as probe,
+            patch.dict("os.environ", {"MODIFF_RUNTIME_PROFILE": "amd-rocm-linux"}),
+        ):
+            root = Path(temporary)
+            report = runtime.runtime_profile(native_hardware(), venv=root)
+            self.assertFalse((root / runtime.STATE_NAME).exists())
+
+        self.assertEqual(report["installed"], PROFILE)
+        self.assertTrue(report["execution_ready"])
+        self.assertEqual(report["support_tier"], "preview")
+        self.assertIsNone(report["requested"])
+        self.assertIsNone(report["installation"])
+        self.assertIn("uv pip install --python .venv/bin/python --config-file", report["repair_command"])
+        probe.assert_called_once_with(PROFILE, "2.10.0+rocm7.14.0")
+
+    def _native_report(self, observed=None, *, requested=None, saved_profile=None, saved_tier="supported", tensor_ready=True):
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            patch.object(runtime, "normalized_os", return_value="linux"),
+            patch.object(runtime, "normalized_arch", return_value="x86_64"),
+            patch.object(runtime, "_device_tensor_probe", return_value={"ready": tensor_ready, "message": "tensor failed"}),
+        ):
+            root = Path(temporary)
+            if saved_profile == PROFILE:
+                self._saved_state(temporary)
+            elif saved_profile:
+                (root / runtime.STATE_NAME).write_text(json.dumps({"profile": saved_profile, "support_tier": saved_tier}))
+            return runtime.runtime_profile(observed or native_hardware(), requested=requested, venv=root)
+
+    def test_receipt_free_instinct_enforces_actual_torch_and_hip_versions(self):
+        for changes in (
+            {"version": "2.10.1+rocm7.14.0"},
+            {"hip_version": "7.140.0"},
+            {"hip_version": "10.1.0"},
+        ):
+            with self.subTest(changes=changes):
+                report = self._native_report(native_hardware(**changes))
+                self.assertEqual(report["installed"], PROFILE)
+                self.assertFalse(report["execution_ready"])
+                self.assertIn("profile-version-mismatch", [issue["code"] for issue in report["issues"]])
+
+    def test_receipt_free_instinct_requires_all_sdk_distributions_and_pins(self):
+        originals = self.package_versions.copy()
+        for name in originals:
+            for version in (None, "0.0.1"):
+                with self.subTest(name=name, version=version):
+                    self.package_versions = originals.copy()
+                    if version is None:
+                        del self.package_versions[name]
+                    else:
+                        self.package_versions[name] = version
+                    report = self._native_report()
+                    self.assertFalse(report["execution_ready"])
+                    self.assertTrue(report["repair_required"])
+                    self.assertIn("profile-package-mismatch", [issue["code"] for issue in report["issues"]])
+                    self.assertTrue(any(name in issue["message"] for issue in report["issues"]))
+
+    def test_receipt_free_instinct_preserves_manifest_prohibitions(self):
+        for name in runtime.load_manifest()["profiles"][PROFILE]["prohibited"]:
+            with self.subTest(name=name):
+                self.package_versions[name] = "1.0.0"
+                report = self._native_report()
+                self.assertFalse(report["execution_ready"])
+                self.assertTrue(any(f"prohibits installed package: {name}" in issue["message"] for issue in report["issues"]))
+                del self.package_versions[name]
+
+    def test_receipt_free_instinct_rejects_malformed_sdk_version_metadata(self):
+        name = runtime.load_manifest()["profiles"][PROFILE]["required"][0]
+        for value in (None, "", "broken-version", 123):
+            with self.subTest(value=value):
+                self.package_versions[name] = value
+                report = self._native_report()
+                self.assertFalse(report["execution_ready"])
+                self.assertIn("profile-package-mismatch", [issue["code"] for issue in report["issues"]])
+                if not isinstance(value, str) or not value:
+                    self.assertTrue(any(f"{name} has invalid installed version metadata" in issue["message"] for issue in report["issues"]))
+
+    def test_native_device_detection_does_not_promote_ryzen_mixed_or_unknown_devices(self):
+        for architecture, memory_kind, count in (
+            ("gfx1151", "shared", 1), ("gfx908", "dedicated", 1),
+            ("gfx942", "shared", 1), (None, "dedicated", 1),
+            ("gfx942", "dedicated", 0), ("gfx942", "dedicated", 2),
+        ):
+            with self.subTest(architecture=architecture, memory_kind=memory_kind, count=count):
+                observed = native_hardware()
+                observed["torch"]["cuda_device_count"] = count
+                observed["devices"][0].update(architecture=architecture, memory_kind=memory_kind)
+                if count == 2:
+                    observed["devices"].append({"type": "cuda", "device": "cuda:1", "architecture": "gfx1151", "memory_kind": "shared"})
+                with patch.object(runtime, "_profile_package_issues", side_effect=AssertionError("Instinct SDK policy applied")):
+                    report = self._native_report(observed)
+                self.assertEqual(report["installed"], "amd-rocm-linux")
+
+    def test_explicit_and_saved_sdk_selections_remain_authoritative(self):
+        observed = native_hardware(version="2.9.1+rocm7.2.0", hip_version="7.2.0")
+        report = self._native_report(observed, requested="amd-rocm-linux")
+        self.assertEqual(report["installed"], "amd-rocm-linux")
+        self.assertEqual(report["requested"], "amd-rocm-linux")
+        report = self._native_report(saved_profile=PROFILE)
+        self.assertEqual(report["installed"], PROFILE)
+        self.assertEqual(report["requested"], PROFILE)
+        self.assertTrue(report["execution_ready"])
+        report = self._native_report(requested="cpu")
+        self.assertFalse(report["execution_ready"])
+        self.assertIn("profile-mismatch", [issue["code"] for issue in report["issues"]])
+
+    def test_receipt_free_instinct_supersedes_stale_native_identity_and_requires_device_probe(self):
+        for saved_profile in ("cpu", "nvidia-cuda"):
+            with self.subTest(saved_profile=saved_profile):
+                report = self._native_report(saved_profile=saved_profile)
+                self.assertEqual(report["installed"], PROFILE)
+                self.assertTrue(report["execution_ready"])
+                self.assertEqual(report["support_tier"], "preview")
+        report = self._native_report(tensor_ready=False)
+        self.assertFalse(report["execution_ready"])
+        self.assertIn("device-tensor-failed", [issue["code"] for issue in report["issues"]])
+
+    def test_native_cuda_uses_its_own_tier_after_stale_cpu_receipt(self):
+        observed = hardware(version="2.11.0+cu128", hip_version=None, cuda_version="12.8")
+        report = self._native_report(observed, saved_profile="cpu", saved_tier="experimental")
+        self.assertEqual(report["installed"], "nvidia-cuda")
+        self.assertTrue(report["execution_ready"])
+        self.assertEqual(report["support_tier"], runtime.load_manifest()["profiles"]["nvidia-cuda"]["tier"])
+
     def test_explicit_and_detected_instinct_do_not_select_ryzen(self):
         for selection in ("amd-instinct", "amd", "auto"):
             with self.subTest(selection=selection):
@@ -122,6 +292,10 @@ class InstinctProfileTests(unittest.TestCase):
             with (
                 patch.object(runtime, "load_manifest", return_value=manifest),
                 patch.object(runtime, "normalized_os", return_value="linux"),
+                patch.object(runtime, "base_runtime_status", return_value={
+                    "status": "verified", "verified": True, "matches": True,
+                    "issues": [], "current_digest": "f" * 64,
+                }),
                 patch.object(runtime, "_device_tensor_probe", return_value={"ready": True}),
             ):
                 report = runtime.runtime_profile(hardware(), venv=root)
@@ -176,6 +350,32 @@ class InstinctProfileTests(unittest.TestCase):
             self.assertIn("requires gfx942", result["message"])
         finally:
             runtime._device_tensor_probe.cache_clear()
+
+    def test_native_base_verification_does_not_mask_instinct_index_drift(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self._saved_state(temporary)
+            spec = runtime.load_manifest()["profiles"][PROFILE]
+            original = runtime.PROJECT_ROOT / spec["uv_config"]
+            changed_config = Path(temporary) / "instinct.uv.toml"
+            changed_config.write_text(original.read_text() + "\n# changed index contract\n")
+            manifest = runtime.load_manifest()
+            manifest["profiles"][PROFILE]["uv_config"] = str(changed_config)
+            with (
+                patch.object(runtime, "load_manifest", return_value=manifest),
+                patch.object(runtime, "normalized_os", return_value="linux"),
+                patch.object(runtime, "normalized_arch", return_value="x86_64"),
+                patch.object(runtime, "base_runtime_status", return_value={
+                    "status": "verified", "verified": True, "matches": True,
+                    "issues": [], "current_digest": "f" * 64,
+                }),
+                patch.object(runtime, "_device_tensor_probe", return_value={"ready": True}),
+            ):
+                report = runtime.runtime_profile(hardware(), venv=root)
+
+        self.assertFalse(report["execution_ready"])
+        self.assertTrue(report["repair_required"])
+        self.assertEqual(report["runtime_contract"]["status"], "drifted")
+        self.assertIn("runtime-contract-drift", [issue["code"] for issue in report["issues"]])
 
     def test_staged_smoke_checks_versions_and_gpu_architecture_before_tensor(self):
         fake = types.SimpleNamespace(

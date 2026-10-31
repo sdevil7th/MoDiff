@@ -1,5 +1,6 @@
 # Derived from cubiq/Mellon@5fd242921d13bff9fb03f4de405fdd39c2335e1f; modified by MoDiff.
 from diffusers import ComponentsManager
+from modiff.component_bundle_contracts import qwen_t2i_bundle_input_param  # noqa: F401 - AST registry preload
 
 from modiff.diffusers_offload import (  # noqa: F401 - preloaded for AST registry evaluation
     OFFLOAD_MODE_GROUP_CPU,

@@ -68,13 +68,24 @@ def _port_types(raw_types):
     return sorted({_identifier(value) for value in types})
 
 
-def with_operation_semantics(contract, *, workflow_id=None, values=None):
+def with_operation_semantics(contract, *, workflow_id=None, values=None, execution_mode=None):
     """Add scoped semantic and binding metadata without claiming type equivalence."""
     from copy import deepcopy
+    from modiff.guidance_operation_semantics import reviewed_guidance_controls
 
     result = deepcopy(contract)
     result["workflowId"] = workflow_id
     result["binding"] = {"values": dict(values or {})}
+    if execution_mode is not None:
+        if (
+            type(execution_mode) is not str
+            or re.fullmatch(r"[a-z][a-z0-9_]{0,63}", execution_mode) is None
+            or execution_mode in _RESERVED
+            or not operation_owns_model(result)
+        ):
+            raise ValueError("Invalid operation execution mode.")
+        result["binding"]["executionMode"] = execution_mode
+    controls = reviewed_guidance_controls(result)
     for port in result["ports"]:
         types = set(port["types"])
         name = port["semanticName"]
@@ -85,11 +96,18 @@ def with_operation_semantics(contract, *, workflow_id=None, values=None):
             # Existing bundles carry conditioning alongside model references.
             # Both ends use that same bundle contract, not a whole component set.
             kind = "conditioning"
+        elif ("component" in port["roles"] and result["decomposition"] == "bundle"
+                and result["nodeType"] in {"image_encoder", "denoise", "decoder"}
+                and port["direction"] == "input" and port["name"] == "pipeline"
+                and types == {"image_diffusion_pipeline"}):
+            # This typed aggregate is still the same real pipeline owner, not
+            # an interchangeable collection of individually supplied models.
+            kind = "pipeline"
         elif "component" in port["roles"]:
             kind = "component"
-        elif types & {"modular_workflow_state", "modular_route_state"}:
+        elif types & {"modular_workflow_state", "modular_route_state", "image_latent_binding"}:
             kind = "state"
-        elif types & {"embeddings", "image_embeddings", "conditioning", "controlnet_bundle", "ip_adapter_bundle"}:
+        elif types & {"embeddings", "image_embeddings", "conditioning", "image_conditioning", "controlnet_bundle", "ip_adapter_bundle"}:
             kind = "conditioning"
         elif "latent" in name and types & {"tensor", "latents"}:
             kind = "latents"
@@ -108,12 +126,15 @@ def with_operation_semantics(contract, *, workflow_id=None, values=None):
             "owner": "same_loader" if kind in {"component", "conditioning", "latents", "state", "pipeline"} else "none",
             "members": [],
         }
+        if port.get("direction") == "input" and port["name"] in controls:
+            port["semantics"]["control"] = controls[port["name"]]
     return result
 
 
 def build_pipeline_operation_contract(
     modules: Mapping, *, pipeline_class: str, task: str, operation_id: str,
     node_key: str, field_overrides: Mapping | None = None, loader: bool = False,
+    stage_node_type: str | None = None, excluded_fields: tuple[str, ...] = (),
 ) -> dict | None:
     """Describe an existing whole-pipeline action using its owner's field overlay.
 
@@ -131,8 +152,13 @@ def build_pipeline_operation_contract(
     declaration = modules.get(module, {}).get(action)
     if declaration is None:
         return None
+    if type(excluded_fields) is not tuple:
+        raise ValueError("Recipe-only operation fields require an explicit tuple.")
+    excluded = {_identifier(name) for name in excluded_fields}
     ports = []
     for name, base in declaration["params"].items():
+        if name in excluded:
+            continue
         field = {**base, **(field_overrides or {}).get(name, {})}
         if "type" not in field or field.get("display") == "button":
             continue
@@ -141,17 +167,23 @@ def build_pipeline_operation_contract(
             "name": _identifier(name),
             "semanticName": name,
             "direction": direction,
-            "roles": ["pipeline" if name == "pipeline" else "value"],
+            # A stage bundle requires its actual aggregate model owner as an
+            # input. Keep ordinary loader/whole pipeline roles unchanged.
+            "roles": ["component" if stage_node_type is not None and name == "pipeline" and direction == "input"
+                      else "pipeline" if name == "pipeline" else "value"],
             "types": _port_types(field["type"]),
             "required": direction == "input" and field.get("required") is True,
             "hidden": field.get("hidden") is True,
         })
     if len(ports) > 128:
         raise ValueError("Too many operation-contract ports.")
-    decomposition = "loader" if loader else "pipeline"
+    if stage_node_type is not None and (type(stage_node_type) is not str
+            or stage_node_type not in {'image_encoder', 'denoise', 'decoder'} or loader):
+        raise ValueError('Invalid declared image pipeline stage type.')
+    decomposition = 'bundle' if stage_node_type is not None else 'loader' if loader else 'pipeline'
     return {
         "pipelineClass": pipeline_class, "task": task, "operationId": operation_id,
-        "nodeKey": node_key, "nodeType": decomposition, "blockName": None,
+        "nodeKey": node_key, "nodeType": stage_node_type or decomposition, "blockName": None,
         "decomposition": decomposition, "support": "declared", "ports": ports,
     }
 
@@ -183,9 +215,10 @@ def build_modular_operation_contracts(configs: Mapping, modules: Mapping) -> lis
                 ("inputs", "input_names", "input", "value", "required_inputs"),
                 ("model_inputs", "model_input_names", "input", "component", "required_model_inputs"),
                 ("outputs", "output_names", "output", "value", None),
+                ("wrapper_inputs", None, "input", "value", None),
             ):
                 params = spec.get(group, [])
-                names = formatted[names_key]
+                names = formatted[names_key] if names_key else [param.name for param in params]
                 required = spec.get(required_key, []) if required_key else []
                 if len(params) != len(names) or not set(required).issubset({p.name for p in params}):
                     raise ValueError("Invalid operation-contract port declaration.")

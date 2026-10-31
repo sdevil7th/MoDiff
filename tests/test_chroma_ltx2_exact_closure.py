@@ -40,9 +40,9 @@ from modules.DiffusersVideo.main import (
 )
 
 
-CHROMA_IMG2IMG_SOURCE_SHA256 = "bbc16648f48afd78a96ad182ecbeece21ac2e140fa114394921abfb9d88c514e"
-CHROMA_INPAINT_SOURCE_SHA256 = "3c94ca463088fa648711adc5110f3babf31194ea94ae9c24d61bf13c0d667112"
-LTX2_SOURCE_SHA256 = "39aa535e809492eaa49a5e8161c05d82674c54b8ab14e77a8899c848a37562e8"
+CHROMA_IMG2IMG_SOURCE_SHA256 = "af14d8c4ce8e0527b0d1f755f826edbe1081994709624416a3a6c334d19db9d2"
+CHROMA_INPAINT_SOURCE_SHA256 = "7ef4c53ad0e11dfd760ed25ad2861b70feedf15dbdf4d8f41ec3040adc6fd954"
+LTX2_SOURCE_SHA256 = "00a973e8f3629d8cd0aae06ef984c75317110e59e450dc2e45ea6ab73d9fbf6b"
 CHROMA_REVISION = "0e0c60ece1e82b17cb7f77342d765ba5024c40c0"
 LTX2_REPO = "Lightricks/LTX-2"
 LTX2_REVISION = "47da56e2ad66ce4125a9922b4a8826bf407f9d0a"
@@ -236,9 +236,11 @@ class LTX2Pipeline:
 class ChromaLTX2ExactClosureTests(unittest.TestCase):
     def test_exact_pinned_sources_and_call_surfaces_are_preserved(self):
         import diffusers
+        import inspect
+        from modiff.upstream_coverage import reviewed_diffusers_source
 
-        self.assertEqual(PINNED_DIFFUSERS_REVISION, "fbf49e7f35857f76bc57b177e26f12b03687c668")
-        root = Path(diffusers.__file__).resolve().parent / "pipelines"
+        self.assertEqual(PINNED_DIFFUSERS_REVISION, "7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941")
+        root = reviewed_diffusers_source() / "pipelines"
         cases = (
             (
                 root / "chroma" / "pipeline_chroma_img2img.py",
@@ -295,6 +297,8 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
             with self.subTest(pipeline=class_name):
                 self.assertTrue(source_path.is_file())
                 self.assertEqual(source_sha256(source_path), digest)
+                installed = getattr(diffusers, class_name)
+                self.assertTrue(required_parameters.issubset(inspect.signature(installed.__call__).parameters))
                 self.assertTrue(
                     required_parameters.issubset(_parameter_names(_pinned_call_node(source_path, class_name)))
                 )
@@ -341,7 +345,26 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
         )
 
     def test_exact_hidden_candidate_specs_reuse_artifacts_and_generic_contracts(self):
-        self.assertEqual(len(validate_studio_execution_specs(module_registry.MODULE_MAP)), 278)
+        specifications = validate_studio_execution_specs(module_registry.MODULE_MAP)
+        public_flux3_spec_ids = {
+            "flux3-klein-base:official-provider:v1:edit-image:v1",
+            "flux3-klein-base:official-provider:v1:text-to-image:v1",
+            "flux3-klein:official-provider:v1:edit-image:v1",
+            "flux3-klein:official-provider:v1:text-to-image:v1",
+        }
+        self.assertEqual(len(specifications), 282)
+        self.assertEqual(
+            {specification["id"] for specification in specifications
+             if specification["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
+            public_flux3_spec_ids,
+        )
+        # The four explicit source contracts extend the existing 278;
+        # every pre-existing contract assertion below is retained.
+        self.assertEqual(
+            sum(specification["id"] not in public_flux3_spec_ids
+                for specification in specifications),
+            278,
+        )
         capabilities = studio_capability_definitions()
         cases = {
             ("ChromaImg2ImgPipeline", "edit_image"): (

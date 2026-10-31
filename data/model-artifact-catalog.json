@@ -1,6 +1,593 @@
 {
   "downloadInventories": [
     {
+      "repo": "black-forest-labs/flux-3-image-klein-pup",
+      "revision": "3f3edb52b2c55de0d49feab28598b68f7f8e4830",
+      "source": "https://huggingface.co/api/models/black-forest-labs/flux-3-image-klein-pup/revision/3f3edb52b2c55de0d49feab28598b68f7f8e4830?blobs=true",
+      "selection": "native-transformers-prompt-enhancement",
+      "files": [
+        {
+          "path": "chat_template.jinja",
+          "byteSize": 7756,
+          "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "config.json",
+          "byteSize": 2903,
+          "sha256": "7d7fc026d8bcb9f1fc505af1004779330fe59bb3256fe0271ec2568e8dc89db1",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "generation_config.json",
+          "byteSize": 163,
+          "sha256": "e92258e3c39afbaa73fd53a98640c56f6d42fb091e1664697bd5396a1dcbb761",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "model.safetensors",
+          "byteSize": 18819722392,
+          "sha256": "f5062a1fba3e63afe5c88349a311903fec06c959b362f1247127e63d5c860ed4",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "preprocessor_config.json",
+          "byteSize": 443,
+          "sha256": "3a159dfec9978a186a72ba085e0ad6a050f3968d8b364218d7bd13f5c89381f2",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "processor_config.json",
+          "byteSize": 1191,
+          "sha256": "d89ef49ce9cd37fbf510158e13c1ef063d9286411c1ec9049932dbe0487143b1",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "system_prompts.json",
+          "byteSize": 12602,
+          "sha256": "b5da3ed8bc04ab59dbdb747930f7dbff847e868903fed8028f85ee1a4ac82fb4",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "tokenizer.json",
+          "byteSize": 19989325,
+          "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523",
+          "sha256Source": "publisher-lfs-and-captured-immutable-file"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "byteSize": 1164,
+          "sha256": "7488550a894dcf741616126e322ea31d66cf9457b59ec5825f4c7efdced421f8",
+          "sha256Source": "captured-immutable-file"
+        }
+      ]
+    },
+    {
+      "repo": "black-forest-labs/flux-3-image-klein",
+      "revision": "8454017f9ebaada30c998fccd9f67a80c7580f68",
+      "source": "https://huggingface.co/api/models/black-forest-labs/flux-3-image-klein/revision/8454017f9ebaada30c998fccd9f67a80c7580f68",
+      "selection": "native-diffusers-dense",
+      "files": [
+        {
+          "path": "LICENSE.md",
+          "byteSize": 19593,
+          "sha256": "100a3a5af8f1a2943dca0d127671bcaa93ad894a63330825219f1a0a44451f22",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "NOTICE.md",
+          "byteSize": 330,
+          "sha256": "a12f7eb0cab87ed210ffb0921425589a1c88abded6ba0c4285b4d32cbaf5f35c",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "modular_model_index.json",
+          "byteSize": 1445,
+          "sha256": "7766e27fba6bd1197505748240d2fc32ab35ffc5e73772dee9ed4faa4797fcab",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/LICENSE",
+          "byteSize": 11357,
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/chat_template.json",
+          "byteSize": 5502,
+          "sha256": "6f8a6a55027e3da5160105556cda5dd69f6423f1c32645f6730d32de7773d0c4",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/config.json",
+          "byteSize": 1505,
+          "sha256": "edac7703329133edfc53e46ac0081835144c99d7eebf28b71c732694d435224d",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/generation_config.json",
+          "byteSize": 269,
+          "sha256": "8469742d1fce0de951c8909b26a2c0c0d8490837ce476efb114da9e0cefc4d44",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/merges.txt",
+          "byteSize": 1671839,
+          "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/model-00001-of-00002.safetensors",
+          "byteSize": 4967229296,
+          "sha256": "30a01a0556622645a3cce87b655bbbbbc1f170c196099f1b666c93202c3339a9",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "text_encoder/model-00002-of-00002.safetensors",
+          "byteSize": 3908490048,
+          "sha256": "046296a2a387efb43b0c997d5833c789604d168834f6e0d3064bf7bb13d002a6",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "text_encoder/model.safetensors.index.json",
+          "byteSize": 64742,
+          "sha256": "58a7841d7bff2548dd91577d216274a83cf1b500bc6a534b809d6c1b1707cf2b",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/preprocessor_config.json",
+          "byteSize": 390,
+          "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/tokenizer.json",
+          "byteSize": 7032403,
+          "sha256": "a5d85b6dcc535e6b93115a9ef287e6132fdbf30270da6218194ba742261173c7",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/tokenizer_config.json",
+          "byteSize": 10868,
+          "sha256": "c2da771801886ad9ae98181793ffd3dfb7f1af30f6f7c6a4e15d7dbba52e2399",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/video_preprocessor_config.json",
+          "byteSize": 385,
+          "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/vocab.json",
+          "byteSize": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "transformer/config.json",
+          "byteSize": 436,
+          "sha256": "e748b382508f3171d1f4039688b23d1f809aebe4507b3ed5a29bca01b4b58877",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "byteSize": 9907529352,
+          "sha256": "4f01de41470090586d7a25aa4aec93987724eae45db45b68de2b3f566f438a8b",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "byteSize": 1189878064,
+          "sha256": "6f6217ab2c7ce5ef177ec202f79d4c2ddab78111c4645030c8828ec615d5f02c",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model.safetensors.index.json",
+          "byteSize": 37951,
+          "sha256": "cc3ba9b73dc3f10ff877dea398c1d48455a4b2164da5cbb7d92b4bb4b66040cc",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "vae/config.json",
+          "byteSize": 808,
+          "sha256": "66564b3cd3f3f3ce5ce3cd4df72f1de883b242c7f338e27d420fe5ddcb0a6ed9",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "byteSize": 336213556,
+          "sha256": "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5",
+          "sha256Source": "publisher-lfs"
+        }
+      ]
+    },
+    {
+      "repo": "black-forest-labs/flux-3-image-klein-base",
+      "revision": "1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4",
+      "source": "https://huggingface.co/api/models/black-forest-labs/flux-3-image-klein-base/revision/1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4",
+      "selection": "native-diffusers-dense",
+      "files": [
+        {
+          "path": "LICENSE.md",
+          "byteSize": 19593,
+          "sha256": "100a3a5af8f1a2943dca0d127671bcaa93ad894a63330825219f1a0a44451f22",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "NOTICE.md",
+          "byteSize": 330,
+          "sha256": "a12f7eb0cab87ed210ffb0921425589a1c88abded6ba0c4285b4d32cbaf5f35c",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "modular_model_index.json",
+          "byteSize": 1447,
+          "sha256": "36e4feabeaf5c4c5ccf301709721269731f5ce037c52406267a03239e4ed39d9",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/LICENSE",
+          "byteSize": 11357,
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/chat_template.json",
+          "byteSize": 5502,
+          "sha256": "6f8a6a55027e3da5160105556cda5dd69f6423f1c32645f6730d32de7773d0c4",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/config.json",
+          "byteSize": 1505,
+          "sha256": "edac7703329133edfc53e46ac0081835144c99d7eebf28b71c732694d435224d",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/generation_config.json",
+          "byteSize": 269,
+          "sha256": "8469742d1fce0de951c8909b26a2c0c0d8490837ce476efb114da9e0cefc4d44",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/merges.txt",
+          "byteSize": 1671839,
+          "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/model-00001-of-00002.safetensors",
+          "byteSize": 4967229296,
+          "sha256": "30a01a0556622645a3cce87b655bbbbbc1f170c196099f1b666c93202c3339a9",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "text_encoder/model-00002-of-00002.safetensors",
+          "byteSize": 3908490048,
+          "sha256": "046296a2a387efb43b0c997d5833c789604d168834f6e0d3064bf7bb13d002a6",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "text_encoder/model.safetensors.index.json",
+          "byteSize": 64742,
+          "sha256": "58a7841d7bff2548dd91577d216274a83cf1b500bc6a534b809d6c1b1707cf2b",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/preprocessor_config.json",
+          "byteSize": 390,
+          "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/tokenizer.json",
+          "byteSize": 7032403,
+          "sha256": "a5d85b6dcc535e6b93115a9ef287e6132fdbf30270da6218194ba742261173c7",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/tokenizer_config.json",
+          "byteSize": 10868,
+          "sha256": "c2da771801886ad9ae98181793ffd3dfb7f1af30f6f7c6a4e15d7dbba52e2399",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/video_preprocessor_config.json",
+          "byteSize": 385,
+          "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/vocab.json",
+          "byteSize": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "transformer/config.json",
+          "byteSize": 416,
+          "sha256": "bdebcf6b591b456742fe579f65978fd7bcffa459ef003ad668edac393d37e7b5",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+          "byteSize": 9887081880,
+          "sha256": "160026c6235e6a10842208d4f4077fd51018cdc525b57e69385a783d7a4d4b43",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+          "byteSize": 1189878064,
+          "sha256": "1b4a893a94561112c9cfc2d69f4043d6686e012b050a9c7149d064e23d92413a",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model.safetensors.index.json",
+          "byteSize": 37747,
+          "sha256": "16253e59b96211abaf36f46a3d3b6e175f3532e0118028b9d40b3bfbe4561907",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "vae/config.json",
+          "byteSize": 808,
+          "sha256": "66564b3cd3f3f3ce5ce3cd4df72f1de883b242c7f338e27d420fe5ddcb0a6ed9",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "byteSize": 336213556,
+          "sha256": "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5",
+          "sha256Source": "publisher-lfs"
+        }
+      ]
+    },
+    {
+      "repo": "nvidia/Cosmos3-Super-Text2Image",
+      "revision": "daf3d374804be4c512c2135568a7cb95d4341d79",
+      "checkedAt": "2026-10-08T00:00:00Z",
+      "source": "https://huggingface.co/api/models/nvidia/Cosmos3-Super-Text2Image/revision/daf3d374804be4c512c2135568a7cb95d4341d79",
+      "gated": false,
+      "scope": "Selected-file Hub metadata only; not license approval, cached-content verification, runtime or hardware qualification.",
+      "files": [
+        {
+          "path": "README.md",
+          "byteSize": 26369,
+          "gitBlobId": "5b17cc4fb4100f7409637187c4b641bd0fe7ac74"
+        },
+        {
+          "path": "SAFETY.md",
+          "byteSize": 3677,
+          "gitBlobId": "44e1a5a58e8a5e76b8f0a6a415be45e59ba9f270"
+        },
+        {
+          "path": "assets/example_caption.json",
+          "byteSize": 7382,
+          "gitBlobId": "01db693d45c8d2f17e0d4190978bfc857a0d104e"
+        },
+        {
+          "path": "modular_model_index.json",
+          "byteSize": 1727,
+          "gitBlobId": "f7085926b0883cbb77a90a5d9ae95a6963d7ce3e"
+        },
+        {
+          "path": "scheduler/scheduler_config.json",
+          "byteSize": 884,
+          "gitBlobId": "d57852ab4b74140b54cc90478e9793dc2a87b8d9"
+        },
+        {
+          "path": "sound_tokenizer/config.json",
+          "byteSize": 1310,
+          "gitBlobId": "88842cb6d7115f0c0a90ddc20ed5e933e672ba74"
+        },
+        {
+          "path": "sound_tokenizer/diffusion_pytorch_model.safetensors",
+          "byteSize": 1892409600,
+          "sha256": "9d4c61cde38acfb0cad9048a140c3533750277a8462b19dc08450d9fe1ad9879"
+        },
+        {
+          "path": "text_tokenizer/added_tokens.json",
+          "byteSize": 707,
+          "gitBlobId": "b54f9135e44c1e81047e8d05cb027af8bc039eed"
+        },
+        {
+          "path": "text_tokenizer/chat_template.jinja",
+          "byteSize": 5292,
+          "gitBlobId": "124386803f142761528f710e77ae483f5f8c4fc4"
+        },
+        {
+          "path": "text_tokenizer/merges.txt",
+          "byteSize": 1671853,
+          "gitBlobId": "31349551d90c7606f325fe0f11bbb8bd5fa0d7c7"
+        },
+        {
+          "path": "text_tokenizer/special_tokens_map.json",
+          "byteSize": 613,
+          "gitBlobId": "ac23c0aaa2434523c494330aeb79c58395378103"
+        },
+        {
+          "path": "text_tokenizer/tokenizer.json",
+          "byteSize": 11422654,
+          "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"
+        },
+        {
+          "path": "text_tokenizer/tokenizer_config.json",
+          "byteSize": 5404,
+          "gitBlobId": "1d4fba2de0e94e8f97e08927cfb7d084160c2880"
+        },
+        {
+          "path": "text_tokenizer/vocab.json",
+          "byteSize": 2776833,
+          "gitBlobId": "4783fe10ac3adce15ac8f358ef5462739852c569"
+        },
+        {
+          "path": "transformer/config.json",
+          "byteSize": 1384,
+          "gitBlobId": "e3b4e1511977fa07d4a772ce5b5ae143c65a0a73"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00001-of-00027.safetensors",
+          "byteSize": 4932297056,
+          "sha256": "28fe2fcd84de5c3e1a26a5224fda8da81b13ba6e58cf6073460f9b04403a33d6"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00002-of-00027.safetensors",
+          "byteSize": 4802610968,
+          "sha256": "9573ad1d6561b9078fece326857055a57a9f382e41e4d7ebb7e9fc5797c6b590"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00003-of-00027.safetensors",
+          "byteSize": 4949368056,
+          "sha256": "a6d1b8462e971a67eb730826f94335fb8f5db8a70bb12c99677ddd560240bcdb"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00004-of-00027.safetensors",
+          "byteSize": 4802610968,
+          "sha256": "65e0145f7776caa4f022f0b178a64a608b9fe69ab9435169fe5be63e4a6c7ed9"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00005-of-00027.safetensors",
+          "byteSize": 4949368096,
+          "sha256": "ca34444e30ecd797c7a8065d3501abd02125039c9601e14864b089cb9834b92b"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00006-of-00027.safetensors",
+          "byteSize": 4802611024,
+          "sha256": "57ab33ceb73ce02a014acecfbf812d09f7a43c0f4a5b327b206276e61f0ba826"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00007-of-00027.safetensors",
+          "byteSize": 4949368104,
+          "sha256": "b83bb25e88ae2197ba33d5b192d0a81aac40cdebfdfb7ca048271a5718fd8edc"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00008-of-00027.safetensors",
+          "byteSize": 4802611024,
+          "sha256": "a48a7b2aa7e99160e028f9818709e8b575c95dddc2c6a38cde99d7eb488c1ec9"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00009-of-00027.safetensors",
+          "byteSize": 4949368104,
+          "sha256": "63737abe6c08976075e7f9c53e56a7d64ac92bb12078e9aeac47d48146a8786c"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00010-of-00027.safetensors",
+          "byteSize": 4802611024,
+          "sha256": "42ab03b9b949e82e454df3e235a6ae649f4bc531549c0df9b7e6a680abbf9fb3"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00011-of-00027.safetensors",
+          "byteSize": 4949368104,
+          "sha256": "03be6e218bc83d193bf2baf88c9ce9b011156003c43e16b5fa35935e761c0680"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00012-of-00027.safetensors",
+          "byteSize": 4802611024,
+          "sha256": "b317d06f0adb826b962c11c28d04bdc8866ee4ae20b5538b4bbda8092654ee0e"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00013-of-00027.safetensors",
+          "byteSize": 4949368104,
+          "sha256": "d6513f5245c13752bf675241e35995cebd8d3e774a5dc139e8fbbe2842345c96"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00014-of-00027.safetensors",
+          "byteSize": 4802611024,
+          "sha256": "bdc20ad60439a6684fb2b5d63da8b44b6bd2907916f109de253d4e8264242dfc"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00015-of-00027.safetensors",
+          "byteSize": 4949368104,
+          "sha256": "3af6c17c430cac5b768f23f1ae6fc92061846719e19d5d4c24f4be397daa07b9"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00016-of-00027.safetensors",
+          "byteSize": 4802611024,
+          "sha256": "0a65c367ac5c7f39695205e7c91e6e1afd5c8e6283e52e894afe124aa122e6ea"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00017-of-00027.safetensors",
+          "byteSize": 4949368104,
+          "sha256": "0296852ac2e05e56519a90825684bd37640e7debeb329f29c6a4760f79762ee4"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00018-of-00027.safetensors",
+          "byteSize": 4802611024,
+          "sha256": "f078e14b01727f24fa03e5715708a5a2f676b97d264bcc8bc91166d74830d5b0"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00019-of-00027.safetensors",
+          "byteSize": 4949368104,
+          "sha256": "009765e7b69ffe65de8e14b026e9cd998d1d463aab687b895844c0d82855699d"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00020-of-00027.safetensors",
+          "byteSize": 4802611024,
+          "sha256": "c55e2e02da62cd9ad77dcbf4b4f759d620976c663c7a7953132ece1c43560863"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00021-of-00027.safetensors",
+          "byteSize": 4949368104,
+          "sha256": "340e4a0066591985390b649ddfbf705adb7bf1235c963223e8291cd0a44e9b78"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00022-of-00027.safetensors",
+          "byteSize": 4802611024,
+          "sha256": "4d019a64084a0294c89d7ad4ed2ad177b03278550ce68f390fa2c036845a6250"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00023-of-00027.safetensors",
+          "byteSize": 4949368104,
+          "sha256": "f5b974d3465abcf072fba5c37ae2147f612a2467d82cd38a199facc99e23ca16"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00024-of-00027.safetensors",
+          "byteSize": 4802611024,
+          "sha256": "06cf61bdb7560b4392f1ee025561e57215dd3b59a39414a41a58e42dca34cbd0"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00025-of-00027.safetensors",
+          "byteSize": 4949368104,
+          "sha256": "9f93556b82a598a4bb39b12aff60a4784f7fb8545e1e91e4ffe6f84d6f29a11f"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00026-of-00027.safetensors",
+          "byteSize": 4425141960,
+          "sha256": "a2aeef5aa284fb8a083f703bf7803628a47f819aa934328fce7a4a44c2b27d4d"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model-00027-of-00027.safetensors",
+          "byteSize": 1616160480,
+          "sha256": "d3cf9a5eca4234cc33d42d950cbaf9984d5663fb7808ab03c63fa5a5a49d0125"
+        },
+        {
+          "path": "transformer/diffusion_pytorch_model.safetensors.index.json",
+          "byteSize": 138454,
+          "gitBlobId": "31fe43886fdd6adf769d29136513b159911ecb34"
+        },
+        {
+          "path": "vae/config.json",
+          "byteSize": 1750,
+          "gitBlobId": "3391d3657e5f8fcc79ef83ac720e7f07a572dee4"
+        },
+        {
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "byteSize": 1409400600,
+          "sha256": "230496cb59ff85bc9c040487737c4062480cb61c71e697b197b4c30142f2a0da"
+        },
+        {
+          "path": "vision_encoder/config.json",
+          "byteSize": 509,
+          "gitBlobId": "f672b783a0f2b206e3867fe01004038d2bbbb4d7"
+        },
+        {
+          "path": "vision_encoder/model.safetensors",
+          "byteSize": 1190568352,
+          "sha256": "3bdba32cec6f4f570a150f0a0e5ec60115fda49ab15873ecc86473a3da824b1e"
+        }
+      ]
+    },
+    {
       "repo": "black-forest-labs/FLUX.2-klein-9b-kv",
       "revision": "a6dfb36eca3a3906eb2fd460795adfb844e5fcce",
       "checkedAt": "2026-09-24T01:50:46.374898+00:00",
@@ -7219,6 +7806,518 @@
           "gitBlobId": "cdddcb9819d9b04ff7bf93ecdd122f87e1bd0d9f"
         }
       ]
+    },
+    {
+      "repo": "black-forest-labs/flux-3-image-klein",
+      "revision": "8454017f9ebaada30c998fccd9f67a80c7580f68",
+      "source": "https://huggingface.co/api/models/black-forest-labs/flux-3-image-klein/revision/8454017f9ebaada30c998fccd9f67a80c7580f68",
+      "selection": "fp8r",
+      "files": [
+        {
+          "path": "LICENSE.md",
+          "byteSize": 19593,
+          "sha256": "100a3a5af8f1a2943dca0d127671bcaa93ad894a63330825219f1a0a44451f22",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "NOTICE.md",
+          "byteSize": 330,
+          "sha256": "a12f7eb0cab87ed210ffb0921425589a1c88abded6ba0c4285b4d32cbaf5f35c",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "modular_model_index.json",
+          "byteSize": 1445,
+          "sha256": "7766e27fba6bd1197505748240d2fc32ab35ffc5e73772dee9ed4faa4797fcab",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/LICENSE",
+          "byteSize": 11357,
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/chat_template.json",
+          "byteSize": 5502,
+          "sha256": "6f8a6a55027e3da5160105556cda5dd69f6423f1c32645f6730d32de7773d0c4",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/config.json",
+          "byteSize": 1505,
+          "sha256": "edac7703329133edfc53e46ac0081835144c99d7eebf28b71c732694d435224d",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/generation_config.json",
+          "byteSize": 269,
+          "sha256": "8469742d1fce0de951c8909b26a2c0c0d8490837ce476efb114da9e0cefc4d44",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/merges.txt",
+          "byteSize": 1671839,
+          "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/model-00001-of-00002.safetensors",
+          "byteSize": 4967229296,
+          "sha256": "30a01a0556622645a3cce87b655bbbbbc1f170c196099f1b666c93202c3339a9",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "text_encoder/model-00002-of-00002.safetensors",
+          "byteSize": 3908490048,
+          "sha256": "046296a2a387efb43b0c997d5833c789604d168834f6e0d3064bf7bb13d002a6",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "text_encoder/model.safetensors.index.json",
+          "byteSize": 64742,
+          "sha256": "58a7841d7bff2548dd91577d216274a83cf1b500bc6a534b809d6c1b1707cf2b",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/preprocessor_config.json",
+          "byteSize": 390,
+          "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/tokenizer.json",
+          "byteSize": 7032403,
+          "sha256": "a5d85b6dcc535e6b93115a9ef287e6132fdbf30270da6218194ba742261173c7",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/tokenizer_config.json",
+          "byteSize": 10868,
+          "sha256": "c2da771801886ad9ae98181793ffd3dfb7f1af30f6f7c6a4e15d7dbba52e2399",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/video_preprocessor_config.json",
+          "byteSize": 385,
+          "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/vocab.json",
+          "byteSize": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "transformer/config.json",
+          "byteSize": 436,
+          "sha256": "e748b382508f3171d1f4039688b23d1f809aebe4507b3ed5a29bca01b4b58877",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "vae/config.json",
+          "byteSize": 808,
+          "sha256": "66564b3cd3f3f3ce5ce3cd4df72f1de883b242c7f338e27d420fe5ddcb0a6ed9",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "byteSize": 336213556,
+          "sha256": "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "variants/fp8r/model.safetensors",
+          "byteSize": 6270949144,
+          "sha256": "30054053f630725b488aead9a81b422793cee18027856a16bd17b902ad612018",
+          "sha256Source": "publisher-lfs"
+        }
+      ]
+    },
+    {
+      "repo": "black-forest-labs/flux-3-image-klein",
+      "revision": "8454017f9ebaada30c998fccd9f67a80c7580f68",
+      "source": "https://huggingface.co/api/models/black-forest-labs/flux-3-image-klein/revision/8454017f9ebaada30c998fccd9f67a80c7580f68",
+      "selection": "nvfp4",
+      "files": [
+        {
+          "path": "LICENSE.md",
+          "byteSize": 19593,
+          "sha256": "100a3a5af8f1a2943dca0d127671bcaa93ad894a63330825219f1a0a44451f22",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "NOTICE.md",
+          "byteSize": 330,
+          "sha256": "a12f7eb0cab87ed210ffb0921425589a1c88abded6ba0c4285b4d32cbaf5f35c",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "modular_model_index.json",
+          "byteSize": 1445,
+          "sha256": "7766e27fba6bd1197505748240d2fc32ab35ffc5e73772dee9ed4faa4797fcab",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/LICENSE",
+          "byteSize": 11357,
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/chat_template.json",
+          "byteSize": 5502,
+          "sha256": "6f8a6a55027e3da5160105556cda5dd69f6423f1c32645f6730d32de7773d0c4",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/config.json",
+          "byteSize": 1505,
+          "sha256": "edac7703329133edfc53e46ac0081835144c99d7eebf28b71c732694d435224d",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/generation_config.json",
+          "byteSize": 269,
+          "sha256": "8469742d1fce0de951c8909b26a2c0c0d8490837ce476efb114da9e0cefc4d44",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/merges.txt",
+          "byteSize": 1671839,
+          "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/model-00001-of-00002.safetensors",
+          "byteSize": 4967229296,
+          "sha256": "30a01a0556622645a3cce87b655bbbbbc1f170c196099f1b666c93202c3339a9",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "text_encoder/model-00002-of-00002.safetensors",
+          "byteSize": 3908490048,
+          "sha256": "046296a2a387efb43b0c997d5833c789604d168834f6e0d3064bf7bb13d002a6",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "text_encoder/model.safetensors.index.json",
+          "byteSize": 64742,
+          "sha256": "58a7841d7bff2548dd91577d216274a83cf1b500bc6a534b809d6c1b1707cf2b",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/preprocessor_config.json",
+          "byteSize": 390,
+          "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/tokenizer.json",
+          "byteSize": 7032403,
+          "sha256": "a5d85b6dcc535e6b93115a9ef287e6132fdbf30270da6218194ba742261173c7",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/tokenizer_config.json",
+          "byteSize": 10868,
+          "sha256": "c2da771801886ad9ae98181793ffd3dfb7f1af30f6f7c6a4e15d7dbba52e2399",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/video_preprocessor_config.json",
+          "byteSize": 385,
+          "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/vocab.json",
+          "byteSize": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "transformer/config.json",
+          "byteSize": 436,
+          "sha256": "e748b382508f3171d1f4039688b23d1f809aebe4507b3ed5a29bca01b4b58877",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "vae/config.json",
+          "byteSize": 808,
+          "sha256": "66564b3cd3f3f3ce5ce3cd4df72f1de883b242c7f338e27d420fe5ddcb0a6ed9",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "byteSize": 336213556,
+          "sha256": "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "variants/nvfp4/model.safetensors",
+          "byteSize": 5277674144,
+          "sha256": "30b110b0675249cf0461247b4613240312c8064ccc4ef486f4d025c9ff65fb83",
+          "sha256Source": "publisher-lfs"
+        }
+      ]
+    },
+    {
+      "repo": "black-forest-labs/flux-3-image-klein-base",
+      "revision": "1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4",
+      "source": "https://huggingface.co/api/models/black-forest-labs/flux-3-image-klein-base/revision/1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4",
+      "selection": "fp8r",
+      "files": [
+        {
+          "path": "LICENSE.md",
+          "byteSize": 19593,
+          "sha256": "100a3a5af8f1a2943dca0d127671bcaa93ad894a63330825219f1a0a44451f22",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "NOTICE.md",
+          "byteSize": 330,
+          "sha256": "a12f7eb0cab87ed210ffb0921425589a1c88abded6ba0c4285b4d32cbaf5f35c",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "modular_model_index.json",
+          "byteSize": 1447,
+          "sha256": "36e4feabeaf5c4c5ccf301709721269731f5ce037c52406267a03239e4ed39d9",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/LICENSE",
+          "byteSize": 11357,
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/chat_template.json",
+          "byteSize": 5502,
+          "sha256": "6f8a6a55027e3da5160105556cda5dd69f6423f1c32645f6730d32de7773d0c4",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/config.json",
+          "byteSize": 1505,
+          "sha256": "edac7703329133edfc53e46ac0081835144c99d7eebf28b71c732694d435224d",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/generation_config.json",
+          "byteSize": 269,
+          "sha256": "8469742d1fce0de951c8909b26a2c0c0d8490837ce476efb114da9e0cefc4d44",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/merges.txt",
+          "byteSize": 1671839,
+          "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/model-00001-of-00002.safetensors",
+          "byteSize": 4967229296,
+          "sha256": "30a01a0556622645a3cce87b655bbbbbc1f170c196099f1b666c93202c3339a9",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "text_encoder/model-00002-of-00002.safetensors",
+          "byteSize": 3908490048,
+          "sha256": "046296a2a387efb43b0c997d5833c789604d168834f6e0d3064bf7bb13d002a6",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "text_encoder/model.safetensors.index.json",
+          "byteSize": 64742,
+          "sha256": "58a7841d7bff2548dd91577d216274a83cf1b500bc6a534b809d6c1b1707cf2b",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/preprocessor_config.json",
+          "byteSize": 390,
+          "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/tokenizer.json",
+          "byteSize": 7032403,
+          "sha256": "a5d85b6dcc535e6b93115a9ef287e6132fdbf30270da6218194ba742261173c7",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/tokenizer_config.json",
+          "byteSize": 10868,
+          "sha256": "c2da771801886ad9ae98181793ffd3dfb7f1af30f6f7c6a4e15d7dbba52e2399",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/video_preprocessor_config.json",
+          "byteSize": 385,
+          "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/vocab.json",
+          "byteSize": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "transformer/config.json",
+          "byteSize": 416,
+          "sha256": "bdebcf6b591b456742fe579f65978fd7bcffa459ef003ad668edac393d37e7b5",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "vae/config.json",
+          "byteSize": 808,
+          "sha256": "66564b3cd3f3f3ce5ce3cd4df72f1de883b242c7f338e27d420fe5ddcb0a6ed9",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "byteSize": 336213556,
+          "sha256": "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "variants/fp8r/model.safetensors",
+          "byteSize": 6250501712,
+          "sha256": "60de5b577f26b6bc3cf4823c180406f888416caec9474265c82d71cc4b515241",
+          "sha256Source": "publisher-lfs"
+        }
+      ]
+    },
+    {
+      "repo": "black-forest-labs/flux-3-image-klein-base",
+      "revision": "1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4",
+      "source": "https://huggingface.co/api/models/black-forest-labs/flux-3-image-klein-base/revision/1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4",
+      "selection": "nvfp4",
+      "files": [
+        {
+          "path": "LICENSE.md",
+          "byteSize": 19593,
+          "sha256": "100a3a5af8f1a2943dca0d127671bcaa93ad894a63330825219f1a0a44451f22",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "NOTICE.md",
+          "byteSize": 330,
+          "sha256": "a12f7eb0cab87ed210ffb0921425589a1c88abded6ba0c4285b4d32cbaf5f35c",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "modular_model_index.json",
+          "byteSize": 1447,
+          "sha256": "36e4feabeaf5c4c5ccf301709721269731f5ce037c52406267a03239e4ed39d9",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/LICENSE",
+          "byteSize": 11357,
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/chat_template.json",
+          "byteSize": 5502,
+          "sha256": "6f8a6a55027e3da5160105556cda5dd69f6423f1c32645f6730d32de7773d0c4",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/config.json",
+          "byteSize": 1505,
+          "sha256": "edac7703329133edfc53e46ac0081835144c99d7eebf28b71c732694d435224d",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/generation_config.json",
+          "byteSize": 269,
+          "sha256": "8469742d1fce0de951c8909b26a2c0c0d8490837ce476efb114da9e0cefc4d44",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/merges.txt",
+          "byteSize": 1671839,
+          "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/model-00001-of-00002.safetensors",
+          "byteSize": 4967229296,
+          "sha256": "30a01a0556622645a3cce87b655bbbbbc1f170c196099f1b666c93202c3339a9",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "text_encoder/model-00002-of-00002.safetensors",
+          "byteSize": 3908490048,
+          "sha256": "046296a2a387efb43b0c997d5833c789604d168834f6e0d3064bf7bb13d002a6",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "text_encoder/model.safetensors.index.json",
+          "byteSize": 64742,
+          "sha256": "58a7841d7bff2548dd91577d216274a83cf1b500bc6a534b809d6c1b1707cf2b",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/preprocessor_config.json",
+          "byteSize": 390,
+          "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/tokenizer.json",
+          "byteSize": 7032403,
+          "sha256": "a5d85b6dcc535e6b93115a9ef287e6132fdbf30270da6218194ba742261173c7",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/tokenizer_config.json",
+          "byteSize": 10868,
+          "sha256": "c2da771801886ad9ae98181793ffd3dfb7f1af30f6f7c6a4e15d7dbba52e2399",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/video_preprocessor_config.json",
+          "byteSize": 385,
+          "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "text_encoder/vocab.json",
+          "byteSize": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "transformer/config.json",
+          "byteSize": 416,
+          "sha256": "bdebcf6b591b456742fe579f65978fd7bcffa459ef003ad668edac393d37e7b5",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "vae/config.json",
+          "byteSize": 808,
+          "sha256": "66564b3cd3f3f3ce5ce3cd4df72f1de883b242c7f338e27d420fe5ddcb0a6ed9",
+          "sha256Source": "captured-immutable-file"
+        },
+        {
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "byteSize": 336213556,
+          "sha256": "d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5",
+          "sha256Source": "publisher-lfs"
+        },
+        {
+          "path": "variants/nvfp4/model.safetensors",
+          "byteSize": 5257226696,
+          "sha256": "fa3341c15644cbcbae9416c40349b82d8dc20bdd9224a64f4d63818b1116df3e",
+          "sha256Source": "publisher-lfs"
+        }
+      ]
     }
   ],
   "schemaVersion": 1,
@@ -7238,6 +8337,15 @@
     "qualificationEvidence": {"status": "unqualified", "source": "catalog-review-required"}
   },
   "repositoryPins": [
+    {
+      "repo": "black-forest-labs/flux-3-image-klein-pup",
+      "revision": "3f3edb52b2c55de0d49feab28598b68f7f8e4830",
+      "license": "apache-2.0",
+      "purpose": "prompt-enhancement-native-install-only",
+      "scope": "Immutable selected-file metadata only; no runtime/resource/output or public model qualification."
+    },
+    {"repo": "nvidia/Cosmos3-Super-Text2Image", "revision": "daf3d374804be4c512c2135568a7cb95d4341d79", "license": "openmdw-1.1", "purpose": "cosmos3-omni-super-text-to-image-only", "gated": false, "snapshotByteSize": 132527809955, "weightByteSize": 132489727416, "verifiedAt": "2026-10-08T00:00:00Z", "scope": "Publisher metadata; no runtime/resource/output qualification."},
+    {"repo": "Qwen/Qwen3Guard-Gen-0.6B", "revision": "fada3b2f655b89601929198343c94cd2f64d93cc", "license": "apache-2.0", "purpose": "cosmos3-mandatory-text-safety-classifier", "gated": false, "verifiedAt": "2026-10-08T00:00:00Z", "scope": "Publisher metadata; no runtime/resource/output qualification."},
     {"repo": "black-forest-labs/FLUX.2-klein-9b-kv", "revision": "a6dfb36eca3a3906eb2fd460795adfb844e5fcce", "license": "flux-non-commercial-license", "purpose": "flux2-klein-kv-standard-pipeline", "gated": true, "snapshotByteSize": 34722772576, "verifiedAt": "2026-09-09T09:55:00+05:30"},
     {"repo": "InstantX/FLUX.1-dev-Controlnet-Canny", "revision": "e7cee4b2afa335bf8f913f2b044764b1a1b01881", "license": "flux-1-dev-non-commercial-license", "purpose": "flux-dev-standard-controlnet-canny-component", "format": "safetensors", "weightName": "diffusion_pytorch_model.safetensors", "weightByteSize": 3583232168, "verifiedAt": "2026-09-09T08:35:00+05:30"},
     {"repo": "Qwen/Qwen-Image", "revision": "75e0b4be04f60ec59a75f475837eced720f823b6", "license": "apache-2.0", "purpose": "qwen-image-modular-text-to-image-base-family-variant", "snapshotByteSize": 57704594653, "weightByteSize": 57699249390, "verifiedAt": "2026-09-04T00:00:00+05:30"},
@@ -7282,6 +8390,24 @@
     {"repo": "fuliucansheng/FLUX.1-Canny-dev-diffusers", "revision": "24df2ba1c46a8c735589cc8f81302678797c9821", "license": "other", "purpose": "verified-diffusers-repair-source", "verifiedAt": "2026-08-03T14:34:36+05:30"}
   ],
   "models": [
+    {
+      "modelType": "Flux3DistilledModularPipeline",
+      "baseRepo": "black-forest-labs/flux-3-image-klein",
+      "baseRevision": "8454017f9ebaada30c998fccd9f67a80c7580f68",
+      "baseLicense": "other",
+      "baseLicenseName": "flux-kommunity-license",
+      "gated": true,
+      "artifacts": []
+    },
+    {
+      "modelType": "Flux3ModularPipeline",
+      "baseRepo": "black-forest-labs/flux-3-image-klein-base",
+      "baseRevision": "1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4",
+      "baseLicense": "other",
+      "baseLicenseName": "flux-kommunity-license",
+      "gated": true,
+      "artifacts": []
+    },
     {"modelType": "QwenImage21Pipeline", "baseRepo": "Qwen/Qwen-Image-2.1", "baseRevision": "790c92633540aa0cb11d9abf19eb46d861714758", "baseLicense": "qwen-research", "artifacts": []},
     {
       "modelType": "AnimaModularPipeline",
@@ -7382,7 +8508,7 @@
       "baseRevision": "25468b98e3276ca6700de15c6628e51b7de54a26",
       "baseLicense": "apache-2.0",
       "artifacts": [
-        {"repo": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit", "revision": "f50b8c24fe21e9265509b15113b7cca82d0a4443", "license": "apache-2.0", "format": "diffusers-bnb", "bits": 4, "components": ["transformer", "text_encoder"], "provenance": "community", "trust": "modiff_qualified", "downloads": 975, "likes": 16}
+        {"repo": "unsloth/Qwen-Image-2512-unsloth-bnb-4bit", "revision": "f50b8c24fe21e9265509b15113b7cca82d0a4443", "license": "apache-2.0", "format": "diffusers-bnb", "bits": 4, "components": ["transformer", "text_encoder"], "provenance": "community", "trust": "modiff_qualified", "supportedPlatforms": ["linux"], "downloads": 975, "likes": 16}
       ]
     },
     {

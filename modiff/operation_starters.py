@@ -30,13 +30,24 @@ def _bind_execution_profile(loader, task, identity, repository=None):
     if not isinstance(identity, str) or identity != identity.strip():
         raise ValueError("Select an exact execution profile.")
     profile = DIFFUSERS_EXECUTION_PROFILES.get(identity)
+    from modiff.studio_execution_specs import studio_public_authoring_replacements
+    if identity in studio_public_authoring_replacements():
+        raise ValueError('The execution profile has a current public authoring replacement. Rebind explicitly before editing or running it with the new provider.')
+    evaluation_authoring = False
+    if profile is not None and not profile.public:
+        from modiff.diffusers_evaluation_runtime import selected_diffusers_evaluation_authoring_profile_ids
+        try:
+            evaluation_authoring = profile.id in selected_diffusers_evaluation_authoring_profile_ids()
+        except (OSError, RuntimeError, ValueError, TypeError, KeyError) as error:
+            raise ValueError("The selected evaluation authoring metadata is unavailable.") from error
     if (
         profile is None
-        or not profile.public
+        or (not profile.public and not evaluation_authoring)
         or profile.pipeline_class != loader["operation"]["binding"]["pipelineClass"]
         or profile.backend_path != f"{loader['module']}.{loader['action']}"
         or (task not in profile.modes and (
             profile.execution_path != "modular-diffusers" or profile.model_type != profile.pipeline_class
+            or profile.required_diffusers_provider is not None
         ))
     ):
         raise ValueError("The execution profile does not belong to this pipeline/task.")
@@ -51,6 +62,12 @@ def _bind_execution_profile(loader, task, identity, repository=None):
         profile.default_repo, profile.fallback_repo, *profile.compatible_repos, *workflow_repositories,
     }):
         raise ValueError("The repository is not an exact reviewed artifact for this execution profile.")
+    if profile.execution_path == "modular-diffusers":
+        from modiff.modular_workflow_contracts import require_reviewed_modular_repository_workflow
+        require_reviewed_modular_repository_workflow(
+            profile.pipeline_class, repository, require_catalog_revision(repository, model_type=profile.model_type),
+            loader["operation"].get("workflowId"),
+        )
     if loader["operation"]["decomposition"] == "integrated":
         if repository != profile.default_repo:
             raise ValueError("Integrated artifact variants require their own reviewed execution profile.")
@@ -87,11 +104,37 @@ def _bind_execution_profile(loader, task, identity, repository=None):
         raise ValueError("The selected model does not resolve to its reviewed loader profile.")
 
 
+def _refresh_selected_audio_contract(nodes, loader_id, task):
+    """Project the existing pure audio contract after exact profile binding."""
+    from copy import deepcopy
+    from modules.DiffusersAudio.main import AUDIO_PIPELINE_ADAPTERS, _audio_contract_signal
+
+    loader = nodes[loader_id]
+    adapter = AUDIO_PIPELINE_ADAPTERS[loader["values"]["pipeline_class"]]
+    mode = adapter.contract_for_mode(task)
+    signal = _audio_contract_signal(adapter, task, loader["values"]["model_id"])
+    loader["params"]["pipeline"]["signal"]["value"] = deepcopy(signal)
+    loader["params"]["audio_contract"]["value"] = deepcopy(signal)
+    loader["values"]["audio_contract"] = deepcopy(signal)
+    for node in nodes.values():
+        if (node["module"], node["action"]) != ("modules.DiffusersAudio", "Generate"):
+            continue
+        for name, overlay in mode.field_param_overlay().items():
+            if name not in node["params"]:
+                raise ValueError("The selected audio contract targets an undeclared field.")
+            node["params"][name].update(deepcopy(overlay))
+        node["params"]["audio_contract"]["value"] = deepcopy(signal)
+        node["values"]["audio_contract"] = deepcopy(signal)
+        node["values"]["task_type"] = mode.task_type
+
+
 def resolve_operation_starter(modules, contracts, selection):
     if not isinstance(selection, dict) or set(selection) not in (
         {"pipelineClass", "task"},
         {"pipelineClass", "task", "executionProfileId"},
         {"pipelineClass", "task", "executionProfileId", "repository"},
+        {"pipelineClass", "task", "executionProfileId", "authoringRecipeId"},
+        {"pipelineClass", "task", "executionProfileId", "repository", "authoringRecipeId"},
     ):
         raise ValueError("Select an exact pipeline and task.")
     pipeline, task = (_identifier(selection[key]) for key in ("pipelineClass", "task"))
@@ -141,13 +184,17 @@ def resolve_operation_starter(modules, contracts, selection):
         profile = DIFFUSERS_EXECUTION_PROFILES[selection["executionProfileId"]]
         for node in nodes.values():
             seed_standard_operation_defaults(node, profile)
+        if profile.execution_path == "direct-diffusers-audio":
+            _refresh_selected_audio_contract(nodes, loader, task)
         if profile.id in {"flux-schnell:modular", "flux2-klein:modular", "flux2-klein-kv:t2i-modular"}:
             field = nodes["diffusion.denoise"]["params"].get("guidance_scale")
             if field:
                 field["hidden"] = True  # the exact distilled transformer does not consume this control
         if profile.id == "flux-schnell:modular":
             text_encoder = nodes["diffusion.encode_prompt"]
-            text_encoder["params"]["max_sequence_length"].update(value=256, max=256)
+            # Keep the convenient Schnell default, while accepting the pinned
+            # upstream T5 encoder's reviewed 512-token creator recipes.
+            text_encoder["params"]["max_sequence_length"].update(value=256, max=512)
             text_encoder["values"]["max_sequence_length"] = 256
         if profile.id == "sdxl-turbo:modular":
             nodes["diffusion.guidance"]["params"]["guidance_scale"]["min"] = 0.0
@@ -176,7 +223,36 @@ def resolve_operation_starter(modules, contracts, selection):
             layers["values"][block] = deepcopy(config)
     workflow_id, upstream, required = None, [], set()
     ordered = [loader]
-    if nodes[loader]["operation"]["decomposition"] == "integrated":
+    image_stage_spec = None
+    if nodes[loader]['module'] == 'modules.DiffusersImage' and nodes[loader]['action'] == 'LoadPipeline':
+        from modules.DiffusersImage.main import selected_image_stage_starter_spec
+        image_stage_spec = selected_image_stage_starter_spec(
+            nodes[loader]['values'].get('pipeline_class', pipeline), task, nodes[loader]['values'])
+    if image_stage_spec is not None:
+        # Draft the very same ordinary nodes/edges as the reviewed source spec.
+        # Existing whole actions remain published for saved graphs, but are not
+        # extra consumers in this new selected stage starter.
+        stage_types = {'image_encoder', 'denoise', 'decoder'}
+        stage_contracts = [c for c in selected if c['decomposition'] == 'bundle'
+                           and c['nodeType'] in stage_types]
+        if (len(stage_contracts) != 3
+                or {c['nodeType'] for c in stage_contracts} != stage_types):
+            raise ValueError('The selected image starter requires exactly three declared stages.')
+        by_key = {c['nodeKey']: c['operationId'] for c in stage_contracts}
+        roles = {}
+        for role, node_key, _x, _y in image_stage_spec['roles']:
+            if node_key == nodes[loader]['operation']['nodeKey']:
+                roles[role] = loader
+            elif node_key in by_key:
+                roles[role] = by_key[node_key]
+                ordered.append(by_key[node_key])
+        if len(roles) != 4 or len(ordered) != 4 or len(set(ordered)) != 4:
+            raise ValueError('The selected image starter disagrees with its declared owner/stage roles.')
+        nodes = {key: nodes[key] for key in ordered}
+        for source, output, target, input_ in image_stage_spec['edges']:
+            if source in roles and target in roles:
+                connect(roles[source], output, roles[target], input_)
+    elif nodes[loader]["operation"]["decomposition"] == "integrated":
         if len(selected) != 1:
             raise ValueError("An integrated starter must be one complete model operation.")
     elif any(c["decomposition"] == "pipeline" for c in selected):
@@ -189,11 +265,40 @@ def resolve_operation_starter(modules, contracts, selection):
             if c["decomposition"] == "pipeline":
                 connect(loader, model_handle, c["operationId"], model_handle)
                 ordered.append(c["operationId"])
+        if nodes[loader]["module"] == "modules.DiffusersImage" and nodes[loader]["action"] == "LoadPipeline":
+            stage_keys = {
+                "image_encoder": "modules.DiffusersImage.EncodeInputs",
+                "denoise": "modules.DiffusersImage.Denoise",
+                "decoder": "modules.DiffusersImage.DecodeLatents",
+            }
+            alternatives = [c for c in selected if c["decomposition"] == "bundle"
+                            and c["nodeType"] in stage_keys]
+            if alternatives:
+                whole = [c for c in selected if c["decomposition"] == "pipeline"]
+                if (len(selected) != 5 or len(alternatives) != 3 or len(whole) != 1
+                        or {c["nodeType"] for c in alternatives} != set(stage_keys)
+                        or any(c["nodeKey"] != stage_keys[c["nodeType"]] for c in alternatives)
+                        or ordered != [loader, whole[0]["operationId"]]):
+                    raise ValueError("The direct image starter alternatives are incomplete or ambiguous.")
+                # Only this complete direct-image alternative partition is
+                # omitted. Native stages and unrelated auxiliary nodes retain
+                # their existing route construction and catalog contracts.
+                nodes = {key: nodes[key] for key in ordered}
     else:
         from modiff.modular_action_bindings import MODULAR_ACTION_BINDINGS
         from modiff.huggingface_cluster_admission import _REQUIRED_COMPONENT_EDGES, _PIPELINE_ACTION_COMPONENT_EDGES
 
         workflow_id, adapter = _modular_route(pipeline, task)
+        # This new draft already owns an exact reviewed route. Publish that
+        # same selection into its ordinary loader instead of leaving the hidden
+        # field at a family default. Saved graphs are never passed through here.
+        native_loader = nodes[loader]
+        if (native_loader['module'], native_loader['action']) == ('modules.ModularDiffusers', 'ModelsLoader'):
+            if (native_loader['operation']['workflowId'] != workflow_id
+                    or 'workflow_id' not in native_loader['params']):
+                raise ValueError('The native starter loader does not declare its selected workflow.')
+            native_loader['params']['workflow_id']['value'] = workflow_id
+            native_loader['values']['workflow_id'] = workflow_id
         upstream = adapter["upstreamBlockSequence"]
         required = set(adapter["requiredInputs"])
         by_key = {c["nodeKey"]: c["operationId"] for c in selected}
@@ -215,6 +320,16 @@ def resolve_operation_starter(modules, contracts, selection):
                 actions[edge["consumerAction"]],
                 edge["consumerInput"],
             )
+        # Native specifications also declare wrapper transports that are not
+        # upstream block values. Preserve exact owned stage edges; external
+        # source/preview suppliers remain ordinary unbound authoring inputs.
+        from modiff.studio_execution_specs import studio_execution_spec_for_pair
+        specification = studio_execution_spec_for_pair(pipeline, task, execution_profile_id=selection.get('executionProfileId'))
+        if specification is not None:
+            roles = {role: by_key[key] for role, key, *_ in specification['roles'] if key in by_key}
+            for source, output, target, field in specification['edges']:
+                if source in roles and target in roles:
+                    connect(roles[source], output, roles[target], field)
         # Publish effective output dimensions instead of duplicating decoder
         # literals. The generic config declares their semantic names explicitly.
         for c in selected:
@@ -319,11 +434,13 @@ def resolve_operation_starter(modules, contracts, selection):
             if len(members) > 1:
                 shared_inputs.append({"name": shared_name, "members": members})
 
-    # A connected Guider owns guidance. Resolve visibility in the draft itself:
+    # A connected Guider owns CFG. FLUX retains its separate embedded scalar.
+    # Resolve visibility in the draft itself:
     # mounting the frontend must not need a family-default schema refresh to
     # hide the unused scalar (whose bounds differ for distilled variants).
     for edge in edges:
-        if edge["targetHandle"] == "guider":
+        if (edge["targetHandle"] == "guider"
+                and pipeline not in {"FluxModularPipeline", "FluxKontextModularPipeline"}):
             guidance = nodes[edge["target"]]["params"].get("guidance_scale")
             if guidance is not None:
                 guidance["hidden"] = True
@@ -338,7 +455,7 @@ def resolve_operation_starter(modules, contracts, selection):
                 continue
             if field.get("required") or name in required or name in declared_required:
                 required_inputs.append({"operationId": operation, "field": name})
-    return {
+    result = {
         "schemaVersion": 1,
         **binding,
         "workflowId": workflow_id,
@@ -348,3 +465,14 @@ def resolve_operation_starter(modules, contracts, selection):
         "sharedInputs": shared_inputs,
         "upstreamBlocks": upstream,
     }
+    if "authoringRecipeId" in selection:
+        from modiff.studio_execution_specs import resolve_studio_operation_authoring_recipe
+
+        # The retained Schnell recipe records the unused embedded scale as
+        # zero. Keep its hidden field schema consistent with that reviewed
+        # value, without changing ordinary developer starter defaults.
+        if (selection["authoringRecipeId"] == "retained-flux-schnell-text-to-image:v1"
+                and selection["executionProfileId"] == "flux-schnell:modular"):
+            nodes["diffusion.denoise"]["params"]["guidance_scale"]["min"] = 0
+        result["authoring"] = resolve_studio_operation_authoring_recipe(modules, selection, result)
+    return result

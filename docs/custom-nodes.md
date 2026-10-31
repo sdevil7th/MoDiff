@@ -18,6 +18,11 @@ Remote branches/tags resolve to exact commits internally. Revision and package
 name overrides live under Advanced. Imports copy bounded source/metadata, not
 model weights. Dependencies are checked but never installed automatically.
 Errors show **Node import failed** and a reason; failed imports are not enabled.
+With Hub offline mode enabled, select an exact lowercase 40-character commit
+under Advanced. Resolution and source staging stay offline: Add requires the
+exact source snapshot in the local Hub cache and validates its files before
+enabling code. A missing cached snapshot fails the import. Branches and
+tags require online resolution and are never guessed from cached references.
 
 Only add code you trust: Python runs with backend permissions, not in a sandbox.
 Add/Load/Reload is the explicit authorization—there is no separate approval
@@ -279,6 +284,15 @@ When several component roles share that transport type, declare
 to the consumer's `signalCompatibility`; the editor then rejects, for example,
 a scheduler object wired to a denoiser input even when both came from the same
 pipeline class.
+
+When one output changes component kind with a scalar selection, publish
+`connectionRoleSelector: {"field": "model_type", "values": {"controlnet": "controlnet_component"}}`
+instead of giving every kind the same static role. The editor resolves only an
+unconnected scalar field against that bounded declared map. Missing, unknown,
+connected or malformed selections cannot satisfy a role requirement. For
+example, Auto Model Loader's ControlNet choice can connect to a ControlNet
+consumer; its VAE and transformer choices cannot.
+
 For structured pipeline signals whose value contains an `actions` mapping, use
 `{"required": true, "action": "$node"}` to require a non-empty entry for the
 current node action (and, when the signal has a current `mode`, membership in that

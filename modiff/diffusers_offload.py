@@ -1,6 +1,12 @@
 import logging
+import hashlib
+import os
+import shutil
+import stat
+import threading
+import weakref
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from tempfile import mkdtemp
 from typing import Iterable
 
@@ -34,7 +40,180 @@ DEFAULT_GROUP_COMPONENTS = (
 # attached to the actual convolution/linear calls and cover both entry points.
 LEAF_LEVEL_GROUP_COMPONENTS = frozenset({"vae"})
 MIN_STREAMING_RAM_BYTES = 8 * 1024**3
+_MAX_STREAMING_MODULES = 65536
+_MAX_STREAMING_TENSOR_REFERENCES = 262144
 CPU_OFFLOAD_ACCELERATOR_TYPES = frozenset({"cuda"})
+_DISK_LEASE_LOCK = threading.RLock()
+_DISK_LEASES = weakref.WeakSet()
+_DIRECTORY_REPARSE_POINT = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+
+
+@dataclass(frozen=True)
+class _OwnedDiskDirectory:
+    root: Path
+    path: Path
+    ancestors: tuple[tuple[Path, tuple[int, int, int | None]], ...]
+
+
+@dataclass(frozen=True, eq=False)
+class _DiskDirectoryLease:
+    """Shared by hook users, never a strong reference to models or hooks."""
+
+    directory: _OwnedDiskDirectory
+
+    def __copy__(self):
+        return self
+
+    def __deepcopy__(self, memo):
+        memo[id(self)] = self
+        return self
+
+
+def _directory_identity(path):
+    info = path.lstat()
+    if (not stat.S_ISDIR(info.st_mode)
+            or getattr(info, "st_file_attributes", 0) & _DIRECTORY_REPARSE_POINT):
+        raise ValueError("Diffusers offload directories must not contain symlinks or junctions.")
+    if not info.st_dev or not info.st_ino:
+        raise ValueError("Diffusers offload directory identity is unavailable.")
+    return info.st_dev, info.st_ino, getattr(info, "st_birthtime_ns", None)
+
+
+def _offload_root():
+    # Resolve the explicit working directory once, then reject indirection in
+    # the dedicated cache hierarchy rather than following graph-supplied paths.
+    return Path.cwd().resolve(strict=True) / "data" / "offload" / "diffusers"
+
+
+def _explicit_offload_root(value):
+    if value is None:
+        return _offload_root()
+    root = Path(value)
+    if not root.is_absolute() or ".." in root.parts:
+        raise ValueError("Selected offload storage requires an explicit absolute plain directory.")
+    # Inspect the lexical chain before creation, never resolve away a junction.
+    current = Path(root.anchor)
+    _directory_identity(current)
+    missing = False
+    for part in root.parts[1:]:
+        current /= part
+        if not missing:
+            try:
+                _directory_identity(current)
+            except FileNotFoundError:
+                missing = True
+    return root
+
+
+def _directory_chain(root, path, *, create=False):
+    if not root.is_absolute() or not path.is_absolute():
+        raise ValueError("Diffusers offload directory paths must be absolute.")
+    path.relative_to(root)
+    anchor = root.parent.parent.parent
+    current = anchor
+    chain = [(current, _directory_identity(current))]
+    for part in path.relative_to(anchor).parts:
+        current = current / part
+        if create:
+            try:
+                current.mkdir()
+            except FileExistsError:
+                pass
+        chain.append((current, _directory_identity(current)))
+    if path.resolve(strict=True) != path:
+        raise ValueError("Diffusers offload directory escapes its owned cache root.")
+    return tuple(chain)
+
+
+def _validate_owned_disk_directory(directory):
+    if directory.path == directory.root:
+        raise ValueError("A per-load offload lease cannot remove the cache root.")
+    directory.path.relative_to(directory.root)
+    current = _directory_chain(directory.root, directory.path)
+    if current != directory.ancestors:
+        raise ValueError("Diffusers offload directory identity changed; storage was preserved.")
+
+
+def _remove_owned_disk_directory(directory):
+    with _DISK_LEASE_LOCK:
+        try:
+            try:
+                directory.path.lstat()
+            except FileNotFoundError:
+                return
+            _validate_owned_disk_directory(directory)
+            shutil.rmtree(directory.path)
+        except Exception:
+            # Cleanup cannot replace the original loading/cancellation error.
+            # A later free-disk check still observes any preserved bytes.
+            logger.warning("Could not release owned Diffusers disk offload directory %s",
+                           directory.path, exc_info=True)
+
+
+def _retain_disk_lease(owner, lease):
+    leases = getattr(owner, "_modiff_disk_offload_leases", ())
+    if lease not in leases:
+        owner._modiff_disk_offload_leases = (*leases, lease)
+
+
+def _bind_disk_hook_lease(module, lease):
+    from diffusers.hooks.group_offloading import GroupOffloadingHook
+
+    for child in module.modules():
+        _retain_disk_lease(child, lease)
+        for hook in getattr(getattr(child, "_diffusers_hook", None), "hooks", {}).values():
+            if (isinstance(hook, GroupOffloadingHook)
+                    and hook.config.offload_to_disk_path == str(lease.directory.path)):
+                # Official PEFT reapplication retains this same config and may
+                # create new hook modules not present in the original tree.
+                for owner in (hook, hook.group, hook.config):
+                    _retain_disk_lease(owner, lease)
+
+
+def _new_disk_offload_lease(module, *, node_id, scope, component_name, offload_root=None):
+    with _DISK_LEASE_LOCK:
+        root = _explicit_offload_root(offload_root)
+        parent = _disk_path(node_id, scope, component_name, offload_root=offload_root)
+        path = Path(mkdtemp(prefix="load-", dir=parent))
+        directory = _OwnedDiskDirectory(root, path, _directory_chain(root, path))
+        lease = _DiskDirectoryLease(directory)
+        finalizer = weakref.finalize(lease, _remove_owned_disk_directory, directory)
+        # A live hook remains authoritative even during interpreter shutdown.
+        # Process termination can leave remnants for explicit global cleanup.
+        finalizer.atexit = False
+        _DISK_LEASES.add(lease)
+        for child in module.modules():
+            _retain_disk_lease(child, lease)
+        return lease
+
+
+def release_disk_offload_cache():
+    """Explicit global cleanup after ownership release, preserving live leases."""
+    with _DISK_LEASE_LOCK:
+        root = _offload_root()
+        try:
+            root.lstat()
+        except FileNotFoundError:
+            return 0, []
+        try:
+            original = _directory_chain(root, root)
+            if any(lease.directory.root == root for lease in _DISK_LEASES):
+                return 0, ["Diffusers disk offload cache: live hook storage was preserved."]
+            count = 0
+            for parent, directories, files in os.walk(root, followlinks=False):
+                # Windows junctions are directory reparse points; do not walk
+                # them when counting cache entries before native rmtree.
+                directories[:] = [name for name in directories
+                    if not (getattr(Path(parent, name).lstat(), "st_file_attributes", 0)
+                            & _DIRECTORY_REPARSE_POINT)]
+                count += len(files)
+            if _directory_chain(root, root) != original:
+                raise ValueError("Diffusers offload cache root identity changed.")
+            shutil.rmtree(root)
+            return count, []
+        except Exception as exc:
+            logger.debug("Diffusers disk offload cache cleanup failed", exc_info=True)
+            return 0, [f"Diffusers disk offload cache: {exc}"]
 
 
 @dataclass
@@ -98,11 +277,24 @@ def offload_mode_param(default=OFFLOAD_MODE_MODEL_CPU, modes=None):
     }
 
 
-def _disk_path(node_id, scope, component_name=None):
-    path = Path("data") / "offload" / "diffusers" / str(node_id or "node") / str(scope or "pipeline")
-    if component_name:
-        path = path / str(component_name)
-    path.mkdir(parents=True, exist_ok=True)
+def _owner_disk_segment(node_id):
+    # Graph IDs are opaque (including colon-rich Block V2 projections), never
+    # filesystem paths. A bounded digest preserves their exact distinct identity.
+    return "owner-" + hashlib.sha256(str(node_id or "node").encode("utf-8")).hexdigest()
+
+
+def _disk_path(node_id, scope, component_name=None, *, offload_root=None):
+    parts = [_owner_disk_segment(node_id), str(scope or "pipeline")]
+    if component_name is not None:
+        parts.append(str(component_name))
+    for part in parts:
+        if (not part or len(part) > 255 or part in {".", ".."}
+                or any(char in '<>:"/\\|?*' or ord(char) < 32 for char in part)
+                or part.rstrip(" .") != part or PureWindowsPath(part).is_reserved()):
+            raise ValueError("Diffusers offload directory segments must be single local names.")
+    root = _explicit_offload_root(offload_root)
+    path = root.joinpath(*parts)
+    _directory_chain(root, path, create=True)
     return path
 
 
@@ -115,8 +307,60 @@ def _is_group_offloaded(module):
         return False
 
 
-def _streaming_offload_allowed(device, mode):
-    """Use pinned asynchronous transfers only on qualified accelerator paths."""
+def _streaming_component_bytes(module):
+    """Bound registered native storage without invoking model traversal hooks.
+
+    Count shared physical storage once, but also retain the logical bytes of
+    every registered reference: upstream may pin separate views independently.
+    Unknown/subclass/placeholder storage selects synchronous offload instead.
+    This is an execution-time transfer policy, not an Auto capacity estimate.
+    """
+    pending, seen_modules, storages = [module], set(), set()
+    physical_bytes = logical_bytes = references = 0
+    while pending:
+        current = pending.pop()
+        if not isinstance(current, torch.nn.Module):
+            return None
+        if id(current) in seen_modules:
+            continue
+        seen_modules.add(id(current))
+        if len(seen_modules) > _MAX_STREAMING_MODULES:
+            return None
+        state = vars(current)
+        children, parameters, buffers = (state.get(name) for name in ("_modules", "_parameters", "_buffers"))
+        if any(type(mapping) is not dict for mapping in (children, parameters, buffers)):
+            return None
+        if len(pending) + len(children) > _MAX_STREAMING_MODULES:
+            return None
+        pending.extend(child for child in children.values() if child is not None)
+        for mapping in (parameters, buffers):
+            for tensor in mapping.values():
+                if tensor is None:
+                    continue
+                references += 1
+                if references > _MAX_STREAMING_TENSOR_REFERENCES:
+                    return None
+                if (type(tensor) not in (torch.Tensor, torch.nn.Parameter)
+                        or tensor.layout != torch.strided or tensor.device.type not in ("cpu", "cuda")
+                        or tensor.is_quantized):
+                    return None
+                storage = tensor.untyped_storage()
+                size = storage.nbytes()
+                logical = tensor.numel() * tensor.element_size()
+                if any(type(value) is not int or not 0 <= value < 2**63 for value in (size, logical)):
+                    return None
+                key = (tensor.device, storage.data_ptr(), size)
+                if key not in storages:
+                    storages.add(key)
+                    physical_bytes += size
+                logical_bytes += logical
+                if max(physical_bytes, logical_bytes) >= 2**63:
+                    return None
+    return max(physical_bytes, logical_bytes) if references else None
+
+
+def _streaming_offload_allowed(device, mode, module=None):
+    """Retain the free-RAM floor after conservative streamed host staging."""
     if mode != OFFLOAD_MODE_GROUP_CPU or not supports_accelerator_cpu_offload(device):
         return False
     try:
@@ -125,12 +369,20 @@ def _streaming_offload_allowed(device, mode):
         from modiff.hardware import system_memory_snapshot
 
         available = system_memory_snapshot().get("available_bytes")
-        return isinstance(available, int) and available >= MIN_STREAMING_RAM_BYTES
+        if type(available) is not int or available < MIN_STREAMING_RAM_BYTES:
+            return False
+        component_bytes = _streaming_component_bytes(module)
+        # Official streamed group hooks retain CPU source tensors and create
+        # pinned transfer material. Reserve two component copies even when
+        # only part of the component is in flight; keep the existing RAM floor
+        # free after that reservation. Synchronous hooks avoid this staging.
+        return (component_bytes is not None
+                and available >= MIN_STREAMING_RAM_BYTES + 2 * component_bytes)
     except Exception:
         return False
 
 
-def _apply_group_to_module(module, *, component_name, device, node_id, scope, mode, offload_type="block_level", num_blocks_per_group=2):
+def _apply_group_to_module(module, *, component_name, device, node_id, scope, mode, offload_type="block_level", num_blocks_per_group=2, allow_streaming=True, offload_root=None):
     if module is None or not isinstance(module, torch.nn.Module):
         return None
     if _is_group_offloaded(module):
@@ -154,15 +406,16 @@ def _apply_group_to_module(module, *, component_name, device, node_id, scope, mo
         raise RuntimeError("Diffusers group offloading is not available in this backend.") from exc
 
     offload_to_disk_path = None
+    disk_lease = None
     if mode == OFFLOAD_MODE_GROUP_DISK:
         # Upstream names files by internal group name and reuses any existing
         # file. A node can load different weights later; component separation
         # alone cannot make those old files safe. Allocate storage per hook
-        # owner/load, beneath the node's existing recursive cleanup boundary.
-        offload_to_disk_path = mkdtemp(
-            prefix="load-", dir=_disk_path(node_id, scope, component_name)
-        )
-    use_stream = False if direct_vae_statistics else _streaming_offload_allowed(device, mode)
+        # owner/load, held until every associated module/hook user is released.
+        disk_lease = _new_disk_offload_lease(module, node_id=node_id, scope=scope,
+                                          component_name=component_name, offload_root=offload_root)
+        offload_to_disk_path = str(disk_lease.directory.path)
+    use_stream = False if direct_vae_statistics or not allow_streaming else _streaming_offload_allowed(device, mode, module)
 
     try:
         apply_group_offloading(
@@ -179,6 +432,9 @@ def _apply_group_to_module(module, *, component_name, device, node_id, scope, mo
         )
     except Exception as exc:
         raise RuntimeError(f"Could not apply {mode} group offload to {component_name}: {exc}") from exc
+    finally:
+        if disk_lease is not None:
+            _bind_disk_hook_lease(module, disk_lease)
     return component_name
 
 
@@ -191,6 +447,8 @@ def apply_component_group_offload(
     node_id,
     scope="pipeline",
     leaf_level_components: Iterable[str] = LEAF_LEVEL_GROUP_COMPONENTS,
+    allow_streaming: bool = True,
+    offload_root=None,
 ):
     requested_mode = normalize_offload_mode(mode, auto_offload=mode != OFFLOAD_MODE_NONE)
     normalized_device = normalize_execution_device(device)
@@ -224,10 +482,12 @@ def apply_component_group_offload(
             scope=scope,
             mode=mode,
             offload_type=offload_type,
+            allow_streaming=allow_streaming,
+            offload_root=offload_root,
         )
         if applied_name:
             applied.append(applied_name)
-    disk_path = str(_disk_path(node_id, scope)) if mode == OFFLOAD_MODE_GROUP_DISK and applied else None
+    disk_path = str(_disk_path(node_id, scope, offload_root=offload_root)) if mode == OFFLOAD_MODE_GROUP_DISK and applied else None
     return OffloadResult(mode=mode, applied=bool(applied), method="component_group_offload", components=applied, disk_path=disk_path)
 
 
@@ -290,7 +550,72 @@ def apply_model_offload(model, *, component_name, mode, device, node_id, scope="
     )
 
 
-def configure_components_manager_offload(manager, *, mode, device):
+def assert_components_manager_offload_ownership(manager, *, mode, device, node_id=None, configure_global=True):
+    """Reject a global hook change that would reconfigure a surviving owner.
+
+    The upstream manager rebuilds or removes hooks for *every* registered
+    Module, including components that another loader promised to keep resident
+    or group-offloaded. Exclusively owned old components can change with their
+    loader; shared and unowned live components cannot acquire another policy.
+    This inspection runs before placement or weight allocation.
+    """
+    effective_mode = normalize_offload_mode(mode, auto_offload=mode != OFFLOAD_MODE_NONE, device=device)
+    entries = getattr(manager, "components", {}) or {}
+    collections = getattr(manager, "collections", {}) or {}
+    own = set(collections.get(node_id, ())) if node_id is not None else set()
+    shared = {key for owner, keys in collections.items() if owner != node_id for key in keys}
+    peers = [(key, component) for key, component in entries.items()
+             if isinstance(component, torch.nn.Module) and (key not in own or key in shared)]
+    enabled = bool(getattr(manager, "_auto_offload_enabled", False))
+    # A standalone loader's placement is local while the shared manager is
+    # disabled. With the manager enabled, add() rebuilds global hooks too.
+    if not configure_global and not enabled:
+        return
+    group_modes = {OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK, OFFLOAD_MODE_SEQUENTIAL_CPU}
+    current_device = getattr(manager, "_auto_offload_device", None)
+    local_add_conflict = (not configure_global and enabled and (
+        effective_mode == OFFLOAD_MODE_NONE or current_device is None
+        or normalize_execution_device(current_device) != normalize_execution_device(device)))
+    if not peers and not local_add_conflict:
+        return
+    conflict = local_add_conflict or enabled and effective_mode == OFFLOAD_MODE_NONE
+    if effective_mode == OFFLOAD_MODE_MODEL_CPU or enabled and effective_mode in group_modes:
+        normalized_device = normalize_execution_device(device)
+        live_hooks = {getattr(wrapper, "model_id", None): wrapper
+                      for wrapper in getattr(manager, "model_hooks", None) or ()}
+
+        def compatible_peer(key, component):
+            recorded_mode = getattr(component, "_modiff_offload_mode", None)
+            recorded_device = getattr(component, "_modiff_execution_device", None)
+            if recorded_mode not in {OFFLOAD_MODE_MODEL_CPU, *group_modes} or recorded_device is None:
+                return False
+            if normalize_execution_device(recorded_device) != normalized_device:
+                return False
+            if _is_group_offloaded(component):
+                # Standalone model_cpu placement uses group hooks too. The
+                # installed manager preserves their own placement, provided
+                # both hooks send inputs to the same execution device.
+                from diffusers.hooks.group_offloading import _get_group_onload_device
+
+                return normalize_execution_device(_get_group_onload_device(component)) == normalized_device
+            wrapper = live_hooks.get(key)
+            return (recorded_mode == OFFLOAD_MODE_MODEL_CPU and enabled
+                    and getattr(wrapper, "model", None) is component
+                    and getattr(component, "_hf_hook", None) is getattr(wrapper, "hook", None)
+                    and getattr(wrapper, "hook", None) is not None)
+
+        # Policy metadata alone is not evidence of an active compatible hook.
+        conflict = (local_add_conflict
+                    or enabled and (current_device is None or normalize_execution_device(current_device) != normalized_device)
+                    or any(not compatible_peer(key, component) for key, component in peers))
+    if conflict:
+        raise ValueError(
+            "Cannot change global CPU offload while an existing live model owner uses an incompatible policy. "
+            "Finish and release that owner before loading this model, or use separate sequential image stages."
+        )
+
+
+def configure_components_manager_offload(manager, *, mode, device, node_id=None):
     """Safely configure Modular Diffusers' shared ComponentsManager.
 
     ``ComponentsManager.enable_auto_cpu_offload`` queries accelerator free
@@ -304,6 +629,9 @@ def configure_components_manager_offload(manager, *, mode, device):
         requested_mode,
         auto_offload=True,
         device=normalized_device,
+    )
+    assert_components_manager_offload_ownership(
+        manager, mode=effective_mode, device=normalized_device, node_id=node_id,
     )
     enabled = bool(getattr(manager, "_auto_offload_enabled", False))
 
@@ -323,6 +651,12 @@ def configure_components_manager_offload(manager, *, mode, device):
             components=[],
         )
 
+    if (enabled and effective_mode in {OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK, OFFLOAD_MODE_SEQUENTIAL_CPU}
+            and normalize_execution_device(getattr(manager, "_auto_offload_device", None)) == normalized_device):
+        # Diffusers 0.41 supports group hooks alongside manager CPU hooks.
+        # Keep the latter alive for existing owners; group hooks own placement.
+        return OffloadResult(mode=effective_mode, applied=False,
+                             method="components_manager_preserved_cpu_offload", components=[])
     if enabled:
         manager.disable_auto_cpu_offload()
     return OffloadResult(

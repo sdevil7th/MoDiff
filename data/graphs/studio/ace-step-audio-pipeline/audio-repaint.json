@@ -5,7 +5,6 @@
       "data": {
         "connectionType": "audio"
       },
-      "edgeType": "default",
       "id": "edge-01",
       "markerEnd": {
         "color": "#F472B6",
@@ -27,7 +26,6 @@
       "data": {
         "connectionType": "audio_diffusion_pipeline"
       },
-      "edgeType": "default",
       "id": "edge-02",
       "markerEnd": {
         "color": "#E879F9",
@@ -49,7 +47,6 @@
       "data": {
         "connectionType": "quantization_config"
       },
-      "edgeType": "default",
       "id": "edge-03",
       "markerEnd": {
         "color": "#FDE68A",
@@ -63,15 +60,13 @@
         "stroke": "#FDE68A"
       },
       "target": "node-05",
-      "targetHandle": "quantization_config",
-      "type": "default"
+      "targetHandle": "quantization_config"
     },
     {
       "className": "category-diffusers_execution_recipe",
       "data": {
         "connectionType": "diffusers_execution_recipe"
       },
-      "edgeType": "default",
       "id": "edge-04",
       "markerEnd": {
         "color": "#C4B5FD",
@@ -85,15 +80,13 @@
         "stroke": "#C4B5FD"
       },
       "target": "node-03",
-      "targetHandle": "execution_recipe",
-      "type": "default"
+      "targetHandle": "execution_recipe"
     },
     {
       "className": "category-audio",
       "data": {
         "connectionType": "audio"
       },
-      "edgeType": "default",
       "id": "edge-05",
       "markerEnd": {
         "color": "#F472B6",
@@ -222,7 +215,6 @@
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "audioExport",
         "style": {},
         "time": [
@@ -245,13 +237,693 @@
         "cache": false,
         "category": "Diffusers Audio",
         "description": "Generate audio with a Diffusers audio pipeline.",
-        "label": "Diffusers.GenerateAudio",
+        "label": "Generate Audio",
         "memory": [
           0,
           0,
           0
         ],
         "module": "modules.DiffusersAudio",
+        "operationAuthoring": {
+          "authored": [
+            "task_type",
+            "prompt",
+            "negative_prompt",
+            "lyrics",
+            "audio_duration",
+            "extension_duration",
+            "vocal_language",
+            "seed",
+            "num_inference_steps",
+            "guidance_scale",
+            "shift",
+            "bpm",
+            "keyscale",
+            "timesignature",
+            "repainting_start",
+            "repainting_end",
+            "audio_cover_strength",
+            "return_continuation_tail",
+            "sample_rate"
+          ],
+          "defaults": {
+            "bpm": 0,
+            "guidance_scale": 1,
+            "keyscale": "",
+            "lyrics": "",
+            "num_inference_steps": 8,
+            "prompt": "Blend the regenerated section naturally with the surrounding audio.",
+            "repainting_end": 0,
+            "repainting_start": 0,
+            "sample_rate": 48000,
+            "seed": 0,
+            "shift": 3,
+            "task_type": "repaint",
+            "timesignature": "4",
+            "vocal_language": "en"
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "AceStepPipeline",
+              "values": {}
+            },
+            "blockName": null,
+            "decomposition": "pipeline",
+            "nodeKey": "modules.DiffusersAudio.Generate",
+            "nodeType": "pipeline",
+            "operationId": "diffusion.generate_audio",
+            "pipelineClass": "AceStepPipeline",
+            "ports": [
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline",
+                "required": true,
+                "roles": [
+                  "pipeline"
+                ],
+                "semanticName": "pipeline",
+                "semantics": {
+                  "kind": "pipeline",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "AceStepPipeline",
+                  "state": null
+                },
+                "types": [
+                  "audio_diffusion_pipeline"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "audio_contract",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "audio_contract",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "AceStepPipeline",
+                  "state": null
+                },
+                "types": [
+                  "object"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "task_type",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "task_type",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "negative_prompt",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "negative_prompt",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "lyrics",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "lyrics",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "text"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "audio_duration",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "audio_duration",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "extension_duration",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "extension_duration",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "vocal_language",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "vocal_language",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "num_inference_steps",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "num_inference_steps",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "guidance_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "guidance_scale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "lora_scale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "lora_scale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "shift",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "shift",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "seed",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "seed",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "bpm",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "bpm",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "keyscale",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "keyscale",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "timesignature",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "timesignature",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "source_audio",
+                "required": true,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "source_audio",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "audio",
+                  "str"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "reference_audio",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "reference_audio",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "audio",
+                  "str"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "repainting_start",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "repainting_start",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "repainting_end",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "repainting_end",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "audio_cover_strength",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "audio_cover_strength",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "return_continuation_tail",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "return_continuation_tail",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "bool"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "sample_rate",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "sample_rate",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "stable_audio_steps",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "stable_audio_steps",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "stable_audio_guidance",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "stable_audio_guidance",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "num_waveforms",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "num_waveforms",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "audio",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "audio",
+                "semantics": {
+                  "kind": "media",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "audio"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "audio_variations",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "audio_variations",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "AceStepPipeline",
+                  "state": null
+                },
+                "types": [
+                  "collection"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "sample_rate_out",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "sample_rate_out",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "int"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "duration_seconds",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "duration_seconds",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "float"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "audio_repaint",
+            "workflowId": null
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
         "params": {
           "audio": {
             "display": "output",
@@ -261,6 +933,20 @@
           },
           "audio_contract": {
             "default": {
+              "actions": {
+                "FuseAdapters": [
+                  "text_to_audio"
+                ],
+                "Generate": [
+                  "text_to_audio"
+                ],
+                "LoadAdapter": [
+                  "text_to_audio"
+                ],
+                "SetAdapters": [
+                  "text_to_audio"
+                ]
+              },
               "fieldParams": {
                 "audio_cover_strength": {
                   "hidden": true
@@ -352,6 +1038,20 @@
             "label": "Audio Contract",
             "type": "object",
             "value": {
+              "actions": {
+                "FuseAdapters": [
+                  "audio_repaint"
+                ],
+                "Generate": [
+                  "audio_repaint"
+                ],
+                "LoadAdapter": [
+                  "audio_repaint"
+                ],
+                "SetAdapters": [
+                  "audio_repaint"
+                ]
+              },
               "fieldParams": {
                 "audio_cover_strength": {
                   "hidden": true
@@ -442,7 +1142,6 @@
           },
           "audio_cover_strength": {
             "default": 0.85,
-            "disabled": false,
             "display": "slider",
             "hidden": true,
             "label": "Cover Strength",
@@ -454,7 +1153,6 @@
           },
           "audio_duration": {
             "default": 30,
-            "disabled": false,
             "hidden": true,
             "label": "Duration",
             "max": 240,
@@ -471,7 +1169,6 @@
           },
           "bpm": {
             "default": 0,
-            "disabled": false,
             "hidden": false,
             "label": "BPM",
             "max": 400,
@@ -487,7 +1184,6 @@
           },
           "extension_duration": {
             "default": 15,
-            "disabled": false,
             "hidden": true,
             "label": "Extension",
             "max": 180,
@@ -499,7 +1195,6 @@
           "guidance_scale": {
             "default": 1,
             "description": "XL Turbo is guidance-distilled; values above 1 are ignored by the Diffusers pipeline.",
-            "disabled": false,
             "display": "slider",
             "hidden": false,
             "label": "Guidance",
@@ -511,7 +1206,6 @@
           },
           "keyscale": {
             "default": "",
-            "disabled": false,
             "hidden": false,
             "label": "Key",
             "type": "string",
@@ -530,7 +1224,6 @@
           },
           "lyrics": {
             "default": "",
-            "disabled": false,
             "display": "textarea",
             "hidden": false,
             "label": "Lyrics",
@@ -539,7 +1232,6 @@
           },
           "negative_prompt": {
             "default": "",
-            "disabled": false,
             "display": "textarea",
             "hidden": true,
             "label": "Negative Prompt",
@@ -549,7 +1241,6 @@
           "num_inference_steps": {
             "default": 8,
             "description": "ACE-Step v1.5 XL Turbo is designed for 8 denoising steps.",
-            "disabled": false,
             "display": "slider",
             "hidden": false,
             "label": "Steps",
@@ -561,7 +1252,6 @@
           "num_waveforms": {
             "default": 1,
             "description": "Number of generated waveforms when supported; ignored by ACE-Step.",
-            "disabled": false,
             "hidden": true,
             "label": "Variations",
             "max": 8,
@@ -569,25 +1259,33 @@
             "type": "int"
           },
           "pipeline": {
-            "disabled": true,
             "display": "input",
+            "fieldOptions": {
+              "suppressAutomaticSignalAction": true
+            },
             "isConnected": true,
             "label": "Pipeline",
             "required": true,
             "signal": {
-              "direction": "input"
+              "direction": "output"
+            },
+            "signalCompatibility": {
+              "action": "$node",
+              "required": true
             },
             "type": "audio_diffusion_pipeline"
           },
           "prompt": {
             "default": "",
             "display": "textarea",
+            "fieldOptions": {
+              "exampleAttribution": "MoDiff task example"
+            },
             "label": "Prompt",
             "type": "text",
             "value": "Task: regenerate only the selected source-audio region while treating all audio before and after that interval as immutable. Musical contract: preserve the source tempo, key, meter, chord progression, melodic destination, lyric wording, vocalist identity, instrumentation, groove, and section function. Replace the damaged phrase with a natural alternative performance, not a new composition. Arrangement and timbre: continue the same down-tuned guitar tone, bass articulation, drum-room character, vocal intensity, stereo placement, and density heard immediately around the selection. Let fills and syllables lead causally into the untouched next phrase. Two-boundary integration: match beat phase, pitch, loudness, noise floor, ambience, reverb tail, decay, and transient shape at both the entrance and exit; preserve sufficient pre-roll and release so no note or word is cut unnaturally. Avoid an audible splice, flammed drum attack, phase smear, tempo drift, changed singer, lyric substitution, sudden mix-width change, clipping, silence, or a reverb tail crossing incorrectly into untouched audio."
           },
           "reference_audio": {
-            "disabled": false,
             "display": "input",
             "hidden": true,
             "isConnected": false,
@@ -600,7 +1298,6 @@
           },
           "repainting_end": {
             "default": 0,
-            "disabled": false,
             "hidden": false,
             "label": "Repaint End",
             "min": 0,
@@ -610,7 +1307,6 @@
           },
           "repainting_start": {
             "default": 0,
-            "disabled": false,
             "hidden": false,
             "label": "Repaint Start",
             "min": 0,
@@ -620,7 +1316,6 @@
           },
           "return_continuation_tail": {
             "default": true,
-            "disabled": false,
             "hidden": true,
             "label": "Return Tail Only",
             "type": "bool",
@@ -702,7 +1397,6 @@
           },
           "shift": {
             "default": 3,
-            "disabled": false,
             "display": "slider",
             "hidden": false,
             "label": "Shift",
@@ -713,7 +1407,6 @@
             "value": 3
           },
           "source_audio": {
-            "disabled": true,
             "display": "input",
             "hidden": false,
             "isConnected": true,
@@ -727,7 +1420,6 @@
           "stable_audio_guidance": {
             "default": 7,
             "description": "Classifier-free guidance for reviewed standard Diffusers audio pipelines; ignored by ACE-Step.",
-            "disabled": false,
             "hidden": true,
             "label": "Stable Audio Guidance",
             "max": 20,
@@ -737,7 +1429,6 @@
           "stable_audio_steps": {
             "default": 100,
             "description": "Denoising steps for reviewed standard Diffusers audio pipelines; ignored by ACE-Step.",
-            "disabled": false,
             "hidden": true,
             "label": "Stable Audio Steps",
             "max": 300,
@@ -746,20 +1437,25 @@
           },
           "task_type": {
             "default": "repaint",
-            "disabled": false,
             "fieldOptions": {
               "noValidation": true
             },
             "label": "Task",
             "options": [
-              "repaint"
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "repaint",
+                "schemaVersion": 1,
+                "value": "repaint"
+              }
             ],
             "type": "string",
             "value": "repaint"
           },
           "timesignature": {
             "default": "4",
-            "disabled": false,
             "hidden": false,
             "label": "Time",
             "type": "string",
@@ -767,7 +1463,6 @@
           },
           "vocal_language": {
             "default": "en",
-            "disabled": false,
             "hidden": false,
             "label": "Language",
             "type": "string",
@@ -776,7 +1471,6 @@
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "audioGenerate",
         "style": {},
         "time": [
@@ -784,8 +1478,7 @@
           0,
           0
         ],
-        "type": "custom",
-        "uiState": {}
+        "type": "custom"
       },
       "id": "node-02",
       "position": {
@@ -800,16 +1493,355 @@
         "cache": false,
         "category": "Diffusers Audio",
         "description": "Load a generic Diffusers audio pipeline.",
-        "label": "Diffusers.LoadPipeline",
+        "label": "Load Models",
         "memory": [
           0,
           0,
           0
         ],
         "module": "modules.DiffusersAudio",
+        "operationAuthoring": {
+          "authored": [
+            "dtype",
+            "device",
+            "auto_offload",
+            "offload_mode"
+          ],
+          "defaults": {
+            "auto_offload": true,
+            "device": "cuda:0",
+            "dtype": "bfloat16",
+            "enable_vae_tiling": true,
+            "low_cpu_mem_usage": true,
+            "mode": "audio_repaint",
+            "model_id": {
+              "source": "hub",
+              "value": "ACE-Step/acestep-v15-xl-turbo-diffusers"
+            },
+            "offload_mode": "model_cpu",
+            "pipeline_class": "AceStepPipeline",
+            "revision": "200ba991ae448051e14b0183157e35c2d27c9fb0"
+          },
+          "operation": {
+            "binding": {
+              "pipelineClass": "AceStepPipeline",
+              "values": {
+                "mode": "audio_repaint",
+                "pipeline_class": "AceStepPipeline"
+              }
+            },
+            "blockName": null,
+            "decomposition": "loader",
+            "nodeKey": "modules.DiffusersAudio.LoadPipeline",
+            "nodeType": "loader",
+            "operationId": "diffusion.load_models",
+            "pipelineClass": "AceStepPipeline",
+            "ports": [
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "pipeline",
+                "required": false,
+                "roles": [
+                  "pipeline"
+                ],
+                "semanticName": "pipeline",
+                "semantics": {
+                  "kind": "pipeline",
+                  "members": [],
+                  "owner": "same_loader",
+                  "scope": "AceStepPipeline",
+                  "state": null
+                },
+                "types": [
+                  "audio_diffusion_pipeline"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "model_id",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "model_id",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "pipeline_class",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "pipeline_class",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "mode",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "mode",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": true,
+                "name": "audio_contract",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "audio_contract",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "AceStepPipeline",
+                  "state": null
+                },
+                "types": [
+                  "object"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "revision",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "revision",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "dtype",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "dtype",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "device",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "device",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "auto_offload",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "auto_offload",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "bool"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "offload_mode",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "offload_mode",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "execution_recipe",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "execution_recipe",
+                "semantics": {
+                  "kind": "opaque",
+                  "members": [],
+                  "owner": "none",
+                  "scope": "AceStepPipeline",
+                  "state": null
+                },
+                "types": [
+                  "diffusers_execution_recipe"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "enable_vae_tiling",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "enable_vae_tiling",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "bool"
+                ]
+              },
+              {
+                "direction": "input",
+                "hidden": false,
+                "name": "low_cpu_mem_usage",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "low_cpu_mem_usage",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "bool"
+                ]
+              },
+              {
+                "direction": "output",
+                "hidden": false,
+                "name": "resolved_artifact",
+                "required": false,
+                "roles": [
+                  "value"
+                ],
+                "semanticName": "resolved_artifact",
+                "semantics": {
+                  "kind": "value",
+                  "members": [],
+                  "owner": "none",
+                  "scope": null,
+                  "state": null
+                },
+                "types": [
+                  "string"
+                ]
+              }
+            ],
+            "support": "declared",
+            "task": "audio_repaint",
+            "workflowId": null
+          },
+          "retained": [],
+          "schemaVersion": 1
+        },
         "params": {
           "audio_contract": {
             "default": {
+              "actions": {
+                "FuseAdapters": [
+                  "text_to_audio"
+                ],
+                "Generate": [
+                  "text_to_audio"
+                ],
+                "LoadAdapter": [
+                  "text_to_audio"
+                ],
+                "SetAdapters": [
+                  "text_to_audio"
+                ]
+              },
               "fieldParams": {
                 "audio_cover_strength": {
                   "hidden": true
@@ -897,10 +1929,27 @@
               "upstreamTaskType": "text2music",
               "validateRepaintInterval": false
             },
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "hidden": true,
             "label": "Audio Contract",
             "type": "object",
             "value": {
+              "actions": {
+                "FuseAdapters": [
+                  "audio_repaint"
+                ],
+                "Generate": [
+                  "audio_repaint"
+                ],
+                "LoadAdapter": [
+                  "audio_repaint"
+                ],
+                "SetAdapters": [
+                  "audio_repaint"
+                ]
+              },
               "fieldParams": {
                 "audio_cover_strength": {
                   "hidden": true
@@ -991,14 +2040,28 @@
           },
           "auto_offload": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Auto offload",
             "type": "bool",
             "value": true
           },
           "device": {
-            "default": "cpu:0",
+            "default": "cuda:0",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Device",
             "options": [
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "cuda:0",
+                "schemaVersion": 1,
+                "value": "cuda:0"
+              },
               {
                 "availability": "installed",
                 "compatibility": "compatible",
@@ -1021,6 +2084,9 @@
           },
           "dtype": {
             "default": "bfloat16",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "DType",
             "options": [
               {
@@ -1032,10 +2098,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -1054,47 +2119,88 @@
           },
           "enable_vae_tiling": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "VAE tiling",
-            "type": "bool"
+            "type": "bool",
+            "value": true
           },
           "execution_recipe": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Execution Recipe",
+            "required": false,
             "type": "diffusers_execution_recipe"
           },
           "low_cpu_mem_usage": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Low CPU memory",
-            "type": "bool"
+            "type": "bool",
+            "value": true
           },
           "mode": {
             "default": "text_to_audio",
-            "disabled": false,
             "fieldOptions": {
-              "noValidation": true
+              "noValidation": true,
+              "suppressInitialFieldAction": true
             },
             "label": "Mode",
+            "onChange": "update_audio_contract",
             "options": [
-              "text_to_audio",
-              "audio_variation",
-              "audio_continuation",
-              "audio_repaint"
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "text_to_audio",
+                "schemaVersion": 1,
+                "value": "text_to_audio"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "audio_variation",
+                "schemaVersion": 1,
+                "value": "audio_variation"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "audio_continuation",
+                "schemaVersion": 1,
+                "value": "audio_continuation"
+              },
+              {
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
+                "label": "audio_repaint",
+                "schemaVersion": 1,
+                "value": "audio_repaint"
+              }
             ],
             "type": "string",
             "value": "audio_repaint"
           },
           "model_id": {
-            "disabled": false,
             "display": "modelselect",
             "fieldOptions": {
               "noValidation": true,
               "sources": [
                 "hub",
                 "local"
-              ]
+              ],
+              "suppressInitialFieldAction": true
             },
             "label": "Model",
+            "onChange": "update_audio_contract",
             "type": "string",
             "value": {
               "source": "hub",
@@ -1103,6 +2209,9 @@
           },
           "offload_mode": {
             "default": "model_cpu",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Offload Mode",
             "options": [
               {
@@ -1158,23 +2267,127 @@
             "value": "model_cpu"
           },
           "pipeline": {
-            "disabled": true,
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Pipeline",
             "signal": {
               "direction": "output",
-              "origin": "audio_contract"
+              "origin": "audio_contract",
+              "value": {
+                "actions": {
+                  "FuseAdapters": [
+                    "audio_repaint"
+                  ],
+                  "Generate": [
+                    "audio_repaint"
+                  ],
+                  "LoadAdapter": [
+                    "audio_repaint"
+                  ],
+                  "SetAdapters": [
+                    "audio_repaint"
+                  ]
+                },
+                "fieldParams": {
+                  "audio_cover_strength": {
+                    "hidden": true
+                  },
+                  "audio_duration": {
+                    "hidden": true,
+                    "max": 240
+                  },
+                  "bpm": {
+                    "hidden": false
+                  },
+                  "extension_duration": {
+                    "hidden": true,
+                    "max": 180
+                  },
+                  "guidance_scale": {
+                    "hidden": false
+                  },
+                  "keyscale": {
+                    "hidden": false
+                  },
+                  "lyrics": {
+                    "hidden": false
+                  },
+                  "negative_prompt": {
+                    "hidden": true
+                  },
+                  "num_inference_steps": {
+                    "hidden": false
+                  },
+                  "num_waveforms": {
+                    "hidden": true
+                  },
+                  "reference_audio": {
+                    "hidden": true,
+                    "required": false
+                  },
+                  "repainting_end": {
+                    "hidden": false
+                  },
+                  "repainting_start": {
+                    "hidden": false
+                  },
+                  "return_continuation_tail": {
+                    "hidden": true
+                  },
+                  "shift": {
+                    "hidden": false
+                  },
+                  "source_audio": {
+                    "hidden": false,
+                    "required": true
+                  },
+                  "stable_audio_guidance": {
+                    "hidden": true
+                  },
+                  "stable_audio_steps": {
+                    "hidden": true
+                  },
+                  "task_type": {
+                    "default": "repaint",
+                    "options": [
+                      "repaint"
+                    ],
+                    "value": "repaint"
+                  },
+                  "timesignature": {
+                    "hidden": false
+                  },
+                  "vocal_language": {
+                    "hidden": false
+                  }
+                },
+                "library": "diffusers",
+                "maxDurationSeconds": 240,
+                "maxExtensionSeconds": null,
+                "mediaKind": "audio",
+                "mode": "audio_repaint",
+                "pipelineClass": "AceStepPipeline",
+                "referenceAudio": "forbidden",
+                "repository": "ACE-Step/acestep-v15-xl-turbo-diffusers",
+                "schemaVersion": 1,
+                "sourceAudio": "required",
+                "taskType": "repaint",
+                "upstreamTaskType": "repaint",
+                "validateRepaintInterval": true
+              }
             },
             "type": "audio_diffusion_pipeline"
           },
           "pipeline_class": {
             "default": "AceStepPipeline",
-            "disabled": false,
             "fieldOptions": {
-              "noValidation": true
+              "noValidation": true,
+              "suppressInitialFieldAction": true
             },
             "label": "Pipeline Class",
+            "onChange": "update_audio_contract",
             "options": [
               {
                 "availability": "installed",
@@ -1214,12 +2427,17 @@
           },
           "resolved_artifact": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Resolved Artifact",
             "type": "string"
           },
           "revision": {
             "default": "",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Revision",
             "type": "string",
             "value": "200ba991ae448051e14b0183157e35c2d27c9fb0"
@@ -1227,7 +2445,6 @@
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "audioPipeline",
         "style": {},
         "time": [
@@ -1235,8 +2452,7 @@
           0,
           0
         ],
-        "type": "custom",
-        "uiState": {}
+        "type": "custom"
       },
       "id": "node-03",
       "position": {
@@ -1261,6 +2477,9 @@
         "params": {
           "backend": {
             "default": "none",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Backend",
             "options": [
               {
@@ -1274,7 +2493,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "disabledReason": "bitsandbytes detected on NVIDIA CUDA",
                 "installationState": "unavailable",
                 "label": "bnb_4bit",
                 "schemaVersion": 1,
@@ -1283,7 +2502,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "MoDiff has not qualified this backend on the active platform",
+                "disabledReason": "bitsandbytes detected on NVIDIA CUDA",
                 "installationState": "unavailable",
                 "label": "bnb_8bit",
                 "schemaVersion": 1,
@@ -1310,7 +2529,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires TorchAO and a qualified NVIDIA compute capability of at least 8.9",
+                "disabledReason": "TorchAO detected on an FP8-capable NVIDIA device",
                 "installationState": "unavailable",
                 "label": "torchao_float8",
                 "schemaVersion": 1,
@@ -1332,8 +2551,12 @@
           "component_overrides": {
             "default": "{}",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Per-component Overrides (JSON)",
-            "type": "text"
+            "type": "text",
+            "value": "{}"
           },
           "components": {
             "default": [
@@ -1341,7 +2564,8 @@
             ],
             "display": "select",
             "fieldOptions": {
-              "multiple": true
+              "multiple": true,
+              "suppressInitialFieldAction": true
             },
             "label": "Components",
             "options": [
@@ -1393,6 +2617,9 @@
           },
           "dtype": {
             "default": "bfloat16",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compute DType",
             "options": [
               {
@@ -1404,10 +2631,9 @@
                 "value": "float32"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "float16 is not supported by the active runtime.",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "float16",
                 "schemaVersion": 1,
                 "value": "float16"
@@ -1428,25 +2654,32 @@
             "default": "",
             "description": "Comma-separated module paths or patterns to keep in their original precision.",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Preserve Modules",
-            "type": "text"
+            "type": "text",
+            "value": ""
           },
           "quantization_config": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Quant Config",
             "type": "quantization_config"
           },
           "summary": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Summary",
             "type": "string"
           }
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "diffusersQuantization",
         "style": {},
         "time": [
@@ -1479,6 +2712,9 @@
         "params": {
           "attention_backend": {
             "default": "auto",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Attention Backend",
             "options": [
               {
@@ -1500,17 +2736,16 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "disabledReason": "Native flash SDPA is unavailable in this Torch build. Select auto attention.",
                 "installationState": "unavailable",
                 "label": "_native_flash",
                 "schemaVersion": 1,
                 "value": "_native_flash"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_native_efficient",
                 "schemaVersion": 1,
                 "value": "_native_efficient"
@@ -1524,10 +2759,9 @@
                 "value": "_native_math"
               },
               {
-                "availability": "unavailable",
-                "compatibility": "incompatible",
-                "disabledReason": "Requires NVIDIA CUDA",
-                "installationState": "unavailable",
+                "availability": "installed",
+                "compatibility": "compatible",
+                "installationState": "installed",
                 "label": "_native_cudnn",
                 "schemaVersion": 1,
                 "value": "_native_cudnn"
@@ -1535,7 +2769,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a PyTorch accelerator build with FlexAttention",
+                "disabledReason": "Requires a successful compiled FlexAttention probe on this accelerator",
                 "installationState": "unavailable",
                 "label": "flex",
                 "schemaVersion": 1,
@@ -1544,7 +2778,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "disabledReason": "flash-attn package is not installed",
                 "installationState": "unavailable",
                 "label": "flash",
                 "schemaVersion": 1,
@@ -1625,7 +2859,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "Requires a CUDA/ROCm torch backend",
+                "disabledReason": "SageAttention package is not installed",
                 "installationState": "unavailable",
                 "label": "sage",
                 "schemaVersion": 1,
@@ -1652,7 +2886,7 @@
               {
                 "availability": "unavailable",
                 "compatibility": "incompatible",
-                "disabledReason": "MoDiff only enables xFormers on NVIDIA CUDA",
+                "disabledReason": "xFormers package is not installed",
                 "installationState": "unavailable",
                 "label": "xformers",
                 "schemaVersion": 1,
@@ -1660,10 +2894,13 @@
               }
             ],
             "type": "string",
-            "value": "auto"
+            "value": "_native_math"
           },
           "attention_components": {
             "default": "",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Attention Components",
             "type": "string",
             "value": ""
@@ -1671,48 +2908,82 @@
           "cache_options": {
             "default": "{}",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Cache Options (JSON)",
-            "type": "text"
+            "type": "text",
+            "value": "{}"
           },
           "cache_threshold": {
             "default": 0.05,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Cache Threshold",
             "min": 0,
-            "type": "float"
+            "type": "float",
+            "value": 0.05
           },
           "channels_last": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Channels Last",
             "type": "bool",
             "value": false
           },
           "channels_last_components": {
             "default": "unet,vae",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Channels Last Components",
-            "type": "string"
+            "type": "string",
+            "value": "unet,vae"
           },
           "compile_backend": {
             "default": "inductor",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Backend",
-            "type": "string"
+            "type": "string",
+            "value": "inductor"
           },
           "compile_components": {
             "default": "transformer",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Components",
-            "type": "string"
+            "type": "string",
+            "value": "transformer"
           },
           "compile_dynamic": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Dynamic Shapes",
-            "type": "bool"
+            "type": "bool",
+            "value": false
           },
           "compile_fullgraph": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Full Graph",
-            "type": "bool"
+            "type": "bool",
+            "value": false
           },
           "compile_mode": {
             "default": "default",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Compile Mode",
             "options": [
               {
@@ -1740,10 +3011,14 @@
                 "value": "max-autotune"
               }
             ],
-            "type": "string"
+            "type": "string",
+            "value": "default"
           },
           "denoiser_cache": {
             "default": "none",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Denoiser Cache",
             "options": [
               {
@@ -1808,12 +3083,18 @@
           },
           "device": {
             "default": "cuda:0",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Execution Device",
             "type": "string",
             "value": "cuda:0"
           },
           "device_map": {
             "default": "none",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Device Placement",
             "options": [
               {
@@ -1880,28 +3161,44 @@
             "default": "{}",
             "description": "Used only with manual placement, for example {\"transformer\": 0, \"text_encoder_2\": \"cpu\"}.",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Manual Device Map (JSON)",
-            "type": "text"
+            "type": "text",
+            "value": "{}"
           },
           "execution_recipe": {
             "display": "output",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Execution Recipe",
             "type": "diffusers_execution_recipe"
           },
           "layerwise_casting": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Layerwise Casting",
             "type": "bool",
             "value": false
           },
           "layerwise_casting_components": {
             "default": "transformer",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Layerwise Casting Components",
-            "type": "string"
+            "type": "string",
+            "value": "transformer"
           },
           "layerwise_compute_dtype": {
             "default": "bfloat16",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Layerwise Compute DType",
             "options": [
               {
@@ -1929,10 +3226,14 @@
                 "value": "float32"
               }
             ],
-            "type": "string"
+            "type": "string",
+            "value": "bfloat16"
           },
           "layerwise_storage_dtype": {
             "default": "float8_e4m3fn",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Layerwise Storage DType",
             "options": [
               {
@@ -1952,17 +3253,25 @@
                 "value": "float8_e5m2"
               }
             ],
-            "type": "string"
+            "type": "string",
+            "value": "float8_e4m3fn"
           },
           "max_memory": {
             "default": "{}",
             "description": "Optional device limits, for example {\"0\": \"16GiB\", \"cpu\": \"48GiB\"}.",
             "display": "textarea",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Max Memory (JSON)",
-            "type": "text"
+            "type": "text",
+            "value": "{}"
           },
           "offload_mode": {
             "default": "none",
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Runtime Offload",
             "options": [
               {
@@ -2011,30 +3320,43 @@
           },
           "quantization_config": {
             "display": "input",
-            "isConnected": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Quant Config",
             "type": "quantization_config"
           },
           "regional_compile": {
             "default": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Regional Compile",
             "type": "bool",
             "value": false
           },
           "summary": {
             "display": "output",
-            "isConnected": false,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "Summary",
             "type": "string"
           },
           "vae_slicing": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "VAE Slicing",
             "type": "bool",
             "value": true
           },
           "vae_tiling": {
             "default": true,
+            "fieldOptions": {
+              "suppressInitialFieldAction": true
+            },
             "label": "VAE Tiling",
             "type": "bool",
             "value": true
@@ -2042,7 +3364,6 @@
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "diffusersRecipe",
         "style": {},
         "time": [
@@ -2123,7 +3444,6 @@
         },
         "resizable": true,
         "skipParamsCheck": false,
-        "studioOwned": true,
         "studioRole": "loadAudio",
         "style": {},
         "time": [

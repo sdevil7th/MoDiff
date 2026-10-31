@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "recipes": [
+    {
+      "id": "Flux3DistilledModularPipeline:fp8r:v1",
+      "status": "contract_only",
+      "modelType": "Flux3DistilledModularPipeline",
+      "repository": "black-forest-labs/flux-3-image-klein",
+      "revision": "8454017f9ebaada30c998fccd9f67a80c7580f68",
+      "weightFormat": "fp8r",
+      "scheme": "fp8r",
+      "loaderLibrary": "diffusers",
+      "loaderClass": "Flux3Transformer2DModel",
+      "weight": {
+        "path": "variants/fp8r/model.safetensors",
+        "byteSize": 6270949144,
+        "sha256": "30054053f630725b488aead9a81b422793cee18027856a16bd17b902ad612018"
+      },
+      "config": {
+        "path": "transformer/config.json",
+        "byteSize": 436,
+        "sha256": "e748b382508f3171d1f4039688b23d1f809aebe4507b3ed5a29bca01b4b58877"
+      },
+      "downloadFiles": [
+        "LICENSE.md",
+        "NOTICE.md",
+        "modular_model_index.json",
+        "text_encoder/LICENSE",
+        "text_encoder/chat_template.json",
+        "text_encoder/config.json",
+        "text_encoder/generation_config.json",
+        "text_encoder/merges.txt",
+        "text_encoder/model-00001-of-00002.safetensors",
+        "text_encoder/model-00002-of-00002.safetensors",
+        "text_encoder/model.safetensors.index.json",
+        "text_encoder/preprocessor_config.json",
+        "text_encoder/tokenizer.json",
+        "text_encoder/tokenizer_config.json",
+        "text_encoder/video_preprocessor_config.json",
+        "text_encoder/vocab.json",
+        "transformer/config.json",
+        "vae/config.json",
+        "vae/diffusion_pytorch_model.safetensors",
+        "variants/fp8r/model.safetensors"
+      ]
+    },
+    {
+      "id": "Flux3DistilledModularPipeline:nvfp4:v1",
+      "status": "contract_only",
+      "modelType": "Flux3DistilledModularPipeline",
+      "repository": "black-forest-labs/flux-3-image-klein",
+      "revision": "8454017f9ebaada30c998fccd9f67a80c7580f68",
+      "weightFormat": "nvfp4",
+      "scheme": "nvfp4",
+      "loaderLibrary": "diffusers",
+      "loaderClass": "Flux3Transformer2DModel",
+      "weight": {
+        "path": "variants/nvfp4/model.safetensors",
+        "byteSize": 5277674144,
+        "sha256": "30b110b0675249cf0461247b4613240312c8064ccc4ef486f4d025c9ff65fb83"
+      },
+      "config": {
+        "path": "transformer/config.json",
+        "byteSize": 436,
+        "sha256": "e748b382508f3171d1f4039688b23d1f809aebe4507b3ed5a29bca01b4b58877"
+      },
+      "downloadFiles": [
+        "LICENSE.md",
+        "NOTICE.md",
+        "modular_model_index.json",
+        "text_encoder/LICENSE",
+        "text_encoder/chat_template.json",
+        "text_encoder/config.json",
+        "text_encoder/generation_config.json",
+        "text_encoder/merges.txt",
+        "text_encoder/model-00001-of-00002.safetensors",
+        "text_encoder/model-00002-of-00002.safetensors",
+        "text_encoder/model.safetensors.index.json",
+        "text_encoder/preprocessor_config.json",
+        "text_encoder/tokenizer.json",
+        "text_encoder/tokenizer_config.json",
+        "text_encoder/video_preprocessor_config.json",
+        "text_encoder/vocab.json",
+        "transformer/config.json",
+        "vae/config.json",
+        "vae/diffusion_pytorch_model.safetensors",
+        "variants/nvfp4/model.safetensors"
+      ]
+    },
+    {
+      "id": "Flux3ModularPipeline:fp8r:v1",
+      "status": "contract_only",
+      "modelType": "Flux3ModularPipeline",
+      "repository": "black-forest-labs/flux-3-image-klein-base",
+      "revision": "1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4",
+      "weightFormat": "fp8r",
+      "scheme": "fp8r",
+      "loaderLibrary": "diffusers",
+      "loaderClass": "Flux3Transformer2DModel",
+      "weight": {
+        "path": "variants/fp8r/model.safetensors",
+        "byteSize": 6250501712,
+        "sha256": "60de5b577f26b6bc3cf4823c180406f888416caec9474265c82d71cc4b515241"
+      },
+      "config": {
+        "path": "transformer/config.json",
+        "byteSize": 416,
+        "sha256": "bdebcf6b591b456742fe579f65978fd7bcffa459ef003ad668edac393d37e7b5"
+      },
+      "downloadFiles": [
+        "LICENSE.md",
+        "NOTICE.md",
+        "modular_model_index.json",
+        "text_encoder/LICENSE",
+        "text_encoder/chat_template.json",
+        "text_encoder/config.json",
+        "text_encoder/generation_config.json",
+        "text_encoder/merges.txt",
+        "text_encoder/model-00001-of-00002.safetensors",
+        "text_encoder/model-00002-of-00002.safetensors",
+        "text_encoder/model.safetensors.index.json",
+        "text_encoder/preprocessor_config.json",
+        "text_encoder/tokenizer.json",
+        "text_encoder/tokenizer_config.json",
+        "text_encoder/video_preprocessor_config.json",
+        "text_encoder/vocab.json",
+        "transformer/config.json",
+        "vae/config.json",
+        "vae/diffusion_pytorch_model.safetensors",
+        "variants/fp8r/model.safetensors"
+      ]
+    },
+    {
+      "id": "Flux3ModularPipeline:nvfp4:v1",
+      "status": "contract_only",
+      "modelType": "Flux3ModularPipeline",
+      "repository": "black-forest-labs/flux-3-image-klein-base",
+      "revision": "1469d27cfb9bb1bd81d3a93f5a023b39dbf136e4",
+      "weightFormat": "nvfp4",
+      "scheme": "nvfp4",
+      "loaderLibrary": "diffusers",
+      "loaderClass": "Flux3Transformer2DModel",
+      "weight": {
+        "path": "variants/nvfp4/model.safetensors",
+        "byteSize": 5257226696,
+        "sha256": "fa3341c15644cbcbae9416c40349b82d8dc20bdd9224a64f4d63818b1116df3e"
+      },
+      "config": {
+        "path": "transformer/config.json",
+        "byteSize": 416,
+        "sha256": "bdebcf6b591b456742fe579f65978fd7bcffa459ef003ad668edac393d37e7b5"
+      },
+      "downloadFiles": [
+        "LICENSE.md",
+        "NOTICE.md",
+        "modular_model_index.json",
+        "text_encoder/LICENSE",
+        "text_encoder/chat_template.json",
+        "text_encoder/config.json",
+        "text_encoder/generation_config.json",
+        "text_encoder/merges.txt",
+        "text_encoder/model-00001-of-00002.safetensors",
+        "text_encoder/model-00002-of-00002.safetensors",
+        "text_encoder/model.safetensors.index.json",
+        "text_encoder/preprocessor_config.json",
+        "text_encoder/tokenizer.json",
+        "text_encoder/tokenizer_config.json",
+        "text_encoder/video_preprocessor_config.json",
+        "text_encoder/vocab.json",
+        "transformer/config.json",
+        "vae/config.json",
+        "vae/diffusion_pytorch_model.safetensors",
+        "variants/nvfp4/model.safetensors"
+      ]
+    }
+  ]
+}
