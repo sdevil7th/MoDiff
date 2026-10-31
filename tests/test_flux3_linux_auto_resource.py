@@ -4,9 +4,11 @@ from copy import deepcopy
 import pytest
 
 from modiff import flux3_auto_resource as resources
-from test_flux3_auto_resource import PROFILES, flux_graph
+from test_flux3_auto_resource import PROFILES, actual_plan as shared_actual_plan, flux_graph
 
-pytest_plugins = ['test_flux3_auto_resource']
+# Register locally even when pytest collected the defining test module first.
+# Loading that module as a plugin only worked for isolated-file invocations.
+actual_plan = shared_actual_plan
 
 
 GIB = 1024**3
