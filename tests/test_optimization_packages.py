@@ -19,7 +19,9 @@ class OptimizationPackageTests(unittest.TestCase):
 
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
-        root = Path(self.temporary.name)
+        # macOS /var and Windows short-name TEMP paths can be aliases. The
+        # mocked package root must match the canonical paths used in production.
+        root = Path(self.temporary.name).resolve(strict=True)
         self.path_patchers = [
             mock.patch.object(optimizations, "OPTIMIZATION_ROOT", root),
             mock.patch.object(optimizations, "ENVIRONMENTS_DIR", root / "environments"),
@@ -207,6 +209,25 @@ class OptimizationPackageTests(unittest.TestCase):
                 self.assertEqual(item["delivery"], "optional_overlay")
                 self.assertFalse(item["enabled"])
                 self.assertIsNone(item["disabledReason"])
+
+    def test_bitsandbytes_fixture_canonicalizes_aliased_temporary_roots(self):
+        target = optimizations.OPTIMIZATION_ROOT / "canonical-temp"
+        target.mkdir()
+        alias = optimizations.OPTIMIZATION_ROOT / "temporary-alias"
+        try:
+            alias.symlink_to(target, target_is_directory=True)
+        except (OSError, NotImplementedError) as error:
+            self.skipTest(f"Directory links are unavailable: {error}")
+        temporary_directory = tempfile.TemporaryDirectory
+        nested = OptimizationPackageTests()
+        with mock.patch.object(tempfile, "TemporaryDirectory", side_effect=lambda: temporary_directory(dir=alias)):
+            nested.setUp()
+        try:
+            self.assertEqual(optimizations.MANAGED_ROOT, optimizations.MANAGED_ROOT.resolve(strict=True))
+            item = nested.bitsandbytes_overlay_catalog(DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID)
+            self.assertTrue(item["deliveryQualified"])
+        finally:
+            nested.tearDown()
 
     def test_bitsandbytes_composite_does_not_bypass_current_delivery_guards(self):
         def set_path(path, value):

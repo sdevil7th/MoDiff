@@ -1,6 +1,7 @@
 """Run public installer bootstraps without downloads or application execution."""
 import os
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import sys
@@ -51,7 +52,8 @@ def _launcher_fixture(tmp_path, *, python=True, path_uv=True, version="uv 0.12.2
             pytest.skip("Bash is unavailable")
         dirname = shutil.which("dirname")
         assert dirname, "The public Bash launcher needs the ordinary dirname utility"
-        shutil.copy2(dirname, root / "dirname")
+        # Keep PATH isolated without copying macOS system protection flags.
+        _write_command(root / "dirname", f'#!/bin/sh\nexec {shlex.quote(dirname)} "$@"\n')
         shutil.copyfile(ROOT / "install.sh", root / "install.sh")
         command = [shell, str(root / "install.sh"), "--backend-only", "--non-interactive"]
         if python:
@@ -65,6 +67,18 @@ def _launcher_fixture(tmp_path, *, python=True, path_uv=True, version="uv 0.12.2
 def _run_fixture(root, command, environment):
     return subprocess.run(command, cwd=root.parent, env=environment,
                           capture_output=True, text=True, timeout=30)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Exercises the POSIX launcher fixture")
+def test_posix_launcher_does_not_copy_protected_system_command_flags(tmp_path, monkeypatch):
+    def reject_metadata_copy(*_args, **_kwargs):
+        raise PermissionError("The system utility's protection flags cannot be copied")
+
+    monkeypatch.setattr(shutil, "copy2", reject_metadata_copy)
+    root, command, environment = _launcher_fixture(tmp_path)
+    result = _run_fixture(root, command, environment)
+    assert result.returncode == 0, result.stderr
+    assert "UV_BOOTSTRAP" in result.stdout
 
 
 def _assert_diagnostic(result, expected):
