@@ -153,8 +153,9 @@
         "Milestone 2 private package/source/attachment checks; not native model evidence"
       ],
       "openIssues": [
-        "61 selected H3 files (144051157679 bytes) fully downloaded and hash-verified; user released Linux GPU.",
-        "No pretrained H3 loading or media output yet; resource admission and bounded native tests remain open."
+        "61 selected H3 files (144051157679 bytes) fully downloaded and hash-verified.",
+        "Native Group Disk loaded selected components within the RAM reserve, then Model Setup failed on an empty optional-adapter list; the narrow loader regression now passes.",
+        "Earlier setup/monitor cancellations are preserved. Successful complete setup, generated video/audio and lifecycle acceptance remain open."
       ]
     },
     {
@@ -171,9 +172,8 @@
         "Milestone 2 private package/source/attachment checks; not native model evidence"
       ],
       "openIssues": [
-        "Required Pika task adapter integration, loading registration and actual tiny official-API tests implemented.",
-        "Ownership review found borrowed-component mutation risk; regression guards added before first native loading.",
-        "Published adapter download, public hierarchy/catalog integration and native acceptance remain open."
+        "Required Pika adapter, exclusive ownership/reuse guards and loading registration implemented; 38 actual-library tiny checks passed on Linux.",
+        "35 selected Pika t2va files (146806845173 bytes) downloading. Published-weight execution, public hierarchy/catalog linking and native acceptance remain open."
       ]
     },
     {
@@ -191,8 +191,9 @@
         "Milestone 2 private package/source/attachment checks; not native model evidence"
       ],
       "openIssues": [
-        "H3 selected-artifact receipt completed with full hashes; storage reserve remains separate from memory admission.",
-        "Pika separate selection has not downloaded; no shard deduplication or model-fit assumption."
+        "H3 complete full-hash receipt retained. Pika finite selected download admitted with operating/staging/offload reserves.",
+        "Scratch estimate raised to 175 GB for float32 VAE expansion before loading. Normal cleanup recovered owned partial offload files with private saved data exact.",
+        "No model-cache deduplication or universal fit claim."
       ]
     },
     {
@@ -243,8 +244,9 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "Complete client npm run check passed with the explicit compatible backend CPU interpreter.",
-        "Current backend full gate, paired bundle deployment and final browser/native checks remain open."
+        "Complete client check passed. Backend baseline: 8758 passed, 755 skipped, 13085 subtests; four failures were stale image-catalog fingerprint assertions.",
+        "Fingerprint refresh changed only catalog/content hashes, no semantic image rows or qualification. Loader/export/readiness focused checks: 120 passed.",
+        "Final complete backend gate, protected paired deployment and final browser/native acceptance remain open."
       ]
     },
     {

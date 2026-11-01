@@ -13,16 +13,25 @@ signoff remain open; the original planning baseline below is historical.
 
 The next slice is in progress. The exact newer Diffusers provider has passed
 isolated package/API qualification on Linux; this does not establish H3 model
-fit or output quality. MiniMax's selected text-to-video/audio artifact is
-downloading. H3 float32 VAE loading and selected-component offload coverage are
-implemented. Image/video attachment in the shared stage editor now has focused
-unit and browser coverage. These changes are published in the same PRs but are
-not yet deployed into the first-milestone app. The required Pika adapter now
+fit or output quality. All 61 selected MiniMax text-to-video/audio files have
+completed full hash verification. A bounded native Group Disk attempt loaded
+the selected components, then exposed an empty-adapter-list dispatch defect;
+the fix and its tiny-loader regression now pass. Earlier cancelled setup and
+monitor diagnostics remain preserved. There is no H3 generated-media PASS.
+H3 float32 VAE loading and selected-component offload coverage are implemented.
+Image/video attachment and captured-model download names have focused browser
+coverage, and the complete client check passed. Video/audio export now protects
+borrowed inputs and prior completed files using owned temporary intermediates.
+These changes are published in the same PRs but are not yet deployed into the
+first-milestone app. The required Pika adapter now
 has source-bound loading, cache and downstream guards; both transformer routes
 passed actual-library checks with tiny generated PEFT fixtures. Its fixed
 sampler remains package-owned. Final catalog/starter linking, pretrained
-execution, resource admission and clip acceptance remain open. Tiny fixtures
-do not qualify the published model or adapter weights.
+execution, resource admission and clip acceptance remain open. Its 35-file
+task-selected download is in progress. Tiny fixtures do not qualify the
+published model or adapter weights. The current backend gate found a stale
+image-catalog fingerprint; its refresh preserves all semantic image rows and
+the affected focused tests pass. The final complete gate remains required.
 
 ## Decisions carried forward from the conversation
 
