@@ -63,6 +63,21 @@ def test_undeclared_group_offload_never_overrides_the_library_optout(tmp_path, m
     assert not (tmp_path / 'data/offload').exists()
 
 
+def test_offload_preflight_uses_the_actual_load_spec_map_without_an_extra_accessor():
+    from unittest.mock import Mock
+    from modules.ModularDiffusers.loaders import load_components_strict
+    load = Mock(side_effect=AssertionError('Weights must not load before the library opt-out check'))
+    pipeline = SimpleNamespace(_component_specs={
+        'audio_vae': SimpleNamespace(type_hint=OptOutAudio, load=load),
+    })
+    with pytest.raises(RuntimeError, match='does not support group offloading'):
+        load_components_strict(pipeline, names=['audio_vae'], required_names=['audio_vae'],
+            model_id='test/unsupported', dtype=torch.float32, offload_mode='group_disk',
+            quant_config=None, diagnostics={}, component_load_kwargs={},
+            incremental_group_offload={'mode': 'group_disk'})
+    load.assert_not_called()
+
+
 def test_actual_reviewed_audio_vae_preserves_direct_decode_without_group_hooks(tmp_path, monkeypatch):
     from modiff.runtime_overlays import active_diffusers_provider
     provider = active_diffusers_provider()

@@ -1711,7 +1711,7 @@ def load_components_strict(
         resident = set(incremental_group_offload.get('resident_components', ()))
         for name in names:
             if name in GROUP_OFFLOAD_COMPONENTS and name in pipeline._component_specs and name not in resident:
-                declared_type = getattr(pipeline.get_component_spec(name), 'type_hint', None)
+                declared_type = getattr(pipeline._component_specs[name], 'type_hint', None)
                 if getattr(declared_type, '_supports_group_offloading', True) is False:
                     raise RuntimeError(f'{name} does not support group offloading in its official library. '
                                        'Choose a reviewed component placement before loading weights.')
