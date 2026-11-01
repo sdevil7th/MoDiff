@@ -18986,6 +18986,16 @@ def resolve_studio_operation_authoring_recipe(
     if not isinstance(identity, str) or not identity or identity != identity.strip() or len(identity) > 128:
         raise ValueError("Select an exact reviewed authoring recipe.")
     definition = _OPERATION_AUTHORING_RECIPES.get(identity)
+    if identity == 'generic-video-stages:v1':
+        from modiff.video_stage_contract import PROFILE_CLASSES
+        candidates = [(spec_id, candidate) for spec_id, candidate in STUDIO_EXECUTION_SPEC_DEFINITIONS.items()
+            if candidate['profile']['id'] == selection.get('executionProfileId')
+            and PROFILE_CLASSES.get(candidate['profile']['id']) == selection.get('pipelineClass')
+            and candidate['mode'] == selection.get('task')]
+        if len(candidates) != 1:
+            raise ValueError('The video authoring recipe requires one exact declared source specification.')
+        definition = {'specId': candidates[0][0], 'task': selection['task'],
+                      'profileId': selection['executionProfileId'], 'initialValues': ()}
     if identity == "generic-native-image:v1":
         # Fresh image templates share this projection. Resolve only existing
         # exact specifications; do not guess a route from a class-name family.
@@ -19020,6 +19030,9 @@ def resolve_studio_operation_authoring_recipe(
     if definition is None:
         raise ValueError("The authoring recipe is not reviewed.")
     spec = _public_spec(definition["specId"], STUDIO_EXECUTION_SPEC_DEFINITIONS[definition["specId"]])
+    if identity == 'generic-video-stages:v1':
+        from modiff.video_stage_contract import video_stage_spec
+        spec = video_stage_spec(spec)
     if (selection.get("pipelineClass") != spec["pipelineClass"]
             or selection.get("task") != definition["task"]
             or selection.get("executionProfileId") != definition["profileId"]):
@@ -19131,7 +19144,7 @@ def resolve_studio_operation_authoring_recipe(
             raise ValueError("The authoring recipe form binding cannot replace an owned identity.")
         source_type = _AUTHORING_SCALAR_SOURCE_TYPES.get(source)
         if source_type is not None and not _block_value_types_are_compatible_v2(source_type, param.get("type")):
-            raise ValueError("The authoring recipe has an incompatible scalar form binding.")
+            raise ValueError(f"The authoring recipe has an incompatible scalar form binding: {role}.{field} ({source}).")
         seen.add((role, field))
     initial_targets = set()
     identity_fields = set(_AUTHORING_IDENTITY_BINDING_SOURCES)

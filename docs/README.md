@@ -4,6 +4,9 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 
 ## Read By Goal
 
+[Video pipeline stages](video-pipeline-stages.md) describes the shared selected
+LTX/Wan stages, retained template finishing steps and native proof boundaries.
+
 | Goal                                                                     | Guide                                                                                       |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
 | Install, verify, run a first workflow, configure, or update MoDiff       | [Project README](../README.md) and [`config.example.ini`](../config.example.ini)            |

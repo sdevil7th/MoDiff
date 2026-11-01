@@ -1,0 +1,254 @@
+"""No-weight dispatch, ownership and official split-video contracts."""
+from types import SimpleNamespace
+from unittest.mock import patch
+
+from PIL import Image
+import pytest
+import torch
+
+from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+from modiff.model_artifact_catalog import require_catalog_revision
+from modules.DiffusersVideo import stage_execution as core
+from modules.DiffusersVideo.stage_nodes import EncodeInputs, Denoise, DecodeLatents
+
+
+class Tokenizer:
+    def __call__(self, *args, **kwargs):
+        return {'input_ids': [1, 2]}
+
+
+class VAE(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.register_parameter('weight', torch.nn.Parameter(torch.ones(1)))
+        self.config = SimpleNamespace(latents_mean=[2.], latents_std=[3.], z_dim=1,
+                                      scaling_factor=1., timestep_conditioning=True)
+        self.latents_mean, self.latents_std = torch.tensor([2.]), torch.tensor([3.])
+        self.last = None
+
+    @property
+    def dtype(self):
+        return self.weight.dtype
+
+    def decode(self, value, *args, **kwargs):
+        assert not torch.is_grad_enabled(), 'separate decode must retain official inference mode'
+        self.last = value.clone()
+        return (value,)
+
+
+class Scheduler:
+    config = {}
+
+
+class Pipeline:
+    def __init__(self, identity):
+        self.identity = identity
+        self.text_encoder = torch.nn.Linear(1, 1)
+        self.tokenizer = Tokenizer()
+        self.transformer = torch.nn.Linear(1, 1)
+        self.scheduler = Scheduler()
+        self.vae = VAE()
+        self._execution_device = 'cpu'
+        profile = DIFFUSERS_EXECUTION_PROFILES[identity]
+        self._modiff_video_pipeline_class = profile.pipeline_class
+        self._modiff_video_repo = profile.default_repo
+        self._modiff_video_revision = require_catalog_revision(profile.default_repo)
+        self.calls = 0
+        self.video_processor = SimpleNamespace(postprocess_video=lambda *args, **kwargs: [[Image.new('RGB', (32, 32)) for _ in range(9)]])
+
+    def encode_prompt(self, **kwargs):
+        assert not torch.is_grad_enabled(), 'separate encoding must retain official inference mode'
+        self.calls += 1
+        out = (torch.ones(1, 4, 2), torch.ones(1, 4, 2) if kwargs['do_classifier_free_guidance'] else None)
+        if self.identity.startswith('ltx'):
+            return out[0], torch.ones(1, 4), out[1], torch.ones(1, 4) if out[1] is not None else None
+        return out
+
+    @staticmethod
+    def _denormalize_latents(value, mean, std, factor):
+        return value * std.view(1, -1, 1, 1, 1) / factor + mean.view(1, -1, 1, 1, 1)
+
+    def maybe_free_model_hooks(self):
+        pass
+
+
+def owner(identity='ltx-video:direct'):
+    pipeline = Pipeline(identity)
+    values = {'execution_profile_id': identity, 'pipeline_class': pipeline._modiff_video_pipeline_class,
+              'model_id': {'source': 'hub', 'value': pipeline._modiff_video_repo},
+              'revision': pipeline._modiff_video_revision,
+              'device': 'cpu', 'dtype': 'bfloat16', 'auto_offload': False, 'offload_mode': 'none'}
+    core.bind_owner(pipeline, values)
+    return pipeline, values
+
+
+def encoded(pipeline, **changes):
+    return core.encode(pipeline, {'mode': 'text_to_video', 'prompt': 'A moving train',
+        'negative_prompt': '', 'guidance_scale': 1., 'max_sequence_length': 128, **changes})
+
+
+@pytest.mark.parametrize('identity', core.PROFILE_CLASSES)
+def test_real_profile_binding_rejects_foreign_mutable_and_advisory_artifacts(identity):
+    pipeline, values = owner(identity)
+    core.require_owner(pipeline)
+    for key, changed in [('revision', 'main'), ('execution_profile_id', ''), ('model_id', {'source': 'local', 'value': 'arbitrary'})]:
+        core.bind_owner(pipeline, {**values, key: changed})
+        with pytest.raises(ValueError, match='ownership'):
+            core.require_owner(pipeline)
+        core.bind_owner(pipeline, values)
+
+
+def test_encoder_node_dispatch_reuses_unchanged_text_and_reencodes_after_adapter_change():
+    pipeline, _ = owner()
+    node = EncodeInputs('video-encoding-unit')
+    args = {'pipeline': pipeline, 'mode': 'text_to_video', 'prompt': 'A moving train',
+            'negative_prompt': '', 'guidance_scale': 1., 'max_sequence_length': 128}
+    first = node(**args)['encoded_inputs']
+    assert node(**args)['encoded_inputs'] is first
+    assert pipeline.calls == 1
+    pipeline._modiff_adapter_scales = {'style': .7}
+    second = node(**args)['encoded_inputs']
+    assert second is not first and pipeline.calls == 2
+    with pytest.raises(ValueError, match='recipe or adapters'):
+        core.require_encoding(pipeline, first)
+
+
+def test_encoding_rejects_foreign_owner_replaced_components_and_mutated_embeddings():
+    pipeline, _ = owner()
+    value = encoded(pipeline)
+    other, _ = owner()
+    with pytest.raises(ValueError, match='ownership'):
+        core.require_encoding(other, value)
+    value.embeddings['prompt_embeds'].add_(1)
+    with pytest.raises(ValueError, match='modified'):
+        core.require_encoding(pipeline, value)
+    value = encoded(pipeline)
+    pipeline.scheduler = Scheduler()
+    with pytest.raises(ValueError, match='ownership'):
+        core.require_encoding(pipeline, value)
+
+
+def test_video_input_keeps_full_121_frame_recipe_and_ordered_owned_media():
+    pipeline, _ = owner()
+    frames = [Image.new('RGB', (32, 32), (index, 0, 0)) for index in range(121)]
+    value = encoded(pipeline, mode='video_to_video', video=frames)
+    frozen = [frame for chunk in value.media['video_chunks'] for frame in chunk]
+    assert len(frozen) == 121
+    assert [frame.getpixel((0, 0))[0] for frame in frozen] == list(range(121))
+    frames[0].putpixel((0, 0), (255, 0, 0))
+    assert frozen[0].getpixel((0, 0)) == (0, 0, 0)
+
+
+@pytest.mark.parametrize('identity', core.PROFILE_CLASSES)
+def test_split_decode_uses_official_normalization_and_current_latent(identity):
+    pipeline, _ = owner(identity)
+    encoding = encoded(pipeline)
+    tensor = torch.ones(1, 1, 2, 2, 2)
+    generator = torch.Generator().manual_seed(7)
+    latent = core.issue_latent(pipeline, encoding, tensor, (32, 32, 9), generator)
+    # This is the exact inverse normalization from the pinned LTX and Wan
+    # decoders. LTX's actual default decode timestep is zero, not 0.05.
+    result = core.decode(pipeline, latent)
+    assert torch.equal(pipeline.vae.last, torch.full_like(tensor, 5.))
+    assert len(result['video_out']) == 9
+    with pytest.raises(ValueError, match='modified'):
+        core.require_latent(pipeline, latent, tensor)
+    latent.tensor.add_(1)
+    with pytest.raises(ValueError, match='modified'):
+        core.decode(pipeline, latent)
+
+
+def test_denoise_invokes_existing_sampler_with_real_embeddings_and_fresh_seed():
+    pipeline, _ = owner()
+    value = encoded(pipeline)
+    node = Denoise('video-denoising-unit')
+    seen = []
+    def actual_adapter(pipe, adapter, mode, args):
+        kwargs = {'width': 32, 'height': 32, 'num_frames': 9,
+                  'generator': torch.Generator().manual_seed(args['seed']), 'prompt': None}
+        seen.append(kwargs)
+        return node._invoke_pipeline(pipe, kwargs)
+    def call(**kwargs):
+        assert kwargs['output_type'] == 'latent'
+        assert kwargs['prompt_embeds'] is value.embeddings['prompt_embeds']
+        assert 'prompt_attention_mask' in kwargs
+        return SimpleNamespace(frames=torch.randn((1, 1, 2, 2, 2), generator=kwargs['generator']))
+    from modules.DiffusersVideo.main import get_video_pipeline_adapter
+    adapter = get_video_pipeline_adapter('LTXConditionPipeline')
+    # The existing adapter remains the sampler call owner. These tiny tensors
+    # prove dispatch/cache/RNG behavior, not model output quality.
+    with patch.object(Pipeline, '__call__', lambda self, **kw: call(**kw), create=True), patch(
+        'modules.DiffusersVideo.main._pipeline_adapter', return_value=adapter,
+    ), patch.object(node, '_execute_adapter', side_effect=actual_adapter):
+        args = {'pipeline': pipeline, 'mode': 'text_to_video', 'guidance_scale': 1.,
+                'seed': 7, 'encoded_inputs': value}
+        first = node(**args)
+        node.invalidate_cache()
+        second = node(**args)
+    assert len(seen) == 2
+    assert first['latent_binding'] is not second['latent_binding']
+    assert torch.equal(first['latents_out'], second['latents_out'])
+
+
+def test_decoder_dispatch_rejects_a_fabricated_binding_before_tensor_work():
+    pipeline, _ = owner()
+    with pytest.raises(ValueError, match='genuine'):
+        DecodeLatents('video-decode-unit')(pipeline=pipeline, mode='text_to_video',
+            latents=torch.ones(1), latent_binding={'seed': 7})
+
+
+def test_wan_stage_seals_latents_after_the_existing_adapter_restores_its_scheduler():
+    pipeline, _ = owner('wan-22-ti2v-5b:direct')
+    value = encoded(pipeline)
+    node = Denoise('wan-stage-scheduler-unit')
+    original, temporary = pipeline.scheduler, Scheduler()
+    from modules.DiffusersVideo.main import get_video_pipeline_adapter
+    adapter = get_video_pipeline_adapter('WanTI2VPipeline')
+    def call(pipe, **kwargs):
+        assert pipe.scheduler is temporary
+        return SimpleNamespace(frames=torch.ones(1, 1, 2, 2, 2))
+    with patch.object(Pipeline, '__call__', call, create=True), patch(
+        'modules.DiffusersVideo.main._pipeline_adapter', return_value=adapter,
+    ), patch('diffusers.UniPCMultistepScheduler.from_config', return_value=temporary), patch.object(
+        node, '_execute_adapter', side_effect=lambda p, a, m, v: node._execute_wan_text_to_video(p, a, m, v),
+    ):
+        result = node(pipeline=pipeline, encoded_inputs=value, mode='text_to_video', guidance_scale=1.,
+                      width=32, height=32, num_frames=9, scheduler_flow_shift=5., seed=7)
+    assert pipeline.scheduler is original
+    core.require_latent(pipeline, result['latent_binding'], result['latents_out'])
+    assert node._video_sample is None
+
+
+@pytest.mark.parametrize('identity,task', [
+    ('ltx-video:direct', 'text_to_video'), ('ltx-video:direct', 'image_to_video'),
+    ('ltx-video:direct', 'reference_to_video'), ('ltx-video:direct', 'video_to_video'),
+    ('wan-22-ti2v-5b:direct', 'text_to_video'),
+])
+def test_selected_starter_publishes_real_stage_edges_and_no_extra_whole_consumer(identity, task):
+    from modules import MODULE_MAP
+    from modiff.operation_catalog import build_operation_catalog
+    from modiff.operation_starters import resolve_operation_starter
+    contracts, _ = build_operation_catalog(MODULE_MAP, [], catalog_resolver=lambda: {})
+    profile = DIFFUSERS_EXECUTION_PROFILES[identity]
+    with patch('modiff.NodeBase.NodeBase.__init__', side_effect=AssertionError('constructed')):
+        result = resolve_operation_starter(MODULE_MAP, contracts, {
+            'pipelineClass': profile.pipeline_class, 'task': task, 'executionProfileId': identity,
+            'authoringRecipeId': 'generic-video-stages:v1',
+        })
+    actions = {node['action'] for node in result['nodes']}
+    assert actions == {'LoadPipeline', 'EncodeInputs', 'Denoise', 'DecodeLatents'}
+    assert {'source': 'diffusion.encode_video', 'sourceHandle': 'encoded_inputs',
+            'target': 'diffusion.denoise', 'targetHandle': 'encoded_inputs'} in result['edges']
+    assert {'source': 'diffusion.denoise', 'sourceHandle': 'latent_binding',
+            'target': 'diffusion.decode_latents', 'targetHandle': 'latent_binding'} in result['edges']
+    assert not any(row['field'] in ('encoded_inputs', 'latent_binding', 'latents') for row in result['requiredInputs'])
+    loader = next(node for node in result['nodes'] if node['action'] == 'LoadPipeline')
+    assert loader['values']['revision'] == require_catalog_revision(profile.default_repo)
+    assert result['authoring']['id'] == 'generic-video-stages:v1'
+    assert not any(field == 'mode' for _role, field, _source in result['authoring']['bindings'])
+    for node in result['nodes']:
+        if node['action'] == 'LoadPipeline':
+            continue
+        port = next(port for port in node['operation']['ports'] if port['name'] == 'pipeline')
+        assert port['semantics']['kind'] == 'pipeline'
+        assert port['semantics']['owner'] == 'same_loader'

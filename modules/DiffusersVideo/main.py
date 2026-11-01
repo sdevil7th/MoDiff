@@ -1044,12 +1044,18 @@ def get_video_operation_contracts(modules) -> list[dict]:
             actions = [("LoadPipeline", "diffusion.load_models"), ("Generate", "diffusion.generate_video")]
             if "audio" in adapter.output_media:
                 actions.append(("GenerateVideoAudio", "diffusion.generate_video_audio"))
+            from .stage_execution import PROFILE_CLASSES
+            if pipeline_class in PROFILE_CLASSES.values():
+                actions.extend((('EncodeInputs', 'diffusion.encode_video'),
+                                ('Denoise', 'diffusion.denoise'), ('DecodeLatents', 'diffusion.decode_latents')))
             for action, operation in actions:
                 record = build_pipeline_operation_contract(
                     modules, pipeline_class=pipeline_class, task=mode, operation_id=operation,
                     node_key=f"modules.DiffusersVideo.{action}",
                     field_overrides=fields if action != "LoadPipeline" else None,
                     loader=action == "LoadPipeline",
+                    stage_node_type={'EncodeInputs': 'video_encoder', 'Denoise': 'denoise',
+                                     'DecodeLatents': 'decoder'}.get(action),
                 )
                 if record is not None:
                     result.append(record)
@@ -1066,6 +1072,9 @@ def _adapter_signal(adapter: VideoPipelineAdapter) -> dict[str, Any]:
         actions["GenerateLTX2"] = list(adapter.modes)
     if "text_to_video" in adapter.modes:
         actions["GenerateSequence"] = ["text_to_video"]
+    from .stage_execution import PROFILE_CLASSES
+    if adapter.pipeline_class in PROFILE_CLASSES.values():
+        actions.update({action: list(adapter.modes) for action in ('EncodeInputs', 'Denoise', 'DecodeLatents')})
     return {
         "schemaVersion": 1,
         "library": "diffusers",
@@ -1651,7 +1660,10 @@ class LoadPipeline(WanVACELoadPipeline):
         values.setdefault("ic_lora_id", "")
         values.setdefault("ic_lora_revision", "")
         values.setdefault("ic_lora_weight_name", "")
-        return super().__call__(**values)
+        result = super().__call__(**values)
+        from .stage_execution import bind_owner
+        bind_owner(result['pipeline'], values)
+        return result
 
     def execute(self, **kwargs):
         adapter = get_video_pipeline_adapter(kwargs.get("pipeline_class"))
@@ -2766,13 +2778,19 @@ class Generate(WanVACEGenerate):
         result.pop("_audio", None)
         return result
 
+    def _invoke_pipeline(self, pipeline, call_kwargs):
+        return pipeline(**call_kwargs)
+
     def update_adapter_modes(self, values, ref):
         values = values if isinstance(values, dict) else {}
         signal = values.get("video_contract")
         if not isinstance(signal, dict):
             raise ValueError("The connected video pipeline did not publish a valid adapter contract.")
         adapter = get_video_pipeline_adapter(signal.get("pipelineClass"))
-        if signal != _adapter_signal(adapter):
+        expected = _adapter_signal(adapter)
+        legacy = {**expected, 'actions': {key: value for key, value in expected['actions'].items()
+                                         if key not in {'EncodeInputs', 'Denoise', 'DecodeLatents'}}}
+        if signal not in (expected, legacy):
             raise ValueError("The connected video pipeline published a stale or mismatched adapter contract.")
         current_mode = values.get("mode")
         selected_mode = current_mode if current_mode in adapter.modes else adapter.modes[0]
@@ -4042,7 +4060,7 @@ class Generate(WanVACEGenerate):
             )
         self._active_pipeline = pipeline
         try:
-            result = pipeline(**call_kwargs)
+            result = self._invoke_pipeline(pipeline, call_kwargs)
         finally:
             self._active_pipeline = None
             if original_scheduler is not None:
@@ -4302,7 +4320,7 @@ class Generate(WanVACEGenerate):
         scheduler_patch = _install_ltx_dynamic_shift(pipeline, width, height, num_frames)
         self._active_pipeline = pipeline
         try:
-            result = pipeline(**call_kwargs)
+            result = self._invoke_pipeline(pipeline, call_kwargs)
         finally:
             if scheduler_patch is not None:
                 scheduler, original_set_timesteps = scheduler_patch

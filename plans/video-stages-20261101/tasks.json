@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "planned",
+  "status": "in_progress",
   "preparedOn": "2026-11-01",
   "timezone": "Asia/Calcutta",
   "scope": "Shared video stages and twelve bounded Linux recipes across LTX, Wan, MiniMax H3 and Pika H3 Flex",
@@ -41,20 +41,22 @@
     {
       "id": "V0",
       "title": "Freeze baseline and evidence",
-      "status": "planned",
+      "status": "verified",
       "estimateActiveHours": {
         "minimum": 1,
         "maximum": 2
       },
       "dependencies": [],
       "actualActiveHours": null,
-      "evidenceRefs": [],
+      "evidenceRefs": [
+        "private baseline.v1.json; SHA-256 f81e8734540bd3695be54ffea9ac01423ef77af980770fb2db5adb8c9b9403bd"
+      ],
       "openIssues": []
     },
     {
       "id": "V1",
       "title": "Declare shared video stage contracts",
-      "status": "planned",
+      "status": "in_progress",
       "estimateActiveHours": {
         "minimum": 3,
         "maximum": 5
@@ -75,12 +77,14 @@
       "dependencies": ["V0", "V1"],
       "actualActiveHours": null,
       "evidenceRefs": [],
-      "openIssues": []
+      "openIssues": [
+        "First LTX/Wan slice uses the existing reviewed runtime; the H3/Pika upgrade remains pending."
+      ]
     },
     {
       "id": "V3",
       "title": "Implement shared backend stage semantics",
-      "status": "planned",
+      "status": "in_progress",
       "estimateActiveHours": {
         "minimum": 5,
         "maximum": 8
@@ -93,7 +97,7 @@
     {
       "id": "V4",
       "title": "Extend shared frontend stage authoring",
-      "status": "planned",
+      "status": "in_progress",
       "estimateActiveHours": {
         "minimum": 5,
         "maximum": 8
@@ -106,7 +110,7 @@
     {
       "id": "V5",
       "title": "Close LTX and Wan route bindings",
-      "status": "planned",
+      "status": "in_progress",
       "estimateActiveHours": {
         "minimum": 3,
         "maximum": 5
@@ -114,7 +118,10 @@
       "dependencies": ["V2", "V3"],
       "actualActiveHours": null,
       "evidenceRefs": [],
-      "openIssues": []
+      "openIssues": [
+        "The retained Wan5B upstream WanPipeline route is text-only; planned Wan image route requires a separately reviewed binding.",
+        "Native staged model execution remains pending."
+      ]
     },
     {
       "id": "V6",
@@ -145,7 +152,7 @@
     {
       "id": "V8",
       "title": "Prepare exact artifacts and disk budget",
-      "status": "planned",
+      "status": "in_progress",
       "estimateActiveHours": {
         "minimum": 1,
         "maximum": 2
@@ -227,7 +234,14 @@
       "title": "LTX-2.5 explicit decoder and access integration",
       "estimatedActiveHours": [6, 12],
       "status": "deferred",
-      "reason": "Separate gated-access and ROCm decoder prerequisite; not included in 43–73 hour total."
+      "reason": "Separate gated-access and ROCm decoder prerequisite; not included in 43\u00e2\u20ac\u201c73 hour total."
     }
-  ]
+  ],
+  "updatedOn": "2026-11-01",
+  "firstMilestone": {
+    "scope": "Existing reviewed runtime; LTX 0.9.8 distilled tasks and Wan5B text-to-video first. No Pika runtime upgrade yet.",
+    "status": "implementation_in_progress",
+    "nativeModelRuns": 0,
+    "readyForUserTesting": false
+  }
 }

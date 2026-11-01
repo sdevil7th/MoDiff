@@ -228,11 +228,20 @@ def resolve_operation_starter(modules, contracts, selection):
         from modules.DiffusersImage.main import selected_image_stage_starter_spec
         image_stage_spec = selected_image_stage_starter_spec(
             nodes[loader]['values'].get('pipeline_class', pipeline), task, nodes[loader]['values'])
+    video_stages = nodes[loader]['module'] == 'modules.DiffusersVideo' and nodes[loader]['action'] == 'LoadPipeline'
+    if video_stages:
+        from modules.DiffusersVideo.stage_execution import starter_spec
+        image_stage_spec = starter_spec(
+            nodes[loader]['values'].get('pipeline_class', pipeline), task, nodes[loader]['values'])
+        if image_stage_spec is None:
+            # Historical/local/advisory loaders keep their whole operation.
+            selected = [c for c in selected if c['decomposition'] != 'bundle']
+            nodes = {c['operationId']: nodes[c['operationId']] for c in selected}
     if image_stage_spec is not None:
         # Draft the very same ordinary nodes/edges as the reviewed source spec.
         # Existing whole actions remain published for saved graphs, but are not
         # extra consumers in this new selected stage starter.
-        stage_types = {'image_encoder', 'denoise', 'decoder'}
+        stage_types = {'video_encoder' if video_stages else 'image_encoder', 'denoise', 'decoder'}
         stage_contracts = [c for c in selected if c['decomposition'] == 'bundle'
                            and c['nodeType'] in stage_types]
         if (len(stage_contracts) != 3

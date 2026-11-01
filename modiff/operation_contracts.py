@@ -97,17 +97,17 @@ def with_operation_semantics(contract, *, workflow_id=None, values=None, executi
             # Both ends use that same bundle contract, not a whole component set.
             kind = "conditioning"
         elif ("component" in port["roles"] and result["decomposition"] == "bundle"
-                and result["nodeType"] in {"image_encoder", "denoise", "decoder"}
+                and result["nodeType"] in {"image_encoder", "video_encoder", "denoise", "decoder"}
                 and port["direction"] == "input" and port["name"] == "pipeline"
-                and types == {"image_diffusion_pipeline"}):
+                and types in ({"image_diffusion_pipeline"}, {"video_diffusion_pipeline"})):
             # This typed aggregate is still the same real pipeline owner, not
             # an interchangeable collection of individually supplied models.
             kind = "pipeline"
         elif "component" in port["roles"]:
             kind = "component"
-        elif types & {"modular_workflow_state", "modular_route_state", "image_latent_binding"}:
+        elif types & {"modular_workflow_state", "modular_route_state", "image_latent_binding", "video_latent_binding"}:
             kind = "state"
-        elif types & {"embeddings", "image_embeddings", "conditioning", "image_conditioning", "controlnet_bundle", "ip_adapter_bundle"}:
+        elif types & {"embeddings", "image_embeddings", "conditioning", "image_conditioning", "video_conditioning", "controlnet_bundle", "ip_adapter_bundle"}:
             kind = "conditioning"
         elif "latent" in name and types & {"tensor", "latents"}:
             kind = "latents"
@@ -178,8 +178,8 @@ def build_pipeline_operation_contract(
     if len(ports) > 128:
         raise ValueError("Too many operation-contract ports.")
     if stage_node_type is not None and (type(stage_node_type) is not str
-            or stage_node_type not in {'image_encoder', 'denoise', 'decoder'} or loader):
-        raise ValueError('Invalid declared image pipeline stage type.')
+            or stage_node_type not in {'image_encoder', 'video_encoder', 'denoise', 'decoder'} or loader):
+        raise ValueError('Invalid declared pipeline stage type.')
     decomposition = 'bundle' if stage_node_type is not None else 'loader' if loader else 'pipeline'
     return {
         "pipelineClass": pipeline_class, "task": task, "operationId": operation_id,

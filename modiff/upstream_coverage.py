@@ -28,6 +28,7 @@ from typing import Any
 from modiff.base_runtime import base_model_runtime_contract
 from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES, EXPERIMENTAL_DIFFUSERS_PIPELINES
 from modiff.image_stage_contract import declared_backend_image_stages
+from modiff.video_stage_contract import declared_backend_video_stages
 from modiff.model_artifact_catalog import catalog_repository_pin
 from modiff.modular_contract_only_registry import (
     CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME,
@@ -1267,8 +1268,9 @@ def _template_execution_coverage(selection: Any, *, artifact: Any = None) -> dic
         )}
         spec = studio_execution_spec_for_pair(binding.get("modelType"), binding.get("mode"), execution_profile_id=selected_profile["id"])
         if (type(selection.get("schemaVersion")) is not int or set(binding) != {"modelType", "mode"}
-                or not declared_backend_image_stages(selected_profile, selection.get("task"), selected_artifact, spec)):
-            raise UpstreamCoverageError("Public staged template has no exact backend image-stage specification.")
+                or not (declared_backend_image_stages(selected_profile, selection.get("task"), selected_artifact, spec)
+                        or declared_backend_video_stages(selected_profile, selection.get("task"), selected_artifact, spec))):
+            raise UpstreamCoverageError("Public staged template has no exact backend stage specification.")
     else:
         expected_implementation = "native_stages" if profile.execution_path == "modular-diffusers" else "whole_pipeline"
         if selection.get("implementation") != expected_implementation:
