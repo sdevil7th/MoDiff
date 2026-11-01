@@ -35,15 +35,19 @@ class StandardOperationDiscoveryTests(unittest.TestCase):
                 self.assertEqual(contract['support'], 'declared')
                 if contract['decomposition'] == 'bundle':
                     action = contract['nodeKey'].rsplit('.', 1)[-1]
-                    self.assertEqual(contract['nodeKey'], f'modules.DiffusersImage.{action}')
+                    from modiff.video_stage_contract import PROFILE_CLASSES
+                    media = 'video' if contract['pipelineClass'] in PROFILE_CLASSES.values() else 'image'
+                    module = 'modules.DiffusersVideo' if media == 'video' else 'modules.DiffusersImage'
+                    self.assertEqual(contract['nodeKey'], f'{module}.{action}')
                     self.assertEqual(contract['nodeType'], {
-                        'EncodeInputs': 'image_encoder', 'Denoise': 'denoise', 'DecodeLatents': 'decoder',
+                        'EncodeInputs': media + '_encoder', 'Denoise': 'denoise', 'DecodeLatents': 'decoder',
                     }[action])
-                    self.assertIsNotNone(image.IMAGE_PIPELINE_ADAPTERS[contract['pipelineClass']].stage_adapter)
+                    if media == 'image':
+                        self.assertIsNotNone(image.IMAGE_PIPELINE_ADAPTERS[contract['pipelineClass']].stage_adapter)
                     handles = [port for port in contract['ports'] if port['roles'] == ['component']]
                     self.assertEqual(len(handles), 1)
                     self.assertEqual((handles[0]['name'], handles[0]['types'], handles[0]['direction']),
-                                     ('pipeline', ['image_diffusion_pipeline'], 'input'))
+                                     ('pipeline', [media + '_diffusion_pipeline'], 'input'))
                     self.assertTrue(handles[0]['required'])
                 else:
                     self.assertIn(contract['decomposition'], ('loader', 'pipeline'))
@@ -88,7 +92,12 @@ class StandardOperationDiscoveryTests(unittest.TestCase):
                         node.update_image_contract({'image_contract': signal}, None)
                 elif owner is video:
                     signal = video._adapter_signal(video.VIDEO_PIPELINE_ADAPTERS[pipeline])
-                    node.update_adapter_modes({'video_contract': signal, 'mode': mode}, None)
+                    if action == 'DecodeLatents':
+                        self.assertFalse(hasattr(node, 'update_stage_contract'))
+                    elif action in ('EncodeInputs', 'Denoise'):
+                        node.update_stage_contract({'video_contract': signal, 'mode': mode}, None)
+                    else:
+                        node.update_adapter_modes({'video_contract': signal, 'mode': mode}, None)
                 elif owner is audio:
                     adapter = audio.AUDIO_PIPELINE_ADAPTERS[pipeline]
                     signal = adapter.contract_for_mode(mode).signal_value(pipeline, adapter.default_repo)

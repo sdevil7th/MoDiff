@@ -9,6 +9,7 @@ from .main import Generate, _adapter_signal
 
 def _params(names):
     params = {key: deepcopy(value) for key, value in Generate.params.items() if key in names}
+    params['mode']['onChange'] = 'update_stage_contract'
     params['pipeline']['onSignal'] = [
         {'action': 'value', 'target': 'video_contract'},
         {'action': 'exec', 'data': 'update_stage_contract'},
