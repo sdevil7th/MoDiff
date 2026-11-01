@@ -59,6 +59,19 @@ audio branch remains distinct.
 
 ## Validation boundaries
 
+The shared joint video/audio backend adapters preserve the exact selected
+MiniMax H3 or Pika H3 Flex pipeline in every process-local state. They delegate
+media preparation, encoding, denoising and decoding to the selected official
+blocks. Ordered references use the selected library-owned dataclasses and
+retain decoded video frame rates and audio sample rates. Saved H3 actions
+continue to resolve their original contracts.
+
+Pika's package-owned sampler fixes the six-step schedules; hidden or explicit
+Steps, CFG and negative-prompt overrides are rejected. Its task adapter is a
+required part of the model, not an optional style control. These adapter
+declarations and no-weight tests alone do not enable a public Pika template or
+establish model fit; exact model loading and native acceptance remain required.
+
 No-weight tests cover selected starters, strict ownership, actual node dispatch,
 inference mode, scheduler restoration, normalized decode, cache reuse and saved
 graph connections. They do not prove video quality or memory feasibility. Native

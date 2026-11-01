@@ -3922,10 +3922,23 @@ def _minimax_h3_reference_types():
     )
 
 
-def _validated_minimax_h3_references(references, *, allow_audio_only):
+def _joint_av_reference_types(pipeline_class):
+    if pipeline_class == _MINIMAX_H3_PIPELINE:
+        return _minimax_h3_reference_types()
+    if pipeline_class != "PikaH3FlexModularPipeline":
+        raise ValueError("Unreviewed joint AV reference pipeline.")
+    from diffusers.modular_pipelines.pika_h3_flex import (
+        PikaH3FlexReference, PikaH3FlexImageReference, PikaH3FlexVideoReference, PikaH3FlexAudioReference,
+    )
+    return PikaH3FlexReference, PikaH3FlexImageReference, PikaH3FlexVideoReference, PikaH3FlexAudioReference
+
+
+def _validated_minimax_h3_references(references, *, allow_audio_only, reference_types=None):
     """Validate one ordered public-reference value without rewriting its order."""
 
-    MiniMaxH3Reference, _image_type, _video_type, _audio_type = _minimax_h3_reference_types()
+    MiniMaxH3Reference, _image_type, _video_type, _audio_type = (
+        _minimax_h3_reference_types() if reference_types is None else reference_types
+    )
     if not isinstance(references, list):
         raise ValueError("MiniMax H3 references must be an ordered list.")
     for index, reference in enumerate(references):
@@ -3981,6 +3994,10 @@ class WorkflowMiniMaxH3ReferenceAssembler(NodeBase):
     }
 
     @staticmethod
+    def _reference_types(kwargs):
+        return _minimax_h3_reference_types()
+
+    @staticmethod
     def _audio_reference_payload(audio):
         if audio is None:
             return None, None
@@ -4003,16 +4020,19 @@ class WorkflowMiniMaxH3ReferenceAssembler(NodeBase):
         return torch.from_numpy(samples.copy()).to(dtype=torch.float32), sample_rate
 
     def execute(self, **kwargs):
+        reference_types = self._reference_types(kwargs)
+        references_in = kwargs.get("references_in")
         references = _validated_minimax_h3_references(
-            kwargs.get("references_in") or [],
+            [] if references_in is None else references_in,
             # An intermediate list may start with audio and be completed by a
             # later chained assembler. The executable ref2va boundary performs
             # the official no-audio-only validation.
             allow_audio_only=True,
+            reference_types=reference_types,
         )
         reference_kind = kwargs.get("reference_kind", "image")
         MiniMaxH3Reference, MiniMaxH3ImageReference, MiniMaxH3VideoReference, MiniMaxH3AudioReference = (
-            _minimax_h3_reference_types()
+            reference_types
         )
         del MiniMaxH3Reference
 
@@ -4049,14 +4069,24 @@ class WorkflowMiniMaxH3ReferenceAssembler(NodeBase):
 
         references.append(reference)
         return {
-            "references": _validated_minimax_h3_references(references, allow_audio_only=True),
+            "references": _validated_minimax_h3_references(
+                references, allow_audio_only=True, reference_types=reference_types,
+            ),
         }
+
+
+def _require_joint_av_pipeline(node, pipeline_class, workflow_id):
+    allowed = getattr(node, "joint_pipeline_classes", (_MINIMAX_H3_PIPELINE,))
+    if pipeline_class not in allowed or workflow_id not in _MINIMAX_H3_WORKFLOWS:
+        raise ValueError("The joint AV stage requires an exact reviewed Modular pipeline and workflow.")
+    if pipeline_class == _MINIMAX_H3_PIPELINE:
+        _require_minimax_h3_pipeline(pipeline_class, workflow_id)
 
 
 def _minimax_h3_state(node, kwargs):
     pipeline_class = kwargs.get("pipeline_class")
     workflow_id = kwargs.get("workflow_id")
-    _require_minimax_h3_pipeline(pipeline_class, workflow_id)
+    _require_joint_av_pipeline(node, pipeline_class, workflow_id)
     token, pipeline = node._prepare_pipeline(
         pipeline_components=kwargs.get("pipeline_components"),
         pipeline_class=pipeline_class,
@@ -4073,11 +4103,11 @@ def _minimax_h3_state(node, kwargs):
     return workflow_id, token, pipeline, state
 
 
-def _minimax_h3_state_result(*, workflow_id, token, stage, state):
+def _minimax_h3_state_result(*, workflow_id, token, stage, state, pipeline_class=_MINIMAX_H3_PIPELINE):
     return {
         "state_out": _issue_workflow_state(
             token=token,
-            pipeline_class=_MINIMAX_H3_PIPELINE,
+            pipeline_class=pipeline_class,
             workflow_id=workflow_id,
             completed_stage=stage,
             state=state,
@@ -4120,7 +4150,7 @@ class WorkflowMiniMaxH3BeforeEncode(_OfficialWorkflowBlockMixin, NodeBase):
     def execute(self, **kwargs):
         pipeline_class = kwargs.get("pipeline_class")
         workflow_id = kwargs.get("workflow_id")
-        _require_minimax_h3_pipeline(pipeline_class, workflow_id)
+        _require_joint_av_pipeline(self, pipeline_class, workflow_id)
         if workflow_id == "t2va":
             raise ValueError("MiniMax H3 text-only generation has no before-encode stage.")
         token, pipeline = self._prepare_pipeline(
@@ -4158,6 +4188,7 @@ class WorkflowMiniMaxH3BeforeEncode(_OfficialWorkflowBlockMixin, NodeBase):
             references = _validated_minimax_h3_references(
                 kwargs.get("references"),
                 allow_audio_only=False,
+                reference_types=_joint_av_reference_types(pipeline_class),
             )
             if not references:
                 raise ValueError("MiniMax H3 omni-reference generation requires a nonempty ordered reference list.")
@@ -4168,6 +4199,7 @@ class WorkflowMiniMaxH3BeforeEncode(_OfficialWorkflowBlockMixin, NodeBase):
                 num_frames=num_frames,
             )
         return _minimax_h3_state_result(
+            pipeline_class=kwargs.get("pipeline_class"),
             workflow_id=workflow_id,
             token=token,
             stage=self.stage,
@@ -4202,7 +4234,7 @@ class WorkflowMiniMaxH3TextEncode(_OfficialWorkflowBlockMixin, NodeBase):
     def execute(self, **kwargs):
         pipeline_class = kwargs.get("pipeline_class")
         workflow_id = kwargs.get("workflow_id")
-        _require_minimax_h3_pipeline(pipeline_class, workflow_id)
+        _require_joint_av_pipeline(self, pipeline_class, workflow_id)
         token, pipeline = self._prepare_pipeline(
             pipeline_components=kwargs.get("pipeline_components"),
             pipeline_class=pipeline_class,
@@ -4224,6 +4256,7 @@ class WorkflowMiniMaxH3TextEncode(_OfficialWorkflowBlockMixin, NodeBase):
             )
             state = pipeline(state=state, prompt=prompt)
         return _minimax_h3_state_result(
+            pipeline_class=kwargs.get("pipeline_class"),
             workflow_id=workflow_id,
             token=token,
             stage=self.stage,
@@ -4265,6 +4298,7 @@ class WorkflowMiniMaxH3VaeEncode(_OfficialWorkflowBlockMixin, NodeBase):
             raise ValueError("MiniMax H3 text-only generation has no VAE conditioning stage.")
         state = pipeline(state=state)
         return _minimax_h3_state_result(
+            pipeline_class=kwargs.get("pipeline_class"),
             workflow_id=workflow_id,
             token=token,
             stage=self.stage,
@@ -4314,14 +4348,15 @@ class WorkflowMiniMaxH3Denoise(_OfficialWorkflowBlockMixin, NodeBase):
 
     def execute(self, **kwargs):
         workflow_id, token, pipeline, state = _minimax_h3_state(self, kwargs)
-        steps = kwargs.get("num_inference_steps", 50)
-        if isinstance(steps, bool) or not isinstance(steps, int) or steps < 1:
-            raise ValueError("MiniMax H3 inference steps must be a positive integer.")
         call_kwargs = {
             "state": state,
-            "num_inference_steps": steps,
             "generator": modular_generator_from_seed(kwargs.get("seed", 0), pipeline),
         }
+        if kwargs.get("pipeline_class") != "PikaH3FlexModularPipeline":
+            steps = kwargs.get("num_inference_steps", 50)
+            if isinstance(steps, bool) or not isinstance(steps, int) or steps < 1:
+                raise ValueError("MiniMax H3 inference steps must be a positive integer.")
+            call_kwargs["num_inference_steps"] = steps
         if workflow_id == "t2va":
             width = kwargs.get("width", 1344)
             height = kwargs.get("height", 768)
@@ -4338,6 +4373,7 @@ class WorkflowMiniMaxH3Denoise(_OfficialWorkflowBlockMixin, NodeBase):
             )
         state = pipeline(**call_kwargs)
         return _minimax_h3_state_result(
+            pipeline_class=kwargs.get("pipeline_class"),
             workflow_id=workflow_id,
             token=token,
             stage=self.stage,
@@ -4398,6 +4434,106 @@ class WorkflowMiniMaxH3Decode(_OfficialWorkflowBlockMixin, NodeBase):
             "audio": output_to_audio_object(raw_audio, sample_rate=sample_rate),
             "sample_rate": sample_rate,
         }
+
+
+# Shared backend stage adapters. The public graph selects the exact pipeline;
+# package-owned blocks retain layout, frame alignment, sampling and decoding.
+def _joint_av_params(params):
+    from copy import deepcopy
+    return deepcopy(params)
+
+
+JOINT_AV_BEFORE_ENCODE_PARAMS = _joint_av_params(WorkflowMiniMaxH3BeforeEncode.params)
+JOINT_AV_BEFORE_ENCODE_PARAMS["references"]["type"] = "joint_av_references"
+JOINT_AV_TEXT_ENCODE_PARAMS = _joint_av_params(WorkflowMiniMaxH3TextEncode.params)
+JOINT_AV_VAE_ENCODE_PARAMS = _joint_av_params(WorkflowMiniMaxH3VaeEncode.params)
+JOINT_AV_DENOISE_PARAMS = _joint_av_params(WorkflowMiniMaxH3Denoise.params)
+# The task's public execution spec exposes Steps only for the non-distilled
+# sampler. Pika's blocks own their six steps; even a forged hidden value fails.
+JOINT_AV_DENOISE_PARAMS["num_inference_steps"] = {"type": "int", "hidden": True}
+JOINT_AV_DECODE_PARAMS = _joint_av_params(WorkflowMiniMaxH3Decode.params)
+JOINT_AV_REFERENCE_PARAMS = _joint_av_params(WorkflowMiniMaxH3ReferenceAssembler.params)
+JOINT_AV_REFERENCE_PARAMS["pipeline_class"] = {"type": "string", "hidden": True,
+                                               "default": _MINIMAX_H3_PIPELINE}
+JOINT_AV_REFERENCE_PARAMS["references_in"]["type"] = "joint_av_references"
+JOINT_AV_REFERENCE_PARAMS["references"]["type"] = "joint_av_references"
+_JOINT_AV_PIPELINES = (_MINIMAX_H3_PIPELINE, "PikaH3FlexModularPipeline")
+
+
+class WorkflowJointAVReferenceAssembler(WorkflowMiniMaxH3ReferenceAssembler, NodeBase):
+    """Build ordered official references from decoded media, without opening files."""
+    label = "Add Ordered Video or Audio Reference"
+    category = "Modular Diffusers"
+    resizable = True
+    params = JOINT_AV_REFERENCE_PARAMS
+
+    @staticmethod
+    def _reference_types(kwargs):
+        return _joint_av_reference_types(kwargs.get("pipeline_class"))
+
+
+class WorkflowJointAVBeforeEncode(WorkflowMiniMaxH3BeforeEncode, NodeBase):
+    """Prepare the selected workflow's keyframes or ordered media references."""
+    label = "Prepare Video and Audio Inputs"
+    category = "Modular Diffusers"
+    resizable = True
+    skipParamsCheck = True
+    action_key = "workflow_joint_av_before_encode"
+    joint_pipeline_classes = _JOINT_AV_PIPELINES
+    params = JOINT_AV_BEFORE_ENCODE_PARAMS
+
+
+class WorkflowJointAVTextEncode(WorkflowMiniMaxH3TextEncode, NodeBase):
+    """Encode a joint-media prompt using its exact selected official block."""
+    label = "Encode Video and Audio Prompt"
+    category = "Modular Diffusers"
+    resizable = True
+    skipParamsCheck = True
+    action_key = "workflow_joint_av_text_encoder"
+    joint_pipeline_classes = _JOINT_AV_PIPELINES
+    params = JOINT_AV_TEXT_ENCODE_PARAMS
+
+
+class WorkflowJointAVVaeEncode(WorkflowMiniMaxH3VaeEncode, NodeBase):
+    """Encode media conditions using the selected official VAE block."""
+    label = "Encode Video and Audio Conditions"
+    category = "Modular Diffusers"
+    resizable = True
+    skipParamsCheck = True
+    action_key = "workflow_joint_av_vae_encoder"
+    joint_pipeline_classes = _JOINT_AV_PIPELINES
+    params = JOINT_AV_VAE_ENCODE_PARAMS
+
+
+class WorkflowJointAVDenoise(WorkflowMiniMaxH3Denoise, NodeBase):
+    """Run the package-owned sampler; fixed samplers reject user step overrides."""
+    label = "Denoise Video and Audio"
+    category = "Modular Diffusers"
+    resizable = True
+    skipParamsCheck = True
+    action_key = "workflow_joint_av_denoise"
+    joint_pipeline_classes = _JOINT_AV_PIPELINES
+    params = JOINT_AV_DENOISE_PARAMS
+
+    def execute(self, **kwargs):
+        if kwargs.get("pipeline_class") == "PikaH3FlexModularPipeline":
+            if any(kwargs.get(name) is not None for name in
+                   ("num_inference_steps", "guidance_scale", "negative_prompt")):
+                raise ValueError("The reviewed Pika sampler has fixed steps and no CFG or negative prompt.")
+        elif kwargs.get("num_inference_steps") is None:
+            kwargs["num_inference_steps"] = 50
+        return super().execute(**kwargs)
+
+
+class WorkflowJointAVDecode(WorkflowMiniMaxH3Decode, NodeBase):
+    """Decode the selected workflow's video and audio through official blocks."""
+    label = "Decode Video and Audio"
+    category = "Modular Diffusers"
+    resizable = True
+    skipParamsCheck = True
+    action_key = "workflow_joint_av_decoder"
+    joint_pipeline_classes = _JOINT_AV_PIPELINES
+    params = JOINT_AV_DECODE_PARAMS
 
 
 def _require_ltx25_pipeline(pipeline_class, workflow_id):
