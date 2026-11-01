@@ -275,6 +275,15 @@ class _OfficialWorkflowBlockMixin:
         require_reviewed_modular_repository_workflow(
             pipeline_class, token._repo_id, token._revision, workflow_id,
         )
+        from modiff.joint_av_model_adapters import required_joint_av_adapter, require_applied_model_adapter
+        required_adapter = required_joint_av_adapter(pipeline_class, token._repo_id, token._revision, workflow_id)
+        if required_adapter is not None:
+            target_ids = collect_model_ids(
+                {"pipeline_components": pipeline_components}, target_key_names=("pipeline_components",),
+                target_model_names=(required_adapter.component,),
+            )
+            target_components = components.get_components_by_ids(ids=target_ids, return_dict_with_names=True)
+            require_applied_model_adapter(target_components.get(required_adapter.component), required_adapter)
         pipeline_type = pipeline_class_from_model_type(pipeline_class)
         definition = pipeline_type()
         blocks = definition.blocks

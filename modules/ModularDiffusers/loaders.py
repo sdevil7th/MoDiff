@@ -2916,6 +2916,17 @@ class ModelsLoader(NodeBase):
             revision=kwargs.get("revision"),
         )
         source, repository, reviewed_revision, index_filename, index_document = reviewed_selection
+        from modiff.joint_av_model_adapters import (
+            required_joint_av_adapter, prepare_required_model_adapter, require_applied_model_adapter,
+        )
+        required_adapter = required_joint_av_adapter(model_type, repository, reviewed_revision, kwargs['workflow_id'])
+        if required_adapter is not None:
+            if source != 'hub' or kwargs.get('lora_list') not in (None, []):
+                raise ValueError('Pika requires its pinned model adapter and does not admit extra style adapters.')
+            _descriptor, resolved_adapter = prepare_required_model_adapter(required_adapter)
+            kwargs['_required_model_adapter_identity'] = resolved_adapter.descriptor_sha256
+        elif kwargs.get('_required_model_adapter_identity') is not None:
+            raise ValueError('Private required-adapter identity has no selected model authority.')
         kwargs["_reviewed_builtin_identity"] = (
             source,
             repository,
@@ -2961,12 +2972,17 @@ class ModelsLoader(NodeBase):
         elif identity is not None:
             raise ValueError('Private component tuple has no current source authority.')
         if verification is None:
-            return super().__call__(**kwargs)
+            result = super().__call__(**kwargs)
+            if required_adapter is not None:
+                require_applied_model_adapter(getattr(self.loader, required_adapter.component, None), required_adapter)
+            return result
         self._active_artifact_verification = verification
         try:
             verification.check()
             result = super().__call__(**kwargs)
             verification.check()
+            if required_adapter is not None:
+                require_applied_model_adapter(getattr(self.loader, required_adapter.component, None), required_adapter)
             return result
         finally:
             self._active_artifact_verification = None
@@ -3370,6 +3386,7 @@ class ModelsLoader(NodeBase):
         _reviewed_component_lora_identity=None,
         weight_format='native',
         _reviewed_weight_format_identity=None,
+        _required_model_adapter_identity=None,
     ):
         from modiff.artifact_verification import artifact_verification_for_loader
         verification = getattr(self, '_active_artifact_verification', None)
@@ -3475,6 +3492,24 @@ class ModelsLoader(NodeBase):
             _cuda_weight_loading_controls(model_type=model_type, offload_mode=offload_mode, device=device, dtype=dtype,
                                           lora_list=lora_list, quant_config=quant_config, unet=unet, vae=vae,
                                           controlnet=controlnet, weight_variant=weight_variant)
+        from modiff.joint_av_model_adapters import (
+            required_joint_av_adapter, prepare_required_model_adapter, apply_required_model_adapter,
+        )
+        required_adapter = required_joint_av_adapter(model_type, real_repo_id, revision, reviewed_workflow_id)
+        prepared_model_adapter = None
+        if required_adapter is not None:
+            if _source != 'hub' or lora_list not in (None, []):
+                raise ValueError('Pika requires its pinned model adapter and does not admit extra style adapters.')
+            prepared_model_adapter = prepare_required_model_adapter(required_adapter)
+            if _required_model_adapter_identity not in (None, prepared_model_adapter[1].descriptor_sha256):
+                raise ValueError('The required model adapter changed after cache validation.')
+            runtime_policy['required_model_adapter'] = {
+                'repository': real_repo_id, 'revision': revision,
+                'weight_name': required_adapter.weight_name, 'sha256': required_adapter.sha256,
+                'component': required_adapter.component, 'scale': 1.0,
+            }
+        elif _required_model_adapter_identity is not None:
+            raise ValueError('Private required-adapter identity has no selected model authority.')
         component_dtypes = reviewed_component_dtypes(model_type, dtype)
         generation_inputs = {
             "model_type": model_type, "repo_id": real_repo_id, "revision": revision,
@@ -3703,6 +3738,10 @@ class ModelsLoader(NodeBase):
         deferred_disk_targets = disk_lora_targets if selected_group_placement or (
             component_context is None and disk_lora_policy and disk_lora_policy[1]
         ) else ()
+        if required_adapter is not None and use_group_offload:
+            # Required model weights must be injected before hooks persist the
+            # component's parameters to disk or establish the group placement.
+            deferred_disk_targets = tuple(dict.fromkeys((*deferred_disk_targets, required_adapter.component)))
 
         # The already-reviewed installed block contract is authoritative. Passing
         # the repository here would make upstream parse its index a second time.
@@ -3924,7 +3963,9 @@ class ModelsLoader(NodeBase):
             from modiff.native_component_lora import begin_component_mutation
             begin_component_mutation(self, disk_lora_policy, components, component_context)
         applied_loras = None
-        if lora_list is not None and (lora_list != [] or disk_lora_policy is None) and (
+        if required_adapter is not None:
+            applied_loras = apply_required_model_adapter(self.loader, required_adapter, prepared_model_adapter)
+        elif lora_list is not None and (lora_list != [] or disk_lora_policy is None) and (
             weight_binding is None or component_context is not None
         ):
             from modiff.native_component_lora import SelectedComponentLifecycle

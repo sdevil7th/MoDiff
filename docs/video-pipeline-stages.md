@@ -68,7 +68,14 @@ continue to resolve their original contracts.
 
 Pika's package-owned sampler fixes the six-step schedules; hidden or explicit
 Steps, CFG and negative-prompt overrides are rejected. Its task adapter is a
-required part of the model, not an optional style control. These adapter
+required part of the model, not an optional style control. Model Setup verifies
+the cached immutable Safetensors file through the existing LoRA file boundary,
+loads it into the task-selected transformer with the official Pika loader, and
+activates it at scale one before group-offload hooks are installed. Optional
+style adapters are not admitted on this route. Reused loaders and downstream
+stages check a weak binding to the actual component and its active, unmerged
+scale-one layers. A serialized flag cannot substitute for that binding. These
+adapter
 declarations and no-weight tests alone do not enable a public Pika template or
 establish model fit; exact model loading and native acceptance remain required.
 
