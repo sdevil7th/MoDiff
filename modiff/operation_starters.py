@@ -11,8 +11,11 @@ from modiff.operation_contracts import _identifier, operation_owns_model
 def _modular_route(pipeline, task):
     from modiff.modular_workflow_discovery import load_reviewed_modular_workflow_snapshot
     from modiff.modular_task_adapters import modular_task_adapters
+    from modiff.supplemental_modular_contracts import reviewed_modular_source_supplements
 
-    for entry in load_reviewed_modular_workflow_snapshot()["contracts"]:
+    contracts = [*load_reviewed_modular_workflow_snapshot()["contracts"],
+        *(entry for source in reviewed_modular_source_supplements() for entry in source['contracts'])]
+    for entry in contracts:
         if entry["pipelineClass"] == pipeline:
             for workflow in entry["workflows"]:
                 for name, adapter in modular_task_adapters(pipeline, workflow):

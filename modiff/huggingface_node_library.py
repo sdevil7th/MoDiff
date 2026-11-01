@@ -42,7 +42,8 @@ from modiff.huggingface_transformers_clusters import reviewed_transformers_clust
 from modiff.huggingface_diffusers_clusters import reviewed_diffusers_cluster_catalog
 
 
-HUGGING_FACE_NODE_LIBRARY_SCHEMA_VERSION = 6
+HUGGING_FACE_NODE_LIBRARY_SCHEMA_VERSION = 7
+HUGGING_FACE_NODE_LIBRARY_MEMBER_SCHEMA_VERSION = 6
 HUGGING_FACE_NODE_LIBRARY_PROVIDER = "diffusers"
 HUGGING_FACE_NODE_LIBRARY_PROVIDERS = ("diffusers", "transformers")
 HUGGING_FACE_NODE_LIBRARY_PUBLISHER = "huggingface"
@@ -224,7 +225,7 @@ def _suggested_inputs(definition: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _definition_with_suggestions(definition: Mapping[str, Any]) -> dict[str, Any]:
-    enriched = {**_json_clone(definition), "schemaVersion": HUGGING_FACE_NODE_LIBRARY_SCHEMA_VERSION}
+    enriched = {**_json_clone(definition), "schemaVersion": HUGGING_FACE_NODE_LIBRARY_MEMBER_SCHEMA_VERSION}
     enriched["suggestedInputs"] = _suggested_inputs(enriched)
     body = {key: item for key, item in enriched.items() if key != "contentHash"}
     enriched["contentHash"] = _content_hash(body)
@@ -372,7 +373,7 @@ def _definition(
     workflow_id = str(workflow["id"])
     task_id = str(workflow["taskId"])
     body = {
-        "schemaVersion": HUGGING_FACE_NODE_LIBRARY_SCHEMA_VERSION,
+        "schemaVersion": HUGGING_FACE_NODE_LIBRARY_MEMBER_SCHEMA_VERSION,
         "id": _definition_id(pipeline_class, workflow_id),
         "provider": HUGGING_FACE_NODE_LIBRARY_PROVIDER,
         "publisher": HUGGING_FACE_NODE_LIBRARY_PUBLISHER,
@@ -417,6 +418,8 @@ def _definition(
 def build_huggingface_node_library(
     snapshot: Mapping[str, Any] | None = None,
     block_snapshot: Mapping[str, Any] | None = None,
+    *,
+    include_source_supplements: bool = True,
 ) -> dict[str, Any]:
     """Build the immutable first-party library from reviewed snapshot data.
 
@@ -452,6 +455,13 @@ def build_huggingface_node_library(
         for contract in normalized_snapshot["contracts"]
         for workflow in contract["workflows"]
     ]
+    from modiff.supplemental_modular_contracts import reviewed_modular_source_supplements
+    supplements = reviewed_modular_source_supplements() if include_source_supplements else []
+    for source in supplements:
+        by_workflow = {(row['pipelineClass'], row['workflowId']): row for row in source['blocks']['workflows']}
+        diffusers_definitions.extend(
+            _definition(contract, workflow, by_workflow[(contract['pipelineClass'], workflow['id'])], source['libraryRevision'])
+            for contract in source['contracts'] for workflow in contract['workflows'])
     standard_diffusers_catalog = reviewed_diffusers_cluster_catalog(revision)
     all_diffusers_definitions = [*diffusers_definitions, *standard_diffusers_catalog["definitions"]]
     transformers_catalog = reviewed_transformers_cluster_catalog()
@@ -463,7 +473,7 @@ def build_huggingface_node_library(
         definitions_by_task[definition["taskId"]].append(definition)
     diffusers_task_contracts = [
         {
-            "schemaVersion": HUGGING_FACE_NODE_LIBRARY_SCHEMA_VERSION,
+            "schemaVersion": HUGGING_FACE_NODE_LIBRARY_MEMBER_SCHEMA_VERSION,
             "id": _task_contract_id(task_id),
             "provider": HUGGING_FACE_NODE_LIBRARY_PROVIDER,
             "taskId": task_id,
@@ -476,14 +486,14 @@ def build_huggingface_node_library(
         [
             *diffusers_task_contracts,
             *[
-                {**task_contract, "schemaVersion": HUGGING_FACE_NODE_LIBRARY_SCHEMA_VERSION}
+                {**task_contract, "schemaVersion": HUGGING_FACE_NODE_LIBRARY_MEMBER_SCHEMA_VERSION}
                 for task_contract in transformers_catalog["taskContracts"]
             ],
         ],
         key=lambda item: item["id"],
     )
     library = {
-        "schemaVersion": HUGGING_FACE_NODE_LIBRARY_SCHEMA_VERSION,
+        "schemaVersion": HUGGING_FACE_NODE_LIBRARY_SCHEMA_VERSION if include_source_supplements else 6,
         "diffusersRevision": revision,
         "providers": list(HUGGING_FACE_NODE_LIBRARY_PROVIDERS),
         "taskContracts": task_contracts,
@@ -491,6 +501,7 @@ def build_huggingface_node_library(
         "blockDefinitions": _json_clone(
             [
                 *normalized_block_snapshot["blockDefinitions"],
+                *(definition for source in supplements for definition in source['blocks']['blockDefinitions']),
                 *standard_diffusers_catalog["blockDefinitions"],
                 *transformers_catalog["blockDefinitions"],
             ]
@@ -503,6 +514,8 @@ def build_huggingface_node_library(
             normalized_block_snapshot,
         ),
     }
+    if include_source_supplements:
+        library['sourceSupplements'] = [_library_source_declaration(source) for source in supplements]
     from modiff.huggingface_cluster_admission import audit_reviewed_cluster_execution_candidates
 
     admissions_by_definition: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -531,8 +544,17 @@ def reviewed_huggingface_node_library() -> dict[str, Any]:
     return _json_clone(_cached_huggingface_node_library())
 
 
+def _library_source_declaration(source):
+    body = {'schemaVersion': 1, 'provider': 'diffusers', 'libraryRevision': source['libraryRevision'],
+        'runtimeProfileId': source['runtimeProfileId'], 'workflowContractHash': source['workflowContractHash'],
+        'blockContractHash': source['blockContractHash'],
+        'definitionIds': sorted(_definition_id(contract['pipelineClass'], workflow['id'])
+            for contract in source['contracts'] for workflow in contract['workflows'])}
+    return {**body, 'contentHash': _content_hash(body)}
+
+
 def validate_huggingface_node_library(value: Any) -> dict[str, Any]:
-    """Validate and detach a schema-v6 first-party node-library payload."""
+    """Validate mixed-source v7 and preserved single-source v6 collections."""
 
     try:
         encoded = json.dumps(value, allow_nan=False, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
@@ -541,7 +563,8 @@ def validate_huggingface_node_library(value: Any) -> dict[str, Any]:
         raise HuggingFaceNodeLibraryError(f"Hugging Face node library is not finite JSON: {error}") from error
     if len(encoded.encode("utf-8")) > _MAX_LIBRARY_BYTES:
         raise HuggingFaceNodeLibraryError("Hugging Face node library exceeds the 8 MiB limit.")
-    if not isinstance(normalized, dict) or set(normalized) != {
+    schema_version = normalized.get('schemaVersion') if isinstance(normalized, dict) else None
+    expected_keys = {
         "schemaVersion",
         "diffusersRevision",
         "providers",
@@ -550,17 +573,27 @@ def validate_huggingface_node_library(value: Any) -> dict[str, Any]:
         "blockDefinitions",
         "blockRoleAdapters",
         "containerStateAdapters",
-    }:
+    }
+    if schema_version == 7:
+        expected_keys.add('sourceSupplements')
+    if not isinstance(normalized, dict) or set(normalized) != expected_keys:
         raise HuggingFaceNodeLibraryError("Hugging Face node library has missing or unknown top-level fields.")
-    if normalized.get("schemaVersion") != HUGGING_FACE_NODE_LIBRARY_SCHEMA_VERSION:
+    if type(schema_version) is not int or schema_version not in (6, HUGGING_FACE_NODE_LIBRARY_SCHEMA_VERSION):
         raise HuggingFaceNodeLibraryError(
-            f"Hugging Face node library requires schemaVersion {HUGGING_FACE_NODE_LIBRARY_SCHEMA_VERSION}."
+            'Hugging Face node library requires schemaVersion 6 or 7.'
         )
     if normalized.get("providers") != list(HUGGING_FACE_NODE_LIBRARY_PROVIDERS):
         raise HuggingFaceNodeLibraryError("Hugging Face node library has an unsupported provider set.")
     revision = normalized.get("diffusersRevision")
     if not isinstance(revision, str) or re.fullmatch(r"[0-9a-f]{40}", revision) is None:
         raise HuggingFaceNodeLibraryError("Hugging Face node library requires an immutable Diffusers revision.")
+    from modiff.supplemental_modular_contracts import reviewed_modular_source_supplements
+    supplements = reviewed_modular_source_supplements() if schema_version == 7 else []
+    expected_sources = [_library_source_declaration(source) for source in supplements]
+    if schema_version == 7 and _content_hash({'sources': normalized['sourceSupplements']}) != _content_hash({'sources': expected_sources}):
+        raise HuggingFaceNodeLibraryError('Hugging Face supplemental sources are not the exact reviewed declarations.')
+    supplemental_by_id = {identity: source for source, declaration in zip(supplements, expected_sources)
+                          for identity in declaration['definitionIds']}
 
     task_contracts = normalized.get("taskContracts")
     definitions = normalized.get("definitions")
@@ -788,14 +821,14 @@ def validate_huggingface_node_library(value: Any) -> dict[str, Any]:
             definitions_by_task[("transformers", definition["taskId"])].append(definition_id)
             continue
         if (
-            definition.get("schemaVersion") != HUGGING_FACE_NODE_LIBRARY_SCHEMA_VERSION
+            definition.get("schemaVersion") != HUGGING_FACE_NODE_LIBRARY_MEMBER_SCHEMA_VERSION
             or definition.get("provider") != HUGGING_FACE_NODE_LIBRARY_PROVIDER
             or definition.get("publisher") != HUGGING_FACE_NODE_LIBRARY_PUBLISHER
             or definition.get("surface") != "diffusers_cluster_nodes"
             or definition.get("definitionKind") != "modular_pipeline_workflow"
             or definition.get("ownership") != "library"
             or definition.get("mutable") is not False
-            or definition.get("libraryRevision") != revision
+            or definition.get("libraryRevision") != supplemental_by_id.get(definition_id, {}).get('libraryRevision', revision)
             or definition.get("executionClaim") != "discovery_only"
         ):
             raise HuggingFaceNodeLibraryError("Hugging Face node definition ownership or provenance is invalid.")
@@ -878,7 +911,7 @@ def validate_huggingface_node_library(value: Any) -> dict[str, Any]:
             raise HuggingFaceNodeLibraryError("Hugging Face task contract id is invalid or duplicated.")
         task_ids.add(task_key)
         if (
-            task_contract.get("schemaVersion") != HUGGING_FACE_NODE_LIBRARY_SCHEMA_VERSION
+            task_contract.get("schemaVersion") != HUGGING_FACE_NODE_LIBRARY_MEMBER_SCHEMA_VERSION
             or task_contract.get("id") != f"{provider}.task.{task_id}.v1"
             or not isinstance(task_contract.get("label"), str)
             or not task_contract["label"]
@@ -909,12 +942,23 @@ def validate_huggingface_node_library(value: Any) -> dict[str, Any]:
     # Reuse the pinned companion-snapshot validator instead of maintaining a
     # second, weaker interpretation of block inputs, outputs, components,
     # configs, path segments, ordering, hashes, or workflow coverage here.
+    supplemental_keys = {(contract['pipelineClass'], workflow['id'])
+        for source in supplements for contract in source['contracts'] for workflow in contract['workflows']}
+    base_workflows = [workflow for workflow in reconstructed_block_workflows
+        if (workflow['pipelineClass'], workflow['workflowId']) not in supplemental_keys]
+
+    def referenced_blocks(workflows):
+        return {identity for workflow in workflows for identity in (
+            workflow['rootBlockDefinitionId'], *(row['blockDefinitionId'] for row in workflow['placements']))}
+
+    base_block_ids = referenced_blocks(base_workflows)
+    claimed_block_ids = set(base_block_ids)
     reconstructed_block_snapshot = {
         "schemaVersion": MODULAR_BLOCK_CONTRACT_SCHEMA_VERSION,
         "diffusersRevision": revision,
-        "blockDefinitions": diffusers_block_definitions,
+        "blockDefinitions": [definition for definition in diffusers_block_definitions if definition['id'] in base_block_ids],
         "workflows": sorted(
-            reconstructed_block_workflows,
+            base_workflows,
             key=lambda workflow: (workflow["pipelineClass"], workflow["workflowId"]),
         ),
     }
@@ -922,6 +966,35 @@ def validate_huggingface_node_library(value: Any) -> dict[str, Any]:
         validated_block_snapshot = validate_modular_block_snapshot(reconstructed_block_snapshot)
     except ModularBlockContractError as error:
         raise HuggingFaceNodeLibraryError(f"Hugging Face block library is invalid: {error}") from error
+    definitions_by_id = {definition['id']: definition for definition in definitions}
+    for source in supplements:
+        keys = {(contract['pipelineClass'], workflow['id']) for contract in source['contracts'] for workflow in contract['workflows']}
+        workflows = sorted((workflow for workflow in reconstructed_block_workflows
+            if (workflow['pipelineClass'], workflow['workflowId']) in keys),
+            key=lambda workflow: (workflow['pipelineClass'], workflow['workflowId']))
+        block_ids = referenced_blocks(workflows)
+        claimed_block_ids.update(block_ids)
+        snapshot = {'schemaVersion': MODULAR_BLOCK_CONTRACT_SCHEMA_VERSION,
+            'diffusersRevision': source['libraryRevision'],
+            'blockDefinitions': sorted((definition for definition in diffusers_block_definitions if definition['id'] in block_ids),
+                key=lambda definition: definition['id']), 'workflows': workflows}
+        try:
+            validate_modular_block_snapshot(snapshot, workflow_snapshot={'contracts': source['contracts']},
+                source_revision=source['libraryRevision'])
+        except ModularBlockContractError as error:
+            raise HuggingFaceNodeLibraryError(f'Hugging Face supplemental block library is invalid: {error}') from error
+        if _content_hash(snapshot) != _content_hash(source['blocks']):
+            raise HuggingFaceNodeLibraryError('Hugging Face supplemental blocks are not the exact reviewed contracts.')
+        workflows_by_key = {(workflow['pipelineClass'], workflow['workflowId']): workflow for workflow in workflows}
+        for contract in source['contracts']:
+            for workflow in contract['workflows']:
+                expected = _definition(contract, workflow, workflows_by_key[(contract['pipelineClass'], workflow['id'])], source['libraryRevision'])
+                expected['executionAdmissions'] = sorted(expected_admissions_by_definition.get(expected['id'], []), key=lambda row: row['id'])
+                expected = _definition_with_suggestions(expected)
+                if definitions_by_id.get(expected['id']) != expected:
+                    raise HuggingFaceNodeLibraryError('Hugging Face supplemental workflow definition is not its exact reviewed contract.')
+    if claimed_block_ids != {definition['id'] for definition in diffusers_block_definitions}:
+        raise HuggingFaceNodeLibraryError('Hugging Face block library contains unreferenced source definitions.')
     expected_block_role_adapters = build_reviewed_modular_block_role_adapters(validated_block_snapshot)
     if block_role_adapters != expected_block_role_adapters:
         raise HuggingFaceNodeLibraryError(

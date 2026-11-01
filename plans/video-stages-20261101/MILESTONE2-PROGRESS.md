@@ -31,16 +31,18 @@ its genuine receipt is not retroactively assigned to the first task.
   `f6a7fb473ee0228f661f3b151459352885aa66c8b9f4678b347514468c389e95`.
   The same prompt/model/offload owner is retained. Estimated 1–3 hours from the
   lower-resolution measurements; larger-canvas timing is not yet measured.
-- Pika: 35 selected files, 146,806,845,173 bytes, downloading at its immutable
-  revision. No Pika pretrained output exists yet. Three task bindings, public
-  source-accurate hierarchy/catalog linking and actual adapter/sampler acceptance
-  remain open.
+- Pika: all 35 selected files, 146,806,845,173 bytes, downloaded and fully
+  hash-verified at its immutable revision. No Pika pretrained output exists yet.
+  Source-accurate catalog and shared-stage starter checks pass without rewriting
+  the 139 existing definition hashes. Executable Cluster admission, visible
+  hierarchy editing and actual adapter/sampler acceptance remain open.
 - H3 keyframe/reference routes, the remaining Wan image route, finishing stages,
   all twelve final creative recipes, final lifecycle and visible browser checks.
 - Complete current backend/client gates, exact paired bundle, protected refresh,
   supported/held matrix and final manual handoff. The earlier complete backend
-  attempt had four stale image-catalog fingerprint failures; the semantic-preserving
-  refresh and affected tests passed. It is not a complete current gate PASS.
+  attempts exposed stale image-catalog fingerprints and an incremental-loader
+  accessor assumption. The semantic-preserving refresh and authoritative component
+  map fix pass their affected tests. Neither attempt is a complete current gate PASS.
 - Public clip publication requires exact-file review; existing image approvals
   do not approve these videos.
 

@@ -2242,7 +2242,8 @@ def declared_optional_pipeline_configs():
     """Source schemas only; no class replacement or process/runtime grant."""
     from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
     configured = {'Flux3ModularPipeline': FLUX_3_PIPELINE_CONFIG,
-                  'Flux3DistilledModularPipeline': FLUX_3_DISTILLED_PIPELINE_CONFIG}
+                  'Flux3DistilledModularPipeline': FLUX_3_DISTILLED_PIPELINE_CONFIG,
+                  'PikaH3FlexModularPipeline': PIKA_H3_FLEX_PIPELINE_CONFIG}
     result = {}
     for profile in DIFFUSERS_EXECUTION_PROFILES.values():
         if not profile.public or profile.required_diffusers_provider is None:
@@ -2254,6 +2255,12 @@ def declared_optional_pipeline_configs():
         if profile.pipeline_class in result:
             raise ValueError('An optional pipeline has ambiguous public config authority.')
         result[profile.pipeline_class] = config
+    from modiff.supplemental_modular_contracts import reviewed_modular_source_providers
+    for model_type in reviewed_modular_source_providers():
+        config = configured.get(model_type)
+        if config is None:
+            raise ValueError('An optional source pipeline lacks its reviewed declarative config.')
+        result[model_type] = config
     return result
 
 
@@ -2297,6 +2304,10 @@ def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:
         from modiff.diffusers_profiles import execution_profiles_for_execution
         profiles = execution_profiles_for_execution(model_type)
         providers = {profile.required_diffusers_provider for profile in profiles}
+        from modiff.supplemental_modular_contracts import reviewed_modular_source_providers
+        source_provider = reviewed_modular_source_providers().get(model_type)
+        if source_provider is not None:
+            providers.add(source_provider)
         if len(providers) != 1 or None in providers:
             raise ValueError('The optional model has no exact declared provider.')
         return {**_pipeline_config_metadata(model_type, declared),

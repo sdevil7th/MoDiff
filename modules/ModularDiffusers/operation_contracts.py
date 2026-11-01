@@ -69,10 +69,18 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
     generic = {(c["pipelineClass"], c["nodeKey"]): c for c in get_modular_operation_contracts(modules)}
     snapshot = load_reviewed_modular_workflow_snapshot()
     blocks_snapshot = load_reviewed_modular_block_snapshot()
-    definitions = {d["id"]: d for d in blocks_snapshot["blockDefinitions"]}
-    workflows = {(w["pipelineClass"], w["workflowId"]): w for w in blocks_snapshot["workflows"]}
+    from modiff.supplemental_modular_contracts import reviewed_modular_source_supplements
+    supplements = reviewed_modular_source_supplements()
+    pipelines = [*snapshot['contracts'], *(contract for source in supplements for contract in source['contracts'])]
+    source_blocks = [blocks_snapshot, *(source['blocks'] for source in supplements)]
+    all_definitions = [definition for source in source_blocks for definition in source['blockDefinitions']]
+    all_workflows = [workflow for source in source_blocks for workflow in source['workflows']]
+    if len({row['id'] for row in all_definitions}) != len(all_definitions):
+        raise ValueError('Reviewed Modular source groups have conflicting block identities.')
+    definitions = {d["id"]: d for d in all_definitions}
+    workflows = {(w["pipelineClass"], w["workflowId"]): w for w in all_workflows}
     result = []
-    for pipeline in snapshot["contracts"]:
+    for pipeline in pipelines:
         pipeline_class = pipeline["pipelineClass"]
         for workflow in pipeline["workflows"]:
             workflow_id = workflow["id"]
@@ -241,7 +249,8 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     )
                     if helper:
                         helper.update(nodeType="reference_assembly", decomposition="bundle")
-                        result.append(with_operation_semantics(helper, workflow_id=workflow_id))
+                        result.append(with_operation_semantics(helper, workflow_id=workflow_id,
+                            values={'pipeline_class': pipeline_class}))
                 metadata = get_model_type_metadata(pipeline_class) or {}
                 if metadata.get('guider_options') and "custom_guider" in helper_types:
                     helper = build_pipeline_operation_contract(

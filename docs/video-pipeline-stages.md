@@ -32,8 +32,18 @@ Pika's source-generated workflow and 26-block companion contracts retain their
 own immutable Diffusers revision. The historical workflow/block snapshots keep
 their original identity. The companion validates its complete three-workflow
 topology against the source-qualified workflow contract; it grants no execution
-or hardware qualification. Public mixed-source catalog/starter registration is
-a separate integration step.
+or hardware qualification. The public library collection uses schema 7 for
+explicit source supplements; individual definitions retain schema 6 and their
+own source revision. Single-source schema 6 collections remain readable, and
+existing definition hashes remain unchanged. Both repositories must be updated
+together for the new collection envelope.
+
+The ordinary operation catalog and starter builder read those reviewed source
+groups without importing optional pipeline classes. Pika's three task starters
+use the shared joint video/audio stages, including its selected reference helper.
+This authoring metadata grants neither runtime activation nor model fit. Runtime
+readiness, executable Cluster admission and native acceptance remain separate
+checks; the historical hierarchy must not be relabelled as Pika's newer source.
 
 ## Execution and ownership
 

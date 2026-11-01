@@ -16,6 +16,18 @@ from modules.ModularDiffusers import loaders
 from modules.ModularDiffusers.modular_utils import PIKA_H3_FLEX_PIPELINE_CONFIG
 
 
+def test_source_authoring_metadata_does_not_require_the_optional_class_or_a_runtime_activation():
+    from unittest.mock import patch
+    from modules.ModularDiffusers import modular_utils
+    with patch.object(modular_utils, '_get_registry_instance', side_effect=AssertionError('No installed-class lookup')):
+        metadata = modular_utils.get_model_type_metadata(PIKA_PIPELINE)
+        assert metadata['default_repo'] == PIKA_REPOSITORY
+        assert metadata['required_diffusers_provider'] == 'huggingface-diffusers-video-d0b9b1b'
+        assert metadata['execution_status'] == 'expert_only'
+        assert modular_utils.pipeline_authoring_identity(PIKA_PIPELINE,
+            class_resolver=lambda value: pytest.fail('Authoring must not import the optional pipeline')) == PIKA_PIPELINE
+
+
 def test_exact_artifact_and_loading_policy_remain_separate_from_historical_source():
     assert require_catalog_revision(PIKA_REPOSITORY, model_type=PIKA_PIPELINE) == PIKA_REVISION
     assert PIKA_H3_FLEX_PIPELINE_CONFIG.default_repo == PIKA_REPOSITORY

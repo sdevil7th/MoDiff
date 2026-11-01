@@ -170,3 +170,19 @@ def reproduce_installed_pika_blocks():
     from diffusers import PikaH3FlexBlocks
     from modiff.modular_block_contracts import build_modular_block_contracts
     return _pika_block_document(build_modular_block_contracts(PikaH3FlexBlocks().init_pipeline()))
+
+
+def reviewed_modular_source_supplements():
+    """Explicit approved source groups for pure-data authoring discovery."""
+    document = reviewed_supplemental_modular_blocks(PIKA_PIPELINE)
+    return [{'libraryRevision': document['source']['revision'],
+        'runtimeProfileId': document['runtimeProfileId'],
+        'workflowContractHash': document['workflowContractHash'],
+        'blockContractHash': document['contentHash'],
+        'contracts': [reviewed_supplemental_modular_contract(PIKA_PIPELINE)],
+        'blocks': document['blocks']}]
+
+
+def reviewed_modular_source_providers():
+    """Lightweight declared providers, independent of installed model classes."""
+    return {PIKA_PIPELINE: PIKA_RUNTIME_PROFILE}
