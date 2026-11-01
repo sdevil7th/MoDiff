@@ -145,6 +145,21 @@ class MiniMaxH3StructuralAdmissionTests(unittest.TestCase):
             self.assertNotIn("max", node.params["height"])
         self.assertNotIn("max", WorkflowMiniMaxH3Denoise.params["num_inference_steps"])
 
+    def test_joint_decoder_precision_is_explicit_and_reaches_native_component_kwargs(self):
+        import torch
+        from modules.ModularDiffusers.loaders import reviewed_component_dtypes, component_load_kwargs_for
+        from modules.ModularDiffusers.pipeline_schema import MoDiffPipelineConfig
+
+        precision = reviewed_component_dtypes(PIPELINE, torch.bfloat16)
+        self.assertEqual(precision, {"default": torch.bfloat16, "vae": torch.float32, "audio_vae": torch.float32})
+        for name in ("text_encoder", "transformer", "transformer_ref"):
+            self.assertIs(component_load_kwargs_for(name, {"torch_dtype": precision})["torch_dtype"], torch.bfloat16)
+        for name in ("vae", "audio_vae"):
+            self.assertIs(component_load_kwargs_for(name, {"torch_dtype": precision})["torch_dtype"], torch.float32)
+        exported = MINIMAX_H3_PIPELINE_CONFIG.to_dict()
+        self.assertEqual(exported["component_dtype_overrides"], [["vae", "float32"], ["audio_vae", "float32"]])
+        self.assertEqual(MoDiffPipelineConfig.from_dict(exported).to_dict(), exported)
+
     def test_loader_closure_requires_the_exact_repository_revision_and_workflow_partition(self):
         self.assertNotIn(PIPELINE, CURRENT_PIN_CONTRACT_ONLY_MODULAR_BY_NAME)
         self.assertEqual(MINIMAX_H3_PIPELINE_CONFIG.default_repo, MINIMAX_H3_REPOSITORY)

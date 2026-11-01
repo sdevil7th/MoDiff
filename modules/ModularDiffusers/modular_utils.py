@@ -1404,6 +1404,7 @@ MINIMAX_H3_PIPELINE_CONFIG = PipelineConfig(
     label="MiniMax H3",
     default_repo="MiniMaxAI/MiniMax-H3",
     default_dtype="bfloat16",
+    component_dtype_overrides=(("vae", "float32"), ("audio_vae", "float32")),
 )
 
 ANIMA_PIPELINE_CONFIG = PipelineConfig(

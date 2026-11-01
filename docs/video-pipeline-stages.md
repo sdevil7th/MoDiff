@@ -20,6 +20,14 @@ existing whole or native Modular operations. Saved whole-pipeline graphs are not
 automatically rewritten. Stage availability is an authoring declaration; it does
 not imply hardware qualification, Auto support or successful model execution.
 
+The separately reviewed MiniMax H3 schema keeps its video and audio VAEs in
+float32 while the default component precision remains bfloat16. The selected
+`transformer_ref` partition and `audio_vae` participate in the existing owned
+group-offload path; direct audio-VAE encode/decode uses leaf hooks like the video
+VAE. This is loading-policy coverage, not measured H3 resource fit or live
+video/audio acceptance. Pika's source runtime remains a separate candidate and
+does not inherit these model qualification claims.
+
 ## Execution and ownership
 
 - `LoadPipeline` retains the existing immutable-artifact, resource, offload and

@@ -26,11 +26,13 @@ logger = logging.getLogger("modiff")
 
 DEFAULT_GROUP_COMPONENTS = (
     "transformer",
+    "transformer_ref",
     "unet",
     "text_encoder",
     "text_encoder_2",
     "text_encoder_3",
     "vae",
+    "audio_vae",
 )
 
 # Diffusers invokes VAE ``encode`` and ``decode`` directly. Block-level group
@@ -38,7 +40,7 @@ DEFAULT_GROUP_COMPONENTS = (
 # so unmatched VAE layers (for example Qwen Image's ``encoder.conv_in``) can
 # remain on CPU while their inputs are prepared on CUDA. Leaf-level hooks are
 # attached to the actual convolution/linear calls and cover both entry points.
-LEAF_LEVEL_GROUP_COMPONENTS = frozenset({"vae"})
+LEAF_LEVEL_GROUP_COMPONENTS = frozenset({"vae", "audio_vae"})
 MIN_STREAMING_RAM_BYTES = 8 * 1024**3
 _MAX_STREAMING_MODULES = 65536
 _MAX_STREAMING_TENSOR_REFERENCES = 262144

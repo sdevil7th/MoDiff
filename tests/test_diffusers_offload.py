@@ -943,6 +943,26 @@ class DiffusersOffloadSmokeTest(unittest.TestCase):
         self.assertEqual(calls[1][1]["offload_type"], "block_level")
         self.assertEqual(calls[1][1]["num_blocks_per_group"], 2)
 
+    def test_joint_video_partitions_and_audio_vae_receive_default_owned_hooks(self):
+        from types import SimpleNamespace
+        pipeline = SimpleNamespace(
+            transformer_ref=torch.nn.Sequential(torch.nn.Linear(2, 2)),
+            audio_vae=torch.nn.Sequential(torch.nn.Conv1d(2, 2, kernel_size=1)),
+        )
+        calls = []
+        with patch("diffusers.hooks.apply_group_offloading", lambda module, **kw: calls.append((module, kw))):
+            result = apply_component_group_offload(
+                pipeline, device="cuda:0", mode=OFFLOAD_MODE_GROUP_DISK,
+                node_id="joint-video-owner", scope="selected-ref-partition",
+            )
+        self.assertEqual(set(result.components), {"transformer_ref", "audio_vae"})
+        by_module = {id(module): values for module, values in calls}
+        self.assertEqual(by_module[id(pipeline.transformer_ref)]["offload_type"], "block_level")
+        self.assertEqual(by_module[id(pipeline.audio_vae)]["offload_type"], "leaf_level")
+        self.assertIsNone(by_module[id(pipeline.audio_vae)]["num_blocks_per_group"])
+        self.assertNotEqual(by_module[id(pipeline.transformer_ref)]["offload_to_disk_path"],
+                            by_module[id(pipeline.audio_vae)]["offload_to_disk_path"])
+
     def test_quant_config_string_is_rejected_with_actionable_error(self):
         self.assertIsNone(normalize_quant_config_input(None))
         self.assertEqual(normalize_quant_config_input({"transformer": "config"}), {"transformer": "config"})
