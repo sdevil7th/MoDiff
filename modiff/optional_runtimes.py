@@ -24,6 +24,7 @@ from types import MappingProxyType
 OPTIONAL_RUNTIME_SCHEMA_VERSION = 1
 QUALIFICATION_WORKLOAD_CUDA_NF4 = "cuda-nf4-v1"
 DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID = "huggingface-diffusers-flux3-7ecb1e1"
+DIFFUSERS_VIDEO_RUNTIME_PROFILE_ID = "huggingface-diffusers-video-d0b9b1b"
 DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID = "huggingface-diffusers-flux3-7ecb1e1-bitsandbytes-0.50.0"
 TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-peft-5.14.1-0.20.0"
 TRANSFORMERS_MAIN_PEFT_RUNTIME_PROFILE_ID = "huggingface-transformers-main-96fe6dce-peft-0.20.0"
@@ -1758,6 +1759,41 @@ _DIFFUSERS_FLUX3_PROFILE = OptionalRuntimeProfile(
 )
 
 
+# Pika is newer than the installed/released catalog. Keep its exact official
+# source provider independent: a built wheel is not installation, model,
+# hardware, Auto or legacy-provider qualification.
+_video_source_build = json.loads(
+    (Path(__file__).resolve().parent.parent / "data/diffusers-video-source-build.v1.json").read_text(encoding="utf-8")
+)
+_VIDEO_DIFFUSERS_CLASSES = (
+    "MiniMaxH3ModularPipeline", "PikaH3FlexModularPipeline", "MiniMaxH3Scheduler",
+    "MiniMaxH3Transformer3DModel", "AutoencoderKLMiniMaxH3", "AutoencoderKLMiniMaxH3Audio",
+    "ModularPipeline", "ComponentsManager", "ComponentSpec",
+)
+_DIFFUSERS_VIDEO_PROFILE = OptionalRuntimeProfile(
+    id=DIFFUSERS_VIDEO_RUNTIME_PROFILE_ID,
+    label="Official Diffusers joint video source runtime",
+    packages=(OptionalRuntimePackageContract(
+        distribution="diffusers", import_name="diffusers", version=_video_source_build["version"],
+        publisher="Hugging Face", project_url="https://github.com/huggingface/diffusers",
+        distribution_url=_video_source_build["sourceArtifact"]["url"], license="Apache-2.0",
+        role="runtime_root", required_symbols=_VIDEO_DIFFUSERS_CLASSES,
+        required_class_symbols=_VIDEO_DIFFUSERS_CLASSES,
+    ),),
+    base_packages=tuple(_FLUX3_BASE_REQUIREMENTS.values()),
+    required_diffusers_symbols=_VIDEO_DIFFUSERS_CLASSES,
+    require_peft_backend=True,
+    pipeline_adapter_symbols=("MiniMaxH3ModularPipeline", "PikaH3FlexModularPipeline"),
+    pipeline_adapter_methods=(("load_components", ("names", "workflow")), ("__call__", ("state", "output"))),
+    source_builds=(_video_source_build,),
+    provides_diffusers=True,
+    target_contracts=tuple(OptionalRuntimeTargetContract(
+        platform=platform_name, machine=machine, contract_state="candidate_unqualified",
+        cutover_ready=False, install_action_available=False, activation_available=False,
+    ) for platform_name, _python_tag, machine in _OPTIONAL_RUNTIME_TARGETS),
+)
+
+
 OPTIONAL_RUNTIME_PROFILES: Mapping[str, OptionalRuntimeProfile] = MappingProxyType(
     {
         _TRANSFORMERS_517_PEFT_PROFILE.id: _TRANSFORMERS_517_PEFT_PROFILE,
@@ -1769,6 +1805,7 @@ OPTIONAL_RUNTIME_PROFILES: Mapping[str, OptionalRuntimeProfile] = MappingProxyTy
         _GALLERY_MEDIA_PROFILE.id: _GALLERY_MEDIA_PROFILE,
         _COSMOS_SAFETY_PROFILE.id: _COSMOS_SAFETY_PROFILE,
         _DIFFUSERS_FLUX3_PROFILE.id: _DIFFUSERS_FLUX3_PROFILE,
+        _DIFFUSERS_VIDEO_PROFILE.id: _DIFFUSERS_VIDEO_PROFILE,
     }
 )
 

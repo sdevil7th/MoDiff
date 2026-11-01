@@ -14,6 +14,26 @@ revision; that checkout is not required to install or run the application.
 
 ### Explicit Diffusers source evaluation
 
+The separately declared `huggingface-diffusers-video-d0b9b1b` optional provider
+is a **candidate**, with installation and activation disabled on every target.
+Its [source build contract](../data/diffusers-video-source-build.v1.json) binds
+official Hugging Face Diffusers commit
+`d0b9b1b5a540e5f9df2f8ec236347bf9c5aa7d1f`, which adds Pika H3 Flex, to one
+deterministically assembled `0.42.0.dev0` wheel. Assembly runs no upstream build
+hooks. The version string is upstream's development version; it is not the
+published `0.42.1` release. This source includes the component-library allowlist
+and distribution-metadata requirement resolution from the upstream security fix.
+Qualification must exercise those paths with the installed artifact.
+
+This declaration does not change the ordinary release pin, the existing FLUX3
+evaluation wheel or a running process. It grants no model downloads, execution,
+hardware, Auto, template or Gallery qualification. Pika's selected mandatory
+adapter and fixed six-step sampler require their own execution/artifact review;
+publishing a runtime entry cannot substitute for that work. Use the isolated
+qualification tool against a clean native base before considering target
+installation or activation. Keep the current testing runtime available until
+the candidate passes compatibility and preservation checks.
+
 Source evaluation is separate from ordinary setup. The reviewed profile in
 [`data/diffusers-evaluation-runtime.v1.json`](../data/diffusers-evaluation-runtime.v1.json)
 currently admits only the locally built `diffusers==0.41.0.dev0` wheel from the

@@ -143,7 +143,8 @@ def test_provider_has_actual_source_locks_and_only_recorded_x86_64_package_targe
         assert target.activation_available is qualified
         assert target.contract_state == ('qualified' if qualified else 'candidate_unqualified')
     assert profile.spec_digest == 'sha256:82017c1615d807c1808c13929f0ee10b180058b2f976e51209a80e41939a40fe'
-    provider_ids = {profile.id, optional_runtimes.DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID}
+    provider_ids = {profile.id, optional_runtimes.DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID,
+                    optional_runtimes.DIFFUSERS_VIDEO_RUNTIME_PROFILE_ID}
     assert {item.id for item in optional_runtimes.OPTIONAL_RUNTIME_PROFILES.values()
             if item.provides_diffusers} == provider_ids
     for old in optional_runtimes.OPTIONAL_RUNTIME_PROFILES.values():

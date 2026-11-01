@@ -20,6 +20,7 @@ from modiff.diffusers_profiles import (
 from modiff.optional_runtimes import (
     DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID,
     DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID,
+    DIFFUSERS_VIDEO_RUNTIME_PROFILE_ID,
     GALLERY_MEDIA_RUNTIME_PROFILE_ID,
     OPTIONAL_RUNTIME_PROFILES,
     TRANSFORMERS_MAIN_PEFT_BITSANDBYTES_RUNTIME_PROFILE_ID,
@@ -654,6 +655,7 @@ class OptionalRuntimePublicationTests(unittest.IsolatedAsyncioTestCase):
                     "cosmos-guardrail-0.3.1",
                     DIFFUSERS_FLUX3_BITSANDBYTES_RUNTIME_PROFILE_ID,
                     DIFFUSERS_FLUX3_RUNTIME_PROFILE_ID,
+                    DIFFUSERS_VIDEO_RUNTIME_PROFILE_ID,
                     GALLERY_MEDIA_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID,
                     TRANSFORMERS_PEFT_RUNTIME_PROFILE_ID,
