@@ -48,6 +48,7 @@ def test_candidate_preserves_required_base_libraries_and_constrains_apis():
             'MiniMaxH3Transformer3DModel', 'AutoencoderKLMiniMaxH3',
             'AutoencoderKLMiniMaxH3Audio'}.issubset(selected.required_diffusers_symbols)
     assert selected.require_peft_backend
+    assert selected.excluded_qualification_symbols == ('add_weighted_adapter',)
 
 
 @pytest.mark.parametrize('platform,machine', [

@@ -1786,6 +1786,7 @@ _DIFFUSERS_VIDEO_PROFILE = OptionalRuntimeProfile(
     pipeline_adapter_symbols=("MiniMaxH3ModularPipeline", "PikaH3FlexModularPipeline"),
     pipeline_adapter_methods=(("load_components", ("names", "workflow")), ("__call__", ("state", "output"))),
     source_builds=(_video_source_build,),
+    excluded_qualification_symbols=("add_weighted_adapter",),
     provides_diffusers=True,
     target_contracts=tuple(OptionalRuntimeTargetContract(
         platform=platform_name, machine=machine, contract_state="candidate_unqualified",
