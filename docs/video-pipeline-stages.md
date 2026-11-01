@@ -20,13 +20,20 @@ existing whole or native Modular operations. Saved whole-pipeline graphs are not
 automatically rewritten. Stage availability is an authoring declaration; it does
 not imply hardware qualification, Auto support or successful model execution.
 
-The separately reviewed MiniMax H3 schema keeps its video and audio VAEs in
-float32 while the default component precision remains bfloat16. The selected
-`transformer_ref` partition and `audio_vae` participate in the existing owned
-group-offload path; direct audio-VAE encode/decode uses leaf hooks like the video
-VAE. This is loading-policy coverage, not measured H3 resource fit or live
-video/audio acceptance. Pika's source runtime remains a separate candidate and
-does not inherit these model qualification claims.
+The reviewed H3/Pika schemas keep video and audio VAEs in float32 while the
+default component precision remains bfloat16. The selected large components,
+including `transformer_ref`, use the existing owned group-offload path; the
+small audio VAE uses the reviewed resident placement described below. Pika's
+exact source runtime has isolated package qualification, which does not establish
+published-model fit or output quality. See the video plan's milestone report for
+the bounded H3 engineering evidence and remaining acceptance.
+
+Pika's source-generated workflow and 26-block companion contracts retain their
+own immutable Diffusers revision. The historical workflow/block snapshots keep
+their original identity. The companion validates its complete three-workflow
+topology against the source-qualified workflow contract; it grants no execution
+or hardware qualification. Public mixed-source catalog/starter registration is
+a separate integration step.
 
 ## Execution and ownership
 

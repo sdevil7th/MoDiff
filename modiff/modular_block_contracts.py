@@ -431,8 +431,14 @@ def validate_modular_block_snapshot(
     value: Any,
     *,
     workflow_snapshot: Mapping[str, Any] | None = None,
+    source_revision: str = PINNED_DIFFUSERS_REVISION,
 ) -> dict[str, Any]:
-    """Validate, cross-check, and detach one complete block snapshot."""
+    """Validate one complete snapshot against its trusted source declaration.
+
+    Historical callers retain the pinned default. A reviewed source supplement
+    supplies its own immutable expected revision, never one inferred from the
+    incoming snapshot. This structural check grants no execution eligibility.
+    """
 
     try:
         encoded = json.dumps(value, allow_nan=False, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
@@ -449,8 +455,9 @@ def validate_modular_block_snapshot(
     }:
         raise ModularBlockContractError("Block snapshot has missing or unknown top-level fields.")
     if (
-        normalized.get("schemaVersion") != MODULAR_BLOCK_CONTRACT_SCHEMA_VERSION
-        or normalized.get("diffusersRevision") != PINNED_DIFFUSERS_REVISION
+        type(source_revision) is not str or re.fullmatch(r"[0-9a-f]{40}", source_revision) is None
+        or normalized.get("schemaVersion") != MODULAR_BLOCK_CONTRACT_SCHEMA_VERSION
+        or normalized.get("diffusersRevision") != source_revision
     ):
         raise ModularBlockContractError("Block snapshot revision is not the pinned Diffusers revision.")
     definitions = normalized.get("blockDefinitions")
