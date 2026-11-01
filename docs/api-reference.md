@@ -2326,6 +2326,18 @@ model support or resource qualification. Workflow Auto uses the same recognition
 when existing explicit mode/workflow bindings do not select a task, and still
 requires its ordinary exact-profile, artifact and memory checks.
 
+Successful ordinary video-stage calls additionally use `graphTasksVersion: 2`.
+This optional owner-vocabulary version includes `DiffusersVideo.LoadPipeline`
+alongside the existing image/Modular owners; the receipt stays `schemaVersion: 1`.
+All three video stages must capture the same supported `executed_task` for their
+exact selected pipeline. Missing, conflicting or foreign observations remain
+unresolved. Absence of the version retains the legacy image/Modular vocabulary,
+including older mixed video outputs. Saved receipts are not rewritten.
+Video prompt values come from encoding, sampling records its actual controls,
+and decoding records the final frame format; internal null text placeholders and
+latent transport are not competing user settings. These observations do not
+grant model, resource or publication qualification.
+
 Ordinary image consumers capture `executed_task` at their validated call boundary.
 Whole Diffusers image owners, Transformers depth/image-caption owners and built-in
 image processors use that scoped evidence with their captured execution class.

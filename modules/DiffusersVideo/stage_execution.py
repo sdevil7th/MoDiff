@@ -196,7 +196,7 @@ def _encode(pipeline, values):
     embeddings, tensor_stamps, _logical, _copied = _material(dict(zip(names, output, strict=True)))
     result = Encoding(owner, _configuration(pipeline), mode, guidance > 1, length,
                       embeddings, material, stamps + tensor_stamps,
-                      MappingProxyType({'prompt': prompt, 'negative_prompt': negative,
+                      MappingProxyType({'executed_task': mode, 'prompt': prompt, 'negative_prompt': negative,
                                         'guidance_scale': guidance, 'max_sequence_length': length}))
     _ENCODINGS.add(result)
     return result

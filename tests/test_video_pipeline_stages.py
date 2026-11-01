@@ -232,6 +232,65 @@ def test_decoder_dispatch_rejects_a_fabricated_binding_before_tensor_work():
             latents=torch.ones(1), latent_binding={'seed': 7})
 
 
+@pytest.mark.parametrize('identity', core.PROFILE_CLASSES)
+def test_actual_split_calls_capture_video_task_prompt_and_final_format_without_form_fallback(identity):
+    from modiff.execution_input_provenance import capture_generation_inputs, build_resolved_execution_inputs, apply_resolved_execution_inputs
+    from modules.DiffusersVideo.main import get_video_pipeline_adapter
+    pipeline, _ = owner(identity)
+    encoder, sampler, decoder = EncodeInputs('encode'), Denoise('sample'), DecodeLatents('decode')
+    encoding = encoder(pipeline=pipeline, mode='text_to_video', prompt='A moving train',
+                       negative_prompt='', guidance_scale=1., max_sequence_length=128)['encoded_inputs']
+    def sample(pipe, adapter, mode, args):
+        return sampler._invoke_pipeline(pipe, {'width': 32, 'height': 32, 'num_frames': 9,
+            'generator': torch.Generator().manual_seed(7)})
+    with patch.object(Pipeline, '__call__', lambda self, **kw: SimpleNamespace(frames=torch.ones(1, 1, 2, 2, 2)), create=True), patch(
+        'modules.DiffusersVideo.main._pipeline_adapter', return_value=get_video_pipeline_adapter(pipeline._modiff_video_pipeline_class),
+    ), patch.object(sampler, '_execute_adapter', side_effect=sample):
+        latent = sampler(pipeline=pipeline, encoded_inputs=encoding, mode='text_to_video', guidance_scale=1., seed=7)
+    decoder(pipeline=pipeline, latents=latent['latents_out'], latent_binding=latent['latent_binding'])
+    nodes = {'owner': {'module': 'modules.DiffusersVideo', 'action': 'LoadPipeline', 'params': {}}}
+    for key, action in [('encode', 'EncodeInputs'), ('sample', 'Denoise'), ('decode', 'DecodeLatents')]:
+        nodes[key] = {'module': 'modules.DiffusersVideo', 'action': action, 'params': {
+            'pipeline': {'sourceId': 'owner', 'sourceKey': 'pipeline'}}}
+    nodes['sample']['params']['encoded_inputs'] = {'sourceId': 'encode', 'sourceKey': 'encoded_inputs'}
+    nodes['decode']['params']['latent_binding'] = {'sourceId': 'sample', 'sourceKey': 'latent_binding'}
+    records = {node.node_id: node._execution_input_record for node in (encoder, sampler, decoder)}
+    records['owner'] = capture_generation_inputs('owner', nodes['owner'], {'pipeline_class': pipeline._modiff_video_pipeline_class})
+    receipt = build_resolved_execution_inputs({'nodes': nodes}, records, task_id='run', attempt_index=0, node_id='decode')
+    assert receipt['graphTasksVersion'] == 2
+    assert receipt['graphTasks'] == [{'loaderId': 'owner', 'pipelineClass': pipeline._modiff_video_pipeline_class, 'task': 'text_to_video'}]
+    assert receipt['summary']['prompt'] == 'A moving train'
+    # Blank text is normalized by the encoder; retain that exact observation.
+    assert receipt['summary']['negativePrompt'] is None
+    assert receipt['summary']['outputType'] == 'pil'
+    assert receipt['summary']['executedTask'] == 'text_to_video'
+    assert receipt['ambiguousFields'] == []
+    result = apply_resolved_execution_inputs({'taskId': 'run', 'nodeId': 'decode', 'mode': 'text_to_image',
+        'formSnapshot': {'mode': 'text_to_image', 'prompt': 'unused'}}, receipt)
+    assert result['mode'] == 'text_to_video' and result['prompt'] == 'A moving train'
+    assert result['formSnapshot'] == {'mode': 'text_to_image', 'prompt': 'unused'}
+
+
+def test_video_task_receipts_require_complete_consistent_actual_stage_observations():
+    from modiff.execution_input_provenance import capture_generation_inputs
+    from modiff.workflow_task_identity import graph_task_receipts
+    nodes = {'owner': {'module': 'modules.DiffusersVideo', 'action': 'LoadPipeline', 'params': {}}}
+    records = {'owner': capture_generation_inputs('owner', nodes['owner'], {'pipeline_class': 'LTXConditionPipeline'})}
+    for action in ('EncodeInputs', 'Denoise', 'DecodeLatents'):
+        nodes[action] = {'module': 'modules.DiffusersVideo', 'action': action, 'params': {
+            'pipeline': {'sourceId': 'owner', 'sourceKey': 'pipeline'}, 'mode': {'value': 'text_to_video'}}}
+        records[action] = capture_generation_inputs(action, nodes[action], {'executed_task': 'text_to_video'})
+    for task in (None, 'image_to_video', 'foreign_task'):
+        changed = {**records, 'Denoise': capture_generation_inputs('Denoise', nodes['Denoise'], {'executed_task': task})}
+        assert graph_task_receipts(nodes, changed)[0]['task'] is None
+    assert graph_task_receipts({k: v for k, v in nodes.items() if k != 'DecodeLatents'}, records)[0]['task'] is None
+    # Original whole-video receipts keep the legacy owner vocabulary.
+    legacy = {k: capture_generation_inputs(k, v, {}) for k, v in nodes.items() if k != 'owner'}
+    assert graph_task_receipts(nodes, {**legacy, 'owner': records['owner']}) == []
+    foreign = {**records, 'owner': capture_generation_inputs('owner', nodes['owner'], {'pipeline_class': 'ForeignVideoPipeline'})}
+    assert graph_task_receipts(nodes, foreign)[0]['task'] is None
+
+
 def test_wan_stage_seals_latents_after_the_existing_adapter_restores_its_scheduler():
     pipeline, _ = owner('wan-22-ti2v-5b:direct')
     value = encoded(pipeline)

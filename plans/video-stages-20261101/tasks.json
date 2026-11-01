@@ -165,7 +165,7 @@
     {
       "id": "V9",
       "title": "Native video acceptance and lifecycle",
-      "status": "planned",
+      "status": "in_progress",
       "estimateActiveHours": {
         "minimum": 4,
         "maximum": 7
@@ -191,7 +191,7 @@
     {
       "id": "V11",
       "title": "Final gates paired build and deployment",
-      "status": "planned",
+      "status": "in_progress",
       "estimateActiveHours": {
         "minimum": 4,
         "maximum": 6
@@ -234,14 +234,21 @@
       "title": "LTX-2.5 explicit decoder and access integration",
       "estimatedActiveHours": [6, 12],
       "status": "deferred",
-      "reason": "Separate gated-access and ROCm decoder prerequisite; not included in 43\u00e2\u20ac\u201c73 hour total."
+      "reason": "Separate gated-access and ROCm decoder prerequisite; not included in 43-73 hour total."
     }
   ],
   "updatedOn": "2026-11-01",
   "firstMilestone": {
     "scope": "Existing reviewed runtime; LTX 0.9.8 distilled tasks and Wan5B text-to-video first. No Pika runtime upgrade yet.",
-    "status": "implementation_in_progress",
-    "nativeModelRuns": 0,
-    "readyForUserTesting": false
+    "status": "native_acceptance_in_progress",
+    "nativeModelRuns": 4,
+    "readyForUserTesting": false,
+    "successfulFreshVideos": 1,
+    "successfulCachedRepeats": 1,
+    "notes": [
+      "Wan text-to-video generated, played, repeated unchanged and released its scoped cache; output metadata correction remains open.",
+      "LTX text-to-video completed sampling and is decoding; no terminal output claim.",
+      "Runtime upgrade, H3/Pika and public video publication have not started."
+    ]
   }
 }

@@ -262,6 +262,30 @@ _IMAGE_OWNERS = {
     ('modules.ImageOperations', 'ProcessImage'),
 }
 
+_VIDEO_OWNERS = {('modules.DiffusersVideo', 'LoadPipeline')}
+_VIDEO_STAGES = {'EncodeInputs', 'Denoise', 'DecodeLatents'}
+
+
+def _ordinary_video_tasks(nodes, records, key, loaders, model):
+    """Observe successful exact video-stage calls, never authoring labels."""
+    from modiff.video_stage_contract import PROFILE_CLASSES
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
+
+    profiles = [DIFFUSERS_EXECUTION_PROFILES[p] for p, cls in PROFILE_CLASSES.items() if cls == model]
+    if len(profiles) != 1:
+        return set()
+    stages = [c for c in resource_consumers(nodes, key, loaders)
+              if nodes[c]['module'] == 'modules.DiffusersVideo']
+    if {nodes[c]['action'] for c in stages} != _VIDEO_STAGES:
+        return set()
+    tasks = set()
+    for stage in stages:
+        task = records.get(stage, {}).get('fields', {}).get('executed_task', {}).get('value')
+        if not isinstance(task, str) or task not in profiles[0].modes:
+            return set()
+        tasks.add(task)
+    return tasks
+
 
 def _ordinary_image_tasks(nodes, records, key, loaders, model):
     module, action = nodes[key]['module'], nodes[key]['action']
@@ -304,11 +328,17 @@ def _ordinary_image_tasks(nodes, records, key, loaders, model):
 
 
 def graph_task_receipts(nodes, records):
-    """Use captured owner identity and validated image calls in output ancestry."""
+    """Use captured owner identity and validated calls in output ancestry."""
+    # Legacy ordinary-video records had no task observations. Keep their old
+    # format; version two adds video ownership only for actual staged captures.
+    video_observed = any(node.get('module') == 'modules.DiffusersVideo' and node.get('action') in _VIDEO_STAGES
+                         and 'executed_task' in records.get(key, {}).get('fields', {})
+                         for key, node in nodes.items())
+    owners = _IMAGE_OWNERS | {('modules.ModularDiffusers', 'ModelsLoader')} | (_VIDEO_OWNERS if video_observed else set())
     loaders = {
         key
         for key, node in nodes.items()
-        if (node.get("module"), node.get("action")) in _IMAGE_OWNERS | {('modules.ModularDiffusers', 'ModelsLoader')}
+        if (node.get("module"), node.get("action")) in owners
     }
     result = []
     for key in sorted(loaders):
@@ -317,6 +347,8 @@ def graph_task_receipts(nodes, records):
         if not isinstance(model, str):
             return []  # Incomplete owner evidence must not select another owner's task.
         tasks = (modular_graph_tasks(nodes, key, resource_consumers(nodes, key, loaders), model) if modular
+                 else _ordinary_video_tasks(nodes, records, key, loaders, model)
+                 if nodes[key]['module'] == 'modules.DiffusersVideo'
                  else _ordinary_image_tasks(nodes, records, key, loaders, model))
         result.append(
             {"loaderId": key, "pipelineClass": model, "task": next(iter(tasks)) if len(tasks) == 1 else None}

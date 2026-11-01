@@ -61,6 +61,8 @@ NODE_FIELD_NAMES = {
        for action in ('Generate', 'Edit', 'Inpaint', 'ControlGenerate', 'ControlEdit', 'ControlInpaint',
                       'LayerDecompose', 'UnconditionalGenerate', 'PredictMap',
                       'EncodeInputs', 'Denoise', 'DecodeLatents')},
+    **{('DiffusersVideo', action): {**FIELD_NAMES, 'executed_task': 'executedTask'}
+       for action in ('EncodeInputs', 'Denoise', 'DecodeLatents')},
     **{('HuggingFaceTransformers', action): {**FIELD_NAMES, 'executed_task': 'executedTask'}
        for action in ('PredictDepth',)},
     ('HuggingFaceTransformers', 'GenerateImageVideoText'): {
@@ -504,6 +506,8 @@ def build_resolved_execution_inputs(graph, records, *, task_id, attempt_index, n
     )
     return {
         **({"graphTasks": graph_tasks} if graph_tasks else {}),
+        **({'graphTasksVersion': 2} if any(nodes[t['loaderId']]['module'] == 'modules.DiffusersVideo'
+                                         for t in graph_tasks) else {}),
         **({'fieldAccountingStatus': {'schemaVersion': 1, 'truncated': accounting_truncated}}
            if any(item is not None for item in accounting_records) else {}),
         **({'appliedAdaptersStatus': {'schemaVersion': 1, 'truncated': applied_truncated}}

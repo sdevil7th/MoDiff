@@ -98,7 +98,12 @@ class Denoise(Generate):
         call_kwargs.update(encoding.embeddings)
         call_kwargs.update(prompt=None, negative_prompt=None, output_type='latent')
         result = pipeline(**call_kwargs)
-        self._video_consumed = {key: value for key, value in call_kwargs.items() if key in FIELD_NAMES}
+        # Text belongs to Encode Inputs, and latent transport is fixed here.
+        # Recording their placeholder None/latent values as user settings would
+        # contradict the actual prompt and final decoded output in the summary.
+        self._video_consumed = {key: value for key, value in call_kwargs.items()
+            if key in FIELD_NAMES and key not in {'prompt', 'negative_prompt', 'output_type'}}
+        self._video_consumed['executed_task'] = encoding.mode
         self._video_consumed['seed'] = int(call_kwargs['generator'].initial_seed())
         # The ordinary Wan adapter restores its temporary scheduler in finally.
         # Seal against the loader's owner only after that restoration, without
@@ -170,5 +175,5 @@ class DecodeLatents(NodeBase):
             self._active_pipeline = None
         if self._interrupt:
             raise InterruptedError('Video decoding interrupted.')
-        self.record_generation_inputs({'output_type': 'pil'})
+        self.record_generation_inputs({'output_type': 'pil', 'executed_task': kwargs['latent_binding'].encoding.mode})
         return result
