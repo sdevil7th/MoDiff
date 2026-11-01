@@ -2458,7 +2458,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:23919f5cc0262fd176b2048d5c38dfb6318b43f6bfe9e4c4bf7b984f8b08feba",
+  "contentHash": "sha256:abac00d9e621c456ffe9c98e7095b970b0d60f590095eebde1d44413e15f5782",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -9062,15 +9062,31 @@
     },
     {
       "canonicalWorkflowId": "LTXVideoPipeline:image_to_video",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "image_to_video",
+          "modelType": "LTXVideoPipeline"
+        },
+        "executionProfileId": "ltx-video:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs reuses official text encoding and owns source media; the official Denoise call prepares media latents and Video Output decodes and exports the matching result.",
+        "pipelineClass": "LTXConditionPipeline",
+        "schemaVersion": 1,
+        "task": "image_to_video"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "ltx_video_image_to_video",
       "mode": "image_to_video",
       "modelType": "LTXVideoPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -9092,45 +9108,93 @@
     },
     {
       "canonicalWorkflowId": "LTXVideoPipeline:reference_to_video",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "reference_to_video",
+          "modelType": "LTXVideoPipeline"
+        },
+        "executionProfileId": "ltx-video:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs reuses official text encoding and owns source media; the official Denoise call prepares media latents and Video Output decodes and exports the matching result.",
+        "pipelineClass": "LTXConditionPipeline",
+        "schemaVersion": 1,
+        "task": "reference_to_video"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "ltx_video_multi_reference",
       "mode": "reference_to_video",
       "modelType": "LTXVideoPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "LTXVideoPipeline:text_to_video",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "text_to_video",
+          "modelType": "LTXVideoPipeline"
+        },
+        "executionProfileId": "ltx-video:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs reuses official text encoding and owns source media; the official Denoise call prepares media latents and Video Output decodes and exports the matching result.",
+        "pipelineClass": "LTXConditionPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_video"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "ltx_video_text_to_video",
       "mode": "text_to_video",
       "modelType": "LTXVideoPipeline",
       "readinessPolicy": "runnable",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
     },
     {
       "canonicalWorkflowId": "LTXVideoPipeline:video_to_video",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "video_to_video",
+          "modelType": "LTXVideoPipeline"
+        },
+        "executionProfileId": "ltx-video:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs reuses official text encoding and owns source media; the official Denoise call prepares media latents and Video Output decodes and exports the matching result.",
+        "pipelineClass": "LTXConditionPipeline",
+        "schemaVersion": 1,
+        "task": "video_to_video"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "ltx_video_video_to_video",
       "mode": "video_to_video",
       "modelType": "LTXVideoPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -9891,15 +9955,31 @@
     },
     {
       "canonicalWorkflowId": "WanTI2VPipeline:text_to_video",
+      "canonicalWorkflowRole": "historical_creator_recipe_reference",
       "evidencePolicy": "generated",
+      "executionRecipeSource": "backend_operation_starter",
+      "executionSelection": {
+        "authoringRecipeId": "generic-video-stages:v1",
+        "bindingSpec": {
+          "mode": "text_to_video",
+          "modelType": "WanTI2VPipeline"
+        },
+        "executionProfileId": "wan-22-ti2v-5b:direct",
+        "implementation": "pipeline_stages",
+        "note": "Encode Inputs reuses official text encoding and owns source media; the official Denoise call prepares media latents and Video Output decodes and exports the matching result.",
+        "pipelineClass": "WanTI2VPipeline",
+        "schemaVersion": 1,
+        "task": "text_to_video"
+      },
       "galleryExamplePresent": true,
+      "galleryExecutionCompatibility": "historical_reference_requires_new_execution_evidence",
       "galleryQualityReviewStatus": "approved_reviewed",
       "galleryVerificationStatus": "reviewed",
       "id": "wan_22_ti2v_5b_seed_vault",
       "mode": "text_to_video",
       "modelType": "WanTI2VPipeline",
       "readinessPolicy": "requires_input",
-      "reason": "The public template resolves to an exact checked-in canonical workflow.",
+      "reason": "Fresh authoring resolves an exact backend operation starter; the canonical workflow retains its historical creator recipe.",
       "reviewedGalleryExample": true,
       "status": "executable",
       "verificationStatus": "unverified"
@@ -10174,7 +10254,7 @@
     },
     "qualificationBoundary": "Executable means source/graph admission only; it does not imply live output, Auto, Gallery, hardware, license, or release qualification.",
     "templateBundle": "web/assets/studio-templates.js",
-    "templateBundleSha256": "781921e67f984326926e295608b3fa27383cc3380c7f1aef4112a060c176f164",
+    "templateBundleSha256": "6cc96d7ec5227533588ec105cb0d94ffccc627285aa7de6e4d82bb452e5d0345",
     "transformers": {
       "currentBaseCoverageVerified": false,
       "currentBaseRuntime": {
