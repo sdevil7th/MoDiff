@@ -45,6 +45,15 @@ This authoring metadata grants neither runtime activation nor model fit. Runtime
 readiness, executable Cluster admission and native acceptance remain separate
 checks; the historical hierarchy must not be relabelled as Pika's newer source.
 
+The read-only `/huggingface/modular-conditionals` response uses collection
+schema 2: its historical tree remains at the original revision, with explicit
+schema 1 source snapshots in `sourceSupplements`. The client selects one exact
+revision before compiling or displaying a hierarchy. Duplicate revisions,
+conflicting pipeline identities and recursively nested source collections are
+rejected. Historical standalone schema 1 snapshots and their generator retain
+their original contract. This hierarchy collection enables structural authoring;
+it does not grant edited-tree execution or runtime/publication qualification.
+
 Pika's explicit `pika-h3-flex:official-provider:v1` Expert profile binds all three
 tasks to the exact optional video provider and immutable model artifact. Its
 shared-stage specification omits sampler overrides. Group Disk is an explicit

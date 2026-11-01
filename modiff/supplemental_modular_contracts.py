@@ -15,6 +15,7 @@ PIKA_SOURCE_TREE = "bf0c806c8af9af94867b1e8069e6230b71feb3d8"
 PIKA_RUNTIME_PROFILE = "huggingface-diffusers-video-d0b9b1b"
 PIKA_CONTRACT_PATH = Path(__file__).resolve().parents[1] / "data/pika-h3-flex-workflow-contract.v1.json"
 PIKA_BLOCK_CONTRACT_PATH = Path(__file__).resolve().parents[1] / "data/pika-h3-flex-block-contract.v1.json"
+PIKA_CONDITIONAL_CONTRACT_PATH = Path(__file__).resolve().parents[1] / "data/pika-h3-flex-conditional-contract.v1.json"
 PIKA_WORKFLOW_TASKS = {
     "t2va": "text_to_video_with_audio",
     "fl2va": "first_last_frame_to_video_with_audio",
@@ -186,3 +187,64 @@ def reviewed_modular_source_supplements():
 def reviewed_modular_source_providers():
     """Lightweight declared providers, independent of installed model classes."""
     return {PIKA_PIPELINE: PIKA_RUNTIME_PROFILE}
+
+
+def validate_supplemental_modular_conditionals(document):
+    """Validate the original tree against its own exact resolved companions."""
+    keys = {'schemaVersion', 'kind', 'source', 'runtimeProfileId', 'workflowContractHash',
+        'blockContractHash', 'snapshot', 'scope', 'contentHash'}
+    if (type(document) is not dict or set(document) != keys
+            or type(document['schemaVersion']) is not int or document['schemaVersion'] != 1
+            or document['kind'] != 'official-source-conditional-supplement'
+            or document['runtimeProfileId'] != PIKA_RUNTIME_PROFILE
+            or document['scope'] != 'Source-generated unpruned hierarchy only; no execution or hardware qualification.'):
+        raise ModularWorkflowContractError('The supplemental conditional contract envelope is invalid.')
+    try:
+        raw = json.dumps(document, allow_nan=False, ensure_ascii=False)
+    except (TypeError, ValueError, OverflowError, RecursionError) as error:
+        raise ModularWorkflowContractError('The supplemental conditional contract must be finite JSON.') from error
+    if len(raw.encode('utf-8')) > 2 * 1024**2:
+        raise ModularWorkflowContractError('The supplemental conditional contract exceeds its bound.')
+    document = json.loads(raw)
+    source, blocks = _reviewed_pika_source_document(), _pika_blocks()
+    if (document['source'] != source['source']
+            or document['workflowContractHash'] != blocks['workflowContractHash']
+            or document['blockContractHash'] != blocks['contentHash']):
+        raise ModularWorkflowContractError('The supplemental conditional contract has substituted source provenance.')
+    from modiff.modular_conditional_contracts import validate_modular_conditional_snapshot
+    validate_modular_conditional_snapshot(document['snapshot'], source_revision=PIKA_SOURCE_REVISION,
+        workflow_snapshot={'contracts': [source['contract']]}, block_snapshot=blocks['blocks'])
+    if document['contentHash'] != _contract_hash({key: value for key, value in document.items() if key != 'contentHash'}):
+        raise ModularWorkflowContractError('The supplemental conditional contract content hash is invalid.')
+    return deepcopy(document)
+
+
+def _pika_conditional_document(part):
+    blocks = _pika_blocks()
+    body = {'schemaVersion': 1, 'kind': 'official-source-conditional-supplement',
+        'source': blocks['source'], 'runtimeProfileId': PIKA_RUNTIME_PROFILE,
+        'workflowContractHash': blocks['workflowContractHash'], 'blockContractHash': blocks['contentHash'],
+        'snapshot': {'schemaVersion': 1, 'diffusersRevision': PIKA_SOURCE_REVISION,
+            'blockDefinitions': part['blockDefinitions'], 'pipelines': [part['pipeline']]},
+        'scope': 'Source-generated unpruned hierarchy only; no execution or hardware qualification.'}
+    return validate_supplemental_modular_conditionals({**body, 'contentHash': _contract_hash(body)})
+
+
+@lru_cache(maxsize=1)
+def _pika_conditionals():
+    raw = PIKA_CONDITIONAL_CONTRACT_PATH.read_bytes()
+    if len(raw) > 2 * 1024**2:
+        raise ModularWorkflowContractError('The supplemental conditional contract exceeds its bound.')
+    return validate_supplemental_modular_conditionals(json.loads(raw))
+
+
+def reviewed_supplemental_modular_conditionals(pipeline_class):
+    return deepcopy(_pika_conditionals()) if pipeline_class == PIKA_PIPELINE else None
+
+
+def reproduce_installed_pika_conditionals():
+    if reproduce_installed_pika_blocks() != _pika_blocks():
+        raise RuntimeError('The installed Pika blocks differ from their reviewed source contract.')
+    from diffusers import PikaH3FlexBlocks
+    from modiff.modular_conditional_contracts import build_modular_conditional_contract
+    return _pika_conditional_document(build_modular_conditional_contract(PikaH3FlexBlocks().init_pipeline()))

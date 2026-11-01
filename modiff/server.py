@@ -469,7 +469,7 @@ from modiff.huggingface_cluster_runtime import (
     qualify_huggingface_cluster_auto_authority,
     qualify_huggingface_cluster_expert_runtime,
 )
-from modiff.modular_conditional_contracts import reviewed_modular_conditional_snapshot
+from modiff.modular_conditional_contracts import reviewed_modular_conditional_collection
 from modiff.modular_composition import rebuild_reviewed_modular_composition
 from modiff.runtime_profile import runtime_profile
 from modiff.auto_resource import (
@@ -14538,7 +14538,7 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         return web.json_response({"error": False, "schemaVersion": 1, "entry": entry})
 
     async def huggingface_modular_conditionals(self, _request):
-        return web.json_response(await asyncio.to_thread(reviewed_modular_conditional_snapshot))
+        return web.json_response(await asyncio.to_thread(reviewed_modular_conditional_collection))
 
     async def huggingface_modular_composition_rebuild(self, request):
         """Rebuild a pinned official block recipe without loading model weights."""

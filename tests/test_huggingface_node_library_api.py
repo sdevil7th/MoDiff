@@ -133,16 +133,19 @@ class HuggingFaceNodeLibraryApiTests(unittest.IsolatedAsyncioTestCase):
         first_response = await server.huggingface_modular_conditionals(None)
         first = json.loads(first_response.text)
         first["pipelines"][0]["pipelineClass"] = "ChangedByCaller"
+        first['sourceSupplements'][0]['pipelines'][0]['pipelineClass'] = 'ChangedSupplement'
 
         second_response = await server.huggingface_modular_conditionals(None)
         second = json.loads(second_response.text)
 
         self.assertEqual(first_response.status, 200)
         self.assertEqual(second_response.status, 200)
-        self.assertEqual(second["schemaVersion"], 1)
+        self.assertEqual(second["schemaVersion"], 2)
         self.assertEqual(len(second["pipelines"]), 36)
         self.assertEqual(sum(len(item["conditionals"]) for item in second["pipelines"]), 77)
         self.assertNotEqual(second["pipelines"][0]["pipelineClass"], "ChangedByCaller")
+        self.assertEqual(second['sourceSupplements'][0]['pipelines'][0]['pipelineClass'], 'PikaH3FlexModularPipeline')
+        self.assertEqual(second['sourceSupplements'][0]['schemaVersion'], 1)
 
     async def test_expert_runtime_qualification_endpoint_returns_backend_receipt(self):
         class Request:
