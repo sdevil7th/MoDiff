@@ -27,8 +27,12 @@ and scoped video input-history fixes. Focused tests/browser checks passed; final
 complete paired gates and deployment into the first-milestone app remain open.
 The required Pika adapter has source-bound loading, ownership/cache and downstream
 guards, with 38 actual-library tiny checks on Linux. Its 35-file selected download
-is in progress. Public hierarchy/catalog linking, pretrained Pika execution and
-the remaining native/template/finishing acceptance are still open. Tiny fixtures,
+is complete and fully hash-verified. Its three shared-stage starters and explicit
+provider-bound Expert profile are published. Its original hierarchy retains its
+own source revision; all 101 old/new workflows pass the existing hierarchy and
+subtree round-trip suite. Visible-browser acceptance, pretrained Pika execution,
+executable Cluster/template admission and the remaining finishing/lifecycle checks
+are still open. Tiny fixtures,
 one engineering clip and package checks do not qualify the full plan.
 
 ## Decisions carried forward from the conversation

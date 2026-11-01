@@ -34,8 +34,11 @@ its genuine receipt is not retroactively assigned to the first task.
 - Pika: all 35 selected files, 146,806,845,173 bytes, downloaded and fully
   hash-verified at its immutable revision. No Pika pretrained output exists yet.
   Source-accurate catalog and shared-stage starter checks pass without rewriting
-  the 139 existing definition hashes. Executable Cluster admission, visible
-  hierarchy editing and actual adapter/sampler acceptance remain open.
+  the 139 existing definition hashes. The exact-provider Expert profile is
+  declared. Its original 32-block hierarchy preserves all 43 placement contexts;
+  all 101 workflows pass the existing nested-graph/control/subtree round-trip
+  suite. Executable Cluster admission, visible hierarchy editing and actual
+  adapter/sampler acceptance remain open.
 - H3 keyframe/reference routes, the remaining Wan image route, finishing stages,
   all twelve final creative recipes, final lifecycle and visible browser checks.
 - Complete current backend/client gates, exact paired bundle, protected refresh,
@@ -43,6 +46,9 @@ its genuine receipt is not retroactively assigned to the first task.
   attempts exposed stale image-catalog fingerprints and an incremental-loader
   accessor assumption. The semantic-preserving refresh and authoritative component
   map fix pass their affected tests. Neither attempt is a complete current gate PASS.
+  A subsequent backend attempt was deliberately interrupted after the client gate
+  exposed Pika's missing source-specific hierarchy. That integration is now fixed
+  in both repositories; complete current gates still require successful reruns.
 - Public clip publication requires exact-file review; existing image approvals
   do not approve these videos.
 
