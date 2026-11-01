@@ -36,6 +36,7 @@ METADATA_ACTIONS = {
     "modules.DiffusersThreeD": {action: frozenset({"update_three_d_contract"}) for action in ("LoadPipeline", "GenerateRenderedArtifact")},
     "modules.DiffusersVideo": {
         "LoadPipeline": frozenset({"select_adapter"}),
+        **{action: frozenset({"update_stage_contract"}) for action in ("EncodeInputs", "Denoise")},
         **{action: frozenset({"update_adapter_modes"}) for action in ("Generate", "GenerateVideoAudio", "GenerateLTX2", "GenerateSequence")},
     },
 }

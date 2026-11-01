@@ -5193,3 +5193,8 @@ class PlanLongVideo(NodeBase):
             "planned_seconds": planned_frames / fps,
             "overlap_frames": overlap_frames,
         }
+
+
+# The existing executor and metadata callbacks resolve registered actions from
+# the module main entry point. Keep these ordinary stage classes visible there.
+from .stage_nodes import EncodeInputs, Denoise, DecodeLatents  # noqa: E402,F401

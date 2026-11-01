@@ -12,6 +12,33 @@ from modules.DiffusersVideo import stage_execution as core
 from modules.DiffusersVideo.stage_nodes import EncodeInputs, Denoise, DecodeLatents
 
 
+@pytest.mark.parametrize('action', ('EncodeInputs', 'Denoise', 'DecodeLatents'))
+def test_registered_video_stages_resolve_through_the_actual_executor_entrypoint(action):
+    from importlib import import_module
+    # The server dispatches getattr(import_module(module + '.main'), action).
+    # Schema registration alone does not prove this executable lookup succeeds.
+    klass = getattr(import_module('modules.DiffusersVideo.main'), action)
+    assert klass is globals()[action]
+    node = klass('video-executor-entrypoint-' + action)
+    assert node.module_name == 'modules.DiffusersVideo' and node.class_name == action
+
+
+@pytest.mark.parametrize('action', ('EncodeInputs', 'Denoise'))
+def test_video_stage_authoring_callbacks_do_not_construct_executable_nodes(action):
+    from modiff.field_metadata import is_metadata_field_action, metadata_field_callback
+    from modiff.field_metadata_context import FieldMessageContext
+    from modules.DiffusersVideo.main import get_video_pipeline_adapter, _adapter_signal
+    assert is_metadata_field_action({'module': 'modules.DiffusersVideo', 'action': action,
+                                    'fn': 'update_stage_contract'})
+    with patch('modiff.NodeBase.NodeBase.__init__', side_effect=AssertionError('constructed')), patch.object(
+        FieldMessageContext, 'set_field_params', autospec=True,
+    ) as update:
+        callback = metadata_field_callback(action, 'update_stage_contract', node_id='draft', sid='s', module='modules.DiffusersVideo')
+        callback({'video_contract': _adapter_signal(get_video_pipeline_adapter('LTXConditionPipeline')),
+                  'mode': 'image_to_video'}, None)
+    assert any(call.args[1] == 'mode' for call in update.call_args_list)
+
+
 class Tokenizer:
     def __call__(self, *args, **kwargs):
         return {'input_ids': [1, 2]}
