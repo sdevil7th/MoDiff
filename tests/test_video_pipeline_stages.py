@@ -166,6 +166,14 @@ def test_video_input_keeps_full_121_frame_recipe_and_ordered_owned_media():
     assert frozen[0].getpixel((0, 0)) == (0, 0, 0)
 
 
+def test_ltx_encoder_normalizes_the_existing_shared_sequence_default_before_real_encoding():
+    pipeline, _ = owner()
+    with patch.object(pipeline, 'encode_prompt', wraps=pipeline.encode_prompt) as encode:
+        value = encoded(pipeline, max_sequence_length=512)
+    assert encode.call_args.kwargs['max_sequence_length'] == 128
+    assert value.max_sequence_length == value.consumed['max_sequence_length'] == 128
+
+
 @pytest.mark.parametrize('identity', core.PROFILE_CLASSES)
 def test_split_decode_uses_official_normalization_and_current_latent(identity):
     pipeline, _ = owner(identity)
@@ -273,6 +281,11 @@ def test_selected_starter_publishes_real_stage_edges_and_no_extra_whole_consumer
     assert loader['values']['revision'] == require_catalog_revision(profile.default_repo)
     assert result['authoring']['id'] == 'generic-video-stages:v1'
     assert not any(field == 'mode' for _role, field, _source in result['authoring']['bindings'])
+    if identity == 'ltx-video:direct':
+        for node in result['nodes']:
+            for field, expected in (('guidance_scale', 1.), ('num_inference_steps', 8)):
+                if field in node['params']:
+                    assert node['params'][field]['min'] == node['params'][field]['max'] == expected
     for node in result['nodes']:
         if node['action'] == 'LoadPipeline':
             continue

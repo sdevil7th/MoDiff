@@ -258,6 +258,15 @@ def resolve_operation_starter(modules, contracts, selection):
         if len(roles) != 4 or len(ordered) != 4 or len(set(ordered)) != 4:
             raise ValueError('The selected image starter disagrees with its declared owner/stage roles.')
         nodes = {key: nodes[key] for key in ordered}
+        if video_stages and nodes[loader]['values'].get('execution_profile_id') == 'ltx-video:direct':
+            from modules.DiffusersVideo.main import LTX_DISTILLED_TIMESTEPS
+            # Only this immutable distilled selection has mandatory sampling
+            # values. Model changes must archive incompatible overrides rather
+            # than preserving generic defaults which the actual sampler rejects.
+            for node in nodes.values():
+                for field, value in (('guidance_scale', 1.0), ('num_inference_steps', len(LTX_DISTILLED_TIMESTEPS))):
+                    if field in node['params']:
+                        node['params'][field].update(min=value, max=value)
         for source, output, target, input_ in image_stage_spec['edges']:
             if source in roles and target in roles:
                 connect(roles[source], output, roles[target], input_)

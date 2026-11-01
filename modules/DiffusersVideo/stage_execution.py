@@ -168,6 +168,10 @@ def _encode(pipeline, values):
     _validate_prompt_token_limit(pipeline, negative, 'negative prompt', adapter.max_prompt_tokens)
     guidance = float(values.get('guidance_scale', 1))
     length = int(values.get('max_sequence_length', adapter.max_prompt_tokens or 256))
+    if owner.pipeline_class == 'LTXConditionPipeline':
+        # Retain the existing LTX adapter's normalization of the shared 512
+        # default. Capture the actual encoder length rather than the form value.
+        length = min(length, adapter.max_prompt_tokens or 256)
     if not 1 <= length <= (adapter.max_prompt_tokens or 512):
         raise ValueError('Video sequence length is outside the declared encoder bound.')
     video = ensure_video_list(values.get('video'), 'video')
