@@ -91,8 +91,12 @@
       },
       "dependencies": ["V1", "V2"],
       "actualActiveHours": null,
-      "evidenceRefs": [],
-      "openIssues": []
+      "evidenceRefs": [
+        "FIRST-MILESTONE.md; exact private originals retained separately"
+      ],
+      "openIssues": [
+        "Bounded LTX/Wan backend stages delivered; remaining H3/Pika integration stays in the four-family plan."
+      ]
     },
     {
       "id": "V4",
@@ -104,8 +108,12 @@
       },
       "dependencies": ["V1", "V3"],
       "actualActiveHours": null,
-      "evidenceRefs": [],
-      "openIssues": []
+      "evidenceRefs": [
+        "FIRST-MILESTONE.md; exact private originals retained separately"
+      ],
+      "openIssues": [
+        "Existing-video media attachment/task-switch convenience, direct-video adapter messaging and output-package filename labeling remain open."
+      ]
     },
     {
       "id": "V5",
@@ -117,10 +125,12 @@
       },
       "dependencies": ["V2", "V3"],
       "actualActiveHours": null,
-      "evidenceRefs": [],
+      "evidenceRefs": [
+        "FIRST-MILESTONE.md; exact private originals retained separately"
+      ],
       "openIssues": [
-        "The retained Wan5B upstream WanPipeline route is text-only; planned Wan image route requires a separately reviewed binding.",
-        "Native staged model execution remains pending."
+        "Five selected routes have bounded native output. Planned Wan image route needs a separately reviewed binding.",
+        "Generic video-source and condition-strength summary accounting is incomplete; retain the graph/source-probe proof boundary."
       ]
     },
     {
@@ -159,8 +169,12 @@
       },
       "dependencies": ["V0", "V1"],
       "actualActiveHours": null,
-      "evidenceRefs": [],
-      "openIssues": []
+      "evidenceRefs": [
+        "FIRST-MILESTONE.md; exact private originals retained separately"
+      ],
+      "openIssues": [
+        "LTX exact selected payload downloaded/verified; remaining H3/Pika artifacts need runtime, resource and disk admission."
+      ]
     },
     {
       "id": "V9",
@@ -172,21 +186,29 @@
       },
       "dependencies": ["V3", "V4", "V5", "V6", "V7", "V8"],
       "actualActiveHours": null,
-      "evidenceRefs": [],
-      "openIssues": []
+      "evidenceRefs": [
+        "FIRST-MILESTONE.md; exact private originals retained separately"
+      ],
+      "openIssues": [
+        "First-milestone media/cache/Stop checks complete; remaining family/offload/finishing/lifecycle rows stay open."
+      ]
     },
     {
       "id": "V10",
       "title": "Author and qualify twelve templates",
-      "status": "planned",
+      "status": "in_progress",
       "estimateActiveHours": {
         "minimum": 3,
         "maximum": 5
       },
       "dependencies": ["V4", "V5", "V7"],
       "actualActiveHours": null,
-      "evidenceRefs": [],
-      "openIssues": []
+      "evidenceRefs": [
+        "FIRST-MILESTONE.md; exact private originals retained separately"
+      ],
+      "openIssues": [
+        "Selected stage template factories retain their settings/branches; twelve final creative/public templates are not qualified or published."
+      ]
     },
     {
       "id": "V11",
@@ -198,21 +220,29 @@
       },
       "dependencies": ["V9", "V10"],
       "actualActiveHours": null,
-      "evidenceRefs": [],
-      "openIssues": []
+      "evidenceRefs": [
+        "FIRST-MILESTONE.md; exact private originals retained separately"
+      ],
+      "openIssues": [
+        "First paired code gates/build/deployment passed. Whole-app browser/release gate remains held by unresolved controlled-image LoRA readiness-summary behavior."
+      ]
     },
     {
       "id": "V12",
       "title": "Manual handoff and postmortem",
-      "status": "planned",
+      "status": "in_progress",
       "estimateActiveHours": {
         "minimum": 1,
         "maximum": 2
       },
       "dependencies": ["V11"],
       "actualActiveHours": null,
-      "evidenceRefs": [],
-      "openIssues": []
+      "evidenceRefs": [
+        "FIRST-MILESTONE.md; exact private originals retained separately"
+      ],
+      "openIssues": [
+        "First bounded testing handoff complete; final four-family manual acceptance/postmortem remains open."
+      ]
     }
   ],
   "dependencyNotes": [
@@ -239,16 +269,31 @@
   ],
   "updatedOn": "2026-11-01",
   "firstMilestone": {
-    "scope": "Existing reviewed runtime; LTX 0.9.8 distilled tasks and Wan5B text-to-video first. No Pika runtime upgrade yet.",
-    "status": "native_acceptance_in_progress",
-    "nativeModelRuns": 4,
-    "readyForUserTesting": false,
-    "successfulFreshVideos": 1,
-    "successfulCachedRepeats": 1,
+    "scope": "Existing reviewed runtime; LTX 0.9.8 distilled T2V/I2V/video-input/two-reference and Wan 5B T2V. No H3/Pika runtime upgrade.",
+    "status": "ready_for_bounded_private_testing",
+    "readyForUserTesting": true,
+    "completedOn": "2026-11-01",
+    "wholePlanComplete": false,
+    "wholeAppReleaseSignoff": false,
+    "deployedSources": {
+      "backend": "569be22033af60b0d0fda731231696a394c9c6ff",
+      "client": "79cf779693acc6c032619c8972b30c06d2c07fa1"
+    },
+    "nativeTaskAttempts": 13,
+    "successfulFreshVideos": 8,
+    "successfulCachedRepeats": 3,
+    "failedBeforeVideo": 1,
+    "intentionallyCancelled": 1,
+    "visualDiagnosticsRetained": 2,
     "notes": [
-      "Wan text-to-video generated, played, repeated unchanged and released its scoped cache; output metadata correction remains open.",
-      "LTX text-to-video completed sampling and is decoding; no terminal output claim.",
-      "Runtime upgrade, H3/Pika and public video publication have not started."
-    ]
+      "Five bounded native routes completed with media/playback evidence. The larger prior T2V runs are reused because subsequent changes did not alter their computation paths; original receipts retain their source scope.",
+      "New actual video task/prompt/final-format metadata passed. Actual LTX starter defaults fixed to guidance 1 / 8 steps and verified without manual correction.",
+      "Wan low-resolution metadata smoke failed visually. Its saved diagnostic remains separate; the testing workflow exactly matches the completed 512x320 / 49-frame recipe.",
+      "Native Stop cancelled an owned task with zero outputs; six completed clips remained hash-exact after ready worker recovery.",
+      "Backend full gate 8,696 passed / 749 skipped / 13,084 subtests; client npm run check and pinned Ruff passed. Full UI/release signoff remains held by the controlled-image LoRA summary mismatch.",
+      "Runtime upgrade, H3/Pika native execution, remaining offload/template qualification and public video publication remain open."
+    ],
+    "report": "FIRST-MILESTONE.md",
+    "actualActiveHours": null
   }
 }

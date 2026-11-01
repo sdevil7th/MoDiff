@@ -6,6 +6,11 @@ The expected effort is **43–73 active engineering hours**, including focused t
 
 Use [tasks.json](tasks.json) for estimates, dependencies and status. Use [Logging and postmortem](logging.md) and [run-record.template.json](run-record.template.json) for private execution evidence. This backend directory is the canonical plan; do not maintain divergent Windows and Linux copies.
 
+The [first LTX/Wan milestone](FIRST-MILESTONE.md) is now ready for bounded private
+testing. Five selected routes have native media evidence and the paired code
+gates passed. MiniMax H3/Pika, public-template acceptance and whole-app release
+signoff remain open; the original planning baseline below is historical.
+
 ## Decisions carried forward from the conversation
 
 1. Nodes represent understandable stages and work across compatible models. A Python function call is not automatically a useful visible node.
