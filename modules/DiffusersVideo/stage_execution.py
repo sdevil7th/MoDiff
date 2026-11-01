@@ -4,6 +4,7 @@ Sampling remains in Generate's existing official-library adapters. These
 process-local bindings are data, never another graph or executable callback.
 """
 from dataclasses import dataclass
+import hashlib
 import json
 from types import MappingProxyType
 import weakref
@@ -131,6 +132,30 @@ def _material(value):
     return _freeze_material(value)
 
 
+def _video_source_evidence(material, stamps):
+    """Identify the frozen pixel sequence from existing validated media stamps.
+
+    This is not a source-file hash. No paths, tensors or arbitrary runtime
+    objects are read for evidence. Non-PIL media retains its frame count and
+    explicitly unavailable pixel digest, rather than an invented identity.
+    """
+    chunks = material['video_chunks']
+    if chunks is None:
+        return {}
+    frames = [frame for chunk in chunks for frame in chunk]
+    by_identity = {id(reference()): stamp for kind, reference, stamp in stamps if kind == 'pil'}
+    descriptors = []
+    for frame in frames:
+        stamp = by_identity.get(id(frame))
+        if stamp is None:
+            return {'video_source_sha256': None, 'video_source_frames': len(frames)}
+        mode, size, digest = stamp
+        descriptors.append([mode, list(size), digest.hex()])
+    payload = json.dumps(descriptors, separators=(',', ':'), ensure_ascii=True).encode('ascii')
+    return {'video_source_sha256': hashlib.sha256(b'modiff-video-source-pixels-v1\0' + payload).hexdigest(),
+            'video_source_frames': len(frames)}
+
+
 def require_encoding(pipeline, value, mode=None, guidance=None):
     from modules.DiffusersImage.stage_execution import _check_stamps
     if type(value) is not Encoding or value not in _ENCODINGS:
@@ -197,7 +222,8 @@ def _encode(pipeline, values):
     result = Encoding(owner, _configuration(pipeline), mode, guidance > 1, length,
                       embeddings, material, stamps + tensor_stamps,
                       MappingProxyType({'executed_task': mode, 'prompt': prompt, 'negative_prompt': negative,
-                                        'guidance_scale': guidance, 'max_sequence_length': length}))
+                                        'guidance_scale': guidance, 'max_sequence_length': length,
+                                        **_video_source_evidence(material, stamps)}))
     _ENCODINGS.add(result)
     return result
 

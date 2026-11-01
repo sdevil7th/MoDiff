@@ -82,6 +82,14 @@ reuse record the audio VAE's actual resident mode. Incremental loading refuses
 declared unsupported types without a reviewed placement before loading weights. The
 actual component's opt-out is checked again before group hooks are installed.
 
+Ordinary split video receipts record LTX condition strength separately from
+denoise strength, using the actual official adapter call. Source video evidence
+identifies the ordered frozen PIL pixel sequence and frame count from the
+existing material stamps. Its versioned SHA-256 is not the original file hash;
+paths and media bytes are not placed in history. Other supported frame material
+retains its count with an explicitly unavailable pixel digest. Legacy output
+history is not backfilled from the current form.
+
 The shared joint video/audio backend adapters preserve the exact selected
 MiniMax H3 or Pika H3 Flex pipeline in every process-local state. They delegate
 media preparation, encoding, denoising and decoding to the selected official

@@ -67,6 +67,9 @@ class EncodeInputs(NodeBase):
         if self._interrupt:
             raise InterruptedError('Video encoding interrupted.')
         self.record_generation_inputs(dict(result.consumed))
+        self._execution_input_source_fields = {
+            'video_source_sha256': 'video', 'video_source_frames': 'video',
+        }
         return {'encoded_inputs': result}
 
 
@@ -92,17 +95,22 @@ class Denoise(Generate):
 
     def _invoke_pipeline(self, pipeline, call_kwargs):
         encoding = self._video_encoding
-        from modiff.execution_input_provenance import FIELD_NAMES
+        from modiff.execution_input_provenance import NODE_FIELD_NAMES
         if encoding.owner.pipeline_class == 'LTXConditionPipeline':
             call_kwargs['frame_rate'] = self._video_frame_rate
         call_kwargs.update(encoding.embeddings)
         call_kwargs.update(prompt=None, negative_prompt=None, output_type='latent')
+        conditions = call_kwargs.get('conditions') if encoding.owner.pipeline_class == 'LTXConditionPipeline' else None
+        condition_strength = conditions[0].strength if conditions else None
         result = pipeline(**call_kwargs)
         # Text belongs to Encode Inputs, and latent transport is fixed here.
         # Recording their placeholder None/latent values as user settings would
         # contradict the actual prompt and final decoded output in the summary.
         self._video_consumed = {key: value for key, value in call_kwargs.items()
-            if key in FIELD_NAMES and key not in {'prompt', 'negative_prompt', 'output_type'}}
+            if key in NODE_FIELD_NAMES[('DiffusersVideo', 'Denoise')]
+            and key not in {'prompt', 'negative_prompt', 'output_type'}}
+        if conditions:
+            self._video_consumed['conditioning_strength'] = condition_strength
         self._video_consumed['executed_task'] = encoding.mode
         self._video_consumed['seed'] = int(call_kwargs['generator'].initial_seed())
         # The ordinary Wan adapter restores its temporary scheduler in finally.
@@ -140,6 +148,7 @@ class Denoise(Generate):
             self._video_encoding, self._video_sample = None, None
             self._video_consumed = None
         self.record_generation_inputs(consumed)
+        self._execution_input_source_fields = {'conditioning_strength': 'strength'}
         width, height, frames = binding.geometry
         return {'latents_out': binding.tensor, 'latent_binding': binding,
                 'width_out': width, 'height_out': height, 'frames_out': frames}

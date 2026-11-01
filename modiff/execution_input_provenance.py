@@ -61,8 +61,15 @@ NODE_FIELD_NAMES = {
        for action in ('Generate', 'Edit', 'Inpaint', 'ControlGenerate', 'ControlEdit', 'ControlInpaint',
                       'LayerDecompose', 'UnconditionalGenerate', 'PredictMap',
                       'EncodeInputs', 'Denoise', 'DecodeLatents')},
-    **{('DiffusersVideo', action): {**FIELD_NAMES, 'executed_task': 'executedTask'}
-       for action in ('EncodeInputs', 'Denoise', 'DecodeLatents')},
+    ('DiffusersVideo', 'EncodeInputs'): {
+        **FIELD_NAMES, 'executed_task': 'executedTask',
+        'video_source_sha256': 'videoSourceSha256', 'video_source_frames': 'videoSourceFrames',
+    },
+    ('DiffusersVideo', 'Denoise'): {
+        **FIELD_NAMES, 'executed_task': 'executedTask',
+        'conditioning_strength': 'conditioningStrength', 'denoise_strength': 'denoiseStrength',
+    },
+    ('DiffusersVideo', 'DecodeLatents'): {**FIELD_NAMES, 'executed_task': 'executedTask'},
     **{('HuggingFaceTransformers', action): {**FIELD_NAMES, 'executed_task': 'executedTask'}
        for action in ('PredictDepth',)},
     ('HuggingFaceTransformers', 'GenerateImageVideoText'): {

@@ -166,6 +166,72 @@ def test_video_input_keeps_full_121_frame_recipe_and_ordered_owned_media():
     assert frozen[0].getpixel((0, 0)) == (0, 0, 0)
 
 
+def test_video_input_receipt_identifies_frozen_order_and_repeated_frames_without_paths():
+    import hashlib
+    import json
+    pipeline, _ = owner()
+    first, second = Image.new('RGB', (32, 32), 'red'), Image.new('RGB', (32, 32), 'blue')
+    frames = [first, second, first]
+    value = encoded(pipeline, mode='video_to_video', video=frames)
+    descriptors = [[image.mode, list(image.size), hashlib.sha256(image.tobytes()).hexdigest()] for image in frames]
+    expected = hashlib.sha256(b'modiff-video-source-pixels-v1\0' +
+        json.dumps(descriptors, separators=(',', ':'), ensure_ascii=True).encode('ascii')).hexdigest()
+    assert value.consumed['video_source_sha256'] == expected
+    assert value.consumed['video_source_frames'] == 3
+    assert encoded(pipeline, mode='video_to_video', video=[second, first, first]).consumed['video_source_sha256'] != expected
+    first.putpixel((0, 0), (0, 0, 0))
+    core.require_encoding(pipeline, value)
+    assert value.consumed['video_source_sha256'] == expected
+    assert 'video_source_sha256' not in encoded(pipeline).consumed
+
+
+def test_video_input_receipt_does_not_read_tensor_pixels_or_invent_a_pixel_digest():
+    pipeline, _ = owner()
+    value = encoded(pipeline, mode='video_to_video', video=[torch.zeros(3, 32, 32)])
+    assert value.consumed['video_source_frames'] == 1
+    assert value.consumed['video_source_sha256'] is None
+
+
+def test_actual_ltx_adapter_captures_condition_and_denoise_strength_separately():
+    from modiff.execution_input_provenance import bind_generation_input_origins, build_resolved_execution_inputs
+    from modules.DiffusersVideo.main import get_video_pipeline_adapter
+    pipeline, _ = owner()
+    encoder, sampler = EncodeInputs('encode-source'), Denoise('denoise-source')
+    value = encoder(pipeline=pipeline, mode='video_to_video', video=[Image.new('RGB', (32, 32))],
+        prompt='A moving train', negative_prompt='', guidance_scale=1., max_sequence_length=128)['encoded_inputs']
+    calls = []
+    def sample(pipe, **kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(frames=torch.ones(1, 1, 2, 2, 2))
+    with patch.object(Pipeline, '__call__', sample, create=True), patch(
+        'modules.DiffusersVideo.main._pipeline_adapter', return_value=get_video_pipeline_adapter('LTXConditionPipeline'),
+    ), patch('modules.DiffusersVideo.main._install_ltx_dynamic_shift', return_value=None), patch.object(
+        sampler, '_execute_adapter', side_effect=lambda p, a, m, v: sampler._execute_ltx(p, a, m, v),
+    ):
+        sampler(pipeline=pipeline, encoded_inputs=value, mode='video_to_video', guidance_scale=1.,
+            width=32, height=32, num_frames=9, frame_rate=24., seed=7, num_inference_steps=8,
+            strength=.65, denoise_strength=.8)
+    assert calls[0]['conditions'][0].strength == .65
+    assert calls[0]['denoise_strength'] == .8
+    encode_node = {'module': 'modules.DiffusersVideo', 'action': 'EncodeInputs', 'params': {
+        'video': {'sourceId': 'source', 'sourceKey': 'video'}}}
+    denoise_node = {'module': 'modules.DiffusersVideo', 'action': 'Denoise', 'params': {
+        'encoded_inputs': {'sourceId': encoder.node_id, 'sourceKey': 'encoded_inputs'},
+        'strength': {'sourceId': 'control', 'sourceKey': 'value'}}}
+    records = {node.node_id: bind_generation_input_origins(node.node_id, descriptor, node._execution_input_record,
+        source_fields=node._execution_input_source_fields) for node, descriptor in (
+            (encoder, encode_node), (sampler, denoise_node))}
+    receipt = build_resolved_execution_inputs({'nodes': {encoder.node_id: encode_node, sampler.node_id: denoise_node}},
+        records, task_id='actual-call', attempt_index=0, node_id=sampler.node_id)
+    assert receipt['summary']['conditioningStrength'] == .65
+    assert receipt['summary']['denoiseStrength'] == .8
+    assert receipt['summary']['videoSourceFrames'] == 1
+    assert len(receipt['summary']['videoSourceSha256']) == 64
+    assert records[sampler.node_id]['fields']['conditioning_strength']['sourceNodeId'] == 'control'
+    assert records[encoder.node_id]['fields']['video_source_sha256']['sourceNodeId'] == 'source'
+    assert 'strength' not in receipt['summary'], 'Do not label condition strength as an ordinary denoise strength'
+
+
 def test_ltx_encoder_normalizes_the_existing_shared_sequence_default_before_real_encoding():
     pipeline, _ = owner()
     with patch.object(pipeline, 'encode_prompt', wraps=pipeline.encode_prompt) as encode:
