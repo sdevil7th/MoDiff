@@ -50,8 +50,9 @@ Thirteen accepted task attempts comprise eight fresh video completions, three
 cached repeats, one failure before video output and one intentional cancellation.
 Two fresh clips are retained as failed visual diagnostics: low-resolution Wan
 produced abstract imagery, and the first video-to-video check used that bad source.
-The corrected source was derived from the earlier good Wan clip. No failure was
-relabelled or removed. There are no public video uploads or publication approvals.
+The corrected source was derived from the earlier good Wan clip. Failed recipes,
+outputs and result logs remain available. There are no public video uploads or
+publication approvals.
 
 The native Stop check became cancelled with zero outputs; the supervisor returned
 a ready worker on the same source. The click raced from sampling into decode, so
@@ -136,6 +137,9 @@ Gallery acceptance remain separate from these short functional tests.
   good completed source media instead of repeating large runs without a reason.
 - Keep full gates at stable source checkpoints. Preserve earlier failures and
   distinguish focused, segmented, mocked and native evidence.
+- Use unique private browser output directories from the first invocation. One
+  early shared-control trace was overwritten by a later default-directory cleanup;
+  its failed result log remains, but the binary trace is an explicit retention gap.
 - Use explicit UTF-8 for repository documentation on Windows. Keep raw evidence
   private. Active engineering time was not reliably metered; do not present wall
   time or test/download waits as measured implementation hours.
