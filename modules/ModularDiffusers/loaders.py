@@ -3972,7 +3972,7 @@ class ModelsLoader(NodeBase):
         applied_loras = None
         if required_adapter is not None:
             applied_loras = apply_required_model_adapter(self.loader, required_adapter, prepared_model_adapter)
-        elif lora_list is not None and (lora_list != [] or disk_lora_policy is None) and (
+        elif lora_list not in (None, []) and (
             weight_binding is None or component_context is not None
         ):
             from modiff.native_component_lora import SelectedComponentLifecycle

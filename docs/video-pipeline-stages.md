@@ -59,6 +59,10 @@ audio branch remains distinct.
 
 ## Validation boundaries
 
+An omitted or empty optional-adapter list means Model Setup has no optional
+adapters to load. Malformed descriptors still fail the ordinary file boundary.
+Required model adapters, including Pika's task adapter, are handled separately.
+
 The shared joint video/audio backend adapters preserve the exact selected
 MiniMax H3 or Pika H3 Flex pipeline in every process-local state. They delegate
 media preparation, encoding, denoising and decoding to the selected official

@@ -172,6 +172,18 @@ def native_args(loras=None):
                 offload_mode='group_disk', auto_offload=True, lora_list=loras)
 
 
+@pytest.mark.parametrize('empty', [None, []])
+def test_no_adapter_selection_works_without_a_native_lora_policy(native_runtime, monkeypatch, empty):
+    from modiff import native_disk_lora
+    loaders, _, events, _ = native_runtime
+    monkeypatch.setattr(native_disk_lora, 'requested_disk_lora_policy', lambda *args, **kwargs: None)
+    node = loaders.ModelsLoader('empty-lora-generic-owner')
+    result = node.execute(**native_args(empty))
+    assert result
+    assert node.loader.get_list_adapters() == {'transformer': []}
+    assert all(event[0] != 'lora' for event in events)
+
+
 def test_actual_native_loader_injects_lora_before_target_disk_files_exist(native_runtime, tmp_path):
     loaders, _, events, _ = native_runtime
     node = loaders.ModelsLoader('models')
