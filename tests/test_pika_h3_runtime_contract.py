@@ -54,12 +54,17 @@ def test_candidate_preserves_required_base_libraries_and_constrains_apis():
 @pytest.mark.parametrize('platform,machine', [
     ('linux', 'x86_64'), ('windows', 'x86_64'), ('macos', 'arm64'), ('linux', 'aarch64'),
 ])
-def test_no_platform_is_promoted_by_a_source_build(platform, machine):
+def test_only_the_observed_linux_package_target_is_enabled(platform, machine):
     target = profile().contract_for_target(platform_name=platform, machine=machine)
-    assert target.contract_state in {'candidate_unqualified', 'unsupported_target'}
-    assert not target.cutover_ready
-    assert not target.install_action_available
-    assert not target.activation_available
+    qualified = (platform, machine) == ('linux', 'x86_64')
+    assert target.contract_state == ('qualified' if qualified else 'candidate_unqualified')
+    assert target.cutover_ready is qualified
+    assert target.install_action_available is qualified
+    assert target.activation_available is qualified
+
+
+def test_linux_projection_matches_the_exact_qualified_package_spec():
+    assert profile().spec_digest == 'sha256:6b49afb6e8a2e69c86e1d93bb5173d69a3864d3ef5834c118afadababe9cdb20'
 
 
 def test_old_evaluation_and_provider_identities_remain_unchanged():

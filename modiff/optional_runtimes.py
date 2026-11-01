@@ -1864,6 +1864,18 @@ OPTIONAL_RUNTIME_PROFILES = MappingProxyType({
 })
 
 
+# Exact provider installation/API/tiny CPU workload and rollback were observed
+# on clean Linux source 15364109e4cd03b4dc83e7455b1dcff837e52dcc. The private
+# receipt has SHA-256 8d584e8e1e1486a1cca5facad3658c0f36fcd6760f26fffbe41f2bacaddb6097.
+# This enables package actions on that target, not model/GPU/Auto qualification.
+_DIFFUSERS_VIDEO_PROFILE = project_optional_runtime_qualification(
+    _DIFFUSERS_VIDEO_PROFILE, platform_name='linux', machine='x86_64',
+)
+OPTIONAL_RUNTIME_PROFILES = MappingProxyType({
+    **OPTIONAL_RUNTIME_PROFILES, _DIFFUSERS_VIDEO_PROFILE.id: _DIFFUSERS_VIDEO_PROFILE,
+})
+
+
 # This explicitly selected closure never copies an earlier active overlay.
 # The auxiliary profile stages only bitsandbytes; TF/PEFT remain base-owned.
 # Qualification of either separate package does not qualify their combination.

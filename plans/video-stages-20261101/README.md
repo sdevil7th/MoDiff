@@ -11,6 +11,15 @@ testing. Five selected routes have native media evidence and the paired code
 gates passed. MiniMax H3/Pika, public-template acceptance and whole-app release
 signoff remain open; the original planning baseline below is historical.
 
+The next slice is in progress. The exact newer Diffusers provider has passed
+isolated package/API qualification on Linux; this does not establish H3 model
+fit or output quality. MiniMax's selected text-to-video/audio artifact is
+downloading. H3 float32 VAE loading and selected-component offload coverage are
+implemented. Image/video attachment in the shared stage editor now has focused
+unit and browser coverage. These changes are published in the same PRs but are
+not yet deployed into the first-milestone app. Pika still needs its mandatory
+adapter integration, exact fixed sampler, native execution and acceptance.
+
 ## Decisions carried forward from the conversation
 
 1. Nodes represent understandable stages and work across compatible models. A Python function call is not automatically a useful visible node.

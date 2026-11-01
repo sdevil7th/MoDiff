@@ -69,16 +69,19 @@
     {
       "id": "V2",
       "title": "Review and lock the video runtime",
-      "status": "planned",
+      "status": "in_progress",
       "estimateActiveHours": {
         "minimum": 4,
         "maximum": 7
       },
       "dependencies": ["V0", "V1"],
       "actualActiveHours": null,
-      "evidenceRefs": [],
+      "evidenceRefs": [
+        "Milestone 2 private package/source/attachment checks; not native model evidence"
+      ],
       "openIssues": [
-        "First LTX/Wan slice uses the existing reviewed runtime; the H3/Pika upgrade remains pending."
+        "Exact newer source provider passed isolated Windows CPU and Linux package/API qualification; Linux package actions admitted only.",
+        "Ordinary base Diffusers upgrade, final paired gates and protected production activation remain open."
       ]
     },
     {
@@ -109,10 +112,12 @@
       "dependencies": ["V1", "V3"],
       "actualActiveHours": null,
       "evidenceRefs": [
-        "FIRST-MILESTONE.md; exact private originals retained separately"
+        "FIRST-MILESTONE.md; exact private originals retained separately",
+        "Milestone 2 private package/source/attachment checks; not native model evidence"
       ],
       "openIssues": [
-        "Existing-video media attachment/task-switch convenience, direct-video adapter messaging and output-package filename labeling remain open."
+        "Image/video source attachment fix published with 471 focused unit checks and two save/export/Undo/Redo browser cases.",
+        "Paired build/deployment, direct-video adapter messaging and output filename labeling remain open."
       ]
     },
     {
@@ -136,28 +141,38 @@
     {
       "id": "V6",
       "title": "Admit H3 memory and MiniMax execution",
-      "status": "planned",
+      "status": "in_progress",
       "estimateActiveHours": {
         "minimum": 5,
         "maximum": 9
       },
       "dependencies": ["V1", "V2", "V8"],
       "actualActiveHours": null,
-      "evidenceRefs": [],
-      "openIssues": []
+      "evidenceRefs": [
+        "Milestone 2 private package/source/attachment checks; not native model evidence"
+      ],
+      "openIssues": [
+        "Selected MiniMax text-to-video/audio artifact download in progress; no H3 pretrained load or output proof.",
+        "Float32 VAEs and selected reference/audio offload hooks fixed; native memory/resource admission remains open."
+      ]
     },
     {
       "id": "V7",
       "title": "Integrate Pika with exact adapter and sampler",
-      "status": "planned",
+      "status": "in_progress",
       "estimateActiveHours": {
         "minimum": 4,
         "maximum": 7
       },
       "dependencies": ["V2", "V3", "V6"],
       "actualActiveHours": null,
-      "evidenceRefs": [],
-      "openIssues": []
+      "evidenceRefs": [
+        "Milestone 2 private package/source/attachment checks; not native model evidence"
+      ],
+      "openIssues": [
+        "Pinned official Pika schema and six-step CPU scheduler probes passed without weights.",
+        "Required task adapter, source-bound backend stage integration and native acceptance remain open."
+      ]
     },
     {
       "id": "V8",
@@ -170,10 +185,12 @@
       "dependencies": ["V0", "V1"],
       "actualActiveHours": null,
       "evidenceRefs": [
-        "FIRST-MILESTONE.md; exact private originals retained separately"
+        "FIRST-MILESTONE.md; exact private originals retained separately",
+        "Milestone 2 private package/source/attachment checks; not native model evidence"
       ],
       "openIssues": [
-        "LTX exact selected payload downloaded/verified; remaining H3/Pika artifacts need runtime, resource and disk admission."
+        "Terms acknowledged for local non-commercial H3/Pika tests in India.",
+        "61-file MiniMax t2va selection admitted against disk reserve and downloading; Pika separate partitions are not assumed deduplicated."
       ]
     },
     {
