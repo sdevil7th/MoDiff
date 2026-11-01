@@ -21,8 +21,8 @@ cd MoDiff
 
 These updates have not yet been released on `main`. The reviewed Windows
 application source pair before final packaging is backend
-`0cef49d971dc8fae08b54bbe83efb528f9cecee1` and client
-`6fe4ef4fe8280c82d0416aff33b5b98335797c4e`, reviewed on 1 November 2026. Final
+`058462aaeacd3279092562d4a97128409069f9e0` and client
+`88dfc8a137291e5fda511b874d5e82f8a0d0cb49`, reviewed on 1 November 2026. Final
 documentation, CI pairing and bundled-client packaging commits can be later
 descendants; they do not expand model or hardware qualification. This candidate
 is not an all-platform release. Record `git rev-parse HEAD` in both checkouts. A
