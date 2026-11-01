@@ -11,27 +11,25 @@ testing. Five selected routes have native media evidence and the paired code
 gates passed. MiniMax H3/Pika, public-template acceptance and whole-app release
 signoff remain open; the original planning baseline below is historical.
 
-The next slice is in progress. The exact newer Diffusers provider has passed
-isolated package/API qualification on Linux; this does not establish H3 model
-fit or output quality. All 61 selected MiniMax text-to-video/audio files have
-completed full hash verification. A bounded native Group Disk attempt loaded
-the selected components, then exposed an empty-adapter-list dispatch defect;
-the fix and its tiny-loader regression now pass. Earlier cancelled setup and
-monitor diagnostics remain preserved. There is no H3 generated-media PASS.
-H3 float32 VAE loading and selected-component offload coverage are implemented.
-Image/video attachment and captured-model download names have focused browser
-coverage, and the complete client check passed. Video/audio export now protects
-borrowed inputs and prior completed files using owned temporary intermediates.
-These changes are published in the same PRs but are not yet deployed into the
-first-milestone app. The required Pika adapter now
-has source-bound loading, cache and downstream guards; both transformer routes
-passed actual-library checks with tiny generated PEFT fixtures. Its fixed
-sampler remains package-owned. Final catalog/starter linking, pretrained
-execution, resource admission and clip acceptance remain open. Its 35-file
-task-selected download is in progress. Tiny fixtures do not qualify the
-published model or adapter weights. The current backend gate found a stale
-image-catalog fingerprint; its refresh preserves all semantic image rows and
-the affected focused tests pass. The final complete gate remains required.
+The next slice remains in progress; see [Milestone 2 progress](MILESTONE2-PROGRESS.md).
+The exact newer Diffusers provider has passed isolated package/API qualification
+on Linux, and all 61 selected MiniMax files are fully hash-verified. One native
+Group Disk engineering recipe completed video/audio export in 552.83 seconds.
+Its saved MP4 fully decodes, but its one-evaluation output fails the visual brief.
+A separate 960×544, 49-evaluation quality candidate is running, not accepted.
+An unchanged-compute replay observed all five stages cached and produced a real
+persisted output record. Earlier failures and the original raw graph's missing
+preview-metadata hold remain intact. The small official audio VAE stays resident;
+the large components retain the declared group strategy.
+
+The same PRs also contain export preservation, accurate inline-adapter limitations
+and scoped video input-history fixes. Focused tests/browser checks passed; final
+complete paired gates and deployment into the first-milestone app remain open.
+The required Pika adapter has source-bound loading, ownership/cache and downstream
+guards, with 38 actual-library tiny checks on Linux. Its 35-file selected download
+is in progress. Public hierarchy/catalog linking, pretrained Pika execution and
+the remaining native/template/finishing acceptance are still open. Tiny fixtures,
+one engineering clip and package checks do not qualify the full plan.
 
 ## Decisions carried forward from the conversation
 

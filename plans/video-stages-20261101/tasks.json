@@ -114,11 +114,12 @@
       "actualActiveHours": null,
       "evidenceRefs": [
         "FIRST-MILESTONE.md; exact private originals retained separately",
-        "Milestone 2 private package/source/attachment checks; not native model evidence"
+        "Milestone 2 private package/source/attachment checks; not native model evidence",
+        "MILESTONE2-PROGRESS.md"
       ],
       "openIssues": [
-        "Image/video attachment and captured-model download filename fixes passed focused browser tests; complete client check passed.",
-        "Production bundle deployment, direct-video LoRA messaging and condition-strength summary behavior remain open."
+        "Image/video attachment and captured-model download name browser checks passed. Accurate direct-video LoRA limitation now passes387 focused checks and2 browser cases.",
+        "Scoped video-source/condition-strength capture and history support pass44 backend and43 client checks. Final paired production integration remains open."
       ]
     },
     {
@@ -150,12 +151,14 @@
       "dependencies": ["V1", "V2", "V8"],
       "actualActiveHours": null,
       "evidenceRefs": [
-        "Milestone 2 private package/source/attachment checks; not native model evidence"
+        "Milestone 2 private package/source/attachment checks; not native model evidence",
+        "MILESTONE2-PROGRESS.md"
       ],
       "openIssues": [
-        "61 selected H3 files (144051157679 bytes) fully downloaded and hash-verified.",
-        "Native Group Disk loaded selected components within the RAM reserve, then Model Setup failed on an empty optional-adapter list; the narrow loader regression now passes.",
-        "Earlier setup/monitor cancellations are preserved. Successful complete setup, generated video/audio and lifecycle acceptance remain open."
+        "61 selected H3 files(144051157679 bytes) fully hash-verified. Model Setup completed in118.70s.",
+        "Native engineering task7BojyLbXZkAp completed video/audio export in552.83s without a resource guard; actual saved media fully decodes. One-evaluation visual output fails the brief.",
+        "Same-compute cached task40RBQUbQ2JpZ observed all5 nodes cached and one genuine persisted output. Original raw graph preview-metadata omission remains held.",
+        "First960x544/124-frame/49-evaluation quality candidate running. Other H3 routes, visual quality and final lifecycle remain open."
       ]
     },
     {
@@ -207,10 +210,12 @@
       "dependencies": ["V3", "V4", "V5", "V6", "V7", "V8"],
       "actualActiveHours": null,
       "evidenceRefs": [
-        "FIRST-MILESTONE.md; exact private originals retained separately"
+        "FIRST-MILESTONE.md; exact private originals retained separately",
+        "MILESTONE2-PROGRESS.md"
       ],
       "openIssues": [
-        "First-milestone media/cache/Stop checks complete; remaining family/offload/finishing/lifecycle rows stay open."
+        "First-milestone media/cache/Stop checks complete. H3 engineering media decode and all-five-stage cached replay are bounded additional evidence.",
+        "H3 quality/keyframe/reference, Pika, finishing and remaining lifecycle/visible-browser rows stay open."
       ]
     },
     {
