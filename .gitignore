@@ -50,6 +50,7 @@ data/*
 !data/diffusers-flux3-source-build.v1.json
 !data/diffusers-video-source-build.v1.json
 !data/pika-h3-flex-workflow-contract.v1.json
+!data/joint-av-artifact-closures.v1.json
 !data/flux3-artifact-review.v1.json
 !data/flux3-catalog-gate-review.v1.json
 !data/modular-weight-formats.v1.json

@@ -17,8 +17,12 @@ fit or output quality. MiniMax's selected text-to-video/audio artifact is
 downloading. H3 float32 VAE loading and selected-component offload coverage are
 implemented. Image/video attachment in the shared stage editor now has focused
 unit and browser coverage. These changes are published in the same PRs but are
-not yet deployed into the first-milestone app. Pika still needs its mandatory
-adapter integration, exact fixed sampler, native execution and acceptance.
+not yet deployed into the first-milestone app. The required Pika adapter now
+has source-bound loading, cache and downstream guards; both transformer routes
+passed actual-library checks with tiny generated PEFT fixtures. Its fixed
+sampler remains package-owned. Final catalog/starter linking, pretrained
+execution, resource admission and clip acceptance remain open. Tiny fixtures
+do not qualify the published model or adapter weights.
 
 ## Decisions carried forward from the conversation
 

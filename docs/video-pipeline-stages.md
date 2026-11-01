@@ -75,9 +75,15 @@ activates it at scale one before group-offload hooks are installed. Optional
 style adapters are not admitted on this route. Reused loaders and downstream
 stages check a weak binding to the actual component and its active, unmerged
 scale-one layers. A serialized flag cannot substitute for that binding. These
-adapter
-declarations and no-weight tests alone do not enable a public Pika template or
+adapter declarations and no-weight tests alone do not enable a public Pika template or
 establish model fit; exact model loading and native acceptance remain required.
+
+The [joint AV artifact closures](../data/joint-av-artifact-closures.v1.json)
+bind each workflow to one transformer partition, shared components, finite
+metadata files and required notices. Pika includes its task adapter; MiniMax
+does not. Their lookup is pure data and performs no model import, download or
+installation. The newer file closure supplements the historical H3 review
+without rewriting its earlier qualification state.
 
 No-weight tests cover selected starters, strict ownership, actual node dispatch,
 inference mode, scheduler restoration, normalized decode, cache reuse and saved
