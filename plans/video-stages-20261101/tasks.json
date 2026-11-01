@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "status": "planned",
+  "preparedOn": "2026-11-01",
+  "timezone": "Asia/Calcutta",
+  "scope": "Shared video stages and twelve bounded Linux recipes across LTX, Wan, MiniMax H3 and Pika H3 Flex",
+  "sourceAuthoring": "One canonical Windows source pair; Linux deploys and records private evidence",
+  "repositories": {
+    "backend": {
+      "branch": "fix-ui-ux-issues",
+      "pr": "https://github.com/sdevil7th/MoDiff/pull/7",
+      "baseline": "da44556740b09a65ce0b7c59f79e2ed3f3067fcf"
+    },
+    "client": {
+      "branch": "fix-ui-ux-issues",
+      "pr": "https://github.com/sdevil7th/MoDiff-client/pull/7",
+      "baseline": "add24386c68eb103fbca8b9b43b6e22e84ce3399"
+    }
+  },
+  "estimatedActiveHours": {
+    "minimum": 43,
+    "maximum": 73
+  },
+  "schedulingAllowanceHours": {
+    "minimum": 52,
+    "maximum": 88
+  },
+  "waitEstimates": {
+    "downloadElapsedHours": [2, 12],
+    "nativeElapsedHours": [8, 24],
+    "overlapAllowed": true,
+    "measured": false
+  },
+  "completionRules": {
+    "verifiedRequiresEvidence": true,
+    "publicationRequiresExactFileApproval": true,
+    "blockedFamilyIsNotComplete": true,
+    "fullAppReleaseIsSeparate": true
+  },
+  "tasks": [
+    {
+      "id": "V0",
+      "title": "Freeze baseline and evidence",
+      "status": "planned",
+      "estimateActiveHours": {
+        "minimum": 1,
+        "maximum": 2
+      },
+      "dependencies": [],
+      "actualActiveHours": null,
+      "evidenceRefs": [],
+      "openIssues": []
+    },
+    {
+      "id": "V1",
+      "title": "Declare shared video stage contracts",
+      "status": "planned",
+      "estimateActiveHours": {
+        "minimum": 3,
+        "maximum": 5
+      },
+      "dependencies": ["V0"],
+      "actualActiveHours": null,
+      "evidenceRefs": [],
+      "openIssues": []
+    },
+    {
+      "id": "V2",
+      "title": "Review and lock the video runtime",
+      "status": "planned",
+      "estimateActiveHours": {
+        "minimum": 4,
+        "maximum": 7
+      },
+      "dependencies": ["V0", "V1"],
+      "actualActiveHours": null,
+      "evidenceRefs": [],
+      "openIssues": []
+    },
+    {
+      "id": "V3",
+      "title": "Implement shared backend stage semantics",
+      "status": "planned",
+      "estimateActiveHours": {
+        "minimum": 5,
+        "maximum": 8
+      },
+      "dependencies": ["V1", "V2"],
+      "actualActiveHours": null,
+      "evidenceRefs": [],
+      "openIssues": []
+    },
+    {
+      "id": "V4",
+      "title": "Extend shared frontend stage authoring",
+      "status": "planned",
+      "estimateActiveHours": {
+        "minimum": 5,
+        "maximum": 8
+      },
+      "dependencies": ["V1", "V3"],
+      "actualActiveHours": null,
+      "evidenceRefs": [],
+      "openIssues": []
+    },
+    {
+      "id": "V5",
+      "title": "Close LTX and Wan route bindings",
+      "status": "planned",
+      "estimateActiveHours": {
+        "minimum": 3,
+        "maximum": 5
+      },
+      "dependencies": ["V2", "V3"],
+      "actualActiveHours": null,
+      "evidenceRefs": [],
+      "openIssues": []
+    },
+    {
+      "id": "V6",
+      "title": "Admit H3 memory and MiniMax execution",
+      "status": "planned",
+      "estimateActiveHours": {
+        "minimum": 5,
+        "maximum": 9
+      },
+      "dependencies": ["V1", "V2", "V8"],
+      "actualActiveHours": null,
+      "evidenceRefs": [],
+      "openIssues": []
+    },
+    {
+      "id": "V7",
+      "title": "Integrate Pika with exact adapter and sampler",
+      "status": "planned",
+      "estimateActiveHours": {
+        "minimum": 4,
+        "maximum": 7
+      },
+      "dependencies": ["V2", "V3", "V6"],
+      "actualActiveHours": null,
+      "evidenceRefs": [],
+      "openIssues": []
+    },
+    {
+      "id": "V8",
+      "title": "Prepare exact artifacts and disk budget",
+      "status": "planned",
+      "estimateActiveHours": {
+        "minimum": 1,
+        "maximum": 2
+      },
+      "dependencies": ["V0", "V1"],
+      "actualActiveHours": null,
+      "evidenceRefs": [],
+      "openIssues": []
+    },
+    {
+      "id": "V9",
+      "title": "Native video acceptance and lifecycle",
+      "status": "planned",
+      "estimateActiveHours": {
+        "minimum": 4,
+        "maximum": 7
+      },
+      "dependencies": ["V3", "V4", "V5", "V6", "V7", "V8"],
+      "actualActiveHours": null,
+      "evidenceRefs": [],
+      "openIssues": []
+    },
+    {
+      "id": "V10",
+      "title": "Author and qualify twelve templates",
+      "status": "planned",
+      "estimateActiveHours": {
+        "minimum": 3,
+        "maximum": 5
+      },
+      "dependencies": ["V4", "V5", "V7"],
+      "actualActiveHours": null,
+      "evidenceRefs": [],
+      "openIssues": []
+    },
+    {
+      "id": "V11",
+      "title": "Final gates paired build and deployment",
+      "status": "planned",
+      "estimateActiveHours": {
+        "minimum": 4,
+        "maximum": 6
+      },
+      "dependencies": ["V9", "V10"],
+      "actualActiveHours": null,
+      "evidenceRefs": [],
+      "openIssues": []
+    },
+    {
+      "id": "V12",
+      "title": "Manual handoff and postmortem",
+      "status": "planned",
+      "estimateActiveHours": {
+        "minimum": 1,
+        "maximum": 2
+      },
+      "dependencies": ["V11"],
+      "actualActiveHours": null,
+      "evidenceRefs": [],
+      "openIssues": []
+    }
+  ],
+  "dependencyNotes": [
+    "V6 loading feasibility starts early after V2/V8; final MiniMax acceptance also needs V3.",
+    "V10 recipe drafts must be frozen before their V9 runs. V10 qualification closes after V9; this is a two-phase task, not an independent acceptance shortcut.",
+    "V8 planning precedes downloads; execution downloads require the V2 reviewed runtime and exact artifact admission.",
+    "V9 counts focus on affected routes and actual new computation. Historical records keep their original source/runtime scope."
+  ],
+  "exclusions": [
+    "Automatic all-hardware qualification",
+    "Thirty-minute long-video campaign",
+    "Entire existing video catalog",
+    "Public upload without exact-file approval",
+    "Large Windows inference"
+  ],
+  "extensions": [
+    {
+      "id": "LTX25",
+      "title": "LTX-2.5 explicit decoder and access integration",
+      "estimatedActiveHours": [6, 12],
+      "status": "deferred",
+      "reason": "Separate gated-access and ROCm decoder prerequisite; not included in 43–73 hour total."
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "recordKind": "template_not_execution_evidence",
+  "taskId": null,
+  "caseId": null,
+  "attemptId": null,
+  "recipe": { "id": null, "version": null, "sha256": null, "brief": null },
+  "source": {
+    "backendCommit": null,
+    "clientCommit": null,
+    "servedBundleSha256": null,
+    "dirtyDiffSha256": null
+  },
+  "runtime": {
+    "contractHash": null,
+    "upstreamRevision": null,
+    "hostEvidenceRef": null
+  },
+  "artifacts": [],
+  "orderedInputMedia": [],
+  "requested": {
+    "graphSha256": null,
+    "controlsEvidenceRef": null,
+    "resourceRecipeRef": null
+  },
+  "admission": {
+    "freeDiskBytes": null,
+    "availableHostBytes": null,
+    "hostReserveBytes": null,
+    "queueEvidenceRef": null,
+    "timeBoundSeconds": null
+  },
+  "experiment": {
+    "previousAttemptId": null,
+    "hypothesis": null,
+    "changedVariables": []
+  },
+  "dispatch": {
+    "backendTaskId": null,
+    "workflowId": null,
+    "startedAtUtc": null,
+    "terminalAtUtc": null,
+    "terminalStatus": null
+  },
+  "timingSeconds": {
+    "load": null,
+    "encode": null,
+    "denoise": null,
+    "decode": null,
+    "export": null,
+    "wholeTask": null,
+    "activeEngineering": null
+  },
+  "consumedInputsRef": null,
+  "originalTerminalReceiptRef": null,
+  "resourceSamplesRef": null,
+  "media": {
+    "rawOutputs": [],
+    "encodedOutputs": [],
+    "inspectionRef": null,
+    "browserPlaybackRef": null
+  },
+  "verdicts": {
+    "execution": "not_run",
+    "freshRepeat": "not_run",
+    "cacheReuse": "not_run",
+    "visualMotionAudio": "not_reviewed",
+    "uiDelivery": "not_run",
+    "cleanup": "not_run",
+    "resourceQualification": "not_qualified",
+    "publication": "not_approved"
+  },
+  "remainingIssues": [],
+  "transferVerificationRef": null
+}
