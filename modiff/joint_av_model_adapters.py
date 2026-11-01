@@ -48,6 +48,13 @@ def _require_selection(selection):
         raise ValueError('Unreviewed required model adapter declaration.')
 
 
+def require_owned_model_components(*components):
+    """A fixed model adapter cannot be injected into connected model owners."""
+    if any(component is not None for component in components):
+        raise ValueError('Pika Model Setup must load its own components. '
+                         'Disconnect component overrides and run Model Setup again.')
+
+
 def prepare_required_model_adapter(selection):
     """Verify the installed pinned bytes using the existing finite LoRA boundary."""
     _require_selection(selection)
@@ -119,6 +126,15 @@ def apply_required_model_adapter(pipeline, selection, prepared):
             require_applied_model_adapter(component, selection)
             return (resolved,)
         _require_inventory(pipeline, selection, loaded=False)
+        manager = getattr(pipeline, '_components_manager', None)
+        owner = getattr(pipeline, '_collection', None)
+        from modiff.native_disk_lora import _assert_exclusive_target
+        if manager is None or not owner:
+            raise ValueError('The required Pika adapter target must be exclusively owned by this Model Setup.')
+        try:
+            _assert_exclusive_target(manager, owner, component)
+        except ValueError as exc:
+            raise ValueError('The required Pika adapter target must be exclusively owned by this Model Setup.') from exc
         pipeline.load_lora_weights(str(resolved.load_directory), weight_name=resolved.weight_name,
             adapter_name=ADAPTER_NAME, use_safetensors=True, local_files_only=True,
             low_cpu_mem_usage=True, load_into_transformer_ref=selection.component == 'transformer_ref')

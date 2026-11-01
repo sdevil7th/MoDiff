@@ -1145,6 +1145,8 @@ def _component_runtime_policy(name, policy):
     if name == 'text_encoder' and policy.get('text_encoder_quantization') is not None:
         result['text_encoder_quantization'] = deepcopy(policy['text_encoder_quantization'])
         result['weight_loading_device'] = 'cuda:0'
+    if name in {'transformer', 'transformer_ref'} and policy.get('required_model_adapter') is not None:
+        result['required_model_adapter'] = deepcopy(policy['required_model_adapter'])
     return result
 
 
@@ -2919,11 +2921,13 @@ class ModelsLoader(NodeBase):
         source, repository, reviewed_revision, index_filename, index_document = reviewed_selection
         from modiff.joint_av_model_adapters import (
             required_joint_av_adapter, prepare_required_model_adapter, require_applied_model_adapter,
+            require_owned_model_components,
         )
         required_adapter = required_joint_av_adapter(model_type, repository, reviewed_revision, kwargs['workflow_id'])
         if required_adapter is not None:
             if source != 'hub' or kwargs.get('lora_list') not in (None, []):
                 raise ValueError('Pika requires its pinned model adapter and does not admit extra style adapters.')
+            require_owned_model_components(*(kwargs.get(name) for name in ('unet', 'vae', 'controlnet')))
             _descriptor, resolved_adapter = prepare_required_model_adapter(required_adapter)
             kwargs['_required_model_adapter_identity'] = resolved_adapter.descriptor_sha256
         elif kwargs.get('_required_model_adapter_identity') is not None:
@@ -3495,12 +3499,14 @@ class ModelsLoader(NodeBase):
                                           controlnet=controlnet, weight_variant=weight_variant)
         from modiff.joint_av_model_adapters import (
             required_joint_av_adapter, prepare_required_model_adapter, apply_required_model_adapter,
+            require_owned_model_components,
         )
         required_adapter = required_joint_av_adapter(model_type, real_repo_id, revision, reviewed_workflow_id)
         prepared_model_adapter = None
         if required_adapter is not None:
             if _source != 'hub' or lora_list not in (None, []):
                 raise ValueError('Pika requires its pinned model adapter and does not admit extra style adapters.')
+            require_owned_model_components(unet, vae, controlnet)
             prepared_model_adapter = prepare_required_model_adapter(required_adapter)
             if _required_model_adapter_identity not in (None, prepared_model_adapter[1].descriptor_sha256):
                 raise ValueError('The required model adapter changed after cache validation.')

@@ -74,9 +74,14 @@ loads it into the task-selected transformer with the official Pika loader, and
 activates it at scale one before group-offload hooks are installed. Optional
 style adapters are not admitted on this route. Reused loaders and downstream
 stages check a weak binding to the actual component and its active, unmerged
-scale-one layers. A serialized flag cannot substitute for that binding. These
-adapter declarations and no-weight tests alone do not enable a public Pika template or
-establish model fit; exact model loading and native acceptance remain required.
+scale-one layers. Model Setup rejects connected component overrides and checks
+exclusive registered ownership before the first adapter injection. Component
+reuse includes the required adapter identity, so an unadapted component from
+another owner cannot be changed in place. Reusing an already bound component
+does not reinject or reactivate it. A serialized flag cannot substitute for
+that binding. Adapter declarations and no-weight tests alone do not enable a
+public Pika template or establish model fit; exact model loading and native
+acceptance remain required.
 
 The [joint AV artifact closures](../data/joint-av-artifact-closures.v1.json)
 bind each workflow to one transformer partition, shared components, finite

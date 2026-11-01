@@ -35,6 +35,11 @@ class Pipeline:
         self.loads = []
         self.activations = []
         self.inventory = {}
+        self._collection = 'pika-owner'
+        self._components_manager = SimpleNamespace(
+            components={'actual-component': self.component},
+            collections={self._collection: {'actual-component'}},
+        )
 
     def get_list_adapters(self):
         return self.inventory
@@ -105,6 +110,33 @@ def test_reference_adapter_routes_only_into_reference_partition(prepared, monkey
     adapters.require_applied_model_adapter(pipeline.component, contract)
     with pytest.raises(ValueError, match='binding'):
         adapters.require_applied_model_adapter(pipeline.component, selection())
+
+
+@pytest.mark.parametrize('ownership', ['shared', 'foreign', 'unregistered', 'missing-manager'])
+def test_first_adapter_injection_requires_exclusive_registered_owner(prepared, ownership):
+    pipeline = Pipeline(selection())
+    manager = pipeline._components_manager
+    if ownership == 'shared':
+        manager.collections['another-owner'] = {'actual-component'}
+    elif ownership == 'foreign':
+        pipeline._collection = 'another-owner'
+    elif ownership == 'unregistered':
+        manager.components.clear()
+    else:
+        pipeline._components_manager = None
+    with pytest.raises(ValueError, match='exclusively owned'):
+        adapters.apply_required_model_adapter(pipeline, selection(), prepared)
+    assert not pipeline.loads
+    assert not pipeline.activations
+    assert not hasattr(pipeline.component.network, 'peft_config')
+
+
+def test_bound_component_reuse_does_not_mutate_a_later_shared_owner(prepared):
+    pipeline = Pipeline(selection())
+    adapters.apply_required_model_adapter(pipeline, selection(), prepared)
+    pipeline._components_manager.collections['stage-owner'] = {'actual-component'}
+    adapters.apply_required_model_adapter(pipeline, selection(), prepared)
+    assert len(pipeline.loads) == len(pipeline.activations) == 1
 
 
 def test_missing_foreign_and_changed_adapter_state_fail_closed(prepared):
@@ -206,6 +238,44 @@ def test_loader_rejects_extra_style_adapters_before_loading_or_reusing(monkeypat
     cached.assert_not_called()
 
 
+@pytest.mark.parametrize('name', ['unet', 'vae', 'controlnet'])
+@pytest.mark.parametrize('connected', [{}, object()])
+def test_loader_rejects_component_overrides_before_adapter_resolution_or_cache(monkeypatch, name, connected):
+    from modiff.NodeBase import NodeBase
+    node = prepare_loader_preflight(monkeypatch)
+    prepare = mock.Mock()
+    monkeypatch.setattr(adapters, 'prepare_required_model_adapter', prepare)
+    with mock.patch.object(NodeBase, '__call__') as cached:
+        with pytest.raises(ValueError, match='load its own components'):
+            node._call_checked(model_type=adapters.PIKA_PIPELINE, workflow_id='t2va', **{name: connected})
+    prepare.assert_not_called()
+    cached.assert_not_called()
+
+
+@pytest.mark.parametrize('name', ['transformer', 'transformer_ref'])
+def test_required_adapter_identity_separates_implicit_component_reuse(name):
+    from modules.ModularDiffusers.loaders import (
+        _component_runtime_policy, assert_explicit_component_runtime_policy, reusable_component_ids,
+    )
+    binding = {'repository': adapters.PIKA_REPOSITORY, 'revision': adapters.PIKA_REVISION,
+               'weight_name': selection().weight_name, 'sha256': selection().sha256,
+               'component': selection().component, 'scale': 1.0}
+    request = {'required_model_adapter': binding}
+    component = SimpleNamespace(_modiff_modular_runtime_policy={})
+    with pytest.raises(ValueError, match='policy'):
+        assert_explicit_component_runtime_policy(name, component, request)
+    stored = _component_runtime_policy(name, request)
+    assert stored['required_model_adapter'] == binding
+    unadapted, adapted = Component(), Component()
+    adapted._modiff_modular_runtime_policy = stored
+    manager = SimpleNamespace(_lookup_ids=lambda **_: ['unadapted', 'adapted'],
+        get_one=lambda component_id: {'unadapted': unadapted, 'adapted': adapted}[component_id])
+    assert reusable_component_ids(manager, name=name, load_id='same-pika-base', dtype=torch.float32,
+        requested_quantization=None, offload_mode='none', device='cpu', runtime_policy=request) == ['adapted']
+    binding['scale'] = 0
+    assert stored['required_model_adapter']['scale'] == 1.0
+
+
 def test_stage_refuses_missing_adapter_before_creating_an_official_block(monkeypatch):
     from modules.ModularDiffusers import workflow_blocks
     token = SimpleNamespace(_repo_id=adapters.PIKA_REPOSITORY, _revision=adapters.PIKA_REVISION)
@@ -257,7 +327,9 @@ def test_installed_reviewed_pipeline_loads_real_tiny_peft_file_with_normal_bound
     monkeypatch.setattr(huggingface, 'cached_file_path', lambda *args, **kwargs: str(artifact))
     monkeypatch.setattr(huggingface, '_hf_cache_locations', lambda: [('fixture', str(cache))])
     prepared = adapters.prepare_required_model_adapter(fixture)
-    pipeline = PikaH3FlexBlocks().get_workflow(workflow).init_pipeline()
+    from diffusers import ComponentsManager
+    pipeline = PikaH3FlexBlocks().get_workflow(workflow).init_pipeline(
+        components_manager=ComponentsManager(), collection='fixture-owner')
     pipeline.update_components(**{fixture.component: MiniMaxH3Transformer3DModel(**config),
         'scheduler': MiniMaxH3Scheduler(shift=12.0, stochastic_sampling=True, shift_provided_sigmas=True),
         'audio_scheduler': MiniMaxH3Scheduler(shift=3.0, stochastic_sampling=True, shift_provided_sigmas=True)})

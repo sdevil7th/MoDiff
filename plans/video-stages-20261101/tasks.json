@@ -80,8 +80,8 @@
         "Milestone 2 private package/source/attachment checks; not native model evidence"
       ],
       "openIssues": [
-        "Exact newer source provider passed isolated Windows CPU and Linux package/API qualification; Linux package actions admitted only.",
-        "Ordinary base Diffusers upgrade, final paired gates and protected production activation remain open."
+        "Exact source-built provider qualified on isolated Windows CPU and Linux; Linux package actions admitted.",
+        "Ordinary base dependency upgrade, final backend gate and protected deployment remain open."
       ]
     },
     {
@@ -98,7 +98,8 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "Bounded LTX/Wan backend stages delivered; remaining H3/Pika integration stays in the four-family plan."
+        "Shared H3/Pika stage implementation and source-bound state checks published; no pretrained Pika proof.",
+        "Remaining native stage acceptance and public Pika hierarchy/catalog linking are open."
       ]
     },
     {
@@ -116,8 +117,8 @@
         "Milestone 2 private package/source/attachment checks; not native model evidence"
       ],
       "openIssues": [
-        "Image/video source attachment fix published with 471 focused unit checks and two save/export/Undo/Redo browser cases.",
-        "Paired build/deployment, direct-video adapter messaging and output filename labeling remain open."
+        "Image/video attachment and captured-model download filename fixes passed focused browser tests; complete client check passed.",
+        "Production bundle deployment, direct-video LoRA messaging and condition-strength summary behavior remain open."
       ]
     },
     {
@@ -152,8 +153,8 @@
         "Milestone 2 private package/source/attachment checks; not native model evidence"
       ],
       "openIssues": [
-        "Selected MiniMax text-to-video/audio artifact download in progress; no H3 pretrained load or output proof.",
-        "Float32 VAEs and selected reference/audio offload hooks fixed; native memory/resource admission remains open."
+        "61 selected H3 files (144051157679 bytes) fully downloaded and hash-verified; user released Linux GPU.",
+        "No pretrained H3 loading or media output yet; resource admission and bounded native tests remain open."
       ]
     },
     {
@@ -170,8 +171,9 @@
         "Milestone 2 private package/source/attachment checks; not native model evidence"
       ],
       "openIssues": [
-        "Pinned official Pika schema and six-step CPU scheduler probes passed without weights.",
-        "Required task adapter, source-bound backend stage integration and native acceptance remain open."
+        "Required Pika task adapter integration, loading registration and actual tiny official-API tests implemented.",
+        "Ownership review found borrowed-component mutation risk; regression guards added before first native loading.",
+        "Published adapter download, public hierarchy/catalog integration and native acceptance remain open."
       ]
     },
     {
@@ -189,8 +191,8 @@
         "Milestone 2 private package/source/attachment checks; not native model evidence"
       ],
       "openIssues": [
-        "Terms acknowledged for local non-commercial H3/Pika tests in India.",
-        "61-file MiniMax t2va selection admitted against disk reserve and downloading; Pika separate partitions are not assumed deduplicated."
+        "H3 selected-artifact receipt completed with full hashes; storage reserve remains separate from memory admission.",
+        "Pika separate selection has not downloaded; no shard deduplication or model-fit assumption."
       ]
     },
     {
@@ -241,7 +243,8 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "First paired code gates/build/deployment passed. Whole-app browser/release gate remains held by unresolved controlled-image LoRA readiness-summary behavior."
+        "Complete client npm run check passed with the explicit compatible backend CPU interpreter.",
+        "Current backend full gate, paired bundle deployment and final browser/native checks remain open."
       ]
     },
     {
@@ -284,7 +287,7 @@
       "reason": "Separate gated-access and ROCm decoder prerequisite; not included in 43-73 hour total."
     }
   ],
-  "updatedOn": "2026-11-01",
+  "updatedOn": "2026-11-02",
   "firstMilestone": {
     "scope": "Existing reviewed runtime; LTX 0.9.8 distilled T2V/I2V/video-input/two-reference and Wan 5B T2V. No H3/Pika runtime upgrade.",
     "status": "ready_for_bounded_private_testing",
