@@ -4380,7 +4380,9 @@ class WorkflowMiniMaxH3Denoise(_OfficialWorkflowBlockMixin, NodeBase):
                     maximum=360,
                 ),
             )
-        state = pipeline(**call_kwargs)
+        from .progress import modular_loop_progress
+        with modular_loop_progress(self, pipeline):
+            state = pipeline(**call_kwargs)
         return _minimax_h3_state_result(
             pipeline_class=kwargs.get("pipeline_class"),
             workflow_id=workflow_id,

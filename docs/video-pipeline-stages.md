@@ -97,6 +97,11 @@ blocks. Ordered references use the selected library-owned dataclasses and
 retain decoded video frame rates and audio sample rates. Saved H3 actions
 continue to resolve their original contracts.
 
+Their actual loop progress uses the existing node progress bridge: totals count
+real model evaluations, and Stop raises after the current official loop step.
+The temporary per-instance progress methods are restored on success, failure or
+interruption; sampler math and the upstream block hierarchy remain unchanged.
+
 Pika's package-owned sampler fixes the six-step schedules; hidden or explicit
 Steps, CFG and negative-prompt overrides are rejected. Its task adapter is a
 required part of the model, not an optional style control. Model Setup verifies
