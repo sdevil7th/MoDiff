@@ -18,6 +18,7 @@ from modiff.diffusers_offload_modes import (
 from modiff.model_artifact_catalog import require_catalog_revision
 from modiff.modular_weight_formats import weight_format_download_selections
 from modiff.optional_runtimes import TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID
+from modiff.joint_av_studio_specs import pika_studio_specifications
 
 
 STUDIO_EXECUTION_SPEC_SCHEMA_VERSION = 1
@@ -10167,6 +10168,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
     **_HELIOS_STUDIO_EXECUTION_SPEC_DEFINITIONS,
     **_HUNYUAN_VIDEO_15_STUDIO_EXECUTION_SPEC_DEFINITIONS,
     **_MINIMAX_H3_STUDIO_EXECUTION_SPEC_DEFINITIONS,
+    **pika_studio_specifications(),
     **_WAN_ANIMATE_2_STUDIO_EXECUTION_SPEC_DEFINITIONS,
     **_COSMOS3_NANO_STUDIO_EXECUTION_SPEC_DEFINITIONS,
     **_COSMOS3_DISTILLED_STUDIO_EXECUTION_SPEC_DEFINITIONS,

@@ -45,6 +45,14 @@ This authoring metadata grants neither runtime activation nor model fit. Runtime
 readiness, executable Cluster admission and native acceptance remain separate
 checks; the historical hierarchy must not be relabelled as Pika's newer source.
 
+Pika's explicit `pika-h3-flex:official-provider:v1` Expert profile binds all three
+tasks to the exact optional video provider and immutable model artifact. Its
+shared-stage specification omits sampler overrides. Group Disk is an explicit
+implemented strategy, including the resident audio VAE; it is not an Auto or
+hardware qualification. Automatic template acquisition remains closed until the
+finite per-task file selection and native acceptance are joined. This profile
+does not promote a public template, Gallery clip or executable Hub Cluster.
+
 ## Execution and ownership
 
 - `LoadPipeline` retains the existing immutable-artifact, resource, offload and

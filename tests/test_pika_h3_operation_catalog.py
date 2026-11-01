@@ -6,6 +6,7 @@ import pytest
 from modiff.operation_catalog import build_operation_catalog
 from modiff.operation_starters import resolve_operation_starter
 from modiff.supplemental_modular_contracts import PIKA_PIPELINE, PIKA_WORKFLOW_TASKS
+from modiff.joint_av_studio_specs import PIKA_EXECUTION_PROFILE
 
 
 @pytest.fixture(scope='module')
@@ -39,3 +40,33 @@ def test_actual_pika_starter_has_complete_shared_stage_bindings(catalog, workflo
     if workflow == 'ref2va':
         helper = next(node for node in result['nodes'] if node['action'] == 'WorkflowJointAVReferenceAssembler')
         assert helper['values']['pipeline_class'] == PIKA_PIPELINE
+
+
+@pytest.mark.parametrize('workflow,task', PIKA_WORKFLOW_TASKS.items())
+def test_pika_explicit_profile_seals_source_and_leaves_qualification_closed(catalog, workflow, task):
+    from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES, resolve_execution_profiles_for_loader
+    from modiff.joint_av_model_adapters import PIKA_REPOSITORY, PIKA_REVISION
+    from modiff.studio_execution_specs import studio_execution_spec_for_pair, studio_capability_definition
+    from modiff.supplemental_modular_contracts import PIKA_RUNTIME_PROFILE
+
+    profile = DIFFUSERS_EXECUTION_PROFILES[PIKA_EXECUTION_PROFILE]
+    assert profile.required_diffusers_provider == PIKA_RUNTIME_PROFILE
+    assert profile.public and not profile.live_proof
+    assert profile.retry_offload_modes == ()
+    modules, contracts = catalog
+    result = resolve_operation_starter(modules, contracts,
+        {'pipelineClass': PIKA_PIPELINE, 'task': task, 'executionProfileId': profile.id})
+    loader = next(node for node in result['nodes'] if node['action'] == 'ModelsLoader')
+    selected, reason = resolve_execution_profiles_for_loader(loader['module'], loader['action'], loader['values'])
+    assert not reason and [item.id for item in selected] == [profile.id]
+    assert loader['values']['repo_id'] == {'source': 'hub', 'value': PIKA_REPOSITORY}
+    assert loader['values']['revision'] == PIKA_REVISION
+    assert loader['values']['workflow_id'] == workflow
+    spec = studio_execution_spec_for_pair(PIKA_PIPELINE, task)
+    assert spec['executionProfileId'] == profile.id
+    assert not any(field in {'num_inference_steps', 'guidance_scale', 'negative_prompt'} for _, field, _ in spec['bindings'])
+    capability = studio_capability_definition(PIKA_PIPELINE)
+    for field in ('autoEligible', 'templateEligible', 'galleryEligible', 'liveProof'):
+        assert capability[field] is False
+    assert capability['qualifiedModes'] == []
+    assert capability['downloadFiles'] == []  # Never expose a full-repository download.
