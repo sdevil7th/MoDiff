@@ -121,6 +121,10 @@ uv pip check --python .venv/bin/python
 
 The wrapper applies the installed accelerator profile's process environment before Python imports Torch. On Windows, run `.venv/Scripts/python.exe` directly in the equivalent commands.
 
+`pytest.ini` limits default discovery to the maintained `tests/` directory. Keep
+preserved source snapshots and executable review helpers outside that directory;
+ignored review archives must not run during the ordinary verification command.
+
 To exercise tests requiring an **already installed and activated** optional
 runtime, use the verified entry point instead of adding a sealed site-packages
 directory to `PYTHONPATH` manually:

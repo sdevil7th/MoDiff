@@ -32,6 +32,14 @@ identity. Retain the original receipt and add the new checks with their own
 scope. State which routes need another model run; do not describe completed
 comparisons as missing simply because a broader qualification gate remains open.
 
+An intentional creative revision must retain the original creator fixture and
+failed output. Keep the revised prompt and settings in a separate explicit
+revision record; validate every unchanged model, adapter, input and control
+against the original fixture. The Cinematic Octane portrait's v3 recipe removes
+injury references and uses true CFG 1 with retained distilled guidance 3.5 and
+Custom group offload. Its revised image is a new creative result, not pixel
+parity with v1, Auto/Windows qualification or permission to publish new media.
+
 Keep an evidence index outside Git with paths and hashes for source inventories,
 task receipts, input/output sets, comparisons, visual notes and test logs. Retain
 failed and incomplete attempts alongside later passing runs. An offline image
