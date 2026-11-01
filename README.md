@@ -40,7 +40,7 @@ branch advances. To reproduce the application source before packaging, check out
 the two commits above in separate checkouts. This candidate is not an all-platform
 release.
 
-**Terminal 1 â€” backend:** clone both repositories into the same parent directory,
+**Terminal 1 — backend:** clone both repositories into the same parent directory,
 then start the backend. These commands work in Linux shells and Windows PowerShell.
 
 ```text
@@ -61,7 +61,7 @@ with the selected profile: use a separate checkout when testing a different
 accelerator. See the [full setup guide](docs/developer-setup.md) for specialized AMD profiles,
 explicit `uv pip` commands, repair, and upgrades.
 
-**Terminal 2 â€” frontend:** from the same parent directory, run:
+**Terminal 2 — frontend:** from the same parent directory, run:
 
 ```text
 cd MoDiff-client
@@ -196,7 +196,7 @@ The client [Studio user guide](https://github.com/sdevil7th/MoDiff-client/blob/f
 explains the complete guided workflow, Auto/Expert controls, Queue, Gallery,
 and recovery behavior.
 
-### What Auto doesâ€”and does not do
+### What Auto does—and does not do
 
 Auto chooses an eligible runnable resource recipe using the current backend,
 artifact, device, memory, and available qualification evidence. It may select a
@@ -211,7 +211,7 @@ denoising step remain very slow. The first run can also spend substantial time
 downloading, validating, loading, and placing weights before generation starts.
 
 The same prompt and generation parameters can sometimes run faster with a
-different qualified runtime recipeâ€”for example, a compatible pre-quantized
+different qualified runtime recipe—for example, a compatible pre-quantized
 artifact, supported attention kernel, compilation/cache path, or improved
 device placement. These choices normally require a new pipeline load and a new
 run; they cannot safely accelerate work already in progress. Do not enable an
@@ -407,7 +407,7 @@ audio processing, selected adapters and playback.
 
 ## Custom nodes
 
-Open **Nodes â†’ Add custom node** for Local, Hugging Face or Git. Intentional Add/Load
+Open **Nodes → Add custom node** for Local, Hugging Face or Git. Intentional Add/Load
 validates and enables code in one action; remote revisions are pinned internally.
 Drop a structured Python node file onto the canvas to import and insert it.
 Files/packages in `custom/` appear automatically without executing; management
@@ -416,11 +416,11 @@ trusted code. Dependencies are checked, not installed automatically.
 See [Developing custom nodes](docs/custom-nodes.md) for contracts and examples.
 
 Approved Modular blocks without model ports receive a **Models** input when their
-Python contract requires components. Connect **Load Models â†’ Pipeline Components**
+Python contract requires components. Connect **Load Models → Pipeline Components**
 to reuse compatible loaded weights. The [VAE reconstruction example](examples/custom_nodes/ModularImageReconstruction)
 demonstrates this without separate family-specific nodes or implicit model downloads.
 For additional weights, approved blocks with official component types also expose
-**Load Models â€” [block name]**. Select pinned, downloaded component sources and use
+**Load Models — [block name]**. Select pinned, downloaded component sources and use
 **Custom** memory policy; connect the resulting components to the block's Models input.
 
 ## Updating and recovery
