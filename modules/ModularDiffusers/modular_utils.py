@@ -1407,6 +1407,19 @@ MINIMAX_H3_PIPELINE_CONFIG = PipelineConfig(
     component_dtype_overrides=(("vae", "float32"), ("audio_vae", "float32")),
 )
 
+# These official workflows call the conditioner's nested ``model`` entrypoint.
+# Block-level fallback hooks on its outer forward cannot cover embeddings and
+# other unmatched layers. Keep this policy in backend execution metadata.
+_COMPONENT_GROUP_OFFLOAD_TYPES = {
+    'MiniMaxH3ModularPipeline': (('text_encoder', 'leaf_level'),),
+    'PikaH3FlexModularPipeline': (('text_encoder', 'leaf_level'),),
+}
+
+
+def component_group_offload_types(model_type):
+    return dict(_COMPONENT_GROUP_OFFLOAD_TYPES.get(model_type, ()))
+
+
 PIKA_H3_FLEX_PIPELINE_CONFIG = PipelineConfig(
     # Exact newer-provider workflow blocks; no split-node compatibility or
     # hardware qualification is inferred from this loading declaration.
@@ -2260,7 +2273,9 @@ def _pipeline_config_metadata(model_type, config):
         'denoise_image_latent_dimensions': list(config.denoise_image_latent_dimensions),
         'node_params': deepcopy(config.node_params),
         **({'component_dtype_overrides': dict(config.component_dtype_overrides)} if config.component_dtype_overrides else {}),
-        **({'weight_formats': list(config.weight_formats)} if config.weight_formats else {})}
+        **({'weight_formats': list(config.weight_formats)} if config.weight_formats else {}),
+        **({'component_group_offload_types': component_group_offload_types(model_type)}
+           if component_group_offload_types(model_type) else {})}
 
 
 def get_model_type_metadata(model_type: str) -> Optional[Dict[str, Any]]:

@@ -1147,6 +1147,8 @@ def _component_runtime_policy(name, policy):
         result['weight_loading_device'] = 'cuda:0'
     if name in {'transformer', 'transformer_ref'} and policy.get('required_model_adapter') is not None:
         result['required_model_adapter'] = deepcopy(policy['required_model_adapter'])
+    if name in policy.get('component_group_offload_types', {}):
+        result['group_offload_type'] = policy['component_group_offload_types'][name]
     return result
 
 
@@ -1897,6 +1899,8 @@ def load_components_strict(
                     scope=incremental_group_offload["scope"],
                     **({"offload_root": incremental_group_offload["offload_root"]}
                        if incremental_group_offload.get("offload_root") is not None else {}),
+                    **({"leaf_level_components": incremental_group_offload["leaf_level_components"]}
+                       if "leaf_level_components" in incremental_group_offload else {}),
                 )
                 if result.applied:
                     offload_diag = diagnostics.setdefault("offload", {})
@@ -3493,6 +3497,16 @@ class ModelsLoader(NodeBase):
             auto_offload=auto_offload,
             device=device,
         )
+        from .modular_utils import component_group_offload_types
+        from modiff.diffusers_offload import LEAF_LEVEL_GROUP_COMPONENTS
+        group_types = component_group_offload_types(model_type) if offload_mode in {
+            OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK} else {}
+        group_entrypoint_kwargs = {}
+        if group_types:
+            runtime_policy['component_group_offload_types'] = group_types
+            group_entrypoint_kwargs['leaf_level_components'] = tuple(sorted(
+                (LEAF_LEVEL_GROUP_COMPONENTS - group_types.keys())
+                | {name for name, kind in group_types.items() if kind == 'leaf_level'}))
         if weight_loading_mode == 'cuda':
             _cuda_weight_loading_controls(model_type=model_type, offload_mode=offload_mode, device=device, dtype=dtype,
                                           lora_list=lora_list, quant_config=quant_config, unet=unet, vae=vae,
@@ -3855,6 +3869,7 @@ class ModelsLoader(NodeBase):
                     "mode": offload_mode,
                     "node_id": self.node_id,
                     "scope": "modular-diffusers",
+                    **group_entrypoint_kwargs,
                     **({"offload_root": component_context.placement.disk_root}
                        if selected_group_placement and component_context.placement.disk_root is not None else {}),
                 }
@@ -3895,6 +3910,7 @@ class ModelsLoader(NodeBase):
                     mode=offload_mode,
                     node_id=self.node_id,
                     scope="modular-diffusers",
+                    **group_entrypoint_kwargs,
                     **({"offload_root": component_context.placement.disk_root}
                        if selected_group_placement and component_context.placement.disk_root is not None else {}),
                 )
@@ -3988,6 +4004,7 @@ class ModelsLoader(NodeBase):
             result = apply_component_group_offload(
                 self.loader, component_names=deferred_disk_targets, device=device,
                 mode=offload_mode, node_id=self.node_id, scope='modular-diffusers',
+                **group_entrypoint_kwargs,
                 allow_streaming=not selected_group_placement,
                 offload_root=component_context.placement.disk_root if selected_group_placement else None,
             )

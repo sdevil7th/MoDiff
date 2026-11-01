@@ -68,6 +68,12 @@ An omitted or empty optional-adapter list means Model Setup has no optional
 adapters to load. Malformed descriptors still fail the ordinary file boundary.
 Required model adapters, including Pika's task adapter, are handled separately.
 
+H3 and Pika call their conditioner's nested model rather than its outer forward.
+Their backend execution metadata selects leaf-level group hooks for that
+conditioner, including incremental loading, so embeddings and other layers
+load at the entrypoints actually called. Reuse requires the same declared
+offload type; another owner's component is never silently reconfigured.
+
 The shared joint video/audio backend adapters preserve the exact selected
 MiniMax H3 or Pika H3 Flex pipeline in every process-local state. They delegate
 media preparation, encoding, denoising and decoding to the selected official

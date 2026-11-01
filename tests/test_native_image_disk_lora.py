@@ -184,6 +184,26 @@ def test_no_adapter_selection_works_without_a_native_lora_policy(native_runtime,
     assert all(event[0] != 'lora' for event in events)
 
 
+def test_loader_applies_declared_entrypoint_policy_incrementally_and_after_loading(native_runtime, monkeypatch):
+    from modules.ModularDiffusers import modular_utils
+    loaders, _, _, _ = native_runtime
+    monkeypatch.setattr(modular_utils, 'component_group_offload_types',
+                        lambda model_type: {'text_encoder': 'leaf_level'})
+    original = loaders.apply_component_group_offload
+    calls = []
+    def inspect(pipeline, **kwargs):
+        calls.append(kwargs)
+        return original(pipeline, **kwargs)
+    monkeypatch.setattr(loaders, 'apply_component_group_offload', inspect)
+    node = loaders.ModelsLoader('declared-entrypoint-owner')
+    node.execute(**native_args())
+    assert any(call['component_names'] == ['text_encoder'] for call in calls)
+    assert any(len(call['component_names']) > 1 for call in calls)
+    assert all(set(call['leaf_level_components']) == {'text_encoder', 'vae', 'audio_vae'} for call in calls)
+    assert node.loader.text_encoder._modiff_modular_runtime_policy['group_offload_type'] == 'leaf_level'
+    assert 'group_offload_type' not in node.loader.transformer._modiff_modular_runtime_policy
+
+
 def test_actual_native_loader_injects_lora_before_target_disk_files_exist(native_runtime, tmp_path):
     loaders, _, events, _ = native_runtime
     node = loaders.ModelsLoader('models')
