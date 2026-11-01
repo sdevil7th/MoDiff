@@ -59,6 +59,11 @@ audio branch remains distinct.
 
 ## Validation boundaries
 
+Export Video with Audio keeps generated intermediates in its own temporary
+directory and preserves loaded audio inputs regardless of their filenames.
+It replaces the destination only after muxing succeeds, cleans intermediates
+on failure, and rejects a destination that aliases its audio input.
+
 An omitted or empty optional-adapter list means Model Setup has no optional
 adapters to load. Malformed descriptors still fail the ordinary file boundary.
 Required model adapters, including Pika's task adapter, are handled separately.

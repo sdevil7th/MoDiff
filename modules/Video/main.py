@@ -643,6 +643,7 @@ class ExportWithAudio(NodeBase):
         import imageio
         import numpy as np
         import subprocess
+        import tempfile
         from scipy.io import wavfile
         from imageio_ffmpeg import get_ffmpeg_exe
 
@@ -652,52 +653,47 @@ class ExportWithAudio(NodeBase):
         fps = float(kwargs.get("fps") or 16)
         destination = Path(parse_filename(kwargs.get("filename") or "{PATH:videos}/MoDiff_{HASH:6}.mp4"))
         destination.parent.mkdir(parents=True, exist_ok=True)
-        silent_path = destination.with_suffix(".silent.mp4")
-        audio_path = destination.with_suffix(".audio.wav")
-
         audio = kwargs.get("audio")
+        source_audio = None
         if isinstance(audio, str):
-            audio_path = resolve_runtime_input_path(audio)
-        else:
-            data = audio.get("samples", audio.get("audio")) if isinstance(audio, dict) else audio
-            sample_rate = int(audio.get("sample_rate", 48000)) if isinstance(audio, dict) else 48000
-            samples = np.asarray(data, dtype=np.float32)
-            while samples.ndim > 2:
-                samples = samples[0]
-            if samples.ndim == 2 and samples.shape[0] <= 8 and samples.shape[1] > samples.shape[0]:
-                samples = samples.T
-            wavfile.write(audio_path, sample_rate, (np.clip(samples, -1, 1) * 32767).astype(np.int16))
+            source_audio = Path(resolve_runtime_input_path(audio))
+            if (destination.resolve() == source_audio.resolve()
+                    or destination.exists() and destination.samefile(source_audio)):
+                raise ValueError("The video export destination must differ from its audio input.")
 
-        writer = imageio.get_writer(silent_path, fps=fps, quality=int(kwargs.get("quality") or 8), codec="libx264")
-        try:
-            for frame in frames:
-                writer.append_data(np.asarray(frame))
-        finally:
-            writer.close()
-        subprocess.run(
-            [
-                get_ffmpeg_exe(),
-                "-y",
-                "-v",
-                "error",
-                "-i",
-                str(silent_path),
-                "-i",
-                str(audio_path),
-                "-c:v",
-                "copy",
-                "-c:a",
-                "aac",
-                "-b:a",
-                "256k",
-                "-shortest",
-                str(destination),
-            ],
-            check=True,
-        )
-        silent_path.unlink(missing_ok=True)
-        if audio_path.parent == destination.parent and audio_path.name.endswith(".audio.wav"):
-            audio_path.unlink(missing_ok=True)
+        # Own every intermediate explicitly. An input's name and directory do
+        # not grant permission to delete it, and failed muxing must preserve a
+        # previous destination until its replacement is complete.
+        with tempfile.TemporaryDirectory(prefix=".modiff-export-", dir=destination.parent) as temporary:
+            owned = Path(temporary)
+            silent_path, muxed_path = owned / "silent.mp4", owned / "muxed.mp4"
+            audio_path = source_audio
+            if audio_path is None:
+                audio_path = owned / "audio.wav"
+                data = audio.get("samples", audio.get("audio")) if isinstance(audio, dict) else audio
+                sample_rate = int(audio.get("sample_rate", 48000)) if isinstance(audio, dict) else 48000
+                samples = np.asarray(data, dtype=np.float32)
+                while samples.ndim > 2:
+                    samples = samples[0]
+                if samples.ndim == 2 and samples.shape[0] <= 8 and samples.shape[1] > samples.shape[0]:
+                    samples = samples.T
+                wavfile.write(audio_path, sample_rate, (np.clip(samples, -1, 1) * 32767).astype(np.int16))
+
+            writer = imageio.get_writer(silent_path, fps=fps, quality=int(kwargs.get("quality") or 8), codec="libx264")
+            try:
+                for frame in frames:
+                    writer.append_data(np.asarray(frame))
+            finally:
+                writer.close()
+            subprocess.run(
+                [
+                    get_ffmpeg_exe(), "-y", "-v", "error",
+                    "-i", str(silent_path), "-i", str(audio_path),
+                    "-c:v", "copy", "-c:a", "aac", "-b:a", "256k", "-shortest", str(muxed_path),
+                ],
+                check=True,
+            )
+            muxed_path.replace(destination)
         return {"file": str(destination), "frames": len(frames), "duration_seconds": len(frames) / fps}
 
 
