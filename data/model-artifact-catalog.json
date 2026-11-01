@@ -8494,6 +8494,15 @@
       "artifacts": []
     },
     {
+      "modelType": "PikaH3FlexModularPipeline",
+      "baseRepo": "Pika-Labs/Pika-H3-Flex",
+      "baseRevision": "3ff166447d5edb1406107ab8370c42000ce173e4",
+      "baseLicense": "minimax-h3-community-license-agreement",
+      "snapshotByteSize": 219913842680,
+      "weightByteSize": 219743812316,
+      "artifacts": []
+    },
+    {
       "modelType": "ZImageModularPipeline",
       "baseRepo": "Tongyi-MAI/Z-Image-Turbo",
       "baseRevision": "f332072aa78be7aecdf3ee76d5c247082da564a6",

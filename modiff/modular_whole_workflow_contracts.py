@@ -513,4 +513,6 @@ def reviewed_whole_workflow_action_adapter(
 
 
 def reviewed_whole_workflow_model_types() -> frozenset[str]:
-    return frozenset(pipeline_class for pipeline_class, _workflow_id in PINNED_WHOLE_WORKFLOW_GRAPH_ADAPTERS)
+    return frozenset(pipeline_class for pipeline_class, _workflow_id in (
+        PINNED_WHOLE_WORKFLOW_GRAPH_ADAPTERS.keys() | SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS.keys()
+    ))

@@ -46,7 +46,6 @@ from modiff.modular_workflow_contracts import (
     HELIOS_MID_REPOSITORY,
     PINNED_MODULAR_REPOSITORY_ADDITIONAL_MODULAR_COMPONENT_TYPES,
     PINNED_MODULAR_REPOSITORY_IGNORED_STANDARD_COMPONENT_TYPES,
-    PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES,
     PINNED_MODULAR_REPOSITORY_COMPONENT_TYPES,
     PINNED_MODULAR_REPOSITORY_COMPONENT_SOURCES,
     PINNED_MODULAR_REPOSITORY_COMPONENT_SUBFOLDERS,
@@ -54,6 +53,7 @@ from modiff.modular_workflow_contracts import (
     effective_reviewed_modular_selector,
     reviewed_modular_workflow_variants,
     reviewed_modular_weight_variant,
+    reviewed_modular_component_load_types,
 )
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
 from utils.huggingface import exact_cached_snapshot_path, _containing_hf_cache_root
@@ -137,6 +137,7 @@ REVIEWED_BUILTIN_WORKFLOWS = {
     # identity: t2va/fl2va select ``transformer`` and ref2va selects
     # ``transformer_ref``. An unscoped load would pull both partitions.
     "MiniMaxH3ModularPipeline": frozenset({"t2va", "fl2va", "ref2va"}),
+    "PikaH3FlexModularPipeline": frozenset({"t2va", "fl2va", "ref2va"}),
 }
 REVIEWED_EXPANDED_WORKFLOW_MODEL_TYPES = frozenset(
     {
@@ -920,7 +921,7 @@ def _instantiate_reviewed_builtin_pipeline(
     from .native_blocks import prepare_native_pipeline_blocks
     installed_blocks = prepare_native_pipeline_blocks(pipeline_class, installed_pipeline.blocks)
     load_document = deepcopy(index_document)
-    for component_name, type_hint in PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES.get(repository, {}).items():
+    for component_name, type_hint in reviewed_modular_component_load_types(repository).items():
         load_document[component_name] = list(type_hint)
     config_kwargs = (
         {"modular_config_dict": load_document}

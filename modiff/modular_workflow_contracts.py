@@ -206,7 +206,20 @@ PINNED_MODULAR_REPOSITORY_COMPONENT_SUBFOLDERS = {
 }
 
 
+def reviewed_modular_component_load_types(repository):
+    """Concrete factory aliases scoped to reviewed immutable repository indices."""
+    if repository == 'Pika-Labs/Pika-H3-Flex':
+        # Newer-source supplement: the reviewed d0b9b1b blocks request the
+        # Qwen2 base while this pinned Pika index publishes its fast tokenizer.
+        return {'tokenizer': ('transformers', 'Qwen2TokenizerFast')}
+    return dict(PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES.get(repository, {}))
+
+
 def require_reviewed_modular_repository_workflow(model_type, repository, revision, workflow_id):
+    if model_type == 'PikaH3FlexModularPipeline':
+        from modiff.joint_av_model_adapters import required_joint_av_adapter, PIKA_REVISION
+        required_joint_av_adapter(model_type, repository, PIKA_REVISION if revision is None else revision, workflow_id)
+        return
     workflows = PINNED_MODULAR_REPOSITORY_WORKFLOW_LIMITS.get((model_type, repository))
     if workflows is None:
         return

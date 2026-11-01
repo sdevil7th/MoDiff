@@ -1407,6 +1407,16 @@ MINIMAX_H3_PIPELINE_CONFIG = PipelineConfig(
     component_dtype_overrides=(("vae", "float32"), ("audio_vae", "float32")),
 )
 
+PIKA_H3_FLEX_PIPELINE_CONFIG = PipelineConfig(
+    # Exact newer-provider workflow blocks; no split-node compatibility or
+    # hardware qualification is inferred from this loading declaration.
+    node_specs={},
+    label="Pika H3 Flex",
+    default_repo="Pika-Labs/Pika-H3-Flex",
+    default_dtype="bfloat16",
+    component_dtype_overrides=(("vae", "float32"), ("audio_vae", "float32")),
+)
+
 ANIMA_PIPELINE_CONFIG = PipelineConfig(
     # Anima uses reviewed package-owned top-level workflow nodes in
     # workflow_blocks.py. No generic block compatibility is inferred here.
@@ -2091,6 +2101,13 @@ def _initialize_registry(registry: ModiffPipelineRegistry):
         registry.register(MiniMaxH3ModularPipeline, MINIMAX_H3_PIPELINE_CONFIG)
     except Exception as e:
         logger.warning(f"Failed to register MiniMaxH3ModularPipeline: {e}")
+
+    try:
+        from diffusers import PikaH3FlexModularPipeline
+
+        registry.register(PikaH3FlexModularPipeline, PIKA_H3_FLEX_PIPELINE_CONFIG)
+    except (AttributeError, ImportError) as error:
+        logger.debug("Pika H3 Flex is unavailable in this installed runtime: %s", error)
 
     try:
         from diffusers import AnimaModularPipeline
