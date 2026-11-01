@@ -204,6 +204,17 @@ def test_loader_applies_declared_entrypoint_policy_incrementally_and_after_loadi
     assert 'group_offload_type' not in node.loader.transformer._modiff_modular_runtime_policy
 
 
+def test_declared_library_group_optout_refuses_before_any_component_weights_load(native_runtime, monkeypatch):
+    loaders, _, events, _ = native_runtime
+    monkeypatch.setattr(TinyAdapterModel, '_supports_group_offloading', False, raising=False)
+    # Use the precise source class, as an actual builtin ComponentSpec does.
+    monkeypatch.setattr(TinySpec, 'type_hint', TinyAdapterModel)
+    node = loaders.ModelsLoader('unsupported-groups')
+    with pytest.raises(RuntimeError, match='does not support group offloading'):
+        node.execute(**native_args())
+    assert not any(event[0] == 'load' for event in events)
+
+
 def test_actual_native_loader_injects_lora_before_target_disk_files_exist(native_runtime, tmp_path):
     loaders, _, events, _ = native_runtime
     node = loaders.ModelsLoader('models')

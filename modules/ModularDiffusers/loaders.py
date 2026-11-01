@@ -1149,6 +1149,8 @@ def _component_runtime_policy(name, policy):
         result['required_model_adapter'] = deepcopy(policy['required_model_adapter'])
     if name in policy.get('component_group_offload_types', {}):
         result['group_offload_type'] = policy['component_group_offload_types'][name]
+    if name in policy.get('component_offload_modes', {}):
+        result['offload_mode'] = policy['component_offload_modes'][name]
     return result
 
 
@@ -1342,7 +1344,7 @@ def reusable_component_ids(
             component,
             dtype=component_load_kwargs_for(name, {"torch_dtype": dtype})["torch_dtype"],
             requested_quantization=requested_quantization,
-            offload_mode=offload_mode,
+            offload_mode=(runtime_policy or {}).get('component_offload_modes', {}).get(name, offload_mode),
             device=device,
             node_id=node_id,
             runtime_policy=_component_runtime_policy(name, runtime_policy),
@@ -1364,9 +1366,10 @@ def record_pipeline_component_runtime_policy(
     for name, component in pipeline_components.items():
         if name in excluded_component_names or not isinstance(component, torch.nn.Module):
             continue
-        component._modiff_offload_mode = offload_mode
+        effective_mode = (runtime_policy or {}).get('component_offload_modes', {}).get(name, offload_mode)
+        component._modiff_offload_mode = effective_mode
         component._modiff_execution_device = str(torch.device(device))
-        component._modiff_offload_node_id = str(node_id) if offload_mode == OFFLOAD_MODE_GROUP_DISK else None
+        component._modiff_offload_node_id = str(node_id) if effective_mode == OFFLOAD_MODE_GROUP_DISK else None
         component._modiff_modular_runtime_policy = _component_runtime_policy(name, runtime_policy)
         if applied_runtime_policy is not None:
             component._modiff_modular_runtime_applied_policy = _component_runtime_policy(name, applied_runtime_policy)
@@ -1704,6 +1707,14 @@ def load_components_strict(
         raise ValueError(f"Invalid type for names: {type(names)}")
 
     required_names = set(required_names or [])
+    if incremental_group_offload:
+        resident = set(incremental_group_offload.get('resident_components', ()))
+        for name in names:
+            if name in GROUP_OFFLOAD_COMPONENTS and name in pipeline._component_specs and name not in resident:
+                declared_type = getattr(pipeline.get_component_spec(name), 'type_hint', None)
+                if getattr(declared_type, '_supports_group_offloading', True) is False:
+                    raise RuntimeError(f'{name} does not support group offloading in its official library. '
+                                       'Choose a reviewed component placement before loading weights.')
     # These are the caller's explicitly selected reuse/override inputs, never a
     # manager-wide or ambient lookup. The binding helper still proves the exact
     # declared model type and complete artifact load id before copying a config.
@@ -1901,6 +1912,8 @@ def load_components_strict(
                        if incremental_group_offload.get("offload_root") is not None else {}),
                     **({"leaf_level_components": incremental_group_offload["leaf_level_components"]}
                        if "leaf_level_components" in incremental_group_offload else {}),
+                    **({"resident_components": incremental_group_offload["resident_components"]}
+                       if "resident_components" in incremental_group_offload else {}),
                 )
                 if result.applied:
                     offload_diag = diagnostics.setdefault("offload", {})
@@ -3497,7 +3510,7 @@ class ModelsLoader(NodeBase):
             auto_offload=auto_offload,
             device=device,
         )
-        from .modular_utils import component_group_offload_types
+        from .modular_utils import component_group_offload_types, component_offload_modes
         from modiff.diffusers_offload import LEAF_LEVEL_GROUP_COMPONENTS
         group_types = component_group_offload_types(model_type) if offload_mode in {
             OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK} else {}
@@ -3507,6 +3520,12 @@ class ModelsLoader(NodeBase):
             group_entrypoint_kwargs['leaf_level_components'] = tuple(sorted(
                 (LEAF_LEVEL_GROUP_COMPONENTS - group_types.keys())
                 | {name for name, kind in group_types.items() if kind == 'leaf_level'}))
+        component_modes = component_offload_modes(model_type) if offload_mode in {
+            OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK} else {}
+        if component_modes:
+            runtime_policy['component_offload_modes'] = component_modes
+            group_entrypoint_kwargs['resident_components'] = tuple(sorted(
+                name for name, mode in component_modes.items() if mode == OFFLOAD_MODE_NONE))
         if weight_loading_mode == 'cuda':
             _cuda_weight_loading_controls(model_type=model_type, offload_mode=offload_mode, device=device, dtype=dtype,
                                           lora_list=lora_list, quant_config=quant_config, unet=unet, vae=vae,
@@ -3643,7 +3662,7 @@ class ModelsLoader(NodeBase):
             if isinstance(component_dtypes, dict) and name in component_dtypes:
                 if getattr(component, "dtype", None) != component_dtypes[name]:
                     raise ValueError(f"Connected component {name!r} violates the selected precision contract.")
-            component_mode = offload_mode
+            component_mode = runtime_policy.get('component_offload_modes', {}).get(name, offload_mode)
             if offload_mode in {OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK} and name not in DEFAULT_GROUP_COMPONENTS:
                 # Group hooks leave auxiliary components such as ControlNet
                 # under their source owner's placement. Do not require or

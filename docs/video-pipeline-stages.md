@@ -74,6 +74,14 @@ conditioner, including incremental loading, so embeddings and other layers
 load at the entrypoints actually called. Reuse requires the same declared
 offload type; another owner's component is never silently reconfigured.
 
+Their small float32 audio VAE explicitly opts out of group offloading in the
+official library because of weight-normalization hook ordering. Source-declared
+`component_offload_modes` keeps that component resident, while the large
+conditioner and transformer retain the requested group strategy. Placement and
+reuse record the audio VAE's actual resident mode. Incremental loading refuses
+declared unsupported types without a reviewed placement before loading weights. The
+actual component's opt-out is checked again before group hooks are installed.
+
 The shared joint video/audio backend adapters preserve the exact selected
 MiniMax H3 or Pika H3 Flex pipeline in every process-local state. They delegate
 media preparation, encoding, denoising and decoding to the selected official

@@ -387,6 +387,9 @@ def _streaming_offload_allowed(device, mode, module=None):
 def _apply_group_to_module(module, *, component_name, device, node_id, scope, mode, offload_type="block_level", num_blocks_per_group=2, allow_streaming=True, offload_root=None):
     if module is None or not isinstance(module, torch.nn.Module):
         return None
+    if getattr(module, '_supports_group_offloading', True) is False:
+        raise RuntimeError(f'{component_name} does not support group offloading in its official library. '
+                           'Use a reviewed resident component placement or a supported offload mode.')
     if _is_group_offloaded(module):
         return component_name
 
@@ -449,6 +452,7 @@ def apply_component_group_offload(
     node_id,
     scope="pipeline",
     leaf_level_components: Iterable[str] = LEAF_LEVEL_GROUP_COMPONENTS,
+    resident_components: Iterable[str] = (),
     allow_streaming: bool = True,
     offload_root=None,
 ):
@@ -473,8 +477,17 @@ def apply_component_group_offload(
             ),
         )
 
-    applied = []
+    resident_components = frozenset(resident_components)
+    applied, resident = [], []
     for component_name in component_names:
+        if component_name in resident_components:
+            module = getattr(pipeline, component_name, None)
+            if isinstance(module, torch.nn.Module):
+                if _is_group_offloaded(module) or getattr(module, '_hf_hook', None) is not None:
+                    raise RuntimeError('Release the prior component hooks before selecting resident placement.')
+                module.to(normalized_device)
+                resident.append(component_name)
+            continue
         offload_type = "leaf_level" if component_name in leaf_level_components else "block_level"
         applied_name = _apply_group_to_module(
             getattr(pipeline, component_name, None),
@@ -490,7 +503,10 @@ def apply_component_group_offload(
         if applied_name:
             applied.append(applied_name)
     disk_path = str(_disk_path(node_id, scope, offload_root=offload_root)) if mode == OFFLOAD_MODE_GROUP_DISK and applied else None
-    return OffloadResult(mode=mode, applied=bool(applied), method="component_group_offload", components=applied, disk_path=disk_path)
+    return OffloadResult(mode=OFFLOAD_MODE_NONE if resident and not applied else mode,
+        applied=bool(applied or resident), method="to_device" if resident and not applied else "component_group_offload",
+        components=applied, disk_path=disk_path,
+        detail=f'Reviewed resident components on {normalized_device}: {", ".join(resident)}.' if resident else None)
 
 
 def apply_model_offload(model, *, component_name, mode, device, node_id, scope="model"):
