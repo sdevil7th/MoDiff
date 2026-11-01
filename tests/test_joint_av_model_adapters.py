@@ -245,7 +245,12 @@ def test_installed_reviewed_pipeline_loads_real_tiny_peft_file_with_normal_bound
     snapshot = cache / ('models--' + adapters.PIKA_REPOSITORY.replace('/', '--')) / 'snapshots' / adapters.PIKA_REVISION
     artifact = snapshot / contract.weight_name
     artifact.parent.mkdir(parents=True)
-    save_file(get_peft_model_state_dict(trained, adapter_name=adapters.ADAPTER_NAME), str(artifact))
+    # The pinned Pika header uses PEFT's .default. infix without a component
+    # prefix. The official H3 loader recognizes this exact published layout.
+    state = get_peft_model_state_dict(trained, adapter_name=adapters.ADAPTER_NAME)
+    state = {name.replace('.lora_A.weight', '.lora_A.default.weight')
+                 .replace('.lora_B.weight', '.lora_B.default.weight'): value for name, value in state.items()}
+    save_file(state, str(artifact))
     fixture = replace(contract, sha256=hashlib.sha256(artifact.read_bytes()).hexdigest(),
                       byte_size=artifact.stat().st_size)
     monkeypatch.setattr(adapters, '_REFERENCE_ADAPTER' if workflow == 'ref2va' else '_FRAME_ADAPTER', fixture)
