@@ -266,7 +266,8 @@ def resolve_operation_starter(modules, contracts, selection):
             for node in nodes.values():
                 for field, value in (('guidance_scale', 1.0), ('num_inference_steps', len(LTX_DISTILLED_TIMESTEPS))):
                     if field in node['params']:
-                        node['params'][field].update(min=value, max=value)
+                        node['params'][field].update(min=value, max=value, default=value, value=value)
+                        node['values'][field] = value
         for source, output, target, input_ in image_stage_spec['edges']:
             if source in roles and target in roles:
                 connect(roles[source], output, roles[target], input_)

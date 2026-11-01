@@ -345,6 +345,8 @@ def test_selected_starter_publishes_real_stage_edges_and_no_extra_whole_consumer
             for field, expected in (('guidance_scale', 1.), ('num_inference_steps', 8)):
                 if field in node['params']:
                     assert node['params'][field]['min'] == node['params'][field]['max'] == expected
+                    assert node['params'][field]['value'] == node['params'][field]['default'] == expected
+                    assert node['values'][field] == expected
     for node in result['nodes']:
         if node['action'] == 'LoadPipeline':
             continue
