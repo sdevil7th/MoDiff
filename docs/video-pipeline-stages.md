@@ -195,6 +195,13 @@ work. A selected file closure does not qualify a runtime, graph, Auto recipe or
 public template. Text and first/last-frame tasks intentionally share their exact
 transformer/adapter bytes; reference tasks use a separate partition.
 
+First/last-frame preparation carries the selected frame count in official
+`PipelineState`, whose downstream before-denoise block consumes it. The keyframe
+preprocessor itself accepts images and geometry, so passing frame count to that
+block would silently ignore the control. The reference preprocessor instead
+consumes frame count directly for reference validation/alignment. Both paths
+retain the existing explicit state connection and official duration alignment.
+
 No-weight tests cover selected starters, strict ownership, actual node dispatch,
 inference mode, scheduler restoration, normalized decode, cache reuse and saved
 graph connections. They do not prove video quality or memory feasibility. Native

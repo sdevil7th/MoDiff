@@ -4191,8 +4191,11 @@ class WorkflowMiniMaxH3BeforeEncode(_OfficialWorkflowBlockMixin, NodeBase):
                 last_image=last_image,
                 width=width,
                 height=height,
-                num_frames=num_frames,
             )
+            # Official keyframe preparation consumes images and geometry,
+            # not duration. Carry the declared control through the public
+            # PipelineState API for the later before-denoise block to consume.
+            state.set('num_frames', num_frames)
         else:
             references = _validated_minimax_h3_references(
                 kwargs.get("references"),

@@ -60,14 +60,43 @@ def test_pika_denoise_preserves_fixed_schedule_and_seed_without_steps_or_cfg():
 
 
 def test_pika_keyframe_preparation_keeps_supplied_geometry_and_partial_frame_or():
+    from diffusers.modular_pipelines.modular_pipeline import PipelineState
     node = blocks.WorkflowJointAVBeforeEncode('joint-prepare')
     frame = Image.new('RGB', (832, 480), 'red')
-    pipeline = mock.Mock(return_value=object())
+    state = PipelineState()
+    pipeline = mock.Mock(return_value=state)
     with mock.patch.object(node, '_prepare_pipeline', return_value=(object(), pipeline)):
         node.execute(pipeline_class=PIKA, workflow_id='fl2va', block_path='before_encode',
                      last_image=frame, width=832, height=480, num_frames=120)
     assert pipeline.call_args.kwargs == dict(image=None, last_image=frame,
-                                             width=832, height=480, num_frames=120)
+                                             width=832, height=480)
+    assert state.get('num_frames') == 120
+
+
+@pytest.mark.parametrize('pipeline_class,node_type', [
+    (H3, blocks.WorkflowMiniMaxH3BeforeEncode),
+    (H3, blocks.WorkflowJointAVBeforeEncode),
+    (PIKA, blocks.WorkflowJointAVBeforeEncode),
+])
+def test_keyframe_count_survives_in_official_state_for_the_downstream_denoiser(pipeline_class, node_type):
+    from diffusers.modular_pipelines.modular_pipeline import PipelineState
+    node, state, token = node_type('frame-count'), PipelineState(), object()
+    frame = Image.new('RGB', (832, 480), 'red')
+
+    def preprocess(**kwargs):
+        # The official keyframe preprocessor accepts geometry and images;
+        # frame count belongs to the later denoiser, carried through state.
+        assert set(kwargs) == {'image', 'last_image', 'width', 'height'}
+        state.set('width', kwargs['width'])
+        return state
+
+    with mock.patch.object(node, '_prepare_pipeline', return_value=(token, preprocess)):
+        result = node.execute(pipeline_class=pipeline_class, workflow_id='fl2va',
+            block_path='before_encode', image=frame, width=832, height=480, num_frames=141)
+    actual = blocks._require_workflow_state(result['state_out'], token=token,
+        pipeline_class=pipeline_class, workflow_id='fl2va', completed_stage='before_encode')
+    assert actual is state
+    assert actual.get('num_frames') == 141 and actual.get('width') == 832
 
 
 def test_legacy_h3_nodes_still_reject_other_pipeline_families():
