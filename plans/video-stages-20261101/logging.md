@@ -140,3 +140,27 @@ Do not conclude with a single all-done flag when a family, task, media approval 
   is not an executable input. Record declared default/unconnected fields and
   intentional new output filenames explicitly rather than asserting that every
   raw object is byte-identical to a hand-authored native request.
+
+## Reference attention and ordinary draft checkpoints
+
+- Preserve the original native OOM and exact trained preprocessing geometry.
+  A successful random-weight attention allocation is a numerical/resource probe,
+  not pretrained reference generation. Record the deployed callback check and
+  actual workflow separately. Fused SDPA non-finites and unavailable CK remain
+  failed/unsupported alternatives; do not enable them globally.
+- Bind the reviewed reference-only attention choice to component/cache identity.
+  Keep completed text/keyframe routes on their existing policy rather than
+  silently changing them and repeating hours of unaffected model work.
+- New private GPU probes must set the repository working directory before
+  importing MoDiff modules. One registered-callback probe failed before compute
+  because it ran outside the repository; its failure is retained. The corrected
+  callback probe passed without a product-code change.
+- Test the ordinary New Workflow path, not only a starter factory. A joint
+  producer needs two distinct typed streams connected to the joined exporter.
+  An ambiguous union port is not evidence of simultaneous video and audio.
+- Use a GPU transport schema for browser-only tests of upstream CPU-offload
+  defaults. The initial CPU fixture correctly refused its invalid offload plan;
+  retain that failure and do not weaken the exporter device check.
+- Client check v20 passed its source/unit/build stages but exceeded only startup
+  size caps. Record exact growth (202 bytes each for largest/total startup), keep
+  loading membership and independent deferred caps, then freeze the final pair.

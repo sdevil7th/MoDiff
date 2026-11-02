@@ -12,28 +12,26 @@ gates passed. MiniMax H3/Pika, public-template acceptance and whole-app release
 signoff remain open; the original planning baseline below is historical.
 
 The next slice remains in progress; see [Milestone 2 progress](MILESTONE2-PROGRESS.md).
-The exact newer Diffusers provider has passed isolated package/API qualification
-on Linux, and all 61 selected MiniMax files are fully hash-verified. One native
-Group Disk engineering recipe completed video/audio export in 552.83 seconds.
-Its saved MP4 fully decodes, but its one-evaluation output fails the visual brief.
-A separate 960×544, 49-evaluation quality candidate is running, not accepted.
-An unchanged-compute replay observed all five stages cached and produced a real
-persisted output record. Earlier failures and the original raw graph's missing
-preview-metadata hold remain intact. The small official audio VAE stays resident;
-the large components retain the declared group strategy.
+As of 2 November, H3 text and keyframe quality clips and Pika keyframes have
+technical, sampled visual and muted playback evidence. Pika's text output has
+an explicit retained finishing-repair chain, not a relabelled original PASS.
+Listening and final editor/template acceptance remain open.
 
-The same PRs also contain export preservation, accurate inline-adapter limitations
-and scoped video input-history fixes. Focused tests/browser checks passed; final
-complete paired gates and deployment into the first-milestone app remain open.
-The required Pika adapter has source-bound loading, ownership/cache and downstream
-guards, with 38 actual-library tiny checks on Linux. Its 35-file selected download
-is complete and fully hash-verified. Its three shared-stage starters and explicit
-provider-bound Expert profile are published. Its original hierarchy retains its
-own source revision; all 101 old/new workflows pass the existing hierarchy and
-subtree round-trip suite. Visible-browser acceptance, pretrained Pika execution,
-executable Cluster/template admission and the remaining finishing/lifecycle checks
-are still open. Tiny fixtures,
-one engineering clip and package checks do not qualify the full plan.
+H3 and Pika reference selections are fully hash-verified. The specifically
+approved old Wan cache retirement freed 90.10 GB. H3 reference initially failed
+in eager vision attention; a scoped reference-only ROCm/BF16 math policy passes
+89 focused checks on both CPU and the active Linux reviewed runtime, plus an
+exact-size numerical probe. Its real reference retry has passed vision encoding
+and is denoising. Pika reference and Wan5B image follow sequentially only after
+the preceding technical media and owned-cache release checks pass.
+
+Client `d357832a` includes Pika saved-model preservation and a joined video/audio
+draft exporter. Seven locally saved candidates have exact normal API readback;
+one normal Pika creation/save/reload browser regression passes. They remain
+unqualified local candidates. The corrected 119-file paired bundle is prepared;
+complete final checks, idle protected deployment and manual handoff remain open.
+Older evidence retains its actual source identities. No video has publication
+approval, and tiny fixtures do not qualify a pretrained route.
 
 ## Decisions carried forward from the conversation
 
