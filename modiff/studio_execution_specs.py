@@ -8821,10 +8821,8 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
             "recommendedSteps": 50,
             "recommendedGuidance": 5.0,
             "guidanceLabel": "Guidance",
-            # Diffusers currently exposes this dense 5B checkpoint through
-            # ``WanPipeline.__call__`` as text-to-video.  The upstream model
-            # family name includes TI2V, but that must not be interpreted as
-            # an admitted image input on the standard Diffusers route.
+            # This retained specification still selects WanPipeline. A separate
+            # explicit image profile below extends the shared capability only.
             "supportsImageInput": False,
             "supportsMask": False,
             "supportsMultiImage": False,
@@ -18376,6 +18374,39 @@ for _old_id, _pipeline, _label, _repository, _revision, _steps, _cfg in _FLUX3_C
             'supportedOffloadModes': [OFFLOAD_MODE_MODEL_CPU],
         }
         STUDIO_EXECUTION_SPEC_DEFINITIONS[f"{_public_id}:{_task.replace('_', '-')}:v1"] = _source
+
+
+# Wan's dense checkpoint shares weights between the official text and image
+# pipelines. Keep the saved text specification/profile exact; a new image
+# selection owns a distinct loader identity, with no dual-transformer controls.
+_WAN_5B_IMAGE_DEFINITION = deepcopy(
+    STUDIO_EXECUTION_SPEC_DEFINITIONS['wan-22-ti2v-5b:text-to-video:v1'])
+_WAN_5B_IMAGE_DEFINITION.pop('autoRequirements')
+_WAN_5B_IMAGE_DEFINITION.update(
+    mode='image_to_video', roles=_I2V_GRAPH_ROLES, edges=_I2V_GRAPH_EDGES,
+    bindings=tuple(STUDIO_EXECUTION_SPEC_DEFINITIONS[
+        'wan-22-ti2v-5b:text-to-video:v1']['bindings']) + (
+            ('loadImage', 'file', 'referenceImages'),
+            ('loadImage', 'alpha_channel', 'alphaMode'),
+        ),
+)
+_WAN_5B_IMAGE_DEFINITION['profile'].update(
+    id='wan-22-ti2v-5b:image-direct:v1', modes=('image_to_video',),
+    pipeline_class='WanTI2VImageToVideoPipeline',
+)
+_WAN_5B_IMAGE_DEFINITION['capability'].update(
+    supportsImageInput=True, modes=['text_to_video', 'image_to_video'],
+    modeRequirements={'image_to_video': {'requiredImages': ['referenceImages']}},
+    notes=[
+        'Text uses the retained WanPipeline selection; opening-image conditioning uses the official WanImageToVideoPipeline with the same pinned dense 5B artifact.',
+        'The image route is an explicit Expert stage selection. Native output, hardware qualification, Auto and public-template admission are separate.',
+    ],
+)
+STUDIO_EXECUTION_SPEC_DEFINITIONS['wan-22-ti2v-5b:image-to-video:v1'] = _WAN_5B_IMAGE_DEFINITION
+# One model owns one capability record. Extend its task discovery without
+# changing the retained text execution specification or its Auto requirements.
+STUDIO_EXECUTION_SPEC_DEFINITIONS['wan-22-ti2v-5b:text-to-video:v1']['capability'].update(
+    _WAN_5B_IMAGE_DEFINITION.pop('capability'))
 
 
 def studio_public_authoring_replacements() -> dict[str, str]:

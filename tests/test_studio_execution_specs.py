@@ -794,6 +794,7 @@ class StudioExecutionSpecTests(unittest.TestCase):
                 ("Flux3ModularPipeline", "edit_image"),
                 ("Flux3DistilledModularPipeline", "text_to_image"),
                 ("Flux3DistilledModularPipeline", "edit_image"),
+                ("WanTI2VPipeline", "image_to_video"),
             ],
         )
         by_id = {item["id"]: item for item in specs}

@@ -110,7 +110,9 @@ def owner(identity='ltx-video:direct'):
 
 
 def encoded(pipeline, **changes):
-    return core.encode(pipeline, {'mode': 'text_to_video', 'prompt': 'A moving train',
+    mode = DIFFUSERS_EXECUTION_PROFILES[pipeline.identity].modes[0]
+    media = {'reference_images': [Image.new('RGB', (32, 32))]} if mode == 'image_to_video' else {}
+    return core.encode(pipeline, {'mode': mode, 'prompt': 'A moving train', **media,
         'negative_prompt': '', 'guidance_scale': 1., 'max_sequence_length': 128, **changes})
 
 
@@ -303,8 +305,10 @@ def test_actual_split_calls_capture_video_task_prompt_and_final_format_without_f
     from modiff.execution_input_provenance import capture_generation_inputs, build_resolved_execution_inputs, apply_resolved_execution_inputs
     from modules.DiffusersVideo.main import get_video_pipeline_adapter
     pipeline, _ = owner(identity)
+    mode = DIFFUSERS_EXECUTION_PROFILES[identity].modes[0]
+    media = {'reference_images': [Image.new('RGB', (32, 32))]} if mode == 'image_to_video' else {}
     encoder, sampler, decoder = EncodeInputs('encode'), Denoise('sample'), DecodeLatents('decode')
-    encoding = encoder(pipeline=pipeline, mode='text_to_video', prompt='A moving train',
+    encoding = encoder(pipeline=pipeline, mode=mode, prompt='A moving train', **media,
                        negative_prompt='', guidance_scale=1., max_sequence_length=128)['encoded_inputs']
     def sample(pipe, adapter, mode, args):
         return sampler._invoke_pipeline(pipe, {'width': 32, 'height': 32, 'num_frames': 9,
@@ -312,7 +316,7 @@ def test_actual_split_calls_capture_video_task_prompt_and_final_format_without_f
     with patch.object(Pipeline, '__call__', lambda self, **kw: SimpleNamespace(frames=torch.ones(1, 1, 2, 2, 2)), create=True), patch(
         'modules.DiffusersVideo.main._pipeline_adapter', return_value=get_video_pipeline_adapter(pipeline._modiff_video_pipeline_class),
     ), patch.object(sampler, '_execute_adapter', side_effect=sample):
-        latent = sampler(pipeline=pipeline, encoded_inputs=encoding, mode='text_to_video', guidance_scale=1., seed=7)
+        latent = sampler(pipeline=pipeline, encoded_inputs=encoding, mode=mode, guidance_scale=1., seed=7)
     decoder(pipeline=pipeline, latents=latent['latents_out'], latent_binding=latent['latent_binding'])
     nodes = {'owner': {'module': 'modules.DiffusersVideo', 'action': 'LoadPipeline', 'params': {}}}
     for key, action in [('encode', 'EncodeInputs'), ('sample', 'Denoise'), ('decode', 'DecodeLatents')]:
@@ -324,16 +328,16 @@ def test_actual_split_calls_capture_video_task_prompt_and_final_format_without_f
     records['owner'] = capture_generation_inputs('owner', nodes['owner'], {'pipeline_class': pipeline._modiff_video_pipeline_class})
     receipt = build_resolved_execution_inputs({'nodes': nodes}, records, task_id='run', attempt_index=0, node_id='decode')
     assert receipt['graphTasksVersion'] == 2
-    assert receipt['graphTasks'] == [{'loaderId': 'owner', 'pipelineClass': pipeline._modiff_video_pipeline_class, 'task': 'text_to_video'}]
+    assert receipt['graphTasks'] == [{'loaderId': 'owner', 'pipelineClass': pipeline._modiff_video_pipeline_class, 'task': mode}]
     assert receipt['summary']['prompt'] == 'A moving train'
     # Blank text is normalized by the encoder; retain that exact observation.
     assert receipt['summary']['negativePrompt'] is None
     assert receipt['summary']['outputType'] == 'pil'
-    assert receipt['summary']['executedTask'] == 'text_to_video'
+    assert receipt['summary']['executedTask'] == mode
     assert receipt['ambiguousFields'] == []
     result = apply_resolved_execution_inputs({'taskId': 'run', 'nodeId': 'decode', 'mode': 'text_to_image',
         'formSnapshot': {'mode': 'text_to_image', 'prompt': 'unused'}}, receipt)
-    assert result['mode'] == 'text_to_video' and result['prompt'] == 'A moving train'
+    assert result['mode'] == mode and result['prompt'] == 'A moving train'
     assert result['formSnapshot'] == {'mode': 'text_to_image', 'prompt': 'unused'}
 
 

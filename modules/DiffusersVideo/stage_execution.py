@@ -201,6 +201,8 @@ def _encode(pipeline, values):
         raise ValueError('Video sequence length is outside the declared encoder bound.')
     video = ensure_video_list(values.get('video'), 'video')
     references = ensure_reference_images(values.get('reference_images'))
+    if owner.pipeline_class == 'WanTI2VImageToVideoPipeline' and (not references or len(references) != 1):
+        raise ValueError('The dense Wan 5B image route needs exactly one opening image.')
     if (mode == 'text_to_video' and (video is not None or references)
             or mode in ('image_to_video', 'reference_to_video') and not references
             or mode == 'video_to_video' and video is None):

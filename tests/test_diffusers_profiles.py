@@ -367,6 +367,7 @@ class DiffusersExecutionProfileTests(unittest.TestCase):
             "wan-vace:direct",
             "wan-22-image-to-video:direct",
             "wan-22-ti2v-5b:direct",
+            "wan-22-ti2v-5b:image-direct:v1",
             "wan-text-to-video:direct",
             "wan-video-to-video:direct",
             "ltx-video:direct",

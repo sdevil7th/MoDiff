@@ -5,6 +5,7 @@ No model imports, node construction, runtime activation or qualification.
 PROFILE_CLASSES = {
     'ltx-video:direct': 'LTXConditionPipeline',
     'wan-22-ti2v-5b:direct': 'WanTI2VPipeline',
+    'wan-22-ti2v-5b:image-direct:v1': 'WanTI2VImageToVideoPipeline',
 }
 ENCODE_FIELDS = frozenset({'pipeline', 'video_contract', 'mode', 'prompt', 'negative_prompt',
     'reference_images', 'video', 'guidance_scale', 'max_sequence_length'})

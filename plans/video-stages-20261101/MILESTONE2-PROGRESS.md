@@ -26,6 +26,33 @@ its genuine receipt is not retroactively assigned to the first task.
 
 ## Latest bounded results
 
+Pika's first/last-frame route now completed through the corrected ordinary AV
+exporter: 124 distinct decoded frames at 832×480/24 fps, synchronized finite
+stereo audio, exact saved/served bytes, and muted Chromium playback to the end
+with zero dropped frames. An unchanged repeat reused all nine nodes and retained
+the exact MP4. A seed-only Stop case reached genuine sampler progress, cancelled,
+recovered ready/idle, and released its owned offload scratch while preserving
+saved media. These are native/API lifecycle and playback results; audio listening,
+full visible-editor acceptance and public publication remain separate.
+
+H3 first/last-frame inference is active on Linux. Its reference partition now
+has a complete full-hash acquisition receipt. Pika reference remains pending
+capacity admission; the user approved retiring the older Wan 2.1 FLF2V cache
+after H3 becomes idle. No deletion during active model execution is permitted.
+
+The missing Wan 5B image route now has an explicit loader/profile using official
+WanImageToVideoPipeline and the existing shared stages. It preserves all 292
+pre-existing complete execution specification bodies, with one new image
+specification. No new model-named node, sampler implementation, runtime upgrade,
+Auto grant or native qualification was introduced. The prior text route and its
+Auto rules remain exact. No-weight focused and cross-contract checks passed;
+guarded Linux execution remains required before this route is accepted.
+
+The complete client check passed with a verified frozen backend copy. The full
+browser gate is running against that same immutable fixture while canonical
+backend development continues. Its isolated CPU interpreter is explicit; older
+CUDA-fixture and default-Expert-versus-Auto test mistakes remain archived.
+
 The H3 quality task `eBU924y4iqro` completed in 7,979.47 seconds at 960×544,
 124 frames and 24 fps, without triggering a resource guard. Its saved MP4
 SHA-256 is `22e7aed778073eb834921bc6309ccdd9ac6a708f9f98c4aa7de90bd301e6ab6f`.

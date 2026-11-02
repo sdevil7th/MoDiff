@@ -98,8 +98,7 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "Shared H3/Pika stages, task receipts and exact optional-provider selection are implemented. Old H3 saved specification hashes remain exact.",
-        "A native first/last-frame attempt exposed an unrelated reference-list helper in its starter; correcting task ports and auxiliary-node selection. Executable Cluster/template admission remains open."
+        "Shared task-specific ports and helper selection are corrected. New Wan 5B image stage binding is implemented; its guarded native run remains open. Existing saved execution specification bodies remain exact."
       ]
     },
     {
@@ -136,8 +135,8 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "Five selected routes have bounded native output. Planned Wan image route needs a separately reviewed binding.",
-        "Video-source/condition-strength summary accounting is implemented with focused checks; final paired deployment and native saved-output readback remain open."
+        "Five selected routes retain bounded native output. The separate Wan 5B image profile/adapter and shared-stage authoring are implemented with focused contract checks; native image-to-video acceptance remains open.",
+        "Video-source/condition-strength accounting is implemented; final paired integration remains open."
       ]
     },
     {
@@ -155,8 +154,8 @@
         "MILESTONE2-PROGRESS.md"
       ],
       "openIssues": [
-        "Completed retained H3 quality task eBU924y4iqro: 960x544,124 frames,50 sigma points/49 evaluations,7979.47s. Exact saved clip and muted Chromium playback(124 decoded/zero dropped) pass. Listening and final quality review remain open.",
-        "H3 keyframe/reference routes and current-source lifecycle remain open. Reference partition download in progress; no repeat of completed T2VA computation."
+        "Retained H3 text quality and muted browser playback pass; listening remains open.",
+        "H3 first/last quality inference is active under its independent resource guard. H3 reference acquisition is complete and full-hash verified; reference inference remains pending."
       ]
     },
     {
@@ -173,9 +172,8 @@
         "Milestone 2 private package/source/attachment checks; not native model evidence"
       ],
       "openIssues": [
-        "Pika task jpqAjXcnc1GI completed model generation in1559.65s without a guard. Original AV export failed strict124-frame acceptance(121 frames); original failure retained.",
-        "Cached plain video contained all124 frames. Ordinary retained-video/audio mux pRAwqJi-SwLF produced124 exact frame matches with generated audio; muted Chromium playback passed. This is separate finishing evidence, not a successful original AV export.",
-        "Permanent shared export fix is implemented. Current-source keyframe/reference, progress/Stop, listening, visible acceptance and executable Cluster/template admission remain open."
+        "Pika first/last generation, ordinary AV export, unchanged nine-node cache reuse and intentional native Stop/recovery pass in bounded scope.",
+        "Original Pika text AV export was truncated; its explicit finishing repair remains separate evidence. Reference output, listening, visible editor and final template admission remain open."
       ]
     },
     {
@@ -193,9 +191,8 @@
         "Milestone 2 private package/source/attachment checks; not native model evidence"
       ],
       "openIssues": [
-        "H3/Pika T2VA selections have complete full-hash receipts; text/keyframe tasks share those exact files. H3 reference partition download is admitted with combined remaining-payload,175GBscratch,160GBoperating and20GBstaging/output budgets.",
-        "Ordinary app task-specific artifact selection is being integrated into the existing model manager/planner/downloader. No whole-repository default or merged partition.",
-        "No new model deletion or universal fit claim. Pika reference capacity still needs a fresh admission after other route closeout."
+        "Ordinary model-manager task artifact acquisition and exact installed status are implemented with focused browser and contract checks. H3 text/keyframe/reference and Pika text/keyframe selections have full-hash receipts.",
+        "Pika reference requires extra capacity. User approved retiring the older Wan 2.1 FLF2V cache after H3 is idle; no deletion has occurred. Refresh actual capacity and complete payload/scratch/operating reserve admission before downloading."
       ]
     },
     {
@@ -213,8 +210,8 @@
         "MILESTONE2-PROGRESS.md"
       ],
       "openIssues": [
-        "First-milestone bounded LTX/Wan evidence reused. H3 quality and repaired Pika playback are additional bounded proof, each bound to actual source/task/finishing operations.",
-        "Keyframe/reference/native cancellation and remaining finishing/listening/service checks remain open. Failed harness transfers and native reference-helper error retained."
+        "Reuse bounded first-milestone LTX/Wan results, retained H3 quality and explicit Pika repair chain. Pika first/last quality, native repeat and Stop/recovery provide additional task-bound evidence.",
+        "H3 first/last is active. Reference modes, Wan 5B image, finishing/listening/service and full visible workflow checks remain open. API Stop proof is distinct from a browser Stop click."
       ]
     },
     {
@@ -248,8 +245,8 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "Complete client check passed at9bc8fa7. Full backend gate at9209 failed15 checks; all affected checks subsequently passed195 tests/2132subtests. No complete current backend PASS yet.",
-        "New app artifact-selection and keyframe-input fixes require final paired gates,119-file bundle identity and protected deployment. Existing LTX/Wan test app stays unchanged."
+        "Complete client check passed at3b734e8 against verified frozen backend86efa329; full browser rerun is active.",
+        "Backend full v5 had one stale official-state fixture failure, now fixed and focused48passed/9subtests. Complete current backend gate and final paired production integration remain open."
       ]
     },
     {

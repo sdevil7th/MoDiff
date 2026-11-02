@@ -19,13 +19,24 @@ before execution under a different provider; saved values are not migrated.
 
 ## Declared selections
 
-| Execution profile       | Tasks exposed by separate stages                            |
-| ----------------------- | ----------------------------------------------------------- |
-| `ltx-video:direct`      | Text, opening image, ordered reference images, source video |
-| `wan-22-ti2v-5b:direct` | Text-to-video                                               |
+| Execution profile                | Tasks exposed by separate stages                            |
+| -------------------------------- | ----------------------------------------------------------- |
+| `ltx-video:direct`               | Text, opening image, ordered reference images, source video |
+| `wan-22-ti2v-5b:direct`          | Text-to-video                                               |
+| `wan-22-ti2v-5b:image-direct:v1` | Opening image to video                                      |
 
-The reviewed Wan 5B route uses the upstream `WanPipeline`. Its public model name
-does not establish an image-to-video contract. Other video routes keep their
+The retained Wan 5B text route uses the upstream `WanPipeline`. The explicit
+image profile uses the official `WanImageToVideoPipeline` with the same pinned
+dense 5B checkpoint and its expanded-timestep configuration. It takes one opening
+image through the official VAE; this checkpoint does not need CLIP components or
+the larger model's second-transformer guidance. Text and image loaders have
+separate backend identities, so a cached text owner cannot serve the image stages.
+The new image selection grants no Auto, native-output or hardware qualification.
+The existing text specification and saved graphs retain their identity.
+The reviewed [official I2V implementation](https://github.com/huggingface/diffusers/blob/7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941/src/diffusers/pipelines/wan/pipeline_wan_i2v.py)
+declares the optional CLIP components and the dense model's expanded-timestep
+conditioning; MoDiff delegates both source-image encoding and sampling to it.
+Other video routes keep their
 existing whole or native Modular operations. Saved whole-pipeline graphs are not
 automatically rewritten. Stage availability is an authoring declaration; it does
 not imply hardware qualification, Auto support or successful model execution.

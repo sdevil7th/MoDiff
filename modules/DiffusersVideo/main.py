@@ -286,6 +286,14 @@ VIDEO_PIPELINE_ADAPTERS = {
         modes=("image_to_video",),
         max_prompt_tokens=512,
     ),
+    "WanTI2VImageToVideoPipeline": VideoPipelineAdapter(
+        id="wan-2.2-ti2v-5b-image",
+        pipeline_class="WanTI2VImageToVideoPipeline",
+        diffusers_class="WanImageToVideoPipeline",
+        default_repo="Wan-AI/Wan2.2-TI2V-5B-Diffusers",
+        modes=("image_to_video",),
+        max_prompt_tokens=512,
+    ),
     "WanAnimatePipeline": VideoPipelineAdapter(
         id="wan-animate",
         pipeline_class="WanAnimatePipeline",
@@ -537,6 +545,11 @@ VIDEO_MODE_FIELD_CONTRACTS = {
     "WanPipeline": {"text_to_video": _video_field_contract("scheduler_flow_shift")},
     "Wan22Pipeline": {"text_to_video": _video_field_contract("scheduler_flow_shift")},
     "WanTI2VPipeline": {"text_to_video": _video_field_contract("scheduler_flow_shift")},
+    "WanTI2VImageToVideoPipeline": {
+        "image_to_video": _video_field_contract(
+            "reference_images", "scheduler_flow_shift", required_fields=("reference_images",),
+        ),
+    },
     "WanImageToVideoPipeline": {
         "image_to_video": _video_field_contract(
             "reference_images",
@@ -670,6 +683,7 @@ VIDEO_PIPELINE_LOAD_HANDLERS = {
     "WanPipeline": "_load_wan_text_to_video",
     "Wan22Pipeline": "_load_wan_text_to_video",
     "WanTI2VPipeline": "_load_wan_text_to_video",
+    "WanTI2VImageToVideoPipeline": "_load_wan_image_to_video",
     "WanImageToVideoPipeline": "_load_wan_image_to_video",
     "WanAnimatePipeline": "_load_wan_animate",
     "LTXConditionPipeline": "_load_ltx",
@@ -701,6 +715,7 @@ VIDEO_PIPELINE_EXECUTE_HANDLERS = {
     "WanPipeline": "_execute_wan_text_to_video",
     "Wan22Pipeline": "_execute_wan_text_to_video",
     "WanTI2VPipeline": "_execute_wan_text_to_video",
+    "WanTI2VImageToVideoPipeline": "_execute_wan_image_to_video",
     "WanImageToVideoPipeline": "_execute_wan_image_to_video",
     "WanAnimatePipeline": "_execute_wan_animate",
     "LTXConditionPipeline": "_execute_ltx",
@@ -2530,6 +2545,10 @@ class LoadPipeline(WanVACELoadPipeline):
             torch_dtype=dtype,
             **common,
             **recipe_load_kwargs,
+            # The dense 5B checkpoint has no CLIP components. The official
+            # I2V pipeline declares these optional; its VAE handles the image.
+            **({"image_encoder": None, "image_processor": None}
+               if adapter.pipeline_class == "WanTI2VImageToVideoPipeline" else {}),
         )
         apply_execution_recipe_to_pipeline(pipeline, recipe)
         self.progress(-1, phase="component_placement", message=f"Applying {offload_mode} offload")
@@ -4160,8 +4179,11 @@ class Generate(WanVACEGenerate):
         negative_prompt = ensure_single_prompt(none_if_blank(kwargs.get("negative_prompt")), "negative prompt")
         _validate_prompt_token_limit(pipeline, prompt, "prompt", adapter.max_prompt_tokens)
         _validate_prompt_token_limit(pipeline, negative_prompt, "negative prompt", adapter.max_prompt_tokens)
-        width = int(kwargs.get("width") or 832)
-        height = int(kwargs.get("height") or 480)
+        is_ti2v = adapter.pipeline_class == "WanTI2VImageToVideoPipeline"
+        if is_ti2v and kwargs.get("last_image") is not None:
+            raise ValueError("The reviewed dense Wan 5B route accepts exactly one opening image.")
+        width = int(kwargs.get("width") or (1280 if is_ti2v else 832))
+        height = int(kwargs.get("height") or (704 if is_ti2v else 480))
         vae_scale = int(getattr(pipeline, "vae_scale_factor_spatial", 8) or 8)
         transformer = getattr(pipeline, "transformer", None)
         patch_size = getattr(getattr(transformer, "config", None), "patch_size", (1, 2, 2))
@@ -4171,8 +4193,8 @@ class Generate(WanVACEGenerate):
             raise ValueError(
                 f"Wan image-to-video dimensions must be divisible by {spatial_multiple}; received {width}x{height}."
             )
-        num_frames = normalize_num_frames(int(kwargs.get("num_frames") or 81), pipeline)
-        if num_frames < 81:
+        num_frames = normalize_num_frames(int(kwargs.get("num_frames") or (121 if is_ti2v else 81)), pipeline)
+        if not is_ti2v and num_frames < 81:
             raise ValueError("Quality-first Wan shots need at least 81 frames (about five seconds at 16 fps).")
         import torch
 
@@ -4180,15 +4202,13 @@ class Generate(WanVACEGenerate):
         generator = torch.Generator(device=device).manual_seed(int(kwargs.get("seed") or 0))
         call_kwargs = {
             "image": references[0],
-            "last_image": kwargs.get("last_image"),
             "prompt": prompt,
             "negative_prompt": negative_prompt,
             "height": height,
             "width": width,
             "num_frames": num_frames,
             "num_inference_steps": int(kwargs.get("num_inference_steps") or 40),
-            "guidance_scale": float(_value_or_default(kwargs, "guidance_scale", 3.5)),
-            "guidance_scale_2": float(_value_or_default(kwargs, "secondary_guidance_scale", 3.5)),
+            "guidance_scale": float(_value_or_default(kwargs, "guidance_scale", 5.0 if is_ti2v else 3.5)),
             "num_videos_per_prompt": 1,
             "generator": generator,
             "latents": none_if_blank(kwargs.get("latents")),
@@ -4203,11 +4223,24 @@ class Generate(WanVACEGenerate):
             ),
             "max_sequence_length": min(int(kwargs.get("max_sequence_length") or 512), 512),
         }
+        if not is_ti2v:
+            call_kwargs.update(
+                last_image=kwargs.get("last_image"),
+                guidance_scale_2=float(_value_or_default(kwargs, "secondary_guidance_scale", 3.5)),
+            )
+        original_scheduler = None
+        requested_shift = float(kwargs.get("scheduler_flow_shift") or 0) if is_ti2v else 0
+        if requested_shift > 0:
+            from diffusers import UniPCMultistepScheduler
+            original_scheduler = pipeline.scheduler
+            pipeline.scheduler = UniPCMultistepScheduler.from_config(original_scheduler.config, flow_shift=requested_shift)
         self._active_pipeline = pipeline
         try:
-            result = pipeline(**call_kwargs)
+            result = self._invoke_pipeline(pipeline, call_kwargs)
         finally:
             self._active_pipeline = None
+            if original_scheduler is not None:
+                pipeline.scheduler = original_scheduler
         frames = getattr(result, "frames", result)
         if isinstance(frames, list) and len(frames) == 1 and isinstance(frames[0], list):
             frames = frames[0]
