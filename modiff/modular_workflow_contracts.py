@@ -215,6 +215,13 @@ def reviewed_modular_component_load_types(repository):
     return dict(PINNED_MODULAR_REPOSITORY_LOAD_COMPONENT_TYPES.get(repository, {}))
 
 
+def reviewed_modular_component_index_overrides(repository):
+    """Exact newer-source index declarations, distinct from loading-only aliases."""
+    if repository == 'Pika-Labs/Pika-H3-Flex':
+        return reviewed_modular_component_load_types(repository)
+    return {}
+
+
 def require_reviewed_modular_repository_workflow(model_type, repository, revision, workflow_id):
     if model_type == 'PikaH3FlexModularPipeline':
         from modiff.joint_av_model_adapters import required_joint_av_adapter, PIKA_REVISION

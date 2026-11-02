@@ -54,6 +54,7 @@ from modiff.modular_workflow_contracts import (
     reviewed_modular_workflow_variants,
     reviewed_modular_weight_variant,
     reviewed_modular_component_load_types,
+    reviewed_modular_component_index_overrides,
 )
 from utils.torch_utils import DEFAULT_DEVICE, DEVICE_LIST, str_to_dtype
 from utils.huggingface import exact_cached_snapshot_path, _containing_hf_cache_root
@@ -894,7 +895,11 @@ def _validate_reviewed_pipeline_index(model_type, repository, revision):
             raise ValueError(
                 f"The cached reviewed pipeline index has an invalid {component_name!r} component type hint."
             )
-        expected_type_hint = list(_fetch_class_library_tuple(component_spec.type_hint))
+        index_override = reviewed_modular_component_index_overrides(repository).get(component_name)
+        expected_type_hint = list(index_override or _fetch_class_library_tuple(component_spec.type_hint))
+        if (index_override is not None and filename == ModularPipeline.config_name
+                and tuple(raw_component[:2]) != index_override):
+            raise ValueError(f'The exact reviewed pipeline index has incompatible outer metadata for {component_name!r}.')
         if observed_type_hint != expected_type_hint and tuple(observed_type_hint) != reviewed_concrete_type:
             raise ValueError(
                 f"The cached reviewed pipeline index maps component {component_name!r} to "

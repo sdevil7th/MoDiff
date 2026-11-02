@@ -1,6 +1,8 @@
 """Pika loading declarations do not imply public templates or model fit."""
 import json
 from pathlib import Path
+from types import SimpleNamespace
+from copy import deepcopy
 
 import pytest
 
@@ -57,6 +59,58 @@ def test_raw_selection_cannot_change_the_reviewed_pika_repository_or_revision():
                                           (PIKA_REPOSITORY, PIKA_REVISION, 'default')]:
         with pytest.raises(ValueError):
             require_reviewed_modular_repository_workflow(PIKA_PIPELINE, repository, revision, workflow)
+
+
+@pytest.fixture
+def published_index_preflight(monkeypatch):
+    from diffusers.pipelines import pipeline_loading_utils
+    document = json.loads((Path(__file__).parent / 'fixtures/pika_h3_flex_modular_index.v1.json').read_bytes())
+    specs = {name: SimpleNamespace(type_hint=tuple(value[:2]),
+        default_creation_method='from_config' if len(value) == 2 else 'from_pretrained')
+        for name, value in document.items() if not name.startswith('_') and isinstance(value, list)}
+    # The official blocks declare the slow base, while this exact published
+    # model index and the reviewed loading adapter select the fast tokenizer.
+    specs['tokenizer'].type_hint = ('transformers', 'Qwen2Tokenizer')
+    class RegisteredPipeline:
+        def __init__(self):
+            self.config = {'_blocks_class_name': document['_blocks_class_name']}
+            self._component_specs = specs
+    monkeypatch.setattr(loaders, 'pipeline_class_from_model_type', lambda _: RegisteredPipeline)
+    monkeypatch.setattr(pipeline_loading_utils, '_get_pipeline_class', lambda *a, **kw: RegisteredPipeline)
+    monkeypatch.setattr(pipeline_loading_utils, '_fetch_class_library_tuple', lambda value: value)
+    monkeypatch.setattr(loaders, '_load_reviewed_pipeline_index', lambda *a: (loaders.ModularPipeline.config_name, deepcopy(document)))
+    return document
+
+
+def test_index_preflight_uses_the_same_reviewed_tokenizer_as_loading(published_index_preflight):
+    _filename, observed = loaders._validate_reviewed_pipeline_index(PIKA_PIPELINE, PIKA_REPOSITORY, PIKA_REVISION)
+    assert observed == published_index_preflight
+
+
+@pytest.mark.parametrize('substitution', ['outer', 'inner', 'slow', 'foreign-repository'])
+def test_pika_index_alias_does_not_admit_other_classes_or_sources(published_index_preflight, substitution):
+    repository = PIKA_REPOSITORY
+    if substitution == 'outer':
+        published_index_preflight['tokenizer'][:2] = ['untrusted', 'RemoteTokenizer']
+    elif substitution == 'inner':
+        published_index_preflight['tokenizer'][2]['type_hint'] = ['transformers', 'OtherTokenizer']
+    elif substitution == 'slow':
+        published_index_preflight['tokenizer'][:2] = ['transformers', 'Qwen2Tokenizer']
+        published_index_preflight['tokenizer'][2]['type_hint'] = ['transformers', 'Qwen2Tokenizer']
+    else:
+        repository = 'unreviewed/repo'
+    with pytest.raises(ValueError):
+        loaders._validate_reviewed_pipeline_index(PIKA_PIPELINE, repository, PIKA_REVISION)
+
+
+def test_actual_installed_pipeline_accepts_the_pinned_index_before_weight_loading(monkeypatch):
+    from modiff.runtime_overlays import active_diffusers_provider
+    provider = active_diffusers_provider()
+    if not provider or provider.get('profileId') != 'huggingface-diffusers-video-d0b9b1b':
+        pytest.skip('Requires the installed exact reviewed video provider')
+    document = json.loads((Path(__file__).parent / 'fixtures/pika_h3_flex_modular_index.v1.json').read_bytes())
+    monkeypatch.setattr(loaders, '_load_reviewed_pipeline_index', lambda *a: (loaders.ModularPipeline.config_name, deepcopy(document)))
+    assert loaders._validate_reviewed_pipeline_index(PIKA_PIPELINE, PIKA_REPOSITORY, PIKA_REVISION)[1] == document
 
 
 @pytest.mark.parametrize('workflow', ['t2va', 'fl2va', 'ref2va'])

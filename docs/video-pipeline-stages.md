@@ -153,6 +153,12 @@ that binding. Adapter declarations and no-weight tests alone do not enable a
 public Pika template or establish model fit; exact model loading and native
 acceptance remain required.
 
+Pika's pinned index declares `Qwen2TokenizerFast`, while the reviewed official
+blocks declare the slow base tokenizer. The exact repository's reviewed adapter
+selects the fast class consistently in preflight and loading. Both outer and inner
+index declarations must match that selection; other repositories or tokenizer
+classes gain no alias permission.
+
 The [joint AV artifact closures](../data/joint-av-artifact-closures.v1.json)
 bind each workflow to one transformer partition, shared components, finite
 metadata files and required notices. Pika includes its task adapter; MiniMax
