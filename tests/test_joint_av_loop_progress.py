@@ -107,3 +107,26 @@ def test_loop_progress_restores_existing_instance_override_on_failure_and_precan
         with modular_loop_progress(node, pipeline):
             pytest.fail('A cancelled loop must not begin')
     assert loop.progress_bar is original
+
+
+@pytest.mark.parametrize('cancel', [False, True])
+def test_progress_binds_the_real_pipeline_execution_tree_instead_of_its_public_copy(cancel):
+    from diffusers import ModularPipeline
+    from modules.ModularDiffusers.progress import modular_loop_progress
+
+    pipeline = ModularPipeline(blocks=NoWeightLoop())
+    executing = pipeline._blocks
+    assert pipeline.blocks is not executing
+    messages = []
+    node = SimpleNamespace(_interrupt=False, progress=lambda percent, **fields: messages.append(fields))
+    with modular_loop_progress(node, pipeline):
+        assert 'progress_bar' in vars(executing)
+        with executing.progress_bar(total=6) as progress:
+            node._interrupt = cancel
+            if cancel:
+                with pytest.raises(InterruptedError, match='interrupted'):
+                    progress.update()
+            else:
+                progress.update()
+    assert [row['current_step'] for row in messages] == ([0] if cancel else [0, 1])
+    assert 'progress_bar' not in vars(executing)

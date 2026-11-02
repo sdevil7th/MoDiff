@@ -10,7 +10,10 @@ def modular_loop_progress(node, pipeline):
     from diffusers.modular_pipelines.modular_pipeline import LoopSequentialPipelineBlocks
     from .reviewed_blocks import _ReviewedNodeProgressBar
 
-    pending = [getattr(pipeline, 'blocks', None)]
+    # ModularPipeline.blocks returns a deep copy for authoring inspection.
+    # __call__ executes _blocks; bind that owned instance, never the copy.
+    executing = getattr(pipeline, '_blocks', None)
+    pending = [executing if executing is not None else getattr(pipeline, 'blocks', None)]
     seen, loops = set(), []
     while pending:
         block = pending.pop()
