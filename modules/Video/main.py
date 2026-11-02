@@ -689,7 +689,12 @@ class ExportWithAudio(NodeBase):
                 [
                     get_ffmpeg_exe(), "-y", "-v", "error",
                     "-i", str(silent_path), "-i", str(audio_path),
-                    "-c:v", "copy", "-c:a", "aac", "-b:a", "256k", "-shortest", str(muxed_path),
+                    "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
+                    # Audio sample rounding must not truncate reordered video
+                    # packets. Keep every frame and fit audio to its duration;
+                    # atrim also bounds apad's otherwise infinite silence.
+                    "-af", f"asetpts=PTS-STARTPTS,apad,atrim=duration={len(frames) / fps:.12g}",
+                    "-c:a", "aac", "-b:a", "256k", str(muxed_path),
                 ],
                 check=True,
             )
@@ -2003,57 +2008,44 @@ class MuxAudioAsset(NodeBase):
         import numpy as np
         from scipy.io import wavfile
         from modiff.media_assets import allocate_video_path, current_task_id, run_ffmpeg
+        from tempfile import TemporaryDirectory
 
         source = _file_asset_collection(kwargs.get("video"))[0]
         audio = kwargs.get("audio")
-        temporary_audio = None
-        if isinstance(audio, str):
-            audio_path = resolve_runtime_input_path(audio).resolve()
-        elif isinstance(audio, dict) and (audio.get("path") or audio.get("file")):
-            audio_path = resolve_runtime_input_path(str(audio.get("path") or audio.get("file"))).resolve()
-        else:
-            samples = audio.get("samples", audio.get("audio")) if isinstance(audio, dict) else audio
-            if samples is None:
-                raise ValueError("Add Audio to Retained Video needs loaded or generated audio.")
-            sample_rate = int(audio.get("sample_rate") or 48000) if isinstance(audio, dict) else 48000
-            array = np.asarray(samples, dtype=np.float32)
-            while array.ndim > 2:
-                array = array[0]
-            if array.ndim == 2 and array.shape[0] <= 8 and array.shape[1] > array.shape[0]:
-                array = array.T
-            temporary_audio = Path(source["path"]).with_name(f".{Path(source['path']).stem}-audio.wav")
-            wavfile.write(temporary_audio, sample_rate, (np.clip(array, -1, 1) * 32767).astype(np.int16))
-            audio_path = temporary_audio
-        if not audio_path.is_file():
-            raise FileNotFoundError(f"Audio file does not exist: {audio_path}")
+        # A source-adjacent filename is not proof of temporary ownership.
+        # Cleanup may touch only this newly created private directory.
+        with TemporaryDirectory(prefix=".modiff-mux-", dir=Path(source['path']).parent) as temporary:
+            if isinstance(audio, str):
+                audio_path = resolve_runtime_input_path(audio).resolve()
+            elif isinstance(audio, dict) and (audio.get("path") or audio.get("file")):
+                audio_path = resolve_runtime_input_path(str(audio.get("path") or audio.get("file"))).resolve()
+            else:
+                samples = audio.get("samples", audio.get("audio")) if isinstance(audio, dict) else audio
+                if samples is None:
+                    raise ValueError("Add Audio to Retained Video needs loaded or generated audio.")
+                sample_rate = int(audio.get("sample_rate") or 48000) if isinstance(audio, dict) else 48000
+                array = np.asarray(samples, dtype=np.float32)
+                while array.ndim > 2:
+                    array = array[0]
+                if array.ndim == 2 and array.shape[0] <= 8 and array.shape[1] > array.shape[0]:
+                    array = array.T
+                audio_path = Path(temporary) / 'audio.wav'
+                wavfile.write(audio_path, sample_rate, (np.clip(array, -1, 1) * 32767).astype(np.int16))
+            if not audio_path.is_file():
+                raise FileNotFoundError(f"Audio file does not exist: {audio_path}")
 
-        asset_id, destination = allocate_video_path(task_id=current_task_id())
-        args = [
-            "-i",
-            source["path"],
-            "-i",
-            str(audio_path),
-            "-map",
-            "0:v:0",
-            "-map",
-            "1:a:0",
-            "-c:v",
-            "copy",
-            "-c:a",
-            "aac",
-            "-b:a",
-            "256k",
-        ]
-        if kwargs.get("fit") == "shortest":
-            args.append("-shortest")
-        else:
-            args += ["-af", "apad", "-t", str(source["duration_seconds"])]
-        args += ["-movflags", "+faststart"]
-        try:
+            asset_id, destination = allocate_video_path(task_id=current_task_id())
+            args = [
+                "-i", source["path"], "-i", str(audio_path),
+                "-map", "0:v:0", "-map", "1:a:0",
+                "-c:v", "copy", "-c:a", "aac", "-b:a", "256k",
+            ]
+            if kwargs.get("fit") == "shortest":
+                args.append("-shortest")
+            else:
+                args += ["-af", "apad", "-t", str(source["duration_seconds"])]
+            args += ["-movflags", "+faststart"]
             run_ffmpeg(args, destination)
-        finally:
-            if temporary_audio is not None:
-                temporary_audio.unlink(missing_ok=True)
         return _derived_asset_result(destination, asset_id, [source], "mux_audio", pin=bool(kwargs.get("pin")))
 
 

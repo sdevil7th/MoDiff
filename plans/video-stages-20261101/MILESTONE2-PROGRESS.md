@@ -77,11 +77,39 @@ rewritten, and recognizing a task grants no Auto, template or runtime eligibilit
 
 ## In progress and still open
 
+Pika task `jpqAjXcnc1GI` completed the six-step 832×480 / 124-frame model route
+in 1,559.65 seconds without a resource guard. The decoder retained all 124 frames,
+but its first video/audio export contained only 121. The strict audit failed and
+that original remains unchanged. A cached ordinary video export confirmed all 124
+frames; ordinary retained-video audio mux task `pRAwqJi-SwLF` then copied that
+complete video stream with the retained generated soundtrack, without a model
+rerun. The repaired media SHA-256 is
+`217bf479436e2c41a50cf9c5618af020c29eda8e38164a7e17e99d54f19d463a`.
+All 124 decoded frames match the complete retained video export; stereo32kHz audio
+is finite/non-silent and its duration agrees within one video frame. Sampled
+frames show a clear sailboat and stable scene. Full playback/listening and public
+qualification remain separate.
+
+The permanent shared exporter correction keeps all video packets and fits audio
+to video duration. Tiny real-media regressions reproduced the truncation without
+models. Related retained-video mux cleanup now preserves existing source-adjacent
+audio. Export/composition checks: 48 passed. The corrected `ExportWithAudio` still
+needs current Linux native integration; the repaired file is explicitly a separate
+deterministic finishing result, not a relabelled successful original export.
+
+The complete client check passed again at `9bc8fa7`, using the reviewed compatible
+backend contract `2b5f1353`. The retained-spec catalog audit includes only exact
+id/hash/profile joins and reproduces the unchanged catalog. The first gate attempt
+exposed that missing retained-spec join; the next caught a stale documented CI pin.
+Both failed logs remain in private evidence. Current bundle packaging, complete
+backend verification and guarded deployment are next.
+
 - H3 quality playback/listening, remaining conditioned routes and lifecycle.
   The completed quality graph SHA-256 remains
   `f6a7fb473ee0228f661f3b151459352885aa66c8b9f4678b347514468c389e95`.
 - Pika: all 35 selected files, 146,806,845,173 bytes, downloaded and fully
-  hash-verified at its immutable revision. No Pika pretrained output exists yet.
+  hash-verified at its immutable revision. First model output and bounded repair
+  evidence are described above.
   Source-accurate catalog and shared-stage starter checks pass without rewriting
   the 139 existing definition hashes. The exact-provider Expert profile is
   declared. Its original 32-block hierarchy preserves all 43 placement contexts;

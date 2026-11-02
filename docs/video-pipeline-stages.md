@@ -192,3 +192,9 @@ acceptance must record the deployed source pair, immutable model, runtime, actua
 inputs, task result, decoded dimensions/frame count, playback, repeat behavior,
 cancellation and scoped release on the tested host. Keep logs and generated media
 outside Git and retain unsuccessful attempts for diagnosis.
+
+Video/audio export preserves every generated video frame. It trims or pads the
+soundtrack to the video's duration instead of letting audio sample rounding end
+the mux early. Retained-video audio muxing keeps its explicit duration choice;
+temporary audio belongs in a newly created private directory, never a predictable
+filename beside a borrowed source. Neither export path may remove user inputs.
