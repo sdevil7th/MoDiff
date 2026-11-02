@@ -164,3 +164,37 @@ Do not conclude with a single all-done flag when a family, task, media approval 
 - Client check v20 passed its source/unit/build stages but exceeded only startup
   size caps. Record exact growth (202 bytes each for largest/total startup), keep
   loading membership and independent deferred caps, then freeze the final pair.
+
+## Reference timing and final-browser lessons
+
+- Measure task-specific cost after a loading/attention fix. H3 reference took
+  about 437 seconds per evaluation, materially more than text/keyframes. A
+  labelled one-evaluation timing admission at trained geometry should precede
+  the full quality run. Preserve the underestimated bound and its reason; do
+  not restart identical long inference to improve the estimate.
+- Extending an observer deadline is not a new model run. Establish successor
+  resource sampling before stopping exact owned observers, retain both raw
+  capture segments and reconnect to the genuine original session. Record the
+  unchanged task/worker/graph and zero additional dispatches or Stop requests.
+- Readiness waits and behavioral assertions are separate. The cold lazy editor
+  now has a scoped visible-readiness wait; the field/interaction assertion
+  limits remain unchanged. Do not add sleeps, retries or a suite-wide timeout
+  increase, and retain the original failing trace.
+- Migrate historical fixtures explicitly when normal template creation changes.
+  One missed legacy LTX test used the new stage-card path; its corrected legacy
+  creator retains the original identity/FPS/recovery assertions. New normal-card
+  tests remain separate. A focused PASS does not close the full browser gate.
+- Test candidate presentation in the actual built app. A private compiler's
+  missing layout position caused overlapping nodes; the existing Arrange action
+  resolved it without changing executable inputs. Re-read current documents
+  before updates so browser-derived display metadata is preserved.
+- Compare actual template-lock functions before attributing Gallery failures.
+  All 90 locks remain exact across the current Pika changes. The retained 83
+  errors and five earlier stage-card lock holds remain failures; do not fix
+  them by blindly refreshing hashes or relabelling public clips.
+- Hash source-controlled review files using the exact Git/LF byte policy. Pika's
+  review was hashed from a CRLF working copy, letting a local gate pass while
+  clean Windows/macOS CI checkouts failed six strict catalog tests. Preserve the
+  byte validator, bind the existing committed LF bytes and test every evidence
+  family for line-ending drift. No review semantics or admission may change as
+  part of this correction. Compare committed blobs as well as working files.

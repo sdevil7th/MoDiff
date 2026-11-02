@@ -19,6 +19,18 @@ class HuggingFaceCatalogOnlyGateTests(unittest.TestCase):
     def setUpClass(cls):
         cls.library = build_huggingface_node_library()
 
+    def test_hash_bound_evidence_uses_repository_lf_bytes(self):
+        # Hashing a CRLF working copy can pass locally while Git's eol=lf
+        # checkout fails on every clean machine. Keep strict byte hashes and
+        # enforce the repository's existing text policy before binding them.
+        root = Path(__file__).resolve().parents[1]
+        ledger = json.loads((root / "data/huggingface-cluster-catalog-gates.v1.json").read_bytes())
+        for family in ledger["families"]:
+            with self.subTest(family=family["id"]):
+                raw = (root / family["evidencePath"]).read_bytes()
+                self.assertNotIn(b"\r\n", raw, "Evidence bytes must match the LF Git checkout.")
+                self.assertEqual(hashlib.sha256(raw).hexdigest(), family["evidenceSha256"])
+
     def test_every_catalog_only_definition_has_one_hash_bound_gate(self):
         audit = audit_huggingface_catalog_only_definitions(self.library)
 

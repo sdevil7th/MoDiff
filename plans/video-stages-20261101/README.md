@@ -26,10 +26,15 @@ and is denoising. Pika reference and Wan5B image follow sequentially only after
 the preceding technical media and owned-cache release checks pass.
 
 Client `d357832a` includes Pika saved-model preservation and a joined video/audio
-draft exporter. Seven locally saved candidates have exact normal API readback;
-one normal Pika creation/save/reload browser regression passes. They remain
-unqualified local candidates. The corrected 119-file paired bundle is prepared;
-complete final checks, idle protected deployment and manual handoff remain open.
+draft exporter. All seven locally saved candidates pass real built-client Open,
+Save and reload, plus exact executable-graph round trips. They remain unqualified
+local candidates. Backend `8351b62a` packages the exact 119-file client bundle;
+its complete backend gate and the client source/build gate pass. The complete
+browser rerun at test-only client `5ad393f3`, protected deployment and final
+manual handoff remain open. H3 reference is substantially slower than text or
+keyframes: current measured timing estimates 6–6½ hours for its full recipe.
+The [second-milestone testing checklist](SECOND-MILESTONE-TESTING.md) is prepared;
+it does not certify completed delivery.
 Older evidence retains its actual source identities. No video has publication
 approval, and tiny fixtures do not qualify a pretrained route.
 

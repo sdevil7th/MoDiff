@@ -288,7 +288,7 @@ The resource monitor keeps a 20 GiB available-RAM floor, bounded worker swap,
 growth is measured separately from the owned model scratch. Do not override
 official model flags, modify model math or rerun unchanged failing allocations.
 
-## Saved candidate reopening defect
+## Saved candidate reopening defect (historical diagnosis)
 
 Seven local candidate workflow packages were prepared through the existing
 starter/registry/stage-grouping path without model dispatch. Reopening exposed
@@ -335,3 +335,97 @@ the normal plan-bound API after a complete dependency-catalog check. No other
 model cache was deleted. Pika's reference selection has now completed all
 35 file hashes (146.81 GB selected); available filesystem space is 381.18 GB.
 No second download or completed text/keyframe rerun is needed.
+
+## Paired-code and saved-editor checkpoint, 2 November
+
+Backend `8351b62a` packages the exact 119-file client artifact from `d357832a`.
+The complete backend CPU/source gate passed: 8,975 tests, 763 skips and 13,176
+subtests in 1,543.27 seconds, with Ruff, dependency consistency and CPU preflight
+also passing. The complete client `npm run check` passed at `d357832a` against
+the frozen compatible backend `9168e6de`. The later client commits `b83e7db6`
+and `5ad393f3` change only two browser-test files; all production source,
+dependencies and rebuilt bundle bytes remain exact. The full browser rerun at
+`5ad393f3` against frozen backend `8351b62a` is still running at this checkpoint.
+
+The first complete browser attempt retained one cold lazy-editor readiness
+failure. Its scoped setup now waits for the actual editor to load before the
+unchanged field and interaction assertions. A subsequent run passed all 16
+shared-control cases and 321 of 322 mocked-app cases. The remaining test still
+used the new stage-card creator to reconstruct a historical legacy LTX graph;
+it now explicitly uses the legacy test creator while keeping the original
+model identity, numeric FPS and tampered-session recovery assertions. Its
+focused reproduction passes. Neither correction changes product code or proves
+the complete rerun passed before its terminal result exists.
+
+All seven local candidates now pass ordinary Open, Save and reload in the real
+built client against the Linux application. The saved bodies also pass normal
+store/form/API round trips against their frozen executable graphs. The private
+candidate compiler initially overlapped output and setup nodes; the existing
+Arrange action corrected presentation positions while preserving form values,
+wires and executable inputs. Browser-derived connection/display metadata was
+retained rather than overwritten. These are editor/persistence proofs with no
+model dispatch, not native browser Run/Stop acceptance or public qualification.
+Use [the testing checklist](SECOND-MILESTONE-TESTING.md) for the later handoff.
+
+All seven saved executable graphs also pass real HTTP Service inspection,
+package creation and preparation with exact nodes, paths, effective hints and
+immutable model pins. Ordinary built-client Wan image Service export passes
+with required `prompt` and `image` inputs and a named `video` output. The server
+first correctly refused an embedded private file path; naming it as a required
+input removes that value from the portable package. This closes metadata/export
+inspection only. No service graph was submitted for inference.
+
+The whole-app `npm run check:acceptance` remains failed at Gallery: 83 retained
+errors plus five earlier LTX/Wan stage-conversion lock discrepancies. Comparing
+the actual template-lock runtime before and after the current Pika changes
+produced 90 identical locks. Do not refresh old public-media hashes or relabel
+clips to hide this hold. No public video approval exists.
+
+The original LTX/Wan application has a fresh read-only preservation snapshot:
+631 application files, 2,271 tracked source files and 105 model snapshots. Its
+source/process refresh is prepared but has not executed at this checkpoint.
+It is separate from the active H3 reference worker. Deployment must wait for the
+current browser gate, recheck protected state and bind the exact published pair;
+no package installation, weight download or model inference is needed for that
+refresh. Browser-roster preservation and a global preservation PASS are not
+claimed by this bounded snapshot.
+
+## Reference timing and monitor handoff
+
+The H3 reference retry passed the original vision-encoding failure and reached
+14 of 49 evaluations by 10:19 UTC. Available RAM was 109.00 GB, free filesystem
+space 237.62 GB and owned offload scratch 143.41 GB. At about 437 seconds per
+evaluation, total reference inference is estimated at 6–6½ hours on this Linux
+machine. The earlier text/keyframe timing was an inadequate estimate for this
+task. Pika reference and Wan image runs have not started.
+
+After measured reference progress, the whole-task time bound increased from
+five to eight hours without changing the task, worker, source, graph, creative
+inputs, sampler or resource floors. An independent successor resource guard
+was ready before the two owned old observers exited. Original raw captures are
+retained as separate segments; a genuine WebSocket connection rejoined the same
+session. There was no new graph submission or Stop request. The serial observer
+continues only after terminal success, technical media audit and normal scoped
+cache release. Failure stops the sequence without retries or further deletion.
+
+The reference-specific step cost should have been measured with a labelled
+one-evaluation timing probe at trained geometry before scheduling the full
+quality run. Future estimates must use that admission step. Do not repeat this
+active full run merely to obtain a better estimate or newer source label.
+
+## Clean-checkout catalog hash correction
+
+GitHub CI exposed six catalog failures on Windows and macOS despite the local
+backend gate above passing. The Pika review hash had been computed from a CRLF
+working copy; the existing Git policy commits and checks out LF bytes. The
+strict validator correctly rejected that clean-checkout mismatch. The Pika
+review body is semantically unchanged, its binding now names the existing LF
+Git blob, and only that family hash plus the ledger's canonical content hash
+change. No admission, blocker, model-execution or validation rule changes.
+
+A regression covering all seven evidence families failed first on Pika's CRLF
+bytes. All seven catalog tests and seven subtests pass after the correction.
+The complete backend gate must run again on the committed correction. The
+ongoing client browser suite uses its frozen backend fixture; the active Linux
+inference checkout remains unchanged. Do not deploy the prior hash mismatch or
+represent the earlier local PASS as a clean-checkout/CI PASS.

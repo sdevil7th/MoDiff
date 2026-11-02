@@ -155,7 +155,7 @@
       ],
       "openIssues": [
         "H3 text and keyframe quality clips have technical, sampled visual and muted browser playback evidence; listening remains open.",
-        "H3 reference failed eager vision attention; reference-only ROCm math fix passes89 focused checks and exact-size numerical probe. Retry wbcphPgV1JcM passed vision encoding and is denoising."
+        "H3 reference failed eager vision attention; reference-only ROCm math fix passes89 focused checks and exact-size numerical probe. Retry passed vision encoding and is denoising; measured full-run estimate is6-6.5hours, within an8hour bound."
       ]
     },
     {
@@ -230,7 +230,7 @@
       ],
       "openIssues": [
         "Five existing LTX/Wan cards use normal split-stage creation; completed native evidence is retained.",
-        "Seven H3/Pika/Wan image candidates are saved through the normal API with exact graph/form readback; two prior workflow bodies remain exact. Pika presentation fallback is fixed; visible-editor acceptance and final local template handoff remain open.",
+        "Seven H3/Pika/Wan image candidates pass real built-client Open/Save/reload and exact normal store/form/executable-graph round trips. Pika presentation and private candidate layout are corrected; native browser Run/Stop, final media acceptance and local handoff remain open.",
         "No public video approval; exact output and rights/publication records remain separate."
       ]
     },
@@ -248,9 +248,11 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "Earlier complete backend73b649ea gate passed8948tests/13176subtests/763skips; it predates the reference-only attention fix.",
-        "Client88b82c4 full check passed all source/unit/build stages but failed only measured startup-size ceilings. Clientd357832 records202-byte startup growth; focused bundle/identity checks pass, complete current client check is running.",
-        "Final complete backend/client browser gates and protected idle deployment remain open. Linux isolated validation runs9168e6de/f557b9f9; current frontend candidate is not yet deployed there."
+        "Complete backend8351b62a gate passed8975tests/13176subtests/763skips, Ruff, dependency consistency and CPU preflight. Client npm run check passed atd357832a; all119packaged/rebuilt bundle files are exact.",
+        "GitHub clean-checkout CI exposed6catalog failures: Pika evidence was bound toCRLFworking bytes while Git commitsLF. The strict byte binding is corrected without admission/validator changes;7focused tests/7subtests pass. Complete corrected backend rerun remains required; earlier local PASS is not clean-checkout proof.",
+        "Complete browser rerun at test-only client5ad393f3 against frozen backend8351b62a remains active. Earlier run passed16shared and321/322mocked cases; legacy fixture/readiness corrections pass focused reproduction and preserve product bytes.",
+        "Read-only original-app preservation captured631applicationfiles/2271trackedfiles/105modelsnapshots. Protected deployment remains pending current browser PASS and fresh state recheck. Active model instance remains9168e6de/f557b9f9.",
+        "Whole-app Gallery acceptance remains failed:83retained errors plus5earlier LTX/Wan stage-card locks. All90computed locks are unchanged by the current Pika changes; no qualification or public media relabelling."
       ]
     },
     {
