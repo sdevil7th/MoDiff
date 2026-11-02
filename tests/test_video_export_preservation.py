@@ -132,3 +132,29 @@ def test_retained_video_mux_preserves_existing_audio_named_like_an_intermediate(
         execute()
     assert all(path.read_bytes() == body for path, body in before.items())
     assert not [path for path in tmp_path.iterdir() if path.is_dir()]
+
+
+def test_retained_mux_does_not_need_to_create_files_beside_a_borrowed_video(tmp_path, monkeypatch):
+    import os
+    from modiff import media_assets
+    protected = tmp_path / 'read-only-source'
+    protected.mkdir()
+    source = protected / 'clip.mp4'
+    source.write_bytes(b'borrowed video')
+    output = tmp_path / 'new-mux.mp4'
+    original_mkdir = os.mkdir
+
+    def guarded_mkdir(path, *args, **kwargs):
+        if Path(path).parent == protected:
+            raise PermissionError('Borrowed source directory does not permit writes')
+        return original_mkdir(path, *args, **kwargs)
+
+    monkeypatch.setattr(os, 'mkdir', guarded_mkdir)
+    monkeypatch.setattr(video, '_file_asset_collection', lambda value: [{'path': str(source), 'duration_seconds': 1.}])
+    monkeypatch.setattr(media_assets, 'allocate_video_path', lambda **kw: ('owned-asset', output))
+    monkeypatch.setattr(media_assets, 'run_ffmpeg', lambda arguments, destination: destination.write_bytes(b'output'))
+    monkeypatch.setattr(video, '_derived_asset_result', lambda *args, **kw: {'file': str(output)})
+    video.MuxAudioAsset('borrowed-source').execute(video=str(source),
+        audio={'samples': np.zeros((8000, 2)), 'sample_rate': 8000}, fit='match_video')
+    assert source.read_bytes() == b'borrowed video'
+    assert list(protected.iterdir()) == [source]

@@ -2014,7 +2014,7 @@ class MuxAudioAsset(NodeBase):
         audio = kwargs.get("audio")
         # A source-adjacent filename is not proof of temporary ownership.
         # Cleanup may touch only this newly created private directory.
-        with TemporaryDirectory(prefix=".modiff-mux-", dir=Path(source['path']).parent) as temporary:
+        with TemporaryDirectory(prefix=".modiff-mux-") as temporary:
             if isinstance(audio, str):
                 audio_path = resolve_runtime_input_path(audio).resolve()
             elif isinstance(audio, dict) and (audio.get("path") or audio.get("file")):
