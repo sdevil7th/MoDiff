@@ -228,7 +228,8 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "Selected stage template factories retain their settings/branches; twelve final creative/public templates are not qualified or published."
+        "Five existing LTX/Wan cards now use the normal split-stage creator and preserve settings/finishing through save/reopen; one normal-card/reload browser case and two legacy managed-document cases passed.",
+        "Seven additional H3/Pika/Wan image candidates, final creative/listening acceptance, exact source assets and publication records remain open. No public video approval."
       ]
     },
     {
@@ -245,8 +246,9 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "Complete client check passed at3b734e8 against verified frozen backend86efa329; full browser rerun is active.",
-        "Backend full v5 had one stale official-state fixture failure, now fixed and focused48passed/9subtests. Complete current backend gate and final paired production integration remain open."
+        "Complete client check passed at f557b9f9 against backend4329a759; exact119-file bundle and five hash-only ledgers are packaged.",
+        "Full baseline UI gate passed16shared+320mocked at its frozen earlier pair; current relevant browser checks passed3cases.",
+        "Backend fullv6 had3stale public-inventory assertions after8941passed/763skipped; assertions and a subsequently caught compiled-selector preservation defect are fixed with focused checks. Complete current backend gate and protected final deployment remain open."
       ]
     },
     {

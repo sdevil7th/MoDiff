@@ -24,6 +24,38 @@ brief. The first raw API graph also omitted the normal client preview
 The separate cached replay adds that metadata without changing compute inputs;
 its genuine receipt is not retroactively assigned to the first task.
 
+## Latest paired integration checkpoint
+
+The ordinary video template card path had still opened a legacy Generate graph,
+although the split-stage factory passed its tests. One shared recipe predicate
+now covers normal cards, secondary creation and the Gallery harness. Five retained
+LTX/Wan cards preserve their creative settings and finishing branches through
+save/reopen. Verification includes 368 related unit checks, one normal-card/reload
+browser case and two retained managed-document browser cases. Seven additional
+H3/Pika/Wan image candidates still need normal-entrypoint/template acceptance;
+this correction does not qualify them.
+
+The new Wan image adapter also extended a raw loader selector, which changed
+nine older compiled Block schemas despite all 292 older execution specifications
+remaining exact. Older compiled recipes now retain their original selector domain;
+the new image recipe retains its explicit choice. The strict generated Block
+catalog matches its unchanged bytes. Focused preservation checks: 78 passed and
+904 subtests.
+
+Complete client `npm run check` passed at `f557b9f9`, paired with backend
+`4329a759`. The 119-file production bundle is mirrored exactly. Five dependent
+ledgers changed only their hashes; semantic and qualification rows are unchanged.
+Measured gzip growth is 20 bytes in the largest startup file and 21 bytes in total
+startup code; deferred code decreases by 93 bytes. Loading membership, dependency
+versions, minification and both deferred caps are unchanged.
+
+The complete baseline browser gate passed 16 shared-control and 320 mocked cases
+at the frozen earlier pair. Current focused browser results above are additional
+coverage; they are not a current complete browser-gate claim. Backend full v6
+reported 8,941 passed, 763 skipped and three stale public-inventory assertions.
+Those assertions and the compiled-schema defect are corrected with focused checks;
+a complete current backend PASS remains required.
+
 ## Latest bounded results
 
 Pika's first/last-frame route now completed through the corrected ordinary AV
@@ -48,10 +80,10 @@ Auto grant or native qualification was introduced. The prior text route and its
 Auto rules remain exact. No-weight focused and cross-contract checks passed;
 guarded Linux execution remains required before this route is accepted.
 
-The complete client check passed with a verified frozen backend copy. The full
-browser gate is running against that same immutable fixture while canonical
-backend development continues. Its isolated CPU interpreter is explicit; older
-CUDA-fixture and default-Expert-versus-Auto test mistakes remain archived.
+The earlier complete client and browser checks passed with a verified frozen
+backend copy. Its isolated CPU interpreter was explicit; older CUDA-fixture and
+default-Expert-versus-Auto test mistakes remain archived. The latest paired
+integration checkpoint above distinguishes current source from that baseline.
 
 The H3 quality task `eBU924y4iqro` completed in 7,979.47 seconds at 960×544,
 124 frames and 24 fps, without triggering a resource guard. Its saved MP4
