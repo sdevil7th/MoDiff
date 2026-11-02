@@ -141,6 +141,28 @@ deployment and remaining product acquisition/native checks continue.
 
 ## Logging and mistakes retained
 
+The complete client check passed at `c614595`, against compatible backend
+contract `73b4fe8b`. Shared parsing avoids separate legacy/generic artifact
+envelopes. The measured feature allowance is 262/267/297 gzip bytes for the
+largest startup file/total startup/deferred code, preserving previous headroom.
+All four startup and 90 deferred asset names retain their loading membership;
+only the shared contract/policy and model-manager chunks change beyond import
+versions. No dependency, minifier or loading-rule change was made. The packaged
+119-file bundle is byte-exact; all five derived-ledger changes are hashes only,
+with qualification rows unchanged. The earlier size-gate failures remain logged.
+
+The complete UI check initially had one cold lazy-editor loading timeout (15
+other shared-control cases passed). Its screenshot, network trace and original
+failure are archived. A targeted reproduction passed without a source change or
+timeout increase; the complete UI rerun remains required.
+
+The native keyframe log also exposed an ignored frame-count argument. Both
+shared families and legacy H3 now carry that declared control through official
+`PipelineState` to before-denoise, rather than passing it to an image-only
+preprocessor. Four regressions failed first; 36 focused tests and nine subtests
+then passed. The ongoing native 124-frame candidate retains its actual older
+source identity; no running checkout was changed or output receipt relabelled.
+
 The current-source first/last-frame attempt `aO0X_KxV7YkF` stopped before
 denoising: its starter incorrectly inserted an empty reference-list assembler.
 The generic Before Encode stage now projects only the selected task's inputs;
