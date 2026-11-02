@@ -283,11 +283,22 @@ class OperationStarterTests(unittest.TestCase):
             result = self.resolve(pipeline, task)
             nodes = {n['operation']['operationId']: n for n in result['nodes']}
             for required in result['requiredInputs']:
-                ports = nodes[required['operationId']]['operation']['ports']
+                node = nodes[required['operationId']]
+                ports = node['operation']['ports']
                 port = next(p for p in ports if p['name'] == required['field'] and p['direction'] == 'input')
                 if port['semantics']['kind'] == 'media':
                     with self.subTest(pipeline=pipeline, task=task, field=required['field']):
-                        self.assertTrue(port['required'])
+                        if not port['required']:
+                            # An authored selector may require one media port
+                            # while the reusable operation keeps its other
+                            # media inputs optional. Require the declared rule
+                            # and its exact selected value, not a blanket pass.
+                            when = node['params'][required['field']].get('requiredWhen')
+                            self.assertIsInstance(when, dict)
+                            self.assertEqual(set(when), {'field', 'equals'})
+                            selector = node['params'][when['field']]
+                            selected = node['values'].get(when['field'], selector.get('default'))
+                            self.assertEqual(selected, when['equals'])
         image = self.resolve('StableDiffusionXLModularPipeline', 'image_to_image')
         encode = next(n for n in image['nodes'] if n['operation']['operationId'] == 'diffusion.encode_image')
         self.assertFalse(next(p for p in encode['operation']['ports'] if p['name'] == 'mask_image')['required'])
