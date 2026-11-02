@@ -1826,13 +1826,14 @@ class ModularWorkflowBlockTests(unittest.TestCase):
                 )
 
     def test_minimax_h3_runs_exact_first_last_frame_joint_video_audio_route(self):
+        from diffusers.modular_pipelines.modular_pipeline import PipelineState
         pipeline_class = "MiniMaxH3ModularPipeline"
         workflow_id = "fl2va"
         token = object()
         first = Image.new("RGB", (640, 480), "red")
         last = Image.new("RGB", (640, 480), "blue")
 
-        prepared_state = FakeState(keyframes=[first, last])
+        prepared_state = PipelineState(values={"keyframes": [first, last]})
         before_pipeline = RecordingPipeline(prepared_state)
         before = WorkflowMiniMaxH3BeforeEncode("minimax-h3-before")
         with mock.patch.object(before, "_prepare_pipeline", return_value=(token, before_pipeline)):
@@ -1849,8 +1850,9 @@ class ModularWorkflowBlockTests(unittest.TestCase):
             )
         self.assertEqual(
             before_pipeline.calls,
-            [{"image": first, "last_image": last, "width": 1344, "height": 768, "num_frames": 124}],
+            [{"image": first, "last_image": last, "width": 1344, "height": 768}],
         )
+        self.assertEqual(prepared_state.get("num_frames"), 124)
 
         encoded_state = FakeState(prompt_embeds="qwen3-vl")
         text_pipeline = RecordingPipeline(encoded_state)
