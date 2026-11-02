@@ -163,6 +163,10 @@ blocks declare the slow base tokenizer. The exact repository's reviewed adapter
 selects the fast class consistently in preflight and loading. Both outer and inner
 index declarations must match that selection; other repositories or tokenizer
 classes gain no alias permission.
+Applying a loading alias preserves the complete three-field Modular component
+declaration, including its pretrained origin and subfolder. A flat two-field
+alias belongs only to a standard pipeline index; using it in a Modular index
+would silently omit that component from upstream loading and registration.
 
 The [joint AV artifact closures](../data/joint-av-artifact-closures.v1.json)
 bind each workflow to one transformer partition, shared components, finite

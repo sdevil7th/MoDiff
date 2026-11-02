@@ -24,13 +24,43 @@ brief. The first raw API graph also omitted the normal client preview
 The separate cached replay adds that metadata without changing compute inputs;
 its genuine receipt is not retroactively assigned to the first task.
 
+## Latest bounded results
+
+The H3 quality task `eBU924y4iqro` completed in 7,979.47 seconds at 960×544,
+124 frames and 24 fps, without triggering a resource guard. Its saved MP4
+SHA-256 is `22e7aed778073eb834921bc6309ccdd9ac6a708f9f98c4aa7de90bd301e6ab6f`.
+All frames decode; sampled frames show a clear red sailboat and stable motion.
+The audio is finite and non-silent but quiet. Full playback/listening and public
+creative qualification remain open; the earlier failed engineering brief remains
+failed.
+
+The complete client `npm run check` passed at `26a426b5`, paired against backend
+`3499b26d`. Its exact 119-file bundle is committed in the backend. Five derived
+ledgers were refreshed with hash-only changes and no qualification promotion.
+The private app was refreshed with protected data checks; the original LTX/Wan
+testing app remains unchanged. Current complete backend and final browser gates
+remain open.
+
+Pika's first attempt failed before weights because its published tokenizer type
+and the official block's base type differed in preflight. After that correction,
+task `oN5ClcZ_oOTh` loaded the components but failed at tokenizer registry lookup
+in about 122 seconds, without OOM or a resource guard. The adapter had flattened
+a three-field Modular loading declaration into a standard two-field class pair;
+upstream consequently skipped the tokenizer. The correction preserves that
+declaration and is checked before another native attempt. A separate rejected
+dispatch during runtime-lock contention submitted no model task. Runtime checks
+and app startup are now serialized and readiness includes the exact active
+optional provider.
+
+New history recognition covers exact shared H3/Pika routes while retaining saved
+H3 actions. Focused task/Auto/profile checks: 123 passed. No old output receipt is
+rewritten, and recognizing a task grants no Auto, template or runtime eligibility.
+
 ## In progress and still open
 
-- First H3 quality recipe: 960×544, 124 frames at 24 fps, seed 20261102, 50 sigma
-  points / 49 evaluations. Graph SHA-256
+- H3 quality playback/listening, remaining conditioned routes and lifecycle.
+  The completed quality graph SHA-256 remains
   `f6a7fb473ee0228f661f3b151459352885aa66c8b9f4678b347514468c389e95`.
-  The same prompt/model/offload owner is retained. Estimated 1–3 hours from the
-  lower-resolution measurements; larger-canvas timing is not yet measured.
 - Pika: all 35 selected files, 146,806,845,173 bytes, downloaded and fully
   hash-verified at its immutable revision. No Pika pretrained output exists yet.
   Source-accurate catalog and shared-stage starter checks pass without rewriting

@@ -87,6 +87,35 @@ def test_index_preflight_uses_the_same_reviewed_tokenizer_as_loading(published_i
     assert observed == published_index_preflight
 
 
+@pytest.mark.parametrize('modular_index', [False, True])
+def test_loading_alias_preserves_the_full_pretrained_component_declaration(monkeypatch, modular_index):
+    from modules.ModularDiffusers import native_blocks
+
+    document = json.loads((Path(__file__).parent / 'fixtures/pika_h3_flex_modular_index.v1.json').read_bytes())
+    if not modular_index:
+        document['tokenizer'] = document['tokenizer'][:2]
+    original = deepcopy(document)
+    captured = {}
+
+    class RegisteredPipeline:
+        blocks = object()
+
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(loaders, 'pipeline_class_from_model_type', lambda _: RegisteredPipeline)
+    monkeypatch.setattr(native_blocks, 'prepare_native_pipeline_blocks', lambda _class, blocks: blocks)
+    loaders._instantiate_reviewed_builtin_pipeline(PIKA_PIPELINE, PIKA_REPOSITORY,
+        index_filename=loaders.ModularPipeline.config_name if modular_index else 'model_index.json',
+        index_document=document, components_manager=object(), collection='pika-fixture-owner', workflow_id='t2va')
+    selected = captured['modular_config_dict' if modular_index else 'config_dict']['tokenizer']
+    assert selected[:2] == ['transformers', 'Qwen2TokenizerFast']
+    if modular_index:
+        assert len(selected) == 3
+        assert selected[2] == original['tokenizer'][2]
+    assert document == original
+
+
 @pytest.mark.parametrize('substitution', ['outer', 'inner', 'slow', 'foreign-repository'])
 def test_pika_index_alias_does_not_admit_other_classes_or_sources(published_index_preflight, substitution):
     repository = PIKA_REPOSITORY
@@ -123,12 +152,23 @@ def test_actual_reviewed_factory_prunes_published_index_without_loading_weights(
     from transformers import Qwen2TokenizerFast
     # Publisher metadata only, from the exact Pika revision above; no weights.
     fixture = Path(__file__).parent / 'fixtures/pika_h3_flex_modular_index.v1.json'
+    manager = ComponentsManager()
     pipeline = loaders._instantiate_reviewed_builtin_pipeline(PIKA_PIPELINE, PIKA_REPOSITORY,
         index_filename=ModularPipeline.config_name, index_document=json.loads(fixture.read_bytes()),
-        components_manager=ComponentsManager(), collection='pika-fixture-owner', workflow_id=workflow)
+        components_manager=manager, collection='pika-fixture-owner', workflow_id=workflow)
     partition = 'transformer_ref' if workflow == 'ref2va' else 'transformer'
     names = set(pipeline.pretrained_component_names)
     assert partition in names and not ({'transformer', 'transformer_ref'} - {partition}) & names
+    assert {'text_encoder', 'tokenizer', 'processor'} <= names
     assert pipeline._component_specs['tokenizer'].type_hint is Qwen2TokenizerFast
+    spec = pipeline._component_specs['tokenizer']
+    assert spec.default_creation_method == 'from_pretrained'
+    assert spec.pretrained_model_name_or_path == PIKA_REPOSITORY and spec.subfolder == 'tokenizer'
+    from tokenizers import Tokenizer
+    from tokenizers.models import WordLevel
+    tiny = Qwen2TokenizerFast(tokenizer_object=Tokenizer(WordLevel({'[UNK]': 0}, unk_token='[UNK]')))
+    pipeline.register_components(tokenizer=tiny)
+    component = loaders.node_get_component_info('pika-fixture-owner', manager, 'tokenizer')
+    assert manager.get_one(component['model_id']) is tiny
     assert loaders.ModelsLoader._reviewed_builtin_selection(model_type=PIKA_PIPELINE,
         repo_id={'source': 'hub', 'value': PIKA_REPOSITORY}, revision=None) == ('hub', PIKA_REPOSITORY, PIKA_REVISION)

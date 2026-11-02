@@ -927,7 +927,17 @@ def _instantiate_reviewed_builtin_pipeline(
     installed_blocks = prepare_native_pipeline_blocks(pipeline_class, installed_pipeline.blocks)
     load_document = deepcopy(index_document)
     for component_name, type_hint in reviewed_modular_component_load_types(repository).items():
-        load_document[component_name] = list(type_hint)
+        declaration = load_document.get(component_name)
+        if (index_filename == ModularPipeline.config_name
+                and isinstance(declaration, (list, tuple)) and len(declaration) == 3):
+            # A Modular index's third field carries the pretrained origin.
+            # Replacing it with a flat pair makes upstream ignore the entry,
+            # so a declared tokenizer can disappear from loading/registration.
+            fields = deepcopy(declaration[2])
+            fields['type_hint'] = list(type_hint)
+            load_document[component_name] = [*type_hint, fields]
+        else:
+            load_document[component_name] = list(type_hint)
     config_kwargs = (
         {"modular_config_dict": load_document}
         if index_filename == ModularPipeline.config_name
