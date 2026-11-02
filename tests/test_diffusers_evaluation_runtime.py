@@ -451,7 +451,8 @@ def test_evaluation_observer_retains_exact_old_ids_but_replaced_new_authoring_is
     assert evaluation.selected_diffusers_evaluation_authoring_profile_ids() == tuple(identities)
     assert build() is None
     replacements = studio_public_authoring_replacements()
-    public = [profile for profile in public_execution_profiles() if profile['id'] in replacements.values()]
+    public = [profile for profile in public_execution_profiles()
+              if profile['id'] in {replacements[identity] for identity in identities}]
     assert len(public) == 2
     assert all(profile['public'] is True and profile['live_proof'] is False for profile in public)
     assert all(set(profile['modes']) == {'text_to_image', 'edit_image'} for profile in public)
@@ -519,8 +520,9 @@ def test_normal_public_selections_resolve_current_parent_without_enabling_pup(ar
 
     build = _authoring_catalog(artifact, monkeypatch, ["flux3-klein:modular", "flux3-klein-base:modular"])
     assert build() is None
-    profiles = [DIFFUSERS_EXECUTION_PROFILES[identity].to_public_dict()
-                for identity in studio_public_authoring_replacements().values()]
+    replacements = studio_public_authoring_replacements()
+    profiles = [DIFFUSERS_EXECUTION_PROFILES[replacements[identity]].to_public_dict()
+                for identity in ("flux3-klein:modular", "flux3-klein-base:modular")]
     metadata = {'executionProfiles': profiles, 'authoringRecipes': studio_operation_authoring_selections(profiles)}
     contracts, _ = build_operation_catalog(modules.MODULE_MAP, [], catalog_resolver=lambda: {})
     for selection in metadata["authoringRecipes"]:

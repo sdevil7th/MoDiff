@@ -1210,7 +1210,8 @@ class HuggingFaceClusterAdmissionTests(unittest.TestCase):
                 optional_runtime_profile_ids_for_execution(model_type, mode),
                 ("cosmos-guardrail-0.3.1",) if model_type in {
                     "Cosmos3OmniModularPipeline", "Cosmos3DistilledModularPipeline",
-                } else (),
+                } else ("huggingface-diffusers-video-d0b9b1b",)
+                if model_type == "MiniMaxH3ModularPipeline" else (),
             )
         self.assertTrue(all(result["executable"] is False for result in admitted))
 

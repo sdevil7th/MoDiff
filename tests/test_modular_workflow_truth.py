@@ -209,6 +209,11 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                 "first_last_frame_to_video_with_audio",
                 "reference_to_video_with_audio",
             },
+            "PikaH3FlexModularPipeline": {
+                "text_to_video_with_audio",
+                "first_last_frame_to_video_with_audio",
+                "reference_to_video_with_audio",
+            },
             "Cosmos3OmniModularPipeline": {
                 "text_to_image",
                 "text_to_video",
@@ -233,7 +238,9 @@ class ModularWorkflowTruthTests(unittest.TestCase):
         self.assertEqual({name: truth_modes[name] for name in private_truth}, private_truth)
         optional = {profile["model_type"]: profile for profile in public_execution_profiles()
                     if profile.get("required_diffusers_provider")}
-        self.assertEqual(set(optional), set(private_truth))
+        self.assertEqual(set(optional), set(private_truth) | {
+            "MiniMaxH3ModularPipeline", "PikaH3FlexModularPipeline",
+        })
         for profile in optional.values():
             self.assertFalse(profile["live_proof"])
             self.assertTrue(profile["optionalRuntimeRequirement"]["requiredNow"])
@@ -307,9 +314,22 @@ class ModularWorkflowTruthTests(unittest.TestCase):
                 metadata = get_model_type_metadata(model_type)
                 self.assertEqual(metadata["required_diffusers_provider"], profile["required_diffusers_provider"])
                 self.assertTrue(profile["optionalRuntimeRequirement"]["requiredNow"])
-                self.assertIsNotNone(truth)
                 for mode in sorted(modes):
-                    self.assertIsNotNone(truth.mode(mode))
+                    if truth is not None:
+                        self.assertIsNotNone(truth.mode(mode))
+                    else:
+                        # Joint AV uses a source-bound whole-workflow adapter,
+                        # independently of the historical detailed mode table.
+                        from modiff.modular_whole_workflow_contracts import SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS
+                        from modiff.supplemental_modular_contracts import PIKA_WORKFLOW_TASKS
+                        workflow = next(key for key, task in PIKA_WORKFLOW_TASKS.items() if task == mode)
+                        adapter = SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS[model_type, workflow]
+                        self.assertEqual(len(adapter['stateEdges']), len(adapter['actionSequence']) - 1)
+                        for action in adapter['actionSequence']:
+                            self.assertTrue(action.startswith('workflow_joint_av_'))
+                            _role, node_key = _ACTION_ROLE_CONTRACTS[action]
+                            module, name = node_key.rsplit('.', 1)
+                            self.assertIn(name, module_registry.MODULE_MAP[module])
                     specification = studio_execution_spec_for_pair(
                         model_type, mode, execution_profile_id=profile["id"])
                     self.assertIsNotNone(specification)

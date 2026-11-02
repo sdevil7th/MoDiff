@@ -37,7 +37,7 @@ class VideoDownloadSelectionTests(unittest.TestCase):
 
         self.assertEqual(
             unbounded,
-            {"LTX2Pipeline", "MiniMaxH3ModularPipeline", "WanAnimatePipeline"},
+            {"LTX2Pipeline", "MiniMaxH3ModularPipeline", "PikaH3FlexModularPipeline", "WanAnimatePipeline"},
         )
 
         builtin = capabilities["BuiltinVideoOperation"]

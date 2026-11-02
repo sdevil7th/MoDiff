@@ -146,7 +146,9 @@ def test_retained_mux_does_not_need_to_create_files_beside_a_borrowed_video(tmp_
 
     def guarded_mkdir(path, *args, **kwargs):
         if Path(path).parent == protected:
-            raise PermissionError('Borrowed source directory does not permit writes')
+            # PermissionError is retryable in Windows tempfile.mkdtemp; fail
+            # immediately if a regression tries to write beside this input.
+            raise AssertionError('Borrowed source directory does not permit writes')
         return original_mkdir(path, *args, **kwargs)
 
     monkeypatch.setattr(os, 'mkdir', guarded_mkdir)

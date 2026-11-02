@@ -89,6 +89,22 @@
       ]
     },
     {
+      "id": "pika-h3-flex",
+      "pipelineClasses": [
+        "PikaH3FlexModularPipeline"
+      ],
+      "evidencePath": "data/pika-h3-flex-catalog-gate-review.v1.json",
+      "evidenceSha256": "375a237b42ecedd0f0116fde6051524d64d5b632b13f87b2c245be664d5434b9",
+      "blockers": [
+        "exact_cluster_execution_admission",
+        "explicit_reviewed_optional_runtime_activation",
+        "task_scoped_artifact_acquisition",
+        "license_and_territory_acknowledgement",
+        "native_resource_lifecycle_and_output_qualification",
+        "template_media_and_publication_approval"
+      ]
+    },
+    {
       "id": "stable-diffusion-3",
       "pipelineClasses": [
         "StableDiffusion3ModularPipeline"
@@ -106,5 +122,5 @@
       ]
     }
   ],
-  "contentHash": "sha256:fd8b1e00b23e74e296f9fd6c0c3251da9c6004a8a3038607b0d7d0f85a1ebbc3"
+  "contentHash": "sha256:435b0487d920e5932aeb3440285c5feab5b79b86e68a99d706e924037fe55201"
 }

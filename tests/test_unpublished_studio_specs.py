@@ -47,7 +47,8 @@ def test_source_audit_opt_in_is_not_a_truthy_transport_value(value):
 
 def test_new_storage_field_only_enters_explicit_recipe_blocks():
     future = next(value for value in specs.STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
-                  if value['profile'].get('public') is False)
+                  if value['profile'].get('public') is False
+                  and any(binding[1] == 'weight_format' for binding in value.get('bindings', ())))
     historical = next(value for value in specs.STUDIO_EXECUTION_SPEC_DEFINITIONS.values()
                       if value['profile'].get('public', True)
                       and value['profile']['loader_module'] == 'modules.ModularDiffusers'

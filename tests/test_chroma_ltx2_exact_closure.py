@@ -352,16 +352,25 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
             "flux3-klein:official-provider:v1:edit-image:v1",
             "flux3-klein:official-provider:v1:text-to-image:v1",
         }
-        self.assertEqual(len(specifications), 282)
+        self.assertEqual(len(specifications), 285)
         self.assertEqual(
             {specification["id"] for specification in specifications
              if specification["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
             public_flux3_spec_ids,
         )
-        # The four explicit source contracts extend the existing 278;
-        # every pre-existing contract assertion below is retained.
+        # Three Pika source-supplement specs extend the previous 282. H3's
+        # replacement preserves its three old contracts in the private archive.
+        pika_ids = {
+            "pika-h3-flex:modular-text-to-video-with-audio:v1",
+            "pika-h3-flex:modular-first-last-frame-to-video-with-audio:v1",
+            "pika-h3-flex:modular-reference-to-video-with-audio:v1",
+        }
         self.assertEqual(
-            sum(specification["id"] not in public_flux3_spec_ids
+            {specification["id"].removeprefix("") for specification in specifications
+             if specification["pipelineClass"] == "PikaH3FlexModularPipeline"}, pika_ids,
+        )
+        self.assertEqual(
+            sum(specification["id"] not in public_flux3_spec_ids | pika_ids
                 for specification in specifications),
             278,
         )

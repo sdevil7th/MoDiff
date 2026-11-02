@@ -52,6 +52,7 @@ data/*
 !data/pika-h3-flex-workflow-contract.v1.json
 !data/pika-h3-flex-block-contract.v1.json
 !data/pika-h3-flex-conditional-contract.v1.json
+!data/pika-h3-flex-catalog-gate-review.v1.json
 !data/joint-av-artifact-closures.v1.json
 !data/flux3-artifact-review.v1.json
 !data/flux3-catalog-gate-review.v1.json

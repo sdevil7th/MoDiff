@@ -87,8 +87,11 @@ rerun. The repaired media SHA-256 is
 `217bf479436e2c41a50cf9c5618af020c29eda8e38164a7e17e99d54f19d463a`.
 All 124 decoded frames match the complete retained video export; stereo32kHz audio
 is finite/non-silent and its duration agrees within one video frame. Sampled
-frames show a clear sailboat and stable scene. Full playback/listening and public
-qualification remain separate.
+frames show a clear sailboat and stable scene. Actual isolated Chromium playback
+passed for both the H3 clip and repaired Pika clip: 124 decoded frames, zero
+dropped, playback ended normally. These checks were muted; listening and public
+qualification remain open. Both saved clips remained byte-exact over HTTP after
+ordinary scoped cache release; all 17 private app data files were preserved.
 
 The permanent shared exporter correction keeps all video packets and fits audio
 to video duration. Tiny real-media regressions reproduced the truncation without
@@ -101,8 +104,15 @@ The complete client check passed again at `9bc8fa7`, using the reviewed compatib
 backend contract `2b5f1353`. The retained-spec catalog audit includes only exact
 id/hash/profile joins and reproduces the unchanged catalog. The first gate attempt
 exposed that missing retained-spec join; the next caught a stale documented CI pin.
-Both failed logs remain in private evidence. Current bundle packaging, complete
-backend verification and guarded deployment are next.
+Both failed logs remain in private evidence. The paired bundle has 119 exact disk
+files. The complete backend gate then exposed 15 failures: missing catalog-only
+Pika disposition and tests with older inventory, optional-provider and image-only
+replacement assumptions. A new hash-bound Pika held-family review preserves the
+structural/execution distinction. All affected checks now pass: 195 passed, two
+skipped, 2,132 subtests. This focused result is not a complete backend gate PASS.
+The read-only-input regression guard also fails immediately rather than causing
+Windows temporary-directory creation to retry indefinitely. Guarded private
+deployment and remaining product acquisition/native checks continue.
 
 - H3 quality playback/listening, remaining conditioned routes and lifecycle.
   The completed quality graph SHA-256 remains

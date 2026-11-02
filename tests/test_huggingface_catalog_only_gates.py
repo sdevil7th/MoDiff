@@ -24,8 +24,8 @@ class HuggingFaceCatalogOnlyGateTests(unittest.TestCase):
 
         self.assertEqual(audit["schemaVersion"], 1)
         self.assertEqual(audit["kind"], "huggingface_cluster_catalog_only_audit")
-        self.assertEqual(audit["familyCount"], 6)
-        self.assertEqual(audit["definitionCount"], 18)
+        self.assertEqual(audit["familyCount"], 7)
+        self.assertEqual(audit["definitionCount"], 21)
         self.assertEqual(audit["routeEligibleCount"], 0)
         self.assertTrue(audit["contentHash"].startswith("sha256:"))
         self.assertTrue(
@@ -57,6 +57,7 @@ class HuggingFaceCatalogOnlyGateTests(unittest.TestCase):
                 "ideogram-4": 1,
                 "krea-2": 2,
                 "ltx-2.5": 4,
+                "pika-h3-flex": 3,
                 "stable-diffusion-3": 2,
             },
         )
@@ -85,6 +86,21 @@ class HuggingFaceCatalogOnlyGateTests(unittest.TestCase):
         self.assertEqual(len(selected), 4)
         self.assertEqual(audit["routeEligibleCount"], 0)
         self.assertTrue(all(item["status"] == "catalog_only_evidence_blocked" for item in selected))
+
+    def test_pika_supplement_stays_source_bound_and_catalog_only(self):
+        root = Path(__file__).resolve().parents[1]
+        family = next(row for row in reviewed_huggingface_catalog_only_gates()['families']
+                      if row['id'] == 'pika-h3-flex')
+        evidence = json.loads((root / family['evidencePath']).read_bytes())
+        source = json.loads((root / 'data/pika-h3-flex-workflow-contract.v1.json').read_bytes())
+        self.assertEqual(evidence['source'], source['source'])
+        artifact = evidence['artifactReview']
+        self.assertEqual(hashlib.sha256((root / artifact['path']).read_bytes()).hexdigest(), artifact['sha256'])
+        self.assertEqual(evidence['admission']['unresolvedGates'], family['blockers'])
+        routes = [row for row in audit_huggingface_catalog_only_definitions(self.library)['definitions']
+                  if row['familyId'] == 'pika-h3-flex']
+        self.assertEqual({row['workflowId'] for row in routes}, {'t2va', 'fl2va', 'ref2va'})
+        self.assertTrue(all(row['status'] == 'catalog_only_evidence_blocked' for row in routes))
 
     def test_reviewed_ledger_is_detached_and_rejects_drift(self):
         first = reviewed_huggingface_catalog_only_gates()

@@ -173,7 +173,10 @@ class ModularOperationDiscoveryTests(unittest.TestCase):
         self.assertGreater(len(contracts), 0)
         by_class = {pipeline.__name__: config for pipeline, config in configs.items()}
         declared = declared_optional_pipeline_configs()
-        self.assertEqual(set(declared), {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"})
+        self.assertEqual(set(declared), {
+            "Flux3ModularPipeline", "Flux3DistilledModularPipeline",
+            "MiniMaxH3ModularPipeline", "PikaH3FlexModularPipeline",
+        })
         by_class.update(declared)
         for contract in contracts:
             with self.subTest(pipeline=contract["pipelineClass"], stage=contract["nodeType"]):
@@ -185,10 +188,12 @@ class ModularOperationDiscoveryTests(unittest.TestCase):
                     # These source-authored transports belong to the wrapper,
                     # not the upstream block input/dependency lists.
                     wrappers = config.node_specs[contract["nodeType"]].get("wrapper_inputs", [])
-                    self.assertEqual({param.name for param in wrappers}, {
+                    expected_wrappers = {
                         "text_encoder": {"layout_conditioning", "reference_binding"},
                         "denoise": {"reference_binding"},
-                    }.get(contract["nodeType"], set()))
+                    } if contract["pipelineClass"].startswith("Flux3") else {}
+                    self.assertEqual({param.name for param in wrappers},
+                                     expected_wrappers.get(contract["nodeType"], set()))
                     for wrapper in wrappers:
                         declaration = wrapper.to_dict()
                         self.assertNotIn(wrapper.name, params["input_names"]

@@ -41,16 +41,25 @@ class TaskTemplateContractTests(unittest.IsolatedAsyncioTestCase):
             "flux3-klein:official-provider:v1:edit-image:v1",
             "flux3-klein:official-provider:v1:text-to-image:v1",
         }
-        self.assertEqual(len(self.contracts), 282)
+        self.assertEqual(len(self.contracts), 285)
         self.assertEqual(
             {contract["id"] for contract in self.contracts
              if contract["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
             {f"task-template:{identity}" for identity in public_flux3_spec_ids},
         )
-        # The four explicit source contracts extend the existing 278;
-        # every pre-existing contract assertion below is retained.
+        # Three Pika source-supplement specs extend the previous 282. H3's
+        # replacement preserves its three old contracts in the private archive.
+        pika_ids = {
+            "pika-h3-flex:modular-text-to-video-with-audio:v1",
+            "pika-h3-flex:modular-first-last-frame-to-video-with-audio:v1",
+            "pika-h3-flex:modular-reference-to-video-with-audio:v1",
+        }
         self.assertEqual(
-            sum(contract["id"].removeprefix("task-template:") not in public_flux3_spec_ids
+            {contract["id"].removeprefix("task-template:") for contract in self.contracts
+             if contract["pipelineClass"] == "PikaH3FlexModularPipeline"}, pika_ids,
+        )
+        self.assertEqual(
+            sum(contract["id"].removeprefix("task-template:") not in public_flux3_spec_ids | pika_ids
                 for contract in self.contracts),
             278,
         )
