@@ -3,6 +3,7 @@ from copy import deepcopy
 
 from modiff.diffusers_offload_modes import OFFLOAD_MODE_GROUP_DISK, OFFLOAD_MODE_NONE
 from modiff.joint_av_model_adapters import PIKA_PIPELINE, PIKA_REPOSITORY, PIKA_REVISION
+from modiff.joint_av_artifacts import reviewed_joint_av_artifact_selections
 from modiff.supplemental_modular_contracts import PIKA_RUNTIME_PROFILE, PIKA_WORKFLOW_TASKS
 
 
@@ -60,6 +61,7 @@ def _joint_av_studio_specifications(pipeline, repository, revision, identity, *,
         'family': 'Joint video/audio', 'supportTier': 'experimental',
         'qualificationStatus': 'runtime-required', 'qualifiedModes': [],
         'defaultRepo': repository, 'downloadFiles': [],
+        'artifactSelections': reviewed_joint_av_artifact_selections(pipeline),
         'artifactLabel': ('Pinned task-selected transformer and required scale-one model adapter'
                           if fixed_sampler else 'Pinned task-selected transformer and shared components'),
         'license': 'MiniMax-H3 Community License Agreement', 'defaultDtype': 'bfloat16',

@@ -185,6 +185,16 @@ does not. Their lookup is pure data and performs no model import, download or
 installation. The newer file closure supplements the historical H3 review
 without rewriting its earlier qualification state.
 
+The ordinary model manager publishes these finite inventories through the existing
+task artifact selections. Generic workflow models show a task selector; the
+selected task alone determines Install/Repair and installed status. Acquisition
+still uses the existing Hub planner, reservation, downloader, validation and
+license acknowledgement flow. H3/Pika acquisition refuses missing, partial,
+wildcard, mixed-partition or wrong-revision selections before planning or queuing
+work. A selected file closure does not qualify a runtime, graph, Auto recipe or
+public template. Text and first/last-frame tasks intentionally share their exact
+transformer/adapter bytes; reference tasks use a separate partition.
+
 No-weight tests cover selected starters, strict ownership, actual node dispatch,
 inference mode, scheduler restoration, normalized decode, cache reuse and saved
 graph connections. They do not prove video quality or memory feasibility. Native

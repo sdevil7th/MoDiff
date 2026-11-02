@@ -141,6 +141,26 @@ deployment and remaining product acquisition/native checks continue.
 
 ## Logging and mistakes retained
 
+The current-source first/last-frame attempt `aO0X_KxV7YkF` stopped before
+denoising: its starter incorrectly inserted an empty reference-list assembler.
+The generic Before Encode stage now projects only the selected task's inputs;
+hidden auxiliary inputs must not create supplier nodes. Keyframe tasks keep
+first/last images, while reference tasks keep their ordered-reference assembler.
+Two earlier launcher attempts had missing transferred private files and submitted
+no model task. Their failure logs remain retained; file presence must be checked
+on the destination host, not inferred from the authoring workspace.
+The task-port correction and related app-acquisition/contract checks now pass:
+85 tests and 343 subtests. Fresh conditioned graphs must be compiled again from
+that corrected starter; an older graph must not be patched and relabelled.
+
+App acquisition is being integrated through finite task artifact selections and
+the existing Hub API. The first endpoint regression attempt used an unavailable
+async pytest plugin; the corrected synchronous harness reproduced 12 failures
+with six valid selections passing. The fix passes 64 focused checks. The generic
+client inventory passes 127 authoring tests and two real browser selector cases,
+including distinct installed status for text and reference partitions. These are
+application contract/UI checks, not new pretrained model outputs.
+
 Raw attempts, source/dependency identities, selected-file receipts, resource
 samples, terminal API responses, original WebSocket events, media hashes and
 commands remain in the private campaign evidence. The append-only event log

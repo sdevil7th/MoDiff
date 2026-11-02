@@ -88,3 +88,21 @@ def test_reference_helpers_bind_only_fields_their_existing_schema_declares(catal
 def test_saved_legacy_h3_reference_helper_keeps_its_original_schema(catalog):
     modules, _contracts = catalog
     assert 'pipeline_class' not in modules['modules.ModularDiffusers']['WorkflowMiniMaxH3ReferenceAssembler']['params']
+
+
+@pytest.mark.parametrize('pipeline', ['MiniMaxH3ModularPipeline', PIKA_PIPELINE])
+def test_keyframe_starters_do_not_require_an_unrelated_reference_list(catalog, pipeline):
+    modules, contracts = catalog
+    result = resolve_operation_starter(modules, contracts,
+        {'pipelineClass': pipeline, 'task': 'first_last_frame_to_video_with_audio'})
+    assert not any(node['action'] == 'WorkflowJointAVReferenceAssembler' for node in result['nodes'])
+    before = next(node for node in result['nodes'] if node['action'] == 'WorkflowJointAVBeforeEncode')
+    assert before['params']['references']['hidden'] is True
+    assert before['params']['image'].get('hidden') is not True
+    assert before['params']['last_image'].get('hidden') is not True
+    reference = resolve_operation_starter(modules, contracts,
+        {'pipelineClass': pipeline, 'task': 'reference_to_video_with_audio'})
+    assert any(node['action'] == 'WorkflowJointAVReferenceAssembler' for node in reference['nodes'])
+    before = next(node for node in reference['nodes'] if node['action'] == 'WorkflowJointAVBeforeEncode')
+    assert before['params']['references'].get('hidden') is not True
+    assert before['params']['image']['hidden'] is True and before['params']['last_image']['hidden'] is True

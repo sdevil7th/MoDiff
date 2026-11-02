@@ -103,3 +103,36 @@ def reviewed_joint_av_artifact_closure(pipeline_class, workflow_id):
     if task is None:
         raise ValueError('Select an exact reviewed joint AV workflow before its model files.')
     return deepcopy({'pipelineClass': pipeline_class, 'repository': row['repository'], 'revision': row['revision'], **task})
+
+
+def reviewed_joint_av_artifact_selections(pipeline_class):
+    """Publish ordinary app inventories without merging task partitions."""
+    if pipeline_class not in _IDENTITIES:
+        return []
+    from modiff.supplemental_modular_contracts import PIKA_WORKFLOW_TASKS
+    labels = {'t2va': 'Text to video with audio', 'fl2va': 'First/last frame to video with audio',
+              'ref2va': 'Reference to video with audio'}
+    result = []
+    for workflow, mode in PIKA_WORKFLOW_TASKS.items():
+        task = reviewed_joint_av_artifact_closure(pipeline_class, workflow)
+        result.append({'modes': [mode], 'repo': task['repository'], 'revision': task['revision'],
+                       'downloadFiles': [file['path'] for file in task['files']], 'label': labels[workflow]})
+    return result
+
+
+def reviewed_joint_av_download_selection(repository, revision, files):
+    """Validate explicit app acquisition through the existing Hub downloader.
+
+    Text and keyframe routes share the same exact bytes. A matching complete
+    selection admits those files, not an inferred execution task or runtime.
+    """
+    pipeline = next((name for name, (repo, _pin) in _IDENTITIES.items() if repo == repository), None)
+    if pipeline is None:
+        return None
+    selections = reviewed_joint_av_artifact_selections(pipeline)
+    if revision not in (None, _IDENTITIES[pipeline][1]):
+        raise ValueError('This model requires its exact reviewed immutable revision.')
+    for selection in selections:
+        if sorted(files) == sorted(selection['downloadFiles']):
+            return deepcopy(selection)
+    raise ValueError('Choose an exact reviewed workflow file selection; whole-repository, partial, and mixed-task downloads are not admitted.')

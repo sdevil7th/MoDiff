@@ -560,12 +560,12 @@ def resolve_operation(modules, contracts, selection):
                 definition["params"]["blocks_select"]["options"] = list(metadata["layer_block_options"])
                 values["blocks_select"] = []
         elif action.startswith('Workflow'):
-            # A shared workflow stage can have a source-owned sampler. Its
-            # selected operation declares whether Steps exists; saved schemas
-            # and package-owned fixed samplers keep their hidden default.
-            steps = next((p for p in contract['ports'] if p['name'] == 'num_inference_steps'), None)
-            if steps is not None and 'num_inference_steps' in definition['params']:
-                definition['params']['num_inference_steps']['hidden'] = steps['hidden']
+            # Fresh operations project selected task visibility (including
+            # sampler controls and mutually exclusive conditioning inputs).
+            # Saved node schemas are never passed through this authoring path.
+            for port in contract['ports']:
+                if port['direction'] == 'input' and port['name'] in definition['params']:
+                    definition['params'][port['name']]['hidden'] = port['hidden']
         else:
             from modules.ModularDiffusers.modular_utils import get_model_type_metadata
 

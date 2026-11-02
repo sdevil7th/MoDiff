@@ -237,13 +237,22 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     # Publish that requirement on the operation itself as well
                     # as the connected starter, including individually inserted nodes.
                     for port in record["ports"]:
+                        if action_key == 'workflow_joint_av_before_encode':
+                            # One generic stage has two distinct official task
+                            # input routes. Do not author a reference-list
+                            # supplier into a first/last-frame workflow.
+                            if port['name'] == 'references':
+                                port['hidden'] = 'references' not in adapter['requiredInputs']
+                            elif port['name'] in {'image', 'last_image'}:
+                                port['hidden'] = 'references' in adapter['requiredInputs']
                         if port['name'] == 'num_inference_steps' and port['name'] in adapter['requiredInputs']:
                             port['hidden'] = False
                         if (port["direction"] == "input" and port["semantics"]["kind"] == "media"
                                 and port["name"] in adapter["requiredInputs"]):
                             port["required"] = True
                     result.append(with_qwen_t2i_bundle_contract(record))
-                    helper_types.update(t for p in record["ports"] if p["direction"] == "input" for t in p["types"])
+                    helper_types.update(t for p in record["ports"]
+                                        if p["direction"] == "input" and not p['hidden'] for t in p["types"])
                 for type_name in sorted(helper_types & MODULAR_AUXILIARY_OPERATION_BINDINGS.keys()):
                     operation_id, node_key = MODULAR_AUXILIARY_OPERATION_BINDINGS[type_name]
                     helper = build_pipeline_operation_contract(

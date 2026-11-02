@@ -16717,8 +16717,18 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         requested_files = sorted(
             {item.strip() for raw in requested_files for item in str(raw or "").split(",") if item.strip()}
         )
-        if not requested_files:
-            requested_files = studio_download_files_for_repo(repo_id)
+        try:
+            from modiff.joint_av_artifacts import reviewed_joint_av_download_selection
+            selection = reviewed_joint_av_download_selection(repo_id, revision, requested_files)
+            if selection is not None:
+                revision = selection['revision']
+                requested_files = sorted(selection['downloadFiles'])
+            elif not requested_files:
+                requested_files = studio_download_files_for_repo(repo_id)
+        except ValueError as error:
+            return web.json_response(
+                {'error': str(error), 'code': 'invalid_reviewed_model_selection', 'retryable': False}, status=400,
+            )
 
         try:
             plan = await asyncio.to_thread(
@@ -17057,8 +17067,6 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
         requested_files = sorted(
             {item.strip() for raw in raw_files for item in str(raw or "").split(",") if item.strip()}
         )
-        if not requested_files and repo_id:
-            requested_files = studio_download_files_for_repo(repo_id)
         if repair and not repair_source_repo_id:
             repair_source_repo_id = VERIFIED_REPAIR_SOURCES.get(repo_id)
 
@@ -17076,6 +17084,19 @@ class WebServer(CustomExtensionAPI, ServiceAPI):
 
         if revision is None:
             revision = catalog_revision(repo_id)
+
+        try:
+            from modiff.joint_av_artifacts import reviewed_joint_av_download_selection
+            selection = reviewed_joint_av_download_selection(repo_id, revision, requested_files)
+            if selection is not None:
+                revision = selection['revision']
+                requested_files = sorted(selection['downloadFiles'])
+            elif not requested_files:
+                requested_files = studio_download_files_for_repo(repo_id)
+        except ValueError as error:
+            return web.json_response(
+                {'error': str(error), 'code': 'invalid_reviewed_model_selection', 'retryable': False}, status=400,
+            )
 
         async with self.hf_cache_mutation_lock:
             if repo_id in self.hf_download_tasks:
