@@ -2243,6 +2243,7 @@ def declared_optional_pipeline_configs():
     from modiff.diffusers_profiles import DIFFUSERS_EXECUTION_PROFILES
     configured = {'Flux3ModularPipeline': FLUX_3_PIPELINE_CONFIG,
                   'Flux3DistilledModularPipeline': FLUX_3_DISTILLED_PIPELINE_CONFIG,
+                  'MiniMaxH3ModularPipeline': MINIMAX_H3_PIPELINE_CONFIG,
                   'PikaH3FlexModularPipeline': PIKA_H3_FLEX_PIPELINE_CONFIG}
     result = {}
     for profile in DIFFUSERS_EXECUTION_PROFILES.values():

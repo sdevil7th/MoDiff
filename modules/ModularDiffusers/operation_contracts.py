@@ -5,7 +5,7 @@ from modiff.component_bundle_contracts import with_qwen_t2i_bundle_contract
 
 from modiff.modular_action_bindings import MODULAR_ACTION_BINDINGS, MODULAR_AUXILIARY_OPERATION_BINDINGS
 from modiff.modular_block_contracts import load_reviewed_modular_block_snapshot
-from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_graph_adapter
+from modiff.modular_whole_workflow_contracts import reviewed_whole_workflow_action_adapter
 from modiff.modular_task_adapters import modular_task_adapters as _task_adapters
 from modiff.modular_workflow_discovery import load_reviewed_modular_workflow_snapshot
 from modiff.operation_contracts import (
@@ -86,8 +86,8 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
             workflow_id = workflow["id"]
             blocks = workflows[pipeline_class, workflow_id]
             root = definitions[blocks["rootBlockDefinitionId"]]
-            for task, adapter in _task_adapters(pipeline_class, workflow):
-                whole = reviewed_whole_workflow_graph_adapter(pipeline_class, workflow_id)
+            for task, adapter in _task_adapters(pipeline_class, workflow, authoring=True):
+                whole = reviewed_whole_workflow_action_adapter(pipeline_class, workflow_id, adapter['actionSequence'][0])
                 # A partial module registry must not advertise an executable
                 # workflow whose required stage action is absent.
                 node_keys = [MODULAR_ACTION_BINDINGS[key][1] for key in adapter["actionSequence"]]
@@ -161,7 +161,7 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     result.append(with_operation_semantics(helper, workflow_id=workflow_id,
                                                          values={"layout": "horizontal_reference"}))
                 actions = adapter["actionSequence"]
-                whole = reviewed_whole_workflow_graph_adapter(pipeline_class, workflow_id)
+                whole = reviewed_whole_workflow_action_adapter(pipeline_class, workflow_id, adapter['actionSequence'][0])
                 for index, action_key in enumerate(actions):
                     role, node_key = MODULAR_ACTION_BINDINGS[action_key]
                     if whole:
@@ -237,6 +237,8 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     # Publish that requirement on the operation itself as well
                     # as the connected starter, including individually inserted nodes.
                     for port in record["ports"]:
+                        if port['name'] == 'num_inference_steps' and port['name'] in adapter['requiredInputs']:
+                            port['hidden'] = False
                         if (port["direction"] == "input" and port["semantics"]["kind"] == "media"
                                 and port["name"] in adapter["requiredInputs"]):
                             port["required"] = True

@@ -115,7 +115,7 @@ class ModularOperationCatalogTests(unittest.TestCase):
             )
         )
         helper = media["diffusion.assemble_references"]
-        self.assertEqual(helper["nodeKey"], "modules.ModularDiffusers.WorkflowMiniMaxH3ReferenceAssembler")
+        self.assertEqual(helper["nodeKey"], "modules.ModularDiffusers.WorkflowJointAVReferenceAssembler")
         self.assertEqual(helper["decomposition"], "bundle")
         self.assertIsNone(helper["blockName"])
         self.assertEqual(next(p for p in helper["ports"] if p["name"] == "references")["semantics"]["kind"], "opaque")

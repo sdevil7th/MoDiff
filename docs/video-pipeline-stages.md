@@ -7,6 +7,16 @@ actual nodes and connections. Optional upscaling, separate soundtrack generation
 audio fitting and delivery remain visible operations when a template needs them.
 Four stages is a starting shape, not a limit.
 
+New H3 and Pika graphs share Model Setup, prompt encoding, video/audio denoising,
+decoding and export operations. Keyframe/reference workflows add the real media
+preparation and VAE encoding stages. They retain the selected model in their
+backend-owned state; they do not create model-named client nodes. H3's new
+`minimax-h3:official-provider:v1` profile requires the same exact reviewed video
+provider as Pika. It exposes Steps; Pika retains its fixed sampler. Old H3 nodes,
+all three original specification hashes and the immutable library definitions
+are preserved. Retained source-era profile selections require an explicit rebind
+before execution under a different provider; saved values are not migrated.
+
 ## Declared selections
 
 | Execution profile       | Tasks exposed by separate stages                            |

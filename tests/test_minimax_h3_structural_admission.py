@@ -11,7 +11,7 @@ from modiff.modular_workflow_contracts import (
     PINNED_MODULAR_REPOSITORY_VARIANTS,
 )
 from modiff.studio_execution_specs import (
-    studio_capability_definitions,
+    STUDIO_EXECUTION_SPEC_DEFINITIONS,
     studio_execution_profile_definitions,
     studio_execution_spec_for_pair,
 )
@@ -119,7 +119,9 @@ class MiniMaxH3StructuralAdmissionTests(unittest.TestCase):
                 self.assertIn(("videoExport", "fps", "fps"), specification["bindings"])
 
     def test_capability_preserves_creator_defaults_and_all_authority_gates(self):
-        capability = studio_capability_definitions()[PIPELINE]
+        # This immutable structural candidate retains its source-era recipe;
+        # fresh shared-stage authoring has a separately versioned default.
+        capability = STUDIO_EXECUTION_SPEC_DEFINITIONS['minimax-h3:modular-text-to-video-with-audio:v1']['capability']
         profile = studio_execution_profile_definitions()["minimax-h3:official-modular-workflow"]
         self.assertEqual(capability["defaultSize"], {"width": 1344, "height": 768, "aspectRatio": "16:9"})
         self.assertEqual(capability["recommendedFrames"], 124)

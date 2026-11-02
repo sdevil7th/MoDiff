@@ -559,7 +559,14 @@ def resolve_operation(modules, contracts, selection):
             else:
                 definition["params"]["blocks_select"]["options"] = list(metadata["layer_block_options"])
                 values["blocks_select"] = []
-        elif not action.startswith("Workflow"):
+        elif action.startswith('Workflow'):
+            # A shared workflow stage can have a source-owned sampler. Its
+            # selected operation declares whether Steps exists; saved schemas
+            # and package-owned fixed samplers keep their hidden default.
+            steps = next((p for p in contract['ports'] if p['name'] == 'num_inference_steps'), None)
+            if steps is not None and 'num_inference_steps' in definition['params']:
+                definition['params']['num_inference_steps']['hidden'] = steps['hidden']
+        else:
             from modules.ModularDiffusers.modular_utils import get_model_type_metadata
 
             metadata = get_model_type_metadata(contract["binding"]["pipelineClass"])

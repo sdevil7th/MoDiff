@@ -34,6 +34,25 @@ The audio is finite and non-silent but quiet. Full playback/listening and public
 creative qualification remain open; the earlier failed engineering brief remains
 failed.
 
+The exact saved H3 clip also played to the end in isolated Chromium: 124 decoded
+frames, zero dropped frames. Playback was muted; this closes the technical browser
+playback row only, not audio listening or full workflow-editor acceptance.
+
+Fresh H3 authoring now selects version-two shared-stage specifications with an
+explicit reviewed provider. All three saved version-one specification hashes and
+all 139 existing library hashes remain exact. New task starters use the shared
+reference helper, while the saved legacy helper schema remains unchanged. The
+source-admission audit resolves a candidate's declared profile rather than a newer
+default. Focused verification: 94 passed and 1,009 subtests. Visible authoring,
+paired integration and final template acceptance remain open.
+
+Native Pika exposed a progress binding defect: the public upstream `blocks`
+property returns a copy. The corrected bridge binds the owned executing tree;
+real-pipeline red/green checks cover progress, Stop and restoration without
+changing model math. The current native attempt retains its original source and
+resource monitor; the correction requires subsequent guarded deployment and
+native lifecycle proof.
+
 The complete client `npm run check` passed at `26a426b5`, paired against backend
 `3499b26d`. Its exact 119-file bundle is committed in the backend. Five derived
 ledgers were refreshed with hash-only changes and no qualification promotion.

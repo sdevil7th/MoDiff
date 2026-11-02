@@ -18,7 +18,7 @@ from modiff.diffusers_offload_modes import (
 from modiff.model_artifact_catalog import require_catalog_revision
 from modiff.modular_weight_formats import weight_format_download_selections
 from modiff.optional_runtimes import TRANSFORMERS_517_PEFT_RUNTIME_PROFILE_ID
-from modiff.joint_av_studio_specs import pika_studio_specifications
+from modiff.joint_av_studio_specs import h3_studio_specifications, pika_studio_specifications
 
 
 STUDIO_EXECUTION_SPEC_SCHEMA_VERSION = 1
@@ -6867,6 +6867,9 @@ _MINIMAX_H3_MODULAR_PROFILE = {
     "max_low_memory_steps": None,
     "live_proof": False,
     "compatible_repos": (),
+    # Exact saved specs retain their hashes; new authoring uses the reviewed
+    # provider-bound shared stages instead of these source-era wrappers.
+    "public": False,
 }
 
 _MINIMAX_H3_MODULAR_CAPABILITY = {
@@ -10168,6 +10171,7 @@ STUDIO_EXECUTION_SPEC_DEFINITIONS: dict[str, dict[str, Any]] = {
     **_HELIOS_STUDIO_EXECUTION_SPEC_DEFINITIONS,
     **_HUNYUAN_VIDEO_15_STUDIO_EXECUTION_SPEC_DEFINITIONS,
     **_MINIMAX_H3_STUDIO_EXECUTION_SPEC_DEFINITIONS,
+    **h3_studio_specifications(),
     **pika_studio_specifications(),
     **_WAN_ANIMATE_2_STUDIO_EXECUTION_SPEC_DEFINITIONS,
     **_COSMOS3_NANO_STUDIO_EXECUTION_SPEC_DEFINITIONS,
@@ -18529,7 +18533,8 @@ def studio_execution_profile_definitions() -> dict[str, dict[str, Any]]:
                 ("trust_remote_code", False)),
         }
     for previous, identity in studio_public_authoring_replacements().items():
-        profiles[identity]['adapter_authoring'] = deepcopy(profiles[previous]['adapter_authoring'])
+        if 'adapter_authoring' in profiles[previous]:
+            profiles[identity]['adapter_authoring'] = deepcopy(profiles[previous]['adapter_authoring'])
     # The ordinary audio loader activates one named adapter, not a row blend.
     # Permission is exact task/artifact authoring, separate from fit and Auto.
     profiles["ace-step-audio:direct"]["adapter_authoring"] = {

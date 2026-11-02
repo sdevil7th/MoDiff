@@ -7,6 +7,7 @@ from modiff.supplemental_modular_contracts import PIKA_RUNTIME_PROFILE, PIKA_WOR
 
 
 PIKA_EXECUTION_PROFILE = 'pika-h3-flex:official-provider:v1'
+H3_EXECUTION_PROFILE = 'minimax-h3:official-provider:v1'
 _ROLES = (
     ('models', 'modules.ModularDiffusers.ModelsLoader', -760, -80),
     ('prompt', 'modules.ModularDiffusers.WorkflowJointAVTextEncode', -400, -80),
@@ -38,14 +39,15 @@ _BINDINGS = (
 )
 
 
-def pika_studio_specifications():
-    """One exact provider and sampler; no model fit or publication promotion."""
+def _joint_av_studio_specifications(pipeline, repository, revision, identity, *, fixed_sampler):
+    """Shared authoring topology with explicit backend-owned sampler differences."""
+    label = 'Pika H3 Flex' if fixed_sampler else 'MiniMax H3'
     profile = {
-        'id': PIKA_EXECUTION_PROFILE, 'model_type': PIKA_PIPELINE,
+        'id': identity, 'model_type': pipeline,
         'modes': tuple(PIKA_WORKFLOW_TASKS.values()),
         'loader_module': 'modules.ModularDiffusers', 'loader_action': 'ModelsLoader',
-        'execution_path': 'modular-diffusers', 'pipeline_class': PIKA_PIPELINE,
-        'default_repo': PIKA_REPOSITORY, 'fallback_repo': None,
+        'execution_path': 'modular-diffusers', 'pipeline_class': pipeline,
+        'default_repo': repository, 'fallback_repo': None,
         'quantizable_components': (), 'default_quantized_components': (),
         'supported_offload_modes': (OFFLOAD_MODE_NONE, OFFLOAD_MODE_GROUP_DISK),
         'retry_offload_modes': (), 'max_low_memory_side': None, 'max_low_memory_steps': None,
@@ -54,15 +56,17 @@ def pika_studio_specifications():
         'optional_runtime_profiles': (PIKA_RUNTIME_PROFILE,), 'optional_runtime_delivery': 'optional_overlay',
     }
     capability = {
-        'modelType': PIKA_PIPELINE, 'label': 'Pika H3 Flex', 'displayName': 'Pika H3 Flex',
+        'modelType': pipeline, 'label': label, 'displayName': label,
         'family': 'Joint video/audio', 'supportTier': 'experimental',
         'qualificationStatus': 'runtime-required', 'qualifiedModes': [],
-        'defaultRepo': PIKA_REPOSITORY, 'downloadFiles': [],
-        'artifactLabel': 'Pinned task-selected transformer and required scale-one model adapter',
+        'defaultRepo': repository, 'downloadFiles': [],
+        'artifactLabel': ('Pinned task-selected transformer and required scale-one model adapter'
+                          if fixed_sampler else 'Pinned task-selected transformer and shared components'),
         'license': 'MiniMax-H3 Community License Agreement', 'defaultDtype': 'bfloat16',
-        'defaultSize': {'width': 832, 'height': 480, 'aspectRatio': '26:15'},
-        'recommendedSteps': 6, 'recommendedGuidance': 1.0,
-        'guidanceLabel': 'Package-owned sampler; no guidance control',
+        'defaultSize': ({'width': 832, 'height': 480, 'aspectRatio': '26:15'} if fixed_sampler
+                        else {'width': 960, 'height': 544, 'aspectRatio': '30:17'}),
+        'recommendedSteps': 6 if fixed_sampler else 50, 'recommendedGuidance': 1.0,
+        'guidanceLabel': 'Package-owned sampler; no guidance control' if fixed_sampler else 'Guidance-distilled; no guidance control',
         'supportsNegativePrompt': False, 'supportsImageInput': True, 'supportsVideoInput': True,
         'supportsAudioInput': True, 'supportsMultiImage': True, 'supportsMask': False,
         'supportsControlImage': False, 'supportsLayers': False, 'supportsLora': False,
@@ -75,16 +79,20 @@ def pika_studio_specifications():
             PIKA_WORKFLOW_TASKS['fl2va']: {'note': 'Requires at least one decoded first or last keyframe.'},
             PIKA_WORKFLOW_TASKS['ref2va']: {'note': 'Requires ordered image/video/audio references; audio-only lists are invalid.'},
         },
-        'executionStatus': 'expert_only', 'revisionCandidates': [PIKA_REVISION],
+        'executionStatus': 'expert_only', 'revisionCandidates': [revision],
         'autoEligible': False, 'templateEligible': False, 'galleryEligible': False, 'liveProof': False,
         'notes': [
             'Explicitly install and verify the exact reviewed official video provider before execution.',
-            'The selected task requires its immutable model adapter at scale one; optional style adapters are not admitted.',
-            'Six-step schedules belong to the official sampler. Steps, guidance and negative-prompt overrides are rejected.',
+            ('The selected task requires its immutable model adapter at scale one; optional style adapters are not admitted.'
+             if fixed_sampler else 'Use one immutable task-selected transformer partition; optional style adapters are not admitted.'),
+            ('Six-step schedules belong to the official sampler. Steps, guidance and negative-prompt overrides are rejected.'
+             if fixed_sampler else 'The official sampler owns its sigma grid. Steps are exposed; guidance and negative-prompt overrides are rejected.'),
             'Group Disk keeps the small float32 audio VAE resident; native model fit, quality and lifecycle remain separate acceptance checks.',
             'Acquisition must use the finite task-specific artifact closure, never the complete repository.',
         ],
     }
+    if not fixed_sampler:
+        profile['replaces_private_authoring_profile'] = 'minimax-h3:official-modular-workflow'
     result = {}
     for workflow, task in PIKA_WORKFLOW_TASKS.items():
         roles = _ROLES if workflow == 't2va' else _CONDITIONED_ROLES
@@ -105,8 +113,21 @@ def pika_studio_specifications():
                 ('imageEncode', 'block_path', 'workflowVaeEncoderBlock'),
             ) + ((('beforeEncode', 'references', 'references'),) if workflow == 'ref2va' else (
                 ('beforeEncode', 'image', 'referenceImages'), ('beforeEncode', 'last_image', 'lastImage')))
-        result[f'pika-h3-flex:modular-{task.replace("_", "-")}:v1'] = {
-            'modelType': PIKA_PIPELINE, 'mode': task, 'profile': deepcopy(profile),
+        if not fixed_sampler:
+            bindings += (('denoise', 'num_inference_steps', 'steps'),)
+        prefix, version = ('pika-h3-flex', 1) if fixed_sampler else ('minimax-h3', 2)
+        result[f'{prefix}:modular-{task.replace("_", "-")}:v{version}'] = {
+            'modelType': pipeline, 'mode': task, 'profile': deepcopy(profile),
             'capability': deepcopy(capability), 'roles': roles, 'edges': edges, 'bindings': bindings,
         }
     return result
+
+
+def pika_studio_specifications():
+    return _joint_av_studio_specifications(PIKA_PIPELINE, PIKA_REPOSITORY, PIKA_REVISION,
+        PIKA_EXECUTION_PROFILE, fixed_sampler=True)
+
+
+def h3_studio_specifications():
+    return _joint_av_studio_specifications('MiniMaxH3ModularPipeline', 'MiniMaxAI/MiniMax-H3',
+        '42ed227ee7df40d41602854ae760620d6eb651fe', H3_EXECUTION_PROFILE, fixed_sampler=False)

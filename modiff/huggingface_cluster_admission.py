@@ -1017,9 +1017,11 @@ def _audit_candidate(
     if studio_definition is None:
         reasons.append(_reason("unknown_studio_spec", "The declared Studio execution specification is absent."))
     else:
+        candidate_profile = studio_definition.get('profile')
         public_spec = studio_execution_spec_for_pair(
             str(studio_definition.get("modelType") or ""),
             str(studio_definition.get("mode") or ""),
+            execution_profile_id=candidate_profile.get('id') if isinstance(candidate_profile, Mapping) else None,
         )
         if public_spec is None or public_spec.get("id") != studio_spec_id:
             reasons.append(

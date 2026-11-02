@@ -73,7 +73,7 @@ def test_pika_explicit_profile_seals_source_and_leaves_qualification_closed(cata
 
 
 @pytest.mark.parametrize('pipeline,helper_action', [
-    ('MiniMaxH3ModularPipeline', 'WorkflowMiniMaxH3ReferenceAssembler'),
+    ('MiniMaxH3ModularPipeline', 'WorkflowJointAVReferenceAssembler'),
     (PIKA_PIPELINE, 'WorkflowJointAVReferenceAssembler'),
 ])
 def test_reference_helpers_bind_only_fields_their_existing_schema_declares(catalog, pipeline, helper_action):
@@ -82,7 +82,9 @@ def test_reference_helpers_bind_only_fields_their_existing_schema_declares(catal
         {'pipelineClass': pipeline, 'task': 'reference_to_video_with_audio'})
     helper = next(node for node in result['nodes'] if node['action'] == helper_action)
     assert set(helper['values']) <= set(helper['params'])
-    if pipeline == PIKA_PIPELINE:
-        assert helper['values']['pipeline_class'] == pipeline
-    else:
-        assert 'pipeline_class' not in helper['values']
+    assert helper['values']['pipeline_class'] == pipeline
+
+
+def test_saved_legacy_h3_reference_helper_keeps_its_original_schema(catalog):
+    modules, _contracts = catalog
+    assert 'pipeline_class' not in modules['modules.ModularDiffusers']['WorkflowMiniMaxH3ReferenceAssembler']['params']

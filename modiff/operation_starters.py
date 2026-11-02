@@ -18,7 +18,7 @@ def _modular_route(pipeline, task):
     for entry in contracts:
         if entry["pipelineClass"] == pipeline:
             for workflow in entry["workflows"]:
-                for name, adapter in modular_task_adapters(pipeline, workflow):
+                for name, adapter in modular_task_adapters(pipeline, workflow, authoring=True):
                     if name == task:
                         return workflow["id"], adapter
     raise ValueError("No reviewed stage route for this task. Add individual operations instead.")
