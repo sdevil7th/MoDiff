@@ -1166,6 +1166,8 @@ def _component_runtime_policy(name, policy):
         result['group_offload_type'] = policy['component_group_offload_types'][name]
     if name in policy.get('component_offload_modes', {}):
         result['offload_mode'] = policy['component_offload_modes'][name]
+    if name in policy.get('component_vision_attention', {}):
+        result['vision_attention'] = policy['component_vision_attention'][name]
     return result
 
 
@@ -1207,7 +1209,8 @@ def apply_modular_runtime_policy(pipeline, policy, *, owned_component_names=()):
     fresh_components = {name: component for name, component in pipeline.components.items() if name in owned_names}
     vision_candidates = {
         name: component for name, component in fresh_components.items()
-        if rocm_vision_attention_requires_configuration(component, torch_module=torch)
+        if (rocm_vision_attention_requires_configuration(component, torch_module=torch)
+            or name in policy.get('component_vision_attention', {}))
     }
     if any(id(component) in unowned_ids for component in vision_candidates.values()):
         raise ValueError('A fresh vision component aliases a source-owned model; configure its source model owner before sharing it.')
@@ -1218,7 +1221,12 @@ def apply_modular_runtime_policy(pipeline, policy, *, owned_component_names=()):
         # Use the same generic ROCm helper as whole pipelines, only on the
         # components this owner actually loaded. Existing inpaint compatibility
         # retains its separate VAE/mask semantics and component policy identity.
-        result['rocmVisionAttention'] = configure_rocm_vision_attention(SimpleNamespace(components=fresh_components))
+        vision_policies = {name: value for name, value in policy.get('component_vision_attention', {}).items()
+                           if name in fresh_components}
+        result['rocmVisionAttention'] = configure_rocm_vision_attention(
+            SimpleNamespace(components=fresh_components),
+            **({'component_policies': vision_policies} if vision_policies else {}),
+        )
         vision_configuration_complete = True
         if policy['attention_backend'] != 'inherit':
             result['attention'] = apply_attention_backend(pipeline, policy['attention_backend'])
@@ -3526,7 +3534,15 @@ class ModelsLoader(NodeBase):
             device=device,
         )
         from .modular_utils import component_group_offload_types, component_offload_modes
+        from modiff.modular_runtime_policy import reviewed_reference_component_attention
         from modiff.diffusers_offload import LEAF_LEVEL_GROUP_COMPONENTS
+        vision_policies = reviewed_reference_component_attention(
+            model_type, reviewed_workflow_id,
+            rocm=bool(getattr(torch.version, 'hip', None)) and str(device).startswith('cuda'),
+            bfloat16=dtype == torch.bfloat16,
+        )
+        if vision_policies:
+            runtime_policy['component_vision_attention'] = vision_policies
         group_types = component_group_offload_types(model_type) if offload_mode in {
             OFFLOAD_MODE_GROUP_CPU, OFFLOAD_MODE_GROUP_DISK} else {}
         group_entrypoint_kwargs = {}

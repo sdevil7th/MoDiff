@@ -299,3 +299,39 @@ fix before deployment. The Linux reference task and download remain untouched.
 The first private comparison also exposed harness-only JSON undefined/display
 metadata differences; those are retained separately from the real model-identity
 failure. Prepared packages are not yet app-persisted or user-ready.
+
+## Reference-mode checkpoint, 2 November
+
+The saved Pika model/profile correction is published in client `0f702adf`.
+All seven private candidates now survive the real store/form/API round trip;
+this remains a no-dispatch check, not editor/model acceptance. A related fresh
+draft defect is being fixed: a joint video/audio producer must connect both
+typed streams to the existing joined exporter rather than separate previews.
+
+H3 keyframes completed in 8,292.63 seconds with 124 distinct frames and stereo
+32 kHz audio. Sampled motion/input continuity and muted Chromium playback passed.
+Listening, visible-editor acceptance and publication remain open. Its original
+source identity is retained; it is not a current-source rerun claim.
+
+H3 reference attempt `auSuWM6x5LJT` failed during vision prompt encoding after
+880.76 seconds: eager attention requested 40.64 GiB beyond available GPU memory.
+The failed request, trace, inputs and resource samples remain unchanged. Normal
+owned-cache/scratch release preserved the 25 protected application files.
+The trained 2,048-pixel reference short edge has not been reduced to hide this.
+
+A reference-only ROCm/BF16 attention policy now delegates to the official
+Transformers SDPA implementation with PyTorch's scoped BF16 math backend.
+Component cache identity and explicit sharing bind that policy; existing text,
+keyframe and image loading retain their prior behavior. The fused kernel failed
+the large numerical probe and CK is unavailable. The selected math path passed
+the exact 26,112-token attention allocation/numerical probe at 55.11 GB peak;
+that is random-weight evidence, not pretrained workflow acceptance. The fix has
+89 focused CPU tests passing, including tiny official-model execution, failure
+restoration, unchanged-route controls and sharing identity. Full final gates and
+the real reference retry remain required.
+
+The specifically approved old Wan 14B cache retirement freed 90.10 GB through
+the normal plan-bound API after a complete dependency-catalog check. No other
+model cache was deleted. Pika's reference selection has now completed all
+35 file hashes (146.81 GB selected); available filesystem space is 381.18 GB.
+No second download or completed text/keyframe rerun is needed.

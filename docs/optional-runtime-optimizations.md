@@ -203,13 +203,37 @@ input.
 
 On ROCm, the ordinary modular model loaders apply the existing vision-attention
 helper to freshly loaded components before placement and publication. It changes
-an exposed default vision SDPA implementation to eager through the component's
-public setter. A shared component must already satisfy that boundary: downstream
+an exposed default vision SDPA implementation through the component's public
+setter. Existing routes retain the eager fallback. Only the reviewed H3 and Pika
+`ref2va` routes loading BF16 Qwen3-VL on ROCm select
+`modiff_rocm_bf16_vision_math_v1`: a small adapter in Transformers' public
+attention and mask registries delegates to its official SDPA implementation,
+scoped to PyTorch's math backend with BF16 reduction enabled. The callback
+rejects non-finite output and restores the previous precision/backend settings
+on success and failure. Its lock protects calls to the adapter within MoDiff's
+serialized model worker. The selected component policy participates in cache
+identity and explicit sharing checks. Text/keyframe routes retain their old
+identities; text and denoiser attention keep their own policy.
+A shared component must already satisfy that boundary: downstream
 loaders reload a default-SDPA vision component or reject an explicit connection
 instead of changing its source owner's model. The standalone model loader applies
-the same rule to its own fresh loads. Existing eager or alternate vision choices,
-text and denoiser attention, and non-ROCm components keep their current settings.
+the existing eager fallback to its own fresh loads. An explicitly shared encoder
+must match its owner's policy; a reference route rejects a conflicting choice.
+Other routes, text and denoiser attention, and non-ROCm components retain their settings.
 This policy alignment does not establish output quality or numerical parity.
+
+This uses the already required Transformers library and installed Torch; it
+installs nothing and changes no reference geometry, model revision, sampler or
+graph representation. See the official [Transformers attention interface](https://huggingface.co/docs/transformers/attention_interface)
+and [PyTorch 2.9 attention controls](https://docs.pytorch.org/docs/2.9/backends.html).
+The initial Linux H3 reference failed with a 40.64 GiB eager-softmax allocation.
+The installed fused kernel produced non-finite output in a bounded large-shape
+check, while CK was unavailable. The BF16 math path passed an exact 26,112-token,
+16-head, 72-wide attention check at 55.11 GB peak allocation with a 20 GiB host
+reserve. That random-weight numerical/allocation check is separate from actual
+pretrained reference workflow and output acceptance. Existing Qwen2.5 vision
+fallbacks, other dtypes, explicit alternate choices and non-ROCm hosts remain
+unchanged.
 
 ### Exact Transformers main source delivery
 

@@ -5,6 +5,15 @@ the executor is allowed to load weights or execute data suppliers.
 """
 
 RUNTIME_POLICY_FIELDS = ('attention_backend', 'vae_slicing', 'vae_tiling', 'inpaint_compatibility', 'weight_loading_mode')
+ROCM_BF16_VISION_MATH = 'modiff_rocm_bf16_vision_math_v1'
+
+
+def reviewed_reference_component_attention(model_type, workflow_id, *, rocm=False, bfloat16=False):
+    """Exact reference-route policy; existing text/keyframe identities stay empty."""
+    if (rocm is True and bfloat16 is True and workflow_id == 'ref2va'
+            and model_type in {'MiniMaxH3ModularPipeline', 'PikaH3FlexModularPipeline'}):
+        return {'text_encoder': ROCM_BF16_VISION_MATH}
+    return {}
 
 
 def normalize_modular_runtime_policy(

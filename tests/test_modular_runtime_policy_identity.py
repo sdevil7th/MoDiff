@@ -7,6 +7,42 @@ import pytest
 from modiff.modular_runtime_policy import normalize_modular_runtime_policy, runtime_policy_from_settings
 
 
+@pytest.mark.parametrize('model_type', ['MiniMaxH3ModularPipeline', 'PikaH3FlexModularPipeline'])
+@pytest.mark.parametrize('workflow', ['t2va', 'fl2va', 'ref2va'])
+def test_only_reviewed_rocm_bfloat16_reference_routes_get_the_vision_policy(model_type, workflow):
+    from modiff.modular_runtime_policy import ROCM_BF16_VISION_MATH, reviewed_reference_component_attention
+    from modules.ModularDiffusers.loaders import _component_runtime_policy
+
+    mapping = reviewed_reference_component_attention(model_type, workflow, rocm=True, bfloat16=True)
+    assert mapping == ({'text_encoder': ROCM_BF16_VISION_MATH} if workflow == 'ref2va' else {})
+    assert reviewed_reference_component_attention(model_type, workflow, rocm=False, bfloat16=True) == {}
+    assert reviewed_reference_component_attention(model_type, workflow, rocm=True, bfloat16=False) == {}
+    policy = {'component_vision_attention': mapping}
+    assert _component_runtime_policy('text_encoder', policy) == (
+        {'vision_attention': ROCM_BF16_VISION_MATH} if mapping else {})
+    assert _component_runtime_policy('transformer', policy) == {}
+
+
+def test_reference_attention_identity_cannot_reuse_or_mutate_another_tasks_encoder():
+    from types import SimpleNamespace
+    from modiff.modular_runtime_policy import ROCM_BF16_VISION_MATH
+    from modules.ModularDiffusers.loaders import assert_explicit_component_runtime_policy
+
+    encoder = SimpleNamespace(
+        config=SimpleNamespace(vision_config=SimpleNamespace(_attn_implementation='eager')),
+        _modiff_modular_runtime_policy={},
+    )
+    reference = {'component_vision_attention': {'text_encoder': ROCM_BF16_VISION_MATH}}
+    with pytest.raises(ValueError, match='different attention/VAE policy'):
+        assert_explicit_component_runtime_policy('text_encoder', encoder, reference)
+    assert encoder.config.vision_config._attn_implementation == 'eager'
+    encoder.config.vision_config._attn_implementation = ROCM_BF16_VISION_MATH
+    encoder._modiff_modular_runtime_policy = {'vision_attention': ROCM_BF16_VISION_MATH}
+    assert_explicit_component_runtime_policy('text_encoder', encoder, reference)
+    with pytest.raises(ValueError, match='different attention/VAE policy'):
+        assert_explicit_component_runtime_policy('text_encoder', encoder, {})
+
+
 @pytest.mark.parametrize('settings,expected', [
     ({}, {'attention_backend': 'inherit', 'vae_slicing': None, 'vae_tiling': None}),
     ({'attention_backend': None, 'vae_slicing': False},

@@ -5,11 +5,13 @@ import hashlib
 import json
 import importlib.util
 import os
+import threading
 from pathlib import Path
 from typing import Any
 
 from modiff.NodeBase import NodeBase
 from modiff.runtime_compilation import cached_compilation_status, require_compilation
+from modiff.modular_runtime_policy import ROCM_BF16_VISION_MATH
 from modiff.model_artifact_catalog import (
     catalog_artifact_file,
     catalog_repository_pin,
@@ -1054,6 +1056,63 @@ def assert_runtime_quantization_full_residency(
     return {"source_weight_bytes": source_bytes, "required_bytes": required, "free_bytes": free_bytes}
 
 
+_ROCM_BF16_VISION_MATH = ROCM_BF16_VISION_MATH
+_ROCM_VISION_MATH_LOCK = threading.RLock()
+
+
+def _rocm_bf16_vision_math_attention(module, query, key, value, attention_mask=None, *args, **kwargs):
+    """Delegate to HF SDPA with a scoped, finite BF16 math implementation.
+
+    The native ROCm fused kernel can produce non-finite large vision results;
+    eager/FP32 math instead materializes oversized score workspaces. Keep the
+    model's BF16 arithmetic and official mask semantics without changing its
+    reference geometry. The supported graph worker serializes model execution;
+    the lock additionally protects nested/concurrent calls to this adapter.
+    """
+    import torch
+    from torch.nn.attention import SDPBackend, sdpa_kernel
+    from transformers.integrations.sdpa_attention import sdpa_attention_forward
+
+    if getattr(query, "dtype", None) != torch.bfloat16:
+        raise RuntimeError("The reviewed ROCm vision math policy requires bfloat16 inputs.")
+    with _ROCM_VISION_MATH_LOCK:
+        previous = torch.backends.cuda.fp16_bf16_reduction_math_sdp_allowed()
+        try:
+            torch.backends.cuda.allow_fp16_bf16_reduction_math_sdp(True)
+            with sdpa_kernel([SDPBackend.MATH]):
+                result = sdpa_attention_forward(module, query, key, value, attention_mask, *args, **kwargs)
+                if not torch.isfinite(result[0]).all().item():
+                    raise RuntimeError("Non-finite ROCm vision attention output; generation was not continued.")
+                return result
+        finally:
+            torch.backends.cuda.allow_fp16_bf16_reduction_math_sdp(previous)
+
+
+def _register_rocm_bf16_vision_math():
+    # Both public registries are required: registering attention alone must not
+    # cause Transformers to omit a model's normal attention-mask construction.
+    from transformers import AttentionInterface
+    from transformers.masking_utils import AttentionMaskInterface, sdpa_mask
+
+    AttentionInterface.register(_ROCM_BF16_VISION_MATH, _rocm_bf16_vision_math_attention)
+    AttentionMaskInterface.register(_ROCM_BF16_VISION_MATH, sdpa_mask)
+
+
+def _rocm_vision_attention_target(component, torch_module):
+    vision = getattr(getattr(component, "config", None), "vision_config", None)
+    cuda = getattr(getattr(torch_module, "backends", None), "cuda", None)
+    bfloat16 = getattr(torch_module, "bfloat16", None)
+    if (
+        getattr(vision, "model_type", None) in {"qwen3_vl", "qwen3_vl_vision"}
+        and bfloat16 is not None
+        and getattr(component, "dtype", None) == bfloat16
+        and callable(getattr(cuda, "allow_fp16_bf16_reduction_math_sdp", None))
+        and callable(getattr(cuda, "fp16_bf16_reduction_math_sdp_allowed", None))
+    ):
+        return _ROCM_BF16_VISION_MATH
+    return "eager"
+
+
 def rocm_vision_attention_requires_configuration(component: Any, *, torch_module: Any = None) -> bool:
     """Inspect the same default vision boundary without changing source ownership."""
     if torch_module is None:
@@ -1066,24 +1125,45 @@ def rocm_vision_attention_requires_configuration(component: Any, *, torch_module
     )
 
 
-def configure_rocm_vision_attention(pipeline: Any, *, torch_module: Any = None) -> list[str]:
+def configure_rocm_vision_attention(pipeline: Any, *, torch_module: Any = None, component_policies=None) -> list[str]:
     """Keep ROCm vision SDPA failures out of multimodal prompt embeddings.
 
     Use Transformers' public subconfig setter, leaving text and Diffusers
-    denoiser attention alone. Only the default SDPA vision implementation is
-    replaced; explicit alternate implementations and non-ROCm hosts are retained.
+    denoiser attention alone. Only a declared reference-component policy selects
+    BF16 Qwen3-VL math SDPA; default eager fallbacks retain their behavior.
     """
     if torch_module is None:
         import torch as torch_module
+    policies = {} if component_policies is None else component_policies
+    if type(policies) is not dict or any(
+        not isinstance(name, str) or policy != _ROCM_BF16_VISION_MATH for name, policy in policies.items()
+    ):
+        raise ValueError("ROCm vision attention needs a declared component policy.")
+    components = getattr(pipeline, "components", {})
+    if set(policies) - set(components):
+        raise ValueError("A declared ROCm vision policy must name a loaded component.")
     if not getattr(getattr(torch_module, "version", None), "hip", None):
+        if policies:
+            raise ValueError("The reference vision math policy requires the reviewed ROCm runtime.")
         return []
     applied = []
-    for name, component in getattr(pipeline, "components", {}).items():
-        if not rocm_vision_attention_requires_configuration(component, torch_module=torch_module):
+    for name, component in components.items():
+        requested = policies.get(name)
+        needs_configuration = rocm_vision_attention_requires_configuration(component, torch_module=torch_module)
+        if not requested and not needs_configuration:
             continue
-        vision = component.config.vision_config
-        component.set_attn_implementation({"vision_config": "eager"})
-        if vision._attn_implementation != "eager":
+        vision = getattr(getattr(component, "config", None), "vision_config", None)
+        target = _rocm_vision_attention_target(component, torch_module) if requested else "eager"
+        if requested and target != requested:
+            raise RuntimeError("The reference vision math policy requires BF16 Qwen3-VL and Torch math controls.")
+        if requested and getattr(vision, "_attn_implementation", None) == requested:
+            continue
+        if requested and not needs_configuration:
+            raise RuntimeError("The declared reference vision policy differs from its model owner's attention choice.")
+        if target == _ROCM_BF16_VISION_MATH:
+            _register_rocm_bf16_vision_math()
+        component.set_attn_implementation({"vision_config": target})
+        if vision._attn_implementation != target:
             raise RuntimeError(f"Could not apply stable ROCm vision attention to {name}.")
         applied.append(name)
     return applied
