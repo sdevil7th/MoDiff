@@ -664,3 +664,20 @@ lifecycle proofs are ready for manual review; full creative/audio acceptance,
 model-backed service CLI verification, public-template qualification and the
 retained whole-app Gallery/hardware holds remain separate. The complete video
 plan is not marked verified from this local checkpoint.
+
+## User visual review — reference boat rejected
+
+The user visually accepts seven of the eight displayed outputs and specifically
+praises both cycling videos. The Pika referenced-boat result is rejected because
+it looks like an unrealistic paper speedboat. This supersedes the earlier local
+creative assessment for that exact output; its technical/media checks still
+pass and the original recipe, input and video remain preserved.
+
+The recipe asked a paper-boat reference to move several hull lengths, throw a
+bow splash and leave a widening V-shaped wake. That mismatch is the hypothesis
+for a future version: physically plausible slow motion and gentle ripples, with
+more of the visible action supplied by camera movement. No new render or input
+replacement was started. The other seven displayed clips do not need reruns
+solely for the previously noted framing/camera deviations. Visual approval does
+not establish audio listening, publication permission or acceptance of the four
+unrun revised motion candidates.

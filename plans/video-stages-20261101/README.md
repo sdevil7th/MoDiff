@@ -1,5 +1,11 @@
 # Video stages workflows and templates
 
+Latest visual review, 3 November: the user accepts seven of the eight displayed
+videos and specifically praises the cycling clips. The Pika reference boat is
+rejected for unrealistic paper-speedboat motion and needs a new creative version.
+Its technical checks remain valid; original media are preserved. Audio,
+publication and the four unrun revised motion candidates remain separate.
+
 Prepared on 1 November 2026 for the approved video-stage design. This is an implementation plan, not an execution or release signoff. It covers shared video authoring and a bounded Linux campaign for LTX, Wan, MiniMax H3 and Pika H3 Flex. The estimates assume one source author and one Linux model worker.
 
 The expected effort is **43–73 active engineering hours**, including focused tests and review. Reserve **52–88 hours with contingency**, plus model downloads and execution that cannot overlap useful coding. At eight focused hours per working day, allow roughly **7–11 working days**, with external access or hardware blockers able to extend that. This is not a promise that all four families will fit before resource admission is measured.

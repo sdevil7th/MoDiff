@@ -1,5 +1,11 @@
 # MiniMax, Pika and Wan image testing checklist
 
+Latest user visual verdict, 3 November: seven displayed clips accepted, including
+both cycling clips. Pika's referenced boat is rejected for unrealistic
+paper-speedboat motion. Preserve that failed creative version; do not rerun the
+other approved outputs solely for earlier framing/camera concerns. Audio and
+publication approval are separate from this visual review.
+
 Prepared 2 November 2026. **This is a checklist, not a completed delivery.**
 The H3 reference technical run and protected candidate-instance deployment have
 closed. Revised motion runs and their output acceptance remain open. Check the current progress report before starting
