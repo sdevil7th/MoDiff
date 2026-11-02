@@ -33,6 +33,9 @@ the larger model's second-transformer guidance. Text and image loaders have
 separate backend identities, so a cached text owner cannot serve the image stages.
 The new image selection grants no Auto, native-output or hardware qualification.
 The existing text specification and saved graphs retain their identity.
+Compiled older Blocks also retain their original loader-selector choices and
+definition hashes. The raw loader and new image recipe expose the new backend
+choice without adding it to those historical compiled schemas.
 The reviewed [official I2V implementation](https://github.com/huggingface/diffusers/blob/7ecb1e1b4fe500be7fb7381a7bb79a24d7fa3941/src/diffusers/pipelines/wan/pipeline_wan_i2v.py)
 declares the optional CLIP components and the dense model's expanded-timestep
 conditioning; MoDiff delegates both source-image encoding and sampling to it.

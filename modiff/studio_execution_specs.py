@@ -19264,6 +19264,15 @@ def _execution_spec_role_params(
     role: str | None = None,
 ) -> dict[str, Any]:
     params = deepcopy(node["params"])
+    if (node_key == 'modules.DiffusersVideo.LoadPipeline'
+            and public['pipelineClass'] != 'WanTI2VImageToVideoPipeline'):
+        # The new manual loader option belongs to the new image recipe. Old
+        # compiled Blocks retain their original selector schema and hashes;
+        # extending ordinary discovery must not rewrite their definitions.
+        selector = params.get('pipeline_class')
+        if isinstance(selector, dict) and isinstance(selector.get('options'), list):
+            selector['options'] = [choice for choice in selector['options']
+                                   if choice != 'WanTI2VImageToVideoPipeline']
     if node_key == "modules.HuggingFaceTransformers.LoadImageTextToTextModel":
         _omit_unbound_recipe_fields(public, node_key, params, ("quantization_mode",))
     if node_key == "modules.HuggingFaceTransformers.GenerateImageVideoText":

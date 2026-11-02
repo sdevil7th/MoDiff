@@ -173,6 +173,26 @@ def test_reviewed_official_wan_i2v_declares_clip_components_optional():
     assert {'image_encoder', 'image_processor'} <= set(WanImageToVideoPipeline._optional_components)
 
 
+@pytest.mark.parametrize('model,task', [
+    ('WanTI2VPipeline', 'text_to_video'), ('WanImageToVideoPipeline', 'image_to_video'),
+    ('LTXVideoPipeline', 'text_to_video'), ('LTX2ConditionPipeline', 'text_to_video'),
+])
+def test_new_wan_loader_choice_does_not_change_retained_compiled_block_schemas(model, task):
+    from copy import deepcopy
+    from modules import MODULE_MAP
+    from modiff.studio_execution_specs import _execution_spec_role_params
+    definition = MODULE_MAP['modules.DiffusersVideo']['LoadPipeline']
+    original = deepcopy(definition)
+    spec = studio_execution_spec_for_pair(model, task)
+    params = _execution_spec_role_params(spec, 'modules.DiffusersVideo.LoadPipeline', definition)
+    assert ADAPTER not in params['pipeline_class']['options']
+    new_spec = studio_execution_spec_for_pair('WanTI2VPipeline', 'image_to_video')
+    new_params = _execution_spec_role_params(new_spec, 'modules.DiffusersVideo.LoadPipeline', definition)
+    assert ADAPTER in new_params['pipeline_class']['options']
+    assert ADAPTER in definition['params']['pipeline_class']['options']
+    assert definition == original
+
+
 @pytest.mark.parametrize('references', [None, [], [Image.new('RGB', (32, 32))] * 2])
 def test_wan_5b_image_route_rejects_missing_or_multiple_opening_frames(references):
     pipeline = image_owner()
