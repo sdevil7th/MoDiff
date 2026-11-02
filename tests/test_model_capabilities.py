@@ -462,7 +462,7 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
             "flux3-klein:official-provider:v1:edit-image:v1",
             "flux3-klein:official-provider:v1:text-to-image:v1",
         }
-        self.assertEqual(len(payload["studioExecutionSpecs"]), 285)
+        self.assertEqual(len(payload["studioExecutionSpecs"]), 286)
         self.assertEqual(
             {specification["id"] for specification in payload["studioExecutionSpecs"]
              if specification["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
@@ -480,7 +480,12 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
              if specification["pipelineClass"] == "PikaH3FlexModularPipeline"}, pika_ids,
         )
         self.assertEqual(
-            sum(specification["id"] not in public_flux3_spec_ids | pika_ids
+            {specification['id'] for specification in payload['studioExecutionSpecs']
+             if specification['pipelineClass'] == 'WanTI2VImageToVideoPipeline'},
+            {'wan-22-ti2v-5b:image-to-video:v1'},
+        )
+        self.assertEqual(
+            sum(specification["id"] not in public_flux3_spec_ids | pika_ids | {'wan-22-ti2v-5b:image-to-video:v1'}
                 for specification in payload["studioExecutionSpecs"]),
             278,
         )
@@ -1161,7 +1166,12 @@ class ModelCapabilitiesTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(ti2v_spec["mode"], "text_to_video")
         self.assertEqual(ti2v_spec["pipelineClass"], "WanTI2VPipeline")
         self.assertIn("wanGenerate", [item[0] for item in ti2v_spec["roles"]])
-        self.assertFalse(by_model["WanTI2VPipeline"]["supportsImageInput"])
+        self.assertTrue(by_model["WanTI2VPipeline"]["supportsImageInput"])
+        ti2v_image_spec, = [spec for spec in by_model['WanTI2VPipeline']['studioExecutionSpecs']
+                           if spec['mode'] == 'image_to_video']
+        self.assertEqual(ti2v_image_spec['pipelineClass'], 'WanTI2VImageToVideoPipeline')
+        self.assertEqual(ti2v_image_spec['executionProfileId'], 'wan-22-ti2v-5b:image-direct:v1')
+        self.assertIn('loadImage', [item[0] for item in ti2v_image_spec['roles']])
         self.assertEqual(
             by_model["WanTI2VPipeline"]["revisionCandidates"],
             ["b8fff7315c768468a5333511427288870b2e9635"],

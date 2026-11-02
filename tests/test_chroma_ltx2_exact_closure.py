@@ -352,7 +352,7 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
             "flux3-klein:official-provider:v1:edit-image:v1",
             "flux3-klein:official-provider:v1:text-to-image:v1",
         }
-        self.assertEqual(len(specifications), 285)
+        self.assertEqual(len(specifications), 286)
         self.assertEqual(
             {specification["id"] for specification in specifications
              if specification["pipelineClass"] in {"Flux3ModularPipeline", "Flux3DistilledModularPipeline"}},
@@ -370,7 +370,12 @@ class ChromaLTX2ExactClosureTests(unittest.TestCase):
              if specification["pipelineClass"] == "PikaH3FlexModularPipeline"}, pika_ids,
         )
         self.assertEqual(
-            sum(specification["id"] not in public_flux3_spec_ids | pika_ids
+            {specification['id'] for specification in specifications
+             if specification['pipelineClass'] == 'WanTI2VImageToVideoPipeline'},
+            {'wan-22-ti2v-5b:image-to-video:v1'},
+        )
+        self.assertEqual(
+            sum(specification["id"] not in public_flux3_spec_ids | pika_ids | {'wan-22-ti2v-5b:image-to-video:v1'}
                 for specification in specifications),
             278,
         )
