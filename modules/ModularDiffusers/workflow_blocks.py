@@ -3984,6 +3984,7 @@ class WorkflowMiniMaxH3ReferenceAssembler(NodeBase):
             "label": "Existing Ordered References",
             "display": "input",
             "type": "minimax_h3_references",
+            "required": False,
         },
         "reference_kind": {
             "label": "Reference Kind",
@@ -3991,10 +3992,19 @@ class WorkflowMiniMaxH3ReferenceAssembler(NodeBase):
             "default": "image",
             "options": ["image", "video", "audio"],
         },
-        "image": {"label": "Image", "display": "input", "type": "image"},
-        "video": {"label": "Video Frames", "display": "input", "type": "video"},
+        "image": {
+            "label": "Image", "display": "input", "type": "image", "required": False,
+            "requiredWhen": {"field": "reference_kind", "equals": "image"},
+        },
+        "video": {
+            "label": "Video Frames", "display": "input", "type": "video", "required": False,
+            "requiredWhen": {"field": "reference_kind", "equals": "video"},
+        },
         "video_fps": {"label": "Video FPS", "type": "float", "default": 24.0, "min": 0.01},
-        "audio": {"label": "Audio or Video Soundtrack", "display": "input", "type": "audio"},
+        "audio": {
+            "label": "Audio or Video Soundtrack", "display": "input", "type": "audio", "required": False,
+            "requiredWhen": {"field": "reference_kind", "equals": "audio"},
+        },
         "references": {
             "label": "Ordered References",
             "display": "output",
@@ -4479,6 +4489,9 @@ class WorkflowJointAVReferenceAssembler(WorkflowMiniMaxH3ReferenceAssembler, Nod
     label = "Add Ordered Video or Audio Reference"
     category = "Modular Diffusers"
     resizable = True
+    # Public discovery reads declarations from this class's AST, not its MRO.
+    # Keep the inherited semantic/opaque-input validation in execute().
+    skipParamsCheck = True
     params = JOINT_AV_REFERENCE_PARAMS
 
     @staticmethod

@@ -88,6 +88,17 @@ does not promote a public template, Gallery clip or executable Hub Cluster.
 
 ## Execution and ownership
 
+The ordered-reference assembler requires only the medium selected by
+`reference_kind`. The initial ordered list is optional; video soundtrack is
+optional in Video mode. Image, Video and Audio modes respectively require an
+image, decoded video frames or decoded audio. Published fields use
+`required: false` with `requiredWhen: {"field": "reference_kind", "equals": ...}`.
+Client Fix and preflight evaluate this read-only condition against a literal
+selector using the current registry, including for older saved nodes. A wired
+selector is not evaluated during inspection; execution still validates its
+actual selected value and media. No saved schema, values or wires are rewritten.
+The final reference consumer also retains the no-audio-only constraint.
+
 - `LoadPipeline` retains the existing immutable-artifact, resource, offload and
   library boundaries. Only an exact declared profile and its catalog revision
   grant separate-stage ownership. Local or advisory selections keep the ordinary

@@ -475,7 +475,18 @@ def resolve_operation_starter(modules, contracts, selection):
         for name, field in node["params"].items():
             if field.get("hidden") or field.get("display") == "output" or (operation, name) in targets:
                 continue
-            if field.get("required") or name in required or name in declared_required:
+            # New drafts must include a selected conditional media input even
+            # though its reusable static port is optional. Do not evaluate a
+            # selector supplied by another operation during discovery.
+            when = field.get("requiredWhen")
+            selected_required = False
+            if (isinstance(when, dict) and isinstance(when.get("field"), str)
+                    and isinstance(when.get("equals"), str)
+                    and (operation, when["field"]) not in targets):
+                selector = node["params"].get(when["field"], {})
+                value = node["values"].get(when["field"], selector.get("default"))
+                selected_required = isinstance(value, str) and value == when["equals"]
+            if field.get("required") or selected_required or name in required or name in declared_required:
                 required_inputs.append({"operationId": operation, "field": name})
     result = {
         "schemaVersion": 1,
