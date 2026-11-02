@@ -119,3 +119,24 @@ At each milestone, answer these questions in at most one page before linking det
 7. Completed, failed, blocked and deferred matrix with one actionable next step per open item.
 
 Do not conclude with a single all-done flag when a family, task, media approval or global release gate remains open. Freeze the handoff and retain its hashes on both machines after a verified transfer.
+
+## 2 November continuation lessons
+
+- Empty dependency arrays in a **blocked** cache-deletion plan do not prove that
+  dependencies are absent. Check every blocker first. An isolated app missing its
+  workflow-library catalog must receive the exact complete published catalog;
+  never create an empty catalog or suppress the guard. Retain the rejected plan,
+  exact source hash, actual dependency warning and successful transaction.
+- A raw loader enum can leak into older compiled Block definitions even when
+  every execution-specification body is unchanged. Compare both proof levels and
+  require the strict generated catalog to stay exact; do not regenerate old
+  hashes to conceal the change.
+- Preserve cold browser failures before rerunning. Here the screenshot remained
+  on the lazy editor's loading state and the trace had an unfinished module
+  request. The unchanged isolated case passed after the backend CPU gate ended.
+  Run the complete relevant browser gate without inflating its timeouts.
+- Saved-candidate authoring checks compare actual wire JSON. JavaScript-only
+  undefined properties disappear during serialization; transport display metadata
+  is not an executable input. Record declared default/unconnected fields and
+  intentional new output filenames explicitly rather than asserting that every
+  raw object is byte-identical to a hand-authored native request.

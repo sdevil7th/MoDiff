@@ -56,6 +56,16 @@ reported 8,941 passed, 763 skipped and three stale public-inventory assertions.
 Those assertions and the compiled-schema defect are corrected with focused checks;
 a complete current backend PASS remains required.
 
+The complete packaged backend gate passed at `73b649ea`: pinned Ruff E9/F,
+package compatibility, CPU preflight and maintained pytest. Result: **8,948 passed,
+763 skipped, 33 warnings and 13,176 passing subtests**, in 1,510.09 seconds.
+The current browser gate initially retained one cold layout-editor timeout:
+15 shared-control cases passed, one module request remained pending, and the
+screenshot still showed loading. After backend CPU work ended, the unchanged
+isolated case passed; the current full rerun passed all 16 shared controls and
+passed 57 mocked cases before an intentional stop for the Pika saved-form defect
+below. No timeout or validator was loosened.
+
 ## Latest bounded results
 
 Pika's first/last-frame route now completed through the corrected ordinary AV
@@ -67,10 +77,30 @@ recovered ready/idle, and released its owned offload scratch while preserving
 saved media. These are native/API lifecycle and playback results; audio listening,
 full visible-editor acceptance and public publication remain separate.
 
-H3 first/last-frame inference is active on Linux. Its reference partition now
-has a complete full-hash acquisition receipt. Pika reference remains pending
-capacity admission; the user approved retiring the older Wan 2.1 FLF2V cache
-after H3 becomes idle. No deletion during active model execution is permitted.
+H3 first/last task `jPn69jG3gIIF` completed in 8,292.63 seconds on backend
+`86efa329`: 960×544, 124 distinct decoded frames, 24 fps and finite stereo 32 kHz
+audio. Its MP4 SHA-256 is
+`4865320db9fdc1a6962f29ea714cd554068bdf703bfc2cf2b721040ff8d703c5`.
+Ten contact-sheet samples and both source views show a coherent red sailboat and
+gentle leftward motion; muted Chromium playback reached the end with zero dropped
+frames. Listening, full editor acceptance and publication remain open. Normal
+release cleared all nine owned nodes and scratch while retaining all 24 prior
+application data files exactly.
+
+The explicitly approved older Wan 2.1 FLF2V 14B cache was then retired through the
+existing exact-plan-hash API. It recovered 90.10 GB, leaving 450.23 GB before new
+reference work. The first plan had correctly refused because this isolated app
+lacked its canonical workflow catalog. The complete exact published 209-workflow
+catalog was supplied; its one legacy Wan image route now needs a redownload,
+while no saved-workflow dependency was found. All 25 protected data files stayed
+exact. No other model was retired, and the original LTX/Wan testing app was not
+changed.
+
+H3 reference task `auSuWM6x5LJT` is now active, using its fully hash-verified
+reference partition. Pika's finite reference download is active concurrently.
+Admission reserves its entire pending payload plus 175 GB offload scratch,
+160 GB operating space and 20 GB staging/output space. Native reference output
+acceptance remains open.
 
 The missing Wan 5B image route now has an explicit loader/profile using official
 WanImageToVideoPipeline and the existing shared stages. It preserves all 292
@@ -257,3 +287,15 @@ The resource monitor keeps a 20 GiB available-RAM floor, bounded worker swap,
 175 GB owned scratch and 160 GB free-filesystem reserve. Concurrent Pika download
 growth is measured separately from the owned model scratch. Do not override
 official model flags, modify model math or rerun unchanged failing allocations.
+
+## Saved candidate reopening defect
+
+Seven local candidate workflow packages were prepared through the existing
+starter/registry/stage-grouping path without model dispatch. Reopening exposed
+that Pika had no frontend presentation profile: its graph survived but its form
+model was coerced to Z-Image. The current full browser run was intentionally
+stopped before source changes; this is a real persistence/presentation gap to
+fix before deployment. The Linux reference task and download remain untouched.
+The first private comparison also exposed harness-only JSON undefined/display
+metadata differences; those are retained separately from the real model-identity
+failure. Prepared packages are not yet app-persisted or user-ready.
