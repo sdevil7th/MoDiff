@@ -249,8 +249,13 @@ def get_modular_task_operation_contracts(modules) -> list[dict]:
                     )
                     if helper:
                         helper.update(nodeType="reference_assembly", decomposition="bundle")
+                        helper_module, helper_action = node_key.rsplit('.', 1)
+                        # Shared helpers select their library; legacy helpers
+                        # already own one fixed schema and expose no selector.
+                        helper_values = ({'pipeline_class': pipeline_class}
+                            if 'pipeline_class' in modules[helper_module][helper_action]['params'] else {})
                         result.append(with_operation_semantics(helper, workflow_id=workflow_id,
-                            values={'pipeline_class': pipeline_class}))
+                            values=helper_values))
                 metadata = get_model_type_metadata(pipeline_class) or {}
                 if metadata.get('guider_options') and "custom_guider" in helper_types:
                     helper = build_pipeline_operation_contract(
