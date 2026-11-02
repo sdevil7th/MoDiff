@@ -212,7 +212,7 @@
       ],
       "openIssues": [
         "Reuse completed LTX/Wan and H3/Pika text/keyframe evidence with actual source identities. Pika text finishing repair is explicit; original failed export remains retained.",
-        "Both revised Pika text clips and lifecycle/media checks pass in bounded scope. Timed cut is native and near 4.17 seconds; scoped release preserves all 52 current app files and outputs. Reference motion now passes strict media/full muted playback and useful identity/travel/camera checks; ordinary scoped release preserves all 54 current app files and media. Wan image is running from its exact saved six-node graph; no duplicate old quiet cases or large H3 label-freshness reruns.",
+        "Both revised Pika text clips and lifecycle/media checks pass in bounded scope. Timed cut is native and near 4.17 seconds; scoped release preserves all 52 current app files and outputs. Reference motion now passes strict media/full muted playback and useful identity/travel/camera checks; ordinary scoped release preserves all 54 current app files and media. Wan image now passes strict 121-frame/video-only audit, full playback and useful conditioned motion; its heavy ending crop remains a creative limitation. Scoped release preserves all 56 current app files with idle queue/cache; no duplicate old quiet cases or large H3 label-freshness reruns.",
         "The user finds the original four H3/Pika clips visually good but motion insufficient. New versioned camera/action, first-frame/reference and timed-cut prompts require native motion and audio review; technical playback alone does not close them."
       ]
     },
@@ -233,9 +233,9 @@
       ],
       "openIssues": [
         "Five existing LTX/Wan cards use normal split-stage creation; completed native evidence is retained.",
-        "Seven H3/Pika/Wan image candidates pass real built-client Open/Save/reload and exact normal store/form/executable-graph round trips. Pika presentation and private candidate layout are corrected; native browser Run/Stop, final media acceptance and local handoff remain open.",
+        "Seven H3/Pika/Wan image candidates pass real built-client Open/Save/reload and exact normal store/form/executable-graph round trips. Pika presentation, actual browser lifecycle and bounded native reference/Wan rows are closed with their exact scope. Final creative/audio/public qualification remains open.",
         "No public video approval; exact output and rights/publication records remain separate.",
-        "Eight revised candidates retain real editor/persistence/graph checks. Three new Pika text/reference clips are available privately with primary motion/native scene change and full media/playback checks. Tighter short ending and insufficient plaza camera arc remain explicit limitations; full creative/listening/public acceptance is unclosed. Reference identity/travel/wake/camera checks pass for local testing; originals retained."
+        "Eight revised candidates retain real editor/persistence/graph checks. Four revised Pika/Wan clips are available privately with primary motion/native scene change and full media/playback checks. Tighter short ending and insufficient plaza camera arc remain explicit limitations; full creative/listening/public acceptance is unclosed. Reference identity/travel/wake/camera and Wan conditioned motion pass for local testing; Wan ending crop remains a limitation. Originals retained."
       ]
     },
     {
@@ -273,7 +273,7 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "First bounded testing handoff complete; final four-family manual acceptance/postmortem remains open."
+        "First and current bounded local testing handoffs are ready. Manual four-family creative/audio acceptance and the unrun revised H3/Pika first-frame motion variants remain open; native reference/Wan receipts and postmortem are retained privately."
       ]
     }
   ],
@@ -348,14 +348,22 @@
     "estimateLimit": "These are additional Pika estimates, not a promise to rerun or finish all eight H3/Pika/Wan motion variants in that time. The eight-second Pika fit is now measured in the completed native case; longer settings remain unmeasured. H3 reference currently costs 6 to 6.5 hours per full run.",
     "actualUiStopRecoveryPassed": true,
     "freshCameraUiRun": "completed with strict technical media and full muted playback; useful primary motion observed, tighter ending framing remains",
-    "nativePrimaryMotionObserved": 3,
-    "nativeTechnicalClipChecksPassed": 3,
+    "nativePrimaryMotionObserved": 4,
+    "nativeTechnicalClipChecksPassed": 4,
     "allFiveEligibleNodesCachedRepeatPassed": true,
     "ordinaryScopedReleasePreservedOutputsAnd50Files": true,
     "twoSceneRun": "completed; 192 frames / 8 seconds / 24 FPS, native cut at frame 100 near 4.17 seconds; plaza camera arc not clearly achieved; full brief/human listening open",
     "referenceMotionRun": "completed; strict 124-frame/stereo audit and full muted playback passed; retained red boat, travel/wake/camera parallax observed; human listening/final creative/public approval open",
     "all52FilesAndLongerOutputPreservedOnScopedRelease": true,
     "all54FilesAndReferenceOutputPreservedOnScopedRelease": true,
-    "wanImageMotionRun": "active; actual saved six-node UI request exact; independent resident-specific guard ready before allocation; 512x320/121frames/50steps/guidance5/BF16/video-only"
+    "wanImageMotionRun": "completed; strict 121-frame/24FPS/video-only audit and full playback passed; conditioned motion observed, heavy ending sail crop/full camera brief remains open",
+    "all56FilesAndWanOutputPreservedOnScopedRelease": true,
+    "localQueueAndCachesIdle": true,
+    "remainingUnrunMotionCandidates": [
+      "pika_first_frame_v2",
+      "h3_camera_action_v2",
+      "h3_first_frame_v2",
+      "h3_reference_motion_v2"
+    ]
   }
 }

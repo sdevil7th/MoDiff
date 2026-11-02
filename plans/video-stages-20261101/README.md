@@ -33,7 +33,11 @@ requested, so the full creative brief and human listening remain open. Both new
 clips are available privately. Pika reference-motion also passes full media,
 muted playback, retained identity and useful travel/wake/camera movement; all
 54 current app files survive ordinary scoped release. The revised Wan image
-workflow is now running through the normal built UI on Linux. The older checkpoints
+workflow also passes its 121-frame/video-only audit and full playback, with
+retained opening identity and useful motion. Its ending heavily crops the sail,
+so the complete camera brief remains open. Its owned release preserves all
+56 current app files. Both reference and Wan results are ready for local testing;
+the model queue and caches are idle. The older checkpoints
 below retain their original timing and source scope.
 
 The following checkpoint predates that motion feedback. The unstarted Pika

@@ -638,3 +638,29 @@ No Pika sampler/audio assumptions or new downloads are introduced. Its native
 media, conditioning/motion review, cleanup and final bounded handoff remain
 open. Earlier H3 technical evidence keeps its true source and is not rerun
 merely for labels; unrun H3/first-frame motion variants stay unaccepted.
+
+## Wan image output delivered; queue ready for local testing
+
+The revised Wan opening-image case completed in 10 minutes 24 seconds through
+the ordinary saved-workflow Run. Strict checks join actual task/attempt/owner,
+source and durable/served video bytes: all 121 frames, 512×320, 24 FPS and no
+audio stream, as expected. Whole actual built-client playback presented all
+121 frames with zero drops and no media error. The input boat remains
+recognizable, with travel, a wake and a strong camera approach. The ending
+heavily crops the sail; the requested controlled arc and full creative brief
+remain open. No unchanged retry was submitted to hide that limitation.
+
+Actual Model Setup and independent source-node scoped releases, followed by
+ordinary idle cleanup, preserve all 56 current app files and the durable served
+video. Cache and queue are empty; the original LTX/Wan process is untouched.
+Both reference and Wan outputs are available privately, with eight clip records
+including the four unchanged baselines. No models were downloaded or deleted.
+
+This closes the two remaining native reference/Wan rows in bounded local scope.
+Revised Pika first-frame-only and H3 camera/action, first-frame-only and reference
+motion candidates remain unrun. Historical H3 technical outputs keep their
+actual source and do not establish new motion. The current results and existing
+lifecycle proofs are ready for manual review; full creative/audio acceptance,
+model-backed service CLI verification, public-template qualification and the
+retained whole-app Gallery/hardware holds remain separate. The complete video
+plan is not marked verified from this local checkpoint.

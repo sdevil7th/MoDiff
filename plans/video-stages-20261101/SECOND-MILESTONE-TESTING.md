@@ -17,8 +17,10 @@ clip also passes all 192-frame/media/playback checks, with a native cut near
 requested arc. Both clips are now available for private review. The revised
 reference-motion clip now passes all technical/full muted playback checks,
 retained identity and useful boat/camera motion. It is first on the private
-review page. The revised Wan image run is active; do not submit another model
-while it runs.
+review page. Wan image-to-video also passes all 121 frames and full playback,
+with recognizable opening identity and useful movement; its strong camera
+approach heavily crops the ending sail. Both new results are available and
+the model queue/caches are idle. Full creative/audio approval remains open.
 
 The latest user review accepts the four H3/Pika clips' image quality but finds
 their motion insufficient. The old unstarted reference/Wan schedule is held.
@@ -26,8 +28,8 @@ Eight revised saved workflows use **My workflows → Video motion**; all eight
 already pass real built-client Save/reload and exact executable-graph checks.
 Three Pika motion results are now available for private review: camera/action,
 two scenes with a native cut, and reference-driven boat motion. Their individual
-framing/camera limitations and human listening remain open. Wan image execution
-is active; the remaining H3 and first-frame motion variants are unrun. The original **Video candidate**
+framing/camera limitations and human listening remain open. Wan image also
+has a completed native result with its ending-crop limitation recorded; the remaining H3 and first-frame motion variants are unrun. The original **Video candidate**
 workflows below remain available as baselines, not improved-motion evidence.
 
 Start the next quality review with **Pika — Camera tracking and cyclist action**:
@@ -92,7 +94,7 @@ Wait until the validation queue is idle. Keep the tested default settings for
 quality review. Actual observed H3 text/keyframe runs took about 2¼ hours each;
 reference sampling is substantially slower, currently estimated at 6–6½ hours
 on this Linux machine. Pika text/keyframes took about 26–29 minutes. The revised Pika
-reference case took 32 minutes 23 seconds. Wan image timing remains pending. These are not Windows performance claims.
+reference case took 32 minutes 23 seconds; Wan image took 10 minutes 24 seconds. These are not Windows performance claims.
 
 For a 2–3 hour manual session, review the retained full-quality clips and use a
 separate engineering copy for a fresh H3 interaction check. Its previously used
