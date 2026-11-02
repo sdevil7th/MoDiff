@@ -212,7 +212,8 @@
       ],
       "openIssues": [
         "Reuse completed LTX/Wan and H3/Pika text/keyframe evidence with actual source identities. Pika text finishing repair is explicit; original failed export remains retained.",
-        "H3 reference retry is active; guarded serial continuation admits Pika reference and Wan5B image only after technical media audit and normal owned-cache release. Listening, final visible workflow and service/lifecycle gaps remain open."
+        "H3 reference baseline continues unchanged. The old unstarted Pika-reference/Wan-image dispatcher is held for user motion feedback. Baseline-only audit/release precedes revised Pika camera/action and two-scene acceptance; no automatic full H3 reference rerun.",
+        "The user finds the original four H3/Pika clips visually good but motion insufficient. New versioned camera/action, first-frame/reference and timed-cut prompts require native motion and audio review; technical playback alone does not close them."
       ]
     },
     {
@@ -226,12 +227,15 @@
       "dependencies": ["V4", "V5", "V7"],
       "actualActiveHours": null,
       "evidenceRefs": [
-        "FIRST-MILESTONE.md; exact private originals retained separately"
+        "FIRST-MILESTONE.md; exact private originals retained separately",
+        "motion-recipes.v2.json",
+        "MILESTONE2-PROGRESS.md"
       ],
       "openIssues": [
         "Five existing LTX/Wan cards use normal split-stage creation; completed native evidence is retained.",
         "Seven H3/Pika/Wan image candidates pass real built-client Open/Save/reload and exact normal store/form/executable-graph round trips. Pika presentation and private candidate layout are corrected; native browser Run/Stop, final media acceptance and local handoff remain open.",
-        "No public video approval; exact output and rights/publication records remain separate."
+        "No public video approval; exact output and rights/publication records remain separate.",
+        "Eight separate motion candidates now pass real built-client Open/Save/reload, full prompt/frame checks and exact post-UI normal graph round trips. All 12 prior saved bodies remain exact. Native camera/action/cut/audio acceptance remains pending; originals retained."
       ]
     },
     {
@@ -248,11 +252,11 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "Complete backend8351b62a gate passed8975tests/13176subtests/763skips, Ruff, dependency consistency and CPU preflight. Client npm run check passed atd357832a; all119packaged/rebuilt bundle files are exact.",
-        "GitHub clean-checkout CI exposed6catalog failures: Pika evidence was bound toCRLFworking bytes while Git commitsLF. The strict byte binding is corrected without admission/validator changes;7focused tests/7subtests pass. Complete corrected backend rerun remains required; earlier local PASS is not clean-checkout proof.",
-        "Complete browser rerun at test-only client5ad393f3 against frozen backend8351b62a remains active. Earlier run passed16shared and321/322mocked cases; legacy fixture/readiness corrections pass focused reproduction and preserve product bytes.",
-        "Read-only original-app preservation captured631applicationfiles/2271trackedfiles/105modelsnapshots. Protected deployment remains pending current browser PASS and fresh state recheck. Active model instance remains9168e6de/f557b9f9.",
-        "Whole-app Gallery acceptance remains failed:83retained errors plus5earlier LTX/Wan stage-card locks. All90computed locks are unchanged by the current Pika changes; no qualification or public media relabelling."
+        "Corrected backend 579bd123 complete gate passed 8,976 tests / 13,183 subtests / 763 skips, Ruff, dependency consistency and CPU preflight. Client npm run check passed at d357832a; all 119 bundle files exact.",
+        "Full browser gate at test-only client 5ad393f3 against frozen backend 8351b62a passed 16 shared and 322 mocked cases. Product bytes remain d357832a.",
+        "Original LTX/Wan app protected refresh to 579bd123/d357832a completed, followed by actual retained-LTX built-client reopen/reload. Normal envelope changes and startup approval-file replacement are explicitly recorded; no global preservation PASS.",
+        "Active H3 reference worker remains 9168e6de/f557b9f9. Final idle-only M2 refresh needs a new versioned admission for baseline-only closeout because unstarted old serial cases are held. Backend 17a784ce changes only Ubuntu CI timeout 35 to 45 minutes after the test process passed but its job timed out. All four backend CI jobs at 17a784ce now pass; the CI hold is closed.",
+        "Whole-app Gallery acceptance remains failed: 83 retained errors plus 5 earlier LTX/Wan stage-card locks. All 90 computed locks are unchanged by the Pika product changes; no qualification or public media relabelling."
       ]
     },
     {
@@ -323,5 +327,24 @@
     ],
     "report": "FIRST-MILESTONE.md",
     "actualActiveHours": null
+  },
+  "motionRevision": {
+    "revision": 2,
+    "reason": "User accepted visual quality but rejected insufficient camera/subject movement and scene changes.",
+    "sourceDescriptor": "motion-recipes.v2.json",
+    "candidates": 8,
+    "realEditorSaveReloadPassed": 8,
+    "postUiExecutableGraphRoundtripsPassed": 8,
+    "nativeMotionAccepted": 0,
+    "firstNativeCandidates": ["pika_camera_action_v2", "pika_two_scene_v2"],
+    "oldUnstartedSerialCasesHeld": true,
+    "currentH3ReferenceUnchanged": true,
+    "applicationCodeChanged": false,
+    "publicationApproved": false,
+    "incrementalEstimatedElapsedHoursAfterGpuIdle": {
+      "pikaCameraActionAndNeededUiLifecycle": [0.6, 1.0],
+      "pikaTwoSceneAndReview": [0.75, 1.5]
+    },
+    "estimateLimit": "These are additional Pika estimates, not a promise to rerun or finish all eight H3/Pika/Wan motion variants in that time. Longer-duration fit remains unmeasured; H3 reference currently costs 6 to 6.5 hours per full run."
   }
 }

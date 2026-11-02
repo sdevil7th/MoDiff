@@ -1,10 +1,33 @@
 # MiniMax, Pika and Wan image testing checklist
 
 Prepared 2 November 2026. **This is a checklist, not a completed delivery.**
-The H3 reference run, subsequent Pika reference/Wan image runs and final deployed
-pair still need to close. Check the current progress report before starting
+The H3 reference run, revised motion runs and final candidate-instance deployment
+still need to close. Check the current progress report before starting
 inference. Run large models on Linux; Windows supplies the browser and source
 checks. Keep the original first-milestone LTX/Wan evidence.
+
+The latest user review accepts the four H3/Pika clips' image quality but finds
+their motion insufficient. The old unstarted reference/Wan schedule is held.
+Eight revised saved workflows use **My workflows → Video motion**; all eight
+already pass real built-client Save/reload and exact executable-graph checks.
+Their native motion results are pending. The original **Video candidate**
+workflows below remain available as baselines, not improved-motion evidence.
+
+Start the next quality review with **Pika — Camera tracking and cyclist action**:
+expect visible pedalling/wheel rotation, lateral camera travel, changing view
+angle and foreground/background parallax. Then review **Pika — Two scenes with
+a timed cut**: expect eight seconds at 24 FPS, a forest-to-plaza cut near four
+seconds, the same cyclist/bicycle, camera travel in both locations and matching
+sound changes. First-frame variants should preserve the opening boat identity
+but allow subsequent travel, heel, wake and a camera arc; Last Frame is omitted.
+Reference variants preserve identity without fixing the opening composition.
+See [the versioned recipes](motion-recipes.v2.json) for exact prompts/settings.
+
+Review full playback, temporal consistency and original audio. A playing file,
+distinct frames or successful encoding alone cannot pass the motion brief.
+Keep failures as separate versions. Do not queue these while the H3 baseline
+or another model task is active. Pika's longer duration requires separate
+resource admission; no unsupported sampler override is part of these recipes.
 
 ## Find the workflows
 

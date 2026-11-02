@@ -198,3 +198,24 @@ Do not conclude with a single all-done flag when a family, task, media approval 
   byte validator, bind the existing committed LF bytes and test every evidence
   family for line-ending drift. No review semantics or admission may change as
   part of this correction. Compare committed blobs as well as working files.
+
+## Motion-feedback lessons
+
+- Review the creative brief before expensive inference. Gentle drift and a
+  steady camera cannot demonstrate camera travel, strong action or scene cuts.
+  Record camera path, subject action and scene transitions as separate checks;
+  distinct frames and successful playback are technical evidence only.
+- User review can overturn an earlier sampled visual judgment. Preserve the
+  old clips and audit records, append the new verdict, and create a versioned
+  recipe instead of retroactively labelling the old output satisfactory.
+- Pin the prompt-guide source as well as the sampler/model. Use the local
+  pipeline's documented syntax and input-image roles; web-product tags or
+  invented motion-strength parameters are not a library contract.
+- Hold unstarted stale recipes after material feedback. Stop only the exact
+  owned dispatcher, keep the active task and resource guard intact, and replace
+  obsolete closeout/refresh prerequisites explicitly. Do not fabricate a
+  successful serial receipt for cases that were never submitted.
+- First test the cheaper short Pika motion candidate, then the longer timed
+  two-scene case. Admit duration against measured memory/storage headroom and
+  preserve task-specific reference preprocessing. A new full H3 reference run
+  is not the first way to validate a prompt improvement.

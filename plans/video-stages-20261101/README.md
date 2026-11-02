@@ -12,6 +12,17 @@ gates passed. MiniMax H3/Pika, public-template acceptance and whole-app release
 signoff remain open; the original planning baseline below is historical.
 
 The next slice remains in progress; see [Milestone 2 progress](MILESTONE2-PROGRESS.md).
+The latest user review accepts the four clips' image quality but finds their
+motion insufficient. [Versioned motion candidates](motion-recipes.v2.json) add
+explicit subject action, camera travel, first-frame-only conditioning and an
+eight-second two-scene Pika example. Their native motion acceptance is pending;
+the earlier steady-camera recipes remain preserved as baselines. See
+[Video prompting](../../docs/video-prompting.md) for the researched approach.
+
+The following checkpoint predates that motion feedback. The unstarted Pika
+reference and Wan image sequence is now held for the revised recipes. The
+already running H3 reference baseline continues unchanged, with no subsequent
+automatic dispatch. A revised native queue requires its audit and scoped release.
 As of 2 November, H3 text and keyframe quality clips and Pika keyframes have
 technical, sampled visual and muted playback evidence. Pika's text output has
 an explicit retained finishing-repair chain, not a relabelled original PASS.
@@ -22,8 +33,8 @@ approved old Wan cache retirement freed 90.10 GB. H3 reference initially failed
 in eager vision attention; a scoped reference-only ROCm/BF16 math policy passes
 89 focused checks on both CPU and the active Linux reviewed runtime, plus an
 exact-size numerical probe. Its real reference retry has passed vision encoding
-and is denoising. Pika reference and Wan5B image follow sequentially only after
-the preceding technical media and owned-cache release checks pass.
+and is denoising. Pika reference and Wan5B image were originally scheduled after
+its audit and release; that unstarted schedule is superseded as described above.
 
 Client `d357832a` includes Pika saved-model preservation and a joined video/audio
 draft exporter. All seven locally saved candidates pass real built-client Open,

@@ -6,6 +6,8 @@ This directory contains the durable technical guides for the MoDiff backend. Sta
 
 [Video pipeline stages](video-pipeline-stages.md) describes the shared selected
 LTX/Wan stages, retained template finishing steps and native proof boundaries.
+[Video prompting and motion examples](video-prompting.md) covers camera paths,
+subject action, timed shots, input-image roles and honest motion acceptance.
 
 | Goal                                                                     | Guide                                                                                       |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |

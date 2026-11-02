@@ -429,3 +429,63 @@ The complete backend gate must run again on the committed correction. The
 ongoing client browser suite uses its frozen backend fixture; the active Linux
 inference checkout remains unchanged. Do not deploy the prior hash mismatch or
 represent the earlier local PASS as a clean-checkout/CI PASS.
+
+## Corrected final gates and original-app deployment
+
+The corrected backend gate at `579bd123` passed 8,976 tests, 763 skips and
+13,183 subtests in 1,604.50 seconds, plus Ruff, dependency consistency and CPU
+preflight. The complete client check passed at `d357832a`; the full browser
+gate at test-only `5ad393f3` passed all 16 shared and 322 mocked-app cases.
+The later backend `17a784ce` changes only the Ubuntu CI timeout from 35 to
+45 minutes after its test process passed but the job exceeded its deadline.
+These are code/browser gates, not new native or listening acceptance.
+
+The original LTX/Wan app is deployed with backend `579bd123` and the exact
+119-file `d357832a` product artifact. Its retained LTX workflow survived actual
+built-client reopen/reload; normal save-envelope revisions are recorded
+separately from exact snapshot content. Protected application/model contents
+remain preserved within the recorded scope. The active H3 reference instance
+still uses `9168e6de`; its final idle-only refresh remains pending.
+
+## Motion feedback and revised recipes, 2 November
+
+The user finds the four H3/Pika clips visually good but nearly static. This
+supersedes the earlier sampled-motion sufficiency assessment; technical media
+checks and original bytes remain valid in their narrower scope. The original
+prompts requested gentle drifting and a steady camera. Do not infer a model
+capability limit from those briefs or rerun them unchanged.
+
+Official Pika and H3 prompting guidance was reviewed at immutable revisions,
+alongside the pinned Diffusers contract. Eight new
+[motion candidates](motion-recipes.v2.json) cover concrete subject action,
+camera travel and parallax, first-frame-only conditioning, identity references,
+and an eight-second two-scene Pika variation with a cut at four seconds. H3/Pika
+use their documented structured prompt sections; Wan retains its own prompt
+format. Pika keeps the official six-evaluation sampler, scale-one task adapter
+and 24 FPS. No invented motion control, Steps, CFG or negative-prompt override
+is introduced. No runtime source change is required to pass these prompts or
+omit the last frame through the existing stages.
+
+The old unstarted Pika-reference/Wan-image dispatcher was stopped by exact
+owned-process identity. The current H3 reference task, graph, worker and guard
+are unchanged. A baseline-only observer will audit that run and release its
+owned cache; it submits no follow-on graph. The original three-case refresh
+precondition is obsolete and must be replaced by a versioned, bound admission.
+
+All eight revised candidates are now normal saved workflows in the Linux-backed
+app. They pass actual built-client Open, Save and reload, exact full prompt and
+frame-count checks, and post-UI normal store/form/executable-graph round trips.
+All 12 prior saved workflow bodies remain exact. One new empty draft appeared
+during the browser-check window; it was retained because its browser client
+identity was not captured before startup. No model graph was submitted by these
+checks. Fresh Pika Run/Stop/recovery, native motion and audio review remain open.
+Start with the short Pika action case, then admit the longer two-scene case
+against measured headroom. Do not automatically schedule another six-hour H3
+reference run before reviewing the cheaper motion results. Original clips,
+recipes, failures and raw captures remain preserved. Publication is not approved.
+
+GitHub CI for `17a784ce` has now completed successfully: lint and backend jobs
+on Ubuntu, Windows and macOS all pass. This closes the CI timeout hold, not
+native or whole-app Gallery acceptance. The motion changes are creative recipe
+descriptors, documentation and local saved workflows; application code and
+installed runtimes are unchanged, so the passing full code gates are reused.
