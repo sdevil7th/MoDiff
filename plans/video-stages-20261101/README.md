@@ -30,8 +30,10 @@ nodes and scoped release preserves the outputs. The longer two-scene clip now
 passes all 192-frame/media/playback checks, with a native forest-to-plaza cut
 near 4.17 seconds and movement in both shots. Its plaza camera is steadier than
 requested, so the full creative brief and human listening remain open. Both new
-clips are available privately. Pika reference-motion is sampling; Wan image
-remains next. The older checkpoints
+clips are available privately. Pika reference-motion also passes full media,
+muted playback, retained identity and useful travel/wake/camera movement; all
+54 current app files survive ordinary scoped release. The revised Wan image
+workflow is now running through the normal built UI on Linux. The older checkpoints
 below retain their original timing and source scope.
 
 The following checkpoint predates that motion feedback. The unstarted Pika

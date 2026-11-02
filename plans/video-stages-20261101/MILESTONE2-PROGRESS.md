@@ -603,3 +603,38 @@ reference adapter and official six evaluations. The new task passed reference
 encoding and reached sampling; full output/motion review is pending. No new
 weights were downloaded. The revised Wan image case remains next after its
 technical review and release.
+
+## Reference motion passes; Wan image execution active
+
+The revised Pika reference-motion case completed in about 32 minutes 23 seconds
+through the ordinary saved-workflow Run. Strict checks join its actual task,
+attempt, owner, source and durable/served bytes; all 124 frames at 24 FPS and
+original stereo 32 kHz audio are retained. Whole built-client muted playback
+presented all 124 frames with zero drops and no media error. The native
+application receipt contains the required reference adapter's exact immutable
+artifact, hash and scale one.
+
+Twelve whole-duration samples show the retained red sailboat travelling with a
+wake, changing view and background parallax. Useful primary reference motion
+passes for local testing. Human listening and final creative/publication
+approval remain separate. The result is first on the seven-clip private review
+page; the previous six media records and original outputs remain unchanged.
+
+Actual Model Setup scoped release cleared its model-dependent nodes. The
+independent image/reference preparation caches correctly remained until the
+normal source-node scoped release; an early helper assertion expecting an empty
+cache stopped before cleanup. This was a helper scope assumption, not an
+application or preservation failure. Both ordinary releases and idle cleanup
+then preserved all 54 current app files and durable served video bytes, with
+empty cache and no remaining owned scratch. No model cache was deleted.
+
+The revised Wan 5B image-to-video workflow is now running through the actual
+built UI. Its six-node submitted graph matches the frozen saved workflow
+exactly. Before Run, a separate monitor checked its retained immutable cache,
+complete indexed safetensors, original image hash, active reviewed runtime,
+idle queue and memory/disk reserves. It uses 512×320, 121 frames, 24 FPS,
+50 steps, guidance five, BF16 and resident placement, with video-only export.
+No Pika sampler/audio assumptions or new downloads are introduced. Its native
+media, conditioning/motion review, cleanup and final bounded handoff remain
+open. Earlier H3 technical evidence keeps its true source and is not rerun
+merely for labels; unrun H3/first-frame motion variants stay unaccepted.
