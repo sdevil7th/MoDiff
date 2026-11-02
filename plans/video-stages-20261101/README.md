@@ -26,8 +26,12 @@ Pika workflow passes actual browser Run/Stop at step 1 of 6 with zero cancelled
 outputs and worker recovery. Its fresh clip now passes complete frame/audio and
 muted playback checks and demonstrates subject/camera movement, with tighter
 ending framing recorded as a limitation. An unchanged repeat reuses all five
-nodes and scoped release preserves the outputs. The longer two-scene run is
-active; its scene-change result and human listening remain pending. The older checkpoints
+nodes and scoped release preserves the outputs. The longer two-scene clip now
+passes all 192-frame/media/playback checks, with a native forest-to-plaza cut
+near 4.17 seconds and movement in both shots. Its plaza camera is steadier than
+requested, so the full creative brief and human listening remain open. Both new
+clips are available privately. Pika reference-motion is sampling; Wan image
+remains next. The older checkpoints
 below retain their original timing and source scope.
 
 The following checkpoint predates that motion feedback. The unstarted Pika

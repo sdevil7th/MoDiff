@@ -12,7 +12,10 @@ at evaluation 1 of 6, zero cancelled outputs and worker recovery. Its fresh
 124-frame clip and full muted playback pass, with subject/camera movement
 observed and tighter ending framing recorded. An unchanged repeat reuses all
 five nodes; scoped release preserves both outputs. The eight-second two-scene
-run is active. Do not submit another model while that validation task runs.
+clip also passes all 192-frame/media/playback checks, with a native cut near
+4.17 seconds and movement in both shots. Its plaza camera is steadier than the
+requested arc. Both clips are now available for private review. The revised
+reference-motion run is active; do not submit another model while it runs.
 
 The latest user review accepts the four H3/Pika clips' image quality but finds
 their motion insufficient. The old unstarted reference/Wan schedule is held.

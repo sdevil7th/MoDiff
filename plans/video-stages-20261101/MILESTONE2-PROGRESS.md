@@ -571,3 +571,35 @@ saved workflow and its independent guard was ready before loading. The requested
 forest-to-plaza cut near four seconds, identity, movement in both shots and audio
 still require actual output review. Pika reference and Wan image remain open;
 the old unstarted quiet recipes are not silently resubmitted.
+
+## Native timed cut and remaining reference execution
+
+The eight-second Pika case completed successfully. Strict media checks retain
+all 192 frames at 24 FPS with original stereo 32 kHz audio and exact native
+task/owner/source/durable/served-byte bindings. The actual built-client Video
+Output played all eight seconds, muted, with 192 presented frames, zero dropped
+frames and no media error.
+
+Whole-duration samples show forest cycling, the root-crossing action and a
+distinct plaza/fountain shot with the same red jacket, black helmet and blue
+bicycle. Analysis of the unmodified native video detects the cut at frame 100,
+about 4.17 seconds. This is a generated scene transition, without stitching or
+review re-encoding. The forest camera tracks the subject; the plaza camera is
+largely fixed, so the requested strong arc in that shot is not clearly achieved.
+The complete creative brief and human listening remain open. Both new motion
+clips are available privately alongside the four unchanged original baselines.
+
+Actual Model Setup scoped release and ordinary idle cleanup cleared this case's
+cache/scratch while preserving its durable bytes and all 52 current application
+files. The already completed five-node cached-repeat proof is reused; this case
+was not rerun just to repeat it. No model cache was retired.
+
+The revised Pika reference-motion workflow is now running through the normal
+built UI with nine executable nodes. Its guard checks the complete cached
+35-file reference selection against the committed closure and binds the retained
+512×288 boat input to its original staging hash. It keeps the trained 1,024-pixel
+reference preprocessing, existing ROCm/BF16 reference attention policy, required
+reference adapter and official six evaluations. The new task passed reference
+encoding and reached sampling; full output/motion review is pending. No new
+weights were downloaded. The revised Wan image case remains next after its
+technical review and release.
