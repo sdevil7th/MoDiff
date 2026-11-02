@@ -131,6 +131,11 @@ blocks. Ordered references use the selected library-owned dataclasses and
 retain decoded video frame rates and audio sample rates. Saved H3 actions
 continue to resolve their original contracts.
 
+New run history recognizes both saved H3 actions and the declared shared H3/Pika
+routes. Shared routes require the exact pipeline, workflow, block selectors,
+single Model Setup owner and complete state chain. This task label grants no
+runtime, Auto or template qualification and does not backfill old receipts.
+
 Their actual loop progress uses the existing node progress bridge: totals count
 real model evaluations, and Stop raises after the current official loop step.
 The temporary per-instance progress methods are restored on success, failure or

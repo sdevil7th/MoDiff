@@ -69,6 +69,11 @@ def modular_graph_tasks(nodes, loader_id, consumer_ids, pipeline_class):
     workflows = next((p['workflows'] for p in load_reviewed_modular_workflow_snapshot()['contracts']
                       if p['pipelineClass'] == pipeline_class), ())
     if not workflows:
+        from modiff.supplemental_modular_contracts import reviewed_supplemental_modular_contract
+
+        supplement = reviewed_supplemental_modular_contract(pipeline_class)
+        workflows = supplement['workflows'] if supplement else ()
+    if not workflows:
         return set()
     helpers = {binding[1] for binding in MODULAR_AUXILIARY_OPERATION_BINDINGS.values()}
     helpers.update({"modules.ModularDiffusers.Guider", "modules.ModularDiffusers.Layers"})
@@ -84,6 +89,14 @@ def modular_graph_tasks(nodes, loader_id, consumer_ids, pipeline_class):
     candidates = []
     routes = [(task, adapter, workflow['id']) for workflow in workflows
               for task, adapter in modular_task_adapters(pipeline_class, workflow)]
+    # Saved H3 actions remain recognized alongside the newer shared stages.
+    # This read-only projection never changes immutable library definitions or
+    # admits an edited composition, a model artifact or an Auto recipe.
+    from modiff.modular_whole_workflow_contracts import SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS
+
+    routes.extend((workflow['taskId'], adapter, workflow['id']) for workflow in workflows
+                  if (adapter := SUPPLEMENTAL_WHOLE_WORKFLOW_GRAPH_ADAPTERS.get((pipeline_class, workflow['id'])))
+                  and adapter not in [route for _, route, _ in routes])
     for task, route, workflow_id in routes:
         names = {
             action: MODULAR_ACTION_BINDINGS[action][1]
@@ -107,6 +120,15 @@ def modular_graph_tasks(nodes, loader_id, consumer_ids, pipeline_class):
         selected_workflow = nodes.get(loader_id, {}).get('params', {}).get('workflow_id', {}).get('value')
         if selected_workflow and selected_workflow != workflow_id:
             continue
+        if any(action.startswith('workflow_joint_av_') for action in route['actionSequence']):
+            if (selected_workflow != workflow_id
+                    or nodes.get(loader_id, {}).get('params', {}).get('model_type', {}).get('value') != pipeline_class
+                    or any(stages[ids[action]].get('params', {}).get('block_path') != {'value': block}
+                           or stages[ids[action]].get('params', {}).get('pipeline_components') != {
+                               'sourceId': loader_id, 'sourceKey': 'pipeline_components',
+                           }
+                           for action, block in zip(route['actionSequence'], route['upstreamBlockSequence']))):
+                continue
         expected = {
             (ids[e['producerAction']], e['producerOutput'], ids[e['consumerAction']], e['consumerInput'])
             for e in route['stateEdges']
