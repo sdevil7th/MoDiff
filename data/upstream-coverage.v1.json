@@ -2458,7 +2458,7 @@
       "status": "executable"
     }
   ],
-  "contentHash": "sha256:efab7eccaf43d4a3c7ae6afa2a00c05ec787497876bb0c0a654e7c952d914a07",
+  "contentHash": "sha256:6eb125ad98f8ad4bd4116fd04313f54396fbdaa8e71f34b68e7791fd9f409d34",
   "diffusersPipelines": [
     {
       "artifactReviews": [],
@@ -5298,17 +5298,17 @@
       "equivalentTo": [],
       "exactExecutionSpecs": [
         {
-          "id": "minimax-h3:modular-first-last-frame-to-video-with-audio:v1",
+          "id": "minimax-h3:modular-first-last-frame-to-video-with-audio:v2",
           "mode": "first_last_frame_to_video_with_audio",
           "modelType": "MiniMaxH3ModularPipeline"
         },
         {
-          "id": "minimax-h3:modular-reference-to-video-with-audio:v1",
+          "id": "minimax-h3:modular-reference-to-video-with-audio:v2",
           "mode": "reference_to_video_with_audio",
           "modelType": "MiniMaxH3ModularPipeline"
         },
         {
-          "id": "minimax-h3:modular-text-to-video-with-audio:v1",
+          "id": "minimax-h3:modular-text-to-video-with-audio:v2",
           "mode": "text_to_video_with_audio",
           "modelType": "MiniMaxH3ModularPipeline"
         }
