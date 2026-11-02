@@ -727,3 +727,39 @@ and no last-frame value/source. The guard uses the finite fl2va artifact closure
 and required frame adapter, not reference-only preprocessing. No concurrent
 model or extra H3 run was started. Model-backed Service CLI verification remains
 next after this case's actual output review and owned release.
+
+## Selected continuation complete and ready for testing
+
+First-frame v3 completed in 27 minutes 8 seconds through actual built-client
+Run. Its eight-node graph connects the opening image and supplies no last frame.
+Strict native task/source/media checks pass all 124 frames at 832×480, 24 FPS,
+with original stereo 32 kHz audio. Full editor playback presented all frames
+with no drops or media errors. Opening identity, gentle movement and whole-boat
+framing pass local review; human visual/audio acceptance remains pending. Owned
+loader/input releases preserved all 62 current app files and durable media.
+
+The subsequent real `modiff.service` CLI run completed in about 10 minutes
+6 seconds including client polling, exited zero and returned named `video`
+from the named image/prompt inputs. Original observed HTTP bytes match the
+current-source exported package and submitted graph. Actual fresh computation
+includes all 50 sampling steps. Its 121-frame, 512×320, 24 FPS video-only output
+passes strict task/attempt/source/durable/served-byte joins and complete editor
+playback with zero drops/errors. The bytes equal the already approved Wan clip
+under the same recipe. This closes actual service inference for this route,
+not every model or runtime. Service-created cache controls were visible after
+ordinary workflow open and acknowledged scoped release without reload.
+
+Final scoped releases/idle cleanup preserve all 64 app files and durable media.
+Both deployed apps are ready with idle queues/empty caches and no downloads;
+the original LTX/Wan worker is unchanged. All ten private review files remain
+hash-exact, including seven human-approved clips, rejected v2 and two new v3s.
+All 22 pre-existing snapshots remain exact; 21 full bodies are exact. The sole
+envelope-only first-frame v2 change remains explicitly retained, not restored or
+promoted into a blanket preservation PASS.
+
+The [selected handoff](SELECTED-CONTINUATION-HANDOFF.md) records tests, expected
+results, command-observer incidents and remaining limits. Recipe/document-only
+changes reuse the full passing application gates. No downloads, deletions,
+new runtime, broad gate reruns, extra H3 renders or public uploads occurred.
+Human review of the two new clips, listening/publication, the optional-input Fix
+diagnostic and separate whole-app/Gallery/hardware qualification remain open.

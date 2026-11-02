@@ -98,7 +98,7 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "Shared task-specific ports and helper selection are corrected. New Wan 5B image stage binding is implemented; its guarded native run remains open. Existing saved execution specification bodies remain exact."
+        "Shared task-specific stages and Wan image binding are deployed and have bounded native evidence. No remaining implementation blocker in the selected continuation; broader task/resource coverage is not implied."
       ]
     },
     {
@@ -117,8 +117,7 @@
         "MILESTONE2-PROGRESS.md"
       ],
       "openIssues": [
-        "Image/video attachment and captured-model download name browser checks passed. Accurate direct-video LoRA limitation now passes387 focused checks and2 browser cases.",
-        "Scoped video-source/condition-strength capture and history support pass44 backend and43 client checks. Final paired production integration remains open."
+        "Paired production integration and current editor/media/lifecycle checks pass in bounded scope. Optional Reference Assembler inputs still appear in Fix suggestions on a valid image-only graph; no unwanted fix was applied, and the exact registry/create origin needs separate diagnosis."
       ]
     },
     {
@@ -135,8 +134,7 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "Five selected routes retain bounded native output. The separate Wan 5B image profile/adapter and shared-stage authoring are implemented with focused contract checks; native image-to-video acceptance remains open.",
-        "Video-source/condition-strength accounting is implemented; final paired integration remains open."
+        "Five selected LTX/Wan routes and the direct Wan image route retain actual native evidence. Current paired integration, Wan full playback and real named-input/output Service CLI inference pass. Additional routes/hardware remain outside these proofs."
       ]
     },
     {
@@ -154,8 +152,7 @@
         "MILESTONE2-PROGRESS.md"
       ],
       "openIssues": [
-        "H3 text and keyframe quality clips have technical, sampled visual and muted browser playback evidence; listening remains open.",
-        "H3 reference completed at trained geometry after the reference-only ROCm math fix: native 22,861.73 seconds, 124 frames, 24 FPS, stereo 32 kHz. Strict technical media audit and owned release pass; visual identity/motion and human listening remain separate."
+        "H3 text/keyframe technical outputs and trained-geometry reference technical audit/release retain their actual source scope. Human listening remains open. Extra H3 camera/action, first-frame and reference motion variants are deferred by the user."
       ]
     },
     {
@@ -172,8 +169,7 @@
         "Milestone 2 private package/source/attachment checks; not native model evidence"
       ],
       "openIssues": [
-        "Pika first/last generation, ordinary AV export, unchanged nine-node cache reuse and intentional native Stop/recovery pass in bounded scope.",
-        "Current Pika text motion and eight-second timed-cut clips pass strict native/full media and muted playback checks. Actual UI Stop/recovery, five-node cached reuse and scoped release pass. Camera/action demonstrated; native forest-to-plaza cut near 4.17 seconds and subject movement in both shots. Tighter short-clip ending and steady plaza camera remain creative limitations; human listening/public admission open. Revised reference motion passes full media/playback, retained identity and useful travel/wake/camera movement; human listening/final creative/public approval remain open."
+        "Pika required immutable task adapters, fixed sampler, actual Stop/recovery, eligible cached reuse, joined AV media and owned release pass in bounded scope. Corrected reference and first-frame-only v3 pass strict native/full playback/local review; human visual/audio acceptance of these new clips and public qualification remain open."
       ]
     },
     {
@@ -191,9 +187,7 @@
         "Milestone 2 private package/source/attachment checks; not native model evidence"
       ],
       "openIssues": [
-        "H3 and Pika text/keyframe/reference selections are fully hash-verified. Ordinary finite task acquisition and exact installed status have separate app contract/browser checks.",
-        "The specifically approved oldWan14B cache retirement freed90.10GB; filesystem had381.18GB free after all reference downloads and before active offload scratch.",
-        "No further cache deletions are authorized. Native reference acceptance remains open."
+        "Existing finite immutable selections and required adapters are verified; the selected continuation needed no new downloads or model deletions. Reference and first-frame native routes are now exercised. Wider geometry/offload/disk combinations remain unqualified; do not infer additional deletion authorization."
       ]
     },
     {
@@ -211,9 +205,8 @@
         "MILESTONE2-PROGRESS.md"
       ],
       "openIssues": [
-        "Reuse completed LTX/Wan and H3/Pika text/keyframe evidence with actual source identities. Pika text finishing repair is explicit; original failed export remains retained.",
-        "Both revised Pika text clips and lifecycle/media checks pass in bounded scope. Timed cut is native and near 4.17 seconds; scoped release preserves all 52 current app files and outputs. Reference motion now passes strict media/full muted playback and useful identity/travel/camera checks; ordinary scoped release preserves all 54 current app files and media. Wan image now passes strict 121-frame/video-only audit, full playback and useful conditioned motion; its heavy ending crop remains a creative limitation. Scoped release preserves all 56 current app files with idle queue/cache; no duplicate old quiet cases or large H3 label-freshness reruns.",
-        "The user finds the original four H3/Pika clips visually good but motion insufficient. New versioned camera/action, first-frame/reference and timed-cut prompts require native motion and audio review; technical playback alone does not close them."
+        "Selected corrected-reference, first-frame-only and actual Wan Service CLI cases pass strict native task/media/full playback and scoped-release preservation checks. Existing Stop/recovery and cached-repeat evidence is reused; no duplicate runs for source labels.",
+        "User visually accepts seven original displayed outputs, including cycling/Wan, and rejects the old reference speedboat. Both new v3 clips pass local review but await human visual/audio review. Extra H3 motion runs are deferred; whole-plan acceptance remains separate."
       ]
     },
     {
@@ -232,10 +225,8 @@
         "MILESTONE2-PROGRESS.md"
       ],
       "openIssues": [
-        "Five existing LTX/Wan cards use normal split-stage creation; completed native evidence is retained.",
-        "Seven H3/Pika/Wan image candidates pass real built-client Open/Save/reload and exact normal store/form/executable-graph round trips. Pika presentation, actual browser lifecycle and bounded native reference/Wan rows are closed with their exact scope. Final creative/audio/public qualification remains open.",
-        "No public video approval; exact output and rights/publication records remain separate.",
-        "Eight revised candidates retain real editor/persistence/graph checks. Four revised Pika/Wan clips are available privately with primary motion/native scene change and full media/playback checks. Tighter short ending and insufficient plaza camera arc remain explicit limitations; full creative/listening/public acceptance is unclosed. Reference identity/travel/wake/camera and Wan conditioned motion pass for local testing; Wan ending crop remains a limitation. Originals retained."
+        "Twelve original local candidates and eight revised motion workflows retain actual editor/graph evidence. Two v3 Pika replacements are saved, reopened and natively exercised. Public-template qualification, exact-file rights/publication records and human listening remain open; no public video approval exists.",
+        "Seven previously displayed clips retain human visual approval; rejected reference v2 stays preserved. Corrected reference/first-frame v3 are separate outputs awaiting human review. Superseded first-frame v2 remains unrun, not relabelled complete."
       ]
     },
     {
@@ -273,7 +264,7 @@
         "FIRST-MILESTONE.md; exact private originals retained separately"
       ],
       "openIssues": [
-        "First and current bounded local testing handoffs are ready. Manual four-family creative/audio acceptance and the unrun revised H3/Pika first-frame motion variants remain open; native reference/Wan receipts and postmortem are retained privately."
+        "The user-selected corrected Pika/first-frame/real Service CLI continuation and its handoff are ready for testing. Human review of the two new v3 clips, listening/publication, deferred H3 variants and separate whole-app holds remain open. The complete plan is not marked verified."
       ]
     }
   ],
@@ -378,17 +369,33 @@
     "selectedContinuation": {
       "dateIst": "2026-11-03",
       "recipeDescriptor": "motion-recipes.v3.json",
-      "correctedReference": "completed; full 124-frame/stereo audit and whole muted playback passed; local gentle-drift/realism review passes, human review pending; all 60 app files preserved",
-      "firstFrameOnly": "active native UI run; exact eight-node opening-image-only graph, finite fl2va closure and strict guard ready before allocation",
-      "serviceCli": "current-source Wan package exported; actual native CLI run pending",
-      "handoff": "pending these selected native cases",
+      "correctedReference": "completed; strict 124-frame/stereo audit, whole editor playback and local gentle-drift review pass; human visual/audio review pending; 60 app files preserved",
+      "firstFrameOnly": "completed; opening image only/no last frame, strict 124-frame/stereo audit, full editor playback and local identity/motion checks pass; human review pending; 62 app files preserved",
+      "serviceCli": "completed; actual modiff.service run executes 50-step Wan graph and returns named video from image/prompt; strict 121-frame/video-only audit and whole editor playback pass; 64 app files preserved",
+      "handoff": "SELECTED-CONTINUATION-HANDOFF.md",
       "preserveSevenApprovedClips": true,
       "deferredExtraH3MotionRuns": [
         "h3_camera_action_v2",
         "h3_first_frame_v2",
         "h3_reference_motion_v2"
       ],
-      "runtimeOrSamplerChanges": false
-    }
+      "runtimeOrSamplerChanges": false,
+      "status": "ready_for_bounded_private_testing",
+      "readyForUserTesting": true,
+      "wholePlanComplete": false,
+      "wholeAppReleaseSignoff": false,
+      "bothAppsReadyQueueCacheIdle": true,
+      "noDownloads": true,
+      "finalPreservation": {
+        "protectedAppFilesExactOnFinalRelease": 64,
+        "priorWorkflowSnapshotsExact": 22,
+        "priorWorkflowBodiesExact": 21,
+        "envelopeOnlyChangedWorkflow": "video_motion_pika_first_frame_v2",
+        "envelopeOnlyFields": ["clientId", "revision", "updatedAt"],
+        "allTenReviewMediaServedExact": true,
+        "globalPreservationPassClaimed": false
+      }
+    },
+    "supersededUnrunFirstFrameV2": "Selected first-frame acceptance completed genuinely with v3; v2 remains unrun."
   }
 }

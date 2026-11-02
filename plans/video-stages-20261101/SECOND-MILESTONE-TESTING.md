@@ -1,5 +1,13 @@
 # MiniMax, Pika and Wan image testing checklist
 
+Current selected continuation, 3 November: corrected reference v3 and
+first-frame-only v3 pass strict native/full playback checks and are ready for
+human review. A real model-backed Wan Service CLI run returns the named video
+and passes native/media/playback/preservation checks. Both apps are ready and
+idle. See the [current handoff](SELECTED-CONTINUATION-HANDOFF.md), which supersedes
+the earlier pending/reference-speedboat assessments below. Extra H3 runs are
+deferred; human listening/publication and whole-plan qualification remain open.
+
 Latest user visual verdict, 3 November: seven displayed clips accepted, including
 both cycling clips. Pika's referenced boat is rejected for unrealistic
 paper-speedboat motion. Preserve that failed creative version; do not rerun the

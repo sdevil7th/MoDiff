@@ -1,17 +1,19 @@
 # Video stages workflows and templates
 
-Current authorized continuation: correct the rejected Pika reference clip,
-complete Pika first-frame-only acceptance, verify a real model-backed Service
-CLI invocation and finish the handoff. The seven approved clips are preserved;
-additional H3 motion runs are deferred. [Version 3 recipes](motion-recipes.v3.json)
-retain the old recipes and correct the paper-boat motion brief without runtime
-or sampler changes.
+The selected local continuation is ready for testing: corrected Pika reference
+and first-frame-only v3 clips, real model-backed Wan Service CLI verification,
+and [the completed handoff](SELECTED-CONTINUATION-HANDOFF.md). The seven approved
+clips and rejected v2 are preserved; additional H3 motion runs are deferred.
+[Version 3 recipes](motion-recipes.v3.json) retain their frozen authoring status;
+current completion evidence is in the handoff and task ledger. No runtime or
+sampler change was required.
 
 Latest visual review, 3 November: the user accepts seven of the eight displayed
 videos and specifically praises the cycling clips. The Pika reference boat is
 rejected for unrealistic paper-speedboat motion and needs a new creative version.
 Its technical checks remain valid; original media are preserved. Audio,
-publication and the four unrun revised motion candidates remain separate.
+publication remain separate. The selected first-frame route is now genuinely
+executed as v3; its superseded v2 and the three deferred H3 variants remain unrun.
 
 Prepared on 1 November 2026 for the approved video-stage design. This is an implementation plan, not an execution or release signoff. It covers shared video authoring and a bounded Linux campaign for LTX, Wan, MiniMax H3 and Pika H3 Flex. The estimates assume one source author and one Linux model worker.
 
