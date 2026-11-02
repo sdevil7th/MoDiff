@@ -705,3 +705,25 @@ inference after both Pika cases are reviewed and released; metadata export alone
 does not close that proof. Existing code gates and approved output evidence are
 reused. Browser authoring failures and narrower preservation results remain in
 the private log; no raw evidence or old recipe is overwritten.
+
+## Corrected reference v3 delivered; first-frame v3 active
+
+The corrected reference completed in 32 minutes 42 seconds. Strict native
+task/media checks retain all 124 frames at 24 FPS and original stereo 32 kHz
+audio. Whole actual built-client muted playback presented all 124 frames with
+zero drops or media errors. Whole-duration samples show the original folded
+paper boat drifting gently, small ripples and modest camera travel, without the
+previous powered-looking wake. The framing is wider and the boat remains small;
+final human visual/audio acceptance is still separate from this local review.
+
+Actual Model Setup and independent input scoped releases plus ordinary idle
+cleanup preserved all 60 current app files and the durable video. The new clip
+is first on the private review page; all eight prior media records and seven
+user approvals remain unchanged, including the rejected v2 diagnostic.
+
+First-frame v3 then started through the normal built UI with its own guard ready
+before allocation. Its exact eight-node graph has the opening image connected
+and no last-frame value/source. The guard uses the finite fl2va artifact closure
+and required frame adapter, not reference-only preprocessing. No concurrent
+model or extra H3 run was started. Model-backed Service CLI verification remains
+next after this case's actual output review and owned release.
