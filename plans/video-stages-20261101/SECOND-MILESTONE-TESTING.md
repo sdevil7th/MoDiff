@@ -8,14 +8,19 @@ checks. Keep the original first-milestone LTX/Wan evidence.
 
 Both Linux instances now serve the tested `579bd123` / `d357832a` application
 pair. The revised Pika camera/action workflow has passed actual browser Run/Stop
-at evaluation 1 of 6, zero cancelled outputs and worker recovery. Its unchanged
-fresh Run is active. Do not submit another model while that validation task runs.
+at evaluation 1 of 6, zero cancelled outputs and worker recovery. Its fresh
+124-frame clip and full muted playback pass, with subject/camera movement
+observed and tighter ending framing recorded. An unchanged repeat reuses all
+five nodes; scoped release preserves both outputs. The eight-second two-scene
+run is active. Do not submit another model while that validation task runs.
 
 The latest user review accepts the four H3/Pika clips' image quality but finds
 their motion insufficient. The old unstarted reference/Wan schedule is held.
 Eight revised saved workflows use **My workflows → Video motion**; all eight
 already pass real built-client Save/reload and exact executable-graph checks.
-Their native motion results are pending. The original **Video candidate**
+The first Pika camera/action result is now available for private review; its
+ending framing and human listening remain open. Other native motion results
+are pending. The original **Video candidate**
 workflows below remain available as baselines, not improved-motion evidence.
 
 Start the next quality review with **Pika — Camera tracking and cyclist action**:

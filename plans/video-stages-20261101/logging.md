@@ -240,3 +240,13 @@ Do not conclude with a single all-done flag when a family, task, media approval 
   allocation and let the browser retain its genuine WebSocket session. Compare
   the unmodified dispatched nodes/paths with the frozen saved export, join the
   actual task/attempt, and never attach a competing socket under the same SID.
+
+- Report native execution time from the task's actual start/completion receipt.
+  Resource observers include their polling/detection overhead: the first motion
+  run was 1,629.85 native seconds versus 1,631.00 observer seconds; the cached
+  repeat was 4.10 native seconds versus 10.65 observer seconds. Do not describe
+  that observation delay as model computation or rerun a model to remove it.
+- Treat useful motion and full creative-brief acceptance separately. The new
+  Pika clip shows camera/subject movement, but tighter ending framing still
+  violates the full-bicycle instruction. Preserve that limitation rather than
+  promoting every creative criterion from successful frame/playback checks.

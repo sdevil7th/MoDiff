@@ -173,7 +173,7 @@
       ],
       "openIssues": [
         "Pika first/last generation, ordinary AV export, unchanged nine-node cache reuse and intentional native Stop/recovery pass in bounded scope.",
-        "Original Pika text AV export was truncated; finishing repair remains separate. The current revised camera/action workflow passed actual UI Run/Stop at 1 of 6, cancelled with zero outputs, recovered to a ready worker and cleared orphaned scratch through ordinary cleanup. Unchanged fresh UI Run is active. Reference output, motion/listening and final template admission remain open."
+        "Current Pika text motion clip now passes fresh joined export (124 frames, 24 FPS, stereo 32 kHz), full muted playback, actual UI Stop/recovery, five-node unchanged cached reuse and scoped release with 50 app files preserved. Useful camera/subject movement observed; tighter ending framing and human listening remain open. Original repaired/truncated text evidence stays separate. Pika reference and template admission remain open."
       ]
     },
     {
@@ -212,7 +212,7 @@
       ],
       "openIssues": [
         "Reuse completed LTX/Wan and H3/Pika text/keyframe evidence with actual source identities. Pika text finishing repair is explicit; original failed export remains retained.",
-        "H3 reference baseline technical execution/audit/release completed. Old unstarted reference/Wan dispatcher remains held for revised briefs. Pika actual browser Stop/recovery now passes; unchanged fresh camera/action UI Run is active before the longer two-scene admission.",
+        "H3 reference baseline technical audit/release and both protected app deployments completed. Current Pika motion UI Run/Stop/recovery/fresh export, five-node cached repeat and scoped release pass. Longer 192-frame/two-scene Pika is active with independent admission; Pika reference and Wan image remain open.",
         "The user finds the original four H3/Pika clips visually good but motion insufficient. New versioned camera/action, first-frame/reference and timed-cut prompts require native motion and audio review; technical playback alone does not close them."
       ]
     },
@@ -235,7 +235,7 @@
         "Five existing LTX/Wan cards use normal split-stage creation; completed native evidence is retained.",
         "Seven H3/Pika/Wan image candidates pass real built-client Open/Save/reload and exact normal store/form/executable-graph round trips. Pika presentation and private candidate layout are corrected; native browser Run/Stop, final media acceptance and local handoff remain open.",
         "No public video approval; exact output and rights/publication records remain separate.",
-        "Eight separate motion candidates now pass real built-client Open/Save/reload, full prompt/frame checks and exact post-UI normal graph round trips. All 12 prior saved bodies remain exact. Native camera/action/cut/audio acceptance remains pending; originals retained."
+        "Eight revised candidates retain real editor/persistence/graph checks. First Pika motion clip is available privately: primary action/camera/parallax observed, full 124-frame/media/playback checks pass, tighter ending framing recorded. Complete visual/human-listening/public acceptance is unclosed. Two-scene output pending; originals retained."
       ]
     },
     {
@@ -347,6 +347,11 @@
     },
     "estimateLimit": "These are additional Pika estimates, not a promise to rerun or finish all eight H3/Pika/Wan motion variants in that time. Longer-duration fit remains unmeasured; H3 reference currently costs 6 to 6.5 hours per full run.",
     "actualUiStopRecoveryPassed": true,
-    "freshCameraUiRun": "in_progress; native output and motion acceptance not yet closed"
+    "freshCameraUiRun": "completed with strict technical media and full muted playback; useful primary motion observed, tighter ending framing remains",
+    "nativePrimaryMotionObserved": 1,
+    "nativeTechnicalClipChecksPassed": 1,
+    "allFiveEligibleNodesCachedRepeatPassed": true,
+    "ordinaryScopedReleasePreservedOutputsAnd50Files": true,
+    "twoSceneRun": "active; independent 192-frame/8-second admission; no scene-change acceptance yet"
   }
 }

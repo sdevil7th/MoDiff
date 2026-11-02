@@ -23,8 +23,11 @@ The later 2 November checkpoint closes the H3 reference technical run and its
 scoped release. Both Linux app instances now serve the tested `579bd123` /
 `d357832a` application pair with protected data/runtime checks. The revised
 Pika workflow passes actual browser Run/Stop at step 1 of 6 with zero cancelled
-outputs and worker recovery. Its unchanged fresh Run is active; camera/action,
-scene-change and listening acceptance remain pending. The older checkpoints
+outputs and worker recovery. Its fresh clip now passes complete frame/audio and
+muted playback checks and demonstrates subject/camera movement, with tighter
+ending framing recorded as a limitation. An unchanged repeat reuses all five
+nodes and scoped release preserves the outputs. The longer two-scene run is
+active; its scene-change result and human listening remain pending. The older checkpoints
 below retain their original timing and source scope.
 
 The following checkpoint predates that motion feedback. The unstarted Pika

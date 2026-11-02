@@ -534,3 +534,40 @@ is now in its fresh ordinary UI Run, with a new independent guard ready before
 allocation. Both actual UI requests match the frozen executable nodes and paths.
 Full current-export frame/audio checks, useful motion and the longer timed-cut
 case remain pending.
+
+## First revised motion clip and complete current UI lifecycle
+
+The revised Pika camera/action task completed in 1,629.85 native seconds
+(about 27 minutes 10 seconds). The current joined exporter retains all 124
+decoded frames at 24 FPS with original stereo 32 kHz audio. Strict native
+task/attempt/owner/cache/source/durable/served-byte checks pass. The actual
+built-client Video Output played the whole 5.167-second clip at normal speed,
+muted, with no dropped frames or media error. No finishing repair or model rerun
+was used to produce this result.
+
+Whole-duration samples show pedalling and wheel/subject movement, foreground
+parallax and a camera move from side-on toward a front three-quarter view.
+This demonstrates useful primary motion. The ending frames crop the bicycle
+more tightly than requested; the complete visual brief and human listening
+remain unaccepted. The new clip is available in the private review alongside
+the four unchanged original baselines. It is not a public Gallery admission.
+
+The genuine native required-adapter receipt reports the exact pinned Pika
+artifact at scale one. The official guide maps both text and endpoint-frame
+tasks to `fl2va/adapter.safetensors`; reference generation uses its distinct
+adapter. This identity check is not general user-LoRA qualification.
+
+One unchanged ordinary UI repeat completed in 4.10 native seconds. Original
+browser events report all five executable nodes as cached with unchanged
+inputs; the resident recipe remained reusable and the media bytes are identical.
+Actual Model Setup scoped release cleared the five nodes and their temporary
+scratch while preserving both durable outputs and all 50 current application
+files. The app's durable previews remain available after release. No model cache
+was deleted.
+
+The separate eight-second, 192-frame Pika two-scene workflow is now admitted
+and running through the normal built UI. Its actual nodes/paths match the frozen
+saved workflow and its independent guard was ready before loading. The requested
+forest-to-plaza cut near four seconds, identity, movement in both shots and audio
+still require actual output review. Pika reference and Wan image remain open;
+the old unstarted quiet recipes are not silently resubmitted.
