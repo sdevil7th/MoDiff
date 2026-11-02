@@ -1,10 +1,15 @@
 # MiniMax, Pika and Wan image testing checklist
 
 Prepared 2 November 2026. **This is a checklist, not a completed delivery.**
-The H3 reference run, revised motion runs and final candidate-instance deployment
-still need to close. Check the current progress report before starting
+The H3 reference technical run and protected candidate-instance deployment have
+closed. Revised motion runs and their output acceptance remain open. Check the current progress report before starting
 inference. Run large models on Linux; Windows supplies the browser and source
 checks. Keep the original first-milestone LTX/Wan evidence.
+
+Both Linux instances now serve the tested `579bd123` / `d357832a` application
+pair. The revised Pika camera/action workflow has passed actual browser Run/Stop
+at evaluation 1 of 6, zero cancelled outputs and worker recovery. Its unchanged
+fresh Run is active. Do not submit another model while that validation task runs.
 
 The latest user review accepts the four H3/Pika clips' image quality but finds
 their motion insufficient. The old unstarted reference/Wan schedule is held.

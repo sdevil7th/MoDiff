@@ -219,3 +219,24 @@ Do not conclude with a single all-done flag when a family, task, media approval 
   two-scene case. Admit duration against measured memory/storage headroom and
   preserve task-specific reference preprocessing. A new full H3 reference run
   is not the first way to validate a prompt improvement.
+
+## Maintenance and native-browser handoff lessons
+
+- Check the maintenance interpreter's process APIs before touching a running
+  app. The model runtime's Python can lack `os.pidfd_open` even when the system
+  Python supports it. Keep the model interpreter and package environment fixed;
+  use the verified system API only for the protected maintenance action.
+- After graceful shutdown, distinguish live listeners from `TIME_WAIT` sockets.
+  A plain bind probe can fail after the exact owned processes have exited. Check
+  listener/process identity and protected state, preserve the failed receipt,
+  then use an explicit stopped-state continuation with an address-reuse probe.
+  Do not kill an unrelated listener or repeat the process-stop stage.
+- Playwright CLI's code evaluator does not support dynamic Node imports. Keep
+  bounded original browser events in memory and drain them through the CLI into
+  private host logs. On Windows, flatten multiline code and send large frozen
+  expectations in bounded chunks to avoid the command wrapper's argument limit.
+  Harness failures before dispatch are not product or native-model failures.
+- For actual Run/Stop evidence, establish the independent resource guard before
+  allocation and let the browser retain its genuine WebSocket session. Compare
+  the unmodified dispatched nodes/paths with the frozen saved export, join the
+  actual task/attempt, and never attach a competing socket under the same SID.

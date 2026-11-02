@@ -489,3 +489,48 @@ on Ubuntu, Windows and macOS all pass. This closes the CI timeout hold, not
 native or whole-app Gallery acceptance. The motion changes are creative recipe
 descriptors, documentation and local saved workflows; application code and
 installed runtimes are unchanged, so the passing full code gates are reused.
+
+## H3 reference completion and current video-app deployment
+
+The retained H3 reference task completed in 22,861.73 seconds of native execution
+(about 6 hours 21 minutes). Its original source remains `9168e6de`. Strict
+task/history/cache/durable/served-byte checks pass with 960×544, 124 decoded
+frames at 24 FPS and stereo 32 kHz audio. Ordinary scoped release cleared its
+owned cache and scratch while preserving all 46 application files. This closes
+technical execution at trained reference geometry; visual identity, sufficient
+motion and human listening are not inferred from those checks. Its quiet brief
+remains a baseline, with the user's revised motion request still open.
+
+The H3/Pika video instance now serves the tested `579bd123` / `d357832a` pair:
+119 disk bundle files and 118 served assets are exact. Its 46 protected files
+remain exact except the expected queue worker ID and update timestamp; queue
+task bodies, configuration, runtime and packages are preserved. The original
+LTX/Wan instance and worker were untouched. No package install, weight download
+or model deletion was part of this refresh.
+
+Two maintenance-helper holds are retained. First, the evaluation Python lacked
+the required process-descriptor API; it stopped before any process/source/data
+mutation. The system Python supplied that maintenance API without changing the
+model interpreter. Next, a probe rejected closing `TIME_WAIT` sockets after a
+verified graceful shutdown. No listener remained; an explicit stopped-state
+continuation used an address-reuse probe, rechecked exact data/process/source
+state and completed the same deployment without a second stop or force kill.
+
+The revised Pika camera/action workflow has now been submitted by the actual
+built client's Run button. Its executable nodes and paths exactly match the
+frozen normal saved-workflow export. An independent Linux resource guard was
+ready before allocation; only the genuine browser session captures WebSocket
+frames. This first attempt is the explicit UI Stop probe, followed by unchanged
+Run recovery and a fresh current joined AV export. Neither the probe nor model
+loading is a new motion-quality PASS.
+
+The actual UI Stop probe subsequently cancelled at evaluation 1 of 6 with zero
+outputs. A ready replacement worker retained the same application/runtime;
+the browser reconnected after four transient handshake resets. Ordinary idle
+accelerator cleanup removed 1,300 temporary disk-offload files left by process
+termination while preserving all 47 current application files. Free space
+returned to 380.81 GB; no model cache was deleted. The same unchanged workflow
+is now in its fresh ordinary UI Run, with a new independent guard ready before
+allocation. Both actual UI requests match the frozen executable nodes and paths.
+Full current-export frame/audio checks, useful motion and the longer timed-cut
+case remain pending.

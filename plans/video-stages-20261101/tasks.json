@@ -155,7 +155,7 @@
       ],
       "openIssues": [
         "H3 text and keyframe quality clips have technical, sampled visual and muted browser playback evidence; listening remains open.",
-        "H3 reference failed eager vision attention; reference-only ROCm math fix passes89 focused checks and exact-size numerical probe. Retry passed vision encoding and is denoising; measured full-run estimate is6-6.5hours, within an8hour bound."
+        "H3 reference completed at trained geometry after the reference-only ROCm math fix: native 22,861.73 seconds, 124 frames, 24 FPS, stereo 32 kHz. Strict technical media audit and owned release pass; visual identity/motion and human listening remain separate."
       ]
     },
     {
@@ -173,7 +173,7 @@
       ],
       "openIssues": [
         "Pika first/last generation, ordinary AV export, unchanged nine-node cache reuse and intentional native Stop/recovery pass in bounded scope.",
-        "Original Pika text AV export was truncated; its explicit finishing repair remains separate evidence. Reference output, listening, visible editor and final template admission remain open."
+        "Original Pika text AV export was truncated; finishing repair remains separate. The current revised camera/action workflow passed actual UI Run/Stop at 1 of 6, cancelled with zero outputs, recovered to a ready worker and cleared orphaned scratch through ordinary cleanup. Unchanged fresh UI Run is active. Reference output, motion/listening and final template admission remain open."
       ]
     },
     {
@@ -212,7 +212,7 @@
       ],
       "openIssues": [
         "Reuse completed LTX/Wan and H3/Pika text/keyframe evidence with actual source identities. Pika text finishing repair is explicit; original failed export remains retained.",
-        "H3 reference baseline continues unchanged. The old unstarted Pika-reference/Wan-image dispatcher is held for user motion feedback. Baseline-only audit/release precedes revised Pika camera/action and two-scene acceptance; no automatic full H3 reference rerun.",
+        "H3 reference baseline technical execution/audit/release completed. Old unstarted reference/Wan dispatcher remains held for revised briefs. Pika actual browser Stop/recovery now passes; unchanged fresh camera/action UI Run is active before the longer two-scene admission.",
         "The user finds the original four H3/Pika clips visually good but motion insufficient. New versioned camera/action, first-frame/reference and timed-cut prompts require native motion and audio review; technical playback alone does not close them."
       ]
     },
@@ -255,7 +255,7 @@
         "Corrected backend 579bd123 complete gate passed 8,976 tests / 13,183 subtests / 763 skips, Ruff, dependency consistency and CPU preflight. Client npm run check passed at d357832a; all 119 bundle files exact.",
         "Full browser gate at test-only client 5ad393f3 against frozen backend 8351b62a passed 16 shared and 322 mocked cases. Product bytes remain d357832a.",
         "Original LTX/Wan app protected refresh to 579bd123/d357832a completed, followed by actual retained-LTX built-client reopen/reload. Normal envelope changes and startup approval-file replacement are explicitly recorded; no global preservation PASS.",
-        "Active H3 reference worker remains 9168e6de/f557b9f9. Final idle-only M2 refresh needs a new versioned admission for baseline-only closeout because unstarted old serial cases are held. Backend 17a784ce changes only Ubuntu CI timeout 35 to 45 minutes after the test process passed but its job timed out. All four backend CI jobs at 17a784ce now pass; the CI hold is closed.",
+        "M2 H3/Pika instance now deploys the tested 579bd123/d357832a pair:119 disk files / 118 served assets exact,46 protected files exact except expected queue worker/timestamp, prior task bodies/config/runtime/packages preserved. Original LTX/Wan worker untouched. Two diagnosed maintenance-helper holds are retained; explicit supported-interpreter/stopped-state continuation completed without force. All 4 backend CI jobs at 17a784ce pass.",
         "Whole-app Gallery acceptance remains failed: 83 retained errors plus 5 earlier LTX/Wan stage-card locks. All 90 computed locks are unchanged by the Pika product changes; no qualification or public media relabelling."
       ]
     },
@@ -345,6 +345,8 @@
       "pikaCameraActionAndNeededUiLifecycle": [0.6, 1.0],
       "pikaTwoSceneAndReview": [0.75, 1.5]
     },
-    "estimateLimit": "These are additional Pika estimates, not a promise to rerun or finish all eight H3/Pika/Wan motion variants in that time. Longer-duration fit remains unmeasured; H3 reference currently costs 6 to 6.5 hours per full run."
+    "estimateLimit": "These are additional Pika estimates, not a promise to rerun or finish all eight H3/Pika/Wan motion variants in that time. Longer-duration fit remains unmeasured; H3 reference currently costs 6 to 6.5 hours per full run.",
+    "actualUiStopRecoveryPassed": true,
+    "freshCameraUiRun": "in_progress; native output and motion acceptance not yet closed"
   }
 }

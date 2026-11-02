@@ -19,6 +19,14 @@ eight-second two-scene Pika example. Their native motion acceptance is pending;
 the earlier steady-camera recipes remain preserved as baselines. See
 [Video prompting](../../docs/video-prompting.md) for the researched approach.
 
+The later 2 November checkpoint closes the H3 reference technical run and its
+scoped release. Both Linux app instances now serve the tested `579bd123` /
+`d357832a` application pair with protected data/runtime checks. The revised
+Pika workflow passes actual browser Run/Stop at step 1 of 6 with zero cancelled
+outputs and worker recovery. Its unchanged fresh Run is active; camera/action,
+scene-change and listening acceptance remain pending. The older checkpoints
+below retain their original timing and source scope.
+
 The following checkpoint predates that motion feedback. The unstarted Pika
 reference and Wan image sequence is now held for the revised recipes. The
 already running H3 reference baseline continues unchanged, with no subsequent
