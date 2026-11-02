@@ -1,5 +1,12 @@
 # Video stages workflows and templates
 
+Current authorized continuation: correct the rejected Pika reference clip,
+complete Pika first-frame-only acceptance, verify a real model-backed Service
+CLI invocation and finish the handoff. The seven approved clips are preserved;
+additional H3 motion runs are deferred. [Version 3 recipes](motion-recipes.v3.json)
+retain the old recipes and correct the paper-boat motion brief without runtime
+or sampler changes.
+
 Latest visual review, 3 November: the user accepts seven of the eight displayed
 videos and specifically praises the cycling clips. The Pika reference boat is
 rejected for unrealistic paper-speedboat motion and needs a new creative version.

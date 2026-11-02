@@ -681,3 +681,27 @@ replacement was started. The other seven displayed clips do not need reruns
 solely for the previously noted framing/camera deviations. Visual approval does
 not establish audio listening, publication permission or acceptance of the four
 unrun revised motion candidates.
+
+## Authorized corrected Pika and Service CLI continuation
+
+The user selected a finite continuation: corrected Pika reference, first-frame
+acceptance, actual model-backed Service CLI verification and handoff, preserving
+approved clips and deferring extra H3 renders. Two version 3 creative recipes
+keep the paper-boat input and fixed native settings but ask for plausible slow
+drift, gentle ripples and modest camera travel instead of powered-looking motion.
+
+The corrected reference was duplicated, edited, saved and reopened through the
+built client. Its full six-section prompt and native exported graph are checked;
+only prompt/output filename differ from the previous executable recipe. The
+first-frame version is separately saved with its full four-section prompt,
+opening image connected and last frame intentionally absent. Its eight-node
+export likewise preserves all other execution values and wires. The corrected
+reference has started through actual UI Run with its independent resource guard
+ready before allocation. No second model is dispatched concurrently.
+
+A current-source Wan Service package was exported through the normal dialog
+with named image/prompt inputs and video output. It will be used for actual CLI
+inference after both Pika cases are reviewed and released; metadata export alone
+does not close that proof. Existing code gates and approved output evidence are
+reused. Browser authoring failures and narrower preservation results remain in
+the private log; no raw evidence or old recipe is overwritten.

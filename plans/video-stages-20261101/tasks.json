@@ -374,6 +374,21 @@
       "h3_camera_action_v2",
       "h3_first_frame_v2",
       "h3_reference_motion_v2"
-    ]
+    ],
+    "selectedContinuation": {
+      "dateIst": "2026-11-03",
+      "recipeDescriptor": "motion-recipes.v3.json",
+      "correctedReference": "active native UI run; saved full prompt and graph checked",
+      "firstFrameOnly": "separate v3 saved/reopened; exact eight-node graph checked; native run pending",
+      "serviceCli": "current-source Wan package exported; actual native CLI run pending",
+      "handoff": "pending these selected native cases",
+      "preserveSevenApprovedClips": true,
+      "deferredExtraH3MotionRuns": [
+        "h3_camera_action_v2",
+        "h3_first_frame_v2",
+        "h3_reference_motion_v2"
+      ],
+      "runtimeOrSamplerChanges": false
+    }
   }
 }
