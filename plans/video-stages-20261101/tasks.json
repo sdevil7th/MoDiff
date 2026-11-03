@@ -481,10 +481,32 @@
       "mixedImageVideoAudioReferences": "rejected_paper_recipe_replacement_required",
       "cyclistContinuationAndTimeline": "human_visual_accepted"
     },
-    "humanVisualReviewPending": false,
+    "humanVisualReviewPending": true,
     "humanAudioReviewPending": true,
-    "newRendersAfterFeedback": 0,
-    "nextProposedWork": "One photographic cyclist-reference Pika pilot, then review before more variants; await user direction",
-    "reviewPendingScope": "Human visual review is complete; audio listening and publication remain separate"
+    "newRendersAfterFeedback": 1,
+    "nextProposedWork": "Single photographic cyclist-reference Pika pilot authorized and running; human review before any further variants",
+    "reviewPendingScope": "Single photographic pilot pending; six earlier outputs accepted, eight paper outputs rejected. Audio/publication separate.",
+    "photographicReferencePilot": {
+      "status": "native_running",
+      "singlePilotOnly": true,
+      "existingReferenceGraph": true,
+      "executableChanges": [
+        "reference image",
+        "complete creative prompt",
+        "output filename"
+      ],
+      "geometry": [832, 480],
+      "frames": 124,
+      "fps": 24,
+      "seed": 20261102,
+      "officialSamplerEvaluations": 6,
+      "normalUiSaveReloadExact": true,
+      "priorSavedWorkflowBodiesExact": 41,
+      "priorAppFilesExactAtFrameExtraction": 92,
+      "guardReadyBeforeAllocation": true,
+      "nativeSuccess": false,
+      "humanVisualAccepted": false,
+      "moreReplacementsAuthorized": false
+    }
   }
 }

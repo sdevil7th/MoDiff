@@ -822,3 +822,21 @@ the continuation template is visually accepted. The next proposed step is one
 photographic cyclist-reference Pika pilot using retained accepted media, reviewed
 before any further variants. New rendering waits for user direction. Audio and
 publication approval remain separate; code/CI fixes require no repetition.
+
+## Single photographic reference pilot in progress
+
+Following the user's go-ahead, one separate Pika reference pilot uses frame zero
+from the accepted cyclist camera/action clip. Source video bytes are verified;
+the deterministic PNG extraction preserves all 92 existing app files. The
+ordinary nine-node reference graph changes only input image, complete prompt and
+output filename. Standard Block unpack/regroup preserves all other executable
+values and connections; an earlier attempt to edit sealed graph contents was
+correctly rejected by the graph-hash validator and was never imported or run.
+
+Actual built-client import, Arrange, Save and reload preserve the entire new
+snapshot, exact executable nodes/paths and all 41 prior saved workflow bodies.
+The independent Linux guard admitted the unchanged memory/disk/swap/time floors
+before the sole genuine UI Run. Rendering and creative acceptance remain pending.
+No further variants, extra H3 runs, downloads, model retirements or public uploads
+are part of this pilot. The six approved clips and eight rejected paper clips
+remain preserved. Technical audits and human review will be recorded separately.
