@@ -16,6 +16,14 @@ blocks Run, and execution still validates that selected medium. Starter graphs
 retain the selected required source. Saved schemas, values and wires are not
 automatically rewritten.
 
+Portable-template acceptance also exposed missing validation for empty literal
+media file editors. Shared Run readiness now treats an unannotated file-browser
+field on a normally validated node as mandatory, preserving explicit optionality,
+conditional requirements and dynamic skip-validation. It handles blank paths,
+empty collections and blank collection members without resolving files or
+mutating definitions. Upload, clear and reopen browser checks pass. Raw backend
+media schemas and all immutable Block identities remain unchanged.
+
 The exact client bundle is paired in the backend. Its five dependent ledgers
 change hash bindings only; qualification rows remain unchanged. The protected
 deployment verifies all 119 disk files and 118 served assets, preserves prior
@@ -67,10 +75,15 @@ qualification or permission to install/download a runtime or model.
 
 ## Validation and preservation
 
-The deployed executable pair is backend `e13bd558` / client product `9bac9ac0`.
-Client `0a88a0f5` is a CI/documentation descendant that pins backend `e13bd558`;
-it changes no deployed product bytes. Subsequent example/documentation commits
-do not require model repetition or deployment just for new Git labels.
+The native media and conditional-reference UI proofs use backend `e13bd558` /
+client product `9bac9ac0`. Client `0a88a0f5` is a CI/documentation descendant
+pinning that backend. Final client product `ba8f7d52` adds literal-file readiness
+and passes the complete client check and all five affected browser cases.
+Backend Python/runtime code remains byte-identical to `e13bd558`; its paired
+bundle, hash-only ledgers, examples and documentation change separately.
+The final deployment and empty-template save/reopen checks are recorded in the
+private delivery receipt. Subsequent documentation/CI-only source labels do not
+require rebuilding product bytes or repeating model computation.
 
 - Full backend gate: 8,982 passed, 763 skipped, 13,185 subtests, plus Ruff,
   dependency consistency and CPU preflight.
@@ -80,6 +93,9 @@ do not require model repetition or deployment just for new Git labels.
 - Current matched client CI run 41555893433 passes all four jobs, including
   `npm run check`, 16 shared browser tests and all 322 mocked browser tests
   against backend `e13bd558`. macOS CI build smoke is not native model coverage.
+- The final file-presence change reuses that unaffected broad browser baseline
+  and the unchanged backend gate, with a new complete client check and five
+  affected browser cases. No single run is relabelled as another source's proof.
 - Normal scoped cache releases preserve all 71, 77 and 85 current app files,
   respectively, and every audited durable export. Final cache/scratch is empty;
   no model cache was deleted. Template layout saves are deliberate subsequent
@@ -123,6 +139,15 @@ Ordinary keyboard activation released those caches; Arrange and exact Save/reloa
 polished the reusable layouts. Private package verification also caught JavaScript
 undefined-versus-JSON representation and an overly broad preview cleanup that
 removed labels; neither reached product source or model dispatch.
+
+The first literal-file prototype added required flags to raw media schemas.
+The catalog check correctly rejected changed immutable Block identities. Those
+flags were fully reverted and the fix kept in shared readiness. The unnecessary
+isolated backend gate was stopped early; its partial result is not a PASS. The
+unchanged runtime instead reuses the completed backend gate. The first browser
+regression fixture also lacked an output node, so another legitimate blocker
+masked the intended check; connecting a normal Preview makes upload/clear/reopen
+isolate file presence. Original failures and recovered checks remain separate.
 
 New visual/audio review and video publication remain human decisions. Weak camera
 arc/pullback is documented rather than relabelled as full creative-brief success.

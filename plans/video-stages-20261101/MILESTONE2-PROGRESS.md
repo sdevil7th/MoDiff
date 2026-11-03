@@ -763,3 +763,37 @@ changes reuse the full passing application gates. No downloads, deletions,
 new runtime, broad gate reruns, extra H3 renders or public uploads occurred.
 Human review of the two new clips, listening/publication, the optional-input Fix
 diagnostic and separate whole-app/Gallery/hardware qualification remain open.
+
+## Optional-reference repair and advanced Pika workflows
+
+The optional-input Fix defect is now fixed, deployed and verified on an owned
+old-schema reference graph. Selected image/video/audio requirements remain
+enforced, and Undo/Save/reload preserves graph values/wires. The complete backend
+gate passes 8,982 tests/13,185 subtests with 763 skips; matched client CI passes
+all four jobs including the full 16+322 browser suite. Prior failed Windows
+navigation evidence retains its own source and outcome.
+
+Three serial Pika runs add four private outputs: exact retained MiniMax keyframe
+prompt/two-image comparison (23m08), mixed image/video/audio references (53m35),
+and actual last-frame cyclist continuation with separate composed timeline
+(27m12). Exact native media audits and full editor playback pass, with 124 native
+frames or 248 composed frames at 832×480, 24 FPS, stereo 32 kHz. The timeline seam
+and container timing pass local inspection. Camera arc/pullback limitations
+remain explicit. No extra MiniMax run, download, retirement or public upload was
+performed. All original media objects and seven user visual approvals remain.
+
+Normal scoped releases preserve 71/77/85 app files and durable media. Arranged
+6/12/14-node presentations survive save/reload without overlaps. The
+[source examples](../../examples/video/README.md) are ordinary packages with
+empty media fields, unchanged sealed definitions and verified parser/form/
+execution roundtrips; private media rebinding reproduces the actual native
+recipes. They do not promote public Gallery or hardware qualification.
+
+Empty portable-template import exposed a final literal-file readiness issue.
+The client-only repair passes focused tests, all five affected browser cases
+and the complete client check. An abandoned raw-schema prototype and incomplete
+gate are retained as failures, not signoff; all raw schema additions were
+reverted so backend runtime and immutable Block identities remain unchanged.
+Final pairing/deployment and actual empty-template save/reopen closeout follow
+the [advanced handoff](ADVANCED-PIKA-HANDOFF.md). Model output is not rerun to
+validate a presence check or a new documentation source label.
