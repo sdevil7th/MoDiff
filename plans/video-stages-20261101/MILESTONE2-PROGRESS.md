@@ -1003,3 +1003,27 @@ See [the current closeout](RELEASE-CLOSEOUT-20261103.md) for the exact remaining
 work and constraints. No extra H3 render, download, deletion, installation or
 public upload occurs during this tooling/status work. App source and approved
 media remain unchanged.
+
+## 3 November — Windows upload diagnosis and single authorized H3 comparison
+
+Native Windows now runs `fc0c9fcc` / client product `75080b73`; a separate
+read-only audit verifies all 105 original saved workflows, 369 prior app files
+and 119 disk/118 served assets. Preserve the earlier cutover observer hold;
+current deployment acceptance is an independent observation.
+
+Actual Audio.Load MP4 upload exposed a server kind-check defect. Fix `a43e5e98`
+extracts a soundtrack only for explicit audio uploads containing real audio,
+preserves uploaded bytes and rejects silent video/renamed images. The focused
+46-test/five-subtest media check passes. A full backend gate has one independent
+reporting failure among 8,989 passing tests: ten deliberately unmapped canonical
+routes were not representable in the reconciliation report. The narrow report
+fix records them as held, without weakening qualification. Full verification
+and Windows deployment of the upload fix remain pending at this checkpoint.
+
+The user lifts the extra-H3 restriction for **one** photographic keyframe
+comparison. Task `DUC96v3XXjU-` is genuinely submitted through the current built
+Linux UI at 13:06 UTC, after resource admission and exact Save/reload/request
+checks. It uses the accepted Pika prompt and identical first/last photos,
+immutable cached H3 weights and native geometry/sampling. No other H3 render,
+download or media publication is authorized. Approved clips/templates and
+original rejected media remain unchanged; native output/review are pending.

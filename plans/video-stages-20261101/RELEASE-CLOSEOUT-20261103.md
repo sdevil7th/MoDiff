@@ -80,6 +80,48 @@ is therefore not a credible fixed-hour promise on the current hardware.
 
 ## Evidence and lessons
 
+### 3 November follow-up: native Windows upload and one MiniMax comparison
+
+The actual Windows application on port 8194 has been refreshed to backend
+`fc0c9fcc` and product `75080b73`. A separate read-only audit verifies the running
+worker/source, all 119 disk/118 served bundle assets and preservation of the
+105 earlier saved workflows and 369 earlier app files (apart from expected
+worker/timestamp fields). The original cutover controller's final observer
+exited during a short-lived validator query; that hold remains recorded. The
+independent audit establishes current deployment/preservation, not graceful
+shutdown of the former worker.
+
+Normal Windows UI upload then exposed a separate defect: Audio.Load advertises
+MP4 soundtrack input, but the server rejected a real audio/video MP4 as video.
+Backend `a43e5e98` permits soundtrack extraction only for an explicit audio
+upload with a real audio stream. Original uploaded bytes remain unchanged;
+silent video, renamed images and wrong-kind uploads remain rejected. Focused
+media tests pass 46 tests and five subtests. The full backend gate reports
+8,989 passed, 762 skipped and 13,187 passing subtests, with one failure in the
+offline public-template reconciliation report. The upload fix is not yet
+deployed to the Windows worker at this checkpoint.
+
+The report failure is diagnosed: ten experimental public templates explicitly
+have no supported canonical workflow, a held release status and historical
+`no_canonical_workflow` evidence. The reconciliation tool previously aborted
+instead of reporting that state. It now retains a separate
+`canonical_workflow_required` bucket, rejects contradictory release/current
+authority, counts historical records accurately and schedules no canary for
+those entries. No workflow, receipt, lock or eligibility is promoted. Focused
+red/green tests cover the original failure and malformed/contradictory records;
+the complete backend gate must pass before the next Windows cutover.
+
+The user explicitly authorizes **one MiniMax photographic keyframe comparison**.
+The ordinary saved workflow uses the accepted Pika keyframe clip's exact prompt
+and opening/ending image bytes. One actual UI Run starts task `DUC96v3XXjU-` on
+Linux at 13:06 UTC, with independent resource admission before allocation,
+cached immutable weights, 960×544 / 124 frames / 24 FPS and the native H3 sampler.
+The running source remains `ce0fb40c`; no Linux restart or source update is made.
+Its native geometry/sampler differ from Pika, so this is a same-brief comparison,
+not an equal-compute benchmark. The result is pending, with no automatic retry
+or extra H3 variants authorized. All nine accepted/eight rejected clips and
+both photographic templates remain preserved. Listening/publication stay open.
+
 The append-only private closeout records retain the original Gallery result,
 decoder producer comparison, focused red/green logs, complete check logs,
 generated release reports, retained-proof recovery attempts and the exact user
