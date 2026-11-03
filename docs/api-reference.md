@@ -42,6 +42,14 @@ the directory. Filesystem access failures still surface as errors.
 | Composite migration     | `GET/POST /studio/composite-migrations/preview`, `GET /studio/composite-migrations`, `/recovery-audit`, `/{migration_id}`; `POST /studio/composite-migrations/apply`, `/{migration_id}/rollback`                                                                                                                                                                                     | Inspect redacted partial recovery evidence or explicitly apply safe V1/exact compiler-supplemented Cluster conversions with exact local backups and fail-closed recovery.                                       |
 | Workflow shares         | `GET /workflow_shares`, `POST /workflows/share`, `GET /workflows/share/{share_id}`, `GET /workflows/share/{share_id}/media/{filename}`                                                                                                                                                                                                                                               | Create and render local workflow share packages and their copied preview media.                                                                                                                                 |
 
+### Audio/video input previews
+
+`GET /media/preview` resolves the selected media identifier within the existing
+managed-file boundary. An audio preview or converted audio export can extract the
+soundtrack from a video that contains an audio stream. The source file remains
+unchanged and continues to probe as video. Silent video, an audio-kind probe of
+a video, and original-file delivery as audio retain their strict type checks.
+
 ## Core response contracts
 
 ### Node cache recomputation and release
