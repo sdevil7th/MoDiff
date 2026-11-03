@@ -1096,3 +1096,14 @@ all earlier verdicts/templates intact. This closes the current local comparison
 and upload round. New MiniMax human visual review, listening/publication and the
 broader Gallery/hardware gate remain separate. See
 [the local handoff](LOCAL-VIDEO-HANDOFF-20261103.md). No further model work is queued.
+
+## 3 November, 17:39 UTC — MiniMax visual approval recorded
+
+The user says "looks good, what next?" while viewing the photographic MiniMax/Pika
+comparison. MiniMax task `DUC96v3XXjU-` is now visually accepted: ten accepted and
+eight rejected clips. All 18 media identities and 25 video URLs remain exact;
+the other 17 clip objects and prior verdicts remain unchanged. Private page and
+manifest before-copies retain the earlier pending state. No additional render,
+template promotion, listening or publication approval is inferred. The current
+video delivery is complete within its documented scope; broader release work
+has not restarted.

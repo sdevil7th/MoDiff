@@ -14,21 +14,29 @@ stay in the canonical Windows repositories on `fix-ui-ux-issues`, in the existin
   implementation and native evidence. Original source scopes remain explicit.
 - The optional-reference Fix-suggestion defect is repaired. Model-backed Wan
   Service CLI verification and the selected continuation handoff are delivered.
-- Both photographic replacements are **visually accepted by the user**. The
-  private review contains nine accepted clips and eight rejected paper-boat
+- Both photographic replacements and the single MiniMax photographic comparison
+  are **visually accepted by the user**. The private review contains ten accepted
+  clips and eight rejected paper-boat
   clips. All originals remain preserved. Muted playback and visual approval do
   not establish audio listening or grant publication permission.
 - **Template â€” Pika photographic cyclist keyframes** and **Template â€” Pika
   photographic image video audio references** are delivered as portable source
   packages and saved workflows. Required media remain blank; ordinary import,
   Arrange, complete Save/reload and blocked Run pass without submitting a model.
-- Input-preview bugs are repaired and deployed at backend `ce0fb40c` / client
+- Input-preview and soundtrack-upload bugs are repaired and deployed on both
+  updated apps at backend `496f3aed` / client
   product `75080b73`. Actual retained-video/soundtrack playback, clear/rebind and
   Save/reload pass with zero model submissions. The complete backend gate passes
-  8,986 tests / 13,185 subtests with 763 skips; the browser gate passes 16 shared
+  8,993 tests / 13,194 subtests with 762 skips; the retained browser gate passes 16 shared
   plus 325 editor cases. All four backend and four client delivery CI jobs pass.
 
 ## Release tooling defects corrected
+
+The user's latest verdict, "looks good, what next?", accepts the single MiniMax
+comparison visually. All 18 media identities and 25 private video URLs remain
+unchanged; the other 17 clip records and eight paper rejections remain exact.
+This closes that visual-review item without a model run. Audio listening,
+publication and broader Gallery/hardware work remain separate.
 
 Client `a0145878` corrects decoded-video comparison across reviewed FFmpeg
 producers. The retained LTX file has identical decoded frame rows on different

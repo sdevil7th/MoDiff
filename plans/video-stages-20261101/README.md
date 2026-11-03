@@ -2,14 +2,14 @@
 
 Current local delivery, 3 November: Windows and Linux video apps run the tested
 audio-upload fix, with preserved data/runtime and no model reruns for the repair.
-The single authorized photographic MiniMax comparison is delivered privately;
-its new visual verdict is pending. See [the current local handoff](LOCAL-VIDEO-HANDOFF-20261103.md)
+The single authorized photographic MiniMax comparison is delivered privately
+and visually accepted by the user. See [the current local handoff](LOCAL-VIDEO-HANDOFF-20261103.md)
 for exact deployed versions, test steps and remaining boundaries.
 
 Shared video implementation, optional-reference Fix
 repair, two reusable photographic templates, Service CLI verification and the
-input-preview repair are delivered. The user visually accepts nine clips,
-including both photographic replacements, and rejects all eight paper-boat
+input-preview repair are delivered. The user visually accepts ten clips,
+including the MiniMax comparison and both photographic replacements, and rejects all eight paper-boat
 clips. Audio listening, public video publication and the specifically deferred
 extra H3 variants remain separate. See
 [the current closeout](RELEASE-CLOSEOUT-20261103.md); older checkpoints below are

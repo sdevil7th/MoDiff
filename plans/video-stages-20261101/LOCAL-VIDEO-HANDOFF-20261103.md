@@ -1,6 +1,6 @@
 # Current local video delivery handoff
 
-Updated 3 November 2026 after the 17:22 UTC acceptance checkpoint. This closes
+Updated 3 November 2026 after the 17:39 UTC user visual verdict. This closes
 the single photographic MiniMax comparison and shared audio-upload follow-up.
 It does not close the broader catalog, hardware or publication release gate.
 
@@ -43,7 +43,9 @@ Normal scoped release preserves all 123 then-current app files and durable
 media, clears owned caches and removes temporary offload scratch. No model
 cache is retired. The private review now contains **18 clips/25 video instances**;
 all 17 earlier objects/23 earlier instances and nine accepted/eight rejected
-verdicts remain unchanged. **The new MiniMax visual verdict is pending.** No
+verdicts remain unchanged. **The user now visually accepts the MiniMax clip**,
+bringing the current verdict to ten accepted and eight rejected clips. The
+exact verdict is "looks good, what next?"; original media remain unchanged. No
 extra H3 run, new H3 template, listening or publication approval is inferred.
 
 ## Upload fix and validation
