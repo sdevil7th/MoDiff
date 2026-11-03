@@ -1,5 +1,31 @@
 # Optional-reference fix and advanced Pika delivery
 
+**Both photographic replacements and reusable templates delivered, 3 November:**
+keyframes completed in 25m09s and ordered image/video/audio references in 48m50s.
+Both pass exact native task/attempt/source/adapter/owner/cache/source/durable/
+served-byte joins, all 124 decoded frames at 24 FPS with stereo 32 kHz, and full
+built-editor muted playback with zero dropped frames/media errors. Samples show
+photographic cyclist identity, pedalling and foreground parallax; the camera is
+mostly side-on and ending wheel crops remain explicit. Local quality is good;
+the two new outputs await human visual/audio review. All prior clips and human
+verdicts are preserved, including the eight rejected paper clips.
+
+Both new source packages and saved **Template — Pika photographic cyclist
+keyframes** / **Template — Pika photographic image video audio references** pass
+ordinary import, Arrange, full Save/reload, exact executable comparison and blank
+required-media Run blocking before/after reopen, without model submission.
+They preserve 45 and 49 prior workflow bodies respectively. Normal model/media
+root releases preserve 104 and 112 app files and all durable exports; final
+cache/scratch is empty. Old paper packages and accepted continuation remain intact.
+
+A separate input-preview defect remains: a selected AV audio reference can get
+422 from the audio preview route, and some Load-node players request raw backend
+paths as browser-relative URLs. The actual 15-node model run observes all three
+reference branches, and generated-output playback passes. Raw console/HTTP
+failures are retained; these checks do not claim a clean input-preview UI. No
+application-code fix/deployment or additional model run is hidden in this
+recipe/template delivery. Input preview is the next separately logged app fix.
+
 **Photographic keyframes delivered; mixed references active:** the new keyframe
 render completed in 25m09s, passes strict task/source/adapter/media joins and
 124-frame 24 FPS/stereo checks, and plays completely in the built editor without

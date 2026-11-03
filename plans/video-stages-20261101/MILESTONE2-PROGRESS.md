@@ -897,3 +897,32 @@ Run before and after reload; no graph is submitted. The mixed-reference recipe
 also passes complete Save/reload while preserving all 47 prior workflow bodies
 and now runs serially under the same Linux guard. Its three-input portable
 package passes static checks but awaits output quality and native/UI closeout.
+
+The mixed-reference replacement also completed, in 48m50s, without a resource
+stop. All 15 submitted nodes appear in the actual resolved-execution record,
+including all three reference assemblers, video trim, audio trim and media loads.
+Strict task/source/adapter/owner/media joins and full decoding pass: 124 frames
+at 24 FPS, 832×480, stereo 32 kHz. Complete built-editor muted playback has zero
+drops/media errors. Samples show a realistic recognizable cyclist, repeated
+pedalling and foreground parallax; the camera remains mostly side-on and some
+ending wheel crop remains. The new clip is delivered privately pending human
+visual/audio review, preserving all 16 prior clip objects, 22 video references
+and seven accepted/eight rejected verdicts. Original paper outputs remain held.
+
+Normal ModelSetup plus independent image/video/audio root releases preserve all
+112 app files and durable media, with empty cache and no temporary offload.
+The mixed portable source and actual **Template — Pika photographic image video
+audio references** pass complete parser/form/sealed-definition/private native
+rebind checks and ordinary import/Arrange/Save/reload. All three required media
+inputs are blank; Run stays blocked before/after reload, no graph is submitted,
+and all 49 prior workflow bodies remain exact. Both new templates are delivered;
+no extra H3, model download/retirement, install or public upload was performed.
+
+The run also exposes a separate existing input-preview defect: requesting an
+audio preview from an AV input returns 422, and some loader players request raw
+backend paths as relative URLs (404). Actual input consumption and generated
+output playback succeed. Preserve those console/HTTP failures and keep this
+visible as remaining app work; do not reinterpret output playback as proof that
+input previews are correct. No application patch or additional model run was
+performed for that diagnosis. Current delivery is the two photographic examples
+and reusable templates, with human review and this preview defect still explicit.

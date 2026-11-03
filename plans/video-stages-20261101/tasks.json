@@ -409,7 +409,7 @@
   "advancedPikaContinuation": {
     "dateIst": "2026-11-03",
     "scope": "Optional reference Fix, exact MiniMax/Pika comparison, multimodal references, last-frame continuation and local reusable templates",
-    "status": "technical_delivery_complete_paper_recipe_visual_acceptance_reopened",
+    "status": "two_photographic_templates_delivered_human_review_and_input_preview_fix_remaining",
     "optionalReferenceFix": "deployed and actual old-schema image/video/audio/Undo/Save/reload accepted",
     "nativeCasesCompleted": 3,
     "newOutputsDelivered": 4,
@@ -478,16 +478,17 @@
       "photographicPilotAccepted": true
     },
     "localExampleVisualStatus": {
-      "matchedKeyframes": "rejected_paper_recipe_replacement_required",
-      "mixedImageVideoAudioReferences": "rejected_paper_recipe_replacement_required",
+      "matchedKeyframes": "rejected_paper_recipe_preserved_as_diagnostic_photographic_replacement_delivered",
+      "mixedImageVideoAudioReferences": "rejected_paper_recipe_preserved_as_diagnostic_photographic_replacement_delivered",
       "cyclistContinuationAndTimeline": "human_visual_accepted",
-      "photographicKeyframes": "locally_good_template_verified_user_review_pending"
+      "photographicKeyframes": "locally_good_template_verified_user_review_pending",
+      "photographicMixedReferences": "locally_good_template_verified_user_review_pending"
     },
     "humanVisualReviewPending": true,
     "humanAudioReviewPending": true,
     "newRendersAfterFeedback": 1,
-    "nextProposedWork": "Complete active mixed-reference native review/release, then verify its good portable template and final handoff",
-    "reviewPendingScope": "Keyframe replacement locally good and delivered, awaiting user verdict; mixed-reference rendering. Prior seven approvals/eight paper rejections preserved; audio/publication separate.",
+    "nextProposedWork": "Human review/listening of two new photographic outputs; separately address loader input-preview URL/AV-audio preview defect",
+    "reviewPendingScope": "Two new photographic outputs locally good and templates verified; seven prior approvals/eight paper rejections preserved. New human visual/audio/publication separate. Input-preview defect remains.",
     "photographicReferencePilot": {
       "status": "human_visual_accepted",
       "singlePilotOnly": true,
@@ -521,7 +522,7 @@
       "framingAndCameraLimitations": true
     },
     "photographicReplacements": {
-      "status": "keyframe_delivered_template_verified_mixed_native_running",
+      "status": "two_native_replacements_and_portable_templates_delivered_pending_human_review",
       "authorizedCases": [
         "photographic first-last keyframes",
         "photographic ordered image-video-audio references"
@@ -537,7 +538,7 @@
       "newDownloads": 0,
       "modelRetirements": 0,
       "publicUploads": 0,
-      "nativeAccepted": false,
+      "nativeAccepted": true,
       "keyframe": {
         "nativeSeconds": 1509.1241562366486,
         "technicalAuditPassed": true,
@@ -557,12 +558,43 @@
       "mixed": {
         "normalUiSaveReloadExact": true,
         "priorWorkflowBodiesExact": 47,
-        "nativeStatus": "running",
+        "nativeStatus": "completed",
         "guardReadyBeforeAllocation": true,
         "staticPortableTemplateStaged": true,
-        "nativeSuccess": false,
-        "templateUiAccepted": false
+        "nativeSuccess": true,
+        "templateUiAccepted": true,
+        "nativeSeconds": 2929.7341606616974,
+        "actualSubmittedNodesObserved": 15,
+        "technicalMediaAuditPassed": true,
+        "wholeMutedPlaybackFrames": 124,
+        "wholeMutedPlaybackDrops": 0,
+        "localCreativeAccepted": true,
+        "humanVisualAccepted": false,
+        "releaseProtectedAppFilesExact": 112,
+        "cacheAndScratchCleared": true,
+        "templateSource": "examples/video/pika-photographic-mixed-references.workflow.json",
+        "templateEmptyMediaCount": 3,
+        "templateSaveReloadAndExecutableExact": true,
+        "templateRunBlockedBeforeAfterReload": true,
+        "templateNoGraphSubmission": true,
+        "templatePriorWorkflowBodiesExact": 49,
+        "priorReviewClipObjectsExact": 16,
+        "priorReviewVideoReferencesExact": 22
+      },
+      "newOutputHumanVisualApprovalInferred": false,
+      "applicationInputPreviewDefectRemaining": true,
+      "finalVerification": {
+        "unrelatedWorkflowBodiesExact": 49,
+        "all17ReviewMediaServedBytesExact": true,
+        "bothTemplateBodiesExact": true,
+        "all23ReviewVideoPlayersReady": true,
+        "bothAppsReadyIdle": true,
+        "originalWorkerUntouched": true,
+        "inputPreviewDefectExplicit": true
       }
-    }
+    },
+    "remainingAppFixes": [
+      "Load-node media preview URL handling and AV-to-audio preview consistency"
+    ]
   }
 }
