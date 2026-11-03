@@ -38,6 +38,10 @@ FIELD_NAMES = {
     "use_kv_cache": "attentionContextReuse",
 }
 NODE_FIELD_NAMES = {
+    ('DiffusersAudio', 'Generate'): {
+        **FIELD_NAMES, 'lyrics': 'lyrics', 'vocal_language': 'vocalLanguage',
+        'shift': 'shift', 'bpm': 'bpm', 'keyscale': 'keyscale', 'timesignature': 'timesignature',
+    },
     ('Image', 'Load'): {
         **FIELD_NAMES, 'alpha_channel': 'imageAlphaChannel',
         'source_hashes': 'imageSourceHashes', 'source_widths': 'imageSourceWidths',

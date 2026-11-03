@@ -88,6 +88,12 @@ Input previews and transcoded playback are not proof of the original output's
 identity. Record measured duration, sample rate, channels, finite samples and
 nonempty output separately from listening quality, lyrics, timing or edit seams.
 
+Generation history records bounded lyrics, language, shift, BPM, key and time
+signature only when the active audio adapter delivers them to the pipeline.
+Inactive ACE controls on another audio family are not execution evidence. The
+client preserves these scoped fields on history restore; older receipts remain
+unchanged and missing controls are not reconstructed from saved form values.
+
 Offload can reduce accelerator residency while increasing host-memory demand.
 Supported options do not establish that a particular model, duration and recipe
 fits a Windows machine. Quantized image support does not automatically authorize
