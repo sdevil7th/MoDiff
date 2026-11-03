@@ -234,6 +234,14 @@ workflows; a delayed autosave cannot demote a saved document. Existing documents
 without an intent marker are treated as saved without rewriting their files.
 Unknown historical documents are not reclassified or deleted.
 
+Required media Load fields also participate in Run readiness, including literal
+file-browser editors without a socket. The current registry supplies the
+requirement for older saved graphs. A blank path, empty collection or blank
+collection member blocks Run and directs the user to select a file; it does not
+suggest creating another Load node. Optional file selectors remain optional.
+This presence check does not establish that a path exists or is safe; backend
+file boundaries and decoding validation still apply at execution.
+
 Shared select, combobox and multiselect menus use an 18rem preferred cap, further
 limited by available viewport space. The cap is passed through Headless UI's
 anchoring constraint so its inline styles cannot override the intended limit.
@@ -290,7 +298,6 @@ with a bookkeeping assertion that expected the still-open recovery draft in the
 mocked saved-document list; application execution, output capture and error checks
 had already passed, and only the explicitly saved workflow had correctly been
 written there.
-
 
 ## Private ancillary execution selections
 

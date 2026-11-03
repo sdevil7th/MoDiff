@@ -5,6 +5,12 @@ testing: corrected Pika reference, first-frame-only acceptance, real model-backe
 Service CLI verification and this handoff. Extra H3 motion runs are deferred.
 This does not mark the entire video plan or the whole application released.
 
+The subsequent optional-reference repair, exact MiniMax/Pika comparison and
+advanced workflow delivery are recorded in
+[Advanced Pika handoff](ADVANCED-PIKA-HANDOFF.md). That newer handoff supersedes
+the optional-input Fix hold and application-source identities below. Original
+native receipts retain their recorded source scope.
+
 ## Completed results
 
 | Check                                   | Measured native time                   | Result                                                                                                                                   |
@@ -92,10 +98,9 @@ neither is merged to `develop` by this handoff.
   clips. No video publication has been approved.
 - H3 camera/action, first-frame-only and reference motion variants are explicitly
   deferred. Earlier H3 technical evidence keeps its actual source scope.
-- Optional Reference Assembler inputs can still appear in Fix suggestions on a
-  valid image-only reference graph. No unwanted repair was applied. The inherited
-  block validation flag versus saved-node metadata mismatch is diagnosed only
-  to a bounded extent; its exact registry/creation origin needs a separate fix.
+- The optional Reference Assembler Fix defect identified during this checkpoint
+  is now fixed and verified through an owned old-schema graph, selected missing
+  video/audio cases, Undo and exact Save/reload. See the newer advanced handoff.
 - Public video-template qualification, wider resource/Auto combinations,
   unavailable hardware and the existing whole-app Gallery holds remain separate
   (83 retained errors plus five earlier stage-card lock discrepancies).
