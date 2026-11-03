@@ -10,11 +10,12 @@ contain no media or machine paths. Run must remain blocked until required inputs
 are supplied. Select media available to the backend, and edit the subject and
 reference descriptions in the prompt to match it.
 
-| Package                                    | Inputs to select                                                | What the graph does                                                                                                                                                                                               |
-| ------------------------------------------ | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pika-matched-keyframes.workflow.json`     | Opening and ending images                                       | Encodes both keyframes, generates a native video with audio, and exports it. Useful for comparing models with the same prompt and image bytes.                                                                    |
-| `pika-mixed-references.workflow.json`      | Identity image, motion-reference video and audio-reference file | Trims the video/audio references to two seconds, assembles the three ordered reference kinds, generates joint video/audio and exports it. The selected audio may be an AV file.                                   |
-| `pika-continuation-timeline.workflow.json` | A source AV file in both Load Video and Load Audio              | Extracts the actual last frame, generates an opening-image continuation, exports that native segment, then composes the source and continuation and joins/fits their soundtracks into a separate timeline export. |
+| Package                                     | Inputs to select                                                | What the graph does                                                                                                                                                                                               |
+| ------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pika-photographic-keyframes.workflow.json` | Opening and ending photographic images                          | Generates continuous photographic motion between both keyframes with original model audio. Its cyclist example moves from a wide side view to the supplied closer ending.                                         |
+| `pika-matched-keyframes.workflow.json`      | Opening and ending images                                       | Encodes both keyframes, generates a native video with audio, and exports it. Useful for comparing models with the same prompt and image bytes.                                                                    |
+| `pika-mixed-references.workflow.json`       | Identity image, motion-reference video and audio-reference file | Trims the video/audio references to two seconds, assembles the three ordered reference kinds, generates joint video/audio and exports it. The selected audio may be an AV file.                                   |
+| `pika-continuation-timeline.workflow.json`  | A source AV file in both Load Video and Load Audio              | Extracts the actual last frame, generates an opening-image continuation, exports that native segment, then composes the source and continuation and joins/fits their soundtracks into a separate timeline export. |
 
 The continuation's Frame Extract output is a collection. The existing Collection
 Item node selects its first item before it reaches the image socket. No final
@@ -51,6 +52,18 @@ Use a resource plan appropriate to the actual machine, leaving headroom for
 other applications.
 
 ## Quality and reuse
+
+The photographic keyframe package is the locally reviewed replacement for the
+paper-boat brief. Its native output passes full media and editor playback checks;
+samples show a recognizable cyclist, pedalling and foreground parallax, with
+opening/ending framing matching the supplied images. The new output awaits the
+user's visual verdict. The source cyclist-reference pilot was already accepted
+visually. Neither status grants audio listening or publication approval.
+
+The new photographic template imports and saves with both media fields empty.
+Run remains blocked before and after reopening, and selecting the exact retained
+test images reproduces its admitted execution recipe. For your own images,
+change the subject and motion description to match the opening and ending views.
 
 The latest human review rejects **all paper-boat outputs**. This supersedes the
 earlier local quality assessments. The keyframe and mixed-reference packages

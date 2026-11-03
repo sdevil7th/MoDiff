@@ -480,13 +480,14 @@
     "localExampleVisualStatus": {
       "matchedKeyframes": "rejected_paper_recipe_replacement_required",
       "mixedImageVideoAudioReferences": "rejected_paper_recipe_replacement_required",
-      "cyclistContinuationAndTimeline": "human_visual_accepted"
+      "cyclistContinuationAndTimeline": "human_visual_accepted",
+      "photographicKeyframes": "locally_good_template_verified_user_review_pending"
     },
-    "humanVisualReviewPending": false,
+    "humanVisualReviewPending": true,
     "humanAudioReviewPending": true,
     "newRendersAfterFeedback": 1,
-    "nextProposedWork": "Complete serial photographic keyframe and mixed-reference native review, then create and verify portable templates from good outputs",
-    "reviewPendingScope": "Photographic pilot accepted; keyframe replacement rendering and mixed-reference prepared. Audio and publication remain separate.",
+    "nextProposedWork": "Complete active mixed-reference native review/release, then verify its good portable template and final handoff",
+    "reviewPendingScope": "Keyframe replacement locally good and delivered, awaiting user verdict; mixed-reference rendering. Prior seven approvals/eight paper rejections preserved; audio/publication separate.",
     "photographicReferencePilot": {
       "status": "human_visual_accepted",
       "singlePilotOnly": true,
@@ -520,7 +521,7 @@
       "framingAndCameraLimitations": true
     },
     "photographicReplacements": {
-      "status": "keyframe_native_running_mixed_prepared",
+      "status": "keyframe_delivered_template_verified_mixed_native_running",
       "authorizedCases": [
         "photographic first-last keyframes",
         "photographic ordered image-video-audio references"
@@ -536,7 +537,32 @@
       "newDownloads": 0,
       "modelRetirements": 0,
       "publicUploads": 0,
-      "nativeAccepted": false
+      "nativeAccepted": false,
+      "keyframe": {
+        "nativeSeconds": 1509.1241562366486,
+        "technicalAuditPassed": true,
+        "localCreativeAccepted": true,
+        "humanVisualAccepted": false,
+        "templateSource": "examples/video/pika-photographic-keyframes.workflow.json",
+        "templateEmptyMediaCount": 2,
+        "templateSaveReloadAndExecutableExact": true,
+        "templateRunBlockedBeforeAfterReload": true,
+        "templateNoGraphSubmission": true,
+        "templatePriorWorkflowBodiesExact": 45,
+        "releaseProtectedAppFilesExact": 104,
+        "cacheAndScratchCleared": true,
+        "priorReviewClipObjectsExact": 15,
+        "priorVideoReferencesExact": 21
+      },
+      "mixed": {
+        "normalUiSaveReloadExact": true,
+        "priorWorkflowBodiesExact": 47,
+        "nativeStatus": "running",
+        "guardReadyBeforeAllocation": true,
+        "staticPortableTemplateStaged": true,
+        "nativeSuccess": false,
+        "templateUiAccepted": false
+      }
     }
   }
 }

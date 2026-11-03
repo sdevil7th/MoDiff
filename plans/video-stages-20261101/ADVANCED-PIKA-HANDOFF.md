@@ -1,5 +1,24 @@
 # Optional-reference fix and advanced Pika delivery
 
+**Photographic keyframes delivered; mixed references active:** the new keyframe
+render completed in 25m09s, passes strict task/source/adapter/media joins and
+124-frame 24 FPS/stereo checks, and plays completely in the built editor without
+drops/errors. Local review sees continuous cycling, passing foreground parallax
+and framing progressing between the supplied opening and ending images. Normal
+scoped release preserves all 104 app files and durable media. The private review
+adds that genuine output while preserving all 15 prior clip objects and 21 prior
+video references and human verdicts; this new clip awaits user visual review.
+
+The new photographic keyframe source package and saved **Template — Pika
+photographic cyclist keyframes** pass ordinary import, Arrange, complete
+Save/reload and exact executable comparison. Both required inputs remain empty,
+Run is blocked before/after reopening, all 45 prior workflow bodies remain exact
+and no model task was submitted for this template check. Original rejected paper
+packages remain intact. The 15-node photographic mixed-reference recipe now
+passes its own full Save/reload, preserves all 47 prior workflow bodies and is
+running serially on Linux under the same strict guard. Its portable package is
+only statically staged until the real output is reviewed.
+
 **New authorized continuation, 3 November:** the user accepts the photographic
 cyclist reference pilot and requests keyframe and mixed-reference replacements,
 with reusable templates from good results. Both new recipes use the approved

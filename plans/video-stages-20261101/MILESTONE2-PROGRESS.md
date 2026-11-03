@@ -877,3 +877,23 @@ it waits for first-case review, release and fresh idle admission. All fixed mode
 adapter, sampler and memory/disk/swap/time limits remain unchanged. Templates
 will be checked as ordinary portable packages with empty required media, after
 their real outputs are reviewed. No extra H3 or unaffected-model/gate reruns.
+
+The photographic keyframe replacement completed in 25m09s. Strict actual
+task/attempt/source/adapter/owner/cache/source/durable/served-byte checks pass,
+with 124 frames at 24 FPS, 832×480 and stereo 32 kHz. Full built-editor muted
+playback has zero drops/errors. Samples show realistic continuous cycling and
+foreground parallax, with framing matching the supplied wider opening and closer
+ending. Normal scoped release preserves all 104 app files and durable media.
+The output is delivered privately as awaiting user visual review; all 15 earlier
+clip objects, 21 video references/comparisons and seven accepted/eight rejected
+human verdicts remain exact.
+
+The new portable photographic keyframe package has two empty required media
+fields, exact sealed definitions/form/parser roundtrip and exact private media
+rebinding to the admitted native graph. Actual import/Arrange/Save/reload under
+**Template — Pika photographic cyclist keyframes** preserves its complete
+snapshot/executable graph and all 45 prior workflow bodies. Empty inputs block
+Run before and after reload; no graph is submitted. The mixed-reference recipe
+also passes complete Save/reload while preserving all 47 prior workflow bodies
+and now runs serially under the same Linux guard. Its three-input portable
+package passes static checks but awaits output quality and native/UI closeout.
