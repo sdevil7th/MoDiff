@@ -401,7 +401,7 @@
   "advancedPikaContinuation": {
     "dateIst": "2026-11-03",
     "scope": "Optional reference Fix, exact MiniMax/Pika comparison, multimodal references, last-frame continuation and local reusable templates",
-    "status": "native_completed_final_client_deployment_pending",
+    "status": "ready_for_bounded_private_testing",
     "optionalReferenceFix": "deployed and actual old-schema image/video/audio/Undo/Save/reload accepted",
     "nativeCasesCompleted": 3,
     "newOutputsDelivered": 4,
@@ -418,7 +418,7 @@
     "localTemplateLayouts": "6/12/14 visible nodes; arranged and saved/reopened without overlaps",
     "portableSourceDirectory": "examples/video",
     "portableParserFormSealedDefinitionAndExecutionRebindChecks": "passed",
-    "literalFileReadiness": "client-only repair;41focused tests,5affected browser cases and fullclientcheck PASS; finaldeploy pending",
+    "literalFileReadiness": "client-only repair;41focused tests,5affected browser cases,completeclientcheck and actualdeployed3template Save/reload Run-block acceptance PASS",
     "backendRuntimeCodeSameAs": "e13bd558",
     "backendGateReused": "8982passed/763skipped/13185subtests; interrupted raw-schema prototype gate not PASS",
     "clientProduct": "ba8f7d522aae96589bf7a314ff6cf67b0c32fc53",
@@ -429,6 +429,28 @@
     "publicUploads": 0,
     "humanNewVisualAudioReviewPending": true,
     "publicationApproved": false,
-    "wholeAppReleaseSignoff": false
+    "wholeAppReleaseSignoff": false,
+    "readyForUserTesting": true,
+    "deployedBackend": "328d06f8ea6c6860c10b97adfa6855a80516cfad",
+    "publishedClient": "121e1b076bf9d601dfc82c7777d0c03d49e94037",
+    "deployedProductClient": "ba8f7d522aae96589bf7a314ff6cf67b0c32fc53",
+    "protectedDeployment": {
+      "diskFiles": 119,
+      "servedAssets": 118,
+      "appFilesExactExceptQueueWorkerTimestamp": 86,
+      "configRuntimePackagesPreserved": true,
+      "originalLtxWanWorkerUntouched": true
+    },
+    "finalAcceptance": {
+      "ordinaryEmptyMediaTemplatesSavedReopened": 3,
+      "completeSnapshotsAndExecutableGraphsExact": true,
+      "missingMediaRunBlockedBeforeAndAfterReload": true,
+      "modelSubmissions": 0,
+      "precedingCurrentBaselineWorkflowBodiesExact": 24,
+      "all14MediaServedExact": true,
+      "sevenVisualApprovalsPreserved": true,
+      "bothApplicationsReadyQueueCacheDownloadsIdle": true,
+      "globalBrowserContextPreservationClaimed": false
+    }
   }
 }

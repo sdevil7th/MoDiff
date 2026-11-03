@@ -797,3 +797,14 @@ reverted so backend runtime and immutable Block identities remain unchanged.
 Final pairing/deployment and actual empty-template save/reopen closeout follow
 the [advanced handoff](ADVANCED-PIKA-HANDOFF.md). Model output is not rerun to
 validate a presence check or a new documentation source label.
+
+The final protected refresh and actual template closeout now pass: backend
+`328d06f8` / client product `ba8f7d52`, exact 119 disk/118 served files and 86
+protected app files except permitted queue worker/timestamp. Both applications
+are ready, queues/caches/downloads idle, original LTX/Wan process unchanged.
+All three portable templates import/save/reopen with missing-media Run blocked,
+exact complete snapshots and executable graphs, preserving other workflow bodies
+and submitting no model task. Fourteen review media files, ten prior clip objects,
+seven approvals and all 24 full workflow bodies from the preceding current
+baseline remain exact. The finite local update is ready for user testing;
+new visual/audio review, publication and wider release gates remain separate.

@@ -66,6 +66,13 @@ Save and reload produce non-overlapping 6/12/14-node presentations. The generate
 execution graphs have 9/15/17 ordinary nodes, respectively; no alternate executor
 or new model-named frontend node was introduced.
 
+Three additional saved **Template — Pika ...** copies leave media empty:
+**matched keyframes**, **image video audio references**, and **continuation
+timeline**. Actual deployed-editor import, Save and reload preserve their complete
+snapshots and exact executable nodes/paths. Missing media blocks Run before and
+after reload; no graph was submitted. All 35/36/38 previously present workflow
+bodies remain exact at the respective template saves.
+
 The [portable source packages](../../examples/video/README.md) contain no media,
 private paths or output receipts. Import them, select your own media and save a
 copy. Their ordinary parser/lowering roundtrips preserve sealed definitions and
@@ -81,8 +88,14 @@ pinning that backend. Final client product `ba8f7d52` adds literal-file readines
 and passes the complete client check and all five affected browser cases.
 Backend Python/runtime code remains byte-identical to `e13bd558`; its paired
 bundle, hash-only ledgers, examples and documentation change separately.
-The final deployment and empty-template save/reopen checks are recorded in the
-private delivery receipt. Subsequent documentation/CI-only source labels do not
+The final protected deployment is backend `328d06f8` / client product `ba8f7d52`.
+All 119 disk files and 118 served assets match the tested package, and all 86
+prior app files are exact except queue worker/timestamp. Config/runtime/packages
+and the original LTX/Wan process are preserved. Both applications are ready with
+empty queues/caches and no downloads. All 14 review files match their retained
+hashes, all ten earlier clip objects and seven approvals are unchanged, and all
+24 full workflow bodies from the preceding current baseline remain exact. These
+checks do not claim global browser-context preservation. Subsequent documentation/CI-only source labels do not
 require rebuilding product bytes or repeating model computation.
 
 - Full backend gate: 8,982 passed, 763 skipped, 13,185 subtests, plus Ruff,
