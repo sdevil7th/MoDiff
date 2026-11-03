@@ -1,5 +1,12 @@
 # Optional-reference fix and advanced Pika delivery
 
+**Latest local handoff, 3 November:** both updated apps now run tested backend
+`496f3aed` / product `75080b73`. The additional explicit AV audio-upload defect
+is repaired, deployed and checked without model runs; all prior media/workflows
+remain preserved. The single photographic MiniMax comparison is delivered and
+awaits its human visual verdict. See [the current local handoff](LOCAL-VIDEO-HANDOFF-20261103.md).
+Earlier source/test counts below remain historical checkpoints.
+
 **Current checkpoint, 3 November:** the user explicitly accepts both photographic
 keyframe and mixed-reference outputs visually. The review now preserves nine
 accepted clips and eight rejected paper-boat clips. Both reusable photographic

@@ -1073,3 +1073,26 @@ and nine accepted/eight rejected verdicts exact. New MiniMax human visual review
 remains pending; no audio/publication/template approval is inferred. Linux
 adoption of the shared upload fix follows after this completed release, with no
 model rerun. Windows acceptance and all earlier closed proofs stay closed.
+
+## 3 November, 17:22 UTC — shared upload fix adopted on Linux
+
+One protected graceful source adoption deploys exact tested `496f3aed` with
+unchanged product `75080b73`, specialist runtime/packages/configuration and all
+119 disk/118 served assets. No model, download, retirement or installation is
+started. The original LTX/Wan worker remains exact and untouched.
+
+Actual video/audio uploads return 200 with original bytes exact. One video/two
+audio previews load; the actual soundtrack finishes muted playback without
+error. Normal import, Save/reload and blocked Run pass with zero graph requests.
+All 57 earlier workflows remain exact, and all 59 current bodies survive reload
+exactly. All 123 earlier app files remain exact except authorized queue restart
+fields. Six owned additions are two uploaded originals, two ordinary managed
+preview derivatives and two QA workflow records. The first five-addition audit
+hold remains retained; its omitted video proxy is independently bound to the
+existing conversion request/source digest and actual response bytes.
+
+All 18 private clips still serve their original hashes after deployment, with
+all earlier verdicts/templates intact. This closes the current local comparison
+and upload round. New MiniMax human visual review, listening/publication and the
+broader Gallery/hardware gate remain separate. See
+[the local handoff](LOCAL-VIDEO-HANDOFF-20261103.md). No further model work is queued.
