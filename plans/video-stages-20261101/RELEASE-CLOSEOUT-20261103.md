@@ -160,6 +160,37 @@ adoption and a no-model upload check on the Linux video app. Do not restart it
 during rendering. Extra H3 cases, broader release qualification, human listening
 and public publication remain unclosed.
 
+### 3 November, 16:44 UTC — single MiniMax comparison delivered privately
+
+The one authorized photographic H3 keyframe task `DUC96v3XXjU-` completes in
+**11,825.66 native seconds (3h17m06)**. Strict task/attempt/source/SID/workflow/
+input/cache/durable/served joins pass: 960×544, all 124 decoded frames at 24 FPS,
+stereo 32 kHz and finite nonzero audio. The consumed prompt and both image byte
+identities exactly match accepted Pika task `thUUt9jxaheu`; native model geometry
+and samplers differ, so this is not an equal-compute benchmark.
+
+Twelve samples show photographic cycling, moving foreground parallax and a
+fluttering jacket; the ending crop is tight. Actual built-app Gallery playback
+shows all 124 frames at 1× muted, with zero dropped frames/errors. The earlier
+canvas playback reported 122 compositor drops because the player was clipped
+inside its Block form scroller. That original result and the actual ancestor/
+viewport diagnosis remain retained; the fully visible Gallery result has its
+own scope and is not relabelled as a canvas pass.
+
+Actual UI releases the owned ModelSetup and two independent ImageLoad roots.
+All 123 current app files remain exact, durable media still serve identically,
+cache is empty and temporary offload scratch is absent. An observer initially
+watched `/cache/` instead of the actual `/cache` route; the original successful
+root request/response is recovered from the browser, not resubmitted.
+
+The private review now compares the new MiniMax clip with unchanged accepted
+Pika keyframes. All 17 prior clip objects, 23 prior video instances, templates
+and nine accepted/eight rejected verdicts remain exact; the page now has 18
+clips/25 instances. **The new H3 visual verdict is pending.** No additional H3
+run, audio-listening approval, template promotion or publication is inferred.
+Protected Linux adoption of the already tested shared upload fix remains next;
+Windows delivery is closed and must not be repeated.
+
 The append-only private closeout records retain the original Gallery result,
 decoder producer comparison, focused red/green logs, complete check logs,
 generated release reports, retained-proof recovery attempts and the exact user

@@ -1051,3 +1051,25 @@ or rerun is started. After its actual terminal audit and normal release, adopt
 the shared upload fix on the Linux video app with protected deployment and
 no-model verification. Existing nine visual acceptances/eight paper rejections,
 all clips/templates and human listening/publication boundaries remain exact.
+
+## 3 November, 16:44 UTC — photographic H3/Pika comparison available
+
+The one authorized MiniMax task `DUC96v3XXjU-` completes in 11,825.66 native
+seconds. Its prompt and opening/ending image bytes exactly match accepted Pika
+`thUUt9jxaheu`. Strict native media/source/ownership checks pass at 960×544 /
+124 frames / 24 FPS / stereo 32 kHz. Twelve samples show photographic cycling
+and parallax, with a tight ending crop. Fully visible built-app Gallery playback
+presents 124 frames with zero drops/errors; the initial clipped canvas-player
+122-drop result remains separate and diagnosed, not normalized or overwritten.
+
+Normal actual UI scoped release preserves all 123 app files and durable media,
+clears cache and removes temporary offload scratch. The first release observer
+watched the wrong route; original successful browser request/response proves
+the root release, without submitting it again. No extra render or reuse probe.
+
+Private review adds one new candidate and a side-by-side comparison with the
+accepted Pika clip: 18 clips/25 video instances, all 17 old objects/23 old URLs
+and nine accepted/eight rejected verdicts exact. New MiniMax human visual review
+remains pending; no audio/publication/template approval is inferred. Linux
+adoption of the shared upload fix follows after this completed release, with no
+model rerun. Windows acceptance and all earlier closed proofs stay closed.
