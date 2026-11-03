@@ -926,3 +926,44 @@ visible as remaining app work; do not reinterpret output playback as proof that
 input previews are correct. No application patch or additional model run was
 performed for that diagnosis. Current delivery is the two photographic examples
 and reusable templates, with human review and this preview defect still explicit.
+
+## 3 November — input-preview repair delivered
+
+The separately diagnosed input-preview hold above is now closed. Selected video
+and audio paths resolve through the managed preview endpoint, including Windows
+paths, scalar and picker-array selections. Clearing an input clears its stale
+preview without changing saved parameters during display. Converted audio
+previews/exports can extract a real AV soundtrack; ordinary probes, original-file
+delivery and silent-video checks retain their strict types and file boundaries.
+
+Backend core `e6eaffb3` and paired delivery `ce0fb40c`, client product `75080b73`
+and measured-budget follow-up `1cd170f2` are in the same two PR7s. The dedicated
+video app was refreshed with the exact 119-file bundle, including 118 served
+assets. The five dependent ledgers changed hashes only; semantic rows and
+qualification remain unchanged. Runtime packages and configuration were retained.
+
+Validation includes 43 focused backend tests/3 subtests, 28 media unit tests and
+three focused browser cases. The complete backend gate passes: lint, dependency
+check, preflight, **8,986 passed / 763 skipped / 13,185 subtests**. Client
+`npm run check` passes in CI at `1cd170f2`; the full local browser gate passes
+**16 shared-control + 325 editor cases**. The initial local size-gate failure and
+its measured-only correction remain recorded; dependencies, loading boundaries,
+four startup/90 deferred assets and prior budget headroom are retained.
+
+Actual built-app verification imports only two ordinary media loaders and reuses
+the accepted cyclist MP4. Video plays all 124 frames at 1x with zero drops/errors;
+both AV soundtrack players complete. Normal Save/reload, clear/Save/reload with
+Run blocked, and array-valued rebind/Save/reload pass with correct managed URLs.
+No graph POST or large-model run occurs. A saved **QA — Retained video/audio input
+previews** workflow provides the same small test without model execution.
+
+Final preservation checks retain all 114 earlier app files except the expected
+supervisor worker/timestamp fields, all 51 earlier saved workflow bodies, both
+source/saved templates, and all 17 review clips/23 video URLs. Only three owned
+QA workflow records and one soundtrack preview cache are added. Review text now
+records the repair, with original page/manifest backups; all clip objects,
+comparisons and seven accepted/eight rejected/two pending verdicts remain exact.
+The original LTX/Wan worker is untouched. No model download, retirement, runtime
+installation, public upload, new rendering or qualification promotion occurred.
+Human review/listening/publication and deferred model work retain their prior
+scope; this repair does not extend their acceptance.
