@@ -70,10 +70,11 @@ For your own media, change the subject and motion description to match it.
 The tested saved copies are **Template — Pika photographic cyclist keyframes**
 and **Template — Pika photographic image video audio references** in My workflows.
 
-An input-preview issue remains: some Load-node players use an unresolved backend
-path, and previewing an AV file as an audio reference can fail. The tested graph
-still reads all three references and its generated clip plays correctly. This
-is an editor/preview limitation, separate from the completed model computation.
+Audio/video Load-node players resolve selected backend paths through managed
+media previews. An AV file selected as an audio reference previews its soundtrack
+without altering the source. Clearing a selection also clears its old preview.
+These editor fixes use retained media and do not require another model run; they
+do not change the clips, template media requirements or recorded visual verdicts.
 
 The latest human review rejects **all paper-boat outputs**. This supersedes the
 earlier local quality assessments. The older `pika-matched-keyframes` and
